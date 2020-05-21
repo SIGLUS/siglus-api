@@ -42,7 +42,7 @@ import org.openlmis.requisition.utils.Message;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public final class RequisitionTemplateDto extends BaseRequisitionTemplateDto
+public class RequisitionTemplateDto extends BaseRequisitionTemplateDto
     implements RequisitionTemplate.Exporter, RequisitionTemplate.Importer {
 
   @Setter

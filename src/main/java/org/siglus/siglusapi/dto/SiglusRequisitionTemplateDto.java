@@ -13,19 +13,20 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.dto;
 
-import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import org.siglus.siglusapi.domain.BaseEntity;
+import lombok.NoArgsConstructor;
+import org.openlmis.requisition.dto.RequisitionTemplateDto;
 
-@Getter
-@Setter
-@EqualsAndHashCode
-@ToString
-public abstract class BaseDto implements BaseEntity.BaseExporter, BaseEntity.BaseImporter {
-  private UUID id;
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class SiglusRequisitionTemplateDto extends RequisitionTemplateDto {
+
+  private RequisitionTemplateExtensionDto extension;
+
 }

@@ -6,5 +6,119 @@ baseUri: "@baseUrl@"
 protocols: [ HTTP, HTTPS ]
 
 documentation:
-- title: Getting Started
-  content: Welcome to the SIGLUS API documentation. This minimal API is intended for illustrative purposes.
+  - title: Getting Started
+    content: Welcome to the SIGLUS API documentation. This minimal API is intended for illustrative purposes.
+
+schemas:
+  - requisitionTemplate: !include schemas/requisitionTemplate.json
+  - requisitionTemplateArray: |
+      {
+        "type": "array",
+        "items": { "type": "object", "$ref": "schemas/requisitionTemplate.json" }
+      }
+
+traits:
+  - secured:
+      queryParameters:
+        access_token:
+          displayName: access_token
+          description: OAuth2 access token
+          type: string
+          required: false
+          repeat: false
+      headers:
+        Authorization:
+          displayName: Authorization
+          description: OAuth2 authorization token header. Takes the form of 'Bearer <token>'.
+          type: string
+          required: false
+          repeat: false
+  - paginated:
+      queryParameters:
+        page:
+          description: The page number which should be displayed. Note that the first page is numbered zero rather than one. Additionally, negative and undefined values are interpreted as zero.
+          type: integer
+          required: false
+          repeat: false
+        size:
+          description: The desired size of each page. This specifies the maximum number of values that should be returned by the server. Zero, undefined, and negative values should result in all possible values being returned.
+          type: integer
+          required: false
+          repeat: false
+  - sorted:
+      queryParameters:
+        sort:
+          description: Sorting criteria in the format "property(,asc|desc)". Default sort order is ascending. Multiple sort criteria are supported.
+          type: string
+          required: false
+          repeat: true
+  - idempotent:
+      headers:
+        Idempotency-Key:
+          displayName: Idempotency Key
+          description: Idempotency Key in UUIDv4 format to avoid duplicated requests.
+          type: string
+          required: false
+          repeat: false
+
+/api:
+
+  /siglusintegration:
+
+    /requisitionTemplates:
+      post:
+        is: [ secured ]
+        description: Creates new requisitionTemplate.
+        body:
+          application/json:
+            schema: requisitionTemplate
+        responses:
+          "201":
+            body:
+              application/json:
+                schema: requisitionTemplate
+          "400":
+            body:
+              application/json:
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /requisitionTemplates/{id}:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get chosen requisitionTemplate.
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: requisitionTemplate
+          "404":
+            body:
+              application/json:
+                schema: localizedMessage
+      put:
+        is: [ secured ]
+        description: Update existing requisitionTemplate.
+        body:
+          application/json:
+            schema: requisitionTemplate
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: requisitionTemplate
+          "400":
+            body:
+              application/json:
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
