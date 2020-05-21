@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>API Console</title>
+    <link rel="stylesheet" href="../webjars/api-console/3.0.17/dist/styles/api-console-light-theme.css" type="text/css" />
+    <style type="text/css">
+    .raml-console-resource-panel-primary p {
+      font-family: inherit;
+    }
+  </style>
+</head>
+<body ng-cloak class="raml-console-body">
+<script type="text/javascript" src="../webjars/api-console/3.0.17/dist/scripts/api-console-vendor.js"></script>
+<script type="text/javascript" src="../webjars/api-console/3.0.17/dist/scripts/api-console.js"></script>
+<script type="text/javascript">
+    var currentProtocol, baseUrl, setProtocols, sortResources;
+
+    $.noConflict();
+
+    currentProtocol = window.location.protocol;
+    if (currentProtocol.indexOf(':') !== -1) {
+      currentProtocol = currentProtocol.substring(0, currentProtocol.length - 1);
+    }
+
+    baseUrl = currentProtocol + '://' + window.location.host;
+
+    setProtocols = function (resource) {
+      var i;
+
+      if (resource.resources) {
+        for (i = 0; i < resource.resources.length; i += 1) {
+          setProtocols(resource.resources[i]);
+        }
+      }
+
+      if (resource.methods) {
+        for (i = 0; i < resource.methods.length; i += 1) {
+          resource.methods[i].protocols = [currentProtocol];
+        }
+      }
+    };
+
+    sortResources = function (resource) {
+      var i;
+
+      if (resource.resources) {
+        for (i = 0; i < resource.resources.length; i += 1) {
+          sortResources(resource.resources[i]);
+        }
+
+        resource.resources.sort(function (left, right) {
+          var leftLower = left.absoluteUri.toLowerCase(),
+              rightLower = right.absoluteUri.toLowerCase();
+
+          return leftLower > rightLower ? 1 : (leftLower < rightLower ? -1 : 0);
+        });
+      }
+    }
+
+    angular.module('raml').config(function($provide) {
+      $provide.decorator('ramlParser', function($delegate) {
+        var originalMethod = $delegate.loadPath;
+
+        $delegate.loadPath = function() {
+          return originalMethod.apply($delegate, arguments).then(function (raml) {
+            raml.specification.baseUri = baseUrl;
+
+            setProtocols(raml.specification);
+            sortResources(raml.specification);
+
+            return raml;
+          });
+        };
+
+        return $delegate;
+      });
+    });
+
+    angular.element(function() {
+      angular.bootstrap(document, ['ramlConsoleApp']);
+    });
+  </script>
+<raml-console-loader
+        src="api-definition.raml"
+        options="{disableThemeSwitcher: true, disableRamlClientGenerator: true, singleView: true}">
+</raml-console-loader>
+</body>
+</html>

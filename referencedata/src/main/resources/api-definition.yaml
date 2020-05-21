@@ -1,0 +1,3670 @@
+#%RAML 0.8
+---
+title: OpenLMIS Reference Data API
+version: "@version@"
+baseUri: "@baseUrl@"
+protocols: [ HTTP, HTTPS ]
+
+documentation:
+    - title: Getting Started
+      content: Welcome to the OpenLMIS referencedata service documentation.
+
+schemas:
+  - booleanResult: |
+      {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-03/schema",
+          "title": "BooleanResult",
+          "description": "Boolean result",
+          "properties": {
+              "result": { "type": "boolean", "required": true, "title": "result" }
+          }
+      }
+
+  - integerResult: |
+      {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-03/schema",
+          "title": "IntegerResult",
+          "description": "Integer result",
+          "properties": {
+              "result": { "type": "number", "required": true, "title": "result" }
+          }
+      }
+
+  - errorResponse: |
+      {   "type": "object",
+          "$schema": "http://json-schema.org/draft-03/schema",
+          "title": "ErrorResponse",
+          "description": "Error response",
+          "properties": {
+              "message": { "type": "string", "required": true, "title": "message" },
+              "description": { "type": "string", "required": false, "title": "description" }
+          }
+      }
+
+  - localizedErrorResponse: |
+      {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-04/schema",
+          "title": "LocalizedErrorResponse",
+          "description": "Localized Error response",
+          "properties": {
+              "messageKey": { "type": "string", "title": "message key" },
+              "message": { "type": "string", "title": "message" }
+          },
+          "required": ["messageKey"]
+      }
+
+  - approvedProductSearchQuery: !include schemas/approvedProductSearchQuery.json
+
+  - approvedProductDto: !include schemas/approvedProductDto.json
+
+  - approvedProductDtoPage: !include schemas/approvedProductDtoPage.json
+
+  - basicFacilityDto: !include schemas/basicFacilityDto.json
+
+  - minimalFacilityDto: !include schemas/minimalFacilityDto.json
+
+  - minimalFacilityDtoPage: !include schemas/minimalFacilityDtoPage.json
+
+  - namedResourceArray: |
+      {
+         "type": "array",
+         "items": { "type": "object", "$ref": "schemas/namedResource.json" }
+      }
+
+  - facility: !include schemas/facility.json
+
+  - facilityArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref":"schemas/facility.json" }
+      }
+  
+  - facilityPage: !include schemas/facilityPage.json
+
+  - basicFacilityPage: !include schemas/facilityPage.json
+
+  - facilityQueryDto: !include schemas/facilityQueryDto.json
+
+  - facilityOperator: !include schemas/facilityOperator.json
+
+  - facilityType: !include schemas/facilityType.json
+
+  - facilityTypePage: !include schemas/facilityTypePage.json
+
+  - geographicLevel: !include schemas/geographicLevel.json
+
+  - geographicZone: !include schemas/geographicZone.json
+
+  - geographicZoneArray: |
+      {
+         "type": "array",
+         "items": { "type": "object", "$ref": "schemas/geographicZone.json" }
+      }
+
+  - geographicZonePage: !include schemas/geographicZonePage.json
+
+  - geographicZoneQuery: !include schemas/geographicZoneQueryDto.json
+
+  - commodityType:  !include schemas/commodityType.json
+
+  - commodityTypePage: !include schemas/commodityTypePage.json
+
+  - tradeItem:  !include schemas/tradeItem.json
+
+  - tradeItemPage: !include schemas/tradeItemPage.json
+
+  - orderable: !include schemas/orderable.json
+
+  - orderableChildDto: !include schemas/orderableChildDto.json
+
+  - orderablePage: !include schemas/orderablePage.json
+
+  - orderableSearchQuery: !include schemas/orderableSearchQuery.json
+
+  - processingPeriod: !include schemas/processingPeriod.json
+
+  - processingPeriodPage: !include schemas/processingPeriodPage.json
+
+  - orderableDisplayCategory: !include schemas/orderableDisplayCategory.json
+
+  - orderableDisplayCategoryArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/orderableDisplayCategory.json" }
+      }
+
+  - program: !include schemas/program.json
+
+  - programArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/program.json" }
+      }
+
+  - programOrderable: !include schemas/programOrderable.json
+
+  - right: !include schemas/right.json
+
+  - rightArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/right.json" }
+      }
+
+  - role: !include schemas/role.json
+
+  - roleArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/role.json" }
+      }
+
+  - processingSchedule: !include schemas/processingSchedule.json
+
+  - processingScheduleArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/processingSchedule.json" }
+      }
+
+  - uploadResult: !include schemas/uploadResult.json
+
+  - user: !include schemas/user.json
+
+  - userArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/user.json" }
+      }
+
+  - userPage: !include schemas/userPage.json
+
+  - userQueryDto: !include schemas/userQueryDto.json
+
+  - detailedRoleAssignmentDto: !include schemas/detailedRoleAssignmentDto.json
+
+  - detailedRoleAssignmentDtoArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/detailedRoleAssignmentDto.json" }
+      }
+
+  - supervisoryNodeDto: !include schemas/supervisoryNodeDto.json
+
+  - supervisoryNodeDtoArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/supervisoryNodeDto.json" }
+      }
+
+  - supervisoryNodePage: !include schemas/supervisoryNodePage.json
+
+  - supplyLine: !include schemas/supplyLineDto.json
+
+  - supplyLinePage: !include schemas/supplyLinePage.json
+
+  - requisitionGroup: !include schemas/requisitionGroupDto.json
+
+  - requisitionGroupProgramSchedule: !include schemas/requisitionGroupProgramScheduleDto.json
+
+  - requisitionGroupQuery: !include schemas/requisitionGroupQueryDto.json
+
+  - requisitionGroupPage: !include schemas/requisitionGroupPageDto.json
+
+  - stockAdjustmentReason: !include schemas/stockAdjustmentReason.json
+
+  - stockAdjustmentReasonArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/stockAdjustmentReason.json" }
+      }
+
+  - uuidArray: |
+      {
+          "type": "array",
+          "items": { "type": "string", "title": "id" }
+      }
+
+  - auditLogEntry: !include schemas/auditLogEntry.json
+
+  - auditLogEntryArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/auditLogEntry.json" }
+      }
+
+  - currencySettingsDto: !include schemas/currencySettingsDto.json
+
+  - localeDto: !include schemas/localeDto.json
+
+  - lot: !include schemas/lot.json
+
+  - lotDto: !include schemas/lotDto.json
+
+  - lotArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/lotDto.json" }
+      }
+
+  - idealStockAmountPage: !include schemas/idealStockAmountPage.json
+  
+  - geoJsonPoint: !include schemas/geoJsonPoint.json
+  
+  - geoJsonPolygon: !include schemas/geoJsonPolygon.json
+
+  - serviceAccount: !include schemas/serviceAccount.json
+  - serviceAccountCreationBody: !include schemas/serviceAccountCreationBody.json
+  - serviceAccountPage: !include schemas/serviceAccountPage.json
+
+  - supplyPartner: !include schemas/supplyPartner.json
+  - supplyPartnerAssociation: !include schemas/supplyPartnerAssociation.json
+  - supplyPartnerPage: !include schemas/supplyPartnerPage.json
+
+  - systemNotificationDto: !include schemas/systemNotificationDto.json
+  - systemNotificationDtoPage: !include schemas/systemNotificationDtoPage.json
+
+  #FHIR schemas
+  - CodeableConcept: !include schemas/fhir/CodeableConcept.schema.json
+  - Coding: !include schemas/fhir/Coding.schema.json
+  - Element: !include schemas/fhir/Element.schema.json
+  - Identifier: !include schemas/fhir/Identifier.schema.json
+  - Location: !include schemas/fhir/Location.schema.json
+  - LocationPosition: !include schemas/fhir/LocationPosition.schema.json
+  - Reference: !include schemas/fhir/Reference.schema.json
+  - Resource: !include schemas/fhir/Resource.schema.json
+
+  - stringArray: |
+      {
+          "type": "array",
+          "items": { "type": "string", "title": "string" }
+      }
+
+traits:
+    - secured:
+          queryParameters:
+              access_token:
+                  displayName: access_token
+                  description: OAuth2 access token
+                  type: string
+                  required: false
+                  repeat: false
+          headers:
+              Authorization:
+                  displayName: Authorization
+                  description: OAuth2 authorization token header. Takes the form of 'Bearer <token>'.
+                  type: string
+                  required: false
+                  repeat: false
+
+    - paginated:
+          queryParameters:
+              page:
+                  description: The page number which should be displayed. Note that the first page is numbered zero rather than one. Additionally, negative and undefined values are interpreted as zero.
+                  type: integer
+                  required: false
+                  repeat: false
+              size:
+                  description: The desired size of each page. This specifies the maximum number of values that should be returned by the server. Zero, undefined, and negative values should result in all possible values being returned.
+                  type: integer
+                  required: false
+                  repeat: false
+    - sorted:
+          queryParameters:
+              sort:
+                  description: Sorting criteria in the format "property(,asc|desc)". Default sort order is ascending. Multiple sort criteria are supported.
+                  type: string
+                  required: false
+                  repeat: true
+
+resourceTypes:
+    - auditLog:
+        description: This represents the audit log for all <<resourcePathName|!singularize>> resources.
+        get:
+          description: Returns all or part of the resource's audit log
+          # Although */auditLog endpoints support "page" and "number" query parameters for pagination,
+          # they don’t return the response body and set of pagination-related values used by collections
+          # of core domain resources.
+          is: [ secured, paginated ]
+          queryParameters:
+              author:
+                  displayName: author
+                  description: UUID of the author of changes which should be returned. By default, all changes are returned regardless of author.
+                  type: string
+                  required: false
+                  repeat: false
+              changedPropertyName:
+                  displayName: changedPropertyName
+                  description: The name of the property about which changes should be returned. If null or empty, changes associated with any and all properties are returned.
+                  type: string
+                  required: false
+                  repeat: false
+          responses:
+              200:
+                body:
+                  application/json:
+                    schema: auditLogEntryArray
+                    example: |
+                      [
+                        {
+                          "changeType": "ValueChange",
+                          "globalId": {
+                            "entity": "org.openlmis.SomeClass",
+                            "cdoId": 1
+                          },
+                          "commitMetadata": {
+                            "author": "SomeUserName",
+                            "properties": [],
+                            "commitDate": "2016-12-17T19:39:57.621",
+                            "id": 3
+                          },
+                          "property": "PropertyName",
+                          "left": "OldValue",
+                          "right": "NewValue"
+                        }
+                      ]
+              403:
+                body:
+                  application/json:
+                    schema: localizedErrorResponse
+              404:
+                description: The specified <<resourcePathName|!singularize>> does not exist.
+                body:
+                  application/json:
+                    schema: localizedErrorResponse
+
+    - instanceAuditLog:
+        description: This represents the audit log for a specified instance of the <<resourcePathName|!singularize>> resource.
+        type: auditLog
+        uriParameters:
+            id:
+                type: string
+                required: true
+                repeat: false
+
+    - collection:
+        get:
+            is: [ secured ]
+            responses:
+                200:
+                  description: Collection retrieved successfully
+                  body:
+                      application/json:
+                          schema: <<schema>>
+                404:
+                  description: Collection is empty.
+        post:
+            is: [ secured ]
+            body:
+                application/json:
+                    schema: <<schema>>
+            responses:
+                201:
+                  description: Item created successfully
+                  body:
+                      application/json:
+                          schema: <<schema>>
+    - member:
+        get:
+            is: [ secured ]
+            responses:
+                200:
+                    body:
+                        application/json:
+                            schema: <<schema>>
+        post:
+            is: [ secured ]
+            body:
+                application/json:
+                    schema: <<schema>>
+            responses:
+                200:
+                    body:
+                        application/json:
+                            schema: <<schema>>
+        delete:
+            is: [ secured ]
+            responses:
+                200:
+
+/api:
+  /processingPeriods:
+      displayName: Processing Period
+      get:
+          is: [ secured, paginated, sorted ]
+          description: >
+              Get all processing periods that match the given parameters. The processingScheduleId
+              parameter should not be used together with facilityId and programId parameters because
+              all of them are used to find a processing schedule. Also the facilityId and programId
+              parameters must be used together.
+          queryParameters:
+              programId:
+                      displayName: program
+                      type: string
+                      required: false
+                      repeat: false
+              facilityId:
+                      displayName: facility
+                      type: string
+                      required: false
+                      repeat: false
+              processingScheduleId:
+                      displayName: processingSchedule
+                      type: string
+                      required: false
+                      repeat: false
+              startDate:
+                      displayName: startDate
+                      type: string
+                      required: false
+                      repeat: false
+              endDate:
+                      displayName: endDate
+                      type: string
+                      required: false
+                      repeat: false
+              id:
+                      displayName: id
+                      type: string
+                      required: false
+                      repeat: true
+          responses:
+              "200":
+                  body:
+                    application/json:
+                      schema: processingPeriodPage
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              401:
+                  body:
+                    application/json:
+      post:
+          is: [ secured ]
+          description: Creates given processingPeriod if possible.
+          body:
+              application/json:
+          responses:
+              "201":
+                  body:
+                    application/json:
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured ]
+              description: Get chosen processingPeriod.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: processingPeriod
+                  401:
+                      body:
+                        application/json:
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Update existing processingPeriod.
+              body:
+                  application/json:
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: processingPeriod
+                  "400":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /{id}/duration:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured ]
+              description: Display total months of processingPeriod.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: integerResult
+                  "400":
+                      body:
+                        application/json:
+                  401:
+                      body:
+                        application/json:
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /orderableDisplayCategories:
+      displayName: Product Categories
+      post:
+            is: [ secured ]
+            description: Create new orderableDisplayCategory.
+            body:
+                application/json:
+                    schema: orderableDisplayCategory
+            responses:
+                "201":
+                    body:
+                        application/json:
+                            schema: orderableDisplayCategory
+                "400":
+                    body:
+                        application/json:
+                "403":
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+      get:
+            is: [ secured ]
+            description: Get all orderableDisplayCategories.
+            responses:
+                "200":
+                    body:
+                        application/json:
+                            schema: orderableDisplayCategoryArray
+                401:
+                    body:
+                      application/json:
+      /{id}:
+            uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+            put:
+                is: [ secured ]
+                description: Update existing orderableDisplayCategory.
+                body:
+                    application/json:
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                                schema: orderableDisplayCategory
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "403":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            get:
+                is: [ secured ]
+                description: Get chosen orderableDisplayCategory.
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                                schema: orderableDisplayCategory
+                    401:
+                        body:
+                          application/json:
+                    "404":
+                        body:
+                            application/json:
+            delete:
+                is: [ secured ]
+                description: "[AVOID USING] Completely removes display category. This action is not recoverable."
+                responses:
+                    "204":
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "409":
+                        body:
+                            application/json:
+                    "403":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+      /search:
+          get:
+              is: [ secured ]
+              description: Find orderable categories with matched code.
+              queryParameters:
+                  code:
+                      displayName: code
+                      description: orderableDisplayCategory code.
+                      type: string
+                      required: false
+                      repeat: false
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: orderableDisplayCategoryArray
+                  401:
+                      body:
+                        application/json:
+
+  /orderables:
+      displayName: Orderable Product
+      put:
+          is: [ secured ]
+          description: Create an Orderable.
+          body:
+            application/json:
+              schema: orderable
+          responses:
+              "200":
+                  body:
+                    application/json:
+                        schema: orderable
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      get:
+          is: [ secured, paginated ]
+          description: >
+            Get all Orderable Products if no search params provided. Otherwise returns a paginated
+            list of Orderables given either an Orderable Ids, a Program Code, a Name or a Code.
+          queryParameters:
+              id:
+                  displayName: orderable ID
+                  type: string
+                  required: false
+                  repeat: true
+              code:
+                  displayName: orderable code
+                  type: string
+                  required: false
+                  repeat: false
+              name:
+                  displayName: orderable name
+                  type: string
+                  required: false
+                  repeat: false
+              program:
+                  displayName: program code
+                  type: string
+                  required: false
+                  repeat: false
+          responses:
+              "200":
+                  body:
+                    application/json:
+                        schema: orderablePage
+              "304":
+                description: Returned with no response body if no resource was modified since date provided in the If-Modified-Since request header.
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured ]
+              description: Get chosen orderable. If versionNumber is omitted, returns newest version.
+              queryParameters:
+                  versionNumber:
+                      displayName: Version Number
+                      type: integer
+                      description: Version of orderable
+                      example: 1
+                      required: false
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: orderable
+                  "304":
+                      description: Returned with no response body if resource was not modified since date provided in the If-Modified-Since request header.
+                  "401":
+                      body:
+                        application/json:
+                  "404":
+                      description: Returned when requested orderable or specified version was not found.
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+            is: [secured]
+            description: >
+              Creates a new version of an orderable with an incremented versionNumber.
+
+              WARNING! Versioned orderables may not be fully supported by all consuming services.
+              Using this rest-api to update orderables may break some functionality in downstream services.
+            body:
+              application/json:
+                schema: orderable
+            responses:
+              "200":
+                body:
+                  application/json:
+                    schema: orderable
+              "400":
+                body:
+                  application/json:
+                      schema: localizedErrorResponse
+              "403":
+                body:
+                  application/json:
+                    schema: localizedErrorResponse
+              "404":
+                body:
+                  application/json:
+                    schema: localizedErrorResponse
+
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+      /search:
+          post:
+              is: [ secured ]
+              description: Return a page of orderables by search criteria.
+              body:
+                  application/json:
+                      schema: orderableSearchQuery
+              responses:
+                200:
+                    description: The request is valid and a page of orderables will be returned.
+                    body:
+                        application/json:
+                            schema: orderablePage
+                "304":
+                  description: Returned with no response body if no resource was modified since date provided in the If-Modified-Since request header.
+                401:
+                    description: The request does not contain a token or the token might be invalid.
+                    body:
+                        application/json:
+
+  /tradeItems:
+      displayName: Trade Item
+      put:
+          is: [ secured ]
+          description: Create or update a Trade Item.
+          body:
+            application/json:
+              schema: tradeItem
+          responses:
+              "200":
+                  body:
+                    application/json:
+                        schema: tradeItem
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      get:
+          is: [ secured, paginated ]
+          description: Retrieve trade items. Optionally filter by the classification ID, either by full or partial match.
+          queryParameters:
+              classificationId:
+                      displayName: classificaitonID
+                      type: string
+                      required: false
+                      repeat: false
+              fullMatch:
+                      displayName: fullMatch
+                      type: boolean
+                      required: false
+                      repeat: false
+          responses:
+              "200":
+                  body:
+                    application/json:
+                      schema: tradeItemPage
+              401:
+                  body:
+                    application/json:
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /commodityTypes:
+      displayName: Commodity Type
+      put:
+          is: [ secured ]
+          description: Create or update a Commodity Type.
+          body:
+            application/json:
+                schema: commodityType
+          responses:
+              "200":
+                  body:
+                    application/json:
+                        schema: commodityType
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      get:
+          is: [ secured, paginated ]
+          description: Retrieve commodity types.
+          responses:
+              "200":
+                  body:
+                    application/json:
+                      schema: commodityTypePage
+
+      /{id}/tradeItems:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured ]
+              description: Get a list of Trade Item UUIDs that may fulfill for the given Commodity Type.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: uuidArray
+                  401:
+                      body:
+                        application/json:
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Update the list of Trade Item UUIDs that may fulfill for the given Commodity Type.
+              body:
+                  application/json:
+                      schema: uuidArray
+              responses:
+                  "200":
+                  "400":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "404":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /processingSchedules:
+      displayName: Processing Schedule
+      get:
+          is: [ secured, paginated ]
+          description: Get all schedules.
+          responses:
+              "200":
+                  body:
+                    application/json:
+              401:
+                  body:
+                    application/json:
+      post:
+          is: [ secured ]
+          description: Creates new processingSchedule.
+          body:
+              application/json:
+          responses:
+              "201":
+                  body:
+                    application/json:
+              "400":
+                  body:
+                    application/json:
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+
+      /search:
+          get:
+              is: [ secured ]
+              description: Retrieve Processing Schedule based on the provided parameters.
+              queryParameters:
+                  programId:
+                          displayName: program
+                          type: string
+                          required: true
+                          repeat: false
+                  facilityId:
+                          displayName: facility
+                          type: string
+                          required: true
+                          repeat: false
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: processingScheduleArray
+                  "400":
+                      body:
+                        application/json:
+                            schema: errorResponse
+
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: "[AVOID USING] Completely removes processing schedule. This action is not recoverable."
+              responses:
+                  "204":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "409":
+          get:
+              is: [ secured ]
+              description: Get chosen processingSchedule.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  401:
+                      body:
+                        application/json:
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Update existing processingSchedule.
+              body:
+                  application/json:
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "400":
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /supplyLines:
+      displayName: Supply Lines
+      get:
+          is: [ secured, paginated, sorted ]
+          description: Returns supply lines that are matching given search params.
+          queryParameters:
+              programId:
+                  displayName: programId
+                  description: program ID
+                  type: string
+                  required: false
+                  repeat: false
+              supervisoryNodeId:
+                  displayName: supervisoryNodeId
+                  description: supervisoryNode ID
+                  type: string
+                  required: false
+                  repeat: false
+              supplyingFacilityId:
+                  displayName: supplyingFacilityId
+                  description: supplyingFacility ID
+                  type: string
+                  required: false
+                  repeat: true
+              expand:
+                  displayName: expand
+                  description: expand
+                  type: string
+                  required: false
+                  repeat: true
+          responses:
+              "200":
+                  body:
+                      application/json:
+                          schema: supplyLinePage
+              "400":
+                  body:
+                      application/json:
+              "401":
+                  body:
+                      application/json:
+              "404":
+                  body:
+                      application/json:
+      post:
+          is: [ secured ]
+          description: Creates new supplyLine.
+          body:
+              application/json:
+          responses:
+              "201":
+                  body:
+                    application/json:
+              "400":
+                  body:
+                    application/json:
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: "[AVOID USING] Completely removes supply line. This action is not recoverable."
+              responses:
+                  "204":
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "409":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          get:
+              is: [ secured ]
+              description: Get chosen supplyLine.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  401:
+                      body:
+                          application/json:
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Update existing supplyLine.
+              body:
+                  application/json:
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  "400":
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /users:
+      displayName: User
+      get:
+          is: [ secured, paginated ]
+          description: >
+              Retrieve all users in the system or search users, matching all parameters
+              specified. Returns paginated user list. For firstName, lastName, email: matches
+              values that equal or contain the searched value. Case insensitive.
+              Other fields: entered string value must equal searched value.
+              There can be multiple id params, other params are ignored if id is
+              provided. When id is not provided and if other params have multiple values,
+              the first one is used.
+          queryParameters:
+              id:
+                displayName: id
+                description: user id
+                type: string
+                required: false
+                repeat: true
+              username:
+                displayName: username
+                description: username
+                type: string
+                required: false
+                repeat: false
+              firstName:
+                displayName: firstName
+                description: first name
+                type: string
+                required: false
+                repeat: false
+              lastName:
+                displayName: lastName
+                description: last name
+                type: string
+                required: false
+                repeat: false
+              email:
+                displayName: email
+                description: user email
+                type: string
+                required: false
+                repeat: false
+              homeFacilityId:
+                displayName: homeFacilityId
+                description: home facility id
+                type: string
+                required: false
+                repeat: false
+              verified:
+                displayName: verified
+                description: is user verfied
+                type: boolean
+                required: false
+                repeat: false
+              active:
+                displayName: active
+                description: is user active
+                type: boolean
+                required: false
+                repeat: false
+          responses:
+              "200":
+                  body:
+                    application/json:
+                      schema: userPage
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      put:
+          is: [ secured ]
+          description: Create a new user or update an exising one. The value of the ID field in the body is used to determine whether this is a new or existing user.
+          body:
+              application/json:
+                schema: user
+          responses:
+              "200":
+                  body:
+                    application/json:
+                      schema: user
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      /{userId}:
+          uriParameters:
+              userId:
+                  displayName: User ID
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: "[AVOID USING] Completely removes user. This action is not recoverable."
+              responses:
+                  "204":
+                  "400":
+                      body:
+                        application/json:
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          get:
+              is: [ secured ]
+              description: Get a chosen user by providing his ID.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: user
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          /roleAssignments:
+              get:
+                  is: [ secured ]
+                  description: Return full information about user's roles and rights.
+                  responses:
+                      "200":
+                          body:
+                            application/json:
+                              schema: detailedRoleAssignmentDtoArray
+                      "404":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+                      "403":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+          /hasRight:
+              get:
+                  is: [ secured ]
+                  description: Check if the user has a right with certain criteria.
+                  queryParameters:
+                      rightId:
+                          displayName: Right ID
+                          description: The right to check.
+                          type: string
+                          required: true
+                          repeat: false
+                      programId:
+                          displayName: Program ID
+                          description: The program to check (for supervision rights).
+                          type: string
+                          required: false
+                          repeat: false
+                      facilityId:
+                          displayName: Facility ID
+                          description: The facility to check (for supervision rights). If program is specified, this is required.
+                          type: string
+                          required: false
+                          repeat: false
+                      warehouseId:
+                          displayName: Warehouse ID
+                          description: The warehouse to check (for fulfillment rights).
+                          type: string
+                          required: false
+                          repeat: false
+                  responses:
+                      "200":
+                          body:
+                            application/json:
+                              schema: booleanResult
+                      "400":
+                          body:
+                            application/json:
+                              schema: errorResponse
+                      "404":
+                      "403":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+          /programs:
+              is: [ secured ]
+              displayName: User supervised programs
+              get:
+                  is: [ secured ]
+                  description: Get all programs the associated user supervises.
+                  responses:
+                      "200":
+                          body:
+                            application/json:
+                              schema: programArray
+                      "404":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+                      "403":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+          /supportedPrograms:
+              is: [ secured ]
+              displayName: User supported programs
+              get:
+                  is: [ secured ]
+                  description: Get all supported programs the associated user supervises through the home
+                      facility.
+                  responses:
+                      "200":
+                          body:
+                            application/json:
+                              schema: programArray
+                      "404":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+                      "403":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+          /fulfillmentFacilities:
+              is: [ secured ]
+              displayName: User fulfilled facilities
+              get:
+                  is: [ secured ]
+                  description: Get all facilities the associated user can fulfill.
+                  queryParameters:
+                      rightId:
+                          displayName: Right ID
+                          description: The right to check.
+                          type: string
+                          required: true
+                          repeat: false
+                  responses:
+                      "200":
+                          body:
+                            application/json:
+                              schema: facilityArray
+                      "400":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+                      "404":
+                      "403":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+          /permissionStrings:
+              is: [ secured ]
+              displayName: User permission strings
+              get:
+                  is: [ secured ]
+                  description: >
+                      Gets a list of all permissions (in string format) associated with a user.
+                      The full format is RightName|FacilityUUID|ProgramUUID which grants the user
+                      access with the named Right, at the given Facility, for the given program.
+                      Where the nature of the Right determines exactly what that means.  Shorter
+                      forms are also available where components of the string are taken off the end.
+                      For example the Program might be ommitted which would imply the Right applies
+                      to the Facility, sans Program.  The shortest form would simply be the name of
+                      the Right, without Facility or Program.  This form is usually used for
+                      Administrative rights where the User's control is not limited by Program
+                      or Facility.  When a permission string is not present in this list, when the
+                      nature of the right requires it, then no access is granted to the user.
+                      These permission strings are never created directly, they are an artifact of
+                      granting Role Assignments to Users in the User resource.
+                  responses:
+                      "200":
+                          body:
+                            application/json:
+                              schema: stringArray
+                      "403":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+                      "404":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+          /facilities:
+              is: [ secured ]
+              displayName: User facilities
+              get:
+                  is: [ secured ]
+                  description: Gets all supervision facilities associated with a user. To determine which facilities work with which right and program, please use /permissionStrings for mappings.
+                  responses:
+                      "200":
+                          body:
+                            application/json:
+                              schema: namedResourceArray
+                      "403":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+                      "404":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+      /search:
+          post:
+              is: [ secured, paginated ]
+              description: >
+                  Search users, matching all parameters specified. Search
+                  parameters are passed in the request body, in JSON format. The JSON in the
+                  request body should be one or more key-value pairs. Returns paginated user list
+                  sorted in descending alphabetical order. For firstName, lastName, email: matches
+                  values that equal or contain the searched value. Case insensitive.
+                  Other fields: entered string value must equal searched value.
+              body:
+                  application/json:
+                    schema: userQueryDto
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: userPage
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /rightSearch:
+              get:
+                  is: [ secured ]
+                  description: "Search users that have the given right assigned. This searches for users with role assignments matching all the parameters based on their type. Takes additional parameters for fulfillment and supervision rights."
+                  queryParameters:
+                      rightId:
+                          displayName: Right ID
+                          description: The right to search for.
+                          type: string
+                          required: true
+                          repeat: false
+                      programId:
+                          displayName: Program ID
+                          description: The program to search for - required only for supervision rights.
+                          type: string
+                          required: false
+                          repeat: false
+                      supervisoryNodeId:
+                          displayName: Supervisory Node ID
+                          description: >
+                            The supervisory node to search for - if provided, results will contain
+                            only users that have at least one supervisory supervision role
+                            assignment for the given supervisory node; otherwise results will
+                            contain only users that have at least one home facility supervision
+                            role. For both cases, other parameters have to match.
+                          type: string
+                          required: false
+                          repeat: false
+                      warehouseId:
+                          displayName: Warehouse ID
+                          description: The warehouse to search for - required only for fulfillment rights.
+                          type: string
+                          required: false
+                          repeat: false
+                  responses:
+                      "200":
+                          body:
+                            application/json:
+                                schema: userArray
+                      "400":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+                      "403":
+                          body:
+                            application/json:
+                              schema: localizedErrorResponse
+
+  /facilities:
+      displayName: Facility
+      get:
+          is: [ secured, paginated, sorted ]
+          description: Returns a paginated list of all facilities that are matching given request parameters. If no parameters, all facilities are returned.
+          queryParameters:
+              id:
+                  description: Facility id
+                  type: string
+                  required: false
+                  repeat: true
+              code:
+                  description: Facility code
+                  type: string
+                  required: false
+                  repeat: false
+              name:
+                  description: Facility name
+                  type: string
+                  required: false
+                  repeat: false
+              zoneId:
+                  description: Facility zone id
+                  type: string
+                  required: false
+                  repeat: false
+              type:
+                  description: Facility type code
+                  type: string
+                  required: false
+                  repeat: false
+              recurse:
+                  description: The recurse option should be given when a zone is also given, and it means that the search should also include all children of the given zone.
+                  type: boolean
+                  required: false
+                  repeat: false
+          responses:
+              "200":
+                  body:
+                    application/json:
+                      schema: basicFacilityPage
+      post:
+          is: [ secured ]
+          description: Creates new facility.
+          body:
+              application/json:
+                schema: facility
+          responses:
+              "201":
+                  body:
+                    application/json:
+                      schema: facility
+              "400":
+                  body:
+                    application/json:
+                      schema: errorResponse
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: "[AVOID USING] Completely removes facility. This action is not recoverable."
+              responses:
+                  "204":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          get:
+              is: [ secured ]
+              description: Get chosen facility.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: facility
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Update existing facility.
+              body:
+                  application/json:
+                    schema: facility
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: facility
+                  "400":
+                      body:
+                        application/json:
+                          schema: errorResponse
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+      /{id}/approvedProducts:
+          uriParameters:
+              id:
+                  displayName: Facility ID
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured, paginated ]
+              description: Returns a list of full or non-full supply approved products for this facility
+              queryParameters:
+                  programId:
+                      displayName: Program ID
+                      type: string
+                      required: false
+                      repeat: false
+                  fullSupply:
+                      displayName: Full-supply orderable
+                      type: boolean
+                      required: false
+                      repeat: false
+                  orderableId:
+                      displayName: Orderable id
+                      type: string
+                      required: false
+                      repeat: true
+              responses:
+                200:
+                    body:
+                      application/json:
+                        schema: approvedProductDtoPage
+                400:
+                    body:
+                      application/json:
+                        schema: errorResponse
+                401:
+                    body:
+                      application/json:
+      /search:
+          post:
+              is: [ secured, paginated ]
+              description: Returns a paginated list of facilities given either a Zone, a Name, a Facility Type or a Code. The recurse option should be given when a zone is also given, and it means that the search should also include all children of the given zone.
+              body:
+                application/json:
+                  schema: facilityQueryDto
+              responses:
+                200:
+                    body:
+                      application/json:
+                          schema: basicFacilityPage
+                400:
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+                401:
+                    body:
+                      application/json:
+      /minimal:
+          get:
+              is: [ secured ]
+              description: Returns all facilities with id and name fields.
+              queryParameters:
+                active:
+                    displayName: active
+                    type: boolean
+                    required: false
+                    repeat: false
+              responses:
+                  200:
+                      body:
+                        application/json:
+                            schema: minimalFacilityDtoPage
+      /byBoundary:
+          post:
+              is: [ secured, paginated ]
+              description: Returns a paginated list of facilities given a polygon in the GeoJSON format.
+              body:
+                application/json:
+                  schema: geoJsonPolygon
+              responses:
+                200:
+                    body:
+                      application/json:
+                          schema: facilityPage
+                400:
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+                403:
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+
+  /facilityTypes:
+      displayName: Facility Type
+      get:
+          is: [ secured, paginated, sorted ]
+          description: Get page of facilityTypes.
+          queryParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: false
+                  repeat: true
+              active:
+                  displayName: active
+                  type: boolean
+                  required: false
+                  repeat: false
+          responses:
+              "200":
+                  body:
+                      application/json:
+                          schema: facilityTypePage
+              401:
+                  body:
+                      application/json:
+      post:
+          is: [ secured ]
+          description: Creates new facilityType.
+          body:
+              application/json:
+          responses:
+              "201":
+                  body:
+                    application/json:
+              "400":
+                  body:
+                    application/json:
+              403:
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: "[AVOID USING] Completely removes facility type. This action is not recoverable."
+              responses:
+                  "204":
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "409":
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          get:
+              is: [ secured ]
+              description: Get chosen facilityType.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  401:
+                      body:
+                        application/json:
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Update existing facilityType.
+              body:
+                  application/json:
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  "400":
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /programs:
+      displayName: Program
+      get:
+          is: [ secured ]
+          description: Get all programs.
+          queryParameters:
+              name:
+                  displayName: Name
+                  description: Filter name value
+                  type: string
+                  required: false
+                  repeat: false
+              id:
+                  displayName: ID
+                  description: Program IDs
+                  type: string
+                  required: false
+                  repeat: true
+          responses:
+              "200":
+                  body:
+                    application/json:
+      post:
+          is: [ secured ]
+          description: Creates new program.
+          body:
+              application/json:
+          responses:
+              "201":
+                  body:
+                    application/json:
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: "[AVOID USING] Completely removes program. This action is not recoverable."
+              responses:
+                  "204":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "409":
+          get:
+              is: [ secured ]
+              description: Get chosen program.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Update existing program.
+              body:
+                  application/json:
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "400":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /search:
+          get:
+              is: [ secured ]
+              description: Get chosen program.
+              queryParameters:
+                  name:
+                      displayName: name
+                      type: string
+                      required: true
+                      repeat: false
+              responses:
+                  "200":
+                      body:
+                        application/json:
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /stockAdjustmentReasons:
+      displayName: Stock Adjustment Reason
+      get:
+          is: [ secured ]
+          description: WARNING! deprecated; please use /stockCardLineItemReasons (for all reasons) or /validReasons (for reasons by program and facility type) to get a list of reasons. Get all stockAdjustmentReasons.
+          responses:
+              "200":
+                  body:
+                    application/json:
+                      schema: stockAdjustmentReasonArray
+              "404":
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      post:
+          is: [ secured ]
+          description: WARNING! deprecated; please use /stockCardLineItemReasons to create a reason or /validReasons to map reasons by program and facility type. Creates new Stock Adjustment Reason.
+          body:
+              application/json:
+                  schema: stockAdjustmentReason
+          responses:
+              "201":
+                  body:
+                    application/json:
+                      schema: stockAdjustmentReason
+              "400":
+                  body:
+                    application/json:
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: "WARNING! deprecated. [AVOID USING] Completely removes stock adjustment reason. This action is not recoverable."
+              responses:
+                  "204":
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "409":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          get:
+              is: [ secured ]
+              description: WARNING! deprecated; please use /stockCardLineItemReasons (for all reasons) or /validReasons (for reasons by program and facility type) to get a list of reasons. Get chosen Stock Adjustment Reason.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: stockAdjustmentReason
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: "WARNING! deprecated; please use /stockCardLineItemReasons/{id} to update a reason or /validReasons to map reasons by program and facility type. Update existing Stock Adjustment Reason."
+              body:
+                  application/json:
+                      schema: stockAdjustmentReason
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: stockAdjustmentReason
+                  "400":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /search:
+          get:
+              is: [ secured ]
+              description: WARNING! deprecated; please use /stockCardLineItemReasons (for all reasons) or /validReasons (for reasons by program and facility type) to get a list of reasons. Search for Stock Adjustment Reasons.
+              queryParameters:
+                  program:
+                      displayName: programId
+                      type: string
+                      required: true
+                      repeat: false
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: stockAdjustmentReasonArray
+                  "404":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /facilityOperators:
+      displayName: Facility Operators
+      post:
+            is: [ secured ]
+            description: Add Facility Operator to database.
+            body:
+                application/json:
+            responses:
+                "201":
+                    body:
+                        application/json:
+                403:
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+                "500":
+                    body:
+                        application/json:
+      get:
+            is: [ secured ]
+            description: Returns all Facility Operators.
+            responses:
+                "200":
+                    body:
+                        application/json:
+                401:
+                    body:
+                        application/json:
+      /{id}:
+            uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+            put:
+                is: [ secured ]
+                description: Updates Facility Operators with given id from database.
+                body:
+                    application/json:
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    403:
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            get:
+                is: [ secured ]
+                description: Get Facility Operator with given id.
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                    401:
+                        body:
+                          application/json:
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            delete:
+                is: [ secured ]
+                description: "[AVOID USING] Completely removes facility operator. This action is  not recoverable."
+                responses:
+                    "204":
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "409":
+                        body:
+                            application/json:
+                    403:
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /geographicZones:
+      displayName: Geographic Zone
+      get:
+          is: [ secured, paginated ]
+          description: Get all geographicZones.
+          responses:
+              "200":
+                  body:
+                    application/json:
+                      schema: geographicZonePage
+              401:
+                  body:
+                    application/json:
+      post:
+          is: [ secured ]
+          description: Creates new geographicZone.
+          body:
+              application/json:
+                schema: geographicZone
+          responses:
+              "201":
+                  body:
+                    application/json:
+                      schema: geographicZone
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: "[AVOID USING] Completely removes geographic zone. This action is not recoverable."
+              responses:
+                  "204":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          get:
+              is: [ secured ]
+              description: Get chosen geographicZone.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: geographicZone
+                  401:
+                      body:
+                        application/json:
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Update existing geographicZone.
+              body:
+                  application/json:
+                    schema: geographicZone
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: geographicZone
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+      /search:
+          post:
+              is: [ secured, paginated, sorted ]
+              description: Filter geographic zones by parent, level, name and code. Results are ordered ascending by name.
+              body:
+                application/json:
+                  schema: geographicZoneQuery
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: geographicZonePage
+                  "400":
+                      body:
+                        application/json:
+                  401:
+                      body:
+                        application/json:
+      /byLocation:
+          post:
+              is: [ secured, paginated ]
+              description: Returns a list of geographic zones given a point in the GeoJSON format.
+              body:
+                application/json:
+                  schema: geoJsonPoint
+              responses:
+                200:
+                    body:
+                      application/json:
+                          schema: geographicZoneArray
+                400:
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+                403:
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+
+  /geographicLevels:
+      displayName: Geographic Level
+      get:
+          is: [ secured ]
+          description: Get all geographicLevels.
+          responses:
+              "200":
+                  body:
+                    application/json:
+              401:
+                  body:
+                    application/json:
+      post:
+          is: [ secured ]
+          description: Creates new geographicLevel.
+          body:
+              application/json:
+          responses:
+              "201":
+                  body:
+                    application/json:
+              "400":
+                  body:
+                    application/json:
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: "[AVOID USING] Completely removes geographic level. This action is not recoverable."
+              responses:
+                  "204":
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "409":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          get:
+              is: [ secured ]
+              description: Get chosen geographicLevel.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  401:
+                      body:
+                        application/json:
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Update existing geographicLevel.
+              body:
+                  application/json:
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  "400":
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /facilityTypeApprovedProducts:
+      displayName: Facility Type Approved Product
+      post:
+            is: [ secured ]
+            description: Create new facility type approved product.
+            body:
+                application/json:
+                    schema: approvedProductDto
+            responses:
+                201:
+                    description: The request is valid and the given facility type approved product has been created.
+                    body:
+                      application/json:
+                        schema: approvedProductDto
+                400:
+                    description: The request's body is invalid
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+                401:
+                    description: The request does not contain a token or the token might be invalid.
+                    body:
+                      application/json:
+                403:
+                    description: The server understood the request but refuses to authorize it.
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+
+      get:
+          is: [ secured, paginated ]
+          description: >
+                  Returns a page of approved products by search criteria.
+                  Returned FTAPs do not ensure that the ProgramOrderable for the Program is active.
+                  It does not guarantee that the Orderable may be currently ordered in that Program.
+                  FTAPs are returned based on the configuration for their latest versions.
+                  It is a client's decision whether any additional validation checks are needed.
+          queryParameters:
+            facilityType:
+                description: >
+                  If set, the endpoint will try to find FTAPs related to the given facility type.
+                  If repeated, the endpoint will try to find FTAPs related to ANY of the given
+                  facility types. For example, if there are FTAPs related with A, B and, C facility
+                  types (one for each type) and in the request there are id of A and C facility
+                  types, the endpoint will return two FTAPs.
+                displayName: facility type
+                type: string
+                required: false
+                repeat: true
+            program:
+                displayName: program
+                type: string
+                required: false
+                repeat: false
+            active:
+              description: >
+                If set to true, the endpoint will try to find active FTAPs.
+                If set to false, the endpoint will try to find inactive FTAPs.
+                If not set, the endpoint will try to find active FTAPs (default behaviour).
+              displayName: active
+              type: boolean
+              required: false
+              repeat: false
+            orderableId:
+              displayName: orderable ID
+              type: string
+              required: false
+              repeat: true
+          responses:
+            200:
+                description: The request is valid and a page of facility type approved products will be returned.
+                body:
+                    application/json:
+                       schema: approvedProductDtoPage
+            400:
+                description: The request's body is invalid
+                body:
+                    application/json:
+                        schema: localizedErrorResponse
+            401:
+                description: The request does not contain a token or the token might be invalid.
+                body:
+                    application/json:
+      /search:
+            post:
+                is: [ secured ]
+                description: >
+                  Return a page of approved products by search criteria.
+                  Returned FTAPs do not ensure that the ProgramOrderable for the Program is active.
+                  It does not guarantee that the Orderable may be currently ordered in that Program.
+                  FTAPs are returned based on the configuration for the specific versions requested.
+                  It is a client's decision whether any additional validation checks are needed.
+                body:
+                    application/json:
+                        schema: approvedProductSearchQuery
+                responses:
+                    200:
+                        description: The request is valid and a page of facility type approved products will be returned.
+                        body:
+                            application/json:
+                                schema: approvedProductDtoPage
+                    401:
+                        description: The request does not contain a token or the token might be invalid.
+                        body:
+                            application/json:
+      /{id}:
+            uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+            put:
+                is: [ secured ]
+                description: Update existing facility type approved product or create a new one with the given ID.
+                body:
+                    application/json:
+                        schema: approvedProductDto
+                responses:
+                    200:
+                        description: The request is valid and the given facility type approved product has been updated or created with the given ID.
+                        body:
+                          application/json:
+                            schema: approvedProductDto
+                    400:
+                        description: The request's body is invalid
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    401:
+                        description: The request does not contain a token or the token might be invalid.
+                        body:
+                          application/json:
+                    403:
+                        description: The server understood the request but refuses to authorize it.
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            get:
+                is: [ secured ]
+                description: Get chosen facility type approved product.
+                queryParameters:
+                  versionNumber:
+                      description: >
+                        Specify which version of the resource should be returned. Please be advised
+                        that if the given version does not exist, the endpoint will return
+                        the Not Found error message.
+                      displayName: versionNumber
+                      type: integer
+                      required: false
+                      repeat: false
+                responses:
+                    200:
+                        description: The request is valid and the given facility type approved product will be returned.
+                        body:
+                            application/json:
+                                schema: approvedProductDto
+                    401:
+                        description: The request does not contain a token or the token might be invalid.
+                        body:
+                            application/json:
+                    404:
+                        description: The server could not find a facility type approved product with the given id and version.
+                        body:
+                            application/json:
+                                schema: localizedErrorResponse
+            delete:
+                is: [ secured ]
+                description: >
+                  WARNING! Deprecated. [AVOID USING] Completely removes facility type approved
+                  product. This action is not recoverable.
+                queryParameters:
+                    versionNumber:
+                        description: >
+                          Specify which version of the resource should be deleted. Please be advised
+                          that if the given version does not exist, the endpoint will return
+                          the Not Found error message.
+                        displayName: versionNumber
+                        type: integer
+                        required: false
+                        repeat: false
+                responses:
+                    204:
+                        description: The request is valid and the given facility type approved product has been removed.
+                    401:
+                        description: The request does not contain a token or the token might be invalid.
+                        body:
+                            application/json:
+                    403:
+                        description: The server understood the request but refuses to authorize it.
+                        body:
+                            application/json:
+                                schema: localizedErrorResponse
+                    404:
+                        description: The server could not find a facility type approved product with the given id and version.
+                        body:
+                            application/json:
+                                schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /supervisoryNodes:
+      displayName: Supervisory Node
+      post:
+          is: [ secured ]
+          description: Create new supervisoryNode.
+          body:
+              application/json:
+          responses:
+              "201":
+                  body:
+                      application/json:
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+      get:
+          is: [ secured, paginated ]
+          description: Get page of Supervisory Nodes that are matching given query parameters.
+          queryParameters:
+              code:
+                  displayName: Supervisory Node Code
+                  type: string
+                  required: false
+                  repeat: false
+              name:
+                  displayName: Supervisory Node Name
+                  type: string
+                  required: false
+                  repeat: false
+              zoneId:
+                  displayName: Geographic Zone Id of Supervisory Node associated Facility
+                  type: string
+                  required: false
+                  repeat: false
+              facilityId:
+                  displayName: Facility Id of Requisition Group Facility Members
+                  type: string
+                  required: false
+                  repeat: false
+              programId:
+                  displayName: Program Id of Requisition Group Program Schedule
+                  type: string
+                  required: false
+                  repeat: false
+              id:
+                  displayName: Supervisory Node Id
+                  type: string
+                  required: false
+                  repeat: true
+          responses:
+              "200":
+                  body:
+                      application/json:
+              401:
+                  body:
+                      application/json:
+
+      /{id}:
+            uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+            put:
+                is: [ secured ]
+                description: Update existing supervisoryNode.
+                body:
+                    application/json:
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                    "400":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "403":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            get:
+                is: [ secured ]
+                description: Get chosen supervisoryNode.
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                    401:
+                        body:
+                            application/json:
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            delete:
+                is: [ secured ]
+                description: "[AVOID USING] Completely removes supervisory node. This action is not recoverable."
+                responses:
+                    "204":
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "409":
+                        body:
+                            application/json:
+                    "403":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            /supervisingUsers:
+                  get:
+                      is: [ secured ]
+                      description: Get supervising users based on the provided parameters.
+                      queryParameters:
+                          rightId:
+                                  displayName: Right ID
+                                  type: string
+                                  required: true
+                                  repeat: false
+                          programId:
+                                  displayName: Program ID
+                                  type: string
+                                  required: true
+                                  repeat: false
+                      responses:
+                          "200":
+                              body:
+                                application/json:
+                                    schema: userArray
+                          "400":
+                              body:
+                                application/json:
+                                  schema: localizedErrorResponse
+                          "403":
+                              body:
+                                application/json:
+                                  schema: localizedErrorResponse
+                          "404":
+                              body:
+                                application/json:
+                                  schema: localizedErrorResponse
+            /facilities:
+                get:
+                    is: [ secured, paginated ]
+                    description: Get supervising facilities based on the provided parameters.
+                    queryParameters:
+                        programId:
+                            description: >
+                              If provided, the endpoint will retrieve all facilities that are
+                              supervised in the given node and support the given program.
+                            displayName: Program ID
+                            type: string
+                            required: false
+                            repeat: false
+                    responses:
+                        200:
+                            description: The request is valid and a list of supervising facilities has been returned.
+                            body:
+                                application/json:
+                                    schema: facilityPage
+                        401:
+                            description: The request does not contain a token or the token might be invalid.
+                            body:
+                                application/json:
+                        403:
+                            description: The server understood the request but refuses to authorize it.
+                            body:
+                                application/json:
+                                    schema: localizedErrorResponse
+                        404:
+                            description: The server could not find a supervisory node with the given id
+                            body:
+                                application/json:
+                                    schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+  /roles:
+      displayName: Role
+      post:
+            is: [ secured ]
+            description: Create new role.
+            body:
+                application/json:
+                  schema: role
+            responses:
+                "201":
+                    body:
+                        application/json:
+                          schema: role
+                "400":
+                    body:
+                        application/json:
+                "403":
+                    body:
+                        application/json:
+                          schema: localizedErrorResponse
+                "409":
+                    body:
+                        application/json:
+                          schema: localizedErrorResponse
+      get:
+            is: [ secured ]
+            description: >
+              Get all roles based on passed parameters. Please have in mind that only roles that
+              match all parameters will be returned.
+            queryParameters:
+                rightId:
+                    description: >
+                      This field presents a right ID value. It will be used to find a role that have
+                      at least one right that match the ID value. Can be repeated but it cannot be
+                      used to narrow results. In other words, if provided many times, all roles that
+                      have at least one right for at least one right ID from the lst will be
+                      returned.
+                    type: string
+                    required: false
+                    repeat: true
+            responses:
+                "200":
+                    description: The request is valid and a list of roles has been returned.
+                    body:
+                        application/json:
+                          schema: roleArray
+                401:
+                    description: The request does not contain a token or the token might be invalid.
+                    body:
+                      application/json:
+      /{roleId}:
+            uriParameters:
+              roleId:
+                  displayName: Role ID
+                  type: string
+                  required: true
+                  repeat: false
+            put:
+                is: [ secured ]
+                description: Update existing role (or create new one using role ID).
+                body:
+                    application/json:
+                      schema: role
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                              schema: role
+                    "400":
+                        body:
+                            application/json:
+                    "403":
+                        body:
+                            application/json:
+                              schema: localizedErrorResponse
+            get:
+                is: [ secured ]
+                description: Get chosen role.
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                              schema: role
+                    401:
+                        body:
+                          application/json:
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            delete:
+                is: [ secured ]
+                description: "[AVOID USING] Completely removes role. This action is not recoverable."
+                responses:
+                    "204":
+                    "400":
+                        body:
+                            application/json:
+                    "403":
+                        body:
+                            application/json:
+                              schema: localizedErrorResponse
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+  /rights:
+      displayName: Right
+      put:
+            is: [ secured ]
+            description: Save a right.
+            body:
+                application/json:
+                    schema: right
+            responses:
+                "200":
+                    body:
+                        application/json:
+                            schema: right
+                "400":
+                    body:
+                        application/json:
+                "403":
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+      get:
+            is: [ secured ]
+            description: Get all rights.
+            responses:
+                "200":
+                    body:
+                        application/json:
+                            schema: rightArray
+                "403":
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+      /{rightId}:
+            uriParameters:
+              rightId:
+                  displayName: Right ID
+                  type: string
+                  required: true
+                  repeat: false
+            get:
+                is: [ secured ]
+                description: Get chosen right.
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                                schema: right
+                    "403":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            delete:
+                is: [ secured ]
+                description: "[AVOID USING] Completely removes right. This action is not recoverable."
+                responses:
+                    "204":
+                    "403":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+      /search:
+          get:
+              is: [ secured ]
+              description: Search for rights.
+              queryParameters:
+                  name:
+                      displayName: Name of the right to find
+                      type: string
+                      required: false
+                      repeat: false
+                  type:
+                      displayName: Type of the right to find
+                      type: string
+                      required: false
+                      repeat: false
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: rightArray
+                  "400":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+
+  /requisitionGroups:
+      displayName: Requisition Group
+      post:
+            is: [ secured ]
+            description: Create new requisitionGroup.
+            body:
+                application/json:
+            responses:
+                "201":
+                    body:
+                        application/json:
+                "403":
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+      get:
+            is: [ secured ]
+            description: Get all requisitionGroups.
+            responses:
+                "200":
+                    body:
+                        application/json:
+                401:
+                    body:
+                        application/json:
+      /{id}:
+            uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+            put:
+                is: [ secured ]
+                description: Update existing requisitionGroup.
+                body:
+                    application/json:
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "403":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            get:
+                is: [ secured ]
+                description: Get chosen requisitionGroup.
+                responses:
+                    "200":
+                        body:
+                            application/json:
+                    401:
+                        body:
+                            application/json:
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            delete:
+                is: [ secured ]
+                description: "[AVOID USING] Completely removes requisition group. This action is not recoverable."
+                responses:
+                    "204":
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "409":
+                    "403":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+      /search:
+            post:
+                is: [ secured, paginated ]
+                description: Returns a paginated list of requisition groups given either a zone, a name, a program or a code.
+                body:
+                  application/json:
+                    schema: requisitionGroupQuery
+                responses:
+                  200:
+                      body:
+                        application/json:
+                            schema: requisitionGroupPage
+                  400:
+                      body:
+                        application/json:
+                          schema: localizedErrorResponse
+                  401:
+                      body:
+                          application/json:
+
+  /currencySettings:
+      displayName: Currency settings
+      get:
+            is: [ secured ]
+            description: Get all currency settings.
+            responses:
+                "200":
+                    body:
+                        application/json:
+                          schema: currencySettingsDto
+
+  /lots:
+      displayName: Lot
+      get:
+          is: [ secured, paginated]
+          description: Find lots with matched parameters. This endpoint is experimental.
+          queryParameters:
+              tradeItemId:
+                  displayName: tradeItemId
+                  description: The UUID of the Trade Item.
+                  type: string
+                  required: false
+                  repeat: false
+              expirationDate:
+                  displayName: expirationDate
+                  description: The expiration date of the Lot.
+                  type: string
+                  required: false
+                  repeat: false
+              lotCode:
+                  displayName: lotCode
+                  description: The code of the Lot.
+                  type: string
+                  required: false
+                  repeat: false
+              id:
+                  displayName: id
+                  description: The UUID of Lot.
+                  type: string
+                  required: false
+                  repeat: true
+
+          responses:
+              "200":
+                  body:
+                    application/json:
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              401:
+                  body:
+                    application/json:
+      post:
+            is: [ secured ]
+            description: Create new lot. This endpoint is experimental.
+            body:
+                application/json:
+                  schema: lotDto
+            responses:
+                "201":
+                    body:
+                        application/json:
+                          schema: lotDto
+                "400":
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+                "403":
+                    body:
+                      application/json:
+                        schema: localizedErrorResponse
+      /{id}:
+            uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+            put:
+                is: [ secured ]
+                description: Update existing lot. This endpoint is experimental.
+                body:
+                    application/json:
+                      schema: lotDto
+                responses:
+                    "200":
+                        body:
+                          application/json:
+                            schema: lotDto
+                    "400":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "403":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+            get:
+                is: [ secured ]
+                description: Get chosen lot. This endpoint is experimental.
+                responses:
+                    "200":
+                        body:
+                          application/json:
+                            schema: lotDto
+                    401:
+                        body:
+                          application/json:
+                    "404":
+                        body:
+                          application/json:
+                            schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+      /search:
+  /idealStockAmounts:
+      displayName: Ideal Stock Amounts
+      get:
+          is: [ secured, paginated ]
+          description: Returns Ideal Stock Amounts.
+          queryParameters:
+              format:
+                  description: >
+                      This parameter specifies return type of this endpoint. If it is not
+                      specified, json format is returned. Supported formats: csv. Note that other
+                      parameters will not work when format is specified.
+                  type: string
+                  required: false
+                  repeat: false
+              facilityId:
+                  displayName: facility id
+                  type: string
+                  required: false
+                  repeat: false
+              commodityTypeId:
+                  displayName: commodity type id
+                  type: string
+                  required: false
+                  repeat: false
+              processingPeriodId:
+                  displayName: processing period id
+                  type: string
+                  required: false
+                  repeat: false
+          responses:
+              "200":
+                  body:
+                      application/json:
+                          schema: idealStockAmountPage
+                      text/csv:
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              401:
+                  body:
+                    application/json:
+      post:
+          is: [ secured ]
+          description: Creates given ISA items if possible.
+          queryParameters:
+              format:
+                  description: "This parameter specifies format of body. If it is not specified json format is required. Supported formats: csv."
+                  type: string
+                  required: false
+                  repeat: false
+          body:
+              multipart/form-data:
+                  formParameters:
+                      file:
+                         displayName: File with .csv format
+                         type: file
+                         required: true
+                         repeat: false
+          responses:
+              "200":
+                  body:
+                    application/json:
+                      schema: uploadResult
+              "400":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+              "403":
+                  body:
+                    application/json:
+                      schema: localizedErrorResponse
+
+  /serviceAccounts:
+      displayName: Service Accounts
+      post:
+          is: [ secured ]
+          description: >
+              Create a new Service Account. This account is related with the API key generated by
+              the auth service. It is required if you wanted to add roles/rights to the API key.
+              Without this resource your API Key will have access only to resources that does not
+              need specific requests. For example you will be able to retrieve a list of
+              programs but an endpoint that return a list of rights will be closed for you.
+          body:
+              application/json:
+                schema: serviceAccountCreationBody
+          responses:
+              201:
+                  body:
+                    application/json:
+                      schema: serviceAccount
+              401:
+                  body:
+                    application/json:
+              403:
+                  body:
+                      application/json:
+                          schema: localizedErrorResponse
+      /{token}:
+          uriParameters:
+              token:
+                  displayName: token
+                  description: >
+                      Service account's token or generated API Key's token from the auth service.
+                      Those two fields have the same value so it is possible to use one time the
+                      first token and another time the second token.
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured ]
+              description: "Get Service Account."
+              responses:
+                  200:
+                      body:
+                        application/json:
+                            schema: serviceAccount
+                  401:
+                      body:
+                        application/json:
+                  403:
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+                  404:
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: "Update Service Account."
+              body:
+                  application/json:
+                      schema: serviceAccount
+              responses:
+                  200:
+                      body:
+                        application/json:
+                            schema: serviceAccount
+                  401:
+                      body:
+                        application/json:
+                  400:
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+                  403:
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+                  404:
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+          delete:
+              is: [ secured ]
+              description: "Completely removes Service Account. This action is not recoverable."
+              responses:
+                  204:
+                  401:
+                      body:
+                        application/json:
+                  403:
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+                  404:
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+  /orderableFulfills:
+      displayName: Orderable Fulfills
+      get:
+          is: [ secured ]
+          description: >
+              This endpoint returns two types of orderable IDs for each orderable. For each
+              orderable, what it returns depends on the orderable: (1) If this orderable ID is a
+              commodityType-backed orderable, the canFulfillForMe property is filled by all
+              tradeItem-backed orderable IDs that can fulfill for this orderable ID;
+              the canBeFulfilledByMe property should be empty. (2) If this orderable ID is a
+              tradeItem-backed orderable, the canBeFulfilledByMe property is filled by all
+              commodityType-backed orderable IDs that this orderable can fulfill for;
+              the canFulfillForMe property should be empty
+          queryParameters:
+              id:
+                  description: >
+                      Orderable id. Cannot be provided together with facilityId and programId.
+                  type: string
+                  required: false
+                  repeat: true
+              facilityId:
+                  description: >
+                      Facility Id. This param allows filtering the result basing on FTAPs (it
+                      selects related orderables). Only active FTAPs are took into account. The
+                      filtration requires the support of FTAPs in OpenLMIS in otherwise the empty
+                      result will be returned. If facilityId is provided, the programId param also
+                      must be provided.
+                  type: string
+                  required: false
+                  repeat: false
+              programId:
+                  description: >
+                      Program Id. This param allows filtering the result basing on FTAPs (it
+                      selects related orderables). Only active FTAPs are took into account. The
+                      filtration requires the support of FTAPs in OpenLMIS in otherwise the empty
+                      result will be returned. If programId is provided, the facilityId param also
+                      must be provided.
+                  type: string
+                  required: false
+                  repeat: false
+          responses:
+              "200":
+                  body:
+                    application/json:
+                      example: |
+                        {
+                          "411779c4-d487-4651-a14a-106d54a91450": {
+                            "canFulfillForMe": ["5a756921-413c-49fd-8a94-7ebf4a646a21", "9024707e-e4d3-4347-8077-44f487476ddc"],
+                            "canBeFulfilledByMe": []
+                          },
+                          "5a756921-413c-49fd-8a94-7ebf4a646a21": {
+                            "canFulfillForMe": [],
+                            "canBeFulfilledByMe": ["411779c4-d487-4651-a14a-106d54a91450"]
+                          }
+                        }
+  /Location:
+      displayName: FHIR Location
+      get:
+          is: [ secured ]
+          description: "Get local resources (like geographic zones, facilities) as FHIR Location instances."
+          responses:
+              200:
+                  body:
+                      application/json:
+                          schema: Location
+  /supplyPartners:
+      displayName: Supply Partners
+      get:
+          is: [ secured, paginated ]
+          description: >
+            Get a page of supply partners based on passed parameters. Please have in mind that only
+            supply partners that match all parameters will be returned.
+          queryParameters:
+              id:
+                  description: >
+                    This field presents a supply partner ID value. If repeated, all supply partners
+                    that match the given IDs values will be returned.
+                  type: string
+                  required: false
+                  repeat: true
+              supervisoryNodeId:
+                  description: >
+                    This field presents a supervisory node ID value. It will be used to find a supply
+                    partner that have at least one association for the given supervisory node. Can
+                    be repeated but it cannot be used to narrow results. In other words, if provided
+                    many times, all supply partners that have at least one association for at least
+                    one supervisory node from the list will be returned.
+                  type: string
+                  required: false
+                  repeat: true
+          responses:
+              200:
+                  description: The request is valid and a page of supply partners has been returned.
+                  body:
+                      application/json:
+                          schema: supplyPartnerPage
+              401:
+                  description: The request does not contain a token or the token might be invalid.
+                  body:
+                      application/json:
+              403:
+                  description: The server understood the request but refuses to authorize it.
+                  body:
+                      application/json:
+                          schema: localizedErrorResponse
+      post:
+          is: [ secured ]
+          description: Creates a new supply partner
+          body:
+              application/json:
+                  schema: supplyPartner
+          responses:
+              201:
+                  description: The request is valid and the given supply partner has been created.
+                  body:
+                      application/json:
+                          schema: supplyPartner
+              400:
+                  description: The request's body is invalid
+                  body:
+                      application/json:
+                          schema: localizedErrorResponse
+              401:
+                  description: The request does not contain a token or the token might be invalid.
+                  body:
+                      application/json:
+              403:
+                  description: The server understood the request but refuses to authorize it.
+                  body:
+                      application/json:
+                          schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: Supply Partner ID
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured ]
+              description: Get a specific supply partner
+              responses:
+                  200:
+                      description: The request is valid and the given supply partner has been returned.
+                      body:
+                          application/json:
+                              schema: supplyPartner
+                  401:
+                      description: The request does not contain a token or the token might be invalid.
+                      body:
+                          application/json:
+                  403:
+                      description: The server understood the request but refuses to authorize it.
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+                  404:
+                      description: The server could not find a supply partner with the given id.
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Updates the existing supply partner or creates a new one with the given id.
+              body:
+                  application/json:
+                      schema: supplyPartner
+              responses:
+                  200:
+                      description: >
+                        The request is valid and if there is a supply partner with the given id
+                        in the system, the supply partner has been updated. Otherwise a new supply
+                        partner has been created with the given id value.
+                      body:
+                          application/json:
+                              schema: supplyPartner
+                  400:
+                      description: The request's body is invalid.
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+                  401:
+                      description: The request does not contain a token or the token might be invalid.
+                      body:
+                          application/json:
+                  403:
+                      description: The server understood the request but refuses to authorize it.
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+      /{id}/auditLog:
+        type: instanceAuditLog
+
+  /systemNotifications:
+      displayName: Administrative Messages
+      get:
+          is: [ secured, paginated ]
+          description: >
+              Get a page of system notifications based on passed parameters. Please have in mind that
+              only system notifications that match all parameters will be returned.
+          queryParameters:
+              isDisplayed:
+                  description: >
+                      This field presents if a system notification is active or not. It will be used
+                      to find active/inactive system notifications.
+                  type: boolean
+                  required: false
+                  repeat: false
+              authorId:
+                  description: >
+                      This field presents UUID of system notification author.
+                  type: string
+                  required: false
+                  repeat: false
+              expand:
+                  displayName: expand
+                  description: expand
+                  type: string
+                  required: false
+                  repeat: true
+          responses:
+              200:
+                  description: The request is valid and a page of system notifications has been returned.
+                  body:
+                      application/json:
+                          schema: systemNotificationDtoPage
+              400:
+                  body:
+                      application/json:
+                          schema: localizedErrorResponse
+              401:
+                  description: The request does not contain a token or the token might be invalid.
+                  body:
+                      application/json:
+              403:
+                  description: The server understood the request but refuses to authorize it.
+                  body:
+                      application/json:
+                          schema: localizedErrorResponse
+      post:
+          is: [ secured ]
+          description: Creates a new system notification
+          body:
+              application/json:
+                  schema: systemNotificationDto
+          responses:
+              201:
+                  description: The request is valid and the given system notification has been created.
+                  body:
+                      application/json:
+                          schema: systemNotificationDto
+              400:
+                  description: The request's body is invalid
+                  body:
+                      application/json:
+                          schema: localizedErrorResponse
+              401:
+                  description: The request does not contain a token or the token might be invalid.
+                  body:
+                      application/json:
+              403:
+                  description: The server understood the request but refuses to authorize it.
+                  body:
+                      application/json:
+                          schema: localizedErrorResponse
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: Administrative message id
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured ]
+              description: Get a specific system notification
+              responses:
+                  200:
+                      description: The request is valid and the given system notification has been returned.
+                      body:
+                          application/json:
+                              schema: systemNotificationDto
+                  401:
+                      description: The request does not contain a token or the token might be invalid.
+                      body:
+                          application/json:
+                  403:
+                      description: The server understood the request but refuses to authorize it.
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+                  404:
+                      description: The server could not find a system notification with the given id.
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+          put:
+              is: [ secured ]
+              description: Updates the existing system notification or creates a new one with the given id.
+              body:
+                  application/json:
+                      schema: systemNotificationDto
+              responses:
+                  200:
+                      description: >
+                          The request is valid and if there is a system notification with the given id
+                          in the system and it has been updated. Otherwise a new system notification
+                          has been created with the given id value.
+                      body:
+                          application/json:
+                              schema: systemNotificationDto
+                  400:
+                      description: The request's body is invalid.
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+                  401:
+                      description: The request does not contain a token or the token might be invalid.
+                      body:
+                          application/json:
+                  403:
+                      description: The server understood the request but refuses to authorize it.
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+          delete:
+              is: [ secured ]
+              description: Completely removes a system notification. This action is not recoverable.
+              responses:
+                  204:
+                  401:
+                      body:
+                          application/json:
+                  403:
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+                  404:
+                      body:
+                          application/json:
+                              schema: localizedErrorResponse
+      /{id}/auditLog:
+          type: instanceAuditLog
+
+/localeSettings:
+  displayName: Locale settings
+  get:
+    description: Get locale settings.
+    responses:
+      "200":
+        body:
+          application/json:
+            schema: localeDto

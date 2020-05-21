@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "RequisitionWithSupplyingDepotsDto",
+  "description": "Basic information about a requisition along with its supplying depots.",
+  "properties": {
+    "requisition": {
+      "type": "object",
+      "$ref": "basicRequisitionDto.json",
+      "title": "requisition"
+    },
+    "supplyingDepots": {
+      "type": ["array", "null"],
+      "title": "supplyingDepots",
+      "items": {
+        "type": "object",
+        "$ref": "basicFacilityDto.json"
+      }
+    }
+  },
+  "required": [
+    "requisition",
+    "supplyingDepots"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Orderable Search Query",
+  "description": "Query parameters supported by POST /api/orderables/search endpoint",
+  "properties": {
+    "code": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "title": "code"
+    },
+    "name": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "title": "name"
+    },
+    "programCode": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "title": "programCode"
+    },
+    "identities": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": "object",
+        "uniqueItems": true,
+        "$ref": "versionIdentity.json"
+      }
+    },
+    "page": {
+      "type": [
+        "null",
+        "integer"
+      ],
+      "title": "page"
+    },
+    "size": {
+      "type": [
+        "null",
+        "integer"
+      ],
+      "title": "size"
+    }
+  }
+}

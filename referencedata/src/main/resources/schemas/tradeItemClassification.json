@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Trade Item",
+  "description": "A classification of a trade item",
+  "properties": {
+    "classificationId": {
+      "type": "string",
+      "title": "classificationId"
+    },
+    "classificationSystem": {
+      "type": "string",
+      "title": "classificationSystem"
+    }
+  },
+  "required": [
+    "classificationId",
+    "classificationSystem"
+  ]
+}

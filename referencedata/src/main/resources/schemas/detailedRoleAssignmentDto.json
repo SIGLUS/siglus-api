@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Detailed role assignment",
+  "description": "A single role assignment with attached full roles and rights",
+  "properties": {
+    "role": {
+      "type": "object",
+      "$ref": "role.json"
+    },
+    "programCode": {
+      "type": "string",
+      "title": "programCode"
+    },
+    "supervisoryNodeCode": {
+      "type": "string",
+      "title": "supervisoryNodeCode"
+    },
+    "warehouseCode": {
+      "type": "string",
+      "title": "warehouseCode"
+    }
+  },
+  "required": [
+    "role"
+  ]
+}

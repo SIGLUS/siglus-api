@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "UploadResult",
+  "description": "An entity representing result of successful file upload.",
+  "properties": {
+    "amount": {
+      "type": "number",
+      "title": "amount"
+    }
+  },
+  "required": ["amount"]
+}

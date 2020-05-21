@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.1.final using JasperReports Library version 6.3.1  -->
+<!-- 2017-03-01T09:39:47 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="timeliness" pageWidth="842" pageHeight="595" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenResourceMissingType="Error" uuid="341cf801-7355-4499-bd5c-182e5275caa1">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="reportType" value="Timeliness Report"/>
+	<import value="org.openlmis.requisition.dto.*"/>
+	<style name="Row" mode="Transparent">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></conditionExpression>
+			<style backcolor="#F3F3F3"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="district" class="org.openlmis.requisition.dto.GeographicZoneDto">
+		<property name="displayName" value="District"/>
+		<property name="selectExpression" value="/api/geographicZones/search?levelNumber=3"/>
+		<property name="selectProperty" value="id"/>
+		<property name="displayProperty" value="name"/>
+		<property name="required" value="false"/>
+	</parameter>
+	<parameter name="program" class="org.openlmis.requisition.dto.ProgramDto">
+		<property name="displayName" value="Program Name"/>
+		<property name="selectExpression" value="/api/programs"/>
+		<property name="selectProperty" value="id"/>
+		<property name="displayProperty" value="name"/>
+		<property name="required" value="true"/>
+	</parameter>
+	<parameter name="period" class="org.openlmis.requisition.dto.ProcessingPeriodDto">
+		<property name="displayName" value="Period Name"/>
+		<property name="selectExpression" value="/api/processingPeriods"/>
+		<property name="selectProperty" value="id"/>
+		<property name="displayProperty" value="name"/>
+		<property name="required" value="true"/>
+	</parameter>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="openLmisAccessible" class="java.lang.Boolean">
+		<fieldDescription><![CDATA[openLmisAccessible]]></fieldDescription>
+	</field>
+	<field name="code" class="java.lang.String">
+		<fieldDescription><![CDATA[code]]></fieldDescription>
+	</field>
+	<field name="goDownDate" class="java.time.LocalDate">
+		<fieldDescription><![CDATA[goDownDate]]></fieldDescription>
+	</field>
+	<field name="active" class="java.lang.Boolean">
+		<fieldDescription><![CDATA[active]]></fieldDescription>
+	</field>
+	<field name="description" class="java.lang.String">
+		<fieldDescription><![CDATA[description]]></fieldDescription>
+	</field>
+	<field name="goLiveDate" class="java.time.LocalDate">
+		<fieldDescription><![CDATA[goLiveDate]]></fieldDescription>
+	</field>
+	<field name="type" class="org.openlmis.requisition.dto.FacilityTypeDto">
+		<fieldDescription><![CDATA[type]]></fieldDescription>
+	</field>
+	<field name="supportedPrograms" class="java.util.List">
+		<fieldDescription><![CDATA[supportedPrograms]]></fieldDescription>
+	</field>
+	<field name="enabled" class="java.lang.Boolean">
+		<fieldDescription><![CDATA[enabled]]></fieldDescription>
+	</field>
+	<field name="operator" class="org.openlmis.requisition.dto.FacilityOperatorDto">
+		<fieldDescription><![CDATA[operator]]></fieldDescription>
+	</field>
+	<field name="geographicZone" class="org.openlmis.requisition.dto.GeographicZoneDto">
+		<fieldDescription><![CDATA[geographicZone]]></fieldDescription>
+	</field>
+	<field name="name" class="java.lang.String">
+		<fieldDescription><![CDATA[name]]></fieldDescription>
+	</field>
+	<field name="comment" class="java.lang.String">
+		<fieldDescription><![CDATA[comment]]></fieldDescription>
+	</field>
+	<field name="id" class="java.util.UUID">
+		<fieldDescription><![CDATA[id]]></fieldDescription>
+	</field>
+	<field name="class" class="java.lang.Class">
+		<fieldDescription><![CDATA[class]]></fieldDescription>
+	</field>
+	<field name="thirdLevel" class="org.openlmis.requisition.dto.GeographicZoneDto">
+		<fieldDescription><![CDATA[thirdLevel]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="100" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement x="200" y="0" width="380" height="60" forecolor="#3D9297" uuid="9425a6c9-4546-4c90-9119-7a7f300b6fb5"/>
+				<textElement textAlignment="Center">
+					<font size="18" isBold="false"/>
+					<paragraph lineSpacing="Double" lineSpacingSize="2.0"/>
+				</textElement>
+				<text><![CDATA[Ministry of Health and Social Welfare
+Non Reporting Facility Report]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="0" y="50" width="180" height="15" uuid="7252b5e1-f025-4e48-ae7c-bd95e291de65"/>
+				<textFieldExpression><![CDATA["Program: " + $P{program}.getName()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="65" width="180" height="15" uuid="f2dee407-b67a-426b-8ae1-9ed9eeb333cc"/>
+				<textFieldExpression><![CDATA["Period: " + $P{period}.getName()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="680" y="65" width="100" height="15" uuid="6d7191af-705f-44e6-bfd0-53e40f9e237b"/>
+				<textElement textAlignment="Right"/>
+				<textFieldExpression><![CDATA["Page: " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="30">
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="40" height="30" backcolor="#3D9297" uuid="7972837a-4e14-4bc0-94ef-c9f465914ad5"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<text><![CDATA[Line#]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="40" y="0" width="90" height="30" backcolor="#3D9297" uuid="f1296dcd-3a59-4110-99af-f111c9e49196"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<text><![CDATA[Facility Code]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="130" y="0" width="170" height="30" backcolor="#3D9297" uuid="fcca10b0-2b26-46d1-b532-5386fbf3bbc4"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<text><![CDATA[Facility]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="300" y="0" width="175" height="30" backcolor="#3D9297" uuid="646a24fe-b770-4291-8a0d-13db58237726"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<text><![CDATA[Facility type]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="475" y="0" width="305" height="30" backcolor="#3D9297" uuid="8e7db4f0-de17-4a0a-b56c-452be828d4db"/>
+				<textElement>
+					<font size="12"/>
+				</textElement>
+				<text><![CDATA[Location]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="25" splitType="Immediate">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement style="Row" mode="Opaque" x="130" y="0" width="170" height="25" uuid="31100a38-97d8-400d-bf98-3b9039cd4d01">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box bottomPadding="1">
+					<pen lineColor="#3D9297"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{name}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Row" mode="Opaque" x="300" y="0" width="175" height="25" uuid="5e3e13b2-3de1-4613-927b-3d352faaed85">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box bottomPadding="1">
+					<pen lineColor="#3D9297"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{type}.getName()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Row" mode="Opaque" x="0" y="0" width="40" height="25" uuid="28c1bf9c-6c13-4551-abf3-82481d555ab9"/>
+				<box bottomPadding="1">
+					<pen lineColor="#3D9297"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{REPORT_COUNT}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Row" mode="Opaque" x="40" y="0" width="90" height="25" uuid="5c934beb-6a56-414f-b44b-039716390a2f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box bottomPadding="1">
+					<pen lineColor="#3D9297"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{code}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Row" mode="Opaque" x="475" y="0" width="305" height="25" uuid="325890b1-a7bb-4c2b-b9aa-0149b25d9968">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box bottomPadding="1">
+					<pen lineColor="#3D9297"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="12"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{thirdLevel}.getName()]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

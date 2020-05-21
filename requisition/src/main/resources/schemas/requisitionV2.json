@@ -1,0 +1,112 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Requisition V2",
+  "description": "A single requisition V2",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "createdDate": {
+      "type": "string",
+      "title": "createdDate"
+    },
+    "modifiedDate": {
+      "type": "string",
+      "title": "modifiedDate"
+    },
+    "facility": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json",
+      "title": "facility"
+    },
+    "program": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json",
+      "title": "program"
+    },
+    "supplyingFacility": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "title": "supplyingFacility"
+    },
+    "status": {
+      "type": "string",
+      "title": "status"
+    },
+    "emergency": {
+      "type": "boolean",
+      "title": "emergency"
+    },
+    "reportOnly": {
+      "type": "boolean",
+      "title": "reportOnly"
+    },
+    "supervisoryNode": {
+      "type": "string",
+      "title": "supervisoryNode"
+    },
+    "processingPeriod": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json",
+      "title": "processingPeriod"
+    },
+    "draftStatusMessage": {
+      "type": "string",
+      "title": "draftStatusMessage"
+    },
+    "requisitionLineItems": {
+      "type": "array",
+      "title": "requisitionLineItems",
+      "items": {
+        "type": "object",
+        "$ref": "requisitionLineItemV2.json"
+      },
+      "uniqueItems": false
+    },
+    "datePhysicalStockCountCompleted": {
+      "type": "string",
+      "title": "datePhysicalStockCountCompleted"
+    },
+    "stockAdjustmentReasons": {
+      "type": "array",
+      "title": "stockAdjustmentReasons",
+      "items": {
+        "type": "object",
+        "$ref": "stockAdjustmentReason.json"
+      },
+      "uniqueItems": true
+    },
+    "availableProducts": {
+      "type": "array",
+      "title": "availableProducts",
+      "items": {
+        "type": "object",
+        "$ref": "versionObjectReference.json"
+      },
+      "uniqueItems": true
+    },
+    "statusHistory": {
+      "type": "array",
+      "title": "statusHistory",
+      "items": {
+        "type": "object",
+        "$ref": "statusChangeDto.json"
+      }
+    },
+    "extraData": {
+      "type": "object",
+      "title": "extraData"
+    }
+  },
+  "required": [
+    "id",
+    "facility",
+    "program",
+    "processingPeriod",
+    "status"
+  ]
+}

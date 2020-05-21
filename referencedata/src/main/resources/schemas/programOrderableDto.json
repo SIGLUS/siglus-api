@@ -1,0 +1,66 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "ProgramOrderableDto",
+  "description": "A single product",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "orderableId": {
+      "type": "string",
+      "title": "orderableId"
+    },
+    "orderableFullProductName": {
+      "type": "string",
+      "title": "orderableFullProductName"
+    },
+    "orderableCode": {
+      "type": "string",
+      "title": "orderableCode"
+    },
+    "orderableNetContent": {
+      "type": "number",
+      "title": "orderableNetContent"
+    },
+    "orderableDisplayCategoryId": {
+      "type": "string",
+      "title": "orderableDisplayCategoryId"
+    },
+    "orderableCategoryDisplayName": {
+      "type": "string",
+      "title": "orderableCategoryDisplayName"
+    },
+    "orderableCategoryDisplayOrder": {
+      "type": "integer",
+      "title": "orderableCategoryDisplayOrder"
+    },
+    "dosesPerPatient": {
+      "type": "integer",
+      "title": "dosesPerPatient"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "active"
+    },
+    "fullSupply": {
+      "type": "boolean",
+      "title": "fullSupply"
+    },
+    "displayOrder": {
+      "type": "integer",
+      "title": "displayOrder"
+    },
+    "pricePerPack": {
+      "type": "number",
+      "title": "pricePerPack"
+    }
+  },
+  "required": [
+    "orderableDisplayCategoryId",
+    "dosesPerPatient",
+    "active",
+    "fullSupply"
+  ]
+}

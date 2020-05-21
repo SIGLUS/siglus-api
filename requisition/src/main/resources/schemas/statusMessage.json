@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "StatusMessage",
+  "description": "Status message",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "requisitionId": {
+      "type": "string",
+      "title": "requisitionId"
+    },
+    "statusChangeId": {
+      "type": "string",
+      "title": "statusChangeId"
+    },
+    "authorId": {
+      "type": "string",
+      "title": "authorId"
+    },
+    "status": {
+      "type": "string",
+      "title": "status"
+    },
+    "body": {
+      "type": "string",
+      "title": "body"
+    }
+  },
+  "required": [
+    "requisitionId",
+    "statusChangeId",
+    "status",
+    "body"
+  ]
+}

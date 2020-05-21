@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "ApproveRequisitionDto",
+  "description": "A single requisitionDto for batch approval",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "modifiedDate": {
+      "type": ["string", "null"],
+      "title": "modifiedDate"
+    },
+    "status": {
+      "type": "string",
+      "title": "status"
+    },
+    "facilityName": {
+      "type": "string",
+      "title": "facilityName"
+    },
+    "periodName": {
+      "type": "string",
+      "title": "periodName"
+    },
+    "requisitionLineItems": {
+      "type": "array",
+      "title": "requisitionLineItems",
+      "items": {
+        "type": "object",
+        "$ref": "approveRequisitionLineItemDto.json"
+      },
+      "uniqueItems": false
+    }
+  },
+  "required": ["id", "facilityName", "periodName", "status"]
+}

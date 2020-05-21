@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "allOf": [
+    {
+      "description": "Base definition for all elements in a resource.",
+      "properties": {
+        "id": {
+          "description": "unique id for the element within a resource (for internal references). This may be any string value that does not contain spaces.",
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "allOf": [
+    {
+      "$ref": "Element"
+    },
+    {
+      "description": "This is the base resource type for everything.",
+      "properties": {
+        "id": {
+          "description": "The logical id of the resource, as used in the URL for the resource. Once assigned, this value never changes.",
+          "type": "string",
+          "pattern": "[A-Za-z0-9\\-\\.]{1,64}"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Right",
+  "description": "A single right",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "type": {
+      "enum": [
+        "ORDER_FULFILLMENT",
+        "SUPERVISION",
+        "GENERAL_ADMIN",
+        "REPORTS"
+      ],
+      "title": "type"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
+    },
+    "attachments": {
+      "type": "array",
+      "title": "attachments",
+      "items": {
+        "type": "object",
+        "$ref": "#"
+      },
+      "uniqueItems": false
+    }
+  },
+  "required": [
+    "name",
+    "type"
+  ]
+}

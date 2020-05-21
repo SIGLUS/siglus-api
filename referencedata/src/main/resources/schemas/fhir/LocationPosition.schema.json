@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "see http://hl7.org/fhir/json.html#schema for information about the FHIR Json Schemas",
+  "allOf": [
+    {
+      "$ref": "Element"
+    },
+    {
+      "description": "Details and position information for a physical place where services are provided  and resources and participants may be stored, found, contained or accommodated.",
+      "properties": {
+        "longitude": {
+          "description": "Longitude. The value domain and the interpretation are the same as for the text of the longitude element in KML (see notes below).",
+          "type": "number",
+          "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+        },
+        "latitude": {
+          "description": "Latitude. The value domain and the interpretation are the same as for the text of the latitude element in KML (see notes below).",
+          "type": "number",
+          "pattern": "-?([0]|([1-9][0-9]*))(\\.[0-9]+)?"
+        }
+      }
+    }
+  ]
+}

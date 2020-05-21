@@ -1,0 +1,54 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "ApprovedProductDto",
+  "description": "A single approved product",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "program": {
+      "type": "object",
+      "$ref": "program.json",
+      "title": "program"
+    },
+    "orderable": {
+      "type": "object",
+      "$ref": "orderable.json",
+      "title": "orderable"
+    },
+    "facilityType": {
+      "type": "object",
+      "$ref": "facilityType.json",
+      "title": "facilityType"
+    },
+    "maxPeriodsOfStock": {
+      "type": "number",
+      "title": "maxPeriodsOfStock"
+    },
+    "minPeriodsOfStock": {
+      "type": "number",
+      "title": "minPeriodsOfStock"
+    },
+    "emergencyOrderPoint": {
+      "type": "number",
+      "title": "emergencyOrderPoint"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "active"
+    },
+    "meta": {
+      "type": "object",
+      "$ref": "metadata.json",
+      "description": "The approved product metadata"
+    }
+  },
+  "required": [
+    "orderable",
+    "program",
+    "facilityType",
+    "maxPeriodsOfStock"
+  ]
+}

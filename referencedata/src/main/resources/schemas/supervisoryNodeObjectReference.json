@@ -1,0 +1,67 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "SupervisoryNodeObjectReference",
+  "description": "A single supervisoryNode",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
+    },
+    "facility": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json"
+    },
+    "parentNode": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json"
+    },
+    "partnerNodeOf": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json"
+    },
+    "requisitionGroup": {
+      "type": "object",
+      "$ref": "requisitionGroupObjectReference.json"
+    },
+    "childNodes": {
+      "type": "array",
+      "title": "childNodes",
+      "items": {
+        "type": "object",
+        "$ref": "referenceObjectDto.json"
+      },
+      "uniqueItems": false
+    },
+    "partnerNodes": {
+      "type": "array",
+      "title": "partnerNodes",
+      "items": {
+        "type": "object",
+        "$ref": "referenceObjectDto.json"
+      },
+      "uniqueItems": false
+    },
+    "extraData": {
+      "type": "object",
+      "title": "extraData"
+    },
+    "href": {
+      "type": "string",
+      "title": "href"
+    }
+  },
+  "required": ["id"]
+}

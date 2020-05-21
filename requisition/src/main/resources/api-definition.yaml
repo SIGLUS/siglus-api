@@ -1,0 +1,1106 @@
+#%RAML 0.8
+---
+title: OpenLMIS Requisition API
+version: "@version@"
+baseUri: "@baseUrl@"
+protocols: [ HTTP, HTTPS ]
+
+documentation:
+    - title: Getting Started
+      content: Welcome to the OpenLMIS requisition-service documentation.
+
+schemas:
+
+  - facilityDto: !include schemas/facilityDto.json
+
+  - facilityOperatorDto: !include schemas/facilityOperatorDto.json
+
+  - facilityTypeDto: !include schemas/facilityTypeDto.json
+
+  - geographicLevelDto: !include schemas/geographicLevelDto.json
+
+  - geographicZoneDto: !include schemas/geographicZoneDto.json
+
+  - basicRequisitionDto: !include schemas/basicRequisitionDto.json
+
+  - basicRequisitionDtoPage: !include schemas/basicRequisitionDtoPage.json
+
+  - requisitionWithSupplyingDepotsDto: !include schemas/requisitionWithSupplyingDepotsDto.json
+
+  - requisitionWithSupplyingDepotsDtoPage: !include schemas/requisitionWithSupplyingDepotsDtoPage.json
+
+  - orderableDto: !include schemas/orderableDto.json
+
+  - processingPeriodDto: !include schemas/processingPeriodDto.json
+
+  - processingScheduleDto: !include schemas/processingScheduleDto.json
+
+  - programDto: !include schemas/programDto.json
+
+  - programOrderableDto: !include schemas/programOrderableDto.json
+
+  - requisitionDto: !include schemas/requisitionDto.json
+
+  - requisitionV2: !include schemas/requisitionV2.json
+
+  - requisitionDtoArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "requisitionDto.json" }
+      }
+
+  - requisitionLineItemDto: !include schemas/requisitionLineItemDto.json
+
+  - requisitionLineItemV2: !include schemas/requisitionLineItemV2.json
+
+  - approveRequisitionDto: !include schemas/approveRequisitionDto.json
+
+  - approveRequisitionLineItemDto: !include schemas/approveRequisitionLineItemDto.json
+
+  - approveRequisitionDtoArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/approveRequisitionDto.json" }
+      }
+
+  - releasableRequisitionBatchDto: !include schemas/releasableRequisitionBatchDto.json
+
+  - releasableRequisitionDto: !include schemas/releasableRequisitionDto.json
+
+  - requisitionError: |
+      {   "type": "object",
+          "$schema": "http://json-schema.org/draft-04/schema",
+          "title": "RequisitionError",
+          "description": "A single requisition error",
+          "properties": {
+              "errorMessage": { "type": "object", "$ref": "#/schemas/localizedMessage" },
+              "fieldErrors": { "type": "object", "$ref": "#/schemas/simpleMap" },
+              "requisitionId": { "type": "string", "title": "id" }
+          }
+      }
+
+  - requisitionErrorArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "#/schemas/requisitionError" }
+      }
+
+  - requisitionsProcessingStatus: |
+      {   "type": "object",
+          "$schema": "http://json-schema.org/draft-04/schema",
+          "title": "RequisitionsProcessingStatus",
+          "description": "An array of all requsitions that have been processed successfully and an array of errors.",
+          "properties": {
+              "requisitions": { "type": "object", "$ref": "#/schemas/approveRequisitionDtoArray" },
+              "errors": { "type": "object", "$ref": "#/schemas/requisitionErrorArray" }
+          }
+      }
+
+  - requisitionTemplate: !include schemas/requisitionTemplate.json
+
+  - requisitionTemplateArray: |
+       {
+           "type": "array",
+           "items": { "type": "object", "$ref": "schemas/requisitionTemplate.json" }
+       }
+
+  - availableRequisitionColumnPage: !include schemas/availableRequisitionColumnPage.json
+
+  - convertedRequisitionMap: |
+      {
+          "type": "array",
+          "items": [
+              { "type": "object", "$ref": "/schemas/requisitionDto.json" },
+              { "type": "array", "items": { "type": "object", "$ref": "#/schemas/facility" } }
+          ]
+      }
+
+  - simpleMap: |
+      {
+          "type": "array",
+          "items": [
+              { "type": "string", "title": "key", "required": true },
+              { "type": "string", "title": "value" }
+          ]
+      }
+
+  - localizedMessage: !include schemas/localizedMessage.json
+
+  - localizedMessageMap: |
+      {
+            "type": "object",
+            "title": "LocalizedMessageMap",
+            "description": "Map of field and localized message"
+      }
+
+  - convertToOrderDto: !include schemas/convertToOrderDto.json
+
+  - convertToOrderDtoArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/convertToOrderDto.json" }
+      }
+
+  - jasperTemplateDto: !include schemas/jasperTemplateDto.json
+
+  - templateDtoArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/jasperTemplateDto.json" }
+      }
+
+  - statusMessage: !include schemas/statusMessage.json
+
+  - statusMessageArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/statusMessage.json" }
+      }
+
+traits:
+    - secured:
+          queryParameters:
+              access_token:
+                  displayName: access_token
+                  description: OAuth2 access token
+                  type: string
+                  required: false
+                  repeat: false
+          headers:
+              Authorization:
+                  displayName: Authorization
+                  description: OAuth2 authorization token header. Takes the form of 'Bearer <token>'.
+                  type: string
+                  required: false
+                  repeat: false
+
+    - paginated:
+          queryParameters:
+              page:
+                  description: The page number which should be displayed. Note that the first page is numbered zero rather than one. Additionally, negative and undefined valued are interpreted as zero.
+                  type: integer
+                  required: false
+                  repeat: false
+              size:
+                  description: The desired size of each page. This specifies the maximum number of values that should be returned by the server. Zero, undefined, and negative values should result in all possible values being returned.
+                  type: integer
+                  required: false
+                  repeat: false
+    - sorted:
+          queryParameters:
+              sort:
+                  description: Sorting criteria in the format "property(,asc|desc)". Default sort order is ascending. Multiple sort criteria are supported.
+                  type: string
+                  required: false
+                  repeat: true
+    - idempotent:
+          headers:
+              Idempotency-Key:
+                  displayName: Idempotency Key
+                  description: Idempotency Key in UUIDv4 format to avoid duplicated requests.
+                  type: string
+                  required: false
+                  repeat: false
+
+resourceTypes:
+    - collection:
+        get:
+            is: [ secured ]
+            responses:
+                200:
+                  description: Collection retrieved successfully
+                  body:
+                      application/json:
+                          schema: <<schema>>
+                404:
+                  description: Collection is empty.
+        post:
+            is: [ secured ]
+            body:
+                application/json:
+                    schema: <<schema>>
+            responses:
+                201:
+                  description: Item created successfully
+                  body:
+                      application/json:
+                          schema: <<schema>>
+    - member:
+        get:
+            is: [ secured ]
+            responses:
+                200:
+                    body:
+                        application/json:
+                            schema: <<schema>>
+        post:
+            is: [ secured ]
+            body:
+                application/json:
+                    schema: <<schema>>
+            responses:
+                200:
+                    body:
+                        application/json:
+                            schema: <<schema>>
+        delete:
+            is: [ secured ]
+            responses:
+                200:
+
+/api:
+  /requisitions:
+      put:
+          is: [ secured ]
+          description: When saveAll param is present, it will save all requisitions from the request body
+          queryParameters:
+              saveAll:
+                  displayName: saveAll
+                  type: string
+                  required: false
+                  repeat: false
+          body:
+              application/json:
+                  schema: approveRequisitionDtoArray
+          responses:
+              "200":
+                  body:
+                    application/json:
+                        schema: requisitionsProcessingStatus
+              "400":
+                  body:
+                    application/json:
+                        schema: requisitionsProcessingStatus
+      post:
+          is: [ secured ]
+          description: when approveAll param is present, it will approve requisitions with passed ids
+          queryParameters:
+              approveAll:
+                  displayName: approveAll
+                  type: string
+                  required: false
+                  repeat: false
+              id:
+                  displayName: id
+                  type: string
+                  required: false
+                  repeat: true
+          responses:
+              "200":
+                  body:
+                    application/json:
+                        schema: requisitionsProcessingStatus
+              "400":
+                  body:
+                    application/json:
+                        schema: requisitionsProcessingStatus
+      get:
+          is: [ secured ]
+          description: when retrieveAll param is present, it will retrieve requisitions with passed ids
+          queryParameters:
+              retrieveAll:
+                  displayName: retrieveAll
+                  type: string
+                  required: false
+                  repeat: false
+              id:
+                  displayName: id
+                  type: string
+                  required: false
+                  repeat: true
+          responses:
+              "200":
+                  body:
+                    application/json:
+                        schema: requisitionsProcessingStatus
+              "400":
+                  body:
+                    application/json:
+                        schema: requisitionsProcessingStatus
+
+      displayName: Requisition
+      /initiate:
+          post:
+              is: [ secured, idempotent ]
+              description: Initiate requisition.
+              queryParameters:
+                  program:
+                      displayName: program
+                      type: string
+                      required: true
+                      repeat: false
+                  facility:
+                      displayName: facility
+                      type: string
+                      required: true
+                      repeat: false
+                  suggestedPeriod:
+                      displayName: suggestedPeriod
+                      type: string
+                      required: false
+                      repeat: false
+                  emergency:
+                      displayName: emergency
+                      type: boolean
+                      required: true
+                      repeat: false
+              responses:
+                  "201":
+                      body:
+                        application/json:
+                  "400":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "409":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+      /submitted:
+          get:
+              is: [ secured, paginated ]
+              description: WARNING! Deprecated. Get all requisitions with submitted status.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: Delete chosen requisition.
+              responses:
+                  "204":
+                  "400":
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  "409":
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+          get:
+              is: [ secured ]
+              description: Get chosen requisition.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+          put:
+              is: [ secured ]
+              description: Update existing requisition. Do not change invariants – id, createdDate, facility, program, supplyingFacility, status, emergency, supervisoryNode, orderableId of line item, such attempts will be ignored.
+              body:
+                  application/json:
+                    schema: requisitionDto
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: requisitionDto
+                  "400":
+                      body:
+                        application/json:
+                            schema: localizedMessageMap
+                  "404":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+      /{id}/skip:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          put:
+              is: [ secured, idempotent ]
+              description: Skip chosen requisition period.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: basicRequisitionDto
+                  "400":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "404":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "409":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+      /{id}/reject:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          put:
+              is: [ secured, idempotent ]
+              description: Reject requisition which is waiting for approval.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: basicRequisitionDto
+                  "400":
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  "404":
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "409":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+      /{id}/submit:
+          post:
+              is: [ secured, idempotent ]
+              description: Submit earlier initiated requisition.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: basicRequisitionDto
+                  "400":
+                      body:
+                        application/json:
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "409":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+      /{id}/authorize:
+          uriParameters:
+              id:
+                  displayName: requisition Id
+                  type: string
+                  required: true
+                  repeat: false
+          post:
+              is: [ secured, idempotent ]
+              description: Authorize submitted requisition.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: basicRequisitionDto
+                  "400":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "404":
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "409":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+      /{id}/print:
+          uriParameters:
+              id:
+                  displayName: requisitionId
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured ]
+              description: Print requisition to a pdf file.
+              responses:
+                  200:
+                      body:
+#                        application/vnd.ms-excel:
+                        application/pdf:
+#                        text/html:
+#                        text/csv:
+                  404:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+      /{id}/statusMessages:
+          get:
+              is: [ secured ]
+              description: Get status messages associated with a requisition.
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: statusMessageArray
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+      /search:
+          get:
+              is: [ secured, paginated ]
+              description: Find requisitions matching all of provided parameters.
+              queryParameters:
+                  facility:
+                      displayName: facility
+                      type: string
+                      required: false
+                      repeat: false
+                  program:
+                      displayName: program
+                      type: string
+                      required: false
+                      repeat: false
+                  initiatedDateFrom:
+                      displayName: initiatedDateFrom
+                      type: string
+                      required: false
+                      repeat: false
+                  initiatedDateTo:
+                      displayName: initiatedDateTo
+                      type: string
+                      required: false
+                      repeat: false
+                  modifiedDateFrom:
+                      displayName: modifiedDateFrom
+                      type: string
+                      required: false
+                      repeat: false
+                  modifiedDateTo:
+                      displayName: modifiedDateTo
+                      type: string
+                      required: false
+                      repeat: false
+                  processingPeriod:
+                      displayName: processingPeriod
+                      type: string
+                      required: false
+                      repeat: false
+                  supervisoryNode:
+                      displayName: supervisoryNode
+                      type: string
+                      required: false
+                      repeat: false
+                  requisitionStatus:
+                      displayName: supervisoryNode
+                      type: string
+                      required: false
+                      repeat: true
+                  emergency:
+                      displayName: emergency
+                      type: boolean
+                      required: false
+                      repeat: false
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: basicRequisitionDtoPage
+                  "400":
+                  "500":
+      /{id}/approve:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          post:
+              is: [ secured, idempotent ]
+              description: Approve specified by id requisition.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: basicRequisitionDto
+                  "400":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "409":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+      /requisitionsForApproval:
+          get:
+              is: [ secured, paginated, sorted ]
+              description: Get requisitions to approve for right supervisor.
+              queryParameters:
+                  program:
+                      displayName: program
+                      description: This parameter contains program UUID.
+                      type: string
+                      required: false
+                      repeat: false
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: basicRequisitionDtoPage
+                  "500":
+      /requisitionsForConvert:
+          get:
+              is: [ secured, paginated, sorted ]
+              description: Get requisitions to approve for right supervisor.
+              queryParameters:
+                  facilityId:
+                      displayName: facilityId
+                      description: This parameter contains facility id filter.
+                      type: string
+                      required: false
+                      repeat: false
+                  programId:
+                      displayName: programId
+                      description: This parameter contains program id filter.
+                      type: string
+                      required: false
+                      repeat: false
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: requisitionWithSupplyingDepotsDtoPage
+                  "500":
+      /convertToOrder:
+          post:
+              is: [ secured ]
+              description: WARNING! deprecated; Please use /batchReleases to convert Requisition to orders.
+              body:
+                application/json:
+                  schema: convertToOrderDtoArray
+              responses:
+                  "201":
+                  "400":
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  "500":
+      /batchReleases:
+          post:
+              is: [ secured ]
+              description: Release Requisition/s with or without orders.
+              body:
+                application/json:
+                  schema: releasableRequisitionBatchDto
+              responses:
+                  "201":
+                      body:
+                        application/json:
+                            schema: requisitionsProcessingStatus
+                  "400":
+                      body:
+                        application/json:
+                            schema: requisitionsProcessingStatus
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  "500":
+
+      /periodsForInitiate:
+          get:
+              is: [ secured ]
+              description: Find periods for initiate requisition.
+              queryParameters:
+                  programId:
+                      displayName: program
+                      type: string
+                      required: true
+                      repeat: false
+                  facilityId:
+                      displayName: facility
+                      type: string
+                      required: true
+                      repeat: false
+                  emergency:
+                      displayName: emergency
+                      type: boolean
+                      required: true
+                      repeat: false
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                          schema: processingPeriodDto
+                  "400":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "403":
+                      body:
+                        application/json:
+                          schema: localizedMessage
+
+  /reports/templates/requisitions:
+      displayName: Report Template
+      post:
+          is: [ secured ]
+          description: Add or update report template to database.
+          body:
+              multipart/form-data:
+                formParameters:
+                    file:
+                         displayName: Template with .jrxml format
+                         type: file
+                         required: false
+                         repeat: false
+                    name:
+                         displayName: Name of Template in database
+                         type: string
+                         required: false
+                         repeat: false
+                    description:
+                         displayName: Description of Template
+                         type: string
+                         required: false
+                         repeat: false
+          responses:
+                200:
+                403:
+                    body:
+                      application/json:
+                        schema: localizedMessage
+      get:
+          is: [ secured ]
+          description: Get all templates.
+          responses:
+              200:
+                  body:
+                    application/json:
+                      schema: templateDtoArray
+              403:
+                  body:
+                    application/json:
+                        schema: localizedMessage
+              404:
+                  body:
+                    application/json:
+                        schema: localizedMessage
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: Delete chosen template.
+              responses:
+                  204:
+                  403:
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  404:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+          get:
+              is: [ secured ]
+              description: Get chosen template.
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: jasperTemplateDto
+                  403:
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  404:
+                      body:
+                        application/json:
+                            schema: localizedMessage
+          /{format}:
+              uriParameters:
+                  format:
+                      displayName: format
+                      type: string
+                      required: true
+                      repeat: false
+              get:
+                  is: [ secured ]
+                  description: Generate report from template ID and format.
+                  responses:
+                      200:
+                          body:
+                            application/pdf:
+                            text/csv:
+                            application/vnd.ms-excel:
+                            text/html:
+                      403:
+                          body:
+                            application/json:
+                                schema: localizedMessage
+                      404:
+                          body:
+                            application/json:
+                                schema: localizedMessage
+
+  /requisitionTemplates:
+      displayName: Requisition Template
+      get:
+          is: [ secured ]
+          description: Get all requisitionTemplates.
+          responses:
+              "200":
+                  body:
+                    application/json:
+                        schema: requisitionTemplateArray
+              "404":
+      post:
+          is: [ secured ]
+          description: Creates new requisitionTemplate.
+          body:
+              application/json:
+                schema: requisitionTemplate
+          responses:
+              "201":
+                  body:
+                    application/json:
+                        schema: requisitionTemplate
+              "400":
+                  body:
+                    application/json:
+              "403":
+                  body:
+                    application/json:
+                        schema: localizedMessage
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: Delete chosen requisitionTemplate.
+              responses:
+                  "204":
+                  "400":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "404":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+                  "409":
+          get:
+              is: [ secured ]
+              description: Get chosen requisitionTemplate.
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: requisitionTemplate
+                  "404":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+          put:
+              is: [ secured ]
+              description: Update existing requisitionTemplate.
+              body:
+                  application/json:
+                    schema: requisitionTemplate
+              responses:
+                  "200":
+                      body:
+                        application/json:
+                            schema: requisitionTemplate
+                  "400":
+                      body:
+                        application/json:
+                  "403":
+                      body:
+                        application/json:
+                            schema: localizedMessage
+
+  /availableRequisitionColumns:
+      displayName: Available Requisition Column
+      get:
+          is: [ secured, paginated ]
+          description: Get page of Available Requisition Columns.
+          responses:
+              "200":
+                  body:
+                    application/json:
+                        schema: availableRequisitionColumnPage
+
+  /v2:
+    /requisitions:
+            displayName: Requisition V2
+            /initiate:
+                post:
+                    is: [ secured, idempotent ]
+                    description: Initiate requisition.
+                    queryParameters:
+                        program:
+                            displayName: Program
+                            type: string
+                            required: true
+                            repeat: false
+                        facility:
+                            displayName: Facility
+                            type: string
+                            required: true
+                            repeat: false
+                        suggestedPeriod:
+                            displayName: Suggested period
+                            type: string
+                            required: false
+                            repeat: false
+                        emergency:
+                            displayName: Emergency
+                            type: boolean
+                            required: true
+                            repeat: false
+                    responses:
+                        201:
+                            description: The request is valid and the given requisition has been created.
+                            body:
+                                application/json:
+                                    schema: requisitionV2
+                        400:
+                            description: The request's body is invalid
+                            body:
+                                application/json:
+                                    schema: localizedMessage
+                        401:
+                            description: The request does not contain a token or the token might be invalid.
+                            body:
+                                application/json:
+                        403:
+                            description: The server understood the request but refuses to authorize it.
+                            body:
+                                application/json:
+                                     schema: localizedMessage
+                        409:
+                            description: There is a conflict while the request is handled.
+                            body:
+                                application/json:
+                                    schema: localizedMessage
+            /{id}:
+                uriParameters:
+                    id:
+                        displayName: id
+                        type: string
+                        required: true
+                        repeat: false
+                get:
+                    is: [ secured ]
+                    description: Get chosen requisition.
+                    responses:
+                        200:
+                            description: The request is valid and the given requisition will be returned.
+                            body:
+                                application/json:
+                                    schema: requisitionV2
+                        401:
+                            description: The request does not contain a token or the token might be invalid.
+                            body:
+                                application/json:
+                        403:
+                            description: The server understood the request but refuses to authorize it.
+                            body:
+                                application/json:
+                                    schema: localizedMessage
+                        404:
+                            description: The server understood the request but can not find the requisition.
+                            body:
+                                application/json:
+                                    schema: localizedMessage
+                put:
+                    is: [ secured ]
+                    description: Update existing requisition. Do not change invariants – id, createdDate, facility, program, supplyingFacility, status, emergency, supervisoryNode, orderableId of line item, such attempts will be ignored.
+                    body:
+                        application/json:
+                            schema: requisitionV2
+                    responses:
+                        200:
+                            description: The request is valid and the given requisition will be updated and returned.
+                            body:
+                                application/json:
+                                    schema: requisitionV2
+                        400:
+                            description: The request's body is invalid
+                            body:
+                                application/json:
+                                    schema: localizedMessageMap
+                        401:
+                            description: The request does not contain a token or the token might be invalid.
+                            body:
+                                application/json:
+                        403:
+                            description: The server understood the request but refuses to authorize it.
+                            body:
+                                application/json:
+                                    schema: localizedMessage
+                        404:
+                            description: The server understood the request but can not find the requisition.
+                            body:
+                                application/json:
+                                    schema: localizedMessage
+                        409:
+                            description: There is a conflict while the request is handled.
+                            body:
+                                application/json:
+                                    schema: localizedMessage

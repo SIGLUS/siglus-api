@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "BasicFacilityDto",
+  "description": "A single facility with basic fields",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "active"
+    },
+    "enabled": {
+      "type": "boolean",
+      "title": "enabled"
+    },
+    "type": {
+      "type": "object",
+      "$ref": "facilityType.json"
+    },
+    "geographicZone": {
+      "type": "object",
+      "$ref": "geographicZone.json"
+    }
+  },
+  "required": [
+    "code",
+    "geographicZone"
+  ]
+}

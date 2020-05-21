@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "SupplyLineObjectReference",
+  "description": "A single supplyLine",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "supervisoryNode": {
+      "type": "object",
+      "$ref": "supervisoryNodeObjectReference.json"
+    },
+    "program": {
+      "type": "object",
+      "$ref": "programObjectReference.json"
+    },
+    "supplyingFacility": {
+      "type": "object",
+      "$ref": "facilityObjectReference.json"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
+    }
+  },
+  "required": [
+    "supervisoryNode",
+    "program",
+    "supplyingFacility",
+    "id"
+  ]
+}

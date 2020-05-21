@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Geographic Zone Query DTO",
+  "description": "A DTO to search for geographic zones",
+  "properties": {
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "parent": {
+      "type": "string",
+      "title": "parent"
+    },
+    "levelNumber": {
+      "type": "integer",
+      "title": "level"
+    }
+  }
+}

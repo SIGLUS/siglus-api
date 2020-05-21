@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "ProgramObjectReference",
+  "description": "A single program",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "active"
+    },
+    "periodsSkippable": {
+      "type": "boolean",
+      "title": "periodsSkippable"
+    },
+    "showNonFullSupplyTab": {
+      "type": "boolean",
+      "title": "showNonFullSupplyTab"
+    },
+    "enableDatePhysicalStockCountCompleted": {
+      "type": ["null", "boolean"],
+      "title": "enableDatePhysicalStockCountCompleted"
+    },
+    "href": {
+      "type": "string",
+      "title": "href"
+    }
+  },
+  "required": ["id"]
+}

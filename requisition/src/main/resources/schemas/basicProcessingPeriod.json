@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "BasicProcessingPeriod",
+  "description": "Basic information about a single processing period",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "startDate": {
+      "type": "object",
+      "title": "startDate"
+    },
+    "endDate": {
+      "type": "boolean",
+      "title": "endDate"
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "starDate",
+    "endDate"
+  ]
+}

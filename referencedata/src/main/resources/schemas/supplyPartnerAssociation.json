@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Supply Partner Association",
+  "description": "The following schema presents a single association related with a supply partner",
+  "properties": {
+    "program": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json"
+    },
+    "supervisoryNode": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json"
+    },
+    "facilities": {
+      "type": "array",
+      "title": "facilities",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "$ref": "referenceObjectDto.json"
+      }
+    },
+    "orderables": {
+      "type": "array",
+      "title": "orderables",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "$ref": "referenceObjectDto.json"
+      }
+    }
+  },
+  "required": [
+    "program",
+    "supervisoryNode",
+    "facilities",
+    "orderables"
+  ]
+}

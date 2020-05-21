@@ -1,0 +1,90 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Requisition Line Item V2",
+  "description": "A single requisition line item V2",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "orderable": {
+      "type": "object",
+      "$ref": "versionObjectReference.json",
+      "title": "orderable"
+    },
+    "approvedProduct": {
+      "type": "object",
+      "$ref": "versionObjectReference.json",
+      "title": "approvedProduct"
+    },
+    "beginningBalance": {
+      "type": "integer",
+      "title": "beginningBalance"
+    },
+    "totalReceivedQuantity": {
+      "type": "integer",
+      "title": "totalReceivedQuantity"
+    },
+    "totalLossesAndAdjustments": {
+      "type": "integer",
+      "title": "totalLossesAndAdjustments"
+    },
+    "stockOnHand": {
+      "type": "integer",
+      "title": "stockOnHand"
+    },
+    "requestedQuantity": {
+      "type": "integer",
+      "title": "requestedQuantity"
+    },
+    "totalConsumedQuantity": {
+      "type": "integer",
+      "title": "totalConsumedQuantity"
+    },
+    "requestedQuantityExplanation": {
+      "type": "string",
+      "title": "requestedQuantityExplanation"
+    },
+    "remarks": {
+      "type": "string",
+      "title": "remarks"
+    },
+    "approvedQuantity": {
+      "type": "integer",
+      "title": "approvedQuantity"
+    },
+    "total": {
+      "type": "integer",
+      "title": "total"
+    },
+    "numberOfNewPatientsAdded": {
+      "type": "number",
+      "title": "numberOfNewPatientsAdded"
+    },
+    "skipped": {
+      "type": "boolean",
+      "title": "skipped"
+    },
+    "adjustedConsumption": {
+      "type": "number",
+      "title": "adjustedConsumption"
+    },
+    "averageConsumption": {
+      "type": "number",
+      "title": "averageConsumption"
+    },
+    "idealStockAmount": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "title": "idealStockAmount"
+    }
+  },
+  "required": [
+    "id",
+    "orderable",
+    "approvedProduct"
+  ]
+}

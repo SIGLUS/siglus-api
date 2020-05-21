@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "FacilityTypeDto",
+  "description": "A single facilityTypeDto",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
+    },
+    "displayOrder": {
+      "type": "integer",
+      "title": "displayOrder"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "active"
+    }
+  },
+  "required": [
+    "id",
+    "code",
+    "name",
+    "description",
+    "displayOrder",
+    "active"
+  ]
+}

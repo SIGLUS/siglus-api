@@ -1,0 +1,85 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "properties": {
+    "openLmisAccessible": {
+      "type": "boolean"
+    },
+    "code": {
+      "type": "string"
+    },
+    "goDownDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "description": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "goLiveDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "type": {
+      "type": "object",
+      "title": "FacilityType",
+      "$ref": "facilityType.json"
+    },
+    "supportedPrograms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "title": "SupportedProgram",
+        "properties": {
+          "supportActive": {
+            "type": "boolean"
+          },
+          "programActive": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "periodsSkippable": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "showNonFullSupplyTab": {
+            "type": "boolean"
+          },
+          "supportStartDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "geographicZone": {
+      "type": "object",
+      "title": "GeographicZone",
+      "$ref": "geographicZone.json"
+    },
+    "name": {
+      "type": "string"
+    },
+    "comment": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    }
+  }
+}

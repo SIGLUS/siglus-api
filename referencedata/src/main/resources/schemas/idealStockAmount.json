@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Ideal Stock Amount",
+  "description": "A single isa object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "facility": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json"
+    },
+    "commodityType": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json"
+    },
+    "processingPeriod": {
+      "type": "object",
+      "$ref": "referenceObjectDto.json"
+    },
+    "amount": {
+      "type": "integer",
+      "title": "amount"
+    }
+  },
+  "required": [
+    "facility",
+    "commodityType",
+    "processingPeriod",
+    "amount"
+  ]
+}

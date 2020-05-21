@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "OrderableDisplayCategory",
+  "description": "A single orderableDisplayCategory",
+  "properties": {
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "displayName": {
+      "type": "string",
+      "title": "displayName"
+    },
+    "displayOrder": {
+      "type": "integer",
+      "title": "displayOrder"
+    }
+  },
+  "required": ["code", "displayName", "displayOrder"]
+}

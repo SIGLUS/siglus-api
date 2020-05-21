@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Facility Query DTO",
+  "description": "A DTO to search for facilities",
+  "properties": {
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "zone": {
+      "type": "string",
+      "title": "zoneId"
+    },
+    "type": {
+      "type": "string",
+      "title": "type"
+    },
+    "extraData": {
+      "type": "object",
+      "title": "extraData"
+    },
+    "page": {
+      "type": "integer",
+      "title": "page"
+    },
+    "size": {
+      "type": "integer",
+      "title": "size"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Role",
+  "description": "A single role",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
+    },
+    "rights": {
+      "type": "array",
+      "title": "rights",
+      "items": {
+        "type": "object",
+        "$ref": "right.json"
+      },
+      "uniqueItems": false
+    }
+  },
+  "required": [
+    "name",
+    "rights"
+  ]
+}

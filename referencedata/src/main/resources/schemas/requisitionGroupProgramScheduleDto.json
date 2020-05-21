@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "title": "RequisitionGroupProgramSchedule",
+  "description": "A single requisitionGroupProgramSchedule",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "program": {
+      "type": "object",
+      "$ref": "program.json"
+    },
+    "processingSchedule": {
+      "type": "object",
+      "$ref": "processingSchedule.json"
+    },
+    "directDelivery": {
+      "type": "boolean",
+      "title": "directDelivery"
+    },
+    "dropOffFacility": {
+      "type": "object",
+      "$ref": "facility.json"
+    }
+  },
+  "required": ["program", "processingSchedule", "directDelivery"]
+}

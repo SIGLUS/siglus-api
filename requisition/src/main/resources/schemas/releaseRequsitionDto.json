@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "ReleaseRequisitionDto",
+  "description": "The Release object is used to release a list of requisitions with or without an order.",
+  "properties": {
+    "createOrder": {
+      "type": "boolean",
+      "title": "createOrder"
+    },
+    "requisitionsToRelease": {
+      "type": "array",
+      "title": "requisitionsToRelease",
+      "items": {
+        "type": "object",
+        "$ref": "releaseRequisitionLineItemDto.json"
+      },
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "createOrder",
+    "requisitionsToRelease"
+  ]
+}

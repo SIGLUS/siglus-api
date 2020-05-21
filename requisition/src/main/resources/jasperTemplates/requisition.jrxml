@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.1.final using JasperReports Library version 6.5.1  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="requisition" pageWidth="1000" pageHeight="595" orientation="Landscape" whenNoDataType="BlankPage" columnWidth="1000" leftMargin="0" rightMargin="0" topMargin="20" bottomMargin="0" isFloatColumnFooter="true" whenResourceMissingType="Empty" uuid="a0a4e861-0726-422f-b3d5-54b1aefe96ce">
+	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.x" value="9"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="0"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="1000"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<import value="java.lang.*"/>
+	<import value="net.sf.jasperreports.engine.*"/>
+	<import value="java.text.DecimalFormat"/>
+	<import value="org.openlmis.requisition.dto.*"/>
+	<import value="org.joda.money.*"/>
+	<import value="net.sf.jasperreports.engine.data.*"/>
+	<import value="java.text.NumberFormat"/>
+	<import value="java.util.stream.*"/>
+	<import value="net.sf.jasperreports.engine.design.*"/>
+	<import value="java.math.BigDecimal"/>
+	<import value="org.springframework.context.i18n.*"/>
+	<import value="java.util.*"/>
+	<import value="java.time.LocalDate"/>
+	<import value="java.time.format.DateTimeFormatter"/>
+	<parameter name="template" class="org.openlmis.requisition.domain.RequisitionTemplate" isForPrompting="false">
+		<property name="displayName" value="template"/>
+	</parameter>
+	<parameter name="subreport" class="net.sf.jasperreports.engine.design.JasperDesign" isForPrompting="false">
+		<property name="displayName" value="subreport directory"/>
+	</parameter>
+	<parameter name="currencyDecimalFormat" class="java.text.NumberFormat" isForPrompting="false">
+		<property name="displayName" value="CurrencyDecimalFormat"/>
+	</parameter>
+	<parameter name="dateFormat" class="java.lang.String" isForPrompting="false">
+		<property name="displayName" value="dateFormat"/>
+	</parameter>
+	<parameter name="decimalFormat" class="java.text.DecimalFormat" isForPrompting="false">
+		<property name="displayName" value="decimalFormat"/>
+	</parameter>
+	<queryString language="SQL">
+		<![CDATA[]]>
+	</queryString>
+	<field name="nonFullSupply" class="java.util.List">
+		<fieldDescription><![CDATA[nonFullSupply]]></fieldDescription>
+	</field>
+	<field name="requisition" class="org.openlmis.requisition.dto.RequisitionDto">
+		<fieldDescription><![CDATA[requisition]]></fieldDescription>
+	</field>
+	<field name="fullSupply" class="java.util.List">
+		<fieldDescription><![CDATA[fullSupply]]></fieldDescription>
+	</field>
+	<field name="fullSupplyTotalCost" class="org.joda.money.Money"/>
+	<field name="nonFullSupplyTotalCost" class="org.joda.money.Money"/>
+	<field name="totalCost" class="org.joda.money.Money"/>
+	<field name="initiatedBy" class="org.openlmis.requisition.dto.UserDto"/>
+	<field name="initiatedDate" class="java.time.ZonedDateTime"/>
+	<field name="submittedBy" class="org.openlmis.requisition.dto.UserDto"/>
+	<field name="submittedDate" class="java.time.ZonedDateTime"/>
+	<field name="authorizedBy" class="org.openlmis.requisition.dto.UserDto"/>
+	<field name="authorizedDate" class="java.time.ZonedDateTime"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="90">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="20" y="10" width="909" height="20" uuid="8b895ad8-e565-41e4-87f4-fe70fea7b9f1"/>
+				<textElement verticalAlignment="Middle">
+					<font size="14" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[MessageFormat.format("Report and Requisition for: {0} ({1})", $F{requisition}.getProgram().getName(), $F{requisition}.getFacility().getType().getName())]]></textFieldExpression>
+			</textField>
+			<rectangle>
+				<reportElement mode="Opaque" x="10" y="35" width="919" height="50" backcolor="#C0C0C0" uuid="65fe1d4d-8334-48d2-b383-ee533c8d5742"/>
+				<graphicElement>
+					<pen lineWidth="0.0"/>
+				</graphicElement>
+			</rectangle>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="480" y="45" width="130" height="10" uuid="d7a846a8-1be2-4c95-b8b6-eb97381c5fd7"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[DateTimeFormatter.ofPattern($P{dateFormat}).format($F{initiatedDate}.toLocalDate())]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="495" y="65" width="115" height="10" uuid="a32b06c8-fec6-4c4e-b229-7e98a0f51657"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[DateTimeFormatter.ofPattern($P{dateFormat}).format($F{requisition}.getProcessingPeriod().getStartDate())
+           + " - " + DateTimeFormatter.ofPattern($P{dateFormat}).format($F{requisition}.getProcessingPeriod().getEndDate())]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="665" y="45" width="135" height="10" uuid="dc6a243b-b839-45f3-a08d-fe49ee03f8cc"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{requisition}.getEmergency() ? "Emergency" : "Regular"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="670" y="65" width="130" height="10" uuid="782089a4-e67c-455d-8f34-1218321f5085"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{requisition}.getStatus().toString()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="235" y="65" width="150" height="10" uuid="0f2769f3-2106-4235-9230-012100b3c3de"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{requisition}.getFacility().getGeographicZone().getName()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="250" y="45" width="135" height="10" uuid="7b42fd08-8189-4b19-8710-aa7571f34137"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{requisition}.getProgram().getName()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="55" y="45" width="130" height="10" uuid="97807c17-6feb-44db-b0ec-eb1fdb21aa21"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{requisition}.getFacility().getName()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="75" y="65" width="110" height="10" uuid="eb29697d-1d2f-42b6-9b25-2e2bcdadc080"/>
+				<textElement textAlignment="Left">
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{requisition}.getFacility().getCode()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="20" y="45" width="35" height="10" uuid="9ff435e1-2db7-4309-8a64-0111b0a6decb">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Facility:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="20" y="65" width="55" height="10" uuid="7e9768e7-2cc9-4f1b-814f-865b39566a13"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Facility code:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="210" y="45" width="40" height="10" uuid="bfb9d50e-e0e4-46cc-aa4a-ea1a0f52b906">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Program:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="210" y="65" width="25" height="10" uuid="4b3a6dad-2836-4ee3-bc07-2a1da8e16314">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Zone:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="420" y="45" width="60" height="10" uuid="f01ca8e1-24ca-4e6e-8ae5-148769220580"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Creation date:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="420" y="65" width="75" height="10" uuid="8195bd81-f503-402c-99fd-79861348d2ec">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Reporting period:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="640" y="45" width="25" height="10" uuid="150c310a-e719-4dfa-a6d3-000dd5f634ac">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Type:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="640" y="65" width="30" height="10" uuid="5a51fb8c-f965-48ea-9f59-7a04b8ea4688"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Status:]]></text>
+			</staticText>
+		</band>
+	</title>
+	<detail>
+		<band height="80">
+			<subreport>
+				<reportElement key="fullSupplySubreport" x="0" y="0" width="990" height="40" uuid="4475ef7c-a24a-4301-812c-f41869743f79">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<subreportParameter name="template">
+					<subreportParameterExpression><![CDATA[$P{template}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="title">
+					<subreportParameterExpression><![CDATA["Full supply items"]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="requisitionStatus">
+					<subreportParameterExpression><![CDATA[$F{requisition}.getStatus()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="programId">
+					<subreportParameterExpression><![CDATA[$F{requisition}.getProgram().getId()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="dateFormat">
+					<subreportParameterExpression><![CDATA[$P{dateFormat}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="decimalFormat">
+					<subreportParameterExpression><![CDATA[$P{decimalFormat}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="currencyDecimalFormat">
+					<subreportParameterExpression><![CDATA[$P{currencyDecimalFormat}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[new JRBeanCollectionDataSource($F{fullSupply})]]></dataSourceExpression>
+				<subreportExpression><![CDATA[JasperCompileManager.compileReport($P{subreport})]]></subreportExpression>
+			</subreport>
+			<subreport>
+				<reportElement key="nonFullSupplySubreport" positionType="Float" x="0" y="40" width="990" height="40" uuid="c5a8dc95-8635-4a3c-9fca-38e46ac77ab8">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<printWhenExpression><![CDATA[!$F{nonFullSupply}.isEmpty()]]></printWhenExpression>
+				</reportElement>
+				<subreportParameter name="template">
+					<subreportParameterExpression><![CDATA[$P{template}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="title">
+					<subreportParameterExpression><![CDATA["Non-full supply items"]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="requisitionStatus">
+					<subreportParameterExpression><![CDATA[$F{requisition}.getStatus()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="programId">
+					<subreportParameterExpression><![CDATA[$F{requisition}.getProgram().getId()]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="dateFormat">
+					<subreportParameterExpression><![CDATA[$P{dateFormat}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="decimalFormat">
+					<subreportParameterExpression><![CDATA[$P{decimalFormat}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="currencyDecimalFormat">
+					<subreportParameterExpression><![CDATA[$P{currencyDecimalFormat}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[new JRBeanCollectionDataSource($F{nonFullSupply})]]></dataSourceExpression>
+				<subreportExpression><![CDATA[JasperCompileManager.compileReport($P{subreport})]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="30">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement x="750" y="10" width="45" height="10" uuid="7510e277-8abf-4ec0-b306-b88cfd265a15">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="800" y="10" width="30" height="10" uuid="5ded44a2-6687-46fd-b29e-205ba278ca50"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["of " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="10" y="10" width="80" height="10" uuid="2dd094dc-e4b5-43c0-89ab-02f2dda79bb5">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[DateTimeFormatter.ofPattern($P{dateFormat}).format(LocalDate.now())]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="170">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement key="summaryLabel" x="10" y="10" width="930" height="20" uuid="d91c61a5-4f51-4610-ac52-e058a2957ddb"/>
+				<textElement verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Summary]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="20" y="40" width="130" height="10" uuid="a035b2b6-8c32-4db2-89fd-6444a109b1d7"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Total Cost for Full Supply Items]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="20" y="60" width="150" height="10" uuid="ec47a93b-983c-447f-85cf-4775e800330a"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Total Cost for Non Full Supply Items]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="20" y="80" width="50" height="10" uuid="08e7b43c-4f44-4e33-88f6-92324585772e"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Total Cost]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="250" y="40" width="240" height="10" uuid="35a72954-5841-4f9b-abf2-711eea0bd17f"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{currencyDecimalFormat}.format(new BigDecimal($F{fullSupplyTotalCost}.toString().replaceAll("[^0-9?!\\.]+", ""))).toString()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="250" y="60" width="240" height="10" uuid="a6e8c1b3-5480-4e60-a44a-0c1c29e21473"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{currencyDecimalFormat}.format(new BigDecimal($F{nonFullSupplyTotalCost}.toString().replaceAll("[^0-9?!\\.]+", ""))).toString()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="250" y="80" width="240" height="10" uuid="526378e0-d374-40c9-a7ec-3a20c4337a25"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{currencyDecimalFormat}.format(new BigDecimal($F{totalCost}.toString().replaceAll("[^0-9?!\\.]+", ""))).toString()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="20" y="110" width="60" height="10" uuid="c7929aee-d4b2-4b69-86ea-26ffd9ea0be0"/>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Created by:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="20" y="130" width="60" height="10" uuid="09833b2c-ae0d-4a34-a608-bfeaf297a414">
+					<printWhenExpression><![CDATA[$F{submittedBy} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Submitted by:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="20" y="150" width="60" height="10" uuid="9544c075-f57c-4a86-8d1b-6a21f3a93963">
+					<printWhenExpression><![CDATA[$F{authorizedBy} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8"/>
+				</textElement>
+				<text><![CDATA[Authorized by:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="140" y="110" width="350" height="10" uuid="d95d5f81-476d-4445-a53c-5ebee7846625"/>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[MessageFormat.format("{0} on {1}", $F{initiatedBy}.printName(),
+														DateTimeFormatter.ofPattern($P{dateFormat}).format($F{initiatedDate}.toLocalDate()))]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="140" y="130" width="350" height="10" uuid="ffd6b808-1a5a-4b04-aa73-cd434c8c1bdf">
+					<printWhenExpression><![CDATA[$F{submittedBy} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[MessageFormat.format("{0} on {1}", $F{submittedBy}.printName(),
+														DateTimeFormatter.ofPattern($P{dateFormat}).format($F{submittedDate}.toLocalDate()))]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="">
+				<reportElement x="140" y="150" width="350" height="10" uuid="4372bf9c-feff-4449-8944-1726d7d65d43">
+					<printWhenExpression><![CDATA[$F{authorizedBy} != null]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[MessageFormat.format("{0} on {1}", $F{authorizedBy}.printName(),
+														DateTimeFormatter.ofPattern($P{dateFormat}).format($F{authorizedDate}.toLocalDate()))]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

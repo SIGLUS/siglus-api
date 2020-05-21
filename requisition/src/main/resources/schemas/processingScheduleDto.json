@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "ProcessingScheduleDto",
+  "description": "A single processingScheduleDto",
+  "properties": {
+    "id": { "type": "string", "title": "id" },
+    "code": { "type": "string", "title": "code" },
+    "description": { "type": "string", "title": "description" },
+    "modifiedDate": { "type": "string", "title": "modifiedDate" },
+    "name": { "type": "string", "title": "name" }
+  },
+  "required": ["id", "code", "description", "modifiedDate", "name"]
+}

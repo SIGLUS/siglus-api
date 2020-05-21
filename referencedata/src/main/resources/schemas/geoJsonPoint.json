@@ -1,0 +1,30 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "GeoJSON Point",
+  "description": "A Point as defined by GeoJSON",
+  "properties": {
+    "type": {
+      "enum": [
+        "Point"
+      ]
+    },
+    "coordinates": {
+      "type": "array",
+      "minItems": 2,
+      "items": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "additionalItems": false
+    }
+  },
+  "required": [
+    "type",
+    "coordinates"
+  ]
+}

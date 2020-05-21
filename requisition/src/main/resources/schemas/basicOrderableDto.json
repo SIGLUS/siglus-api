@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-03/schema",
+  "title": "OrderableDto",
+  "description": "A single orderableDto",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "productCode": {
+      "type": "string",
+      "title": "code"
+    },
+    "fullProductName": {
+      "type": "string",
+      "title": "fullProductName"
+    },
+    "netContent": {
+      "type": "integer",
+      "title": "netContent"
+    },
+    "packRoundingThreshold": {
+      "type": "integer",
+      "title": "packRoundingThreshold"
+    },
+    "roundToZero": {
+      "type": "boolean",
+      "title": "roundToZero"
+    }
+  },
+  "required": [
+    "id",
+    "productCode"
+  ]
+}

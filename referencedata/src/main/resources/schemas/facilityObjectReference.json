@@ -1,0 +1,74 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "FacilityObjectReference",
+  "description": "A single facility",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
+    },
+    "geographicZone": {
+      "type": "object",
+      "$ref": "geographicZone.json"
+    },
+    "type": {
+      "type": "object",
+      "$ref": "facilityType.json"
+    },
+    "operator": {
+      "type": "object",
+      "$ref": "facilityOperator.json"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "active"
+    },
+    "goLiveDate": {
+      "type": "string",
+      "title": "goLiveDate"
+    },
+    "goDownDate": {
+      "type": "string",
+      "title": "goDownDate"
+    },
+    "comment": {
+      "type": "string",
+      "title": "comment"
+    },
+    "enabled": {
+      "type": "boolean",
+      "title": "enabled"
+    },
+    "openLmisAccessible": {
+      "type": "boolean",
+      "title": "openLmisAccessible"
+    },
+    "supportedPrograms": {
+      "type": "array",
+      "title": "supportedPrograms",
+      "items": {
+        "type": "object",
+        "$ref": "supportedProgram.json"
+      },
+      "uniqueItems": false
+    },
+    "href": {
+      "type": "string",
+      "title": "href"
+    }
+  },
+  "required": ["id"]
+}
