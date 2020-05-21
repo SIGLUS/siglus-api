@@ -1,0 +1,10 @@
+#%RAML 0.8
+---
+title: SIGLUS API
+version: "@version@"
+baseUri: "@baseUrl@"
+protocols: [ HTTP, HTTPS ]
+
+documentation:
+- title: Getting Started
+  content: Welcome to the SIGLUS API documentation. This minimal API is intended for illustrative purposes.
