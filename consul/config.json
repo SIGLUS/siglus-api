@@ -1,15 +1,15 @@
 {
   "service": {
-    "Name": "siglus-api",
+    "Name": "siglusapi",
     "Port": 8080,
     "Tags": ["openlmis-service"]
   },
   "raml": "src/main/resources/api-definition.yaml",
   "path": [
-    "siglus-api",
-    "siglus-api/docs",
-    "siglus-api/docs/<all>",
-    "siglus-api/webjars",
-    "siglus-api/webjars/<all>"
+    "siglusapi",
+    "siglusapi/docs",
+    "siglusapi/docs/<all>",
+    "siglusapi/webjars",
+    "siglusapi/webjars/<all>"
   ]
 }

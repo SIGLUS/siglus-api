@@ -1,0 +1,1 @@
+ALTER TABLE siglusintegration.stock_card_extension ADD COLUMN archive boolean NOT NULL DEFAULT FALSE;
