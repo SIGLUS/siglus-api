@@ -63,7 +63,7 @@ traits:
 
 /api:
 
-  /siglusintegration:
+  /siglusapi:
 
     /requisitionTemplates:
       post:

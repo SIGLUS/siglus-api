@@ -196,6 +196,12 @@ function RegistrationService(host, port) {
   }
   function registerService(service, mode) {
     service.ID = generateServiceId(service.Name);
+    if (service.check) {
+      var checkHttp = service.check.http;
+      checkHttp = checkHttp.replace("HOST", service.Address);
+      checkHttp = checkHttp.replace("PORT", service.Port);
+      service.check.http = checkHttp;
+    }
 
     if (mode === 'register') {
       self.registrator.registerService(service);

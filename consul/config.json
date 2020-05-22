@@ -2,7 +2,11 @@
   "service": {
     "Name": "siglusapi",
     "Port": 8080,
-    "Tags": ["openlmis-service"]
+    "Tags": ["openlmis-service"],
+    "check": {
+      "interval": "10s",
+      "http": "http://HOST:PORT/health"
+    }
   },
   "raml": "src/main/resources/api-definition.yaml",
   "path": [
