@@ -135,8 +135,7 @@ public class Orderable implements Versionable {
   @MapKeyColumn(name = "key")
   @BatchSize(size = FETCH_SIZE)
   @Column(name = VALUE)
-  @CollectionTable(
-      name = "orderable_identifiers",
+  @CollectionTable(name = "orderable_identifiers", schema = "referencedata",
       joinColumns = {
           @JoinColumn(name = "orderableId", referencedColumnName = "id"),
           @JoinColumn(name = "orderableVersionNumber", referencedColumnName = "versionNumber")})

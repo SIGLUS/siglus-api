@@ -26,7 +26,7 @@ import org.hibernate.annotations.Type;
 import org.openlmis.requisition.domain.BaseEntity;
 
 @Entity
-@Table(name = "stock_adjustments")
+@Table(name = "stock_adjustments", schema = "requisition")
 @NoArgsConstructor
 public class StockAdjustment extends BaseEntity {
 

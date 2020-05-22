@@ -36,7 +36,7 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
 @Entity
-@Table(name = "jasper_templates")
+@Table(name = "jasper_templates", schema = "requisition")
 @NoArgsConstructor
 @AllArgsConstructor
 public class JasperTemplate extends BaseEntity {

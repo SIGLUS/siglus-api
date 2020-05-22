@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -43,7 +44,7 @@ import org.openlmis.requisition.dto.JasperTemplateParameterDependencyDto;
  * </p>
  */
 @Entity
-@Table(name = "template_parameters")
+@Table(name = "template_parameters", schema = "requisition")
 @NoArgsConstructor
 public class JasperTemplateParameter extends BaseEntity {
 
@@ -104,6 +105,9 @@ public class JasperTemplateParameter extends BaseEntity {
   private String description;
 
   @ElementCollection
+  @CollectionTable(name="jaspertemplateparameter_options", schema = "requisition",
+      joinColumns=@JoinColumn(name="jaspertemplateparameterid"))
+  @Column(name="options")
   @Getter
   @Setter
   private List<String> options;

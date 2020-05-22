@@ -60,8 +60,7 @@ public class StockCardLineItemReason extends BaseEntity {
   private Boolean isFreeTextAllowed = false;
 
   @ElementCollection(fetch = FetchType.LAZY, targetClass = String.class)
-  @CollectionTable(
-      name = "stock_card_line_item_reason_tags",
+  @CollectionTable(name = "stock_card_line_item_reason_tags", schema = "stockmanagement",
       joinColumns = @JoinColumn(name = "reasonId"))
   @Column(name = "tag")
   private List<String> tags = new ArrayList<>();

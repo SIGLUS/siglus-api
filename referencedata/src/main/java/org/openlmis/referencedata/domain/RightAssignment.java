@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 import org.javers.core.metamodel.annotation.TypeName;
 
 @Entity
-@Table(name = "right_assignments", uniqueConstraints =
+@Table(name = "right_assignments", schema = "referencedata", uniqueConstraints =
     @UniqueConstraint(columnNames = {"userid", "rightName", "facilityId", "programId"}))
 @NoArgsConstructor
 @TypeName("RightAssignment")

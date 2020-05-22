@@ -60,7 +60,7 @@ import org.openlmis.requisition.utils.Message;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @Entity
-@Table(name = "requisition_templates")
+@Table(name = "requisition_templates", schema = "requisition")
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false, exclude = {"programId", "facilityTypeIds"})
 public class RequisitionTemplate extends BaseTimestampedEntity {
@@ -97,8 +97,7 @@ public class RequisitionTemplate extends BaseTimestampedEntity {
   @ElementCollection(fetch = FetchType.LAZY)
   @MapKeyColumn(name = "key")
   @Column(name = "value")
-  @CollectionTable(
-      name = "columns_maps",
+  @CollectionTable(name = "columns_maps", schema = "requisition",
       joinColumns = @JoinColumn(name = "requisitionTemplateId"))
   @BatchSize(size = STANDARD_BATCH_SIZE)
   private Map<String, RequisitionTemplateColumn> columnsMap = new HashMap<>();

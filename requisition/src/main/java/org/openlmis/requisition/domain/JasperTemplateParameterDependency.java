@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "jasper_template_parameter_dependencies")
+@Table(name = "jasper_template_parameter_dependencies", schema = "requisition")
 @NoArgsConstructor
 public class JasperTemplateParameterDependency extends BaseEntity {
   @ManyToOne(cascade = CascadeType.REFRESH)

@@ -35,7 +35,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-@Table(name = "system_notifications")
+@Table(name = "system_notifications", schema = "referencedata")
 public class SystemNotification extends BaseEntity {
 
   private String title;

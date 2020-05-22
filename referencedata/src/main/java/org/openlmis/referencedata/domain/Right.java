@@ -57,7 +57,7 @@ public class Right extends BaseEntity {
   private String description;
 
   @ManyToMany
-  @JoinTable(name = "right_attachments",
+  @JoinTable(name = "right_attachments", schema = "referencedata",
       joinColumns = @JoinColumn(name = "rightid", nullable = false),
       inverseJoinColumns = @JoinColumn(name = "attachmentid", nullable = false))
   @Getter

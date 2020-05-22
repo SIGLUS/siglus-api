@@ -60,8 +60,7 @@ public class Role extends BaseEntity {
   private String description;
 
   @ManyToMany(fetch = FetchType.EAGER)
-  @JoinTable(name = "role_rights",
-      schema = "referencedata",
+  @JoinTable(name = "role_rights", schema = "referencedata",
       joinColumns = @JoinColumn(name = "roleid", nullable = false),
       inverseJoinColumns = @JoinColumn(name = "rightid", nullable = false))
   @Getter

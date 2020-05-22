@@ -41,7 +41,7 @@ import org.openlmis.referencedata.util.messagekeys.OrderableMessageKeys;
  * dosage, dispensing unit etc.
  */
 @Entity
-@Table(name = "dispensables")
+@Table(name = "dispensables", schema = "referencedata")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("abstract")
@@ -54,8 +54,7 @@ public abstract class Dispensable extends BaseEntity {
   @ElementCollection(fetch = FetchType.EAGER)
   @MapKeyColumn(name = "key")
   @Column(name = "value")
-  @CollectionTable(
-      name = "dispensable_attributes",
+  @CollectionTable(name = "dispensable_attributes", schema = "referencedata",
       joinColumns = @JoinColumn(name = "dispensableid"))
   @Getter
   protected Map<String, String> attributes;

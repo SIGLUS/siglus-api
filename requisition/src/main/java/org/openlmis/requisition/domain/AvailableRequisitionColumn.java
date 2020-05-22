@@ -53,8 +53,7 @@ public class AvailableRequisitionColumn extends BaseEntity {
   @ElementCollection(fetch = FetchType.LAZY, targetClass = SourceType.class)
   @Enumerated(EnumType.STRING)
   @Column(name = "value")
-  @CollectionTable(
-      name = "available_requisition_column_sources",
+  @CollectionTable(name = "available_requisition_column_sources", schema = "requisition",
       joinColumns = @JoinColumn(name = "columnId"))
   @BatchSize(size = STANDARD_BATCH_SIZE)
   private Set<SourceType> sources;

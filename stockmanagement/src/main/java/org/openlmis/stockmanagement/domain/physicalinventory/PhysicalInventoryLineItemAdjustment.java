@@ -30,7 +30,7 @@ import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 @Data
 @Builder
 @Entity
-@Table(name = "physical_inventory_line_item_adjustments")
+@Table(name = "physical_inventory_line_item_adjustments", schema = "stockmanagement")
 @NoArgsConstructor
 @AllArgsConstructor
 public class PhysicalInventoryLineItemAdjustment extends BaseEntity {

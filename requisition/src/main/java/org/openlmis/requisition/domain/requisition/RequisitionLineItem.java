@@ -77,7 +77,7 @@ import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @Entity
-@Table(name = "requisition_line_items")
+@Table(name = "requisition_line_items", schema = "requisition")
 @AllArgsConstructor
 public class RequisitionLineItem extends BaseEntity {
   private static final Logger LOGGER = LoggerFactory.getLogger(RequisitionLineItem.class);
@@ -199,8 +199,7 @@ public class RequisitionLineItem extends BaseEntity {
   private Integer adjustedConsumption;
 
   @ElementCollection
-  @CollectionTable(
-      name = "previous_adjusted_consumptions",
+  @CollectionTable(name = "previous_adjusted_consumptions", schema = "requisition",
       joinColumns = @JoinColumn(name = "requisitionLineItemId"))
   @Column(name = "previousAdjustedConsumption")
   @Setter

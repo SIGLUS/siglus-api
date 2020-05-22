@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "jasper_templates")
+@Table(name = "jasper_templates", schema = "stockmanagement")
 @NoArgsConstructor
 @AllArgsConstructor
 public class JasperTemplate extends BaseEntity {

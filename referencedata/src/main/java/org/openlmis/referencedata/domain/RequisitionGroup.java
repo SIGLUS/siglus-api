@@ -79,7 +79,7 @@ public class RequisitionGroup extends BaseEntity {
   private List<RequisitionGroupProgramSchedule> requisitionGroupProgramSchedules;
 
   @ManyToMany(fetch = FetchType.EAGER)
-  @JoinTable(name = "requisition_group_members",
+  @JoinTable(name = "requisition_group_members", schema = "referencedata",
       joinColumns = @JoinColumn(name = "requisitiongroupid", nullable = false),
       inverseJoinColumns = @JoinColumn(name = "facilityid", nullable = false))
   @Getter

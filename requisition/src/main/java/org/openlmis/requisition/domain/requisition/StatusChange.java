@@ -34,7 +34,7 @@ import org.hibernate.annotations.Type;
 import org.openlmis.requisition.domain.BaseTimestampedEntity;
 
 @Entity
-@Table(name = "status_changes")
+@Table(name = "status_changes", schema = "requisition")
 @NoArgsConstructor
 public class StatusChange extends BaseTimestampedEntity {
 

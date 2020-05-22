@@ -30,7 +30,7 @@ import lombok.Setter;
 import org.openlmis.requisition.domain.BaseEntity;
 
 @Entity
-@Table(name = "requisition_permission_strings")
+@Table(name = "requisition_permission_strings", schema = "requisition")
 @NoArgsConstructor
 @AllArgsConstructor
 public class RequisitionPermissionString extends BaseEntity {

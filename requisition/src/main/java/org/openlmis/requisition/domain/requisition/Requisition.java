@@ -113,7 +113,7 @@ import org.springframework.util.CollectionUtils;
 @SuppressWarnings("PMD.TooManyMethods")
 @Entity
 @TypeName("Requisition")
-@Table(name = "requisitions")
+@Table(name = "requisitions", schema = "requisition")
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
@@ -220,7 +220,7 @@ public class Requisition extends BaseTimestampedEntity {
   private UUID supervisoryNodeId;
 
   @ManyToMany
-  @JoinTable(name = "requisitions_previous_requisitions",
+  @JoinTable(name = "requisitions_previous_requisitions", schema = "requisition",
       joinColumns = {@JoinColumn(name = "requisitionId")},
       inverseJoinColumns = {@JoinColumn(name = "previousRequisitionId")})
   @DiffIgnore
@@ -230,7 +230,9 @@ public class Requisition extends BaseTimestampedEntity {
 
   @ElementCollection(fetch = FetchType.LAZY)
   @BatchSize(size = AVAILABLE_PRODUCTS_BATCH_SIZE)
-  @CollectionTable(name = "available_products", joinColumns = @JoinColumn(name = "requisitionId"))
+  @CollectionTable(name = "available_products", schema = "requisition",
+      joinColumns = @JoinColumn(name = "requisitionId")
+  )
   @Getter
   @Setter
   private Set<ApprovedProductReference> availableProducts;
