@@ -27,8 +27,8 @@ import org.openlmis.stockmanagement.util.RequestParameters;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-@Service
-public class UserReferenceDataService extends BaseReferenceDataService<UserDto> {
+@Service("StockmanagementUserReferenceDataService")
+public class StockmanagementUserReferenceDataService extends BaseReferenceDataService<UserDto> {
 
   @Override
   protected String getUrl() {

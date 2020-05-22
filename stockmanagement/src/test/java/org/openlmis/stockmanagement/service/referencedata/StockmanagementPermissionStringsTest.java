@@ -36,30 +36,32 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.service.ServiceResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PermissionStringsTest {
+public class StockmanagementPermissionStringsTest {
   private static final String HANDLERS_FIELD_NAME = "handlers";
   private static final UUID USER = UUID.randomUUID();
 
   @Mock
-  private UserReferenceDataService userReferenceDataService;
+  @Qualifier("StockmanagementUserReferenceDataService")
+  private StockmanagementUserReferenceDataService userReferenceDataService;
 
   @InjectMocks
-  private PermissionStrings permissionStrings;
+  private StockmanagementPermissionStrings permissionStrings;
 
   @Mock
   private ServiceResponse<List<String>> response;
 
   @Test
   public void shouldCreateHandlerIfNotExist() throws Exception {
-    Field handlers = PermissionStrings.class.getDeclaredField(HANDLERS_FIELD_NAME);
+    Field handlers = StockmanagementPermissionStrings.class.getDeclaredField(HANDLERS_FIELD_NAME);
     handlers.setAccessible(true);
 
     Map map = (Map) handlers.get(permissionStrings);
     assertThat(map.size(), is(0));
 
-    PermissionStrings.Handler handler = permissionStrings.forUser(USER);
+    StockmanagementPermissionStrings.Handler handler = permissionStrings.forUser(USER);
 
     assertThat(handler, is(notNullValue()));
 
@@ -69,7 +71,7 @@ public class PermissionStringsTest {
 
   @Test
   public void shouldNotRecreateHandler() throws Exception {
-    Field handlers = PermissionStrings.class.getDeclaredField(HANDLERS_FIELD_NAME);
+    Field handlers = StockmanagementPermissionStrings.class.getDeclaredField(HANDLERS_FIELD_NAME);
     handlers.setAccessible(true);
 
     permissionStrings.forUser(USER);
@@ -84,7 +86,7 @@ public class PermissionStringsTest {
   @Test
   public void shouldUpdateDataIfResponseWasModified() throws Exception {
     String etag = random(5);
-    PermissionStrings.Handler handler = permissionStrings.forUser(USER);
+    StockmanagementPermissionStrings.Handler handler = permissionStrings.forUser(USER);
 
     // here handler does not have etag so it should pass null value
     when(userReferenceDataService.getPermissionStrings(USER, null)).thenReturn(response);
@@ -110,7 +112,7 @@ public class PermissionStringsTest {
   @Test
   public void shouldNotUpdateDataIfResponseWasNotModified() throws Exception {
     String etag = random(5);
-    PermissionStrings.Handler handler = permissionStrings.forUser(USER);
+    StockmanagementPermissionStrings.Handler handler = permissionStrings.forUser(USER);
 
     // here handler does not have etag so it should pass null value
     when(userReferenceDataService.getPermissionStrings(USER, null)).thenReturn(response);

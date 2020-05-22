@@ -25,16 +25,19 @@ import org.openlmis.stockmanagement.service.ServiceResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PermissionStrings {
-  private static final Logger LOGGER = LoggerFactory.getLogger(PermissionStrings.class);
+public class StockmanagementPermissionStrings {
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(StockmanagementPermissionStrings.class);
 
   private final Map<UUID, Handler> handlers = Maps.newConcurrentMap();
 
   @Autowired
-  private UserReferenceDataService userReferenceDataService;
+  @Qualifier("StockmanagementUserReferenceDataService")
+  private StockmanagementUserReferenceDataService userReferenceDataService;
 
   public Handler forUser(UUID user) {
     return handlers.computeIfAbsent(user, Handler::new);

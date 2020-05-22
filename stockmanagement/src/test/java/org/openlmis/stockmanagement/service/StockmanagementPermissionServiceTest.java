@@ -28,15 +28,15 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_NO_FOLLOWING_P
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PERMISSION_CHECK_FAILED;
 import static org.openlmis.stockmanagement.service.OAuth2AuthenticationDataBuilder.API_KEY_PREFIX;
 import static org.openlmis.stockmanagement.service.OAuth2AuthenticationDataBuilder.SERVICE_CLIENT_ID;
-import static org.openlmis.stockmanagement.service.PermissionService.REASONS_MANAGE;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_ADJUST;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARD_TEMPLATES_MANAGE;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_DESTINATIONS_MANAGE;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_ORGANIZATIONS_MANAGE;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_SOURCES_MANAGE;
-import static org.openlmis.stockmanagement.service.PermissionService.SYSTEM_SETTINGS_MANAGE;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.REASONS_MANAGE;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_ADJUST;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARD_TEMPLATES_MANAGE;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_DESTINATIONS_MANAGE;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_ORGANIZATIONS_MANAGE;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_SOURCES_MANAGE;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.SYSTEM_SETTINGS_MANAGE;
 
 import java.util.UUID;
 import org.junit.Before;
@@ -52,9 +52,10 @@ import org.openlmis.stockmanagement.dto.referencedata.ResultDto;
 import org.openlmis.stockmanagement.dto.referencedata.RightDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
-import org.openlmis.stockmanagement.service.referencedata.PermissionStrings;
-import org.openlmis.stockmanagement.service.referencedata.UserReferenceDataService;
-import org.openlmis.stockmanagement.util.AuthenticationHelper;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementPermissionStrings;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementUserReferenceDataService;
+import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -64,22 +65,23 @@ import org.springframework.web.client.HttpClientErrorException;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
-public class PermissionServiceTest {
+public class StockmanagementPermissionServiceTest {
 
   @Rule
   public final ExpectedException exception = ExpectedException.none();
 
   @Mock
-  private UserReferenceDataService userReferenceDataService;
+  @Qualifier("StockmanagementUserReferenceDataService")
+  private StockmanagementUserReferenceDataService userReferenceDataService;
 
   @Mock
-  private AuthenticationHelper authenticationHelper;
+  private StockmanagementAuthenticationHelper authenticationHelper;
 
   @Mock
-  private PermissionStrings permissionStrings;
+  private StockmanagementPermissionStrings permissionStrings;
 
   @InjectMocks
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   @Mock
   private UserDto user;
@@ -309,12 +311,12 @@ public class PermissionServiceTest {
 
   @Test
   public void shouldGetPermissionStrings() {
-    PermissionStrings.Handler handler = mock(PermissionStrings.Handler.class);
+    StockmanagementPermissionStrings.Handler handler = mock(StockmanagementPermissionStrings.Handler.class);
     when(permissionStrings.forUser(any(UUID.class))).thenReturn(handler);
 
     UUID userId = randomUUID();
 
-    PermissionStrings.Handler response = permissionService.getPermissionStrings(userId);
+    StockmanagementPermissionStrings.Handler response = permissionService.getPermissionStrings(userId);
 
     assertEquals(handler, response);
     verify(permissionStrings).forUser(userId);

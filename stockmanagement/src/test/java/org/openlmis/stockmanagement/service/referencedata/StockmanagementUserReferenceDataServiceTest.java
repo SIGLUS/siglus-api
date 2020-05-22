@@ -38,7 +38,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-public class UserReferenceDataServiceTest extends BaseReferenceDataServiceTest<UserDto> {
+public class StockmanagementUserReferenceDataServiceTest extends
+    BaseReferenceDataServiceTest<UserDto> {
 
   private static final String PERMISSION_STRING = "right-name|facility-id";
   private static final String ETAG_FROM_RESPONSE = "new-etag";
@@ -47,12 +48,12 @@ public class UserReferenceDataServiceTest extends BaseReferenceDataServiceTest<U
   @Mock
   private ResponseEntity<String[]> stringArrayResponse;
 
-  private UserReferenceDataService service;
+  private StockmanagementUserReferenceDataService service;
   private UUID userId = UUID.randomUUID();
 
   @Override
   protected BaseCommunicationService<UserDto> getService() {
-    return new UserReferenceDataService();
+    return new StockmanagementUserReferenceDataService();
   }
 
   @Override
@@ -64,7 +65,7 @@ public class UserReferenceDataServiceTest extends BaseReferenceDataServiceTest<U
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    service = (UserReferenceDataService) prepareService();
+    service = (StockmanagementUserReferenceDataService) prepareService();
 
     when(restTemplate.exchange(any(String.class), any(HttpMethod.class), any(HttpEntity.class),
         any(Class.class))).thenReturn(stringArrayResponse);

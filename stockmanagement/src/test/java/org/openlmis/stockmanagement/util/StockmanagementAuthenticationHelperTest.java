@@ -33,23 +33,25 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.referencedata.RightDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.exception.AuthenticationException;
-import org.openlmis.stockmanagement.service.referencedata.RightReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.UserReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementRightReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementUserReferenceDataService;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 @RunWith(MockitoJUnitRunner.class)
-public class AuthenticationHelperTest {
+public class StockmanagementAuthenticationHelperTest {
 
   @Mock
-  private UserReferenceDataService userReferenceDataService;
+  @Qualifier("StockmanagementUserReferenceDataService")
+  private StockmanagementUserReferenceDataService userReferenceDataService;
 
   @Mock
-  private RightReferenceDataService rightReferenceDataService;
+  private StockmanagementRightReferenceDataService rightReferenceDataService;
 
   @InjectMocks
-  private AuthenticationHelper authenticationHelper;
+  private StockmanagementAuthenticationHelper authenticationHelper;
 
   private UUID userId = UUID.randomUUID();
 

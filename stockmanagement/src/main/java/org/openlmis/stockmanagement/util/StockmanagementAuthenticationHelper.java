@@ -21,20 +21,22 @@ import java.util.UUID;
 import org.openlmis.stockmanagement.dto.referencedata.RightDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.exception.AuthenticationException;
-import org.openlmis.stockmanagement.service.referencedata.RightReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.UserReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementRightReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementUserReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
-public class AuthenticationHelper {
+public class StockmanagementAuthenticationHelper {
 
   @Autowired
-  private UserReferenceDataService userReferenceDataService;
+  @Qualifier("StockmanagementUserReferenceDataService")
+  private StockmanagementUserReferenceDataService userReferenceDataService;
 
   @Autowired
-  private RightReferenceDataService rightReferenceDataService;
+  private StockmanagementRightReferenceDataService rightReferenceDataService;
 
   /**
    * Method returns current user based on Spring context
