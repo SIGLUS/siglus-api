@@ -33,7 +33,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 import org.hibernate.spatial.JTSGeometryJavaTypeDescriptor;
 import org.javers.core.metamodel.annotation.TypeName;
 import org.openlmis.referencedata.domain.ExtraDataEntity.ExtraDataExporter;
@@ -47,7 +46,7 @@ import org.openlmis.referencedata.domain.ExtraDataEntity.ExtraDataExporter;
 @NamedQueries({
     @NamedQuery(name = "GeographicZone.findIdsByParent",
         query = "SELECT DISTINCT id FROM GeographicZone WHERE parent.id = :parentId")
-    })
+})
 public class GeographicZone extends BaseEntity implements FhirLocation {
 
   @Column(nullable = false, unique = true, columnDefinition = "text")
@@ -86,7 +85,7 @@ public class GeographicZone extends BaseEntity implements FhirLocation {
   @Setter
   private Double longitude;
 
-  @Type(type = "jts_geometry")
+  @Column(columnDefinition="Geometry")
   @Getter
   @Setter
   private Polygon boundary;
@@ -190,7 +189,7 @@ public class GeographicZone extends BaseEntity implements FhirLocation {
     void setLatitude(Double latitude);
 
     void setLongitude(Double longitude);
-    
+
     void setBoundary(Polygon boundary);
 
     void setParent(GeographicZone parent);
@@ -210,7 +209,7 @@ public class GeographicZone extends BaseEntity implements FhirLocation {
     Double getLatitude();
 
     Double getLongitude();
-    
+
     Polygon getBoundary();
 
     Importer getParent();

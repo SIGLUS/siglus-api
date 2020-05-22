@@ -44,7 +44,6 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 import org.hibernate.spatial.JTSGeometryJavaTypeDescriptor;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
@@ -152,7 +151,7 @@ public class Facility extends BaseEntity implements FhirLocation {
   @Setter
   private Set<SupportedProgram> supportedPrograms = new HashSet<>();
 
-  @Type(type = "jts_geometry")
+  @Column(columnDefinition="Geometry")
   @DiffIgnore
   @Getter
   @Setter
