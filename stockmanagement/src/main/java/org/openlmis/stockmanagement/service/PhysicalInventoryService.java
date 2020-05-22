@@ -52,7 +52,7 @@ public class PhysicalInventoryService {
   private PhysicalInventoryValidator physicalInventoryValidator;
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   @Autowired
   private HomeFacilityPermissionService homeFacilityPermissionService;

@@ -33,10 +33,10 @@ import org.openlmis.stockmanagement.repository.ValidDestinationAssignmentReposit
 import org.openlmis.stockmanagement.repository.ValidSourceAssignmentRepository;
 import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
 import org.openlmis.stockmanagement.service.StockEventProcessContextBuilder;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramReferenceDataService;
 import org.openlmis.stockmanagement.util.StockEventProcessContext;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,16 +46,16 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 public abstract class BaseValidatorTest {
 
   @Mock
-  FacilityReferenceDataService facilityService;
+  StockmanagementFacilityReferenceDataService facilityService;
 
   @Mock
-  ProgramReferenceDataService programService;
+  StockmanagementProgramReferenceDataService programService;
 
   @Mock
-  OrderableReferenceDataService orderableReferenceDataService;
+  StockmanagementOrderableReferenceDataService orderableReferenceDataService;
 
   @Mock
-  LotReferenceDataService lotReferenceDataService;
+  StockmanagementLotReferenceDataService lotReferenceDataService;
 
   @Mock
   StockCardLineItemReasonRepository reasonRepository;

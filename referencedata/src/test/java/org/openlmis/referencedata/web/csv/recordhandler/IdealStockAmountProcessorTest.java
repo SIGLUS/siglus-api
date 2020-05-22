@@ -44,7 +44,7 @@ import org.openlmis.referencedata.repository.CommodityTypeRepository;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.openlmis.referencedata.repository.ProcessingPeriodRepository;
 import org.openlmis.referencedata.repository.ProcessingScheduleRepository;
-import org.openlmis.referencedata.service.IdealStockAmountService;
+import org.openlmis.referencedata.service.ReferencedataIdealStockAmountService;
 import org.openlmis.referencedata.validate.IdealStockAmountValidator;
 
 public class IdealStockAmountProcessorTest {
@@ -59,7 +59,7 @@ public class IdealStockAmountProcessorTest {
   private FacilityRepository facilityRepository;
 
   @Mock
-  private IdealStockAmountService service;
+  private ReferencedataIdealStockAmountService service;
 
   @Mock
   private ProcessingPeriodRepository processingPeriodRepository;

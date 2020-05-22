@@ -24,7 +24,7 @@ import static org.openlmis.stockmanagement.domain.reason.ReasonType.DEBIT;
 import java.util.List;
 import org.openlmis.stockmanagement.domain.reason.ReasonCategory;
 import org.openlmis.stockmanagement.domain.reason.ReasonType;
-import org.openlmis.stockmanagement.service.PermissionService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReasonConfigurationOptionsController {
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   @RequestMapping(value = "/reasonTypes", method = RequestMethod.GET)
   public List<ReasonType> getReasonTypes() {

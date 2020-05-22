@@ -27,8 +27,8 @@ import org.openlmis.referencedata.dto.GeographicZoneSimpleDto;
 import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.fhir.FhirClient;
 import org.openlmis.referencedata.repository.GeographicZoneRepository;
-import org.openlmis.referencedata.service.GeographicZoneBuilder;
-import org.openlmis.referencedata.service.GeographicZoneService;
+import org.openlmis.referencedata.service.ReferencedataGeographicZoneBuilder;
+import org.openlmis.referencedata.service.ReferencedataGeographicZoneService;
 import org.openlmis.referencedata.util.messagekeys.GeographicZoneMessageKeys;
 import org.openlmis.referencedata.validate.GeographicZoneValidator;
 import org.slf4j.ext.XLogger;
@@ -62,10 +62,10 @@ public class GeographicZoneController extends BaseController {
   private GeographicZoneRepository geographicZoneRepository;
 
   @Autowired
-  private GeographicZoneService geographicZoneService;
+  private ReferencedataGeographicZoneService geographicZoneService;
 
   @Autowired
-  private GeographicZoneBuilder geographicZoneBuilder;
+  private ReferencedataGeographicZoneBuilder geographicZoneBuilder;
 
   @Autowired
   private GeographicZoneValidator geographicZoneValidator;

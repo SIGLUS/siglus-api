@@ -27,7 +27,7 @@ import java.util.UUID;
 import org.openlmis.stockmanagement.domain.sourcedestination.Organization;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
-import org.openlmis.stockmanagement.service.PermissionService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.util.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,7 @@ public class OrganizationController {
   private OrganizationRepository organizationRepository;
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(OrganizationController.class);
 

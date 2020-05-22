@@ -36,10 +36,10 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.referencedata.SupervisoryNodeDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
-import org.openlmis.stockmanagement.i18n.MessageService;
-import org.openlmis.stockmanagement.service.notification.NotificationService;
-import org.openlmis.stockmanagement.service.referencedata.SupervisingUsersReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.openlmis.stockmanagement.i18n.StockmanagementMessageService;
+import org.openlmis.stockmanagement.service.notification.StockmanagementNotificationService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementSupervisingUsersReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementSupervisoryNodeReferenceDataService;
 import org.openlmis.stockmanagement.util.Message;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -57,16 +57,16 @@ public class StockCardNotifierTest {
   public ExpectedException exception = ExpectedException.none();
 
   @Mock
-  private MessageService messageService;
+  private StockmanagementMessageService messageService;
   
   @Mock
-  private SupervisingUsersReferenceDataService supervisingUsersReferenceDataService;
+  private StockmanagementSupervisingUsersReferenceDataService supervisingUsersReferenceDataService;
 
   @Mock
-  private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+  private StockmanagementSupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
 
   @Mock
-  private NotificationService notificationService;
+  private StockmanagementNotificationService notificationService;
 
   @InjectMocks
   private StockCardNotifier stockCardNotifier;

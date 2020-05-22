@@ -22,7 +22,7 @@ import static org.openlmis.stockmanagement.domain.card.StockCard.createStockCard
 import static org.openlmis.stockmanagement.domain.card.StockCardLineItem.createLineItemFrom;
 import static org.openlmis.stockmanagement.domain.identity.OrderableLotIdentity.identityOf;
 import static org.openlmis.stockmanagement.domain.reason.ReasonCategory.PHYSICAL_INVENTORY;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -43,15 +43,15 @@ import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
-import org.openlmis.stockmanagement.i18n.MessageService;
+import org.openlmis.stockmanagement.i18n.StockmanagementMessageService;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
 import org.openlmis.stockmanagement.service.referencedata.PermissionStringDto;
-import org.openlmis.stockmanagement.service.referencedata.PermissionStrings;
-import org.openlmis.stockmanagement.util.AuthenticationHelper;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementPermissionStrings;
+import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.slf4j.Logger;
@@ -77,19 +77,19 @@ public class StockCardService extends StockCardBaseService {
       "stockmanagement.reason.physicalInventory.";
 
   @Autowired
-  private MessageService messageService;
+  private StockmanagementMessageService messageService;
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   @Autowired
-  private OrderableReferenceDataService orderableRefDataService;
+  private StockmanagementOrderableReferenceDataService orderableRefDataService;
 
   @Autowired
-  private FacilityReferenceDataService facilityRefDataService;
+  private StockmanagementFacilityReferenceDataService facilityRefDataService;
 
   @Autowired
-  private LotReferenceDataService lotReferenceDataService;
+  private StockmanagementLotReferenceDataService lotReferenceDataService;
 
   @Autowired
   private StockCardRepository cardRepository;
@@ -98,7 +98,7 @@ public class StockCardService extends StockCardBaseService {
   private OrganizationRepository organizationRepository;
 
   @Autowired
-  private AuthenticationHelper authenticationHelper;
+  private StockmanagementAuthenticationHelper authenticationHelper;
 
   @Autowired
   private StockOnHandCalculationService calculationSoHService;
@@ -178,7 +178,7 @@ public class StockCardService extends StockCardBaseService {
       UserDto user = authenticationHelper.getCurrentUser();
       LOGGER.info("list of ids:" + ids);
 
-      PermissionStrings.Handler handler = permissionService.getPermissionStrings(user.getId());
+      StockmanagementPermissionStrings.Handler handler = permissionService.getPermissionStrings(user.getId());
       Set<PermissionStringDto> permissionStrings = handler.get();
       LOGGER.info("list of permission strings:" + permissionStrings);
 

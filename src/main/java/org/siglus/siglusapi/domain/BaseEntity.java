@@ -36,7 +36,7 @@ public abstract class BaseEntity {
   @Id
   @GeneratedValue(generator = "uuid-gen")
   @GenericGenerator(name = "uuid-gen",
-      strategy = "org.openlmis.template.domain.ConditionalUuidGenerator")
+      strategy = "org.siglus.siglusapi.domain.ConditionalUuidGenerator")
   @Type(type = UUID_TYPE)
   @Getter
   @Setter

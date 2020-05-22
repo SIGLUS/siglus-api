@@ -30,7 +30,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -42,7 +42,7 @@ abstract class BasePermissionValidatorTest {
   public MockitoRule mockitoRule = MockitoJUnit.rule();
 
   @Mock
-  AuthenticationHelper authenticationHelper;
+  RequisitionAuthenticationHelper authenticationHelper;
 
   @InjectMocks
   RightAssignmentPermissionValidator validator;

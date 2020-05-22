@@ -38,8 +38,8 @@ import org.openlmis.referencedata.repository.CountResource;
 import org.openlmis.referencedata.repository.RightRepository;
 import org.openlmis.referencedata.repository.RoleAssignmentRepository;
 import org.openlmis.referencedata.repository.RoleRepository;
-import org.openlmis.referencedata.service.RightAssignmentService;
-import org.openlmis.referencedata.service.RightService;
+import org.openlmis.referencedata.service.ReferencedataRightAssignmentService;
+import org.openlmis.referencedata.service.ReferencedataRightService;
 import org.openlmis.referencedata.testbuilder.RightDataBuilder;
 import org.openlmis.referencedata.testbuilder.RoleDataBuilder;
 import org.springframework.util.LinkedMultiValueMap;
@@ -58,10 +58,10 @@ public class RoleControllerTest {
   private RightRepository rightRepository;
 
   @Mock
-  private RightService rightService;
+  private ReferencedataRightService rightService;
   
   @Mock
-  private RightAssignmentService rightAssignmentService;
+  private ReferencedataRightAssignmentService rightAssignmentService;
 
   @InjectMocks
   private RoleController controller = new RoleController();

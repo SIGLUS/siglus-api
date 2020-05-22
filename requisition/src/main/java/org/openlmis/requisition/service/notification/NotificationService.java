@@ -21,7 +21,7 @@ import static org.openlmis.requisition.service.notification.NotificationChannelD
 import java.util.HashMap;
 import java.util.Map;
 import org.openlmis.requisition.dto.UserDto;
-import org.openlmis.requisition.service.AuthService;
+import org.openlmis.requisition.service.RequisitionAuthService;
 import org.openlmis.requisition.utils.RequestHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,7 @@ public class NotificationService {
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Autowired
-  private AuthService authService;
+  private RequisitionAuthService authService;
 
   @Value("${notification.url}")
   private String notificationUrl;

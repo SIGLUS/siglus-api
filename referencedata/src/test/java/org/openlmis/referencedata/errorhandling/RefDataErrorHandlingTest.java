@@ -33,7 +33,7 @@ import org.openlmis.referencedata.exception.IntegrityViolationException;
 import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.exception.UnauthorizedException;
 import org.openlmis.referencedata.exception.ValidationMessageException;
-import org.openlmis.referencedata.i18n.MessageService;
+import org.openlmis.referencedata.i18n.ReferencedataMessageService;
 import org.openlmis.referencedata.util.LocalizedMessage;
 import org.openlmis.referencedata.util.Message;
 import org.openlmis.referencedata.util.messagekeys.OrderableMessageKeys;
@@ -49,7 +49,7 @@ public class RefDataErrorHandlingTest {
   private static final String ERROR_MESSAGE = "error-message";
 
   @Mock
-  private MessageService messageService;
+  private ReferencedataMessageService messageService;
 
   @Mock
   private MessageSource messageSource;

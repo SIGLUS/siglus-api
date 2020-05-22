@@ -22,9 +22,9 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.FormatStyle;
 import java.util.Locale;
 import java.util.UUID;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -32,13 +32,13 @@ import org.springframework.context.i18n.LocaleContextHolder;
 public class BaseNotifier {
 
   @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private StockmanagementFacilityReferenceDataService facilityReferenceDataService;
 
   @Autowired
-  private ProgramReferenceDataService programReferenceDataService;
+  private StockmanagementProgramReferenceDataService programReferenceDataService;
 
   @Autowired
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private StockmanagementOrderableReferenceDataService orderableReferenceDataService;
 
   @Value("${email.urlToViewBinCard}")
   private String urlToViewBinCard;

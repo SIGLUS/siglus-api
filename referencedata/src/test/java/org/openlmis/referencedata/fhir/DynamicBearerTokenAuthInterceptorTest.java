@@ -25,14 +25,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.service.AuthService;
+import org.openlmis.referencedata.service.ReferencedataAuthService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DynamicBearerTokenAuthInterceptorTest {
   private static final String TOKEN = "f4f83db4-20e0-448a-a6e3-5be219bb57aa";
 
   @Mock
-  private AuthService authService;
+  private ReferencedataAuthService authService;
 
   @Mock
   private IHttpRequest request;

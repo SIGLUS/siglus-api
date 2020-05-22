@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
 import static org.openlmis.stockmanagement.testutils.DatesUtil.getBaseDate;
 import static org.openlmis.stockmanagement.testutils.DatesUtil.getBaseDateTime;
 import static org.openlmis.stockmanagement.testutils.StockEventDtoDataBuilder.createStockEventDto;
@@ -43,7 +43,7 @@ import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.dto.referencedata.RightDto;
 import org.openlmis.stockmanagement.service.notifier.StockoutNotifier;
-import org.openlmis.stockmanagement.service.referencedata.RightReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementRightReferenceDataService;
 import org.openlmis.stockmanagement.util.StockEventProcessContext;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -53,7 +53,7 @@ public class StockEventNotificationProcessorTest {
   private StockoutNotifier stockoutNotifier;
 
   @Mock
-  private RightReferenceDataService rightReferenceDataService;
+  private StockmanagementRightReferenceDataService rightReferenceDataService;
 
   @InjectMocks
   private StockEventNotificationProcessor stockEventNotificationProcessor;

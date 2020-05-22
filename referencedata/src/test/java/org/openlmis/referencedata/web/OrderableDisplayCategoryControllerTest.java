@@ -30,7 +30,7 @@ import org.openlmis.referencedata.domain.OrderableDisplayCategory;
 import org.openlmis.referencedata.domain.OrderedDisplayValue;
 import org.openlmis.referencedata.dto.OrderableDisplayCategoryDto;
 import org.openlmis.referencedata.repository.OrderableDisplayCategoryRepository;
-import org.openlmis.referencedata.service.RightService;
+import org.openlmis.referencedata.service.ReferencedataRightService;
 
 @SuppressWarnings({"PMD.UnusedPrivateField"})
 public class OrderableDisplayCategoryControllerTest {
@@ -39,7 +39,7 @@ public class OrderableDisplayCategoryControllerTest {
   private OrderableDisplayCategoryRepository repository;
 
   @Mock
-  private RightService rightService;
+  private ReferencedataRightService rightService;
 
   @InjectMocks
   private OrderableDisplayCategoryController controller;

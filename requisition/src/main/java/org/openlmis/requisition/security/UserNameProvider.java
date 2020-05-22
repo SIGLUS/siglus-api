@@ -17,7 +17,7 @@ package org.openlmis.requisition.security;
 
 import org.javers.spring.auditable.AuthorProvider;
 import org.openlmis.requisition.dto.UserDto;
-import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class UserNameProvider implements AuthorProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(UserNameProvider.class);
 
   @Autowired
-  AuthenticationHelper authenticationHelper;
+  RequisitionAuthenticationHelper authenticationHelper;
 
   @Override
   public String provide() {

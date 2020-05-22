@@ -44,8 +44,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.dto.referencedata.LotDto;
-import org.openlmis.stockmanagement.i18n.MessageService;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
+import org.openlmis.stockmanagement.i18n.StockmanagementMessageService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
 import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.util.Message.LocalizedMessage;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -59,13 +59,13 @@ public class StockoutNotifierTest {
       "/requisitions/initiate?facility={1}&program={0}&emergency={2}&supervised={3}";
 
   @Mock
-  private LotReferenceDataService lotReferenceDataService;
+  private StockmanagementLotReferenceDataService lotReferenceDataService;
 
   @Mock
   private StockCardNotifier stockCardNotifier;
 
   @Mock
-  private MessageService messageService;
+  private StockmanagementMessageService messageService;
 
   @InjectMocks
   private StockoutNotifier stockoutNotifier;

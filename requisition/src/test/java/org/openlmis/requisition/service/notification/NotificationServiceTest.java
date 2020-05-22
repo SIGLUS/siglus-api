@@ -30,7 +30,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.UserDto;
-import org.openlmis.requisition.service.AuthService;
+import org.openlmis.requisition.service.RequisitionAuthService;
 import org.openlmis.requisition.testutils.DtoGenerator;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -47,7 +47,7 @@ public class NotificationServiceTest {
   private static final String BASE_URL = "http://localhost";
 
   @Mock
-  private AuthService authService;
+  private RequisitionAuthService authService;
 
   @Mock
   private RestTemplate restTemplate;

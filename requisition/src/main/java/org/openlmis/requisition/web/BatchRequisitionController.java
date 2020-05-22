@@ -65,7 +65,7 @@ import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.errorhandling.ValidationFailure;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.i18n.MessageKeys;
-import org.openlmis.requisition.i18n.MessageService;
+import org.openlmis.requisition.i18n.RequisitionMessageService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
@@ -96,7 +96,7 @@ public class BatchRequisitionController extends BaseRequisitionController {
       BatchRequisitionController.class);
 
   @Autowired
-  private MessageService messageService;
+  private RequisitionMessageService messageService;
 
   @Autowired
   private SupervisoryNodeReferenceDataService supervisoryNodeService;

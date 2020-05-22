@@ -37,8 +37,8 @@ import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.service.JasperReportService;
-import org.openlmis.stockmanagement.service.JasperTemplateService;
-import org.openlmis.stockmanagement.service.PermissionService;
+import org.openlmis.stockmanagement.service.StockmanagementJasperTemplateService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.util.ReportUtils;
@@ -74,10 +74,10 @@ public class PhysicalInventoryController {
   private JasperReportService jasperReportService;
 
   @Autowired
-  private JasperTemplateService templateService;
+  private StockmanagementJasperTemplateService templateService;
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   @Autowired
   private PhysicalInventoryService physicalInventoryService;

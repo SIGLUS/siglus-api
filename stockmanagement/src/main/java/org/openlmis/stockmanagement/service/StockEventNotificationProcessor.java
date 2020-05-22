@@ -15,7 +15,7 @@
 
 package org.openlmis.stockmanagement.service;
 
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
 
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.card.StockCard;
@@ -24,7 +24,7 @@ import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.dto.referencedata.RightDto;
 import org.openlmis.stockmanagement.service.notifier.StockoutNotifier;
-import org.openlmis.stockmanagement.service.referencedata.RightReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementRightReferenceDataService;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -44,7 +44,7 @@ public class StockEventNotificationProcessor {
   private StockoutNotifier stockoutNotifier;
 
   @Autowired
-  private RightReferenceDataService rightReferenceDataService;
+  private StockmanagementRightReferenceDataService rightReferenceDataService;
 
   /**
    * From the stock event, check each line item's stock card and see if stock on hand has gone to

@@ -27,7 +27,7 @@ import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.repository.LotRepository;
 import org.openlmis.referencedata.repository.TradeItemRepository;
 import org.openlmis.referencedata.service.LotSearchParams;
-import org.openlmis.referencedata.service.LotService;
+import org.openlmis.referencedata.service.ReferencedataLotService;
 import org.openlmis.referencedata.util.Message;
 import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.referencedata.util.messagekeys.LotMessageKeys;
@@ -68,7 +68,7 @@ public class LotController extends BaseController {
   private LotValidator validator;
 
   @Autowired
-  private LotService lotService;
+  private ReferencedataLotService lotService;
 
   /**
    * Allows creating new Lots.

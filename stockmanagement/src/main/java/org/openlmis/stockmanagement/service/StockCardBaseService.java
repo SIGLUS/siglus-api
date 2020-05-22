@@ -27,8 +27,8 @@ import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramReferenceDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,10 +48,10 @@ public abstract class StockCardBaseService {
   private static final Logger LOGGER = LoggerFactory.getLogger(StockCardBaseService.class);
 
   @Autowired
-  private FacilityReferenceDataService facilityRefDataService;
+  private StockmanagementFacilityReferenceDataService facilityRefDataService;
 
   @Autowired
-  private ProgramReferenceDataService programRefDataService;
+  private StockmanagementProgramReferenceDataService programRefDataService;
   
   @Autowired
   protected CalculatedStockOnHandService calculatedStockOnHandService;

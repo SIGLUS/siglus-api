@@ -36,7 +36,7 @@ import org.openlmis.referencedata.repository.CommodityTypeRepository;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.openlmis.referencedata.repository.ProcessingPeriodRepository;
 import org.openlmis.referencedata.repository.ProcessingScheduleRepository;
-import org.openlmis.referencedata.service.IdealStockAmountService;
+import org.openlmis.referencedata.service.ReferencedataIdealStockAmountService;
 import org.openlmis.referencedata.util.Message;
 import org.openlmis.referencedata.util.messagekeys.ProcessingScheduleMessageKeys;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class IdealStockAmountProcessor
   private static final Logger LOGGER = LoggerFactory.getLogger(IdealStockAmountProcessor.class);
 
   @Autowired
-  private IdealStockAmountService idealStockAmountService;
+  private ReferencedataIdealStockAmountService idealStockAmountService;
 
   @Autowired
   private FacilityRepository facilityRepository;

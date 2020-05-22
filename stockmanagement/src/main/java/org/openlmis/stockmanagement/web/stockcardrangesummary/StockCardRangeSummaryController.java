@@ -17,7 +17,7 @@ package org.openlmis.stockmanagement.web.stockcardrangesummary;
 
 import java.util.Map;
 import java.util.UUID;
-import org.openlmis.stockmanagement.service.PermissionService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.service.StockCardAggregate;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.slf4j.Logger;
@@ -47,7 +47,7 @@ public class StockCardRangeSummaryController {
   private StockCardRangeSummaryBuilder builder;
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   /**
    * Get stock card range summaries by program and facility.

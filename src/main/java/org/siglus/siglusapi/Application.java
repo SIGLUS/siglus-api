@@ -15,30 +15,71 @@
 
 package org.siglus.siglusapi;
 
+import com.google.gson.internal.bind.TypeAdapters;
+import java.time.Clock;
+import java.time.ZoneId;
 import java.util.Locale;
 import org.flywaydb.core.api.callback.FlywayCallback;
+import org.javers.core.Javers;
+import org.javers.core.MappingStyle;
+import org.javers.core.diff.ListCompareAlgorithm;
+import org.javers.hibernate.integration.HibernateUnproxyObjectAccessHook;
+import org.javers.repository.sql.ConnectionProvider;
+import org.javers.repository.sql.DialectName;
+import org.javers.repository.sql.JaversSqlRepository;
+import org.javers.repository.sql.SqlRepositoryBuilder;
+import org.javers.spring.boot.sql.JaversSqlProperties;
+import org.javers.spring.jpa.TransactionalJaversBuilder;
+import org.openlmis.referencedata.validate.ProcessingPeriodValidator;
+import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.PropertySources;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 
 @SpringBootApplication
 @EnableAsync
-@ComponentScan(basePackages = {"org.siglus.siglusapi", "org.openlmis.*"})
+@ComponentScan(basePackages = {"org.siglus", "org.openlmis"})
+@EntityScan(basePackages = {"org.siglus", "org.openlmis"})
+@EnableJpaRepositories(basePackages = {"org.siglus", "org.openlmis"})
+@PropertySources({
+    @PropertySource("classpath:application.properties"),
+    @PropertySource("classpath:referencedata-application.properties"),
+    @PropertySource("classpath:stockmanagement-application.properties"),
+    @PropertySource("classpath:requisition-application.properties")
+})
 public class Application {
   private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
   @Value("${defaultLocale}")
   private Locale locale;
+
+  @Autowired
+  private DialectName dialectName;
+
+  @Autowired
+  private JaversSqlProperties javersProperties;
+
+  @Value("${spring.jpa.properties.hibernate.default_schema}")
+  private String preferredSchema;
+
+  @Value("${time.zoneId}")
+  private String timeZoneId;
 
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
@@ -90,5 +131,81 @@ public class Application {
     messageSource.setUseCodeAsDefaultMessage(true);
     return messageSource;
   }
+
+
+  // copy from requisition Application.java start
+  @Bean
+  public ProcessingPeriodValidator beforeCreatePeriodValidator() {
+    return new ProcessingPeriodValidator();
+  }
+
+  @Bean
+  public ProcessingPeriodValidator beforeSavePeriodValidator() {
+    return new ProcessingPeriodValidator();
+  }
+
+  /**
+   * Creates new MessageSource.
+   *
+   * @return Created MessageSource.
+   */
+  @Bean
+  public RequisitionExposedMessageSourceImpl requisitionMessageSource() {
+    RequisitionExposedMessageSourceImpl messageSource = new RequisitionExposedMessageSourceImpl();
+    messageSource.setBasename("classpath:messages");
+    messageSource.setDefaultEncoding("UTF-8");
+    messageSource.setUseCodeAsDefaultMessage(true);
+    return messageSource;
+  }
+
+  @Bean
+  public Clock clock() {
+    return Clock.system(ZoneId.of(timeZoneId));
+  }
+  // copy from requisition Application.java end
+
+  // copy from referencedata Application.java start
+  /**
+   * Create and return an instance of JaVers precisely configured as necessary.
+   * This is particularly helpful for getting JaVers to create and use tables
+   * within a particular schema (specified via the withSchema method).
+   *
+   * @See <a href="https://github.com/javers/javers/blob/master/javers-spring-boot-starter-sql/src
+   * /main/java/org/javers/spring/boot/sql/JaversSqlAutoConfiguration.java">
+   * JaversSqlAutoConfiguration.java</a> for the default configuration upon which this code is based
+   */
+  @Bean
+  public Javers javersProvider(ConnectionProvider connectionProvider,
+      PlatformTransactionManager transactionManager) {
+    JaversSqlRepository sqlRepository = SqlRepositoryBuilder
+        .sqlRepository()
+        .withConnectionProvider(connectionProvider)
+        .withDialect(dialectName)
+        .withSchema(preferredSchema)
+        .build();
+
+    // ReferencedataJaVersDateProvider customDateProvider = new ReferencedataJaVersDateProvider();
+
+    return TransactionalJaversBuilder
+        .javers()
+        .withTxManager(transactionManager)
+        .registerJaversRepository(sqlRepository)
+        .withObjectAccessHook(new HibernateUnproxyObjectAccessHook())
+        .withListCompareAlgorithm(
+            ListCompareAlgorithm.valueOf(javersProperties.getAlgorithm().toUpperCase()))
+        .withMappingStyle(
+            MappingStyle.valueOf(javersProperties.getMappingStyle().toUpperCase()))
+        .withNewObjectsSnapshot(javersProperties.isNewObjectSnapshot())
+        .withPrettyPrint(javersProperties.isPrettyPrint())
+        .withTypeSafeValues(javersProperties.isTypeSafeValues())
+        .withPackagesToScan(javersProperties.getPackagesToScan())
+        // .withDateTimeProvider(customDateProvider)
+        .registerValueGsonTypeAdapter(double.class, TypeAdapters.DOUBLE)
+        .registerValueGsonTypeAdapter(Double.class, TypeAdapters.DOUBLE)
+        .registerValueGsonTypeAdapter(float.class, TypeAdapters.FLOAT)
+        .registerValueGsonTypeAdapter(Float.class, TypeAdapters.FLOAT)
+        .build();
+  }
+  // copy from referencedata Application.java end
 
 }

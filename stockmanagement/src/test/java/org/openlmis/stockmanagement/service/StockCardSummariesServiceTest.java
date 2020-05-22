@@ -56,11 +56,11 @@ import org.openlmis.stockmanagement.dto.referencedata.OrderableFulfillDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.OrderableFulfillReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableFulfillReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramReferenceDataService;
 import org.openlmis.stockmanagement.testutils.CalculatedStockOnHandDataBuilder;
 import org.openlmis.stockmanagement.testutils.OrderableDtoDataBuilder;
 import org.openlmis.stockmanagement.testutils.OrderableFulfillDtoDataBuilder;
@@ -73,21 +73,21 @@ import org.openlmis.stockmanagement.util.Message;
 public class StockCardSummariesServiceTest {
 
   @Mock
-  private OrderableFulfillReferenceDataService orderableFulfillReferenceDataService;
+  private StockmanagementOrderableFulfillReferenceDataService orderableFulfillReferenceDataService;
 
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
-
-  @Mock
-  @SuppressWarnings("PMD")
-  private FacilityReferenceDataService facilityRefDataService;
+  private StockmanagementOrderableReferenceDataService orderableReferenceDataService;
 
   @Mock
   @SuppressWarnings("PMD")
-  private ProgramReferenceDataService programRefDataService;
+  private StockmanagementFacilityReferenceDataService facilityRefDataService;
 
   @Mock
-  private LotReferenceDataService lotReferenceDataService;
+  @SuppressWarnings("PMD")
+  private StockmanagementProgramReferenceDataService programRefDataService;
+
+  @Mock
+  private StockmanagementLotReferenceDataService lotReferenceDataService;
 
   @Mock
   private CalculatedStockOnHandService calculatedStockOnHandService;
@@ -96,7 +96,7 @@ public class StockCardSummariesServiceTest {
   private StockCardRepository cardRepository;
 
   @Mock
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   @Mock
   private CalculatedStockOnHandRepository calculatedStockOnHandRepository;

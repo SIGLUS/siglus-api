@@ -17,7 +17,7 @@ package org.openlmis.referencedata.testbuilder;
 
 import java.util.UUID;
 import org.openlmis.referencedata.domain.Program;
-import org.openlmis.referencedata.domain.StockAdjustmentReason;
+import org.openlmis.referencedata.domain.ReferencedataStockAdjustmentReason;
 
 public class StockAdjustmentReasonDataBuilder {
 
@@ -45,17 +45,17 @@ public class StockAdjustmentReasonDataBuilder {
   }
 
   /**
-   * Builds instance of {@link StockAdjustmentReason} without id field.
+   * Builds instance of {@link ReferencedataStockAdjustmentReason} without id field.
    */
-  public StockAdjustmentReason buildAsNew() {
-    return new StockAdjustmentReason(program, name, description, additive, displayOrder);
+  public ReferencedataStockAdjustmentReason buildAsNew() {
+    return new ReferencedataStockAdjustmentReason(program, name, description, additive, displayOrder);
   }
 
   /**
-   * Builds instance of {@link StockAdjustmentReason}.
+   * Builds instance of {@link ReferencedataStockAdjustmentReason}.
    */
-  public StockAdjustmentReason build() {
-    StockAdjustmentReason reason = buildAsNew();
+  public ReferencedataStockAdjustmentReason build() {
+    ReferencedataStockAdjustmentReason reason = buildAsNew();
     reason.setId(id);
 
     return reason;

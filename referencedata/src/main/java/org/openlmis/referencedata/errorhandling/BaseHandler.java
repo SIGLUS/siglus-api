@@ -15,7 +15,7 @@
 
 package org.openlmis.referencedata.errorhandling;
 
-import org.openlmis.referencedata.i18n.MessageService;
+import org.openlmis.referencedata.i18n.ReferencedataMessageService;
 import org.openlmis.referencedata.util.LocalizedMessage;
 import org.openlmis.referencedata.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 public class BaseHandler {
 
   @Autowired
-  private MessageService messageService;
+  private ReferencedataMessageService messageService;
 
   /**
    * Translate a Message into a LocalizedMessage.

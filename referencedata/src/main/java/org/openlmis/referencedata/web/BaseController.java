@@ -35,7 +35,7 @@ import org.javers.repository.jql.QueryBuilder;
 import org.openlmis.referencedata.domain.BaseEntity;
 import org.openlmis.referencedata.exception.ValidationMessageException;
 import org.openlmis.referencedata.service.ObjectReferenceExpander;
-import org.openlmis.referencedata.service.RightService;
+import org.openlmis.referencedata.service.ReferencedataRightService;
 import org.openlmis.referencedata.util.Message;
 import org.openlmis.referencedata.util.Pagination;
 import org.slf4j.profiler.Profiler;
@@ -58,7 +58,7 @@ public abstract class BaseController {
   public static final String API_PATH = "/api";
 
   @Autowired
-  RightService rightService;
+  ReferencedataRightService rightService;
 
   @Resource(name = "javersProvider")
   private Javers javers;

@@ -46,7 +46,7 @@ import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.UserDto;
-import org.openlmis.requisition.i18n.MessageService;
+import org.openlmis.requisition.i18n.RequisitionMessageService;
 import org.openlmis.requisition.service.notification.NotificationService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
@@ -54,7 +54,7 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
 import org.openlmis.requisition.testutils.DtoGenerator;
 import org.openlmis.requisition.testutils.UserDtoDataBuilder;
-import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.web.RequisitionForConvertBuilder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -84,7 +84,7 @@ public class ApprovedRequisitionNotifierTest {
   private NotificationService notificationService;
 
   @Mock
-  private AuthenticationHelper authenticationHelper;
+  private RequisitionAuthenticationHelper authenticationHelper;
 
   @Mock
   private ProgramReferenceDataService programReferenceDataService;
@@ -93,7 +93,7 @@ public class ApprovedRequisitionNotifierTest {
   private PeriodReferenceDataService periodReferenceDataService;
 
   @Mock
-  private MessageService messageService;
+  private RequisitionMessageService messageService;
 
   @Mock
   private RequisitionForConvertBuilder requisitionForConvertBuilder;

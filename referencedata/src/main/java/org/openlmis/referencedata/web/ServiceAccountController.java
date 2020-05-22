@@ -27,7 +27,7 @@ import org.openlmis.referencedata.dto.ServiceAccountDto;
 import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.exception.ValidationMessageException;
 import org.openlmis.referencedata.repository.ServiceAccountRepository;
-import org.openlmis.referencedata.service.AuthenticationHelper;
+import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.referencedata.util.messagekeys.ServiceAccountMessageKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,7 @@ public class ServiceAccountController extends BaseController {
   private ServiceAccountRepository serviceAccountRepository;
 
   @Autowired
-  private AuthenticationHelper authenticationHelper;
+  private ReferencedataAuthenticationHelper authenticationHelper;
 
   /**
    * Allows creating new service account.

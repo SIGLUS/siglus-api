@@ -36,7 +36,7 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.testutils.DtoGenerator;
 import org.openlmis.requisition.testutils.ReleasableRequisitionBatchDtoDataBuilder;
-import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 
 public class BatchRequisitionControllerTest {
 
@@ -44,7 +44,7 @@ public class BatchRequisitionControllerTest {
   RequisitionService requisitionService;
 
   @Mock
-  AuthenticationHelper authenticationHelper;
+  RequisitionAuthenticationHelper authenticationHelper;
 
   @Mock
   PermissionService permissionService;

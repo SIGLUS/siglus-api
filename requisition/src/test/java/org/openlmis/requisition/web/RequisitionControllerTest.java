@@ -132,7 +132,7 @@ import org.openlmis.requisition.testutils.RequisitionPeriodDtoDataBuilder;
 import org.openlmis.requisition.testutils.SupervisoryNodeDtoDataBuilder;
 import org.openlmis.requisition.testutils.SupplyLineDtoDataBuilder;
 import org.openlmis.requisition.testutils.SupportedProgramDtoDataBuilder;
-import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.utils.DateHelper;
 import org.openlmis.requisition.utils.DatePhysicalStockCountCompletedEnabledPredicate;
 import org.openlmis.requisition.utils.Message;
@@ -192,7 +192,7 @@ public class RequisitionControllerTest {
   private FacilitySupportsProgramHelper facilitySupportsProgramHelper;
 
   @Mock
-  private AuthenticationHelper authenticationHelper;
+  private RequisitionAuthenticationHelper authenticationHelper;
 
   @Mock
   private OrderableReferenceDataService orderableReferenceDataService;

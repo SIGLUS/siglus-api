@@ -17,7 +17,7 @@ package org.openlmis.referencedata.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.openlmis.referencedata.domain.StockAdjustmentReason;
+import org.openlmis.referencedata.domain.ReferencedataStockAdjustmentReason;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -25,17 +25,17 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
 public interface StockAdjustmentReasonRepository
-        extends PagingAndSortingRepository<StockAdjustmentReason, UUID>,
-        BaseAuditableRepository<StockAdjustmentReason, UUID> {
+        extends PagingAndSortingRepository<ReferencedataStockAdjustmentReason, UUID>,
+        BaseAuditableRepository<ReferencedataStockAdjustmentReason, UUID> {
 
   @Override
-  <S extends StockAdjustmentReason> S save(S entity);
+  <S extends ReferencedataStockAdjustmentReason> S save(S entity);
 
   @Override
-  <S extends StockAdjustmentReason> Iterable<S> save(Iterable<S> entities);
+  <S extends ReferencedataStockAdjustmentReason> Iterable<S> save(Iterable<S> entities);
 
-  @Query("SELECT r FROM StockAdjustmentReason r WHERE r.program.id = :programId")
-  List<StockAdjustmentReason> findByProgramId(@Param("programId") UUID programId);
+  @Query("SELECT r FROM ReferencedataStockAdjustmentReason r WHERE r.program.id = :programId")
+  List<ReferencedataStockAdjustmentReason> findByProgramId(@Param("programId") UUID programId);
 
   @Query(value = "SELECT\n"
       + "    sar.*\n"
@@ -53,6 +53,6 @@ public interface StockAdjustmentReasonRepository
       + "    )\n"
       + " ORDER BY ?#{#pageable}",
       nativeQuery = true)
-  Page<StockAdjustmentReason> findAllWithoutSnapshots(Pageable pageable);
+  Page<ReferencedataStockAdjustmentReason> findAllWithoutSnapshots(Pageable pageable);
 }
 

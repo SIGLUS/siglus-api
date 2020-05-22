@@ -26,8 +26,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.openlmis.stockmanagement.domain.JasperTemplate;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
-import org.openlmis.stockmanagement.service.JasperTemplateService;
-import org.openlmis.stockmanagement.service.PermissionService;
+import org.openlmis.stockmanagement.service.StockmanagementJasperTemplateService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.util.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,10 +56,10 @@ public class PhysicalInventoryTemplateController {
   private static final String CONSISTENCY_REPORT = "Consistency Report";
 
   @Autowired
-  private JasperTemplateService templateService;
+  private StockmanagementJasperTemplateService templateService;
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   /**
    * Add Physical Inventory report templates with ".jrxml" format(extension) to database, remove

@@ -28,7 +28,7 @@ import org.openlmis.referencedata.exception.ValidationMessageException;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.openlmis.referencedata.repository.ProcessingScheduleRepository;
 import org.openlmis.referencedata.repository.ProgramRepository;
-import org.openlmis.referencedata.service.RequisitionGroupProgramScheduleService;
+import org.openlmis.referencedata.service.ReferencedataRequisitionGroupProgramScheduleService;
 import org.openlmis.referencedata.util.Message;
 import org.openlmis.referencedata.util.messagekeys.FacilityMessageKeys;
 import org.openlmis.referencedata.util.messagekeys.ProcessingScheduleMessageKeys;
@@ -63,7 +63,8 @@ public class ProcessingScheduleController extends BaseController {
 
 
   @Autowired
-  private RequisitionGroupProgramScheduleService requisitionGroupProgramScheduleService;
+  private ReferencedataRequisitionGroupProgramScheduleService
+      requisitionGroupProgramScheduleService;
 
   @Autowired
   private ProgramRepository programRepository;

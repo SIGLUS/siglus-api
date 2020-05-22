@@ -45,11 +45,11 @@ import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.repository.ValidDestinationAssignmentRepository;
 import org.openlmis.stockmanagement.repository.ValidSourceAssignmentRepository;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.stockmanagement.util.AuthenticationHelper;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramReferenceDataService;
+import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.openlmis.stockmanagement.util.LazyGrouping;
 import org.openlmis.stockmanagement.util.LazyList;
 import org.openlmis.stockmanagement.util.LazyResource;
@@ -77,19 +77,19 @@ public class StockEventProcessContextBuilder {
   private static final XLogger XLOGGER = getXLogger(StockEventProcessContextBuilder.class);
 
   @Autowired
-  private AuthenticationHelper authenticationHelper;
+  private StockmanagementAuthenticationHelper authenticationHelper;
 
   @Autowired
-  private FacilityReferenceDataService facilityService;
+  private StockmanagementFacilityReferenceDataService facilityService;
 
   @Autowired
-  private ProgramReferenceDataService programService;
+  private StockmanagementProgramReferenceDataService programService;
 
   @Autowired
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private StockmanagementOrderableReferenceDataService orderableReferenceDataService;
 
   @Autowired
-  private LotReferenceDataService lotReferenceDataService;
+  private StockmanagementLotReferenceDataService lotReferenceDataService;
 
   @Autowired
   private StockCardLineItemReasonRepository reasonRepository;

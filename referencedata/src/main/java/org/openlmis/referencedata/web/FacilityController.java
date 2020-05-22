@@ -39,9 +39,9 @@ import org.openlmis.referencedata.fhir.FhirClient;
 import org.openlmis.referencedata.repository.FacilityRepository;
 import org.openlmis.referencedata.repository.FacilityTypeApprovedProductRepository;
 import org.openlmis.referencedata.repository.OrderableRepository;
-import org.openlmis.referencedata.service.FacilityBuilder;
-import org.openlmis.referencedata.service.FacilityService;
-import org.openlmis.referencedata.service.RightAssignmentService;
+import org.openlmis.referencedata.service.ReferencedataFacilityBuilder;
+import org.openlmis.referencedata.service.ReferencedataFacilityService;
+import org.openlmis.referencedata.service.ReferencedataRightAssignmentService;
 import org.openlmis.referencedata.util.messagekeys.FacilityMessageKeys;
 import org.openlmis.referencedata.validate.FacilityValidator;
 import org.slf4j.ext.XLogger;
@@ -88,19 +88,19 @@ public class FacilityController extends BaseController {
   private OrderableRepository orderableRepository;
 
   @Autowired
-  private FacilityService facilityService;
+  private ReferencedataFacilityService facilityService;
 
   @Autowired
   private FacilityValidator facilityValidator;
 
   @Autowired
-  private RightAssignmentService rightAssignmentService;
+  private ReferencedataRightAssignmentService rightAssignmentService;
 
   @Autowired
   private FhirClient fhirClient;
 
   @Autowired
-  private FacilityBuilder facilityBuilder;
+  private ReferencedataFacilityBuilder facilityBuilder;
 
   /**
    * Allows creating new facilities. If the id is specified, it will be ignored.

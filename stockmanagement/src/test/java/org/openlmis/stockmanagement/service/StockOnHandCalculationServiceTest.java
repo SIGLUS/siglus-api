@@ -44,7 +44,7 @@ import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
 import org.openlmis.stockmanagement.testutils.StockCardLineItemReasonDataBuilder;
 
 @SuppressWarnings("PMD.TooManyMethods")
@@ -55,7 +55,7 @@ public class StockOnHandCalculationServiceTest {
   public ExpectedException expectedException = none();
 
   @Mock
-  private OrderableReferenceDataService orderableService;
+  private StockmanagementOrderableReferenceDataService orderableService;
 
   @InjectMocks
   private StockOnHandCalculationService stockOnHandCalculationService;

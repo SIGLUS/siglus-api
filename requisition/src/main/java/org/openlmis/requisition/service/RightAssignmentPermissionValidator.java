@@ -19,7 +19,7 @@ import org.openlmis.requisition.dto.ResultDto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
-import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 class RightAssignmentPermissionValidator extends BasePermissionValidator {
 
   @Autowired
-  private AuthenticationHelper authenticationHelper;
+  private RequisitionAuthenticationHelper authenticationHelper;
 
   @Autowired
   private UserReferenceDataService userReferenceDataService;

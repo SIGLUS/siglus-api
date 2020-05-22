@@ -34,7 +34,7 @@ import org.openlmis.referencedata.repository.CountResource;
 import org.openlmis.referencedata.repository.RightRepository;
 import org.openlmis.referencedata.repository.RoleAssignmentRepository;
 import org.openlmis.referencedata.repository.RoleRepository;
-import org.openlmis.referencedata.service.RightAssignmentService;
+import org.openlmis.referencedata.service.ReferencedataRightAssignmentService;
 import org.openlmis.referencedata.util.messagekeys.RoleMessageKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +71,7 @@ public class RoleController extends BaseController {
   private RightRepository rightRepository;
   
   @Autowired
-  private RightAssignmentService rightAssignmentService;
+  private ReferencedataRightAssignmentService rightAssignmentService;
 
   /**
    * Get all roles in the system.

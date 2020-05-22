@@ -29,7 +29,7 @@ import org.openlmis.stockmanagement.domain.common.VvmApplicable;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class VvmValidatorTest {
@@ -37,7 +37,7 @@ public class VvmValidatorTest {
   private static final String ERROR_MESSAGE = "message";
 
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private StockmanagementOrderableReferenceDataService orderableReferenceDataService;
 
   @InjectMocks
   private VvmValidator validator;

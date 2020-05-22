@@ -35,7 +35,7 @@ import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.exception.ValidationMessageException;
 import org.openlmis.referencedata.repository.FacilityTypeApprovedProductRepository;
 import org.openlmis.referencedata.repository.OrderableRepository;
-import org.openlmis.referencedata.service.FacilityTypeApprovedProductBuilder;
+import org.openlmis.referencedata.service.ReferencedataFacilityTypeApprovedProductBuilder;
 import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.referencedata.util.UuidUtil;
 import org.openlmis.referencedata.util.messagekeys.FacilityTypeApprovedProductMessageKeys;
@@ -78,7 +78,7 @@ public class FacilityTypeApprovedProductController extends BaseController {
   private OrderableRepository orderableRepository;
 
   @Autowired
-  private FacilityTypeApprovedProductBuilder facilityTypeApprovedProductBuilder;
+  private ReferencedataFacilityTypeApprovedProductBuilder facilityTypeApprovedProductBuilder;
 
   /**
    * Allows creating new facilityTypeApprovedProduct.

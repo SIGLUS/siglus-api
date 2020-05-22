@@ -27,7 +27,7 @@ import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
 import org.openlmis.stockmanagement.util.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public class StockOnHandCalculationService {
       .getLogger(StockOnHandCalculationService.class);
 
   @Autowired
-  private OrderableReferenceDataService orderableService;
+  private StockmanagementOrderableReferenceDataService orderableService;
 
   /**
    * Returns stock card with updated Stock on Hand value.

@@ -51,16 +51,14 @@ public final class SupplyPartnerAssociation extends BaseEntity {
   private SupervisoryNode supervisoryNode;
 
   @ManyToMany
-  @JoinTable(name = "supply_partner_association_facilities",
-      schema = "referencedata",
+  @JoinTable(name = "supply_partner_association_facilities", schema = "referencedata",
       joinColumns = @JoinColumn(name = "supplyPartnerAssociationId", nullable = false),
       inverseJoinColumns = @JoinColumn(name = "facilityId", nullable = false))
   @BatchSize(size = 25)
   private Set<Facility> facilities = Sets.newHashSet();
 
   @ManyToMany
-  @JoinTable(name = "supply_partner_association_orderables",
-      schema = "referencedata",
+  @JoinTable(name = "supply_partner_association_orderables", schema = "referencedata",
       joinColumns = @JoinColumn(name = "supplyPartnerAssociationId", nullable = false),
       inverseJoinColumns = {
           @JoinColumn(name = "orderableId", nullable = false),

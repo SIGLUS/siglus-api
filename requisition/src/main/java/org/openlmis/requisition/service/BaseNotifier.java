@@ -24,7 +24,7 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.FormatStyle;
 import java.util.Locale;
 import org.openlmis.requisition.domain.requisition.Requisition;
-import org.openlmis.requisition.i18n.MessageService;
+import org.openlmis.requisition.i18n.RequisitionMessageService;
 import org.openlmis.requisition.utils.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -32,7 +32,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 public class BaseNotifier {
 
   @Autowired
-  protected MessageService messageService;
+  protected RequisitionMessageService messageService;
 
   protected String getMessage(String key, Locale locale) {
     return messageService

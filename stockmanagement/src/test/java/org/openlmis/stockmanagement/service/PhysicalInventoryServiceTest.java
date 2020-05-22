@@ -70,7 +70,7 @@ public class PhysicalInventoryServiceTest {
   private HomeFacilityPermissionService homeFacilityPermissionService;
 
   @Mock
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   @Mock
   private CalculatedStockOnHandService calculatedStockOnHandService;

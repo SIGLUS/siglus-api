@@ -28,7 +28,7 @@ import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
-import org.openlmis.stockmanagement.service.PermissionService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.service.StockCardLineItemReasonService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +54,7 @@ public class StockCardLineItemReasonController extends BaseController {
   private StockCardLineItemReasonRepository reasonRepository;
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   /**
    * Create a new stock card line item reason. If the ID is specified, ID will be ignored.

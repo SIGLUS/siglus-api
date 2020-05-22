@@ -45,9 +45,9 @@ import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableFulfillDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.OrderableFulfillReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableFulfillReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -69,13 +69,13 @@ public class StockCardSummariesService extends StockCardBaseService {
   private static final Logger LOGGER = LoggerFactory.getLogger(StockCardSummariesService.class);
 
   @Autowired
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private StockmanagementOrderableReferenceDataService orderableReferenceDataService;
 
   @Autowired
-  private OrderableFulfillReferenceDataService orderableFulfillService;
+  private StockmanagementOrderableFulfillReferenceDataService orderableFulfillService;
 
   @Autowired
-  private LotReferenceDataService lotReferenceDataService;
+  private StockmanagementLotReferenceDataService lotReferenceDataService;
 
   @Autowired
   private StockCardRepository stockCardRepository;
@@ -84,7 +84,7 @@ public class StockCardSummariesService extends StockCardBaseService {
   private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   /**
    * Get a map of stock cards assigned to orderable ids.

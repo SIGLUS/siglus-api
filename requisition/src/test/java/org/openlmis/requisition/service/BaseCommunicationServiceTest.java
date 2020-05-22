@@ -81,7 +81,7 @@ public abstract class BaseCommunicationServiceTest<T> {
   protected RestTemplate restTemplate;
 
   @Mock
-  private AuthService authService;
+  private RequisitionAuthService authService;
 
   @Captor
   protected ArgumentCaptor<URI> uriCaptor;

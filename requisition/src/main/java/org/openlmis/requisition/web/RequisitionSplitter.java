@@ -34,7 +34,7 @@ import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.SupplyPartnerAssociationDto;
 import org.openlmis.requisition.dto.SupplyPartnerDto;
 import org.openlmis.requisition.dto.TogglzFeatureDto;
-import org.openlmis.requisition.i18n.MessageService;
+import org.openlmis.requisition.i18n.RequisitionMessageService;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupplyPartnerReferenceDataService;
@@ -60,7 +60,7 @@ class RequisitionSplitter {
   private RequisitionRepository requisitionRepository;
 
   @Autowired
-  private MessageService messageService;
+  private RequisitionMessageService messageService;
 
   /**
    * Splits the given requisition into parts based on associations from supply partners. After the

@@ -16,7 +16,7 @@
 package org.openlmis.stockmanagement.errorhandling;
 
 import org.openlmis.stockmanagement.exception.BaseMessageException;
-import org.openlmis.stockmanagement.i18n.MessageService;
+import org.openlmis.stockmanagement.i18n.StockmanagementMessageService;
 import org.openlmis.stockmanagement.util.ErrorResponse;
 import org.openlmis.stockmanagement.util.Message;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public abstract class AbstractErrorHandling {
   protected Logger logger = LoggerFactory.getLogger(getClass());
 
   @Autowired
-  private MessageService messageService;
+  private StockmanagementMessageService messageService;
 
   /**
    * Translate a Message into a LocalizedMessage.

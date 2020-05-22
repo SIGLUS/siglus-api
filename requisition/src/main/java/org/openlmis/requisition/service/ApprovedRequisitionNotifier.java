@@ -38,7 +38,7 @@ import org.openlmis.requisition.service.referencedata.FacilityReferenceDataServi
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
-import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionForConvertBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,7 +59,7 @@ public class ApprovedRequisitionNotifier extends BaseNotifier {
   private NotificationService notificationService;
 
   @Autowired
-  private AuthenticationHelper authenticationHelper;
+  private RequisitionAuthenticationHelper authenticationHelper;
 
   @Autowired
   private ProgramReferenceDataService programReferenceDataService;

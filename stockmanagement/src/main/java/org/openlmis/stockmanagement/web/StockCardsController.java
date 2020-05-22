@@ -21,7 +21,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.StockCardDto;
-import org.openlmis.stockmanagement.service.PermissionService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.service.StockCardService;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.util.UuidUtil;
@@ -44,7 +44,7 @@ public class StockCardsController {
   private static final Logger LOGGER = LoggerFactory.getLogger(StockCardsController.class);
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   @Autowired
   private StockCardService stockCardService;

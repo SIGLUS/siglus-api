@@ -39,7 +39,7 @@ import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableChildDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
 import org.openlmis.stockmanagement.testutils.StockEventDtoDataBuilder;
 import org.openlmis.stockmanagement.testutils.StockEventLineItemDtoDataBuilder;
 import org.openlmis.stockmanagement.util.StockEventProcessContext;
@@ -53,7 +53,7 @@ public class UnpackKitValidatorTest {
       .fromString("a80d090b-56c3-4fa6-8403-a40da8323199");
 
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private StockmanagementOrderableReferenceDataService orderableReferenceDataService;
 
   @Mock
   private StockEventProcessContext context;

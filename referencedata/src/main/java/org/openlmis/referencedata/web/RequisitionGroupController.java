@@ -29,8 +29,8 @@ import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.exception.ValidationMessageException;
 import org.openlmis.referencedata.repository.RequisitionGroupRepository;
 import org.openlmis.referencedata.repository.SupervisoryNodeRepository;
-import org.openlmis.referencedata.service.RequisitionGroupService;
-import org.openlmis.referencedata.service.RightAssignmentService;
+import org.openlmis.referencedata.service.ReferencedataRequisitionGroupService;
+import org.openlmis.referencedata.service.ReferencedataRightAssignmentService;
 import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.referencedata.util.messagekeys.RequisitionGroupMessageKeys;
 import org.openlmis.referencedata.validate.RequisitionGroupValidator;
@@ -75,10 +75,10 @@ public class RequisitionGroupController extends BaseController {
   private RequisitionGroupRepository requisitionGroupRepository;
 
   @Autowired
-  private RequisitionGroupService requisitionGroupService;
+  private ReferencedataRequisitionGroupService requisitionGroupService;
 
   @Autowired
-  private RightAssignmentService rightAssignmentService;
+  private ReferencedataRightAssignmentService rightAssignmentService;
 
   @Autowired
   private SupervisoryNodeRepository supervisoryNodeRepository;

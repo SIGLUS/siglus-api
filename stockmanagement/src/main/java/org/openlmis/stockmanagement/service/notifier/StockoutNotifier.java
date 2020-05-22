@@ -28,8 +28,8 @@ import java.util.UUID;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.dto.referencedata.LotDto;
-import org.openlmis.stockmanagement.i18n.MessageService;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
+import org.openlmis.stockmanagement.i18n.StockmanagementMessageService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
 import org.openlmis.stockmanagement.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,10 +39,10 @@ import org.springframework.stereotype.Component;
 public class StockoutNotifier {
 
   @Autowired
-  private LotReferenceDataService lotReferenceDataService;
+  private StockmanagementLotReferenceDataService lotReferenceDataService;
 
   @Autowired
-  private MessageService messageService;
+  private StockmanagementMessageService messageService;
   
   @Autowired
   private StockCardNotifier stockCardNotifier;

@@ -32,12 +32,12 @@ import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramReferenceDataService;
 import org.openlmis.stockmanagement.testutils.StockEventDtoDataBuilder;
-import org.openlmis.stockmanagement.util.AuthenticationHelper;
+import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.openlmis.stockmanagement.util.StockEventProcessContext;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -51,19 +51,19 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 public class StockEventProcessContextBuilderTest {
 
   @Mock
-  private AuthenticationHelper authenticationHelper;
+  private StockmanagementAuthenticationHelper authenticationHelper;
 
   @Mock
-  private FacilityReferenceDataService facilityService;
+  private StockmanagementFacilityReferenceDataService facilityService;
 
   @Mock
-  private ProgramReferenceDataService programService;
+  private StockmanagementProgramReferenceDataService programService;
 
   @Mock
-  private LotReferenceDataService lotReferenceDataService;
+  private StockmanagementLotReferenceDataService lotReferenceDataService;
 
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private StockmanagementOrderableReferenceDataService orderableReferenceDataService;
 
   @Mock
   private SecurityContext securityContext;

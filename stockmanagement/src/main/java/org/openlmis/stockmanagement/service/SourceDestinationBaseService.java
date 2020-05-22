@@ -33,8 +33,8 @@ import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.repository.NodeRepository;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
 import org.openlmis.stockmanagement.repository.SourceDestinationAssignmentRepository;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.ProgramFacilityTypeExistenceService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramFacilityTypeExistenceService;
 import org.openlmis.stockmanagement.util.Message;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,10 +45,10 @@ import org.springframework.stereotype.Service;
 public abstract class SourceDestinationBaseService {
 
   @Autowired
-  private ProgramFacilityTypeExistenceService programFacilityTypeExistenceService;
+  private StockmanagementProgramFacilityTypeExistenceService programFacilityTypeExistenceService;
 
   @Autowired
-  private FacilityReferenceDataService facilityRefDataService;
+  private StockmanagementFacilityReferenceDataService facilityRefDataService;
 
   @Autowired
   private OrganizationRepository organizationRepository;

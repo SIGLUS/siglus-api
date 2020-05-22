@@ -27,7 +27,7 @@ import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.exception.ValidationMessageException;
 import org.openlmis.referencedata.repository.ProcessingPeriodRepository;
 import org.openlmis.referencedata.service.ProcessingPeriodSearchParams;
-import org.openlmis.referencedata.service.ProcessingPeriodService;
+import org.openlmis.referencedata.service.ReferencedataProcessingPeriodService;
 import org.openlmis.referencedata.util.Message;
 import org.openlmis.referencedata.util.messagekeys.ProcessingPeriodMessageKeys;
 import org.openlmis.referencedata.validate.ProcessingPeriodValidator;
@@ -70,7 +70,7 @@ public class ProcessingPeriodController extends BaseController {
   private ProcessingPeriodRepository periodRepository;
 
   @Autowired
-  private ProcessingPeriodService periodService;
+  private ReferencedataProcessingPeriodService periodService;
 
   /**
    * Create a new processing period using the provided processing period DTO.

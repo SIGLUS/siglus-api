@@ -28,7 +28,8 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @EnableAsync
 public class RightAssignmentExecutor {
 
-  private static final XLogger XLOGGER = XLoggerFactory.getXLogger(RightAssignmentService.class);
+  private static final XLogger XLOGGER = XLoggerFactory.getXLogger(
+      ReferencedataRightAssignmentService.class);
 
   @Value("${rightAssignments.thread.corePool}")
   private int corePoolSize;

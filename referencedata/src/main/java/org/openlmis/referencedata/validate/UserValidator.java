@@ -23,7 +23,7 @@ import org.openlmis.referencedata.dto.RoleAssignmentDto;
 import org.openlmis.referencedata.dto.UserDto;
 import org.openlmis.referencedata.repository.RoleAssignmentRepository;
 import org.openlmis.referencedata.repository.UserRepository;
-import org.openlmis.referencedata.service.RightService;
+import org.openlmis.referencedata.service.ReferencedataRightService;
 import org.openlmis.referencedata.util.messagekeys.UserMessageKeys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -52,7 +52,7 @@ public class UserValidator implements BaseValidator {
   private UserRepository userRepository;
 
   @Autowired
-  private RightService rightService;
+  private ReferencedataRightService rightService;
 
   @Autowired
   private RoleAssignmentRepository roleAssignmentRepository;

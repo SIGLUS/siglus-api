@@ -93,7 +93,7 @@ import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDa
 import org.openlmis.requisition.service.referencedata.SupplyLineReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockEventStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.ValidReasonStockmanagementService;
-import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.utils.DateHelper;
 import org.openlmis.requisition.utils.DatePhysicalStockCountCompletedEnabledPredicate;
 import org.openlmis.requisition.utils.Message;
@@ -135,7 +135,7 @@ public abstract class BaseRequisitionController extends BaseController {
   PermissionService permissionService;
 
   @Autowired
-  AuthenticationHelper authenticationHelper;
+  RequisitionAuthenticationHelper authenticationHelper;
 
   @Autowired
   OrderableReferenceDataService orderableReferenceDataService;

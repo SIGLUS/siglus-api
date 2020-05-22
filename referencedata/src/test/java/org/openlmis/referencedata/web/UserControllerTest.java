@@ -56,8 +56,8 @@ import org.openlmis.referencedata.repository.RoleRepository;
 import org.openlmis.referencedata.repository.SupervisoryNodeRepository;
 import org.openlmis.referencedata.repository.UserRepository;
 import org.openlmis.referencedata.repository.UserSearchParams;
-import org.openlmis.referencedata.service.RightService;
-import org.openlmis.referencedata.service.UserService;
+import org.openlmis.referencedata.service.ReferencedataRightService;
+import org.openlmis.referencedata.service.ReferencedataUserService;
 import org.openlmis.referencedata.testbuilder.SupportedProgramDataBuilder;
 import org.openlmis.referencedata.testbuilder.UserDataBuilder;
 import org.openlmis.referencedata.util.Pagination;
@@ -72,7 +72,7 @@ public class UserControllerTest {
   private static final String[] IGNORED_FIELDS_ON_EQUAL_CHECK = { "roleAssignments" };
 
   @Mock
-  private UserService service;
+  private ReferencedataUserService service;
 
   @Mock
   private UserRepository repository;
@@ -93,7 +93,7 @@ public class UserControllerTest {
   private RightRepository rightRepository;
 
   @Mock
-  private RightService rightService;
+  private ReferencedataRightService rightService;
 
   @Mock
   private UserValidator validator;
@@ -102,7 +102,7 @@ public class UserControllerTest {
   private RoleAssignmentRepository roleAssignmentRepository;
 
   @Mock
-  private UserService userService;
+  private ReferencedataUserService userService;
 
   @InjectMocks
   private UserController controller = new UserController();

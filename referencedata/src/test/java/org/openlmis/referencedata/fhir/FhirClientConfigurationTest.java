@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.service.AuthService;
+import org.openlmis.referencedata.service.ReferencedataAuthService;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -43,7 +43,7 @@ public class FhirClientConfigurationTest {
   private static final FhirVersionEnum VERSION_R4 = FhirVersionEnum.R4;
 
   @Mock
-  private AuthService authService;
+  private ReferencedataAuthService authService;
 
   @Mock
   private FhirContext context;

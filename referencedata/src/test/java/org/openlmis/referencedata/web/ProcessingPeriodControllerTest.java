@@ -39,7 +39,7 @@ import org.openlmis.referencedata.domain.RightName;
 import org.openlmis.referencedata.dto.ProcessingPeriodDto;
 import org.openlmis.referencedata.repository.ProcessingPeriodRepository;
 import org.openlmis.referencedata.repository.ProcessingScheduleRepository;
-import org.openlmis.referencedata.service.RightService;
+import org.openlmis.referencedata.service.ReferencedataRightService;
 import org.openlmis.referencedata.testbuilder.ProcessingPeriodDataBuilder;
 import org.openlmis.referencedata.testbuilder.ProcessingScheduleDataBuilder;
 import org.openlmis.referencedata.validate.ProcessingPeriodValidator;
@@ -50,7 +50,7 @@ import org.springframework.validation.BindingResult;
 public class ProcessingPeriodControllerTest {
 
   @Mock
-  private RightService rightService;
+  private ReferencedataRightService rightService;
 
   @Mock
   private ProcessingPeriodValidator processingPeriodValidator;

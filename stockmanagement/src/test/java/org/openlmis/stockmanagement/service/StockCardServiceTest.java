@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,14 +47,14 @@ import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
 import org.openlmis.stockmanagement.service.referencedata.PermissionStringDto;
-import org.openlmis.stockmanagement.service.referencedata.PermissionStrings;
-import org.openlmis.stockmanagement.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementPermissionStrings;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramReferenceDataService;
 import org.openlmis.stockmanagement.testutils.StockCardDataBuilder;
 import org.openlmis.stockmanagement.testutils.StockEventDataBuilder;
 import org.openlmis.stockmanagement.testutils.StockEventDtoDataBuilder;
-import org.openlmis.stockmanagement.util.AuthenticationHelper;
+import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.openlmis.stockmanagement.util.StockEventProcessContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -70,16 +70,16 @@ public class StockCardServiceTest {
   private StockCardRepository cardRepository;
 
   @Mock
-  private FacilityReferenceDataService facilityRefDataService;
+  private StockmanagementFacilityReferenceDataService facilityRefDataService;
 
   @Mock
-  private ProgramReferenceDataService programRefDataService;
+  private StockmanagementProgramReferenceDataService programRefDataService;
 
   @Mock
-  private AuthenticationHelper authenticationHelper;
+  private StockmanagementAuthenticationHelper authenticationHelper;
 
   @Mock
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   @InjectMocks
   private StockCardService stockCardService;
@@ -88,7 +88,7 @@ public class StockCardServiceTest {
   private ArgumentCaptor<List<StockCard>> cardCaptor;
 
   @Mock
-  private PermissionStrings.Handler permissionStringsHandler;
+  private StockmanagementPermissionStrings.Handler permissionStringsHandler;
   
   @Mock
   private CalculatedStockOnHandService calculatedStockOnHandService;

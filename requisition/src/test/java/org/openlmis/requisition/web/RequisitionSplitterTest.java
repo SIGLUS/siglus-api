@@ -47,7 +47,7 @@ import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.SupplyPartnerAssociationDto;
 import org.openlmis.requisition.dto.SupplyPartnerDto;
 import org.openlmis.requisition.dto.TogglzFeatureDto;
-import org.openlmis.requisition.i18n.MessageService;
+import org.openlmis.requisition.i18n.RequisitionMessageService;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
@@ -82,7 +82,7 @@ public class RequisitionSplitterTest {
   private RequisitionRepository requisitionRepository;
 
   @Mock
-  private MessageService messageService;
+  private RequisitionMessageService messageService;
 
   @InjectMocks
   private RequisitionSplitter splitter;

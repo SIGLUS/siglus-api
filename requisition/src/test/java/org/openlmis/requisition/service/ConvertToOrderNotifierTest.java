@@ -39,7 +39,7 @@ import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.UserDto;
-import org.openlmis.requisition.i18n.MessageService;
+import org.openlmis.requisition.i18n.RequisitionMessageService;
 import org.openlmis.requisition.service.notification.NotificationService;
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
@@ -64,7 +64,7 @@ public class ConvertToOrderNotifierTest {
   private UserReferenceDataService userReferenceDataService;
 
   @Mock
-  private MessageService messageService;
+  private RequisitionMessageService messageService;
 
   @InjectMocks
   private ConvertToOrderNotifier convertToOrderNotifier;

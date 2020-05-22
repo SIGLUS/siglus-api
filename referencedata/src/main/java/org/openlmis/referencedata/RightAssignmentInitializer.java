@@ -16,7 +16,7 @@
 package org.openlmis.referencedata;
 
 import java.util.concurrent.Future;
-import org.openlmis.referencedata.service.RightAssignmentService;
+import org.openlmis.referencedata.service.ReferencedataRightAssignmentService;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,7 @@ public class RightAssignmentInitializer implements CommandLineRunner {
       RightAssignmentInitializer.class);
   
   @Autowired
-  RightAssignmentService rightAssignmentService;
+  ReferencedataRightAssignmentService rightAssignmentService;
   
   /**
    * Re-generates right assignments.

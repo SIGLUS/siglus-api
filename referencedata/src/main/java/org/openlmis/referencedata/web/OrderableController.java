@@ -29,7 +29,7 @@ import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.exception.ValidationMessageException;
 import org.openlmis.referencedata.repository.OrderableRepository;
-import org.openlmis.referencedata.service.OrderableService;
+import org.openlmis.referencedata.service.ReferencedataOrderableService;
 import org.openlmis.referencedata.util.OrderableBuilder;
 import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.referencedata.util.UuidUtil;
@@ -72,7 +72,7 @@ public class OrderableController extends BaseController {
   private OrderableRepository repository;
 
   @Autowired
-  private OrderableService orderableService;
+  private ReferencedataOrderableService orderableService;
 
   @Autowired
   private OrderableBuilder orderableBuilder;

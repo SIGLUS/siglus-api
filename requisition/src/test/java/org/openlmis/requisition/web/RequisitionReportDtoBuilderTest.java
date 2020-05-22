@@ -52,7 +52,7 @@ import org.openlmis.requisition.dto.RequisitionReportDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.i18n.MessageKeys;
-import org.openlmis.requisition.i18n.MessageService;
+import org.openlmis.requisition.i18n.RequisitionMessageService;
 import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
 import org.openlmis.requisition.testutils.ApprovedProductDtoDataBuilder;
@@ -82,7 +82,7 @@ public class RequisitionReportDtoBuilderTest {
   private OrderableReferenceDataService orderableReferenceDataService;
 
   @Mock
-  private MessageService messageService;
+  private RequisitionMessageService messageService;
 
   @InjectMocks
   private RequisitionReportDtoBuilder requisitionReportDtoBuilder =

@@ -21,7 +21,7 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
 import static org.openlmis.stockmanagement.service.notifier.BaseNotifierTest.FACILITY_NAME;
 import static org.openlmis.stockmanagement.service.notifier.BaseNotifierTest.LOT_CODE;
 import static org.openlmis.stockmanagement.service.notifier.BaseNotifierTest.ORDERABLE_NAME;
@@ -43,8 +43,8 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.dto.referencedata.RightDto;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.RightReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementRightReferenceDataService;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -53,10 +53,10 @@ public class NearExpiryNotifierTest {
   private static final String TEST_DATE = "2019-01-01";
   
   @Mock
-  private LotReferenceDataService lotReferenceDataService;
+  private StockmanagementLotReferenceDataService lotReferenceDataService;
 
   @Mock
-  private RightReferenceDataService rightReferenceDataService;
+  private StockmanagementRightReferenceDataService rightReferenceDataService;
 
   @Mock
   private StockCardRepository stockCardRepository;

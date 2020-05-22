@@ -57,7 +57,7 @@ import org.openlmis.referencedata.repository.RoleRepository;
 import org.openlmis.referencedata.repository.SupervisoryNodeRepository;
 import org.openlmis.referencedata.repository.UserRepository;
 import org.openlmis.referencedata.repository.UserSearchParams;
-import org.openlmis.referencedata.service.UserService;
+import org.openlmis.referencedata.service.ReferencedataUserService;
 import org.openlmis.referencedata.util.Message;
 import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.referencedata.util.messagekeys.FacilityMessageKeys;
@@ -103,7 +103,7 @@ public class UserController extends BaseController {
   private static final String PROFILER_TO_DTO = "TO_DTO";
 
   @Autowired
-  private UserService userService;
+  private ReferencedataUserService userService;
 
   @Autowired
   private UserRepository userRepository;
@@ -138,7 +138,7 @@ public class UserController extends BaseController {
   /**
    * Constructor for controller unit testing.
    */
-  public UserController(UserService userService,
+  public UserController(ReferencedataUserService userService,
                         UserRepository userRepository,
                         RoleRepository roleRepository,
                         RightRepository rightRepository,

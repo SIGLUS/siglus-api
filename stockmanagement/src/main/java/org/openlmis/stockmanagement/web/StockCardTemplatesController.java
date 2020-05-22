@@ -23,7 +23,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.StockCardTemplateDto;
-import org.openlmis.stockmanagement.service.PermissionService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.service.StockCardTemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -43,7 +43,7 @@ public class StockCardTemplatesController {
   private StockCardTemplateService stockCardTemplateService;
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   /**
    * Search for stock card template by program id and facility type id.

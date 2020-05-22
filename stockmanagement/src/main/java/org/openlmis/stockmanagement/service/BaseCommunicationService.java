@@ -58,7 +58,7 @@ public abstract class BaseCommunicationService<T> {
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Autowired
-  private AuthService authService;
+  private StockmanagementAuthService authService;
 
   @Autowired
   private ObjectMapper objectMapper;

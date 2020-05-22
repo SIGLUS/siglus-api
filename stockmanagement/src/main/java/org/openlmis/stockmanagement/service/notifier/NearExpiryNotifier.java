@@ -17,7 +17,7 @@ package org.openlmis.stockmanagement.service.notifier;
 
 import static org.openlmis.stockmanagement.i18n.MessageKeys.NOTIFICATION_NEAR_EXPIRY_CONTENT;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.NOTIFICATION_NEAR_EXPIRY_SUBJECT;
-import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -32,8 +32,8 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.dto.referencedata.RightDto;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.RightReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementRightReferenceDataService;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,10 +47,10 @@ public class NearExpiryNotifier {
   private static final XLogger XLOGGER = XLoggerFactory.getXLogger(NearExpiryNotifier.class);
 
   @Autowired
-  LotReferenceDataService lotReferenceDataService;
+  StockmanagementLotReferenceDataService lotReferenceDataService;
 
   @Autowired
-  RightReferenceDataService rightReferenceDataService;
+  StockmanagementRightReferenceDataService rightReferenceDataService;
 
   @Autowired
   StockCardRepository stockCardRepository;

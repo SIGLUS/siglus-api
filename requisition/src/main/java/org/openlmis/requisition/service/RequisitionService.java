@@ -88,7 +88,7 @@ import org.openlmis.requisition.service.referencedata.UserFulfillmentFacilitiesR
 import org.openlmis.requisition.service.referencedata.UserRoleAssignmentsReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
-import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.requisition.web.OrderDtoBuilder;
@@ -126,7 +126,7 @@ public class RequisitionService {
   private OrderFulfillmentService orderFulfillmentService;
 
   @Autowired
-  private AuthenticationHelper authenticationHelper;
+  private RequisitionAuthenticationHelper authenticationHelper;
 
   @Autowired
   private OrderDtoBuilder orderDtoBuilder;

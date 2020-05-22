@@ -41,7 +41,7 @@ import org.openlmis.referencedata.repository.RightRepository;
 import org.openlmis.referencedata.repository.SupervisoryNodeRepository;
 import org.openlmis.referencedata.repository.UserRepository;
 import org.openlmis.referencedata.repository.custom.impl.SupervisoryNodeDtoRedisRepository;
-import org.openlmis.referencedata.service.RightAssignmentService;
+import org.openlmis.referencedata.service.ReferencedataRightAssignmentService;
 import org.openlmis.referencedata.service.SupervisoryNodeBuilder;
 import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.referencedata.util.messagekeys.ProgramMessageKeys;
@@ -94,7 +94,7 @@ public class SupervisoryNodeController extends BaseController {
   private UserRepository userRepository;
 
   @Autowired
-  private RightAssignmentService rightAssignmentService;
+  private ReferencedataRightAssignmentService rightAssignmentService;
 
   @Autowired
   private SupervisoryNodeValidator validator;

@@ -29,9 +29,9 @@ import org.openlmis.referencedata.dto.IdealStockAmountDto;
 import org.openlmis.referencedata.dto.UploadResultDto;
 import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.exception.ValidationMessageException;
-import org.openlmis.referencedata.i18n.MessageService;
+import org.openlmis.referencedata.i18n.ReferencedataMessageService;
 import org.openlmis.referencedata.service.IdealStockAmountSearchParams;
-import org.openlmis.referencedata.service.IdealStockAmountService;
+import org.openlmis.referencedata.service.ReferencedataIdealStockAmountService;
 import org.openlmis.referencedata.util.IdealStockAmountDtoBuilder;
 import org.openlmis.referencedata.util.Message;
 import org.openlmis.referencedata.util.Pagination;
@@ -72,7 +72,7 @@ public class IdealStockAmountController extends BaseController {
   private static final String CSV = "csv";
 
   @Autowired
-  private IdealStockAmountService service;
+  private ReferencedataIdealStockAmountService service;
 
   @Autowired
   private CsvFormatter csvFormatter;
@@ -90,7 +90,7 @@ public class IdealStockAmountController extends BaseController {
   private CsvHeaderValidator csvHeaderValidator;
 
   @Autowired
-  private MessageService messageService;
+  private ReferencedataMessageService messageService;
 
   @Autowired
   private IdealStockAmountDtoBuilder isaDtoBuilder;

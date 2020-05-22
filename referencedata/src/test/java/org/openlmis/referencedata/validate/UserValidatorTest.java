@@ -46,7 +46,7 @@ import org.openlmis.referencedata.dto.RoleAssignmentDto;
 import org.openlmis.referencedata.dto.UserDto;
 import org.openlmis.referencedata.repository.RoleAssignmentRepository;
 import org.openlmis.referencedata.repository.UserRepository;
-import org.openlmis.referencedata.service.RightService;
+import org.openlmis.referencedata.service.ReferencedataRightService;
 import org.openlmis.referencedata.testbuilder.UserDataBuilder;
 import org.openlmis.referencedata.util.messagekeys.UserMessageKeys;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -61,7 +61,7 @@ public class UserValidatorTest {
   private UserRepository userRepository;
 
   @Mock
-  private RightService rightService;
+  private ReferencedataRightService rightService;
 
   @Mock
   private RoleAssignmentRepository roleAssignmentRepository;

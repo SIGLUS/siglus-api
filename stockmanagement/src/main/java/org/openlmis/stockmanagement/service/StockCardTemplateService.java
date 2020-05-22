@@ -36,7 +36,7 @@ import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.repository.AvailableStockCardFieldsRepository;
 import org.openlmis.stockmanagement.repository.AvailableStockCardLineItemFieldsRepository;
 import org.openlmis.stockmanagement.repository.StockCardTemplatesRepository;
-import org.openlmis.stockmanagement.service.referencedata.ProgramFacilityTypeExistenceService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramFacilityTypeExistenceService;
 import org.openlmis.stockmanagement.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -59,7 +59,7 @@ public class StockCardTemplateService {
   private AvailableStockCardLineItemFieldsRepository lineItemFieldsRepo;
 
   @Autowired
-  private ProgramFacilityTypeExistenceService programFacilityTypeExistenceService;
+  private StockmanagementProgramFacilityTypeExistenceService programFacilityTypeExistenceService;
 
   /**
    * Save or update stock card template by facility type id and program id.

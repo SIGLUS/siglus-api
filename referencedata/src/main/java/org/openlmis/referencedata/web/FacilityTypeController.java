@@ -23,7 +23,7 @@ import org.openlmis.referencedata.domain.RightName;
 import org.openlmis.referencedata.exception.IntegrityViolationException;
 import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.repository.FacilityTypeRepository;
-import org.openlmis.referencedata.service.FacilityTypeService;
+import org.openlmis.referencedata.service.ReferencedataFacilityTypeService;
 import org.openlmis.referencedata.util.messagekeys.FacilityTypeMessageKeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +59,7 @@ public class FacilityTypeController extends BaseController {
   private FacilityTypeRepository facilityTypeRepository;
 
   @Autowired
-  private FacilityTypeService facilityTypeService;
+  private ReferencedataFacilityTypeService facilityTypeService;
 
   /**
    * Allows creating new facilityType. If the id is specified, it will be ignored.

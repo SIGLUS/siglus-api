@@ -20,8 +20,8 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SU
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.util.AuthenticationHelper;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.openlmis.stockmanagement.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,10 +29,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class HomeFacilityPermissionService {
   @Autowired
-  private AuthenticationHelper authenticationHelper;
+  private StockmanagementAuthenticationHelper authenticationHelper;
   
   @Autowired
-  private FacilityReferenceDataService facilityService;
+  private StockmanagementFacilityReferenceDataService facilityService;
 
   /**
    * Check if program is supported by user's home facility.

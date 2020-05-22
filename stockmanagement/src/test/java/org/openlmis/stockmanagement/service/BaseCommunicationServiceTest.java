@@ -65,7 +65,7 @@ public abstract class BaseCommunicationServiceTest<T> {
   protected RestTemplate restTemplate;
 
   @Mock
-  protected AuthService authService;
+  protected StockmanagementAuthService authService;
 
   @Mock
   protected ResponseEntity<T[]> arrayResponse;

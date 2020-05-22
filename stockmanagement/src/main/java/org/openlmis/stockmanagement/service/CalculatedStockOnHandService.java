@@ -34,7 +34,7 @@ import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
 import org.openlmis.stockmanagement.util.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +54,7 @@ public class CalculatedStockOnHandService {
   private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   @Autowired
-  private OrderableReferenceDataService orderableService;
+  private StockmanagementOrderableReferenceDataService orderableService;
 
   /**
    * Returns list of stock cards with fetched Stock on Hand values.

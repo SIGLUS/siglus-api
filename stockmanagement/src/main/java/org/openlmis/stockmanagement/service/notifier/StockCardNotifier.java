@@ -22,9 +22,9 @@ import org.apache.commons.lang.text.StrSubstitutor;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.referencedata.SupervisoryNodeDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
-import org.openlmis.stockmanagement.service.notification.NotificationService;
-import org.openlmis.stockmanagement.service.referencedata.SupervisingUsersReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.openlmis.stockmanagement.service.notification.StockmanagementNotificationService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementSupervisingUsersReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementSupervisoryNodeReferenceDataService;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -38,13 +38,13 @@ public class StockCardNotifier extends BaseNotifier {
   private static final XLogger XLOGGER = XLoggerFactory.getXLogger(StockCardNotifier.class);
 
   @Autowired
-  private SupervisingUsersReferenceDataService supervisingUsersReferenceDataService;
+  private StockmanagementSupervisingUsersReferenceDataService supervisingUsersReferenceDataService;
 
   @Autowired
-  private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+  private StockmanagementSupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
 
   @Autowired
-  private NotificationService notificationService;
+  private StockmanagementNotificationService notificationService;
 
   /**
    * Notify users with a certain right for the facility/program that facility has stocked out of a

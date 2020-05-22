@@ -19,11 +19,11 @@ import ca.uhn.fhir.rest.api.Constants;
 import ca.uhn.fhir.rest.client.api.IHttpRequest;
 import ca.uhn.fhir.rest.client.interceptor.BearerTokenAuthInterceptor;
 import lombok.AllArgsConstructor;
-import org.openlmis.referencedata.service.AuthService;
+import org.openlmis.referencedata.service.ReferencedataAuthService;
 
 @AllArgsConstructor
 final class DynamicBearerTokenAuthInterceptor extends BearerTokenAuthInterceptor {
-  private AuthService authService;
+  private ReferencedataAuthService authService;
 
   @Override
   public void interceptRequest(IHttpRequest theRequest) {

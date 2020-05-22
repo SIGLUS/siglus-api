@@ -52,7 +52,7 @@ import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.UserDto;
-import org.openlmis.requisition.i18n.MessageService;
+import org.openlmis.requisition.i18n.RequisitionMessageService;
 import org.openlmis.requisition.service.notification.NotificationService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
@@ -89,7 +89,7 @@ public class ApprovalNotifierTest {
   private FacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
-  private MessageService messageService;
+  private RequisitionMessageService messageService;
 
   @InjectMocks
   private ApprovalNotifier approvalNotifier;

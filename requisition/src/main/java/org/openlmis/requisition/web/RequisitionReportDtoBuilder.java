@@ -38,7 +38,7 @@ import org.openlmis.requisition.dto.RequisitionReportDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.i18n.MessageKeys;
-import org.openlmis.requisition.i18n.MessageService;
+import org.openlmis.requisition.i18n.RequisitionMessageService;
 import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
 import org.openlmis.requisition.utils.Message;
@@ -62,7 +62,7 @@ public class RequisitionReportDtoBuilder {
   private UserReferenceDataService userReferenceDataService;
 
   @Autowired
-  private MessageService messageService;
+  private RequisitionMessageService messageService;
   
   /**
    * Create a {@link RequisitionReportDto} based on a given {@link Requisition}.

@@ -33,8 +33,8 @@ import org.openlmis.stockmanagement.dto.builder.ValidReasonAssignmentDtoBuilder;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
 import org.openlmis.stockmanagement.repository.ValidReasonAssignmentRepository;
-import org.openlmis.stockmanagement.service.PermissionService;
-import org.openlmis.stockmanagement.service.referencedata.ProgramFacilityTypeExistenceService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramFacilityTypeExistenceService;
 import org.openlmis.stockmanagement.util.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,10 +60,10 @@ public class ValidReasonAssignmentController {
   private ValidReasonAssignmentRepository reasonAssignmentRepository;
 
   @Autowired
-  private ProgramFacilityTypeExistenceService programFacilityTypeExistenceService;
+  private StockmanagementProgramFacilityTypeExistenceService programFacilityTypeExistenceService;
 
   @Autowired
-  private PermissionService permissionService;
+  private StockmanagementPermissionService permissionService;
 
   @Autowired
   private ValidReasonAssignmentDtoBuilder reasonAssignmentDtoBuilder;

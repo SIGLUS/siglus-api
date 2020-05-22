@@ -30,9 +30,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramReferenceDataService;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -46,13 +46,13 @@ public class BaseNotifierTest {
       "/stockCardSummaries/{0}";
 
   @Mock
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private StockmanagementFacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
-  private ProgramReferenceDataService programReferenceDataService;
+  private StockmanagementProgramReferenceDataService programReferenceDataService;
 
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private StockmanagementOrderableReferenceDataService orderableReferenceDataService;
 
   @InjectMocks
   private BaseNotifier baseNotifier;

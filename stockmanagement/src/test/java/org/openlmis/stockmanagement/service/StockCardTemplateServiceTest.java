@@ -30,7 +30,7 @@ import org.openlmis.stockmanagement.dto.StockCardFieldDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemFieldDto;
 import org.openlmis.stockmanagement.dto.StockCardTemplateDto;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
-import org.openlmis.stockmanagement.service.referencedata.ProgramFacilityTypeExistenceService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramFacilityTypeExistenceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -45,7 +45,7 @@ public class StockCardTemplateServiceTest {
   private StockCardTemplateService stockCardTemplateService;
 
   @MockBean
-  private ProgramFacilityTypeExistenceService programFacilityTypeExistenceService;
+  private StockmanagementProgramFacilityTypeExistenceService programFacilityTypeExistenceService;
 
   @Test
   public void shouldUpdateExistingTemplate() {

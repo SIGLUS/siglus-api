@@ -56,8 +56,8 @@ import org.openlmis.stockmanagement.repository.NodeRepository;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
 import org.openlmis.stockmanagement.repository.ValidDestinationAssignmentRepository;
 import org.openlmis.stockmanagement.repository.ValidSourceAssignmentRepository;
-import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.ProgramFacilityTypeExistenceService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramFacilityTypeExistenceService;
 import org.openlmis.stockmanagement.testutils.GeographicLevelDtoDataBuilder;
 import org.openlmis.stockmanagement.testutils.GeographicZoneDtoDataBuilder;
 
@@ -78,10 +78,10 @@ public class SourceDestinationBaseServiceTest {
   private ValidDestinationService validDestinationService;
 
   @Mock
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private StockmanagementFacilityReferenceDataService stockmanagementFacilityReferenceDataService;
 
   @Mock
-  private ProgramFacilityTypeExistenceService programFacilityTypeExistenceService;
+  private StockmanagementProgramFacilityTypeExistenceService programFacilityTypeExistenceService;
 
   @Mock
   private ValidDestinationAssignmentRepository destinationRepository;
@@ -103,7 +103,7 @@ public class SourceDestinationBaseServiceTest {
     UUID facilityId = randomUUID();
     UUID facilityTypeId = randomUUID();
     FacilityDto facilityDto = createFacilityDtoWithFacilityType(facilityId, facilityTypeId);
-    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(stockmanagementFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     doThrow(new ValidationMessageException("errorKey")).when(programFacilityTypeExistenceService)
         .checkProgramAndFacilityTypeExist(programId, facilityTypeId);
 
@@ -119,7 +119,7 @@ public class SourceDestinationBaseServiceTest {
     ValidSourceAssignment assignment = createSource(programId, facilityTypeId, sourceId);
     Node node = createNode(sourceId, true);
     when(nodeRepository.findByReferenceId(sourceId)).thenReturn(node);
-    when(facilityReferenceDataService.findOne(sourceId)).thenReturn(new FacilityDto());
+    when(stockmanagementFacilityReferenceDataService.findOne(sourceId)).thenReturn(new FacilityDto());
 
     when(sourceRepository.findByProgramIdAndFacilityTypeIdAndNodeId(
         programId, facilityTypeId, node.getId()))
@@ -148,8 +148,8 @@ public class SourceDestinationBaseServiceTest {
         createSourceAssignment(programId, facilityTypeId, createNode(sourceId, true)));
     FacilityDto facilityDto = new FacilityDto();
     facilityDto.setName(FACILITY_NAME);
-    when(facilityReferenceDataService.exists(sourceId)).thenReturn(true);
-    when(facilityReferenceDataService.findOne(sourceId)).thenReturn(facilityDto);
+    when(stockmanagementFacilityReferenceDataService.exists(sourceId)).thenReturn(true);
+    when(stockmanagementFacilityReferenceDataService.findOne(sourceId)).thenReturn(facilityDto);
     when(nodeRepository.findByReferenceId(sourceId)).thenReturn(null);
     ValidSourceAssignment assignment = createSource(programId, facilityTypeId, sourceId);
 
@@ -216,7 +216,7 @@ public class SourceDestinationBaseServiceTest {
         programId, facilityTypeId, destinationId);
     Node node = createNode(destinationId, true);
     when(nodeRepository.findByReferenceId(destinationId)).thenReturn(node);
-    when(facilityReferenceDataService.findOne(destinationId)).thenReturn(new FacilityDto());
+    when(stockmanagementFacilityReferenceDataService.findOne(destinationId)).thenReturn(new FacilityDto());
 
     when(destinationRepository.findByProgramIdAndFacilityTypeIdAndNodeId(
         programId, facilityTypeId, node.getId()))
@@ -245,8 +245,8 @@ public class SourceDestinationBaseServiceTest {
         createDestinationAssignment(programId, facilityTypeId, createNode(destinationId, true)));
     FacilityDto facilityDto = new FacilityDto();
     facilityDto.setName(FACILITY_NAME);
-    when(facilityReferenceDataService.exists(destinationId)).thenReturn(true);
-    when(facilityReferenceDataService.findOne(destinationId)).thenReturn(facilityDto);
+    when(stockmanagementFacilityReferenceDataService.exists(destinationId)).thenReturn(true);
+    when(stockmanagementFacilityReferenceDataService.findOne(destinationId)).thenReturn(facilityDto);
     when(nodeRepository.findByReferenceId(destinationId)).thenReturn(null);
     ValidDestinationAssignment assignment = createDestination(
         programId, facilityTypeId, destinationId);
@@ -318,7 +318,7 @@ public class SourceDestinationBaseServiceTest {
     FacilityDto facilityDto = createFacilityDtoWithFacilityType(facilityId, facilityTypeId);
     facilityDto.setName(FACILITY_NODE_NAME);
 
-    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(stockmanagementFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
 
     List<ValidDestinationAssignment> validDestinationAssignments = asList(
             createOrganizationDestination(mockedOrganizationNode(ORGANIZATION_NODE_NAME)),
@@ -353,7 +353,7 @@ public class SourceDestinationBaseServiceTest {
     FacilityDto facilityDto = createFacilityDtoWithFacilityType(facilityId, facilityTypeId);
     facilityDto.setName(FACILITY_NODE_NAME);
 
-    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(stockmanagementFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
 
     doNothing().when(programFacilityTypeExistenceService)
         .checkProgramAndFacilityTypeExist(programId, facilityTypeId);
@@ -365,7 +365,7 @@ public class SourceDestinationBaseServiceTest {
     when(destinationRepository.findByProgramIdAndFacilityTypeId(programId, facilityTypeId))
         .thenReturn(validDestinationAssignments);
 
-    when(facilityReferenceDataService.findByIds(anyListOf(UUID.class))).thenReturn(
+    when(stockmanagementFacilityReferenceDataService.findByIds(anyListOf(UUID.class))).thenReturn(
         Collections.singletonMap(facilityId, facilityDto));
 
     //when
@@ -393,7 +393,7 @@ public class SourceDestinationBaseServiceTest {
     FacilityDto facilityDto = createFacilityDtoWithFacilityType(facilityId, facilityTypeId);
     facilityDto.setName(FACILITY_NODE_NAME);
 
-    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(stockmanagementFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
 
     List<ValidSourceAssignment> validSourceAssignments = asList(
             createOrganizationSourceAssignment(mockedOrganizationNode(ORGANIZATION_NODE_NAME)),
@@ -428,7 +428,7 @@ public class SourceDestinationBaseServiceTest {
     FacilityDto facilityDto = createFacilityDtoWithFacilityType(facilityId, facilityTypeId);
     facilityDto.setName(FACILITY_NODE_NAME);
 
-    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(stockmanagementFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     doNothing().when(programFacilityTypeExistenceService)
         .checkProgramAndFacilityTypeExist(programId, facilityTypeId);
 
@@ -439,7 +439,7 @@ public class SourceDestinationBaseServiceTest {
     when(sourceRepository.findByProgramIdAndFacilityTypeId(programId, facilityTypeId))
         .thenReturn(validSourceAssignments);
 
-    when(facilityReferenceDataService.findByIds(anyListOf(UUID.class))).thenReturn(
+    when(stockmanagementFacilityReferenceDataService.findByIds(anyListOf(UUID.class))).thenReturn(
         Collections.singletonMap(facilityId, facilityDto));
 
     //when
@@ -546,7 +546,7 @@ public class SourceDestinationBaseServiceTest {
     facilityDto.setGeographicZone(generateGeographicZone(randomUUID(), regionGeoLevelId,
         randomUUID(), randomUUID(), regionGeoZoneId, randomUUID()));
 
-    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(stockmanagementFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
 
     doNothing().when(programFacilityTypeExistenceService)
         .checkProgramAndFacilityTypeExist(programId, facilityTypeId);
@@ -566,7 +566,7 @@ public class SourceDestinationBaseServiceTest {
     refDataFacilityDto.setGeographicZone(generateGeographicZone(randomUUID(), regionGeoLevelId,
         randomUUID(), randomUUID(), regionGeoZoneId, randomUUID()));
 
-    when(facilityReferenceDataService.findByIds(anyListOf(UUID.class))).thenReturn(
+    when(stockmanagementFacilityReferenceDataService.findByIds(anyListOf(UUID.class))).thenReturn(
         Collections.singletonMap(refDataFacilityId, refDataFacilityDto));
   }
 
@@ -590,7 +590,7 @@ public class SourceDestinationBaseServiceTest {
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenFacilityNotExists()
       throws Exception {
-    when(facilityReferenceDataService.findOne(any(UUID.class))).thenReturn(null);
+    when(stockmanagementFacilityReferenceDataService.findOne(any(UUID.class))).thenReturn(null);
     validDestinationService.findDestinations(randomUUID(), randomUUID());
   }
 

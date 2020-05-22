@@ -19,8 +19,8 @@ import static org.openlmis.referencedata.domain.RightName.STOCK_ADJUSTMENT_REASO
 
 import java.util.List;
 import java.util.UUID;
+import org.openlmis.referencedata.domain.ReferencedataStockAdjustmentReason;
 import org.openlmis.referencedata.domain.RightName;
-import org.openlmis.referencedata.domain.StockAdjustmentReason;
 import org.openlmis.referencedata.exception.NotFoundException;
 import org.openlmis.referencedata.exception.ValidationMessageException;
 import org.openlmis.referencedata.repository.StockAdjustmentReasonRepository;
@@ -61,8 +61,8 @@ public class StockAdjustmentReasonController extends BaseController {
   @RequestMapping(value = "/stockAdjustmentReasons", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
-  public StockAdjustmentReason createStockAdjustmentReason(
-          @RequestBody StockAdjustmentReason stockAdjustmentReason) {
+  public ReferencedataStockAdjustmentReason createStockAdjustmentReason(
+          @RequestBody ReferencedataStockAdjustmentReason stockAdjustmentReason) {
     rightService.checkAdminRight(STOCK_ADJUSTMENT_REASONS_MANAGE);
 
     LOGGER.debug("Creating new stockAdjustmentReason");
@@ -79,8 +79,8 @@ public class StockAdjustmentReasonController extends BaseController {
   @RequestMapping(value = "/stockAdjustmentReasons", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public Iterable<StockAdjustmentReason> getAllStockAdjustmentReasons() {
-    Iterable<StockAdjustmentReason> stockAdjustmentReasons =
+  public Iterable<ReferencedataStockAdjustmentReason> getAllStockAdjustmentReasons() {
+    Iterable<ReferencedataStockAdjustmentReason> stockAdjustmentReasons =
             stockAdjustmentReasonRepository.findAll();
     if (stockAdjustmentReasons == null) {
       throw new NotFoundException(StockAdjustmentReasonMessageKeys.ERROR_NOT_FOUND);
@@ -93,14 +93,14 @@ public class StockAdjustmentReasonController extends BaseController {
    * Get chosen stockAdjustmentReason.
    *
    * @param stockAdjustmentReasonId UUID of stockAdjustmentReason which we want to get.
-   * @return the StockAdjustmentReason.
+   * @return the ReferencedataStockAdjustmentReason.
    */
   @RequestMapping(value = "/stockAdjustmentReasons/{id}", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public StockAdjustmentReason getChosenStockAdjustmentReason(
+  public ReferencedataStockAdjustmentReason getChosenStockAdjustmentReason(
           @PathVariable("id") UUID stockAdjustmentReasonId) {
-    StockAdjustmentReason stockAdjustmentReason =
+    ReferencedataStockAdjustmentReason stockAdjustmentReason =
             stockAdjustmentReasonRepository.findOne(stockAdjustmentReasonId);
     if (stockAdjustmentReason == null) {
       throw new NotFoundException(StockAdjustmentReasonMessageKeys.ERROR_NOT_FOUND);
@@ -133,13 +133,13 @@ public class StockAdjustmentReasonController extends BaseController {
     rightService.checkAdminRight(RightName.STOCK_ADJUSTMENT_REASONS_MANAGE);
 
     //Return a 404 if the specified instance can't be found
-    StockAdjustmentReason instance = stockAdjustmentReasonRepository.findOne(id);
+    ReferencedataStockAdjustmentReason instance = stockAdjustmentReasonRepository.findOne(id);
     if (instance == null) {
       throw new NotFoundException(StockAdjustmentReasonMessageKeys.ERROR_NOT_FOUND);
     }
 
     return getAuditLogResponse(
-        StockAdjustmentReason.class, id, author, changedPropertyName, page, returnJson
+        ReferencedataStockAdjustmentReason.class, id, author, changedPropertyName, page, returnJson
     );
   }
 
@@ -155,7 +155,7 @@ public class StockAdjustmentReasonController extends BaseController {
           @PathVariable("id") UUID stockAdjustmentReasonId) {
     rightService.checkAdminRight(STOCK_ADJUSTMENT_REASONS_MANAGE);
 
-    StockAdjustmentReason stockAdjustmentReason =
+    ReferencedataStockAdjustmentReason stockAdjustmentReason =
             stockAdjustmentReasonRepository.findOne(stockAdjustmentReasonId);
     if (stockAdjustmentReason == null) {
       throw new NotFoundException(StockAdjustmentReasonMessageKeys.ERROR_NOT_FOUND);
@@ -172,9 +172,9 @@ public class StockAdjustmentReasonController extends BaseController {
   @RequestMapping(value = "/stockAdjustmentReasons/{id}", method = RequestMethod.PUT)
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public StockAdjustmentReason updateStockAdjustmentReason(
+  public ReferencedataStockAdjustmentReason updateStockAdjustmentReason(
           @PathVariable("id") UUID stockAdjustmentReasonId,
-          @RequestBody StockAdjustmentReason stockAdjustmentReason) {
+          @RequestBody ReferencedataStockAdjustmentReason stockAdjustmentReason) {
     rightService.checkAdminRight(STOCK_ADJUSTMENT_REASONS_MANAGE);
 
     if (stockAdjustmentReason == null || stockAdjustmentReasonId == null) {
@@ -182,7 +182,7 @@ public class StockAdjustmentReasonController extends BaseController {
       throw new ValidationMessageException(StockAdjustmentReasonMessageKeys.ERROR_ID_NULL);
     }
 
-    StockAdjustmentReason storedStockAdjustmentReason =
+    ReferencedataStockAdjustmentReason storedStockAdjustmentReason =
             stockAdjustmentReasonRepository.findOne(stockAdjustmentReasonId);
     if (storedStockAdjustmentReason == null) {
       LOGGER.warn("Update failed - stockAdjustmentReason with id: {} not found",
@@ -206,7 +206,7 @@ public class StockAdjustmentReasonController extends BaseController {
   @RequestMapping(value = "/stockAdjustmentReasons/search", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public List<StockAdjustmentReason> findStockAdjustmentReasonsByProgramId(
+  public List<ReferencedataStockAdjustmentReason> findStockAdjustmentReasonsByProgramId(
           @RequestParam("program") UUID programId) {
     return stockAdjustmentReasonRepository.findByProgramId(programId);
   }

@@ -16,7 +16,7 @@
 package org.openlmis.requisition.errorhandling;
 
 import org.openlmis.requisition.exception.BaseMessageException;
-import org.openlmis.requisition.i18n.MessageService;
+import org.openlmis.requisition.i18n.RequisitionMessageService;
 import org.openlmis.requisition.utils.Message;
 import org.openlmis.util.ErrorResponse;
 import org.slf4j.Logger;
@@ -33,7 +33,7 @@ public abstract class AbstractErrorHandling {
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Autowired
-  private MessageService messageService;
+  private RequisitionMessageService messageService;
 
   /**
    * Logs an error message and returns an error response.

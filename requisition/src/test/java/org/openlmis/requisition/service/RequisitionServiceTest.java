@@ -161,7 +161,7 @@ import org.openlmis.requisition.testutils.StockAdjustmentReasonDataBuilder;
 import org.openlmis.requisition.testutils.StockCardRangeSummaryDtoDataBuilder;
 import org.openlmis.requisition.testutils.SupplyLineDtoDataBuilder;
 import org.openlmis.requisition.testutils.UserDtoDataBuilder;
-import org.openlmis.requisition.utils.AuthenticationHelper;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.requisition.web.RequisitionForConvertBuilder;
@@ -233,7 +233,7 @@ public class RequisitionServiceTest {
   private PermissionService permissionService;
 
   @Mock
-  private AuthenticationHelper authenticationHelper;
+  private RequisitionAuthenticationHelper authenticationHelper;
 
   @Mock
   private RequisitionStatusProcessor requisitionStatusProcessor;

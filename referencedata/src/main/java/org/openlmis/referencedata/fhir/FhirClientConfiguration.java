@@ -20,7 +20,7 @@ import ca.uhn.fhir.context.FhirVersionEnum;
 import ca.uhn.fhir.rest.api.CacheControlDirective;
 import ca.uhn.fhir.rest.client.api.IGenericClient;
 import ca.uhn.fhir.rest.client.interceptor.LoggingInterceptor;
-import org.openlmis.referencedata.service.AuthService;
+import org.openlmis.referencedata.service.ReferencedataAuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +38,7 @@ public class FhirClientConfiguration {
   private static final Logger LOGGER = LoggerFactory.getLogger(FhirClientConfiguration.class);
 
   @Autowired
-  private AuthService authService;
+  private ReferencedataAuthService authService;
 
   @Value("${fhirClient.serverUrl}")
   private String fhirServerUrl;
