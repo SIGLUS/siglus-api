@@ -103,11 +103,6 @@ ext.configureForDockerCompose = { task ->
     // source postgres host and port from docker compose
     def db = dockerCompose.servicesInfos.db.firstContainer
     task.environment "DATABASE_URL", "jdbc:postgresql://${db.host}:${db.port}/open_lmis"
-
-    // source redis host and port from docker compose
-    def redis = dockerCompose.servicesInfos.redis.firstContainer
-    task.environment "REDIS_URL", redis.host
-    task.environment "REDIS_PORT", redis.ports[6379]
 }
 
 /*

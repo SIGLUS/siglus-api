@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.internal.bind.TypeAdapters;
 import java.time.Clock;
 import java.time.ZoneId;
@@ -41,12 +42,18 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.PropertySources;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.servlet.LocaleResolver;
@@ -63,6 +70,8 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
     @PropertySource("classpath:stockmanagement-application.properties"),
     @PropertySource("classpath:requisition-application.properties")
 })
+@EnableCaching
+@SuppressWarnings({"PMD.TooManyMethods"})
 public class Application {
   private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
@@ -80,6 +89,15 @@ public class Application {
 
   @Value("${time.zoneId}")
   private String timeZoneId;
+
+  @Value("${redis.url}")
+  private String redisUrl;
+
+  @Value("${redis.port}")
+  private int redisPort;
+
+  @Value("${redis.password}")
+  private String redisPassword;
 
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
@@ -205,6 +223,53 @@ public class Application {
         .registerValueGsonTypeAdapter(float.class, TypeAdapters.FLOAT)
         .registerValueGsonTypeAdapter(Float.class, TypeAdapters.FLOAT)
         .build();
+  }
+
+  @Bean
+  JedisConnectionFactory connectionFactory() {
+    JedisConnectionFactory factory = new JedisConnectionFactory();
+    factory.setHostName(redisUrl);
+    factory.setPort(redisPort);
+    factory.setPassword(redisPassword);
+    factory.setUsePool(true);
+    return factory;
+  }
+
+  @Bean
+  public StringRedisSerializer stringRedisSerializer() {
+    return new StringRedisSerializer();
+  }
+
+  /**
+   * Creates RedisTemplate instance.
+   */
+  @Bean
+  public RedisTemplate<String, Object> redisTemplate(JedisConnectionFactory factory,
+      ObjectMapper objectMapper) {
+    RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+    Jackson2JsonRedisSerializer jackson2JsonRedisSerializer =
+        new Jackson2JsonRedisSerializer<>(Object.class);
+    redisTemplate.setConnectionFactory(factory);
+    redisTemplate.setKeySerializer(stringRedisSerializer());
+    redisTemplate.setDefaultSerializer(jackson2JsonRedisSerializer);
+    redisTemplate.setHashValueSerializer(jackson2JsonRedisSerializer);
+    redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);
+    jackson2JsonRedisSerializer.setObjectMapper(objectMapper);
+
+    return redisTemplate;
+  }
+
+  /**
+   * Creates RedisCacheManager instance.
+   */
+  @Bean
+  public RedisCacheManager cacheManager(ObjectMapper objectMapper) {
+    RedisCacheManager redisCacheManager = new RedisCacheManager(redisTemplate(connectionFactory(),
+        objectMapper));
+    redisCacheManager.setTransactionAware(true);
+    redisCacheManager.setLoadRemoteCachesOnStartup(true);
+    redisCacheManager.setUsePrefix(true);
+    return redisCacheManager;
   }
   // copy from referencedata Application.java end
 
