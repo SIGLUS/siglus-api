@@ -15,12 +15,17 @@
 
 package org.siglus.siglusapi.service;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
+import org.siglus.siglusapi.domain.AssociateProgram;
 import org.siglus.siglusapi.domain.RequisitionTemplateExtension;
 import org.siglus.siglusapi.dto.RequisitionTemplateExtensionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionTemplateDto;
+import org.siglus.siglusapi.repository.AssociateProgramExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.service.client.RequisitionTemplateRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,34 +41,86 @@ public class SiglusRequisitionTemplateService {
   @Autowired
   private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
 
+  @Autowired
+  private AssociateProgramExtensionRepository associateProgramExtensionRepository;
+
   public SiglusRequisitionTemplateDto getTemplate(UUID id) {
-    SiglusRequisitionTemplateDto template = getTemplateByOpenLmis(id);
+    SiglusRequisitionTemplateDto templateDto = SiglusRequisitionTemplateDto.from(
+        getTemplateByOpenLmis(id));
     RequisitionTemplateExtension extension = requisitionTemplateExtensionRepository
         .findByRequisitionTemplateId(id);
-    template.setExtension(RequisitionTemplateExtensionDto.from(extension));
-    return template;
+    templateDto.setExtension(RequisitionTemplateExtensionDto.from(extension));
+    templateDto.setAssociateProgramsIds(getAssociateProgram(id));
+    return templateDto;
   }
 
-  public RequisitionTemplateDto updateTemplateExtension(SiglusRequisitionTemplateDto updatedDto,
-      RequisitionTemplateExtensionDto extensionDto) {
-    log.info("create or update requisition template extension: {}",  extensionDto);
-    RequisitionTemplateExtension templateExtension = saveTemplateExtension(updatedDto.getId(),
-        extensionDto);
-    updatedDto.setExtension(RequisitionTemplateExtensionDto.from(templateExtension));
-    return updatedDto;
+  public SiglusRequisitionTemplateDto updateTemplate(RequisitionTemplateDto updatedDto,
+      SiglusRequisitionTemplateDto requestDto) {
+    SiglusRequisitionTemplateDto newDto = updateTemplateExtension(updatedDto, requestDto);
+    return updateTemplateAsscociatedProgram(newDto, requestDto);
   }
 
-  private SiglusRequisitionTemplateDto getTemplateByOpenLmis(UUID id) {
-    return (SiglusRequisitionTemplateDto) requisitionTemplateRequisitionService.findTemplate(id);
+  public SiglusRequisitionTemplateDto updateTemplateExtension(
+      RequisitionTemplateDto updatedDto, SiglusRequisitionTemplateDto requestDto) {
+    SiglusRequisitionTemplateDto newDto = SiglusRequisitionTemplateDto.from(updatedDto);
+    RequisitionTemplateExtensionDto extension = requestDto.getExtension();
+    if (extension == null) {
+      return newDto;
+    }
+    log.info("create or update requisition template extension: {}",  extension);
+    RequisitionTemplateExtension templateExtension = saveTemplateExtension(
+        updatedDto.getId(), extension);
+    newDto.setExtension(RequisitionTemplateExtensionDto.from(templateExtension));
+    return newDto;
   }
 
-  private RequisitionTemplateExtension saveTemplateExtension(UUID id,
+  public SiglusRequisitionTemplateDto updateTemplateAsscociatedProgram(
+      RequisitionTemplateDto updatedDto, SiglusRequisitionTemplateDto requestDto) {
+    SiglusRequisitionTemplateDto newDto = SiglusRequisitionTemplateDto.from(updatedDto);
+    Set<UUID> uuids = requestDto.getAssociateProgramsIds();
+    if (uuids.isEmpty()) {
+      return newDto;
+    }
+    log.info("save requisition template asscociated programs: {}",  uuids);
+    List<AssociateProgram> associatePrograms =
+        associateProgramExtensionRepository.findByRequisitionTemplateId(updatedDto.getId());
+    Set<UUID> associateProgramIds = associatePrograms.stream()
+        .map(AssociateProgram::getAssociatedProgramId)
+        .collect(Collectors.toSet());
+    if (!associateProgramIds.equals(uuids)) {
+      log.info("delete old requisition template asscociated programss: {}",  associatePrograms);
+      associateProgramExtensionRepository.delete(associatePrograms);
+      log.info("create new requisition template asscociated programss: {}",  uuids);
+      associateProgramExtensionRepository.save(AssociateProgram.from(updatedDto.getId(), uuids));
+    }
+    newDto.setAssociateProgramsIds(uuids);
+    return newDto;
+  }
+
+  private Set<UUID> getAssociateProgram(UUID templateId) {
+    List<AssociateProgram> associatePrograms =
+        associateProgramExtensionRepository.findByRequisitionTemplateId(templateId);
+    return associatePrograms.stream()
+        .map(AssociateProgram::getAssociatedProgramId)
+        .collect(Collectors.toSet());
+  }
+
+  private RequisitionTemplateDto getTemplateByOpenLmis(UUID id) {
+    // call origin OpenLMIS API
+    return requisitionTemplateRequisitionService.findTemplate(id);
+  }
+
+  private RequisitionTemplateExtension saveTemplateExtension(UUID templateId,
       RequisitionTemplateExtensionDto extensionDto) {
     if (extensionDto == null) {
       return null;
     }
-    RequisitionTemplateExtension tobeSave = RequisitionTemplateExtension.from(id, extensionDto);
-    return requisitionTemplateExtensionRepository.save(tobeSave);
+    // archive old requisition template and create new requisition template
+    if (!templateId.equals(extensionDto.getRequisitionTemplateId())) {
+      extensionDto.setId(null);
+    }
+    return requisitionTemplateExtensionRepository.save(
+        RequisitionTemplateExtension.from(templateId, extensionDto));
   }
 
 }

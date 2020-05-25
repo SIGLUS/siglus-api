@@ -21,9 +21,6 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_CANNOT_CALCULATE_A
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_COLUMNS_TAG_NOT_SET;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_COLUMN_SOURCE_INVALID;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_DISPLAYED_WHEN_CALC_ORDER_QUANTITY_EXPLANATION_NOT_DISPLAYED;
-import static org.openlmis.requisition.i18n.MessageKeys.ERROR_DISPLAYED_WHEN_REQUESTED_QUANTITY_EXPLANATION_IS_DISPLAYED;
-import static org.openlmis.requisition.i18n.MessageKeys.ERROR_DISPLAYED_WHEN_REQUESTED_QUANTITY_IS_DISPLAYED;
-import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_DISPLAYED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_DISPLAYED_WHEN_AVERAGE_CONSUMPTION_IS_CALCULATED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_DISPLAYED_WHEN_CONSUMED_QUANTITY_IS_CALCULATED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_DISPLAYED_WHEN_CONSUMPTION_IS_CALCULATED;
@@ -144,22 +141,26 @@ public class RequisitionTemplateDtoValidator extends BaseValidator {
 
   private void validateRequestedQuantity(RequisitionTemplateDto template) {
     boolean quantityDisplayed = template.isColumnDisplayed(REQUESTED_QUANTITY);
-    boolean explanationDisplayed = template.isColumnDisplayed(REQUESTED_QUANTITY_EXPLANATION);
+    // [SIGLUS change start]
+    // [change reason]: "request quantity explanation" can be undisplayed when "request quantity"
+    //                  is displayed.
+    // boolean explanationDisplayed = template.isColumnDisplayed(REQUESTED_QUANTITY_EXPLANATION);
     boolean calcOrderQuantityDisplayed = template.isColumnDisplayed(CALCULATED_ORDER_QUANTITY);
 
-    if (quantityDisplayed) {
-      if (!explanationDisplayed) {
-        rejectValue(errors, COLUMNS_MAP,
-            new Message(ERROR_DISPLAYED_WHEN_REQUESTED_QUANTITY_IS_DISPLAYED,
-                REQUESTED_QUANTITY_EXPLANATION));
-      }
-    } else {
-      if (explanationDisplayed) {
-        rejectValue(errors, COLUMNS_MAP,
-            new Message(ERROR_DISPLAYED_WHEN_REQUESTED_QUANTITY_EXPLANATION_IS_DISPLAYED,
-                REQUESTED_QUANTITY));
-      }
-    }
+    // if (quantityDisplayed) {
+    //   if (!explanationDisplayed) {
+    //     rejectValue(errors, COLUMNS_MAP,
+    //         new Message(ERROR_DISPLAYED_WHEN_REQUESTED_QUANTITY_IS_DISPLAYED,
+    //             REQUESTED_QUANTITY_EXPLANATION));
+    //   }
+    // } else {
+    //   if (explanationDisplayed) {
+    //     rejectValue(errors, COLUMNS_MAP,
+    //         new Message(ERROR_DISPLAYED_WHEN_REQUESTED_QUANTITY_EXPLANATION_IS_DISPLAYED,
+    //             REQUESTED_QUANTITY));
+    //   }
+    // }
+    // [SIGLUS change end]
     if (!calcOrderQuantityDisplayed && !quantityDisplayed) {
       rejectValue(errors, COLUMNS_MAP,
           new Message(ERROR_DISPLAYED_WHEN_CALC_ORDER_QUANTITY_EXPLANATION_NOT_DISPLAYED,
@@ -246,12 +247,15 @@ public class RequisitionTemplateDtoValidator extends BaseValidator {
       AvailableRequisitionColumn.Importer definition = column.getColumnDefinition();
       Set<SourceType> sources = definition.getSources();
 
-      if (sources.size() > 1 && template.isColumnUserInput(definition.getName())) {
-        rejectIfNotDisplayed(
-            errors, template, definition.getName(), COLUMNS_MAP,
-            new Message(ERROR_MUST_BE_DISPLAYED, definition.getName())
-        );
-      }
+      // [SIGLUS change start]
+      // [change reason]: "skip" column need be undisplayed.
+      // if (sources.size() > 1 && template.isColumnUserInput(definition.getName())) {
+      //   rejectIfNotDisplayed(
+      //       errors, template, definition.getName(), COLUMNS_MAP,
+      //       new Message(ERROR_MUST_BE_DISPLAYED, definition.getName())
+      //   );
+      // }
+      // [SIGLUS change end]
       rejectIfNotContains(
           errors, sources, chosenSource, COLUMNS_MAP,
           new Message(ERROR_SOURCE_NOT_AVAILABLE, chosenSource.toString(), column.getName())
