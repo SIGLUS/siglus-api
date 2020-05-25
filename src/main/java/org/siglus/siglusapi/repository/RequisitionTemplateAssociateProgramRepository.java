@@ -17,11 +17,12 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.AssociateProgram;
+import org.siglus.siglusapi.domain.RequisitionTemplateAssociateProgram;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AssociateProgramExtensionRepository extends JpaRepository<AssociateProgram, UUID> {
+public interface RequisitionTemplateAssociateProgramRepository extends
+    JpaRepository<RequisitionTemplateAssociateProgram, UUID> {
 
-  List<AssociateProgram> findByRequisitionTemplateId(UUID requisitionTemplateId);
+  List<RequisitionTemplateAssociateProgram> findByRequisitionTemplateId(UUID requisitionTemplateId);
 
 }

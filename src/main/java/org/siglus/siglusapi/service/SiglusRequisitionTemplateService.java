@@ -21,11 +21,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
-import org.siglus.siglusapi.domain.AssociateProgram;
+import org.siglus.siglusapi.domain.RequisitionTemplateAssociateProgram;
 import org.siglus.siglusapi.domain.RequisitionTemplateExtension;
 import org.siglus.siglusapi.dto.RequisitionTemplateExtensionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionTemplateDto;
-import org.siglus.siglusapi.repository.AssociateProgramExtensionRepository;
+import org.siglus.siglusapi.repository.RequisitionTemplateAssociateProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.service.client.RequisitionTemplateRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +42,7 @@ public class SiglusRequisitionTemplateService {
   private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
 
   @Autowired
-  private AssociateProgramExtensionRepository associateProgramExtensionRepository;
+  private RequisitionTemplateAssociateProgramRepository associateProgramExtensionRepository;
 
   public SiglusRequisitionTemplateDto getTemplate(UUID id) {
     SiglusRequisitionTemplateDto templateDto = SiglusRequisitionTemplateDto.from(
@@ -82,26 +82,27 @@ public class SiglusRequisitionTemplateService {
       return newDto;
     }
     log.info("save requisition template asscociated programs: {}",  uuids);
-    List<AssociateProgram> associatePrograms =
+    List<RequisitionTemplateAssociateProgram> associatePrograms =
         associateProgramExtensionRepository.findByRequisitionTemplateId(updatedDto.getId());
     Set<UUID> associateProgramIds = associatePrograms.stream()
-        .map(AssociateProgram::getAssociatedProgramId)
+        .map(RequisitionTemplateAssociateProgram::getAssociatedProgramId)
         .collect(Collectors.toSet());
     if (!associateProgramIds.equals(uuids)) {
       log.info("delete old requisition template asscociated programss: {}",  associatePrograms);
       associateProgramExtensionRepository.delete(associatePrograms);
       log.info("create new requisition template asscociated programss: {}",  uuids);
-      associateProgramExtensionRepository.save(AssociateProgram.from(updatedDto.getId(), uuids));
+      associateProgramExtensionRepository.save(
+          RequisitionTemplateAssociateProgram.from(updatedDto.getId(), uuids));
     }
     newDto.setAssociateProgramsIds(uuids);
     return newDto;
   }
 
   private Set<UUID> getAssociateProgram(UUID templateId) {
-    List<AssociateProgram> associatePrograms =
+    List<RequisitionTemplateAssociateProgram> associatePrograms =
         associateProgramExtensionRepository.findByRequisitionTemplateId(templateId);
     return associatePrograms.stream()
-        .map(AssociateProgram::getAssociatedProgramId)
+        .map(RequisitionTemplateAssociateProgram::getAssociatedProgramId)
         .collect(Collectors.toSet());
   }
 

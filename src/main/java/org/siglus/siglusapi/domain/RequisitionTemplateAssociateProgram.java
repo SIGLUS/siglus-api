@@ -33,7 +33,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "requisition_template_associated_programs", schema = "siglusintegration")
-public class AssociateProgram extends BaseEntity {
+public class RequisitionTemplateAssociateProgram extends BaseEntity {
 
   @Column(nullable = false)
   private UUID requisitionTemplateId;
@@ -41,10 +41,12 @@ public class AssociateProgram extends BaseEntity {
   @Column(name = "associatedprogram", nullable = false)
   private UUID associatedProgramId;
 
-  public static List<AssociateProgram> from(UUID templateId, Set<UUID> programIds) {
+  public static List<RequisitionTemplateAssociateProgram> from(UUID templateId,
+      Set<UUID> programIds) {
     return programIds.stream()
         .map(programId -> {
-          AssociateProgram associateProgram = new AssociateProgram();
+          RequisitionTemplateAssociateProgram associateProgram =
+              new RequisitionTemplateAssociateProgram();
           associateProgram.setRequisitionTemplateId(templateId);
           associateProgram.setAssociatedProgramId(programId);
           return associateProgram;
