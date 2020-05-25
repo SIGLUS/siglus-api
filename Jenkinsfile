@@ -4,21 +4,6 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '50'))
     }
     stages {
-        stage('CheckStyle & PMD Check') {
-            steps {
-                println "checkstyle_pmd_test, JOB_NAME=${JOB_NAME}"
-                sh 'mkdir -p /ebs2/gradle-caches/${JOB_NAME}'
-                sh 'mkdir -p /ebs2/node-caches/${JOB_NAME}'
-                sh 'docker run --rm -v ${PWD}:/app -w /app siglusdevops/gradle:4.10.3 gradle checkstyleMain checkstyleTest pmdMain pmdTest'
-            }
-        }
-        stage('SonarQube Analysis') {
-            steps {
-                withCredentials([string(credentialsId: 'sonarqube_token', variable: 'SONARQUBE_TOKEN')]) {
-                    sh 'docker run --rm -v ${PWD}:/app -w /app siglusdevops/gradle:4.10.3 gradle sonarqube -Dsonar.projectKey=siglus-integration -Dsonar.host.url=http://13.234.176.65:9000 -Dsonar.login=$SONARQUBE_TOKEN'
-                }
-            }
-        }
         stage('Build') {
             steps {
                 fetch_setting_env()
@@ -27,11 +12,18 @@ pipeline {
                     sh 'mkdir -p /ebs2/gradle-caches/${JOB_NAME}'
                     sh 'mkdir -p /ebs2/node-caches/${JOB_NAME}'
                     sh 'pwd && ls -l'
-                    sh 'docker run --rm --env-file .env --add-host=log:127.0.0.1 -v ${PWD}:/app -w /app siglusdevops/gradle:4.10.3 gradle clean build -x checkstyleMain -x checkstyleTest -x pmdMain -x pmdTest'
+                    sh 'docker run --rm --env-file .env --add-host=log:127.0.0.1 -v ${PWD}:/app -w /app siglusdevops/gradle:4.10.3 gradle clean build'
                 }
                 checkstyle pattern: '**/build/reports/checkstyle/*.xml'
                 pmd pattern: '**/build/reports/pmd/*.xml'
                 junit '**/build/test-results/*/*.xml'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube_token', variable: 'SONARQUBE_TOKEN')]) {
+                    sh 'docker run --rm -v ${PWD}:/app -w /app siglusdevops/gradle:4.10.3 gradle sonarqube -Dsonar.projectKey=siglus-api -Dsonar.host.url=http://13.234.176.65:9000 -Dsonar.login=$SONARQUBE_TOKEN'
+                }
             }
         }
         stage('Push Image') {
