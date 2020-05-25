@@ -248,7 +248,7 @@ public class RequisitionTemplateDtoValidator extends BaseValidator {
       Set<SourceType> sources = definition.getSources();
 
       // [SIGLUS change start]
-      // [change reason]: "skip" column need be undisplayed.
+      // [change reason]: "skip" column has multiple sources, but need be undisplayed.
       // if (sources.size() > 1 && template.isColumnUserInput(definition.getName())) {
       //   rejectIfNotDisplayed(
       //       errors, template, definition.getName(), COLUMNS_MAP,

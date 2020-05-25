@@ -17,9 +17,9 @@ package org.openlmis.stockmanagement.web.stockcardrangesummary;
 
 import java.util.Map;
 import java.util.UUID;
-import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.service.StockCardAggregate;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;

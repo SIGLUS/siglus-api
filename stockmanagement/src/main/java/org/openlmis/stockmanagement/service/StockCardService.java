@@ -46,13 +46,13 @@ import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.i18n.StockmanagementMessageService;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.openlmis.stockmanagement.service.referencedata.PermissionStringDto;
 import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
 import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
 import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
-import org.openlmis.stockmanagement.service.referencedata.PermissionStringDto;
 import org.openlmis.stockmanagement.service.referencedata.StockmanagementPermissionStrings;
-import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.openlmis.stockmanagement.util.Message;
+import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -178,7 +178,8 @@ public class StockCardService extends StockCardBaseService {
       UserDto user = authenticationHelper.getCurrentUser();
       LOGGER.info("list of ids:" + ids);
 
-      StockmanagementPermissionStrings.Handler handler = permissionService.getPermissionStrings(user.getId());
+      StockmanagementPermissionStrings.Handler handler =
+          permissionService.getPermissionStrings(user.getId());
       Set<PermissionStringDto> permissionStrings = handler.get();
       LOGGER.info("list of permission strings:" + permissionStrings);
 

@@ -151,7 +151,7 @@ public class Facility extends BaseEntity implements FhirLocation {
   @Setter
   private Set<SupportedProgram> supportedPrograms = new HashSet<>();
 
-  @Column(columnDefinition="Geometry")
+  @Column(columnDefinition = "Geometry")
   @DiffIgnore
   @Getter
   @Setter

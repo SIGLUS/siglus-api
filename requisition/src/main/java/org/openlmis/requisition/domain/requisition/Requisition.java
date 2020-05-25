@@ -110,7 +110,7 @@ import org.slf4j.ext.XLoggerFactory;
 import org.slf4j.profiler.Profiler;
 import org.springframework.util.CollectionUtils;
 
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 @Entity
 @TypeName("Requisition")
 @Table(name = "requisitions", schema = "requisition")

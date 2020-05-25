@@ -201,7 +201,8 @@ public class Application {
    */
   @Bean
   public ReferencedataExposedMessageSourceImpl messageSource() {
-    ReferencedataExposedMessageSourceImpl messageSource = new ReferencedataExposedMessageSourceImpl();
+    ReferencedataExposedMessageSourceImpl messageSource =
+        new ReferencedataExposedMessageSourceImpl();
     messageSource.setBasename("classpath:messages");
     messageSource.setDefaultEncoding("UTF-8");
     messageSource.setUseCodeAsDefaultMessage(true);

@@ -59,7 +59,8 @@ public class StockmanagementSupervisoryNodeReferenceDataServiceTest {
 
   @Test
   public void shouldReturnFirstElementIfMoreThanOneFound() {
-    StockmanagementSupervisoryNodeReferenceDataService spy = spy(new StockmanagementSupervisoryNodeReferenceDataService());
+    StockmanagementSupervisoryNodeReferenceDataService spy =
+        spy(new StockmanagementSupervisoryNodeReferenceDataService());
     SupervisoryNodeDto secondNode = new SupervisoryNodeDto();
     List<SupervisoryNodeDto> found = Arrays.asList(supervisoryNode, secondNode);
     doReturn(new DummyPage<>(found))
@@ -76,7 +77,8 @@ public class StockmanagementSupervisoryNodeReferenceDataServiceTest {
 
   @Test
   public void shouldReturnFirstElementFoundElementIfOneFound() {
-    StockmanagementSupervisoryNodeReferenceDataService spy = spy(new StockmanagementSupervisoryNodeReferenceDataService());
+    StockmanagementSupervisoryNodeReferenceDataService spy =
+        spy(new StockmanagementSupervisoryNodeReferenceDataService());
     doReturn(new DummyPage<>(Collections.singletonList(supervisoryNode)))
         .when(spy)
         .getPage(RequestParameters.init()

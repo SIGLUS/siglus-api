@@ -85,7 +85,7 @@ public class GeographicZone extends BaseEntity implements FhirLocation {
   @Setter
   private Double longitude;
 
-  @Column(columnDefinition="Geometry")
+  @Column(columnDefinition = "Geometry")
   @Getter
   @Setter
   private Polygon boundary;

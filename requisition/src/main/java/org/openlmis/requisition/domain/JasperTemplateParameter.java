@@ -105,9 +105,9 @@ public class JasperTemplateParameter extends BaseEntity {
   private String description;
 
   @ElementCollection
-  @CollectionTable(name="jaspertemplateparameter_options", schema = "requisition",
-      joinColumns=@JoinColumn(name="jaspertemplateparameterid"))
-  @Column(name="options")
+  @CollectionTable(name = "jaspertemplateparameter_options", schema = "requisition",
+      joinColumns = @JoinColumn(name = "jaspertemplateparameterid"))
+  @Column(name = "options")
   @Getter
   @Setter
   private List<String> options;

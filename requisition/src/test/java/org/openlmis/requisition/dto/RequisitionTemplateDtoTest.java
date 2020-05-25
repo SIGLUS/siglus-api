@@ -36,7 +36,11 @@ public class RequisitionTemplateDtoTest {
     EqualsVerifier
         .forClass(RequisitionTemplateDto.class)
         .withRedefinedSuperclass()
-        .suppress(Warning.NONFINAL_FIELDS, Warning.STRICT_INHERITANCE) // fields in DTO cannot be final
+        .suppress(Warning.NONFINAL_FIELDS) // fields in DTO cannot be final
+        // [SIGLUS change start]
+        // [change reason]: RequisitionTemplateDto Class need be extended, cannot be final
+        .suppress(Warning.STRICT_INHERITANCE)
+        // [SIGLUS change end]
         .verify();
   }
 

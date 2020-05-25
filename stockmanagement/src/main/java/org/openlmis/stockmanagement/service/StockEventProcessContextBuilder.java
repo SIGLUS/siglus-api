@@ -49,12 +49,12 @@ import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilit
 import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
 import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
 import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramReferenceDataService;
-import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.openlmis.stockmanagement.util.LazyGrouping;
 import org.openlmis.stockmanagement.util.LazyList;
 import org.openlmis.stockmanagement.util.LazyResource;
 import org.openlmis.stockmanagement.util.ReferenceDataSupplier;
 import org.openlmis.stockmanagement.util.StockEventProcessContext;
+import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.slf4j.Logger;
 import org.slf4j.ext.XLogger;
 import org.slf4j.profiler.Profiler;

@@ -37,8 +37,8 @@ import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotRefe
 import org.openlmis.stockmanagement.service.referencedata.StockmanagementOrderableReferenceDataService;
 import org.openlmis.stockmanagement.service.referencedata.StockmanagementProgramReferenceDataService;
 import org.openlmis.stockmanagement.testutils.StockEventDtoDataBuilder;
-import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.openlmis.stockmanagement.util.StockEventProcessContext;
+import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;

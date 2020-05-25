@@ -311,12 +311,14 @@ public class StockmanagementPermissionServiceTest {
 
   @Test
   public void shouldGetPermissionStrings() {
-    StockmanagementPermissionStrings.Handler handler = mock(StockmanagementPermissionStrings.Handler.class);
+    StockmanagementPermissionStrings.Handler handler =
+        mock(StockmanagementPermissionStrings.Handler.class);
     when(permissionStrings.forUser(any(UUID.class))).thenReturn(handler);
 
     UUID userId = randomUUID();
 
-    StockmanagementPermissionStrings.Handler response = permissionService.getPermissionStrings(userId);
+    StockmanagementPermissionStrings.Handler response =
+        permissionService.getPermissionStrings(userId);
 
     assertEquals(handler, response);
     verify(permissionStrings).forUser(userId);

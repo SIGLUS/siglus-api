@@ -47,7 +47,8 @@ public class ReferencedataFacilityTypeServiceTest {
   private FacilityTypeRepository facilityTypeRepository;
 
   @InjectMocks
-  private ReferencedataFacilityTypeService facilityTypeService = new ReferencedataFacilityTypeService();
+  private ReferencedataFacilityTypeService facilityTypeService =
+      new ReferencedataFacilityTypeService();
 
   private Pageable pageable;
   private FacilityType facilityType1;

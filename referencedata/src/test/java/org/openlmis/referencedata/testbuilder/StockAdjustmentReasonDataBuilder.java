@@ -48,7 +48,8 @@ public class StockAdjustmentReasonDataBuilder {
    * Builds instance of {@link ReferencedataStockAdjustmentReason} without id field.
    */
   public ReferencedataStockAdjustmentReason buildAsNew() {
-    return new ReferencedataStockAdjustmentReason(program, name, description, additive, displayOrder);
+    return new ReferencedataStockAdjustmentReason(program, name, description, additive,
+        displayOrder);
   }
 
   /**
