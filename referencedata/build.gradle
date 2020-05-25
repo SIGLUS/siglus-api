@@ -64,6 +64,7 @@ dependencies {
     compile group: 'org.hibernate', name: 'hibernate-ehcache', version: '5.0.12.Final'
 
     compile 'org.joda:joda-money:0.12'
+    compile 'joda-time:joda-time:2.10.6'
     compile 'org.jadira.usertype:usertype.core:5.0.0.GA'
 
     compile 'net.sf.supercsv:super-csv:2.4.0'
