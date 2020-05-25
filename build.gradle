@@ -46,6 +46,7 @@ dependencies {
     compile group: 'net.sf.ehcache', name: 'ehcache', version: '2.4.3'
     compile group: 'org.hibernate', name: 'hibernate-ehcache', version: '5.0.12.Final'
     compile 'org.flywaydb:flyway-core:4.1.2'
+    compile 'org.springframework.boot:spring-boot-starter-data-redis:1.5.21.RELEASE'
     compile 'org.openlmis:openlmis-service-util:3.0.0'
     compile 'org.jadira.usertype:usertype.core:5.0.0.GA'
 
@@ -102,6 +103,11 @@ ext.configureForDockerCompose = { task ->
     // source postgres host and port from docker compose
     def db = dockerCompose.servicesInfos.db.firstContainer
     task.environment "DATABASE_URL", "jdbc:postgresql://${db.host}:${db.port}/open_lmis"
+
+    // source redis host and port from docker compose
+    def redis = dockerCompose.servicesInfos.redis.firstContainer
+    task.environment "REDIS_URL", redis.host
+    task.environment "REDIS_PORT", redis.ports[6379]
 }
 
 /*
