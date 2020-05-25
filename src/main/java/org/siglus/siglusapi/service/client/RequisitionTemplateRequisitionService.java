@@ -38,11 +38,6 @@ public class RequisitionTemplateRequisitionService
     return RequisitionTemplateDto[].class;
   }
 
-  @Override
-  protected String getServiceName() {
-    return null;
-  }
-
   public RequisitionTemplateDto findTemplate(UUID id) {
     return findOne(id);
   }

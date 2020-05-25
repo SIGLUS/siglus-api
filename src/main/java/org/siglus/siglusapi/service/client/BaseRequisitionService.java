@@ -24,6 +24,11 @@ public abstract class BaseRequisitionService<T> extends BaseCommunicationService
   private String requisitionUrl;
 
   @Override
+  protected String getServiceName() {
+    return "Requisition";
+  }
+
+  @Override
   protected String getServiceUrl() {
     return requisitionUrl;
   }

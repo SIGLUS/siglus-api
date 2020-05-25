@@ -30,16 +30,12 @@ import lombok.NoArgsConstructor;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Value;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class SiglusRequisitionTemplateDto extends RequisitionTemplateDto {
-
-  @Value("${service.url}")
-  private String serviceUrl;
 
   private RequisitionTemplateExtensionDto extension;
 
@@ -66,7 +62,7 @@ public class SiglusRequisitionTemplateDto extends RequisitionTemplateDto {
         .ofNullable(associateProgramsIds)
         .orElse(Collections.emptySet())
         .stream()
-        .map(elem -> new ObjectReferenceDto(elem, serviceUrl, PROGRAMS))
+        .map(elem -> new ObjectReferenceDto(elem, "", PROGRAMS))
         .collect(Collectors.toSet());
   }
 
