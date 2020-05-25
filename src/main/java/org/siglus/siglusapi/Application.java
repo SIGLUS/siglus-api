@@ -42,7 +42,6 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
@@ -70,7 +69,6 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
     @PropertySource("classpath:stockmanagement-application.properties"),
     @PropertySource("classpath:requisition-application.properties")
 })
-@EnableCaching
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class Application {
   private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
