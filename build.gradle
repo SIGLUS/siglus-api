@@ -173,8 +173,10 @@ jacocoTestReport {
     afterEvaluate {
         classDirectories = files(classDirectories.files.collect {
             fileTree(dir: it, exclude: [
+                    'org/siglus/siglusapi/*.class',
                     'org/siglus/siglusapi/constants',
-                    'org/siglus/siglusapi/i18n'
+                    'org/siglus/siglusapi/i18n',
+                    'org/siglus/siglusapi/service/client'
             ])
         })
     }

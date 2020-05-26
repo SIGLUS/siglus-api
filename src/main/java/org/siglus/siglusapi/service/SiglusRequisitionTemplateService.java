@@ -60,7 +60,7 @@ public class SiglusRequisitionTemplateService {
     return updateTemplateAsscociatedProgram(newDto, requestDto);
   }
 
-  public SiglusRequisitionTemplateDto updateTemplateExtension(
+  private SiglusRequisitionTemplateDto updateTemplateExtension(
       RequisitionTemplateDto updatedDto, SiglusRequisitionTemplateDto requestDto) {
     SiglusRequisitionTemplateDto newDto = SiglusRequisitionTemplateDto.from(updatedDto);
     RequisitionTemplateExtensionDto extension = requestDto.getExtension();
@@ -74,7 +74,7 @@ public class SiglusRequisitionTemplateService {
     return newDto;
   }
 
-  public SiglusRequisitionTemplateDto updateTemplateAsscociatedProgram(
+  private SiglusRequisitionTemplateDto updateTemplateAsscociatedProgram(
       RequisitionTemplateDto updatedDto, SiglusRequisitionTemplateDto requestDto) {
     SiglusRequisitionTemplateDto newDto = SiglusRequisitionTemplateDto.from(updatedDto);
     Set<UUID> uuids = requestDto.getAssociateProgramsIds();
