@@ -13,20 +13,35 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.dto;
+package org.siglus.siglusapi.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.springframework.beans.BeanUtils;
 
-@Getter
-@Setter
+@Data
 @EqualsAndHashCode(callSuper = true)
-public class ProgramDto extends BasicProgramDto {
-  private String description;
-  private Boolean active;
-  private Boolean periodsSkippable;
-  private Boolean showNonFullSupplyTab;
-  private Boolean skipAuthorization;
-  private Boolean enableDatePhysicalStockCountCompleted;
+public class SiglusProgramDto extends ProgramDto {
+
+  private Boolean isVirtual;
+
+  private UUID parentId;
+
+  private Boolean isSupportEmergency;
+
+  public static SiglusProgramDto from(ProgramDto programDto) {
+    SiglusProgramDto siglusProgramDto = new SiglusProgramDto();
+    BeanUtils.copyProperties(programDto, siglusProgramDto);
+    return siglusProgramDto;
+  }
+
+  public static List<SiglusProgramDto> from(List<ProgramDto> programDtos) {
+    List<SiglusProgramDto> siglusProgramDtos = new ArrayList<>(programDtos.size());
+    programDtos.forEach(programDto -> siglusProgramDtos.add(from(programDto)));
+    return siglusProgramDtos;
+  }
 }

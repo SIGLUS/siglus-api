@@ -16,6 +16,11 @@ schemas:
         "type": "array",
         "items": { "type": "object", "$ref": "schemas/requisitionTemplate.json" }
       }
+  - validReasonAssignments: |
+      {
+        "type": "array",
+        "items": {"type": "object", "$ref": "schemas/validReasonAssignment.json"}
+      }
 
 traits:
   - secured:
@@ -119,6 +124,49 @@ traits:
             body:
               application/json:
           "403":
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /validReasons:
+      get:
+        is: [ secured ]
+        description: Return a list of valid reasons based on program and facility type.
+        queryParameters:
+          program:
+            description: Program id
+            type: string
+            required: false
+          facilityType:
+            description: Facility type id
+            type: string
+            required: false
+          reasonType:
+            description: Reason type
+            type: string
+            required: false
+            repeat: true
+            enum:
+              - CREDIT
+              - DEBIT
+              - BALANCE_ADJUSTMENT
+          reason:
+            description: Stock card line item reason id
+            type: string
+            required: false
+        responses:
+          200:
+            description: Valid reason response
+            body:
+              application/json:
+                schema: validReasonAssignments
+          400:
+            description: Facility type or program is not found.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: Facility type given is no match with home facility or given program is not supported by home facility.
             body:
               application/json:
                 schema: localizedMessage

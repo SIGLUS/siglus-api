@@ -13,20 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.dto;
+package org.siglus.siglusapi.constant;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+public class FieldConstants {
 
-@Getter
-@Setter
-@EqualsAndHashCode(callSuper = true)
-public class ProgramDto extends BasicProgramDto {
-  private String description;
-  private Boolean active;
-  private Boolean periodsSkippable;
-  private Boolean showNonFullSupplyTab;
-  private Boolean skipAuthorization;
-  private Boolean enableDatePhysicalStockCountCompleted;
+  private FieldConstants() { }
+
+  public static final String PROGRAM = "program";
+
+  public static final String FACILITY_TYPE = "facilityType";
+
+  public static final String REASON_TYPE = "reasonType";
+
+  public static final String REASON = "reason";
+
+  public static final String ACTUAL_START_DATE = "actualStartDate";
+
+  public static final String ACTUAL_END_DATE = "actualEndDate";
+
 }

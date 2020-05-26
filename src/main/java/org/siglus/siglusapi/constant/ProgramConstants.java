@@ -13,20 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.dto;
+package org.siglus.siglusapi.constant;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.UUID;
 
-@Getter
-@Setter
-@EqualsAndHashCode(callSuper = true)
-public class ProgramDto extends BasicProgramDto {
-  private String description;
-  private Boolean active;
-  private Boolean periodsSkippable;
-  private Boolean showNonFullSupplyTab;
-  private Boolean skipAuthorization;
-  private Boolean enableDatePhysicalStockCountCompleted;
+public class ProgramConstants {
+
+  private ProgramConstants() { }
+
+  public static final UUID ALL_PRODUCTS_UUID = UUID
+      .fromString("00000000-0000-0000-0000-000000000000");
+
+  public static final UUID ALL_PRODUCTS_PROGRAM_ID = UUID
+      .fromString("00000000-0000-0000-0000-000000000000");
+
+  public static final String ALL_PRODUCTS_PROGRAM_CODE = "ALL";
+
+  public static final String ALL_PRODUCTS_PROGRAM_NAME = "All Products";
+
 }

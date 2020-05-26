@@ -13,20 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.dto;
+package org.siglus.siglusapi.repository;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.List;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.ProgramExtension;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Getter
-@Setter
-@EqualsAndHashCode(callSuper = true)
-public class ProgramDto extends BasicProgramDto {
-  private String description;
-  private Boolean active;
-  private Boolean periodsSkippable;
-  private Boolean showNonFullSupplyTab;
-  private Boolean skipAuthorization;
-  private Boolean enableDatePhysicalStockCountCompleted;
+public interface ProgramExtensionRepository extends JpaRepository<ProgramExtension, UUID> {
+
+  ProgramExtension findByProgramId(UUID programId);
+
+  List<ProgramExtension> findByParentId(UUID programId);
+
+  List<ProgramExtension> findByIsVirtual(Boolean isVirtual);
 }

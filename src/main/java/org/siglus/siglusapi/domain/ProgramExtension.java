@@ -13,20 +13,40 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.dto;
+package org.siglus.siglusapi.domain;
 
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@Entity
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class ProgramDto extends BasicProgramDto {
-  private String description;
-  private Boolean active;
-  private Boolean periodsSkippable;
-  private Boolean showNonFullSupplyTab;
-  private Boolean skipAuthorization;
-  private Boolean enableDatePhysicalStockCountCompleted;
+@Table(name = "program_extension", schema = "siglusintegration")
+public class ProgramExtension extends BaseEntity {
+
+  @Column
+  private UUID programId;
+
+  @Column(columnDefinition = "text")
+  private String code;
+
+  @Column(nullable = false)
+  private Boolean isVirtual;
+
+  @Column(nullable = false)
+  private UUID parentId;
+
+  @Column(nullable = false)
+  private Boolean isSupportEmergency;
+
 }
