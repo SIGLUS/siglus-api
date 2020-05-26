@@ -1,0 +1,16 @@
+[
+  {
+    "id": "e526787a-6856-4009-983d-d277f4cdd716",
+    "productCode": "14A02",
+    "fullProductName": "Kit1",
+    "stockOnHand": 0,
+    "parentProgramId": "dce17f2e-af3e-40ad-8e00-3496adef44c3"
+  },
+  {
+    "id": "e526787a-6856-4009-983d-d277f4cdd718",
+    "productCode": "14A03",
+    "fullProductName": "Kit2",
+    "stockOnHand": 18,
+    "parentProgramId": "dce17f2e-af3e-40ad-8e00-3496adef44c3"
+  }
+]

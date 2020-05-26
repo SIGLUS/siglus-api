@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "Valid destination assignment.",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "programId": {
+      "type": "string"
+    },
+    "facilityTypeId": {
+      "type": "string"
+    },
+    "node": {
+      "type": "object",
+      "title": "Node",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "referenceId": {
+          "type": "string"
+        },
+        "isRefDataFacility": {
+          "type":"boolean"
+        }
+      }
+    },
+    "name": {
+      "type": "string"
+    },
+    "isFreeTextAllowed": {
+      "type": "boolean"
+    }
+  }
+}

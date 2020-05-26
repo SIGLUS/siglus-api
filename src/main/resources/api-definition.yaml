@@ -10,17 +10,105 @@ documentation:
     content: Welcome to the SIGLUS API documentation. This minimal API is intended for illustrative purposes.
 
 schemas:
-  - requisitionTemplate: !include schemas/requisitionTemplate.json
-  - requisitionTemplateArray: |
+  - program: !include schemas/program.json
+  - validSourceDestinations: |
       {
         "type": "array",
-        "items": { "type": "object", "$ref": "schemas/requisitionTemplate.json" }
+        "items": {"type": "object", "$ref": "schemas/validSourceDestination.json"}
       }
   - validReasonAssignments: |
       {
-        "type": "array",
-        "items": {"type": "object", "$ref": "schemas/validReasonAssignment.json"}
+         "type": "array",
+         "items": {"type": "object", "$ref": "schemas/validReasonAssignment.json"}
       }
+  - siglusOrdeableKitDto: !include schemas/siglusOrdeableKitDto.json
+  - orderableInKitDto: !include schemas/orderableInKitDto.json
+  - physicalInventories: |
+      {
+        "type": "array",
+        "items": {"type": "object", "$ref": "schemas/physicalInventory.json"}
+      }
+  - programArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/program.json" }
+      }
+  - uuid: |
+      {
+        "type": "string",
+        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      }
+  - arrayOfStrings: |
+      {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+  - stockCard: !include schemas/stockCard.json
+  - stockManagementDraft: !include schemas/stockManagementDraft.json
+  - stockCardSummariesPage: !include schemas/stockCardSummaryV2Page.json
+  - physicalInventoryDate: !include schemas/physicalInventoryDate.json
+  - requisitionTemplate: !include schemas/requisitionTemplate.json
+  - requisitionTemplateArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/requisitionTemplate.json" }
+      }
+  - processingPeriod: !include schemas/processingPeriod.json
+  - processingPeriodPage: !include schemas/processingPeriodPage.json
+  - processingPeriodDto: !include schemas/processingPeriodDto.json
+  - basicRequisitionDto: !include schemas/basicRequisitionDto.json
+  - basicRequisitionDtoPage: !include schemas/basicRequisitionDtoPage.json
+resourceTypes:
+  - collection:
+      get:
+        responses:
+          200:
+            description: Collection retrieved successfully
+            headers:
+              X-Content-Type-Options:
+              X-XSS-Protection:
+            body:
+              application/json:
+                schema: <<schema>>
+          404:
+            description: Collection is empty.
+            headers:
+              X-Content-Type-Options:
+              X-XSS-Protection:
+      post:
+        body:
+          application/json:
+            schema: <<schema>>
+        responses:
+          201:
+            description: Item created successfully
+            headers:
+              X-Content-Type-Options:
+              X-XSS-Protection:
+            body:
+              application/json:
+                schema: <<schema>>
+  - member:
+      get:
+        responses:
+          200:
+            body:
+              application/json:
+                schema: <<schema>>
+      post:
+        body:
+          application/json:
+            schema: <<schema>>
+        responses:
+          200:
+            body:
+              application/json:
+                schema: <<schema>>
+      delete:
+        responses:
+          200:
 
 traits:
   - secured:
@@ -69,6 +157,698 @@ traits:
 /api:
 
   /siglusapi:
+
+    /programs:
+      displayName: Program
+      get:
+        is: [ secured ]
+        description: Get all programs.
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: programArray
+      /{id}:
+        uriParameters:
+          id:
+            displayName: id
+            type: string
+            required: true
+            repeat: false
+        get:
+          is: [ secured ]
+          description: Get chosen program.
+          responses:
+            "200":
+              body:
+                application/json:
+            "404":
+              body:
+                application/json:
+                  schema: localizedErrorResponse
+
+    /orderables:
+      displayName: Orderable Product
+      get:
+        is: [ secured, paginated ]
+        description: >
+          Get all Orderable Products if no search params provided. Otherwise returns a paginated
+          list of Orderables given either an Orderable Ids, a Program Code, a Name or a Code.
+        queryParameters:
+          id:
+            displayName: orderable ID
+            type: string
+            required: false
+            repeat: true
+          code:
+            displayName: orderable code
+            type: string
+            required: false
+            repeat: false
+          name:
+            displayName: orderable name
+            type: string
+            required: false
+            repeat: false
+          program:
+            displayName: program code
+            type: string
+            required: false
+            repeat: false
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: orderablePage
+          "304":
+            description: Returned with no response body if no resource was modified since date provided in the If-Modified-Since request header.
+          "400":
+            body:
+              application/json:
+                schema: localizedErrorResponse
+
+    /validDestinations:
+      get:
+        is: [ secured ]
+        description: Get a list of valid destinations of a program and a facility. The filtration works only if both params are provided. If no params are present all assignments are returned.
+        queryParameters:
+          programId:
+            required: false
+            description: Program ID, indicates the program that the valid destinations are under.
+          facilityId:
+            required: false
+            description: Facility ID, indicates the facility that the valid destinations are under.
+        responses:
+          200:
+            body:
+              application/json:
+                schema: validSourceDestinations
+          400:
+            description: Program or facility type does not exist.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to view valid destination.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /validSources:
+      get:
+        is: [ secured ]
+        description: Get a list of valid sources of a program and a facility. The filtration works only if both params are provided. If no params are present all assignments are returned.
+        queryParameters:
+          programId:
+            required: false
+            description: Program ID, indicates the program that the valid sources are under.
+          facilityId:
+            required: false
+            description: Facility ID, indicates the facility that the valid sources are under.
+        responses:
+          200:
+            body:
+              application/json:
+                schema: validSourceDestinations
+          400:
+            description: Program or facility type does not exist.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to view valid sources.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /validReasons:
+      get:
+        is: [ secured ]
+        description: Return a list of valid reasons based on program and facility type.
+        queryParameters:
+          program:
+            description: Program id
+            type: string
+            required: false
+          facilityType:
+            description: Facility type id
+            type: string
+            required: false
+          reasonType:
+            description: Reason type
+            type: string
+            required: false
+            repeat: true
+            enum:
+              - CREDIT
+              - DEBIT
+              - BALANCE_ADJUSTMENT
+          reason:
+            description: Stock card line item reason id
+            type: string
+            required: false
+        responses:
+          200:
+            description: Valid reason response
+            body:
+              application/json:
+                schema: validReasonAssignments
+          400:
+            description: Facility type or program is not found.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: Facility type given is no match with home facility or given program is not supported by home facility.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /unpackKits:
+      get:
+        is: [ secured ]
+        description: Get a list of saved stock management kit products. If products do not exist, will return empty list.
+        queryParameters:
+          facilityId:
+            required: true
+        responses:
+          200:
+            description: list of stock management kit products.
+            body:
+              application/json:
+                schema: siglusOrdeableKitDto
+
+    /unpackKit:
+      get:
+        is: [ secured ]
+        description: Get a kit product. If products do not exist, will return empty list.
+        queryParameters:
+          facilityId:
+            required: true
+          orderableId:
+            required: true
+        responses:
+          200:
+            description: kit product.
+            body:
+              application/json:
+                schema: stockManagementDraft
+
+    /orderableInKit:
+      displayName: orderableInKit
+      get:
+        is: [ secured ]
+        description: Get all orderableInKit.
+        queryParameters:
+          kitProductId:
+            displayName: kitProductId
+            description: The UUID of the Trade Item.
+            type: string
+            required: true
+            repeat: false
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: orderableInKitDto
+
+    /physicalInventories:
+      get:
+        is: [ secured ]
+        description: Get a list of saved physical inventory. If inventories do not exist, will return empty list.
+        queryParameters:
+          facility:
+            required: true
+          program:
+            required: true
+          isDraft:
+            required: false
+        responses:
+          200:
+            description: list of physical inventories.
+            body:
+              application/json:
+                schema: physicalInventories
+          403:
+            description: User does not have permission to view draft physical inventory.
+            body:
+              application/json:
+                schema: localizedMessage
+          406:
+            description: initial inventory has been created.
+            body:
+              application/json:
+                schema: localizedMessage
+      post:
+        is: [ secured ]
+        description: Create empty draft physical inventory. Only one draft is allowed at the same time for one facility&program.
+        body:
+          application/json:
+            schema: physicalInventory
+        responses:
+          201:
+            description: Draft saved.
+            body:
+              application/json:
+                schema: physicalInventory
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+            description: An error occured during request processing.
+          403:
+            description: User does not have permission to save draft physical inventory.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /physicalInventories/{id}:
+      uriParameters:
+        id:
+          displayName: physicalInventoryId
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get a physical inventory with format specified in query param. Json format is default.
+        queryParameters:
+          format:
+            description: "This parameter specifies return format of this endpoint. If it is not specified json format is returned. Supported types: csv, html, pdf, xls, xlsx."
+            type: string
+            required: false
+            repeat: false
+        responses:
+          200:
+            body:
+              application/pdf:
+              application/json:
+                schema: physicalInventory
+          404:
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+      put:
+        is: [ secured ]
+        description: Save a draft physical inventory. Only one draft is allowed at the same time for one facility&program.
+        body:
+          application/json:
+            schema: physicalInventory
+        responses:
+          200:
+            description: Draft saved.
+            body:
+              application/json:
+                schema: physicalInventory
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+            description: An error occured during request processing.
+          403:
+            description: User does not have permission to save draft physical inventory.
+            body:
+              application/json:
+                schema: localizedMessage
+      delete:
+        is: [ secured ]
+        description: Delete a draft physical inventory.
+
+        responses:
+          204:
+            description: Draft deleted.
+          400:
+            description: Physical inventory is submittted.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to delete draft physical inventory.
+            body:
+              application/json:
+                schema: localizedMessage
+          404:
+            description: Physical inventory not found.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /stockEvents:
+      post:
+        is: [ secured ]
+        description: Create a new stock event with one or more orderables.
+        body:
+          application/json:
+            schema: stockEventDto
+        responses:
+          201:
+            description: Stock event has been processed with no validatoin error or persistence error.
+            body:
+              application/json:
+                schema: uuid
+          400:
+            description: Failed to process stock event due to validation error.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to create stock events for given facility and program.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /drafts:
+      get:
+        is: [ secured ]
+        description: Get a list of saved stock management draft. If drafts do not exist, will return empty list.
+        queryParameters:
+          facility:
+            required: true
+          program:
+            required: true
+          isDraft:
+            required: false
+        responses:
+          200:
+            description: list of stock management drafts.
+            body:
+              application/json:
+                schema: stockManagementDraft
+          403:
+            description: User does not have permission to view draft stock management.
+            body:
+              application/json:
+                schema: localizedMessage
+      delete:
+        is: [ secured ]
+        description: Delete a draft physical inventory.
+        responses:
+          204:
+            description: Draft deleted.
+          404:
+            description: stock management Draft not found.
+            body:
+              application/json:
+                schema: localizedMessage
+      post:
+        is: [ secured ]
+        description: Create empty draft stock management inventory. Only one draft is allowed at the same time for one facility&program&user.
+        body:
+          application/json:
+            schema: stockManagementDraft
+        responses:
+          201:
+            description: Draft saved.
+            body:
+              application/json:
+                schema: stockManagementDraft
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+            description: An error occured during request processing.
+
+    /drafts/{id}:
+      put:
+        is: [ secured ]
+        description: Save a draft stock management draft. Only one draft is allowed at the same time for one facility&program.
+        body:
+          application/json:
+            schema: stockManagementDraft
+
+        responses:
+          200:
+            description: Draft saved.
+            body:
+              application/json:
+                schema: stockManagementDraft
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+            description: An error occured during request processing.
+
+          403:
+            description: User does not have permission to save draft stock management.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /archiveProduct/{orderableId}:
+      post:
+        is: [ secured ]
+        description: Archive product.
+        responses:
+          200:
+            description: Product archived.
+
+    /stockCards/orderable:
+      get:
+        is: [ secured ]
+        description: Get full details of one stock card.
+        responses:
+          200:
+            body:
+              application/json:
+                schema: stockCard
+          404:
+            description: Stock card with given id does not exist.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to view stock card.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /stockCards/{id}:
+      get:
+        is: [ secured ]
+        description: Get full details of one stock card.
+        responses:
+          200:
+            body:
+              application/json:
+                schema: stockCard
+          404:
+            description: Stock card with given id does not exist.
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to view stock card.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /initialInventory:
+      get:
+        is: [ secured ]
+        description: If this facility doesn't have any stock movements before , then can initital inventory
+        queryParameters:
+          facility:
+            required: true
+            description: facility id
+            repeat: false
+            type: string
+        responses:
+          200:
+            body:
+              application/json:
+                schema: InitialInventoryField
+
+    /stockCardSummaries:
+      get:
+        is: [ secured, paginated ]
+        description: Get summaries of stock cards, which contains SOH, product name, and other essential information. This will NOT return any line items. (This could be used by front end for list view.)
+        queryParameters:
+          facilityId:
+            required: true
+            description: Facility id, indicates the facility that the queried stock card summaries should belong to.
+            repeat: false
+            type: string
+          programId:
+            required: false
+            description: Program id, indicates the program that the queries stock card summaries is under.
+            repeat: false
+            type: string
+          orderableId:
+            required: false
+            description: Orderable id, indicates the orderable that the queries stock card summaries is under, can specify multiple orderable ids.
+            repeat: true
+            type: string
+          asOfDate:
+            required: false
+            description: Stock Card data will be calculated as of given date.
+            repeat: false
+            type: string
+          nonEmptyOnly:
+            required: false
+            description: Flag defining whether only summaries with non empty set of canFulfillForMe should be returned. Defaults to false.
+            repeat: false
+            type: boolean
+        responses:
+          200:
+            body:
+              application/json:
+                schema: stockCardSummariesPage
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            description: User does not have permission to view stock cards of given facility and program.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /physicalInventories/latest:
+      get:
+        is: [ secured ]
+        description: Get the latest physical inventory ocuur date.
+        queryParameters:
+          facility:
+            required: true
+        responses:
+          200:
+            description: the latest physical inventory ocuur date.
+            body:
+              application/json:
+                schema: physicalInventory
+
+    /physicalInventories/dates:
+      get:
+        is: [ secured ]
+        description: Get the physical inventory ocuur date.
+        queryParameters:
+          facilityId:
+            required: true
+          startDate:
+            required: true
+          endDate:
+            required: true
+        responses:
+          200:
+            description: the latest physical inventory ocuur date.
+            body:
+              application/json:
+                schema: physicalInventoryDate
+
+    /processingPeriods:
+      displayName: Processing Period
+      get:
+        is: [ secured, paginated, sorted ]
+        description: >
+          Get all processing periods that match the given parameters. The processingScheduleId
+          parameter should not be used together with facilityId and programId parameters because
+          all of them are used to find a processing schedule. Also the facilityId and programId
+          parameters must be used together.
+        queryParameters:
+          programId:
+            displayName: program
+            type: string
+            required: false
+            repeat: false
+          facilityId:
+            displayName: facility
+            type: string
+            required: false
+            repeat: false
+          processingScheduleId:
+            displayName: processingSchedule
+            type: string
+            required: false
+            repeat: false
+          startDate:
+            displayName: startDate
+            type: string
+            required: false
+            repeat: false
+          endDate:
+            displayName: endDate
+            type: string
+            required: false
+            repeat: false
+          id:
+            displayName: id
+            type: string
+            required: false
+            repeat: true
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: processingPeriodPage
+          "400":
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          401:
+            body:
+              application/json:
+      post:
+        is: [ secured ]
+        description: Creates given processingPeriod if possible.
+        body:
+          application/json:
+        responses:
+          "201":
+            body:
+              application/json:
+          "400":
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          "403":
+            body:
+              application/json:
+                schema: localizedErrorResponse
+
+    /processingPeriods/{id}:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: Get chosen processingPeriod.
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: processingPeriod
+          401:
+            body:
+              application/json:
+          "404":
+            body:
+              application/json:
+                schema: localizedErrorResponse
+      put:
+        is: [ secured ]
+        description: Update existing processingPeriod.
+        body:
+          application/json:
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: processingPeriod
+          "400":
+            body:
+              application/json:
+                schema: localizedErrorResponse
+          "403":
+            body:
+              application/json:
+                schema: localizedErrorResponse
 
     /requisitionTemplates:
       post:
@@ -128,45 +908,369 @@ traits:
               application/json:
                 schema: localizedMessage
 
-    /validReasons:
+    /requisitions/search:
+      displayName: Requisition
       get:
-        is: [ secured ]
-        description: Return a list of valid reasons based on program and facility type.
+        is: [ secured, paginated ]
+        description: Find requisitions matching all of provided parameters.
         queryParameters:
+          facility:
+            displayName: facility
+            type: string
+            required: false
+            repeat: false
           program:
-            description: Program id
+            displayName: program
             type: string
             required: false
-          facilityType:
-            description: Facility type id
+            repeat: false
+          initiatedDateFrom:
+            displayName: initiatedDateFrom
             type: string
             required: false
-          reasonType:
-            description: Reason type
+            repeat: false
+          initiatedDateTo:
+            displayName: initiatedDateTo
+            type: string
+            required: false
+            repeat: false
+          modifiedDateFrom:
+            displayName: modifiedDateFrom
+            type: string
+            required: false
+            repeat: false
+          modifiedDateTo:
+            displayName: modifiedDateTo
+            type: string
+            required: false
+            repeat: false
+          processingPeriod:
+            displayName: processingPeriod
+            type: string
+            required: false
+            repeat: false
+          supervisoryNode:
+            displayName: supervisoryNode
+            type: string
+            required: false
+            repeat: false
+          requisitionStatus:
+            displayName: supervisoryNode
             type: string
             required: false
             repeat: true
-            enum:
-              - CREDIT
-              - DEBIT
-              - BALANCE_ADJUSTMENT
-          reason:
-            description: Stock card line item reason id
+          emergency:
+            displayName: emergency
+            type: boolean
+            required: false
+            repeat: false
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: basicRequisitionDtoPage
+          "400":
+          "500":
+
+    /requisitions/initiate:
+      post:
+        is: [ secured, idempotent ]
+        description: Initiate requisition.
+        queryParameters:
+          program:
+            displayName: Program
+            type: string
+            required: true
+            repeat: false
+          facility:
+            displayName: Facility
+            type: string
+            required: true
+            repeat: false
+          suggestedPeriod:
+            displayName: Suggested period
             type: string
             required: false
+            repeat: false
+          emergency:
+            displayName: Emergency
+            type: boolean
+            required: true
+            repeat: false
+          physicalInventoryDate:
+            displayName: physicalInventoryDate
+            type: boolean
+            required: false
+            repeat: false
+        responses:
+          201:
+            description: The request is valid and the given requisition has been created.
+            body:
+              application/json:
+                schema: requisitionV2
+          400:
+            description: The request's body is invalid
+            body:
+              application/json:
+                schema: localizedMessage
+          401:
+            description: The request does not contain a token or the token might be invalid.
+            body:
+              application/json:
+          403:
+            description: The server understood the request but refuses to authorize it.
+            body:
+              application/json:
+                schema: localizedMessage
+          409:
+            description: There is a conflict while the request is handled.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /requisitions/{id}:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      delete:
+        is: [ secured ]
+        description: Delete chosen requisition.
+        responses:
+          "204":
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "404":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+      get:
+        is: [ secured ]
+        description: Get chosen requisition.
         responses:
           200:
-            description: Valid reason response
+            description: The request is valid and the given requisition will be returned.
             body:
               application/json:
-                schema: validReasonAssignments
-          400:
-            description: Facility type or program is not found.
+                schema: requisitionV2
+          401:
+            description: The request does not contain a token or the token might be invalid.
             body:
               application/json:
-                schema: localizedMessage
           403:
-            description: Facility type given is no match with home facility or given program is not supported by home facility.
+            description: The server understood the request but refuses to authorize it.
             body:
               application/json:
                 schema: localizedMessage
+          404:
+            description: The server understood the request but can not find the requisition.
+            body:
+              application/json:
+                schema: localizedMessage
+      put:
+        is: [ secured ]
+        description: Update existing requisition. Do not change invariants – id, createdDate, facility, program, supplyingFacility, status, emergency, supervisoryNode, orderableId of line item, such attempts will be ignored.
+        body:
+          application/json:
+            schema: requisitionV2
+        responses:
+          200:
+            description: The request is valid and the given requisition will be updated and returned.
+            body:
+              application/json:
+                schema: requisitionV2
+          400:
+            description: The request's body is invalid
+            body:
+              application/json:
+                schema: localizedMessageMap
+          401:
+            description: The request does not contain a token or the token might be invalid.
+            body:
+              application/json:
+          403:
+            description: The server understood the request but refuses to authorize it.
+            body:
+              application/json:
+                schema: localizedMessage
+          404:
+            description: The server understood the request but can not find the requisition.
+            body:
+              application/json:
+                schema: localizedMessage
+          409:
+            description: There is a conflict while the request is handled.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /requisitions/periodsForInitiate:
+      get:
+        is: [ secured ]
+        description: Find periods for initiate requisition.
+        queryParameters:
+          programId:
+            displayName: program
+            type: string
+            required: true
+            repeat: false
+          facilityId:
+            displayName: facility
+            type: string
+            required: true
+            repeat: false
+          emergency:
+            displayName: emergency
+            type: boolean
+            required: true
+            repeat: false
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: processingPeriodDto
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /requisitions/{id}/submit:
+      post:
+        is: [ secured, idempotent ]
+        description: Submit earlier initiated requisition.
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: basicRequisitionDto
+          "400":
+            body:
+              application/json:
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /requisitions/{id}/authorize:
+      uriParameters:
+        id:
+          displayName: requisition Id
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured, idempotent ]
+        description: Authorize submitted requisition.
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: basicRequisitionDto
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "404":
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /requisitions/{id}/approve:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      post:
+        is: [ secured, idempotent ]
+        description: Approve specified by id requisition.
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: basicRequisitionDto
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /requisitions/createLineItem:
+      post:
+        is: [ secured, idempotent ]
+        description: create LineItem for emergency requisition.
+        queryParameters:
+          requisitionId:
+            displayName: requisitionId
+            type: string
+            required: true
+            repeat: false
+          orderableId:
+            displayName: orderableId
+            type: string
+            required: true
+            repeat: false
+        responses:
+          "201":
+            body:
+              application/json:
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /requisitions/requisitionsForApproval:
+      get:
+        is: [ secured, paginated, sorted ]
+        description: Get requisitions to approve for right supervisor.
+        queryParameters:
+          program:
+            displayName: program
+            description: This parameter contains program UUID.
+            type: string
+            required: false
+            repeat: false
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: basicRequisitionDtoPage
+          "500":

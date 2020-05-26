@@ -191,8 +191,11 @@ public class RequisitionController extends BaseRequisitionController {
 
     validateForStatusChange(requisition, orderables, approvedProducts, profiler);
 
+    // [SIGLUS change start]
+    // [change reason]: need period remove validation for SIGLUS bussiness logic
     ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
     checkIfPeriodIsValid(requisition, period, profiler);
+    // [SIGLUS change end]
 
     logger.debug("Submitting a requisition with id " + requisition.getId());
 
@@ -539,8 +542,11 @@ public class RequisitionController extends BaseRequisitionController {
 
     validateForStatusChange(requisition, orderables, approvedProducts, profiler);
 
+    // [SIGLUS change start]
+    // [change reason]: need period remove validation for SIGLUS bussiness logic
     ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
     checkIfPeriodIsValid(requisition, period, profiler);
+    // [SIGLUS change end]
 
     UserDto user = getCurrentUser(profiler);
 

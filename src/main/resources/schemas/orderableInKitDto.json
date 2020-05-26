@@ -1,0 +1,188 @@
+[
+  {
+    "productCode": "14A01",
+    "fullProductName": "Ibuprofeno",
+    "description": "Ibuprofeno",
+    "quantity": 30,
+    "lots": [
+      {
+        "lotCode": "IBU01A",
+        "active": true,
+        "expirationDate": "2019-08-31",
+        "id": "1d3bcf4a-7502-4669-9a54-9e13a288c7f3"
+      },
+      {
+        "lotCode": "ASP01AQ",
+        "active": true,
+        "expirationDate": "2019-09-04",
+        "manufactureDate": "2019-08-16",
+        "id": "4d9ef1f0-267f-4a75-b70b-58b5690557c5"
+      },
+      {
+        "lotCode": "ICDD2",
+        "active": true,
+        "expirationDate": "2022-04-09",
+        "manufactureDate": "2019-08-19",
+        "id": "5dcfe599-9b22-4f52-9459-2f3900328110"
+      },
+      {
+        "lotCode": "W100",
+        "active": true,
+        "expirationDate": "2019-08-14",
+        "manufactureDate": "2019-08-15",
+        "id": "99c131c4-e187-43ee-9c37-a45d67c52b71"
+      },
+      {
+        "lotCode": "TEST201908",
+        "active": true,
+        "expirationDate": "2019-08-27",
+        "manufactureDate": "2019-08-27",
+        "id": "2f6578bc-1f90-4eca-b706-67cf81ee99a2"
+      },
+      {
+        "lotCode": "EAWIHDFAŠ",
+        "active": true,
+        "expirationDate": "2019-08-11",
+        "manufactureDate": "2019-08-15",
+        "id": "a8e7cf15-7a1a-4a0f-ac9f-708082a08960"
+      },
+      {
+        "lotCode": "AASD100",
+        "active": true,
+        "expirationDate": "2019-08-20",
+        "manufactureDate": "2019-08-16",
+        "id": "5d09a4be-d29c-48ae-9d87-36284520f247"
+      },
+      {
+        "lotCode": "IBU01C",
+        "active": true,
+        "expirationDate": "2019-08-31",
+        "manufactureDate": "2019-08-21",
+        "id": "6d62dfe7-5f1e-4c42-8cf3-28934427ecf5"
+      },
+      {
+        "lotCode": "ICDD1",
+        "active": true,
+        "expirationDate": "2029-08-17",
+        "manufactureDate": "2019-08-19",
+        "id": "b53c5e1d-dd35-45ce-bd0b-4254a09c2097"
+      },
+      {
+        "lotCode": "IBU01B",
+        "active": true,
+        "expirationDate": "2019-09-30",
+        "id": "a5b6f365-bacf-4264-9fe0-40e030dd51ca"
+      }
+    ],
+    "id": "e526787a-6856-4009-983d-d277f4cdd715"
+  },
+  {
+    "productCode": "13A01",
+    "fullProductName": "Aspirin",
+    "description": "Aspirin",
+    "quantity": 20,
+    "lots": [
+      {
+        "lotCode": "ADH100",
+        "active": true,
+        "expirationDate": "2019-08-21",
+        "manufactureDate": "2019-08-16",
+        "id": "fe6f78ae-e471-4e52-83ed-75c6c3748fd9"
+      },
+      {
+        "lotCode": "ABC-P",
+        "active": true,
+        "manufactureDate": "2019-08-26",
+        "id": "85062a87-0d3d-476c-b786-4f347358658f"
+      },
+      {
+        "lotCode": "ASP01A",
+        "active": true,
+        "expirationDate": "2020-08-31",
+        "id": "252fc7b0-add0-4059-be4e-ad5199f946a7"
+      },
+      {
+        "lotCode": "ASP01B",
+        "active": true,
+        "expirationDate": "2020-10-31",
+        "id": "be5d6ecd-2f87-4d27-b96d-e5a7c591d37a"
+      },
+      {
+        "lotCode": "SEM-LOTE-13A01-082019",
+        "active": true,
+        "manufactureDate": "2019-08-23",
+        "id": "ae8ffe37-5344-480b-8470-c163afb387c9"
+      },
+      {
+        "lotCode": "EAWIHDFAQ",
+        "active": true,
+        "expirationDate": "2019-08-22",
+        "manufactureDate": "2019-08-16",
+        "id": "0f3cbf94-f3e6-4dc3-9718-ebcfd26c75e9"
+      },
+      {
+        "lotCode": "SEM-LOTE-13A01-082019-6",
+        "active": true,
+        "expirationDate": "2019-08-26",
+        "manufactureDate": "2019-08-27",
+        "id": "d9758ab0-5202-4b4f-be50-355a287cc804"
+      },
+      {
+        "lotCode": "SEM-LOTE-13A01-062019-0",
+        "active": true,
+        "expirationDate": "2019-06-18",
+        "manufactureDate": "2019-08-27",
+        "id": "85ec1e1e-35f9-4fc9-9ffc-db9ea0e85876"
+      },
+      {
+        "lotCode": "TEST2019",
+        "active": true,
+        "expirationDate": "2019-08-07",
+        "manufactureDate": "2019-08-26",
+        "id": "796a7da4-01d6-4dbb-a2a5-051a7350a421"
+      },
+      {
+        "lotCode": "YUNLEI-TEST-ADD-LOTS",
+        "active": true,
+        "expirationDate": "2019-08-31",
+        "manufactureDate": "2019-08-21",
+        "id": "c36d3bd4-44fc-4333-878b-9a9aa7ec8473"
+      },
+      {
+        "lotCode": "YUNLEI-TEST-ADD-LOTS-2",
+        "active": true,
+        "expirationDate": "2019-08-30",
+        "manufactureDate": "2019-08-21",
+        "id": "ea06596d-53f2-4c09-9da8-8d9d428bd644"
+      },
+      {
+        "lotCode": "ABC-2019",
+        "active": true,
+        "manufactureDate": "2019-08-26",
+        "id": "5e29645e-be8f-4090-9329-963dbf411d2a"
+      },
+      {
+        "lotCode": "ADH100123",
+        "active": true,
+        "expirationDate": "2019-08-21",
+        "manufactureDate": "2019-08-22",
+        "id": "b8d71520-fbb8-4394-b2da-bb54f3ee1ae0"
+      },
+      {
+        "lotCode": "A100",
+        "active": true,
+        "expirationDate": "2019-08-15",
+        "manufactureDate": "2019-08-15",
+        "id": "b9830b65-66e2-4d53-af47-5ffdb6b118f1"
+      },
+      {
+        "lotCode": "YUNLEI-TEST-ADD-LOTS-1",
+        "active": true,
+        "expirationDate": "2019-08-31",
+        "manufactureDate": "2019-08-21",
+        "id": "3ed809bc-1b2c-48d2-99f5-30d28bb2f7f3"
+      }
+    ],
+    "id": "ca3e813b-a5d2-4d82-8450-b14b9632fc18"
+  }
+]
