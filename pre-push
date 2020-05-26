@@ -1,0 +1,4 @@
+#!/bin/sh
+./gradlew check
+RESULT=$?
+exit $RESULT
