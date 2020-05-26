@@ -78,9 +78,6 @@ public class SiglusRequisitionTemplateService {
       RequisitionTemplateDto updatedDto, SiglusRequisitionTemplateDto requestDto) {
     SiglusRequisitionTemplateDto newDto = SiglusRequisitionTemplateDto.from(updatedDto);
     Set<UUID> uuids = requestDto.getAssociateProgramsIds();
-    if (uuids.isEmpty()) {
-      return newDto;
-    }
     log.info("save requisition template asscociated programs: {}",  uuids);
     List<RequisitionTemplateAssociateProgram> associatePrograms =
         associateProgramExtensionRepository.findByRequisitionTemplateId(updatedDto.getId());
