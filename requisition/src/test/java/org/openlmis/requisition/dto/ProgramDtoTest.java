@@ -16,6 +16,7 @@
 package org.openlmis.requisition.dto;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
 
 public class ProgramDtoTest extends EqualsContractTest<ProgramDto> {
 
@@ -26,6 +27,10 @@ public class ProgramDtoTest extends EqualsContractTest<ProgramDto> {
 
   @Override
   protected void prepare(EqualsVerifier<ProgramDto> verifier) {
-    verifier.withRedefinedSuperclass();
+    verifier.withRedefinedSuperclass()
+        // [SIGLUS change start]
+        // [change reason]: ProgramDto Class need be extended, cannot be final
+        .suppress(Warning.STRICT_INHERITANCE);
+        // [SIGLUS change end]
   }
 }
