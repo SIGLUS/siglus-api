@@ -38,7 +38,6 @@ import org.openlmis.requisition.testutils.ApprovedProductDtoDataBuilder;
 import org.openlmis.requisition.testutils.OrderableDtoDataBuilder;
 import org.openlmis.requisition.testutils.ProgramDtoDataBuilder;
 
-@Ignore
 public class ApproveProductsAggregatorTest {
   private static final int PRODUCT_COUNT = 25;
 
@@ -62,8 +61,13 @@ public class ApproveProductsAggregatorTest {
       }
     }
 
-    nonFullSupplyReferences.addAll(references);
-    nonFullSupplyReferences.removeAll(fullSupplyReferences);
+    // [SIGLUS change start]
+    // [change reason]: siglus all full supply, because requisition && program program, we can't
+    //                  compare it.
+    // nonFullSupplyReferences.addAll(references);
+    // nonFullSupplyReferences.removeAll(fullSupplyReferences);
+    fullSupplyReferences.addAll(references);
+    // [SIGLUS change end]
 
     for (ApprovedProductReference reference : references) {
       approvedProducts.add(new ApprovedProductDtoDataBuilder()

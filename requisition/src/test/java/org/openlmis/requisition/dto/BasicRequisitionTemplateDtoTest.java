@@ -17,10 +17,8 @@ package org.openlmis.requisition.dto;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
-import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
 public class BasicRequisitionTemplateDtoTest {
 
   @Test

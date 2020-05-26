@@ -25,7 +25,6 @@ import static org.mockito.internal.verification.VerificationModeFactory.atLeastO
 
 import java.util.ArrayList;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -39,7 +38,6 @@ import org.openlmis.requisition.testutils.DtoGenerator;
 import org.openlmis.requisition.testutils.ReleasableRequisitionBatchDtoDataBuilder;
 import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 
-@Ignore
 public class BatchRequisitionControllerTest {
 
   @Mock

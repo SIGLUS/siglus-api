@@ -54,7 +54,7 @@ public class ApprovedProductReferenceDataService extends
   // [SIGLUS change start]
   // [change reason]: need support virtual program
   @Autowired
-  private ProgramExtensionRepository programExtensionRepository;
+  public ProgramExtensionRepository programExtensionRepository;
 
   @Autowired
   private ProgramOrderableRepository programOrderableRepository;

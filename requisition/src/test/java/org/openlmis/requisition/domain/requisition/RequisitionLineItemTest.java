@@ -67,7 +67,6 @@ import org.openlmis.requisition.testutils.ProcessingPeriodDtoDataBuilder;
 import org.openlmis.requisition.testutils.StockCardRangeSummaryDtoDataBuilder;
 
 @SuppressWarnings("PMD.TooManyMethods")
-@Ignore
 public class RequisitionLineItemTest {
 
   private static final String COLUMN_IDENTIFIER = "I";
@@ -557,6 +556,10 @@ public class RequisitionLineItemTest {
     assertFalse(item.allRequiredCalcFieldsNotFilled(""));
   }
 
+  // [SIGLUS change start]
+  // [change reason]: siglus ignore test, product by real program, requisition by virtual program.
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldThrowExceptionIfNoProductWasFound() {
     expectedException.expect(ValidationMessageException.class);

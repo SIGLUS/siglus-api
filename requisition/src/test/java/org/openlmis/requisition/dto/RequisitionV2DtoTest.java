@@ -16,9 +16,7 @@
 package org.openlmis.requisition.dto;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.Ignore;
 
-@Ignore
 public class RequisitionV2DtoTest extends ToStringContractTest<RequisitionV2Dto> {
 
   @Override

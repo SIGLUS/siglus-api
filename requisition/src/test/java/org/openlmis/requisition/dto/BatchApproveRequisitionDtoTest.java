@@ -17,10 +17,8 @@ package org.openlmis.requisition.dto;
 
 import java.util.List;
 import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.Ignore;
 import org.openlmis.requisition.testutils.DtoGenerator;
 
-@Ignore
 public class BatchApproveRequisitionDtoTest
     extends ToStringContractTest<BatchApproveRequisitionDto> {
 
