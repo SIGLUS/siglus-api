@@ -20,7 +20,7 @@ import java.util.Arrays;
 public abstract class MessageKeys {
   private static final String DELIMITER = ".";
 
-  private static final String SERVICE_PREFIX = "template";
+  private static final String SERVICE_PREFIX = "siglusapi";
   private static final String ERROR = "error";
 
   private static final String WIDGET = "widget";
@@ -42,6 +42,10 @@ public abstract class MessageKeys {
 
   public static final String ERROR_JAVERS_EXISTING_ENTRY =
       join(ERROR_PREFIX, JAVERS, "entryAlreadyExists");
+  public static final String ERROR_NOT_ACCEPTABLE = ERROR_PREFIX
+      + ".not.acceptable";
+  public static final String ERROR_PROGRAM_NOT_SUPPORTED = ERROR_PREFIX
+      + ".authorization.program.not.supported";
 
   private MessageKeys() {
     throw new UnsupportedOperationException();

@@ -34,6 +34,10 @@ import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLi
 @AllArgsConstructor
 @Builder
 public class PhysicalInventoryLineItemDto implements IdentifiableByOrderableLot, VvmApplicable {
+  // [SIGLUS change start]
+  // [change reason]: PhysicalInventoryLineItems can have different programId.
+  private UUID programId;
+  // [SIGLUS change end]
   private UUID orderableId;
   private UUID lotId;
   private Integer stockOnHand;

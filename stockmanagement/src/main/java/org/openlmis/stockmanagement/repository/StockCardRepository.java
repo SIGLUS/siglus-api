@@ -62,4 +62,10 @@ public interface StockCardRepository extends JpaRepository<StockCard, UUID> {
   Page<StockCard> findByIdIn(Collection<UUID> ids, Pageable pageable);
   
   List<StockCard> findByLotIdIn(Collection<UUID> lotIds);
+
+  // [SIGLUS change start]
+  // [change reason]: add new method.
+  List<StockCard> findByFacilityId(UUID facilityId);
+  // [SIGLUS change end]
+
 }

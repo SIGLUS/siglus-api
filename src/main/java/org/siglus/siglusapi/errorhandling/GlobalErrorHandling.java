@@ -18,7 +18,9 @@ package org.siglus.siglusapi.errorhandling;
 import java.util.HashMap;
 import java.util.Map;
 import org.hibernate.exception.ConstraintViolationException;
+import org.siglus.siglusapi.exception.NotAcceptableException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.exception.PermissionMessageException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.util.Message;
@@ -40,6 +42,20 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
 
   static {
     CONSTRAINT_MAP.put("unq_widget_code", MessageKeys.ERROR_WIDGET_CODE_DUPLICATED);
+  }
+
+  @ExceptionHandler(NotAcceptableException.class)
+  @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
+  @ResponseBody
+  public Message.LocalizedMessage handlePermissionException(NotAcceptableException ex) {
+    return getLocalizedMessage(ex);
+  }
+
+  @ExceptionHandler(PermissionMessageException.class)
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  @ResponseBody
+  public Message.LocalizedMessage handlePermissionException(PermissionMessageException ex) {
+    return getLocalizedMessage(ex);
   }
 
   @ExceptionHandler(NotFoundException.class)

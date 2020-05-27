@@ -18,6 +18,7 @@ package org.openlmis.stockmanagement.repository;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
@@ -32,4 +33,22 @@ public interface PhysicalInventoriesRepository
   List<PhysicalInventory> findByProgramIdAndFacilityId(
       @Param("programId") UUID programId,
       @Param("facilityId") UUID facilityId);
+
+  // [SIGLUS change start]
+  // [change reason]: add new methods.
+  List<PhysicalInventory> findByFacilityId(UUID facilityId);
+
+  @Query(value = "SELECT * FROM stockmanagement.physical_inventories pi "
+      + "WHERE pi.facilityid = :facility \n"
+      + "      AND pi.isdraft = false\n"
+      + "      AND pi.occurreddate >= :startDate \n"
+      + "      AND pi.occurreddate <= :endDate ",
+      nativeQuery = true
+  )
+  List<PhysicalInventory> findByFacilityIdAndStartDateAndEndDate(
+      @Param("facility") UUID facility,
+      @Param("startDate") String startDate,
+      @Param("endDate") String endDate);
+  // [SIGLUS change end]
+
 }

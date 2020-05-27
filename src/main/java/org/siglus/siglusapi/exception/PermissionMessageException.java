@@ -13,30 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.constant;
+package org.siglus.siglusapi.exception;
 
-public class FieldConstants {
+import org.siglus.siglusapi.util.Message;
 
-  private FieldConstants() { }
+public class PermissionMessageException extends BaseMessageException {
 
-  public static final String PROGRAM = "program";
-
-  public static final String PROGRAM_ID = "programId";
-
-  public static final String FACILITY = "facility";
-
-  public static final String FACILITY_TYPE = "facilityType";
-
-  public static final String ORDERABLE_ID = "orderableId";
-
-  public static final String REASON_TYPE = "reasonType";
-
-  public static final String REASON = "reason";
-
-  public static final String IS_DRAFT = "isDraft";
-
-  public static final String ACTUAL_START_DATE = "actualStartDate";
-
-  public static final String ACTUAL_END_DATE = "actualEndDate";
+  public PermissionMessageException(Message message) {
+    super(message);
+  }
 
 }
