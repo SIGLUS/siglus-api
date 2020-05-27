@@ -33,6 +33,12 @@ public class FieldConstants {
 
   public static final String REASON = "reason";
 
+  public static final String CODE = "code";
+
+  public static final String NAME = "name";
+
+  public static final String ID = "id";
+
   public static final String IS_DRAFT = "isDraft";
 
   public static final String ACTUAL_START_DATE = "actualStartDate";

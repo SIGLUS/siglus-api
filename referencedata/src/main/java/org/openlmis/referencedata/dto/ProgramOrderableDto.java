@@ -59,6 +59,11 @@ public class ProgramOrderableDto implements ProgramOrderable.Importer, ProgramOr
   @JsonDeserialize(using = MoneyDeserializer.class)
   private Money pricePerPack;
 
+  // [SIGLUS change start]
+  // [change reason]: need return program's parent id.
+  private UUID parentId;
+  // [SIGLUS change end]
+
   /**
    * Create new list of ProgramOrderableDto based on given list of {@link ProgramOrderable}.
    *
