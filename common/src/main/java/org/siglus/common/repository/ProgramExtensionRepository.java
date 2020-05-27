@@ -13,40 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.common.repository;
 
+import java.util.List;
 import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.siglus.common.domain.ProgramExtension;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Entity
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@Table(name = "program_extension", schema = "siglusintegration")
-public class ProgramExtension extends BaseEntity {
+public interface ProgramExtensionRepository extends JpaRepository<ProgramExtension, UUID> {
 
-  @Column
-  private UUID programId;
+  ProgramExtension findByProgramId(UUID programId);
 
-  @Column(columnDefinition = "text")
-  private String code;
+  List<ProgramExtension> findByParentId(UUID programId);
 
-  @Column(nullable = false)
-  private Boolean isVirtual;
-
-  @Column(nullable = false)
-  private UUID parentId;
-
-  @Column(nullable = false)
-  private Boolean isSupportEmergency;
-
+  List<ProgramExtension> findByIsVirtual(Boolean isVirtual);
 }

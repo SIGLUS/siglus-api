@@ -13,18 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.common.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ProgramExtension;
+import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ProgramExtensionRepository extends JpaRepository<ProgramExtension, UUID> {
-
-  ProgramExtension findByProgramId(UUID programId);
-
-  List<ProgramExtension> findByParentId(UUID programId);
-
-  List<ProgramExtension> findByIsVirtual(Boolean isVirtual);
+public interface ProgramOrderableRepository
+    extends JpaRepository<ProgramOrderable, UUID> {
+  List<ProgramOrderable> findByProgramId(UUID programId);
 }

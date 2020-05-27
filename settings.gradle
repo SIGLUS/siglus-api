@@ -2,3 +2,5 @@ rootProject.name = serviceName
 include 'referencedata'
 include 'stockmanagement'
 include 'requisition'
+include 'common'
+

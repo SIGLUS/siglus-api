@@ -36,13 +36,14 @@ public class SiglusProgramController {
 
   @GetMapping
   public List<SiglusProgramDto> searchPrograms(@RequestParam(required = false) String code) {
-    // call origin OpenLMIS API &&  support extension virtual program.
+    // call origin OpenLMIS API
+    // reason: support extension virtual program.
     return programExtensionService.getPrograms(code);
   }
 
   @GetMapping("/{id}")
   public SiglusProgramDto searchChosenProgram(@PathVariable("id") UUID programId) {
-    //support all products program.
+    // support all products program
     return programExtensionService.getProgram(programId);
   }
 }

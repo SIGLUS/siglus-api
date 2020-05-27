@@ -31,9 +31,9 @@ import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.SupportedProgramDto;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.siglusapi.domain.ProgramExtension;
+import org.siglus.common.domain.ProgramExtension;
+import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
-import org.siglus.siglusapi.repository.ProgramExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -15,12 +15,20 @@
 
 package org.openlmis.stockmanagement.service.referencedata;
 
+import com.google.common.collect.Maps;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableFulfillDto;
 import org.openlmis.stockmanagement.util.RequestParameters;
+import org.siglus.common.domain.ProgramExtension;
+import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.common.repository.ProgramOrderableRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class StockmanagementOrderableFulfillReferenceDataService extends
@@ -40,6 +48,12 @@ public class StockmanagementOrderableFulfillReferenceDataService extends
   protected Class<Map[]> getArrayResultClass() {
     return Map[].class;
   }
+
+  @Autowired
+  private ProgramExtensionRepository programExtensionRepository;
+
+  @Autowired
+  private ProgramOrderableRepository programOrderableRepository;
 
   /**
    * Finds orderables by their ids.
@@ -63,6 +77,28 @@ public class StockmanagementOrderableFulfillReferenceDataService extends
    * @return a page of orderables
    */
   public Map<UUID, OrderableFulfillDto> findByFacilityIdProgramId(UUID facilityId, UUID programId) {
+    // [SIGLUS change start]
+    // [change reason]: support "virtual" program.
+    ProgramExtension programExtension = programExtensionRepository.findByProgramId(programId);
+    if (Boolean.FALSE.equals(programExtension.getIsVirtual())) {
+      return findByFacilityIdRealProgramId(facilityId, programId);
+    }
+    List<ProgramExtension> realPrograms = programExtensionRepository.findByParentId(programId);
+    Map<UUID, OrderableFulfillDto> fulfillDtoMaps = Maps.newHashMap();
+    for (ProgramExtension realProgram : realPrograms) {
+      Map<UUID, OrderableFulfillDto> fulfillDtoMap =
+          findByFacilityIdRealProgramId(facilityId, realProgram.getProgramId());
+      fulfillDtoMaps.putAll(fulfillDtoMap);
+    }
+    return fulfillDtoMaps;
+  }
+
+  private Map<UUID, OrderableFulfillDto> findByFacilityIdRealProgramId(UUID facilityId,
+      UUID programId) {
+    if (programOrderableRepository.findByProgramId(programId).isEmpty()) {
+      return new HashMap<>();
+    }
+    // [SIGLUS change end]
     RequestParameters parameters = RequestParameters
         .init()
         .set("facilityId", facilityId)

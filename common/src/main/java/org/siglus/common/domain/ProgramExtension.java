@@ -13,14 +13,41 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.common.domain;
 
-import java.util.List;
 import java.util.UUID;
-import org.openlmis.referencedata.domain.ProgramOrderable;
-import org.springframework.data.jpa.repository.JpaRepository;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.openlmis.referencedata.domain.BaseEntity;
 
-public interface ProgramOrderableRepository
-    extends JpaRepository<ProgramOrderable, UUID> {
-  List<ProgramOrderable> findByProgramId(UUID programId);
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@Table(name = "program_extension", schema = "siglusintegration")
+public class ProgramExtension extends BaseEntity {
+
+  @Column
+  private UUID programId;
+
+  @Column(columnDefinition = "text")
+  private String code;
+
+  @Column(nullable = false)
+  private Boolean isVirtual;
+
+  @Column(nullable = false)
+  private UUID parentId;
+
+  @Column(nullable = false)
+  private Boolean isSupportEmergency;
+
 }
