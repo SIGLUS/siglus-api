@@ -59,8 +59,14 @@ public class OrderableDtoDataBuilder {
    * @return created orderable.
    */
   public OrderableDto build() {
+    // [SIGLUS change start]
+    // [change reason]: support for archive.
+    // return new OrderableDto(
+    //  id, productCode, fullProductName, netContent, dispensable, children, identifiers, extraData
+    //    )
     return new OrderableDto(
-        id, productCode, fullProductName, netContent, dispensable, children, identifiers, extraData
+        id, productCode, fullProductName, netContent, dispensable, children, identifiers, extraData,
+        false
     );
   }
 

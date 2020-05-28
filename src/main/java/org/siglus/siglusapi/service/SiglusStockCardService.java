@@ -33,6 +33,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.ReasonCategory;
+import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
@@ -185,6 +186,7 @@ public class SiglusStockCardService {
       StockCardExtension stockCard) {
     StockCardLineItemReason reason = StockCardLineItemReason.builder()
         .name("Inventory")
+        .reasonType(ReasonType.BALANCE_ADJUSTMENT)
         .reasonCategory(ReasonCategory.ADJUSTMENT)
         .build();
     StockCardLineItemReasonDto resonDto = StockCardLineItemReasonDto.newInstance(reason);

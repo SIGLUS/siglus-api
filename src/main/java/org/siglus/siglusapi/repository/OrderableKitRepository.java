@@ -33,4 +33,5 @@ public interface OrderableKitRepository extends
       nativeQuery = true
   )
   List<Orderable> findAllKitProduct();
+
 }

@@ -63,7 +63,7 @@ public class OrderableDtoTest {
         .forClass(OrderableDto.class)
         .withRedefinedSuperclass()
         // [SIGLUS change start]
-       // [change reason]: need to be extend
+        // [change reason]: need to be extend
         .suppress(Warning.STRICT_INHERITANCE)
         // [SIGLUS change end]
         .suppress(Warning.NONFINAL_FIELDS) // we can't make fields as final in DTO

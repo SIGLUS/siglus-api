@@ -26,9 +26,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class SiglusOrdeableKitDto {
+
   private UUID id;
+
   private String productCode;
+
   private String fullProductName;
+
   private Integer stockOnHand;
+
   private UUID parentProgramId;
 }

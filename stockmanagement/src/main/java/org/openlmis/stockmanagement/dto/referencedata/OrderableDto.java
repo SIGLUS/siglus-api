@@ -37,11 +37,6 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class OrderableDto {
-  // [SIGLUS change start]
-  // [change reason]: support for archive
-  @JsonInclude(NON_NULL)
-  private Boolean inKit;
-  // [SIGLUS change end]
   private UUID id;
   private String productCode;
   private String fullProductName;
@@ -50,4 +45,9 @@ public class OrderableDto {
   private Set<OrderableChildDto> children;
   private Map<String, String> identifiers;
   private Map<String, String> extraData;
+  // [SIGLUS change start]
+  // [change reason]: support for archive
+  @JsonInclude(NON_NULL)
+  private Boolean inKit;
+  // [SIGLUS change end]
 }

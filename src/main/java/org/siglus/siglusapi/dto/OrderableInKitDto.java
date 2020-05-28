@@ -25,7 +25,10 @@ import org.openlmis.referencedata.dto.OrderableDto;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class OrderableInKitDto extends OrderableDto {
+
   private UUID parentProgramId;
+
   private Long quantity;
+
   private Set<LotDto> lots;
 }

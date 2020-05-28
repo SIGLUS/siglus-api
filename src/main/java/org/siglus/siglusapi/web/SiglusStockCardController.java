@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusintegration/stockCards")
+@RequestMapping("/api/siglusapi/stockCards")
 public class SiglusStockCardController {
 
   private static final String PRODUCT_ID = "id";
