@@ -40,7 +40,7 @@ import org.openlmis.referencedata.repository.OrderableRepository;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public final class OrderableDto extends BaseDto implements Orderable.Importer,
+public class OrderableDto extends BaseDto implements Orderable.Importer,
     Orderable.Exporter {
 
   private String productCode;

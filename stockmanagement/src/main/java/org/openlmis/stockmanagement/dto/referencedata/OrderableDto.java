@@ -15,6 +15,9 @@
 
 package org.openlmis.stockmanagement.dto.referencedata;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -34,6 +37,11 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public class OrderableDto {
+  // [SIGLUS change start]
+  // [change reason]: support for archive
+  @JsonInclude(NON_NULL)
+  private Boolean inKit;
+  // [SIGLUS change end]
   private UUID id;
   private String productCode;
   private String fullProductName;

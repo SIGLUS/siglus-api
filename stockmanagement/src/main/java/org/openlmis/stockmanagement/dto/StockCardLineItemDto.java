@@ -15,18 +15,52 @@
 
 package org.openlmis.stockmanagement.dto;
 
+import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Setter;
+import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 
 @Builder
 @Data
-public class StockCardLineItemDto {
+public class StockCardLineItemDto extends BaseDto {
 
-  @JsonUnwrapped
+  // [SIGLUS change start]
+  // [change reason]: support get data from get stock card interface
+  @JsonFormat(shape = STRING)
+  private LocalDate occurredDate;
+  private String destinationFreeText;
+  private String documentNumber;
+  private Map<String, String> extraData;
+  private Boolean physicalInventory;
+  private Integer quantity;
+  private Integer quantityWithSign;
+  private StockCardLineItemReasonDto reason;
+  private String reasonFreeText;
+  private String signature;
+  private String sourceFreeText;
+  private List<PhysicalInventoryLineItemAdjustmentDto> stockAdjustments;
+  private Integer stockOnHand;
+  @JsonIgnore
+  private ZonedDateTime processedDate;
+
+  @JsonIgnore
+  private StockCard stockCard;
+
+  //@JsonUnwrapped
+  @JsonIgnore
   private StockCardLineItem lineItem;
+  // [SIGLUS change end]
 
   private FacilityDto source;
   private FacilityDto destination;

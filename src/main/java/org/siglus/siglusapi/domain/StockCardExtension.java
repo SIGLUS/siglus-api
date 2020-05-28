@@ -13,24 +13,33 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.domain;
 
-import java.util.List;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.domain.VersionIdentity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import java.time.LocalDate;
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public interface OrderableKitRepository extends
-    JpaRepository<Orderable, VersionIdentity> {
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "stock_card_extension", schema = "siglusintegration")
+public class StockCardExtension extends BaseEntity {
 
-  @Query(value = "SELECT o.* "
-      + "         FROM referencedata.orderables o"
-      + " WHERE EXISTS ("
-      + "    SELECT 1 FROM referencedata.orderable_children children "
-      + "             WHERE o.id = children.parentid "
-      + "             AND o.versionnumber = children.orderableversionnumber )",
-      nativeQuery = true
-  )
-  List<Orderable> findAllKitProduct();
+  @Column(columnDefinition = "text")
+  private UUID stockCardId;
+
+  @Column(updatable = false)
+  private LocalDate createDate;
+
+  private boolean archive;
 }

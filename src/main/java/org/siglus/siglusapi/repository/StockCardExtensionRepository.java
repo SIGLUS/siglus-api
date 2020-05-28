@@ -15,22 +15,12 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.List;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.domain.VersionIdentity;
+import java.util.UUID;
+
+import org.siglus.siglusapi.domain.StockCardExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
-public interface OrderableKitRepository extends
-    JpaRepository<Orderable, VersionIdentity> {
+public interface StockCardExtensionRepository extends JpaRepository<StockCardExtension, UUID> {
 
-  @Query(value = "SELECT o.* "
-      + "         FROM referencedata.orderables o"
-      + " WHERE EXISTS ("
-      + "    SELECT 1 FROM referencedata.orderable_children children "
-      + "             WHERE o.id = children.parentid "
-      + "             AND o.versionnumber = children.orderableversionnumber )",
-      nativeQuery = true
-  )
-  List<Orderable> findAllKitProduct();
+  StockCardExtension findByStockCardId(UUID stockCardId);
 }

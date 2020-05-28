@@ -17,40 +17,15 @@ package org.siglus.siglusapi.dto;
 
 import java.util.Set;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.openlmis.referencedata.dto.BaseDto;
-import org.openlmis.referencedata.dto.DispensableDto;
 import org.openlmis.referencedata.dto.LotDto;
+import org.openlmis.referencedata.dto.OrderableDto;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
 @EqualsAndHashCode(callSuper = true)
-public class OrderableInKitDto extends BaseDto {
-
-  private String productCode;
-
-  private DispensableDto dispensable;
-
-  private String fullProductName;
-
-  private String description;
-
-  private Long netContent;
-
-  private Long packRoundingThreshold;
-
-  private Boolean roundToZero;
-
+public class OrderableInKitDto extends OrderableDto {
   private UUID parentProgramId;
-
   private Long quantity;
-
   private Set<LotDto> lots;
-
 }

@@ -1,3 +1,4 @@
+
 /*
  * This program is part of the OpenLMIS logistics management information system platform software.
  * Copyright © 2017 VillageReach
@@ -13,24 +14,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.openlmis.stockmanagement.dto;
 
-import java.util.List;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.domain.VersionIdentity;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-public interface OrderableKitRepository extends
-    JpaRepository<Orderable, VersionIdentity> {
-
-  @Query(value = "SELECT o.* "
-      + "         FROM referencedata.orderables o"
-      + " WHERE EXISTS ("
-      + "    SELECT 1 FROM referencedata.orderable_children children "
-      + "             WHERE o.id = children.parentid "
-      + "             AND o.versionnumber = children.orderableversionnumber )",
-      nativeQuery = true
-  )
-  List<Orderable> findAllKitProduct();
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@ToString
+public final class PhysicalInventoryLineItemAdjustmentDto extends BaseDto {
+  private StockCardLineItemReasonDto reason;
+  private Integer quantity;
 }
