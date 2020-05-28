@@ -29,11 +29,14 @@ public abstract class MessageKeys {
   private static final String ID = "id";
   private static final String CODE = "code";
 
+  protected static final String SEARCH = "search";
+
   private static final String MISMATCH = "mismatch";
   private static final String NOT_FOUND = "notFound";
   private static final String DUPLICATED = "duplicated";
+  protected static final String INVALID_PARAMS = "invalidParams";
 
-  private static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
+  protected static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
 
   public static final String ERROR_WIDGET_NOT_FOUND = join(ERROR_PREFIX, WIDGET, NOT_FOUND);
   public static final String ERROR_WIDGET_ID_MISMATCH = join(ERROR_PREFIX, WIDGET, ID, MISMATCH);
@@ -47,11 +50,11 @@ public abstract class MessageKeys {
   public static final String ERROR_PROGRAM_NOT_SUPPORTED = ERROR_PREFIX
       + ".authorization.program.not.supported";
 
-  private MessageKeys() {
+  protected MessageKeys() {
     throw new UnsupportedOperationException();
   }
 
-  private static String join(String... params) {
+  protected static String join(String... params) {
     return String.join(DELIMITER, Arrays.asList(params));
   }
 }
