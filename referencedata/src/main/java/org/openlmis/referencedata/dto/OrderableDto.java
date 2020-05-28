@@ -171,4 +171,12 @@ public class OrderableDto extends BaseDto implements Orderable.Importer,
     this.inBoxCubeDimension = new VolumeMeasurementDto();
     inBoxCubeDimension.export(this.inBoxCubeDimension);
   }
+
+  // [SIGLUS change start]
+  // [change reason]: need return isKit.
+  public boolean getIsKit() {
+    return !children.isEmpty();
+  }
+  // [SIGLUS change end]
+
 }
