@@ -29,7 +29,6 @@ import org.siglus.common.repository.ProgramOrderableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
 @Service
 public class StockmanagementOrderableFulfillReferenceDataService extends
     BaseReferenceDataService<Map> {
@@ -49,11 +48,14 @@ public class StockmanagementOrderableFulfillReferenceDataService extends
     return Map[].class;
   }
 
+  // [SIGLUS change start]
+  // [change reason]: support "virtual" program.
   @Autowired
   private ProgramExtensionRepository programExtensionRepository;
 
   @Autowired
   private ProgramOrderableRepository programOrderableRepository;
+  // [SIGLUS change end]
 
   /**
    * Finds orderables by their ids.
