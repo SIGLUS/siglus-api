@@ -20,7 +20,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import java.util.Collection;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.siglus.siglusapi.service.ValidSourceDestinationService;
+import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusValidSourceDestinationController {
 
   @Autowired
-  private ValidSourceDestinationService validSourceDestinationService;
+  private SiglusValidSourceDestinationService validSourceDestinationService;
 
   @GetMapping("/validDestinations")
   public Collection<ValidSourceDestinationDto> searchValidDestinations(@RequestParam UUID programId,

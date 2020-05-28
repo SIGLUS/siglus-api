@@ -42,7 +42,7 @@ import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.openlmis.stockmanagement.util.RequestHelper;
 import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.service.AuthService;
+import org.siglus.siglusapi.service.SiglusAuthService;
 import org.siglus.siglusapi.util.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ public abstract class BaseCommunicationService<T> {
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Autowired
-  protected AuthService authService;
+  protected SiglusAuthService authService;
 
   @Autowired
   private ObjectMapper objectMapper;

@@ -22,7 +22,7 @@ import org.springframework.security.oauth2.provider.authentication.OAuth2Authent
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthService extends StockmanagementAuthService {
+public class SiglusAuthService extends StockmanagementAuthService {
 
   public String obtainAccessToken(boolean obtainUserToken) {
     if (obtainUserToken) {
