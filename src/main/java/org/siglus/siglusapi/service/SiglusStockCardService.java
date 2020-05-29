@@ -69,7 +69,7 @@ public class SiglusStockCardService {
   private SiglusUnpackService unpackService;
 
   @Autowired
-  private SiglusArchiveProductService archiveProductservice;
+  private SiglusArchiveProductService archiveProductService;
 
   @Autowired
   private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
@@ -150,7 +150,7 @@ public class SiglusStockCardService {
     StockCardDto stockCardDto = stockCardDtos.get(0);
     OrderableDto orderableDto = stockCardDto.getOrderable();
     orderableDto.setInKit(unpackService.orderablesInKit().contains(stockCardDto.getOrderableId()));
-    orderableDto.setArchived(archiveProductservice.isArchived(stockCardDto.getId()));
+    orderableDto.setArchived(archiveProductService.isArchived(stockCardDto.getId()));
     StockCardDto resultStockCardDto = StockCardDto.builder()
         .id(stockCardDto.getOrderableId())
         .lineItems(lineItemDtos)
