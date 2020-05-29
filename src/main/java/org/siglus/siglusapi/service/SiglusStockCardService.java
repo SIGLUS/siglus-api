@@ -69,6 +69,9 @@ public class SiglusStockCardService {
   private SiglusUnpackService unpackService;
 
   @Autowired
+  private SiglusArchiveProductService archiveProductservice;
+
+  @Autowired
   private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   public StockCardDto findStockCardByOrderable(UUID orderableId) {
@@ -144,10 +147,11 @@ public class SiglusStockCardService {
       List<StockCardDto> stockCardDtos,
       List<StockCardLineItemDto> lineItemDtos,
       boolean byLot) {
-    StockCardDto stockCardDto = (StockCardDto) stockCardDtos.get(0);
+    StockCardDto stockCardDto = stockCardDtos.get(0);
     OrderableDto orderableDto = stockCardDto.getOrderable();
     orderableDto.setInKit(unpackService.orderablesInKit().contains(stockCardDto.getOrderableId()));
-    StockCardDto resultStockCardDto = (StockCardDto) StockCardDto.builder()
+    orderableDto.setArchived(archiveProductservice.isArchived(stockCardDto.getId()));
+    StockCardDto resultStockCardDto = StockCardDto.builder()
         .id(stockCardDto.getOrderableId())
         .lineItems(lineItemDtos)
         .stockOnHand(getStockOnHand(stockCardDtos))
@@ -163,7 +167,7 @@ public class SiglusStockCardService {
   }
 
   private Integer getStockOnHand(List<StockCardDto> stockCardDtos) {
-    Integer stockOnHand = 0;
+    int stockOnHand = 0;
     for (StockCardDto stockCardDto : stockCardDtos) {
       Optional<CalculatedStockOnHand> calculatedStockOnHandOptional =
           calculatedStockOnHandRepository

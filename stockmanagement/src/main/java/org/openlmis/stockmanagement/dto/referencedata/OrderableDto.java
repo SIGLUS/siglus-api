@@ -49,5 +49,7 @@ public class OrderableDto {
   // [change reason]: support for archive
   @JsonInclude(NON_NULL)
   private Boolean inKit;
+  @JsonInclude(NON_NULL)
+  private Boolean archived;
   // [SIGLUS change end]
 }
