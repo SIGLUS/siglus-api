@@ -169,7 +169,7 @@ public class SiglusStockCardService {
           calculatedStockOnHandRepository
               .findFirstByStockCardIdAndOccurredDateLessThanEqualOrderByOccurredDateDesc(
                   stockCardDto.getId(), LocalDate.now());
-      stockOnHand = calculatedStockOnHandOptional.isPresent()
+      stockOnHand += calculatedStockOnHandOptional.isPresent()
           ? calculatedStockOnHandOptional.get().getStockOnHand() : 0;
 
     }
