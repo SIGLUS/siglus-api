@@ -598,13 +598,21 @@ traits:
               application/json:
                 schema: localizedMessage
 
-    /archiveProduct/{orderableId}:
+    /archivedproducts/{orderableId}/archive:
       post:
         is: [ secured ]
         description: Archive product.
         responses:
           200:
             description: Product archived.
+
+    /archivedproducts/{orderableId}/activate:
+      post:
+        is: [ secured ]
+        description: Activate product.
+        responses:
+          200:
+            description: Product activated.
 
     /stockCards/orderable:
       get:

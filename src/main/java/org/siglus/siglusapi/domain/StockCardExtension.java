@@ -41,5 +41,5 @@ public class StockCardExtension extends BaseEntity {
   @Column(updatable = false)
   private LocalDate createDate;
 
-  private boolean archive;
+  private boolean archived;
 }
