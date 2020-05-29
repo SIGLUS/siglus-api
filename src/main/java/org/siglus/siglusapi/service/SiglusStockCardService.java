@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byOccurre
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byProcessedDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonPriority;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -32,6 +33,7 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.domain.reason.ReasonCategory;
 import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
@@ -39,6 +41,7 @@ import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
+import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
@@ -64,6 +67,9 @@ public class SiglusStockCardService {
 
   @Autowired
   private SiglusUnpackService unpackService;
+
+  @Autowired
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
   public StockCardDto findStockCardByOrderable(UUID orderableId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -144,7 +150,7 @@ public class SiglusStockCardService {
     StockCardDto resultStockCardDto = (StockCardDto) StockCardDto.builder()
         .id(stockCardDto.getOrderableId())
         .lineItems(lineItemDtos)
-        .stockOnHand(0)
+        .stockOnHand(getStockOnHand(stockCardDtos))
         .facility(stockCardDto.getFacility())
         .program(stockCardDto.getProgram())
         .lastUpdate(stockCardDto.getLastUpdate())
@@ -152,9 +158,22 @@ public class SiglusStockCardService {
         .build();
     if (byLot) {
       resultStockCardDto.setLot(stockCardDto.getLot());
-      resultStockCardDto.setStockOnHand(stockCardDto.getStockOnHand());
     }
     return resultStockCardDto;
+  }
+
+  private Integer getStockOnHand(List<StockCardDto> stockCardDtos) {
+    Integer stockOnHand = 0;
+    for (StockCardDto stockCardDto : stockCardDtos) {
+      Optional<CalculatedStockOnHand> calculatedStockOnHandOptional =
+          calculatedStockOnHandRepository
+              .findFirstByStockCardIdAndOccurredDateLessThanEqualOrderByOccurredDateDesc(
+                  stockCardDto.getId(), LocalDate.now());
+      stockOnHand = calculatedStockOnHandOptional.isPresent()
+          ? calculatedStockOnHandOptional.get().getStockOnHand() : 0;
+
+    }
+    return stockOnHand;
   }
 
   private void addCreateInventory(List<StockCardLineItemDto> lineItemDtos,
