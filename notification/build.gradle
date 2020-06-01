@@ -73,3 +73,15 @@ dependencies {
     testCompile 'io.rest-assured:spring-mock-mvc:3.0.0'
     testCompile 'org.awaitility:awaitility:3.1.6'
 }
+
+checkstyle {
+    toolVersion = "8.12"
+}
+
+pmd {
+    toolVersion = '5.4.0'
+    consoleOutput= true
+    ignoreFailures = false
+    ruleSetFiles = files("config/pmd/ruleset.xml")
+    reportsDir = file("build/reports/pmd")
+}

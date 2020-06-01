@@ -21,16 +21,6 @@
         <appender-ref ref="SYSLOG"/>
     </logger>
 
-    <logger name="org.openlmis.referencedata.TestDataInitializer" level="TRACE" additivity="false">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="SYSLOG"/>
-    </logger>
-
-    <logger name="org.openlmis.referencedata.RightAssignmentInitializer" level="TRACE" additivity="false">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="SYSLOG"/>
-    </logger>
-
     <!-- Define the root logger log level -->
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
