@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service.client;
 
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.openlmis.referencedata.web.OrderableSearchParams;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
 import org.openlmis.requisition.service.RequestParameters;
 import org.openlmis.requisition.service.referencedata.BaseReferenceDataService;
@@ -55,7 +54,4 @@ public class SiglusOrderableReferenceDataService
     return getPage(parameters);
   }
 
-  public Page<OrderableDto> searchOrderables(OrderableSearchParams searchParams) {
-    return getPage("search", null, searchParams);
-  }
 }

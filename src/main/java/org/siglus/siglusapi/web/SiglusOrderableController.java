@@ -15,10 +15,7 @@
 
 package org.siglus.siglusapi.web;
 
-import java.util.UUID;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
-import org.openlmis.referencedata.web.OrderableSearchParams;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +23,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,20 +34,11 @@ public class SiglusOrderableController {
   @Autowired
   private SiglusOrderableService orderableService;
 
-  @Autowired
-  private ReferencedataAuthenticationHelper authenticationHelper;
-
   @GetMapping
   public Page<OrderableDto> searchOrderables(
       @RequestParam MultiValueMap<String, Object> queryParams, Pageable pageable) {
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
     return orderableService.searchOrderables(searchParams, pageable);
-  }
-
-  @PostMapping("/search")
-  public Page<OrderableDto> searchOrderables(@RequestBody OrderableSearchParams searchParams) {
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    return orderableService.searchOrderables(searchParams, facilityId);
   }
 
 }

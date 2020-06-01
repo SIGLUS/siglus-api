@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 import org.siglus.siglusapi.domain.StockCardExtension;
@@ -25,6 +23,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface StockCardExtensionRepository extends JpaRepository<StockCardExtension, UUID> {
 
   StockCardExtension findByStockCardId(UUID stockCardId);
-
-  List<StockCardExtension> findByStockCardIdIn(Collection<UUID> stockCardIds);
 }
