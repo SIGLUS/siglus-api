@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "User Subscription",
+  "description": "A single user subscriptions",
+  "properties": {
+    "digestConfiguration": {
+      "type": "object",
+      "title": "digestConfiguration",
+      "$ref": "referenceObjectDto.json"
+    },
+    "cronExpression": {
+      "type": "string",
+      "title": "cronExpression"
+    },
+    "useDigest": {
+      "type": "boolean",
+      "title": "useDigest"
+    },
+    "preferredChannel": {
+      "type": "string",
+      "title": "preferredChannel"
+    }
+  },
+  "required": [
+    "digestConfiguration",
+    "cronExpression",
+    "useDigest",
+    "preferredChannel"
+  ]
+}

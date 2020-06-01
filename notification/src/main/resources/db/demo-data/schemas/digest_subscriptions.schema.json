@@ -1,0 +1,51 @@
+{
+  "id": 156249,
+  "num_rows": 1000,
+  "file_format": "csv",
+  "name": "digest_subscriptions",
+  "include_header": true,
+  "columns": [
+    {
+      "name": "id",
+      "null_percentage": 0,
+      "type": "GUID",
+      "formula": ""
+    },
+    {
+      "name": "userContactDetailsId",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "UserContactDetails",
+      "column": "referenceDataUserId",
+      "selectionStyle": "cartesian",
+      "formula": ""
+    },
+    {
+      "name": "digestConfigurationId",
+      "null_percentage": 0,
+      "type": "Custom List",
+      "values": [
+        "4ec4f5fc-4397-4e98-bddd-2a2267cbe387",
+        "148f4acb-1504-41e9-ac71-c29e8599ee70",
+        "91290036-97b4-428c-8299-0ccc76bf3df3",
+        "407310f8-c44d-400c-93d1-c3ff7dd3a98f"
+      ],
+      "selectionStyle": "cartesian",
+      "distribution": null,
+      "formula": ""
+    },
+    {
+      "name": "cronExpression",
+      "null_percentage": 0,
+      "type": "Custom List",
+      "values": [
+        "0 0/1 * * * *",
+        "0 0/5 * * * *",
+        "0 0/15 * * * *"
+      ],
+      "selectionStyle": "random",
+      "distribution": null,
+      "formula": ""
+    }
+  ]
+}

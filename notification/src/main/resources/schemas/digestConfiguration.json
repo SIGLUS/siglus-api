@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "userContactDetails",
+  "description": "A single user contact details",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "message": {
+      "type": "string",
+      "title": "message"
+    },
+    "tag": {
+      "type": "string",
+      "title": "tag"
+    }
+  },
+  "required": [
+    "id",
+    "message",
+    "tag"
+  ]
+}

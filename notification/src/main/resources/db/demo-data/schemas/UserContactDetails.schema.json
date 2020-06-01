@@ -1,0 +1,43 @@
+{
+  "id": 120704,
+  "num_rows": 1000,
+  "file_format": "csv",
+  "name": "UserContactDetails",
+  "include_header": true,
+  "columns": [
+    {
+      "name": "referenceDataUserId",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "UserIdsTemp1",
+      "column": null,
+      "selectionStyle": "sequential",
+      "formula": ""
+    },
+    {
+      "name": "phoneNumber",
+      "null_percentage": 75,
+      "type": "Phone",
+      "format": "###-###-####",
+      "formula": ""
+    },
+    {
+      "name": "allowNotify",
+      "null_percentage": 0,
+      "type": "Boolean",
+      "formula": ""
+    },
+    {
+      "name": "email",
+      "null_percentage": 25,
+      "type": "Email Address",
+      "formula": ""
+    },
+    {
+      "name": "emailVerified",
+      "null_percentage": 0,
+      "type": "Boolean",
+      "formula": "if email.nil? then nil else this end"
+    }
+  ]
+}

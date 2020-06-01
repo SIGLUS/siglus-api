@@ -1,0 +1,39 @@
+{
+  "id": 121420,
+  "num_rows": 100000,
+  "file_format": "csv",
+  "name": "notifications",
+  "include_header": true,
+  "columns": [
+    {
+      "name": "id",
+      "null_percentage": 0,
+      "type": "GUID",
+      "formula": ""
+    },
+    {
+      "name": "userid",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "UsersBasic",
+      "column": "id",
+      "selectionStyle": "random",
+      "formula": ""
+    },
+    {
+      "name": "important",
+      "null_percentage": 0,
+      "type": "Boolean",
+      "formula": ""
+    },
+    {
+      "name": "createddate",
+      "null_percentage": 0,
+      "type": "Date",
+      "min": "01/01/2017",
+      "max": "06/01/2018",
+      "format": "%Y-%m-%dT%H:%M:%SZ",
+      "formula": ""
+    }
+  ]
+}

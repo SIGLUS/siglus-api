@@ -1,0 +1,60 @@
+{
+  "id": 121421,
+  "num_rows": 100000,
+  "file_format": "csv",
+  "name": "notification_messages",
+  "include_header": true,
+  "columns": [
+    {
+      "name": "id",
+      "null_percentage": 0,
+      "type": "GUID",
+      "formula": ""
+    },
+    {
+      "name": "notificationid",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "Notifications",
+      "column": "id",
+      "selectionStyle": "sequential",
+      "formula": ""
+    },
+    {
+      "name": "__important",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "Notifications",
+      "column": "important",
+      "selectionStyle": null,
+      "formula": ""
+    },
+    {
+      "name": "channel",
+      "null_percentage": 0,
+      "type": "Custom List",
+      "values": [
+        "EMAIL"
+      ],
+      "selectionStyle": "random",
+      "distribution": null,
+      "formula": ""
+    },
+    {
+      "name": "body",
+      "null_percentage": 0,
+      "type": "Words",
+      "min": 5,
+      "max": 10,
+      "formula": "if field(\"__important\") == 'true' then 'Dear user, This is to notify you that you need to do something in the system. Please log in.' else 'Dear user, This is to notify you of something.' end"
+    },
+    {
+      "name": "subject",
+      "null_percentage": 0,
+      "type": "Sentences",
+      "min": 2,
+      "max": 5,
+      "formula": "if field(\"__important\") == 'true' then 'ACTION REQUIRED: Important notification' else 'Regular notification' end"
+    }
+  ]
+}

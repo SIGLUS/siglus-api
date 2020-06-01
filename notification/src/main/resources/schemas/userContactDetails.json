@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "userContactDetails",
+  "description": "A single user contact details",
+  "properties": {
+    "referenceDataUserId": {
+      "type": "string",
+      "title": "id"
+    },
+    "username": {
+      "type": "string",
+      "title": "username"
+    },
+    "email": {
+      "type": "string",
+      "title": "email"
+    },
+    "phoneNumber": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "title": "phoneNumber"
+    },
+    "emailVerified": {
+      "type": "boolean",
+      "title": "emailVerified"
+    },
+    "allowNotify": {
+      "type": "boolean",
+      "title": "allowNotify"
+    }
+  },
+  "required": [
+    "referenceDataUserId"
+  ]
+}
