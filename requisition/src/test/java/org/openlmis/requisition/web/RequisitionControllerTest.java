@@ -146,6 +146,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
+@Ignore
 public class RequisitionControllerTest {
   @Rule
   public final ExpectedException exception = ExpectedException.none();

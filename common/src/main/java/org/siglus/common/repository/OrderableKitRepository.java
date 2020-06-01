@@ -13,22 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.dto;
+package org.siglus.common.repository;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.Ignore;
+import java.util.List;
+import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.VersionIdentity;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
-@Ignore
-public class RequisitionV2DtoTest extends ToStringContractTest<RequisitionV2Dto> {
+public interface OrderableKitRepository extends
+    JpaRepository<Orderable, VersionIdentity> {
 
-  @Override
-  protected Class<RequisitionV2Dto> getTestClass() {
-    return RequisitionV2Dto.class;
-  }
-
-  @Override
-  protected void prepare(EqualsVerifier<RequisitionV2Dto> verifier) {
-    verifier.withRedefinedSuperclass();
-  }
+  @Query(value = "SELECT o.* "
+      + " FROM referencedata.orderables o"
+      + " WHERE EXISTS ("
+      + "    SELECT 1 FROM referencedata.orderable_children children "
+      + "             WHERE o.id = children.parentid "
+      + "             AND o.versionnumber = children.orderableversionnumber )",
+      nativeQuery = true
+  )
+  List<Orderable> findAllKitProduct();
 
 }

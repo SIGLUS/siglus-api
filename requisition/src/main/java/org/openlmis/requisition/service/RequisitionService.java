@@ -24,6 +24,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.APPROVED_QUANTITY;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_CANNOT_UPDATE_WITH_STATUS;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_DELETE_FAILED_NEWER_EXISTS;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_DELETE_FAILED_WRONG_STATUS;
@@ -34,17 +35,24 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_REQUISITION_NOT_FO
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_REQUISITION_WAS_SPLIT;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_VALIDATION_CANNOT_CONVERT_WITHOUT_APPROVED_QTY;
 import static org.openlmis.requisition.service.PermissionService.ORDERS_EDIT;
+import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
+import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
 
 import com.google.common.collect.Sets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.requisition.domain.RequisitionTemplate;
@@ -57,6 +65,7 @@ import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.StatusMessage;
 import org.openlmis.requisition.domain.requisition.StockAdjustmentReason;
 import org.openlmis.requisition.domain.requisition.StockData;
+import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.OrderDto;
@@ -68,6 +77,7 @@ import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.SupplyLineDto;
+import org.openlmis.requisition.dto.SupportedProgramDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
@@ -76,9 +86,12 @@ import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.i18n.MessageKeys;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.repository.StatusMessageRepository;
+import org.openlmis.requisition.repository.custom.DefaultRequisitionSearchParams;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
+import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
+import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
@@ -93,13 +106,20 @@ import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.requisition.web.RequisitionForConvertBuilder;
+import org.siglus.common.domain.ProgramExtension;
+import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
+import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
+import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -161,6 +181,27 @@ public class RequisitionService {
   @Autowired
   private SupplyLineReferenceDataService supplyLineReferenceDataService;
 
+  // [SIGLUS change start]
+  // [change reason]: associateProgramRepository && approve product.
+  @Autowired
+  private SimulateAuthenticationHelper simulateAuthenticationHelper;
+
+  // [SIGLUS change end]
+  // [SIGLUS change start]
+  // [change reason]: associateProgramRepository && approve product.
+  @Autowired
+  private ApprovedProductReferenceDataService approvedProductReferenceDataService;
+
+  @Autowired
+  private RequisitionTemplateAssociateProgramRepository associateProgramRepository;
+
+  @Autowired
+  private FacilityReferenceDataService facilityReferenceDataService;
+
+  @Autowired
+  private ProgramExtensionRepository programExtensionRepository;
+  // [SIGLUS change end]
+
   /**
    * Initiated given requisition if possible.
    *
@@ -171,10 +212,26 @@ public class RequisitionService {
    * @param stockAdjustmentReasons list of stockAdjustmentReasons
    * @return Initiated requisition.
    */
+  // [SIGLUS change start]
+  // [change reason]: support physical inventory date.
+  //  public Requisition initiate(ProgramDto program, FacilityDto facility,
+  //      ProcessingPeriodDto period, boolean emergency,
+  //      List<StockAdjustmentReason> stockAdjustmentReasons,
+  //      RequisitionTemplate requisitionTemplate, ApproveProductsAggregator approvedProducts) {
+  public Requisition initiate(ProgramDto program, FacilityDto facility,
+        ProcessingPeriodDto period, boolean emergency,
+        List<StockAdjustmentReason> stockAdjustmentReasons,
+        RequisitionTemplate requisitionTemplate, ApproveProductsAggregator approvedProducts) {
+    return initiate(program, facility, period, emergency, stockAdjustmentReasons,
+        requisitionTemplate, approvedProducts, period.getSubmitStartDate());
+  }
+  
   public Requisition initiate(ProgramDto program, FacilityDto facility,
       ProcessingPeriodDto period, boolean emergency,
       List<StockAdjustmentReason> stockAdjustmentReasons,
-      RequisitionTemplate requisitionTemplate, ApproveProductsAggregator approvedProducts) {
+      RequisitionTemplate requisitionTemplate, ApproveProductsAggregator approvedProducts,
+      LocalDate inventoryDate) {
+    // [SIGLUS change end]
     Profiler profiler = new Profiler("REQUISITION_INITIATE_SERVICE");
     profiler.setLogger(LOGGER);
 
@@ -195,25 +252,45 @@ public class RequisitionService {
       numberOfPreviousPeriodsToAverage--;
     }
 
+    // [SIGLUS change start]
+    setActualStartAndEndDate(period, inventoryDate, requisition);
+    // [SIGLUS change end]
+
+    // [SIGLUS change start]
+    // [change reason]: mock Cross-service request for stock card permission
+    OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
+    // [SIGLUS change end]
+
+    // [SIGLUS change start]
+    // [change reason]: period.getEndDate() -> requisition.getActualEndDate().
     profiler.start("FIND_STOCK_ON_HANDS");
     Map<UUID, Integer> orderableSoh = stockOnHandRetrieverBuilderFactory
         .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
         .forProgram(program.getId())
         .forFacility(facility.getId())
         .forProducts(approvedProducts)
-        .asOfDate(period.getEndDate())
+        .asOfDate(requisition.getActualEndDate())
         .build()
         .get();
+    // [SIGLUS change end]
 
     profiler.start("FIND_BEGINNING_BALANCES");
+    // [SIGLUS change start]
+    // [change reason]: period.getStartDate() -> requisition.getActualStartDate().
     Map<UUID, Integer> orderableBeginning = stockOnHandRetrieverBuilderFactory
         .getInstance(requisitionTemplate, RequisitionLineItem.BEGINNING_BALANCE)
         .forProgram(program.getId())
         .forFacility(facility.getId())
         .forProducts(approvedProducts)
-        .asOfDate(period.getStartDate().minusDays(1))
+        .asOfDate(requisition.getActualStartDate().minusDays(1))
         .build()
         .get();
+    // [SIGLUS change end]
+
+    // [SIGLUS change start]
+    // [change reason]: set real auth
+    simulateAuthenticationHelper.recoveryAuth(originAuth);
+    // [SIGLUS change end]
 
     final StockData stockData = new StockData(orderableSoh, orderableBeginning);
 
@@ -231,11 +308,15 @@ public class RequisitionService {
     List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage = null;
     List<ProcessingPeriodDto> previousPeriods = null;
     if (requisitionTemplate.isPopulateStockOnHandFromStockCards()) {
+      // [SIGLUS change start]
+      // [change reason]: 1. period.getStartDate() -> requisition.getActualStartDate().
+      //                  2. period.getEndDate() -> requisition.getActualEndDate().
       stockCardRangeSummaryDtos =
           stockCardRangeSummaryStockManagementService
               .search(program.getId(), facility.getId(),
                   approvedProducts.getOrderableIdentities(), null,
-                  period.getStartDate(), period.getEndDate());
+                  requisition.getActualStartDate(), requisition.getActualEndDate());
+      // [SIGLUS change end]
 
       profiler.start("GET_PREVIOUS_PERIODS");
       previousPeriods = periodService
@@ -272,9 +353,16 @@ public class RequisitionService {
         stockCardRangeSummariesToAverage, previousPeriods);
 
     profiler.start("SET_AVAILABLE_PRODUCTS");
-    Set<ApprovedProductReference> availableProductIdentities = emergency
-        ? approvedProducts.getApprovedProductReferences()
-        : approvedProducts.getNonFullSupplyApprovedProductReferences();
+    // [SIGLUS change start]
+    // [change reason] siglus dosen't exist no full supply, orderable related to real program,
+    //                 we can't get by virtual program.
+    // Set<ApprovedProductReference> availableProductIdentities = emergency
+    //     ? approvedProducts.getApprovedProductReferences()
+    //     : approvedProducts.getNonFullSupplyApprovedProductReferences();
+    profiler.start("SET_AVAILABLE_PRODUCTS");
+    Set<ApprovedProductReference> availableProductIdentities =
+        approvedProducts.getApprovedProductReferences();
+    // [SIGLUS change end]
 
     requisition.setAvailableProducts(availableProductIdentities);
 
@@ -287,6 +375,45 @@ public class RequisitionService {
     profiler.stop().log();
     return requisition;
   }
+
+  // [SIGLUS change start]
+  // [change reason]: update actual start date && get end date
+  private void setActualStartAndEndDate(ProcessingPeriodDto period,
+      LocalDate inventoryDate,
+      Requisition requisition) {
+    if (inventoryDate == null) {
+      updateRequisitionActualDate(requisition, period.getStartDate(), period.getEndDate());
+      return;
+    }
+
+    LocalDate actualStartDate = null;
+    if (requisition.getEmergency()) {
+      Requisition currentRegularRequisiton = searchAuthorizedRequisitions(
+          requisition.getFacilityId(), requisition.getProgramId(), period.getId(), false)
+          .get(0);
+      actualStartDate = currentRegularRequisiton.getActualStartDate();
+    } else {
+      Requisition previousRegularRequisition = getPreviousRegularRequisition(requisition);
+      if (Objects.nonNull(previousRegularRequisition)) {
+        actualStartDate = previousRegularRequisition.getActualEndDate().plusDays(1);
+      }
+      if (actualStartDate == null) {
+        actualStartDate = period.getStartDate();
+      }
+    }
+    updateRequisitionActualDate(requisition, actualStartDate, inventoryDate);
+  }
+
+  private void updateRequisitionActualDate(Requisition requisition,
+      LocalDate actualStartDate,
+      LocalDate actualEndDate) {
+    Map<String, Object> extraData = new HashMap<>();
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    extraData.put(ACTUAL_START_DATE, actualStartDate.format(dateTimeFormatter));
+    extraData.put(ACTUAL_END_DATE, actualEndDate.format(dateTimeFormatter));
+    requisition.setExtraData(extraData);
+  }
+  // [SIGLUS change end]
 
   /**
    * Delete given Requisition if possible.
@@ -717,6 +844,79 @@ public class RequisitionService {
     saveStatusMessage(requisition, currentUser);
     requisitionRepository.saveAndFlush(requisition);
   }
+
+  // [SIGLUS change start]
+  // [change reason]: seach requisition by permission
+  public List<Requisition> searchAuthorizedRequisitions(UUID facilityId, UUID programId,
+      UUID periodId, boolean emergency) {
+    DefaultRequisitionSearchParams params = new DefaultRequisitionSearchParams(
+        facilityId, programId, periodId, null, emergency,
+        null, null, null, null,
+        EnumSet.of(AUTHORIZED));
+    PageRequest pageRequest = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
+        Pagination.NO_PAGINATION);
+    return searchRequisitions(params, pageRequest).getContent();
+  }
+
+  private Requisition getPreviousRegularRequisition(Requisition requisition) {
+    List<Requisition> recentRegularRequisitions = getRecentRegularRequisitions(requisition,
+        1);
+    if (!recentRegularRequisitions.isEmpty()) {
+      return recentRegularRequisitions.get(0);
+    }
+    return null;
+  }
+  // [SIGLUS change end]
+
+  // [SIGLUS change start]
+  // [change reason]: provide associated approved product
+  public ApproveProductsAggregator getApproveProduct(FacilityDto facility,
+      ProgramDto program, RequisitionTemplate template) {
+    approvedProductReferenceDataService.getApprovedProducts(facility.getId(), program.getId());
+    ApproveProductsAggregator approveProductsAggregator = approvedProductReferenceDataService
+        .getApprovedProducts(facility.getId(), program.getId());
+    Set<UUID> associateProgramIds = getAssociateProgram(template.getId());
+    if (associateProgramIds.isEmpty()) {
+      return approveProductsAggregator;
+    }
+    List<ApprovedProductDto> approvedProducts = approveProductsAggregator.getFullSupplyProducts();
+    Set<UUID> supportedVirtualPrograms = findSupportedVirtualPrograms();
+    associateProgramIds.stream().forEach(associateProgram -> {
+          if (supportedVirtualPrograms.contains(associateProgram)) {
+            ApproveProductsAggregator productsAggregator = approvedProductReferenceDataService
+                .getApprovedProducts(facility.getId(), associateProgram);
+            approvedProducts.addAll(productsAggregator.getFullSupplyProducts());
+          }
+        }
+    );
+
+    return new ApproveProductsAggregator(approvedProducts, program.getId());
+  }
+
+  public Set<UUID> getAssociateProgram(UUID templateId) {
+    List<RequisitionTemplateAssociateProgram> associatePrograms =
+        associateProgramRepository.findByRequisitionTemplateId(templateId);
+    return associatePrograms.stream()
+        .map(RequisitionTemplateAssociateProgram::getAssociatedProgramId)
+        .collect(Collectors.toSet());
+  }
+
+  private Set<UUID> findSupportedVirtualPrograms() {
+    UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    FacilityDto homeFacility = facilityReferenceDataService.findOne(homeFacilityId);
+    Set<UUID> supportedPrograms = homeFacility.getSupportedPrograms()
+        .stream()
+        .map(SupportedProgramDto::getId)
+        .collect(Collectors.toSet());
+    List<ProgramExtension> programExtensions = programExtensionRepository.findAll();
+    return programExtensions.stream()
+        .filter(programExtension -> supportedPrograms.contains(programExtension.getProgramId()))
+        .map(ProgramExtension::getParentId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+  }
+
+  // [SIGLUS change end]
 
   private boolean isRequisitionNewest(Requisition requisition) {
     Requisition recentRequisition = findRecentRegularRequisition(

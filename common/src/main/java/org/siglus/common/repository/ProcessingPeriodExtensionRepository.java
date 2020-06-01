@@ -13,22 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.dto;
+package org.siglus.common.repository;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.Ignore;
+import java.util.UUID;
 
-@Ignore
-public class RequisitionV2DtoTest extends ToStringContractTest<RequisitionV2Dto> {
+import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-  @Override
-  protected Class<RequisitionV2Dto> getTestClass() {
-    return RequisitionV2Dto.class;
-  }
+public interface ProcessingPeriodExtensionRepository extends
+    JpaRepository<ProcessingPeriodExtension, UUID> {
 
-  @Override
-  protected void prepare(EqualsVerifier<RequisitionV2Dto> verifier) {
-    verifier.withRedefinedSuperclass();
-  }
+  ProcessingPeriodExtension findByProcessingPeriodId(UUID processingPeriodId);
 
 }

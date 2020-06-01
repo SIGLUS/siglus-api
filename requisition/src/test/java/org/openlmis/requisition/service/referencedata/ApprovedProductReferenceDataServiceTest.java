@@ -22,6 +22,7 @@ import static org.junit.Assert.assertThat;
 
 import java.util.UUID;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -31,6 +32,7 @@ import org.openlmis.requisition.testutils.ApprovedProductDtoDataBuilder;
 import org.openlmis.requisition.testutils.OrderableDtoDataBuilder;
 import org.openlmis.requisition.testutils.ProgramDtoDataBuilder;
 
+@Ignore
 public class ApprovedProductReferenceDataServiceTest
     extends BaseReferenceDataServiceTest<ApprovedProductDto> {
 

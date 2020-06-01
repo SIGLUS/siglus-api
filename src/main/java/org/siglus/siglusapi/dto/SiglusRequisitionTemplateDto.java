@@ -29,6 +29,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
+import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.springframework.beans.BeanUtils;
 
 @AllArgsConstructor

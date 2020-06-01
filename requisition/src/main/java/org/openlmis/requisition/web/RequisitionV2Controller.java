@@ -35,7 +35,6 @@ import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.dto.ApprovedProductDto;
-import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -82,6 +81,11 @@ public class RequisitionV2Controller extends BaseRequisitionController {
       @RequestParam(value = "facility") UUID facilityId,
       @RequestParam(value = "suggestedPeriod", required = false) UUID suggestedPeriod,
       @RequestParam(value = "emergency") boolean emergency,
+      // [SIGLUS change start]
+      // [change reason]: physicalInventoryDateStr actual period.
+      @RequestParam(value = "physicalInventoryDate", required = false)
+          String physicalInventoryDateStr,
+      // [SIGLUS change end]
       HttpServletRequest request, HttpServletResponse response) {
 
     Profiler profiler = getProfiler(
@@ -90,7 +94,7 @@ public class RequisitionV2Controller extends BaseRequisitionController {
     );
 
     InitiateResult result = doInitiate(programId, facilityId, suggestedPeriod, emergency,
-        request, profiler);
+        request, profiler, physicalInventoryDateStr);
     Requisition requisition = result.getRequisition();
 
     RequisitionV2Dto dto = buildDto(requisition, profiler);
@@ -170,7 +174,10 @@ public class RequisitionV2Controller extends BaseRequisitionController {
     RequisitionV2Dto dto = new RequisitionV2Dto();
     requisition.export(dto);
 
-    dto.setTemplate(BasicRequisitionTemplateDto.newInstance(requisition.getTemplate()));
+    // [SIGLUS change start]
+    // [change reason]:set template extension.
+    dto.setTemplate(getTemplateDto(requisition.getTemplate()));
+    // [SIGLUS change end]
     dto.setFacility(new ObjectReferenceDto(requisition.getFacilityId(), serviceUrl, FACILITIES));
     dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(),
         serviceUrl, PROCESSING_PERIODS));

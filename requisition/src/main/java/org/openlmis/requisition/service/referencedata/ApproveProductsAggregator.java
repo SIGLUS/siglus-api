@@ -20,13 +20,11 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
-import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 
 public final class ApproveProductsAggregator {
@@ -64,17 +62,20 @@ public final class ApproveProductsAggregator {
           approvedProduct.getVersionNumber(), orderable.getId(), orderable.getVersionNumber()));
       allOrderableIdentities.add(orderable.getIdentity());
 
-      ProgramOrderableDto po = orderable.getProgramOrderable(programId);
-
-      if (Objects.equals(true, po.getFullSupply())) {
-        fullSupplyProducts.add(approvedProduct);
-        fullSupplyOrderableIds.add(orderable.getId());
-      }
-
-      if (Objects.equals(false, po.getFullSupply())) {
-        nonFullSupplyProductReferences.add(new ApprovedProductReference(approvedProduct.getId(),
-            approvedProduct.getVersionNumber(), orderable.getId(), orderable.getVersionNumber()));
-      }
+      // [SIGLUS change start]:
+      // [change reason]: TW for virtual program all fullsupply && display order.
+      // ProgramOrderableDto po = orderable.getProgramOrderable(programId);
+      // if (Objects.equals(true, po.getFullSupply())) {
+      //   fullSupplyProducts.add(approvedProduct);
+      //   fullSupplyOrderableIds.add(orderable.getId());
+      //
+      // if (Objects.equals(false, po.getFullSupply())) {
+      //   nonFullSupplyProductReferences.add(new ApprovedProductReference(approvedProduct.getId(),
+      //      approvedProduct.getVersionNumber(), orderable.getId(), orderable.getVersionNumber()));
+      // }
+      fullSupplyProducts.add(approvedProduct);
+      fullSupplyOrderableIds.add(orderable.getId());
+      // [SIGLUS change end]
     }
   }
 

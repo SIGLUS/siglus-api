@@ -15,6 +15,7 @@
 
 package org.openlmis.requisition.web;
 
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.BooleanUtils.isNotTrue;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -25,6 +26,7 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_PROGRAM_NOT_FOUND;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_REQUISITION_NOT_FOUND;
 import static org.openlmis.requisition.i18n.MessageKeys.IDEMPOTENCY_KEY_ALREADY_USED;
 import static org.openlmis.requisition.i18n.MessageKeys.IDEMPOTENCY_KEY_WRONG_FORMAT;
+import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import com.google.common.collect.ImmutableList;
@@ -45,6 +47,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -56,6 +59,7 @@ import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -84,7 +88,6 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionStatusProcessor;
 import org.openlmis.requisition.service.RequisitionTemplateService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
-import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
@@ -100,6 +103,12 @@ import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.utils.StockEventBuilder;
 import org.openlmis.requisition.validate.ReasonsValidator;
 import org.openlmis.requisition.validate.RequisitionVersionValidator;
+import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.dto.RequisitionTemplateExtensionDto;
+import org.siglus.common.repository.OrderableKitRepository;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.ext.XLogger;
@@ -189,8 +198,11 @@ public abstract class BaseRequisitionController extends BaseController {
   FacilityTypeApprovedProductReferenceDataService
       facilityTypeApprovedProductReferenceDataService;
 
-  @Autowired
-  private ApprovedProductReferenceDataService approvedProductReferenceDataService;
+  // [SIGLUS change start]
+  // [change reason]: associated program + filter kit product.
+  // @Autowired
+  // private ApprovedProductReferenceDataService approvedProductReferenceDataService;
+  // [SIGLUS change end]
 
   @Autowired
   private ValidReasonStockmanagementService validReasonStockmanagementService;
@@ -201,8 +213,36 @@ public abstract class BaseRequisitionController extends BaseController {
   @Autowired
   private ReasonsValidator reasonsValidator;
 
+  // [SIGLUS change start]
+  // [change reason]: filter kit product for approved product.
+  @Autowired
+  private OrderableKitRepository orderableKitRepository;
+  // [SIGLUS change end]
+
+  // [SIGLUS change start]
+  // [change reason]: template extension.
+  @Autowired
+  private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+  // [SIGLUS change end]
+
+  // [SIGLUS change start]
+  // [change reason]: submit start date && sumbit end date.
+  @Autowired
+  private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
+  // [SIGLUS change end]
+
   InitiateResult doInitiate(UUID programId, UUID facilityId, UUID suggestedPeriod,
       boolean emergency, HttpServletRequest request, Profiler profiler) {
+    // [SIGLUS change start]
+    // [change reason]: add physical Inventory support actual period.
+    return doInitiate(programId, facilityId, suggestedPeriod, emergency, request, profiler,
+        "");
+  }
+
+  InitiateResult doInitiate(UUID programId, UUID facilityId, UUID suggestedPeriod,
+      boolean emergency, HttpServletRequest request, Profiler profiler,
+      String physicalInventoryDateStr) {
+    // [SIGLUS change end]
     if (null == facilityId || null == programId) {
       throw new ValidationMessageException(
           new Message(MessageKeys.ERROR_INITIALIZE_MISSING_PARAMETERS));
@@ -235,19 +275,91 @@ public abstract class BaseRequisitionController extends BaseController {
     );
 
     profiler.start("FIND_APPROVED_PRODUCTS");
-    ApproveProductsAggregator approvedProducts = approvedProductReferenceDataService
-        .getApprovedProducts(facility.getId(), program.getId());
+    // [SIGLUS change start]
+    // [change reason]: associated program + filter kit product.
+    // ApproveProductsAggregator approvedProducts = approvedProductReferenceDataService
+    //     .getApprovedProducts(facility.getId(), program.getId());
+    ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(
+        facility, program, requisitionTemplate);
+    List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
+        .map(Orderable::getId).collect(toList());
+    List<ApprovedProductDto> approvedProductDtos =
+        approvedProductsContainKit.getFullSupplyProducts()
+            .stream()
+            .filter(approvedProductDto ->
+                !kitIds.contains(approvedProductDto.getOrderable().getId()))
+            .collect(Collectors.toList());
+    ApproveProductsAggregator approvedProducts =
+        new ApproveProductsAggregator(approvedProductDtos, programId);
+    // [SIGLUS change end]
 
     profiler.start("INITIATE_REQUISITION");
+    // [SIGLUS change start]
+    // [change reason]: check physical date
+    // Requisition newRequisition = requisitionService.initiate(
+    //     program, facility, period, emergency, stockAdjustmentReasons,
+    //     requisitionTemplate, approvedProducts);
+    LocalDate physicalInventoryDate = validAndSetPhysicalInventoryDate(period,
+        physicalInventoryDateStr);
     Requisition newRequisition = requisitionService.initiate(
-        program, facility, period, emergency, stockAdjustmentReasons,
-        requisitionTemplate, approvedProducts);
+                program, facility, period, emergency, stockAdjustmentReasons,
+                requisitionTemplate, approvedProducts, physicalInventoryDate);
+    // [SIGLUS change end]
 
     profiler.start("VALIDATE_REASONS");
     reasonsValidator.validate(stockAdjustmentReasons, newRequisition.getTemplate());
 
     return new InitiateResult(newRequisition, approvedProducts, facility, program, period);
   }
+
+  // [SIGLUS change start]
+  // [change reason]: check physical date
+  private LocalDate validAndSetPhysicalInventoryDate(ProcessingPeriodDto period,
+      String physicalInventoryDateStr) {
+    LocalDate physicalInventoryDate = null;
+    if (physicalInventoryDateStr != null) {
+      DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+      physicalInventoryDate = LocalDate.parse(physicalInventoryDateStr, format);
+      validatePhysicalInventoryDate(period, physicalInventoryDate);
+    }
+    return physicalInventoryDate;
+  }
+
+  private void validatePhysicalInventoryDate(ProcessingPeriodDto period,
+      LocalDate physicalInventoryDate) {
+    ProcessingPeriodExtension extension = processingPeriodExtensionRepository
+        .findByProcessingPeriodId(period.getId());
+    if (extension != null) {
+      period.setSubmitStartDate(extension.getSubmitStartDate());
+      period.setSubmitEndDate(extension.getSubmitEndDate());
+      if (physicalInventoryDate.isBefore(period.getSubmitStartDate()) || physicalInventoryDate
+          .isAfter(period.getSubmitEndDate())) {
+        throw new ValidationMessageException(
+            new Message(MessageKeys.ERROR_PHYSICAL_INVENTORY_DATE_MUST_IN_SUBMIT_DURATION));
+      }
+    }
+  }
+  // [SIGLUS change end]
+
+  // [SIGLUS change start]
+  // [change reason]: setRequisition Template extension
+  public BasicRequisitionTemplateDto getTemplateDto(RequisitionTemplate template) {
+    BasicRequisitionTemplateDto templateDto =
+        BasicRequisitionTemplateDto.newInstance(template);
+    RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
+        .findByRequisitionTemplateId(template.getId());
+    templateDto.setExtension(RequisitionTemplateExtensionDto.from(templateExtension));
+    requisitionService.getAssociateProgram(template.getId());
+    Set<ObjectReferenceDto>  associatePrograms = Optional
+        .ofNullable(requisitionService.getAssociateProgram(template.getId()))
+        .orElse(Collections.emptySet())
+        .stream()
+        .map(elem -> new ObjectReferenceDto(elem, baseUrl, PROGRAMS))
+        .collect(Collectors.toSet());
+    templateDto.setAssociatePrograms(associatePrograms);
+    return templateDto;
+  }
+  // [SIGLUS change end]
 
   UpdatePreparationResult doUpdatePreparation(UUID requisitionId,
       Requisition.Importer requisitionImporter, HttpServletRequest request, Profiler profiler) {

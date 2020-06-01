@@ -13,44 +13,62 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.common.domain;
 
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.openlmis.referencedata.domain.BaseEntity;
+import org.siglus.common.dto.RequisitionTemplateExtensionDto;
+import org.springframework.beans.BeanUtils;
 
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "requisition_template_associated_programs", schema = "siglusintegration")
-public class RequisitionTemplateAssociateProgram extends BaseEntity {
+@Builder
+@Table(name = "requisition_template_extension", schema = "siglusintegration")
+public class RequisitionTemplateExtension extends BaseEntity {
 
   @Column(nullable = false)
   private UUID requisitionTemplateId;
 
-  @Column(name = "associatedprogram", nullable = false)
-  private UUID associatedProgramId;
+  @Column
+  private Boolean enableConsultationNumber;
 
-  public static List<RequisitionTemplateAssociateProgram> from(UUID templateId,
-      Set<UUID> programIds) {
-    return programIds.stream()
-        .map(programId -> {
-          RequisitionTemplateAssociateProgram associateProgram =
-              new RequisitionTemplateAssociateProgram();
-          associateProgram.setRequisitionTemplateId(templateId);
-          associateProgram.setAssociatedProgramId(programId);
-          return associateProgram;
-        }).collect(Collectors.toList());
+  @Column
+  private Boolean enableKitUsage;
+
+  @Column
+  private Boolean enableProduct;
+
+  @Column
+  private Boolean enablePatientLineItem;
+
+  @Column
+  private Boolean enableRegimen;
+
+  @Column
+  private Boolean enableRapidTestConsumption;
+
+  @Column
+  private Boolean enableUsageInformation;
+
+  public static RequisitionTemplateExtension from(UUID id, RequisitionTemplateExtensionDto dto) {
+    if (dto == null) {
+      return null;
+    }
+    RequisitionTemplateExtension extension = new RequisitionTemplateExtension();
+    BeanUtils.copyProperties(dto, extension);
+    extension.setRequisitionTemplateId(id);
+    return extension;
   }
 
 }

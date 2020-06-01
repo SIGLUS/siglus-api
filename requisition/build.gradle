@@ -36,6 +36,8 @@ repositories {
 }
 
 dependencies {
+    compile project(":common")
+    compile project(':stockmanagement')
     compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate4"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
     compile "net.sf.jasperreports:jasperreports:6.3.0"

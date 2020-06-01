@@ -13,22 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.dto;
+package org.siglus.common.constant;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.Ignore;
+public class FieldConstants {
 
-@Ignore
-public class RequisitionV2DtoTest extends ToStringContractTest<RequisitionV2Dto> {
+  private FieldConstants() { }
 
-  @Override
-  protected Class<RequisitionV2Dto> getTestClass() {
-    return RequisitionV2Dto.class;
-  }
+  public static final String ACTUAL_START_DATE = "actualStartDate";
 
-  @Override
-  protected void prepare(EqualsVerifier<RequisitionV2Dto> verifier) {
-    verifier.withRedefinedSuperclass();
-  }
+  public static final String ACTUAL_END_DATE = "actualEndDate";
+
+  public static final String EXTRA_DATA_IS_SAVED = "isSaved";
 
 }

@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -63,6 +64,7 @@ import org.openlmis.requisition.testutils.OrderableDtoDataBuilder;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
+@Ignore
 public class RequisitionBuilderTest {
 
   @Rule

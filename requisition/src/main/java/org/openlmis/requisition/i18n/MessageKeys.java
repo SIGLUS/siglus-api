@@ -299,6 +299,11 @@ public abstract class MessageKeys {
       = "requisition.email.requisitionApproved.content";
   public static final String REQUISITION_SMS_REQUISITION_APPROVED_CONTENT
       = "requisition.sms.requisitionApproved.content";
+  // [SIGLUS change start]
+  // [change reason]: siglus need error message.
+  public static final String ERROR_PHYSICAL_INVENTORY_DATE_MUST_IN_SUBMIT_DURATION = ERROR_PREFIX
+      + ".reject.physicalInventoryDateMustInSubmitDuration";
+  // [SIGLUS change end]
 
   public static final String STATUS_CHANGE_USER_SYSTEM =
       SERVICE_PREFIX + ".statusChange.user.system";

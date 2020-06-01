@@ -51,9 +51,14 @@ final class StandardStockOnHandRetrieverBuilder extends StockOnHandRetrieverBuil
 
   @Override
   public StandardStockOnHandRetriever build() {
-    return new StandardStockOnHandRetriever(
-        getStockCardSummariesService(), products, programId, facilityId, asOfDate
+    // [SIGLUS change start]
+    // [change reason]: for call our modify stock card.
+    // return new StandardStockOnHandRetriever( products, programId, facilityId, asOfDate
+    // );
+    return new StandardStockOnHandRetriever(getStockCardSummariesService(),
+        getStockCardSummariesV2DtoBuilder(), products, programId, facilityId, asOfDate
     );
+    // [SIGLUS change end]
   }
 
 }

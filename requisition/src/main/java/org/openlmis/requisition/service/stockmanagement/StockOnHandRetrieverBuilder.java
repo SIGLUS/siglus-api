@@ -21,12 +21,24 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
+import org.openlmis.stockmanagement.service.StockCardSummariesService;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 
 public abstract class StockOnHandRetrieverBuilder {
 
+  // [SIGLUS change start]
+  // [change reason]: for call our modify stock card.
+  //  @Setter(AccessLevel.PACKAGE)
+  //  @Getter(AccessLevel.PACKAGE)
+  //  private StockCardSummariesStockManagementService stockCardSummariesService;
   @Setter(AccessLevel.PACKAGE)
   @Getter(AccessLevel.PACKAGE)
-  private StockCardSummariesStockManagementService stockCardSummariesService;
+  private StockCardSummariesService stockCardSummariesService;
+
+  @Setter(AccessLevel.PACKAGE)
+  @Getter(AccessLevel.PACKAGE)
+  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
+  // [SIGLUS change end]
 
   public abstract StockOnHandRetrieverBuilder forProducts(ApproveProductsAggregator products);
 

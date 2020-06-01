@@ -13,16 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.common.constant;
 
-import java.util.List;
-import java.util.UUID;
-import org.siglus.siglusapi.domain.RequisitionTemplateAssociateProgram;
-import org.springframework.data.jpa.repository.JpaRepository;
+public class DateFormatConstants {
 
-public interface RequisitionTemplateAssociateProgramRepository extends
-    JpaRepository<RequisitionTemplateAssociateProgram, UUID> {
+  private DateFormatConstants() { }
 
-  List<RequisitionTemplateAssociateProgram> findByRequisitionTemplateId(UUID requisitionTemplateId);
+  public static final String PROCESSING_PERIOD_DATE_FORMAT = "yyyy-MM-dd";
 
 }

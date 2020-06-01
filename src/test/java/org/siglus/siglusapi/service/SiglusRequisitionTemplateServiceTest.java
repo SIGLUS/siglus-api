@@ -35,12 +35,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
-import org.siglus.siglusapi.domain.RequisitionTemplateAssociateProgram;
-import org.siglus.siglusapi.domain.RequisitionTemplateExtension;
-import org.siglus.siglusapi.dto.RequisitionTemplateExtensionDto;
+import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
+import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.dto.RequisitionTemplateExtensionDto;
+import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
+import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.dto.SiglusRequisitionTemplateDto;
-import org.siglus.siglusapi.repository.RequisitionTemplateAssociateProgramRepository;
-import org.siglus.siglusapi.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.service.client.RequisitionTemplateRequisitionService;
 
 @SuppressWarnings("PMD.TooManyMethods")

@@ -24,17 +24,24 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.openlmis.requisition.domain.RequisitionTemplate;
+import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true)
 public class BasicRequisitionTemplateDto extends BaseRequisitionTemplateDto
     implements RequisitionTemplate.Exporter {
-
   private boolean populateStockOnHandFromStockCards;
   private String name;
 
   private Map<String, BasicRequisitionTemplateColumnDto> columnsMap;
+
+  // [SIGLUS change start]
+  // [change reason]: set requisition status.
+  private RequisitionTemplateExtensionDto extension;
+
+  private Set<ObjectReferenceDto> associatePrograms;
+  // [SIGLUS change end]
 
   /**
    * Create new list of RequisitionTemplateDto based on given list of {@link RequisitionTemplate}.

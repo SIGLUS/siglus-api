@@ -35,12 +35,16 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_SUBMITTED_
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_PROGRAM_DOES_NOT_ALLOW_SKIP;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_SKIP_FAILED_EMERGENCY;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_SKIP_FAILED_WRONG_STATUS;
+import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
+import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
+import static org.siglus.common.constant.FieldConstants.EXTRA_DATA_IS_SAVED;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.lang.reflect.InvocationTargetException;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -472,8 +476,41 @@ public class Requisition extends BaseTimestampedEntity {
     profiler.start("SET_STATUS_CHANGES");
     statusChanges.add(StatusChange.newStatusChange(this, initiator));
 
+    // [SIGLUS change start]
+    // [change reason]: for our frontend difference initial && second time to fill some filed.
+    profiler.start("SET_EXTRA_DATA");
+    setIsSavedExtraData(false);
+    // [SIGLUS change end]
+
     profiler.stop().log();
   }
+
+  // [SIGLUS change start]
+  // [change reason]: for our frontend difference initial && second time to fill some filed.
+  private void setIsSavedExtraData(Boolean isSaved) {
+    this.extraData.put(EXTRA_DATA_IS_SAVED, isSaved);
+  }
+  // [SIGLUS change end]
+
+
+  // [SIGLUS change start]
+  // [change reason]: get actual start date && get end date
+  public LocalDate getActualStartDate() {
+    if (extraData != null && extraData.get(ACTUAL_START_DATE) != null) {
+      DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+      return LocalDate.parse((String) extraData.get(ACTUAL_START_DATE), dateTimeFormatter);
+    }
+    return null;
+  }
+
+  public LocalDate getActualEndDate() {
+    if (extraData != null && extraData.get(ACTUAL_END_DATE) != null) {
+      DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+      return LocalDate.parse((String) extraData.get(ACTUAL_END_DATE), dateTimeFormatter);
+    }
+    return null;
+  }
+  // [SIGLUS change end]
 
   private void copySkippedValuesFromPreviousRequisition() {
     if (!previousRequisitions.isEmpty() && null != previousRequisitions.get(0)) {

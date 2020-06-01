@@ -13,22 +13,34 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.dto;
+package org.siglus.common.domain;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.Ignore;
+import java.time.LocalDate;
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.openlmis.referencedata.domain.BaseEntity;
 
-@Ignore
-public class RequisitionV2DtoTest extends ToStringContractTest<RequisitionV2Dto> {
+@Entity
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "processing_period_extension", schema = "siglusintegration")
+public class ProcessingPeriodExtension extends BaseEntity {
 
-  @Override
-  protected Class<RequisitionV2Dto> getTestClass() {
-    return RequisitionV2Dto.class;
-  }
+  @Column
+  private UUID processingPeriodId;
 
-  @Override
-  protected void prepare(EqualsVerifier<RequisitionV2Dto> verifier) {
-    verifier.withRedefinedSuperclass();
-  }
+  @Column(nullable = false)
+  private LocalDate submitStartDate;
+
+  @Column(nullable = false)
+  private LocalDate submitEndDate;
 
 }

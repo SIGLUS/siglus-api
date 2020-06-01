@@ -50,9 +50,13 @@ public class ObjectReferenceDto extends BaseDto {
     this(id, joinWith(SEPARATOR, serviceUrl + BASE_PATH, resourceName, id));
   }
 
-  private ObjectReferenceDto(UUID id, String href) {
+  // [SIGLUS change start]
+  // [change reason]: from stock card ObjectReferenceDto to requisition.
+  // private ObjectReferenceDto(UUID id, String href) {
+  public ObjectReferenceDto(UUID id, String href) {
+    // [SIGLUS change end]
     this.id = id;
     this.href = href;
   }
-
+  
 }

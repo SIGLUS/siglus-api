@@ -15,6 +15,9 @@
 
 package org.openlmis.requisition.dto;
 
+import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;
 import java.util.Collections;
@@ -25,6 +28,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.siglus.common.constant.DateFormatConstants;
 
 @Getter
 @Setter
@@ -37,6 +41,17 @@ public class ProcessingPeriodDto extends BasicProcessingPeriodDto {
   private String description;
   private Integer durationInMonths;
   private Map<String, String> extraData;
+
+  // [SIGLUS change start]
+  // [change reason]: submit date for period && authorized status
+  @JsonFormat(shape = STRING, pattern = DateFormatConstants.PROCESSING_PERIOD_DATE_FORMAT)
+  private LocalDate submitStartDate;
+
+  @JsonFormat(shape = STRING, pattern = DateFormatConstants.PROCESSING_PERIOD_DATE_FORMAT)
+  private LocalDate submitEndDate;
+
+  private boolean currentPeriodRegularRequisitionAuthorized;
+  // [SIGLUS change end]
 
   /**
    * Constructor for {@link ProcessingPeriodDto} with all parameters.

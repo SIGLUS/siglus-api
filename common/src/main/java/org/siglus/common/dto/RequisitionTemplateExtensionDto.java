@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.common.dto;
 
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -21,8 +21,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.openlmis.requisition.dto.BaseDto;
-import org.siglus.siglusapi.domain.RequisitionTemplateExtension;
+import org.openlmis.referencedata.dto.BaseDto;
+import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.springframework.beans.BeanUtils;
 
 @AllArgsConstructor

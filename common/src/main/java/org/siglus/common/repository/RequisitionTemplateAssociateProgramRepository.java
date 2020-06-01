@@ -13,25 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.common.repository;
 
 import java.util.List;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.domain.VersionIdentity;
+import java.util.UUID;
+import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
-public interface OrderableKitRepository extends
-    JpaRepository<Orderable, VersionIdentity> {
+public interface RequisitionTemplateAssociateProgramRepository extends
+    JpaRepository<RequisitionTemplateAssociateProgram, UUID> {
 
-  @Query(value = "SELECT o.* "
-      + "         FROM referencedata.orderables o"
-      + " WHERE EXISTS ("
-      + "    SELECT 1 FROM referencedata.orderable_children children "
-      + "             WHERE o.id = children.parentid "
-      + "             AND o.versionnumber = children.orderableversionnumber )",
-      nativeQuery = true
-  )
-  List<Orderable> findAllKitProduct();
+  List<RequisitionTemplateAssociateProgram> findByRequisitionTemplateId(UUID requisitionTemplateId);
 
 }

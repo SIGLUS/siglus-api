@@ -19,11 +19,16 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.web.RequisitionController;
+import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -32,6 +37,22 @@ public class SiglusRequisitionController {
 
   @Autowired
   private RequisitionController requisitionController;
+
+  @Autowired
+  private RequisitionV2Controller requisitionV2Controller;
+
+  @PostMapping("/initiate")
+  @ResponseStatus(HttpStatus.CREATED)
+  public RequisitionV2Dto initiate(@RequestParam(value = "program") UUID programId,
+      @RequestParam(value = "facility") UUID facilityId,
+      @RequestParam(value = "suggestedPeriod", required = false) UUID suggestedPeriod,
+      @RequestParam(value = "emergency") boolean emergency,
+      @RequestParam(value = "physicalInventoryDate", required = false)
+          String physicalInventoryDateStr,
+      HttpServletRequest request, HttpServletResponse response) {
+    return requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, emergency,
+        physicalInventoryDateStr, request, response);
+  }
 
   @PostMapping("/{id}/submit")
   public BasicRequisitionDto submitRequisition(

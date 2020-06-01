@@ -37,18 +37,18 @@ import org.springframework.util.MultiValueMap;
 
 @EqualsAndHashCode
 @ToString
-final class QueryRequisitionSearchParams implements RequisitionSearchParams {
+public final class QueryRequisitionSearchParams implements RequisitionSearchParams {
 
-  private static final String FACILITY = "facility";
-  private static final String PROGRAM = "program";
-  private static final String INITIATED_DATE_FROM = "initiatedDateFrom";
-  private static final String INITIATED_DATE_TO = "initiatedDateTo";
-  private static final String PROCESSING_PERIOD = "processingPeriod";
-  private static final String SUPERVISORY_NODE = "supervisoryNode";
-  private static final String REQUISITION_STATUS = "requisitionStatus";
-  private static final String EMERGENCY = "emergency";
-  private static final String MODIFIED_DATE_FROM = "modifiedDateFrom";
-  private static final String MODIFIED_DATE_TO = "modifiedDateTo";
+  public static final String FACILITY = "facility";
+  public static final String PROGRAM = "program";
+  public static final String INITIATED_DATE_FROM = "initiatedDateFrom";
+  public static final String INITIATED_DATE_TO = "initiatedDateTo";
+  public static final String PROCESSING_PERIOD = "processingPeriod";
+  public static final String SUPERVISORY_NODE = "supervisoryNode";
+  public static final String REQUISITION_STATUS = "requisitionStatus";
+  public static final String EMERGENCY = "emergency";
+  public static final String MODIFIED_DATE_FROM = "modifiedDateFrom";
+  public static final String MODIFIED_DATE_TO = "modifiedDateTo";
 
   private static final List<String> ALL_PARAMETERS = asList(FACILITY, PROGRAM, INITIATED_DATE_FROM,
       INITIATED_DATE_TO, MODIFIED_DATE_FROM, MODIFIED_DATE_TO, PROCESSING_PERIOD,

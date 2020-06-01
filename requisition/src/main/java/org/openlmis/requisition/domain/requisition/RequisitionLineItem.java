@@ -260,7 +260,8 @@ public class RequisitionLineItem extends BaseEntity {
     OrderableDto orderableDto = approvedProduct.getOrderable();
 
     // the method will throw exception if program orderable does not exist.
-    orderableDto.getProgramOrderable(requisition.getProgramId());
+    // orderableDto.getProgramOrderable(requisition.getProgramId());
+    // [SIGLUS change end]
 
     this.orderable = new VersionEntityReference(orderableDto.getId(),
         orderableDto.getVersionNumber());
