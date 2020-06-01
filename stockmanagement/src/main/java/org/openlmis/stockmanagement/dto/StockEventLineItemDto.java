@@ -19,6 +19,7 @@ import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 import static java.util.Collections.emptyList;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,11 @@ public class StockEventLineItemDto implements IdentifiableByOrderableLot, VvmApp
   private UUID destinationId;
   private String destinationFreeText;
   private List<StockEventAdjustmentDto> stockAdjustments;
+  // [SIGLUS change start]
+  // [change reason]: StockEventLineItems can have different documentationNo and programId.
+  private String documentationNo;
+  private UUID programId;
+  // [SIGLUS change end]
 
   StockEventLineItem toEventLineItem() {
     // event is set in StockEventDto.toEvent()
@@ -101,4 +107,17 @@ public class StockEventLineItemDto implements IdentifiableByOrderableLot, VvmApp
         .map(StockEventAdjustmentDto::toPhysicalInventoryLineItemAdjustment)
         .collect(Collectors.toList());
   }
+
+  // [SIGLUS change start]
+  // [change reason]: add methods to get values from extraData
+  @JsonIgnore
+  public String getLotCode() {
+    return extraData.get("lotCode");
+  }
+
+  @JsonIgnore
+  public LocalDate getExpirationDate() {
+    return LocalDate.parse(extraData.get("expirationDate"));
+  }
+  // [SIGLUS change end]
 }

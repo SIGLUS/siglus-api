@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.StockCardExtension;
@@ -25,6 +27,8 @@ import org.springframework.data.repository.query.Param;
 public interface StockCardExtensionRepository extends JpaRepository<StockCardExtension, UUID> {
 
   StockCardExtension findByStockCardId(UUID stockCardId);
+
+  List<StockCardExtension> findByStockCardIdIn(Collection<UUID> stockCardIds);
 
   @Query(value = "select cast(orderableId as varchar) orderableId "
       + "from stockmanagement.stock_cards sc, "

@@ -47,6 +47,8 @@ public class FieldConstants {
 
   public static final String LOT_CODE = "lotCode";
 
+  public static final String TRADE_ITEM = "tradeItem";
+
   public static final String ACTUAL_START_DATE = "actualStartDate";
 
   public static final String ACTUAL_END_DATE = "actualEndDate";

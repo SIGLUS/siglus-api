@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.openlmis.stockmanagement.domain.event.StockEvent;
@@ -37,6 +38,7 @@ import org.openlmis.stockmanagement.util.StockEventProcessContext;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class StockEventDto {
 
   private UUID resourceId;
@@ -56,8 +58,35 @@ public class StockEventDto {
   private StockEventProcessContext context;
 
   // [SIGLUS change start]
-  // [change reason]: support for stockmanagement draft
+  // [change reason]: support for stockmanagement draft.
   private String type;
+  // [SIGLUS change end]
+
+  // [SIGLUS change start]
+  // [change reason]: add methods.
+  /**
+   * Create from PhysicalInventoryDto.
+   * @param dto PhysicalInventoryDto.
+   * @return created dto.
+   */
+  public static StockEventDto fromPhysicalInventoryDto(PhysicalInventoryDto dto) {
+    return StockEventDto.builder()
+        .resourceId(dto.getId())
+        .facilityId(dto.getFacilityId())
+        .programId(dto.getProgramId())
+        .build();
+  }
+
+  /**
+   * Create from programId.
+   * @param programId programId.
+   * @return created dto.
+   */
+  public static StockEventDto fromProgramId(UUID programId) {
+    return StockEventDto.builder()
+        .programId(programId)
+        .build();
+  }
   // [SIGLUS change end]
 
   /**
@@ -172,4 +201,19 @@ public class StockEventDto {
         .stream()
         .anyMatch(l -> context.getUnpackReasonId().equals(l.getReasonId()));
   }
+
+  // [SIGLUS change start]
+  // [change reason]: add method
+  /**
+   * Checks if a stock event has a special reason or not.
+   * @param reasonId reasonId
+   */
+  public boolean hasSpecialReason(UUID reasonId) {
+    return hasLineItems()
+        && lineItems
+        .stream()
+        .anyMatch(l -> reasonId.equals(l.getReasonId()));
+  }
+  // [SIGLUS change end]
+
 }

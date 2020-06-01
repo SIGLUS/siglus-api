@@ -13,20 +13,32 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.stockmanagement.repository;
+package org.siglus.siglusapi.service.client;
 
-import java.util.List;
 import java.util.UUID;
-import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
-import org.openlmis.stockmanagement.domain.event.StockEvent;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.openlmis.stockmanagement.dto.StockEventDto;
+import org.springframework.stereotype.Service;
 
-public interface StockCardLineItemRepository
-    extends PagingAndSortingRepository<StockCardLineItem, UUID> {
+@Service
+public class StockEventsStockManagementService extends
+    BaseStockManagementService<StockEventDto> {
 
-  // [SIGLUS change start]
-  // [change reason]: add method.
-  List<StockCardLineItem> findByOriginEvent(StockEvent stockEvent);
-  // [SIGLUS change end]
+  @Override
+  protected String getUrl() {
+    return "/api/stockEvents/";
+  }
 
+  @Override
+  protected Class<StockEventDto> getResultClass() {
+    return StockEventDto.class;
+  }
+
+  @Override
+  protected Class<StockEventDto[]> getArrayResultClass() {
+    return StockEventDto[].class;
+  }
+
+  public UUID createStockEvent(StockEventDto eventDto) {
+    return postResult("", eventDto, UUID.class);
+  }
 }

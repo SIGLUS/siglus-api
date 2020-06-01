@@ -15,6 +15,10 @@
 
 package org.siglus.siglusapi.service.client;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
 import org.openlmis.requisition.service.RequestParameters;
@@ -23,6 +27,7 @@ import org.siglus.siglusapi.constant.FieldConstants;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 @Service
 public class SiglusOrderableReferenceDataService
@@ -41,6 +46,12 @@ public class SiglusOrderableReferenceDataService
   @Override
   protected Class<OrderableDto[]> getArrayResultClass() {
     return OrderableDto[].class;
+  }
+
+  public List<OrderableDto> findByIds(Collection<UUID> ids) {
+    return CollectionUtils.isEmpty(ids)
+        ? Collections.emptyList()
+        : getPage(RequestParameters.init().set(FieldConstants.ID, ids)).getContent();
   }
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,

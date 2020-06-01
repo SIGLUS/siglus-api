@@ -37,9 +37,11 @@ import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.util.StockEventProcessContext;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-@Component("UnpackKitValidator")
+// [SIGLUS change start]
+// [change reason]: quantity can be inconsistent when unpack
+// @Component("UnpackKitValidator")
+// [SIGLUS change end]
 public class UnpackKitValidator implements StockEventValidator {
 
   @Autowired

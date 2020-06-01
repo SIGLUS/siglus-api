@@ -15,9 +15,14 @@
 
 package org.siglus.siglusapi.service;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,7 +31,22 @@ import org.springframework.stereotype.Service;
 public class SiglusArchiveProductService {
 
   @Autowired
+  private StockCardRepository stockCardRepository;
+
+  @Autowired
   private StockCardExtensionRepository stockCardExtensionRepository;
+
+  public void activateArchivedProducts(Collection<UUID> orderableIds, UUID facilityId) {
+    Set<UUID> stockCardIds = stockCardRepository
+        .findByOrderableIdInAndFacilityId(orderableIds, facilityId)
+        .stream()
+        .map(StockCard::getId)
+        .collect(Collectors.toSet());
+    List<StockCardExtension> stockCardExtensions = stockCardExtensionRepository
+        .findByStockCardIdIn(stockCardIds);
+    stockCardExtensions.forEach(stockCardExtension -> stockCardExtension.setArchived(false));
+    stockCardExtensionRepository.save(stockCardExtensions);
+  }
 
   public boolean isArchived(UUID stockCardId) {
     return stockCardExtensionRepository.findByStockCardId(stockCardId).isArchived();

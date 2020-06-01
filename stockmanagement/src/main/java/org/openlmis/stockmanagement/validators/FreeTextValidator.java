@@ -99,6 +99,14 @@ public class FreeTextValidator implements StockEventValidator {
     boolean reasonNotAllowFreeText = lineItem.hasReasonId()
         && !isFreeTextAllowed(event, lineItem);
     boolean hasNoReasonIdButHasFreeText = !lineItem.hasReasonId();
+
+    // [SIGLUS change start]
+    // [change reason]: has no reasonId but has freeText when do physical inventory,
+    //                  shouldn't throw exception.
+    if (event.isPhysicalInventory()) {
+      hasNoReasonIdButHasFreeText = false;
+    }
+    // [SIGLUS change end]
     if (reasonNotAllowFreeText || hasNoReasonIdButHasFreeText) {
       throwError(ERROR_REASON_FREE_TEXT_NOT_ALLOWED,
           lineItem.getReasonId(), lineItem.getReasonFreeText());

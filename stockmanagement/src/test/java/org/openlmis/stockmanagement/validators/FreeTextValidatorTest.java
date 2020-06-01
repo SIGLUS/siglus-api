@@ -31,6 +31,7 @@ import static org.openlmis.stockmanagement.testutils.StockEventDtoDataBuilder.cr
 
 import java.util.UUID;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -81,6 +82,11 @@ public class FreeTextValidatorTest extends BaseValidatorTest {
   }
 
   @Test
+  // [SIGLUS change start]
+  // [change reason]: has no reasonId but has freeText when do physical inventory,
+  //                  shouldn't throw exception.
+  @Ignore
+  // [SIGLUS change end]
   public void shouldFailWhenReasonNotExistButReasonFreeTextExist() throws Exception {
     StockEventDto eventDto = createNoSourceDestinationStockEventDto();
     eventDto.getLineItems().get(0).setReasonId(null);

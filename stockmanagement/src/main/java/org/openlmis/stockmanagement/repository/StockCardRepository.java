@@ -27,6 +27,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@SuppressWarnings("PMD.TooManyMethods")
 public interface StockCardRepository extends JpaRepository<StockCard, UUID> {
 
   StockCard findByProgramIdAndFacilityIdAndOrderableIdAndLotId(
@@ -64,8 +65,11 @@ public interface StockCardRepository extends JpaRepository<StockCard, UUID> {
   List<StockCard> findByLotIdIn(Collection<UUID> lotIds);
 
   // [SIGLUS change start]
-  // [change reason]: add new method.
+  // [change reason]: add methods.
   List<StockCard> findByFacilityId(UUID facilityId);
+
+  List<StockCard> findByOrderableIdInAndFacilityId(
+      Collection<UUID> orderableIds, UUID facilityId);
   // [SIGLUS change end]
 
 }
