@@ -16,12 +16,18 @@
 package org.siglus.siglusapi.service;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.referencedata.dto.OrderableDto;
+import org.openlmis.referencedata.web.OrderableSearchParams;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -37,6 +43,12 @@ public class SiglusOrderableService {
   @Autowired
   private ProgramExtensionRepository programExtensionRepository;
 
+  @Autowired
+  private StockCardRepository stockCardRepository;
+
+  @Autowired
+  private StockCardExtensionRepository stockCardExtensionRepository;
+
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable) {
     Map<UUID, ProgramExtension> programExtensions =
@@ -51,4 +63,32 @@ public class SiglusOrderableService {
     return orderableDtoPage;
   }
 
+  public Page<OrderableDto> searchOrderables(OrderableSearchParams searchParams, UUID facilityId) {
+    Page<OrderableDto> orderableDtoPage = orderableReferenceDataService
+        .searchOrderables(searchParams);
+    Set<UUID> stockCardIds = stockCardRepository
+        .findByFacilityId(facilityId)
+        .stream()
+        .map(StockCard::getId)
+        .collect(Collectors.toSet());
+    Map<UUID, StockCardExtension> stockCardIdStockCardExtensionMap = stockCardExtensionRepository
+        .findByStockCardIdIn(stockCardIds)
+        .stream()
+        .collect(Collectors.toMap(StockCardExtension::getStockCardId,
+            stockCardExtension -> stockCardExtension));
+    Map<UUID, UUID> orderableIdStockCardIdMap = stockCardRepository
+        .findByFacilityId(facilityId)
+        .stream()
+        .collect(Collectors.toMap(StockCard::getOrderableId, StockCard::getId, (v1, v2) -> v1));
+    orderableDtoPage.getContent().forEach(orderableDto -> {
+      UUID stockCardId = orderableIdStockCardIdMap.get(orderableDto.getId());
+      StockCardExtension stockCardExtension = stockCardIdStockCardExtensionMap.get(stockCardId);
+      if (null == stockCardExtension) {
+        orderableDto.setArchived(false);
+        return;
+      }
+      orderableDto.setArchived(stockCardExtension.isArchived());
+    });
+    return orderableDtoPage;
+  }
 }

@@ -226,6 +226,25 @@ traits:
             body:
               application/json:
                 schema: localizedErrorResponse
+      /search:
+        post:
+          is: [ secured ]
+          description: Return a page of orderables by search criteria.
+          body:
+            application/json:
+              schema: orderableSearchQuery
+          responses:
+            200:
+              description: The request is valid and a page of orderables will be returned.
+              body:
+                application/json:
+                  schema: orderablePage
+            "304":
+              description: Returned with no response body if no resource was modified since date provided in the If-Modified-Since request header.
+            401:
+              description: The request does not contain a token or the token might be invalid.
+              body:
+                application/json:
 
     /validDestinations:
       get:
