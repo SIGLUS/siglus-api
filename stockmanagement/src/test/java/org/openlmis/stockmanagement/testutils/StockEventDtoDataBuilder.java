@@ -141,8 +141,11 @@ public class StockEventDtoDataBuilder {
   }
 
   public StockEventDto build() {
+    // [SIGLUS change start]
+    // [change reason]: support for stockmanagement draft
     return new StockEventDto(resourceId, facilityId, programId, signature, documentNumber, userId,
-        lineItems, context);
+        lineItems, context, null);
+    // [SIGLUS change end]
   }
 
   public StockEventDtoDataBuilder addLineItem(StockEventLineItemDto... lineItemDtos) {

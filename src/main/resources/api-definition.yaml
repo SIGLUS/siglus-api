@@ -614,6 +614,20 @@ traits:
           200:
             description: Product activated.
 
+    /archivedproducts:
+      get:
+        is: [ secured ]
+        description: Get archived products.
+        queryParameters:
+          facilityId:
+            required: true
+            description: facility id
+            repeat: false
+            type: string
+        responses:
+          200:
+            description: return archived products.
+
     /stockCards/orderable:
       get:
         is: [ secured ]

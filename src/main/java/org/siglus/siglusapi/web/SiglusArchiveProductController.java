@@ -13,24 +13,26 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.web;
 
 import java.util.Set;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.StockCardExtension;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.siglus.siglusapi.service.SiglusArchiveProductService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-public interface StockCardExtensionRepository extends JpaRepository<StockCardExtension, UUID> {
+@RestController
+@RequestMapping("/api/siglusapi/archivedproducts")
+public class SiglusArchiveProductController {
 
-  StockCardExtension findByStockCardId(UUID stockCardId);
+  @Autowired
+  private SiglusArchiveProductService archiveProductService;
 
-  @Query(value = "select cast(orderableId as varchar) orderableId "
-      + "from stockmanagement.stock_cards sc, "
-      + "siglusintegration.stock_card_extension sce "
-      + "where sc.id = sce.stockcardid "
-      + "and sc.facilityId = :facilityId "
-      + "and sce.archived = true", nativeQuery = true)
-  Set<String> findArchivedProducts(@Param("facilityId") UUID facilityId);
+  @GetMapping
+  public Set<String> searchArchivedProducts(@RequestParam UUID facilityId) {
+    return archiveProductService.searchArchivedProducts(facilityId);
+  }
 }

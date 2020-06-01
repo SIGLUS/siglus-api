@@ -55,6 +55,11 @@ public class StockEventDto {
 
   private StockEventProcessContext context;
 
+  // [SIGLUS change start]
+  // [change reason]: support for stockmanagement draft
+  private String type;
+  // [SIGLUS change end]
+
   /**
    * Convert dto to jpa model.
    *

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
@@ -39,4 +40,7 @@ public class SiglusArchiveProductService {
     return !isArchived(stockCard);
   }
 
+  public Set<String> searchArchivedProducts(UUID facilityId) {
+    return stockCardExtensionRepository.findArchivedProducts(facilityId);
+  }
 }
