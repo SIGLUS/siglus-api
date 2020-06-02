@@ -30,6 +30,9 @@ import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.AV
 import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.CALCULATED_ORDER_QUANTITY;
 import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.CALCULATED_ORDER_QUANTITY_ISA;
 import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.SKIPPED_COLUMN;
+import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.TOTAL_LOSSES_AND_ADJUSTMENTS;
+import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.TOTAL_RECEIVED_QUANTITY;
+import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.TOTAL_STOCKOUT_DAYS;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_FIELD_MUST_HAVE_VALUES;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_INITIATED_TO_BE_SUBMMITED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_SUBMITTED_TO_BE_AUTHORIZED;
@@ -95,6 +98,7 @@ import org.openlmis.requisition.domain.ExtraDataEntity.ExtraDataExporter;
 import org.openlmis.requisition.domain.ExtraDataEntity.ExtraDataImporter;
 import org.openlmis.requisition.domain.OpenLmisNumberUtils;
 import org.openlmis.requisition.domain.RequisitionTemplate;
+import org.openlmis.requisition.domain.RequisitionTemplateColumn;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -814,6 +818,189 @@ public class Requisition extends BaseTimestampedEntity {
     statusChanges.add(StatusChange.newStatusChange(this, userId));
     setModifiedDate(ZonedDateTime.now());
   }
+
+  // [SIGLUS change start]
+  // create lineitem for add-product
+  public RequisitionLineItem constructLineItem(
+      RequisitionTemplate template,
+      Integer stockOnHand, Integer beginningBalance,
+      ApprovedProductDto productDto,
+      int numberOfPreviousPeriodsToAverage,
+      Map<UUID, Integer> idealStockAmounts,
+      List<StockCardRangeSummaryDto> stockCardRangeSummaries,
+      List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage,
+      List<ProcessingPeriodDto> periods,
+      ProofOfDeliveryDto pod,
+      Collection<ApprovedProductDto> fullSupplyProducts) {
+    if (requisitionLineItems == null) {
+      requisitionLineItems = new ArrayList<>();
+    }
+
+    RequisitionLineItem lineItem;
+    if (template.isPopulateStockOnHandFromStockCards()) {
+      lineItem = buildLineItem(idealStockAmounts,
+          stockOnHand,
+          beginningBalance,
+          stockCardRangeSummaries,
+          stockCardRangeSummariesToAverage,
+          periods,
+          productDto);
+      //requisitionLineItems.add(lineItem);
+    } else {
+      lineItem = new RequisitionLineItem(this, productDto);
+      lineItem.setIdealStockAmount(extractIdealStockAmount(idealStockAmounts, productDto));
+
+      //requisitionLineItems.add(lineItem);
+
+      setLineItemBeginningBalance(lineItem);
+      setLineItemTotalReceivedQuantity(pod, lineItem);
+
+      setPreviousAdjustedConsumptions(numberOfPreviousPeriodsToAverage);
+    }
+    //lineItem.setStatus(lineStatusBaseOnRequisitionStatus());
+    return lineItem;
+  }
+
+  private void setLineItemBeginningBalance(RequisitionLineItem requisitionLineItem) {
+    // Firstly, if we display the column ...
+    // ... and if the previous requisition exists ...
+    // .. for each line from the current requisition ...
+    if (!previousRequisitions.isEmpty()
+        && null != previousRequisitions.get(0)
+        && template.isColumnDisplayed(RequisitionLineItem.BEGINNING_BALANCE)
+        && !requisitionLineItem.isLineSkipped()) {
+      Map<VersionEntityReference, RequisitionLineItem> productIdToPreviousLine =
+          previousRequisitions.get(0).getRequisitionLineItems().stream().collect(
+              toMap(RequisitionLineItem::getOrderable, identity(),
+                  (item1, item2) -> item1));
+
+      // ... we try to find line in the previous requisition for the same product ...
+      RequisitionLineItem previousLine = productIdToPreviousLine.getOrDefault(
+          requisitionLineItem.getOrderable(), null);
+
+      // ... and in the end we use it to calculate beginning balance in a new line.
+      requisitionLineItem.setBeginningBalance(
+          LineItemFieldsCalculator.calculateBeginningBalance(previousLine));
+    }
+  }
+
+  private void setLineItemTotalReceivedQuantity(ProofOfDeliveryDto proofOfDelivery,
+      RequisitionLineItem requisitionLineItem) {
+    // Secondly, if Proof Of Delivery exists and it is submitted ...
+    // .. for each line from the current requisition ...
+    if (null != proofOfDelivery && proofOfDelivery.isSubmitted()
+        && requisitionLineItem.isLineSkipped()) {
+      Map<UUID, ProofOfDeliveryLineItemDto> productIdToPodLine = proofOfDelivery
+          .getLineItems()
+          .stream()
+          .filter(li -> null != li.getOrderable())
+          .collect(toMap(li -> li.getOrderable().getId(), identity(), (one, two) -> one));
+      // ... we try to find line in POD for the same product ...
+      ProofOfDeliveryLineItemDto proofOfDeliveryLine = productIdToPodLine.getOrDefault(
+          requisitionLineItem.getOrderable().getId(), null);
+
+      // ... and if line exists we set value for Total Received Quantity (B) column
+      if (null != proofOfDeliveryLine) {
+        requisitionLineItem.setTotalReceivedQuantity(
+            OpenLmisNumberUtils.zeroIfNull(proofOfDeliveryLine.getQuantityAccepted())
+        );
+      }
+    }
+  }
+
+  private RequisitionLineItem buildLineItem(
+      Map<UUID, Integer> idealStockAmounts,
+      Integer stockOnHand,
+      Integer beginningBalance,
+      List<StockCardRangeSummaryDto> stockCardRangeSummaries,
+      List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage,
+      List<ProcessingPeriodDto> periods,
+      ApprovedProductDto product) {
+
+    RequisitionLineItem lineItem = new RequisitionLineItem(this, product);
+    lineItem.setIdealStockAmount(extractIdealStockAmount(idealStockAmounts, product));
+    lineItem.setStockOnHand(initiateQuantity(stockOnHand));
+    lineItem.setBeginningBalance(initiateQuantity(beginningBalance));
+
+    StockCardRangeSummaryDto summary =
+        findStockCardRangeSummary(stockCardRangeSummaries, lineItem.getOrderable().getId());
+
+    setTotalReceivedQuantity(template, lineItem, summary);
+    setTotalStockoutDays(lineItem, summary, numberOfMonthsInPeriod);
+    setTotalConsumedQuantity(template, lineItem, summary);
+    StockCardRangeSummaryDto summaryToAverage =
+        findStockCardRangeSummary(stockCardRangeSummariesToAverage,
+            lineItem.getOrderable().getId());
+    setAverageConsumption(summaryToAverage, template, periods,
+        previousRequisitions, lineItem);
+    setTotalLossesAndAdjustments(template, lineItem, summary);
+
+    return lineItem;
+  }
+
+  private void setTotalReceivedQuantity(RequisitionTemplate template,
+      RequisitionLineItem lineItem,
+      StockCardRangeSummaryDto summary) {
+    if (isDisplayedTemplateColumn(TOTAL_RECEIVED_QUANTITY)) {
+      lineItem.calculateAndSetStockBasedTotalReceivedQuantity(template, summary);
+    } else {
+      lineItem.setTotalReceivedQuantity(null);
+    }
+  }
+
+  private void setTotalStockoutDays(RequisitionLineItem lineItem,
+      StockCardRangeSummaryDto summary,
+      Integer numberOfMonthsInPeriod) {
+    if (isDisplayedTemplateColumn(TOTAL_STOCKOUT_DAYS)) {
+      lineItem.calculateAndSetStockBasedTotalStockoutDays(summary,
+          numberOfMonthsInPeriod);
+    } else {
+      lineItem.setTotalStockoutDays(null);
+    }
+  }
+
+  private void setTotalConsumedQuantity(RequisitionTemplate template,
+      RequisitionLineItem lineItem,
+      StockCardRangeSummaryDto summary) {
+    if (isDisplayedTemplateColumn(TOTAL_CONSUMED_QUANTITY)) {
+      lineItem.calculateAndSetStockBasedTotalConsumedQuantity(template, summary);
+    } else {
+      lineItem.setTotalConsumedQuantity(null);
+    }
+  }
+
+  private void setAverageConsumption(StockCardRangeSummaryDto summaryToAverage,
+      RequisitionTemplate template,
+      List<ProcessingPeriodDto> periods,
+      List<Requisition> previousRequisitions,
+      RequisitionLineItem lineItem) {
+    if (isDisplayedTemplateColumn(AVERAGE_CONSUMPTION)) {
+      lineItem.calculateAndSetStockBasedAverageConsumption(summaryToAverage, template, periods,
+          previousRequisitions);
+    } else {
+      lineItem.setAverageConsumption(null);
+    }
+  }
+
+  private void setTotalLossesAndAdjustments(RequisitionTemplate template,
+      RequisitionLineItem lineItem,
+      StockCardRangeSummaryDto summary) {
+    if (isDisplayedTemplateColumn(TOTAL_LOSSES_AND_ADJUSTMENTS)) {
+      lineItem.calculateAndSetStockBasedTotalLossesAndAdjustments(template, summary);
+    } else {
+      lineItem.setTotalLossesAndAdjustments(null);
+    }
+  }
+
+  private Integer initiateQuantity(Integer quantity) {
+    return quantity == null ? 0 : quantity;
+  }
+
+  private boolean isDisplayedTemplateColumn(String name) {
+    RequisitionTemplateColumn column = template.findColumn(name);
+    return column != null && column.getIsDisplayed();
+  }
+  // [SIGLUS change end]
 
   /**
    * Finds first RequisitionLineItem that have productId property equals to the given productId

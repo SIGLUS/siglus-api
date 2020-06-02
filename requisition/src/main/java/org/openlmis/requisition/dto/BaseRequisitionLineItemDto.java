@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -69,6 +70,10 @@ public abstract class BaseRequisitionLineItemDto extends BaseDto
   private Integer idealStockAmount;
   private Integer calculatedOrderQuantityIsa;
   private Integer additionalQuantityRequired;
+  // [SIGLUS change start]
+  // [change reason]:new property used in SiglusRequisitionService.java
+  private LocalDate expirationDate;
+  // [SIGLUS change end]
 
   @JsonProperty
   private List<StockAdjustmentDto> stockAdjustments = new ArrayList<>();

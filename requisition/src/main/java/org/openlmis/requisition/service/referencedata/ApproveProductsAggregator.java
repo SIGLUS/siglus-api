@@ -105,4 +105,9 @@ public final class ApproveProductsAggregator {
   public Map<VersionIdentityDto, ApprovedProductDto> getAllGroupByIdentity() {
     return allProducts;
   }
+
+  // get all products
+  public Map<VersionIdentityDto, ApprovedProductDto> getAllProducts() {
+    return allProducts;
+  }
 }

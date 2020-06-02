@@ -15,17 +15,21 @@
 
 package org.siglus.siglusapi.web;
 
+import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
+import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -40,6 +44,9 @@ public class SiglusRequisitionController {
 
   @Autowired
   private RequisitionV2Controller requisitionV2Controller;
+
+  @Autowired
+  private SiglusRequisitionService siglusRequisitionService;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -68,5 +75,12 @@ public class SiglusRequisitionController {
       HttpServletRequest request,
       HttpServletResponse response) {
     return requisitionController.authorizeRequisition(requisitionId, request, response);
+  }
+
+  @PostMapping("/createLineItem")
+  public List<RequisitionLineItemV2Dto> createRequisitionLineItem(
+      @RequestParam(value = "requisitionId") UUID requisitonId,
+      @RequestBody List<UUID> orderableIds) {
+    return siglusRequisitionService.createRequisitionLineItem(requisitonId, orderableIds);
   }
 }

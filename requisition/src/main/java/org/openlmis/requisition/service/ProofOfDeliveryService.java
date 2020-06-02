@@ -42,8 +42,8 @@ public class ProofOfDeliveryService {
   @Autowired
   private ProofOfDeliveryFulfillmentService proofOfDeliveryFulfillmentService;
 
-
-  ProofOfDeliveryDto get(Requisition requisition) {
+  // set public
+  public ProofOfDeliveryDto get(Requisition requisition) {
     Profiler profiler = new Profiler("POD_SERVICE_GET");
     profiler.setLogger(LOGGER);
 

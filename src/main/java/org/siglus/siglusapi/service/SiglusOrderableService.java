@@ -15,13 +15,17 @@
 
 package org.siglus.siglusapi.service;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
+import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -37,6 +41,9 @@ public class SiglusOrderableService {
   @Autowired
   private ProgramExtensionRepository programExtensionRepository;
 
+  @Autowired
+  private SiglusOrderableRepository siglusOrderableRepository;
+
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable) {
     Map<UUID, ProgramExtension> programExtensions =
@@ -51,4 +58,7 @@ public class SiglusOrderableService {
     return orderableDtoPage;
   }
 
+  public List<OrderableExpirationDateDto> getOrderableExpirationDate(Set<UUID> orderableIds) {
+    return siglusOrderableRepository.findExpirationDate(orderableIds);
+  }
 }

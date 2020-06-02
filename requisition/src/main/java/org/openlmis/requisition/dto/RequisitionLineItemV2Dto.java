@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import java.math.BigDecimal;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,6 +35,10 @@ import org.joda.money.Money;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
+// [SIGLUS change start]
+// [change reason]:builder used in SiglusRequisitionService.java
+@Builder
+// [SIGLUS change start]
 public final class RequisitionLineItemV2Dto extends BaseRequisitionLineItemDto {
 
   @JsonIgnore

@@ -274,6 +274,9 @@ public abstract class MessageKeys {
       ERROR_PREFIX + ".duplication";
   public static final String ERROR_REQUISITION_DUPLICATION_WITH_NODE =
       ERROR_PREFIX + ".duplicationWithNode";
+  // orderable error error
+  public static final String ERROR_ORDERABLE_ALREADY_IN_GIVEN_REQUISITION = ERROR_PREFIX
+      + ".alreadyHaveOrderable";
 
   public static final String REQUISITION_EMAIL_CONVERT_TO_ORDER_SUBJECT
       = "requisition.email.convertToOrder.subject";
@@ -322,6 +325,10 @@ public abstract class MessageKeys {
       = "requisition.error.pageable.size.null";
   public static final String ERROR_SIZE_NOT_POSITIVE
       = "requisition.error.pageable.size.notPositive";
+
+  // permission error
+  public static final String ERROR_PERMISSION_CHECK_FAILED = ERROR_PREFIX
+      + ".authorization.failed";
 
   private MessageKeys() {
     throw new UnsupportedOperationException();

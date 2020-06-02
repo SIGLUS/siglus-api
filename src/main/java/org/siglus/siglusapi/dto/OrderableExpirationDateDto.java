@@ -13,18 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.web;
+package org.siglus.siglusapi.dto;
 
-import org.openlmis.requisition.exception.BaseMessageException;
-import org.openlmis.requisition.utils.Message;
+import java.time.LocalDate;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public class PermissionMessageException extends BaseMessageException {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderableExpirationDateDto {
 
-  public PermissionMessageException(Message message) {
-    super(message);
-  }
-
-  public PermissionMessageException(Message message, Throwable cause) {
-    super(message, cause);
-  }
+  private UUID orderableId;
+  private LocalDate expirationDate;
 }

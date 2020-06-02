@@ -620,7 +620,10 @@ public abstract class BaseRequisitionController extends BaseController {
         orderables, approvedProducts);
   }
 
-  Profiler getProfiler(String name, Object... entryArgs) {
+  // [SIGLUS change start]
+  // [change reason]:make public for import in SiglusRequisitionService.java
+  public Profiler getProfiler(String name, Object... entryArgs) {
+    // [SIGLUS change ends]
     extLogger.entry(entryArgs);
 
     Profiler profiler = new Profiler(name);
@@ -634,7 +637,10 @@ public abstract class BaseRequisitionController extends BaseController {
     extLogger.exit(exitArgs);
   }
 
-  Requisition findRequisition(UUID requisitionId, Profiler profiler) {
+  // [SIGLUS change start]
+  // [change reason]:make public for import in SiglusRequisitionService.java
+  public Requisition findRequisition(UUID requisitionId, Profiler profiler) {
+    // [SIGLUS change ends]
     profiler.start("GET_REQUISITION_BY_ID");
     Requisition requisition = findResource(
         profiler, requisitionId, requisitionRepository::findOne, ERROR_REQUISITION_NOT_FOUND
@@ -647,14 +653,20 @@ public abstract class BaseRequisitionController extends BaseController {
     return requisition;
   }
 
-  FacilityDto findFacility(UUID facilityId, Profiler profiler) {
+  // [SIGLUS change start]
+  // [change reason]:make public for import in SiglusRequisitionService.java
+  public FacilityDto findFacility(UUID facilityId, Profiler profiler) {
+    // [SIGLUS change ends]
     profiler.start("GET_FACILITY");
     return findResource(
         profiler, facilityId, facilityReferenceDataService::findOne, ERROR_FACILITY_NOT_FOUND
     );
   }
 
-  ProgramDto findProgram(UUID programId, Profiler profiler) {
+  // [SIGLUS change start]
+  // [change reason]:make public for import in SiglusRequisitionService.java
+  public ProgramDto findProgram(UUID programId, Profiler profiler) {
+    // [SIGLUS change ends]
     profiler.start("GET_PROGRAM");
     return findResource(
         profiler, programId, programReferenceDataService::findOne, ERROR_PROGRAM_NOT_FOUND

@@ -43,4 +43,6 @@ public interface RequisitionSearchParams {
 
   Set<RequisitionStatus> getRequisitionStatuses();
 
+  // set requisition status
+  void setRequisitionStatuses(Set<RequisitionStatus> requisitionStatus);
 }

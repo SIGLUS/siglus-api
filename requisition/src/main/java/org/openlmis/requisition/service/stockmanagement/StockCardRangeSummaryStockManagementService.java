@@ -29,6 +29,21 @@ import org.springframework.stereotype.Service;
 @Service
 public class StockCardRangeSummaryStockManagementService
     extends BaseStockManagementService<StockCardRangeSummaryDto> {
+  // [SIGLUS change start]
+  // [change reason]:search method without orderableId
+  public List<StockCardRangeSummaryDto> search(UUID programId, UUID facilityId, String tag,
+      LocalDate startDate, LocalDate endDate) {
+    RequestParameters params = RequestParameters.init()
+        .set("size", Integer.MAX_VALUE)
+        .set("programId", programId)
+        .set("facilityId", facilityId)
+        .set("tag", tag)
+        .set("startDate", startDate)
+        .set("endDate", endDate);
+
+    return getPage(params).getContent();
+  }
+  // [SIGLUS change end]
 
   /**
    * Get a map of stock cards assigned to orderable ids.

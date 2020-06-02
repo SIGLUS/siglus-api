@@ -13,18 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.web;
+package org.siglus.siglusapi.repository;
 
-import org.openlmis.requisition.exception.BaseMessageException;
-import org.openlmis.requisition.utils.Message;
+import java.util.List;
+import java.util.UUID;
+import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.VersionIdentity;
+import org.siglus.siglusapi.domain.SiglusOrderable;
+import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public class PermissionMessageException extends BaseMessageException {
+/**
+ * Persistence repository for saving/finding {@link Orderable}.
+ */
+public interface SiglusOrderableRepository extends
+    JpaRepository<SiglusOrderable, VersionIdentity> {
 
-  public PermissionMessageException(Message message) {
-    super(message);
-  }
-
-  public PermissionMessageException(Message message, Throwable cause) {
-    super(message, cause);
-  }
+  @Query(name = "SiglusOrderable.findExpirationDate", nativeQuery = true)
+  List<OrderableExpirationDateDto> findExpirationDate(@Param("ids") Iterable<UUID> ids);
 }

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -172,6 +173,13 @@ public class PeriodService {
     profiler.stop().log();
     return requisitionPeriods;
   }
+
+  // [SIGLUS change start]
+  // [change reason]:get periods by period ids
+  public List<ProcessingPeriodDto> getPeriods(Set<UUID> periodIds) {
+    return periodReferenceDataService.search(periodIds);
+  }
+  // [SIGLUS change ends]
 
   /**
    * Find recent periods for the given period.

@@ -24,6 +24,8 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
@@ -73,6 +75,20 @@ public final class SearchParams {
 
   public Collection<String> get(String key) {
     return params.get(key);
+  }
+
+  // set params as string by key
+  public void set(String key, Collection<?> valueCollection) {
+    Optional
+        .ofNullable(valueCollection)
+        .orElse(Collections.emptySet())
+        .forEach(elem -> set(key, elem.toString()));
+  }
+
+  public void set(String key, String value) {
+    if (null != value) {
+      params.add(key, value);
+    }
   }
 
   public LinkedMultiValueMap<String, String> asMultiValueMap() {
