@@ -142,7 +142,7 @@ public class SiglusStockEventsService {
       stockEventDto.setLineItems(eventDto.getLineItems().stream()
           .filter(lineItem -> lineItem.getProgramId().equals(stockEventDto.getProgramId()))
           .collect(Collectors.toList()));
-      if (eventDto.hasSpecialReason(unpackReasonId) || eventDto.isPhysicalInventory()) {
+      if (eventDto.hasReason(unpackReasonId) || eventDto.isPhysicalInventory()) {
         return createStockEventForUnpackKitAndPhysicalInventory(stockEventDto);
       }
       return createStockEvent(stockEventDto);
@@ -151,7 +151,7 @@ public class SiglusStockEventsService {
       if (eventDto.isPhysicalInventory()) {
         siglusPhysicalInventoryService
             .deletePhysicalInventoryForAllProducts(eventDto.getFacilityId());
-      } else if (!eventDto.hasSpecialReason(unpackReasonId)) {
+      } else if (!eventDto.hasReason(unpackReasonId)) {
         setType(eventDto);
         stockManagementDraftService.deleteStockManagementDraft(eventDto);
       }

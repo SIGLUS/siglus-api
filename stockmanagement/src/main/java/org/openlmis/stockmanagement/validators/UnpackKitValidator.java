@@ -18,7 +18,6 @@ package org.openlmis.stockmanagement.validators;
 import static java.util.stream.Collectors.summingInt;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_CANNOT_UNPACK_CONSTITUENT_NOT_ACCOUNTED_FOR;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_CANNOT_UNPACK_REGULAR_ORDERABLE;
-import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_CANNOT_UNPACK_WHEN_EXTRA_CONSTITUENTS_CREDITED;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.util.List;
@@ -37,11 +36,9 @@ import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.util.StockEventProcessContext;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
-// [SIGLUS change start]
-// [change reason]: quantity can be inconsistent when unpack
-// @Component("UnpackKitValidator")
-// [SIGLUS change end]
+@Component("UnpackKitValidator")
 public class UnpackKitValidator implements StockEventValidator {
 
   @Autowired
@@ -90,10 +87,13 @@ public class UnpackKitValidator implements StockEventValidator {
         .forEach(line -> validateUnpackedKit(line, orderables.get(line.getOrderableId()),
             nonUnpackQuantities));
 
-    if (nonUnpackQuantities.values().stream().anyMatch(i -> i > 0)) {
-      throw new ValidationMessageException(
-          new Message(ERROR_EVENT_CANNOT_UNPACK_WHEN_EXTRA_CONSTITUENTS_CREDITED));
-    }
+    // [SIGLUS change start]
+    // [change reason]: quantity can be inconsistent when unpack.
+    // if (nonUnpackQuantities.values().stream().anyMatch(i -> i > 0)) {
+    //   throw new ValidationMessageException(
+    //       new Message(ERROR_EVENT_CANNOT_UNPACK_WHEN_EXTRA_CONSTITUENTS_CREDITED));
+    // }
+    // [SIGLUS change end]
 
     profiler.stop().log();
     XLOGGER.exit(stockEventDto);
@@ -118,7 +118,11 @@ public class UnpackKitValidator implements StockEventValidator {
       Map<UUID, Integer> orderableCredits, OrderableChildDto orderableChild) {
     Integer quantityToAccountFor = lineItem.getQuantity() * orderableChild.getQuantity();
     Integer constituentCredits = orderableCredits.get(orderableChild.getOrderable().getId());
-    if (constituentCredits == null || quantityToAccountFor > constituentCredits) {
+    // [SIGLUS change start]
+    // [change reason]: quantity can be inconsistent when unpack.
+    // if (constituentCredits == null || quantityToAccountFor > constituentCredits) {
+    if (constituentCredits == null) {
+      // [SIGLUS change end]
       throw new ValidationMessageException(
           new Message(ERROR_EVENT_CANNOT_UNPACK_CONSTITUENT_NOT_ACCOUNTED_FOR,
               lineItem.getOrderableId()));

@@ -27,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -122,6 +123,10 @@ public class UnpackKitValidatorTest {
   }
 
   @Test(expected = ValidationMessageException.class)
+  // [SIGLUS change start]
+  // [change reason]: quantity can be inconsistent when unpack
+  @Ignore
+  // [SIGLUS change end]
   public void shouldThrowExceptionWhenUnpackingWithLessQuantityThanUnpackList() {
     StockEventLineItemDto kitLineItem = createStockEventLineItem(UNPACK_REASON_ID,
         kitDto.getId(), 2);
@@ -137,6 +142,10 @@ public class UnpackKitValidatorTest {
   }
 
   @Test(expected = ValidationMessageException.class)
+  // [SIGLUS change start]
+  // [change reason]: quantity can be inconsistent when unpack
+  @Ignore
+  // [SIGLUS change end]
   public void shouldThrowExceptionWhenUnpackingWithMoreQuantityThanUnpackList() {
     StockEventLineItemDto kitLineItem = createStockEventLineItem(UNPACK_REASON_ID,
         kitDto.getId(), 2);

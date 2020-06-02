@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusapi")
+@RequestMapping("/api/siglusapi/stockEvents")
 public class SiglusStockEventsController {
 
   @Autowired
@@ -37,7 +37,7 @@ public class SiglusStockEventsController {
   @Autowired
   private ReferencedataAuthenticationHelper authenticationHelper;
 
-  @PostMapping("/stockEvents")
+  @PostMapping
   public UUID createStockEvent(@RequestBody StockEventDto eventDto) {
     stockEventsService.createAndFillLotId(eventDto);
     eventDto.setUserId(authenticationHelper.getCurrentUser().getId());

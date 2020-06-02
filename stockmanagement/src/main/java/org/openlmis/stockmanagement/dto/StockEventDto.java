@@ -208,7 +208,7 @@ public class StockEventDto {
    * Checks if a stock event has a special reason or not.
    * @param reasonId reasonId
    */
-  public boolean hasSpecialReason(UUID reasonId) {
+  public boolean hasReason(UUID reasonId) {
     return hasLineItems()
         && lineItems
         .stream()

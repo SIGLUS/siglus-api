@@ -140,9 +140,15 @@ public class StockEventDtoDataBuilder {
     return stockEventDto;
   }
 
+  /**
+   * Build new stock event dto object.
+   */
   public StockEventDto build() {
+    // [SIGLUS change start]
+    // [change reason]: add field.
     return new StockEventDto(resourceId, facilityId, programId, signature, documentNumber, userId,
         lineItems, context, null);
+    // [SIGLUS change end]
   }
 
   public StockEventDtoDataBuilder addLineItem(StockEventLineItemDto... lineItemDtos) {
