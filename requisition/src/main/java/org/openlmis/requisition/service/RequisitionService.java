@@ -106,10 +106,13 @@ import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.requisition.web.RequisitionForConvertBuilder;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
+import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -202,6 +205,14 @@ public class RequisitionService {
   private ProgramExtensionRepository programExtensionRepository;
   // [SIGLUS change end]
 
+  // [SIGLUS change start]
+  // [change reason]: archived product.
+  @Autowired
+  private StockCardRepository stockCardRepository;
+
+  @Autowired
+  private StockCardExtensionRepository stockCardExtensionRepository;
+
   /**
    * Initiated given requisition if possible.
    *
@@ -292,7 +303,12 @@ public class RequisitionService {
     simulateAuthenticationHelper.recoveryAuth(originAuth);
     // [SIGLUS change end]
 
-    final StockData stockData = new StockData(orderableSoh, orderableBeginning);
+    // [SIGLUS change start]
+    // [change reason]filter archived product
+    // final StockData stockData = new StockData(orderableSoh, orderableBeginning);
+    final StockData originStockData = new StockData(orderableSoh, orderableBeginning);
+    final StockData stockData = filterArchivedProduct(facility, originStockData);
+    // [SIGLUS change end]
 
     profiler.start("FIND_IDEAL_STOCK_AMOUNTS");
     final Map<UUID, Integer> idealStockAmounts = idealStockAmountReferenceDataService
@@ -375,6 +391,37 @@ public class RequisitionService {
     profiler.stop().log();
     return requisition;
   }
+
+  // [SIGLUS change start]
+  // [change reason] filter archived product
+  private StockData filterArchivedProduct(FacilityDto facility, StockData stockData) {
+    Map<UUID, Integer> beginningBalances = new HashMap<>();
+    Map<UUID, Integer> stockOnHands = new HashMap<>();
+    stockOnHands.putAll(stockData.stockOnHands);
+    beginningBalances.putAll(stockData.beginningBalances);
+    stockData.stockOnHands.keySet().forEach(orderableId -> {
+      if (stockData.hasDataFor(orderableId)
+          && isArchivedProduct(facility.getId(), orderableId)) {
+        stockOnHands.remove(orderableId);
+        if (beginningBalances.get(orderableId) != null) {
+          beginningBalances.remove(orderableId);
+        }
+      }
+    });
+    return new StockData(stockOnHands, beginningBalances);
+  }
+
+  private boolean isArchivedProduct(UUID facilityId, UUID orderableId) {
+    List<StockCard> stockCards = stockCardRepository
+        .findByFacilityIdAndOrderableId(facilityId, orderableId);
+    if (stockCards.isEmpty()) {
+      return false;
+    }
+    return stockCardExtensionRepository
+        .findByStockCardId(stockCards.get(0).getId()).isArchived();
+
+  }
+  // [SIGLUS change end]
 
   // [SIGLUS change start]
   // [change reason]: update actual start date && get end date

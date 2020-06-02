@@ -27,7 +27,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
 public interface StockCardRepository extends JpaRepository<StockCard, UUID> {
 
   StockCard findByProgramIdAndFacilityIdAndOrderableIdAndLotId(
@@ -35,6 +35,13 @@ public interface StockCardRepository extends JpaRepository<StockCard, UUID> {
       @Param("facilityId") UUID facilityId,
       @Param("orderableId") UUID orderableId,
       @Param("lotId") UUID lotId);
+
+  // [SIGLUS change start]
+  // [change reason]: support for archivedProduct.
+  List<StockCard> findByFacilityIdAndOrderableId(
+      @Param("facilityId") UUID facilityId,
+      @Param("orderableId") UUID orderableId);
+  // [SIGLUS change end]
 
   Page<StockCard> findByProgramIdAndFacilityId(
       @Param("programId") UUID programId,

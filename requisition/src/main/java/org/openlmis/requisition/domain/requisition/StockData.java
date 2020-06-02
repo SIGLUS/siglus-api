@@ -21,8 +21,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class StockData {
-  private final Map<UUID, Integer> stockOnHands;
-  private final Map<UUID, Integer> beginningBalances;
+  public final Map<UUID, Integer> stockOnHands;
+  public final Map<UUID, Integer> beginningBalances;
 
   public StockData() {
     this(Collections.emptyMap(), Collections.emptyMap());

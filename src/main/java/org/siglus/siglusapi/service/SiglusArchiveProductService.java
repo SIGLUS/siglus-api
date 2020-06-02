@@ -22,8 +22,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.siglus.siglusapi.domain.StockCardExtension;
-import org.siglus.siglusapi.repository.StockCardExtensionRepository;
+import org.siglus.common.domain.StockCardExtension;
+import org.siglus.common.repository.StockCardExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
