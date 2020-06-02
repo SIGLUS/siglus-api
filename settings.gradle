@@ -3,5 +3,4 @@ include 'referencedata'
 include 'stockmanagement'
 include 'requisition'
 include 'common'
-include 'notification'
 
