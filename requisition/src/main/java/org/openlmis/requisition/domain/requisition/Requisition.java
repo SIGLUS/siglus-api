@@ -820,7 +820,7 @@ public class Requisition extends BaseTimestampedEntity {
   }
 
   // [SIGLUS change start]
-  // create lineitem for add-product
+  // [change reason]: create lineitem for add-product
   public RequisitionLineItem constructLineItem(
       RequisitionTemplate template,
       Integer stockOnHand, Integer beginningBalance,
@@ -845,19 +845,16 @@ public class Requisition extends BaseTimestampedEntity {
           stockCardRangeSummariesToAverage,
           periods,
           productDto);
-      //requisitionLineItems.add(lineItem);
     } else {
       lineItem = new RequisitionLineItem(this, productDto);
       lineItem.setIdealStockAmount(extractIdealStockAmount(idealStockAmounts, productDto));
-
-      //requisitionLineItems.add(lineItem);
 
       setLineItemBeginningBalance(lineItem);
       setLineItemTotalReceivedQuantity(pod, lineItem);
 
       setPreviousAdjustedConsumptions(numberOfPreviousPeriodsToAverage);
     }
-    //lineItem.setStatus(lineStatusBaseOnRequisitionStatus());
+
     return lineItem;
   }
 

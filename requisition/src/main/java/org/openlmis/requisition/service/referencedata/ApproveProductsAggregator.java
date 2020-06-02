@@ -106,8 +106,10 @@ public final class ApproveProductsAggregator {
     return allProducts;
   }
 
-  // get all products
+  // [SIGLUS change start]:
+  // [change reason]: get all products property
   public Map<VersionIdentityDto, ApprovedProductDto> getAllProducts() {
     return allProducts;
   }
+  // [SIGLUS change end]
 }

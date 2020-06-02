@@ -23,8 +23,4 @@ public class PermissionMessageException extends BaseMessageException {
   public PermissionMessageException(Message message) {
     super(message);
   }
-
-  public PermissionMessageException(Message message, Throwable cause) {
-    super(message, cause);
-  }
 }

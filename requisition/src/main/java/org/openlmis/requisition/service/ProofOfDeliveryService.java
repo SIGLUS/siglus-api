@@ -42,8 +42,10 @@ public class ProofOfDeliveryService {
   @Autowired
   private ProofOfDeliveryFulfillmentService proofOfDeliveryFulfillmentService;
 
-  // set public
+  // [SIGLUS change start]
+  // [change reason]: set public
   public ProofOfDeliveryDto get(Requisition requisition) {
+    // [SIGLUS change end]
     Profiler profiler = new Profiler("POD_SERVICE_GET");
     profiler.setLogger(LOGGER);
 

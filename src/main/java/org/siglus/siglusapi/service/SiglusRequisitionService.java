@@ -18,28 +18,22 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.referencedata.dto.OrderableExpirationDateDto;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
-import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
@@ -55,8 +49,6 @@ import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.i18n.MessageKeys;
-import org.openlmis.requisition.repository.custom.DefaultRequisitionSearchParams;
-import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
 import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
@@ -73,21 +65,16 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
-import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.RequisitionApprovalDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.siglus.siglusapi.util.Pagination;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -179,7 +166,7 @@ public class SiglusRequisitionService {
     return buildLineItemV2Dto(lineItemList);
   }
 
-  public List<RequisitionLineItem> constructLineItem(Requisition requisition,
+  private List<RequisitionLineItem> constructLineItem(Requisition requisition,
       ProgramDto program,
       FacilityDto facility,
       List<UUID> orderableIds) {
@@ -226,7 +213,7 @@ public class SiglusRequisitionService {
             .getActualStartDate();
         if (requisition.getEmergency()) {
           List<Requisition> requisitions =
-              searchAuthorizedRequisitions(requisition.getFacilityId(),
+              requisitionService.searchAuthorizedRequisitions(requisition.getFacilityId(),
                   requisition.getProgramId(),
                   period.getId(), false);
           endDateForCalculateAvg = requisitions.get(0).getActualEndDate();
@@ -286,8 +273,6 @@ public class SiglusRequisitionService {
       }
     }
 
-    //requisitionRepository.save(requisition);
-
     profiler.stop().log();
     return lineItemList;
   }
@@ -310,50 +295,6 @@ public class SiglusRequisitionService {
         .forFacility(facilityId)
         .asOfDate(actualEndDate)
         .build().get();
-  }
-
-  public List<Requisition> searchAuthorizedRequisitions(UUID facilityId, UUID programId,
-      UUID periodId, boolean emergency) {
-    RequisitionSearchParams params = new DefaultRequisitionSearchParams(
-        facilityId, programId, periodId, null, emergency,
-        null, null, null, null,
-        EnumSet.of(AUTHORIZED));
-    PageRequest pageRequest = new PageRequest(Pagination.getDefaultPageNumber(),
-        Pagination.getNoPaginationPageSize());
-    return searchRequisitions(params, pageRequest, false).getContent();
-  }
-
-  public Page<Requisition> searchRequisitions(RequisitionSearchParams params,
-      Pageable pageable,
-      boolean needMatchStatusAndPermission) {
-    if (needMatchStatusAndPermission) {
-      Set<RequisitionStatus> canSeeRequisitionStatus = getUserCanSeeRequisitionStatus(
-          params.getFacility(),
-          params.getProgram());
-      params.setRequisitionStatuses(canSeeRequisitionStatus);
-    }
-    return requisitionService.searchRequisitions(params, pageable);
-  }
-
-  private Set<RequisitionStatus> getUserCanSeeRequisitionStatus(UUID facilityId, UUID programId) {
-    final boolean canCreate =
-        permissionService.canSubmitRequisition(programId, facilityId);
-    final boolean canAuth = permissionService.canAuthorizeRequisition(programId, facilityId);
-    Set<RequisitionStatus> canSeeRequisitionStatus = Sets.newHashSet();
-
-    if (canCreate) {
-      canSeeRequisitionStatus.addAll(Arrays.asList(SUBMITTED, AUTHORIZED, APPROVED));
-    }
-
-    if (canAuth) {
-      canSeeRequisitionStatus.addAll(Arrays.asList(AUTHORIZED, APPROVED));
-    }
-
-    if (canCreate && canAuth) {
-      canSeeRequisitionStatus.clear();
-      canSeeRequisitionStatus.addAll(Arrays.asList(AUTHORIZED, APPROVED));
-    }
-    return canSeeRequisitionStatus;
   }
 
   private Integer decrementOrZero(Integer numberOfPreviousPeriodsToAverage) {
@@ -393,9 +334,7 @@ public class SiglusRequisitionService {
                   null));
           approvedProduct.setId(line.getFacilityTypeApprovedProduct().getId());
 
-          RequisitionLineItemV2Dto lineDto = RequisitionLineItemV2Dto.builder()
-              .serviceUrl(serviceUrl)
-              .build();
+          RequisitionLineItemV2Dto lineDto = new RequisitionLineItemV2Dto();
           lineDto.setServiceUrl(serviceUrl);
           line.export(lineDto, orderable, approvedProduct);
           setOrderableExpirationDate(expirationDateDtos, orderable, lineDto);

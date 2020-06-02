@@ -175,7 +175,7 @@ public class PeriodService {
   }
 
   // [SIGLUS change start]
-  // [change reason]:get periods by period ids
+  // [change reason]: get periods by period ids
   public List<ProcessingPeriodDto> getPeriods(Set<UUID> periodIds) {
     return periodReferenceDataService.search(periodIds);
   }

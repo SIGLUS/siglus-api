@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 public class StockCardRangeSummaryStockManagementService
     extends BaseStockManagementService<StockCardRangeSummaryDto> {
   // [SIGLUS change start]
-  // [change reason]:search method without orderableId
+  // [change reason]: search method without orderableId
   public List<StockCardRangeSummaryDto> search(UUID programId, UUID facilityId, String tag,
       LocalDate startDate, LocalDate endDate) {
     RequestParameters params = RequestParameters.init()

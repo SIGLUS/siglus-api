@@ -15,7 +15,6 @@
 
 package org.openlmis.requisition.service;
 
-import static org.apache.commons.lang3.StringUtils.startsWith;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_CANNOT_UPDATE_REQUISITION;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION_FOR_REQUISITION_UPDATE;
@@ -31,23 +30,11 @@ import org.openlmis.requisition.domain.BaseEntity;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
-import org.openlmis.requisition.dto.ResultDto;
-import org.openlmis.requisition.dto.RightDto;
-import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
-import org.openlmis.requisition.i18n.MessageKeys;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
-import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
-import org.openlmis.requisition.utils.Message;
-import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
-import org.openlmis.requisition.web.PermissionMessageException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @Service
@@ -78,18 +65,6 @@ public class PermissionService {
 
   @Autowired
   private PermissionStrings permissionStrings;
-
-  @Autowired
-  private UserReferenceDataService userReferenceDataService;
-
-  @Autowired
-  private RequisitionAuthenticationHelper requisitionAuthenticationHelper;
-
-  @Value("${auth.server.clientId}")
-  private String serviceTokenClientId;
-
-  @Value("${auth.server.clientId.apiKey.prefix}")
-  private String apiKeyPrefix;
 
   /**
    * Checks if current user has permission to initiate a requisition.
@@ -157,13 +132,6 @@ public class PermissionService {
     return checkRight(REQUISITION_CREATE, requisition.getFacilityId(), requisition.getProgramId());
   }
 
-  // check submit right by programId and facility
-  public Boolean canSubmitRequisition(UUID programId, UUID facility) {
-    ResultDto<Boolean> result = getRightResult(REQUISITION_CREATE, programId, facility,
-        null, false);
-    return null != result && result.getResult();
-  }
-
   /**
    * Checks if current user has permission to approve a requisition.
    *
@@ -184,55 +152,6 @@ public class PermissionService {
   public ValidationResult canAuthorizeRequisition(Requisition requisition) {
     return checkRight(REQUISITION_AUTHORIZE,
         requisition.getFacilityId(), requisition.getProgramId());
-  }
-
-  // check authorize right by programId and facility
-  public Boolean canAuthorizeRequisition(UUID programId, UUID facility) {
-    ResultDto<Boolean> result = getRightResult(REQUISITION_AUTHORIZE, programId, facility,
-        null, false);
-    return null != result && result.getResult();
-  }
-
-  private ResultDto<Boolean> getRightResult(String rightName, UUID program, UUID facility,
-      UUID warehouse, boolean allowApiKey) {
-    OAuth2Authentication authentication = (OAuth2Authentication) SecurityContextHolder
-        .getContext()
-        .getAuthentication();
-
-    return authentication.isClientOnly()
-        ? checkServiceToken(allowApiKey, authentication)
-        : checkUserToken(rightName, program, facility, warehouse);
-  }
-
-  private ResultDto<Boolean> checkUserToken(String rightName, UUID program, UUID facility,
-      UUID warehouse) {
-    UserDto user = requisitionAuthenticationHelper.getCurrentUser();
-    RightDto right = requisitionAuthenticationHelper.getRight(rightName);
-
-    try {
-      return userReferenceDataService.hasRight(
-          user.getId(), right.getId(), program, facility, warehouse);
-    } catch (HttpClientErrorException httpException) {
-      throw new PermissionMessageException(
-          new Message(MessageKeys.ERROR_PERMISSION_CHECK_FAILED,
-              httpException.getMessage()), httpException);
-
-    }
-  }
-
-  private ResultDto<Boolean> checkServiceToken(boolean allowApiKey,
-      OAuth2Authentication authentication) {
-    String clientId = authentication.getOAuth2Request().getClientId();
-
-    if (serviceTokenClientId.equals(clientId)) {
-      return new ResultDto<>(true);
-    }
-
-    if (startsWith(clientId, apiKeyPrefix)) {
-      return new ResultDto<>(allowApiKey);
-    }
-
-    return new ResultDto<>(false);
   }
 
   /**

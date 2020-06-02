@@ -123,13 +123,4 @@ public final class Pagination {
   public static <T> Page<T> getPage(List<T> subList, Pageable pageable, long fullListSize) {
     return new PageImpl<>(subList, pageable, fullListSize);
   }
-
-  public static int getDefaultPageNumber() {
-    return DEFAULT_PAGE_NUMBER;
-  }
-
-  public static int getNoPaginationPageSize() {
-    return NO_PAGINATION;
-  }
-
 }

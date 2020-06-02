@@ -13,24 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.openlmis.referencedata.dto;
 
-import java.util.List;
+import java.time.LocalDate;
 import java.util.UUID;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.domain.VersionIdentity;
-import org.siglus.siglusapi.domain.SiglusOrderable;
-import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-/**
- * Persistence repository for saving/finding {@link Orderable}.
- */
-public interface SiglusOrderableRepository extends
-    JpaRepository<SiglusOrderable, VersionIdentity> {
+// [SIGLUS change start]
+// [change reason]: dto to store the most recent expirationDate of orderable
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class OrderableExpirationDateDto {
 
-  @Query(name = "SiglusOrderable.findExpirationDate", nativeQuery = true)
-  List<OrderableExpirationDateDto> findExpirationDate(@Param("ids") Iterable<UUID> ids);
+  private UUID orderableId;
+  private LocalDate expirationDate;
 }
+// [SIGLUS change end]

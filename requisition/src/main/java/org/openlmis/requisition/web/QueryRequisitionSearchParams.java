@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -167,13 +166,6 @@ public final class QueryRequisitionSearchParams implements RequisitionSearchPara
       throw new ValidationMessageException(
           new Message(ERROR_INVALID_REQUISITION_STATUS, values), cause);
     }
-  }
-
-  //override set status
-  @Override
-  public void setRequisitionStatuses(Set<RequisitionStatus> requisitionStatus) {
-    queryParams.set(REQUISITION_STATUS,
-        requisitionStatus.stream().map(RequisitionStatus::toString).collect(Collectors.toList()));
   }
 
   /**
