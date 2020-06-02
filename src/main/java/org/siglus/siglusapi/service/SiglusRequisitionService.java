@@ -38,8 +38,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
+import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.MetadataDto;
@@ -48,6 +50,8 @@ import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
+import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.i18n.MessageKeys;
@@ -60,16 +64,25 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
+import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
 import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.web.RequisitionController;
+import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.dto.RequisitionTemplateExtensionDto;
+import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
+import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
+import org.siglus.siglusapi.dto.RequisitionApprovalDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
+import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.util.Pagination;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -116,6 +129,18 @@ public class SiglusRequisitionService {
 
   @Autowired
   private ApprovedProductReferenceDataService approvedProductReferenceDataService;
+
+  @Autowired
+  private SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
+
+  @Autowired
+  private SupervisoryNodeReferenceDataService supervisoryNodeService;
+
+  @Autowired
+  private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+
+  @Autowired
+  private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -393,4 +418,76 @@ public class SiglusRequisitionService {
       lineDto.setExpirationDate(null);
     }
   }
+
+  public RequisitionApprovalDto searchRequisition(UUID requisitionId) {
+    // call origin OpenLMIS API
+    // reason: 1. set template extension
+    //         1. 2. set line item authorized quality extension
+    RequisitionV2Dto requisitionDto =
+        siglusRequisitionRequisitionService.searchRequisition(requisitionId);
+    if (requisitionDto != null) {
+      setTemplateExtension(requisitionDto);
+      setLineItemExtension(requisitionDto);
+    }
+
+    return setIsFinalApproval(requisitionDto);
+  }
+
+  private void setTemplateExtension(RequisitionV2Dto requisitionDto) {
+    BasicRequisitionTemplateDto templateDto = requisitionDto.getTemplate();
+    RequisitionTemplateExtension extension = requisitionTemplateExtensionRepository
+        .findByRequisitionTemplateId(requisitionDto.getTemplate().getId());
+    templateDto.setExtension(RequisitionTemplateExtensionDto.from(extension));
+    requisitionDto.setTemplate(templateDto);
+  }
+
+  private void setLineItemExtension(RequisitionV2Dto requisitionDto) {
+    List<RequisitionLineItem.Importer> lineItems = requisitionDto.getRequisitionLineItems();
+    List<UUID> lineItemsId = lineItems.stream()
+        .map(Importer::getId)
+        .collect(Collectors.toList());
+    if (!lineItemsId.isEmpty()) {
+      List<RequisitionLineItemExtension> lineItemExtension =
+          lineItemExtensionRepository.findLineItems(lineItemsId);
+      lineItems.forEach(lineItem -> {
+        RequisitionLineItemExtension itemExtension = findLineItemExtension(lineItemExtension,
+            (RequisitionLineItemV2Dto) lineItem);
+        if (itemExtension != null) {
+          RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
+          lineItemV2Dto.setAuthorizedQuantity(itemExtension.getAuthorizedQuantity());
+        }
+      });
+    }
+  }
+
+  private RequisitionApprovalDto setIsFinalApproval(RequisitionV2Dto requisitionV2Dto) {
+    RequisitionApprovalDto requisitionApprovalDto = new RequisitionApprovalDto();
+    BeanUtils.copyProperties(requisitionV2Dto, requisitionApprovalDto);
+
+    if (requisitionV2Dto.getStatus().duringApproval()) {
+      UUID nodeId = requisitionV2Dto.getSupervisoryNode();
+      SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService
+          .findOne(nodeId);
+
+      if (supervisoryNodeDto != null && supervisoryNodeDto.getParentNode() == null) {
+        requisitionApprovalDto.setIsFinalApproval(Boolean.TRUE);
+        return requisitionApprovalDto;
+      }
+    }
+
+    requisitionApprovalDto.setIsFinalApproval(Boolean.FALSE);
+    return requisitionApprovalDto;
+  }
+
+  private RequisitionLineItemExtension findLineItemExtension(
+      List<RequisitionLineItemExtension> extensions,
+      RequisitionLineItemV2Dto lineItem) {
+    for (RequisitionLineItemExtension extension : extensions) {
+      if (lineItem.getId().equals(extension.getRequisitionLineItemId())) {
+        return extension;
+      }
+    }
+    return null;
+  }
+
 }

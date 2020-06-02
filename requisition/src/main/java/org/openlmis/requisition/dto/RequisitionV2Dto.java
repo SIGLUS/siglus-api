@@ -33,7 +33,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public final class RequisitionV2Dto extends BaseRequisitionDto {
+public class RequisitionV2Dto extends BaseRequisitionDto {
 
   @Getter
   @Setter

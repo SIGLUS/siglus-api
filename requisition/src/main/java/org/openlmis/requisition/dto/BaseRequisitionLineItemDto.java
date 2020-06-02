@@ -73,6 +73,7 @@ public abstract class BaseRequisitionLineItemDto extends BaseDto
   // [SIGLUS change start]
   // [change reason]:new property used in SiglusRequisitionService.java
   private LocalDate expirationDate;
+  private Integer authorizedQuantity;
   // [SIGLUS change end]
 
   @JsonProperty

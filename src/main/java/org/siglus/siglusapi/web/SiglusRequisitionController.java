@@ -27,6 +27,7 @@ import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,6 +60,11 @@ public class SiglusRequisitionController {
       HttpServletRequest request, HttpServletResponse response) {
     return requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, emergency,
         physicalInventoryDateStr, request, response);
+  }
+
+  @GetMapping("/{id}")
+  public RequisitionV2Dto searchRequisition(@PathVariable("id") UUID requisitionId) {
+    return siglusRequisitionService.searchRequisition(requisitionId);
   }
 
   @PostMapping("/{id}/submit")

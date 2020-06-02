@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service;
+package org.siglus.siglusapi.service.client;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 
