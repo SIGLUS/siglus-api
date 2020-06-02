@@ -55,6 +55,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
+import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -107,11 +108,15 @@ import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.requisition.web.RequisitionForConvertBuilder;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
+import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
+import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.slf4j.Logger;
@@ -206,12 +211,23 @@ public class RequisitionService {
   // [SIGLUS change end]
 
   // [SIGLUS change start]
-  // [change reason]: archived product.
+  // [change reason]: archived product && kit Product
   @Autowired
   private StockCardRepository stockCardRepository;
 
   @Autowired
   private StockCardExtensionRepository stockCardExtensionRepository;
+
+  @Autowired
+  private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+
+  @Autowired
+  private OrderableKitRepository orderableKitRepository;
+
+  @Autowired
+  private StockCardLineItemRepository stockCardLineItemRepository;
+
+  // [SIGLUS change end]
 
   /**
    * Initiated given requisition if possible.
@@ -388,9 +404,86 @@ public class RequisitionService {
     profiler.start("SAVE");
     requisitionRepository.save(requisition);
 
+    // [SIGLUS change start]
+    // [change reason] kit calculate
+    RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
+        .findByRequisitionTemplateId(requisitionTemplate.getId());
+    setKitUsageModule(facility, emergency, templateExtension, profiler, requisition,
+        approvedProducts, stockCardRangeSummaryDtos);
+    // [SIGLUS change end]
+
     profiler.stop().log();
     return requisition;
   }
+
+  // [SIGLUS change start]
+  // [change reason] kit calculate
+  private void setKitUsageModule(FacilityDto facility, boolean emergency,
+      RequisitionTemplateExtension requisitionTemplate,
+      Profiler profiler,
+      Requisition requisition,
+      ApproveProductsAggregator approvedProducts,
+      List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos) {
+    if (requisitionTemplate.getEnableKitUsage() && !emergency) {
+      profiler.start("SET_OPENED_KIT_QUANTITY");
+      ProcessingPeriodDto actualPeriod = getActualPeriod(requisition);
+      updateRequisitionKit(facility, actualPeriod,
+          approvedProducts, requisition, stockCardRangeSummaryDtos);
+    }
+  }
+
+  private ProcessingPeriodDto getActualPeriod(Requisition requisition) {
+    ProcessingPeriodDto actualPeriod = new ProcessingPeriodDto();
+    actualPeriod.setStartDate(requisition.getActualStartDate());
+    actualPeriod.setEndDate(requisition.getActualEndDate());
+    return actualPeriod;
+  }
+
+  private void updateRequisitionKit(FacilityDto facility,
+      ProcessingPeriodDto period,
+      ApproveProductsAggregator approvedProducts,
+      Requisition requisition,
+      List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos) {
+    List<UUID> allKitIds = orderableKitRepository.findAllKitProduct().stream()
+        .map(Orderable::getId).collect(toList());
+    Set<UUID> kitIds = approvedProducts.getFullSupplyProducts().stream()
+        .map(item -> item.getOrderable().getId())
+        .filter(allKitIds::contains)
+        .collect(toSet());
+    Map<String, Object> extraData = requisition.getExtraData();
+    extraData.put("receivedKitByHF",
+        getReceivedKitQuantity(kitIds, requisition, stockCardRangeSummaryDtos));
+    extraData.put("receivedKitByCHW", 0);
+    extraData.put("openedKitByHF", getOpenedKitQuantity(facility.getId(), kitIds, period));
+    extraData.put("openedKitByCHW", 0);
+  }
+
+  private Integer getOpenedKitQuantity(UUID facilityId, Set<UUID> orderableIds,
+      ProcessingPeriodDto period) {
+    if (orderableIds.isEmpty()) {
+      return 0;
+    }
+    Integer openKit = stockCardLineItemRepository
+        .findByFacilityIdAndOrderableIdAndStartDateAndEndDate(facilityId,
+            new ArrayList<>(orderableIds), period.getStartDate(), period.getEndDate());
+    return openKit == null ? 0 : openKit;
+  }
+
+  private Integer getReceivedKitQuantity(Set<UUID> orderableIds,
+      Requisition requisition,
+      List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos) {
+    if (orderableIds.isEmpty()) {
+      return 0;
+    }
+    Integer receivedKitQuantity = 0;
+    for (UUID orderableId : orderableIds) {
+      Integer receivedQuantity =
+          requisition.getTotalReceivedQuantity(orderableId, stockCardRangeSummaryDtos);
+      receivedKitQuantity += receivedQuantity;
+    }
+    return receivedKitQuantity;
+  }
+  // [SIGLUS change end]
 
   // [SIGLUS change start]
   // [change reason] filter archived product

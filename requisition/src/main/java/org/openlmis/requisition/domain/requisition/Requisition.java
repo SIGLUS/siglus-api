@@ -23,6 +23,7 @@ import static org.apache.commons.lang3.BooleanUtils.isNotTrue;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.openlmis.requisition.CurrencyConfig.currencyCode;
+import static org.openlmis.requisition.domain.requisition.LineItemFieldsCalculator.calculateStockBasedTotalReceivedQuantity;
 import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.ADDITIONAL_QUANTITY_REQUIRED;
 import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.ADJUSTED_CONSUMPTION;
 import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.AVERAGE_CONSUMPTION;
@@ -900,6 +901,16 @@ public class Requisition extends BaseTimestampedEntity {
   public Money getFullSupplyTotalCost(Map<VersionIdentityDto, OrderableDto> orderables) {
     return calculateTotalCostForLines(getNonSkippedFullSupplyRequisitionLineItems(orderables));
   }
+
+  // [SIGLUS change start]
+  // [change reason]: received kit quantity
+  public Integer getTotalReceivedQuantity(UUID orderableId,
+      List<StockCardRangeSummaryDto> stockCardRangeSummaries) {
+      StockCardRangeSummaryDto summary =
+          findStockCardRangeSummary(stockCardRangeSummaries, orderableId);
+      return calculateStockBasedTotalReceivedQuantity(template, summary, orderableId);
+  }
+  // [SIGLUS change end]
 
   /**
    * Filter out requisitionLineItems that are not skipped.
