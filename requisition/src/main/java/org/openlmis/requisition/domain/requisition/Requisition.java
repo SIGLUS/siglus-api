@@ -906,9 +906,9 @@ public class Requisition extends BaseTimestampedEntity {
   // [change reason]: received kit quantity
   public Integer getTotalReceivedQuantity(UUID orderableId,
       List<StockCardRangeSummaryDto> stockCardRangeSummaries) {
-      StockCardRangeSummaryDto summary =
-          findStockCardRangeSummary(stockCardRangeSummaries, orderableId);
-      return calculateStockBasedTotalReceivedQuantity(template, summary, orderableId);
+    StockCardRangeSummaryDto summary =
+        findStockCardRangeSummary(stockCardRangeSummaries, orderableId);
+    return calculateStockBasedTotalReceivedQuantity(template, summary, orderableId);
   }
   // [SIGLUS change end]
 

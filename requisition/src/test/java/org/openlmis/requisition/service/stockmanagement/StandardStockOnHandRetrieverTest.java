@@ -111,13 +111,14 @@ public class StandardStockOnHandRetrieverTest extends StockOnHandRetrieverTest {
     // when(stockCardSummariesStockManagementService
     //     .search(programId, facilityId, products.getFullSupplyOrderableIds(), asOfDate))
     //     .thenReturn(Lists.newArrayList(stockCardSummary));
-    StockCardSummariesV2SearchParams v2SearchParams = StockCardSummariesV2SearchParams.builder()
-        .programId(programId)
-        .facilityId(facilityId)
-        .asOfDate(asOfDate)
-        .build();
-    StockCardSummaries summaries = new StockCardSummaries();
+    setMockDataforStockSummaries();
+    // [SIGLUS change end]
+  }
 
+  // [SIGLUS change start]
+  // [change reason]: call our modify stock card.
+  private void setMockDataforStockSummaries() {
+    StockCardSummaries summaries = new StockCardSummaries();
     StockCard stockCard = StockCard.builder()
         .stockOnHand(15)
         .orderableId(orderable)
@@ -127,21 +128,25 @@ public class StandardStockOnHandRetrieverTest extends StockOnHandRetrieverTest {
         .orderableId(orderable2)
         .build();
     summaries.setStockCardsForFulfillOrderables(Arrays.asList(stockCard, stockCard2));
-
     OrderableFulfillDto fulfillDto = new OrderableFulfillDto(Arrays.asList(orderable),
         Arrays.asList(orderable));
     OrderableFulfillDto fulfillDto2 = new OrderableFulfillDto(Arrays.asList(orderable2),
         Arrays.asList(orderable2));
-    HashMap<UUID, OrderableFulfillDto> orderableFulfillMap = new HashMap<UUID, OrderableFulfillDto>() {{
-      put(orderable, fulfillDto);
-      put(orderable2, fulfillDto2);
-    }};
+    HashMap<UUID, OrderableFulfillDto> orderableFulfillMap = new HashMap<UUID,
+        OrderableFulfillDto>();
+    orderableFulfillMap.put(orderable, fulfillDto);
+    orderableFulfillMap.put(orderable2, fulfillDto2);
     summaries.setOrderableFulfillMap(orderableFulfillMap);
+    StockCardSummariesV2SearchParams v2SearchParams = StockCardSummariesV2SearchParams.builder()
+        .programId(programId)
+        .facilityId(facilityId)
+        .asOfDate(asOfDate)
+        .build();
     when(stockCardSummariesService
         .findStockCards(v2SearchParams))
         .thenReturn(summaries);
-    // [SIGLUS change end]
   }
+  // [SIGLUS change end]
 
   @Override
   StockOnHandRetriever getRetriever() {
@@ -175,11 +180,6 @@ public class StandardStockOnHandRetrieverTest extends StockOnHandRetrieverTest {
     // when(stockCardSummariesStockManagementService
     //     .search(programId, facilityId, products.getFullSupplyOrderableIds(), asOfDate))
     //     .thenReturn(Lists.newArrayList(stockCardSummary));
-    StockCardSummariesV2SearchParams v2SearchParams = StockCardSummariesV2SearchParams.builder()
-        .programId(programId)
-        .facilityId(facilityId)
-        .asOfDate(asOfDate)
-        .build();
     StockCardSummaries summaries = new StockCardSummaries();
 
     StockCard stockCard = StockCard.builder()
@@ -190,16 +190,21 @@ public class StandardStockOnHandRetrieverTest extends StockOnHandRetrieverTest {
 
     OrderableFulfillDto fulfillDto = new OrderableFulfillDto(Arrays.asList(orderable),
         Arrays.asList(orderable));
-    HashMap<UUID, OrderableFulfillDto> orderableFulfillMap = new HashMap<UUID, OrderableFulfillDto>() {{
-      put(orderable, fulfillDto);
-    }};
+    HashMap<UUID, OrderableFulfillDto> orderableFulfillMap = new HashMap<UUID,
+        OrderableFulfillDto>();
+    orderableFulfillMap.put(orderable, fulfillDto);
     summaries.setOrderableFulfillMap(orderableFulfillMap);
+    StockCardSummariesV2SearchParams v2SearchParams = StockCardSummariesV2SearchParams.builder()
+        .programId(programId)
+        .facilityId(facilityId)
+        .asOfDate(asOfDate)
+        .build();
     when(stockCardSummariesService
         .findStockCards(v2SearchParams))
         .thenReturn(summaries);
     // [SIGLUS change end]
     Map<UUID, Integer> stockOnHands = getRetriever().get();
-    
+
     assertThat(stockOnHands.size(), is(1));
     assertThat(stockOnHands, hasEntry(orderable, stockCardSummary.getStockOnHand()));
   }
