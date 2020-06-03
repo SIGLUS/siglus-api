@@ -127,6 +127,7 @@ import org.springframework.util.CollectionUtils;
 @AllArgsConstructor
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Requisition extends BaseTimestampedEntity {
+
   private static final XLogger LOGGER = XLoggerFactory.getXLogger(Requisition.class);
 
   static final String FACILITY_ID = "facilityId";
@@ -252,7 +253,7 @@ public class Requisition extends BaseTimestampedEntity {
   @AttributeOverrides({
       @AttributeOverride(name = "localDate",
           column = @Column(name = "datephysicalstockcountcompleted"))
-      })
+  })
   private DatePhysicalStockCountCompleted datePhysicalStockCountCompleted;
 
   @OneToMany(
@@ -288,7 +289,7 @@ public class Requisition extends BaseTimestampedEntity {
    * @param emergency          whether this Requisition is emergency
    */
   public Requisition(UUID facilityId, UUID programId, UUID processingPeriodId,
-                     RequisitionStatus status, Boolean emergency) {
+      RequisitionStatus status, Boolean emergency) {
     this.facilityId = facilityId;
     this.programId = programId;
     this.processingPeriodId = processingPeriodId;
@@ -389,8 +390,8 @@ public class Requisition extends BaseTimestampedEntity {
   /**
    * Copy values of attributes into new or updated Requisition.
    *
-   * @param requisition            Requisition with new values.
-   * @param products               Collection of orderables.
+   * @param requisition Requisition with new values.
+   * @param products    Collection of orderables.
    */
   public void updateFrom(Requisition requisition, Map<VersionIdentityDto, OrderableDto> products,
       Map<VersionIdentityDto, ApprovedProductDto> approvedProducts,
@@ -648,7 +649,7 @@ public class Requisition extends BaseTimestampedEntity {
   }
 
   private Integer extractIdealStockAmount(Map<UUID, Integer> idealStockAmounts,
-                                          ApprovedProductDto product) {
+      ApprovedProductDto product) {
     String commodityType = product.getOrderable().getCommodityTypeIdentifier();
     return isNotBlank(commodityType)
         ? idealStockAmounts.get(UUID.fromString(commodityType))
@@ -657,7 +658,6 @@ public class Requisition extends BaseTimestampedEntity {
 
   /**
    * Submits this requisition.
-   *
    */
   public void submit(Map<VersionIdentityDto, OrderableDto> products, UUID submitter,
       boolean skipAuthorize) {
@@ -701,7 +701,6 @@ public class Requisition extends BaseTimestampedEntity {
 
   /**
    * Authorize this Requisition.
-   *
    */
   public void authorize(Map<VersionIdentityDto, OrderableDto> products, UUID authorizer) {
     if (!RequisitionStatus.SUBMITTED.equals(status)) {
@@ -717,7 +716,6 @@ public class Requisition extends BaseTimestampedEntity {
 
   /**
    * Check if the requisition is approvable.
-   *
    */
   public boolean isApprovable() {
     return status.duringApproval();
@@ -737,8 +735,8 @@ public class Requisition extends BaseTimestampedEntity {
    *
    * @param nodeId      supervisoryNode that has a supply line for the requisition's program.
    * @param products    orderable products that will be used by line items to update packs to ship.
-   * @param supplyLines supplyLineDtos of the supervisoryNode that has
-   *                    a supply line for the requisition's program.
+   * @param supplyLines supplyLineDtos of the supervisoryNode that has a supply line for the
+   *                    requisition's program.
    * @param approver    user who approves this requisition.
    */
   public void approve(UUID nodeId, Map<VersionIdentityDto, OrderableDto> products,
@@ -1125,8 +1123,13 @@ public class Requisition extends BaseTimestampedEntity {
 
       if (null != nonFullSupply) {
         OrderableDto orderable = orderables.get(new VersionIdentityDto(line.getOrderable()));
-        ProgramOrderableDto programOrderable = orderable.getProgramOrderable(programId);
 
+        // [SIGLUS change start]:
+        // [change reason]: siglus all full supply(ordeable relate to real program).
+        // ProgramOrderableDto programOrderable = orderable.getProgramOrderable(programId);
+        ProgramOrderableDto programOrderable = (ProgramOrderableDto) orderable.getPrograms()
+            .toArray()[0];
+        // [SIGLUS change end]
         if (Objects.equals(nonFullSupply, isFalse(programOrderable.getFullSupply()))) {
           list.add(line);
         }
@@ -1200,8 +1203,8 @@ public class Requisition extends BaseTimestampedEntity {
   }
 
   /**
-   * Sets appropriate value for Previous Adjusted Consumptions field in
-   * each {@link RequisitionLineItem}.
+   * Sets appropriate value for Previous Adjusted Consumptions field in each {@link
+   * RequisitionLineItem}.
    */
   void setPreviousAdjustedConsumptions(int numberOfPreviousPeriodsToAverage) {
     Map<VersionEntityReference, List<RequisitionLineItem>> orderables = previousRequisitions
@@ -1213,12 +1216,12 @@ public class Requisition extends BaseTimestampedEntity {
 
     requisitionLineItems
         .forEach(line -> line.setPreviousAdjustedConsumptions(Optional
-              .ofNullable(orderables.get(line.getOrderable()))
-              .orElse(Collections.emptyList())
-              .stream()
-              .map(RequisitionLineItem::getAdjustedConsumption)
-              .filter(Objects::nonNull)
-              .collect(toList())));
+            .ofNullable(orderables.get(line.getOrderable()))
+            .orElse(Collections.emptyList())
+            .stream()
+            .map(RequisitionLineItem::getAdjustedConsumption)
+            .filter(Objects::nonNull)
+            .collect(toList())));
   }
 
   Map<VersionEntityReference, Object> getAllColumnsValuesByColumnName(String columnName) {
@@ -1284,7 +1287,14 @@ public class Requisition extends BaseTimestampedEntity {
     getNonSkippedRequisitionLineItems()
         .forEach(line -> {
           OrderableDto product = products.get(new VersionIdentityDto(line.getOrderable()));
-          ProgramOrderableDto programOrderable = product.getProgramOrderable(programId);
+
+          // [SIGLUS change start]
+          // [change reason]: Tw requisition is virtual program, so we need seach by real program,
+          // all real program in vitual will have same pricePerPack.
+          //ProgramOrderableDto programOrderable = product.getProgramOrderable(programId);
+          ProgramOrderableDto programOrderable = (ProgramOrderableDto)
+              product.getPrograms().toArray()[0];
+          // [SIGLUS change end]
 
           line.updatePacksToShip(product);
           line.setTotalCost(LineItemFieldsCalculator
@@ -1303,7 +1313,7 @@ public class Requisition extends BaseTimestampedEntity {
         line.setApprovedQuantity(Optional
             .ofNullable(line.getRequestedQuantity())
             .orElse(line.getCalculatedOrderQuantity()));
-      }  else {
+      } else {
         line.setApprovedQuantity(line.getRequestedQuantity());
       }
     }
@@ -1382,6 +1392,7 @@ public class Requisition extends BaseTimestampedEntity {
   }
 
   public interface Exporter extends ExtraDataExporter {
+
     void setId(UUID id);
 
     void setCreatedDate(ZonedDateTime createdDate);
@@ -1391,7 +1402,7 @@ public class Requisition extends BaseTimestampedEntity {
     void setStatus(RequisitionStatus status);
 
     void setEmergency(Boolean emergency);
-    
+
     void setReportOnly(Boolean reportOnly);
 
     void setSupplyingFacility(UUID supplyingFacility);
@@ -1412,6 +1423,7 @@ public class Requisition extends BaseTimestampedEntity {
   }
 
   public interface Importer extends ExtraDataImporter {
+
     UUID getId();
 
     ZonedDateTime getCreatedDate();
