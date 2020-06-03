@@ -69,6 +69,8 @@ dependencies {
     compile "net.sf.jasperreports:jasperreports:6.3.0"
     compile "org.slf4j:slf4j-ext:1.7.25"
     compile "com.github.tomakehurst:wiremock:1.58"
+    compile 'org.openlmis:openlmis-service-util:3.1.0'
+    compile 'org.apache.camel:camel-core:2.18.0'
 
     testCompile "junit:junit"
     testCompile "org.mockito:mockito-core:1.10.19"

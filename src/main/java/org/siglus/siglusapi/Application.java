@@ -19,6 +19,9 @@ import com.google.gson.internal.bind.TypeAdapters;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.util.Locale;
+import org.apache.camel.CamelContext;
+import org.apache.camel.ProducerTemplate;
+import org.apache.camel.impl.DefaultCamelContext;
 import org.flywaydb.core.api.callback.FlywayCallback;
 import org.javers.core.Javers;
 import org.javers.core.MappingStyle;
@@ -255,4 +258,25 @@ public class Application {
   }
   // copy from referencedata Application.java end
 
+  // copy from fulfillment Application.java start
+  /**
+   * Creates new camelContext.
+   *
+   * @return Created camelContext.
+   */
+  @Bean
+  public CamelContext camelContext() {
+    return new DefaultCamelContext();
+  }
+
+  /**
+   * Creates new camelTemplate.
+   *
+   * @return Created camelTemplate.
+   */
+  @Bean
+  public ProducerTemplate camelTemplate() {
+    return camelContext().createProducerTemplate();
+  }
+  // copy from fulfillment Application.java end
 }
