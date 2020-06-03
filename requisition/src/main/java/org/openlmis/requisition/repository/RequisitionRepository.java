@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 import org.javers.spring.annotation.JaversSpringDataAuditable;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.repository.custom.RequisitionRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -62,4 +63,9 @@ public interface RequisitionRepository extends
       nativeQuery = true
   )
   boolean existsByOriginalRequisitionId(@Param("originalRequisitionId") UUID originalRequisitionId);
+
+  // [SIGLUS change start]
+  // [change reason]: add method.
+  List<Requisition> findByFacilityIdAndStatus(UUID facilityId, RequisitionStatus status);
+  // [SIGLUS change end]
 }

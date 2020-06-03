@@ -17,9 +17,12 @@ package org.siglus.siglusapi.web;
 
 import java.util.Set;
 import java.util.UUID;
+import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,8 +34,24 @@ public class SiglusArchiveProductController {
   @Autowired
   private SiglusArchiveProductService archiveProductService;
 
+  @Autowired
+  private ReferencedataAuthenticationHelper authenticationHelper;
+
+  @PostMapping("/{orderableId}/archive")
+  public void archiveProduct(@PathVariable UUID orderableId) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    archiveProductService.archiveProduct(facilityId, orderableId);
+  }
+
+  @PostMapping("/{orderableId}/activate")
+  public void activateProduct(@PathVariable UUID orderableId) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    archiveProductService.activateProduct(facilityId, orderableId);
+  }
+
   @GetMapping
   public Set<String> searchArchivedProducts(@RequestParam UUID facilityId) {
     return archiveProductService.searchArchivedProducts(facilityId);
   }
+
 }

@@ -125,14 +125,18 @@ public class StockCardSummariesV2DtoBuilder {
 
   private CanFulfillForMeEntryDto createCanFulfillForMeEntry(StockCard stockCard,
                                                               UUID orderableId) {
+    // [SIGLUS change start]
+    // [change reason]: add field.
     return new CanFulfillForMeEntryDto(
         createStockCardReference(stockCard.getId()),
         createOrderableReference(orderableId),
         stockCard.getLotId() == null ? null : createLotReference(stockCard.getLotId()),
         stockCard.getStockOnHand(),
         stockCard.getOccurredDate(),
-        stockCard.getProcessedDate()
+        stockCard.getProcessedDate(),
+        stockCard.isArchived()
       );
+    // [SIGLUS change end]
   }
 
   private List<StockCard> findStockCardByOrderableId(UUID orderableId,

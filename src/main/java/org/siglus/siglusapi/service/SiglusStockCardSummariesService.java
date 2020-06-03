@@ -44,8 +44,8 @@ import org.springframework.util.MultiValueMap;
 public class SiglusStockCardSummariesService {
 
   private static final String PROGRAM_ID = "programId";
-  // private static final String EXCLUDE_ARCHIVED = "excludeArchived";
-  // private static final String ARCHIVED_ONLY = "archivedOnly";
+  private static final String EXCLUDE_ARCHIVED = "excludeArchived";
+  private static final String ARCHIVED_ONLY = "archivedOnly";
   private static final String STOCK_CARDS_VIEW = "STOCK_CARDS_VIEW";
 
   @Autowired
@@ -60,8 +60,8 @@ public class SiglusStockCardSummariesService {
   @Autowired
   private PermissionService permissionService;
 
-  //  @Autowired
-  //  private SiglusArchiveProductService archiveProductService;
+  @Autowired
+  private SiglusArchiveProductService archiveProductService;
 
   public StockCardSummaries findSiglusStockCard(
       MultiValueMap<String, String> parameters) {
@@ -80,22 +80,33 @@ public class SiglusStockCardSummariesService {
       // call modify stockCardSummariesService for orderable support virtual program
       StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
       siglusSummaries.setAsOfDate(summaries.getAsOfDate());
-      // TODO: move ArchiveProductService which depend on RequisitionRepository &&
-      // SiglusPhysicalInventoryService && draft
-      // if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED))) {
-      //   siglusSummaries.getStockCardsForFulfillOrderables()
-      //       .addAll(summaries.getStockCardsForFulfillOrderables().stream()
-      //           .filter(archiveProductService::isNotArchived).collect(Collectors.toList()));
-      // } else if (Boolean.parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
-      //   siglusSummaries.getStockCardsForFulfillOrderables()
-      //       .addAll(summaries.getStockCardsForFulfillOrderables().stream()
-      //           .filter(archiveProductService::isArchived).collect(Collectors.toList()));
-      // } else {
-      //   siglusSummaries.getStockCardsForFulfillOrderables()
-      //       .addAll(summaries.getStockCardsForFulfillOrderables());
-      // }
-      siglusSummaries.getStockCardsForFulfillOrderables()
-          .addAll(summaries.getStockCardsForFulfillOrderables());
+      if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED))) {
+        siglusSummaries.getStockCardsForFulfillOrderables()
+            .addAll(summaries.getStockCardsForFulfillOrderables()
+                .stream()
+                .filter(archiveProductService::isNotArchived)
+                .map(stockCard -> {
+                  stockCard.setArchived(false);
+                  return stockCard;
+                }).collect(Collectors.toList()));
+      } else if (Boolean.parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
+        siglusSummaries.getStockCardsForFulfillOrderables()
+            .addAll(summaries.getStockCardsForFulfillOrderables()
+                .stream()
+                .filter(archiveProductService::isArchived)
+                .map(stockCard -> {
+                  stockCard.setArchived(true);
+                  return stockCard;
+                }).collect(Collectors.toList()));
+      } else {
+        siglusSummaries.getStockCardsForFulfillOrderables()
+            .addAll(summaries.getStockCardsForFulfillOrderables()
+                .stream()
+                .map(stockCard -> {
+                  stockCard.setArchived(archiveProductService.isArchived(stockCard));
+                  return stockCard;
+                }).collect(Collectors.toList()));
+      }
       siglusSummaries.getOrderableFulfillMap().putAll(summaries.getOrderableFulfillMap());
     }
     return siglusSummaries;
