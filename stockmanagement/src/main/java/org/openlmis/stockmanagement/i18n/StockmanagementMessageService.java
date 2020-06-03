@@ -24,10 +24,10 @@ import org.springframework.stereotype.Service;
 public class StockmanagementMessageService {
 
   @Autowired
-  private ExposedMessageSource messageSource;
+  private ExposedMessageSource stockmanagementMessageSource;
 
   public Message.LocalizedMessage localize(Message message) {
-    return message.localMessage(messageSource, LocaleContextHolder.getLocale());
+    return message.localMessage(stockmanagementMessageSource, LocaleContextHolder.getLocale());
   }
 
 }

@@ -32,6 +32,7 @@ import org.javers.spring.boot.sql.JaversSqlProperties;
 import org.javers.spring.jpa.TransactionalJaversBuilder;
 import org.openlmis.referencedata.validate.ProcessingPeriodValidator;
 import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
+import org.openlmis.stockmanagement.i18n.StockmanagementExposedMessageSourceImpl;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -144,6 +145,22 @@ public class Application {
     return messageSource;
   }
 
+  // copy from stockmanagement Application.java start
+  /**
+   * Creates new MessageSource.
+   *
+   * @return Created MessageSource.
+   */
+  @Bean
+  public StockmanagementExposedMessageSourceImpl stockmanagementMessageSource() {
+    StockmanagementExposedMessageSourceImpl messageSource =
+        new StockmanagementExposedMessageSourceImpl();
+    messageSource.setBasename("classpath:messages");
+    messageSource.setDefaultEncoding("UTF-8");
+    messageSource.setUseCodeAsDefaultMessage(true);
+    return messageSource;
+  }
+  // copy from stockmanagement Application.java end
 
   // copy from requisition Application.java start
   @Bean
