@@ -20,14 +20,14 @@ import static org.openlmis.fulfillment.i18n.MessageKeys.MUST_BE_GREATER_THAN_OR_
 import static org.openlmis.fulfillment.i18n.MessageKeys.MUST_CONTAIN_VALUE;
 
 import java.util.List;
-import org.openlmis.fulfillment.i18n.MessageService;
+import org.openlmis.fulfillment.i18n.FulfillmentMessageService;
 import org.openlmis.fulfillment.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 
 abstract class BaseValidator {
 
   @Autowired
-  private MessageService messageService;
+  private FulfillmentMessageService messageService;
 
   void rejectIfNull(List<Message.LocalizedMessage> errors, Object value, String field) {
     if (null == value) {

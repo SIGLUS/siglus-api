@@ -36,7 +36,7 @@ import org.openlmis.fulfillment.repository.ShipmentDraftRepository;
 import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.util.FulfillmentDateHelper;
 import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.BaseController;
 import org.openlmis.fulfillment.web.NotFoundException;
@@ -88,7 +88,7 @@ public class ShipmentDraftController extends BaseController {
   private AuthenticationHelper authenticationHelper;
 
   @Autowired
-  private DateHelper dateHelper;
+  private FulfillmentDateHelper dateHelper;
 
   /**
    * Allows creating new shipment. If the id is specified, it will be ignored.

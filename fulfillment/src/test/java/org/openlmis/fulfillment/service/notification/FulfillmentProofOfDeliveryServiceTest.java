@@ -41,7 +41,7 @@ import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.service.FulfillmentProofOfDeliveryService;
 import org.openlmis.fulfillment.service.referencedata.PermissionStringDto;
-import org.openlmis.fulfillment.service.referencedata.PermissionStrings;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPermissionStrings;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.testutils.UserDataBuilder;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
@@ -63,7 +63,7 @@ public class FulfillmentProofOfDeliveryServiceTest {
   private ProofOfDeliveryRepository proofOfDeliveryRepository;
 
   @Mock
-  private PermissionStrings.Handler permissionStringsHandler;
+  private FulfillmentPermissionStrings.Handler permissionStringsHandler;
 
   @InjectMocks
   private FulfillmentProofOfDeliveryService proofOfDeliveryService;

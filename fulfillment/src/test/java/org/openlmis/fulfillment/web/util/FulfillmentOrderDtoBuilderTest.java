@@ -47,7 +47,7 @@ import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.testutils.OrderableDataBuilder;
 
 @RunWith(MockitoJUnitRunner.class)
-public class OrderDtoBuilderTest {
+public class FulfillmentOrderDtoBuilderTest {
 
   @Mock
   private OrderExportHelper orderExportHelper;
@@ -59,7 +59,7 @@ public class OrderDtoBuilderTest {
   private OrderLineItemDto orderLineItemDto;
 
   @InjectMocks
-  private OrderDtoBuilder orderDtoBuilder = new OrderDtoBuilder();
+  private FulfillmentOrderDtoBuilder orderDtoBuilder = new FulfillmentOrderDtoBuilder();
 
   private Order order;
   private OrderableDto orderableDto;

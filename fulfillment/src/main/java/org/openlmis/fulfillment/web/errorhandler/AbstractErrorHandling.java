@@ -15,7 +15,7 @@
 
 package org.openlmis.fulfillment.web.errorhandler;
 
-import org.openlmis.fulfillment.i18n.MessageService;
+import org.openlmis.fulfillment.i18n.FulfillmentMessageService;
 import org.openlmis.fulfillment.service.FulfillmentException;
 import org.openlmis.fulfillment.util.Message;
 import org.slf4j.Logger;
@@ -30,7 +30,7 @@ abstract class AbstractErrorHandling {
   protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Autowired
-  private MessageService messageService;
+  private FulfillmentMessageService messageService;
 
   Message.LocalizedMessage logErrorAndRespond(String message, String messageKey, String... params) {
     return logErrorAndRespond(message, new FulfillmentException(messageKey, params));

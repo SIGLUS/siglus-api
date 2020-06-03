@@ -43,11 +43,11 @@ import org.openlmis.fulfillment.service.ShipmentService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.service.stockmanagement.FulfillmentStockEventStockManagementService;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.util.FulfillmentDateHelper;
 import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.fulfillment.web.stockmanagement.StockEventDto;
 import org.openlmis.fulfillment.web.stockmanagement.StockEventDtoDataBuilder;
-import org.openlmis.fulfillment.web.util.StockEventBuilder;
+import org.openlmis.fulfillment.web.util.FulfillmentStockEventBuilder;
 
 @SuppressWarnings("PMD.UnusedPrivateField")
 public class ShipmentControllerTest {
@@ -68,7 +68,7 @@ public class ShipmentControllerTest {
   private AuthenticationHelper authenticationHelper;
 
   @Mock
-  private DateHelper dateHelper;
+  private FulfillmentDateHelper dateHelper;
 
   @Mock
   private UserDto userDto;
@@ -77,7 +77,7 @@ public class ShipmentControllerTest {
   private FulfillmentStockEventStockManagementService stockEventService;
 
   @Mock
-  private StockEventBuilder stockEventBuilder;
+  private FulfillmentStockEventBuilder stockEventBuilder;
 
   @Mock
   private OrderRepository orderRepository;

@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @NoArgsConstructor
-public class ConfigurationSettingService {
+public class FulfillmentConfigurationSettingService {
 
   private static final String RESONS_SUFFIX = "reasons.";
   static final String TRANSFER_IN = RESONS_SUFFIX + "transferIn";

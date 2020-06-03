@@ -42,7 +42,7 @@ import org.openlmis.fulfillment.domain.CreationDetails;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
-import org.openlmis.fulfillment.i18n.MessageService;
+import org.openlmis.fulfillment.i18n.FulfillmentMessageService;
 import org.openlmis.fulfillment.service.notification.NotificationService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
@@ -67,7 +67,7 @@ public class FulfillmentNotificationServiceTest {
   private NotificationService notificationService;
 
   @Mock
-  private MessageService messageService;
+  private FulfillmentMessageService messageService;
 
   @InjectMocks
   private FulfillmentNotificationService fulfillmentNotificationService = new

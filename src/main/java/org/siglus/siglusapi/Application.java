@@ -64,7 +64,8 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
     @PropertySource("classpath:application.properties"),
     @PropertySource("classpath:referencedata-application.properties"),
     @PropertySource("classpath:stockmanagement-application.properties"),
-    @PropertySource("classpath:requisition-application.properties")
+    @PropertySource("classpath:requisition-application.properties"),
+    @PropertySource("classpath:fulfillment-application.properties")
 })
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class Application {

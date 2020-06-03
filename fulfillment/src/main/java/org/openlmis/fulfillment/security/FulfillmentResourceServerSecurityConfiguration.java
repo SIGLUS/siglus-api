@@ -45,9 +45,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Configuration
 @EnableWebSecurity
-@Import({ MethodSecurityConfiguration.class })
+@Import({ FulfillmentMethodSecurityConfiguration.class })
 @EnableResourceServer
-public class ResourceServerSecurityConfiguration implements ResourceServerConfigurer {
+public class FulfillmentResourceServerSecurityConfiguration implements ResourceServerConfigurer {
 
   private TokenExtractor tokenExtractor = new BearerTokenExtractor();
 

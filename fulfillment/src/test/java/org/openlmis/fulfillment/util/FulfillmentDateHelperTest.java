@@ -31,7 +31,7 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class DateHelperTest {
+public class FulfillmentDateHelperTest {
 
   private static final ZoneId ZONE_ID = ZoneId.of("UTC");
 
@@ -39,7 +39,7 @@ public class DateHelperTest {
   Clock clock;
 
   @InjectMocks
-  DateHelper dateHelper;
+  FulfillmentDateHelper dateHelper;
 
   @Before
   public void setUp() {

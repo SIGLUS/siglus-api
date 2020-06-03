@@ -34,8 +34,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
-public class OrderDtoBuilder {
-  private static final XLogger XLOGGER = XLoggerFactory.getXLogger(OrderDtoBuilder.class);
+public class FulfillmentOrderDtoBuilder {
+  private static final XLogger XLOGGER =
+      XLoggerFactory.getXLogger(FulfillmentOrderDtoBuilder.class);
 
   @Autowired
   private OrderExportHelper orderExportHelper;

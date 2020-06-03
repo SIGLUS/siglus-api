@@ -46,12 +46,12 @@ import org.openlmis.fulfillment.repository.TransferPropertiesRepository;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.PermissionStrings;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPermissionStrings;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.util.FulfillmentDateHelper;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
@@ -97,7 +97,7 @@ public class OrderService {
   private ExtensionManager extensionManager;
 
   @Autowired
-  private DateHelper dateHelper;
+  private FulfillmentDateHelper dateHelper;
 
   @Autowired
   private FulfillmentPermissionService permissionService;
@@ -168,7 +168,7 @@ public class OrderService {
     }
 
     if (null != user) {
-      PermissionStrings.Handler handler = permissionService.getPermissionStrings(user.getId());
+      FulfillmentPermissionStrings.Handler handler = permissionService.getPermissionStrings(user.getId());
 
       return orderRepository.searchOrders(
           params, processingPeriodIds, pageable,

@@ -41,14 +41,14 @@ import org.openlmis.fulfillment.service.ShipmentService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.service.stockmanagement.FulfillmentStockEventStockManagementService;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.util.FulfillmentDateHelper;
 import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.BaseController;
 import org.openlmis.fulfillment.web.NotFoundException;
 import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.fulfillment.web.stockmanagement.StockEventDto;
 import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
-import org.openlmis.fulfillment.web.util.StockEventBuilder;
+import org.openlmis.fulfillment.web.util.FulfillmentStockEventBuilder;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -92,7 +92,7 @@ public class ShipmentController extends BaseController {
   private AuthenticationHelper authenticationHelper;
 
   @Autowired
-  private DateHelper dateHelper;
+  private FulfillmentDateHelper dateHelper;
 
   @Autowired
   private FulfillmentPermissionService permissionService;
@@ -101,7 +101,7 @@ public class ShipmentController extends BaseController {
   private FulfillmentStockEventStockManagementService stockEventService;
 
   @Autowired
-  private StockEventBuilder stockEventBuilder;
+  private FulfillmentStockEventBuilder stockEventBuilder;
 
   @Autowired
   private ShipmentService shipmentService;

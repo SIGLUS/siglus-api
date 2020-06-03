@@ -27,7 +27,7 @@ import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentDraft;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.PermissionStrings;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPermissionStrings;
 import org.openlmis.fulfillment.service.referencedata.RightDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
@@ -71,7 +71,7 @@ public class FulfillmentPermissionService {
   private String apiKeyPrefix;
 
   @Autowired
-  private PermissionStrings permissionStrings;
+  private FulfillmentPermissionStrings permissionStrings;
 
   public void canTransferOrder(Order order) {
     checkPermission(ORDERS_TRANSFER, order.getSupplyingFacilityId());
@@ -216,7 +216,7 @@ public class FulfillmentPermissionService {
     checkPermission(SHIPMENTS_EDIT, shipmentDraft.getOrder().getSupplyingFacilityId());
   }
 
-  public PermissionStrings.Handler getPermissionStrings(UUID userId) {
+  public FulfillmentPermissionStrings.Handler getPermissionStrings(UUID userId) {
     return permissionStrings.forUser(userId);
   }
 

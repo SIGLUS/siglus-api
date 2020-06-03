@@ -38,7 +38,7 @@ import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 
 @RunWith(MockitoJUnitRunner.class)
-public class BasicOrderDtoBuilderTest {
+public class BasicFulfillmentOrderDtoBuilderTest {
 
   @Mock
   private OrderExportHelper orderExportHelper;

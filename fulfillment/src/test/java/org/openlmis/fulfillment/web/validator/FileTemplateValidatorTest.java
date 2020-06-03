@@ -33,7 +33,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.TemplateType;
-import org.openlmis.fulfillment.i18n.MessageService;
+import org.openlmis.fulfillment.i18n.FulfillmentMessageService;
 import org.openlmis.fulfillment.util.Message;
 import org.openlmis.fulfillment.web.util.FileColumnDto;
 import org.openlmis.fulfillment.web.util.FileTemplateDto;
@@ -51,7 +51,7 @@ public class FileTemplateValidatorTest {
   Errors errors;
 
   @Mock
-  MessageService messageService;
+  FulfillmentMessageService messageService;
 
   @InjectMocks
   private FileTemplateValidator validator;

@@ -28,7 +28,7 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
-import org.openlmis.fulfillment.service.ConfigurationSettingService;
+import org.openlmis.fulfillment.service.FulfillmentConfigurationSettingService;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
@@ -37,7 +37,7 @@ import org.openlmis.fulfillment.service.stockmanagement.ValidDestinationsStockMa
 import org.openlmis.fulfillment.service.stockmanagement.ValidSourceDestinationsStockManagementService;
 import org.openlmis.fulfillment.service.stockmanagement.ValidSourcesStockManagementService;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.util.FulfillmentDateHelper;
 import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.fulfillment.web.stockmanagement.StockEventDto;
 import org.openlmis.fulfillment.web.stockmanagement.StockEventLineItemDto;
@@ -51,9 +51,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StockEventBuilder {
-  private static final XLogger XLOGGER = XLoggerFactory.getXLogger(StockEventBuilder.class);
-  private static final Logger LOGGER = LoggerFactory.getLogger(StockEventBuilder.class);
+public class FulfillmentStockEventBuilder {
+  private static final XLogger XLOGGER = XLoggerFactory.getXLogger(
+      FulfillmentStockEventBuilder.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(FulfillmentStockEventBuilder.class);
 
   @Autowired
   private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
@@ -65,7 +66,7 @@ public class StockEventBuilder {
   private ValidSourcesStockManagementService validSourcesStockManagementService;
 
   @Autowired
-  private ConfigurationSettingService configurationSettingService;
+  private FulfillmentConfigurationSettingService configurationSettingService;
 
   @Autowired
   private AuthenticationHelper authenticationHelper;
@@ -74,7 +75,7 @@ public class StockEventBuilder {
   private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   @Autowired
-  private DateHelper dateHelper;
+  private FulfillmentDateHelper dateHelper;
 
   /**
    * Builds a stock event DTO from the given shipment.

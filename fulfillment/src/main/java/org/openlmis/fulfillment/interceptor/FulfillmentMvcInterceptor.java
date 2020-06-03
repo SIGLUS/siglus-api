@@ -27,7 +27,7 @@ import org.springframework.validation.Errors;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 @Service
-public class MvcInterceptor extends HandlerInterceptorAdapter {
+public class FulfillmentMvcInterceptor extends HandlerInterceptorAdapter {
 
   private static final String SIZE_PARAM = "size";
   private static final String PAGE_PARAM = "page";

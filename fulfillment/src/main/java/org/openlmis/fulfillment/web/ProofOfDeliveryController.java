@@ -48,12 +48,12 @@ import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableRefere
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.stockmanagement.FulfillmentStockEventStockManagementService;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.util.FulfillmentDateHelper;
 import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.stockmanagement.StockEventDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDtoBuilder;
-import org.openlmis.fulfillment.web.util.StockEventBuilder;
+import org.openlmis.fulfillment.web.util.FulfillmentStockEventBuilder;
 import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,10 +109,10 @@ public class ProofOfDeliveryController extends BaseController {
   private AuthenticationHelper authenticationHelper;
 
   @Autowired
-  private DateHelper dateHelper;
+  private FulfillmentDateHelper dateHelper;
 
   @Autowired
-  private StockEventBuilder stockEventBuilder;
+  private FulfillmentStockEventBuilder stockEventBuilder;
 
   @Autowired
   private FulfillmentStockEventStockManagementService stockEventStockManagementService;

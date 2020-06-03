@@ -32,7 +32,7 @@ import org.mockito.junit.MockitoRule;
 import org.openlmis.fulfillment.i18n.MessageKeys;
 import org.openlmis.fulfillment.web.ValidationException;
 
-public class MvcInterceptorTest {
+public class FulfillmentMvcInterceptorTest {
 
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -43,12 +43,12 @@ public class MvcInterceptorTest {
   @Mock
   private HttpServletRequest request;
 
-  private MvcInterceptor interceptor;
+  private FulfillmentMvcInterceptor interceptor;
   private Map<String, String[]> parameterMaps;
 
   @Before
   public void setUp() {
-    interceptor = new MvcInterceptor();
+    interceptor = new FulfillmentMvcInterceptor();
     parameterMaps = new HashMap<>();
     given(request.getParameterMap()).willReturn(parameterMaps);
     parameterMaps.put("page", new String[]{"0"});

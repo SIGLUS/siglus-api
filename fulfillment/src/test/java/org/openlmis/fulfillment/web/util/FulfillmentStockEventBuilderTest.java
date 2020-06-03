@@ -45,7 +45,7 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
-import org.openlmis.fulfillment.service.ConfigurationSettingService;
+import org.openlmis.fulfillment.service.FulfillmentConfigurationSettingService;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
@@ -56,7 +56,7 @@ import org.openlmis.fulfillment.service.stockmanagement.ValidSourcesStockManagem
 import org.openlmis.fulfillment.testutils.DtoGenerator;
 import org.openlmis.fulfillment.testutils.OrderableDataBuilder;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.util.FulfillmentDateHelper;
 import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.stockmanagement.NodeDto;
@@ -67,7 +67,7 @@ import org.openlmis.fulfillment.web.stockmanagement.ValidSourceDestinationDtoDat
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
-public class StockEventBuilderTest {
+public class FulfillmentStockEventBuilderTest {
   private static final UUID TRANSFER_IN_REASON_ID = UUID.randomUUID();
   private static final LocalDate CURRENT_DATE = LocalDate.now();
   private static final Long NET_CONTENT = 76L;
@@ -85,7 +85,7 @@ public class StockEventBuilderTest {
   private ValidSourcesStockManagementService validSourcesStockManagementService;
 
   @Mock
-  private ConfigurationSettingService configurationSettingService;
+  private FulfillmentConfigurationSettingService configurationSettingService;
 
   @Mock
   private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
@@ -94,10 +94,10 @@ public class StockEventBuilderTest {
   private AuthenticationHelper authenticationHelper;
 
   @Mock
-  private DateHelper dateHelper;
+  private FulfillmentDateHelper dateHelper;
 
   @InjectMocks
-  private StockEventBuilder stockEventBuilder;
+  private FulfillmentStockEventBuilder stockEventBuilder;
 
   private FacilityDto toFacilityDto = DtoGenerator.of(FacilityDto.class);
   private FacilityDto fromFacilityDto = DtoGenerator.of(FacilityDto.class);

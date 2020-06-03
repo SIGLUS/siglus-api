@@ -32,7 +32,7 @@ import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.LocalTransferProperties;
 import org.openlmis.fulfillment.i18n.ExposedMessageSource;
-import org.openlmis.fulfillment.i18n.MessageService;
+import org.openlmis.fulfillment.i18n.FulfillmentMessageService;
 import org.openlmis.fulfillment.util.Message;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -42,7 +42,7 @@ public class LocalTransferPropertiesValidatorTest {
   private ExposedMessageSource messageSource;
 
   @Spy
-  private MessageService messageService;
+  private FulfillmentMessageService messageService;
 
   @InjectMocks
   private LocalTransferPropertiesValidator validator;

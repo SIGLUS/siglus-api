@@ -33,7 +33,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.FtpProtocol;
 import org.openlmis.fulfillment.domain.FtpTransferProperties;
 import org.openlmis.fulfillment.i18n.ExposedMessageSource;
-import org.openlmis.fulfillment.i18n.MessageService;
+import org.openlmis.fulfillment.i18n.FulfillmentMessageService;
 import org.openlmis.fulfillment.util.Message;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -44,7 +44,7 @@ public class FtpTransferPropertiesValidatorTest {
   private ExposedMessageSource messageSource;
 
   @Spy
-  private MessageService messageService;
+  private FulfillmentMessageService messageService;
 
   @InjectMocks
   private FtpTransferPropertiesValidator validator;

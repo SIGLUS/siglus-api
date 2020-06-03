@@ -58,9 +58,9 @@ import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDa
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.testutils.UpdateDetailsDataBuilder;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.util.FulfillmentDateHelper;
 import org.openlmis.fulfillment.web.util.OrderDto;
-import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
+import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -74,7 +74,7 @@ public class OrderControllerTest {
   private AuthenticationHelper authenticationHelper;
 
   @Mock
-  private DateHelper dateHelper;
+  private FulfillmentDateHelper dateHelper;
 
   @Mock
   private FulfillmentProgramReferenceDataService programReferenceDataService;
@@ -119,7 +119,7 @@ public class OrderControllerTest {
   private ProgramDto programDto;
 
   @Mock
-  private OrderDtoBuilder orderDtoBuilder;
+  private FulfillmentOrderDtoBuilder orderDtoBuilder;
 
   private static final String ORDER_NUMBER = "orderNumber";
   private static final String SERVICE_URL = "localhost";

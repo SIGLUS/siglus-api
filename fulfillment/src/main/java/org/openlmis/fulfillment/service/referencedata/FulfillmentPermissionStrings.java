@@ -33,7 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PermissionStrings {
+public class FulfillmentPermissionStrings {
   private final Map<UUID, Handler> handlers = Maps.newConcurrentMap();
 
   @Autowired

@@ -44,7 +44,7 @@ import org.openlmis.fulfillment.repository.ShipmentRepository;
 import org.openlmis.fulfillment.service.FulfillmentException;
 import org.openlmis.fulfillment.service.PageDto;
 import org.openlmis.fulfillment.testutils.ShipmentDataBuilder;
-import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.util.FulfillmentDateHelper;
 import org.openlmis.fulfillment.util.FileColumnKeyPath;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -69,7 +69,7 @@ public class ShipmentBuilderTest {
   OrderRepository orderRepository;
 
   @Mock
-  DateHelper dateHelper;
+  FulfillmentDateHelper dateHelper;
 
   @Mock
   ShipmentRepository shipmentRepository;

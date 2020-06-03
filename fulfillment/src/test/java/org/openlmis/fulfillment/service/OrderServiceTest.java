@@ -79,7 +79,7 @@ import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReference
 import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.PermissionStrings;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPermissionStrings;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
@@ -89,7 +89,7 @@ import org.openlmis.fulfillment.testutils.ProcessingPeriodDataBuilder;
 import org.openlmis.fulfillment.testutils.ProgramDataBuilder;
 import org.openlmis.fulfillment.testutils.UserDataBuilder;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.util.FulfillmentDateHelper;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -137,7 +137,7 @@ public class OrderServiceTest {
   private OrderSender orderSender;
 
   @Mock
-  private DateHelper dateHelper;
+  private FulfillmentDateHelper dateHelper;
 
   @Mock
   private ExtensionManager extensionManager;
@@ -287,7 +287,7 @@ public class OrderServiceTest {
     Order order = generateOrder();
     Pageable pageable = new PageRequest(0, 10);
     UserDto user = new UserDataBuilder().build();
-    PermissionStrings.Handler handler = mock(PermissionStrings.Handler.class);
+    FulfillmentPermissionStrings.Handler handler = mock(FulfillmentPermissionStrings.Handler.class);
     when(handler.getFacilityIds(ORDERS_EDIT, ORDERS_VIEW, SHIPMENTS_EDIT, SHIPMENTS_VIEW))
         .thenReturn(newHashSet(order.getSupplyingFacilityId()));
     when(handler.getFacilityIds(PODS_MANAGE, PODS_VIEW))

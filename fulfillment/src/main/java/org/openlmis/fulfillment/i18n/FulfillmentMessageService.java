@@ -13,30 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.fulfillment.util;
+package org.openlmis.fulfillment.i18n;
 
-import java.time.Clock;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
+import org.openlmis.fulfillment.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.stereotype.Service;
 
-@Component
-public class DateHelper {
+@Service
+public class FulfillmentMessageService {
 
   @Autowired
-  private Clock clock;
+  private ExposedMessageSource messageSource;
 
-  /**
-   * Obtains the current date time from the system clock in the system time zone.
-   * @return the current date time using the system clock
-   */
-  public ZonedDateTime getCurrentDateTimeWithSystemZone() {
-    return ZonedDateTime.now(clock);
-  }
-
-  public LocalDate getCurrentDate() {
-    return LocalDate.now(clock);
+  public Message.LocalizedMessage localize(Message message) {
+    return message.localMessage(messageSource, LocaleContextHolder.getLocale());
   }
 
 }

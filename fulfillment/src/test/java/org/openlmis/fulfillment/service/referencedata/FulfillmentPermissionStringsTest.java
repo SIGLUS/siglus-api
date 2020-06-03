@@ -41,7 +41,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.service.ServiceResponse;
 
 @RunWith(MockitoJUnitRunner.class)
-public class PermissionStringsTest {
+public class FulfillmentPermissionStringsTest {
   private static final String HANDLERS_FIELD_NAME = "handlers";
   private static final UUID USER = randomUUID();
 
@@ -49,20 +49,20 @@ public class PermissionStringsTest {
   private FulfillmentUserReferenceDataService userReferenceDataService;
 
   @InjectMocks
-  private PermissionStrings permissionStrings;
+  private FulfillmentPermissionStrings permissionStrings;
 
   @Mock
   private ServiceResponse<List<String>> response;
 
   @Test
   public void shouldCreateHandlerIfNotExist() throws Exception {
-    Field handlers = PermissionStrings.class.getDeclaredField(HANDLERS_FIELD_NAME);
+    Field handlers = FulfillmentPermissionStrings.class.getDeclaredField(HANDLERS_FIELD_NAME);
     handlers.setAccessible(true);
 
     Map map = (Map) handlers.get(permissionStrings);
     assertThat(map.size(), is(0));
 
-    PermissionStrings.Handler handler = permissionStrings.forUser(USER);
+    FulfillmentPermissionStrings.Handler handler = permissionStrings.forUser(USER);
 
     assertThat(handler, is(notNullValue()));
 
@@ -72,7 +72,7 @@ public class PermissionStringsTest {
 
   @Test
   public void shouldNotRecreateHandler() throws Exception {
-    Field handlers = PermissionStrings.class.getDeclaredField(HANDLERS_FIELD_NAME);
+    Field handlers = FulfillmentPermissionStrings.class.getDeclaredField(HANDLERS_FIELD_NAME);
     handlers.setAccessible(true);
 
     permissionStrings.forUser(USER);
@@ -87,7 +87,7 @@ public class PermissionStringsTest {
   @Test
   public void shouldUpdateDataIfResponseWasModified() throws Exception {
     String etag = random(5);
-    PermissionStrings.Handler handler = permissionStrings.forUser(USER);
+    FulfillmentPermissionStrings.Handler handler = permissionStrings.forUser(USER);
 
     // here handler does not have etag so it should pass null value
     when(userReferenceDataService.getPermissionStrings(USER, null)).thenReturn(response);
@@ -113,7 +113,7 @@ public class PermissionStringsTest {
   @Test
   public void shouldNotUpdateDataIfResponseWasNotModified() throws Exception {
     String etag = random(5);
-    PermissionStrings.Handler handler = permissionStrings.forUser(USER);
+    FulfillmentPermissionStrings.Handler handler = permissionStrings.forUser(USER);
 
     // here handler does not have etag so it should pass null value
     when(userReferenceDataService.getPermissionStrings(USER, null)).thenReturn(response);
@@ -146,7 +146,7 @@ public class PermissionStringsTest {
     when(response.getETag()).thenReturn(etag);
     when(response.getBody()).thenReturn(singletonList(data.toString()));
 
-    PermissionStrings.Handler handler = permissionStrings.forUser(USER);
+    FulfillmentPermissionStrings.Handler handler = permissionStrings.forUser(USER);
     assertThat(handler.getFacilityIds(PODS_MANAGE), contains(data.getFacilityId()));
   }
 

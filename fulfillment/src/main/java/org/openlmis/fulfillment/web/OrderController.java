@@ -52,7 +52,7 @@ import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
-import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
+import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -112,7 +112,7 @@ public class OrderController extends BaseController {
   private ShipmentService shipmentService;
 
   @Autowired
-  private OrderDtoBuilder orderDtoBuilder;
+  private FulfillmentOrderDtoBuilder orderDtoBuilder;
 
   @Autowired
   private BasicOrderDtoBuilder basicOrderDtoBuilder;

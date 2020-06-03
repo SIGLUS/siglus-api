@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
-import org.openlmis.fulfillment.i18n.MessageService;
+import org.openlmis.fulfillment.i18n.FulfillmentMessageService;
 import org.openlmis.fulfillment.service.notification.NotificationService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
@@ -62,7 +62,7 @@ public class FulfillmentNotificationService {
   private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Autowired
-  protected MessageService messageService;
+  protected FulfillmentMessageService messageService;
 
   @Value("${publicUrl}")
   private String publicUrl;
