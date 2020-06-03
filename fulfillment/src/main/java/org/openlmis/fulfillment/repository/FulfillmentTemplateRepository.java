@@ -17,12 +17,12 @@ package org.openlmis.fulfillment.repository;
 
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.Template;
-import org.openlmis.fulfillment.repository.custom.TemplateRepositoryCustom;
+import org.openlmis.fulfillment.repository.custom.FulfillmentTemplateRepositoryCustom;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
 public interface FulfillmentTemplateRepository extends PagingAndSortingRepository<Template, UUID>,
-    TemplateRepositoryCustom {
+    FulfillmentTemplateRepositoryCustom {
 
   Template findByName(@Param("name") String name);
 

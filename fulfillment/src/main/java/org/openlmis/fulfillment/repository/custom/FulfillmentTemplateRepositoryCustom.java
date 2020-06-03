@@ -13,21 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.fulfillment.repository.custom.impl;
+package org.openlmis.fulfillment.repository.custom;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import org.openlmis.fulfillment.domain.Template;
-import org.openlmis.fulfillment.repository.custom.TemplateRepositoryCustom;
 
-public class TemplateRepositoryImpl implements TemplateRepositoryCustom {
+public interface FulfillmentTemplateRepositoryCustom {
 
-  @PersistenceContext
-  private EntityManager entityManager;
+  void removeAndFlush(Template template);
 
-  @Override
-  public void removeAndFlush(Template template) {
-    entityManager.remove(template);
-    entityManager.flush();
-  }
 }
