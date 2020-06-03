@@ -21,7 +21,7 @@ import org.openlmis.fulfillment.repository.custom.TemplateRepositoryCustom;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
-public interface TemplateRepository extends PagingAndSortingRepository<Template, UUID>,
+public interface FulfillmentTemplateRepository extends PagingAndSortingRepository<Template, UUID>,
     TemplateRepositoryCustom {
 
   Template findByName(@Param("name") String name);

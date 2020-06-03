@@ -52,7 +52,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.openlmis.fulfillment.domain.Template;
-import org.openlmis.fulfillment.repository.TemplateRepository;
+import org.openlmis.fulfillment.repository.FulfillmentTemplateRepository;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
@@ -65,7 +65,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class TemplateServiceTest {
 
   @Mock
-  private TemplateRepository templateRepository;
+  private FulfillmentTemplateRepository templateRepository;
 
   @InjectMocks
   private TemplateService templateService;

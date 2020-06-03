@@ -18,7 +18,7 @@ package org.openlmis.fulfillment.web;
 import java.util.UUID;
 import org.apache.log4j.Logger;
 import org.openlmis.fulfillment.domain.Template;
-import org.openlmis.fulfillment.repository.TemplateRepository;
+import org.openlmis.fulfillment.repository.FulfillmentTemplateRepository;
 import org.openlmis.fulfillment.service.TemplateService;
 import org.openlmis.fulfillment.web.util.TemplateDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +48,7 @@ public class TemplateController extends BaseController {
   private TemplateService templateService;
 
   @Autowired
-  private TemplateRepository templateRepository;
+  private FulfillmentTemplateRepository templateRepository;
 
   /**
    * Adding report templates with ".jrxml" format to database.
