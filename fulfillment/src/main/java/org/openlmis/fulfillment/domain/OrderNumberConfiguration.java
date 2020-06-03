@@ -29,7 +29,7 @@ import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "order_number_configurations")
+@Table(name = "order_number_configurations", schema = "fulfillment")
 @EqualsAndHashCode(callSuper = true)
 public final class OrderNumberConfiguration extends BaseEntity {
 

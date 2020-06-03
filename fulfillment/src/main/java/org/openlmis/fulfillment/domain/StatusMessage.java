@@ -30,7 +30,7 @@ import lombok.Setter;
 import org.hibernate.annotations.Type;
 
 @Entity
-@Table(name = "status_messages")
+@Table(name = "status_messages", schema = "fulfillment")
 @NoArgsConstructor
 public class StatusMessage extends BaseEntity {
 

@@ -32,7 +32,7 @@ import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 
 @Entity
-@Table(name = "shipment_draft_line_items")
+@Table(name = "shipment_draft_line_items", schema = "fulfillment")
 @TypeName("ShipmentDraftLineItem")
 @AllArgsConstructor
 @ToString

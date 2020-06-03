@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "template_parameters")
+@Table(name = "template_parameters", schema = "fulfillment")
 @NoArgsConstructor
 @AllArgsConstructor
 public class TemplateParameter extends BaseEntity {

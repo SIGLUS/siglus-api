@@ -44,7 +44,7 @@ import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor
-@Table(name = "proof_of_delivery_line_items")
+@Table(name = "proof_of_delivery_line_items", schema = "fulfillment")
 @TypeName("ProofOfDeliveryLineItem")
 public class ProofOfDeliveryLineItem extends BaseEntity {
 

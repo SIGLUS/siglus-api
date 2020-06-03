@@ -30,7 +30,7 @@ import lombok.Setter;
 import org.openlmis.fulfillment.util.FileColumnKeyPath;
 
 @Entity
-@Table(name = "file_columns")
+@Table(name = "file_columns", schema = "fulfillment")
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)

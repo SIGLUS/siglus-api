@@ -35,7 +35,7 @@ import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 
 @Entity
-@Table(name = "order_line_items")
+@Table(name = "order_line_items", schema = "fulfillment")
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)

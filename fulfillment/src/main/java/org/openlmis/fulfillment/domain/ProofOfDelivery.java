@@ -52,7 +52,7 @@ import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @AllArgsConstructor
-@Table(name = "proofs_of_delivery")
+@Table(name = "proofs_of_delivery", schema = "fulfillment")
 @TypeName("ProofOfDelivery")
 public class ProofOfDelivery extends BaseEntity {
 

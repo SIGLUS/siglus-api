@@ -33,7 +33,7 @@ import lombok.Setter;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 
 @Entity
-@Table(name = "transfer_properties",
+@Table(name = "transfer_properties", schema = "fulfillment",
     uniqueConstraints = @UniqueConstraint(columnNames = {"facilityId", "transferType"}))
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.STRING)

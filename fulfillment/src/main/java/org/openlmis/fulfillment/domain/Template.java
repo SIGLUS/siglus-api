@@ -36,7 +36,7 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
 @Entity
-@Table(name = "templates")
+@Table(name = "templates", schema = "fulfillment")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Template extends BaseEntity {

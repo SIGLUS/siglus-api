@@ -44,7 +44,7 @@ import org.openlmis.fulfillment.i18n.MessageKeys;
 import org.openlmis.fulfillment.web.ValidationException;
 
 @Entity
-@Table(name = "shipments")
+@Table(name = "shipments", schema = "fulfillment")
 @TypeName("Shipment")
 @AllArgsConstructor
 @ToString

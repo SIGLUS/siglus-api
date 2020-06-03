@@ -50,7 +50,7 @@ import org.openlmis.fulfillment.web.util.StatusChangeDto;
 import org.openlmis.fulfillment.web.util.StatusMessageDto;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", schema = "fulfillment")
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order extends BaseEntity {

@@ -36,7 +36,7 @@ import lombok.ToString;
 import org.javers.core.metamodel.annotation.TypeName;
 
 @Entity
-@Table(name = "shipment_drafts")
+@Table(name = "shipment_drafts", schema = "fulfillment")
 @TypeName("ShipmentDraft")
 @AllArgsConstructor
 @ToString
