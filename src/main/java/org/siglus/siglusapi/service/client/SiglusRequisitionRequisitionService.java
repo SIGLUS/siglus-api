@@ -15,16 +15,12 @@
 
 package org.siglus.siglusapi.service.client;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-
 import java.util.UUID;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
-import org.openlmis.requisition.service.RequestParameters;
-
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
-import org.siglus.siglusapi.service.client.BaseRequisitionService;
+import org.openlmis.stockmanagement.util.RequestParameters;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
@@ -48,11 +44,6 @@ public class SiglusRequisitionRequisitionService extends BaseRequisitionService<
     return RequisitionV2Dto[].class;
   }
 
-  @Override
-  protected String getServiceName() {
-    return "requisition";
-  }
-
   public Page<BasicRequisitionDto> searchRequisitions(RequisitionSearchParams params,
       Pageable pageable) {
     RequestParameters queryParams = RequestParameters.init()
@@ -65,8 +56,8 @@ public class SiglusRequisitionRequisitionService extends BaseRequisitionService<
         .set(QueryRequisitionSearchParams.REQUISITION_STATUS, params.getRequisitionStatuses())
         .set(QueryRequisitionSearchParams.EMERGENCY, params.getEmergency())
         .set(QueryRequisitionSearchParams.MODIFIED_DATE_FROM, params.getModifiedDateFrom())
-        .set(QueryRequisitionSearchParams.MODIFIED_DATE_TO, params.getModifiedDateTo())
-        .setPage(pageable);
+        .set(QueryRequisitionSearchParams.MODIFIED_DATE_TO, params.getModifiedDateTo());
+
     return getPage("requisitions/search", queryParams, null, HttpMethod.GET,
         BasicRequisitionDto.class);
   }

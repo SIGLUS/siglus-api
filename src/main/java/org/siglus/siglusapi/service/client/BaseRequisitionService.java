@@ -15,18 +15,12 @@
 
 package org.siglus.siglusapi.service.client;
 
-import org.openlmis.requisition.service.BaseCommunicationService;
 import org.springframework.beans.factory.annotation.Value;
 
 public abstract class BaseRequisitionService<T> extends BaseCommunicationService<T> {
 
   @Value("${requisition.url}")
   private String requisitionUrl;
-
-  @Override
-  protected String getServiceName() {
-    return "Requisition";
-  }
 
   @Override
   protected String getServiceUrl() {

@@ -139,6 +139,7 @@ public class SiglusRequisitionService {
   private FacilityTypeApprovedProductReferenceDataService
       facilityTypeApprovedProductReferenceDataService;
 
+  @Autowired
   private RequisitionRepository requisitionRepository;
 
   @Value("${service.url}")
