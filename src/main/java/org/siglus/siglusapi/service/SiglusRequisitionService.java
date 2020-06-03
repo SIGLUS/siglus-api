@@ -34,6 +34,7 @@ import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
+import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
@@ -45,6 +46,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.SiglusRequisitionLineItemDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.exception.ValidationMessageException;
@@ -55,6 +57,7 @@ import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
+import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
@@ -129,10 +132,14 @@ public class SiglusRequisitionService {
   @Autowired
   private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
 
+  @Autowired
+  private FacilityTypeApprovedProductReferenceDataService
+      facilityTypeApprovedProductReferenceDataService;
+
   @Value("${service.url}")
   private String serviceUrl;
 
-  public List<RequisitionLineItemV2Dto> createRequisitionLineItem(
+  public List<SiglusRequisitionLineItemDto> createRequisitionLineItem(
       UUID requisitonId,
       List<UUID> orderableIds) {
 
@@ -163,7 +170,7 @@ public class SiglusRequisitionService {
     List<RequisitionLineItem> lineItemList = constructLineItem(
         existedRequisition, program, facility, orderableIds);
 
-    return buildLineItemV2Dto(lineItemList);
+    return buildSiglusLineItem(lineItemList);
   }
 
   private List<RequisitionLineItem> constructLineItem(Requisition requisition,
@@ -317,9 +324,22 @@ public class SiglusRequisitionService {
         siglusOrderableService.getOrderableExpirationDate(orderableIds);
   }
 
-  private List<RequisitionLineItemV2Dto> buildLineItemV2Dto(
+  private List<SiglusRequisitionLineItemDto> buildSiglusLineItem(
       List<RequisitionLineItem> lineItemList) {
     List<OrderableExpirationDateDto> expirationDateDtos = findOrderableIds(lineItemList);
+
+    Set<VersionEntityReference> references = lineItemList.stream()
+        .map(line -> {
+          VersionEntityReference reference = line.getFacilityTypeApprovedProduct();
+          return new VersionEntityReference(reference.getId(), reference.getVersionNumber());
+        }).collect(toSet());
+
+    List<ApprovedProductDto> list = facilityTypeApprovedProductReferenceDataService
+        .findByIdentities(references);
+
+    Map<UUID, ApprovedProductDto> approvedProductDtoMap = list.stream()
+        .collect(Collectors.toMap(dto -> dto.getId(), dto -> dto));
+
     return lineItemList
         .stream()
         .map(line -> {
@@ -332,13 +352,21 @@ public class SiglusRequisitionService {
               null, null, null, null,
               new MetadataDto(line.getFacilityTypeApprovedProduct().getVersionNumber(),
                   null));
-          approvedProduct.setId(line.getFacilityTypeApprovedProduct().getId());
+          UUID approvedProductId = line.getFacilityTypeApprovedProduct().getId();
+          approvedProduct.setId(approvedProductId);
 
           RequisitionLineItemV2Dto lineDto = new RequisitionLineItemV2Dto();
           lineDto.setServiceUrl(serviceUrl);
           line.export(lineDto, orderable, approvedProduct);
           setOrderableExpirationDate(expirationDateDtos, orderable, lineDto);
-          return lineDto;
+
+          SiglusRequisitionLineItemDto siglusRequisitionLineItemDto =
+              new SiglusRequisitionLineItemDto();
+          siglusRequisitionLineItemDto.setLineItem(lineDto);
+          siglusRequisitionLineItemDto
+              .setApprovedProduct(approvedProductDtoMap.get(approvedProductId));
+
+          return siglusRequisitionLineItemDto;
         })
         .collect(Collectors.toList());
   }

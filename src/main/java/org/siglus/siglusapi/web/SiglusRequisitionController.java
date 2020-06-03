@@ -20,8 +20,8 @@ import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
-import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.SiglusRequisitionLineItemDto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
@@ -84,7 +84,7 @@ public class SiglusRequisitionController {
   }
 
   @PostMapping("/createLineItem")
-  public List<RequisitionLineItemV2Dto> createRequisitionLineItem(
+  public List<SiglusRequisitionLineItemDto> createRequisitionLineItem(
       @RequestParam(value = "requisitionId") UUID requisitonId,
       @RequestBody List<UUID> orderableIds) {
     return siglusRequisitionService.createRequisitionLineItem(requisitonId, orderableIds);
