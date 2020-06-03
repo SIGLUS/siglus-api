@@ -481,4 +481,12 @@ public class SiglusRequisitionService {
     return null;
   }
 
+  public Set<UUID> findLineItemOrderableIds(UUID requisitionId) {
+    Requisition requisition = requisitionRepository.findOne(requisitionId);
+    List<RequisitionLineItem> lineItems = requisition.getRequisitionLineItems();
+    return lineItems.stream()
+        .map(lineItem -> lineItem.getOrderable().getId())
+        .collect(Collectors.toSet());
+  }
+
 }

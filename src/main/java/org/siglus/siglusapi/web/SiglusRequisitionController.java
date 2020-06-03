@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -24,6 +25,7 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SiglusRequisitionLineItemDto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
+import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -49,6 +51,9 @@ public class SiglusRequisitionController {
 
   @Autowired
   private SiglusRequisitionService siglusRequisitionService;
+
+  @Autowired
+  private SiglusArchiveProductService archiveProductService;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -79,7 +84,12 @@ public class SiglusRequisitionController {
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
-    return requisitionController.submitRequisition(requisitionId, request, response);
+    BasicRequisitionDto basicRequisitionDto = requisitionController
+        .submitRequisition(requisitionId, request, response);
+    Set<UUID> orderableIds = siglusRequisitionService.findLineItemOrderableIds(requisitionId);
+    archiveProductService
+        .activateArchivedProducts(orderableIds, basicRequisitionDto.getFacility().getId());
+    return basicRequisitionDto;
   }
 
   @PostMapping("/{id}/authorize")
@@ -87,7 +97,12 @@ public class SiglusRequisitionController {
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
-    return requisitionController.authorizeRequisition(requisitionId, request, response);
+    BasicRequisitionDto basicRequisitionDto = requisitionController
+        .authorizeRequisition(requisitionId, request, response);
+    Set<UUID> orderableIds = siglusRequisitionService.findLineItemOrderableIds(requisitionId);
+    archiveProductService
+        .activateArchivedProducts(orderableIds, basicRequisitionDto.getFacility().getId());
+    return basicRequisitionDto;
   }
 
   @PostMapping("/createLineItem")

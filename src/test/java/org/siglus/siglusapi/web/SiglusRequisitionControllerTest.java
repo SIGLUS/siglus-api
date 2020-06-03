@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
@@ -25,7 +27,11 @@ import org.junit.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.web.RequisitionController;
+import org.siglus.siglusapi.service.SiglusArchiveProductService;
+import org.siglus.siglusapi.service.SiglusRequisitionService;
 
 public class SiglusRequisitionControllerTest {
 
@@ -36,6 +42,12 @@ public class SiglusRequisitionControllerTest {
   private SiglusRequisitionController siglusRequisitionController;
 
   @Mock
+  private SiglusRequisitionService siglusRequisitionService;
+
+  @Mock
+  private SiglusArchiveProductService archiveProductService;
+
+  @Mock
   private HttpServletResponse response;
 
   @Mock
@@ -43,24 +55,40 @@ public class SiglusRequisitionControllerTest {
 
   private UUID uuid;
 
+  private BasicRequisitionDto basicRequisitionDto;
+
   @Before
   public void prepare() {
     MockitoAnnotations.initMocks(this);
     uuid = UUID.randomUUID();
+    basicRequisitionDto = new BasicRequisitionDto();
+    MinimalFacilityDto minimalFacilityDto = new MinimalFacilityDto();
+    minimalFacilityDto.setId(UUID.randomUUID());
+    basicRequisitionDto.setFacility(minimalFacilityDto);
   }
 
   @Test
   public void shouldCallOpenlmisControllerWhenSubmitRequisition() {
+    when(requisitionController.submitRequisition(uuid, request, response))
+        .thenReturn(basicRequisitionDto);
+
     siglusRequisitionController.submitRequisition(uuid, request, response);
 
     verify(requisitionController).submitRequisition(uuid, request, response);
+    verify(siglusRequisitionService).findLineItemOrderableIds(any());
+    verify(archiveProductService).activateArchivedProducts(any(), any());
   }
 
   @Test
   public void shouldCallOpenlmisControllerWhenAuthorizeRequisition() {
+    when(requisitionController.authorizeRequisition(uuid, request, response))
+        .thenReturn(basicRequisitionDto);
+
     siglusRequisitionController.authorizeRequisition(uuid, request, response);
 
     verify(requisitionController).authorizeRequisition(uuid, request, response);
+    verify(siglusRequisitionService).findLineItemOrderableIds(any());
+    verify(archiveProductService).activateArchivedProducts(any(), any());
   }
 
 }
