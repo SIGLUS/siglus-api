@@ -30,6 +30,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.dto.OrderableExpirationDateDto;
+import org.openlmis.requisition.domain.BaseEntity;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
@@ -51,6 +52,7 @@ import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.i18n.MessageKeys;
+import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
@@ -83,6 +85,7 @@ import org.springframework.util.CollectionUtils;
 
 @Service
 @Slf4j
+@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusRequisitionService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SiglusRequisitionService.class);
@@ -135,6 +138,8 @@ public class SiglusRequisitionService {
   @Autowired
   private FacilityTypeApprovedProductReferenceDataService
       facilityTypeApprovedProductReferenceDataService;
+
+  private RequisitionRepository requisitionRepository;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -282,6 +287,24 @@ public class SiglusRequisitionService {
 
     profiler.stop().log();
     return lineItemList;
+  }
+
+  public void deleteRequisition(UUID requisitionId) {
+    Requisition requisition = requisitionRepository.findOne(requisitionId);
+    List<UUID> ids = findLineItemIds(requisition);
+    siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
+    List<RequisitionLineItemExtension> extensions = ids.isEmpty() ? new ArrayList<>() :
+        lineItemExtensionRepository.findLineItems(ids);
+    if (!extensions.isEmpty()) {
+      lineItemExtensionRepository.delete(extensions);
+    }
+  }
+
+  private List<UUID> findLineItemIds(Requisition requisition) {
+    List<RequisitionLineItem> lineItems = requisition.getRequisitionLineItems();
+    return lineItems.stream()
+        .map(BaseEntity::getId)
+        .collect(Collectors.toList());
   }
 
   private Map<UUID, Integer> getOrderableBegingningMap(RequisitionTemplate requisitionTemplate,
