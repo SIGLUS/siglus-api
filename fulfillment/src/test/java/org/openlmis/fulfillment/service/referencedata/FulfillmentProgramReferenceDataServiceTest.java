@@ -38,7 +38,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
-public class FulfillmentProgramReferenceDataServiceTest extends BaseReferenceDataServiceTest<ProgramDto> {
+public class FulfillmentProgramReferenceDataServiceTest extends
+    BaseReferenceDataServiceTest<ProgramDto> {
 
   private FulfillmentProgramReferenceDataService service;
 

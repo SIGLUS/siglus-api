@@ -31,7 +31,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
-public class FulfillmentRightReferenceDataServiceTest extends BaseReferenceDataServiceTest<RightDto> {
+public class FulfillmentRightReferenceDataServiceTest extends
+    BaseReferenceDataServiceTest<RightDto> {
 
   @Override
   protected BaseReferenceDataService<RightDto> getService() {
@@ -52,7 +53,8 @@ public class FulfillmentRightReferenceDataServiceTest extends BaseReferenceDataS
     rightDto.setName(name);
 
     RightDto[] rights = new RightDto[]{rightDto};
-    FulfillmentRightReferenceDataService service = (FulfillmentRightReferenceDataService) prepareService();
+    FulfillmentRightReferenceDataService service =
+        (FulfillmentRightReferenceDataService) prepareService();
     ResponseEntity<RightDto[]> response = mock(ResponseEntity.class);
 
     // when
@@ -86,7 +88,8 @@ public class FulfillmentRightReferenceDataServiceTest extends BaseReferenceDataS
     String name = "testRight";
 
     RightDto[] rights = new RightDto[0];
-    FulfillmentRightReferenceDataService service = (FulfillmentRightReferenceDataService) prepareService();
+    FulfillmentRightReferenceDataService service =
+        (FulfillmentRightReferenceDataService) prepareService();
     ResponseEntity<RightDto[]> response = mock(ResponseEntity.class);
 
     // when

@@ -25,7 +25,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 @Service
-public class FulfillmentPeriodReferenceDataService extends BaseReferenceDataService<ProcessingPeriodDto> {
+public class FulfillmentPeriodReferenceDataService extends
+    BaseReferenceDataService<ProcessingPeriodDto> {
 
   private static final String START_DATE = "startDate";
   private static final String END_DATE = "endDate";

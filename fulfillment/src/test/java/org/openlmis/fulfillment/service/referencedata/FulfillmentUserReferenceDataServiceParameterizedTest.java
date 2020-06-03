@@ -83,7 +83,8 @@ public class FulfillmentUserReferenceDataServiceParameterizedTest
    * @param facility  UUID of facility
    * @param warehouse UUID of facility
    */
-  public FulfillmentUserReferenceDataServiceParameterizedTest(UUID program, UUID facility, UUID warehouse) {
+  public FulfillmentUserReferenceDataServiceParameterizedTest(UUID program, UUID facility,
+      UUID warehouse) {
     this.program = program;
     this.facility = facility;
     this.warehouse = warehouse;
@@ -117,7 +118,8 @@ public class FulfillmentUserReferenceDataServiceParameterizedTest
   private void executeHasRightEndpoint(UUID user, UUID right, UUID program, UUID facility,
                                        UUID warehouse, boolean expectedValue) {
     // given
-    FulfillmentUserReferenceDataService service = (FulfillmentUserReferenceDataService) prepareService();
+    FulfillmentUserReferenceDataService service =
+        (FulfillmentUserReferenceDataService) prepareService();
     ResponseEntity<ResultDto> response = mock(ResponseEntity.class);
 
     // when

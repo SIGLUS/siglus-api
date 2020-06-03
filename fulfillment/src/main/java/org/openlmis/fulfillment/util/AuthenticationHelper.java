@@ -18,10 +18,10 @@ package org.openlmis.fulfillment.util;
 import static org.openlmis.fulfillment.i18n.MessageKeys.USER_NOT_FOUND;
 
 import java.util.UUID;
-import org.openlmis.fulfillment.service.referencedata.RightDto;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentRightReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.RightDto;
+import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
