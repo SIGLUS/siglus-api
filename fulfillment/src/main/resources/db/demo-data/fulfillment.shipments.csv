@@ -1,7 +1,0 @@
-id,orderId,shippedDate,shippedById,extraData,notes
-cf07c382-5239-4bba-83fd-bc6d4240e9a6,35e5059a-fd92-4078-a448-b00402b3fb5b,2016-04-30T16:45:22,a337ec45-31a0-4f2b-9b2e-a105c4b669bb,{"external":"true"},"demo data"
-bbd01dae-d080-43d2-bbe9-7a9de83ee660,5edbb162-721d-4abb-adbf-09ab6130d8e6,2016-06-13T12:22:20,a337ec45-31a0-4f2b-9b2e-a105c4b669bb,{"external":"true"},"demo data"
-d356fa76-9553-42a4-80b8-444f417949d4,90ddacf9-2280-4e8c-80f7-4e2e0251f8f3,2016-06-15T12:00:00,a337ec45-31a0-4f2b-9b2e-a105c4b669bb,{"external":"true"},"demo data"
-967e2c6b-749e-4467-9990-d087e272170d,ec49baf1-fb6c-4bbc-ad5e-54fff70115a2,2016-06-21T17:17:17,a337ec45-31a0-4f2b-9b2e-a105c4b669bb,{"external":"true"},"demo data"
-1674cc66-ac8c-11e9-a2a3-2a2ae2dbcce4,35e5059b-fd92-4078-a448-b00402b3fb5c,2016-06-21T17:17:17,a337ec45-31a0-4f2b-9b2e-a105c4b669bb,{"external":"true"},"demo data"
-642ffec2-acb3-11e9-a2a3-2a2ae2dbcce4,35e5059c-fd92-4078-a448-b00402b3fb5d,2016-06-21T17:17:17,a337ec45-31a0-4f2b-9b2e-a105c4b669bb,{"external":"true"},"demo data"

@@ -1,1 +1,0 @@
-ALTER TABLE transfer_properties RENAME CONSTRAINT uk_sprkvmtubsjd58jc0afdycmiy TO transfer_properties_facility_id_unique;
