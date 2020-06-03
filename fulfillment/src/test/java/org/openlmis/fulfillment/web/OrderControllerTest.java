@@ -51,11 +51,11 @@ import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.service.ExporterBuilder;
 import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.fulfillment.service.ShipmentService;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
-import org.openlmis.fulfillment.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.UserReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
 import org.openlmis.fulfillment.testutils.UpdateDetailsDataBuilder;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.util.DateHelper;
@@ -77,7 +77,7 @@ public class OrderControllerTest {
   private DateHelper dateHelper;
 
   @Mock
-  private ProgramReferenceDataService programReferenceDataService;
+  private FulfillmentProgramReferenceDataService programReferenceDataService;
 
   @Mock
   private OrderService orderService;
@@ -101,16 +101,16 @@ public class OrderControllerTest {
   private ExporterBuilder exporterBuilder;
 
   @Mock
-  private FacilityReferenceDataService facilities;
+  private FulfillmentFacilityReferenceDataService facilities;
 
   @Mock
-  private ProgramReferenceDataService programs;
+  private FulfillmentProgramReferenceDataService programs;
 
   @Mock
-  private PeriodReferenceDataService periods;
+  private FulfillmentPeriodReferenceDataService periods;
 
   @Mock
-  private UserReferenceDataService users;
+  private FulfillmentUserReferenceDataService users;
 
   @Mock
   private ShipmentService shipmentService;

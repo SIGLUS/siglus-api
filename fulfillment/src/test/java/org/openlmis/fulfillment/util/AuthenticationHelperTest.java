@@ -34,9 +34,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.service.referencedata.RightDto;
-import org.openlmis.fulfillment.service.referencedata.RightReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentRightReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
-import org.openlmis.fulfillment.service.referencedata.UserReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -45,10 +45,10 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 public class AuthenticationHelperTest {
 
   @Mock
-  private UserReferenceDataService userReferenceDataService;
+  private FulfillmentUserReferenceDataService userReferenceDataService;
 
   @Mock
-  private RightReferenceDataService rightReferenceDataService;
+  private FulfillmentRightReferenceDataService rightReferenceDataService;
 
   @InjectMocks
   private AuthenticationHelper authenticationHelper;

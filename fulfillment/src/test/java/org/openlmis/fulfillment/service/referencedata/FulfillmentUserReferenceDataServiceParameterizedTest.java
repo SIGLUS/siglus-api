@@ -47,7 +47,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
 @RunWith(Parameterized.class)
-public class UserReferenceDataServiceParameterizedTest
+public class FulfillmentUserReferenceDataServiceParameterizedTest
     extends BaseReferenceDataServiceTest<UserDto> {
 
   private static final String URI_QUERY_NAME = "name";
@@ -55,7 +55,7 @@ public class UserReferenceDataServiceParameterizedTest
 
   @Override
   protected BaseReferenceDataService<UserDto> getService() {
-    return new UserReferenceDataService();
+    return new FulfillmentUserReferenceDataService();
   }
 
   @Override
@@ -83,7 +83,7 @@ public class UserReferenceDataServiceParameterizedTest
    * @param facility  UUID of facility
    * @param warehouse UUID of facility
    */
-  public UserReferenceDataServiceParameterizedTest(UUID program, UUID facility, UUID warehouse) {
+  public FulfillmentUserReferenceDataServiceParameterizedTest(UUID program, UUID facility, UUID warehouse) {
     this.program = program;
     this.facility = facility;
     this.warehouse = warehouse;
@@ -117,7 +117,7 @@ public class UserReferenceDataServiceParameterizedTest
   private void executeHasRightEndpoint(UUID user, UUID right, UUID program, UUID facility,
                                        UUID warehouse, boolean expectedValue) {
     // given
-    UserReferenceDataService service = (UserReferenceDataService) prepareService();
+    FulfillmentUserReferenceDataService service = (FulfillmentUserReferenceDataService) prepareService();
     ResponseEntity<ResultDto> response = mock(ResponseEntity.class);
 
     // when

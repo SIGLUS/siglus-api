@@ -25,8 +25,8 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE;
-import static org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS_MANAGE;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SHIPMENTS_EDIT;
 
 import java.util.UUID;
 import org.junit.Before;
@@ -38,8 +38,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.ProofOfDeliveryDataBuilder;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
-import org.openlmis.fulfillment.service.PermissionService;
-import org.openlmis.fulfillment.service.ProofOfDeliveryService;
+import org.openlmis.fulfillment.service.FulfillmentPermissionService;
+import org.openlmis.fulfillment.service.FulfillmentProofOfDeliveryService;
 import org.openlmis.fulfillment.service.referencedata.PermissionStringDto;
 import org.openlmis.fulfillment.service.referencedata.PermissionStrings;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
@@ -51,13 +51,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ProofOfDeliveryServiceTest {
+public class FulfillmentProofOfDeliveryServiceTest {
 
   @Mock
   private AuthenticationHelper authenticationHelper;
 
   @Mock
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @Mock
   private ProofOfDeliveryRepository proofOfDeliveryRepository;
@@ -66,7 +66,7 @@ public class ProofOfDeliveryServiceTest {
   private PermissionStrings.Handler permissionStringsHandler;
 
   @InjectMocks
-  private ProofOfDeliveryService proofOfDeliveryService;
+  private FulfillmentProofOfDeliveryService proofOfDeliveryService;
 
   private ProofOfDelivery proofOfDelivery = new ProofOfDeliveryDataBuilder().build();
   private Pageable pageable = new PageRequest(0, 10);

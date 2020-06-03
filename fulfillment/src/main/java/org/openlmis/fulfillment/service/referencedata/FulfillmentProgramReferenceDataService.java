@@ -15,40 +15,41 @@
 
 package org.openlmis.fulfillment.service.referencedata;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.UUID;
 import org.openlmis.fulfillment.service.request.RequestParameters;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 @Service
-public class RightReferenceDataService extends BaseReferenceDataService<RightDto> {
+public class FulfillmentProgramReferenceDataService extends BaseReferenceDataService<ProgramDto> {
 
   @Override
   protected String getUrl() {
-    return "/api/rights/";
+    return "/api/programs/";
   }
 
   @Override
-  protected Class<RightDto> getResultClass() {
-    return RightDto.class;
+  protected Class<ProgramDto> getResultClass() {
+    return ProgramDto.class;
   }
 
   @Override
-  protected Class<RightDto[]> getArrayResultClass() {
-    return RightDto[].class;
+  protected Class<ProgramDto[]> getArrayResultClass() {
+    return ProgramDto[].class;
   }
 
   /**
-   * Find a correct right by the provided name.
+   * Finds programs by their ids.
    *
-   * @param name right name
-   * @return right related with the name or {@code null}.
+   * @param ids ids to look for.
+   * @return a page of programs
    */
-  public RightDto findRight(String name) {
-    List<RightDto> rights = new ArrayList<>(
-        findAll("search", RequestParameters.init().set("name", name)));
-    return rights.isEmpty() ? null : rights.get(0);
+  public Collection<ProgramDto> findByIds(Collection<UUID> ids) {
+    if (CollectionUtils.isEmpty(ids)) {
+      return Collections.emptyList();
+    }
+    return findAll("", RequestParameters.init().set("id", ids));
   }
-
 }
-

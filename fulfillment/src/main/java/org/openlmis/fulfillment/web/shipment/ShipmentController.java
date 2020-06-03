@@ -36,10 +36,10 @@ import org.openlmis.fulfillment.domain.UpdateDetails;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.repository.ShipmentDraftRepository;
 import org.openlmis.fulfillment.repository.ShipmentRepository;
-import org.openlmis.fulfillment.service.PermissionService;
+import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.service.ShipmentService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
-import org.openlmis.fulfillment.service.stockmanagement.StockEventStockManagementService;
+import org.openlmis.fulfillment.service.stockmanagement.FulfillmentStockEventStockManagementService;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.fulfillment.util.Pagination;
@@ -95,10 +95,10 @@ public class ShipmentController extends BaseController {
   private DateHelper dateHelper;
 
   @Autowired
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @Autowired
-  private StockEventStockManagementService stockEventService;
+  private FulfillmentStockEventStockManagementService stockEventService;
 
   @Autowired
   private StockEventBuilder stockEventBuilder;

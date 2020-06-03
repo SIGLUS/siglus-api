@@ -28,12 +28,12 @@ import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.StatusChange;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.BaseReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.UserReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
 import org.openlmis.fulfillment.web.util.StatusChangeDto;
 import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,19 +44,19 @@ import org.springframework.stereotype.Service;
 public class ExporterBuilder {
 
   @Autowired
-  private FacilityReferenceDataService facilities;
+  private FulfillmentFacilityReferenceDataService facilities;
 
   @Autowired
-  private ProgramReferenceDataService programs;
+  private FulfillmentProgramReferenceDataService programs;
 
   @Autowired
-  private UserReferenceDataService users;
+  private FulfillmentUserReferenceDataService users;
 
   @Autowired
-  private PeriodReferenceDataService periods;
+  private FulfillmentPeriodReferenceDataService periods;
 
   @Autowired
-  private OrderableReferenceDataService products;
+  private FulfillmentOrderableReferenceDataService products;
 
   @Value("${service.url}")
   private String serviceUrl;

@@ -32,7 +32,7 @@ import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
 @Service
-public class AuthService {
+public class FulfillmentAuthService {
   private static final String ACCESS_TOKEN = "access_token";
 
   @Value("${auth.server.clientId}")

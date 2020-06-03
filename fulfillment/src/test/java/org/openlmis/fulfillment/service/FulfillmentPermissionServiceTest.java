@@ -24,14 +24,14 @@ import static org.mockito.Mockito.when;
 import static org.openlmis.fulfillment.i18n.MessageKeys.ORDER_NOT_FOUND;
 import static org.openlmis.fulfillment.i18n.MessageKeys.PERMISSIONS_MISSING;
 import static org.openlmis.fulfillment.i18n.MessageKeys.PERMISSION_MISSING;
-import static org.openlmis.fulfillment.service.PermissionService.ORDERS_EDIT;
-import static org.openlmis.fulfillment.service.PermissionService.ORDERS_TRANSFER;
-import static org.openlmis.fulfillment.service.PermissionService.ORDERS_VIEW;
-import static org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE;
-import static org.openlmis.fulfillment.service.PermissionService.PODS_VIEW;
-import static org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT;
-import static org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_VIEW;
-import static org.openlmis.fulfillment.service.PermissionService.SYSTEM_SETTINGS_MANAGE;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.ORDERS_EDIT;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.ORDERS_TRANSFER;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.ORDERS_VIEW;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS_MANAGE;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS_VIEW;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SHIPMENTS_EDIT;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SHIPMENTS_VIEW;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SYSTEM_SETTINGS_MANAGE;
 import static org.openlmis.fulfillment.testutils.OAuth2AuthenticationDataBuilder.API_KEY_PREFIX;
 import static org.openlmis.fulfillment.testutils.OAuth2AuthenticationDataBuilder.SERVICE_CLIENT_ID;
 
@@ -55,7 +55,7 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.repository.ShipmentRepository;
 import org.openlmis.fulfillment.service.referencedata.RightDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
-import org.openlmis.fulfillment.service.referencedata.UserReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
 import org.openlmis.fulfillment.testutils.DtoGenerator;
 import org.openlmis.fulfillment.testutils.OAuth2AuthenticationDataBuilder;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
@@ -71,13 +71,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
-public class PermissionServiceTest {
+public class FulfillmentPermissionServiceTest {
 
   @Rule
   public final ExpectedException exception = ExpectedException.none();
 
   @Mock
-  private UserReferenceDataService userReferenceDataService;
+  private FulfillmentUserReferenceDataService userReferenceDataService;
 
   @Mock
   private AuthenticationHelper authenticationHelper;
@@ -89,7 +89,7 @@ public class PermissionServiceTest {
   private ShipmentRepository shipmentRepository;
 
   @InjectMocks
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @Mock
   private SecurityContext securityContext;

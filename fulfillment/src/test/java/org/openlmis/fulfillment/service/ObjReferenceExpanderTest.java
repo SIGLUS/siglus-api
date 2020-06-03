@@ -72,7 +72,7 @@ public class ObjReferenceExpanderTest {
   public ExpectedException expected = ExpectedException.none();
 
   @Mock
-  private AuthService authService;
+  private FulfillmentAuthService authService;
 
   @Mock
   private RestTemplate restTemplate;

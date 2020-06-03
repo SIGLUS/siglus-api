@@ -26,7 +26,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
-import static org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS_MANAGE;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -46,7 +46,7 @@ public class PermissionStringsTest {
   private static final UUID USER = randomUUID();
 
   @Mock
-  private UserReferenceDataService userReferenceDataService;
+  private FulfillmentUserReferenceDataService userReferenceDataService;
 
   @InjectMocks
   private PermissionStrings permissionStrings;

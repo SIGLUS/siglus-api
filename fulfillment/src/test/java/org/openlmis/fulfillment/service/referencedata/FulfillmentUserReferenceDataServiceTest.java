@@ -44,13 +44,13 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
-public class UserReferenceDataServiceTest extends BaseReferenceDataServiceTest<UserDto> {
+public class FulfillmentUserReferenceDataServiceTest extends BaseReferenceDataServiceTest<UserDto> {
 
-  UserReferenceDataService service;
+  FulfillmentUserReferenceDataService service;
 
   @Override
   protected BaseReferenceDataService<UserDto> getService() {
-    return new UserReferenceDataService();
+    return new FulfillmentUserReferenceDataService();
   }
 
   @Override
@@ -60,7 +60,7 @@ public class UserReferenceDataServiceTest extends BaseReferenceDataServiceTest<U
 
   @Before
   public void before() {
-    service = (UserReferenceDataService) prepareService();
+    service = (FulfillmentUserReferenceDataService) prepareService();
   }
 
   @Test

@@ -31,12 +31,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.openlmis.fulfillment.service.PermissionService.ORDERS_EDIT;
-import static org.openlmis.fulfillment.service.PermissionService.ORDERS_VIEW;
-import static org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE;
-import static org.openlmis.fulfillment.service.PermissionService.PODS_VIEW;
-import static org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT;
-import static org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_VIEW;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.ORDERS_EDIT;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.ORDERS_VIEW;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS_MANAGE;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS_VIEW;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SHIPMENTS_EDIT;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SHIPMENTS_VIEW;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -73,16 +73,16 @@ import org.openlmis.fulfillment.repository.OrderNumberConfigurationRepository;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.repository.TransferPropertiesRepository;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.PermissionStrings;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
-import org.openlmis.fulfillment.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
-import org.openlmis.fulfillment.service.referencedata.UserReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
 import org.openlmis.fulfillment.testutils.FacilityDataBuilder;
 import org.openlmis.fulfillment.testutils.OrderableDataBuilder;
 import org.openlmis.fulfillment.testutils.ProcessingPeriodDataBuilder;
@@ -110,19 +110,19 @@ public class OrderServiceTest {
   private OrderNumberConfigurationRepository orderNumberConfigurationRepository;
 
   @Mock
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
-  private ProgramReferenceDataService programReferenceDataService;
+  private FulfillmentProgramReferenceDataService programReferenceDataService;
 
   @Mock
-  private PeriodReferenceDataService periodReferenceDataService;
+  private FulfillmentPeriodReferenceDataService periodReferenceDataService;
 
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   @Mock
-  private UserReferenceDataService userReferenceDataService;
+  private FulfillmentUserReferenceDataService userReferenceDataService;
 
   @Mock
   private TransferPropertiesRepository transferPropertiesRepository;
@@ -143,7 +143,7 @@ public class OrderServiceTest {
   private ExtensionManager extensionManager;
 
   @Mock
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @Mock
   private AuthenticationHelper authenticationHelper;

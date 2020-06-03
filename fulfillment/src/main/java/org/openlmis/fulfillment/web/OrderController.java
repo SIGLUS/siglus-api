@@ -39,11 +39,11 @@ import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.Template;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.FileTemplateService;
-import org.openlmis.fulfillment.service.JasperReportsViewService;
+import org.openlmis.fulfillment.service.FulfillmentJasperReportsViewService;
 import org.openlmis.fulfillment.service.OrderCsvHelper;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.OrderService;
-import org.openlmis.fulfillment.service.PermissionService;
+import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.service.ResultDto;
 import org.openlmis.fulfillment.service.ShipmentService;
 import org.openlmis.fulfillment.service.TemplateService;
@@ -97,10 +97,10 @@ public class OrderController extends BaseController {
   private FileTemplateService fileTemplateService;
 
   @Autowired
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @Autowired
-  private JasperReportsViewService jasperReportsViewService;
+  private FulfillmentJasperReportsViewService jasperReportsViewService;
 
   @Autowired
   private TemplateService templateService;

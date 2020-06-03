@@ -34,66 +34,64 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
-import org.openlmis.fulfillment.service.PageDto;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
-public class FacilityReferenceDataServiceTest extends BaseReferenceDataServiceTest<FacilityDto> {
-  
-  FacilityReferenceDataService service;
+public class FulfillmentProgramReferenceDataServiceTest extends BaseReferenceDataServiceTest<ProgramDto> {
 
+  private FulfillmentProgramReferenceDataService service;
+
+  @Override
+  protected BaseReferenceDataService<ProgramDto> getService() {
+    return new FulfillmentProgramReferenceDataService();
+  }
+
+  @Override
+  protected ProgramDto generateInstance() {
+    return new ProgramDto();
+  }
+
+  @Override
   @Before
-  public void before() {
-    service = (FacilityReferenceDataService) prepareService();
-  }
-  
-  @Override
-  protected BaseReferenceDataService<FacilityDto> getService() {
-    return new FacilityReferenceDataService();
+  public void setUp() throws Exception {
+    super.setUp();
+    service = (FulfillmentProgramReferenceDataService) prepareService();
   }
 
-  @Override
-  protected FacilityDto generateInstance() {
-    return new FacilityDto();
-  }
-  
   @Test
-  public void shouldFindFacilitiesByIds() {
+  public void shouldFindProgramsByIds() {
     // given
     UUID id = UUID.randomUUID();
     UUID id2 = UUID.randomUUID();
     List<UUID> ids = Arrays.asList(id, id2);
 
-    FacilityDto facility = generateInstance();
-    facility.setId(id);
-    FacilityDto anotherFacility = generateInstance();
-    anotherFacility.setId(id2);
+    ProgramDto program = generateInstance();
+    program.setId(id);
+    ProgramDto anotherProgram = generateInstance();
+    anotherProgram.setId(id2);
 
     Map<String, Object> payload = new HashMap<>();
     payload.put("id", ids);
     ResponseEntity response = mock(ResponseEntity.class);
 
-    when(response.getBody()).thenReturn(
-        new PageDto<>(new PageImpl<>(Arrays.asList(facility, anotherFacility)))
-    );
+    // when
+    when(response.getBody()).thenReturn(new ProgramDto[]{program, anotherProgram});
 
     when(restTemplate.exchange(
         any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class),
-        any(ParameterizedTypeReference.class)
+        eq(service.getArrayResultClass())
     )).thenReturn(response);
 
-    Collection<FacilityDto> facilities = service.findByIds(ids);
+    Collection<ProgramDto> programs = service.findByIds(ids);
 
     // then
     verify(restTemplate).exchange(
         uriCaptor.capture(), eq(HttpMethod.GET),
-        entityCaptor.capture(), any(ParameterizedTypeReference.class)
+        entityCaptor.capture(), eq(service.getArrayResultClass())
     );
-    assertTrue(facilities.contains(facility));
-    assertTrue(facilities.contains(anotherFacility));
+    assertTrue(programs.contains(program));
+    assertTrue(programs.contains(anotherProgram));
 
     String actualUrl = uriCaptor.getValue().toString();
     assertTrue(actualUrl.startsWith(service.getServiceUrl() + service.getUrl()));
@@ -104,12 +102,12 @@ public class FacilityReferenceDataServiceTest extends BaseReferenceDataServiceTe
   }
 
   @Test
-  public void shouldReturnEmptyListWhenFindingFacilitiesWithNoIdsProvided() {
+  public void shouldReturnEmptyListWhenFindingProgramsWithNoIdsProvided() {
     // given
     checkAuth = false;
     // when
-    Collection<FacilityDto> facilities = service.findByIds(Collections.emptyList());
+    Collection<ProgramDto> programs = service.findByIds(Collections.emptyList());
     // then
-    assertThat(facilities, empty());
+    assertThat(programs, empty());
   }
 }

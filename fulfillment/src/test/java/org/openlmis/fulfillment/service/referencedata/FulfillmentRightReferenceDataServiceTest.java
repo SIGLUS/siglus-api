@@ -31,11 +31,11 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
-public class RightReferenceDataServiceTest extends BaseReferenceDataServiceTest<RightDto> {
+public class FulfillmentRightReferenceDataServiceTest extends BaseReferenceDataServiceTest<RightDto> {
 
   @Override
   protected BaseReferenceDataService<RightDto> getService() {
-    return new RightReferenceDataService();
+    return new FulfillmentRightReferenceDataService();
   }
 
   @Override
@@ -52,7 +52,7 @@ public class RightReferenceDataServiceTest extends BaseReferenceDataServiceTest<
     rightDto.setName(name);
 
     RightDto[] rights = new RightDto[]{rightDto};
-    RightReferenceDataService service = (RightReferenceDataService) prepareService();
+    FulfillmentRightReferenceDataService service = (FulfillmentRightReferenceDataService) prepareService();
     ResponseEntity<RightDto[]> response = mock(ResponseEntity.class);
 
     // when
@@ -86,7 +86,7 @@ public class RightReferenceDataServiceTest extends BaseReferenceDataServiceTest<
     String name = "testRight";
 
     RightDto[] rights = new RightDto[0];
-    RightReferenceDataService service = (RightReferenceDataService) prepareService();
+    FulfillmentRightReferenceDataService service = (FulfillmentRightReferenceDataService) prepareService();
     ResponseEntity<RightDto[]> response = mock(ResponseEntity.class);
 
     // when

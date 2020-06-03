@@ -33,9 +33,9 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.i18n.MessageService;
 import org.openlmis.fulfillment.service.notification.NotificationService;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
-import org.openlmis.fulfillment.service.referencedata.UserReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
 import org.openlmis.fulfillment.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,10 +56,10 @@ public class FulfillmentNotificationService {
   private NotificationService notificationService;
 
   @Autowired
-  private UserReferenceDataService userReferenceDataService;
+  private FulfillmentUserReferenceDataService userReferenceDataService;
 
   @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Autowired
   protected MessageService messageService;

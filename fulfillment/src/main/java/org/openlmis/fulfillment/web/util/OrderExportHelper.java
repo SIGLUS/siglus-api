@@ -28,15 +28,15 @@ import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.BaseReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
-import org.openlmis.fulfillment.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
-import org.openlmis.fulfillment.service.referencedata.UserReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -49,19 +49,19 @@ public class OrderExportHelper {
   private static final XLogger XLOGGER = XLoggerFactory.getXLogger(OrderExportHelper.class);
 
   @Autowired
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Autowired
-  private ProgramReferenceDataService programReferenceDataService;
+  private FulfillmentProgramReferenceDataService programReferenceDataService;
 
   @Autowired
-  private UserReferenceDataService userReferenceDataService;
+  private FulfillmentUserReferenceDataService userReferenceDataService;
 
   @Autowired
-  private PeriodReferenceDataService periodReferenceDataService;
+  private FulfillmentPeriodReferenceDataService periodReferenceDataService;
 
   /**
    * Return list of OrderLineItemDtos for a given OrderLineItem.

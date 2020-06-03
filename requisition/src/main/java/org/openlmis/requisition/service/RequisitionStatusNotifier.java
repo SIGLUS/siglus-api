@@ -36,7 +36,7 @@ import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.UserDto;
-import org.openlmis.requisition.service.notification.NotificationService;
+import org.openlmis.requisition.service.notification.RequisitionNotificationService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
@@ -63,7 +63,7 @@ public class RequisitionStatusNotifier extends BaseNotifier {
   private FacilityReferenceDataService facilityReferenceDataService;
 
   @Autowired
-  private NotificationService notificationService;
+  private RequisitionNotificationService notificationService;
 
   @Autowired
   private UserReferenceDataService userReferenceDataService;

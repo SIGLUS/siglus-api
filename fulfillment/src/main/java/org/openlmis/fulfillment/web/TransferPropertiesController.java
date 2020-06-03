@@ -27,7 +27,7 @@ import org.openlmis.fulfillment.domain.TransferType;
 import org.openlmis.fulfillment.repository.TransferPropertiesRepository;
 import org.openlmis.fulfillment.service.ExporterBuilder;
 import org.openlmis.fulfillment.service.IncorrectTransferPropertiesException;
-import org.openlmis.fulfillment.service.PermissionService;
+import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.service.TransferPropertiesService;
 import org.openlmis.fulfillment.util.Message;
 import org.openlmis.fulfillment.web.util.TransferPropertiesDto;
@@ -64,7 +64,7 @@ public class TransferPropertiesController extends BaseController {
   private ExporterBuilder exporter;
 
   @Autowired
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @Autowired
   private FtpTransferPropertiesValidator ftpTransferPropertiesValidator;

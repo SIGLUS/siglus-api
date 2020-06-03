@@ -21,12 +21,12 @@ import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.openlmis.fulfillment.domain.OrderStatus.IN_ROUTE;
 import static org.openlmis.fulfillment.domain.OrderStatus.READY_TO_PACK;
 import static org.openlmis.fulfillment.domain.OrderStatus.TRANSFER_FAILED;
-import static org.openlmis.fulfillment.service.PermissionService.ORDERS_EDIT;
-import static org.openlmis.fulfillment.service.PermissionService.ORDERS_VIEW;
-import static org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE;
-import static org.openlmis.fulfillment.service.PermissionService.PODS_VIEW;
-import static org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT;
-import static org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_VIEW;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.ORDERS_EDIT;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.ORDERS_VIEW;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS_MANAGE;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS_VIEW;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SHIPMENTS_EDIT;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SHIPMENTS_VIEW;
 
 import java.util.Optional;
 import java.util.Set;
@@ -43,12 +43,12 @@ import org.openlmis.fulfillment.extension.point.OrderNumberGenerator;
 import org.openlmis.fulfillment.repository.OrderNumberConfigurationRepository;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.repository.TransferPropertiesRepository;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.PermissionStrings;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
-import org.openlmis.fulfillment.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.util.DateHelper;
@@ -82,13 +82,13 @@ public class OrderService {
   private OrderSender orderSender;
 
   @Autowired
-  private PeriodReferenceDataService periodService;
+  private FulfillmentPeriodReferenceDataService periodService;
 
   @Autowired
-  private ProgramReferenceDataService programReferenceDataService;
+  private FulfillmentProgramReferenceDataService programReferenceDataService;
 
   @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Autowired
   private OrderNumberConfigurationRepository orderNumberConfigurationRepository;
@@ -100,7 +100,7 @@ public class OrderService {
   private DateHelper dateHelper;
 
   @Autowired
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @Autowired
   private AuthenticationHelper authenticationHelper;

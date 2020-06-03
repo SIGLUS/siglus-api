@@ -43,7 +43,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 @RunWith(MockitoJUnitRunner.class)
-public class AuthServiceTest {
+public class FulfillmentAuthServiceTest {
   private static final String TOKEN = UUID.randomUUID().toString();
   private static final String AUTHORIZATION_URL = "http://localhost/auth/oauth/token";
   private static final URI AUTHORIZATION_URI = URI.create(
@@ -56,11 +56,11 @@ public class AuthServiceTest {
   @Captor
   private ArgumentCaptor<HttpEntity<String>> entityStringCaptor;
 
-  private AuthService authService;
+  private FulfillmentAuthService authService;
 
   @Before
   public void setUp() throws Exception {
-    authService = new AuthService();
+    authService = new FulfillmentAuthService();
     ReflectionTestUtils.setField(authService, "restTemplate", restTemplate);
 
     ReflectionTestUtils.setField(authService, "clientId", "trusted-client");

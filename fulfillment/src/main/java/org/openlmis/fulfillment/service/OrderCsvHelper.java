@@ -31,10 +31,10 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,13 +55,13 @@ public class OrderCsvHelper {
   private static final Boolean ENCLOSE_VALUES_WITH_QUOTES = false;
 
   @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Autowired
-  private PeriodReferenceDataService periodReferenceDataService;
+  private FulfillmentPeriodReferenceDataService periodReferenceDataService;
 
   @Autowired
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   @Value("${order.export.includeZeroQuantity}")
   private boolean includeZeroQuantity;

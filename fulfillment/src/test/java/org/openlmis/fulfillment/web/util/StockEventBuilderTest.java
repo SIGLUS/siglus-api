@@ -47,9 +47,9 @@ import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.ConfigurationSettingService;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.service.stockmanagement.ValidDestinationsStockManagementService;
 import org.openlmis.fulfillment.service.stockmanagement.ValidSourcesStockManagementService;
@@ -76,7 +76,7 @@ public class StockEventBuilderTest {
   public ExpectedException exception = ExpectedException.none();
 
   @Mock
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
   private ValidDestinationsStockManagementService validDestinationsStockManagementService;
@@ -88,7 +88,7 @@ public class StockEventBuilderTest {
   private ConfigurationSettingService configurationSettingService;
 
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   @Mock
   private AuthenticationHelper authenticationHelper;

@@ -38,7 +38,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
 @RunWith(MockitoJUnitRunner.class)
-public class NotificationServiceTest {
+public class RequisitionNotificationServiceTest {
   private static final String ACCESS_TOKEN = "token";
   private static final String MAIL_SUBJECT = "subject";
   private static final String MAIL_CONTENT = "Email content";
@@ -53,7 +53,7 @@ public class NotificationServiceTest {
   private RestTemplate restTemplate;
 
   @InjectMocks
-  private NotificationService notificationService;
+  private RequisitionNotificationService notificationService;
 
   @Before
   public void before() {

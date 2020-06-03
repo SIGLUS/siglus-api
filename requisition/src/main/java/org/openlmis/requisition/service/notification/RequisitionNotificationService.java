@@ -33,7 +33,7 @@ import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
 @Service
-public class NotificationService {
+public class RequisitionNotificationService {
 
   private final Logger logger = LoggerFactory.getLogger(getClass());
 

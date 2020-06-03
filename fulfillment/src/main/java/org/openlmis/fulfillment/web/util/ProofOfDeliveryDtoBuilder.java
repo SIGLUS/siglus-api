@@ -30,7 +30,7 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -42,7 +42,7 @@ public class ProofOfDeliveryDtoBuilder {
   private String serviceUrl;
 
   @Autowired
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   /**
    * Create a new list of {@link ProofOfDeliveryDto} based on data

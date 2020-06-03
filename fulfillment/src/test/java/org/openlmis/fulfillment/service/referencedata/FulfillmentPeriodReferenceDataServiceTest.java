@@ -48,14 +48,14 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
-public class PeriodReferenceDataServiceTest
+public class FulfillmentPeriodReferenceDataServiceTest
     extends BaseReferenceDataServiceTest<ProcessingPeriodDto> {
 
-  private PeriodReferenceDataService service;
+  private FulfillmentPeriodReferenceDataService service;
 
   @Override
   protected BaseReferenceDataService<ProcessingPeriodDto> getService() {
-    return new PeriodReferenceDataService();
+    return new FulfillmentPeriodReferenceDataService();
   }
 
   @Override
@@ -67,7 +67,7 @@ public class PeriodReferenceDataServiceTest
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    service = (PeriodReferenceDataService) prepareService();
+    service = (FulfillmentPeriodReferenceDataService) prepareService();
   }
 
   @Test

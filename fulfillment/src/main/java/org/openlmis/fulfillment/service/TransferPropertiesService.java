@@ -21,7 +21,7 @@ import org.openlmis.fulfillment.ShipmentContextRunner;
 import org.openlmis.fulfillment.domain.TransferProperties;
 import org.openlmis.fulfillment.domain.TransferType;
 import org.openlmis.fulfillment.repository.TransferPropertiesRepository;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +32,7 @@ public class TransferPropertiesService {
   private TransferPropertiesRepository transferPropertiesRepository;
 
   @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Autowired
   private ShipmentContextRunner shipmentContextRunner;

@@ -35,8 +35,8 @@ import org.openlmis.fulfillment.domain.FileTemplate;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.FulfillmentException;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,7 +47,7 @@ public class ShipmentLineItemBuilder {
   private static final String LINE_ITEM = "lineItem";
 
   @Autowired
-  private OrderableReferenceDataService orderableService;
+  private FulfillmentOrderableReferenceDataService orderableService;
 
   /**
    * Builds shipment line item objects from parsed CSV data.

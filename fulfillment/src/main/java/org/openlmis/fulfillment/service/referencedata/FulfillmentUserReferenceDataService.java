@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 @Service
-public class UserReferenceDataService extends BaseReferenceDataService<UserDto> {
+public class FulfillmentUserReferenceDataService extends BaseReferenceDataService<UserDto> {
 
   @Override
   protected String getUrl() {

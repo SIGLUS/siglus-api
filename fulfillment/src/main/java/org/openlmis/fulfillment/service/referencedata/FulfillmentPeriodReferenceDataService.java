@@ -15,41 +15,61 @@
 
 package org.openlmis.fulfillment.service.referencedata;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.openlmis.fulfillment.service.request.RequestParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 @Service
-public class ProgramReferenceDataService extends BaseReferenceDataService<ProgramDto> {
+public class FulfillmentPeriodReferenceDataService extends BaseReferenceDataService<ProcessingPeriodDto> {
+
+  private static final String START_DATE = "startDate";
+  private static final String END_DATE = "endDate";
 
   @Override
   protected String getUrl() {
-    return "/api/programs/";
+    return "/api/processingPeriods/";
   }
 
   @Override
-  protected Class<ProgramDto> getResultClass() {
-    return ProgramDto.class;
+  protected Class<ProcessingPeriodDto> getResultClass() {
+    return ProcessingPeriodDto.class;
   }
 
   @Override
-  protected Class<ProgramDto[]> getArrayResultClass() {
-    return ProgramDto[].class;
+  protected Class<ProcessingPeriodDto[]> getArrayResultClass() {
+    return ProcessingPeriodDto[].class;
   }
 
   /**
-   * Finds programs by their ids.
+   * Gets filtered Processing Periods by start date and end date.
+   *
+   * @param startDate filter start date value
+   * @param endDate   filter end date value
+   * @return a list of filtered Processing Periods
+   */
+  public List<ProcessingPeriodDto> search(LocalDate startDate, LocalDate endDate) {
+    return getPage(
+        RequestParameters.init()
+            .set(START_DATE, startDate)
+            .set(END_DATE, endDate))
+        .getContent();
+  }
+
+  /**
+   * Finds periods by their ids.
    *
    * @param ids ids to look for.
-   * @return a page of programs
+   * @return a page of periods
    */
-  public Collection<ProgramDto> findByIds(Collection<UUID> ids) {
+  public List<ProcessingPeriodDto> findByIds(Collection<UUID> ids) {
     if (CollectionUtils.isEmpty(ids)) {
       return Collections.emptyList();
     }
-    return findAll("", RequestParameters.init().set("id", ids));
+    return getPage(RequestParameters.init().set("id", ids)).getContent();
   }
 }

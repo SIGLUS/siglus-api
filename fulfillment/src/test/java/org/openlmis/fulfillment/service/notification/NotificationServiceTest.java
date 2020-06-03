@@ -36,7 +36,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.service.AuthService;
+import org.openlmis.fulfillment.service.FulfillmentAuthService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -53,7 +53,7 @@ public class NotificationServiceTest {
   private static final String NOTIFICATION_URL = BASE_URL + "/api/notifications";
 
   @Mock
-  private AuthService authService;
+  private FulfillmentAuthService authService;
 
   @Mock
   private RestTemplate restTemplate;

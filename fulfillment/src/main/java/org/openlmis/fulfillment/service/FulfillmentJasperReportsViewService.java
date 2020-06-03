@@ -48,7 +48,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.jasperreports.JasperReportsMultiFormatView;
 
 @Service
-public class JasperReportsViewService {
+public class FulfillmentJasperReportsViewService {
 
   @Autowired
   private DataSource replicationDataSource;

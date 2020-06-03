@@ -19,7 +19,7 @@ import java.util.Iterator;
 import javax.validation.Valid;
 import org.openlmis.fulfillment.domain.OrderNumberConfiguration;
 import org.openlmis.fulfillment.repository.OrderNumberConfigurationRepository;
-import org.openlmis.fulfillment.service.PermissionService;
+import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.web.util.OrderNumberConfigurationDto;
 import org.openlmis.fulfillment.web.validator.OrderNumberConfigurationValidator;
 import org.slf4j.Logger;
@@ -51,7 +51,7 @@ public class OrderNumberConfigurationController extends BaseController {
   private OrderNumberConfigurationValidator validator;
 
   @Autowired
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @InitBinder
   protected void initBinder(final WebDataBinder binder) {

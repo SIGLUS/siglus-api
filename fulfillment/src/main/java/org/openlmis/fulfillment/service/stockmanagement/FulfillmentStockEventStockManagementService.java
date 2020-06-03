@@ -34,11 +34,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 
 @Service
-public class StockEventStockManagementService
+public class FulfillmentStockEventStockManagementService
     extends BaseStockManagementService<StockEventDto> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(
-          StockEventStockManagementService.class);
+          FulfillmentStockEventStockManagementService.class);
 
   @Autowired
   private ObjectMapper objectMapper;

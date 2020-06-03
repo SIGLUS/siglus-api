@@ -35,7 +35,7 @@ import org.openlmis.fulfillment.domain.FileTemplate;
 import org.openlmis.fulfillment.domain.TemplateType;
 import org.openlmis.fulfillment.service.FulfillmentException;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.testutils.OrderableDataBuilder;
 import org.openlmis.fulfillment.util.FileColumnKeyPath;
 import org.powermock.api.mockito.PowerMockito;
@@ -58,7 +58,7 @@ public class ShipmentLineItemBuilderTest {
   private static final Long VERSION_NUMBER = 1L;
 
   @Mock
-  OrderableReferenceDataService orderableReferenceDataService;
+  FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   FileTemplate template;
 

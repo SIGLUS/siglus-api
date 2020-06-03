@@ -40,7 +40,7 @@ import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.UpdateDetails;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -51,7 +51,7 @@ public class ExporterBuilderTest {
   private static final String SERVICE_URL = "localhost";
 
   @Mock
-  private OrderableReferenceDataService products;
+  private FulfillmentOrderableReferenceDataService products;
 
   @InjectMocks
   private ExporterBuilder exportBuilder;

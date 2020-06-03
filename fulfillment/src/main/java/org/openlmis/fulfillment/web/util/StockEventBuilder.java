@@ -30,9 +30,9 @@ import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.ConfigurationSettingService;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.stockmanagement.ValidDestinationsStockManagementService;
 import org.openlmis.fulfillment.service.stockmanagement.ValidSourceDestinationsStockManagementService;
 import org.openlmis.fulfillment.service.stockmanagement.ValidSourcesStockManagementService;
@@ -56,7 +56,7 @@ public class StockEventBuilder {
   private static final Logger LOGGER = LoggerFactory.getLogger(StockEventBuilder.class);
 
   @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Autowired
   private ValidDestinationsStockManagementService validDestinationsStockManagementService;
@@ -71,7 +71,7 @@ public class StockEventBuilder {
   private AuthenticationHelper authenticationHelper;
 
   @Autowired
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   @Autowired
   private DateHelper dateHelper;

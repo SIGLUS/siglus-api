@@ -20,7 +20,7 @@ import static org.openlmis.fulfillment.service.notification.NotificationChannelD
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import org.openlmis.fulfillment.service.AuthService;
+import org.openlmis.fulfillment.service.FulfillmentAuthService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.service.request.RequestHeaders;
 import org.openlmis.fulfillment.service.request.RequestHelper;
@@ -39,7 +39,7 @@ public class NotificationService {
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Autowired
-  private AuthService authService;
+  private FulfillmentAuthService authService;
 
   @Value("${notification.url}")
   private String notificationUrl;

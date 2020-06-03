@@ -17,9 +17,9 @@ package org.openlmis.fulfillment.service;
 
 import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE;
-import static org.openlmis.fulfillment.service.PermissionService.PODS_VIEW;
-import static org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS_MANAGE;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS_VIEW;
+import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SHIPMENTS_EDIT;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -40,15 +40,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ProofOfDeliveryService {
+public class FulfillmentProofOfDeliveryService {
 
-  private static final XLogger XLOGGER = XLoggerFactory.getXLogger(ProofOfDeliveryService.class);
+  private static final XLogger XLOGGER = XLoggerFactory.getXLogger(
+      FulfillmentProofOfDeliveryService.class);
 
   @Autowired
   private AuthenticationHelper authenticationHelper;
 
   @Autowired
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @Autowired
   private ProofOfDeliveryRepository proofOfDeliveryRepository;

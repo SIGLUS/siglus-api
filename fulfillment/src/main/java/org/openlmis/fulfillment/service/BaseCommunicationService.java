@@ -52,7 +52,7 @@ public abstract class BaseCommunicationService<T> {
   protected RestOperations restTemplate = new RestTemplate();
 
   @Autowired
-  protected AuthService authService;
+  protected FulfillmentAuthService authService;
 
   @Value("${request.maxUrlLength}")
   private int maxUrlLength;

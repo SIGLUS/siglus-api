@@ -44,10 +44,10 @@ import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.TemplateType;
 import org.openlmis.fulfillment.service.referencedata.DispensableDto;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -68,13 +68,13 @@ public class OrderCsvHelperTest {
   private static final String PRODUCT = "Product";
 
   @Mock
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
-  private PeriodReferenceDataService periodReferenceDataService;
+  private FulfillmentPeriodReferenceDataService periodReferenceDataService;
 
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   @InjectMocks
   private OrderCsvHelper orderCsvHelper;

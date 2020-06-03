@@ -33,7 +33,7 @@ import org.openlmis.fulfillment.domain.ShipmentDraft;
 import org.openlmis.fulfillment.domain.UpdateDetails;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.repository.ShipmentDraftRepository;
-import org.openlmis.fulfillment.service.PermissionService;
+import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.util.DateHelper;
@@ -82,7 +82,7 @@ public class ShipmentDraftController extends BaseController {
   private ShipmentDraftDtoBuilder draftDtoBuilder;
 
   @Autowired
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @Autowired
   private AuthenticationHelper authenticationHelper;

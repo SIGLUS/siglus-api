@@ -39,7 +39,7 @@ import org.openlmis.fulfillment.domain.TransferProperties;
 import org.openlmis.fulfillment.domain.TransferType;
 import org.openlmis.fulfillment.repository.TransferPropertiesRepository;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
-import org.openlmis.fulfillment.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TransferPropertiesServiceTest {
@@ -48,7 +48,7 @@ public class TransferPropertiesServiceTest {
   private TransferPropertiesRepository transferPropertiesRepository;
 
   @Mock
-  private FacilityReferenceDataService facilityReferenceDataService;
+  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
   private ShipmentContextRunner shipmentContextRunner;

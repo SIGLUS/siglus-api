@@ -37,14 +37,14 @@ import org.openlmis.fulfillment.util.DynamicPageTypeReference;
 import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 import org.springframework.http.HttpMethod;
 
-public class OrderableReferenceDataServiceTest
+public class FulfillmentOrderableReferenceDataServiceTest
     extends BaseReferenceDataServiceTest<OrderableDto> {
 
-  private OrderableReferenceDataService service;
+  private FulfillmentOrderableReferenceDataService service;
 
   @Override
   protected BaseReferenceDataService<OrderableDto> getService() {
-    return new OrderableReferenceDataService();
+    return new FulfillmentOrderableReferenceDataService();
   }
 
   @Override
@@ -57,7 +57,7 @@ public class OrderableReferenceDataServiceTest
   public void setUp() throws Exception {
     super.setUp();
 
-    service = (OrderableReferenceDataService) prepareService();
+    service = (FulfillmentOrderableReferenceDataService) prepareService();
   }
 
   @Test

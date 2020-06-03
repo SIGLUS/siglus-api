@@ -37,7 +37,7 @@ public class PermissionStrings {
   private final Map<UUID, Handler> handlers = Maps.newConcurrentMap();
 
   @Autowired
-  private UserReferenceDataService userReferenceDataService;
+  private FulfillmentUserReferenceDataService userReferenceDataService;
 
   public Handler forUser(UUID user) {
     return handlers.computeIfAbsent(user, Handler::new);

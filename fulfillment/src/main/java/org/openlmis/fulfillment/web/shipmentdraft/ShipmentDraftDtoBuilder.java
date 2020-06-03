@@ -29,7 +29,7 @@ import org.openlmis.fulfillment.domain.ShipmentDraft;
 import org.openlmis.fulfillment.domain.ShipmentDraftLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +43,7 @@ public class ShipmentDraftDtoBuilder {
   private String serviceUrl;
 
   @Autowired
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   /**
    * Create a new list of {@link ShipmentDraftDto} based on data

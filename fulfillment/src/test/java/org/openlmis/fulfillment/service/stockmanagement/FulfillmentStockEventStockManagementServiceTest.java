@@ -45,23 +45,23 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 
-public class StockEventStockManagementServiceTest
+public class FulfillmentStockEventStockManagementServiceTest
     extends BaseCommunicationServiceTest<StockEventDto> {
 
   @Mock
   private ObjectMapper objectMapper;
 
-  private StockEventStockManagementService service;
+  private FulfillmentStockEventStockManagementService service;
 
   @Before
   public void setUp() {
-    service = (StockEventStockManagementService) prepareService();
+    service = (FulfillmentStockEventStockManagementService) prepareService();
     ReflectionTestUtils.setField(service, "objectMapper", objectMapper);
   }
 
   @Override
   protected BaseCommunicationService getService() {
-    return new StockEventStockManagementService();
+    return new FulfillmentStockEventStockManagementService();
   }
 
   @Override

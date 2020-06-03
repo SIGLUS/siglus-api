@@ -22,7 +22,7 @@ import org.openlmis.fulfillment.domain.FileTemplate;
 import org.openlmis.fulfillment.domain.TemplateType;
 import org.openlmis.fulfillment.repository.FileTemplateRepository;
 import org.openlmis.fulfillment.service.FileTemplateService;
-import org.openlmis.fulfillment.service.PermissionService;
+import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.web.util.FileTemplateDto;
 import org.openlmis.fulfillment.web.validator.FileTemplateValidator;
 import org.slf4j.Logger;
@@ -54,7 +54,7 @@ public class FileTemplateController extends BaseController {
   @Autowired
   private FileTemplateService fileTemplateService;
   @Autowired
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @InitBinder
   protected void initBinder(WebDataBinder binder) {

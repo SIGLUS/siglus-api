@@ -63,7 +63,7 @@ public class ObjReferenceExpander {
   }
 
   @Autowired
-  private AuthService authService;
+  private FulfillmentAuthService authService;
 
   private BeanUtilsBean beanUtils;
 

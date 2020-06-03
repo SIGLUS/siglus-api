@@ -63,7 +63,7 @@ public abstract class BaseCommunicationServiceTest<T> {
   protected RestTemplate restTemplate;
 
   @Mock
-  protected AuthService authService;
+  protected FulfillmentAuthService authService;
 
   @Mock
   @Getter

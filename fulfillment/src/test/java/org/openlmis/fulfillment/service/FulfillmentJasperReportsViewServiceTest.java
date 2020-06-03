@@ -57,8 +57,8 @@ import org.springframework.web.servlet.view.jasperreports.JasperReportsMultiForm
 @SuppressWarnings({"PMD.UnusedPrivateField"})
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(BlockJUnit4ClassRunner.class)
-@PrepareForTest({JasperReportsViewService.class})
-public class JasperReportsViewServiceTest {
+@PrepareForTest({FulfillmentJasperReportsViewService.class})
+public class FulfillmentJasperReportsViewServiceTest {
 
   private static final String FORMAT = "format";
   private static final String PDF = "pdf";
@@ -70,7 +70,7 @@ public class JasperReportsViewServiceTest {
   private ExporterBuilder exporterBuilder;
 
   @InjectMocks
-  private JasperReportsViewService viewFactory;
+  private FulfillmentJasperReportsViewService viewFactory;
 
   private Template template;
   private JasperReportsMultiFormatView jasperReportsView;

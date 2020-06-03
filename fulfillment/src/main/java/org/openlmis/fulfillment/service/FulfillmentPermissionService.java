@@ -29,7 +29,7 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.referencedata.PermissionStrings;
 import org.openlmis.fulfillment.service.referencedata.RightDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
-import org.openlmis.fulfillment.service.referencedata.UserReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentUserReferenceDataService;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.MissingPermissionException;
 import org.openlmis.fulfillment.web.ValidationException;
@@ -45,7 +45,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @SuppressWarnings("PMD.TooManyMethods")
-public class PermissionService {
+public class FulfillmentPermissionService {
   static final String ORDERS_TRANSFER = "ORDERS_TRANSFER";
   public static final String PODS_MANAGE = "PODS_MANAGE";
   public static final String PODS_VIEW = "PODS_VIEW";
@@ -56,7 +56,7 @@ public class PermissionService {
   static final String SYSTEM_SETTINGS_MANAGE = "SYSTEM_SETTINGS_MANAGE";
 
   @Autowired
-  private UserReferenceDataService userReferenceDataService;
+  private FulfillmentUserReferenceDataService userReferenceDataService;
 
   @Autowired
   private AuthenticationHelper authenticationHelper;

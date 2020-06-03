@@ -40,13 +40,13 @@ import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.service.FulfillmentNotificationService;
-import org.openlmis.fulfillment.service.JasperReportsViewService;
-import org.openlmis.fulfillment.service.PermissionService;
-import org.openlmis.fulfillment.service.ProofOfDeliveryService;
+import org.openlmis.fulfillment.service.FulfillmentJasperReportsViewService;
+import org.openlmis.fulfillment.service.FulfillmentPermissionService;
+import org.openlmis.fulfillment.service.FulfillmentProofOfDeliveryService;
 import org.openlmis.fulfillment.service.TemplateService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
-import org.openlmis.fulfillment.service.stockmanagement.StockEventStockManagementService;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
+import org.openlmis.fulfillment.service.stockmanagement.FulfillmentStockEventStockManagementService;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.fulfillment.util.Pagination;
@@ -88,7 +88,7 @@ public class ProofOfDeliveryController extends BaseController {
   private static final String CHECK_PERMISSION = "CHECK_PERMISSION";
 
   @Autowired
-  private JasperReportsViewService jasperReportsViewService;
+  private FulfillmentJasperReportsViewService jasperReportsViewService;
 
   @Autowired
   private TemplateService templateService;
@@ -100,7 +100,7 @@ public class ProofOfDeliveryController extends BaseController {
   private OrderRepository orderRepository;
 
   @Autowired
-  private PermissionService permissionService;
+  private FulfillmentPermissionService permissionService;
 
   @Autowired
   private ProofOfDeliveryDtoBuilder dtoBuilder;
@@ -115,16 +115,16 @@ public class ProofOfDeliveryController extends BaseController {
   private StockEventBuilder stockEventBuilder;
 
   @Autowired
-  private StockEventStockManagementService stockEventStockManagementService;
+  private FulfillmentStockEventStockManagementService stockEventStockManagementService;
 
   @Autowired
   private FulfillmentNotificationService fulfillmentNotificationService;
 
   @Autowired
-  private ProofOfDeliveryService proofOfDeliveryService;
+  private FulfillmentProofOfDeliveryService proofOfDeliveryService;
 
   @Autowired
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   @Value("${dateFormat}")
   private String dateFormat;

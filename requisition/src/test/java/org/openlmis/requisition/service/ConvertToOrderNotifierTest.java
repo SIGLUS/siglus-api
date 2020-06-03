@@ -40,7 +40,7 @@ import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.i18n.RequisitionMessageService;
-import org.openlmis.requisition.service.notification.NotificationService;
+import org.openlmis.requisition.service.notification.RequisitionNotificationService;
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
@@ -58,7 +58,7 @@ public class ConvertToOrderNotifierTest {
   private PeriodReferenceDataService periodReferenceDataService;
 
   @Mock
-  private NotificationService notificationService;
+  private RequisitionNotificationService notificationService;
 
   @Mock
   private UserReferenceDataService userReferenceDataService;
