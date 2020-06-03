@@ -1,0 +1,56 @@
+{ "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "FileColumnDto",
+  "description": "A single FileColumn",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "openLmisField": {
+      "type": "boolean",
+      "title": "openLmisField"
+    },
+    "dataFieldLabel": {
+      "type": "string",
+      "title": "dataFieldLabel"
+    },
+    "columnLabel": {
+      "type": "string",
+      "title": "columnLabel"
+    },
+    "include": {
+      "type": "boolean",
+      "title": "include"
+    },
+    "position": {
+      "type": "integer",
+      "title": "position"
+    },
+    "format": {
+      "type": "string",
+      "title": "format"
+    },
+    "nested": {
+      "type": "string",
+      "title": "nested"
+    },
+    "keyPath": {
+      "type": "string",
+      "title": "keyPath"
+    },
+    "related": {
+      "type": "string",
+      "title": "related"
+    },
+    "relatedKeyPath": {
+      "type": "string",
+      "title": "relatedKeyPath"
+    }
+  },
+  "required": [
+    "openLmisField",
+    "include",
+    "position"
+  ]
+}

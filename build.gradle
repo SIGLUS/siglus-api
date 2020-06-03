@@ -38,6 +38,11 @@ repositories {
 }
 
 dependencies {
+    compile project(':referencedata')
+    compile project(':stockmanagement')
+    compile project(':requisition')
+    compile project(':fulfillment')
+
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-data-rest"
     compile "org.springframework.boot:spring-boot-starter-data-jpa"
@@ -52,7 +57,6 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-data-redis:1.5.21.RELEASE'
     compile 'org.openlmis:openlmis-service-util:3.0.0'
     compile 'org.jadira.usertype:usertype.core:5.0.0.GA'
-
     compile "org.projectlombok:lombok:1.16.8"
     compile "org.postgresql:postgresql:42.0.0"
     compile "com.google.guava:guava:18.0"
@@ -65,10 +69,6 @@ dependencies {
     compile "net.sf.jasperreports:jasperreports:6.3.0"
     compile "org.slf4j:slf4j-ext:1.7.25"
     compile "com.github.tomakehurst:wiremock:1.58"
-
-    compile project(':referencedata')
-    compile project(':stockmanagement')
-    compile project(':requisition')
 
     testCompile "junit:junit"
     testCompile "org.mockito:mockito-core:1.10.19"

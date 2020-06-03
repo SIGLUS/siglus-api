@@ -1,0 +1,1077 @@
+#%RAML 0.8
+---
+title: OpenLMIS Fulfillment API
+version: "@version@"
+baseUri: "@baseUrl@"
+protocols: [ HTTP, HTTPS ]
+
+documentation:
+    - title: Getting Started
+      content: Welcome to the OpenLMIS fulfillment-service documentation.
+
+schemas:
+  - basicOrderDto: !include schemas/basicOrderDto.json
+  - basicOrderDtoPage: !include schemas/basicOrderDtoPage.json
+  - basicOrderDtoArray: |
+      {
+          "type": "array",
+          "items": {"type": "object", "$ref": "schemas/basicOrderDto.json" }
+      }
+  - orderDto: !include schemas/orderDto.json
+  - orderDtoPage: !include schemas/orderDtoPage.json
+  - orderDtoArray: |
+      {
+          "type": "array",
+          "items": {"type": "object", "$ref": "schemas/orderDto.json" }
+      }
+  - orderLineItemDto: !include schemas/orderLineItemDto.json
+  - orderLineItemDtoArray: |
+        {
+            "type": "array",
+            "items": { "type": "object", "$ref": "schemas/orderLineItemDto.json" }
+        }
+  - fileColumnDto: !include schemas/fileColumnDto.json
+  - fileTemplateDto: !include schemas/fileTemplateDto.json
+  - proofOfDeliveryDto: !include schemas/proofOfDeliveryDto.json
+  - proofOfDeliveryPage: !include schemas/proofOfDeliveryPage.json
+  - proofOfDeliveryLineItemDto: !include schemas/proofOfDeliveryLineItemDto.json
+  - proofOfDeliveryLineItemDtoArray: |
+        {
+            "type": "array",
+            "items": { "type": "object", "$ref": "schemas/proofOfDeliveryLineItemDto.json" }
+        }
+  - orderNumberConfigurationDto: !include schemas/orderNumberConfigurationDto.json
+  - templateDto: !include schemas/templateDto.json
+  - templateDtoArray: |
+        {
+            "type": "array",
+            "items": { "type": "object", "$ref": "schemas/templateDto.json" }
+        }
+  - templateParameterDto: !include schemas/templateParameterDto.json
+  - templateParameterDtoArray: |
+        {
+            "type": "array",
+            "items": { "type": "object", "$ref": "schemas/templateParameterDto.json" }
+        }
+  - transferProperties: !include schemas/transferProperties.json
+
+  - shipmentDraft: !include schemas/shipmentDraft.json
+  - shipmentDraftPage: !include schemas/shipmentDraftPage.json
+
+  - shipment: !include schemas/shipment.json
+  - shipmentPage: !include schemas/shipmentPage.json
+
+  - shipmentExample: |
+      {
+          "order": {"id": "316c9b76-c90f-4040-8d53-61277112b947"},
+          "notes": "some notes",
+          "lineItems": [{
+              "orderable": {"id": "2a3484ce-4e45-46b1-901e-19a4fd770f73"},
+              "lot": {"id": "1d16ed3d-d4e5-474d-99fc-0ece0f5ddd67"},
+              "quantityShipped": 20
+          }]
+      }
+
+  - localizedMessage: !include schemas/localizedMessage.json
+
+  - resultDto: !include schemas/resultDto.json
+
+  - badRequestResponse: |
+      {
+          "oneOf": [{
+            "type": "object",
+            "$ref": "schemas/localizedMessage.json"
+          }, {
+            "type": "array",
+            "items": { "type": "object", "$ref": "schemas/localizedMessage.json" }
+          }]
+      }
+
+  - uuidArray: |
+        {
+            "type": "array",
+            "items": { "type": "string" }
+        }
+
+  - auditLogEntryArray: |
+      {
+          "type": "array",
+          "items": { "type": "object", "$ref": "schemas/auditLogEntry.json" }
+      }
+
+traits:
+    - secured:
+        queryParameters:
+            access_token:
+                displayName: access_token
+                description: OAuth2 access token
+                type: string
+                required: false
+                repeat: false
+        headers:
+            Authorization:
+                displayName: Authorization
+                description: OAuth2 authorization token header. Takes the form of 'Bearer <token>'.
+                type: string
+                required: false
+                repeat: false
+    - paginated:
+        queryParameters:
+            page:
+                description: The page number which should be displayed. Note that the first page is numbered zero rather than one. Additionally, negative and undefined values are interpreted as zero.
+                type: integer
+                required: false
+                repeat: false
+            size:
+                description: The desired size of each page. This specifies the maximum number of values that should be returned by the server. Zero, undefined, and negative values should result in all possible values being returned.
+                type: integer
+                required: false
+                repeat: false
+    - expandable:
+        queryParameters:
+            expand:
+                description: Allows to specify which reference fields should contain an expanded representation.
+                type: string
+                required: false
+                repeat: true
+    - sorted:
+        queryParameters:
+            sort:
+                description: Sorting criteria in the format "property(,asc|desc)". Default sort order is ascending. Multiple sort criteria are supported.
+                type: string
+                required: false
+                repeat: true
+
+resourceTypes:
+    - auditLog:
+        description: This represents the audit log for all <<resourcePathName|!singularize>> resources.
+        get:
+          description: Returns all or part of the resource's audit log
+          # Although */auditLog endpoints support "page" and "number" query parameters for pagination,
+          # they don’t return the response body and set of pagination-related values used by collections
+          # of core domain resources.
+          is: [ secured, paginated ]
+          queryParameters:
+              author:
+                  displayName: author
+                  description: UUID of the author of changes which should be returned. By default, all changes are returned regardless of author.
+                  type: string
+                  required: false
+                  repeat: false
+              changedPropertyName:
+                  displayName: changedPropertyName
+                  description: The name of the property about which changes should be returned. If null or empty, changes associated with any and all properties are returned.
+                  type: string
+                  required: false
+                  repeat: false
+          responses:
+              200:
+                body:
+                  application/json:
+                    schema: auditLogEntryArray
+                    example: |
+                      [
+                        {
+                          "changeType": "ValueChange",
+                          "globalId": {
+                            "entity": "org.openlmis.SomeClass",
+                            "cdoId": 1
+                          },
+                          "commitMetadata": {
+                            "author": "SomeUserName",
+                            "properties": [],
+                            "commitDate": "2016-12-17T19:39:57.621",
+                            "id": 3
+                          },
+                          "property": "PropertyName",
+                          "left": "OldValue",
+                          "right": "NewValue"
+                        }
+                      ]
+              403:
+                body:
+                  application/json:
+                    schema: localizedMessage
+              404:
+                description: The specified <<resourcePathName|!singularize>> does not exist.
+                body:
+                  application/json:
+                    schema: localizedMessage
+
+    - instanceAuditLog:
+        description: This represents the audit log for a specified instance of the <<resourcePathName|!singularize>> resource.
+        type: auditLog
+        uriParameters:
+            id:
+                type: string
+                required: true
+                repeat: false
+
+    - collection:
+        get:
+            is: [ secured ]
+            responses:
+                200:
+                  description: Collection retrieved succesfully
+                  body:
+                      application/json:
+                          schema: <<schema>>
+                404:
+                  description: Collection is empty.
+        post:
+            is: [ secured ]
+            body:
+                application/json:
+                    schema: <<schema>>
+            responses:
+                201:
+                  description: Item created succesfully
+                  body:
+                      application/json:
+                          schema: <<schema>>
+    - member:
+        get:
+            is: [ secured ]
+            responses:
+                200:
+                    body:
+                        application/json:
+                            schema: <<schema>>
+        post:
+            is: [ secured ]
+            body:
+                application/json:
+                    schema: <<schema>>
+            responses:
+                200:
+                    body:
+                        application/json:
+                            schema: <<schema>>
+        delete:
+            is: [ secured ]
+            responses:
+                200:
+
+/api:
+  /orders:
+      displayName: Order
+      get:
+          is: [ secured, paginated, sorted ]
+          description: >
+              Get all orders. This endpoint requires one of the following rights: ORDERS_EDIT,
+              ORDERS_VIEW, SHIPMENT_EDIT, SHIPMENT_VIEW (for supplying facility) POD_MANAGE,
+              POD_VIEW (for requesting facility)
+          queryParameters:
+              supplyingFacilityId:
+                  displayName: supplyingFacility
+                  description: supplyingFacility ID
+                  type: string
+                  required: false
+                  repeat: false
+              requestingFacilityId:
+                  displayName: requestingFacility
+                  description: requestingFacility ID
+                  type: string
+                  required: false
+                  repeat: false
+              programId:
+                  displayName: program
+                  description: program ID
+                  type: string
+                  required: false
+                  repeat: false
+              processingPeriodId:
+                  displayName: processingPeriod
+                  description: processingPeriod ID
+                  type: string
+                  required: false
+                  repeat: false
+              status:
+                  displayName: status
+                  description: Order status
+                  type: string
+                  required: false
+                  repeat: true
+                  enum:
+                      - ORDERED
+                      - FULFILLING
+                      - SHIPPED
+                      - RECEIVED
+                      - TRANSFER_FAILED
+                      - IN_ROUTE
+                      - READY_TO_PACK
+              periodStartDate:
+                  displayName: periodStartDate
+                  type: string
+                  required: false
+                  repeat: false
+              periodEndDate:
+                  displayName: periodEndDate
+                  type: string
+                  required: false
+                  repeat: false
+          responses:
+              200:
+                  body:
+                    application/json:
+                      schema: basicOrderDtoPage
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+              404:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+      post:
+          is: [ secured ]
+          description: Creates new order. This endpoint requires ORDERS_EDIT right.
+          body:
+              application/json:
+                schema: orderDto
+          responses:
+              201:
+                  body:
+                    application/json:
+                      schema: orderDto
+              409:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured, expandable ]
+              description: >
+                  Get chosen order. This endpoint requires one of the following rights: ORDERS_EDIT,
+                  ORDERS_VIEW, SHIPMENT_EDIT, SHIPMENT_VIEW (for supplying facility) POD_MANAGE,
+                  POD_VIEW (for requesting facility)
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: orderDto
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  404:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+          /export:
+              get:
+                  is: [ secured ]
+                  description: >
+                      Export Order to csv. This endpoint requires one of the following rights:
+                      ORDERS_EDIT, ORDERS_VIEW, SHIPMENT_EDIT, SHIPMENT_VIEW (for supplying
+                      facility) POD_MANAGE, POD_VIEW (for requesting facility)
+                  queryParameters:
+                      type:
+                          displayName: type
+                          type: string
+                          required: false
+                          default: csv
+                          repeat: false
+                  responses:
+                    200:
+                      headers:
+                        Content-Disposition:
+                      body:
+                        text/csv:
+                    400:
+                      body:
+                        application/json:
+                    403:
+                        body:
+                          application/json:
+                            schema: localizedMessage
+                    404:
+                      body:
+                        application/json:
+          /retry:
+              get:
+                  is: [ secured ]
+                  description: Manually retry for transferring order file via FTP after updating or checking the FTP transfer properties.
+                  responses:
+                    200:
+                      body:
+                        application/json:
+                          schema: resultDto
+                    404:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                    400:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+      /{id}/print:
+          uriParameters:
+              id:
+                  displayName: orderId
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured ]
+              description: >
+                  Print all order line items from an order to a csv or pdf file. This endpoint
+                  requires one of the following rights: ORDERS_EDIT, ORDERS_VIEW, SHIPMENT_EDIT,
+                  SHIPMENT_VIEW (for supplying facility) POD_MANAGE, POD_VIEW (for requesting
+                  facility)
+              queryParameters:
+                  format:
+                      displayName: format
+                      type: string
+                      required: true
+                      repeat: false
+              responses:
+                  200:
+                      headers:
+                        Content-Disposition:
+                      body:
+                        application/pdf:
+                        text/csv:
+                  404:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+      /batch:
+          post:
+              is: [ secured ]
+              description: Creates multiple new orders in one transaction. This endpoint requires ORDERS_EDIT right.
+              body:
+                  application/json:
+                    schema: orderDtoArray
+              responses:
+                  201:
+                      body:
+                        application/json:
+                          schema: basicOrderDtoArray
+                  409:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+      /requestingFacilities:
+          get:
+              is: [ secured ]
+              description: Return UUIDs of all the available, distinct requesting facilities. The supplying facility when provided, it will also filter the available requesting facilities by the supplying facility of the order.
+              queryParameters:
+                  supplyingFacilityId:
+                      displayName: supplyingFacilityId
+                      description: supplying facility ID
+                      type: string
+                      required: false
+                      repeat: true
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: uuidArray
+
+  /orderNumberConfigurations:
+      displayName: OrderNumberConfiguration
+      get:
+          is: [ secured ]
+          description: Get OrderNumberConfiguration.
+          responses:
+              200:
+                  body:
+                    application/json:
+                      schema: orderNumberConfigurationDto
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+              404:
+      post:
+          is: [ secured ]
+          description: Create or Update OrderNumberConfiguration.
+          body:
+              application/json:
+                schema: orderNumberConfigurationDto
+          responses:
+            200:
+              body:
+                application/json:
+                  schema: orderNumberConfigurationDto
+            400:
+              body:
+                application/json:
+            403:
+              body:
+                application/json:
+                  schema: localizedMessage
+  /proofsOfDelivery:
+      displayName: Proof Of Delivery
+      get:
+          is: [ secured, paginated ]
+          description: >
+              Get proofs of delivery page. This endpoint requires one of the following rights:
+              PODS_MANAGE, PODS_VIEW (for requesting facility), SHIPMENTS_EDIT (for supplying
+              facility)
+          queryParameters:
+              orderId:
+                  displayName: orderId
+                  description: order ID
+                  type: string
+                  required: false
+                  repeat: false
+              shipmentId:
+                  displayName: shipmentId
+                  description: shipment ID
+                  type: string
+                  required: false
+                  repeat: false
+          responses:
+              200:
+                  body:
+                    application/json:
+                      schema: proofOfDeliveryPage
+              400:
+                  body:
+                      application/json:
+                          schema: badRequestResponse
+              404:
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured, expandable ]
+              description: >
+                  Get chosen proofOfDelivery. This endpoint requires one of the following rights:
+                  PODS_MANAGE, PODS_VIEW (for requesting facility), SHIPMENTS_EDIT (for supplying
+                  facility)
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: proofOfDeliveryDto
+                  404:
+                      body:
+                          application/json:
+                              schema: localizedMessage
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+          put:
+              is: [ secured ]
+              description: Update existing proofOfDelivery. This endpoint requires PODS_MANAGE right.
+              body:
+                  application/json:
+                    schema: proofOfDeliveryDto
+              responses:
+                  200:
+                      body:
+                          application/json:
+                              schema: proofOfDeliveryDto
+                  400:
+                      body:
+                          application/json:
+                              schema: badRequestResponse
+                  404:
+                      body:
+                          application/json:
+                              schema: localizedMessage
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+      /{id}/print:
+          uriParameters:
+                id:
+                    displayName: proofOfDeliveryId
+                    type: string
+                    required: true
+                    repeat: false
+          get:
+              is: [ secured ]
+              description: >
+                  Print proof of delivery to a pdf file. This endpoint requires one of the
+                  following rights: PODS_MANAGE, PODS_VIEW (for requesting facility),
+                  SHIPMENTS_EDIT (for supplying facility)
+              responses:
+                  200:
+                      body:
+                        application/pdf:
+                  400:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+      /{id}/auditLog:
+          type: instanceAuditLog
+  /fileTemplates:
+      displayName: FileTemplate
+      get:
+          is: [ secured ]
+          description: Get File Template.
+          queryParameters:
+              templateType:
+                  displayName: templateType
+                  description: Template Type
+                  type: string
+                  required: false
+                  repeat: false
+          responses:
+              200:
+                  body:
+                    application/json:
+                      schema: fileTemplateDto
+              404:
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+      put:
+          is: [ secured ]
+          description: Update fileTemplate.
+          body:
+              application/json:
+                schema: fileTemplateDto
+          responses:
+              200:
+                  body:
+                    application/json:
+                      schema: fileTemplateDto
+              400:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+  /proofOfDeliveryTemplates:
+      displayName: Proof of delivery report template.
+      post:
+            is: [ secured ]
+            description: Save Proof Of Delivery report template in database.
+            body:
+                multipart/form-data:
+                  formParameters:
+                      file:
+                           displayName: Template with .jrxml format
+                           type: file
+                           required: false
+                           repeat: false
+            responses:
+                200:
+                403:
+                    body:
+                      application/json:
+                        schema: localizedMessage
+      get:
+            is: [ secured ]
+            description: Download Proof Of Delivery report template with jrxml format.
+            responses:
+                200:
+                    body:
+                      application/xml:
+                403:
+                    body:
+                      application/json:
+                        schema: localizedMessage
+                404:
+                    body:
+                      application/json:
+  /reports/templates/fulfillment:
+      displayName: Report Template
+      post:
+            is: [ secured ]
+            description: Add report template to database.
+            body:
+                multipart/form-data:
+                  formParameters:
+                      file:
+                           displayName: Template with .jrxml format
+                           type: file
+                           required: false
+                           repeat: false
+                      name:
+                           displayName: Name of Template in database
+                           type: string
+                           required: false
+                           repeat: false
+                      description:
+                           displayName: Descryption of Template
+                           type: string
+                           required: false
+                           repeat: false
+            responses:
+                200:
+                400:
+                    body:
+                      application/json:
+                        schema: localizedMessage
+      get:
+          is: [ secured ]
+          description: Get all templates.
+          responses:
+              200:
+                  body:
+                    application/json:
+                      schema: templateDtoArray
+              404:
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: Delete chosen template.
+              responses:
+                  204:
+                  404:
+          get:
+              is: [ secured ]
+              description: Get chosen template.
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: templateDto
+                  404:
+          put:
+              is: [ secured ]
+              description: Update existing template.
+              body:
+                  application/json:
+                    schema: templateDto
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: templateDto
+  /transferProperties:
+      displayName: Transfer properties for facilities.
+      post:
+          is: [ secured ]
+          description: Creates new transfer properties.
+          body:
+              application/json:
+                schema: transferProperties
+          responses:
+              201:
+                  body:
+                    application/json:
+                      schema: transferProperties
+              400:
+                  body:
+                      application/json:
+                          schema: badRequestResponse
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+              409:
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          delete:
+              is: [ secured ]
+              description: Delete chosen transfer properties.
+              responses:
+                  204:
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  404:
+                  409:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+          get:
+              is: [ secured ]
+              description: Get chosen transfer properties.
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: transferProperties
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  404:
+          put:
+              is: [ secured ]
+              description: Update existing transfer properties.
+              body:
+                  application/json:
+                    schema: transferProperties
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: transferProperties
+                  400:
+                      body:
+                          application/json:
+                            schema: badRequestResponse
+                  404:
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+      /search:
+          get:
+              is: [ secured ]
+              description: Find transfer properties by facility id.
+              queryParameters:
+                  facility:
+                      displayName: facility
+                      description: facility ID
+                      type: string
+                      required: true
+                      repeat: false
+                  transferType:
+                      displayName: transferType
+                      description: Transfer Type with default value of ORDER.
+                      type: string
+                      required: false
+                      repeat: false
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: transferProperties
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  404:
+  /shipmentDrafts:
+      post:
+          is: [ secured ]
+          description: Create a shipment draft. Only one draft can exist in the system for a given order. This endpoint requires SHIPMENT_EDIT right.
+          body:
+              application/json:
+                schema: shipmentDraft
+          responses:
+              201:
+                  description: Draft created.
+                  body:
+                    application/json:
+                      schema: shipmentDraft
+                      example: shipmentExample
+              400:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+              401:
+                  body:
+                    application/json:
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+      get:
+          is: [ secured, paginated ]
+          description: Get shipment drafts. This endpoint requires SHIPMENT_VIEW or SHIPMENT_EDIT rights.
+          queryParameters:
+              orderId:
+                  displayName: orderId
+                  description: order ID
+                  type: string
+                  required: true
+                  repeat: false
+          responses:
+              200:
+                  body:
+                    application/json:
+                      schema: shipmentDraftPage
+              400:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+              401:
+                  body:
+                    application/json:
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          put:
+              is: [ secured ]
+              description: Create or update shipment draft. This endpoint requires SHIPMENT_EDIT right.
+              body:
+                  application/json:
+                    schema: shipmentDraft
+                    example: shipmentExample
+              responses:
+                  200:
+                      description: Draft saved.
+                      body:
+                        application/json:
+                          schema: shipmentDraft
+                          example: shipmentExample
+                  400:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  401:
+                      body:
+                        application/json:
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+          get:
+              is: [ secured, expandable ]
+              description: Get chosen shipment draft. This endpoint requires SHIPMENT_VIEW or SHIPMENT_EDIT rights.
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: shipmentDraft
+                  401:
+                      body:
+                        application/json:
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  404:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+          delete:
+              is: [ secured ]
+              description: Delete chosen shipment draft. This endpoint requires SHIPMENT_EDIT right.
+              responses:
+                  204:
+                  401:
+                      body:
+                        application/json:
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  404:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+
+  /shipments:
+      post:
+          is: [ secured ]
+          description: Create a shipment. This endpoint requires SHIPMENT_EDIT right.
+          body:
+              application/json:
+                  schema: shipment
+                  example: shipmentExample
+          responses:
+              201:
+                  description: Shipment created.
+                  body:
+                    application/json:
+                      schema: shipment
+              400:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+              401:
+                  body:
+                    application/json:
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+      get:
+          is: [ secured, paginated ]
+          description: Get shipments page. This endpoint requires SHIPMENT_VIEW or SHIPMENT_EDIT rights.
+          queryParameters:
+              orderId:
+                  displayName: orderId
+                  description: order ID
+                  type: string
+                  required: true
+                  repeat: false
+          responses:
+              200:
+                  body:
+                    application/json:
+                      schema: shipmentPage
+              400:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+              401:
+                  body:
+                    application/json:
+              403:
+                  body:
+                    application/json:
+                      schema: localizedMessage
+      /{id}:
+          uriParameters:
+              id:
+                  displayName: id
+                  type: string
+                  required: true
+                  repeat: false
+          get:
+              is: [ secured, expandable ]
+              description: Get chosen shipment. This endpoint requires SHIPMENT_VIEW or SHIPMENT_EDIT rights.
+              responses:
+                  200:
+                      body:
+                        application/json:
+                          schema: shipment
+                  401:
+                      body:
+                        application/json:
+                  403:
+                      body:
+                        application/json:
+                          schema: localizedMessage
+                  404:
+                      body:
+                        application/json:
+                          schema: localizedMessage

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ This program is part of the OpenLMIS logistics management information system platform software.
+  ~ Copyright © 2017 VillageReach
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms
+  ~ of the GNU Affero General Public License as published by the Free Software Foundation, either
+  ~ version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU Affero General Public License for more details. You should have received a copy of
+  ~ the GNU Affero General Public License along with this program. If not, see
+  ~ http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:int="http://www.springframework.org/schema/integration"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xmlns:int-sftp="http://www.springframework.org/schema/integration/sftp"
+  xmlns:tx="http://www.springframework.org/schema/tx"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/integration
+    http://www.springframework.org/schema/integration/spring-integration.xsd
+    http://www.springframework.org/schema/integration/sftp
+    http://www.springframework.org/schema/integration/sftp/spring-integration-sftp.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+  <context:component-scan base-package="org.openlmis.fulfillment.service.shipment"/>
+  <context:property-placeholder/>
+  <tx:annotation-driven/>
+
+
+  <bean id="ftpClientFactory"
+    class="org.springframework.integration.ftp.session.DefaultFtpSessionFactory">
+    <property name="host" value="${host}"/>
+    <property name="port" value="${port}"/>
+    <property name="username" value="${user}"/>
+    <property name="password" value="${password}"/>
+  </bean>
+
+  <int-sftp:inbound-channel-adapter id="ftpInboundAdapter"
+    channel="inboundShipmentFileChannel"
+    session-factory="ftpClientFactory"
+    filename-pattern="*.csv"
+    auto-create-local-directory="true"
+    delete-remote-files="true"
+    remote-directory="${remote.incoming.directory}"
+    local-directory="${local.directory}">
+    <int:poller max-messages-per-poll="10" fixed-rate="${shipment.polling.rate}"/>
+  </int-sftp:inbound-channel-adapter>
+
+  <int:service-activator input-channel="inboundShipmentFileChannel"
+    ref="shipmentMessageHandler" method="process"
+  />
+
+  <int:channel id="outboundShipmentFileArchiveChannel"
+    datatype="java.io.File"/>
+
+  <int-sftp:outbound-channel-adapter
+    channel="outboundShipmentFileArchiveChannel"
+    remote-directory="${remote.archive.directory}"
+    auto-create-directory="true"
+    id="archiveFtpAdapter"
+    remote-filename-generator="shipmentArchiveFileNameGenerator"
+    session-factory="ftpClientFactory">
+    <int-sftp:request-handler-advice-chain>
+      <int:retry-advice max-attempts="10"/>
+    </int-sftp:request-handler-advice-chain>
+  </int-sftp:outbound-channel-adapter>
+
+  <int-sftp:outbound-channel-adapter id="ftpErrorAdaptor"
+    session-factory="ftpClientFactory"
+    auto-create-directory="true"
+    channel="errorChannel"
+    remote-directory="${remote.error.directory}"
+    remote-filename-generator="shipmentArchiveFileNameGenerator">
+    <int-sftp:request-handler-advice-chain>
+      <int:retry-advice max-attempts="10"/>
+    </int-sftp:request-handler-advice-chain>
+  </int-sftp:outbound-channel-adapter>
+
+</beans>

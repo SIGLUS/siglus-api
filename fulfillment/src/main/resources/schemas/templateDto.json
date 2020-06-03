@@ -1,0 +1,44 @@
+{ "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "TemplateDto",
+  "description": "A single template",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "data": {
+      "type": ["array", "null"],
+      "title": "data",
+      "items": {
+        "type": "integer"
+      },
+      "uniqueItems": false
+    },
+    "templateParameters": {
+      "type": ["array", "null"],
+      "title": "templateParameters",
+      "items": {
+        "type": "object",
+        "$ref": "templateParameterDto.json"
+      },
+      "uniqueItems": false
+    },
+    "type": {
+      "type": ["string", "null"],
+      "title": "type"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "title": "description"
+    }
+  } ,
+  "required": [
+    "id",
+    "name"
+  ]
+}

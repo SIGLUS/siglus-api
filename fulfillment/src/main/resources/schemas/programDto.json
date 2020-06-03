@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "ProgramDto",
+  "description": "A single programDto",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "title": "description"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "active"
+    },
+    "periodsSkippable": {
+      "type": "boolean",
+      "title": "periodsSkippable"
+    },
+    "showNonFullSupplyTab": {
+      "type": "boolean",
+      "title": "showNonFullSupplyTab"
+    }
+  },
+  "required": [
+    "id",
+    "code",
+    "name",
+    "active",
+    "periodsSkippable",
+    "showNonFullSupplyTab"
+  ]
+}

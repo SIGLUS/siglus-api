@@ -1,0 +1,78 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "FacilityDto",
+  "description": "A single facilityDto",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "title": "description"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "active"
+    },
+    "goLiveDate": {
+      "type": ["string", "null"],
+      "title": "goLiveDate"
+    },
+    "goDownDate": {
+      "type": ["string", "null"],
+      "title": "goDownDate"
+    },
+    "comment": {
+      "type": ["string", "null"],
+      "title": "comment"
+    },
+    "enabled": {
+      "type": "boolean",
+      "title": "enabled"
+    },
+    "openLmisAccessible": {
+      "type": ["boolean", "null"],
+      "title": "openLmisAccessible"
+    },
+    "supportedPrograms": {
+      "type": ["array", "null"],
+      "title": "supportedPrograms",
+      "items": {
+        "type": "object",
+        "$ref": "programDto.json"
+      },
+      "uniqueItems": false
+    },
+    "geographicZone": {
+      "type": "object",
+      "$ref": "geographicZoneDto.json",
+      "title": "geographicZone"
+    },
+    "operator": {
+      "type": "object",
+      "$ref": "facilityOperatorDto.json",
+      "title": "operator"
+    },
+    "type": {
+      "type": "object",
+      "$ref": "facilityTypeDto.json",
+      "title": "type"
+    }
+  },
+  "required": [
+    "id",
+    "code",
+    "name",
+    "active"
+  ]
+}

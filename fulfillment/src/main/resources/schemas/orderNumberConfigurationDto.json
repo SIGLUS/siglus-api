@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "OrderNumberConfigurationDto",
+  "description": "A single orderNumberConfiguration describing how orders number will look like",
+  "properties": {
+    "id": {
+      "type": ["string", "null"],
+      "title": "id"
+    },
+    "orderNumberPrefix": {
+      "type": "string",
+      "title": "orderNumberPrefix"
+    },
+    "includeOrderNumberPrefix": {
+      "type": "boolean",
+      "title": "includeOrderNumberPrefix"
+    },
+    "includeProgramCode": {
+      "type": "boolean",
+      "title": "includeProgramCode"
+    },
+    "includeTypeSuffix": {
+      "type": "boolean",
+      "title": "includeTypeSuffix"
+    }
+  } ,
+  "required": [
+    "includeOrderNumberPrefix",
+    "includeProgramCode",
+    "includeTypeSuffix"
+  ]
+}

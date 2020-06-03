@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "TemplateParameterDto",
+  "description": "A single templateParameter for template object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "displayName": {
+      "type": "string",
+      "title": "displayName"
+    },
+    "defaultValue": {
+      "type": "string",
+      "title": "defaultValue"
+    },
+    "dataType": {
+      "type": "string",
+      "title": "dataType"
+    },
+    "selectSql": {
+      "type": "string",
+      "title": "selectSql"
+    },
+    "description": {
+      "type": "string",
+      "title": "description"
+    }
+  },
+  "required": [
+    "id",
+    "template"
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "id": 122205,
+  "num_rows": 100000,
+  "file_format": "csv",
+  "name": "100k orders",
+  "include_header": true,
+  "columns": [
+    {
+      "name": "id",
+      "null_percentage": 0,
+      "type": "GUID",
+      "formula": ""
+    },
+    {
+      "name": "externalId",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "Requisitions5k",
+      "column": "id",
+      "selectionStyle": "random",
+      "formula": ""
+    },
+    {
+      "name": "emergency",
+      "null_percentage": 0,
+      "type": "Boolean",
+      "formula": ""
+    },
+    {
+      "name": "createdDate",
+      "null_percentage": 0,
+      "type": "Date",
+      "min": "7/5/2017",
+      "max": "7/5/2018",
+      "format": "%Y-%m-%dT%H:%M:%SZ",
+      "formula": ""
+    },
+    {
+      "name": "createdBy",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "UsersBasic",
+      "column": "id",
+      "selectionStyle": "random",
+      "formula": ""
+    },
+    {
+      "name": "facilityId",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "Facilities",
+      "column": "id",
+      "selectionStyle": "random",
+      "formula": ""
+    },
+    {
+      "name": "programId",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "Programs2",
+      "column": "id",
+      "selectionStyle": "random",
+      "formula": ""
+    },
+    {
+      "name": "processingPeriodId",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "ProcessingPeriods",
+      "column": "id",
+      "selectionStyle": "random",
+      "formula": ""
+    },
+    {
+      "name": "requestingFacilityId",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "Facilities",
+      "column": "id",
+      "selectionStyle": "random",
+      "formula": ""
+    },
+    {
+      "name": "receivingFacilityId",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "Facilities",
+      "column": "id",
+      "selectionStyle": "random",
+      "formula": ""
+    },
+    {
+      "name": "supplyingFacilityId",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "Facilities",
+      "column": "id",
+      "selectionStyle": "random",
+      "formula": ""
+    },
+    {
+      "name": "orderCode",
+      "null_percentage": 0,
+      "type": "Password",
+      "formula": ""
+    },
+    {
+      "name": "status",
+      "null_percentage": 0,
+      "type": "Custom List",
+      "values": [
+        "RECEIVED",
+        "IN_ROUTE",
+        "READY_TO_PACK"
+      ],
+      "selectionStyle": "random",
+      "distribution": null,
+      "formula": ""
+    },
+    {
+      "name": "lastUpdatedDate",
+      "null_percentage": 0,
+      "type": "Date",
+      "min": "7/5/2017",
+      "max": "7/5/2018",
+      "format": "%Y-%m-%dT%H:%M:%SZ",
+      "formula": ""
+    },
+    {
+      "name": "lastUpdaterId",
+      "null_percentage": 0,
+      "type": "Dataset Column",
+      "dataset": "UsersBasic",
+      "column": "id",
+      "selectionStyle": "random",
+      "formula": ""
+    }
+  ]
+}

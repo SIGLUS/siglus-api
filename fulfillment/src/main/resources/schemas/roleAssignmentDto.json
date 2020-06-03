@@ -1,0 +1,27 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Role Assignment",
+  "description": "A single role assignment",
+  "properties": {
+    "roleId": {
+      "type": "string",
+      "title": "roleId"
+    },
+    "programCode": {
+      "type": "string",
+      "title": "programCode"
+    },
+    "supervisoryNodeCode": {
+      "type": "string",
+      "title": "supervisoryNodeCode"
+    },
+    "warehouseCode": {
+      "type": "string",
+      "title": "warehouseCode"
+    }
+  },
+  "required": [
+    "roleId"
+  ]
+}

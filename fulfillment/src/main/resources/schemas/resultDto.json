@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Result",
+  "description": "Object that contain result of some actions",
+  "properties": {
+    "result": {
+      "type": [
+        "array",
+        "boolean",
+        "number",
+        "object",
+        "string"
+      ],
+      "title": "result"
+    }
+  },
+  "required": [
+    "result"
+  ]
+}

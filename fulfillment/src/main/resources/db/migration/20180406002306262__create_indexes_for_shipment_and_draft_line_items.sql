@@ -1,0 +1,6 @@
+CREATE INDEX shipment_line_items_shipmentid_idx ON shipment_line_items (shipmentid);
+CLUSTER shipment_line_items USING shipment_line_items_shipmentid_idx;
+
+CREATE INDEX shipment_draft_line_items_shipmentdraftid_idx ON shipment_draft_line_items
+  (shipmentdraftid);
+CLUSTER shipment_draft_line_items USING shipment_draft_line_items_shipmentdraftid_idx;

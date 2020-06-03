@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "OrderLineItemDto",
+  "description": "A single orderLineItem representing ordered product",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "orderable": {
+      "type": "object",
+      "title": "orderable",
+      "$ref": "orderableDto.json"
+    },
+    "orderedQuantity": {
+      "type": "integer",
+      "description": "Ordered quantity in packs",
+      "title": "orderedQuantity"
+    },
+    "totalDispensingUnits": {
+      "type": "integer",
+      "description": "Ordered quantity in dispensing units (number of packs multiplied by net content)",
+      "title": "orderedQuantity"
+    }
+  },
+  "required": [
+    "id",
+    "orderable",
+    "orderedQuantity"
+  ]
+}

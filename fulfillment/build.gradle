@@ -1,0 +1,98 @@
+import java.time.Instant
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+plugins {
+    id "org.flywaydb.flyway"
+    id "org.sonarqube"
+    id "com.moowork.node"
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'spring-boot'
+apply plugin: 'checkstyle'
+apply plugin: 'jacoco'
+apply plugin: 'pmd'
+
+group = serviceGroup
+version = serviceVersion
+archivesBaseName = rootProject.name
+project.ext.buildTime = Instant.now().toString() // for versioning
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { url "http://jaspersoft.artifactoryonline.com/jaspersoft/third-party-ce-artifacts/" }
+    maven { url "http://jasperreports.sourceforge.net/maven2/" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+}
+
+dependencies {
+    compile "org.springframework.boot:spring-boot-starter-web"
+    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    compile "org.projectlombok:lombok:1.16.8"
+    compile "org.postgresql:postgresql:42.0.0"
+    compile "org.springframework:spring-test"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate4"
+    compile "net.sf.supercsv:super-csv-dozer:2.4.0"
+    compile "org.springframework.boot:spring-boot-starter-security"
+    compile "org.springframework.security.oauth:spring-security-oauth2"
+    compile "org.springframework.integration:spring-integration-ftp"
+    compile "org.springframework.integration:spring-integration-sftp"
+    compile "org.springframework.integration:spring-integration-file"
+    compile "org.springframework.integration:spring-integration-core"
+    compile "net.sf.jasperreports:jasperreports:6.3.0"
+    compile "net.sf.jasperreports:jasperreports-fonts:4.0.0"
+    compile "com.lowagie:itext:2.1.7"
+    compile "org.olap4j:olap4j:1.2.0"
+    compile 'commons-io:commons-io:2.4'
+    compile 'org.springframework:spring-context-support'
+    compile 'commons-jxpath:commons-jxpath:1.3'
+    compile 'org.webjars.npm:api-console:3.0.17'
+    compile 'org.apache.camel:camel-core:2.18.0'
+    compile 'org.apache.camel:camel-spring:2.18.0'
+    compile 'org.apache.camel:camel-ftp:2.18.0'
+    compile 'org.openlmis:openlmis-service-util:3.1.0'
+    compile 'org.flywaydb:flyway-core:4.0.3'
+    compile 'org.hibernate:hibernate-java8'
+    compile 'org.apache.commons:commons-collections4:4.1'
+    compile 'org.apache.commons:commons-lang3:3.5'
+    compile 'org.apache.commons:commons-csv:1.4'
+    compile 'org.javers:javers-spring-boot-starter-sql:2.8.2'
+    compile "org.slf4j:slf4j-ext:1.7.25"
+
+    testCompile 'io.rest-assured:rest-assured:3.0.0'
+    testCompile 'io.rest-assured:json-schema-validator:3.0.0'
+    testCompile 'io.rest-assured:spring-mock-mvc:3.0.0'
+    testCompile "com.jayway.restassured:rest-assured:2.7.0"
+
+    testCompile "org.springframework.boot:spring-boot-starter-test"
+    testCompile "guru.nidi.raml:raml-tester:0.8.9"
+    testCompile "junit:junit"
+    testCompile "org.mockito:mockito-core:1.+"
+    testCompile "org.powermock:powermock-api-mockito:1.6.5"
+    testCompile "org.powermock:powermock-module-junit4:1.6.5"
+    testCompile "nl.jqno.equalsverifier:equalsverifier:2.4"
+    testCompile "be.joengenduvel.java.verifiers:to-string:1.0.2"
+    testCompile "com.github.tomakehurst:wiremock:1.58"
+}
+
+checkstyle {
+    toolVersion = "8.12"
+}
+
+pmd {
+    toolVersion = '5.4.0'
+    consoleOutput= true
+    ignoreFailures = false
+    ruleSetFiles = files("config/pmd/ruleset.xml")
+    reportsDir = file("build/reports/pmd")
+}

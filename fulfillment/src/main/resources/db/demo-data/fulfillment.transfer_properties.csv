@@ -1,0 +1,8 @@
+id,facilityId,type,protocol,username,password,serverHost,serverPort,remoteDirectory,localDirectory,passiveMode,transferType
+5f028911-2683-4343-83e7-48434cd6b7a2,e6799d64-d10d-4011-b8c2-0e4d4a3f65ce,ftp,FTP,admin,p@ssw0rd,ftp,21,/orders/files/csv/HC01,/var/lib/openlmis/fulfillment/orders/HC01,true,ORDER
+b8f940de-3f01-4e56-b164-8b9651ecd38e,13037147-1769-4735-90a7-b9b310d128b8,ftp,FTP,admin,p@ssw0rd,ftp,21,/orders/files/csv/DH01,/var/lib/openlmis/fulfillment/orders/DH01,true,ORDER
+ce88d3b1-0518-42fb-8fc1-e47ad80c7134,19121381-9f3d-4e77-b9e5-d3f59fc1639e,ftp,FTP,admin,p@ssw0rd,ftp,21,/orders/files/csv/W01,/var/lib/openlmis/fulfillment/orders/W01,true,ORDER
+643c433a-91fe-4373-85f1-2db751d5be06,44a29ccb-ed55-4c26-9eca-7e5759269b25,ftp,FTP,admin,p@ssw0rd,ftp,21,/orders/files/csv/FAC003,/var/lib/openlmis/fulfillment/orders/FAC003,true,ORDER
+312247e0-7c31-4b6c-b35c-1868e5a19742,ab95f1cf-ae8d-4888-ba9d-05141d3f50de,ftp,FTP,admin,p@ssw0rd,ftp,21,/orders/files/csv/FAC004,/var/lib/openlmis/fulfillment/orders/FAC004,true,ORDER
+30a4f6e9-a169-44fa-821d-0e430b9f13c6,9318b2ea-9ae0-42b2-a7e1-353683f54000,ftp,FTP,admin,p@ssw0rd,ftp,21,/orders/files/csv/WH02,/var/lib/openlmis/fulfillment/orders/WH02,true,ORDER
+3b0dadc6-d92a-11e8-9f8b-f2801f1b9fd1,9318b2ea-9ae0-42b2-a7e1-353683f54000,ftp,FTP,admin,p@ssw0rd,ftp,21,/shipments/files/csv/WH02,/var/lib/openlmis/fulfillment/shipment/WH02,true,SHIPMENT

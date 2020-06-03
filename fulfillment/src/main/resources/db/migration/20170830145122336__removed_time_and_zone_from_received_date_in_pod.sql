@@ -1,0 +1,1 @@
+ALTER TABLE proof_of_deliveries ALTER COLUMN receiveddate TYPE date;

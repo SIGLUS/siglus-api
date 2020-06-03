@@ -1,0 +1,7 @@
+id,shipmentId,deliveredBy,receivedBy,receivedDate,status
+b204aa9e-5c95-4962-b418-571dbdf7796e,cf07c382-5239-4bba-83fd-bc6d4240e9a6,"Delivery Guy",Receiver,2016-05-01,CONFIRMED
+f384f067-e9e8-4360-92f5-63d1e04d58a0,bbd01dae-d080-43d2-bbe9-7a9de83ee660,"Delivery Guy",Receiver,2016-06-14,INITIATED
+f02e1b11-87c8-4809-ae86-ebefa2867ca2,d356fa76-9553-42a4-80b8-444f417949d4,"Delivery Guy",Receiver,2016-06-16,INITIATED
+b47d3586-2daa-4251-bd82-15b14e57bac2,967e2c6b-749e-4467-9990-d087e272170d,"Delivery Guy",Receiver,2016-06-22,INITIATED
+363e865e-ac8c-11e9-a2a3-2a2ae2dbcceF,1674cc66-ac8c-11e9-a2a3-2a2ae2dbcce4,"Delivery Guy",Receiver,2016-06-22,INITIATED
+43206bb8-acb3-11e9-a2a3-2a2ae2dbcce4,642ffec2-acb3-11e9-a2a3-2a2ae2dbcce4,"Delivery Guy",Receiver,2016-06-22,INITIATED

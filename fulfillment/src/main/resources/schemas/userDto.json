@@ -1,0 +1,66 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "User",
+  "description": "A single user",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "username": {
+      "type": "string",
+      "title": "username"
+    },
+    "firstName": {
+      "type": "string",
+      "title": "firstName"
+    },
+    "lastName": {
+      "type": "string",
+      "title": "lastName"
+    },
+    "email": {
+      "type": "string",
+      "title": "email"
+    },
+    "timezone": {
+      "type": "string",
+      "title": "timezone"
+    },
+    "homeFacility": {
+      "type": "object",
+      "$ref": "facilityDto.json",
+      "title": "homeFacility"
+    },
+    "verified": {
+      "type": "boolean",
+      "title": "verified"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "active"
+    },
+    "roleAssignments": {
+      "type": ["array", "null"],
+      "title": "roleAssignments",
+      "items": {
+        "type": "object",
+        "$ref": "roleAssignmentDto.json"
+      },
+      "uniqueItems": false
+    },
+    "extraData": {
+      "type": "object",
+      "title": "extraData"
+    }
+  },
+  "required": [
+    "username",
+    "firstName",
+    "lastName",
+    "email",
+    "verified",
+    "active"
+  ]
+}
