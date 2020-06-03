@@ -59,8 +59,8 @@ import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.testutils.UpdateDetailsDataBuilder;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.util.FulfillmentDateHelper;
-import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
+import org.openlmis.fulfillment.web.util.OrderDto;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
 

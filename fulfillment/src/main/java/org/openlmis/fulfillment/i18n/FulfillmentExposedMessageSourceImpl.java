@@ -24,8 +24,8 @@ import org.springframework.context.support.ReloadableResourceBundleMessageSource
 import org.springframework.stereotype.Component;
 
 @Component
-public class FulfillmentExposedMessageSourceImpl extends ReloadableResourceBundleMessageSource implements
-    ExposedMessageSource {
+public class FulfillmentExposedMessageSourceImpl extends ReloadableResourceBundleMessageSource
+    implements ExposedMessageSource {
 
   protected Properties getAllProperties(Locale locale) {
     clearCacheIncludingAncestors();

@@ -45,8 +45,8 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.repository.TransferPropertiesRepository;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentPermissionStrings;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
@@ -168,7 +168,8 @@ public class OrderService {
     }
 
     if (null != user) {
-      FulfillmentPermissionStrings.Handler handler = permissionService.getPermissionStrings(user.getId());
+      FulfillmentPermissionStrings.Handler handler = permissionService.getPermissionStrings(
+          user.getId());
 
       return orderRepository.searchOrders(
           params, processingPeriodIds, pageable,

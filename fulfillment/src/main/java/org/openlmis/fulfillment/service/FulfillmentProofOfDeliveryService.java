@@ -26,8 +26,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
-import org.openlmis.fulfillment.service.referencedata.PermissionStringDto;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentPermissionStrings;
+import org.openlmis.fulfillment.service.referencedata.PermissionStringDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.util.Pagination;
@@ -79,7 +79,8 @@ public class FulfillmentProofOfDeliveryService {
 
     if (null != user) {
       profiler.start("GET_PERMISSION_STRINGS");
-      FulfillmentPermissionStrings.Handler handler = permissionService.getPermissionStrings(user.getId());
+      FulfillmentPermissionStrings.Handler handler = permissionService.getPermissionStrings(
+          user.getId());
       Set<PermissionStringDto> permissionStrings = handler.get();
 
       profiler.start("RETRIEVE_LIST_OF_IDS_FROM_PERMISSION_STRINGS");
