@@ -59,10 +59,13 @@ public final class QueryRequisitionSearchParams implements RequisitionSearchPara
   /**
    * Wraps map of query params into an object.
    */
-  QueryRequisitionSearchParams(MultiValueMap<String, String> queryMap) {
+  // [SIGLUS change start]
+  // [change reason]: method need be public.
+  public QueryRequisitionSearchParams(MultiValueMap<String, String> queryMap) {
     queryParams = new SearchParams(queryMap);
     validate();
   }
+  // [SIGLUS change end]
 
   /**
    * Gets {@link UUID} for "facility" key from params.

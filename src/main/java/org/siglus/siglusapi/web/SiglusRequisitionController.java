@@ -28,7 +28,10 @@ import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -77,6 +80,12 @@ public class SiglusRequisitionController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void deleteRequisition(@PathVariable("id") UUID requisitionId) {
     siglusRequisitionService.deleteRequisition(requisitionId);
+  }
+
+  @GetMapping("/search")
+  public Page<BasicRequisitionDto> searchRequisitions(
+      @RequestParam MultiValueMap<String, String> queryParams, Pageable pageable) {
+    return siglusRequisitionService.searchRequisitions(queryParams, pageable);
   }
 
   @PostMapping("/{id}/submit")

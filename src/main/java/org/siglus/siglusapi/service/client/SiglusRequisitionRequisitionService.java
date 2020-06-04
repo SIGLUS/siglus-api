@@ -56,10 +56,10 @@ public class SiglusRequisitionRequisitionService extends BaseRequisitionService<
         .set(QueryRequisitionSearchParams.REQUISITION_STATUS, params.getRequisitionStatuses())
         .set(QueryRequisitionSearchParams.EMERGENCY, params.getEmergency())
         .set(QueryRequisitionSearchParams.MODIFIED_DATE_FROM, params.getModifiedDateFrom())
-        .set(QueryRequisitionSearchParams.MODIFIED_DATE_TO, params.getModifiedDateTo());
-
+        .set(QueryRequisitionSearchParams.MODIFIED_DATE_TO, params.getModifiedDateTo())
+        .setPage(pageable);
     return getPage("requisitions/search", queryParams, null, HttpMethod.GET,
-        BasicRequisitionDto.class);
+        BasicRequisitionDto.class, true);
   }
 
   public RequisitionV2Dto searchRequisition(UUID id) {

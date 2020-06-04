@@ -18,10 +18,18 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +43,10 @@ import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.IdealStockAmountDto;
@@ -53,6 +63,7 @@ import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.i18n.MessageKeys;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
 import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
@@ -65,6 +76,7 @@ import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDa
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
 import org.openlmis.requisition.utils.Message;
+import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
@@ -80,8 +92,11 @@ import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.MultiValueMap;
 
 @Service
 @Slf4j
@@ -487,6 +502,40 @@ public class SiglusRequisitionService {
     return lineItems.stream()
         .map(lineItem -> lineItem.getOrderable().getId())
         .collect(Collectors.toSet());
+  }
+
+  public Page<BasicRequisitionDto> searchRequisitions(MultiValueMap<String, String> queryParams,
+      Pageable pageable) {
+    Set<RequisitionStatus> canSeeRequisitionStatus = getUserCanSeeRequisitionStatus(
+        UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.FACILITY)),
+        UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.PROGRAM)));
+    canSeeRequisitionStatus.forEach(requisitionStatus -> queryParams
+        .add(QueryRequisitionSearchParams.REQUISITION_STATUS, requisitionStatus.toString()));
+    RequisitionSearchParams params = new QueryRequisitionSearchParams(queryParams);
+    return siglusRequisitionRequisitionService.searchRequisitions(params, pageable);
+  }
+
+  private Set<RequisitionStatus> getUserCanSeeRequisitionStatus(UUID facilityId, UUID programId) {
+    Requisition requisition = new Requisition();
+    requisition.setProgramId(programId);
+    requisition.setFacilityId(facilityId);
+    Set<RequisitionStatus> canSeeRequisitionStatus = Sets.newHashSet();
+
+    final boolean canAuth = permissionService.canAuthorizeRequisition(requisition).isSuccess();
+    if (canAuth) {
+      canSeeRequisitionStatus.addAll(
+          Arrays.asList(AUTHORIZED, IN_APPROVAL, APPROVED, RELEASED, RELEASED_WITHOUT_ORDER));
+      return canSeeRequisitionStatus;
+    }
+
+    final boolean canCreate = permissionService.canSubmitRequisition(requisition).isSuccess();
+    if (canCreate) {
+      canSeeRequisitionStatus.addAll(Arrays
+          .asList(SUBMITTED, AUTHORIZED, IN_APPROVAL, APPROVED, RELEASED, RELEASED_WITHOUT_ORDER));
+      return canSeeRequisitionStatus;
+    }
+
+    return canSeeRequisitionStatus;
   }
 
 }
