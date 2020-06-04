@@ -21,9 +21,6 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.openlmis.referencedata.security.CustomTokenServices;
-import org.openlmis.referencedata.security.CustomUserAuthenticationConverter;
-import org.openlmis.referencedata.security.ReferencedataMethodSecurityConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -48,7 +45,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Configuration
 @EnableWebSecurity
-@Import({ ReferencedataMethodSecurityConfiguration.class })
+@Import({ MethodSecurityConfiguration.class })
 @EnableResourceServer
 public class ResourceServerSecurityConfiguration implements ResourceServerConfigurer {
 

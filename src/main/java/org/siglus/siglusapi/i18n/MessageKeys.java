@@ -97,6 +97,9 @@ public abstract class MessageKeys {
   public static final String ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE = ERROR_PREFIX
       + ".submitStartDate.before.last.submitEndDate";
 
+  public static final String ERROR_SIZE_NULL = ERROR_PREFIX + ".pageable.size.null";
+  public static final String ERROR_SIZE_NOT_POSITIVE = ERROR_PREFIX + ".pageable.size.notPositive";
+
   protected MessageKeys() {
     throw new UnsupportedOperationException();
   }
