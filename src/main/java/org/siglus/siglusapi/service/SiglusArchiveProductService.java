@@ -138,7 +138,9 @@ public class SiglusArchiveProductService {
   }
 
   public boolean isArchived(UUID stockCardId) {
-    return stockCardExtensionRepository.findByStockCardId(stockCardId).isArchived();
+    StockCardExtension stockCardExtension =
+        stockCardExtensionRepository.findByStockCardId(stockCardId);
+    return stockCardExtension != null && stockCardExtension.isArchived();
   }
 
   public boolean isArchived(StockCard stockCard) {
