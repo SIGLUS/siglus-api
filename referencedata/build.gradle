@@ -22,7 +22,7 @@ apply plugin: 'pmd'
 
 group = serviceGroup
 version = serviceVersion
-archivesBaseName = rootProject.name
+archivesBaseName = serviceName
 project.ext.buildTime = Instant.now().toString() // for versioning
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

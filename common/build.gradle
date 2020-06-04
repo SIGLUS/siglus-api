@@ -22,9 +22,9 @@ apply plugin: 'jacoco'
 apply plugin: 'pmd'
 
 
-group 'org.siglus'
-version '1.0.0-SNAPSHOT'
-archivesBaseName = rootProject.name
+group serviceGroup
+version serviceVersion
+archivesBaseName = serviceName
 project.ext.buildTime = Instant.now().toString() // for versioning
 sourceCompatibility = 1.8
 targetCompatibility = 1.8

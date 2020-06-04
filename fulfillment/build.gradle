@@ -21,7 +21,7 @@ apply plugin: 'pmd'
 
 group = serviceGroup
 version = serviceVersion
-archivesBaseName = rootProject.name
+archivesBaseName = serviceName
 project.ext.buildTime = Instant.now().toString() // for versioning
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -95,4 +95,19 @@ pmd {
     ignoreFailures = false
     ruleSetFiles = files("config/pmd/ruleset.xml")
     reportsDir = file("build/reports/pmd")
+}
+
+jacocoTestReport {
+    group = "reporting"
+    description = "Generate Jacoco coverage reports after running tests."
+    reports {
+        xml.enabled false
+        html.enabled true
+        csv.enabled false
+    }
+    additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
+}
+
+assemble {
+    dependsOn jacocoTestReport
 }
