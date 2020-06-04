@@ -20,7 +20,6 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ADJUSTED_CONSUMPTI
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_CANNOT_CALCULATE_AT_THE_SAME_TIME;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_COLUMNS_TAG_NOT_SET;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_COLUMN_SOURCE_INVALID;
-import static org.openlmis.requisition.i18n.MessageKeys.ERROR_DISPLAYED_WHEN_CALC_ORDER_QUANTITY_EXPLANATION_NOT_DISPLAYED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_DISPLAYED_WHEN_AVERAGE_CONSUMPTION_IS_CALCULATED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_DISPLAYED_WHEN_CONSUMED_QUANTITY_IS_CALCULATED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_DISPLAYED_WHEN_CONSUMPTION_IS_CALCULATED;
@@ -140,13 +139,13 @@ public class RequisitionTemplateDtoValidator extends BaseValidator {
   }
 
   private void validateRequestedQuantity(RequisitionTemplateDto template) {
-    boolean quantityDisplayed = template.isColumnDisplayed(REQUESTED_QUANTITY);
     // [SIGLUS change start]
-    // [change reason]: "request quantity explanation" can be undisplayed when "request quantity"
+    // [change reason]: 1. "request quantity explanation" can be undisplayed when "request quantity"
     //                  is displayed.
+    //                  2. "calcOrderQuantityDisplayed && quantityDisplayed all optional"
+    // boolean quantityDisplayed = template.isColumnDisplayed(REQUESTED_QUANTITY);
     // boolean explanationDisplayed = template.isColumnDisplayed(REQUESTED_QUANTITY_EXPLANATION);
-    boolean calcOrderQuantityDisplayed = template.isColumnDisplayed(CALCULATED_ORDER_QUANTITY);
-
+    // boolean calcOrderQuantityDisplayed = template.isColumnDisplayed(CALCULATED_ORDER_QUANTITY);
     // if (quantityDisplayed) {
     //   if (!explanationDisplayed) {
     //     rejectValue(errors, COLUMNS_MAP,
@@ -160,12 +159,12 @@ public class RequisitionTemplateDtoValidator extends BaseValidator {
     //             REQUESTED_QUANTITY));
     //   }
     // }
+    // if (!calcOrderQuantityDisplayed && !quantityDisplayed) {
+    //   rejectValue(errors, COLUMNS_MAP,
+    //       new Message(ERROR_DISPLAYED_WHEN_CALC_ORDER_QUANTITY_EXPLANATION_NOT_DISPLAYED,
+    //           REQUESTED_QUANTITY));
+    // }
     // [SIGLUS change end]
-    if (!calcOrderQuantityDisplayed && !quantityDisplayed) {
-      rejectValue(errors, COLUMNS_MAP,
-          new Message(ERROR_DISPLAYED_WHEN_CALC_ORDER_QUANTITY_EXPLANATION_NOT_DISPLAYED,
-              REQUESTED_QUANTITY));
-    }
   }
 
   private void validateCalculatedFields(RequisitionTemplateDto template) {

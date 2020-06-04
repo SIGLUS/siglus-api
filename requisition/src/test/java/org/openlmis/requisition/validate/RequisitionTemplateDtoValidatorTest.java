@@ -129,6 +129,12 @@ public class RequisitionTemplateDtoValidatorTest {
             REQUESTED_QUANTITY_EXPLANATION).toString()));
   }
 
+
+  // [SIGLUS change start]
+  // [change reason]:  form must choose one between REQUESTED_QUANTITY and CALCULATED_ORDER_QUANTITY
+  //                   to optional columns.
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldRejectWhenRequestedQuantityAndCalcOrderQuantityAreNotDisplayed() {
     RequisitionTemplateDto requisitionTemplate = generateTemplate();
