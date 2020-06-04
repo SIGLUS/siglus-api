@@ -113,6 +113,7 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
 import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
@@ -510,8 +511,9 @@ public class RequisitionService {
     if (stockCards.isEmpty()) {
       return false;
     }
-    return stockCardExtensionRepository
-        .findByStockCardId(stockCards.get(0).getId()).isArchived();
+    StockCardExtension stockCardExtension =
+        stockCardExtensionRepository.findByStockCardId(stockCards.get(0).getId());
+    return stockCardExtension != null && stockCardExtension.isArchived();
 
   }
   // [SIGLUS change end]
