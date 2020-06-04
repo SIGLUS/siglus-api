@@ -38,6 +38,7 @@ import static org.openlmis.requisition.service.PermissionService.ORDERS_EDIT;
 import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
 import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -253,7 +254,7 @@ public class RequisitionService {
     return initiate(program, facility, period, emergency, stockAdjustmentReasons,
         requisitionTemplate, approvedProducts, period.getSubmitStartDate());
   }
-  
+
   public Requisition initiate(ProgramDto program, FacilityDto facility,
       ProcessingPeriodDto period, boolean emergency,
       List<StockAdjustmentReason> stockAdjustmentReasons,
@@ -320,12 +321,7 @@ public class RequisitionService {
     simulateAuthenticationHelper.recoveryAuth(originAuth);
     // [SIGLUS change end]
 
-    // [SIGLUS change start]
-    // [change reason]filter archived product
-    // final StockData stockData = new StockData(orderableSoh, orderableBeginning);
-    final StockData originStockData = new StockData(orderableSoh, orderableBeginning);
-    final StockData stockData = filterArchivedProduct(facility, originStockData);
-    // [SIGLUS change end]
+    final StockData stockData = new StockData(orderableSoh, orderableBeginning);
 
     profiler.start("FIND_IDEAL_STOCK_AMOUNTS");
     final Map<UUID, Integer> idealStockAmounts = idealStockAmountReferenceDataService
@@ -380,10 +376,22 @@ public class RequisitionService {
     }
 
     profiler.start("INITIATE");
-    requisition.initiate(requisitionTemplate, approvedProducts.getFullSupplyProducts(),
+    // [SIGLUS change start]
+    // [change reason]: remove archived products.
+    // requisition.initiate(requisitionTemplate, approvedProducts.getFullSupplyProducts(),
+    //     previousRequisitions, numberOfPreviousPeriodsToAverage, pod, idealStockAmounts,
+    //     authenticationHelper.getCurrentUser().getId(), stockData, stockCardRangeSummaryDtos,
+    //     stockCardRangeSummariesToAverage, previousPeriods);
+    List<ApprovedProductDto> fullSupplyProductsUsedToInitiateLineItems = Lists
+        .newArrayList(approvedProducts.getFullSupplyProducts());
+    fullSupplyProductsUsedToInitiateLineItems
+        .removeIf(approvedProductDto -> isArchivedProduct(facility.getId(),
+            approvedProductDto.getOrderable().getId()));
+    requisition.initiate(requisitionTemplate, fullSupplyProductsUsedToInitiateLineItems,
         previousRequisitions, numberOfPreviousPeriodsToAverage, pod, idealStockAmounts,
         authenticationHelper.getCurrentUser().getId(), stockData, stockCardRangeSummaryDtos,
         stockCardRangeSummariesToAverage, previousPeriods);
+    // [SIGLUS change end]
 
     profiler.start("SET_AVAILABLE_PRODUCTS");
     // [SIGLUS change start]
@@ -488,23 +496,6 @@ public class RequisitionService {
 
   // [SIGLUS change start]
   // [change reason] filter archived product
-  private StockData filterArchivedProduct(FacilityDto facility, StockData stockData) {
-    Map<UUID, Integer> beginningBalances = new HashMap<>();
-    Map<UUID, Integer> stockOnHands = new HashMap<>();
-    stockOnHands.putAll(stockData.stockOnHands);
-    beginningBalances.putAll(stockData.beginningBalances);
-    stockData.stockOnHands.keySet().forEach(orderableId -> {
-      if (stockData.hasDataFor(orderableId)
-          && isArchivedProduct(facility.getId(), orderableId)) {
-        stockOnHands.remove(orderableId);
-        if (beginningBalances.get(orderableId) != null) {
-          beginningBalances.remove(orderableId);
-        }
-      }
-    });
-    return new StockData(stockOnHands, beginningBalances);
-  }
-
   private boolean isArchivedProduct(UUID facilityId, UUID orderableId) {
     List<StockCard> stockCards = stockCardRepository
         .findByFacilityIdAndOrderableId(facilityId, orderableId);
