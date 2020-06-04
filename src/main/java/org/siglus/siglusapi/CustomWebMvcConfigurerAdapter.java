@@ -34,16 +34,16 @@ public class CustomWebMvcConfigurerAdapter extends WebMvcConfigurerAdapter {
 
   @Override
   public void addViewControllers(ViewControllerRegistry registry) {
-    registry.addViewController("/template/docs")
-        .setViewName("redirect:" + serviceUrl + "/template/docs/");
-    registry.addViewController("/template/docs/")
-        .setViewName("forward:/template/docs/index.html");
+    registry.addViewController("/siglusapi/docs")
+        .setViewName("redirect:" + serviceUrl + "/siglusapi/docs/");
+    registry.addViewController("/siglusapi/docs/")
+        .setViewName("forward:/siglusapi/docs/index.html");
     super.addViewControllers(registry);
   }
 
   @Override
   public void addResourceHandlers(ResourceHandlerRegistry registry) {
-    registry.addResourceHandler("/template/webjars/**")
+    registry.addResourceHandler("/siglusapi/webjars/**")
         .addResourceLocations("classpath:/META-INF/resources/webjars/");
     super.addResourceHandlers(registry);
   }
