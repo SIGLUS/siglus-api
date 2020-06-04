@@ -15,8 +15,10 @@
 
 package org.openlmis.stockmanagement.util;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Lists;
 import java.util.List;
+import org.openlmis.referencedata.util.CustomSortDeserializer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -132,9 +134,13 @@ public class PageImplRepresentation<T> extends PageImpl<T> {
     return sort;
   }
 
+  // [SIGLUS change start]
+  // [change reason]: parse json for sort property
+  @JsonDeserialize(using = CustomSortDeserializer.class)
   public void setSort(Sort sort) {
     this.sort = sort;
   }
+  // [SIGLUS change end]
 
   public PageImpl<T> pageImpl() {
     return new PageImpl<T>(getContent(), new PageRequest(getNumber(),

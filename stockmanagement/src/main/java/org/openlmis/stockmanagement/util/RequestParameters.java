@@ -22,13 +22,23 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.data.domain.Pageable;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @EqualsAndHashCode
 public final class RequestParameters {
+  // [SIGLUS change start]
+  // [change reason]: suppert set pageable
+  static final String PAGE = "page";
+  static final String SIZE = "size";
+  static final String SORT = "sort";
+  // [SIGLUS change end]
+
   private final MultiValueMap<String, String> params;
 
   private RequestParameters() {
@@ -82,6 +92,30 @@ public final class RequestParameters {
 
     return this;
   }
+
+  // [SIGLUS change start]
+  // [change reason]: suppert set pageable
+  /**
+   * Set parameters like page, size, sort only if the argument is not null.
+   */
+  public RequestParameters setPage(Pageable pageable) {
+    if (null != pageable) {
+      set(PAGE, pageable.getPageNumber());
+      set(SIZE, pageable.getPageSize());
+
+      if (null != pageable.getSort()) {
+        Set<String> sort = StreamSupport
+            .stream(pageable.getSort().spliterator(), false)
+            .map(order -> String.format("%s,%s", order.getProperty(), order.getDirection()))
+            .collect(Collectors.toSet());
+
+        set(SORT, sort);
+      }
+    }
+
+    return this;
+  }
+  // [SIGLUS change end]
 
   public void forEach(Consumer<Map.Entry<String, List<String>>> action) {
     params.entrySet().forEach(action);

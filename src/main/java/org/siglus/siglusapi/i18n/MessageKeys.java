@@ -90,6 +90,13 @@ public abstract class MessageKeys {
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_SHOULD_NULL =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.id.should.null";
 
+  public static final String ERROR_SUBMIT_START_DATE_BEFORE_START_DATE = ERROR_PREFIX
+      + ".submitStartDate.before.startDate";
+  public static final String ERROR_SUBMIT_END_DATE_BEFORE_SUBMIT_START_DATE = ERROR_PREFIX
+      + ".submitEndDate.before.submitStartDate";
+  public static final String ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE = ERROR_PREFIX
+      + ".submitStartDate.before.last.submitEndDate";
+
   protected MessageKeys() {
     throw new UnsupportedOperationException();
   }
