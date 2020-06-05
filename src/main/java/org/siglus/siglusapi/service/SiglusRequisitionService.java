@@ -141,6 +141,9 @@ public class SiglusRequisitionService {
   private SupervisoryNodeReferenceDataService supervisoryNodeService;
 
   @Autowired
+  private SiglusArchiveProductService archiveProductService;
+
+  @Autowired
   private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
 
   @Autowired
@@ -493,7 +496,12 @@ public class SiglusRequisitionService {
     return null;
   }
 
-  public Set<UUID> findLineItemOrderableIds(UUID requisitionId) {
+  public void activateArchivedProducts(UUID requisitionId, UUID facilityId) {
+    Set<UUID> orderableIds = findLineItemOrderableIds(requisitionId);
+    archiveProductService.activateArchivedProducts(orderableIds, facilityId);
+  }
+
+  private Set<UUID> findLineItemOrderableIds(UUID requisitionId) {
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     List<RequisitionLineItem> lineItems = requisition.getRequisitionLineItems();
     return lineItems.stream()
@@ -503,16 +511,18 @@ public class SiglusRequisitionService {
 
   public Page<BasicRequisitionDto> searchRequisitions(MultiValueMap<String, String> queryParams,
       Pageable pageable) {
-    Set<RequisitionStatus> canSeeRequisitionStatus = getUserCanSeeRequisitionStatus(
-        UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.FACILITY)),
-        UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.PROGRAM)));
-    canSeeRequisitionStatus.forEach(requisitionStatus -> queryParams
+    Set<RequisitionStatus> requisitionStatusDisplayInRequisitionHistory =
+        getRequisitionStatusDisplayInRequisitionHistory(
+            UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.FACILITY)),
+            UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.PROGRAM)));
+    requisitionStatusDisplayInRequisitionHistory.forEach(requisitionStatus -> queryParams
         .add(QueryRequisitionSearchParams.REQUISITION_STATUS, requisitionStatus.toString()));
     RequisitionSearchParams params = new QueryRequisitionSearchParams(queryParams);
     return siglusRequisitionRequisitionService.searchRequisitions(params, pageable);
   }
 
-  private Set<RequisitionStatus> getUserCanSeeRequisitionStatus(UUID facilityId, UUID programId) {
+  private Set<RequisitionStatus> getRequisitionStatusDisplayInRequisitionHistory(UUID facilityId,
+      UUID programId) {
     Requisition requisition = new Requisition();
     requisition.setProgramId(programId);
     requisition.setFacilityId(facilityId);

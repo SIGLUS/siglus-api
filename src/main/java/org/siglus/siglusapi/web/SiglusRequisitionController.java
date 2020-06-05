@@ -17,7 +17,6 @@ package org.siglus.siglusapi.web;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,7 +26,6 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
-import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,9 +55,6 @@ public class SiglusRequisitionController {
 
   @Autowired
   private SiglusRequisitionService siglusRequisitionService;
-
-  @Autowired
-  private SiglusArchiveProductService archiveProductService;
 
   @Autowired
   private SiglusProcessingPeriodService siglusProcessingPeriodService;
@@ -101,9 +96,8 @@ public class SiglusRequisitionController {
       HttpServletResponse response) {
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .submitRequisition(requisitionId, request, response);
-    Set<UUID> orderableIds = siglusRequisitionService.findLineItemOrderableIds(requisitionId);
-    archiveProductService
-        .activateArchivedProducts(orderableIds, basicRequisitionDto.getFacility().getId());
+    siglusRequisitionService
+        .activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
     return basicRequisitionDto;
   }
 
@@ -114,9 +108,8 @@ public class SiglusRequisitionController {
       HttpServletResponse response) {
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .authorizeRequisition(requisitionId, request, response);
-    Set<UUID> orderableIds = siglusRequisitionService.findLineItemOrderableIds(requisitionId);
-    archiveProductService
-        .activateArchivedProducts(orderableIds, basicRequisitionDto.getFacility().getId());
+    siglusRequisitionService
+        .activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
     return basicRequisitionDto;
   }
 

@@ -30,7 +30,6 @@ import org.mockito.MockitoAnnotations;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.web.RequisitionController;
-import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 
 public class SiglusRequisitionControllerTest {
@@ -43,9 +42,6 @@ public class SiglusRequisitionControllerTest {
 
   @Mock
   private SiglusRequisitionService siglusRequisitionService;
-
-  @Mock
-  private SiglusArchiveProductService archiveProductService;
 
   @Mock
   private HttpServletResponse response;
@@ -75,8 +71,7 @@ public class SiglusRequisitionControllerTest {
     siglusRequisitionController.submitRequisition(uuid, request, response);
 
     verify(requisitionController).submitRequisition(uuid, request, response);
-    verify(siglusRequisitionService).findLineItemOrderableIds(any());
-    verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(siglusRequisitionService).activateArchivedProducts(any(), any());
   }
 
   @Test
@@ -87,8 +82,7 @@ public class SiglusRequisitionControllerTest {
     siglusRequisitionController.authorizeRequisition(uuid, request, response);
 
     verify(requisitionController).authorizeRequisition(uuid, request, response);
-    verify(siglusRequisitionService).findLineItemOrderableIds(any());
-    verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(siglusRequisitionService).activateArchivedProducts(any(), any());
   }
 
 }
