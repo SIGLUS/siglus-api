@@ -57,7 +57,6 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.openlmis.requisition.dto.SiglusRequisitionLineItemDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.exception.ValidationMessageException;
@@ -69,7 +68,6 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
-import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
@@ -84,6 +82,7 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.RequisitionApprovalDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
+import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.Logger;
@@ -134,9 +133,6 @@ public class SiglusRequisitionService {
 
   @Autowired
   private IdealStockAmountReferenceDataService idealStockAmountReferenceDataService;
-
-  @Autowired
-  private ApprovedProductReferenceDataService approvedProductReferenceDataService;
 
   @Autowired
   private SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
@@ -283,8 +279,9 @@ public class SiglusRequisitionService {
         .stream()
         .collect(toMap(isa -> isa.getCommodityType().getId(), IdealStockAmountDto::getAmount));
 
-    ApproveProductsAggregator approvedProducts = approvedProductReferenceDataService
-        .getApprovedProducts(facility.getId(), program.getId());
+    // including the approved product of associate program
+    ApproveProductsAggregator approvedProducts = requisitionService.getApproveProduct(
+        facility, program, requisitionTemplate);
 
     List<RequisitionLineItem> lineItemList = new ArrayList<>();
     for (ApprovedProductDto approvedProductDto : approvedProducts.getAllProducts().values()) {

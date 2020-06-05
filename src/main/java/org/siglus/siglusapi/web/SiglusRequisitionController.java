@@ -15,17 +15,20 @@
 
 package org.siglus.siglusapi.web;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.openlmis.requisition.dto.SiglusRequisitionLineItemDto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
+import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
+import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -57,6 +60,9 @@ public class SiglusRequisitionController {
 
   @Autowired
   private SiglusArchiveProductService archiveProductService;
+
+  @Autowired
+  private SiglusProcessingPeriodService siglusProcessingPeriodService;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -119,5 +125,16 @@ public class SiglusRequisitionController {
       @RequestParam(value = "requisitionId") UUID requisitonId,
       @RequestBody List<UUID> orderableIds) {
     return siglusRequisitionService.createRequisitionLineItem(requisitonId, orderableIds);
+  }
+
+  @GetMapping("/periodsForInitiate")
+  public Collection<RequisitionPeriodDto> searchProcessingPeriodIds(
+      @RequestParam(value = "programId") UUID programId,
+      @RequestParam(value = "facilityId") UUID facilityId,
+      @RequestParam(value = "emergency") boolean emergency) {
+
+    return siglusProcessingPeriodService.getPeriods(
+        programId, facilityId, emergency
+    );
   }
 }
