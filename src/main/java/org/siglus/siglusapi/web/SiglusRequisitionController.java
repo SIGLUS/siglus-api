@@ -118,7 +118,11 @@ public class SiglusRequisitionController {
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
-    return requisitionController.approveRequisition(requisitionId, request, response);
+    BasicRequisitionDto basicRequisitionDto = requisitionController
+        .approveRequisition(requisitionId, request, response);
+    siglusRequisitionService
+        .activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
+    return basicRequisitionDto;
   }
 
   @PostMapping("/createLineItem")
