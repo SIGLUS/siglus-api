@@ -26,15 +26,21 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.LazyCollection;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
 import org.springframework.beans.BeanUtils;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Entity
+@Builder
 @EqualsAndHashCode(callSuper = true)
 @Table(name = "stock_management_drafts", schema = "siglusintegration")
 public class StockManagementDraft extends BaseEntity {

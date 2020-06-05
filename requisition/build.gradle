@@ -62,7 +62,6 @@ dependencies {
     compile 'org.springframework:spring-context-support'
     compile 'org.webjars.npm:api-console:3.0.17'
 
-    testCompile project(":common").sourceSets.test.output
     testCompile "be.joengenduvel.java.verifiers:to-string:1.0.2"
     testCompile "com.github.tomakehurst:wiremock:1.58"
     testCompile "com.jayway.restassured:rest-assured:2.7.0"
