@@ -354,6 +354,20 @@ public class Requisition extends BaseTimestampedEntity {
         .validateRequisitionCanChangeStatus();
   }
 
+  // [SIGLUS change start]
+  // [change reason]: override validateCanChangeStatus with new params isInternalFacility
+  public ValidationResult validateCanChangeStatus(LocalDate currentDate,
+      boolean isDatePhysicalStockCountCompletedEnabled,
+      Map<VersionIdentityDto, OrderableDto> orderables,
+      Map<VersionIdentityDto, ApprovedProductDto> approvedProducts,
+      boolean isInternalFacility) {
+    return new StatusChangeValidationService(this, currentDate,
+        isDatePhysicalStockCountCompletedEnabled, orderables, approvedProducts,
+        isInternalFacility)
+        .validateRequisitionCanChangeStatus();
+  }
+  // [SIGLUS change end]
+
   /**
    * Returns a set of all orderable IDs in this requisition.
    */

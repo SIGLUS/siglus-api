@@ -621,6 +621,19 @@ public abstract class BaseRequisitionController extends BaseController {
   }
 
   // [SIGLUS change start]
+  // [change reason]: override getValidationResultForStatusChange with new params isInternalFacility
+  ValidationResult getValidationResultForStatusChange(Requisition requisition,
+      Map<VersionIdentityDto, OrderableDto> orderables,
+      Map<VersionIdentityDto, ApprovedProductDto> approvedProducts,
+      boolean isInternalFacility) {
+    return requisition.validateCanChangeStatus(
+        dateHelper.getCurrentDateWithSystemZone(),
+        datePhysicalStockCountCompletedEnabledPredicate.exec(requisition.getProgramId()),
+        orderables, approvedProducts, isInternalFacility);
+  }
+  // [SIGLUS change end]
+
+  // [SIGLUS change start]
   // [change reason]:make public for import in SiglusRequisitionService.java
   public Profiler getProfiler(String name, Object... entryArgs) {
     // [SIGLUS change ends]
@@ -715,6 +728,19 @@ public abstract class BaseRequisitionController extends BaseController {
     getValidationResultForStatusChange(requisition, orderables, approvedProducts)
         .throwExceptionIfHasErrors();
   }
+
+  // [SIGLUS change start]
+  // [change reason]: override validateForStatusChange with new params isInternalFacility
+  void validateForStatusChange(Requisition requisition,
+      Map<VersionIdentityDto, OrderableDto> orderables,
+      Map<VersionIdentityDto, ApprovedProductDto> approvedProducts,
+      Profiler profiler, boolean isInternalFacility) {
+    profiler.start("VALIDATE_CAN_CHANGE_STATUS");
+    getValidationResultForStatusChange(requisition, orderables, approvedProducts,
+        isInternalFacility)
+        .throwExceptionIfHasErrors();
+  }
+  // [SIGLUS change end]
 
   UserDto getCurrentUser(Profiler profiler) {
     profiler.start("GET_CURRENT_USER");

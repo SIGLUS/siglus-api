@@ -68,6 +68,23 @@ public class StatusChangeValidationService {
         requisition.getTemplate(), orderables));
   }
 
+  // [SIGLUS change start]
+  // [change reason]: #147 NO approved quantity if internal facility approve
+  public StatusChangeValidationService(Requisition requisition, LocalDate currentDate,
+      boolean isDatePhysicalStockCountCompletedEnabled,
+      Map<VersionIdentityDto, OrderableDto> orderables,
+      Map<VersionIdentityDto, ApprovedProductDto> approvedProducts,
+      boolean isInternalFacility) {
+
+    this(requisition, currentDate, isDatePhysicalStockCountCompletedEnabled, orderables,
+        approvedProducts);
+
+    if (isInternalFacility) {
+      validators.remove(1);
+    }
+  }
+  // [SIGLUS change end]
+
   /**
    * Validates if requisition can be updated. Return errors as {@link ValidationResult}.
    */

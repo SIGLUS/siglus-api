@@ -431,6 +431,12 @@ public class RequisitionController extends BaseRequisitionController {
         () -> getLineItemApprovedProductIdentities(requisition), profiler);
 
     validateForStatusChange(requisition, orderables, approvedProducts, profiler);
+    // [SIGLUS change start]
+    // [change reason]: #147 NO approved quantity if internal facility.
+    boolean isInternalFacility = user.getHomeFacilityId().equals(requisition.getFacilityId());
+    validateForStatusChange(requisition, orderables, approvedProducts, profiler,
+        isInternalFacility);
+    // [SIGLUS change end]
 
     SupervisoryNodeDto supervisoryNodeDto = getSupervisoryNodeDto(profiler, requisition);
     ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());

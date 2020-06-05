@@ -62,9 +62,8 @@ public class SiglusProcessingPeriodValidator {
 
     if (!periodList.isEmpty()) {
       LocalDate lastSubmitEndDate = processingPeriodExtensionRepository
-          .findByProcessingPeriodId(
-              periodList.get(periodList.size() - 1).getId()
-          ).getSubmitEndDate();
+          .findByProcessingPeriodId(periodList.get(periodList.size() - 1).getId())
+          .getSubmitEndDate();
       if (!submitStartDate.isAfter(lastSubmitEndDate)) {
         throw new ValidationMessageException(
             ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE
