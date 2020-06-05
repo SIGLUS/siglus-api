@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -434,6 +435,10 @@ public class PeriodServiceTest {
   }
 
   @Test(expected = ValidationMessageException.class)
+  // [SIGLUS change start]
+  // [change reason]: pre requisition status is submit can sumbit next one
+  @Ignore
+  // [SIGLUS change end]
   public void shouldThrowExceptionWhenPreviousReqHasSubmittedStatus() {
     setMockForFindPeriod();
 

@@ -26,7 +26,6 @@ import static org.openlmis.requisition.domain.requisition.Requisition.PROGRAM_ID
 import static org.openlmis.requisition.domain.requisition.Requisition.REQUISITION_LINE_ITEMS;
 import static org.openlmis.requisition.domain.requisition.Requisition.SUPERVISORY_NODE_ID;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_IS_INVARIANT;
-import static org.openlmis.requisition.i18n.MessageKeys.ERROR_LINE_ITEM_ADDED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_LINE_ITEM_REMOVED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_STOCK_BASED_VALUE_MODIFIED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_VALUE_MUST_BE_ENTERED;
@@ -136,7 +135,11 @@ class RequisitionInvariantsValidator
         .filter(line -> orderables.containsKey(new VersionIdentityDto(line.getOrderable())))
         .filter(line -> isTrue(orderables
             .get(new VersionIdentityDto(line.getOrderable()))
-            .getProgramOrderable(requisitionUpdater.getProgramId())
+            // [SIGLUS change start]
+            // [change reason]: program relation
+            // .getProgramOrderable(requisitionUpdater.getProgramId())
+            .getPrograms().iterator().next()
+            // [SIGLUS change end]
             .getFullSupply()))
         .map(BaseEntity::getId)
         .collect(toList());
@@ -146,16 +149,26 @@ class RequisitionInvariantsValidator
         .stream()
         .filter(line -> isTrue(orderables
             .get(new VersionIdentityDto(line.getOrderable()))
-            .getProgramOrderable(requisitionToUpdate.getProgramId())
+            // [SIGLUS change start]
+            // [change reason]: program relation
+            // .getProgramOrderable(requisitionUpdater.getProgramId())
+            .getPrograms().iterator().next()
+            // [SIGLUS change end]
             .getFullSupply()))
         .map(BaseEntity::getId)
         .collect(toList());
 
-    if (currentIds.stream().anyMatch(id -> !existingIds.contains(id))) {
-      errors.put(REQUISITION_LINE_ITEMS, new Message(ERROR_LINE_ITEM_ADDED));
-    } else if (existingIds.stream().anyMatch(id -> !currentIds.contains(id))) {
+    // [SIGLUS change start]
+    // [change reason]: we can add product for regular and Emergency.
+    // if (currentIds.stream().anyMatch(id -> !existingIds.contains(id))) {
+    //   errors.put(REQUISITION_LINE_ITEMS, new Message(ERROR_LINE_ITEM_ADDED));
+    // } else if (existingIds.stream().anyMatch(id -> !currentIds.contains(id))) {
+    //   errors.put(REQUISITION_LINE_ITEMS, new Message(ERROR_LINE_ITEM_REMOVED));
+    // }
+    if (existingIds.stream().anyMatch(id -> !currentIds.contains(id))) {
       errors.put(REQUISITION_LINE_ITEMS, new Message(ERROR_LINE_ITEM_REMOVED));
     }
+    // [SIGLUS change end]
   }
 
   private void validateRegularLineItemStockFields(Map<String, Message> errors) {
@@ -194,8 +207,12 @@ class RequisitionInvariantsValidator
 
   private boolean isColumnValueChanged(String columnName, Object currentValue, Object newValue) {
     return !(newValue == null
-            && !requisitionToUpdate.getTemplate().isColumnDisplayed(columnName)
-            || Objects.equals(currentValue, newValue));
+        && !requisitionToUpdate.getTemplate().isColumnDisplayed(columnName)
+        // [SIGLUS change start]
+        // [change reason]: new add product shouldn't be compare.
+        || currentValue == null
+        // [SIGLUS change end]
+        || Objects.equals(currentValue, newValue));
   }
 
   private void validateExtraData(Map<String, Message> errors) {

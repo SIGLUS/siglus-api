@@ -39,6 +39,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.openlmis.requisition.domain.RequisitionTemplateDataBuilder;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -169,6 +170,10 @@ public class RequisitionInvariantsValidatorTest {
   }
 
   @Test
+  // [SIGLUS change start]
+  // [change reason]: siglus can add product for regular requisition.
+  @Ignore
+  // [SIGLUS change end]
   public void shouldRejectIfNewFullSupplyLineWasAddedForRegularRequisition() {
     RequisitionLineItem newLineItem = new RequisitionLineItemDataBuilder().build();
     OrderableDto newOrderable = new OrderableDtoDataBuilder()

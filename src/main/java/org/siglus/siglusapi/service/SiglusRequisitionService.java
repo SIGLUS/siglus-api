@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.dto.OrderableExpirationDateDto;
 import org.openlmis.requisition.domain.BaseEntity;
@@ -76,6 +78,7 @@ import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuil
 import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
+import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
@@ -96,6 +99,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Service
 @Slf4j
@@ -103,6 +107,9 @@ import org.springframework.util.MultiValueMap;
 public class SiglusRequisitionService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SiglusRequisitionService.class);
+
+  @Autowired
+  private RequisitionV2Controller requisitionV2Controller;
 
   @Autowired
   private RequisitionController requisitionController;
@@ -158,6 +165,55 @@ public class SiglusRequisitionService {
 
   @Value("${service.url}")
   private String serviceUrl;
+
+  public RequisitionV2Dto updateRequisition(UUID requisitionId,
+      @RequestBody RequisitionV2Dto requisitionDto,
+      HttpServletRequest request, HttpServletResponse response) {
+    // call modify OpenLMIS API
+    RequisitionV2Dto upadateRequsitionDto = requisitionV2Controller
+        .updateRequisition(requisitionId, requisitionDto, request, response);
+    saveLineItemExtension(requisitionDto, upadateRequsitionDto);
+    return upadateRequsitionDto;
+  }
+
+  public void saveLineItemExtension(RequisitionV2Dto toUpdatedDto, RequisitionV2Dto updatedDto) {
+    List<RequisitionLineItem.Importer> lineItems = updatedDto.getRequisitionLineItems();
+    if (!lineItems.isEmpty()) {
+      List<UUID> lineItemsId = updatedDto.getRequisitionLineItems()
+          .stream()
+          .map(item ->  item.getId())
+          .collect(Collectors.toList());
+      List<RequisitionLineItemExtension> updateExtension = new ArrayList<>();
+      List<RequisitionLineItemExtension> extensions =
+          lineItemExtensionRepository.findLineItems(lineItemsId);
+      lineItems.forEach(lineItem -> {
+        RequisitionLineItemV2Dto dto = findDto(lineItem, toUpdatedDto);
+        RequisitionLineItemExtension requisitionLineItemExtension =
+            findLineItemExtension(extensions, dto);
+        if (requisitionLineItemExtension != null) {
+          requisitionLineItemExtension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
+          updateExtension.add(requisitionLineItemExtension);
+        } else if (dto.getAuthorizedQuantity() != null) {
+          RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
+          extension.setRequisitionLineItemId(lineItem.getId());
+          extension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
+          updateExtension.add(extension);
+        }
+      });
+      lineItemExtensionRepository.save(updateExtension);
+    }
+  }
+
+  private RequisitionLineItemV2Dto findDto(RequisitionLineItem.Importer lineItem,
+      RequisitionV2Dto dto) {
+    for (RequisitionLineItem.Importer lineItemV2Dto : dto.getRequisitionLineItems()) {
+      if (lineItemV2Dto.getOrderableIdentity().getId()
+          .equals(lineItem.getOrderableIdentity().getId())) {
+        return (RequisitionLineItemV2Dto) lineItemV2Dto;
+      }
+    }
+    return null;
+  }
 
   public List<SiglusRequisitionLineItemDto> createRequisitionLineItem(
       UUID requisitonId,

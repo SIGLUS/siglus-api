@@ -282,9 +282,14 @@ public class PeriodService {
         if (!requisitions.isEmpty()) {
           previousStatus = requisitions.get(0).getStatus();
         } else {
-          if (null != previousStatus && previousStatus.isPreAuthorize()) {
+
+          // [SIGLUS change start]
+          // [change reason]: submit finish, we can start new requisition.
+          // if (null != previousStatus && previousStatus.isPreAuthorize()) {
+          if (null != previousStatus && previousStatus.isSubmittable()) {
             throw new ValidationMessageException(new Message(ERROR_FINISH_PROVIOUS_REQUISITION));
           }
+          // [SIGLUS change end]
 
           result = dto;
           break;

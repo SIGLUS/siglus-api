@@ -31,7 +31,6 @@ import org.siglus.siglusapi.service.SiglusRequisitionTemplateService;
 import org.springframework.validation.BindingResult;
 
 public class SiglusRequisitionTemplateControllerTest {
-
   @Mock
   private SiglusRequisitionTemplateService siglusRequisitionTemplateService;
 

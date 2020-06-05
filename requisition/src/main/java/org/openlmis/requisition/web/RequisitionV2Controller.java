@@ -15,6 +15,7 @@
 
 package org.openlmis.requisition.web;
 
+import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.TOTAL_LOSSES_AND_ADJUSTMENTS;
 import static org.openlmis.requisition.dto.ReasonDto.newInstance;
 import static org.openlmis.requisition.web.RequisitionV2Controller.RESOURCE_URL;
 import static org.openlmis.requisition.web.ResourceNames.FACILITIES;
@@ -25,21 +26,25 @@ import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
+import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Value;
@@ -127,9 +132,22 @@ public class RequisitionV2Controller extends BaseRequisitionController {
     logger.debug("Updating requisition with id: {}", requisitionId);
 
     profiler.start("UPDATE");
+    // [SIGLUS change start]
+    // [change reason]: when the mismatch of requisition lineItem， between original requisition and
+    //                  request body dto, especially after add product. calculation max stock
+    //                  quantity will based on the ApprovedProducts. from original lineItems these
+    //                  lineItems will not include the newly added, then case NPE.
     requisitionToUpdate.updateFrom(result.getRequisition(),
-        result.getOrderables(), result.getApprovedProducts(),
+        result.getOrderables(), findApprovedProductFromRequisitionDto(requisitionDto),
         datePhysicalStockCountCompletedEnabledPredicate.exec(result.getProgram()));
+    // [SIGLUS change end]
+
+    // [SIGLUS change start]
+    // [change reason]: total losses and adjustments when the source is user input. Change it to
+    //                  let user input the value (both positive & negative) directly rather than
+    //                  assign reasons.
+    updateTotalLossAndAjustmentForUserInput(requisitionDto, requisitionToUpdate);
+    // [SIGLUS change end]
 
     profiler.start("SAVE");
     requisitionRepository.save(requisitionToUpdate);
@@ -145,6 +163,57 @@ public class RequisitionV2Controller extends BaseRequisitionController {
 
     return etaggedResource.getResource();
   }
+
+  // [SIGLUS change start]
+  // [change reason]: total losses and adjustments when the source is user input. Change it to
+  //                  let user input the value (both positive & negative) directly rather than
+  //                  assign reasons.
+  private void updateTotalLossAndAjustmentForUserInput(
+      @RequestBody RequisitionV2Dto requisitionDto,
+      Requisition requisitionToUpdate) {
+    RequisitionTemplate template = requisitionToUpdate.getTemplate();
+    if (!template.isPopulateStockOnHandFromStockCards()
+        && template.isColumnDisplayed(TOTAL_LOSSES_AND_ADJUSTMENTS)
+        && template.isColumnUserInput(TOTAL_LOSSES_AND_ADJUSTMENTS)
+    ) {
+      requisitionToUpdate.getRequisitionLineItems().forEach(lineItem -> {
+        RequisitionLineItemV2Dto existing = (RequisitionLineItemV2Dto) requisitionDto
+            .getRequisitionLineItems()
+            .stream()
+            .filter(l -> l.getId().equals(lineItem.getId()))
+            .findFirst()
+            .orElse(null);
+        if (existing != null) {
+          lineItem.setTotalLossesAndAdjustments(existing.getTotalLossesAndAdjustments());
+        }
+      });
+    }
+  }
+  // [SIGLUS change end]
+
+  // [SIGLUS change start]
+  private Map<VersionIdentityDto, ApprovedProductDto> findApprovedProductFromRequisitionDto(
+      RequisitionV2Dto requisitionV2Dto) {
+    Set<VersionEntityReference> references = Optional
+        .ofNullable(requisitionV2Dto.getLineItems())
+        .orElse(Collections.emptyList())
+        .stream()
+        .map(baseDto -> {
+          RequisitionLineItemV2Dto requisitionLineItemV2Dto =
+              (RequisitionLineItemV2Dto)baseDto;
+          VersionObjectReferenceDto versionObjectReferenceDto =
+              requisitionLineItemV2Dto.getApprovedProduct();
+          return new VersionEntityReference(
+              versionObjectReferenceDto.getId(),
+              versionObjectReferenceDto.getVersionNumber());
+        })
+        .collect(Collectors.toSet());
+
+    return facilityTypeApprovedProductReferenceDataService
+        .findByIdentities(references).stream()
+        .collect(Collectors.toMap(ApprovedProductDto::getIdentity, dto -> dto));
+  }
+  // [SIGLUS change end]
 
   /**
    * Get chosen requisition.

@@ -55,7 +55,7 @@ public class RequisitionV2Dto extends BaseRequisitionDto {
   private Set<VersionObjectReferenceDto> availableProducts;
 
   @Override
-  List<BaseRequisitionLineItemDto> getLineItems() {
+  public List<BaseRequisitionLineItemDto> getLineItems() {
     return Lists.newArrayList(Optional
         .ofNullable(requisitionLineItems)
         .orElse(Collections.emptyList()));

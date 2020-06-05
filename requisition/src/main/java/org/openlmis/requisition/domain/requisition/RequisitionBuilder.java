@@ -17,7 +17,6 @@ package org.openlmis.requisition.domain.requisition;
 
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NULL_ID;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ORDERABLE_NOT_IN_AVAILABLE_LIST;
-import static org.openlmis.requisition.i18n.MessageKeys.ERROR_PROGRAM_NOT_FOUND;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -80,9 +79,12 @@ public final class RequisitionBuilder {
               new Message(ERROR_ORDERABLE_NOT_IN_AVAILABLE_LIST, item.getOrderable().getId()));
         }
 
-        orderable
-            .findProgramOrderable(programId)
-            .orElseThrow(() -> new ValidationMessageException(ERROR_PROGRAM_NOT_FOUND, programId));
+        // [SIGLUS change start]
+        // [change reason]:programId is vitual program, orderable is real program.
+        // orderable
+        //   .findProgramOrderable(programId)
+        //   .orElseThrow(() -> new ValidationMessageException(ERROR_PROGRAM_NOT_FOUND, programId));
+        // [SIGLUS change end]
 
         if (isSkipped(requisitionLineItem) && requisitionStatus.isPreAuthorize()) {
           item.skipLineItem(template);
