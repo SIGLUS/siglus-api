@@ -430,7 +430,6 @@ public class RequisitionController extends BaseRequisitionController {
     Map<VersionIdentityDto, ApprovedProductDto> approvedProducts = findApprovedProducts(
         () -> getLineItemApprovedProductIdentities(requisition), profiler);
 
-    validateForStatusChange(requisition, orderables, approvedProducts, profiler);
     // [SIGLUS change start]
     // [change reason]: #147 NO approved quantity if internal facility.
     boolean isInternalFacility = user.getHomeFacilityId().equals(requisition.getFacilityId());
