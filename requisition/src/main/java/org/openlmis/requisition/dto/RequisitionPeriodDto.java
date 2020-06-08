@@ -37,6 +37,11 @@ public class RequisitionPeriodDto extends ProcessingPeriodDto {
     dto.setName(period.getName());
     dto.setStartDate(period.getStartDate());
     dto.setEndDate(period.getEndDate());
+    // [SIGLUS change start]
+    // [change reason]: set submit start&end date from dto
+    dto.setSubmitStartDate(period.getSubmitStartDate());
+    dto.setSubmitEndDate(period.getSubmitEndDate());
+    // [SIGLUS change end]
     dto.setProcessingSchedule(period.getProcessingSchedule());
     dto.setDescription(period.getDescription());
     dto.setDurationInMonths(period.getDurationInMonths());
