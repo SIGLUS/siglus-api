@@ -27,10 +27,10 @@ import java.util.List;
 import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.util.Lists;
+import org.openlmis.fulfillment.domain.FulfillmentStatusChange;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
-import org.openlmis.fulfillment.domain.FulfillmentStatusChange;
 import org.openlmis.fulfillment.domain.StatusMessage;
 import org.openlmis.fulfillment.domain.UpdateDetails;
 

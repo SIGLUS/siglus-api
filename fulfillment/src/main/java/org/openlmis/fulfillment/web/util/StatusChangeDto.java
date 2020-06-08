@@ -36,7 +36,8 @@ import org.springframework.context.i18n.LocaleContextHolder;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StatusChangeDto implements FulfillmentStatusChange.Exporter, FulfillmentStatusChange.Importer {
+public class StatusChangeDto implements FulfillmentStatusChange.Exporter,
+    FulfillmentStatusChange.Importer {
 
   @Getter
   @Setter

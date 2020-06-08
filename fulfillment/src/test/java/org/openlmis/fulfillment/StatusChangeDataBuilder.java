@@ -30,7 +30,8 @@ public class StatusChangeDataBuilder {
    * Creates new instance of {@link FulfillmentStatusChange} based on passed data.
    */
   public FulfillmentStatusChange build() {
-    FulfillmentStatusChange statusChange = new FulfillmentStatusChange(null, status, authorId, createdDate);
+    FulfillmentStatusChange statusChange = new FulfillmentStatusChange(null, status, authorId,
+        createdDate);
 
     return statusChange;
   }
