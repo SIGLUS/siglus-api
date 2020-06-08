@@ -39,22 +39,32 @@ public class SiglusOrderableService {
   private SiglusOrderableReferenceDataService orderableReferenceDataService;
 
   @Autowired
+  private SiglusArchiveProductService archiveProductService;
+
+  @Autowired
   private ProgramExtensionRepository programExtensionRepository;
 
   @Autowired
   private OrderableRepository orderableRepository;
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
-      Pageable pageable) {
+      Pageable pageable, UUID facilityId) {
     Map<UUID, ProgramExtension> programExtensions =
         programExtensionRepository.findAll().stream().collect(Collectors.toMap(
             ProgramExtension::getProgramId,
             programExtension -> programExtension));
     Page<OrderableDto> orderableDtoPage = orderableReferenceDataService
         .searchOrderables(searchParams, pageable);
-    orderableDtoPage.getContent().forEach(orderableDto -> orderableDto.getPrograms().forEach(
-        programOrderableDto -> programOrderableDto
-            .setParentId(programExtensions.get(programOrderableDto.getProgramId()).getParentId())));
+    Set<String> archivedProducts = archiveProductService.searchArchivedProducts(facilityId);
+    orderableDtoPage.getContent().forEach(orderableDto -> {
+      orderableDto.setArchived(false);
+      if (archivedProducts.contains(orderableDto.getId().toString())) {
+        orderableDto.setArchived(true);
+      }
+      orderableDto.getPrograms()
+          .forEach(programOrderableDto -> programOrderableDto.setParentId(
+              programExtensions.get(programOrderableDto.getProgramId()).getParentId()));
+    });
     return orderableDtoPage;
   }
 

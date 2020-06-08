@@ -15,7 +15,10 @@
 
 package org.openlmis.referencedata.dto;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
@@ -72,6 +75,12 @@ public class OrderableDto extends BaseDto implements Orderable.Importer,
   private TemperatureMeasurementDto maximumTemperature;
 
   private VolumeMeasurementDto inBoxCubeDimension;
+
+  // [SIGLUS change start]
+  // [change reason]: support for archive.
+  @JsonInclude(NON_NULL)
+  private Boolean archived;
+  // [SIGLUS change end]
 
   @JsonIgnore
   private OrderableRepository orderableRepository;
