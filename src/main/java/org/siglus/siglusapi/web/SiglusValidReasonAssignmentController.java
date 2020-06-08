@@ -34,8 +34,6 @@ public class SiglusValidReasonAssignmentController {
   @Autowired
   private SiglusValidReasonAssignmentService siglusValidReasonAssignmentService;
 
-  // [SIGLUS change start]
-  // [change reason]: support "All Products" program.
   @GetMapping
   public Collection<ValidReasonAssignmentDto> searchValidReasons(
       @RequestParam(required = false) UUID program,
@@ -49,5 +47,4 @@ public class SiglusValidReasonAssignmentController {
     return siglusValidReasonAssignmentService
         .getValidReasons(program, facilityType, reasonType, reason);
   }
-  // [SIGLUS change end]
 }
