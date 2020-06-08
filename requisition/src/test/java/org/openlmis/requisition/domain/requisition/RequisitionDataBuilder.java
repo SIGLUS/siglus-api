@@ -128,7 +128,12 @@ public class RequisitionDataBuilder implements DataBuilder<Requisition>,
     Requisition requisition = new Requisition(
         requisitionLineItems, version, draftStatusMessage, template, facilityId, programId,
         processingPeriodId, supplyingFacilityId, status, statusChanges, emergency, reportOnly,
-        numberOfMonthsInPeriod, supervisoryNodeId, previousRequisitions, availableProducts,
+        numberOfMonthsInPeriod, supervisoryNodeId,
+        // [SIGLUS change start]
+        // [change reason]: add field.
+        null,
+        // [SIGLUS change end]
+        previousRequisitions, availableProducts,
         datePhysicalStockCountCompleted, stockAdjustmentReasons, permissionStrings,
         new ExtraDataEntity(extraData)
     );

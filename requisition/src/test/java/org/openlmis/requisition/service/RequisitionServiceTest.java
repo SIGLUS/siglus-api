@@ -561,8 +561,12 @@ public class RequisitionServiceTest {
     role.setRights(rights);
 
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
-        any(Set.class), any(Pageable.class)))
-        .thenReturn(getPage(emptyList(), pageRequest));
+        any(Set.class), any(Pageable.class),
+        // [SIGLUS change start]
+        // [change reason]: add field.
+        user.getHomeFacilityId()
+        // [SIGLUS change end]
+    )).thenReturn(getPage(emptyList(), pageRequest));
 
     Page<Requisition> requisitionsForApproval =
         requisitionService.getRequisitionsForApproval(user, null, pageRequest);
@@ -577,8 +581,12 @@ public class RequisitionServiceTest {
     role.setRights(rights);
 
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
-        any(Set.class), any(Pageable.class)))
-        .thenReturn(getPage(emptyList(), pageRequest));
+        any(Set.class), any(Pageable.class),
+        // [SIGLUS change start]
+        // [change reason]: add field.
+        user.getHomeFacilityId()
+        // [SIGLUS change end]
+    )).thenReturn(getPage(emptyList(), pageRequest));
 
     Page<Requisition> requisitionsForApproval =
         requisitionService.getRequisitionsForApproval(user, null, pageRequest);
@@ -593,8 +601,12 @@ public class RequisitionServiceTest {
     role.setRights(rights);
 
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
-        any(Set.class), any(Pageable.class)))
-        .thenReturn(getPage(emptyList(), pageRequest));
+        any(Set.class), any(Pageable.class),
+        // [SIGLUS change start]
+        // [change reason]: add field.
+        user.getHomeFacilityId()
+        // [SIGLUS change end]
+    )).thenReturn(getPage(emptyList(), pageRequest));
 
     Page<Requisition> requisitionsForApproval =
         requisitionService.getRequisitionsForApproval(user, null, pageRequest);
@@ -1632,7 +1644,12 @@ public class RequisitionServiceTest {
     requisitions.add(requisition2);
 
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
-        newHashSet(new ImmutablePair<>(program.getId(), supervisoryNode.getId())), pageRequest))
+        newHashSet(new ImmutablePair<>(program.getId(), supervisoryNode.getId())), pageRequest,
+        // [SIGLUS change start]
+        // [change reason]: add field.
+        user.getHomeFacilityId()
+        // [SIGLUS change end]
+    ))
         .thenReturn(getPage(requisitions, pageRequest));
     return requisitions;
   }

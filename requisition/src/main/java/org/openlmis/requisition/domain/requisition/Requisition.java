@@ -92,6 +92,7 @@ import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
+import org.openlmis.referencedata.domain.SupervisoryNode;
 import org.openlmis.requisition.domain.BaseTimestampedEntity;
 import org.openlmis.requisition.domain.ExtraDataEntity;
 import org.openlmis.requisition.domain.ExtraDataEntity.ExtraDataExporter;
@@ -229,6 +230,13 @@ public class Requisition extends BaseTimestampedEntity {
   @Type(type = UUID_TYPE)
   private UUID supervisoryNodeId;
 
+  // [SIGLUS change start]
+  // [change reason]: support for filter approve list for internal approve.
+  @ManyToOne
+  @JoinColumn(name = "supervisoryNodeId", insertable = false, updatable= false)
+  private SupervisoryNode supervisoryNode;
+  // [SIGLUS change end]
+
   @ManyToMany
   @JoinTable(name = "requisitions_previous_requisitions", schema = "requisition",
       joinColumns = {@JoinColumn(name = "requisitionId")},
@@ -309,6 +317,10 @@ public class Requisition extends BaseTimestampedEntity {
         original.template, original.facilityId, original.programId, original.processingPeriodId,
         original.supplyingFacilityId, original.status, original.statusChanges, original.emergency,
         original.reportOnly, original.numberOfMonthsInPeriod, original.supervisoryNodeId,
+        // [SIGLUS change start]
+        // [change reason]: add field.
+        original.supervisoryNode,
+        // [SIGLUS change end]
         original.previousRequisitions, original.availableProducts,
         original.datePhysicalStockCountCompleted, null,
         null, new ExtraDataEntity());

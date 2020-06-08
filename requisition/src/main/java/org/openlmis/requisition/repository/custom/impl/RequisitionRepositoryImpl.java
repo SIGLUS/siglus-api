@@ -253,7 +253,12 @@ public class RequisitionRepositoryImpl
    */
   @Override
   public Page<Requisition> searchApprovableRequisitionsByProgramSupervisoryNodePairs(
-      Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable) {
+      Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable,
+      // [SIGLUS change start]
+      // [change reason]: support for filter approve list for internal approve.
+      UUID facilityId
+      // [SIGLUS change end]
+  ) {
     XLOGGER.entry(programNodePairs, pageable);
 
     Profiler profiler = new Profiler("SEARCH_APPROBABLE_REQ_BY_PROGRAM_SUP_NODE_PAIRS");
@@ -264,7 +269,12 @@ public class RequisitionRepositoryImpl
 
     profiler.start("PREPARE_COUNT_QUERY");
     CriteriaQuery<Long> countQuery = builder.createQuery(Long.class);
-    countQuery = prepareApprovableQuery(builder, countQuery, programNodePairs, true, pageable);
+    countQuery = prepareApprovableQuery(builder, countQuery, programNodePairs, true, pageable,
+        // [SIGLUS change start]
+        // [change reason]: support for filter approve list for internal approve.
+        facilityId
+        // [SIGLUS change end]
+    );
 
     profiler.start("EXECUTE_COUNT_QUERY");
     Long count = countEntities(countQuery);
@@ -284,7 +294,12 @@ public class RequisitionRepositoryImpl
 
     profiler.start("PREPARE_MAIN_QUERY");
     CriteriaQuery<Requisition> query = builder.createQuery(Requisition.class);
-    query = prepareApprovableQuery(builder, query, programNodePairs, false, pageable);
+    query = prepareApprovableQuery(builder, query, programNodePairs, false, pageable,
+        // [SIGLUS change start]
+        // [change reason]: support for filter approve list for internal approve.
+        facilityId
+        // [SIGLUS change end]
+    );
 
     profiler.start("EXECUTE_MAIN_QUERY");
     List<Requisition> requisitions = entityManager.createQuery(query)
@@ -402,7 +417,12 @@ public class RequisitionRepositoryImpl
 
   private <T> CriteriaQuery<T> prepareApprovableQuery(CriteriaBuilder builder,
       CriteriaQuery<T> query, Set<Pair<UUID, UUID>> programNodePairs,
-      boolean isCountQuery, Pageable pageable) {
+      boolean isCountQuery, Pageable pageable,
+      // [SIGLUS change start]
+      // [change reason]: support for filter approve list for internal approve.
+      UUID facilityId
+      // [SIGLUS change end]
+  ) {
 
     Root<Requisition> root = query.from(Requisition.class);
 
@@ -418,6 +438,13 @@ public class RequisitionRepositoryImpl
         .in(RequisitionStatus.AUTHORIZED, RequisitionStatus.IN_APPROVAL);
 
     Predicate predicate = builder.and(pairPredicate, statusPredicate);
+
+    // [SIGLUS change start]
+    // [change reason]: support for filter approve list for internal approve.
+    predicate = builder.and(predicate, builder
+        .or(builder.equal(root.get("supervisoryNode").get("facility").get("id"), facilityId),
+            builder.equal(root.get(FACILITY_ID), facilityId)));
+    // [SIGLUS change end]
 
     if (!isCountQuery) {
       Subquery<ZonedDateTime> subquery = query.subquery(ZonedDateTime.class);

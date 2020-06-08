@@ -46,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/requisitions")
+@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusRequisitionController {
 
   @Autowired
@@ -150,5 +151,12 @@ public class SiglusRequisitionController {
     return siglusProcessingPeriodService.getPeriods(
         programId, facilityId, emergency
     );
+  }
+
+  @GetMapping("/requisitionsForApproval")
+  public Page<BasicRequisitionDto> searchRequisitionsForApproval(
+      @RequestParam(value = "program", required = false) UUID programId,
+      Pageable pageable) {
+    return requisitionController.requisitionsForApproval(programId, pageable);
   }
 }
