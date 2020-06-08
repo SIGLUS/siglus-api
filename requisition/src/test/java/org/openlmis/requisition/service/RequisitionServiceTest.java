@@ -560,13 +560,13 @@ public class RequisitionServiceTest {
     Set<RightDto> rights = new HashSet<>();
     role.setRights(rights);
 
+    // [SIGLUS change start]
+    // [change reason]: add field.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         any(Set.class), any(Pageable.class),
-        // [SIGLUS change start]
-        // [change reason]: add field.
-        user.getHomeFacilityId()
-        // [SIGLUS change end]
-    )).thenReturn(getPage(emptyList(), pageRequest));
+        user.getHomeFacilityId()))
+        .thenReturn(getPage(emptyList(), pageRequest));
+    // [SIGLUS change end]
 
     Page<Requisition> requisitionsForApproval =
         requisitionService.getRequisitionsForApproval(user, null, pageRequest);
@@ -580,13 +580,13 @@ public class RequisitionServiceTest {
     rights.add(approveRequisitionRight);
     role.setRights(rights);
 
+    // [SIGLUS change start]
+    // [change reason]: add field.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         any(Set.class), any(Pageable.class),
-        // [SIGLUS change start]
-        // [change reason]: add field.
-        user.getHomeFacilityId()
-        // [SIGLUS change end]
-    )).thenReturn(getPage(emptyList(), pageRequest));
+        user.getHomeFacilityId()))
+        .thenReturn(getPage(emptyList(), pageRequest));
+    // [SIGLUS change end]
 
     Page<Requisition> requisitionsForApproval =
         requisitionService.getRequisitionsForApproval(user, null, pageRequest);
@@ -600,13 +600,13 @@ public class RequisitionServiceTest {
     rights.add(approveRequisitionRight);
     role.setRights(rights);
 
+    // [SIGLUS change start]
+    // [change reason]: add field.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         any(Set.class), any(Pageable.class),
-        // [SIGLUS change start]
-        // [change reason]: add field.
-        user.getHomeFacilityId()
-        // [SIGLUS change end]
-    )).thenReturn(getPage(emptyList(), pageRequest));
+        user.getHomeFacilityId()))
+        .thenReturn(getPage(emptyList(), pageRequest));
+    // [SIGLUS change end]
 
     Page<Requisition> requisitionsForApproval =
         requisitionService.getRequisitionsForApproval(user, null, pageRequest);
@@ -1643,14 +1643,13 @@ public class RequisitionServiceTest {
     requisition2.setStatus(AUTHORIZED);
     requisitions.add(requisition2);
 
+    // [SIGLUS change start]
+    // [change reason]: add field.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         newHashSet(new ImmutablePair<>(program.getId(), supervisoryNode.getId())), pageRequest,
-        // [SIGLUS change start]
-        // [change reason]: add field.
-        user.getHomeFacilityId()
-        // [SIGLUS change end]
-    ))
+        user.getHomeFacilityId()))
         .thenReturn(getPage(requisitions, pageRequest));
+    // [SIGLUS change end]
     return requisitions;
   }
 

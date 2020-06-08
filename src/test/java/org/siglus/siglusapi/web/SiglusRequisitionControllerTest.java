@@ -31,6 +31,7 @@ import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
+import org.springframework.data.domain.Pageable;
 
 public class SiglusRequisitionControllerTest {
 
@@ -52,6 +53,9 @@ public class SiglusRequisitionControllerTest {
   private UUID uuid;
 
   private BasicRequisitionDto basicRequisitionDto;
+
+  @Mock
+  private Pageable pageable;
 
   @Before
   public void prepare() {
@@ -83,6 +87,13 @@ public class SiglusRequisitionControllerTest {
 
     verify(requisitionController).authorizeRequisition(uuid, request, response);
     verify(siglusRequisitionService).activateArchivedProducts(any(), any());
+  }
+
+  @Test
+  public void shouldCallOpenlmisControllerWhenSearchRequisitionsForApproval() {
+    siglusRequisitionController.searchRequisitionsForApproval(null, pageable);
+
+    verify(requisitionController).requisitionsForApproval(null, pageable);
   }
 
 }

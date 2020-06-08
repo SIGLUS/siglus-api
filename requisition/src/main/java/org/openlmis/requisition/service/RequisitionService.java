@@ -668,13 +668,12 @@ public class RequisitionService {
           .collect(toSet());
 
       profiler.start("REQUISITION_REPOSITORY_SEARCH_APPROVABLE_BY_PAIRS");
+      // [SIGLUS change start]
+      // [change reason]: support for filter approve list for internal approve.
       requisitionsForApproval = requisitionRepository
           .searchApprovableRequisitionsByProgramSupervisoryNodePairs(programNodePairs, pageable,
-              // [SIGLUS change start]
-              // [change reason]: support for filter approve list for internal approve.
-              user.getHomeFacilityId()
-              // [SIGLUS change end]
-          );
+              user.getHomeFacilityId());
+      // [SIGLUS change end]
     }
 
     profiler.stop().log();
