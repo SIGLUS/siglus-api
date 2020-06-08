@@ -18,7 +18,7 @@ package org.openlmis.fulfillment;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.ExternalStatus;
-import org.openlmis.fulfillment.domain.StatusChange;
+import org.openlmis.fulfillment.domain.FulfillmentStatusChange;
 
 public class StatusChangeDataBuilder {
   private ExternalStatus status = ExternalStatus.APPROVED;
@@ -27,10 +27,10 @@ public class StatusChangeDataBuilder {
 
 
   /**
-   * Creates new instance of {@link StatusChange} based on passed data.
+   * Creates new instance of {@link FulfillmentStatusChange} based on passed data.
    */
-  public StatusChange build() {
-    StatusChange statusChange = new StatusChange(null, status, authorId, createdDate);
+  public FulfillmentStatusChange build() {
+    FulfillmentStatusChange statusChange = new FulfillmentStatusChange(null, status, authorId, createdDate);
 
     return statusChange;
   }

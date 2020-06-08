@@ -25,7 +25,7 @@ import org.openlmis.fulfillment.domain.FtpTransferProperties;
 import org.openlmis.fulfillment.domain.LocalTransferProperties;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
-import org.openlmis.fulfillment.domain.StatusChange;
+import org.openlmis.fulfillment.domain.FulfillmentStatusChange;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.BaseReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
@@ -139,9 +139,9 @@ public class ExporterBuilder {
    * @param statusChanges the status changes to convert
    * @return list of StatusChangeDto
    */
-  public List<StatusChangeDto> convertToDtos(List<StatusChange> statusChanges) {
+  public List<StatusChangeDto> convertToDtos(List<FulfillmentStatusChange> statusChanges) {
     List<StatusChangeDto> dtos = new ArrayList<>();
-    for (StatusChange statusChange : statusChanges) {
+    for (FulfillmentStatusChange statusChange : statusChanges) {
       StatusChangeDto dto = StatusChangeDto.newInstance(statusChange);
       dto.setAuthor(getIfPresent(users, dto.getAuthorId()));
       dtos.add(dto);

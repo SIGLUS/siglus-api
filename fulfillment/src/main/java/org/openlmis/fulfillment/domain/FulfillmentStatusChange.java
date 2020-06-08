@@ -35,7 +35,7 @@ import org.hibernate.annotations.Type;
 @Table(name = "status_changes", schema = "fulfillment")
 @NoArgsConstructor
 @AllArgsConstructor
-public class StatusChange extends BaseEntity {
+public class FulfillmentStatusChange extends BaseEntity {
 
   @ManyToOne(cascade = {CascadeType.REFRESH})
   @JoinColumn(name = "orderId", nullable = false)
@@ -58,8 +58,8 @@ public class StatusChange extends BaseEntity {
   @Setter
   private ZonedDateTime createdDate;
 
-  public static StatusChange newStatusChange(Importer importer) {
-    return new StatusChange(null, importer.getStatus(),
+  public static FulfillmentStatusChange newStatusChange(Importer importer) {
+    return new FulfillmentStatusChange(null, importer.getStatus(),
             importer.getAuthorId(), importer.getCreatedDate());
   }
 

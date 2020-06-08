@@ -29,14 +29,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openlmis.fulfillment.domain.ExternalStatus;
-import org.openlmis.fulfillment.domain.StatusChange;
+import org.openlmis.fulfillment.domain.FulfillmentStatusChange;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.springframework.context.i18n.LocaleContextHolder;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StatusChangeDto implements StatusChange.Exporter, StatusChange.Importer {
+public class StatusChangeDto implements FulfillmentStatusChange.Exporter, FulfillmentStatusChange.Importer {
 
   @Getter
   @Setter
@@ -73,11 +73,11 @@ public class StatusChangeDto implements StatusChange.Exporter, StatusChange.Impo
   }
 
   /**
-   * Create new instance of StatusChangeDto based on given {@link StatusChange}.
+   * Create new instance of StatusChangeDto based on given {@link FulfillmentStatusChange}.
    * @param statusChange instance of StatusChange
    * @return new instance of StatusChangeDto.
    */
-  public static StatusChangeDto newInstance(StatusChange statusChange) {
+  public static StatusChangeDto newInstance(FulfillmentStatusChange statusChange) {
     StatusChangeDto statusChangeDto = new StatusChangeDto();
     statusChange.export(statusChangeDto);
     return statusChangeDto;

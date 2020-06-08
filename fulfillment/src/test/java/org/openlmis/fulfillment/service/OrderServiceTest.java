@@ -65,7 +65,7 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderNumberConfiguration;
 import org.openlmis.fulfillment.domain.OrderStatus;
-import org.openlmis.fulfillment.domain.StatusChange;
+import org.openlmis.fulfillment.domain.FulfillmentStatusChange;
 import org.openlmis.fulfillment.domain.TransferType;
 import org.openlmis.fulfillment.extension.ExtensionManager;
 import org.openlmis.fulfillment.extension.point.OrderNumberGenerator;
@@ -262,7 +262,7 @@ public class OrderServiceTest {
 
   @Test
   public void shouldSaveOrderAndNotDeleteFileIfFtpSendFailure() throws Exception {
-    StatusChange statusChange = new StatusChange();
+    FulfillmentStatusChange statusChange = new FulfillmentStatusChange();
     statusChange.setStatus(ExternalStatus.APPROVED);
     statusChange.setCreatedDate(ZonedDateTime.now());
     statusChange.setAuthorId(randomUUID());
@@ -449,8 +449,8 @@ public class OrderServiceTest {
     assertEquals(expectedLineItem.getOrderedQuantity(), actualLineItem.getOrderedQuantity());
     assertEquals(expectedLineItem.getOrderable(), actualLineItem.getOrderable());
 
-    StatusChange actualStatusChange = actual.getStatusChanges().iterator().next();
-    StatusChange expectedStatusChange = expected.getStatusChanges().iterator().next();
+    FulfillmentStatusChange actualStatusChange = actual.getStatusChanges().iterator().next();
+    FulfillmentStatusChange expectedStatusChange = expected.getStatusChanges().iterator().next();
 
     assertEquals(expectedStatusChange.getStatus(), actualStatusChange.getStatus());
     assertEquals(expectedStatusChange.getCreatedDate(), actualStatusChange.getCreatedDate());
@@ -474,7 +474,7 @@ public class OrderServiceTest {
         .withOrderedQuantity(100L)
         .withOrderable(orderable.getId(), orderable.getVersionNumber())
         .build();
-    StatusChange statusChange = new StatusChangeDataBuilder().build();
+    FulfillmentStatusChange statusChange = new StatusChangeDataBuilder().build();
     order = new OrderDataBuilder()
         .withQuotedCost(BigDecimal.ZERO)
         .withProgramId(program.getId())

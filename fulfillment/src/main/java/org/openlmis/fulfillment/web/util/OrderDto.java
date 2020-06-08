@@ -33,7 +33,7 @@ import org.openlmis.fulfillment.domain.ExternalStatus;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
-import org.openlmis.fulfillment.domain.StatusChange;
+import org.openlmis.fulfillment.domain.FulfillmentStatusChange;
 import org.openlmis.fulfillment.domain.StatusMessage;
 import org.openlmis.fulfillment.domain.UpdateDetails;
 import org.openlmis.fulfillment.service.ExporterBuilder;
@@ -135,7 +135,7 @@ public class OrderDto implements Order.Importer, Order.Exporter, UpdateDetails.E
   }
 
   @Override
-  public List<StatusChange.Importer> getStatusChanges() {
+  public List<FulfillmentStatusChange.Importer> getStatusChanges() {
     return new ArrayList<>(Optional.ofNullable(statusChanges).orElse(Collections.emptyList()));
   }
 

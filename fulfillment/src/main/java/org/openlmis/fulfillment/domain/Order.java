@@ -160,7 +160,7 @@ public class Order extends BaseEntity {
       orphanRemoval = true)
   @Getter
   @Setter
-  private List<StatusChange> statusChanges;
+  private List<FulfillmentStatusChange> statusChanges;
 
   @Getter
   @Setter
@@ -236,7 +236,7 @@ public class Order extends BaseEntity {
         .ifPresent(list -> list.forEach(consumer));
   }
 
-  public void forEachStatusChange(Consumer<StatusChange> consumer) {
+  public void forEachStatusChange(Consumer<FulfillmentStatusChange> consumer) {
     Optional.ofNullable(statusChanges)
             .ifPresent(list -> list.forEach(consumer));
   }
@@ -296,7 +296,7 @@ public class Order extends BaseEntity {
 
     if (importer.getStatusChanges() != null) {
       importer.getStatusChanges().forEach(
-          sch -> order.getStatusChanges().add(StatusChange.newStatusChange(sch)));
+          sch -> order.getStatusChanges().add(FulfillmentStatusChange.newStatusChange(sch)));
     }
 
     return order;
@@ -391,7 +391,7 @@ public class Order extends BaseEntity {
 
     UserDto getCreatedBy();
 
-    List<StatusChange.Importer> getStatusChanges();
+    List<FulfillmentStatusChange.Importer> getStatusChanges();
 
     UpdateDetails getUpdateDetails();
   }

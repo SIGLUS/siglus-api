@@ -30,7 +30,7 @@ import org.assertj.core.util.Lists;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
-import org.openlmis.fulfillment.domain.StatusChange;
+import org.openlmis.fulfillment.domain.FulfillmentStatusChange;
 import org.openlmis.fulfillment.domain.StatusMessage;
 import org.openlmis.fulfillment.domain.UpdateDetails;
 
@@ -53,7 +53,7 @@ public class OrderDataBuilder {
   private BigDecimal quotedCost = new BigDecimal("1.29");
   private List<OrderLineItem> orderLineItems = Lists.newArrayList(); // check constructor
   private List<StatusMessage> statusMessages = Lists.emptyList();
-  private List<StatusChange> statusChanges = Lists.newArrayList();
+  private List<FulfillmentStatusChange> statusChanges = Lists.newArrayList();
   private UpdateDetails updateDetails = new UpdateDetails(lastUpdaterId, ZonedDateTime.now());
 
   public OrderDataBuilder() {
@@ -82,7 +82,7 @@ public class OrderDataBuilder {
   /**
    * Sets order line items that should be in the order.
    */
-  public OrderDataBuilder withStatusChanges(StatusChange... changes) {
+  public OrderDataBuilder withStatusChanges(FulfillmentStatusChange... changes) {
     statusChanges.clear();
     Collections.addAll(statusChanges, changes);
     return this;
