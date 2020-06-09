@@ -31,10 +31,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openlmis.fulfillment.domain.ExternalStatus;
 import org.openlmis.fulfillment.domain.FulfillmentStatusChange;
+import org.openlmis.fulfillment.domain.FulfillmentStatusMessage;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
-import org.openlmis.fulfillment.domain.StatusMessage;
 import org.openlmis.fulfillment.domain.UpdateDetails;
 import org.openlmis.fulfillment.service.ExporterBuilder;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
@@ -130,7 +130,7 @@ public class OrderDto implements Order.Importer, Order.Exporter, UpdateDetails.E
   }
 
   @Override
-  public List<StatusMessage.Importer> getStatusMessages() {
+  public List<FulfillmentStatusMessage.Importer> getStatusMessages() {
     return new ArrayList<>(Optional.ofNullable(statusMessages).orElse(Collections.emptyList()));
   }
 

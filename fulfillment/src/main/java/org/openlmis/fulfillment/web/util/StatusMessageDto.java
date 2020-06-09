@@ -20,25 +20,26 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.openlmis.fulfillment.domain.ExternalStatus;
-import org.openlmis.fulfillment.domain.StatusMessage;
+import org.openlmis.fulfillment.domain.FulfillmentStatusMessage;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StatusMessageDto implements StatusMessage.Exporter, StatusMessage.Importer {
+public class StatusMessageDto implements
+    FulfillmentStatusMessage.Exporter, FulfillmentStatusMessage.Importer {
   private UUID id;
   private UUID authorId;
   private ExternalStatus status;
   private String body;
 
   /**
-   * Create new instance of StatusMessageDto based on given {@link StatusMessage}.
-   * @param statusMessage instance of StatusMessage
+   * Create new instance of StatusMessageDto based on given {@link FulfillmentStatusMessage}.
+   * @param fulfillmentStatusMessage instance of FulfillmentStatusMessage
    * @return new instance of StatusMessageDto.
    */
-  public static StatusMessageDto newInstance(StatusMessage statusMessage) {
+  public static StatusMessageDto newInstance(FulfillmentStatusMessage fulfillmentStatusMessage) {
     StatusMessageDto statusMessageDto = new StatusMessageDto();
-    statusMessage.export(statusMessageDto);
+    fulfillmentStatusMessage.export(statusMessageDto);
     return statusMessageDto;
   }
 }

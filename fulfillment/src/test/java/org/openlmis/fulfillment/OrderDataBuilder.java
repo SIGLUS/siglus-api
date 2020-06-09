@@ -28,10 +28,10 @@ import java.util.UUID;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.util.Lists;
 import org.openlmis.fulfillment.domain.FulfillmentStatusChange;
+import org.openlmis.fulfillment.domain.FulfillmentStatusMessage;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
-import org.openlmis.fulfillment.domain.StatusMessage;
 import org.openlmis.fulfillment.domain.UpdateDetails;
 
 @SuppressWarnings({"PMD.TooManyMethods"})
@@ -52,7 +52,7 @@ public class OrderDataBuilder {
   private OrderStatus status = TRANSFER_FAILED;
   private BigDecimal quotedCost = new BigDecimal("1.29");
   private List<OrderLineItem> orderLineItems = Lists.newArrayList(); // check constructor
-  private List<StatusMessage> statusMessages = Lists.emptyList();
+  private List<FulfillmentStatusMessage> statusMessages = Lists.emptyList();
   private List<FulfillmentStatusChange> statusChanges = Lists.newArrayList();
   private UpdateDetails updateDetails = new UpdateDetails(lastUpdaterId, ZonedDateTime.now());
 

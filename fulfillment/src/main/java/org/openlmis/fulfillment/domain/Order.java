@@ -151,7 +151,7 @@ public class Order extends BaseEntity {
   @Fetch(FetchMode.SELECT)
   @Getter
   @Setter
-  private List<StatusMessage> statusMessages;
+  private List<FulfillmentStatusMessage> statusMessages;
 
   @OneToMany(
       mappedBy = "order",
@@ -231,7 +231,7 @@ public class Order extends BaseEntity {
         .ifPresent(list -> list.forEach(consumer));
   }
 
-  public void forEachStatus(Consumer<StatusMessage> consumer) {
+  public void forEachStatus(Consumer<FulfillmentStatusMessage> consumer) {
     Optional.ofNullable(statusMessages)
         .ifPresent(list -> list.forEach(consumer));
   }
@@ -291,7 +291,7 @@ public class Order extends BaseEntity {
 
     if (importer.getStatusMessages() != null) {
       importer.getStatusMessages().forEach(
-          sm -> order.getStatusMessages().add(StatusMessage.newInstance(sm)));
+          sm -> order.getStatusMessages().add(FulfillmentStatusMessage.newInstance(sm)));
     }
 
     if (importer.getStatusChanges() != null) {
@@ -383,7 +383,7 @@ public class Order extends BaseEntity {
 
     List<OrderLineItem.Importer> getOrderLineItems();
 
-    List<StatusMessage.Importer> getStatusMessages();
+    List<FulfillmentStatusMessage.Importer> getStatusMessages();
 
     ProcessingPeriodDto getProcessingPeriod();
 

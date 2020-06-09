@@ -32,7 +32,7 @@ import org.hibernate.annotations.Type;
 @Entity
 @Table(name = "status_messages", schema = "fulfillment")
 @NoArgsConstructor
-public class StatusMessage extends BaseEntity {
+public class FulfillmentStatusMessage extends BaseEntity {
 
   @ManyToOne(cascade = CascadeType.REFRESH)
   @JoinColumn(name = "orderId", nullable = false)
@@ -57,17 +57,17 @@ public class StatusMessage extends BaseEntity {
   private String body;
 
   /**
-   * Create new instance of StatusMessage based on given {@link Importer}.
+   * Create new instance of FulfillmentStatusMessage based on given {@link Importer}.
    * @param importer instance of {@link Importer}
-   * @return instance of StatusMessage.
+   * @return instance of FulfillmentStatusMessage.
    */
-  public static StatusMessage newInstance(Importer importer) {
-    StatusMessage statusMessage = new StatusMessage();
-    statusMessage.setId(importer.getId());
-    statusMessage.setAuthorId(importer.getAuthorId());
-    statusMessage.setStatus(importer.getStatus());
-    statusMessage.setBody(importer.getBody());
-    return statusMessage;
+  public static FulfillmentStatusMessage newInstance(Importer importer) {
+    FulfillmentStatusMessage fulfillmentStatusMessage = new FulfillmentStatusMessage();
+    fulfillmentStatusMessage.setId(importer.getId());
+    fulfillmentStatusMessage.setAuthorId(importer.getAuthorId());
+    fulfillmentStatusMessage.setStatus(importer.getStatus());
+    fulfillmentStatusMessage.setBody(importer.getBody());
+    return fulfillmentStatusMessage;
   }
 
   /**
