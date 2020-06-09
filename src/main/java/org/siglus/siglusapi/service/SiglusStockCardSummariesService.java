@@ -85,27 +85,16 @@ public class SiglusStockCardSummariesService {
             .addAll(summaries.getStockCardsForFulfillOrderables()
                 .stream()
                 .filter(archiveProductService::isNotArchived)
-                .map(stockCard -> {
-                  stockCard.setArchived(false);
-                  return stockCard;
-                }).collect(Collectors.toList()));
+                .collect(Collectors.toList()));
       } else if (Boolean.parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
         siglusSummaries.getStockCardsForFulfillOrderables()
             .addAll(summaries.getStockCardsForFulfillOrderables()
                 .stream()
                 .filter(archiveProductService::isArchived)
-                .map(stockCard -> {
-                  stockCard.setArchived(true);
-                  return stockCard;
-                }).collect(Collectors.toList()));
+                .collect(Collectors.toList()));
       } else {
         siglusSummaries.getStockCardsForFulfillOrderables()
-            .addAll(summaries.getStockCardsForFulfillOrderables()
-                .stream()
-                .map(stockCard -> {
-                  stockCard.setArchived(archiveProductService.isArchived(stockCard));
-                  return stockCard;
-                }).collect(Collectors.toList()));
+            .addAll(summaries.getStockCardsForFulfillOrderables());
       }
       siglusSummaries.getOrderableFulfillMap().putAll(summaries.getOrderableFulfillMap());
     }

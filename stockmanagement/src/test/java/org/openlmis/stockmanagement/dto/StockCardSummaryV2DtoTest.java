@@ -121,10 +121,7 @@ public class StockCardSummaryV2DtoTest {
     StockCardSummaryV2Dto stockCardWithTwoFulfillingProducts =
         new StockCardSummaryV2DtoDataBuilder()
             .withCanFulfillForMe(new HashSet<>(Arrays.asList(
-                // [SIGLUS change start]
-                // [change reason]: add field.
-                new CanFulfillForMeEntryDto(null, null, null, 15, null, null, false),
-                // [SIGLUS change end]
+                new CanFulfillForMeEntryDto(null, null, null, 15, null, null),
                 new CanFulfillForMeEntryDto())))
             .build();
     StockCardSummaryV2Dto stockCardWithOneFulfillingProduct = new StockCardSummaryV2DtoDataBuilder()
@@ -141,10 +138,7 @@ public class StockCardSummaryV2DtoTest {
     StockCardSummaryV2Dto stockCardWithTwoFulfillingProducts =
         new StockCardSummaryV2DtoDataBuilder()
             .withCanFulfillForMe(new HashSet<>(Arrays.asList(
-                // [SIGLUS change start]
-                // [change reason]: add field.
-                new CanFulfillForMeEntryDto(null, null, null, 15, null, null, false),
-                // [SIGLUS change end]
+                new CanFulfillForMeEntryDto(null, null, null, 15, null, null),
                 new CanFulfillForMeEntryDto())))
             .build();
     StockCardSummaryV2Dto stockCardWithOneFulfillingProduct = new StockCardSummaryV2DtoDataBuilder()

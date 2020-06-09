@@ -96,13 +96,10 @@ public class StockCardDataBuilder {
    * Creates stock card based on parameters from the builder.
    */
   public StockCard build() {
-    // [SIGLUS change start]
-    // [change reason]: add field.
     StockCard card = new StockCard(
         originalEvent, originalEvent.getFacilityId(), originalEvent.getProgramId(), orderableId,
-        lotId, lineItems, stockOnHand, occurredDate, processedDate, false
+        lotId, lineItems, stockOnHand, occurredDate, processedDate
     );
-    // [SIGLUS change end]
     card.setId(id);
 
     return card;

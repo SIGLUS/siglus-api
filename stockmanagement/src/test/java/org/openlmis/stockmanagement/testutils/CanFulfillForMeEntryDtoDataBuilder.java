@@ -47,11 +47,8 @@ public class CanFulfillForMeEntryDtoDataBuilder {
    * @return created can fulfill for me entry
    */
   public CanFulfillForMeEntryDto build() {
-    // [SIGLUS change start]
-    // [change reason]: add field.
     return new CanFulfillForMeEntryDto(stockCard, orderable, lot, stockOnHand,
-        occurredDate, processedDate, false);
-    // [SIGLUS change end]
+        occurredDate, processedDate);
   }
 
   /**

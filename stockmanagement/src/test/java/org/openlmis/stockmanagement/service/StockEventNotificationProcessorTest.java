@@ -74,11 +74,8 @@ public class StockEventNotificationProcessorTest {
 
   @Before
   public void setUp() {
-    // [SIGLUS change start]
-    // [change reason]: add field.
     stockCard = new StockCard(null, facilityId, programId, orderableId, lotId, null, 0,
-        getBaseDate(), getBaseDateTime(), false);
-    // [SIGLUS change end]
+        getBaseDate(), getBaseDateTime());
     stockCard.setId(stockCardId);
 
     context = mock(StockEventProcessContext.class);
@@ -124,11 +121,8 @@ public class StockEventNotificationProcessorTest {
     UUID anotherOrderableId = UUID.randomUUID();
     UUID anotherLotId = UUID.randomUUID();
 
-    // [SIGLUS change start]
-    // [change reason]: add field.
     StockCard anotherStockCard = new StockCard(null, facilityId, programId, orderableId, lotId,
-        null, 0, getBaseDate(), getBaseDateTime(), false);
-    // [SIGLUS change end]
+        null, 0, getBaseDate(), getBaseDateTime());
     anotherStockCard.setId(anotherStockCardId);
 
     StockEventLineItemDto secondLineItem = createStockEventLineItem();

@@ -106,12 +106,6 @@ public class StockCard extends BaseEntity implements IdentifiableByOrderableLot 
   @Transient
   private ZonedDateTime processedDate = null;
 
-  // [SIGLUS change start]
-  // [change reason]: support for archive.
-  @Transient
-  private boolean archived;
-  // [SIGLUS change end]
-
   /**
    * Create stock card from stock event dto and its line item.
    *

@@ -59,11 +59,4 @@ public final class CanFulfillForMeEntryDto {
   @Setter
   @JsonFormat(shape = STRING)
   private ZonedDateTime processedDate;
-
-  // [SIGLUS change start]
-  // [change reason]: support for archive.
-  @Getter
-  @Setter
-  private boolean archived;
-  // [SIGLUS change end]
 }
