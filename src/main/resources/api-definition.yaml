@@ -1247,6 +1247,38 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /requisitions/{id}/reject:
+      uriParameters:
+        id:
+          displayName: id
+          type: string
+          required: true
+          repeat: false
+      put:
+        is: [ secured, idempotent ]
+        description: Reject requisition which is waiting for approval.
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: basicRequisitionDto
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "404":
+            body:
+              application/json:
+                schema: localizedMessage
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            body:
+              application/json:
+                schema: localizedMessage
+
     /requisitions/createLineItem:
       post:
         is: [ secured, idempotent ]

@@ -135,6 +135,15 @@ public class SiglusRequisitionController {
     return basicRequisitionDto;
   }
 
+  @PutMapping("/{id}/reject")
+  public BasicRequisitionDto rejectRequisition(
+      @PathVariable("id") UUID requisitionId,
+      HttpServletRequest request,
+      HttpServletResponse response) {
+    return requisitionController
+        .rejectRequisition(requisitionId, request, response);
+  }
+
   @PostMapping("/createLineItem")
   public List<SiglusRequisitionLineItemDto> createRequisitionLineItem(
       @RequestParam(value = "requisitionId") UUID requisitonId,
