@@ -180,7 +180,8 @@ public class RequisitionV2Controller extends BaseRequisitionController {
         RequisitionLineItemV2Dto existing = (RequisitionLineItemV2Dto) requisitionDto
             .getRequisitionLineItems()
             .stream()
-            .filter(l -> l.getId().equals(lineItem.getId()))
+            .filter(l -> l.getOrderableIdentity().getId()
+                .equals(lineItem.getOrderable().getId()))
             .findFirst()
             .orElse(null);
         if (existing != null) {
