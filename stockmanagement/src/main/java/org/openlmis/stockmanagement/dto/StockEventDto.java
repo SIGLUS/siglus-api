@@ -203,7 +203,7 @@ public class StockEventDto {
   }
 
   // [SIGLUS change start]
-  // [change reason]: add methods.
+  // [change reason]: need to skip AdjustmentReasonValidator when unpack kit.
   /**
    * Checks if a stock event is a unpacking from kit event or not. Returns true if this is a
    * unpacking from kit event.
@@ -215,7 +215,11 @@ public class StockEventDto {
         .stream()
         .anyMatch(l -> context.getUnpackedFromReasonId().equals(l.getReasonId()));
   }
+  // [SIGLUS change end]
 
+  // [SIGLUS change start]
+  // [change reason]: unpack kit stock event cannot call v3's api but receive stock event can, so I
+  //                  need to know whether the line items have unpack kit reason id or not.
   /**
    * Checks if a stock event has a special reason or not.
    * @param reasonId reasonId

@@ -561,7 +561,7 @@ public class RequisitionServiceTest {
     role.setRights(rights);
 
     // [SIGLUS change start]
-    // [change reason]: add field.
+    // [change reason]: support for filter approve list for internal approve.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         any(Set.class), any(Pageable.class),
         user.getHomeFacilityId()))
@@ -581,7 +581,7 @@ public class RequisitionServiceTest {
     role.setRights(rights);
 
     // [SIGLUS change start]
-    // [change reason]: add field.
+    // [change reason]: support for filter approve list for internal approve.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         any(Set.class), any(Pageable.class),
         user.getHomeFacilityId()))
@@ -601,7 +601,7 @@ public class RequisitionServiceTest {
     role.setRights(rights);
 
     // [SIGLUS change start]
-    // [change reason]: add field.
+    // [change reason]: support for filter approve list for internal approve.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         any(Set.class), any(Pageable.class),
         user.getHomeFacilityId()))
@@ -1644,7 +1644,7 @@ public class RequisitionServiceTest {
     requisitions.add(requisition2);
 
     // [SIGLUS change start]
-    // [change reason]: add field.
+    // [change reason]: support for filter approve list for internal approve.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         newHashSet(new ImmutablePair<>(program.getId(), supervisoryNode.getId())), pageRequest,
         user.getHomeFacilityId()))

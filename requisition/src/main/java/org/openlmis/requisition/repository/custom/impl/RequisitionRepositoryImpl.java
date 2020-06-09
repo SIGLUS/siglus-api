@@ -435,9 +435,11 @@ public class RequisitionRepositoryImpl
 
     // [SIGLUS change start]
     // [change reason]: support for filter approve list for internal approve.
-    predicate = builder.and(predicate, builder
-        .or(builder.equal(root.get("supervisoryNode").get("facility").get("id"), facilityId),
-            builder.equal(root.get(FACILITY_ID), facilityId)));
+    Predicate higherLevelApprovePredicate = createHigherLevelApprovePredicate(builder, facilityId,
+        root);
+    Predicate internalApprovePredicate = createInternalApprovePredicate(builder, facilityId, root);
+    predicate = builder
+        .and(predicate, builder.or(higherLevelApprovePredicate, internalApprovePredicate));
     // [SIGLUS change end]
 
     if (!isCountQuery) {
@@ -466,6 +468,19 @@ public class RequisitionRepositoryImpl
 
     return query.where(predicate);
   }
+
+  // [SIGLUS change start]
+  // [change reason]: support for filter approve list for internal approve.
+  private Predicate createHigherLevelApprovePredicate(CriteriaBuilder builder, UUID facilityId,
+      Root<Requisition> root) {
+    return builder.equal(root.get("supervisoryNode").get("facility").get("id"), facilityId);
+  }
+
+  private Predicate createInternalApprovePredicate(CriteriaBuilder builder, UUID facilityId,
+      Root<Requisition> root) {
+    return builder.equal(root.get(FACILITY_ID), facilityId);
+  }
+  // [SIGLUS change end]
 
   private Predicate createProgramNodePairPredicate(CriteriaBuilder builder,
       Root<Requisition> root, Set<Pair<UUID, UUID>> programNodePairs) {

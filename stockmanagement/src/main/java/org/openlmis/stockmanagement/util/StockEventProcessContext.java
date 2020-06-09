@@ -58,7 +58,7 @@ public class StockEventProcessContext {
   private UUID unpackReasonId;
 
   // [SIGLUS change start]
-  // [change reason]: add field.
+  // [change reason]: need to skip AdjustmentReasonValidator when unpack kit.
   @Getter
   private UUID unpackedFromReasonId;
   // [SIGLUS change end]

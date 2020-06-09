@@ -113,7 +113,7 @@ public class StockEventProcessContextBuilder {
   private UUID unpackReasonId;
 
   // [SIGLUS change start]
-  // [change reason]: add field.
+  // [change reason]: need to skip AdjustmentReasonValidator when unpack kit.
   @Value("${stockmanagement.kit.unpacked.from.reasonId}")
   private UUID unpackedFromReasonId;
   // [SIGLUS change end]
@@ -143,7 +143,7 @@ public class StockEventProcessContextBuilder {
     context.setUnpackReasonId(unpackReasonId);
 
     // [SIGLUS change start]
-    // [change reason]: add field.
+    // [change reason]: need to skip AdjustmentReasonValidator when unpack kit.
     context.setUnpackedFromReasonId(unpackedFromReasonId);
     // [SIGLUS change end]
 

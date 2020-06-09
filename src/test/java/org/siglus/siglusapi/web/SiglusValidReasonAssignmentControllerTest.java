@@ -18,6 +18,7 @@ package org.siglus.siglusapi.web;
 import static org.mockito.Mockito.verify;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -34,19 +35,29 @@ public class SiglusValidReasonAssignmentControllerTest {
   @Mock
   private SiglusValidReasonAssignmentService siglusValidReasonAssignmentService;
 
+  private UUID programId = UUID.randomUUID();
+
+  private UUID facilityType = UUID.randomUUID();
+
+  private String reasonType = "reasonType";
+
+  private UUID reason = UUID.randomUUID();
+
   @Test
   public void shouldCallGetValidReasonsForAllProductsWhenProgramIsAllProducts() {
     siglusValidReasonAssignmentController
-        .searchValidReasons(ALL_PRODUCTS_PROGRAM_ID, null, null, null);
+        .searchValidReasons(ALL_PRODUCTS_PROGRAM_ID, facilityType, reasonType, reason);
 
-    verify(siglusValidReasonAssignmentService).getValidReasonsForAllProducts(null, null, null);
+    verify(siglusValidReasonAssignmentService)
+        .getValidReasonsForAllProducts(facilityType, reasonType, reason);
   }
 
   @Test
   public void shouldCallGetValidReasonsWhenProgramIsNotAllProducts() {
     siglusValidReasonAssignmentController
-        .searchValidReasons(null, null, null, null);
+        .searchValidReasons(programId, facilityType, reasonType, reason);
 
-    verify(siglusValidReasonAssignmentService).getValidReasons(null, null, null, null);
+    verify(siglusValidReasonAssignmentService)
+        .getValidReasons(programId, facilityType, reasonType, reason);
   }
 }

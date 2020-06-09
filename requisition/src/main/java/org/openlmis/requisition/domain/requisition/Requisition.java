@@ -318,7 +318,7 @@ public class Requisition extends BaseTimestampedEntity {
         original.supplyingFacilityId, original.status, original.statusChanges, original.emergency,
         original.reportOnly, original.numberOfMonthsInPeriod, original.supervisoryNodeId,
         // [SIGLUS change start]
-        // [change reason]: add field.
+        // [change reason]: support for filter approve list for internal approve.
         original.supervisoryNode,
         // [SIGLUS change end]
         original.previousRequisitions, original.availableProducts,

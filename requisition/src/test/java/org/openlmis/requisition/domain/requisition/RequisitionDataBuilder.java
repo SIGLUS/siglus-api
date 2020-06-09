@@ -130,7 +130,7 @@ public class RequisitionDataBuilder implements DataBuilder<Requisition>,
         processingPeriodId, supplyingFacilityId, status, statusChanges, emergency, reportOnly,
         numberOfMonthsInPeriod, supervisoryNodeId,
         // [SIGLUS change start]
-        // [change reason]: add field.
+        // [change reason]: support for filter approve list for internal approve.
         null,
         // [SIGLUS change end]
         previousRequisitions, availableProducts,

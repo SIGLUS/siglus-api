@@ -57,6 +57,8 @@ public class SiglusRequisitionControllerTest {
   @Mock
   private Pageable pageable;
 
+  private UUID programId = UUID.randomUUID();
+
   @Before
   public void prepare() {
     MockitoAnnotations.initMocks(this);
@@ -91,9 +93,9 @@ public class SiglusRequisitionControllerTest {
 
   @Test
   public void shouldCallOpenlmisControllerWhenSearchRequisitionsForApproval() {
-    siglusRequisitionController.searchRequisitionsForApproval(null, pageable);
+    siglusRequisitionController.searchRequisitionsForApproval(programId, pageable);
 
-    verify(requisitionController).requisitionsForApproval(null, pageable);
+    verify(requisitionController).requisitionsForApproval(programId, pageable);
   }
 
 }
