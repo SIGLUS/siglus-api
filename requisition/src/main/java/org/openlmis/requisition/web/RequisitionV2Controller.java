@@ -146,7 +146,7 @@ public class RequisitionV2Controller extends BaseRequisitionController {
     // [change reason]: total losses and adjustments when the source is user input. Change it to
     //                  let user input the value (both positive & negative) directly rather than
     //                  assign reasons.
-    updateTotalLossAndAjustmentForUserInput(requisitionDto, requisitionToUpdate);
+    updateTotalLossAndAdjustmentForUserInput(requisitionDto, requisitionToUpdate);
     // [SIGLUS change end]
 
     profiler.start("SAVE");
@@ -168,7 +168,7 @@ public class RequisitionV2Controller extends BaseRequisitionController {
   // [change reason]: total losses and adjustments when the source is user input. Change it to
   //                  let user input the value (both positive & negative) directly rather than
   //                  assign reasons.
-  private void updateTotalLossAndAjustmentForUserInput(
+  private void updateTotalLossAndAdjustmentForUserInput(
       @RequestBody RequisitionV2Dto requisitionDto,
       Requisition requisitionToUpdate) {
     RequisitionTemplate template = requisitionToUpdate.getTemplate();
