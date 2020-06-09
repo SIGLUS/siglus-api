@@ -357,39 +357,46 @@ public class RequisitionLineItem extends BaseEntity {
     if (requisition.isApprovable()) {
       this.approvedQuantity = requisitionLineItem.getApprovedQuantity();
       this.remarks = requisitionLineItem.getRemarks();
-    } else {
-      this.stockOnHand = requisitionLineItem.getStockOnHand();
-      this.beginningBalance = requisitionLineItem.getBeginningBalance();
-      this.totalReceivedQuantity = requisitionLineItem.getTotalReceivedQuantity();
-      this.totalConsumedQuantity = requisitionLineItem.getTotalConsumedQuantity();
-      this.requestedQuantity = requisitionLineItem.getRequestedQuantity();
-      this.requestedQuantityExplanation = requisitionLineItem.getRequestedQuantityExplanation();
-      this.totalStockoutDays = requisitionLineItem.getTotalStockoutDays();
-      this.total = requisitionLineItem.getTotal();
-      this.numberOfNewPatientsAdded = requisitionLineItem.getNumberOfNewPatientsAdded();
-      this.maximumStockQuantity = requisitionLineItem.getMaximumStockQuantity();
-      this.calculatedOrderQuantity = requisitionLineItem.getCalculatedOrderQuantity();
-      this.calculatedOrderQuantityIsa = requisitionLineItem.getCalculatedOrderQuantityIsa();
-      this.additionalQuantityRequired = requisitionLineItem.getAdditionalQuantityRequired();
-      if (requisitionLineItem.getSkipped() != null) {
-        this.skipped = requisitionLineItem.getSkipped();
-      } else {
-        this.skipped = false;
-      }
-
-      if (null == this.stockAdjustments) {
-        this.stockAdjustments = new ArrayList<>();
-      } else {
-        this.stockAdjustments.clear();
-      }
-
-      if (null != requisitionLineItem.getStockAdjustments()) {
-        stockAdjustments.addAll(requisitionLineItem.getStockAdjustments());
-      }
-
-      this.adjustedConsumption = requisitionLineItem.getAdjustedConsumption();
-      this.averageConsumption = requisitionLineItem.getAverageConsumption();
+      // [SIGLUS change start]
+      // [change reason]: should support updating normal data when approve.
     }
+    // } else {
+    // [SIGLUS change end]
+    this.stockOnHand = requisitionLineItem.getStockOnHand();
+    this.beginningBalance = requisitionLineItem.getBeginningBalance();
+    this.totalReceivedQuantity = requisitionLineItem.getTotalReceivedQuantity();
+    this.totalConsumedQuantity = requisitionLineItem.getTotalConsumedQuantity();
+    this.requestedQuantity = requisitionLineItem.getRequestedQuantity();
+    this.requestedQuantityExplanation = requisitionLineItem.getRequestedQuantityExplanation();
+    this.totalStockoutDays = requisitionLineItem.getTotalStockoutDays();
+    this.total = requisitionLineItem.getTotal();
+    this.numberOfNewPatientsAdded = requisitionLineItem.getNumberOfNewPatientsAdded();
+    this.maximumStockQuantity = requisitionLineItem.getMaximumStockQuantity();
+    this.calculatedOrderQuantity = requisitionLineItem.getCalculatedOrderQuantity();
+    this.calculatedOrderQuantityIsa = requisitionLineItem.getCalculatedOrderQuantityIsa();
+    this.additionalQuantityRequired = requisitionLineItem.getAdditionalQuantityRequired();
+    if (requisitionLineItem.getSkipped() != null) {
+      this.skipped = requisitionLineItem.getSkipped();
+    } else {
+      this.skipped = false;
+    }
+
+    if (null == this.stockAdjustments) {
+      this.stockAdjustments = new ArrayList<>();
+    } else {
+      this.stockAdjustments.clear();
+    }
+
+    if (null != requisitionLineItem.getStockAdjustments()) {
+      stockAdjustments.addAll(requisitionLineItem.getStockAdjustments());
+    }
+
+    this.adjustedConsumption = requisitionLineItem.getAdjustedConsumption();
+    this.averageConsumption = requisitionLineItem.getAverageConsumption();
+    // [SIGLUS change start]
+    // [change reason]: should support updating normal data when approve.
+    // }
+    // [SIGLUS change end]
   }
 
   /**

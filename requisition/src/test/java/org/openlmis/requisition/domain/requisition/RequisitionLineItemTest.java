@@ -152,13 +152,21 @@ public class RequisitionLineItemTest {
   }
 
   @Test
-  public void shouldOnlyUpdateApprovedFieldsWhenRequisitionStatusIsAuthorized() {
+  // [SIGLUS change start]
+  // [change reason]: should support updating normal data when approve.
+  // public void shouldOnlyUpdateApprovedFieldsWhenRequisitionStatusIsAuthorized() {
+  public void shouldUpdateApprovedAndNormalFieldsWhenRequisitionStatusIsAuthorized() {
+    // [SIGLUS change end]
     Requisition requisition = mockReq(RequisitionStatus.AUTHORIZED);
     assertOnlyApprovalFieldsEditable(requisition);
   }
 
   @Test
-  public void shouldOnlyUpdateApprovedFieldsWhenRequisitionStatusIsInApproval() {
+  // [SIGLUS change start]
+  // [change reason]: should support updating normal data when approve.
+  // public void shouldOnlyUpdateApprovedFieldsWhenRequisitionStatusIsInApproval() {
+  public void shouldUpdateApprovedAndNormalFieldsWhenRequisitionStatusIsInApproval() {
+    // [SIGLUS change end]
     Requisition requisition = mockReq(RequisitionStatus.IN_APPROVAL);
     assertOnlyApprovalFieldsEditable(requisition);
   }
@@ -662,7 +670,11 @@ public class RequisitionLineItemTest {
 
     assertEquals(1, updatedItem.getApprovedQuantity().intValue());
     assertEquals("Remarks", updatedItem.getRemarks());
-    assertNull(updatedItem.getStockOnHand());
+    // [SIGLUS change start]
+    // [change reason]: should support updating normal data when approve.
+    // assertNull(updatedItem.getStockOnHand());
+    assertEquals(5, updatedItem.getStockOnHand().intValue());
+    // [SIGLUS change end]
   }
 
   private RequisitionLineItem createDefaultRequisitionLineItem(
