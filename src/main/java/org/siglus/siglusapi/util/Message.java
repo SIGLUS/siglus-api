@@ -67,8 +67,7 @@ public class Message {
         return null;
       } else {
         final HashMap<String,String> hashMap = objectMapper.readValue(messageStr, HashMap.class);
-        Message message = new Message(hashMap.get(MESSAGE_KEY));
-        return message;
+        return new Message(hashMap.get(MESSAGE_KEY));
       }
     } catch (IOException ex) {
       return new Message(messageStr);

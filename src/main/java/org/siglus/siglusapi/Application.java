@@ -22,7 +22,6 @@ import java.util.Locale;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
-import org.flywaydb.core.api.callback.FlywayCallback;
 import org.javers.core.Javers;
 import org.javers.core.MappingStyle;
 import org.javers.core.diff.ListCompareAlgorithm;
@@ -37,19 +36,14 @@ import org.openlmis.referencedata.validate.ProcessingPeriodValidator;
 import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
 import org.openlmis.stockmanagement.i18n.StockmanagementExposedMessageSourceImpl;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.boot.autoconfigure.flyway.FlywayMigrationStrategy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.annotation.PropertySources;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -63,16 +57,16 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @ComponentScan(basePackages = {"org.siglus", "org.openlmis"})
 @EntityScan(basePackages = {"org.siglus", "org.openlmis"})
 @EnableJpaRepositories(basePackages = {"org.siglus", "org.openlmis"})
-@PropertySources({
-    @PropertySource("classpath:application.properties"),
-    @PropertySource("classpath:referencedata-application.properties"),
-    @PropertySource("classpath:stockmanagement-application.properties"),
-    @PropertySource("classpath:requisition-application.properties"),
-    @PropertySource("classpath:fulfillment-application.properties")
-})
+@PropertySource("classpath:application.properties")
+@PropertySource("classpath:referencedata-application.properties")
+@PropertySource("classpath:stockmanagement-application.properties")
+@PropertySource("classpath:requisition-application.properties")
+@PropertySource("classpath:fulfillment-application.properties")
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class Application {
-  private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
+
+  private static final String CLASSPATH_MESSAGES = "classpath:messages";
+  private static final String UTF_8 = "UTF-8";
 
   @Value("${defaultLocale}")
   private Locale locale;
@@ -116,26 +110,6 @@ public class Application {
   }
 
   /**
-   * Configures the Flyway migration strategy to clean the DB before migration first.  This is used
-   * as the default unless the Spring Profile "production" is active.
-   * @return the clean-migrate strategy
-   */
-  @Bean
-  @Profile("!production")
-  public FlywayMigrationStrategy cleanMigrationStrategy() {
-    return flyway -> {
-      LOGGER.info("Using clean-migrate flyway strategy -- production profile not active");
-      flyway.setCallbacks(flywayCallback());
-      flyway.migrate();
-    };
-  }
-
-  @Bean
-  public FlywayCallback flywayCallback() {
-    return new ExportSchemaFlywayCallback();
-  }
-
-  /**
    * Creates new MessageSource.
    *
    * @return Created MessageSource.
@@ -143,8 +117,8 @@ public class Application {
   @Bean
   public ExposedMessageSourceImpl messageSource() {
     ExposedMessageSourceImpl messageSource = new ExposedMessageSourceImpl();
-    messageSource.setBasename("classpath:messages");
-    messageSource.setDefaultEncoding("UTF-8");
+    messageSource.setBasename(CLASSPATH_MESSAGES);
+    messageSource.setDefaultEncoding(UTF_8);
     messageSource.setUseCodeAsDefaultMessage(true);
     return messageSource;
   }
@@ -159,8 +133,8 @@ public class Application {
   public StockmanagementExposedMessageSourceImpl stockmanagementMessageSource() {
     StockmanagementExposedMessageSourceImpl messageSource =
         new StockmanagementExposedMessageSourceImpl();
-    messageSource.setBasename("classpath:messages");
-    messageSource.setDefaultEncoding("UTF-8");
+    messageSource.setBasename(CLASSPATH_MESSAGES);
+    messageSource.setDefaultEncoding(UTF_8);
     messageSource.setUseCodeAsDefaultMessage(true);
     return messageSource;
   }
@@ -185,8 +159,8 @@ public class Application {
   @Bean
   public RequisitionExposedMessageSourceImpl requisitionMessageSource() {
     RequisitionExposedMessageSourceImpl messageSource = new RequisitionExposedMessageSourceImpl();
-    messageSource.setBasename("classpath:messages");
-    messageSource.setDefaultEncoding("UTF-8");
+    messageSource.setBasename(CLASSPATH_MESSAGES);
+    messageSource.setDefaultEncoding(UTF_8);
     messageSource.setUseCodeAsDefaultMessage(true);
     return messageSource;
   }
@@ -217,8 +191,6 @@ public class Application {
         .withSchema(preferredSchema)
         .build();
 
-    // ReferencedataJaVersDateProvider customDateProvider = new ReferencedataJaVersDateProvider();
-
     return TransactionalJaversBuilder
         .javers()
         .withTxManager(transactionManager)
@@ -232,7 +204,6 @@ public class Application {
         .withPrettyPrint(javersProperties.isPrettyPrint())
         .withTypeSafeValues(javersProperties.isTypeSafeValues())
         .withPackagesToScan(javersProperties.getPackagesToScan())
-        // .withDateTimeProvider(customDateProvider)
         .registerValueGsonTypeAdapter(double.class, TypeAdapters.DOUBLE)
         .registerValueGsonTypeAdapter(Double.class, TypeAdapters.DOUBLE)
         .registerValueGsonTypeAdapter(float.class, TypeAdapters.FLOAT)

@@ -397,10 +397,6 @@ public abstract class BaseCommunicationService<T> {
               RequestHelper.createEntity(payload, authService.obtainAccessToken(obtainUserToken)),
               type);
     } catch (HttpStatusCodeException ex) {
-      logger.error(
-              "Unable to call remote api. Error code: {}, response message: {}",
-              ex.getStatusCode(), ex.getResponseBodyAsString()
-      );
       final Message errorMessage = Message.createFromMessageKeyStr(ex.getResponseBodyAsString());
       throw new ValidationMessageException(ex, errorMessage);
     }
@@ -419,10 +415,6 @@ public abstract class BaseCommunicationService<T> {
       response = restTemplate.exchange(RequestHelper.createUri(url), HttpMethod.PUT,
           createEntity(payload, obtainUserToken), type).getBody();
     } catch (HttpStatusCodeException ex) {
-      logger.error(
-          "Unable to call remote api. Error code: {}, response message: {}",
-          ex.getStatusCode(), ex.getResponseBodyAsString()
-      );
       final Message errorMessage = Message.createFromMessageKeyStr(ex.getResponseBodyAsString());
       throw new ValidationMessageException(ex, errorMessage);
     }
@@ -440,10 +432,6 @@ public abstract class BaseCommunicationService<T> {
           .exchange(RequestHelper.createUri(url), HttpMethod.DELETE,
               createEntity(null, obtainUserToken), Void.class);
     } catch (HttpStatusCodeException ex) {
-      logger.error(
-          "Unable to call remote api. Error code: {}, response message: {}",
-          ex.getStatusCode(), ex.getResponseBodyAsString()
-      );
       final Message errorMessage = Message.createFromMessageKeyStr(ex.getResponseBodyAsString());
       throw new ValidationMessageException(ex, errorMessage);
     }

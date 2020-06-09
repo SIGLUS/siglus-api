@@ -39,6 +39,7 @@ import org.openlmis.requisition.service.referencedata.PermissionStrings;
 import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -172,7 +173,8 @@ public class SiglusProcessingPeriodService {
       if (emergency) {
         if (!preAuthorizeRequisitions.isEmpty()) {
           Requisition earliestRequisition = preAuthorizeRequisitions.stream().min(
-              Comparator.comparing(Requisition::getCreatedDate)).get();
+              Comparator.comparing(Requisition::getCreatedDate)).orElseThrow(
+                  () -> new NotFoundException("Earlier Rquisition Not Found"));
           requisitionPeriod.setRequisitionId(earliestRequisition.getId());
           requisitionPeriod.setRequisitionStatus(earliestRequisition.getStatus());
         }

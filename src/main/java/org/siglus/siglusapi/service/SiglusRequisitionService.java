@@ -86,6 +86,7 @@ import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.RequisitionApprovalDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.Logger;
@@ -181,7 +182,7 @@ public class SiglusRequisitionService {
     if (!lineItems.isEmpty()) {
       List<UUID> lineItemsId = updatedDto.getRequisitionLineItems()
           .stream()
-          .map(item ->  item.getId())
+          .map(Importer::getId)
           .collect(Collectors.toList());
       List<RequisitionLineItemExtension> updateExtension = new ArrayList<>();
       List<RequisitionLineItemExtension> extensions =
@@ -292,7 +293,7 @@ public class SiglusRequisitionService {
 
         startDateForCalculateAvg = previousRequisitions.stream()
             .min(Comparator.comparing(Requisition::getActualStartDate))
-            .get()
+            .orElseThrow(() -> new NotFoundException("Earlier Rquisition Not Found"))
             .getActualStartDate();
         if (requisition.getEmergency()) {
           List<Requisition> requisitions =
@@ -433,7 +434,7 @@ public class SiglusRequisitionService {
         .findByIdentities(references);
 
     Map<UUID, ApprovedProductDto> approvedProductDtoMap = list.stream()
-        .collect(Collectors.toMap(dto -> dto.getId(), dto -> dto));
+        .collect(Collectors.toMap(ApprovedProductDto::getId, dto -> dto));
 
     return lineItemList
         .stream()
@@ -487,11 +488,8 @@ public class SiglusRequisitionService {
     //         1. 2. set line item authorized quality extension
     RequisitionV2Dto requisitionDto =
         siglusRequisitionRequisitionService.searchRequisition(requisitionId);
-    if (requisitionDto != null) {
-      setTemplateExtension(requisitionDto);
-      setLineItemExtension(requisitionDto);
-    }
-
+    setTemplateExtension(requisitionDto);
+    setLineItemExtension(requisitionDto);
     return setIsFinalApproval(requisitionDto);
   }
 

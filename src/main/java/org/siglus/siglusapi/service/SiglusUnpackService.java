@@ -49,6 +49,7 @@ import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.siglusapi.dto.OrderableInKitDto;
 import org.siglus.siglusapi.dto.SiglusOrdeableKitDto;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.OrderableMessageKeys;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
@@ -111,7 +112,8 @@ public class SiglusUnpackService {
   private Boolean isUnpackPermission(Set<PermissionStringDto> permissionDtos,
       OrderableDto orderableDto) {
     UUID virtualProgramId = programExtensionService.findByProgramId(
-        orderableDto.getPrograms().stream().findFirst().get().getProgramId()).getParentId();
+        orderableDto.getPrograms().stream().findFirst().orElseThrow(() ->
+            new NotFoundException("Orderable's program Not Found")).getProgramId()).getParentId();
     List<String> rights = getPermissionRightBy(permissionDtos, virtualProgramId);
     return rights.containsAll(Arrays.asList(STOCK_INVENTORIES_EDIT,
         STOCK_ADJUST, STOCK_CARDS_VIEW));
@@ -129,7 +131,8 @@ public class SiglusUnpackService {
 
   private SiglusOrdeableKitDto getKitDto(OrderableDto kitOrderable, UUID facilityId) {
     UUID virtualProgramId = programExtensionService.findByProgramId(
-        kitOrderable.getPrograms().stream().findFirst().get().getProgramId()).getParentId();
+        kitOrderable.getPrograms().stream().findFirst().orElseThrow(() ->
+            new NotFoundException("Kit's program Not Found")).getProgramId()).getParentId();
     List<StockCard> stockCards = calculatedStockOnHandService
         .getStockCardsWithStockOnHandByOrderableIds(virtualProgramId, facilityId,
             Collections.singletonList(kitOrderable.getId()));
