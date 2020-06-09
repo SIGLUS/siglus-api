@@ -57,6 +57,12 @@ public class StockEventProcessContext {
   @Getter
   private UUID unpackReasonId;
 
+  // [SIGLUS change start]
+  // [change reason]: add field.
+  @Getter
+  private UUID unpackedFromReasonId;
+  // [SIGLUS change end]
+
   public UUID getCurrentUserId() {
     return currentUserId.get();
   }

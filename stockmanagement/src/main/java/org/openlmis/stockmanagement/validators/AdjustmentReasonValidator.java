@@ -40,7 +40,12 @@ public class AdjustmentReasonValidator implements StockEventValidator {
     profiler.setLogger(XLOGGER);
 
     boolean hasSourceOrDestination = stockEventDto.hasSource() || stockEventDto.hasDestination();
-    if (hasSourceOrDestination || !stockEventDto.hasLineItems() || stockEventDto.isKitUnpacking()) {
+
+    // [SIGLUS change start]
+    // [change reason]: add isUnpackingFromKit check.
+    if (hasSourceOrDestination || !stockEventDto.hasLineItems() || stockEventDto.isKitUnpacking()
+        || stockEventDto.isUnpackingFromKit()) {
+      // [SIGLUS change end]
       return;
     }
 

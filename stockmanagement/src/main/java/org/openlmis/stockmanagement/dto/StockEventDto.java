@@ -203,7 +203,19 @@ public class StockEventDto {
   }
 
   // [SIGLUS change start]
-  // [change reason]: add method
+  // [change reason]: add methods.
+  /**
+   * Checks if a stock event is a unpacking from kit event or not. Returns true if this is a
+   * unpacking from kit event.
+   */
+  @JsonIgnore
+  public boolean isUnpackingFromKit() {
+    return hasLineItems()
+        && lineItems
+        .stream()
+        .anyMatch(l -> context.getUnpackedFromReasonId().equals(l.getReasonId()));
+  }
+
   /**
    * Checks if a stock event has a special reason or not.
    * @param reasonId reasonId

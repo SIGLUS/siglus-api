@@ -161,6 +161,11 @@ public class UnpackKitValidatorTest {
   }
 
   @Test(expected = ValidationMessageException.class)
+  // [SIGLUS change start]
+  // [change reason]: missing constituent line item is ok because they belong to different program,
+  //                  every program has a part of line items.
+  @Ignore
+  // [SIGLUS change end]
   public void shouldThrowExceptionWhenUnpackingWithMissingConstituentLineItem() {
     StockEventLineItemDto kitLineItem = createStockEventLineItem(UNPACK_REASON_ID,
         kitDto.getId(), 2);

@@ -109,8 +109,11 @@ public class UnpackKitValidator implements StockEventValidator {
     }
 
     // check if the constituent products are all accounted for.
-    orderable.getChildren().forEach(
-        orderableChild -> validateKitConstituents(lineItem, orderableCredits, orderableChild));
+    // [SIGLUS change start]
+    // [change reason]: quantity can be inconsistent when unpack.
+    // orderable.getChildren().forEach(
+    //     orderableChild -> validateKitConstituents(lineItem, orderableCredits, orderableChild));
+    // [SIGLUS change end]
 
   }
 
@@ -118,11 +121,7 @@ public class UnpackKitValidator implements StockEventValidator {
       Map<UUID, Integer> orderableCredits, OrderableChildDto orderableChild) {
     Integer quantityToAccountFor = lineItem.getQuantity() * orderableChild.getQuantity();
     Integer constituentCredits = orderableCredits.get(orderableChild.getOrderable().getId());
-    // [SIGLUS change start]
-    // [change reason]: quantity can be inconsistent when unpack.
-    // if (constituentCredits == null || quantityToAccountFor > constituentCredits) {
-    if (constituentCredits == null) {
-      // [SIGLUS change end]
+    if (constituentCredits == null || quantityToAccountFor > constituentCredits) {
       throw new ValidationMessageException(
           new Message(ERROR_EVENT_CANNOT_UNPACK_CONSTITUENT_NOT_ACCOUNTED_FOR,
               lineItem.getOrderableId()));

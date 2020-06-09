@@ -112,6 +112,12 @@ public class StockEventProcessContextBuilder {
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;
 
+  // [SIGLUS change start]
+  // [change reason]: add field.
+  @Value("${stockmanagement.kit.unpacked.from.reasonId}")
+  private UUID unpackedFromReasonId;
+  // [SIGLUS change end]
+
   /**
    * Before processing events, put all needed ref data into context so we don't have to do frequent
    * network requests.
@@ -135,6 +141,11 @@ public class StockEventProcessContextBuilder {
     Supplier<UUID> userIdSupplier;
 
     context.setUnpackReasonId(unpackReasonId);
+
+    // [SIGLUS change start]
+    // [change reason]: add field.
+    context.setUnpackedFromReasonId(unpackedFromReasonId);
+    // [SIGLUS change end]
 
     if (authentication.isClientOnly()) {
       userIdSupplier = eventDto::getUserId;
