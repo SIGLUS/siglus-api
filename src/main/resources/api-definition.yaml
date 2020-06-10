@@ -1359,7 +1359,7 @@ traits:
         description: batch create orders
         body:
           application/json:
-            schema: releasableRequisitionBatchDto
+            schema: orderList
         responses:
           "201":
             body:
