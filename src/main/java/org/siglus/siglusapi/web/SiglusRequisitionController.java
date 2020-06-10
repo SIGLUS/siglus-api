@@ -130,18 +130,22 @@ public class SiglusRequisitionController {
       HttpServletResponse response) {
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
-    siglusRequisitionService
-        .activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
+    siglusRequisitionService.activateArchivedProducts(requisitionId,
+        basicRequisitionDto.getFacility().getId());
     return basicRequisitionDto;
   }
 
+  /**
+   * why we redo this api? for bug card #228, change dependency:
+   * requisition.reject->updateConsumptions(products)->
+   * getNonSkippedFullSupplyRequisitionLineItems->filterLineItems
+   */
   @PutMapping("/{id}/reject")
   public BasicRequisitionDto rejectRequisition(
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
-    return requisitionController
-        .rejectRequisition(requisitionId, request, response);
+    return requisitionController.rejectRequisition(requisitionId, request, response);
   }
 
   @PostMapping("/createLineItem")

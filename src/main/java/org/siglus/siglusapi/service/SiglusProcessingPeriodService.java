@@ -171,20 +171,8 @@ public class SiglusProcessingPeriodService {
           permissionStrings, requisitions);
 
       if (emergency) {
-        if (!preAuthorizeRequisitions.isEmpty()) {
-          Requisition earliestRequisition = preAuthorizeRequisitions.stream().min(
-              Comparator.comparing(Requisition::getCreatedDate)).orElseThrow(
-                  () -> new NotFoundException("Earlier Rquisition Not Found"));
-          requisitionPeriod.setRequisitionId(earliestRequisition.getId());
-          requisitionPeriod.setRequisitionStatus(earliestRequisition.getStatus());
-        }
-
-        if (!requisitionService.searchAuthorizedRequisitions(facility, program,
-            period.getId(), false).isEmpty()) {
-          //for emergency, requisitionPeriods only have one element
-          requisitionPeriods.forEach(requisitionPeriodDto ->
-              requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
-        }
+        processingEmergencyRequisitionPeriod(requisitionPeriods,
+            preAuthorizeRequisitions, requisitionPeriod, period, program, facility);
       } else {
         if (!requisitions.isEmpty()) {
           if (preAuthorizeRequisitions.isEmpty()) {
@@ -198,6 +186,30 @@ public class SiglusProcessingPeriodService {
     }
 
     return requisitionPeriods;
+  }
+
+  private void processingEmergencyRequisitionPeriod(
+      List<RequisitionPeriodDto> requisitionPeriods,
+      List<Requisition> preAuthorizeRequisitions,
+      RequisitionPeriodDto requisitionPeriod,
+      ProcessingPeriodDto period,
+      UUID program,
+      UUID facility
+  ) {
+    if (!preAuthorizeRequisitions.isEmpty()) {
+      Requisition earliestRequisition = preAuthorizeRequisitions.stream().min(
+          Comparator.comparing(Requisition::getCreatedDate)).orElseThrow(
+            () -> new NotFoundException("Earlier Rquisition Not Found"));
+      requisitionPeriod.setRequisitionId(earliestRequisition.getId());
+      requisitionPeriod.setRequisitionStatus(earliestRequisition.getStatus());
+    }
+
+    if (!requisitionService.searchAuthorizedRequisitions(facility, program,
+        period.getId(), false).isEmpty()) {
+      //for emergency, requisitionPeriods only have one element
+      requisitionPeriods.forEach(requisitionPeriodDto ->
+          requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
+    }
   }
 
   private List<String> findPermissionStringsByUser(UserDto user) {

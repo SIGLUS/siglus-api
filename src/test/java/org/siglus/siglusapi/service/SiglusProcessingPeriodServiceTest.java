@@ -87,7 +87,7 @@ public class SiglusProcessingPeriodServiceTest {
   private ProcessingPeriodDto dto = builder.buildDto();
   private ProcessingPeriodExtension extension = builder.buildExtenstion();
 
-  private UUID processingScheduleId = UUID.fromString("727bef28-de1c-11e9-8785-0242ac130007");
+  private UUID processingScheduleId = UUID.randomUUID();
   private int page = 0;
   private int size = 10;
   private Sort sort = new Sort("startDate");

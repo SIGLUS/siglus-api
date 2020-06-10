@@ -80,7 +80,11 @@ public class StatusChangeValidationService {
         approvedProducts);
 
     if (isInternalFacility) {
-      validators.remove(1);
+      for (RequisitionStatusChangeDomainValidator validator: validators) {
+        if (validator instanceof ApprovalFieldsValidator) {
+          validators.remove(validator);
+        }
+      }
     }
   }
   // [SIGLUS change end]
