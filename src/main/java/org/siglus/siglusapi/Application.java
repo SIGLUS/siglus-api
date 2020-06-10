@@ -19,6 +19,7 @@ import com.google.gson.internal.bind.TypeAdapters;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.util.Locale;
+
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
@@ -32,6 +33,7 @@ import org.javers.repository.sql.JaversSqlRepository;
 import org.javers.repository.sql.SqlRepositoryBuilder;
 import org.javers.spring.boot.sql.JaversSqlProperties;
 import org.javers.spring.jpa.TransactionalJaversBuilder;
+import org.openlmis.fulfillment.i18n.FulfillmentExposedMessageSourceImpl;
 import org.openlmis.referencedata.validate.ProcessingPeriodValidator;
 import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
 import org.openlmis.stockmanagement.i18n.StockmanagementExposedMessageSourceImpl;
@@ -43,6 +45,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
@@ -248,6 +251,16 @@ public class Application {
   @Bean
   public ProducerTemplate camelTemplate() {
     return camelContext().createProducerTemplate();
+  }
+
+  @Bean
+  @Primary
+  public FulfillmentExposedMessageSourceImpl fulfillmentMessageSource() {
+    FulfillmentExposedMessageSourceImpl messageSource = new FulfillmentExposedMessageSourceImpl();
+    messageSource.setBasename(CLASSPATH_MESSAGES);
+    messageSource.setDefaultEncoding(UTF_8);
+    messageSource.setUseCodeAsDefaultMessage(true);
+    return messageSource;
   }
   // copy from fulfillment Application.java end
 }

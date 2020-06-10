@@ -70,7 +70,10 @@ public class OrderFulfillmentService extends BaseFulfillmentService<OrderDto> {
   }
 
   protected String getBatchUrl() {
-    return getUrl() + "/batch";
+    // [SIGLUS change start]
+    // [SIGLUS reason] #245 remove influence with locallyFulfill
+    return "/api/siglusapi/orders/batch";
+    // [SIGLUS change end]
   }
 
   @Override

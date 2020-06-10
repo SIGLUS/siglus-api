@@ -27,9 +27,7 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_REQUISITION_NOT_FO
 import static org.openlmis.requisition.i18n.MessageKeys.IDEMPOTENCY_KEY_ALREADY_USED;
 import static org.openlmis.requisition.i18n.MessageKeys.IDEMPOTENCY_KEY_WRONG_FORMAT;
 import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
-import static org.springframework.util.CollectionUtils.isEmpty;
 
-import com.google.common.collect.ImmutableList;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
@@ -66,11 +64,9 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ReasonDto;
-import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.SupplyLineDto;
-import org.openlmis.requisition.dto.SupportedProgramDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.ValidReasonDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
@@ -513,24 +509,25 @@ public abstract class BaseRequisitionController extends BaseController {
     profiler.start("DO_APPROVE");
     requisitionService.doApprove(parentNodeId, approveParams.user, approveParams.orderables,
         requisition, approveParams.supplyLines);
-
-    if (requisition.getStatus().isApproved() && !isEmpty(approveParams.supplyLines)) {
-      profiler.start("RETRIEVE_SUPPLYING_FACILITY");
-      FacilityDto facility = facilityReferenceDataService
-          .findOne(approveParams.supplyLines.get(0).getSupplyingFacility().getId());
-
-      profiler.start("FIND_SUPPORTED_PROGRAM_ENTRY");
-      SupportedProgramDto supportedProgram = facilitySupportsProgramHelper
-          .getSupportedProgram(facility, requisition.getProgramId());
-
-      if (supportedProgram != null && supportedProgram.isSupportLocallyFulfilled()) {
-        profiler.start("CONVERT_TO_ORDER");
-        ReleasableRequisitionDto entry = new ReleasableRequisitionDto(requisition.getId(),
-            facility.getId());
-        requisitionService.convertToOrder(ImmutableList.of(entry), approveParams.user);
-      }
-    }
-
+    // [SIGLUS change start]
+    // [SIGLUS reason] #245 remove influence with locallyFulfill
+    //if (requisition.getStatus().isApproved() && !isEmpty(approveParams.supplyLines)) {
+    //  profiler.start("RETRIEVE_SUPPLYING_FACILITY");
+    //  FacilityDto facility = facilityReferenceDataService
+    //      .findOne(approveParams.supplyLines.get(0).getSupplyingFacility().getId());
+    //
+    //  profiler.start("FIND_SUPPORTED_PROGRAM_ENTRY");
+    //  SupportedProgramDto supportedProgram = facilitySupportsProgramHelper
+    //      .getSupportedProgram(facility, requisition.getProgramId());
+    //
+    //  if (supportedProgram != null && supportedProgram.isSupportLocallyFulfilled()) {
+    //    profiler.start("CONVERT_TO_ORDER");
+    //    ReleasableRequisitionDto entry = new ReleasableRequisitionDto(requisition.getId(),
+    //        facility.getId());
+    //    requisitionService.convertToOrder(ImmutableList.of(entry), approveParams.user);
+    //  }
+    //}
+    // [SIGLUS change end]
     callStatusChangeProcessor(profiler, requisition);
   }
 
@@ -606,7 +603,7 @@ public abstract class BaseRequisitionController extends BaseController {
       Requisition requisition, ProgramDto program,
       Map<VersionIdentityDto, OrderableDto> orderables) {
     return requisitionToUpdate.validateCanBeUpdated(new RequisitionValidationService(
-        requisition, requisitionToUpdate, orderables, 
+        requisition, requisitionToUpdate, orderables,
         dateHelper.getCurrentDateWithSystemZone(),
         datePhysicalStockCountCompletedEnabledPredicate.exec(program)));
   }

@@ -1328,3 +1328,51 @@ traits:
               application/json:
                 schema: basicRequisitionDtoPage
           "500":
+
+    /requisitions/batchReleases:
+      post:
+        is: [ secured, idempotent ]
+        description: convert to orders
+        body:
+          application/json:
+            schema: releasableRequisitionBatchDto
+        responses:
+          "201":
+            body:
+              application/json:
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /orders/batch:
+      post:
+        is: [ secured, idempotent ]
+        description: batch create orders
+        body:
+          application/json:
+            schema: releasableRequisitionBatchDto
+        responses:
+          "201":
+            body:
+              application/json:
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            body:
+              application/json:
+                schema: localizedMessage

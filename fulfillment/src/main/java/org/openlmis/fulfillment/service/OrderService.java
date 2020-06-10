@@ -18,8 +18,7 @@ package org.openlmis.fulfillment.service;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
-import static org.openlmis.fulfillment.domain.OrderStatus.IN_ROUTE;
-import static org.openlmis.fulfillment.domain.OrderStatus.READY_TO_PACK;
+import static org.openlmis.fulfillment.domain.OrderStatus.ORDERED;
 import static org.openlmis.fulfillment.domain.OrderStatus.TRANSFER_FAILED;
 import static org.openlmis.fulfillment.service.FulfillmentPermissionService.ORDERS_EDIT;
 import static org.openlmis.fulfillment.service.FulfillmentPermissionService.ORDERS_VIEW;
@@ -28,10 +27,10 @@ import static org.openlmis.fulfillment.service.FulfillmentPermissionService.PODS
 import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SHIPMENTS_EDIT;
 import static org.openlmis.fulfillment.service.FulfillmentPermissionService.SHIPMENTS_VIEW;
 
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import org.openlmis.fulfillment.domain.FtpTransferProperties;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderNumberConfiguration;
@@ -43,7 +42,6 @@ import org.openlmis.fulfillment.extension.point.OrderNumberGenerator;
 import org.openlmis.fulfillment.repository.OrderNumberConfigurationRepository;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.repository.TransferPropertiesRepository;
-import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentPermissionStrings;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
@@ -87,8 +85,11 @@ public class OrderService {
   @Autowired
   private FulfillmentProgramReferenceDataService programReferenceDataService;
 
-  @Autowired
-  private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
+  // [SIGLUS change start]
+  // [SIGLUS reason] #245 remove influence with locallyFulfill
+  //@Autowired
+  //private FulfillmentFacilityReferenceDataService facilityReferenceDataService;
+  // [SIGLUS change end]
 
   @Autowired
   private OrderNumberConfigurationRepository orderNumberConfigurationRepository;
@@ -224,31 +225,35 @@ public class OrderService {
     if (null != order.getSupplyingFacilityId()) {
       // Is the supplying facility have the FTP configuration?
 
-      ProgramDto program = programReferenceDataService.findOne(order.getProgramId());
-      Optional<ProgramDto> supportedProgram = facilityReferenceDataService
-          .findOne(order.getSupplyingFacilityId())
-          .getSupportedPrograms()
-          .stream()
-          .filter(p -> program.getCode().equals(p.getCode()))
-          .findFirst();
+      // [SIGLUS change start]
+      // [SIGLUS reason] #245 remove influence with locallyFulfill
+      //ProgramDto program = programReferenceDataService.findOne(order.getProgramId());
+      //Optional<ProgramDto> supportedProgram = facilityReferenceDataService
+      //    .findOne(order.getSupplyingFacilityId())
+      //    .getSupportedPrograms()
+      //    .stream()
+      //    .filter(p -> program.getCode().equals(p.getCode()))
+      //    .findFirst();
 
-      if (supportedProgram.isPresent() && supportedProgram.get().isSupportLocallyFulfilled()) {
-        order.prepareToLocalFulfill();
-      } else {
-        TransferProperties properties = transferPropertiesRepository
-            .findFirstByFacilityIdAndTransferType(order.getSupplyingFacilityId(),
-                TransferType.ORDER);
-
-        if (null == properties) {
-          // Set order status as TRANSFER_FAILED
-          order.setStatus(TRANSFER_FAILED);
-        } else {
-          // Is the export-orders flag enabled on the supply line associated with the order
-          // yes -> Set order status as IN_ROUTE
-          // no  -> Set order status as READY_TO_PACK
-          order.setStatus(properties instanceof FtpTransferProperties ? IN_ROUTE : READY_TO_PACK);
-        }
-      }
+      order.setStatus(ORDERED);
+      //if (supportedProgram.isPresent() && supportedProgram.get().isSupportLocallyFulfilled()) {
+      //  order.prepareToLocalFulfill();
+      //} else {
+      //  TransferProperties properties = transferPropertiesRepository
+      //      .findFirstByFacilityIdAndTransferType(order.getSupplyingFacilityId(),
+      //          TransferType.ORDER);
+      //
+      //  if (null == properties) {
+      //    // Set order status as TRANSFER_FAILED
+      //    order.setStatus(TRANSFER_FAILED);
+      //  } else {
+      //    // Is the export-orders flag enabled on the supply line associated with the order
+      //    // yes -> Set order status as IN_ROUTE
+      //    // no  -> Set order status as READY_TO_PACK
+      //    order.setStatus(properties instanceof FtpTransferProperties ? IN_ROUTE : READY_TO_PACK);
+      //  }
+      //}
+      // [SIGLUS change end]
     } else {
       // Set order status as TRANSFER_FAILED
       order.setStatus(TRANSFER_FAILED);
