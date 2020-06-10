@@ -42,11 +42,10 @@ public class SiglusAvailableUsageColumnController {
   @ResponseBody
   public Page<AvailableUsageColumnDto> getAllColumns(Pageable pageable) {
     Page<AvailableUsageColumn> page = repository.findAll(pageable);
-    Page<AvailableUsageColumnDto> result = new PageImpl<>(page.getContent()
+    return new PageImpl<>(page.getContent()
         .stream()
         .map(AvailableUsageColumnDto::newInstance)
         .collect(Collectors.toList()), pageable, page.getTotalElements());
-    return result;
   }
 
 }

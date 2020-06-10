@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -114,14 +113,13 @@ public class SiglusStockCardService {
   }
 
   private List<StockCardLineItemDto> calculateStockOnHandByOrderable(
-      List<StockCardLineItemDto> stockCardLineItems,
+      List<StockCardLineItemDto> lineItemDtos,
       Map<UUID, StockCardLineItem> lineItemsSource) {
-    List<StockCardLineItemDto> lineItemDtos =
-        stockCardLineItems.stream().peek(stockCardLineItemDto -> {
-          StockCardLineItem lineitemSource = lineItemsSource.get(stockCardLineItemDto.getId());
-          stockCardLineItemDto.setProcessedDate(lineitemSource.getProcessedDate());
-          stockCardLineItemDto.setStockCard(lineitemSource.getStockCard());
-        }).collect(Collectors.toList());
+    lineItemDtos.stream().forEach(stockCardLineItemDto -> {
+      StockCardLineItem lineitemSource = lineItemsSource.get(stockCardLineItemDto.getId());
+      stockCardLineItemDto.setProcessedDate(lineitemSource.getProcessedDate());
+      stockCardLineItemDto.setStockCard(lineitemSource.getStockCard());
+    });
     Comparator<StockCardLineItemDto> comparator = byOccurredDate()
         .thenComparing(byProcessedDate())
         .thenComparing(byReasonPriority());
