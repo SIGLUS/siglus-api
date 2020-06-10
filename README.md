@@ -51,7 +51,6 @@ These variables are used by our builds in order to integrate with the [Transifex
 Talisman is a tool that installs a hook to your repository to ensure that potential secrets or sensitive information do not leave the developer's workstation.
 It validates the outgoing changeset for things that look suspicious - such as potential SSH keys, authorization tokens, private keys etc.
 
-Installation:
 ```
 # download the talisman binary
 curl https://thoughtworks.github.io/talisman/install.sh > ~/install-talisman.sh
