@@ -25,12 +25,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.SupportedProgramDto;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.requisition.utils.DateHelper;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
@@ -52,6 +54,9 @@ public class ProgramExtensionService {
   @Autowired
   private ProgramReferenceDataService programRefDataService;
 
+  @Autowired
+  DateHelper dateHelper;
+
   public ProgramExtension findByProgramId(UUID programId) {
     return programExtensionRepository.findByProgramId(programId);
   }
@@ -61,6 +66,7 @@ public class ProgramExtensionService {
     FacilityDto homeFacility = facilityReferenceDataService.findOne(homeFacilityId);
     Set<UUID> supportedPrograms = homeFacility.getSupportedPrograms()
         .stream()
+        .filter(supportedProgramShouldBeActive())
         .map(SupportedProgramDto::getId)
         .collect(Collectors.toSet());
     List<ProgramExtension> programExtensions = programExtensionRepository.findAll();
@@ -111,5 +117,11 @@ public class ProgramExtensionService {
     siglusProgramDto.setParentId(programExtension.getParentId());
     siglusProgramDto.setIsSupportEmergency(programExtension.getIsSupportEmergency());
     return siglusProgramDto;
+  }
+
+  private Predicate<SupportedProgramDto> supportedProgramShouldBeActive() {
+    return supportedProgram ->
+        supportedProgram.isSupportActive() && supportedProgram.isProgramActive() && dateHelper
+            .isDateBeforeNow(supportedProgram.getSupportStartDate());
   }
 }
