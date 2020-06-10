@@ -20,9 +20,9 @@ import org.openlmis.requisition.web.BatchRequisitionController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,7 +34,7 @@ public class SiglusBatchRequisitionController {
   @Autowired
   private BatchRequisitionController batchRequisitionController;
 
-  @RequestMapping(value = "/batchReleases", method = RequestMethod.POST)
+  @PostMapping("/batchReleases")
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
   public ResponseEntity batchReleaseRequisitions(

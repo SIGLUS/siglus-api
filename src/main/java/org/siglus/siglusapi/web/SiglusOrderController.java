@@ -22,9 +22,9 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,12 +36,12 @@ public class SiglusOrderController {
   @Autowired
   private OrderController orderController;
 
-  @RequestMapping(value = "/batch", method = RequestMethod.POST)
+  @PostMapping("/batch")
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
   public Iterable<BasicOrderDto> batchCreateOrders(@RequestBody List<OrderDto> orders,
-                                                   OAuth2Authentication authentication) {
-    return orderController.batchCreateOrders(orders,authentication);
+      OAuth2Authentication authentication) {
+    return orderController.batchCreateOrders(orders, authentication);
   }
 
 }
