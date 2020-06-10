@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto;
 
+import static java.util.Collections.emptyList;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -71,7 +73,9 @@ public class AvailableUsageColumnDto {
   public static AvailableUsageColumnDto newInstance(AvailableUsageColumn column) {
     AvailableUsageColumnDto columnDto = new AvailableUsageColumnDto();
     BeanUtils.copyProperties(column, columnDto);
-    columnDto.setSources(Arrays.asList(column.getSources().split("\\|")));
+    List<String> sources = column.getSources().isEmpty() ? emptyList() :
+        Arrays.asList(column.getSources().split("\\|"));
+    columnDto.setSources(sources);
     columnDto.setSection(AvailableUsageColumnSectionDto
         .newInstance(column.getAvailableUsageColumnSection()));
     return columnDto;
