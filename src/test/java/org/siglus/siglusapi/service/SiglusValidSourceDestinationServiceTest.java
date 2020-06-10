@@ -27,45 +27,58 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
+import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusValidReasonAssignmentServiceTest {
+public class SiglusValidSourceDestinationServiceTest {
 
   @InjectMocks
-  private SiglusValidReasonAssignmentService siglusValidReasonAssignmentService;
+  private SiglusValidSourceDestinationService siglusValidSourceDestinationService;
 
   @Mock
-  private ValidReasonAssignmentStockManagementService validReasonAssignmentStockManagementService;
+  private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
 
   @Mock
   private ProgramExtensionService programExtensionService;
 
   private UUID programId = UUID.randomUUID();
 
-  private UUID facilityType = UUID.randomUUID();
-
-  private String reasonType = "reasonType";
-
-  private UUID reason = UUID.randomUUID();
+  private UUID facilityId = UUID.randomUUID();
 
   @Test
-  public void shouldCallGetValidReasonsWhenGetValidReasons() {
-    siglusValidReasonAssignmentService.getValidReasons(programId, facilityType, reasonType, reason);
+  public void shouldCallGetValidDestinationsWhenFindDestinations() {
+    siglusValidSourceDestinationService.findDestinations(programId, facilityId);
 
-    verify(validReasonAssignmentStockManagementService)
-        .getValidReasons(programId, facilityType, reasonType, reason);
+    verify(validSourceDestinationStockManagementService)
+        .getValidDestinations(programId, facilityId);
   }
 
   @Test
-  public void shouldCallGetValidReasonsMultipleTimesWhenGetValidReasonsForAllProducts() {
+  public void shouldCallGetValidDestinationsMultipleTimesWhenFindDestinationsForAllProducts() {
     when(programExtensionService.findSupportedVirtualPrograms())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
-    siglusValidReasonAssignmentService
-        .getValidReasonsForAllProducts(facilityType, reasonType, reason);
+    siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId);
 
-    verify(validReasonAssignmentStockManagementService, times(2))
-        .getValidReasons(any(), any(), any(), any());
+    verify(validSourceDestinationStockManagementService, times(2))
+        .getValidDestinations(any(), any());
+  }
+
+  @Test
+  public void shouldCallGetValidSourcesWhenFindSources() {
+    siglusValidSourceDestinationService.findSources(programId, facilityId);
+
+    verify(validSourceDestinationStockManagementService).getValidSources(programId, facilityId);
+  }
+
+  @Test
+  public void shouldCallGetValidSourcesMultipleTimesWhenFindSourcesForAllProducts() {
+    when(programExtensionService.findSupportedVirtualPrograms())
+        .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
+
+    siglusValidSourceDestinationService.findSourcesForAllProducts(facilityId);
+
+    verify(validSourceDestinationStockManagementService, times(2))
+        .getValidSources(any(), any());
   }
 }
