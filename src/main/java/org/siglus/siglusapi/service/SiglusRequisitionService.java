@@ -24,15 +24,19 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_A
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
+import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.dto.OrderableExpirationDateDto;
 import org.openlmis.requisition.domain.BaseEntity;
 import org.openlmis.requisition.domain.RequisitionTemplate;
+import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
@@ -60,6 +65,8 @@ import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
+import org.openlmis.requisition.dto.UserDto;
+import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.i18n.MessageKeys;
@@ -70,12 +77,14 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
+import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
 import org.openlmis.requisition.utils.Message;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
@@ -163,6 +172,12 @@ public class SiglusRequisitionService {
 
   @Autowired
   private RequisitionRepository requisitionRepository;
+
+  @Autowired
+  RequisitionAuthenticationHelper authenticationHelper;
+
+  @Autowired
+  ApprovedProductReferenceDataService approvedProductReferenceDataService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -490,6 +505,44 @@ public class SiglusRequisitionService {
         siglusRequisitionRequisitionService.searchRequisition(requisitionId);
     setTemplateExtension(requisitionDto);
     setLineItemExtension(requisitionDto);
+
+    //set available products in approve page
+    Profiler profiler = requisitionController
+        .getProfiler("GET_REQUISITION_TO_APPROVE", requisitionId);
+    Requisition requisition = requisitionController
+        .findRequisition(requisitionId, profiler);
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    if (requisitionService
+        .validateCanApproveRequisition(requisition, userDto.getId()).isSuccess()) {
+
+      Set<VersionObjectReferenceDto> availableProducts = requisitionDto.getAvailableProducts();
+
+      ProgramDto mainProgram = requisitionController
+            .findProgram(requisition.getProgramId(), profiler);
+      FacilityDto approverFacility = requisitionController
+            .findFacility(userDto.getHomeFacilityId(), profiler);
+
+      Set<VersionObjectReferenceDto> approverMainProgramAndAssociateProgramApprovedProducts
+          = new HashSet<>();
+
+      Optional
+          .ofNullable(requisitionService
+              .getApproveProduct(approverFacility, mainProgram, requisition.getTemplate())
+              .getApprovedProductReferences())
+          .orElse(Collections.emptySet())
+          .stream()
+          .map(ApprovedProductReference::getOrderable)
+          .forEach(orderable -> {
+            VersionObjectReferenceDto reference = new VersionObjectReferenceDto(
+                orderable.getId(), serviceUrl, ORDERABLES, orderable.getVersionNumber());
+
+            approverMainProgramAndAssociateProgramApprovedProducts.add(reference);
+          });
+
+      // keep only products in approver facility main & associate programs
+      availableProducts.retainAll(approverMainProgramAndAssociateProgramApprovedProducts);
+    }
+
     return setIsFinalApproval(requisitionDto);
   }
 
