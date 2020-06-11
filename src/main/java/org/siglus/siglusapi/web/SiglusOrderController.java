@@ -36,6 +36,11 @@ public class SiglusOrderController {
   @Autowired
   private OrderController orderController;
 
+  /**
+   * why we redo this api?<br>
+   * to support #245, we refactor
+   * the {@linkplain org.openlmis.fulfillment.service.OrderService#setOrderStatus method}
+   */
   @PostMapping("/batch")
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody

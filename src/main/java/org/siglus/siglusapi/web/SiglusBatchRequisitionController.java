@@ -34,6 +34,11 @@ public class SiglusBatchRequisitionController {
   @Autowired
   private BatchRequisitionController batchRequisitionController;
 
+  /**
+   * why we redo this api? to support #245?<br>
+   * we refactor
+   * the {@linkplain org.openlmis.fulfillment.service.OrderService#setOrderStatus}  method}
+   */
   @PostMapping("/batchReleases")
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody

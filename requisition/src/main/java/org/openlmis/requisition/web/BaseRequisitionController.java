@@ -510,23 +510,23 @@ public abstract class BaseRequisitionController extends BaseController {
     requisitionService.doApprove(parentNodeId, approveParams.user, approveParams.orderables,
         requisition, approveParams.supplyLines);
     // [SIGLUS change start]
-    // [SIGLUS reason] #245 remove influence with locallyFulfill
-    //if (requisition.getStatus().isApproved() && !isEmpty(approveParams.supplyLines)) {
-    //  profiler.start("RETRIEVE_SUPPLYING_FACILITY");
-    //  FacilityDto facility = facilityReferenceDataService
-    //      .findOne(approveParams.supplyLines.get(0).getSupplyingFacility().getId());
+    // [change reason]: #245 remove influence with locallyFulfill
+    // if (requisition.getStatus().isApproved() && !isEmpty(approveParams.supplyLines)) {
+    //   profiler.start("RETRIEVE_SUPPLYING_FACILITY");
+    //   FacilityDto facility = facilityReferenceDataService
+    //       .findOne(approveParams.supplyLines.get(0).getSupplyingFacility().getId());
     //
-    //  profiler.start("FIND_SUPPORTED_PROGRAM_ENTRY");
-    //  SupportedProgramDto supportedProgram = facilitySupportsProgramHelper
-    //      .getSupportedProgram(facility, requisition.getProgramId());
+    //   profiler.start("FIND_SUPPORTED_PROGRAM_ENTRY");
+    //   SupportedProgramDto supportedProgram = facilitySupportsProgramHelper
+    //       .getSupportedProgram(facility, requisition.getProgramId());
     //
-    //  if (supportedProgram != null && supportedProgram.isSupportLocallyFulfilled()) {
-    //    profiler.start("CONVERT_TO_ORDER");
-    //    ReleasableRequisitionDto entry = new ReleasableRequisitionDto(requisition.getId(),
-    //        facility.getId());
-    //    requisitionService.convertToOrder(ImmutableList.of(entry), approveParams.user);
-    //  }
-    //}
+    //   if (supportedProgram != null && supportedProgram.isSupportLocallyFulfilled()) {
+    //     profiler.start("CONVERT_TO_ORDER");
+    //     ReleasableRequisitionDto entry = new ReleasableRequisitionDto(requisition.getId(),
+    //         facility.getId());
+    //     requisitionService.convertToOrder(ImmutableList.of(entry), approveParams.user);
+    //   }
+    // }
     // [SIGLUS change end]
     callStatusChangeProcessor(profiler, requisition);
   }
