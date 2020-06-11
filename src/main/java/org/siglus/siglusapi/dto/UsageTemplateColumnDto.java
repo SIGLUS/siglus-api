@@ -15,13 +15,13 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.openlmis.requisition.dto.BaseRequisitionTemplateColumnDto;
+import org.openlmis.requisition.dto.AvailableRequisitionColumnOptionDto;
 import org.siglus.siglusapi.domain.AvailableUsageColumn;
+import org.siglus.siglusapi.domain.BaseEntity;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.springframework.beans.BeanUtils;
 
@@ -29,11 +29,27 @@ import org.springframework.beans.BeanUtils;
 @NoArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class UsageTemplateColumnDto extends BaseRequisitionTemplateColumnDto {
+public class UsageTemplateColumnDto  extends BaseEntity {
 
-  private UUID id;
+  private String name;
+
+  private String label;
+
+  private String indicator;
+
+  private int displayOrder;
+
+  private Boolean isDisplayed;
+
+  private AvailableRequisitionColumnOptionDto option;
+
+  private String definition;
+
+  private String tag;
 
   private AvailableUsageColumnDto columnDefinition;
+
+  private String source;
 
   public static UsageTemplateColumnDto from(UsageTemplateColumn column) {
     UsageTemplateColumnDto columnDto = new UsageTemplateColumnDto();

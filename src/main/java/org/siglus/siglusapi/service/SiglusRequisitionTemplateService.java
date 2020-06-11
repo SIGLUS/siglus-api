@@ -229,7 +229,7 @@ public class SiglusRequisitionTemplateService {
           allUsageTemplateCategoryDto.entrySet()) {
         UsageCategory category = categoryListEntry.getKey();
         List<UsageTemplateSectionDto> categoryDto = categoryListEntry.getValue();
-        if (categoryDto != null) {
+        if (categoryDto != null && !categoryDto.isEmpty()) {
           Set<UsageTemplateColumnSection> columnSections = categoryDto.stream()
               .map(sectionDto -> UsageTemplateColumnSection.from(sectionDto, category,
                   updatedDto.getId(), availableUsageColumns)).collect(Collectors.toSet());
