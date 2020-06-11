@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_UUID_WRONG_FORMAT;
+import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import java.util.ArrayList;
@@ -46,7 +47,6 @@ public class SiglusStockCardSummariesService {
   private static final String PROGRAM_ID = "programId";
   private static final String EXCLUDE_ARCHIVED = "excludeArchived";
   private static final String ARCHIVED_ONLY = "archivedOnly";
-  private static final String STOCK_CARDS_VIEW = "STOCK_CARDS_VIEW";
 
   @Autowired
   private ProgramExtensionRepository programExtensionRepository;
@@ -68,7 +68,7 @@ public class SiglusStockCardSummariesService {
     UUID inputProgramId = getId(PROGRAM_ID, parameters);
 
     UUID userId = authenticationHelper.getCurrentUser().getId();
-    List<UUID> programIds = getProgramIds(inputProgramId, userId);
+    List<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME));
 
     StockCardSummaries siglusSummaries = new StockCardSummaries();
     siglusSummaries.setStockCardsForFulfillOrderables(new ArrayList<>());
@@ -102,13 +102,13 @@ public class SiglusStockCardSummariesService {
   }
 
 
-  private List<UUID> getProgramIds(UUID programId, UUID userId) {
+  private List<UUID> getProgramIds(UUID programId, UUID userId, String rightName) {
     List<UUID> programIds = new ArrayList<>();
     Set<PermissionStringDto> permissionStrings = permissionService
         .getPermissionStrings(userId).get();
     List<UUID> programsByRight = permissionStrings
         .stream()
-        .filter(permissionStringDto -> permissionStringDto.getRightName().equals(STOCK_CARDS_VIEW))
+        .filter(permissionStringDto -> permissionStringDto.getRightName().equals(rightName))
         .map(PermissionStringDto::getProgramId)
         .collect(Collectors.toList());
     List<ProgramExtension> programExtensions = programExtensionRepository.findByIsVirtual(true);
