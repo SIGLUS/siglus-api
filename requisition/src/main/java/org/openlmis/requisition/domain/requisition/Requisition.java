@@ -432,10 +432,16 @@ public class Requisition extends BaseTimestampedEntity {
     profiler.start("UPDATE_LINE_ITEMS");
     updateReqLines(requisition.getRequisitionLineItems());
 
-    if (!emergency) {
-      profiler.start("CALCULATE_AND_VALIDATE_TEMPLATE_FIELDS");
-      calculateAndValidateTemplateFields(this.template, products, approvedProducts);
-    }
+    // [SIGLUS change start]
+    // [change reason]: siglus emergency need same logic with regular.
+    // if (!emergency) {
+    // [SIGLUS change end]
+    profiler.start("CALCULATE_AND_VALIDATE_TEMPLATE_FIELDS");
+    calculateAndValidateTemplateFields(this.template, products, approvedProducts);
+    // [SIGLUS change start]
+    // [change reason]: siglus emergency need same logic with regular.
+    // }
+    // [SIGLUS change end]
 
     profiler.start("UPDATE_TOTAL_COST_AND_PACKS_TO_SHIP");
     updateTotalCostAndPacksToShip(products);
@@ -447,6 +453,10 @@ public class Requisition extends BaseTimestampedEntity {
 
     profiler.start("SET_EXTRA_DATA");
     extraData = new ExtraDataEntity(requisition.getExtraData());
+    // [SIGLUS change start]
+    // [change reason]: for our frontend difference initial && second time to fill some filed.
+    setIsSavedExtraData(true);
+    // [SIGLUS change end]
 
     // do this manually here, since JPA won't catch updates to collections (line items)
     profiler.start("SET_MODIFIED_DATE");
@@ -723,6 +733,10 @@ public class Requisition extends BaseTimestampedEntity {
       prepareRequisitionForApproval(submitter);
     }
     setModifiedDate(ZonedDateTime.now());
+    // [SIGLUS change start]
+    // [change reason]: for our frontend difference initial && second time to fill some filed.
+    setIsSavedExtraData(false);
+    // [SIGLUS change end]
   }
 
   /**
@@ -738,6 +752,10 @@ public class Requisition extends BaseTimestampedEntity {
     updateTotalCostAndPacksToShip(products);
     prepareRequisitionForApproval(authorizer);
     setModifiedDate(ZonedDateTime.now());
+    // [SIGLUS change start]
+    // [change reason]: for our frontend difference initial && second time to fill some filed.
+    setIsSavedExtraData(false);
+    // [SIGLUS change end]
   }
 
   /**
@@ -783,6 +801,10 @@ public class Requisition extends BaseTimestampedEntity {
     setModifiedDate(ZonedDateTime.now());
 
     statusChanges.add(StatusChange.newStatusChange(this, approver));
+    // [SIGLUS change start]
+    // [change reason]: for our frontend difference initial && second time to fill some filed.
+    setIsSavedExtraData(false);
+    // [SIGLUS change end]
   }
 
   /**
