@@ -5,16 +5,17 @@
 CREATE TABLE usage_columns_maps (
     id UUID PRIMARY KEY,
     requisitiontemplateid UUID NOT NULL,
-    requisitioncolumnid UUID,
+    usagecolumnid UUID,
     definition text,
     displayorder INTEGER NOT NULL,
     indicator CHARACTER VARYING(255),
-    isdisplayed boolean,
+    isdisplayed boolean DEFAULT false,
     label CHARACTER VARYING(255),
     name CHARACTER VARYING(255),
     source CHARACTER VARYING(255),
-    key CHARACTER VARYING(255) NOT NULL,
+    tag CHARACTER VARYING(255),
+    availableSources CHARACTER VARYING(255),
     usagesectionid UUID NOT NULL,
-    FOREIGN KEY(requisitioncolumnid) REFERENCES siglusintegration.available_usage_columns(id),
+    FOREIGN KEY(usagecolumnid) REFERENCES siglusintegration.available_usage_columns(id),
     FOREIGN KEY(usagesectionid) REFERENCES siglusintegration.usage_sections_maps(id)
 );

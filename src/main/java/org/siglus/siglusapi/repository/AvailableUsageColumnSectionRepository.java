@@ -16,10 +16,10 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import org.siglus.siglusapi.domain.AvailableUsageColumn;
+import org.siglus.siglusapi.domain.AvailableUsageColumnSection;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AvailableUsageColumnRepository
-    extends JpaRepository<AvailableUsageColumn, UUID> {
+public interface AvailableUsageColumnSectionRepository
+    extends JpaRepository<AvailableUsageColumnSection, UUID> {
 
 }

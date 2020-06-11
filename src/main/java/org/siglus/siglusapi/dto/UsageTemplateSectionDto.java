@@ -13,34 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
-
-import static javax.persistence.CascadeType.ALL;
-import static org.hibernate.annotations.LazyCollectionOption.FALSE;
+package org.siglus.siglusapi.dto;
 
 import java.util.List;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.LazyCollection;
+import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.springframework.beans.BeanUtils;
 
-@Entity
-@Getter
-@Setter
-@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-@Table(name = "available_usage_column_sections", schema = "siglusintegration")
-public class AvailableUsageColumnSection extends BaseEntity {
+@Data
+public class UsageTemplateSectionDto {
+
+  private UUID id;
 
   private String name;
 
@@ -48,11 +37,15 @@ public class AvailableUsageColumnSection extends BaseEntity {
 
   private Integer displayOrder;
 
-  @Enumerated(value = EnumType.STRING)
-  private UsageCategory category;
+  private List<UsageTemplateColumnDto> columns;
 
-  @LazyCollection(FALSE)
-  @OneToMany(cascade = ALL, mappedBy = "availableUsageColumnSection")
-  private List<AvailableUsageColumn> columns;
-
+  public static UsageTemplateSectionDto from(UsageTemplateColumnSection section) {
+    UsageTemplateSectionDto sectionDto = new UsageTemplateSectionDto();
+    BeanUtils.copyProperties(section, sectionDto);
+    sectionDto.columns = section.getColumns()
+        .stream()
+        .map(UsageTemplateColumnDto::from)
+        .collect(Collectors.toList());
+    return sectionDto;
+  }
 }

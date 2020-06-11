@@ -20,7 +20,7 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum UsageCategory {
-  KITUSAG("kitUsage"),
+  KITUSAGE("kitUsage"),
   PATIENT("patient"),
   REGIMEN("regimen"),
   CONSULTATIONNUMBER("consultationNumber"),

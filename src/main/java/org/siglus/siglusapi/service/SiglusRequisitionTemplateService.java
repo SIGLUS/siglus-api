@@ -15,7 +15,12 @@
 
 package org.siglus.siglusapi.service;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,7 +31,15 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
+import org.siglus.siglusapi.domain.AvailableUsageColumn;
+import org.siglus.siglusapi.domain.AvailableUsageColumnSection;
+import org.siglus.siglusapi.domain.UsageCategory;
+import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
 import org.siglus.siglusapi.dto.SiglusRequisitionTemplateDto;
+import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
+import org.siglus.siglusapi.repository.AvailableUsageColumnRepository;
+import org.siglus.siglusapi.repository.AvailableUsageColumnSectionRepository;
+import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.siglus.siglusapi.service.client.RequisitionTemplateRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,6 +57,16 @@ public class SiglusRequisitionTemplateService {
   @Autowired
   private RequisitionTemplateAssociateProgramRepository associateProgramExtensionRepository;
 
+  @Autowired
+  AvailableUsageColumnSectionRepository availableUsageColumnSectionRepository;
+
+  @Autowired
+  AvailableUsageColumnRepository availableUsageColumnRepository;
+
+  @Autowired
+  UsageTemplateColumnSectionRepository columnSectionRepository;
+
+
   public SiglusRequisitionTemplateDto getTemplate(UUID id) {
     SiglusRequisitionTemplateDto templateDto = SiglusRequisitionTemplateDto.from(
         getTemplateByOpenLmis(id));
@@ -51,13 +74,27 @@ public class SiglusRequisitionTemplateService {
         .findByRequisitionTemplateId(id);
     templateDto.setExtension(RequisitionTemplateExtensionDto.from(extension));
     templateDto.setAssociateProgramsIds(getAssociateProgram(id));
-    return templateDto;
+    List<UsageTemplateColumnSection> usageTemplateColumns = columnSectionRepository
+        .findByRequisitionTemplateId(id);
+    return setUsageTemplateDto(templateDto, usageTemplateColumns);
+
+  }
+
+  public SiglusRequisitionTemplateDto createTemplateExtension(RequisitionTemplateDto updatedDto,
+      SiglusRequisitionTemplateDto requestDto) {
+    SiglusRequisitionTemplateDto templateExtension = updateTemplateExtension(updatedDto,
+        requestDto);
+    templateExtension = updateTemplateAsscociatedProgram(templateExtension, requestDto);
+    List<UsageTemplateColumnSection> usageTemplateColumns = createUsageTemplateColumn(updatedDto);
+    return setUsageTemplateDto(templateExtension, usageTemplateColumns);
   }
 
   public SiglusRequisitionTemplateDto updateTemplate(RequisitionTemplateDto updatedDto,
       SiglusRequisitionTemplateDto requestDto) {
-    SiglusRequisitionTemplateDto newDto = updateTemplateExtension(updatedDto, requestDto);
-    return updateTemplateAsscociatedProgram(newDto, requestDto);
+    SiglusRequisitionTemplateDto templateExtension = updateTemplateExtension(updatedDto,
+        requestDto);
+    templateExtension = updateTemplateAsscociatedProgram(templateExtension, requestDto);
+    return updateUsageTemplateDto(templateExtension, requestDto);
   }
 
   private SiglusRequisitionTemplateDto updateTemplateExtension(
@@ -67,7 +104,7 @@ public class SiglusRequisitionTemplateService {
     if (extension == null) {
       return newDto;
     }
-    log.info("create or update requisition template extension: {}",  extension);
+    log.info("create or update requisition template extension: {}", extension);
     RequisitionTemplateExtension templateExtension = saveTemplateExtension(
         updatedDto.getId(), extension);
     newDto.setExtension(RequisitionTemplateExtensionDto.from(templateExtension));
@@ -78,16 +115,16 @@ public class SiglusRequisitionTemplateService {
       RequisitionTemplateDto updatedDto, SiglusRequisitionTemplateDto requestDto) {
     SiglusRequisitionTemplateDto newDto = SiglusRequisitionTemplateDto.from(updatedDto);
     Set<UUID> uuids = requestDto.getAssociateProgramsIds();
-    log.info("save requisition template asscociated programs: {}",  uuids);
+    log.info("save requisition template asscociated programs: {}", uuids);
     List<RequisitionTemplateAssociateProgram> associatePrograms =
         associateProgramExtensionRepository.findByRequisitionTemplateId(updatedDto.getId());
     Set<UUID> associateProgramIds = associatePrograms.stream()
         .map(RequisitionTemplateAssociateProgram::getAssociatedProgramId)
         .collect(Collectors.toSet());
     if (!associateProgramIds.equals(uuids)) {
-      log.info("delete old requisition template asscociated programss: {}",  associatePrograms);
+      log.info("delete old requisition template asscociated programss: {}", associatePrograms);
       associateProgramExtensionRepository.delete(associatePrograms);
-      log.info("create new requisition template asscociated programss: {}",  uuids);
+      log.info("create new requisition template asscociated programss: {}", uuids);
       associateProgramExtensionRepository.save(
           RequisitionTemplateAssociateProgram.from(updatedDto.getId(), uuids));
     }
@@ -119,6 +156,127 @@ public class SiglusRequisitionTemplateService {
     }
     return requisitionTemplateExtensionRepository.save(
         RequisitionTemplateExtension.from(templateId, extensionDto));
+  }
+
+  private List<UsageTemplateColumnSection> createUsageTemplateColumn(RequisitionTemplateDto
+      updatedDto) {
+    List<AvailableUsageColumnSection> usageSections = availableUsageColumnSectionRepository
+        .findAll();
+    List<UsageTemplateColumnSection> updatedTemplateColumns = new ArrayList<>();
+    for (AvailableUsageColumnSection section : usageSections) {
+      UsageTemplateColumnSection columnSection = UsageTemplateColumnSection
+          .from(section, updatedDto.getId());
+      columnSection.setRequisitionTemplateId(updatedDto.getId());
+      updatedTemplateColumns.add(columnSection);
+    }
+    return columnSectionRepository.save(updatedTemplateColumns);
+  }
+
+  private Map<UsageCategory, List<UsageTemplateSectionDto>> getUsageTempateDto(
+      List<UsageTemplateColumnSection> templateColumnSections) {
+    Map<UsageCategory, List<UsageTemplateColumnSection>> usageCategoryMap = getUsageCategoryListMap(
+        templateColumnSections);
+    EnumMap<UsageCategory, List<UsageTemplateSectionDto>> usageCategoryListMap = new EnumMap<>(
+        UsageCategory.class);
+    for (Map.Entry<UsageCategory, List<UsageTemplateColumnSection>>
+        categoryMapEntry : usageCategoryMap.entrySet()) {
+      List<UsageTemplateSectionDto> dtos = categoryMapEntry.getValue().stream()
+          .map(UsageTemplateSectionDto::from)
+          .collect(Collectors.toList());
+      usageCategoryListMap.put(categoryMapEntry.getKey(), dtos);
+    }
+    return usageCategoryListMap;
+  }
+
+  private Map<UsageCategory, List<UsageTemplateColumnSection>> getUsageCategoryListMap(
+      List<UsageTemplateColumnSection> templateColumnSections) {
+    return templateColumnSections.stream().collect(
+        Collectors.groupingBy(UsageTemplateColumnSection::getCategory));
+  }
+
+  private List<UsageTemplateSectionDto> getCategoryDto(
+      Map<UsageCategory, List<UsageTemplateSectionDto>> categoryListMap, UsageCategory category) {
+    if (!categoryListMap.containsKey(category)) {
+      return new ArrayList<>();
+    }
+    return categoryListMap.get(category);
+  }
+
+  private SiglusRequisitionTemplateDto updateUsageTemplateDto(
+      SiglusRequisitionTemplateDto updatedDto, SiglusRequisitionTemplateDto requestDto) {
+    EnumMap<UsageCategory, List<UsageTemplateSectionDto>> allUsageTemplateCategoryDto =
+        getUsageCategoryListEnumMap(requestDto);
+
+    List<AvailableUsageColumn> availableUsageColumns = availableUsageColumnRepository.findAll();
+    List<UsageTemplateColumnSection> updatedColumnSections = Arrays.asList();
+    if (!requestDto.getId().equals(updatedDto.getId())) {
+      for (Map.Entry<UsageCategory, List<UsageTemplateSectionDto>> categoryListEntry :
+          allUsageTemplateCategoryDto.entrySet()) {
+        Set<UsageTemplateColumnSection> columnSections = categoryListEntry.getValue()
+            .stream()
+            .map(sectionDto -> UsageTemplateColumnSection
+                .from(sectionDto, categoryListEntry.getKey(),
+                    updatedDto.getId(), availableUsageColumns))
+            .map(UsageTemplateColumnSection::getNewTemplateSection)
+            .collect(Collectors.toSet());
+        updatedColumnSections.addAll(columnSectionRepository.save(columnSections));
+      }
+    } else {
+      Map<UsageCategory, List<UsageTemplateColumnSection>> usageCategoryMap =
+          getUsageCategoryListMap(
+              columnSectionRepository.findByRequisitionTemplateId(updatedDto.getId()));
+      for (Map.Entry<UsageCategory, List<UsageTemplateSectionDto>> categoryListEntry :
+          allUsageTemplateCategoryDto.entrySet()) {
+        UsageCategory category = categoryListEntry.getKey();
+        List<UsageTemplateSectionDto> categoryDto = categoryListEntry.getValue();
+        if (categoryDto != null) {
+          Set<UsageTemplateColumnSection> columnSections = categoryDto.stream()
+              .map(sectionDto -> UsageTemplateColumnSection.from(sectionDto, category,
+                  updatedDto.getId(), availableUsageColumns)).collect(Collectors.toSet());
+          if (columnSections.equals(new HashSet<>(usageCategoryMap.get(category)))) {
+            columnSectionRepository.delete(usageCategoryMap.get(category));
+            updatedColumnSections.addAll(columnSectionRepository.save(columnSections));
+          } else {
+            updatedColumnSections.addAll(columnSections);
+          }
+        }
+      }
+
+    }
+    return setUsageTemplateDto(updatedDto, updatedColumnSections);
+  }
+
+  private EnumMap<UsageCategory, List<UsageTemplateSectionDto>> getUsageCategoryListEnumMap(
+      SiglusRequisitionTemplateDto requestDto) {
+    EnumMap<UsageCategory, List<UsageTemplateSectionDto>> allUsageTemplateCategoryDto =
+        new EnumMap<>(UsageCategory.class);
+    allUsageTemplateCategoryDto.put(UsageCategory.KITUSAGE, requestDto.getKitUsage());
+    allUsageTemplateCategoryDto.put(UsageCategory.PATIENT, requestDto.getPatient());
+    allUsageTemplateCategoryDto.put(UsageCategory.REGIMEN, requestDto.getRegimen());
+    allUsageTemplateCategoryDto.put(UsageCategory.CONSULTATIONNUMBER,
+        requestDto.getConsultationNumber());
+    allUsageTemplateCategoryDto.put(UsageCategory.RAPIDTESTCONSUMPTION,
+        requestDto.getRapidTestConsumption());
+    allUsageTemplateCategoryDto.put(UsageCategory.USAGEINFORMATION,
+        requestDto.getUsageInformation());
+    return allUsageTemplateCategoryDto;
+  }
+
+
+  private SiglusRequisitionTemplateDto setUsageTemplateDto(SiglusRequisitionTemplateDto templateDto,
+      List<UsageTemplateColumnSection> columnSections) {
+    Map<UsageCategory, List<UsageTemplateSectionDto>> categoryListMap =
+        getUsageTempateDto(columnSections);
+    templateDto.setKitUsage(getCategoryDto(categoryListMap, UsageCategory.KITUSAGE));
+    templateDto.setPatient(getCategoryDto(categoryListMap, UsageCategory.PATIENT));
+    templateDto.setRegimen(getCategoryDto(categoryListMap, UsageCategory.REGIMEN));
+    templateDto
+        .setConsultationNumber(getCategoryDto(categoryListMap, UsageCategory.CONSULTATIONNUMBER));
+    templateDto.setRapidTestConsumption(
+        getCategoryDto(categoryListMap, UsageCategory.RAPIDTESTCONSUMPTION));
+    templateDto
+        .setUsageInformation(getCategoryDto(categoryListMap, UsageCategory.USAGEINFORMATION));
+    return templateDto;
   }
 
 }

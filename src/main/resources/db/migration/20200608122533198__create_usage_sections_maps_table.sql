@@ -10,5 +10,6 @@ CREATE TABLE usage_sections_maps (
     displayorder INTEGER NOT NULL,
     sectionid UUID,
     category CHARACTER VARYING(255),
+    requisitionTemplateId UUID,
     FOREIGN KEY(sectionid) REFERENCES siglusintegration.available_usage_column_sections(id)
 );

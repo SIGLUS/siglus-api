@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.domain;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -68,7 +69,7 @@ public class AvailableUsageColumn extends BaseEntity {
   @Enumerated(EnumType.STRING)
   private ColumnType columnType;
 
-  @ManyToOne
+  @ManyToOne(cascade = CascadeType.REFRESH)
   @JoinColumn(name = "sectionId", nullable = false)
   private AvailableUsageColumnSection availableUsageColumnSection;
 

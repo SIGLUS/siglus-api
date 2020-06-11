@@ -84,7 +84,7 @@ public class SiglusRequisitionTemplateControllerTest {
     siglusRequisitionTemplateController.createRequisitionTemplate(requestDto, bindingResult);
 
     verify(requisitionTemplateController).createRequisitionTemplate(requestDto, bindingResult);
-    verify(siglusRequisitionTemplateService).updateTemplate(updatedDto, requestDto);
+    verify(siglusRequisitionTemplateService).createTemplateExtension(updatedDto, requestDto);
   }
 
 }

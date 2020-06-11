@@ -57,12 +57,13 @@ public class SiglusRequisitionTemplateController {
   }
 
   @PostMapping
-  public RequisitionTemplateDto createRequisitionTemplate(
+  public SiglusRequisitionTemplateDto createRequisitionTemplate(
       @RequestBody SiglusRequisitionTemplateDto requisitionTemplateDto,
       BindingResult bindingResult) {
     // call modified OpenLMIS API
     RequisitionTemplateDto updatedDto = requisitionTemplateController
         .createRequisitionTemplate(requisitionTemplateDto, bindingResult);
-    return siglusRequisitionTemplateService.updateTemplate(updatedDto, requisitionTemplateDto);
+    return siglusRequisitionTemplateService.createTemplateExtension(updatedDto,
+        requisitionTemplateDto);
   }
 }

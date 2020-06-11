@@ -15,11 +15,14 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.AvailableUsageColumn;
+import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AvailableUsageColumnRepository
-    extends JpaRepository<AvailableUsageColumn, UUID> {
+public interface UsageTemplateColumnRepository
+    extends JpaRepository<UsageTemplateColumn, UUID> {
+
+  List<UsageTemplateColumn> findByRequisitionTemplateId(UUID id);
 
 }

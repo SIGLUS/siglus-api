@@ -19,6 +19,7 @@ import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -41,6 +42,18 @@ public class SiglusRequisitionTemplateDto extends RequisitionTemplateDto {
   private RequisitionTemplateExtensionDto extension;
 
   private Set<ObjectReferenceDto> associatePrograms;
+
+  private List<UsageTemplateSectionDto> kitUsage;
+
+  private List<UsageTemplateSectionDto> patient;
+
+  private List<UsageTemplateSectionDto> regimen;
+
+  private List<UsageTemplateSectionDto> consultationNumber;
+
+  private List<UsageTemplateSectionDto> rapidTestConsumption;
+
+  private List<UsageTemplateSectionDto> usageInformation;
 
   public static SiglusRequisitionTemplateDto from(RequisitionTemplateDto requisitionTemplateDto) {
     SiglusRequisitionTemplateDto dto = new SiglusRequisitionTemplateDto();

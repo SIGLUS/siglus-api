@@ -40,7 +40,12 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
+import org.siglus.siglusapi.domain.AvailableUsageColumn;
+import org.siglus.siglusapi.domain.AvailableUsageColumnSection;
 import org.siglus.siglusapi.dto.SiglusRequisitionTemplateDto;
+import org.siglus.siglusapi.repository.AvailableUsageColumnRepository;
+import org.siglus.siglusapi.repository.AvailableUsageColumnSectionRepository;
+import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.siglus.siglusapi.service.client.RequisitionTemplateRequisitionService;
 
 @SuppressWarnings("PMD.TooManyMethods")
@@ -61,6 +66,15 @@ public class SiglusRequisitionTemplateServiceTest {
   @Mock
   private RequisitionTemplateAssociateProgram associateProgram2;
 
+  @Mock
+  private UsageTemplateColumnSectionRepository columnSectionRepository;
+
+  @Mock
+  private AvailableUsageColumnRepository availableUsageColumnRepository;
+
+  @Mock
+  private AvailableUsageColumnSectionRepository availableUsageColumnSectionRepository;
+
   @InjectMocks
   private SiglusRequisitionTemplateService siglusRequisitionTemplateService;
 
@@ -79,6 +93,25 @@ public class SiglusRequisitionTemplateServiceTest {
     tempalteExtensionId = UUID.randomUUID();
     programId1 = UUID.randomUUID();
     programId2 = UUID.randomUUID();
+
+    when(availableUsageColumnRepository.findAll()).thenReturn(getAvailableUsageColumns());
+    when(availableUsageColumnSectionRepository.findAll()).thenReturn(getMockAvailableSection());
+    when(columnSectionRepository.findByRequisitionTemplateId(any())).thenReturn(Arrays.asList());
+  }
+
+  private List<AvailableUsageColumnSection> getMockAvailableSection() {
+    AvailableUsageColumnSection section = new AvailableUsageColumnSection();
+    section.setId(UUID.randomUUID());
+    section.setColumns(getAvailableUsageColumns());
+    return Arrays.asList(section);
+  }
+
+  private List<AvailableUsageColumn> getAvailableUsageColumns() {
+    AvailableUsageColumn availableUsageColumn = new AvailableUsageColumn();
+    availableUsageColumn.setId(UUID.randomUUID());
+    availableUsageColumn.setName("available");
+    availableUsageColumn.setSources("USER_INPUT|STOCK_CARDS");
+    return Arrays.asList(availableUsageColumn);
   }
 
   @Test
@@ -129,6 +162,7 @@ public class SiglusRequisitionTemplateServiceTest {
     SiglusRequisitionTemplateDto requestDto = new SiglusRequisitionTemplateDto();
     RequisitionTemplateExtension extension = prepareExtension();
     RequisitionTemplateExtensionDto extensionDto = prepareExtensionDto();
+    requestDto.setId(tempalteId);
     requestDto.setExtension(extensionDto);
     when(requisitionTemplateExtensionRepository.save(any(RequisitionTemplateExtension.class)))
         .thenReturn(extension);
@@ -145,6 +179,7 @@ public class SiglusRequisitionTemplateServiceTest {
     updatedDto.setId(tempalteId);
     SiglusRequisitionTemplateDto requestDto = new SiglusRequisitionTemplateDto();
     Set<UUID> uuids = prepareAssociatedProgramIds();
+    requestDto.setId(tempalteId);
     requestDto.setAssociateProgramsIds(uuids);
     List<RequisitionTemplateAssociateProgram> associatePrograms = prepareAssociatePrograms();
     when(associateProgramExtensionRepository.findByRequisitionTemplateId(tempalteId)).thenReturn(
@@ -165,6 +200,7 @@ public class SiglusRequisitionTemplateServiceTest {
     updatedDto.setId(tempalteId);
     SiglusRequisitionTemplateDto requestDto = new SiglusRequisitionTemplateDto();
     Set<UUID> uuids = prepareUpdatedAssociatedProgramIds();
+    requestDto.setId(tempalteId);
     requestDto.setAssociateProgramsIds(uuids);
     List<RequisitionTemplateAssociateProgram> associatePrograms = prepareAssociatePrograms();
     when(associateProgramExtensionRepository.findByRequisitionTemplateId(tempalteId)).thenReturn(
