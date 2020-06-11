@@ -21,7 +21,6 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -81,13 +80,7 @@ public class StatusChangeValidationService {
         approvedProducts);
 
     if (isInternalFacility) {
-      Iterator<RequisitionStatusChangeDomainValidator> iterator = validators.iterator();
-      while (iterator.hasNext()) {
-        RequisitionStatusChangeDomainValidator validator = iterator.next();
-        if (validator instanceof ApprovalFieldsValidator) {
-          iterator.remove();
-        }
-      }
+      validators.removeIf(validator -> validator instanceof ApprovalFieldsValidator);
     }
   }
   // [SIGLUS change end]

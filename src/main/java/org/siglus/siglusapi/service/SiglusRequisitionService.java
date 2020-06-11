@@ -507,6 +507,13 @@ public class SiglusRequisitionService {
     setLineItemExtension(requisitionDto);
 
     //set available products in approve page
+    setAvailableProductsForApprovePage(requisitionDto);
+
+    return setIsFinalApproval(requisitionDto);
+  }
+
+  private void setAvailableProductsForApprovePage(RequisitionV2Dto requisitionDto) {
+    UUID requisitionId = requisitionDto.getId();
     Profiler profiler = requisitionController
         .getProfiler("GET_REQUISITION_TO_APPROVE", requisitionId);
     Requisition requisition = requisitionController
@@ -518,9 +525,9 @@ public class SiglusRequisitionService {
       Set<VersionObjectReferenceDto> availableProducts = requisitionDto.getAvailableProducts();
 
       ProgramDto mainProgram = requisitionController
-            .findProgram(requisition.getProgramId(), profiler);
+          .findProgram(requisition.getProgramId(), profiler);
       FacilityDto approverFacility = requisitionController
-            .findFacility(userDto.getHomeFacilityId(), profiler);
+          .findFacility(userDto.getHomeFacilityId(), profiler);
 
       Set<VersionObjectReferenceDto> approverMainProgramAndAssociateProgramApprovedProducts
           = new HashSet<>();
@@ -542,8 +549,6 @@ public class SiglusRequisitionService {
       // keep only products in approver facility main & associate programs
       availableProducts.retainAll(approverMainProgramAndAssociateProgramApprovedProducts);
     }
-
-    return setIsFinalApproval(requisitionDto);
   }
 
   private void setTemplateExtension(RequisitionV2Dto requisitionDto) {

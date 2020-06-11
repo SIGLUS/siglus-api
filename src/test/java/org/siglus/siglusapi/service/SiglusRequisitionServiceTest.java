@@ -158,7 +158,7 @@ public class SiglusRequisitionServiceTest {
     verify(requisitionController).findRequisition(requisitionId, profiler);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
     verify(authenticationHelper).getCurrentUser();
-    verify(requisitionController).findProgram(null, profiler);
+    verify(requisitionController).findProgram(programId, profiler);
     verify(requisitionController).findFacility(null, profiler);
     verify(supervisoryNodeService).findOne(null);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
@@ -174,6 +174,8 @@ public class SiglusRequisitionServiceTest {
         .build();
     Requisition requisition = new Requisition();
     requisition.setId(requisitionId);
+    requisition.setProgramId(programId);
+    requisition.setFacilityId(facilityId);
     requisition.setRequisitionLineItems(Lists.newArrayList(lineItem));
     return requisition;
   }
@@ -195,6 +197,7 @@ public class SiglusRequisitionServiceTest {
     requisitionV2Dto.setAvailableProducts(products);
     requisitionV2Dto.setTemplate(createTemplateDto());
     requisitionV2Dto.setStatus(RequisitionStatus.AUTHORIZED);
+    requisitionV2Dto.setId(requisitionId);
     return requisitionV2Dto;
   }
 

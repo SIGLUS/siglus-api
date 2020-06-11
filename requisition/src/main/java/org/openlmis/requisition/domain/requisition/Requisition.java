@@ -1175,8 +1175,8 @@ public class Requisition extends BaseTimestampedEntity {
         // [SIGLUS change start]:
         // [change reason]: siglus all full supply(ordeable relate to real program).
         // ProgramOrderableDto programOrderable = orderable.getProgramOrderable(programId);
-        ProgramOrderableDto programOrderable = (ProgramOrderableDto) orderable.getPrograms()
-            .toArray()[0];
+        ProgramOrderableDto programOrderable = orderable.getPrograms().stream().findFirst()
+            .orElse(null);
         // [SIGLUS change end]
         if (Objects.equals(nonFullSupply, isFalse(programOrderable.getFullSupply()))) {
           list.add(line);
