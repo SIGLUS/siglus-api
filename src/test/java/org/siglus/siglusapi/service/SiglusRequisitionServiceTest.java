@@ -164,9 +164,8 @@ public class SiglusRequisitionServiceTest {
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
 
     Set<VersionObjectReferenceDto> availableProducts = response.getAvailableProducts();
-    assertEquals(availableProducts.size(), 1);
+    assertEquals(1, availableProducts.size());
     assertTrue(availableProducts.contains(productVersionObjectReference2));
-    //    verify();
   }
 
   private Requisition createRequisition() {
