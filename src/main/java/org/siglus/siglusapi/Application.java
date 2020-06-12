@@ -45,6 +45,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -65,6 +66,7 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @PropertySource("classpath:stockmanagement-application.properties")
 @PropertySource("classpath:requisition-application.properties")
 @PropertySource("classpath:fulfillment-application.properties")
+@EnableAspectJAutoProxy
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class Application {
 
