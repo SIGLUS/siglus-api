@@ -31,9 +31,10 @@ import java.util.UUID;
 import org.javers.common.collections.Sets;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
 import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
 import org.siglus.common.domain.RequisitionTemplateExtension;
@@ -48,6 +49,7 @@ import org.siglus.siglusapi.repository.AvailableUsageColumnSectionRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.siglus.siglusapi.service.client.RequisitionTemplateRequisitionService;
 
+@RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusRequisitionTemplateServiceTest {
 
@@ -88,7 +90,6 @@ public class SiglusRequisitionTemplateServiceTest {
 
   @Before
   public void prepare() {
-    MockitoAnnotations.initMocks(this);
     tempalteId = UUID.randomUUID();
     tempalteExtensionId = UUID.randomUUID();
     programId1 = UUID.randomUUID();

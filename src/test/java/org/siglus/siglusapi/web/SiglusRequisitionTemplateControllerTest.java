@@ -21,15 +21,18 @@ import static org.mockito.Mockito.when;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
 import org.openlmis.requisition.web.RequisitionTemplateController;
 import org.siglus.siglusapi.dto.SiglusRequisitionTemplateDto;
 import org.siglus.siglusapi.service.SiglusRequisitionTemplateService;
 import org.springframework.validation.BindingResult;
 
+
+@RunWith(MockitoJUnitRunner.class)
 public class SiglusRequisitionTemplateControllerTest {
   @Mock
   private SiglusRequisitionTemplateService siglusRequisitionTemplateService;
@@ -53,7 +56,6 @@ public class SiglusRequisitionTemplateControllerTest {
 
   @Before
   public void prepare() {
-    MockitoAnnotations.initMocks(this);
     uuid = UUID.randomUUID();
   }
 

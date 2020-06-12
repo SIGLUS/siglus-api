@@ -24,9 +24,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.web.RequisitionController;
@@ -35,6 +36,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+@RunWith(MockitoJUnitRunner.class)
 public class SiglusRequisitionControllerTest {
 
   @Mock
@@ -63,7 +65,6 @@ public class SiglusRequisitionControllerTest {
 
   @Before
   public void prepare() {
-    MockitoAnnotations.initMocks(this);
     uuid = UUID.randomUUID();
     basicRequisitionDto = new BasicRequisitionDto();
     MinimalFacilityDto minimalFacilityDto = new MinimalFacilityDto();
