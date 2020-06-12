@@ -309,27 +309,23 @@ public class SiglusArchiveProductServiceTest {
   }
 
   @Test
-  public void shouldReturnTrueIfStockCardIsNotArchived() {
-    StockCard stockCard = new StockCardDataBuilder(new StockEvent()).build();
-    stockCard.setId(stockCardId);
+  public void shouldReturnFalseIfStockCardIsNotArchived() {
     StockCardExtension stockCardExtension = new StockCardExtensionDataBuilder()
         .withStockCardId(stockCardId).withArchived(false).build();
     when(stockCardExtensionRepository.findByStockCardId(stockCardId))
         .thenReturn(stockCardExtension);
 
-    assertTrue(archiveProductService.isNotArchived(stockCard));
+    assertFalse(archiveProductService.isArchived(stockCardId));
   }
 
   @Test
-  public void shouldReturnFalseIfStockCardIsArchived() {
-    StockCard stockCard = new StockCardDataBuilder(new StockEvent()).build();
-    stockCard.setId(stockCardId);
+  public void shouldReturnTrueIfStockCardIsArchived() {
     StockCardExtension stockCardExtension = new StockCardExtensionDataBuilder()
         .withStockCardId(stockCardId).withArchived(true).build();
     when(stockCardExtensionRepository.findByStockCardId(stockCardId))
         .thenReturn(stockCardExtension);
 
-    assertFalse(archiveProductService.isNotArchived(stockCard));
+    assertTrue(archiveProductService.isArchived(stockCardId));
   }
 
   @Test

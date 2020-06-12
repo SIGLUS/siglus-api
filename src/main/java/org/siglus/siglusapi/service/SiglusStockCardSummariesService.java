@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_UUID_WRONG_FORMAT;
+import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
@@ -32,6 +34,7 @@ import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Message;
+import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
@@ -73,6 +76,8 @@ public class SiglusStockCardSummariesService {
     StockCardSummaries siglusSummaries = new StockCardSummaries();
     siglusSummaries.setStockCardsForFulfillOrderables(new ArrayList<>());
     siglusSummaries.setOrderableFulfillMap(new HashMap<>());
+    Set<String> archivedProducts = archiveProductService
+        .searchArchivedProducts(UUID.fromString(parameters.getFirst(FACILITY_ID)));
     for (UUID programId : programIds) {
       parameters.put(PROGRAM_ID, Collections.singletonList(programId.toString()));
       StockCardSummariesV2SearchParams v2SearchParams = new
@@ -84,13 +89,13 @@ public class SiglusStockCardSummariesService {
         siglusSummaries.getStockCardsForFulfillOrderables()
             .addAll(summaries.getStockCardsForFulfillOrderables()
                 .stream()
-                .filter(archiveProductService::isNotArchived)
+                .filter(isNotArchived(archivedProducts))
                 .collect(Collectors.toList()));
       } else if (Boolean.parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
         siglusSummaries.getStockCardsForFulfillOrderables()
             .addAll(summaries.getStockCardsForFulfillOrderables()
                 .stream()
-                .filter(archiveProductService::isArchived)
+                .filter(isArchived(archivedProducts))
                 .collect(Collectors.toList()));
       } else {
         siglusSummaries.getStockCardsForFulfillOrderables()
@@ -101,6 +106,13 @@ public class SiglusStockCardSummariesService {
     return siglusSummaries;
   }
 
+  private Predicate<StockCard> isArchived(Set<String> archivedProducts) {
+    return stockCard -> archivedProducts.contains(stockCard.getOrderableId().toString());
+  }
+
+  private Predicate<StockCard> isNotArchived(Set<String> archivedProducts) {
+    return stockCard -> !archivedProducts.contains(stockCard.getOrderableId().toString());
+  }
 
   private List<UUID> getProgramIds(UUID programId, UUID userId, String rightName) {
     List<UUID> programIds = new ArrayList<>();

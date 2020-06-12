@@ -143,14 +143,6 @@ public class SiglusArchiveProductService {
     return stockCardExtension != null && stockCardExtension.isArchived();
   }
 
-  public boolean isArchived(StockCard stockCard) {
-    return isArchived(stockCard.getId());
-  }
-
-  public boolean isNotArchived(StockCard stockCard) {
-    return !isArchived(stockCard);
-  }
-
   private void deleteArchivedItemInPhysicalInventoryDraft(UUID facilityId, UUID orderableId) {
     PhysicalInventoryDto physicalInventoryDraft = siglusPhysicalInventoryService
         .getPhysicalInventoryForAllProducts(facilityId);

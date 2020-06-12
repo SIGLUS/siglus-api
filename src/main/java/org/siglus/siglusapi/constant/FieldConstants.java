@@ -25,6 +25,8 @@ public class FieldConstants {
 
   public static final String FACILITY = "facility";
 
+  public static final String FACILITY_ID = "facilityId";
+
   public static final String FACILITY_TYPE = "facilityType";
 
   public static final String ORDERABLE_ID = "orderableId";
