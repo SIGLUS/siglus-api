@@ -18,7 +18,9 @@ package org.siglus.siglusapi.dto;
 import static java.util.Collections.emptyList;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +28,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.openlmis.requisition.domain.AvailableRequisitionColumn;
 import org.openlmis.requisition.domain.ColumnType;
+import org.openlmis.requisition.dto.AvailableRequisitionColumnOptionDto;
 import org.siglus.siglusapi.domain.AvailableUsageColumn;
 import org.springframework.beans.BeanUtils;
 
@@ -59,9 +62,9 @@ public class AvailableUsageColumnDto {
 
   private ColumnType columnType;
 
-  private AvailableUsageColumnSectionDto section;
-
   private Integer displayOrder;
+
+  private Set<AvailableRequisitionColumnOptionDto> options;
 
   /**
    * Create new instance of AvailableRequisitionColumnDto based
@@ -76,8 +79,7 @@ public class AvailableUsageColumnDto {
     List<String> sources = column.getSources().isEmpty() ? emptyList() :
         Arrays.asList(column.getSources().split("\\|"));
     columnDto.setSources(sources);
-    columnDto.setSection(AvailableUsageColumnSectionDto
-        .newInstance(column.getAvailableUsageColumnSection()));
+    columnDto.setOptions(new HashSet<>());
     return columnDto;
   }
 

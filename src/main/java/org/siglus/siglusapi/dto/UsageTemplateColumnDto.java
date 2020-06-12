@@ -58,6 +58,12 @@ public class UsageTemplateColumnDto  extends BaseEntity {
     if (availableUsageColumn == null) {
       availableUsageColumn = new AvailableUsageColumn();
       BeanUtils.copyProperties(column, availableUsageColumn);
+      availableUsageColumn.setSources(column.getAvailableSources());
+      availableUsageColumn.setIsDisplayRequired(false);
+      availableUsageColumn.setCanChangeOrder(true);
+      availableUsageColumn.setCanBeChangedByUser(true);
+      availableUsageColumn.setSupportsTag(true);
+      availableUsageColumn.setMandatory(false);
       availableUsageColumn.setId(null);
     }
     columnDto.columnDefinition = AvailableUsageColumnDto.newInstance(availableUsageColumn);

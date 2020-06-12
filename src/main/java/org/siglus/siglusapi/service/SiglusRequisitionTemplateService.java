@@ -16,9 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -208,7 +206,9 @@ public class SiglusRequisitionTemplateService {
         getUsageCategoryListEnumMap(requestDto);
 
     List<AvailableUsageColumn> availableUsageColumns = availableUsageColumnRepository.findAll();
-    List<UsageTemplateColumnSection> updatedColumnSections = Arrays.asList();
+    List<AvailableUsageColumnSection> availableUsageColumnSection =
+        availableUsageColumnSectionRepository.findAll();
+    List<UsageTemplateColumnSection> updatedColumnSections = new ArrayList<>();
     if (!requestDto.getId().equals(updatedDto.getId())) {
       for (Map.Entry<UsageCategory, List<UsageTemplateSectionDto>> categoryListEntry :
           allUsageTemplateCategoryDto.entrySet()) {
@@ -216,7 +216,7 @@ public class SiglusRequisitionTemplateService {
             .stream()
             .map(sectionDto -> UsageTemplateColumnSection
                 .from(sectionDto, categoryListEntry.getKey(),
-                    updatedDto.getId(), availableUsageColumns))
+                    updatedDto.getId(), availableUsageColumnSection, availableUsageColumns))
             .map(UsageTemplateColumnSection::getNewTemplateSection)
             .collect(Collectors.toSet());
         updatedColumnSections.addAll(columnSectionRepository.save(columnSections));
@@ -230,15 +230,15 @@ public class SiglusRequisitionTemplateService {
         UsageCategory category = categoryListEntry.getKey();
         List<UsageTemplateSectionDto> categoryDto = categoryListEntry.getValue();
         if (categoryDto != null && !categoryDto.isEmpty()) {
-          Set<UsageTemplateColumnSection> columnSections = categoryDto.stream()
+          List<UsageTemplateColumnSection> columnSections = categoryDto.stream()
               .map(sectionDto -> UsageTemplateColumnSection.from(sectionDto, category,
-                  updatedDto.getId(), availableUsageColumns)).collect(Collectors.toSet());
-          if (columnSections.equals(new HashSet<>(usageCategoryMap.get(category)))) {
-            columnSectionRepository.delete(usageCategoryMap.get(category));
-            updatedColumnSections.addAll(columnSectionRepository.save(columnSections));
-          } else {
-            updatedColumnSections.addAll(columnSections);
+                  updatedDto.getId(), availableUsageColumnSection, availableUsageColumns))
+              .collect(Collectors.toList());
+          if (usageCategoryMap.get(category) != null) {
+            List<UsageTemplateColumnSection> sections = usageCategoryMap.get(category);
+            columnSectionRepository.delete(sections);
           }
+          updatedColumnSections.addAll(columnSectionRepository.save(columnSections));
         }
       }
 

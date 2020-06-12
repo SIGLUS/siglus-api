@@ -83,20 +83,29 @@ public class UsageTemplateColumnSection extends BaseEntity {
   }
 
   public static UsageTemplateColumnSection from(UsageTemplateSectionDto sectionDto,
-      UsageCategory category, UUID templateId, List<AvailableUsageColumn> availableUsageColumns) {
+      UsageCategory category, UUID templateId, List<AvailableUsageColumnSection> sections,
+      List<AvailableUsageColumn> availableUsageColumns) {
     UsageTemplateColumnSection section = new UsageTemplateColumnSection();
     BeanUtils.copyProperties(sectionDto, section);
     section.requisitionTemplateId = templateId;
     section.category = category;
+    section.setSection(findAvailableUsageSection(section.name, sections));
     section.columns = sectionDto.getColumns().stream().map(columnDto ->
         UsageTemplateColumn.from(templateId, columnDto, section, availableUsageColumns))
         .collect(Collectors.toList());
     return section;
   }
 
+  private static AvailableUsageColumnSection findAvailableUsageSection(String name,
+      List<AvailableUsageColumnSection> availableUsageSections) {
+    return availableUsageSections.stream()
+        .filter(section -> section.getName().equals(name)).findFirst().orElse(null);
+  }
+
+
   public UsageTemplateColumnSection getNewTemplateSection() {
     this.setId(null);
-    this.getColumns().stream().forEach(column -> column.setId(null));
+    this.getColumns().forEach(column -> column.setId(null));
     return this;
   }
 

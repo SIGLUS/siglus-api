@@ -37,7 +37,7 @@ import org.springframework.beans.BeanUtils;
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -49,7 +49,7 @@ public class UsageTemplateColumn extends BaseEntity {
   @ManyToOne(
       cascade = {CascadeType.REFRESH},
       fetch = FetchType.EAGER)
-  @JoinColumn(name = "usagecolumnid", nullable = false)
+  @JoinColumn(name = "usagecolumnid")
   @Getter
   private AvailableUsageColumn columnDefinition;
 
@@ -104,7 +104,9 @@ public class UsageTemplateColumn extends BaseEntity {
           findAvailableUsageColumn(availableColumnId, availableUsageColumns));
     }
     List<String> sources = columnDto.getColumnDefinition().getSources();
-    usageTemplateColumn.source = sources.isEmpty() ? "" : String.join("|", sources);
+    usageTemplateColumn.availableSources = sources.isEmpty() ? ""
+        : String.join("|", sources);
+    usageTemplateColumn.source = columnDto.getSource();
     usageTemplateColumn.usageTemplateColumnSection = section;
     usageTemplateColumn.setRequisitionTemplateId(requisitionTemplateId);
 
