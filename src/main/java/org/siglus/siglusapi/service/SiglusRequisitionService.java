@@ -600,9 +600,11 @@ public class SiglusRequisitionService {
   private RequisitionLineItemExtension findLineItemExtension(
       List<RequisitionLineItemExtension> extensions,
       RequisitionLineItemV2Dto lineItem) {
-    for (RequisitionLineItemExtension extension : extensions) {
-      if (lineItem.getId().equals(extension.getRequisitionLineItemId())) {
-        return extension;
+    if (lineItem != null) {
+      for (RequisitionLineItemExtension extension : extensions) {
+        if (lineItem.getId().equals(extension.getRequisitionLineItemId())) {
+          return extension;
+        }
       }
     }
     return null;
