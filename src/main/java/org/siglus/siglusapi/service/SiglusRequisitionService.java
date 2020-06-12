@@ -259,16 +259,24 @@ public class SiglusRequisitionService {
 
     permissionService.canInitOrAuthorizeRequisition(programId, facilityId);
 
-    List<RequisitionLineItem> lineItemList = constructLineItem(
-        existedRequisition, program, facility, orderableIds);
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    FacilityDto userFacility = requisitionController.findFacility(
+        userDto.getHomeFacilityId(), profiler);
 
-    return buildSiglusLineItem(lineItemList);
+    List<RequisitionLineItem> lineItemList = constructLineItem(
+        existedRequisition, program, facility, orderableIds, userFacility);
+
+    boolean isApprovePage = requisitionService
+        .validateCanApproveRequisition(existedRequisition, userDto.getId()).isSuccess();
+
+    return buildSiglusLineItem(lineItemList, isApprovePage);
   }
 
   private List<RequisitionLineItem> constructLineItem(Requisition requisition,
       ProgramDto program,
       FacilityDto facility,
-      List<UUID> orderableIds) {
+      List<UUID> orderableIds,
+      FacilityDto userFacility) {
 
     Profiler profiler = new Profiler("REQUISITION_INITIATE_SERVICE");
     profiler.setLogger(LOGGER);
@@ -354,9 +362,9 @@ public class SiglusRequisitionService {
         .stream()
         .collect(toMap(isa -> isa.getCommodityType().getId(), IdealStockAmountDto::getAmount));
 
-    // including the approved product of associate program
+    // including the approved product of associate program, and the user facility
     ApproveProductsAggregator approvedProducts = requisitionService.getApproveProduct(
-        facility, program, requisitionTemplate);
+        userFacility, program, requisitionTemplate);
 
     List<RequisitionLineItem> lineItemList = new ArrayList<>();
     for (ApprovedProductDto approvedProductDto : approvedProducts.getAllProducts().values()) {
@@ -436,7 +444,7 @@ public class SiglusRequisitionService {
   }
 
   private List<SiglusRequisitionLineItemDto> buildSiglusLineItem(
-      List<RequisitionLineItem> lineItemList) {
+      List<RequisitionLineItem> lineItemList, boolean isApprovePage) {
     List<OrderableExpirationDateDto> expirationDateDtos = findOrderableIds(lineItemList);
 
     Set<VersionEntityReference> references = lineItemList.stream()
@@ -470,6 +478,10 @@ public class SiglusRequisitionService {
           lineDto.setServiceUrl(serviceUrl);
           line.export(lineDto, orderable, approvedProduct);
           setOrderableExpirationDate(expirationDateDtos, orderable, lineDto);
+          if (isApprovePage) {
+            lineDto.setRequestedQuantity(0);
+            lineDto.setAuthorizedQuantity(0);
+          }
 
           SiglusRequisitionLineItemDto siglusRequisitionLineItemDto =
               new SiglusRequisitionLineItemDto();
