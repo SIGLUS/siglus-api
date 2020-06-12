@@ -32,6 +32,8 @@ import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.data.domain.Pageable;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 public class SiglusRequisitionControllerTest {
 
@@ -96,6 +98,15 @@ public class SiglusRequisitionControllerTest {
     siglusRequisitionController.searchRequisitionsForApproval(programId, pageable);
 
     verify(requisitionController).requisitionsForApproval(programId, pageable);
+  }
+
+  @Test
+  public void shouldCallSiglusRequisitionServiceWhenSearchRequisitions() {
+    MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+
+    siglusRequisitionController.searchRequisitions(queryParams, pageable);
+
+    verify(siglusRequisitionService).searchRequisitions(queryParams, pageable);
   }
 
 }

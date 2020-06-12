@@ -15,11 +15,21 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
+import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
+import static org.openlmis.requisition.service.PermissionService.REQUISITION_AUTHORIZE;
+import static org.openlmis.requisition.service.PermissionService.REQUISITION_CREATE;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -30,6 +40,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -50,18 +62,29 @@ import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
+import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
+import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.profiler.Profiler;
+import org.springframework.data.domain.Pageable;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings({"PMD.TooManyMethods"})
 public class SiglusRequisitionServiceTest {
+
+  @Captor
+  private ArgumentCaptor<RequisitionSearchParams> requisitionSearchParamsArgumentCaptor;
 
   @Mock
   private SiglusArchiveProductService archiveProductService;
@@ -87,8 +110,14 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private SupervisoryNodeReferenceDataService supervisoryNodeService;
 
+  @Mock
+  private PermissionService permissionService;
+
   @InjectMocks
   private SiglusRequisitionService siglusRequisitionService;
+
+  @Mock
+  private Pageable pageable;
 
   private UUID facilityId = UUID.randomUUID();
 
@@ -166,6 +195,68 @@ public class SiglusRequisitionServiceTest {
     Set<VersionObjectReferenceDto> availableProducts = response.getAvailableProducts();
     assertEquals(1, availableProducts.size());
     assertTrue(availableProducts.contains(productVersionObjectReference2));
+  }
+
+  @Test
+  public void shouldAddRequisitionStatusesDisplayWhenCanAuth() {
+    MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+    queryParams.add(QueryRequisitionSearchParams.FACILITY, facilityId.toString());
+    queryParams.add(QueryRequisitionSearchParams.PROGRAM, programId.toString());
+    when(permissionService.canAuthorizeRequisition(any())).thenReturn(ValidationResult.success());
+    final HashSet<RequisitionStatus> requisitionStatusesDisplayWhenCanAuth = newHashSet(
+        AUTHORIZED, IN_APPROVAL, APPROVED, RELEASED, RELEASED_WITHOUT_ORDER);
+
+    siglusRequisitionService.searchRequisitions(queryParams, pageable);
+
+    verify(siglusRequisitionRequisitionService)
+        .searchRequisitions(requisitionSearchParamsArgumentCaptor.capture(), any());
+    RequisitionSearchParams requisitionSearchParams = requisitionSearchParamsArgumentCaptor
+        .getValue();
+    Set<RequisitionStatus> requisitionStatuses = requisitionSearchParams.getRequisitionStatuses();
+    assertTrue(requisitionStatuses.size() == requisitionStatusesDisplayWhenCanAuth.size());
+    assertTrue(requisitionStatuses.containsAll(requisitionStatusesDisplayWhenCanAuth));
+  }
+
+  @Test
+  public void shouldAddRequisitionStatusesDisplayWhenOnlyCanCreate() {
+    MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+    queryParams.add(QueryRequisitionSearchParams.FACILITY, facilityId.toString());
+    queryParams.add(QueryRequisitionSearchParams.PROGRAM, programId.toString());
+    when(permissionService.canAuthorizeRequisition(any())).thenReturn(
+        ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, REQUISITION_AUTHORIZE));
+    when(permissionService.canSubmitRequisition(any())).thenReturn(ValidationResult.success());
+    final HashSet<RequisitionStatus> requisitionStatusesDisplayWhenCanCreate = newHashSet(
+        SUBMITTED, AUTHORIZED, IN_APPROVAL, APPROVED, RELEASED, RELEASED_WITHOUT_ORDER);
+
+    siglusRequisitionService.searchRequisitions(queryParams, pageable);
+
+    verify(siglusRequisitionRequisitionService)
+        .searchRequisitions(requisitionSearchParamsArgumentCaptor.capture(), any());
+    RequisitionSearchParams requisitionSearchParams = requisitionSearchParamsArgumentCaptor
+        .getValue();
+    Set<RequisitionStatus> requisitionStatuses = requisitionSearchParams.getRequisitionStatuses();
+    assertTrue(requisitionStatuses.size() == requisitionStatusesDisplayWhenCanCreate.size());
+    assertTrue(requisitionStatuses.containsAll(requisitionStatusesDisplayWhenCanCreate));
+  }
+
+  @Test
+  public void shouldNotAddRequisitionStatusesDisplayWhenCannotCreateAndAuth() {
+    MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+    queryParams.add(QueryRequisitionSearchParams.FACILITY, facilityId.toString());
+    queryParams.add(QueryRequisitionSearchParams.PROGRAM, programId.toString());
+    when(permissionService.canAuthorizeRequisition(any())).thenReturn(
+        ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, REQUISITION_AUTHORIZE));
+    when(permissionService.canSubmitRequisition(any())).thenReturn(
+        ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, REQUISITION_CREATE));
+
+    siglusRequisitionService.searchRequisitions(queryParams, pageable);
+
+    verify(siglusRequisitionRequisitionService)
+        .searchRequisitions(requisitionSearchParamsArgumentCaptor.capture(), any());
+    RequisitionSearchParams requisitionSearchParams = requisitionSearchParamsArgumentCaptor
+        .getValue();
+    Set<RequisitionStatus> requisitionStatuses = requisitionSearchParams.getRequisitionStatuses();
+    assertTrue(CollectionUtils.isEmpty(requisitionStatuses));
   }
 
   private Requisition createRequisition() {
