@@ -27,7 +27,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.i18n.MessageService;
@@ -116,20 +115,6 @@ public class GlobalErrorHandlingTest {
     // when
     mockMessage(messageKey);
     LocalizedMessage message = errorHandler.handleMessageException(exp);
-
-    // then
-    assertMessage(message, messageKey);
-  }
-
-  @Test
-  public void shouldHandleNotFoundException() {
-    // given
-    String messageKey = "key";
-    NotFoundException exp = new NotFoundException(messageKey);
-
-    // when
-    mockMessage(messageKey);
-    LocalizedMessage message = errorHandler.handleNotFoundException(exp);
 
     // then
     assertMessage(message, messageKey);

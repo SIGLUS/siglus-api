@@ -35,13 +35,13 @@ import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
 import org.siglus.siglusapi.exception.NotAcceptableException;
-import org.siglus.siglusapi.exception.PermissionMessageException;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.util.Message;
@@ -160,7 +160,8 @@ public class SiglusPhysicalInventoryService {
     Set<UUID> supportedVirtualPrograms = programExtensionService.findSupportedVirtualPrograms();
     if (CollectionUtils.isEmpty(supportedVirtualPrograms)) {
       throw new PermissionMessageException(
-          new Message(ERROR_PROGRAM_NOT_SUPPORTED, ALL_PRODUCTS_PROGRAM_ID));
+          new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
+              ALL_PRODUCTS_PROGRAM_ID));
     }
     List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
         supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facilityId,

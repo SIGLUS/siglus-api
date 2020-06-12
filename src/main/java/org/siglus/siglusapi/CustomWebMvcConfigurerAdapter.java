@@ -16,8 +16,8 @@
 package org.siglus.siglusapi;
 
 import java.util.List;
+import org.openlmis.referencedata.util.Pagination;
 import org.siglus.siglusapi.interceptor.MvcInterceptor;
-import org.siglus.siglusapi.util.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
