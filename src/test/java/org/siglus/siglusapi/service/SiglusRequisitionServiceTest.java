@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -140,13 +141,36 @@ public class SiglusRequisitionServiceTest {
   private VersionObjectReferenceDto productVersionObjectReference2
       = createVersionObjectReferenceDto(productId2, productVersion2);
 
-  private Profiler profiler = new Profiler("GET_REQUISITION_TO_APPROVE");
+  private String profilerName = "GET_REQUISITION_TO_APPROVE";
+
+  private Profiler profiler = new Profiler(profilerName);
 
   private UserDto userDto = new UserDto();
 
   private ProgramDto programDto = new ProgramDto();
 
   private FacilityDto facilityDto = new FacilityDto();
+
+  private RequisitionV2Dto requisitionV2Dto = createRequisitionV2Dto();
+
+  private Requisition requisition = createRequisition();
+
+  @Before
+  public void prepare() {
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
+        .thenReturn(requisitionV2Dto);
+    when(requisitionTemplateExtensionRepository
+        .findByRequisitionTemplateId(templateId)).thenReturn(createTemplate());
+    when(requisitionController.getProfiler(
+        profilerName, requisitionId)).thenReturn(profiler);
+    when(requisitionController.findRequisition(requisitionId, profiler)).thenReturn(requisition);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    when(requisitionController.findProgram(programId, profiler)).thenReturn(programDto);
+    when(requisitionController.findFacility(facilityId, profiler)).thenReturn(facilityDto);
+    when(requisitionService.getApproveProduct(any(), any(), any()))
+        .thenReturn(createApproveProductsAggregator());
+    when(supervisoryNodeService.findOne(supervisoryNodeId)).thenReturn(createSupervisoryNodeDto());
+  }
 
   @Test
   public void shouldActivateArchivedProducts() {
@@ -160,30 +184,15 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  public void shouldSearchRequisitionByIdAndKeepApproverApprovedProduct() {
-    RequisitionV2Dto requisitionV2Dto = createRequisitionV2Dto();
-    Requisition requisition = createRequisition();
-    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
-        .thenReturn(requisitionV2Dto);
-    when(requisitionTemplateExtensionRepository
-        .findByRequisitionTemplateId(templateId)).thenReturn(createTemplate());
-    when(requisitionController.getProfiler(
-        "GET_REQUISITION_TO_APPROVE", requisitionId)).thenReturn(profiler);
-    when(requisitionController.findRequisition(requisitionId, profiler)).thenReturn(requisition);
+  public void shouldSearchRequisitionByIdAndKeepApproverApprovedProductIfInApprovePage() {
     when(requisitionService
         .validateCanApproveRequisition(any(), any())).thenReturn(ValidationResult.success());
-    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
-    when(requisitionController.findProgram(programId, profiler)).thenReturn(programDto);
-    when(requisitionController.findFacility(facilityId, profiler)).thenReturn(facilityDto);
-    when(requisitionService.getApproveProduct(any(), any(), any()))
-        .thenReturn(createApproveProductsAggregator());
-    when(supervisoryNodeService.findOne(supervisoryNodeId)).thenReturn(createSupervisoryNodeDto());
 
     RequisitionV2Dto response = siglusRequisitionService.searchRequisition(requisitionId);
 
     verify(siglusRequisitionRequisitionService).searchRequisition(requisitionId);
     verify(requisitionTemplateExtensionRepository).findByRequisitionTemplateId(templateId);
-    verify(requisitionController).getProfiler("GET_REQUISITION_TO_APPROVE", requisitionId);
+    verify(requisitionController).getProfiler(profilerName, requisitionId);
     verify(requisitionController).findRequisition(requisitionId, profiler);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
     verify(authenticationHelper).getCurrentUser();
@@ -194,6 +203,26 @@ public class SiglusRequisitionServiceTest {
 
     Set<VersionObjectReferenceDto> availableProducts = response.getAvailableProducts();
     assertEquals(1, availableProducts.size());
+    assertTrue(availableProducts.contains(productVersionObjectReference2));
+  }
+
+  @Test
+  public void shouldSearchRequisitionIdIfNotInApprovePage() {
+    when(requisitionService
+        .validateCanApproveRequisition(any(), any()))
+        .thenReturn(ValidationResult.noPermission("no approve permission"));
+
+    RequisitionV2Dto response = siglusRequisitionService.searchRequisition(requisitionId);
+
+    verify(siglusRequisitionRequisitionService).searchRequisition(requisitionId);
+    verify(requisitionTemplateExtensionRepository).findByRequisitionTemplateId(templateId);
+    verify(requisitionController).getProfiler(profilerName, requisitionId);
+    verify(requisitionController).findRequisition(requisitionId, profiler);
+    verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
+
+    Set<VersionObjectReferenceDto> availableProducts = response.getAvailableProducts();
+    assertEquals(2, availableProducts.size());
+    assertTrue(availableProducts.contains(productVersionObjectReference1));
     assertTrue(availableProducts.contains(productVersionObjectReference2));
   }
 
