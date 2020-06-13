@@ -389,11 +389,26 @@ public abstract class BaseRequisitionController extends BaseController {
         .getPeriod(requisitionToUpdate.getProcessingPeriodId());
 
     profiler.start("BUILD_REQUISITION_UPDATER");
-    Map<VersionEntityReference, ApprovedProductReference> productReferences = requisitionToUpdate
-        .getAvailableProducts()
+    // [SIGLUS change start]
+    // [change reason]: fix NPE at line 802 of RequisitionLineItem
+    // {@linkplain RequisitionLineItem#getMaxPeriodsOfStockFromApprovedProduct(Map)}
+    // RequisitionBuilder line 98 will set approved product from requisition
+    // {@linkplain RequisitionBuilder#newRequisition(Importer, RequisitionTemplate, UUID,
+    //     * ProcessingPeriodDto, RequisitionStatus, Map, Map)
+    // but actually the added product is from the current user approved product
+    // then mismatch of these two cause in getMaxPeriodsOfStockFromApprovedProduct
+    // can't find product in method of RequisitionLineItem
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    ProgramDto mainProgram = findProgram(requisitionToUpdate.getProgramId(), profiler);
+    FacilityDto approverFacility = findFacility(userDto.getHomeFacilityId(), profiler);
+    ApproveProductsAggregator aggregator = requisitionService
+        .getApproveProduct(approverFacility, mainProgram, requisitionToUpdate.getTemplate());
+
+    Map<VersionEntityReference, ApprovedProductReference> productReferences = aggregator
+        .getApprovedProductReferences()
         .stream()
         .collect(Collectors.toMap(ApprovedProductReference::getOrderable, Function.identity()));
-
+    // [SIGLUS change end]
     Requisition requisition = RequisitionBuilder.newRequisition(requisitionImporter,
         requisitionToUpdate.getTemplate(), requisitionToUpdate.getProgramId(),
         period, requisitionToUpdate.getStatus(), orderables, productReferences);

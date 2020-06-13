@@ -90,6 +90,8 @@ public final class RequisitionBuilder {
           item.skipLineItem(template);
         }
 
+        // change the approved Products then cause NPE
+        // same orderable map different approved product in different facility
         Optional
             .ofNullable(productReferences.get(item.getOrderable()))
             .map(ApprovedProductReference::getFacilityTypeApprovedProduct)
