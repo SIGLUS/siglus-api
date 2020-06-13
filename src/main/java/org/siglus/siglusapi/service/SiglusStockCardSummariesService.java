@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Sets.newHashSet;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_UUID_WRONG_FORMAT;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
@@ -71,7 +72,7 @@ public class SiglusStockCardSummariesService {
     UUID inputProgramId = getId(PROGRAM_ID, parameters);
 
     UUID userId = authenticationHelper.getCurrentUser().getId();
-    List<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME));
+    Set<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME));
 
     StockCardSummaries siglusSummaries = new StockCardSummaries();
     siglusSummaries.setStockCardsForFulfillOrderables(new ArrayList<>());
@@ -114,21 +115,21 @@ public class SiglusStockCardSummariesService {
     return stockCard -> !archivedProducts.contains(stockCard.getOrderableId().toString());
   }
 
-  private List<UUID> getProgramIds(UUID programId, UUID userId, String rightName) {
-    List<UUID> programIds = new ArrayList<>();
+  private Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName) {
+    Set<UUID> programIds = newHashSet();
     Set<PermissionStringDto> permissionStrings = permissionService
         .getPermissionStrings(userId).get();
-    List<UUID> programsByRight = permissionStrings
+    Set<UUID> programsByRight = permissionStrings
         .stream()
         .filter(permissionStringDto -> permissionStringDto.getRightName().equals(rightName))
         .map(PermissionStringDto::getProgramId)
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
     List<ProgramExtension> programExtensions = programExtensionRepository.findByIsVirtual(true);
     if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
       return programsByRight
           .stream()
           .filter(programByRight -> isVirtual(programExtensions, programByRight))
-          .collect(Collectors.toList());
+          .collect(Collectors.toSet());
     }
     if (isVirtual(programExtensions, programId)) {
       programIds.add(programId);
