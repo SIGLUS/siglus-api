@@ -72,7 +72,8 @@ public class SiglusStockCardSummariesService {
     UUID inputProgramId = getId(PROGRAM_ID, parameters);
 
     UUID userId = authenticationHelper.getCurrentUser().getId();
-    Set<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME));
+    Set<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME),
+        parameters.getFirst(FACILITY_ID));
 
     StockCardSummaries siglusSummaries = new StockCardSummaries();
     siglusSummaries.setStockCardsForFulfillOrderables(new ArrayList<>());
@@ -115,13 +116,16 @@ public class SiglusStockCardSummariesService {
     return stockCard -> !archivedProducts.contains(stockCard.getOrderableId().toString());
   }
 
-  private Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName) {
+  private Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName,
+      String facilityId) {
     Set<UUID> programIds = newHashSet();
     Set<PermissionStringDto> permissionStrings = permissionService
         .getPermissionStrings(userId).get();
     Set<UUID> programsByRight = permissionStrings
         .stream()
-        .filter(permissionStringDto -> permissionStringDto.getRightName().equals(rightName))
+        .filter(permissionStringDto -> permissionStringDto.getRightName().equals(rightName)
+            && UUID.fromString(facilityId).equals(permissionStringDto.getFacilityId())
+        )
         .map(PermissionStringDto::getProgramId)
         .collect(Collectors.toSet());
     List<ProgramExtension> programExtensions = programExtensionRepository.findByIsVirtual(true);
