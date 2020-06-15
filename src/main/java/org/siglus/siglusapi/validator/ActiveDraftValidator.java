@@ -42,13 +42,13 @@ public class ActiveDraftValidator {
   private ReferencedataAuthenticationHelper authenticationHelper;
 
   public void validateFacilityId(UUID facilityId) {
-    if (facilityId == null || "".equals(facilityId.toString())) {
+    if (facilityId == null || new UUID(0L, 0L).equals(facilityId)) {
       throw new ValidationMessageException(ERROR_EVENT_FACILITY_INVALID);
     }
   }
 
   public void validateProgramId(UUID programId) {
-    if (programId == null || "".equals(programId.toString())) {
+    if (programId == null) {
       throw new ValidationMessageException(ERROR_PROGRAM_MISSING);
     }
   }
@@ -77,11 +77,12 @@ public class ActiveDraftValidator {
 
   public void validateUserId(UUID userId) {
     User user = authenticationHelper.getCurrentUser();
-    if (userId == null || "".equals(userId.toString())) {
+    if (userId == null || new UUID(0L, 0L).equals(userId)) {
       throw new ValidationMessageException(ERROR_USER_ID_MISSING);
     }
     if (!user.getId().equals(userId)) {
       throw new ValidationMessageException(ERROR_NOT_EXPECTED_USER_DRAFT);
     }
   }
+
 }

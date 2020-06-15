@@ -33,10 +33,10 @@ public class Message {
   private static final String MESSAGE_KEY = "messageKey";
 
   @Getter
-  private String key;
+  private final String key;
 
   @Getter
-  private Object[] params;
+  private final Object[] params;
 
   public Message(String messageKey) {
     this(messageKey, (Object[]) null);
@@ -61,15 +61,13 @@ public class Message {
   }
 
   public static Message createFromMessageKeyStr(String messageStr) {
-    final ObjectMapper objectMapper = new ObjectMapper();
     try {
       if (null == messageStr || "null".equalsIgnoreCase(messageStr)) {
         return null;
-      } else {
-        final HashMap<String,String> hashMap = objectMapper.readValue(messageStr, HashMap.class);
-        return new Message(hashMap.get(MESSAGE_KEY));
       }
-    } catch (IOException ex) {
+      HashMap<String,String> hashMap = new ObjectMapper().readValue(messageStr, HashMap.class);
+      return new Message(hashMap.get(MESSAGE_KEY));
+    } catch (IOException e) {
       return new Message(messageStr);
     }
   }
@@ -111,10 +109,10 @@ public class Message {
    */
   public final class LocalizedMessage {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private String messageKey;
+    private final String messageKey;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private String message;
+    private final String message;
 
     /**
      * Creates new LocalizedMessage based on given String.
@@ -133,10 +131,6 @@ public class Message {
     @Override
     public String toString() {
       return messageKey + ": " + message;
-    }
-
-    public String asMessage() {
-      return message;
     }
 
   }
