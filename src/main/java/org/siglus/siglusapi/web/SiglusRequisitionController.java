@@ -154,9 +154,9 @@ public class SiglusRequisitionController {
 
   @PostMapping("/createLineItem")
   public List<SiglusRequisitionLineItemDto> createRequisitionLineItem(
-      @RequestParam(value = "requisitionId") UUID requisitonId,
+      @RequestParam(value = "requisitionId") UUID requisitionId,
       @RequestBody List<UUID> orderableIds) {
-    return siglusRequisitionService.createRequisitionLineItem(requisitonId, orderableIds);
+    return siglusRequisitionService.createRequisitionLineItem(requisitionId, orderableIds);
   }
 
   @GetMapping("/periodsForInitiate")

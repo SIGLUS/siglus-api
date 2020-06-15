@@ -18,6 +18,8 @@ package org.siglus.siglusapi.web;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_ORDERABLE_INVALID;
+import static org.siglus.siglusapi.web.SiglusStockCardController.PRODUCT_ID;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -31,6 +33,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.siglus.siglusapi.service.SiglusStockCardService;
 import org.springframework.http.ResponseEntity;
@@ -62,27 +65,35 @@ public class SiglusStockCardControllerTest {
     productId = UUID.randomUUID();
     stockCardId = UUID.randomUUID();
     parameters = new LinkedMultiValueMap<>();
-    parameters.add("id", productId.toString());
+    parameters.add(PRODUCT_ID, productId.toString());
   }
 
 
   @Test
-  public void shouldCallSiglusServicefindStockCardByOrderable() {
-    controller.searchStocokCard(parameters);
+  public void shouldCallSiglusServiceFindStockCardByOrderable() {
+    controller.searchStockCard(parameters);
     verify(service).findStockCardByOrderable(productId);
   }
 
   @Test
-  public void shouldGetReponseNotFound() {
+  public void shouldThrowExceptionWhenSearchStockCardGiven() {
+    parameters.remove(PRODUCT_ID);
+    expectedEx.expect(ValidationMessageException.class);
+    expectedEx.expectMessage(ERROR_EVENT_ORDERABLE_INVALID);
+    controller.searchStockCard(parameters);
+  }
+
+  @Test
+  public void shouldGetResponseNotFound() {
     when(service.findStockCardByOrderable(productId)).thenReturn(null);
-    ResponseEntity<StockCardDto> responseEntity = controller.searchStocokCard(parameters);
+    ResponseEntity<StockCardDto> responseEntity = controller.searchStockCard(parameters);
     assertEquals(NOT_FOUND, responseEntity.getStatusCode());
   }
 
   @Test
   public void shouldGetReponseOk() {
     when(service.findStockCardByOrderable(productId)).thenReturn(new StockCardDto());
-    ResponseEntity<StockCardDto> responseEntity = controller.searchStocokCard(parameters);
+    ResponseEntity<StockCardDto> responseEntity = controller.searchStockCard(parameters);
     assertEquals(OK, responseEntity.getStatusCode());
   }
 

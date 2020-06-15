@@ -20,7 +20,6 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.util.UUID;
-
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.util.UuidUtil;
@@ -40,14 +39,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/stockCards")
 public class SiglusStockCardController {
 
-  private static final String PRODUCT_ID = "id";
+  static final String PRODUCT_ID = "id";
   private static final Logger LOGGER = LoggerFactory.getLogger(SiglusStockCardController.class);
 
   @Autowired
   private SiglusStockCardService siglusStockCardService;
 
   @GetMapping("/orderable")
-  public ResponseEntity<StockCardDto> searchStocokCard(
+  public ResponseEntity<StockCardDto> searchStockCard(
       @RequestParam MultiValueMap<String, String> parameters) {
 
     UUID orderableId = UuidUtil.fromString(parameters.getFirst(PRODUCT_ID)).orElse(null);

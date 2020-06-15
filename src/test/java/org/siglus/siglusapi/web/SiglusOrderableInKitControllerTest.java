@@ -17,37 +17,29 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
-import java.util.List;
-
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.web.OrderController;
-import org.openlmis.fulfillment.web.util.OrderDto;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.siglus.siglusapi.service.SiglusUnpackService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusOrderControllerTest {
+public class SiglusOrderableInKitControllerTest {
 
   @InjectMocks
-  private SiglusOrderController controller;
+  private SiglusOrderableInKitController controller;
 
   @Mock
-  private OrderController actualController;
-
-  @Mock
-  private OAuth2Authentication authentication;
-
-  @Mock
-  private List<OrderDto> orders;
+  private SiglusUnpackService service;
 
   @Test
-  public void shouldCallOpenlmisControllerWhenBatchCreateOrders() {
-    controller.batchCreateOrders(orders, authentication);
+  public void shouldCallServiceSearchProductsInKitWhenSearchProductsInKit() {
+    UUID kitProductId = UUID.randomUUID();
+    controller.searchProductsInKit(kitProductId);
 
-    verify(actualController).batchCreateOrders(orders, authentication);
+    verify(service).searchOrderablesInKit(kitProductId);
   }
 
 }

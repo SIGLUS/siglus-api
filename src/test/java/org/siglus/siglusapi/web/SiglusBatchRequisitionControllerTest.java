@@ -29,11 +29,11 @@ import org.openlmis.requisition.web.BatchRequisitionController;
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusBatchRequisitionControllerTest {
 
-  @Mock
-  private BatchRequisitionController actualController;
-
   @InjectMocks
   private SiglusBatchRequisitionController controller;
+
+  @Mock
+  private BatchRequisitionController actualController;
 
   private ReleasableRequisitionBatchDto releasableRequisitionBatchDto;
 
