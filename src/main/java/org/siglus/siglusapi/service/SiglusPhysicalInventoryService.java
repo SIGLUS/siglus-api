@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
@@ -204,7 +205,7 @@ public class SiglusPhysicalInventoryService {
           .getApprovedProducts(facilityId, supportedVirtualProgram, null).getOrderablesPage()
           .getContent();
       approvedProductDtos.forEach(orderable -> {
-        if (Boolean.parseBoolean(orderable.getExtraData().get("isBasic"))) {
+        if (Boolean.parseBoolean(orderable.getExtraData().get(IS_BASIC))) {
           PhysicalInventoryLineItemDto lineItem = PhysicalInventoryLineItemDto.builder()
               .orderableId(orderable.getId())
               .programId(supportedVirtualProgram)
@@ -253,15 +254,14 @@ public class SiglusPhysicalInventoryService {
     return new InitialInventoryFieldDto(canInitialInventory);
   }
 
-  public List<String> findPhysicalInventoryDates(UUID facility,
+  public Set<String> findPhysicalInventoryDates(UUID facility,
       String startDate,
       String endDate) {
     List<PhysicalInventory> physicalInventories = physicalInventoriesRepository
         .findByFacilityIdAndStartDateAndEndDate(facility, startDate, endDate);
     return physicalInventories.stream()
         .map(physicalInventory -> physicalInventory.getOccurredDate().toString())
-        .distinct()
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
   }
 
   public PhysicalInventoryDto findLatestPhysicalInventory(UUID facilityId) {

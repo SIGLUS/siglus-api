@@ -21,6 +21,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
@@ -100,7 +101,7 @@ public class SiglusPhysicalInventoryController {
   }
 
   @GetMapping("/dates")
-  public List<String> searchPhysicalInventoryDates(
+  public Set<String> searchPhysicalInventoryDates(
       @RequestParam UUID facilityId,
       @RequestParam String startDate,
       @RequestParam String endDate) {

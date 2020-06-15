@@ -53,4 +53,6 @@ public class FieldConstants {
 
   public static final String RIGHT_NAME = "rightName";
 
+  public static final String IS_BASIC = "isBasic";
+
 }
