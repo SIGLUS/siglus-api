@@ -23,6 +23,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -43,7 +44,13 @@ import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepositor
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.domain.AvailableUsageColumn;
 import org.siglus.siglusapi.domain.AvailableUsageColumnSection;
+import org.siglus.siglusapi.domain.UsageCategory;
+import org.siglus.siglusapi.domain.UsageTemplateColumn;
+import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.siglus.siglusapi.dto.AvailableUsageColumnDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionTemplateDto;
+import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
+import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.repository.AvailableUsageColumnRepository;
 import org.siglus.siglusapi.repository.AvailableUsageColumnSectionRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
@@ -52,6 +59,8 @@ import org.siglus.siglusapi.service.client.RequisitionTemplateRequisitionService
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusRequisitionTemplateServiceTest {
+
+  private static final String kitSectionName = "kit section Name";
 
   @Mock
   private RequisitionTemplateRequisitionService requisitionTemplateRequisitionService;
@@ -102,8 +111,10 @@ public class SiglusRequisitionTemplateServiceTest {
 
   private List<AvailableUsageColumnSection> getMockAvailableSection() {
     AvailableUsageColumnSection section = new AvailableUsageColumnSection();
+    section.setName("sectionName");
     section.setId(UUID.randomUUID());
     section.setColumns(getAvailableUsageColumns());
+    section.setDisplayOrder(1);
     return Arrays.asList(section);
   }
 
@@ -112,6 +123,7 @@ public class SiglusRequisitionTemplateServiceTest {
     availableUsageColumn.setId(UUID.randomUUID());
     availableUsageColumn.setName("available");
     availableUsageColumn.setSources("USER_INPUT|STOCK_CARDS");
+    availableUsageColumn.setDisplayOrder(1);
     return Arrays.asList(availableUsageColumn);
   }
 
@@ -175,6 +187,143 @@ public class SiglusRequisitionTemplateServiceTest {
   }
 
   @Test
+  public void shouldCreateExtensionIfExtensionIsNotEmptyWhenCreateTemplate() {
+    RequisitionTemplateDto updatedDto = new RequisitionTemplateDto();
+    updatedDto.setId(tempalteId);
+    SiglusRequisitionTemplateDto requestDto = new SiglusRequisitionTemplateDto();
+    RequisitionTemplateExtension extension = prepareExtension();
+    RequisitionTemplateExtensionDto extensionDto = prepareExtensionDto();
+    requestDto.setId(tempalteId);
+    requestDto.setExtension(extensionDto);
+    when(requisitionTemplateExtensionRepository.save(any(RequisitionTemplateExtension.class)))
+        .thenReturn(extension);
+
+    SiglusRequisitionTemplateDto result = siglusRequisitionTemplateService
+        .createTemplateExtension(updatedDto, requestDto);
+
+    assertEquals(extensionDto, result.getExtension());
+  }
+
+  @Test
+  public void shouldGetExtensionIfExtensionIsNotEmptyWhenGetTemplate() {
+    UUID templateId = UUID.randomUUID();
+    SiglusRequisitionTemplateDto templateDto = new SiglusRequisitionTemplateDto();
+    templateDto.setId(tempalteId);
+    when(requisitionTemplateRequisitionService.findTemplate(templateId)).thenReturn(templateDto);
+
+    RequisitionTemplateExtension extension = prepareExtension();
+    when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(templateId))
+        .thenReturn(extension);
+
+    RequisitionTemplateExtensionDto extensionDto = prepareExtensionDto();
+    templateDto.setId(tempalteId);
+    templateDto.setExtension(extensionDto);
+
+    SiglusRequisitionTemplateDto result = siglusRequisitionTemplateService
+        .getTemplate(templateId);
+
+    assertEquals(extensionDto, result.getExtension());
+  }
+
+  @Test
+  public void shouldGetUsageTemplateIfExtensionIsNotEmptyWhenGetTemplate() {
+    UUID templateId = UUID.randomUUID();
+    SiglusRequisitionTemplateDto templateDto = new SiglusRequisitionTemplateDto();
+    templateDto.setId(tempalteId);
+    when(requisitionTemplateRequisitionService.findTemplate(templateId)).thenReturn(templateDto);
+
+    RequisitionTemplateExtension extension = prepareExtension();
+    when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(templateId))
+        .thenReturn(extension);
+
+    RequisitionTemplateExtensionDto extensionDto = prepareExtensionDto();
+    templateDto.setId(tempalteId);
+    templateDto.setExtension(extensionDto);
+
+    when(columnSectionRepository.findByRequisitionTemplateId(templateId))
+        .thenReturn(getMockColumnSection());
+
+    SiglusRequisitionTemplateDto result = siglusRequisitionTemplateService
+        .getTemplate(templateId);
+
+    assertEquals(kitSectionName, result.getKitUsage().get(0).getName());
+  }
+
+  @Test
+  public void shouldUpdateNewUsageExtensionIfTemplateIdModifiedWhenUpdateTemplate() {
+    UUID updatedTemplateId = UUID.randomUUID();
+    RequisitionTemplateDto updatedDto = new RequisitionTemplateDto();
+    updatedDto.setId(updatedTemplateId);
+
+    SiglusRequisitionTemplateDto requestDto = new SiglusRequisitionTemplateDto();
+    requestDto.setId(UUID.randomUUID());
+    UsageTemplateSectionDto mockKitSectionDto = getMockKitTemplateSectionDto();
+    requestDto.setKitUsage(Arrays.asList(mockKitSectionDto));
+
+    RequisitionTemplateExtension extension = getRequisitionTemplateExtension(requestDto);
+    when(requisitionTemplateExtensionRepository.save(any(RequisitionTemplateExtension.class)))
+        .thenReturn(extension);
+
+    List<AvailableUsageColumnSection> mockKitAvailableSections =
+        Arrays.asList(getMockKitAvailableSection());
+    when(availableUsageColumnSectionRepository.findAll()).thenReturn(mockKitAvailableSections);
+
+    List<AvailableUsageColumn> mockKitAvailableUsageColumns =
+        Arrays.asList(getMockKitAvailableUsageColumn());
+    when(availableUsageColumnRepository.findAll()).thenReturn(mockKitAvailableUsageColumns);
+
+    UsageTemplateColumnSection section = UsageTemplateColumnSection
+        .from(mockKitSectionDto, UsageCategory.KITUSAGE,
+            updatedDto.getId(), mockKitAvailableSections, mockKitAvailableUsageColumns);
+    when(columnSectionRepository.save(Arrays.asList(any(UsageTemplateColumnSection.class))))
+        .thenReturn(Arrays.asList(section));
+    SiglusRequisitionTemplateDto newTemplateDto =
+        siglusRequisitionTemplateService.updateTemplate(updatedDto, requestDto);
+    verify(columnSectionRepository, never())
+        .delete(Arrays.asList(any(UsageTemplateColumnSection.class)));
+    assertEquals("request colum name", newTemplateDto.getKitUsage().get(0)
+        .getColumns().get(0).getName());
+  }
+
+
+  @Test
+  public void shouldUpdateUsageExtensionIfTemplateIdNotModifiedWhenUpdateTemplate() {
+    UUID updatedTemplateId = UUID.randomUUID();
+    RequisitionTemplateDto updatedDto = new RequisitionTemplateDto();
+    updatedDto.setId(updatedTemplateId);
+
+    SiglusRequisitionTemplateDto requestDto = new SiglusRequisitionTemplateDto();
+    requestDto.setId(updatedTemplateId);
+    UsageTemplateSectionDto mockKitSectionDto = getMockKitTemplateSectionDto();
+    requestDto.setKitUsage(Arrays.asList(mockKitSectionDto));
+
+    RequisitionTemplateExtension extension = getRequisitionTemplateExtension(requestDto);
+    when(requisitionTemplateExtensionRepository.save(any(RequisitionTemplateExtension.class)))
+        .thenReturn(extension);
+
+    List<AvailableUsageColumnSection> mockKitAvailableSections =
+        Arrays.asList(getMockKitAvailableSection());
+    when(availableUsageColumnSectionRepository.findAll()).thenReturn(mockKitAvailableSections);
+
+    List<AvailableUsageColumn> mockKitAvailableUsageColumns =
+        Arrays.asList(getMockKitAvailableUsageColumn());
+    when(availableUsageColumnRepository.findAll()).thenReturn(mockKitAvailableUsageColumns);
+
+    UsageTemplateColumnSection section = UsageTemplateColumnSection
+        .from(mockKitSectionDto, UsageCategory.KITUSAGE,
+            updatedDto.getId(), mockKitAvailableSections, mockKitAvailableUsageColumns);
+    when(columnSectionRepository.findByRequisitionTemplateId(requestDto.getId()))
+        .thenReturn(Arrays.asList(section));
+    when(columnSectionRepository.save(Arrays.asList(any(UsageTemplateColumnSection.class))))
+        .thenReturn(Arrays.asList(section));
+    SiglusRequisitionTemplateDto newTemplateDto =
+        siglusRequisitionTemplateService.updateTemplate(updatedDto, requestDto);
+    verify(columnSectionRepository).delete(Arrays.asList(any(UsageTemplateColumnSection.class)));
+    assertEquals("request colum name", newTemplateDto.getKitUsage().get(0)
+        .getColumns().get(0).getName());
+  }
+
+  @Test
   public void shouldNotDeleteAndCreateAssociateProgramsIfNotChangedWhenUpdateTemplate() {
     RequisitionTemplateDto updatedDto = new RequisitionTemplateDto();
     updatedDto.setId(tempalteId);
@@ -214,6 +363,68 @@ public class SiglusRequisitionTemplateServiceTest {
     verify(associateProgramExtensionRepository).save(
         anyListOf(RequisitionTemplateAssociateProgram.class));
     assertEquals(uuids, result.getAssociateProgramsIds());
+  }
+
+  private UsageTemplateSectionDto getMockKitTemplateSectionDto() {
+    UsageTemplateSectionDto templateSectionDto = new UsageTemplateSectionDto();
+    templateSectionDto.setName("request section name");
+    templateSectionDto.setDisplayOrder(0);
+    UsageTemplateColumnDto columnDto = new UsageTemplateColumnDto();
+    columnDto.setName("request colum name");
+    AvailableUsageColumnDto availableUsageColumnDto = new AvailableUsageColumnDto();
+    availableUsageColumnDto.setSources(new ArrayList<>());
+    columnDto.setColumnDefinition(availableUsageColumnDto);
+    columnDto.setDisplayOrder(0);
+    templateSectionDto.setColumns(Arrays.asList(columnDto));
+    return templateSectionDto;
+  }
+
+  private AvailableUsageColumnSection getMockKitAvailableSection() {
+    AvailableUsageColumnSection availableSection = new AvailableUsageColumnSection();
+    availableSection.setName(kitSectionName);
+    availableSection.setId(UUID.randomUUID());
+    availableSection.setCategory(UsageCategory.KITUSAGE);
+    availableSection.setDisplayOrder(1);
+    return availableSection;
+  }
+
+  private AvailableUsageColumn getMockKitAvailableUsageColumn() {
+    AvailableUsageColumn availableUsageColumn = new AvailableUsageColumn();
+    availableUsageColumn.setId(UUID.randomUUID());
+    availableUsageColumn.setName("kit available");
+    availableUsageColumn.setSources("USER_INPUT|STOCK_CARDS");
+    availableUsageColumn.setDisplayOrder(1);
+    return availableUsageColumn;
+  }
+
+  private List<UsageTemplateColumnSection> getMockColumnSection() {
+    UsageTemplateColumnSection templateColumnSection = new UsageTemplateColumnSection();
+    templateColumnSection.setCategory(UsageCategory.KITUSAGE);
+    templateColumnSection.setName(kitSectionName);
+
+    AvailableUsageColumnSection availableSection = new AvailableUsageColumnSection();
+    availableSection.setName(kitSectionName);
+    availableSection.setId(UUID.randomUUID());
+    availableSection.setColumns(getAvailableUsageColumns());
+    availableSection.setDisplayOrder(1);
+    templateColumnSection.setSection(availableSection);
+
+    UsageTemplateColumn column = new UsageTemplateColumn();
+    column.setId(UUID.randomUUID());
+    column.setName("kitColumn");
+    column.setSource("USER_INPUT");
+    column.setDisplayOrder(1);
+    column.setAvailableSources("USER_INPUT");
+    templateColumnSection.setColumns(Arrays.asList(column));
+    return Arrays.asList(templateColumnSection);
+  }
+
+  private RequisitionTemplateExtension getRequisitionTemplateExtension(
+      SiglusRequisitionTemplateDto requestDto) {
+    RequisitionTemplateExtension extension = prepareExtension();
+    RequisitionTemplateExtensionDto extensionDto = prepareExtensionDto();
+    requestDto.setExtension(extensionDto);
+    return extension;
   }
 
   private RequisitionTemplateExtension prepareExtension() {
