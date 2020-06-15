@@ -3,8 +3,8 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 INSERT INTO siglusintegration.available_usage_column_sections(id, name, label, displayorder, category) VALUES
-('bce979a4-1957-4259-a5bb-b04f86c4c72c','KIT data collection', 'collection', 0, 'KITUSAGE'),
-('bce979a4-1957-4259-a5bb-b04f86c4c72a','Services', 'service', 1, 'KITUSAGE');
+('bce979a4-1957-4259-a5bb-b04f86c4c72c','collection', 'KIT data collection', 0, 'KITUSAGE'),
+('bce979a4-1957-4259-a5bb-b04f86c4c72a','service', 'Services', 1, 'KITUSAGE');
 
 INSERT INTO siglusintegration.available_usage_columns(id, canbechangedbyuser, canchangeorder, columntype, definition, indicator, isdisplayrequired, label, mandatory, name, supportstag, sectionid, sources, displayorder) VALUES
 ('23c0ecc1-f58e-41e4-99f2-241a3f8360d6',FALSE,FALSE,'NUMERIC','record the quantity of how many KIT received','KD',TRUE,'No. of Kit Received',FALSE,'kitReceived',true,'bce979a4-1957-4259-a5bb-b04f86c4c72c','USER_INPUT|STOCK_CARDS', 0),
