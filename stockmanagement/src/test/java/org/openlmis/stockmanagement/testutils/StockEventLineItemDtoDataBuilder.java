@@ -40,6 +40,11 @@ public class StockEventLineItemDtoDataBuilder {
   private UUID destinationId = UUID.randomUUID();
   private String destinationFreeText = RandomStringUtils.random(5);
   private List<StockEventAdjustmentDto> stockAdjustments = new ArrayList<>();
+  // [SIGLUS change start]
+  // [change reason]: StockEventLineItems can have different documentationNo and programId.
+  private String documentationNo = RandomStringUtils.random(5);
+  private UUID programId = UUID.randomUUID();
+  // [SIGLUS change end]
 
   /**
    * Builds Physical Inventory Event.
@@ -57,10 +62,10 @@ public class StockEventLineItemDtoDataBuilder {
   public StockEventLineItemDto buildForAdjustment() {
     noSourceAndDestination();
     // [SIGLUS change start]
-    // [change reason]: add fields.
+    // [change reason]: StockEventLineItems can have different documentationNo and programId.
     return new StockEventLineItemDto(orderableId, lotId,quantity, extraData, occurredDate, reasonId,
         reasonFreeText, sourceId, sourceFreeText, destinationId, destinationFreeText,
-        stockAdjustments, null, null);
+        stockAdjustments, documentationNo, programId);
     // [SIGLUS change end]
   }
 
@@ -69,10 +74,10 @@ public class StockEventLineItemDtoDataBuilder {
    */
   public StockEventLineItemDto build() {
     // [SIGLUS change start]
-    // [change reason]: add fields.
+    // [change reason]: StockEventLineItems can have different documentationNo and programId.
     return new StockEventLineItemDto(orderableId, lotId,quantity, extraData, occurredDate, reasonId,
         reasonFreeText, sourceId, sourceFreeText, destinationId, destinationFreeText,
-        stockAdjustments, null, null);
+        stockAdjustments, documentationNo, programId);
     // [SIGLUS change end]
   }
 
