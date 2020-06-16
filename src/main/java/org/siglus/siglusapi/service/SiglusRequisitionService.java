@@ -92,6 +92,7 @@ import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
+import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.RequisitionApprovalDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
@@ -106,6 +107,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
@@ -178,6 +180,9 @@ public class SiglusRequisitionService {
 
   @Autowired
   ApprovedProductReferenceDataService approvedProductReferenceDataService;
+
+  @Autowired
+  private SimulateAuthenticationHelper simulateAuthenticationHelper;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -347,12 +352,21 @@ public class SiglusRequisitionService {
     profiler.start("FIND_APPROVED_PRODUCTS");
 
     profiler.start("FIND_STOCK_ON_HANDS");
+    // [SIGLUS change start]
+    // [change reason]: mock Cross-service request for stock card permission
+    OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
+    // [SIGLUS change end]
     Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate, virtualProgramId,
         facility.getId(), requisition.getActualEndDate());
 
     profiler.start("FIND_BEGINNING_BALANCES");
     Map<UUID, Integer> orderableBeginning = getOrderableBegingningMap(requisitionTemplate,
         virtualProgramId, facility.getId(), requisition.getActualStartDate().minusDays(1));
+
+    // [SIGLUS change start]
+    // [change reason]: set real auth
+    simulateAuthenticationHelper.recoveryAuth(originAuth);
+    // [SIGLUS change end]
 
     ProofOfDeliveryDto pod = null;
     if (!isEmpty(previousRequisitions)) {
