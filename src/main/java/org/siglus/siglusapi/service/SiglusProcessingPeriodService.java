@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static java.util.stream.Collectors.toList;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -30,14 +28,10 @@ import org.openlmis.referencedata.service.ProcessingPeriodSearchParams;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
-import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.requisition.service.referencedata.PermissionStringDto;
-import org.openlmis.requisition.service.referencedata.PermissionStrings;
-import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
@@ -59,9 +53,6 @@ public class SiglusProcessingPeriodService {
 
   @Autowired
   private SiglusProcessingPeriodValidator siglusProcessingPeriodValidator;
-
-  @Autowired
-  private RequisitionAuthenticationHelper requisitionAuthenticationHelper;
 
   @Autowired
   private PermissionService permissionService;
@@ -145,9 +136,6 @@ public class SiglusProcessingPeriodService {
   // get periods for initiate
   public Collection<RequisitionPeriodDto> getPeriods(UUID program,
       UUID facility, boolean emergency) {
-    UserDto user = requisitionAuthenticationHelper.getCurrentUser();
-
-    List<String> permissionStrings = findPermissionStringsByUser(user);
 
     Collection<ProcessingPeriodDto> periods;
     if (emergency) {
@@ -168,7 +156,7 @@ public class SiglusProcessingPeriodService {
           period.getId(), facility, program, emergency);
 
       List<Requisition> preAuthorizeRequisitions = getPreAuthorizedRequisitions(program, facility,
-          permissionStrings, requisitions);
+          requisitions);
 
       if (emergency) {
         processingEmergencyRequisitionPeriod(requisitionPeriods,
@@ -212,14 +200,6 @@ public class SiglusProcessingPeriodService {
     }
   }
 
-  private List<String> findPermissionStringsByUser(UserDto user) {
-    PermissionStrings.Handler handler = permissionService.getPermissionStrings(user.getId());
-    return handler.get()
-        .stream()
-        .map(PermissionStringDto::toString)
-        .collect(toList());
-  }
-
   private Collection<ProcessingPeriodDto> fillProcessingPeriodWithExtension(
       Collection<ProcessingPeriodDto> periods) {
     List<ProcessingPeriodExtension> extensions = processingPeriodExtensionRepository.findAll();
@@ -237,17 +217,15 @@ public class SiglusProcessingPeriodService {
   }
 
   private List<Requisition> getPreAuthorizedRequisitions(UUID program, UUID facility,
-      List<String> permissionStrings, List<Requisition> requisitions) {
+      List<Requisition> requisitions) {
     List<Requisition> preAuthorizeRequisitions = new ArrayList<>();
-    if (permissionStrings.contains(PermissionService.REQUISITION_CREATE + "|"
-        + facility + "|" + program)) {
+    if (permissionService.canInitRequisition(program, facility).isSuccess()) {
       preAuthorizeRequisitions.addAll(requisitions.stream()
           .filter(requisition -> requisition.getStatus().isSubmittable())
           .collect(Collectors.toList()));
     }
 
-    if (permissionStrings.contains(PermissionService.REQUISITION_AUTHORIZE + "|"
-        + facility + "|" + program)) {
+    if (permissionService.canAuthorizeRequisition(program, facility).isSuccess()) {
       preAuthorizeRequisitions.addAll(requisitions.stream()
           .filter(requisition -> requisition.getStatus().isPreAuthorize())
           .collect(Collectors.toList()));

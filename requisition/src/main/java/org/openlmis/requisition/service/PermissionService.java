@@ -154,6 +154,13 @@ public class PermissionService {
         requisition.getFacilityId(), requisition.getProgramId());
   }
 
+  // [SIGLUS change start]
+  // [change reason]: needs method to check user authorize right by program & facility
+  public ValidationResult canAuthorizeRequisition(UUID program, UUID facility) {
+    return checkRight(REQUISITION_AUTHORIZE, facility, program);
+  }
+  // [SIGLUS change end]
+
   /**
    * Checks if current user has permission to delete a requisition.
    *
