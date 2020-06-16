@@ -455,7 +455,6 @@ public abstract class BaseRequisitionController extends BaseController {
 
   void doApprove(Requisition requisition, ApproveParams approveParams) {
     Profiler profiler = getProfiler("DO_APPROVE_REQUISITION", requisition, approveParams.user);
-    checkIfPeriodIsValid(requisition, approveParams.period, profiler);
 
     ObjectReferenceDto parentNode = null;
     UUID parentNodeId = null;
