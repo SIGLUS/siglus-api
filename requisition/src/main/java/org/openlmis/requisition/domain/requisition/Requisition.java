@@ -785,13 +785,24 @@ public class Requisition extends BaseTimestampedEntity {
    */
   public void approve(UUID nodeId, Map<VersionIdentityDto, OrderableDto> products,
       Collection<SupplyLineDto> supplyLines, UUID approver) {
-    if (isTrue(reportOnly)) {
-      status = RequisitionStatus.RELEASED_WITHOUT_ORDER;
+    // [SIGLUS change start]
+    // [change reason]: for reportOnly, status change to RELEASED_WITHOUT_ORDER when final
+    //                  approval.
+    // if (isTrue(reportOnly)) {
+    //   status = RequisitionStatus.RELEASED_WITHOUT_ORDER;
+    // } else {
+    // [SIGLUS change end]
+    if (CollectionUtils.isEmpty(supplyLines) && nodeId != null) {
+      status = RequisitionStatus.IN_APPROVAL;
+      supervisoryNodeId = nodeId;
     } else {
-      if (CollectionUtils.isEmpty(supplyLines) && nodeId != null) {
-        status = RequisitionStatus.IN_APPROVAL;
-        supervisoryNodeId = nodeId;
+      // [SIGLUS change start]
+      // [change reason]: for reportOnly, status change to RELEASED_WITHOUT_ORDER when final
+      //                  approval.
+      if (isTrue(reportOnly)) {
+        status = RequisitionStatus.RELEASED_WITHOUT_ORDER;
       } else {
+        // [SIGLUS change end]
         status = RequisitionStatus.APPROVED;
       }
     }
