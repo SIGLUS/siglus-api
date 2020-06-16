@@ -85,6 +85,7 @@ public class MessageTest {
 
     LocalizedMessage localizedMessage = message.localMessage(messageSource, locale);
     assertEquals("hello", localizedMessage.getMessage());
+    assertEquals("hi: hello", localizedMessage.toString());
   }
 
   @Test(expected = NoSuchMessageException.class)

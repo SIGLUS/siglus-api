@@ -48,11 +48,6 @@ public class WebLogAspectTest {
   }
 
   @Test
-  public void webLog() {
-    webLogAspect.webLog();
-  }
-
-  @Test
   public void around() throws Throwable {
     HttpServletRequest request = new MockHttpServletRequest("GET",
         "/api/siglusapi/requisitions/initiate");

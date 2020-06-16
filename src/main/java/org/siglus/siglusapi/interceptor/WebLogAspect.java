@@ -33,7 +33,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class WebLogAspect {
 
   @Pointcut("within(org.siglus.siglusapi.web.*)")
-  public void webLog() { }
+  public void webLog() {
+    // do nothing
+  }
 
   @Around("webLog()")
   public Object around(ProceedingJoinPoint joinPoint) throws Throwable {

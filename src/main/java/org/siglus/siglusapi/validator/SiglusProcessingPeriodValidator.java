@@ -43,7 +43,7 @@ public class SiglusProcessingPeriodValidator {
   private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
   public void validSubmitDuration(ProcessingPeriodDto periodDto) {
-    LocalDate startDate = periodDto.getSubmitStartDate();
+    LocalDate startDate = periodDto.getStartDate();
     LocalDate submitStartDate = periodDto.getSubmitStartDate();
     LocalDate submitEndDate = periodDto.getSubmitEndDate();
 
