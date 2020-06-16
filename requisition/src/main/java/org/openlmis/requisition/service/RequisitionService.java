@@ -1043,6 +1043,12 @@ public class RequisitionService {
     FacilityDto homeFacility = facilityReferenceDataService.findOne(homeFacilityId);
     Set<UUID> supportedPrograms = homeFacility.getSupportedPrograms()
         .stream()
+        .filter(supportedProgramDto -> {
+          LocalDate supportStartDate = supportedProgramDto.getSupportStartDate();
+          return supportedProgramDto.isProgramActive()
+              && supportedProgramDto.isSupportActive()
+              && supportStartDate.isBefore(LocalDate.now());
+        })
         .map(SupportedProgramDto::getId)
         .collect(Collectors.toSet());
     List<ProgramExtension> programExtensions = programExtensionRepository.findAll();
