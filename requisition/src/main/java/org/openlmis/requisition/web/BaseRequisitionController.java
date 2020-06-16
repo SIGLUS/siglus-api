@@ -296,7 +296,7 @@ public abstract class BaseRequisitionController extends BaseController {
     //     program, facility, period, emergency, stockAdjustmentReasons,
     //     requisitionTemplate, approvedProducts);
     LocalDate physicalInventoryDate = validAndSetPhysicalInventoryDate(period,
-        physicalInventoryDateStr);
+        physicalInventoryDateStr, emergency);
     Requisition newRequisition = requisitionService.initiate(
                 program, facility, period, emergency, stockAdjustmentReasons,
                 requisitionTemplate, approvedProducts, physicalInventoryDate);
@@ -311,25 +311,26 @@ public abstract class BaseRequisitionController extends BaseController {
   // [SIGLUS change start]
   // [change reason]: check physical date
   private LocalDate validAndSetPhysicalInventoryDate(ProcessingPeriodDto period,
-      String physicalInventoryDateStr) {
+      String physicalInventoryDateStr, boolean emergency) {
     LocalDate physicalInventoryDate = null;
     if (physicalInventoryDateStr != null) {
       DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd");
       physicalInventoryDate = LocalDate.parse(physicalInventoryDateStr, format);
-      validatePhysicalInventoryDate(period, physicalInventoryDate);
+      validatePhysicalInventoryDate(period, physicalInventoryDate, emergency);
     }
     return physicalInventoryDate;
   }
 
   private void validatePhysicalInventoryDate(ProcessingPeriodDto period,
-      LocalDate physicalInventoryDate) {
+      LocalDate physicalInventoryDate, boolean emergency) {
     ProcessingPeriodExtension extension = processingPeriodExtensionRepository
         .findByProcessingPeriodId(period.getId());
     if (extension != null) {
       period.setSubmitStartDate(extension.getSubmitStartDate());
       period.setSubmitEndDate(extension.getSubmitEndDate());
+      LocalDate submitDate = emergency ? period.getEndDate() : period.getSubmitEndDate();
       if (physicalInventoryDate.isBefore(period.getSubmitStartDate()) || physicalInventoryDate
-          .isAfter(period.getSubmitEndDate())) {
+          .isAfter(submitDate)) {
         throw new ValidationMessageException(
             new Message(MessageKeys.ERROR_PHYSICAL_INVENTORY_DATE_MUST_IN_SUBMIT_DURATION));
       }
