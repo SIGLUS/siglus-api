@@ -287,33 +287,62 @@ public class RequisitionService {
 
     // [SIGLUS change start]
     // [change reason]: mock Cross-service request for stock card permission
-    OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
+    final OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
     // [SIGLUS change end]
 
     // [SIGLUS change start]
     // [change reason]: period.getEndDate() -> requisition.getActualEndDate().
+    // [change reason]: add template associate program support
+    Set<UUID> allProgramIds = new HashSet<>();
+    allProgramIds.add(program.getId());
+    allProgramIds.addAll(getAssociateProgram(requisitionTemplate.getId()));
     profiler.start("FIND_STOCK_ON_HANDS");
-    Map<UUID, Integer> orderableSoh = stockOnHandRetrieverBuilderFactory
-        .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
-        .forProgram(program.getId())
-        .forFacility(facility.getId())
-        .forProducts(approvedProducts)
-        .asOfDate(requisition.getActualEndDate())
-        .build()
-        .get();
+    // Map<UUID, Integer> orderableSoh = stockOnHandRetrieverBuilderFactory
+    //     .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
+    //     .forProgram(program.getId())
+    //     .forFacility(facility.getId())
+    //     .forProducts(approvedProducts)
+    //     .asOfDate(requisition.getActualEndDate())
+    //     .build()
+    //     .get();
+    Map<UUID, Integer> orderableSoh = allProgramIds.stream()
+        .map(programId -> stockOnHandRetrieverBuilderFactory
+            .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
+            .forProgram(programId)
+            .forFacility(facility.getId())
+            .forProducts(approvedProducts)
+            .asOfDate(requisition.getActualEndDate())
+            .build()
+            .get())
+        .map(Map::entrySet)
+        .flatMap(Collection::stream)
+        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
     // [SIGLUS change end]
 
     profiler.start("FIND_BEGINNING_BALANCES");
     // [SIGLUS change start]
     // [change reason]: period.getStartDate() -> requisition.getActualStartDate().
-    Map<UUID, Integer> orderableBeginning = stockOnHandRetrieverBuilderFactory
-        .getInstance(requisitionTemplate, RequisitionLineItem.BEGINNING_BALANCE)
-        .forProgram(program.getId())
-        .forFacility(facility.getId())
-        .forProducts(approvedProducts)
-        .asOfDate(requisition.getActualStartDate().minusDays(1))
-        .build()
-        .get();
+    // [change reason]: add template associate program support
+    // Map<UUID, Integer> orderableBeginning = stockOnHandRetrieverBuilderFactory
+    //     .getInstance(requisitionTemplate, RequisitionLineItem.BEGINNING_BALANCE)
+    //     .forProgram(program.getId())
+    //     .forFacility(facility.getId())
+    //     .forProducts(approvedProducts)
+    //     .asOfDate(requisition.getActualStartDate().minusDays(1))
+    //     .build()
+    //     .get();
+    HashMap<UUID, Integer> orderableBeginning = allProgramIds.stream()
+        .map(programId -> stockOnHandRetrieverBuilderFactory
+            .getInstance(requisitionTemplate, RequisitionLineItem.BEGINNING_BALANCE)
+            .forProgram(programId)
+            .forFacility(facility.getId())
+            .forProducts(approvedProducts)
+            .asOfDate(requisition.getActualStartDate().minusDays(1))
+            .build()
+            .get())
+        .map(Map::entrySet)
+        .flatMap(Collection::stream)
+        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
     // [SIGLUS change end]
 
     // [SIGLUS change start]
@@ -1136,7 +1165,7 @@ public class RequisitionService {
   }
 
   private List<Requisition> getRegularRequisitionsByPeriod(Requisition requisition,
-                                                           ProcessingPeriodDto period) {
+      ProcessingPeriodDto period) {
     return requisitionRepository.searchRequisitions(
         period.getId(), requisition.getFacilityId(), requisition.getProgramId(), false);
   }
