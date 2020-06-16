@@ -268,8 +268,11 @@ public class SiglusRequisitionService {
 
     boolean isApprovePage = requisitionService
         .validateCanApproveRequisition(existedRequisition, userDto.getId()).isSuccess();
+    boolean isInternalFacility = userDto.getHomeFacilityId()
+        .equals(existedRequisition.getFacilityId());
+    boolean isExternalApprovePage = isApprovePage && !isInternalFacility;
 
-    return buildSiglusLineItem(lineItemList, isApprovePage);
+    return buildSiglusLineItem(lineItemList, isExternalApprovePage);
   }
 
   private List<RequisitionLineItem> constructLineItem(Requisition requisition,
@@ -444,7 +447,7 @@ public class SiglusRequisitionService {
   }
 
   private List<SiglusRequisitionLineItemDto> buildSiglusLineItem(
-      List<RequisitionLineItem> lineItemList, boolean isApprovePage) {
+      List<RequisitionLineItem> lineItemList, boolean isExternalApprovePage) {
     List<OrderableExpirationDateDto> expirationDateDtos = findOrderableIds(lineItemList);
 
     Set<VersionEntityReference> references = lineItemList.stream()
@@ -478,7 +481,7 @@ public class SiglusRequisitionService {
           lineDto.setServiceUrl(serviceUrl);
           line.export(lineDto, orderable, approvedProduct);
           setOrderableExpirationDate(expirationDateDtos, orderable, lineDto);
-          if (isApprovePage) {
+          if (isExternalApprovePage) {
             lineDto.setRequestedQuantity(0);
             lineDto.setAuthorizedQuantity(0);
           }
