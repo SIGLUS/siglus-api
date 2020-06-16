@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -210,7 +211,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     when(permissionService.canInitRequisition(programId, facilityId))
         .thenReturn(ValidationResult.success());
-    when(permissionService.canAuthorizeRequisition(programId, facilityId))
+    when(permissionService.canAuthorizeRequisition(any()))
         .thenReturn(ValidationResult.success());
 
     RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(fullDto);
@@ -242,7 +243,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     when(permissionService.canInitRequisition(programId, facilityId))
         .thenReturn(ValidationResult.success());
-    when(permissionService.canAuthorizeRequisition(programId, facilityId))
+    when(permissionService.canAuthorizeRequisition(any()))
         .thenReturn(ValidationResult.success());
 
     List<Requisition> authorizedRequisitions = new ArrayList<>();

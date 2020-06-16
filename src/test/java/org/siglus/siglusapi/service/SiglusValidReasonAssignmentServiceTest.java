@@ -27,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.common.util.SupportedVirtualProgramsHelper;
 import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -39,7 +40,7 @@ public class SiglusValidReasonAssignmentServiceTest {
   private ValidReasonAssignmentStockManagementService validReasonAssignmentStockManagementService;
 
   @Mock
-  private ProgramExtensionService programExtensionService;
+  private SupportedVirtualProgramsHelper supportedVirtualProgramsHelper;
 
   private UUID programId = UUID.randomUUID();
 
@@ -59,7 +60,7 @@ public class SiglusValidReasonAssignmentServiceTest {
 
   @Test
   public void shouldCallGetValidReasonsMultipleTimesWhenGetValidReasonsForAllProducts() {
-    when(programExtensionService.findSupportedVirtualPrograms())
+    when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
     siglusValidReasonAssignmentService

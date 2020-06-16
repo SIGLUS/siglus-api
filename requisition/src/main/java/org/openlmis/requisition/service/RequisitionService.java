@@ -79,7 +79,6 @@ import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionWithSupplyingDepotsDto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.SupplyLineDto;
-import org.openlmis.requisition.dto.SupportedProgramDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
@@ -93,7 +92,6 @@ import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
-import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
@@ -111,16 +109,15 @@ import org.openlmis.requisition.web.RequisitionForConvertBuilder;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
-import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.repository.OrderableKitRepository;
-import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
+import org.siglus.common.util.SupportedVirtualProgramsHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -205,11 +202,6 @@ public class RequisitionService {
   @Autowired
   private RequisitionTemplateAssociateProgramRepository associateProgramRepository;
 
-  @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
-
-  @Autowired
-  private ProgramExtensionRepository programExtensionRepository;
   // [SIGLUS change end]
 
   // [SIGLUS change start]
@@ -228,7 +220,12 @@ public class RequisitionService {
 
   @Autowired
   private StockCardLineItemRepository stockCardLineItemRepository;
+  // [SIGLUS change end]
 
+  // [SIGLUS change start]
+  // [change reason]: refactor it into common
+  @Autowired
+  private SupportedVirtualProgramsHelper supportedVirtualProgramsHelper;
   // [SIGLUS change end]
 
   /**
@@ -1046,7 +1043,8 @@ public class RequisitionService {
       return approveProductsAggregator;
     }
     List<ApprovedProductDto> approvedProducts = approveProductsAggregator.getFullSupplyProducts();
-    Set<UUID> supportedVirtualPrograms = findSupportedVirtualPrograms();
+    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+        .findUserSupportedVirtualPrograms();
     associateProgramIds.stream().forEach(associateProgram -> {
           if (supportedVirtualPrograms.contains(associateProgram)) {
             ApproveProductsAggregator productsAggregator = approvedProductReferenceDataService
@@ -1064,27 +1062,6 @@ public class RequisitionService {
         associateProgramRepository.findByRequisitionTemplateId(templateId);
     return associatePrograms.stream()
         .map(RequisitionTemplateAssociateProgram::getAssociatedProgramId)
-        .collect(Collectors.toSet());
-  }
-
-  private Set<UUID> findSupportedVirtualPrograms() {
-    UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    FacilityDto homeFacility = facilityReferenceDataService.findOne(homeFacilityId);
-    Set<UUID> supportedPrograms = homeFacility.getSupportedPrograms()
-        .stream()
-        .filter(supportedProgramDto -> {
-          LocalDate supportStartDate = supportedProgramDto.getSupportStartDate();
-          return supportedProgramDto.isProgramActive()
-              && supportedProgramDto.isSupportActive()
-              && supportStartDate.isBefore(LocalDate.now());
-        })
-        .map(SupportedProgramDto::getId)
-        .collect(Collectors.toSet());
-    List<ProgramExtension> programExtensions = programExtensionRepository.findAll();
-    return programExtensions.stream()
-        .filter(programExtension -> supportedPrograms.contains(programExtension.getProgramId()))
-        .map(ProgramExtension::getParentId)
-        .filter(Objects::nonNull)
         .collect(Collectors.toSet());
   }
 

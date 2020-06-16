@@ -22,15 +22,10 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
-import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.SupportedProgramDto;
-import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.utils.DateHelper;
 import org.siglus.common.domain.ProgramExtension;
@@ -46,12 +41,6 @@ public class ProgramExtensionService {
   private ProgramExtensionRepository programExtensionRepository;
 
   @Autowired
-  private ReferencedataAuthenticationHelper authenticationHelper;
-
-  @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
-
-  @Autowired
   private ProgramReferenceDataService programRefDataService;
 
   @Autowired
@@ -59,22 +48,6 @@ public class ProgramExtensionService {
 
   public ProgramExtension findByProgramId(UUID programId) {
     return programExtensionRepository.findByProgramId(programId);
-  }
-
-  public Set<UUID> findSupportedVirtualPrograms() {
-    UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    FacilityDto homeFacility = facilityReferenceDataService.findOne(homeFacilityId);
-    Set<UUID> supportedPrograms = homeFacility.getSupportedPrograms()
-        .stream()
-        .filter(supportedProgramShouldBeActive())
-        .map(SupportedProgramDto::getId)
-        .collect(Collectors.toSet());
-    List<ProgramExtension> programExtensions = programExtensionRepository.findAll();
-    return programExtensions.stream()
-        .filter(programExtension -> supportedPrograms.contains(programExtension.getProgramId()))
-        .map(ProgramExtension::getParentId)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toSet());
   }
 
   public List<SiglusProgramDto> getPrograms(String code) {

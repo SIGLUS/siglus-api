@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
+import org.siglus.common.util.SupportedVirtualProgramsHelper;
 import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,7 @@ public class SiglusValidReasonAssignmentService {
   private ValidReasonAssignmentStockManagementService validReasonAssignmentStockManagementService;
 
   @Autowired
-  private ProgramExtensionService programExtensionService;
+  private SupportedVirtualProgramsHelper supportedVirtualProgramsHelper;
 
   public Collection<ValidReasonAssignmentDto> getValidReasons(UUID programId, UUID facilityType,
       String reasonType, UUID reason) {
@@ -41,7 +42,8 @@ public class SiglusValidReasonAssignmentService {
 
   public Collection<ValidReasonAssignmentDto> getValidReasonsForAllProducts(UUID facilityType,
       String reasonType, UUID reason) {
-    Set<UUID> supportedVirtualPrograms = programExtensionService.findSupportedVirtualPrograms();
+    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+        .findUserSupportedVirtualPrograms();
     return supportedVirtualPrograms.stream()
         .map(supportedVirtualProgram -> getValidReasons(supportedVirtualProgram, facilityType,
             reasonType, reason))

@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
+import org.siglus.common.util.SupportedVirtualProgramsHelper;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,14 +32,15 @@ public class SiglusValidSourceDestinationService {
   private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
 
   @Autowired
-  private ProgramExtensionService programExtensionService;
+  private SupportedVirtualProgramsHelper supportedVirtualProgramsHelper;
 
   public Collection<ValidSourceDestinationDto> findDestinations(UUID programId, UUID facilityId) {
     return validSourceDestinationStockManagementService.getValidDestinations(programId, facilityId);
   }
 
   public Collection<ValidSourceDestinationDto> findDestinationsForAllProducts(UUID facilityId) {
-    Set<UUID> supportedVirtualPrograms = programExtensionService.findSupportedVirtualPrograms();
+    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+        .findUserSupportedVirtualPrograms();
     return supportedVirtualPrograms.stream()
         .map(supportedVirtualProgram -> findDestinations(supportedVirtualProgram, facilityId))
         .flatMap(Collection::stream).collect(Collectors.toList());
@@ -49,7 +51,8 @@ public class SiglusValidSourceDestinationService {
   }
 
   public Collection<ValidSourceDestinationDto> findSourcesForAllProducts(UUID facilityId) {
-    Set<UUID> supportedVirtualPrograms = programExtensionService.findSupportedVirtualPrograms();
+    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+        .findUserSupportedVirtualPrograms();
     return supportedVirtualPrograms.stream()
         .map(supportedVirtualProgram -> findSources(supportedVirtualProgram, facilityId))
         .flatMap(Collection::stream).collect(Collectors.toList());

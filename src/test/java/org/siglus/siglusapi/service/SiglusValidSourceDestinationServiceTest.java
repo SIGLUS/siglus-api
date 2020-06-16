@@ -27,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.common.util.SupportedVirtualProgramsHelper;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -39,7 +40,7 @@ public class SiglusValidSourceDestinationServiceTest {
   private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
 
   @Mock
-  private ProgramExtensionService programExtensionService;
+  private SupportedVirtualProgramsHelper supportedVirtualProgramsHelper;
 
   private UUID programId = UUID.randomUUID();
 
@@ -55,7 +56,7 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @Test
   public void shouldCallGetValidDestinationsMultipleTimesWhenFindDestinationsForAllProducts() {
-    when(programExtensionService.findSupportedVirtualPrograms())
+    when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
     siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId);
@@ -73,7 +74,7 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @Test
   public void shouldCallGetValidSourcesMultipleTimesWhenFindSourcesForAllProducts() {
-    when(programExtensionService.findSupportedVirtualPrograms())
+    when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
     siglusValidSourceDestinationService.findSourcesForAllProducts(facilityId);

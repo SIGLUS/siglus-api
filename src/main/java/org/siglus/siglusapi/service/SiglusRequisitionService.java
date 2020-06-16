@@ -271,13 +271,13 @@ public class SiglusRequisitionService {
     List<RequisitionLineItem> lineItemList = constructLineItem(
         existedRequisition, program, facility, orderableIds, userFacility);
 
-    boolean isApprovePage = requisitionService
+    boolean isApprove = requisitionService
         .validateCanApproveRequisition(existedRequisition, userDto.getId()).isSuccess();
     boolean isInternalFacility = userDto.getHomeFacilityId()
         .equals(existedRequisition.getFacilityId());
-    boolean isExternalApprovePage = isApprovePage && !isInternalFacility;
+    boolean isExternalApprove = isApprove && !isInternalFacility;
 
-    return buildSiglusLineItem(lineItemList, isExternalApprovePage);
+    return buildSiglusLineItem(lineItemList, isExternalApprove);
   }
 
   private List<RequisitionLineItem> constructLineItem(Requisition requisition,
@@ -352,10 +352,9 @@ public class SiglusRequisitionService {
     profiler.start("FIND_APPROVED_PRODUCTS");
 
     profiler.start("FIND_STOCK_ON_HANDS");
-    // [SIGLUS change start]
-    // [change reason]: mock Cross-service request for stock card permission
+
     OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
-    // [SIGLUS change end]
+
     Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate, virtualProgramId,
         facility.getId(), requisition.getActualEndDate());
 
@@ -363,10 +362,7 @@ public class SiglusRequisitionService {
     Map<UUID, Integer> orderableBeginning = getOrderableBegingningMap(requisitionTemplate,
         virtualProgramId, facility.getId(), requisition.getActualStartDate().minusDays(1));
 
-    // [SIGLUS change start]
-    // [change reason]: set real auth
     simulateAuthenticationHelper.recoveryAuth(originAuth);
-    // [SIGLUS change end]
 
     ProofOfDeliveryDto pod = null;
     if (!isEmpty(previousRequisitions)) {
@@ -461,7 +457,7 @@ public class SiglusRequisitionService {
   }
 
   private List<SiglusRequisitionLineItemDto> buildSiglusLineItem(
-      List<RequisitionLineItem> lineItemList, boolean isExternalApprovePage) {
+      List<RequisitionLineItem> lineItemList, boolean isExternalApprove) {
     List<OrderableExpirationDateDto> expirationDateDtos = findOrderableIds(lineItemList);
 
     Set<VersionEntityReference> references = lineItemList.stream()
@@ -495,7 +491,7 @@ public class SiglusRequisitionService {
           lineDto.setServiceUrl(serviceUrl);
           line.export(lineDto, orderable, approvedProduct);
           setOrderableExpirationDate(expirationDateDtos, orderable, lineDto);
-          if (isExternalApprovePage) {
+          if (isExternalApprove) {
             lineDto.setRequestedQuantity(0);
             lineDto.setAuthorizedQuantity(0);
           }
@@ -629,14 +625,13 @@ public class SiglusRequisitionService {
   private RequisitionLineItemExtension findLineItemExtension(
       List<RequisitionLineItemExtension> extensions,
       RequisitionLineItemV2Dto lineItem) {
-    if (lineItem != null && lineItem.getId() != null) {
-      for (RequisitionLineItemExtension extension : extensions) {
-        if (lineItem.getId().equals(extension.getRequisitionLineItemId())) {
-          return extension;
-        }
-      }
+    if (lineItem == null || lineItem.getId() == null) {
+      return null;
     }
-    return null;
+
+    return extensions.stream().filter(extension ->
+        lineItem.getId().equals(extension.getRequisitionLineItemId()))
+        .findFirst().orElse(null);
   }
 
   public void activateArchivedProducts(UUID requisitionId, UUID facilityId) {

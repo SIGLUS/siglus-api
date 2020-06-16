@@ -455,7 +455,10 @@ public abstract class BaseRequisitionController extends BaseController {
 
   void doApprove(Requisition requisition, ApproveParams approveParams) {
     Profiler profiler = getProfiler("DO_APPROVE_REQUISITION", requisition, approveParams.user);
-
+    // [SIGLUS change start]
+    // [change reason]: remove period validate when approve
+    // checkIfPeriodIsValid(requisition, approveParams.period, profiler);
+    // [SIGLUS change end]
     ObjectReferenceDto parentNode = null;
     UUID parentNodeId = null;
 
