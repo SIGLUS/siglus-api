@@ -94,6 +94,7 @@ import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.RequisitionApprovalDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -181,6 +182,9 @@ public class SiglusRequisitionService {
 
   @Autowired
   private SimulateAuthenticationHelper simulateAuthenticationHelper;
+
+  @Autowired
+  private SiglusUsageReportService siglusUsageReportService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -681,4 +685,14 @@ public class SiglusRequisitionService {
     return canSeeRequisitionStatus;
   }
 
+  public SiglusRequisitionDto initiate(UUID programId, UUID facilityId,
+      UUID suggestedPeriod,
+      boolean emergency,
+      String physicalInventoryDateStr,
+      HttpServletRequest request, HttpServletResponse response) {
+    RequisitionV2Dto v2Dto = requisitionV2Controller
+        .initiate(programId, facilityId, suggestedPeriod, emergency,
+            physicalInventoryDateStr, request, response);
+    return siglusUsageReportService.initiateUsageReport(v2Dto);
+  }
 }

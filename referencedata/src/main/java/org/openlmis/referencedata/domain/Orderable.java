@@ -161,6 +161,7 @@ public class Orderable implements Versionable {
   @BatchSize(size = FETCH_SIZE)
   @DiffIgnore
   @Setter
+  @Getter
   @Cache(usage =  CacheConcurrencyStrategy.READ_WRITE)
   private List<ProgramOrderable> programOrderables;
 

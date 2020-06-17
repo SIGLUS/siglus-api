@@ -24,7 +24,7 @@ import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.web.RequisitionController;
-import org.openlmis.requisition.web.RequisitionV2Controller;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
@@ -53,9 +53,6 @@ public class SiglusRequisitionController {
   private RequisitionController requisitionController;
 
   @Autowired
-  private RequisitionV2Controller requisitionV2Controller;
-
-  @Autowired
   private SiglusRequisitionService siglusRequisitionService;
 
   @Autowired
@@ -63,14 +60,14 @@ public class SiglusRequisitionController {
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
-  public RequisitionV2Dto initiate(@RequestParam(value = "program") UUID programId,
+  public SiglusRequisitionDto initiate(@RequestParam(value = "program") UUID programId,
       @RequestParam(value = "facility") UUID facilityId,
       @RequestParam(value = "suggestedPeriod", required = false) UUID suggestedPeriod,
       @RequestParam(value = "emergency") boolean emergency,
       @RequestParam(value = "physicalInventoryDate", required = false)
           String physicalInventoryDateStr,
       HttpServletRequest request, HttpServletResponse response) {
-    return requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, emergency,
+    return siglusRequisitionService.initiate(programId, facilityId, suggestedPeriod, emergency,
         physicalInventoryDateStr, request, response);
   }
 
