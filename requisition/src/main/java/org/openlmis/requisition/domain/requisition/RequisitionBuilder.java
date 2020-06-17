@@ -80,13 +80,17 @@ public final class RequisitionBuilder {
         }
 
         // [SIGLUS change start]
-        // [change reason]:programId is vitual program, orderable is real program.
+        // [change reason]: programId is virtual program, orderable is real program.
         // orderable
         //   .findProgramOrderable(programId)
         //   .orElseThrow(() -> new ValidationMessageException(ERROR_PROGRAM_NOT_FOUND, programId));
         // [SIGLUS change end]
 
-        if (isSkipped(requisitionLineItem) && requisitionStatus.isPreAuthorize()) {
+        // [SIGLUS change start]
+        // [change reason]: isPreAuthorize cannot edit skip, only duringApproval can edit skip.
+        // if (isSkipped(requisitionLineItem) && requisitionStatus.isPreAuthorize()) {
+        if (isSkipped(requisitionLineItem) && requisitionStatus.duringApproval()) {
+          // [SIGLUS change end]
           item.skipLineItem(template);
         }
 

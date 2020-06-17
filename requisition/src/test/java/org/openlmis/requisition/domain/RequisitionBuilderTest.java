@@ -62,7 +62,6 @@ import org.openlmis.requisition.i18n.MessageKeys;
 import org.openlmis.requisition.testutils.DtoGenerator;
 import org.openlmis.requisition.testutils.OrderableDtoDataBuilder;
 
-@Ignore
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
 public class RequisitionBuilderTest {
@@ -191,19 +190,31 @@ public class RequisitionBuilderTest {
 
     RequisitionBuilder
         .newRequisition(requisitionDto, requisitionTemplate, program.getId(),
-            processingPeriodDto, RequisitionStatus.INITIATED,
+            // [SIGLUS change start]
+            // [change reason]: isPreAuthorize cannot edit skip, only duringApproval can edit skip.
+            // processingPeriodDto, RequisitionStatus.INITIATED,
+            processingPeriodDto, RequisitionStatus.IN_APPROVAL,
+            // [SIGLUS change end]
             getOrderables(), getProductReferences());
   }
 
   @Test
-  public void shouldNotSetSkippedIfRequisitionStatusIsAuthorized() {
+  // [SIGLUS change start]
+  // [change reason]: isPreAuthorize cannot edit skip, only duringApproval can edit skip.
+  // public void shouldNotSetSkippedIfRequisitionStatusIsAuthorized() {
+  public void shouldSetSkippedIfRequisitionStatusIsAuthorized() {
+    // [SIGLUS change end]
     prepareForTestSkipped();
 
     Requisition requisition = RequisitionBuilder.newRequisition(
         requisitionDto, requisitionTemplate, program.getId(),
         processingPeriodDto, RequisitionStatus.AUTHORIZED, getOrderables(), getProductReferences());
 
-    assertEquals(false, requisition.getRequisitionLineItems().get(0).getSkipped());
+    // [SIGLUS change start]
+    // [change reason]: isPreAuthorize cannot edit skip, only duringApproval can edit skip.
+    // assertEquals(false, requisition.getRequisitionLineItems().get(0).getSkipped());
+    assertEquals(true, requisition.getRequisitionLineItems().get(0).getSkipped());
+    // [SIGLUS change end]
   }
 
   @Test
@@ -218,28 +229,48 @@ public class RequisitionBuilderTest {
   }
 
   @Test
-  public void shouldSetSkippedIfRequisitionStatusIsInitiated() {
+  // [SIGLUS change start]
+  // [change reason]: isPreAuthorize cannot edit skip, only duringApproval can edit skip.
+  // public void shouldSetSkippedIfRequisitionStatusIsInitiated() {
+  public void shouldNotSetSkippedIfRequisitionStatusIsInitiated() {
+    // [SIGLUS change end]
     prepareForTestSkipped();
 
     Requisition requisition = RequisitionBuilder.newRequisition(
         requisitionDto, requisitionTemplate, program.getId(), processingPeriodDto,
         RequisitionStatus.INITIATED, getOrderables(), getProductReferences());
 
-    assertEquals(true, requisition.getRequisitionLineItems().get(0).getSkipped());
+    // [SIGLUS change start]
+    // [change reason]: isPreAuthorize cannot edit skip, only duringApproval can edit skip.
+    // assertEquals(true, requisition.getRequisitionLineItems().get(0).getSkipped());
+    assertEquals(false, requisition.getRequisitionLineItems().get(0).getSkipped());
+    // [SIGLUS change end]
   }
 
   @Test
-  public void shouldSetSkippedIfRequisitionStatusIsSubmitted() {
+  // [SIGLUS change start]
+  // [change reason]: isPreAuthorize cannot edit skip, only duringApproval can edit skip.
+  // public void shouldSetSkippedIfRequisitionStatusIsSubmitted() {
+  public void shouldNotSetSkippedIfRequisitionStatusIsSubmitted() {
+    // [SIGLUS change end]
     prepareForTestSkipped();
 
     Requisition requisition = RequisitionBuilder.newRequisition(
         requisitionDto, requisitionTemplate, program.getId(), processingPeriodDto,
         RequisitionStatus.SUBMITTED, getOrderables(), getProductReferences());
 
-    assertEquals(true, requisition.getRequisitionLineItems().get(0).getSkipped());
+    // [SIGLUS change start]
+    // [change reason]: isPreAuthorize cannot edit skip, only duringApproval can edit skip.
+    // assertEquals(true, requisition.getRequisitionLineItems().get(0).getSkipped());
+    assertEquals(false, requisition.getRequisitionLineItems().get(0).getSkipped());
+    // [SIGLUS change end]
   }
 
   @Test
+  // [SIGLUS change start]
+  // [change reason]: programId is virtual program, orderable is real program.
+  @Ignore
+  // [SIGLUS change end]
   public void shouldThrowExceptionWhenProgramOrderableIsNotFound() {
     expectedException.expect(ValidationMessageException.class);
     expectedException.expectMessage(MessageKeys.ERROR_PROGRAM_NOT_FOUND);
