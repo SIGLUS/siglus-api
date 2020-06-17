@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.requisition.utils.DateHelper;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
@@ -40,9 +39,6 @@ public class ProgramExtensionService {
 
   @Autowired
   private ProgramReferenceDataService programRefDataService;
-
-  @Autowired
-  DateHelper dateHelper;
 
   public ProgramExtension findByProgramId(UUID programId) {
     return programExtensionRepository.findByProgramId(programId);
@@ -75,6 +71,7 @@ public class ProgramExtensionService {
 
   public SiglusProgramDto getProgram(UUID programId) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
+      // TODO duplicate code ProgramExtensionService.java: 49
       SiglusProgramDto siglusProgramDto = new SiglusProgramDto();
       siglusProgramDto.setId(ALL_PRODUCTS_PROGRAM_ID);
       siglusProgramDto.setCode(ALL_PRODUCTS_PROGRAM_CODE);

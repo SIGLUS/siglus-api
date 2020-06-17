@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import lombok.AllArgsConstructor;
 import org.openlmis.stockmanagement.service.StockmanagementAuthService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -22,7 +23,10 @@ import org.springframework.security.oauth2.provider.authentication.OAuth2Authent
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthService extends StockmanagementAuthService {
+@AllArgsConstructor
+public class AuthService {
+
+  private final StockmanagementAuthService stockmanagementAuthService;
 
   public String obtainAccessToken(boolean obtainUserToken) {
     if (obtainUserToken) {
@@ -35,6 +39,14 @@ public class AuthService extends StockmanagementAuthService {
         return authenticationDetails.getTokenValue();
       }
     }
-    return super.obtainAccessToken();
+    return stockmanagementAuthService.obtainAccessToken();
+  }
+
+  public String obtainAccessToken() {
+    return stockmanagementAuthService.obtainAccessToken();
+  }
+
+  public void clearTokenCache() {
+    stockmanagementAuthService.clearTokenCache();
   }
 }
