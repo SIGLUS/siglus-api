@@ -23,9 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.openlmis.requisition.dto.SupportedProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.utils.DateHelper;
 import org.siglus.common.domain.ProgramExtension;
@@ -90,11 +88,5 @@ public class ProgramExtensionService {
     siglusProgramDto.setParentId(programExtension.getParentId());
     siglusProgramDto.setIsSupportEmergency(programExtension.getIsSupportEmergency());
     return siglusProgramDto;
-  }
-
-  private Predicate<SupportedProgramDto> supportedProgramShouldBeActive() {
-    return supportedProgram ->
-        supportedProgram.isSupportActive() && supportedProgram.isProgramActive() && dateHelper
-            .isDateBeforeNow(supportedProgram.getSupportStartDate());
   }
 }

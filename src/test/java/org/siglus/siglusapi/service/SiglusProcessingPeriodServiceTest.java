@@ -249,9 +249,10 @@ public class SiglusProcessingPeriodServiceTest {
     List<Requisition> authorizedRequisitions = new ArrayList<>();
     authorizedRequisitions.add(createRequisition(requisitionId2, RequisitionStatus.AUTHORIZED,
         false));
-    when(requisitionService
-        .searchAuthorizedRequisitions(facilityId, programId, dto.getId(), false))
-        .thenReturn(authorizedRequisitions);
+    PageImplRepresentation<Requisition> pageImpl = new PageImplRepresentation();
+    pageImpl.setContent(authorizedRequisitions);
+    when(requisitionService.searchRequisitions(any(), any()))
+        .thenReturn(pageImpl);
 
     RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(fullDto);
     requisitionPeriod.setRequisitionId(requisitionId);
