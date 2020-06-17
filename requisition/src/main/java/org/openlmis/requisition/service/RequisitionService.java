@@ -25,6 +25,9 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.APPROVED_QUANTITY;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_CANNOT_UPDATE_WITH_STATUS;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_DELETE_FAILED_NEWER_EXISTS;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_DELETE_FAILED_WRONG_STATUS;
@@ -547,7 +550,7 @@ public class RequisitionService {
 
     LocalDate actualStartDate = null;
     if (requisition.getEmergency()) {
-      Requisition currentRegularRequisiton = searchAuthorizedRequisitions(
+      Requisition currentRegularRequisiton = searchAfterAuthorizedRequisitions(
           requisition.getFacilityId(), requisition.getProgramId(), period.getId(), false)
           .get(0);
       actualStartDate = currentRegularRequisiton.getActualStartDate();
@@ -1009,13 +1012,13 @@ public class RequisitionService {
   }
 
   // [SIGLUS change start]
-  // [change reason]: seach requisition by permission
-  public List<Requisition> searchAuthorizedRequisitions(UUID facilityId, UUID programId,
+  // [change reason]: search after authorized requisition by permission
+  public List<Requisition> searchAfterAuthorizedRequisitions(UUID facilityId, UUID programId,
       UUID periodId, boolean emergency) {
     DefaultRequisitionSearchParams params = new DefaultRequisitionSearchParams(
         facilityId, programId, periodId, null, emergency,
         null, null, null, null,
-        EnumSet.of(AUTHORIZED));
+        EnumSet.of(AUTHORIZED, IN_APPROVAL, APPROVED, RELEASED, RELEASED_WITHOUT_ORDER));
     PageRequest pageRequest = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
         Pagination.NO_PAGINATION);
     return searchRequisitions(params, pageRequest).getContent();

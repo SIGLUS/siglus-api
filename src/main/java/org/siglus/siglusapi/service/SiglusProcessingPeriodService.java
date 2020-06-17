@@ -15,16 +15,9 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,18 +29,15 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.openlmis.requisition.repository.custom.DefaultRequisitionSearchParams;
 import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.requisition.utils.Pagination;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
@@ -202,23 +192,12 @@ public class SiglusProcessingPeriodService {
       requisitionPeriod.setRequisitionStatus(earliestRequisition.getStatus());
     }
 
-    if (!searchAfterAuthorizedRequisitions(facility, program,
+    if (!requisitionService.searchAfterAuthorizedRequisitions(facility, program,
         period.getId(), false).isEmpty()) {
       //for emergency, requisitionPeriods only have one element
       requisitionPeriods.forEach(requisitionPeriodDto ->
           requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
     }
-  }
-
-  public List<Requisition> searchAfterAuthorizedRequisitions(UUID facilityId, UUID programId,
-      UUID periodId, boolean emergency) {
-    DefaultRequisitionSearchParams params = new DefaultRequisitionSearchParams(
-        facilityId, programId, periodId, null, emergency,
-        null, null, null, null,
-        EnumSet.of(AUTHORIZED, IN_APPROVAL, APPROVED, RELEASED, RELEASED_WITHOUT_ORDER));
-    PageRequest pageRequest = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
-        Pagination.NO_PAGINATION);
-    return requisitionService.searchRequisitions(params, pageRequest).getContent();
   }
 
   private Collection<ProcessingPeriodDto> fillProcessingPeriodWithExtension(

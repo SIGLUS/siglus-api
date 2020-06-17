@@ -328,7 +328,7 @@ public class SiglusRequisitionService {
             .getActualStartDate();
         if (requisition.getEmergency()) {
           List<Requisition> requisitions =
-              requisitionService.searchAuthorizedRequisitions(requisition.getFacilityId(),
+              requisitionService.searchAfterAuthorizedRequisitions(requisition.getFacilityId(),
                   requisition.getProgramId(),
                   period.getId(), false);
           endDateForCalculateAvg = requisitions.get(0).getActualEndDate();
