@@ -24,10 +24,6 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.openlmis.requisition.domain.requisition.RequisitionLineItem.APPROVED_QUANTITY;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
-import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_CANNOT_UPDATE_WITH_STATUS;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_DELETE_FAILED_NEWER_EXISTS;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_DELETE_FAILED_WRONG_STATUS;
@@ -48,7 +44,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1018,7 +1013,7 @@ public class RequisitionService {
     DefaultRequisitionSearchParams params = new DefaultRequisitionSearchParams(
         facilityId, programId, periodId, null, emergency,
         null, null, null, null,
-        EnumSet.of(AUTHORIZED, IN_APPROVAL, APPROVED, RELEASED, RELEASED_WITHOUT_ORDER));
+        RequisitionStatus.getAfterAuthorizedStatus());
     PageRequest pageRequest = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
         Pagination.NO_PAGINATION);
     return searchRequisitions(params, pageRequest).getContent();

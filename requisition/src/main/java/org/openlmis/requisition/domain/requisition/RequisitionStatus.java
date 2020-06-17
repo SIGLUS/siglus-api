@@ -16,6 +16,8 @@
 package org.openlmis.requisition.domain.requisition;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.EnumSet;
+import java.util.Set;
 
 public enum RequisitionStatus {
   INITIATED(1),
@@ -69,5 +71,9 @@ public enum RequisitionStatus {
 
   public boolean isSkipped() {
     return value == -1;
+  }
+
+  public static Set<RequisitionStatus> getAfterAuthorizedStatus() {
+    return EnumSet.of(AUTHORIZED, IN_APPROVAL, APPROVED, RELEASED, RELEASED_WITHOUT_ORDER);
   }
 }

@@ -225,10 +225,10 @@ public class SiglusProcessingPeriodService {
           .collect(Collectors.toList()));
     }
 
-    Requisition mock = new Requisition();
-    mock.setProgramId(program);
-    mock.setFacilityId(facility);
-    if (permissionService.canAuthorizeRequisition(mock).isSuccess()) {
+    Requisition dummy = new Requisition();
+    dummy.setProgramId(program);
+    dummy.setFacilityId(facility);
+    if (permissionService.canAuthorizeRequisition(dummy).isSuccess()) {
       preAuthorizeRequisitions.addAll(requisitions.stream()
           .filter(requisition -> requisition.getStatus().isPreAuthorize())
           .collect(Collectors.toList()));
