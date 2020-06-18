@@ -364,11 +364,20 @@ public class RequisitionService {
       // [SIGLUS change start]
       // [change reason]: 1. period.getStartDate() -> requisition.getActualStartDate().
       //                  2. period.getEndDate() -> requisition.getActualEndDate().
-      stockCardRangeSummaryDtos =
-          stockCardRangeSummaryStockManagementService
-              .search(program.getId(), facility.getId(),
-                  approvedProducts.getOrderableIdentities(), null,
-                  requisition.getActualStartDate(), requisition.getActualEndDate());
+      // [change reason]: add template associate program support
+      // stockCardRangeSummaryDtos =
+      //     stockCardRangeSummaryStockManagementService
+      //         .search(program.getId(), facility.getId(),
+      //             approvedProducts.getOrderableIdentities(), null,
+      //             requisition.getActualStartDate(), requisition.getActualEndDate());
+      stockCardRangeSummaryDtos = allProgramIds.stream()
+          .map(programId ->
+              stockCardRangeSummaryStockManagementService
+                  .search(programId, facility.getId(),
+                      approvedProducts.getOrderableIdentities(), null,
+                      requisition.getActualStartDate(), requisition.getActualEndDate()))
+          .flatMap(Collection::stream)
+          .collect(toList());
       // [SIGLUS change end]
 
       profiler.start("GET_PREVIOUS_PERIODS");
