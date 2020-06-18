@@ -53,7 +53,7 @@ public class SiglusStockCardSummariesSiglusController {
     List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
         summaries.getStockCardsForFulfillOrderables(),
         summaries.getOrderableFulfillMap(),
-        Boolean.valueOf(parameters.getFirst(NON_EMPTY_ONLY)));
+        Boolean.parseBoolean(parameters.getFirst(NON_EMPTY_ONLY)));
 
     return Pagination.getPage(dtos, pageable);
   }

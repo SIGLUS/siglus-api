@@ -85,10 +85,6 @@ public class SiglusUnpackService {
   @Autowired
   private ProgramExtensionRepository programExtensionRepository;
 
-  public List<OrderableDto> searchKitOrderables() {
-    return OrderableDto.newInstance(orderableKitRepository.findAllKitProduct());
-  }
-
   public SiglusOrdeableKitDto getKitByFacilityIdAndOrderableId(UUID facilityId, UUID orderableId) {
     List<SiglusOrdeableKitDto> siglusOrdeableKitDtos = getKitsByFacilityId(facilityId);
     return siglusOrdeableKitDtos.stream()
@@ -107,6 +103,31 @@ public class SiglusUnpackService {
         .map(kitOrderable -> getKitDto(kitOrderable, facilityId))
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
+  }
+
+  public List<OrderableInKitDto> searchOrderablesInKit(UUID kitProductId) {
+    if (kitProductId == null) {
+      throw new ValidationMessageException(OrderableMessageKeys.ERROR_INVALID_PARAMS);
+    }
+    List<OrderableChild> children = getOrderableChildren(kitProductId);
+    Map<UUID, List<LotDto>> lotMap = getLots(children);
+    return getOrderableInKit(children, lotMap);
+  }
+
+  public Set<UUID> orderablesInKit() {
+    List<OrderableDto> kitOrderables = searchKitOrderables();
+    Set<UUID> orderablesInKit = newHashSet();
+    kitOrderables.forEach(kitOrderable -> {
+      Set<OrderableChildDto> children = kitOrderable.getChildren();
+      orderablesInKit.addAll(children.stream()
+          .map(orderableChild -> orderableChild.getOrderable().getId())
+          .collect(Collectors.toSet()));
+    });
+    return orderablesInKit;
+  }
+
+  private List<OrderableDto> searchKitOrderables() {
+    return OrderableDto.newInstance(orderableKitRepository.findAllKitProduct());
   }
 
   private Boolean isUnpackPermission(Set<PermissionStringDto> permissionDtos,
@@ -145,37 +166,6 @@ public class SiglusUnpackService {
     orderableKitDto.setProductCode(kitOrderable.getProductCode());
     orderableKitDto.setParentProgramId(virtualProgramId);
     return orderableKitDto;
-  }
-
-  /**
-   * Method returns all orderables with matched parameters.
-   *
-   * @param kitProductId request parameters (code, name, description, program).
-   * @return the Page of orderables found, or an empty page.
-   */
-  public List<OrderableInKitDto> searchOrderablesInKit(UUID kitProductId) {
-    if (kitProductId == null) {
-      throw new ValidationMessageException(
-          OrderableMessageKeys.ERROR_INVALID_PARAMS);
-    }
-
-    List<OrderableChild> children = getOrderableChildren(kitProductId);
-
-    Map<UUID, List<LotDto>> lotMap = getLots(children);
-
-    return getOrderableInKit(children, lotMap);
-  }
-
-  public Set<UUID> orderablesInKit() {
-    List<OrderableDto> kitOrderables = searchKitOrderables();
-    Set<UUID> orderablesInKit = newHashSet();
-    kitOrderables.forEach(kitOrderable -> {
-      Set<OrderableChildDto> children = kitOrderable.getChildren();
-      orderablesInKit.addAll(children.stream()
-          .map(orderableChild -> orderableChild.getOrderable().getId())
-          .collect(Collectors.toSet()));
-    });
-    return orderablesInKit;
   }
 
   private List<OrderableChild> getOrderableChildren(@RequestParam UUID kitProductId) {
