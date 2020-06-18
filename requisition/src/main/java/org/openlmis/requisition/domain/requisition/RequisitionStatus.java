@@ -73,7 +73,10 @@ public enum RequisitionStatus {
     return value == -1;
   }
 
+  // [SIGLUS change start]
+  // [change reason]: status set of after authorized,used in query after authorized query request
   public static Set<RequisitionStatus> getAfterAuthorizedStatus() {
     return EnumSet.of(AUTHORIZED, IN_APPROVAL, APPROVED, RELEASED, RELEASED_WITHOUT_ORDER);
   }
+  // [SIGLUS change end]
 }

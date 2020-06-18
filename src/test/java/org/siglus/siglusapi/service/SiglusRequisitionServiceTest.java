@@ -350,6 +350,7 @@ public class SiglusRequisitionServiceTest {
 
   @Test
   public void shouldCreateRequisitionLineItem() {
+    // given
     Requisition requisition = createMockRequisition();
     when(requisitionController.getProfiler(any())).thenReturn(profiler);
     when(requisitionController.findRequisition(requisitionId, profiler)).thenReturn(requisition);
@@ -382,12 +383,14 @@ public class SiglusRequisitionServiceTest {
     ApprovedProductDto productDto = createApprovedProductDto(orderable, meta);
     when(facilityTypeApprovedProductReferenceDataService.findByIdentities(any()))
         .thenReturn(Lists.newArrayList(productDto));
-
     List<UUID> orderableIds  = new ArrayList<>();
     orderableIds.add(orderableId2);
+
+    // when
     List<SiglusRequisitionLineItemDto> response =
         siglusRequisitionService.createRequisitionLineItem(requisitionId, orderableIds);
 
+    // then
     assertEquals(1, response.size());
     RequisitionLineItemV2Dto lineItem = response.get(0).getLineItem();
     assertEquals(100, lineItem.getBeginningBalance().intValue());
