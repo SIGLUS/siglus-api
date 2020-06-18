@@ -23,6 +23,7 @@ import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
 import static org.openlmis.requisition.web.ResourceNames.PROCESSING_PERIODS;
 import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -253,27 +254,33 @@ public class RequisitionV2Controller extends BaseRequisitionController {
     dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), serviceUrl, PROGRAMS));
 
     List<RequisitionLineItem> requisitionLineItems = requisition.getRequisitionLineItems();
-    List<RequisitionLineItemV2Dto> lineItems = requisitionLineItems
-        .stream()
-        .map(line -> {
-          // The whole object is not required here
-          OrderableDto orderable = new OrderableDto();
-          orderable.setId(line.getOrderable().getId());
-          orderable.setMeta(new MetadataDto(line.getOrderable().getVersionNumber(), null));
+    // [SIGLUS change start]
+    // [change reason]: support usage report which is no product section
+    //List<RequisitionLineItemV2Dto> lineItems = requisitionLineItems
+    List<RequisitionLineItemV2Dto> lineItems = new ArrayList<>();
+    if (requisition.getTemplate().getTemplateExtension().getEnableProduct()) {
+      lineItems = requisitionLineItems
+          // [SIGLUS change end]
+          .stream()
+          .map(line -> {
+            // The whole object is not required here
+            OrderableDto orderable = new OrderableDto();
+            orderable.setId(line.getOrderable().getId());
+            orderable.setMeta(new MetadataDto(line.getOrderable().getVersionNumber(), null));
 
-          ApprovedProductDto approvedProduct = new ApprovedProductDto(
-              line.getFacilityTypeApprovedProduct().getId(), null, null, null,
-              null, null, new MetadataDto(
-              line.getFacilityTypeApprovedProduct().getVersionNumber(), null));
+            ApprovedProductDto approvedProduct = new ApprovedProductDto(
+                line.getFacilityTypeApprovedProduct().getId(), null, null, null,
+                null, null, new MetadataDto(
+                line.getFacilityTypeApprovedProduct().getVersionNumber(), null));
 
-          RequisitionLineItemV2Dto lineDto = new RequisitionLineItemV2Dto();
-          lineDto.setServiceUrl(serviceUrl);
-          line.export(lineDto, orderable, approvedProduct);
+            RequisitionLineItemV2Dto lineDto = new RequisitionLineItemV2Dto();
+            lineDto.setServiceUrl(serviceUrl);
+            line.export(lineDto, orderable, approvedProduct);
 
-          return lineDto;
-        })
-        .collect(Collectors.toList());
-
+            return lineDto;
+          })
+          .collect(Collectors.toList());
+    }
     dto.setRequisitionLineItems(lineItems);
 
     Set<VersionObjectReferenceDto> availableProducts = new HashSet<>();

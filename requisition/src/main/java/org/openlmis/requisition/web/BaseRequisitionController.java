@@ -30,6 +30,7 @@ import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -269,22 +270,33 @@ public abstract class BaseRequisitionController extends BaseController {
     RequisitionTemplate requisitionTemplate = requisitionTemplateService.findTemplate(
         program.getId(), facility.getType().getId(), reportOnly && !emergency
     );
+    // [SIGLUS change start]
+    // [change reason]: support template extension.
+    RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
+        .findByRequisitionTemplateId(requisitionTemplate.getId());
+    requisitionTemplate.setTemplateExtension(templateExtension);
+    // [SIGLUS change end]
 
     profiler.start("FIND_APPROVED_PRODUCTS");
     // [SIGLUS change start]
-    // [change reason]: associated program + filter kit product.
+    // [change reason]: 1.only product section , we can have approve products
+    //                  2.associated program + filter kit product .
+    //                  3.support usage report which is no product section.
     // ApproveProductsAggregator approvedProducts = approvedProductReferenceDataService
     //     .getApprovedProducts(facility.getId(), program.getId());
-    ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(
-        facility, program, requisitionTemplate);
-    List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
-        .map(Orderable::getId).collect(toList());
-    List<ApprovedProductDto> approvedProductDtos =
-        approvedProductsContainKit.getFullSupplyProducts()
-            .stream()
-            .filter(approvedProductDto ->
-                !kitIds.contains(approvedProductDto.getOrderable().getId()))
-            .collect(Collectors.toList());
+    List<ApprovedProductDto> approvedProductDtos = new ArrayList<>();
+    if (templateExtension.getEnableProduct()) {
+      ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(
+          facility, program, requisitionTemplate);
+      List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
+          .map(Orderable::getId).collect(toList());
+      approvedProductDtos =
+          approvedProductsContainKit.getFullSupplyProducts()
+              .stream()
+              .filter(approvedProductDto ->
+                  !kitIds.contains(approvedProductDto.getOrderable().getId()))
+              .collect(Collectors.toList());
+    }
     ApproveProductsAggregator approvedProducts =
         new ApproveProductsAggregator(approvedProductDtos, programId);
     // [SIGLUS change end]

@@ -496,21 +496,26 @@ public class Requisition extends BaseTimestampedEntity {
     this.previousRequisitions = previousRequisitions;
 
     profiler.start("SET_LINE_ITEMS");
-    if (template.isPopulateStockOnHandFromStockCards()) {
-      initiateLineItems(fullSupplyProducts, idealStockAmounts, stockData, stockCardRangeSummaries,
-          stockCardRangeSummariesToAverage, periods);
-    } else {
-      initiateLineItems(fullSupplyProducts, idealStockAmounts, proofOfDelivery, profiler);
+    // [SIGLUS change start]
+    // [change reason]: support usage report which is no product section.
+    if (template.getTemplateExtension().getEnableProduct()) {
+      // [SIGLUS change end]
+      if (template.isPopulateStockOnHandFromStockCards()) {
+        initiateLineItems(fullSupplyProducts, idealStockAmounts, stockData, stockCardRangeSummaries,
+            stockCardRangeSummariesToAverage, periods);
+      } else {
+        initiateLineItems(fullSupplyProducts, idealStockAmounts, proofOfDelivery, profiler);
 
-      profiler.start("SET_PREV_ADJ_CONSUMPTION");
-      setPreviousAdjustedConsumptions(numberOfPreviousPeriodsToAverage);
-    }
+        profiler.start("SET_PREV_ADJ_CONSUMPTION");
+        setPreviousAdjustedConsumptions(numberOfPreviousPeriodsToAverage);
+      }
 
-    profiler.start("SET_SKIPPED_FROM_PREV_REQUISITION");
-    if (isNotTrue(emergency)
-        && template.isColumnInTemplateAndDisplayed(SKIPPED_COLUMN)
-        && template.isColumnFromPreviousRequisition(SKIPPED_COLUMN)) {
-      copySkippedValuesFromPreviousRequisition();
+      profiler.start("SET_SKIPPED_FROM_PREV_REQUISITION");
+      if (isNotTrue(emergency)
+          && template.isColumnInTemplateAndDisplayed(SKIPPED_COLUMN)
+          && template.isColumnFromPreviousRequisition(SKIPPED_COLUMN)) {
+        copySkippedValuesFromPreviousRequisition();
+      }
     }
 
     status = RequisitionStatus.INITIATED;

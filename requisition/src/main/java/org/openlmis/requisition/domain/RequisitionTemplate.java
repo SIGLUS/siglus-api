@@ -52,11 +52,13 @@ import javax.persistence.Transient;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.utils.Message;
+import org.siglus.common.domain.RequisitionTemplateExtension;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @Entity
@@ -117,6 +119,14 @@ public class RequisitionTemplate extends BaseTimestampedEntity {
   @Transient
   @Getter
   private Set<UUID> facilityTypeIds = Sets.newHashSet();
+
+  // [SIGLUS change start]
+  // [change reason]: for support usage report which attributes
+  @Transient
+  @Getter
+  @Setter
+  private RequisitionTemplateExtension templateExtension;
+  // [SIGLUS change end]
 
   RequisitionTemplate(UUID id) {
     this(id, null, false, null, null, null);

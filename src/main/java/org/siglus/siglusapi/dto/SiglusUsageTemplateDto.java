@@ -15,21 +15,21 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
-import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.springframework.beans.BeanUtils;
 
 @Data
-public class SiglusRequisitionDto extends RequisitionV2Dto {
-  private List<KitUsageLineItemDto> kitUsageLineItems = new ArrayList<>();
-  private SiglusUsageTemplateDto usageTemplate;
+public class SiglusUsageTemplateDto {
+  private List<UsageTemplateSectionDto> kitUsage;
 
-  public static SiglusRequisitionDto from(RequisitionV2Dto v2Dto) {
-    SiglusRequisitionDto dto = new SiglusRequisitionDto();
-    BeanUtils.copyProperties(v2Dto, dto);
-    return dto;
-  }
+  private List<UsageTemplateSectionDto> patient;
+
+  private List<UsageTemplateSectionDto> regimen;
+
+  private List<UsageTemplateSectionDto> consultationNumber;
+
+  private List<UsageTemplateSectionDto> rapidTestConsumption;
+
+  private List<UsageTemplateSectionDto> usageInformation;
 
 }

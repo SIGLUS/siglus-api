@@ -53,9 +53,6 @@ public class SiglusRequisitionControllerTest {
   private RequisitionController requisitionController;
 
   @Mock
-  private RequisitionV2Controller requisitionV2Controller;
-
-  @Mock
   private SiglusRequisitionService siglusRequisitionService;
 
   @Mock
@@ -178,7 +175,7 @@ public class SiglusRequisitionControllerTest {
         .initiate(programId, facilityId, suggestedPeriod, emergency, physicalInventoryDateStr,
             request, response);
 
-    verify(requisitionV2Controller)
+    verify(siglusRequisitionService)
         .initiate(programId, facilityId, suggestedPeriod, emergency, physicalInventoryDateStr,
             request, response);
   }

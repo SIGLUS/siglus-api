@@ -175,7 +175,7 @@ public class SiglusRequisitionTemplateService {
     return columnSectionRepository.save(updatedTemplateColumns);
   }
 
-  private Map<UsageCategory, List<UsageTemplateSectionDto>> getUsageTempateDto(
+  public Map<UsageCategory, List<UsageTemplateSectionDto>> getUsageTempateDto(
       List<UsageTemplateColumnSection> templateColumnSections) {
     Map<UsageCategory, List<UsageTemplateColumnSection>> usageCategoryMap = getUsageCategoryListMap(
         templateColumnSections);
@@ -191,13 +191,13 @@ public class SiglusRequisitionTemplateService {
     return usageCategoryListMap;
   }
 
-  private Map<UsageCategory, List<UsageTemplateColumnSection>> getUsageCategoryListMap(
+  public Map<UsageCategory, List<UsageTemplateColumnSection>> getUsageCategoryListMap(
       List<UsageTemplateColumnSection> templateColumnSections) {
     return templateColumnSections.stream().collect(
         Collectors.groupingBy(UsageTemplateColumnSection::getCategory));
   }
 
-  private List<UsageTemplateSectionDto> getCategoryDto(
+  public List<UsageTemplateSectionDto> getCategoryDto(
       Map<UsageCategory, List<UsageTemplateSectionDto>> categoryListMap, UsageCategory category) {
     if (!categoryListMap.containsKey(category)) {
       return new ArrayList<>();

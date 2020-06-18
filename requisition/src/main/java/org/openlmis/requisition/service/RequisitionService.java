@@ -360,7 +360,12 @@ public class RequisitionService {
     List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos = null;
     List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage = null;
     List<ProcessingPeriodDto> previousPeriods = null;
-    if (requisitionTemplate.isPopulateStockOnHandFromStockCards()) {
+    // [SIGLUS change start]
+    // [change reason]: support usage report which is no product section.
+    // if (requisitionTemplate.isPopulateStockOnHandFromStockCards()) {
+    if (requisitionTemplate.getTemplateExtension().getEnableProduct()
+        && requisitionTemplate.isPopulateStockOnHandFromStockCards()) {
+      // [SIGLUS change end]
       // [SIGLUS change start]
       // [change reason]: 1. period.getStartDate() -> requisition.getActualStartDate().
       //                  2. period.getEndDate() -> requisition.getActualEndDate().
