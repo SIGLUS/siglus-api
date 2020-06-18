@@ -24,7 +24,6 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_A
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
-import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -532,12 +530,13 @@ public class SiglusRequisitionService {
     setLineItemExtension(requisitionDto);
 
     //set available products in approve page
-    setAvailableProductsForApprovePage(requisitionDto);
+    requisitionDto.setAvailableProducts(setAvailableProductsForApprovePage(requisitionDto));
 
     return setIsFinalApproval(requisitionDto);
   }
 
-  private void setAvailableProductsForApprovePage(RequisitionV2Dto requisitionDto) {
+  private Set<VersionObjectReferenceDto> setAvailableProductsForApprovePage(
+      RequisitionV2Dto requisitionDto) {
     UUID requisitionId = requisitionDto.getId();
     Profiler profiler = requisitionController
         .getProfiler("GET_REQUISITION_TO_APPROVE", requisitionId);
@@ -554,26 +553,25 @@ public class SiglusRequisitionService {
       FacilityDto approverFacility = requisitionController
           .findFacility(userDto.getHomeFacilityId(), profiler);
 
-      Set<VersionObjectReferenceDto> approverMainProgramAndAssociateProgramApprovedProducts
-          = new HashSet<>();
-
-      Optional
+      Set<UUID> approverMainProgramAndAssociateProgramApprovedProducts
+          = Optional
           .ofNullable(requisitionService
               .getApproveProduct(approverFacility, mainProgram, requisition.getTemplate())
               .getApprovedProductReferences())
           .orElse(Collections.emptySet())
           .stream()
           .map(ApprovedProductReference::getOrderable)
-          .forEach(orderable -> {
-            VersionObjectReferenceDto reference = new VersionObjectReferenceDto(
-                orderable.getId(), serviceUrl, ORDERABLES, orderable.getVersionNumber());
-
-            approverMainProgramAndAssociateProgramApprovedProducts.add(reference);
-          });
+          .map(VersionEntityReference::getId)
+          .collect(toSet());
 
       // keep only products in approver facility main & associate programs
-      availableProducts.retainAll(approverMainProgramAndAssociateProgramApprovedProducts);
+      // toggle no/full-supply will update the version
+      // version mismatch in VersionObjectReferenceDto is not needed here
+      return availableProducts.stream().filter(product ->
+          approverMainProgramAndAssociateProgramApprovedProducts.contains(product.getId()))
+          .collect(toSet());
     }
+    return requisitionDto.getAvailableProducts();
   }
 
   private void setTemplateExtension(RequisitionV2Dto requisitionDto) {
