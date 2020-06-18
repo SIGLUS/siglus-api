@@ -19,6 +19,8 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
@@ -33,9 +35,12 @@ import static org.openlmis.requisition.service.PermissionService.REQUISITION_CRE
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
@@ -46,6 +51,9 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.referencedata.dto.OrderableExpirationDateDto;
+import org.openlmis.requisition.domain.RequisitionTemplate;
+import org.openlmis.requisition.domain.RequisitionTemplateDataBuilder;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItemDataBuilder;
@@ -53,26 +61,42 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
+import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.dto.ProofOfDeliveryDto;
+import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
+import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
+import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
+import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
+import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
+import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
+import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
+import org.openlmis.requisition.testutils.IdealStockAmountDtoDataBuilder;
+import org.openlmis.requisition.testutils.StockCardRangeSummaryDtoDataBuilder;
 import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
+import org.siglus.common.util.SimulateAuthenticationHelper;
+import org.siglus.siglusapi.dto.SiglusProgramDto;
+import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.data.domain.Pageable;
@@ -81,7 +105,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings({"PMD.TooManyMethods"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusRequisitionServiceTest {
 
   @Captor
@@ -114,6 +138,34 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private PermissionService permissionService;
 
+  @Mock
+  private ProgramExtensionService programExtensionService;
+
+  @Mock
+  private PeriodService periodService;
+
+  @Mock
+  private StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
+
+  @Mock
+  private SimulateAuthenticationHelper simulateAuthenticationHelper;
+
+  @Mock
+  private ProofOfDeliveryService proofOfDeliveryService;
+
+  @Mock
+  private StockOnHandRetrieverBuilderFactory stockOnHandRetrieverBuilderFactory;
+
+  @Mock
+  private SiglusOrderableService siglusOrderableService;
+
+  @Mock
+  private IdealStockAmountReferenceDataService idealStockAmountReferenceDataService;
+
+  @Mock
+  private FacilityTypeApprovedProductReferenceDataService
+      facilityTypeApprovedProductReferenceDataService;
+
   @InjectMocks
   private SiglusRequisitionService siglusRequisitionService;
 
@@ -122,15 +174,23 @@ public class SiglusRequisitionServiceTest {
 
   private UUID facilityId = UUID.randomUUID();
 
+  private UUID userFacilityId = UUID.randomUUID();
+
+  private UUID userId = UUID.randomUUID();
+
   private UUID programId = UUID.randomUUID();
 
   private UUID orderableId = UUID.randomUUID();
+
+  private UUID orderableId2 = UUID.randomUUID();
 
   private UUID requisitionId = UUID.randomUUID();
 
   private UUID templateId = UUID.randomUUID();
 
   private UUID supervisoryNodeId = UUID.randomUUID();
+
+  private UUID processingperiodId = UUID.randomUUID();
 
   private UUID productId1 = UUID.randomUUID();
   private Long productVersion1 = new Long(1);
@@ -160,7 +220,7 @@ public class SiglusRequisitionServiceTest {
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
         .thenReturn(requisitionV2Dto);
     when(requisitionTemplateExtensionRepository
-        .findByRequisitionTemplateId(templateId)).thenReturn(createTemplate());
+        .findByRequisitionTemplateId(templateId)).thenReturn(createTemplateExtension());
     when(requisitionController.getProfiler(
         profilerName, requisitionId)).thenReturn(profiler);
     when(requisitionController.findRequisition(requisitionId, profiler)).thenReturn(requisition);
@@ -288,6 +348,56 @@ public class SiglusRequisitionServiceTest {
     assertTrue(CollectionUtils.isEmpty(requisitionStatuses));
   }
 
+  @Test
+  public void shouldCreateRequisitionLineItem() {
+    Requisition requisition = createMockRequisition();
+    when(requisitionController.getProfiler(any())).thenReturn(profiler);
+    when(requisitionController.findRequisition(requisitionId, profiler)).thenReturn(requisition);
+    when(requisitionController.findProgram(programId, profiler)).thenReturn(createProgram());
+    when(requisitionController.findFacility(facilityId, profiler)).thenReturn(createFacility());
+    when(permissionService.canInitOrAuthorizeRequisition(programId, facilityId))
+        .thenReturn(new ValidationResult());
+    when(authenticationHelper.getCurrentUser()).thenReturn(createUserDto());
+    when(requisitionController.findFacility(userDto.getHomeFacilityId(), profiler))
+        .thenReturn(createUserFacility());
+    when(programExtensionService.getProgram(programId)).thenReturn(createSiglusProgramDto());
+    when(periodService.getPeriod(processingperiodId)).thenReturn(createProcessingPeriod());
+    when(stockCardRangeSummaryStockManagementService.search(any(), any(), any(), any(), any()))
+        .thenReturn(createStockCardRangeSummaryList());
+    List<ProcessingPeriodDto> processingPeriodDtos = new ArrayList<>();
+    when(periodService.getPeriods(any())).thenReturn(processingPeriodDtos);
+    when(simulateAuthenticationHelper.simulateCrossServiceAuth()).thenReturn(null);
+    when(proofOfDeliveryService.get(any())).thenReturn(new ProofOfDeliveryDto());
+    when(idealStockAmountReferenceDataService.search(facilityId, processingperiodId))
+        .thenReturn(createIdealStockAmountDtoList());
+    when(requisitionService.getApproveProduct(any(), any(), any()))
+        .thenReturn(createApproveProductsAggregator(orderableId2));
+    when(requisitionService.validateCanApproveRequisition(any(), any()))
+        .thenReturn(new ValidationResult());
+    when(siglusOrderableService.getOrderableExpirationDate(any()))
+        .thenReturn(Lists.newArrayList(new OrderableExpirationDateDto(orderableId2,
+            LocalDate.of(2022, 1, 1))));
+    MetadataDto meta = createMetadataDto();
+    OrderableDto orderable = createOrderableDto(meta);
+    ApprovedProductDto productDto = createApprovedProductDto(orderable, meta);
+    when(facilityTypeApprovedProductReferenceDataService.findByIdentities(any()))
+        .thenReturn(Lists.newArrayList(productDto));
+
+    List<UUID> orderableIds  = new ArrayList<>();
+    orderableIds.add(orderableId2);
+    List<SiglusRequisitionLineItemDto> response =
+        siglusRequisitionService.createRequisitionLineItem(requisitionId, orderableIds);
+
+    assertEquals(1, response.size());
+    RequisitionLineItemV2Dto lineItem = response.get(0).getLineItem();
+    assertEquals(100, lineItem.getBeginningBalance().intValue());
+    assertEquals(50, lineItem.getTotalReceivedQuantity().intValue());
+    assertEquals(0, lineItem.getTotalLossesAndAdjustments().intValue());
+    assertEquals(50, lineItem.getStockOnHand().intValue());
+    assertEquals(0, lineItem.getRequestedQuantity().intValue());
+    assertEquals(100, lineItem.getTotalConsumedQuantity().intValue());
+  }
+
   private Requisition createRequisition() {
     RequisitionLineItem lineItem = new RequisitionLineItemDataBuilder()
         .withOrderable(orderableId, 1L)
@@ -297,6 +407,35 @@ public class SiglusRequisitionServiceTest {
     requisition.setProgramId(programId);
     requisition.setFacilityId(facilityId);
     requisition.setRequisitionLineItems(Lists.newArrayList(lineItem));
+    requisition.setTemplate(createTemplate());
+    requisition.setProcessingPeriodId(processingperiodId);
+    Map<String, Object> extraData = new HashMap<>();
+    extraData.put("actualStartDate", "2020-01-23");
+    extraData.put("actualEndDate", "2020-01-30");
+    requisition.setExtraData(extraData);
+    return requisition;
+  }
+
+  private Requisition createMockRequisition() {
+    RequisitionLineItem lineItem = new RequisitionLineItemDataBuilder()
+        .withOrderable(orderableId, 1L)
+        .build();
+    Requisition requisition = mock(Requisition.class);
+    when(requisition.getRequisitionLineItems()).thenReturn(Lists.newArrayList(lineItem));
+    when(requisition.getId()).thenReturn(requisitionId);
+    when(requisition.getProgramId()).thenReturn(programId);
+    when(requisition.getFacilityId()).thenReturn(facilityId);
+    when(requisition.getTemplate()).thenReturn(createTemplate());
+    when(requisition.getProcessingPeriodId()).thenReturn(processingperiodId);
+    when(requisition.getActualStartDate()).thenReturn(LocalDate.of(2020, 1, 23));
+    when(requisition.getActualEndDate()).thenReturn(LocalDate.of(2020,1,30));
+    List<Requisition> previousRequisions = new ArrayList<>();
+    previousRequisions.add(createRequisition());
+    when(requisition.getPreviousRequisitions()).thenReturn(previousRequisions);
+    RequisitionLineItem lineItemCreated = new RequisitionLineItemDataBuilder().build();
+    when(requisition.constructLineItem(any(), anyInt(), anyInt(), any(), anyInt(), any(),
+        any(), any(), any(), any(), any())).thenReturn(lineItemCreated);
+
     return requisition;
   }
 
@@ -327,7 +466,7 @@ public class SiglusRequisitionServiceTest {
     return templateDto;
   }
 
-  private RequisitionTemplateExtension createTemplate() {
+  private RequisitionTemplateExtension createTemplateExtension() {
     RequisitionTemplateExtension extension = new RequisitionTemplateExtension();
     extension.setRequisitionTemplateId(templateId);
     extension.setEnableConsultationNumber(true);
@@ -338,6 +477,37 @@ public class SiglusRequisitionServiceTest {
     extension.setEnableRegimen(true);
     extension.setEnableUsageInformation(true);
     return extension;
+  }
+
+  private ApprovedProductDto createApprovedProductDto(OrderableDto orderable, MetadataDto meta) {
+    ApprovedProductDto productDto = new ApprovedProductDto();
+    productDto.setId(UUID.randomUUID());
+    productDto.setMeta(meta);
+    productDto.setOrderable(orderable);
+    return productDto;
+  }
+
+  private MetadataDto createMetadataDto() {
+    MetadataDto meta = new MetadataDto();
+    meta.setVersionNumber(new Long(1));
+    return meta;
+  }
+
+  private OrderableDto createOrderableDto(MetadataDto meta) {
+    OrderableDto orderable = new OrderableDto();
+    orderable.setId(orderableId2);
+    orderable.setMeta(meta);
+    return orderable;
+  }
+
+  private ApproveProductsAggregator createApproveProductsAggregator(UUID orderableId) {
+    MetadataDto meta = createMetadataDto();
+    OrderableDto orderable = createOrderableDto(meta);
+    ApprovedProductDto productDto = createApprovedProductDto(orderable, meta);
+    List<ApprovedProductDto> list = new ArrayList<>();
+    list.add(productDto);
+    ApproveProductsAggregator aggregator = new ApproveProductsAggregator(list, programId);
+    return aggregator;
   }
 
   private ApproveProductsAggregator createApproveProductsAggregator() {
@@ -356,9 +526,74 @@ public class SiglusRequisitionServiceTest {
     return aggregator;
   }
 
+
   private SupervisoryNodeDto createSupervisoryNodeDto() {
     SupervisoryNodeDto nodeDto = new SupervisoryNodeDto();
     nodeDto.setId(supervisoryNodeId);
     return nodeDto;
+  }
+
+  private ProgramDto createProgram() {
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    return programDto;
+  }
+
+  private SiglusProgramDto createSiglusProgramDto() {
+    SiglusProgramDto siglusProgramDto = new SiglusProgramDto();
+    siglusProgramDto.setId(programId);
+    siglusProgramDto.setIsVirtual(true);
+    return siglusProgramDto;
+  }
+
+  private FacilityDto createFacility() {
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(facilityId);
+    return facilityDto;
+  }
+
+  private FacilityDto createUserFacility() {
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(userFacilityId);
+    return facilityDto;
+  }
+
+  private UserDto createUserDto() {
+    userDto.setId(userId);
+    userDto.setHomeFacilityId(userFacilityId);
+    return userDto;
+  }
+
+  private RequisitionTemplate createTemplate() {
+    return baseTemplateBuilder()
+        .withNumberOfPeriodsToAverage(3)
+        .withPopulateStockOnHandFromStockCards(true)
+        .build();
+
+  }
+
+  private RequisitionTemplateDataBuilder baseTemplateBuilder() {
+
+    return new RequisitionTemplateDataBuilder()
+        .withRequiredColumns()
+        .withAssignment(UUID.randomUUID(), UUID.randomUUID());
+  }
+
+  private ProcessingPeriodDto createProcessingPeriod() {
+    ProcessingPeriodDto processingPeriodDto = new ProcessingPeriodDto();
+    processingPeriodDto.setId(processingperiodId);
+    return processingPeriodDto;
+  }
+
+  private List<StockCardRangeSummaryDto> createStockCardRangeSummaryList() {
+    List<StockCardRangeSummaryDto> list = new ArrayList<>();
+    list.add(new StockCardRangeSummaryDtoDataBuilder().buildAsDto());
+    return list;
+  }
+
+  private List<IdealStockAmountDto> createIdealStockAmountDtoList() {
+    List<IdealStockAmountDto> list = new ArrayList<>();
+    list.add(new IdealStockAmountDtoDataBuilder().buildAsDto());
+    return list;
   }
 }
