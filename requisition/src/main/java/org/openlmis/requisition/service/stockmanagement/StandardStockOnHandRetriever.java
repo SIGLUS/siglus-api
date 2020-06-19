@@ -60,7 +60,7 @@ final class StandardStockOnHandRetriever implements StockOnHandRetriever {
     // return stockCardSummariesService
     //     .search(programId, facilityId, products.getFullSupplyOrderableIds(), asOfDate);
     // StockCardSummariesV2SearchParams
-    if (products.getFullSupplyProducts().isEmpty()) {
+    if (products != null && products.getFullSupplyProducts().isEmpty()) {
       return Collections.emptyList();
     }
     StockCardSummariesV2SearchParams v2SearchParams = StockCardSummariesV2SearchParams.builder()
