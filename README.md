@@ -62,3 +62,12 @@ rm .git/hooks/pre-push
 # install new pre-push hook
 ~/install-talisman.sh
 ```
+
+### Dependency Check Hawkeye
+The Hawkeye scanner-cli is a project security, vulnerability and general risk highlighting tool. 
+It is meant to be integrated into your pre-commit hooks and your pipelines.
+
+```
+# The docker image is hands-down the easiest way to the scanner. Please note that your project root (e.g. $PWD) needs to be mounted to /target.
+docker run --rm -v $PWD:/target hawkeyesec/scanner-cli:latest
+```
