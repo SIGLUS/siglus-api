@@ -84,7 +84,7 @@ public class UsageTemplateColumn extends BaseEntity {
     usageTemplateColumn.columnDefinition = column;
     usageTemplateColumn.availableSources = column.getSources();
     usageTemplateColumn.isDisplayed = true;
-    usageTemplateColumn.source = column.getSources().isEmpty() ? ""
+    usageTemplateColumn.source = column.getSources().isEmpty() ? null
         : Arrays.asList(column.getSources().split("\\|")).get(0);
     usageTemplateColumn.usageTemplateColumnSection = section;
     usageTemplateColumn.setRequisitionTemplateId(requisitionTemplateId);
