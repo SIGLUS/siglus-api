@@ -23,7 +23,6 @@ import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -197,7 +196,7 @@ public class SiglusUsageReportService {
     if (section == null) {
       return false;
     }
-    return section.getColumns()
+    return ! section.getColumns()
         .stream()
         .filter(column -> column.getIsDisplayed() && column.getSource()
             .equals(CALCULATE_FROM_STOCK_CARD))
@@ -235,7 +234,8 @@ public class SiglusUsageReportService {
   }
 
   private List<UUID> reportSupportedProgram(RequisitionV2Dto requisitionV2Dto) {
-    List<UUID> reportSupportProgram = Arrays.asList(requisitionV2Dto.getProgramId());
+    List<UUID> reportSupportProgram = new ArrayList<>();
+    reportSupportProgram.add(requisitionV2Dto.getProgramId());
     reportSupportProgram.addAll(requisitionV2Dto.getTemplate()
         .getAssociatePrograms()
         .stream()
@@ -321,7 +321,7 @@ public class SiglusUsageReportService {
       Integer value = summaryDto == null ? 0 : summaryDto.getTagAmount(collection.getTag());
       valueByTag += value;
     }
-    return valueByTag;
+    return Math.abs(valueByTag);
   }
 
   private List<KitUsageLineItemDto> getKitUsageLineItemDtos(
