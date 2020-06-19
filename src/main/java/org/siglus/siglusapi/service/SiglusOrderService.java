@@ -17,9 +17,14 @@ package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
+import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.Sets;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -38,11 +43,16 @@ import org.openlmis.requisition.service.referencedata.FacilityReferenceDataServi
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
-import org.openlmis.stockmanagement.dto.StockCardDto;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 @Service
 public class SiglusOrderService {
@@ -69,7 +79,7 @@ public class SiglusOrderService {
   private SiglusArchiveProductService siglusArchiveProductService;
 
   @Autowired
-  private SiglusStockCardService siglusStockCardService;
+  private SiglusStockCardSummariesSiglusController siglusStockCardSummariesSiglusController;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -104,6 +114,8 @@ public class SiglusOrderService {
     Set<UUID> archivedOrderableIds = getArchivedOrderableIds(Sets.newHashSet(
         requisition.getFacilityId(), approverFacility.getId(), userHomeFacility.getId()));
 
+    Map<UUID, Integer> orderableSohMap = getOrderableIdSohMap(userHomeFacility.getId());
+
     return Optional
         .ofNullable(requisition.getAvailableProducts())
         .orElse(Collections.emptySet())
@@ -114,9 +126,8 @@ public class SiglusOrderService {
           if (!archivedOrderableIds.contains(orderableId)
               && approverOrderableIds.contains(orderableId)
               && userOrderableIds.contains(orderableId)) {
-            StockCardDto stockCardDto = siglusStockCardService
-                .findStockCardByOrderable(orderableId);
-            return stockCardDto != null && stockCardDto.getStockOnHand() > 0;
+            Integer soh = orderableSohMap.get(orderableId);
+            return soh != null && soh > 0;
           }
           return false;
         })
@@ -141,5 +152,22 @@ public class SiglusOrderService {
             .stream())
         .map(id -> UUID.fromString(id))
         .collect(Collectors.toSet());
+  }
+
+  private Map<UUID, Integer> getOrderableIdSohMap(UUID userFacilityId) {
+    MultiValueMap<String, String> multiValueMap = new LinkedMultiValueMap<>();
+    multiValueMap.set(FACILITY_ID, userFacilityId.toString());
+    multiValueMap.set(PROGRAM_ID, ALL_PRODUCTS_PROGRAM_ID.toString());
+    multiValueMap.set(RIGHT_NAME, "STOCK_CARDS_VIEW");
+    Page<StockCardSummaryV2Dto> stockCardSummary = siglusStockCardSummariesSiglusController
+        .searchStockCardSummaries(multiValueMap, new PageRequest(0, Integer.MAX_VALUE));
+
+    // to map stockCardSummaryV2Dto.getStockOnHand() return null cause NPE
+    return stockCardSummary.getContent().stream().collect(Collectors.toMap(
+        stockCardSummaryV2Dto -> stockCardSummaryV2Dto.getOrderable().getId(),
+        stockCardSummaryV2Dto ->
+            stockCardSummaryV2Dto.getStockOnHand() == null ? 0 :
+                stockCardSummaryV2Dto.getStockOnHand()
+    ));
   }
 }
