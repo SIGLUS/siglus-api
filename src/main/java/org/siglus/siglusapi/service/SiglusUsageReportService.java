@@ -86,6 +86,9 @@ public class SiglusUsageReportService {
     log.info("get all kit line items", requisitionV2Dto.getId());
     List<KitUsageLineItem> items = kitUsageRepository.findByRequisitionId(requisitionV2Dto.getId());
     siglusRequisitionDto.setKitUsageLineItems(getKitUsageLineItemDtos(items));
+    List<UsageTemplateColumnSection> templateColumnSections =
+        columnSectionRepository.findByRequisitionTemplateId(requisitionV2Dto.getTemplate().getId());
+    setUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
     return siglusRequisitionDto;
   }
 
