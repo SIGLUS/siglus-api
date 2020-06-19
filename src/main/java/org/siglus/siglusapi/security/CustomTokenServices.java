@@ -15,13 +15,15 @@
 
 package org.siglus.siglusapi.security;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.common.exceptions.InvalidTokenException;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 
+@Slf4j
 public class CustomTokenServices extends RemoteTokenServices {
 
-  private int invalidTokenRetryLimit;
+  private final int invalidTokenRetryLimit;
 
   public CustomTokenServices(int invalidTokenRetryLimit) {
     super();
@@ -39,7 +41,7 @@ public class CustomTokenServices extends RemoteTokenServices {
     } catch (InvalidTokenException e) {
       if (attempt < invalidTokenRetryLimit) {
         attempt++;
-        logger.debug("Retrying authentication load. Retry number: " + attempt);
+        log.debug("Retrying authentication load. Retry number: " + attempt);
         return loadAuthentication(accessToken, attempt);
       } else {
         throw e;

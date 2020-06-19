@@ -15,11 +15,10 @@
 
 package org.siglus.siglusapi.errorhandling;
 
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.exception.BaseMessageException;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.util.Message;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
@@ -27,9 +26,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
  * Base classes for controller advices dealing with error handling.
  */
 @ControllerAdvice
+@Slf4j
 public abstract class AbstractErrorHandling {
-
-  private final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Autowired
   private MessageService messageService;
@@ -52,7 +50,7 @@ public abstract class AbstractErrorHandling {
    */
   final Message.LocalizedMessage getLocalizedMessage(BaseMessageException exception) {
     Message.LocalizedMessage message = messageService.localize(exception.asMessage());
-    logger.error("{}", message);
+    log.error("{}", message);
     return message;
   }
 

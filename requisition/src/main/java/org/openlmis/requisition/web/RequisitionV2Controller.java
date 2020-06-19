@@ -249,7 +249,6 @@ public class RequisitionV2Controller extends BaseRequisitionController {
     response.setHeader(HttpHeaders.ETAG, ETagResource.buildWeakETag(requisition.getVersion()));
 
     stopProfiler(profiler, dto);
-
     return dto;
   }
 

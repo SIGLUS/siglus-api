@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.openlmis.stockmanagement.dto.referencedata.ResultDto;
 import org.openlmis.stockmanagement.service.RequestHeaders;
@@ -44,8 +45,6 @@ import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.service.AuthService;
 import org.siglus.siglusapi.util.Message;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -58,9 +57,9 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
+@Slf4j
 @SuppressWarnings("PMD.TooManyMethods")
 public abstract class BaseCommunicationService<T> {
-  protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Autowired
   protected AuthService authService;
@@ -149,11 +148,8 @@ public abstract class BaseCommunicationService<T> {
     } catch (HttpStatusCodeException ex) {
       // rest template will handle 404 as an exception, instead of returning null
       if (HttpStatus.NOT_FOUND == ex.getStatusCode()) {
-        logger.warn(
-            "{} matching params does not exist. Params: {}",
-            getResultClass().getSimpleName(), parameters
-        );
-
+        log.warn("{} matching params does not exist. Params: {}",
+            getResultClass().getSimpleName(), parameters);
         return null;
       } else {
         throw buildDataRetrievalException(ex);
@@ -237,14 +233,14 @@ public abstract class BaseCommunicationService<T> {
   protected <P> ServiceResponse<List<P>> tryFindAll(String resourceUrl, Class<P[]> type,
       String etag) {
     String url = getServiceUrl() + getUrl() + resourceUrl;
-    logger.info("permissionStrings url: {}", url);
+    log.info("permissionStrings url: {}", url);
 
     try {
       RequestHeaders headers = RequestHeaders.init().setIfNoneMatch(etag);
       ResponseEntity<P[]> response = restTemplate.exchange(
           url, HttpMethod.GET, RequestHelper.createEntity(null, addAuthHeader(headers)), type
       );
-      logger.info("permissionStrings responseEntity: {}", response);
+      log.info("permissionStrings responseEntity: {}", response);
 
       if (response.getStatusCode() == HttpStatus.NOT_MODIFIED) {
         return new ServiceResponse<>(null, response.getHeaders(), false);
@@ -259,14 +255,14 @@ public abstract class BaseCommunicationService<T> {
 
   protected <P> ServiceResponse<List<P>> tryFindAll(String resourceUrl, Class<P[]> type) {
     String url = getServiceUrl() + getUrl() + resourceUrl;
-    logger.info("permissionStrings url: {}", url);
+    log.info("permissionStrings url: {}", url);
 
     try {
       RequestHeaders headers = RequestHeaders.init();
       ResponseEntity<P[]> response = restTemplate.exchange(
               url, HttpMethod.GET, RequestHelper.createEntity(null, addAuthHeader(headers)), type
       );
-      logger.info("permissionStrings responseEntity: {}", response);
+      log.info("permissionStrings responseEntity: {}", response);
 
       List<P> list = Stream.of(response.getBody()).collect(Collectors.toList());
       return new ServiceResponse<>(list, response.getHeaders(), false);

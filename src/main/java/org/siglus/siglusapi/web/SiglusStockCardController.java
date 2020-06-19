@@ -24,8 +24,6 @@ import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.util.UuidUtil;
 import org.siglus.siglusapi.service.SiglusStockCardService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
@@ -40,7 +38,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusStockCardController {
 
   static final String PRODUCT_ID = "id";
-  private static final Logger LOGGER = LoggerFactory.getLogger(SiglusStockCardController.class);
 
   @Autowired
   private SiglusStockCardService siglusStockCardService;
@@ -55,10 +52,8 @@ public class SiglusStockCardController {
     }
     StockCardDto stockCardDto = siglusStockCardService.findStockCardByOrderable(orderableId);
     if (stockCardDto == null) {
-      LOGGER.debug("Not found orderable with id: {}", orderableId);
       return new ResponseEntity<>(NOT_FOUND);
     } else {
-      LOGGER.debug("Found stock orderable with id: {}", orderableId);
       return new ResponseEntity<>(stockCardDto, OK);
     }
   }
@@ -66,14 +61,10 @@ public class SiglusStockCardController {
   @GetMapping("/{stockCardId}")
   public ResponseEntity<StockCardDto> searchStockCardById(
       @PathVariable("stockCardId") UUID stockCardId) {
-    LOGGER.debug("Try to find stock card with id: {}", stockCardId);
-
     StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardId);
     if (stockCardDto == null) {
-      LOGGER.debug("Not found stock card with id: {}", stockCardId);
       return new ResponseEntity<>(NOT_FOUND);
     } else {
-      LOGGER.debug("Found stock card with id: {}", stockCardId);
       return new ResponseEntity<>(stockCardDto, OK);
     }
   }

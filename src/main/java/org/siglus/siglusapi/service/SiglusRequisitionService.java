@@ -97,8 +97,6 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,8 +112,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Slf4j
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusRequisitionService {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(SiglusRequisitionService.class);
 
   @Autowired
   private RequisitionV2Controller requisitionV2Controller;
@@ -215,7 +211,7 @@ public class SiglusRequisitionService {
         if (requisitionLineItemExtension != null) {
           requisitionLineItemExtension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
           updateExtension.add(requisitionLineItemExtension);
-        } else if (dto.getAuthorizedQuantity() != null) {
+        } else if (dto != null && dto.getAuthorizedQuantity() != null) {
           RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
           extension.setRequisitionLineItemId(lineItem.getId());
           extension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
@@ -281,23 +277,11 @@ public class SiglusRequisitionService {
     return buildSiglusLineItem(lineItemList, isExternalApprove);
   }
 
-  private List<RequisitionLineItem> constructLineItem(Requisition requisition,
-      ProgramDto program,
-      FacilityDto facility,
-      List<UUID> orderableIds,
-      FacilityDto userFacility) {
-
-    Profiler profiler = new Profiler("REQUISITION_INITIATE_SERVICE");
-    profiler.setLogger(LOGGER);
-    profiler.start("BUILD_REQUISITION");
-
+  private List<RequisitionLineItem> constructLineItem(Requisition requisition, ProgramDto program,
+      FacilityDto facility, List<UUID> orderableIds, FacilityDto userFacility) {
     RequisitionTemplate requisitionTemplate = requisition.getTemplate();
-
     Integer numberOfPreviousPeriodsToAverage = decrementOrZero(requisitionTemplate
         .getNumberOfPeriodsToAverage());
-
-    profiler.start("GET_PREV_REQUISITIONS_FOR_AVERAGING");
-
     List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos = null;
     List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage = null;
     List<ProcessingPeriodDto> periods = null;
@@ -350,16 +334,11 @@ public class SiglusRequisitionService {
       numberOfPreviousPeriodsToAverage = previousRequisitions.size();
     }
 
-    profiler.start("FIND_APPROVED_PRODUCTS");
-
-    profiler.start("FIND_STOCK_ON_HANDS");
-
     OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
 
     Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate, virtualProgramId,
         facility.getId(), requisition.getActualEndDate());
 
-    profiler.start("FIND_BEGINNING_BALANCES");
     Map<UUID, Integer> orderableBeginning = getOrderableBegingningMap(requisitionTemplate,
         virtualProgramId, facility.getId(), requisition.getActualStartDate().minusDays(1));
 
@@ -370,7 +349,6 @@ public class SiglusRequisitionService {
       pod = proofOfDeliveryService.get(previousRequisitions.get(0));
     }
 
-    profiler.start("FIND_IDEAL_STOCK_AMOUNTS");
     final Map<UUID, Integer> idealStockAmounts = idealStockAmountReferenceDataService
         .search(requisition.getFacilityId(), requisition.getProcessingPeriodId())
         .stream()
@@ -394,8 +372,6 @@ public class SiglusRequisitionService {
             periods, pod, approvedProducts.getFullSupplyProducts()));
       }
     }
-
-    profiler.stop().log();
     return lineItemList;
   }
 
