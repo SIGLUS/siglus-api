@@ -433,6 +433,12 @@ public class RequisitionController extends BaseRequisitionController {
     Requisition requisition = findRequisition(requisitionId, profiler);
     UserDto user = getCurrentUser(profiler);
 
+    // [SIGLUS change start]
+    // [change reason]: update tempalate extension, support usage report which is no product
+    //                  section
+    updateTemplateExtension(requisition);
+    // [SIGLUS change end]
+
     checkPermission(profiler,
         () -> requisitionService.validateCanApproveRequisition(requisition, user.getId()));
 
