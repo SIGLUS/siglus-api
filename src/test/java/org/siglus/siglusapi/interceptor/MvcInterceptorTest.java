@@ -88,7 +88,7 @@ public class MvcInterceptorTest {
 
   @Test
   public void shouldNotThrowExceptionIfPageAndSizeNull() {
-    //given
+    // given
     parameterMaps.put("page", null);
 
     // when

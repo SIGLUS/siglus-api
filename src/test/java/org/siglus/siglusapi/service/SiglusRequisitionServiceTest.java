@@ -477,11 +477,11 @@ public class SiglusRequisitionServiceTest {
     when(requisitionV2Controller.updateRequisition(requisitionId, siglusRequisitionDto,
         httpServletRequest, httpServletResponse)).thenReturn(requisitionV2Dto);
 
-    //when
+    // when
     siglusRequisitionService.updateRequisition(requisitionId, siglusRequisitionDto,
         httpServletRequest, httpServletResponse);
 
-    //then
+    // then
     verify(siglusUsageReportService).saveUsageReport(siglusRequisitionDto, requisitionV2Dto);
 
   }

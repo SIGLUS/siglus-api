@@ -509,7 +509,7 @@ public class SiglusRequisitionService {
     setTemplateExtension(requisitionDto);
     setLineItemExtension(requisitionDto);
 
-    //set available products in approve page
+    // set available products in approve page
     requisitionDto.setAvailableProducts(setAvailableProductsForApprovePage(requisitionDto));
 
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService

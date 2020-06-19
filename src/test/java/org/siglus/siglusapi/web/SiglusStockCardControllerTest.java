@@ -19,7 +19,6 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_ORDERABLE_INVALID;
-import static org.siglus.siglusapi.web.SiglusStockCardController.PRODUCT_ID;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
@@ -42,6 +41,8 @@ import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusStockCardControllerTest {
+
+  private static final String PRODUCT_ID = "id";
 
   @Rule
   public final ExpectedException expectedEx = ExpectedException.none();

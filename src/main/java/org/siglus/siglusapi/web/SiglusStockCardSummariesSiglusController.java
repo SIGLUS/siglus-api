@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/stockCardSummaries")
 public class SiglusStockCardSummariesSiglusController {
 
-  static final String NON_EMPTY_ONLY = "nonEmptyOnly";
+  private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
   @Autowired
   private SiglusStockCardSummariesService stockCardSummariesSiglusService;

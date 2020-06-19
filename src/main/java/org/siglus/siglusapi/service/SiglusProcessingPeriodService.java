@@ -194,7 +194,7 @@ public class SiglusProcessingPeriodService {
 
     if (!requisitionService.searchAfterAuthorizedRequisitions(facility, program,
         period.getId(), false).isEmpty()) {
-      //for emergency, requisitionPeriods only have one element
+      // for emergency, requisitionPeriods only have one element
       requisitionPeriods.forEach(requisitionPeriodDto ->
           requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
     }

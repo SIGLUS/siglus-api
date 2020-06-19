@@ -15,10 +15,13 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.RandomStringUtils.random;
+import static org.apache.commons.lang3.RandomUtils.nextBoolean;
+import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_CODE;
@@ -52,78 +55,84 @@ public class ProgramExtensionServiceTest {
   @Mock
   private ProgramReferenceDataService programRefDataService;
 
-  public ProgramExtension findByProgramId(UUID programId) {
-    return repo.findByProgramId(programId);
-  }
-
   @Test
   public void shouldCallRepoWhenFindByProgramId() {
-    //given
+    // given
     UUID programId = UUID.randomUUID();
 
-    //when
+    // when
     service.findByProgramId(programId);
 
-    //then
+    // then
     verify(repo).findByProgramId(programId);
   }
 
   @Test
   public void shouldReturnAllProgramListWhenGetProgramsGivenAllProductsProgramCode() {
-    //given & when
+    // when
     List<SiglusProgramDto> programs = service.getPrograms(ALL_PRODUCTS_PROGRAM_CODE);
 
-    //then
+    // then
     assertEquals(allProgramList(), programs);
   }
 
   private List<SiglusProgramDto> allProgramList() {
-    return singletonList(allProgram());
+    return singletonList(getAllProgramDto());
   }
 
   @Test
-  public void shouldReturnAllProgramListWhenGetProgramsGivenNotAllProductsProgramCode() {
-    //given
-    when(programRefDataService.findAll()).thenReturn(singletonList(new ProgramDto()));
-    when(repo.findAll()).thenReturn(singletonList(new ProgramExtension()));
+  public void shouldReturnListWithSpecifiedProgramWhenGetProgramsGivenNotAllProductsProgramCode() {
+    // given
     String code = random(NOT_TOO_LONG);
     while (code.equals(ALL_PRODUCTS_PROGRAM_CODE)) {
       code = random(NOT_TOO_LONG);
     }
-    //when
-    service.getPrograms(code);
+    ProgramDto mockProgram1 = mockProgram(UUID.randomUUID(), code);
+    ProgramDto mockProgram2 = mockProgram(UUID.randomUUID(), random(NOT_TOO_LONG));
+    when(programRefDataService.findAll()).thenReturn(asList(mockProgram1, mockProgram2));
+    ProgramExtension mockProgramExtension1 = mockProgramExtension(mockProgram1);
+    ProgramExtension mockProgramExtension2 = mockProgramExtension(mockProgram2);
+    when(repo.findAll()).thenReturn(asList(mockProgramExtension1, mockProgramExtension2));
+    // when
+    List<SiglusProgramDto> programs = service.getPrograms(code);
 
-    //then
-    verify(programRefDataService).findAll();
-    verify(repo).findAll();
+    // then
+    SiglusProgramDto expected = expectedSiglusProgram(mockProgram1, mockProgramExtension1);
+    int expectedSize = 1;
+    assertEquals(expectedSize, programs.size());
+    assertThat(programs, hasItem(expected));
   }
 
   @Test
-  public void shouldReturnProgramListWhenGetProgramsGivenNotAllProductsProgramCodeAndNoPrgExt() {
-    //given
-    when(programRefDataService.findAll()).thenReturn(singletonList(new ProgramDto()));
+  public void shouldReturnProgramListWhenGetProgramsGivenNoMatchedProgramExt() {
+    // given
     String code = random(NOT_TOO_LONG);
     while (code.equals(ALL_PRODUCTS_PROGRAM_CODE)) {
       code = random(NOT_TOO_LONG);
     }
-    //when
-    service.getPrograms(code);
+    UUID programId = UUID.randomUUID();
+    ProgramDto mockProgram = mockProgram(programId, code);
+    when(programRefDataService.findAll()).thenReturn(singletonList(mockProgram));
+    // when
+    List<SiglusProgramDto> programs = service.getPrograms(code);
 
-    //then
-    verify(programRefDataService).findAll();
-    verify(repo).findAll();
+    // then
+    SiglusProgramDto expected = expectedSiglusProgram(mockProgram, null);
+    int expectedSize = 1;
+    assertEquals(expectedSize, programs.size());
+    assertThat(programs, hasItem(expected));
   }
 
   @Test
   public void shouldReturnAllProgramWhenGetProgramGivenAllProductsProgramId() {
-    //given & when
+    // when
     SiglusProgramDto program = service.getProgram(ALL_PRODUCTS_PROGRAM_ID);
 
-    //then
-    assertEquals(allProgram(), program);
+    // then
+    assertEquals(getAllProgramDto(), program);
   }
 
-  private SiglusProgramDto allProgram() {
+  private SiglusProgramDto getAllProgramDto() {
     SiglusProgramDto siglusProgramDto = new SiglusProgramDto();
     siglusProgramDto.setId(ALL_PRODUCTS_PROGRAM_ID);
     siglusProgramDto.setCode(ALL_PRODUCTS_PROGRAM_CODE);
@@ -133,17 +142,50 @@ public class ProgramExtensionServiceTest {
 
   @Test
   public void shouldProgramWhenGetProgramGivenNotAllProductsProgramId() {
-    //given
-    when(programRefDataService.findOne(any())).thenReturn(new ProgramDto());
-    when(repo.findByProgramId(any())).thenReturn(new ProgramExtension());
+    // given
     UUID programId = UUID.randomUUID();
+    ProgramDto mockProgram = mockProgram(programId, random(NOT_TOO_LONG));
+    when(programRefDataService.findOne(programId)).thenReturn(mockProgram);
+    ProgramExtension mockProgramExtension = mockProgramExtension(mockProgram);
+    when(repo.findByProgramId(programId)).thenReturn(mockProgramExtension);
 
-    //when
-    service.getProgram(programId);
+    // when
+    SiglusProgramDto program = service.getProgram(programId);
 
-    //then
-    verify(programRefDataService).findOne(programId);
-    verify(repo).findByProgramId(programId);
+    // then
+    SiglusProgramDto expected = expectedSiglusProgram(mockProgram, mockProgramExtension);
+    assertEquals(expected, program);
+  }
+
+  private ProgramDto mockProgram(UUID programId, String code) {
+    ProgramDto mockProgram = new ProgramDto();
+    mockProgram.setId(programId);
+    mockProgram.setCode(code);
+    return mockProgram;
+  }
+
+  private ProgramExtension mockProgramExtension(ProgramDto program) {
+    ProgramExtension mockProgramExtension = new ProgramExtension();
+    mockProgramExtension.setId(UUID.randomUUID());
+    mockProgramExtension.setCode(program.getCode());
+    mockProgramExtension.setProgramId(program.getId());
+    mockProgramExtension.setIsVirtual(nextBoolean());
+    mockProgramExtension.setParentId(UUID.randomUUID());
+    mockProgramExtension.setIsSupportEmergency(nextBoolean());
+    return mockProgramExtension;
+  }
+
+  private SiglusProgramDto expectedSiglusProgram(ProgramDto programDto,
+      ProgramExtension extension) {
+    SiglusProgramDto siglusProgramDto = new SiglusProgramDto();
+    siglusProgramDto.setId(programDto.getId());
+    siglusProgramDto.setCode(programDto.getCode());
+    if (extension != null) {
+      siglusProgramDto.setIsVirtual(extension.getIsVirtual());
+      siglusProgramDto.setParentId(extension.getParentId());
+      siglusProgramDto.setIsSupportEmergency(extension.getIsSupportEmergency());
+    }
+    return siglusProgramDto;
   }
 
 }

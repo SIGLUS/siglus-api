@@ -53,58 +53,58 @@ public class AuthServiceTest {
 
   @Test
   public void shouldReadFromTokenWhenObtainAccessTokenGivenObtainUserTokenAndNotClientOnly() {
-    //given
+    // given
     when(authentication.isClientOnly()).thenReturn(false);
     final boolean obtainUserToken = true;
 
-    //when
+    // when
     service.obtainAccessToken(obtainUserToken);
 
-    //then
+    // then
     verify(authenticationDetails).getTokenValue();
   }
 
   @Test
   public void shouldReadFromTokenWhenObtainAccessTokenGivenObtainUserTokenAndClientOnly() {
-    //given
+    // given
     when(authentication.isClientOnly()).thenReturn(true);
     final boolean obtainUserToken = true;
 
-    //when
+    // when
     service.obtainAccessToken(obtainUserToken);
 
-    //then
+    // then
     verify(stockmanagementAuthService).obtainAccessToken();
   }
 
   @Test
   public void shouldReadFromTokenWhenObtainAccessTokenGivenNotObtainUserToken() {
-    //given
+    // given
     when(authentication.isClientOnly()).thenReturn(nextBoolean());
     final boolean obtainUserToken = false;
 
-    //when
+    // when
     service.obtainAccessToken(obtainUserToken);
 
-    //then
+    // then
     verify(stockmanagementAuthService).obtainAccessToken();
   }
 
   @Test
   public void shouldCallStockAuthServiceWhenObtainAccessToken() {
-    //when
+    // when
     service.obtainAccessToken();
 
-    //then
+    // then
     verify(stockmanagementAuthService).obtainAccessToken();
   }
 
   @Test
   public void shouldCallStockAuthServiceWhenClearTokenCache() {
-    //when
+    // when
     service.clearTokenCache();
 
-    //then
+    // then
     verify(stockmanagementAuthService).clearTokenCache();
   }
 

@@ -17,7 +17,6 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController.NON_EMPTY_ONLY;
 
 import java.util.Collections;
 import org.junit.Test;
@@ -35,6 +34,8 @@ import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusStockCardSummariesSiglusControllerTest {
+
+  private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
   @InjectMocks
   private SiglusStockCardSummariesSiglusController controller;

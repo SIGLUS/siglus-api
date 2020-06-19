@@ -44,16 +44,14 @@ public class ProgramExtensionService {
     return programExtensionRepository.findByProgramId(programId);
   }
 
-  public List<SiglusProgramDto> getPrograms(String code) {
+  public List<SiglusProgramDto> getPrograms(/*@Nullable*/ String code) {
     if (ALL_PRODUCTS_PROGRAM_CODE.equals(code)) {
-      SiglusProgramDto siglusProgramDto = new SiglusProgramDto();
-      siglusProgramDto.setId(ALL_PRODUCTS_PROGRAM_ID);
-      siglusProgramDto.setCode(ALL_PRODUCTS_PROGRAM_CODE);
-      siglusProgramDto.setName(ALL_PRODUCTS_PROGRAM_NAME);
-      return Collections.singletonList(siglusProgramDto);
+      return Collections.singletonList(getAllProgramDto());
     }
-    List<SiglusProgramDto> siglusProgramDtos = SiglusProgramDto
-        .from(programRefDataService.findAll());
+    List<SiglusProgramDto> siglusProgramDtos = programRefDataService.findAll().stream()
+        .filter(programDto -> code == null || code.equals(programDto.getCode()))
+        .map(SiglusProgramDto::from)
+        .collect(Collectors.toList());
     Map<UUID, ProgramExtension> programExtensions =
         programExtensionRepository.findAll().stream().collect(Collectors.toMap(
             ProgramExtension::getProgramId,
@@ -71,12 +69,7 @@ public class ProgramExtensionService {
 
   public SiglusProgramDto getProgram(UUID programId) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
-      // TODO duplicate code ProgramExtensionService.java: 49
-      SiglusProgramDto siglusProgramDto = new SiglusProgramDto();
-      siglusProgramDto.setId(ALL_PRODUCTS_PROGRAM_ID);
-      siglusProgramDto.setCode(ALL_PRODUCTS_PROGRAM_CODE);
-      siglusProgramDto.setName(ALL_PRODUCTS_PROGRAM_NAME);
-      return siglusProgramDto;
+      return getAllProgramDto();
     }
     SiglusProgramDto siglusProgramDto = SiglusProgramDto
         .from(programRefDataService.findOne(programId));
@@ -84,6 +77,14 @@ public class ProgramExtensionService {
     siglusProgramDto.setIsVirtual(programExtension.getIsVirtual());
     siglusProgramDto.setParentId(programExtension.getParentId());
     siglusProgramDto.setIsSupportEmergency(programExtension.getIsSupportEmergency());
+    return siglusProgramDto;
+  }
+
+  private SiglusProgramDto getAllProgramDto() {
+    SiglusProgramDto siglusProgramDto = new SiglusProgramDto();
+    siglusProgramDto.setId(ALL_PRODUCTS_PROGRAM_ID);
+    siglusProgramDto.setCode(ALL_PRODUCTS_PROGRAM_CODE);
+    siglusProgramDto.setName(ALL_PRODUCTS_PROGRAM_NAME);
     return siglusProgramDto;
   }
 }

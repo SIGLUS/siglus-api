@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/stockCards")
 public class SiglusStockCardController {
 
-  static final String PRODUCT_ID = "id";
+  private static final String PRODUCT_ID = "id";
 
   @Autowired
   private SiglusStockCardService siglusStockCardService;

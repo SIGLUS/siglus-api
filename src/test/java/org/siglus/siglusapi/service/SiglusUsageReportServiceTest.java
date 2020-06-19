@@ -151,7 +151,7 @@ public class SiglusUsageReportServiceTest {
     // when
     siglusUsageReportService.deleteUsageReport(requisitionId);
 
-    //then
+    // then
     verify(kitUsageRepository).delete(Arrays.asList(usageLineItem));
   }
 
@@ -164,7 +164,7 @@ public class SiglusUsageReportServiceTest {
     // when
     SiglusRequisitionDto dto = siglusUsageReportService.searchUsageReport(requisitionV2Dto);
 
-    //then
+    // then
     assertEquals(COLLECTION, dto.getKitUsageLineItems().get(0).getCollection());
   }
 
@@ -186,7 +186,7 @@ public class SiglusUsageReportServiceTest {
     // when
     siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto);
 
-    //then
+    // then
     verify(kitUsageRepository).save(Arrays.asList(usageLineItem));
   }
 
