@@ -64,7 +64,11 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 @Entity
 @Table(name = "requisition_templates", schema = "requisition")
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = false, exclude = {"programId", "facilityTypeIds"})
+// [SIGLUS change start]
+// [change reason]: ignore Transient field templateExtension which is support for usage report.
+@EqualsAndHashCode(callSuper = false, exclude = {"programId", "facilityTypeIds",
+    "templateExtension"})
+// [SIGLUS change end]
 public class RequisitionTemplate extends BaseTimestampedEntity {
   public static final String SOURCE = "Source ";
   public static final String OPTION = "Option ";

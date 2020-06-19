@@ -100,6 +100,7 @@ import org.openlmis.requisition.utils.Message;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.siglus.common.domain.RequisitionTemplateExtension;
 
 @PrepareForTest({LineItemFieldsCalculator.class})
 @RunWith(PowerMockRunner.class)
@@ -148,9 +149,21 @@ public class RequisitionTest {
 
   @Mock
   private RequisitionTemplateColumn totalStockoutDays;
+  // [SIGLUS change start]
+  // [change reason]: support for usage report, extensions' product section enable, return
+  //                  requisition line items
+  private RequisitionTemplateExtension extension;
+  // [SIGLUS change end]
 
   @Before
   public void setUp() {
+    // [SIGLUS change start]
+    // [change reason]: support for usage report, extensions' product section enable, return
+    //                  requisition line items
+    extension = RequisitionTemplateExtension.builder().enableProduct(true).build();
+    when(template.getTemplateExtension()).thenReturn(extension);
+    // [SIGLUS change end]
+
     requisitionLineItem = new RequisitionLineItemDataBuilder()
         .withId(UUID.randomUUID())
         .withRequestedQuantity(REQUESTED_QUANTITY)
@@ -1334,6 +1347,11 @@ public class RequisitionTest {
     stockCardRangeSummaryDto.getOrderable().setId(orderable.getId());
 
     RequisitionTemplate requisitionTemplate = mockStockBasedRequisitionTemplate();
+    // [SIGLUS change start]
+    // [change reason]: support for usage report, extensions' product section enable, return
+    //                  requisition line items
+    when(requisitionTemplate.getTemplateExtension()).thenReturn(extension);
+    // [SIGLUS change end]
 
     Requisition req = createRequisitionWithStatusOf(RequisitionStatus.INITIATED);
     req.setNumberOfMonthsInPeriod(1);
@@ -1362,6 +1380,11 @@ public class RequisitionTest {
     stockCardRangeSummaryDto.setStockOutDays(31);
 
     RequisitionTemplate requisitionTemplate = mockStockBasedRequisitionTemplate();
+    // [SIGLUS change start]
+    // [change reason]: support for usage report, extensions' product section enable, return
+    //                  requisition line items
+    when(requisitionTemplate.getTemplateExtension()).thenReturn(extension);
+    // [SIGLUS change end]
 
     Requisition req = createRequisitionWithStatusOf(RequisitionStatus.INITIATED);
     req.setNumberOfMonthsInPeriod(1);
@@ -1386,6 +1409,11 @@ public class RequisitionTest {
     stockCardRangeSummaryDto.getTags().put(CONSUMED_TAG, 1000);
 
     RequisitionTemplate requisitionTemplate = mockStockBasedRequisitionTemplate();
+    // [SIGLUS change start]
+    // [change reason]: support for usage report, extensions' product section enable, return
+    //                  requisition line items
+    when(requisitionTemplate.getTemplateExtension()).thenReturn(extension);
+    // [SIGLUS change end]
 
     Requisition req = createRequisitionWithStatusOf(RequisitionStatus.INITIATED);
     req.setNumberOfMonthsInPeriod(1);
@@ -1409,6 +1437,11 @@ public class RequisitionTest {
     stockCardRangeSummaryDto.getTags().put(RECEIVED_TAG, -1000);
 
     RequisitionTemplate requisitionTemplate = mockStockBasedRequisitionTemplate();
+    // [SIGLUS change start]
+    // [change reason]: support for usage report, extensions' product section enable, return
+    //                  requisition line items
+    when(requisitionTemplate.getTemplateExtension()).thenReturn(extension);
+    // [SIGLUS change end]
 
     Requisition req = createRequisitionWithStatusOf(RequisitionStatus.INITIATED);
     req.setNumberOfMonthsInPeriod(1);
@@ -1846,6 +1879,11 @@ public class RequisitionTest {
     when(totalConsumedQuantity.getTag()).thenReturn(CONSUMED_TAG);
     when(totalReceivedQuantity.getTag()).thenReturn(RECEIVED_TAG);
     when(totalLossesAndAdjustments.getTag()).thenReturn(ADJUSTMENT_TAG);
+    // [SIGLUS change start]
+    // [change reason]: support for usage report, extensions' product section enable, return
+    //                  requisition line items
+    when(requisitionTemplate.getTemplateExtension()).thenReturn(extension);
+    // [SIGLUS change end]
 
     return requisitionTemplate;
   }

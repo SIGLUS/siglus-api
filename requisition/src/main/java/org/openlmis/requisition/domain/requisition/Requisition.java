@@ -115,6 +115,7 @@ import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.utils.Message;
+import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -498,7 +499,8 @@ public class Requisition extends BaseTimestampedEntity {
     profiler.start("SET_LINE_ITEMS");
     // [SIGLUS change start]
     // [change reason]: support usage report which is no product section.
-    if (template.getTemplateExtension().getEnableProduct()) {
+    RequisitionTemplateExtension extension = template.getTemplateExtension();
+    if (extension != null && extension.getEnableProduct()) {
       // [SIGLUS change end]
       if (template.isPopulateStockOnHandFromStockCards()) {
         initiateLineItems(fullSupplyProducts, idealStockAmounts, stockData, stockCardRangeSummaries,

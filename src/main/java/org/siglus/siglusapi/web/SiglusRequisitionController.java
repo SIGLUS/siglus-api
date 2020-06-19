@@ -22,7 +22,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
-import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
@@ -72,13 +71,13 @@ public class SiglusRequisitionController {
   }
 
   @GetMapping("/{id}")
-  public RequisitionV2Dto searchRequisition(@PathVariable("id") UUID requisitionId) {
+  public SiglusRequisitionDto searchRequisition(@PathVariable("id") UUID requisitionId) {
     return siglusRequisitionService.searchRequisition(requisitionId);
   }
 
   @PutMapping("/{id}")
-  public RequisitionV2Dto updateRequisition(@PathVariable("id") UUID requisitionId,
-      @RequestBody RequisitionV2Dto requisitionDto,
+  public SiglusRequisitionDto updateRequisition(@PathVariable("id") UUID requisitionId,
+      @RequestBody SiglusRequisitionDto requisitionDto,
       HttpServletRequest request, HttpServletResponse response) {
     return siglusRequisitionService
         .updateRequisition(requisitionId, requisitionDto, request, response);

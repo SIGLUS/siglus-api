@@ -92,7 +92,6 @@ import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
-import org.siglus.siglusapi.dto.RequisitionApprovalDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
@@ -101,7 +100,6 @@ import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -189,14 +187,15 @@ public class SiglusRequisitionService {
   @Value("${service.url}")
   private String serviceUrl;
 
-  public RequisitionV2Dto updateRequisition(UUID requisitionId,
-      @RequestBody RequisitionV2Dto requisitionDto,
+  public SiglusRequisitionDto updateRequisition(UUID requisitionId,
+      @RequestBody SiglusRequisitionDto requisitionDto,
       HttpServletRequest request, HttpServletResponse response) {
     // call modify OpenLMIS API
     RequisitionV2Dto upadateRequsitionDto = requisitionV2Controller
         .updateRequisition(requisitionId, requisitionDto, request, response);
     saveLineItemExtension(requisitionDto, upadateRequsitionDto);
-    return upadateRequsitionDto;
+
+    return siglusUsageReportService.saveUsageReport(requisitionDto, upadateRequsitionDto);
   }
 
   public void saveLineItemExtension(RequisitionV2Dto toUpdatedDto, RequisitionV2Dto updatedDto) {
@@ -409,6 +408,7 @@ public class SiglusRequisitionService {
     if (!extensions.isEmpty()) {
       lineItemExtensionRepository.delete(extensions);
     }
+    siglusUsageReportService.deleteUsageReport(requisitionId);
   }
 
   private List<UUID> findLineItemIds(Requisition requisition) {
@@ -524,7 +524,7 @@ public class SiglusRequisitionService {
     }
   }
 
-  public RequisitionApprovalDto searchRequisition(UUID requisitionId) {
+  public SiglusRequisitionDto searchRequisition(UUID requisitionId) {
     // call origin OpenLMIS API
     // reason: 1. set template extension
     //         1. 2. set line item authorized quality extension
@@ -536,7 +536,9 @@ public class SiglusRequisitionService {
     //set available products in approve page
     requisitionDto.setAvailableProducts(setAvailableProductsForApprovePage(requisitionDto));
 
-    return setIsFinalApproval(requisitionDto);
+    SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService
+        .searchUsageReport(requisitionDto);
+    return setIsFinalApproval(siglusRequisitionDto);
   }
 
   private Set<VersionObjectReferenceDto> setAvailableProductsForApprovePage(
@@ -605,23 +607,20 @@ public class SiglusRequisitionService {
     }
   }
 
-  private RequisitionApprovalDto setIsFinalApproval(RequisitionV2Dto requisitionV2Dto) {
-    RequisitionApprovalDto requisitionApprovalDto = new RequisitionApprovalDto();
-    BeanUtils.copyProperties(requisitionV2Dto, requisitionApprovalDto);
-
-    if (requisitionV2Dto.getStatus().duringApproval()) {
-      UUID nodeId = requisitionV2Dto.getSupervisoryNode();
+  private SiglusRequisitionDto setIsFinalApproval(SiglusRequisitionDto siglusRequisitionDto) {
+    if (siglusRequisitionDto.getStatus().duringApproval()) {
+      UUID nodeId = siglusRequisitionDto.getSupervisoryNode();
       SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService
           .findOne(nodeId);
 
       if (supervisoryNodeDto != null && supervisoryNodeDto.getParentNode() == null) {
-        requisitionApprovalDto.setIsFinalApproval(Boolean.TRUE);
-        return requisitionApprovalDto;
+        siglusRequisitionDto.setIsFinalApproval(Boolean.TRUE);
+        return siglusRequisitionDto;
       }
     }
 
-    requisitionApprovalDto.setIsFinalApproval(Boolean.FALSE);
-    return requisitionApprovalDto;
+    siglusRequisitionDto.setIsFinalApproval(Boolean.FALSE);
+    return siglusRequisitionDto;
   }
 
   private RequisitionLineItemExtension findLineItemExtension(

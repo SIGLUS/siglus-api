@@ -18,11 +18,14 @@ package org.siglus.siglusapi.dto;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.springframework.beans.BeanUtils;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class SiglusRequisitionDto extends RequisitionV2Dto {
+  private Boolean isFinalApproval;
   private List<KitUsageLineItemDto> kitUsageLineItems = new ArrayList<>();
   private SiglusUsageTemplateDto usageTemplate;
 

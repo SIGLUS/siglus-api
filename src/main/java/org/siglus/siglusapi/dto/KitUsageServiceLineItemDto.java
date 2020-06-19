@@ -16,12 +16,17 @@
 package org.siglus.siglusapi.dto;
 
 import java.util.UUID;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class KitUsageServiceLineItemDto {
+
   private UUID id;
 
   private Integer value;

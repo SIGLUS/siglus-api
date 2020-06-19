@@ -47,7 +47,10 @@ import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
+import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.slf4j.profiler.Profiler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -68,6 +71,12 @@ import org.springframework.web.bind.annotation.RestController;
 public class RequisitionV2Controller extends BaseRequisitionController {
 
   public static final String RESOURCE_URL = API_URL + "/v2/requisitions";
+
+  // [SIGLUS change start]
+  // [change reason]: update tempalate extension, support usage report which is no product section.
+  @Autowired
+  RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+  // [SIGLUS change end]
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -144,9 +153,14 @@ public class RequisitionV2Controller extends BaseRequisitionController {
     // [SIGLUS change end]
 
     // [SIGLUS change start]
-    // [change reason]: total losses and adjustments when the source is user input. Change it to
+    // [change reason]: 1. total losses and adjustments when the source is user input. Change it to
     //                  let user input the value (both positive & negative) directly rather than
     //                  assign reasons.
+    //                  2. update tempalate extension, support usage report which is no product
+    //                  section
+    RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
+        .findByRequisitionTemplateId(requisitionToUpdate.getTemplate().getId());
+    requisitionToUpdate.getTemplate().setTemplateExtension(templateExtension);
     updateTotalLossAndAdjustmentForUserInput(requisitionDto, requisitionToUpdate);
     // [SIGLUS change end]
 

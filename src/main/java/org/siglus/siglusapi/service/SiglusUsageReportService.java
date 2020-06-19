@@ -81,6 +81,55 @@ public class SiglusUsageReportService {
   @Autowired
   KitUsageLineItemRepository kitUsageRepository;
 
+  public SiglusRequisitionDto searchUsageReport(RequisitionV2Dto requisitionV2Dto) {
+    SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
+    log.info("get all kit line items", requisitionV2Dto.getId());
+    List<KitUsageLineItem> items = kitUsageRepository.findByRequisitionId(requisitionV2Dto.getId());
+    siglusRequisitionDto.setKitUsageLineItems(getKitUsageLineItemDtos(items));
+    return siglusRequisitionDto;
+  }
+
+  public void deleteUsageReport(UUID requisitionId) {
+    log.info("find kit requisition line item", requisitionId);
+    List<KitUsageLineItem> items = kitUsageRepository.findByRequisitionId(requisitionId);
+    if (!items.isEmpty()) {
+      log.info("delete kit requisition line item", items);
+      kitUsageRepository.delete(items);
+    }
+  }
+
+  public SiglusRequisitionDto saveUsageReport(SiglusRequisitionDto requisitionDto,
+      RequisitionV2Dto updatedDto) {
+    SiglusRequisitionDto siglusUpdatedDto = SiglusRequisitionDto.from(updatedDto);
+    updateKitUsageLineItem(requisitionDto, siglusUpdatedDto);
+    return siglusUpdatedDto;
+  }
+
+  private void updateKitUsageLineItem(SiglusRequisitionDto requisitionDto,
+      SiglusRequisitionDto updatedDto) {
+    List<KitUsageLineItemDto> kitUsageLineItemDtos = requisitionDto.getKitUsageLineItems();
+    List<KitUsageLineItem> lineItems = new ArrayList<>();
+    for (KitUsageLineItemDto lineItemDto : kitUsageLineItemDtos) {
+      String collection = lineItemDto.getCollection();
+      for (Map.Entry<String, KitUsageServiceLineItemDto> serviceDto :
+          lineItemDto.getServices().entrySet()) {
+        KitUsageServiceLineItemDto service = serviceDto.getValue();
+        KitUsageLineItem kitUsageLineItem = KitUsageLineItem.builder()
+            .requisitionId(requisitionDto.getId())
+            .collection(collection)
+            .service(serviceDto.getKey())
+            .value(service.getValue())
+            .build();
+        kitUsageLineItem.setId(service.getId());
+        lineItems.add(kitUsageLineItem);
+      }
+    }
+    log.info("save all kit line item", lineItems);
+    List<KitUsageLineItem> kitUsageLineUpdate = kitUsageRepository.save(lineItems);
+    updatedDto.setKitUsageLineItems(getKitUsageLineItemDtos(kitUsageLineUpdate));
+  }
+
+
   public SiglusRequisitionDto initiateUsageReport(RequisitionV2Dto requisitionV2Dto) {
     List<UsageTemplateColumnSection> templateColumnSections =
         columnSectionRepository.findByRequisitionTemplateId(requisitionV2Dto.getTemplate().getId());
@@ -223,11 +272,11 @@ public class SiglusUsageReportService {
     }
     List<KitUsageLineItem> kitUsageLineItems = new ArrayList<>();
     for (UsageTemplateColumn templateService : service.getColumns()) {
-      if (!templateService.getIsDisplayed()) {
+      if (!Boolean.TRUE.equals(templateService.getIsDisplayed())) {
         continue;
       }
       for (UsageTemplateColumn templateCollection : collection.getColumns()) {
-        if (!templateCollection.getIsDisplayed()) {
+        if (!Boolean.TRUE.equals(templateCollection.getIsDisplayed())) {
           continue;
         }
         kitUsageLineItems.add(KitUsageLineItem.builder()
@@ -276,8 +325,7 @@ public class SiglusUsageReportService {
       List<KitUsageLineItem> kitUsageLineUpdate) {
     List<KitUsageLineItemDto> kitDtos = new ArrayList<>();
     Map<String, List<KitUsageLineItem>> groupKitUsages = kitUsageLineUpdate.stream()
-        .collect(Collectors.groupingBy(kitUsageLineItem ->
-            kitUsageLineItem.getCollection()));
+        .collect(Collectors.groupingBy(KitUsageLineItem::getCollection));
     for (Entry<String, List<KitUsageLineItem>> groupKitUsage : groupKitUsages.entrySet()) {
       KitUsageLineItemDto kitUsageLineItemDto = new KitUsageLineItemDto();
       kitUsageLineItemDto.setCollection(groupKitUsage.getKey());
@@ -315,7 +363,6 @@ public class SiglusUsageReportService {
             templateService.getCategoryDto(categoryListMap, UsageCategory.USAGEINFORMATION));
     requisitionDto.setUsageTemplate(templateDto);
   }
-
 
   private void throwError(String messageKey, Object... params) {
     throw new ValidationMessageException(new Message(messageKey, params));

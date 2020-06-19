@@ -18,10 +18,12 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -48,15 +50,19 @@ import org.siglus.siglusapi.domain.KitUsageLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.siglus.siglusapi.dto.KitUsageLineItemDto;
+import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
+import org.springframework.beans.BeanUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusUsageReportServiceTest {
 
-  static final String  USER_INPUT = "USER_INPUT";
+  static final String USER_INPUT = "USER_INPUT";
+  static final String COLLECTION = "collection";
 
   @Mock
   UsageTemplateColumnSectionRepository columnSectionRepository;
@@ -88,6 +94,10 @@ public class SiglusUsageReportServiceTest {
 
   private BasicRequisitionTemplateDto requisitionTemplateDto;
 
+  private KitUsageLineItem usageLineItem;
+
+  private SiglusRequisitionDto siglusRequisitionDto;
+
   @Before
   public void prepare() {
     templateId = UUID.randomUUID();
@@ -102,19 +112,22 @@ public class SiglusUsageReportServiceTest {
     requisitionTemplateDto.setExtension(extensionDto);
     requisitionV2Dto.setTemplate(requisitionTemplateDto);
     requisitionV2Dto.setId(requisitionId);
+    siglusRequisitionDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
     when(columnSectionRepository.findByRequisitionTemplateId(templateId))
         .thenReturn(getMockKitSection());
-    Orderable kitProduct = new Orderable(Code.code("kitProduct"), null, 10, 7,
-        true, UUID.randomUUID(), 1L);
+    Orderable kitProduct = new Orderable(Code.code("kitProduct"), null, 10,
+        7, true, UUID.randomUUID(), 1L);
     ProgramOrderable programOrderable = new ProgramOrderable();
     Program program = new Program(programId);
     programOrderable.setProgram(program);
     kitProduct.setProgramOrderables(Arrays.asList(programOrderable));
     when(orderableKitRepository.findAllKitProduct()).thenReturn(Arrays.asList(kitProduct));
-    KitUsageLineItem usageLineItem = KitUsageLineItem.builder()
+    usageLineItem = KitUsageLineItem.builder()
         .requisitionId(requisitionId)
-        .collection("collection")
-        .service("service")
+        .collection(COLLECTION)
+        .service("HF")
+        .value(10)
         .build();
     when(kitUsageRepository.save(Arrays.asList(any(KitUsageLineItem.class)))).thenReturn(
         Arrays.asList(usageLineItem)
@@ -127,6 +140,54 @@ public class SiglusUsageReportServiceTest {
     programExtension.setIsVirtual(true);
     when(programExtensionRepository.findAll()).thenReturn(newArrayList(programExtension));
     when(stockCardRangeSummaryStockManagementService.findAll()).thenReturn(new ArrayList<>());
+  }
+
+  @Test
+  public void shouldDeleteKitLineItemWhenRequisitionDelete() {
+    // given
+    when(kitUsageRepository.findByRequisitionId(requisitionId))
+        .thenReturn(Arrays.asList(usageLineItem));
+
+    // when
+    siglusUsageReportService.deleteUsageReport(requisitionId);
+
+    //then
+    verify(kitUsageRepository).delete(Arrays.asList(usageLineItem));
+  }
+
+  @Test
+  public void shouldGetKitValueWhensearchUsageReport() {
+    // given
+    when(kitUsageRepository.findByRequisitionId(requisitionId))
+        .thenReturn(Arrays.asList(usageLineItem));
+
+    // when
+    SiglusRequisitionDto dto = siglusUsageReportService.searchUsageReport(requisitionV2Dto);
+
+    //then
+    assertEquals(COLLECTION, dto.getKitUsageLineItems().get(0).getCollection());
+  }
+
+  @Test
+  public void shouldCallSaveWhenSaveUsageReport() {
+    // given
+    when(kitUsageRepository.findByRequisitionId(requisitionId))
+        .thenReturn(Arrays.asList(usageLineItem));
+    KitUsageLineItemDto kitUsageLineItemDto = new KitUsageLineItemDto();
+    kitUsageLineItemDto.setCollection(COLLECTION);
+    KitUsageServiceLineItemDto serviceLineItemDto = KitUsageServiceLineItemDto.builder()
+        .id(UUID.randomUUID()).value(10).build();
+    HashMap<String, KitUsageServiceLineItemDto> serviceLineItems = new HashMap<>();
+    serviceLineItems.put("HF", serviceLineItemDto);
+    kitUsageLineItemDto.setServices(serviceLineItems);
+    siglusRequisitionDto.setKitUsageLineItems(Arrays.asList(kitUsageLineItemDto));
+    usageLineItem.setId(serviceLineItemDto.getId());
+
+    // when
+    siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto);
+
+    //then
+    verify(kitUsageRepository).save(Arrays.asList(usageLineItem));
   }
 
   @Test
@@ -148,10 +209,10 @@ public class SiglusUsageReportServiceTest {
   private List<UsageTemplateColumnSection> getMockKitSection() {
     UsageTemplateColumnSection templateColumnSection = new UsageTemplateColumnSection();
     templateColumnSection.setCategory(UsageCategory.KITUSAGE);
-    templateColumnSection.setName("collection");
+    templateColumnSection.setName(COLLECTION);
 
     AvailableUsageColumnSection availableSection = new AvailableUsageColumnSection();
-    availableSection.setName("collection");
+    availableSection.setName(COLLECTION);
     availableSection.setId(UUID.randomUUID());
     availableSection.setColumns(getAvailableUsageColumns());
     availableSection.setDisplayOrder(1);

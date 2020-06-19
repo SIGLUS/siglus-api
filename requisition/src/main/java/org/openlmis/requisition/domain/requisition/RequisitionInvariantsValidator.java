@@ -97,7 +97,12 @@ class RequisitionInvariantsValidator
 
   @Override
   public void validateCanChangeStatus(Map<String, Message> errors) {
-    if (isEmpty(requisitionToUpdate.getNonSkippedRequisitionLineItems())) {
+    // [SIGLUS change start]
+    // [change reason] support for usage report which doesn't exist product section.
+    // if (isEmpty(requisitionToUpdate.getNonSkippedRequisitionLineItems())) {
+    if (requisitionToUpdate.getTemplate().getTemplateExtension().getEnableProduct()
+        && isEmpty(requisitionToUpdate.getNonSkippedRequisitionLineItems())) {
+      // [SIGLUS change end]
       errors.put(REQUISITION_LINE_ITEMS,
           new Message(ERROR_VALUE_MUST_BE_ENTERED, REQUISITION_LINE_ITEMS));
     }

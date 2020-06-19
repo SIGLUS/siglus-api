@@ -33,9 +33,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
-import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.web.RequisitionController;
-import org.openlmis.requisition.web.RequisitionV2Controller;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.data.domain.Pageable;
@@ -191,7 +190,7 @@ public class SiglusRequisitionControllerTest {
   @Test
   public void shouldCallServiceWhenUpdateRequisition() {
     UUID requisitionId = UUID.randomUUID();
-    RequisitionV2Dto requisitionDto = new RequisitionV2Dto();
+    SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
     siglusRequisitionController.updateRequisition(requisitionId, requisitionDto, request, response);
 
     verify(siglusRequisitionService)

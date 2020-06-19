@@ -141,7 +141,12 @@ public class RequisitionTemplateTest {
         .withPrefabValues(RequisitionTemplateAssignment.class,
             new RequisitionTemplateAssignment(UUID.randomUUID(), UUID.randomUUID(), null),
             new RequisitionTemplateAssignment(UUID.randomUUID(), UUID.randomUUID(), null))
-        .withIgnoredFields("id", "createdDate", "modifiedDate", "programId", "facilityTypeIds")
+        // [SIGLUS change start]
+        // [change reason]: siglus field templateExtension(Transient) should not be included.
+        // .withIgnoredFields("id", "createdDate", "modifiedDate", "programId", "facilityTypeIds")
+        .withIgnoredFields("id", "createdDate", "modifiedDate", "programId", "facilityTypeIds",
+            "templateExtension")
+        // [SIGLUS change end]
         .verify();
   }
 

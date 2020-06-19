@@ -31,6 +31,7 @@ import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.testutils.ApprovedProductDtoDataBuilder;
 import org.openlmis.requisition.testutils.OrderableDtoDataBuilder;
 import org.openlmis.requisition.utils.Message;
+import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 public class StatusChangeValidationServiceTest {
@@ -77,6 +78,13 @@ public class StatusChangeValidationServiceTest {
 
   @Test
   public void shouldPassValidations() {
+    // [SIGLUS change start]
+    // [change reason]: support for usage report, extensions' product section enable, need to
+    //                  validate.
+    RequisitionTemplateExtension extension = RequisitionTemplateExtension.builder()
+        .enableProduct(true).build();
+    requisition.getTemplate().setTemplateExtension(extension);
+    // [SIGLUS change end]
     StatusChangeValidationService statusChangeValidationService =
         new StatusChangeValidationService(requisition, LocalDate.now(), true,
             orderables, approvedProducts);
@@ -99,6 +107,13 @@ public class StatusChangeValidationServiceTest {
             .buildForInitiatedRegularRequisition(), false)
         .withStatus(RequisitionStatus.AUTHORIZED)
         .build();
+    // [SIGLUS change start]
+    // [change reason]: support for usage report, extensions' product section enable, need to
+    //                  validate.
+    RequisitionTemplateExtension extension = RequisitionTemplateExtension.builder()
+        .enableProduct(true).build();
+    requisition.getTemplate().setTemplateExtension(extension);
+    // [SIGLUS change end]
     addValidatorForApprovalAndCallValidationService();
   }
 
@@ -120,6 +135,13 @@ public class StatusChangeValidationServiceTest {
   }
 
   private void addValidatorForApprovalAndCallValidationService() {
+    // [SIGLUS change start]
+    // [change reason]: support for usage report, extensions' product section enable, need to
+    //                  validate.
+    RequisitionTemplateExtension extension = RequisitionTemplateExtension.builder()
+        .enableProduct(true).build();
+    requisition.getTemplate().setTemplateExtension(extension);
+    // [SIGLUS change end]
     StatusChangeValidationService statusChangeValidationService =
         new StatusChangeValidationService(requisition, LocalDate.now(), true,
             orderables, approvedProducts);

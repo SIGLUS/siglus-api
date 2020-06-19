@@ -37,12 +37,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -92,14 +95,21 @@ import org.openlmis.requisition.testutils.StockCardRangeSummaryDtoDataBuilder;
 import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
+import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
+import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.profiler.Profiler;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -172,6 +182,15 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private Pageable pageable;
 
+  @Mock
+  private SiglusUsageReportService siglusUsageReportService;
+
+  @Mock
+  private RequisitionV2Controller requisitionV2Controller;
+
+  @Mock
+  private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
+
   private UUID facilityId = UUID.randomUUID();
 
   private UUID userFacilityId = UUID.randomUUID();
@@ -215,8 +234,13 @@ public class SiglusRequisitionServiceTest {
 
   private Requisition requisition = createRequisition();
 
+  private SiglusRequisitionDto siglusRequisitionDto;
+
   @Before
   public void prepare() {
+    siglusRequisitionDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
+    when(siglusUsageReportService.searchUsageReport(any())).thenReturn(siglusRequisitionDto);
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
         .thenReturn(requisitionV2Dto);
     when(requisitionTemplateExtensionRepository
@@ -247,6 +271,15 @@ public class SiglusRequisitionServiceTest {
   public void shouldSearchRequisitionByIdAndKeepApproverApprovedProductIfInApprovePage() {
     when(requisitionService
         .validateCanApproveRequisition(any(), any())).thenReturn(ValidationResult.success());
+    Set<VersionObjectReferenceDto> products = new HashSet<>();
+    products.add(productVersionObjectReference2);
+    RequisitionV2Dto filteredRequisitionDto = new RequisitionV2Dto();
+    BeanUtils.copyProperties(requisitionV2Dto, filteredRequisitionDto);
+    filteredRequisitionDto.setAvailableProducts(products);
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(filteredRequisitionDto, siglusRequisitionDto);
+    when(siglusUsageReportService.searchUsageReport(any(RequisitionV2Dto.class)))
+        .thenReturn(siglusRequisitionDto);
 
     RequisitionV2Dto response = siglusRequisitionService.searchRequisition(requisitionId);
 
@@ -383,7 +416,7 @@ public class SiglusRequisitionServiceTest {
     ApprovedProductDto productDto = createApprovedProductDto(orderable, meta);
     when(facilityTypeApprovedProductReferenceDataService.findByIdentities(any()))
         .thenReturn(Lists.newArrayList(productDto));
-    List<UUID> orderableIds  = new ArrayList<>();
+    List<UUID> orderableIds = new ArrayList<>();
     orderableIds.add(orderableId2);
 
     // when
@@ -399,6 +432,58 @@ public class SiglusRequisitionServiceTest {
     assertEquals(50, lineItem.getStockOnHand().intValue());
     assertEquals(0, lineItem.getRequestedQuantity().intValue());
     assertEquals(100, lineItem.getTotalConsumedQuantity().intValue());
+  }
+
+  @Test
+  public void shouldCallUsegeReportInitialWhenInitialRequisition() {
+    // given
+    UUID suggestedPeriod = UUID.randomUUID();
+    String physicalInventoryDateStr = "date_str";
+    HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+    HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+    when(requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, true,
+        physicalInventoryDateStr, httpServletRequest, httpServletResponse))
+        .thenReturn(requisitionV2Dto);
+
+    // when
+    siglusRequisitionService.initiate(programId, facilityId, suggestedPeriod, true,
+        physicalInventoryDateStr, httpServletRequest, httpServletResponse);
+
+    // then
+    verify(siglusUsageReportService).initiateUsageReport(requisitionV2Dto);
+  }
+
+  @Test
+  public void shouldCallDeleteUsegeReportWhenDelteRequisition() {
+    // given
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(createRequisition());
+    RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
+    extension.setId(UUID.randomUUID());
+    when(lineItemExtensionRepository.findLineItems(Arrays.asList(any(UUID.class))))
+        .thenReturn(Arrays.asList(extension));
+
+    // when
+    siglusRequisitionService.deleteRequisition(requisitionId);
+
+    // then
+    verify(siglusUsageReportService).deleteUsageReport(requisitionId);
+  }
+
+  @Test
+  public void shouldUpdateRequisitionWhenUpdateRequisition() {
+    // given
+    HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+    HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+    when(requisitionV2Controller.updateRequisition(requisitionId, siglusRequisitionDto,
+        httpServletRequest, httpServletResponse)).thenReturn(requisitionV2Dto);
+
+    //when
+    siglusRequisitionService.updateRequisition(requisitionId, siglusRequisitionDto,
+        httpServletRequest, httpServletResponse);
+
+    //then
+    verify(siglusUsageReportService).saveUsageReport(siglusRequisitionDto, requisitionV2Dto);
+
   }
 
   private Requisition createRequisition() {
@@ -431,7 +516,7 @@ public class SiglusRequisitionServiceTest {
     when(requisition.getTemplate()).thenReturn(createTemplate());
     when(requisition.getProcessingPeriodId()).thenReturn(processingperiodId);
     when(requisition.getActualStartDate()).thenReturn(LocalDate.of(2020, 1, 23));
-    when(requisition.getActualEndDate()).thenReturn(LocalDate.of(2020,1,30));
+    when(requisition.getActualEndDate()).thenReturn(LocalDate.of(2020, 1, 30));
     List<Requisition> previousRequisions = new ArrayList<>();
     previousRequisions.add(createRequisition());
     when(requisition.getPreviousRequisitions()).thenReturn(previousRequisions);

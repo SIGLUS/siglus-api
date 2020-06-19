@@ -47,6 +47,8 @@ import org.openlmis.requisition.service.RequisitionStatusNotifier;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.utils.Pagination;
+import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -81,6 +83,12 @@ public class RequisitionController extends BaseRequisitionController {
 
   @Autowired
   private SupervisoryNodeReferenceDataService supervisoryNodeService;
+
+  // [SIGLUS change start]
+  // [change reason]: update tempalate extension, support usage report which is no product section.
+  @Autowired
+  RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+  // [SIGLUS change end]
 
   /**
    * Allows creating new requisitions.
@@ -189,6 +197,11 @@ public class RequisitionController extends BaseRequisitionController {
     Map<VersionIdentityDto, ApprovedProductDto> approvedProducts = findApprovedProducts(
         () -> getLineItemApprovedProductIdentities(requisition), profiler);
 
+    // [SIGLUS change start]
+    // [change reason]: update tempalate extension, support usage report which is no product
+    //                  section
+    updateTemplateExtension(requisition);
+    // [SIGLUS change end]
     validateForStatusChange(requisition, orderables, approvedProducts, profiler);
 
     // [SIGLUS change start]
@@ -545,6 +558,11 @@ public class RequisitionController extends BaseRequisitionController {
     Map<VersionIdentityDto, ApprovedProductDto> approvedProducts = findApprovedProducts(
         () -> getLineItemApprovedProductIdentities(requisition), profiler);
 
+    // [SIGLUS change start]
+    // [change reason]: update tempalate extension, support usage report which is no product
+    //                  section
+    updateTemplateExtension(requisition);
+    // [SIGLUS change end]
     validateForStatusChange(requisition, orderables, approvedProducts, profiler);
 
     // [SIGLUS change start]
@@ -638,5 +656,15 @@ public class RequisitionController extends BaseRequisitionController {
     return supplyLineReferenceDataService.search(
         requisition.getProgramId(), requisition.getSupervisoryNodeId());
   }
+
+  // [SIGLUS change start]
+  // [change reason]: update tempalate extension, support usage report which is no product
+  //                  section
+  private void updateTemplateExtension(Requisition requisition) {
+    RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
+        .findByRequisitionTemplateId(requisition.getTemplate().getId());
+    requisition.getTemplate().setTemplateExtension(templateExtension);
+  }
+  // [SIGLUS change end]
 
 }
