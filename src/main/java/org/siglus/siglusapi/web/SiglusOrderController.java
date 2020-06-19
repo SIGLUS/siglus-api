@@ -16,12 +16,17 @@
 package org.siglus.siglusapi.web;
 
 import java.util.List;
+import java.util.UUID;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.service.SiglusOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,6 +41,9 @@ public class SiglusOrderController {
   @Autowired
   private OrderController orderController;
 
+  @Autowired
+  private SiglusOrderService siglusOrderService;
+
   /**
    * why we redo this api?<br>
    * to support #245, we refactor
@@ -47,6 +55,11 @@ public class SiglusOrderController {
   public Iterable<BasicOrderDto> batchCreateOrders(@RequestBody List<OrderDto> orders,
       OAuth2Authentication authentication) {
     return orderController.batchCreateOrders(orders, authentication);
+  }
+
+  @GetMapping("/{id}")
+  public SiglusOrderDto getOrder(@PathVariable("id") UUID orderId) {
+    return siglusOrderService.searchOrderById(orderId);
   }
 
 }
