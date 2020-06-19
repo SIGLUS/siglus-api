@@ -24,15 +24,11 @@ public abstract class MessageKeys {
   private static final String ERROR = "error";
 
   private static final String WIDGET = "widget";
-  private static final String JAVERS = "javers";
 
-  private static final String ID = "id";
   private static final String CODE = "code";
 
   protected static final String SEARCH = "search";
 
-  private static final String MISMATCH = "mismatch";
-  private static final String NOT_FOUND = "notFound";
   private static final String DUPLICATED = "duplicated";
   protected static final String INVALID_PARAMS = "invalidParams";
 
@@ -40,17 +36,11 @@ public abstract class MessageKeys {
   private static final String EVENT_ERROR_PREFIX = ERROR_PREFIX + ".event";
   private static final String STOCK_MANAGEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockManagement";
 
-  public static final String ERROR_WIDGET_NOT_FOUND = join(ERROR_PREFIX, WIDGET, NOT_FOUND);
-  public static final String ERROR_WIDGET_ID_MISMATCH = join(ERROR_PREFIX, WIDGET, ID, MISMATCH);
   public static final String ERROR_WIDGET_CODE_DUPLICATED =
       join(ERROR_PREFIX, WIDGET, CODE, DUPLICATED);
 
-  public static final String ERROR_JAVERS_EXISTING_ENTRY =
-      join(ERROR_PREFIX, JAVERS, "entryAlreadyExists");
   public static final String ERROR_NOT_ACCEPTABLE = ERROR_PREFIX
       + ".not.acceptable";
-  public static final String ERROR_PROGRAM_NOT_SUPPORTED = ERROR_PREFIX
-      + ".authorization.program.not.supported";
   public static final String ERROR_LOT_CODE_IS_EMPTY = ERROR_PREFIX + ".lotcode.is.empty";
   public static final String ERROR_TRADE_ITEM_IS_EMPTY = ERROR_PREFIX + ".tradeItem.is.empty";
   public static final String ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY = ERROR_PREFIX

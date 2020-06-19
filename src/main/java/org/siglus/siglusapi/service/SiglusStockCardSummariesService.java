@@ -20,6 +20,7 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_UUID_WRONG_FOR
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,18 +32,20 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
-import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
-import org.openlmis.requisition.utils.Message;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
+import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
+import org.openlmis.stockmanagement.util.Message;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 
 @Service
@@ -121,15 +124,19 @@ public class SiglusStockCardSummariesService {
     Set<UUID> programIds = newHashSet();
     Set<PermissionStringDto> permissionStrings = permissionService
         .getPermissionStrings(userId).get();
-    Set<UUID> programsByRight = permissionStrings
-        .stream()
-        .filter(permissionStringDto -> permissionStringDto.getRightName().equals(rightName)
-            && UUID.fromString(facilityId).equals(permissionStringDto.getFacilityId())
-        )
-        .map(PermissionStringDto::getProgramId)
-        .collect(Collectors.toSet());
     List<ProgramExtension> programExtensions = programExtensionRepository.findByIsVirtual(true);
     if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
+      Set<UUID> programsByRight = permissionStrings
+          .stream()
+          .filter(permissionStringDto -> permissionStringDto.getRightName().equals(rightName)
+              && UUID.fromString(facilityId).equals(permissionStringDto.getFacilityId())
+          )
+          .map(PermissionStringDto::getProgramId)
+          .collect(Collectors.toSet());
+      if (CollectionUtils.isEmpty(programsByRight)) {
+        throw new PermissionMessageException(
+            new Message(ERROR_NO_FOLLOWING_PERMISSION, rightName, facilityId));
+      }
       return programsByRight
           .stream()
           .filter(programByRight -> isVirtual(programExtensions, programByRight))
@@ -162,8 +169,8 @@ public class SiglusStockCardSummariesService {
       try {
         return UUID.fromString(id);
       } catch (IllegalArgumentException ex) {
-        throw new ValidationMessageException(
-            new Message(ERROR_UUID_WRONG_FORMAT, id, fieldName), ex);
+        throw new ValidationMessageException(ex,
+            new Message(ERROR_UUID_WRONG_FORMAT, id, fieldName));
       }
     }
     return null;
