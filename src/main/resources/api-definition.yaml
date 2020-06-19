@@ -61,6 +61,8 @@ schemas:
   - basicRequisitionDto: !include schemas/basicRequisitionDto.json
   - basicRequisitionDtoPage: !include schemas/basicRequisitionDtoPage.json
   - orderDto: !include schemas/orderDto.json
+  - shipmentDraft: !include schemas/shipmentDraft.json
+  - shipmentDraftPage: !include schemas/shipmentDraftPage.json
 resourceTypes:
   - collection:
       get:
@@ -139,6 +141,13 @@ traits:
           type: integer
           required: false
           repeat: false
+  - expandable:
+      queryParameters:
+        expand:
+          description: Allows to specify which reference fields should contain an expanded representation.
+          type: string
+          required: false
+          repeat: true
   - sorted:
       queryParameters:
         sort:
@@ -1407,3 +1416,118 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+
+    /shipmentDrafts:
+      get:
+        is: [ secured, paginated ]
+        description: Get shipment drafts. This endpoint requires SHIPMENT_VIEW or SHIPMENT_EDIT rights.
+        queryParameters:
+          orderId:
+            displayName: orderId
+            description: order ID
+            type: string
+            required: true
+            repeat: false
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: shipmentDraftPage
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+          401:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+      /{id}:
+        uriParameters:
+          id:
+            displayName: id
+            type: string
+            required: true
+            repeat: false
+        put:
+          is: [ secured ]
+          description: Create or update shipment draft. This endpoint requires SHIPMENT_EDIT right.
+          body:
+            application/json:
+              schema: shipmentDraft
+              example: shipmentExample
+          responses:
+            200:
+              description: Draft saved.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: shipmentDraft
+                  example: shipmentExample
+            400:
+              body:
+                application/json:
+                  schema: localizedMessage
+            401:
+              body:
+                application/json:
+            403:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+        get:
+          is: [ secured, expandable ]
+          description: Get chosen shipment draft. This endpoint requires SHIPMENT_VIEW or SHIPMENT_EDIT rights.
+          responses:
+            200:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: shipmentDraft
+            401:
+              body:
+                application/json:
+            403:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+            404:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+        delete:
+          is: [ secured ]
+          description: Delete chosen shipment draft. This endpoint requires SHIPMENT_EDIT right.
+          responses:
+            204:
+              headers:
+                Keep-Alive:
+            401:
+              body:
+                application/json:
+            403:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+            404:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
