@@ -18,12 +18,12 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
 
+import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -38,6 +38,7 @@ import org.openlmis.requisition.service.referencedata.FacilityReferenceDataServi
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
+import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,16 +57,19 @@ public class SiglusOrderService {
   private RequisitionService requisitionService;
 
   @Autowired
-  RequisitionAuthenticationHelper authenticationHelper;
+  private RequisitionAuthenticationHelper authenticationHelper;
 
   @Autowired
-  FulfillmentFacilityReferenceDataService fulfillmentFacilityReferenceDataService;
+  private FacilityReferenceDataService facilityReferenceDataService;
 
   @Autowired
-  FacilityReferenceDataService facilityReferenceDataService;
+  private ProgramReferenceDataService programReferenceDataService;
 
   @Autowired
-  ProgramReferenceDataService programReferenceDataService;
+  private SiglusArchiveProductService siglusArchiveProductService;
+
+  @Autowired
+  private SiglusStockCardService siglusStockCardService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -97,13 +101,25 @@ public class SiglusOrderService {
     Set<UUID> approverOrderableIds = getOrderableIds(approverProductAggregator);
     Set<UUID> userOrderableIds = getOrderableIds(userProductAggregator);
 
+    Set<UUID> archivedOrderableIds = getArchivedOrderableIds(Sets.newHashSet(
+        requisition.getFacilityId(), approverFacility.getId(), userHomeFacility.getId()));
+
     return Optional
         .ofNullable(requisition.getAvailableProducts())
         .orElse(Collections.emptySet())
         .stream()
         .map(ApprovedProductReference::getOrderable)
-        .filter(orderable -> approverOrderableIds.contains(orderable.getId())
-            && userOrderableIds.contains(orderable.getId()))
+        .filter(orderable -> {
+          UUID orderableId = orderable.getId();
+          if (!archivedOrderableIds.contains(orderableId)
+              && approverOrderableIds.contains(orderableId)
+              && userOrderableIds.contains(orderableId)) {
+            StockCardDto stockCardDto = siglusStockCardService
+                .findStockCardByOrderable(orderableId);
+            return stockCardDto != null && stockCardDto.getStockOnHand() > 0;
+          }
+          return false;
+        })
         .map(orderable -> new VersionObjectReferenceDto(
               orderable.getId(), serviceUrl, ORDERABLES, orderable.getVersionNumber())
         ).collect(Collectors.toSet());
@@ -119,4 +135,11 @@ public class SiglusOrderService {
         .collect(toSet());
   }
 
+  private Set<UUID> getArchivedOrderableIds(Set<UUID> facilityIds) {
+    return facilityIds.stream()
+        .flatMap(facilityId -> siglusArchiveProductService.searchArchivedProducts(facilityId)
+            .stream())
+        .map(id -> UUID.fromString(id))
+        .collect(Collectors.toSet());
+  }
 }
