@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -41,7 +42,6 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
@@ -67,7 +67,7 @@ public class SiglusOrderService {
   private RequisitionService requisitionService;
 
   @Autowired
-  private RequisitionAuthenticationHelper authenticationHelper;
+  private AuthenticationHelper authenticationHelper;
 
   @Autowired
   private FacilityReferenceDataService facilityReferenceDataService;
@@ -85,7 +85,7 @@ public class SiglusOrderService {
   private String serviceUrl;
 
   public SiglusOrderDto searchOrderById(UUID orderId) {
-    OrderDto orderDto = orderController.getOrder(orderId, Collections.EMPTY_SET);
+    OrderDto orderDto = orderController.getOrder(orderId, Collections.emptySet());
 
     return SiglusOrderDto.builder()
         .order(orderDto)
@@ -150,7 +150,7 @@ public class SiglusOrderService {
     return facilityIds.stream()
         .flatMap(facilityId -> siglusArchiveProductService.searchArchivedProducts(facilityId)
             .stream())
-        .map(id -> UUID.fromString(id))
+        .map(UUID::fromString)
         .collect(Collectors.toSet());
   }
 
