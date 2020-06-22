@@ -65,7 +65,7 @@ public class SiglusShipmentDraftServiceTest {
   private UUID lineItemId = UUID.randomUUID();
 
   @Test
-  public void shouldUpdateLineItemExtensionWhenUpdateShipmentDraft() {
+  public void shouldUpdateLineItemExtensionWhenUpdateShipmentDraftIfExtensionExist() {
     // given
     ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
     lineItemDto.setId(lineItemId);
@@ -98,7 +98,7 @@ public class SiglusShipmentDraftServiceTest {
   }
 
   @Test
-  public void shouldCreateLineItemExtensionWhenUpdateShipmentDraft() {
+  public void shouldCreateLineItemExtensionWhenUpdateShipmentDraftIfExtensionNotExist() {
     // given
     ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
     lineItemDto.setId(lineItemId);
