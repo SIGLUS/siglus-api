@@ -16,6 +16,7 @@
 package org.openlmis.requisition.service.stockmanagement;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -24,11 +25,20 @@ import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.service.RequestParameters;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class StockCardRangeSummaryStockManagementService
     extends BaseStockManagementService<StockCardRangeSummaryDto> {
+  // [SIGLUS change start]
+  // [change reason]: get Stock Card for search Range Summary performance
+  @Autowired
+  public StockCardRepository stockCardRepository;
+  // [SIGLUS change end]
+
   // [SIGLUS change start]
   // [change reason]: search method without orderableId
   public List<StockCardRangeSummaryDto> search(UUID programId, UUID facilityId, String tag,
@@ -61,6 +71,21 @@ public class StockCardRangeSummaryStockManagementService
   public List<StockCardRangeSummaryDto> search(UUID programId, UUID facilityId,
       Set<VersionIdentityDto> orderableIdentities, String tag,
       LocalDate startDate, LocalDate endDate) {
+    // [SIGLUS change start]
+    // [change reason]: get Stock Card for search Range Summary performance
+    Set<UUID> orderableIdsInStockCard =
+        stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId)
+            .stream()
+            .map(StockCard::getOrderableId)
+            .collect(Collectors.toSet());
+    orderableIdentities = orderableIdentities.stream()
+        .filter(orderableIdentity -> orderableIdsInStockCard.contains(orderableIdentity.getId()))
+        .collect(Collectors.toSet());
+    if (orderableIdentities.isEmpty()) {
+      return Collections.emptyList();
+    }
+    // [SIGLUS change end]
+
     RequestParameters params = RequestParameters.init()
         .set("size", Integer.MAX_VALUE)
         .set("programId", programId)

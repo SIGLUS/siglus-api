@@ -19,20 +19,31 @@ package org.openlmis.requisition.service.stockmanagement;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.service.BaseCommunicationService;
 import org.openlmis.requisition.testutils.StockCardRangeSummaryDtoDataBuilder;
+import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.repository.StockCardRepository;
 
 public class StockCardRangeSummaryStockManagementSerivceTest
     extends BaseStockmanagementServiceTest<StockCardRangeSummaryDto> {
+
+  // [SIGLUS change start]
+  // [change reason]: get Stock Card for search Range Summary performance
+  @Mock
+  private StockCardRepository stockCardRepository;
+  // [SIGLUS change end]
 
   private UUID programId = UUID.randomUUID();
   private UUID facilityId = UUID.randomUUID();
@@ -63,6 +74,14 @@ public class StockCardRangeSummaryStockManagementSerivceTest
   @Test
   public void shouldFindStockCardSummaries() {
     // when
+    // [SIGLUS change start]
+    // [change reason]: get Stock Card for search Range Summary performance
+    service.stockCardRepository = stockCardRepository;
+    StockCard stockCard = new StockCard();
+    stockCard.setOrderableId(orderableId);
+    when(stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId))
+        .thenReturn(Arrays.asList(stockCard));
+    // [SIGLUS change end]
     StockCardRangeSummaryDto stockCardRangeSummaryDto = mockPageResponseEntityAndGetDto();
     List<StockCardRangeSummaryDto> actual = service.search(
         programId, facilityId, Collections.singleton(new VersionIdentityDto(orderableId, 1L)),
