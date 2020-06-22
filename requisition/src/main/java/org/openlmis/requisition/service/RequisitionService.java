@@ -413,18 +413,20 @@ public class RequisitionService {
       pod = proofOfDeliveryService.get(previousRequisitions.get(0));
     }
 
-    profiler.start("INITIATE");
     // [SIGLUS change start]
     // [change reason]: remove archived products.
     // requisition.initiate(requisitionTemplate, approvedProducts.getFullSupplyProducts(),
     //     previousRequisitions, numberOfPreviousPeriodsToAverage, pod, idealStockAmounts,
     //     authenticationHelper.getCurrentUser().getId(), stockData, stockCardRangeSummaryDtos,
     //     stockCardRangeSummariesToAverage, previousPeriods);
+    profiler.start("GET_FULL_SUPPLY_PRODUCTS");
     List<ApprovedProductDto> fullSupplyProductsUsedToInitiateLineItems = Lists
         .newArrayList(approvedProducts.getFullSupplyProducts());
     fullSupplyProductsUsedToInitiateLineItems
         .removeIf(approvedProductDto -> isArchivedProduct(facility.getId(),
             approvedProductDto.getOrderable().getId()));
+
+    profiler.start("INITIATE");
     requisition.initiate(requisitionTemplate, fullSupplyProductsUsedToInitiateLineItems,
         previousRequisitions, numberOfPreviousPeriodsToAverage, pod, idealStockAmounts,
         authenticationHelper.getCurrentUser().getId(), stockData, stockCardRangeSummaryDtos,

@@ -50,7 +50,7 @@ public class WebLogAspect {
     String className = joinPoint.getTarget().getClass().getName();
     String methodName = signature.getName();
 
-    log.info("[API] {} {}, body:{}, method: {}.{}", method, url, body, className, methodName);
+    log.info("[API] {} {}, body: {}, method: {}.{}", method, url, body, className, methodName);
 
     Object result = joinPoint.proceed();
 
