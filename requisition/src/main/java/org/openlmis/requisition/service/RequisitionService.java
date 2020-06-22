@@ -104,12 +104,9 @@ import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.requisition.web.RequisitionForConvertBuilder;
-import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
-import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
 import org.siglus.common.domain.RequisitionTemplateExtension;
-import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
@@ -204,9 +201,6 @@ public class RequisitionService {
 
   // [SIGLUS change start]
   // [change reason]: archived product && kit Product
-  @Autowired
-  private StockCardRepository stockCardRepository;
-
   @Autowired
   private StockCardExtensionRepository stockCardExtensionRepository;
 
@@ -422,8 +416,10 @@ public class RequisitionService {
     profiler.start("GET_FULL_SUPPLY_PRODUCTS");
     List<ApprovedProductDto> fullSupplyProductsUsedToInitiateLineItems = Lists
         .newArrayList(approvedProducts.getFullSupplyProducts());
+    Set<String> archivedProducts = stockCardExtensionRepository
+        .findArchivedProducts(facility.getId());
     fullSupplyProductsUsedToInitiateLineItems
-        .removeIf(approvedProductDto -> isArchivedProduct(facility.getId(),
+        .removeIf(approvedProductDto -> isArchivedProduct(archivedProducts,
             approvedProductDto.getOrderable().getId()));
 
     profiler.start("INITIATE");
@@ -536,16 +532,8 @@ public class RequisitionService {
 
   // [SIGLUS change start]
   // [change reason] filter archived product
-  private boolean isArchivedProduct(UUID facilityId, UUID orderableId) {
-    List<StockCard> stockCards = stockCardRepository
-        .findByFacilityIdAndOrderableId(facilityId, orderableId);
-    if (stockCards.isEmpty()) {
-      return false;
-    }
-    StockCardExtension stockCardExtension =
-        stockCardExtensionRepository.findByStockCardId(stockCards.get(0).getId());
-    return stockCardExtension != null && stockCardExtension.isArchived();
-
+  private boolean isArchivedProduct(Set<String> archivedProducts, UUID orderableId) {
+    return archivedProducts.contains(orderableId.toString());
   }
   // [SIGLUS change end]
 
