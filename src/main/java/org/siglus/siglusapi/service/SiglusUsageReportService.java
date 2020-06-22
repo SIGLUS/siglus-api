@@ -321,7 +321,7 @@ public class SiglusUsageReportService {
       Integer value = summaryDto == null ? 0 : summaryDto.getTagAmount(collection.getTag());
       valueByTag += value;
     }
-    return Math.abs(valueByTag);
+    return valueByTag;
   }
 
   private List<KitUsageLineItemDto> getKitUsageLineItemDtos(

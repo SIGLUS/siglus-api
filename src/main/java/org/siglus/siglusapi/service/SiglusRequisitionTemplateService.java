@@ -41,6 +41,7 @@ import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.siglus.siglusapi.service.client.RequisitionTemplateRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -80,6 +81,7 @@ public class SiglusRequisitionTemplateService {
 
   }
 
+  @Transactional
   public SiglusRequisitionTemplateDto createTemplateExtension(RequisitionTemplateDto updatedDto,
       SiglusRequisitionTemplateDto requestDto) {
     SiglusRequisitionTemplateDto templateExtension = updateTemplateExtension(updatedDto,
@@ -89,6 +91,7 @@ public class SiglusRequisitionTemplateService {
     return setUsageTemplateDto(templateExtension, usageTemplateColumns);
   }
 
+  @Transactional
   public SiglusRequisitionTemplateDto updateTemplate(RequisitionTemplateDto updatedDto,
       SiglusRequisitionTemplateDto requestDto) {
     SiglusRequisitionTemplateDto templateExtension = updateTemplateExtension(updatedDto,

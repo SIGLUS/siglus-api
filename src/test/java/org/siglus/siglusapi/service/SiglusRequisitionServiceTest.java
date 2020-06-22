@@ -450,6 +450,8 @@ public class SiglusRequisitionServiceTest {
         physicalInventoryDateStr, httpServletRequest, httpServletResponse);
 
     // then
+    verify(requisitionV2Controller).initiate(programId, facilityId, suggestedPeriod, true,
+        physicalInventoryDateStr, httpServletRequest, httpServletResponse);
     verify(siglusUsageReportService).initiateUsageReport(requisitionV2Dto);
   }
 
@@ -466,6 +468,8 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.deleteRequisition(requisitionId);
 
     // then
+    verify(siglusRequisitionRequisitionService).deleteRequisition(requisitionId);
+    verify(lineItemExtensionRepository).delete(Arrays.asList(extension));
     verify(siglusUsageReportService).deleteUsageReport(requisitionId);
   }
 
@@ -482,6 +486,8 @@ public class SiglusRequisitionServiceTest {
         httpServletRequest, httpServletResponse);
 
     // then
+    verify(requisitionV2Controller).updateRequisition(requisitionId, siglusRequisitionDto,
+        httpServletRequest, httpServletResponse);
     verify(siglusUsageReportService).saveUsageReport(siglusRequisitionDto, requisitionV2Dto);
 
   }

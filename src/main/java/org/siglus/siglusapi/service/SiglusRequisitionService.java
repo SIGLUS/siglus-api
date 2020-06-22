@@ -104,6 +104,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -183,6 +184,7 @@ public class SiglusRequisitionService {
   @Value("${service.url}")
   private String serviceUrl;
 
+  @Transactional
   public SiglusRequisitionDto updateRequisition(UUID requisitionId,
       @RequestBody SiglusRequisitionDto requisitionDto,
       HttpServletRequest request, HttpServletResponse response) {
@@ -194,7 +196,7 @@ public class SiglusRequisitionService {
     return siglusUsageReportService.saveUsageReport(requisitionDto, upadateRequsitionDto);
   }
 
-  public void saveLineItemExtension(RequisitionV2Dto toUpdatedDto, RequisitionV2Dto updatedDto) {
+  private void saveLineItemExtension(RequisitionV2Dto toUpdatedDto, RequisitionV2Dto updatedDto) {
     List<RequisitionLineItem.Importer> lineItems = updatedDto.getRequisitionLineItems();
     if (!lineItems.isEmpty()) {
       List<UUID> lineItemsId = updatedDto.getRequisitionLineItems()
@@ -233,6 +235,7 @@ public class SiglusRequisitionService {
     return null;
   }
 
+  @Transactional
   public List<SiglusRequisitionLineItemDto> createRequisitionLineItem(
       UUID requisitonId,
       List<UUID> orderableIds) {
@@ -375,13 +378,16 @@ public class SiglusRequisitionService {
     return lineItemList;
   }
 
+  @Transactional
   public void deleteRequisition(UUID requisitionId) {
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     List<UUID> ids = findLineItemIds(requisition);
     siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
+    log.info("find line item extension", ids);
     List<RequisitionLineItemExtension> extensions = ids.isEmpty() ? new ArrayList<>() :
         lineItemExtensionRepository.findLineItems(ids);
     if (!extensions.isEmpty()) {
+      log.info("delete line item extension", extensions);
       lineItemExtensionRepository.delete(extensions);
     }
     siglusUsageReportService.deleteUsageReport(requisitionId);
@@ -570,6 +576,7 @@ public class SiglusRequisitionService {
         .map(Importer::getId)
         .collect(Collectors.toList());
     if (!lineItemsId.isEmpty()) {
+      log.info("find line item extension", lineItemsId);
       List<RequisitionLineItemExtension> lineItemExtension =
           lineItemExtensionRepository.findLineItems(lineItemsId);
       lineItems.forEach(lineItem -> {
@@ -660,6 +667,7 @@ public class SiglusRequisitionService {
     return canSeeRequisitionStatus;
   }
 
+  @Transactional
   public SiglusRequisitionDto initiate(UUID programId, UUID facilityId,
       UUID suggestedPeriod,
       boolean emergency,

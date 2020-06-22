@@ -17,15 +17,21 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
+import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,7 +44,10 @@ import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.Program;
 import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.VersionIdentityDto;
+import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
@@ -63,6 +72,7 @@ public class SiglusUsageReportServiceTest {
 
   static final String USER_INPUT = "USER_INPUT";
   static final String COLLECTION = "collection";
+  static final String CALCULATE_FROM_STOCK_CARD = "STOCK_CARDS";
 
   @Mock
   UsageTemplateColumnSectionRepository columnSectionRepository;
@@ -98,6 +108,8 @@ public class SiglusUsageReportServiceTest {
 
   private SiglusRequisitionDto siglusRequisitionDto;
 
+  private Orderable kitProduct;
+
   @Before
   public void prepare() {
     templateId = UUID.randomUUID();
@@ -111,12 +123,13 @@ public class SiglusUsageReportServiceTest {
     requisitionTemplateDto.setAssociatePrograms(new HashSet<>());
     requisitionTemplateDto.setExtension(extensionDto);
     requisitionV2Dto.setTemplate(requisitionTemplateDto);
+    requisitionV2Dto.setProgram(new ObjectReferenceDto(programId, ""));
     requisitionV2Dto.setId(requisitionId);
     siglusRequisitionDto = new SiglusRequisitionDto();
     BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
     when(columnSectionRepository.findByRequisitionTemplateId(templateId))
         .thenReturn(getMockKitSection());
-    Orderable kitProduct = new Orderable(Code.code("kitProduct"), null, 10,
+    kitProduct = new Orderable(Code.code("kitProduct"), null, 10,
         7, true, UUID.randomUUID(), 1L);
     ProgramOrderable programOrderable = new ProgramOrderable();
     Program program = new Program(programId);
@@ -129,9 +142,6 @@ public class SiglusUsageReportServiceTest {
         .service("HF")
         .value(10)
         .build();
-    when(kitUsageRepository.save(Arrays.asList(any(KitUsageLineItem.class)))).thenReturn(
-        Arrays.asList(usageLineItem)
-    );
     ProgramExtension programExtension = new ProgramExtensionDataBuilder()
         .withProgramId(programId)
         .withParentId(null)
@@ -156,7 +166,21 @@ public class SiglusUsageReportServiceTest {
   }
 
   @Test
-  public void shouldGetKitValueWhensearchUsageReport() {
+  public void shouldNotDeleteKitLineItemIfListIsEmptyWhenRequisitionDelete() {
+    // given
+    List<KitUsageLineItem> kitUsageLineItems = Collections.emptyList();
+    when(kitUsageRepository.findByRequisitionId(requisitionId))
+        .thenReturn(kitUsageLineItems);
+
+    // when
+    siglusUsageReportService.deleteUsageReport(requisitionId);
+
+    // then
+    verify(kitUsageRepository, never()).delete(kitUsageLineItems);
+  }
+
+  @Test
+  public void shouldGetKitValueWhenSearchUsageReport() {
     // given
     when(kitUsageRepository.findByRequisitionId(requisitionId))
         .thenReturn(Arrays.asList(usageLineItem));
@@ -166,6 +190,8 @@ public class SiglusUsageReportServiceTest {
 
     // then
     assertEquals(COLLECTION, dto.getKitUsageLineItems().get(0).getCollection());
+    assertEquals(Integer.valueOf(10),
+        dto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
   }
 
   @Test
@@ -182,28 +208,115 @@ public class SiglusUsageReportServiceTest {
     kitUsageLineItemDto.setServices(serviceLineItems);
     siglusRequisitionDto.setKitUsageLineItems(Arrays.asList(kitUsageLineItemDto));
     usageLineItem.setId(serviceLineItemDto.getId());
+    KitUsageLineItem lineItem = getMockKitUsageLineItem();
+    lineItem.setId(serviceLineItemDto.getId());
+    when(kitUsageRepository.save(Arrays.asList(lineItem))).thenReturn(Arrays.asList(lineItem));
 
     // when
-    siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto);
+    SiglusRequisitionDto resultDto = siglusUsageReportService
+        .saveUsageReport(siglusRequisitionDto, requisitionV2Dto);
 
     // then
     verify(kitUsageRepository).save(Arrays.asList(usageLineItem));
+    assertEquals(Integer.valueOf(10),
+        resultDto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
   }
 
   @Test
   public void shouldIsEmptyIfTemplateEnableKitFalse() {
+    // when
     SiglusRequisitionDto requisitionDto = siglusUsageReportService
         .initiateUsageReport(requisitionV2Dto);
+
+    // then
     assertEquals(0, requisitionDto.getKitUsageLineItems().size());
   }
 
   @Test
-  public void shouldHaveTwoValueIfTemplateEnableKitTrue() {
-    extensionDto.setEnableKitUsage(true);
-    requisitionTemplateDto.setExtension(extensionDto);
+  public void shouldIsEmptyForUsageReportIfTemplateColumnSectionsEmpty() {
+    // given
+    when(columnSectionRepository
+        .findByRequisitionTemplateId(requisitionV2Dto.getTemplate().getId()))
+        .thenReturn(Collections.emptyList());
+
+    // when
     SiglusRequisitionDto requisitionDto = siglusUsageReportService
         .initiateUsageReport(requisitionV2Dto);
+
+    // then
+    assertEquals(0, requisitionDto.getKitUsageLineItems().size());
+  }
+
+  @Test
+  public void shouldEqualNullIfColumnIsUsageInput() {
+    // given
+    extensionDto.setEnableKitUsage(true);
+    requisitionTemplateDto.setExtension(extensionDto);
+    KitUsageLineItem lineItem = getMockKitUsageLineItem();
+    lineItem.setCollection("kitColumn");
+    lineItem.setValue(null);
+    when(kitUsageRepository.save(Arrays.asList(lineItem))).thenReturn(Arrays.asList(lineItem));
+
+    // when
+    SiglusRequisitionDto requisitionDto = siglusUsageReportService
+        .initiateUsageReport(requisitionV2Dto);
+
+    // then
     assertEquals(1, requisitionDto.getKitUsageLineItems().size());
+    assertEquals(null,
+        requisitionDto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
+  }
+
+  @Test
+  public void shouldCalculateKitValueIfColumnIsStockCard() {
+    // given
+    extensionDto.setEnableKitUsage(true);
+    requisitionTemplateDto.setExtension(extensionDto);
+    UUID facilityId = UUID.randomUUID();
+    requisitionV2Dto.setFacility(new ObjectReferenceDto(facilityId, ""));
+    Map<String, Object> extraData = new HashMap<>();
+    extraData.put(ACTUAL_START_DATE, "2020-08-01");
+    extraData.put(ACTUAL_END_DATE, "2020-08-20");
+    requisitionV2Dto.setExtraData(extraData);
+    List<UsageTemplateColumnSection> mockSection = getMockKitSection();
+    UsageTemplateColumn column = mockSection.get(0).getColumns().get(0);
+    column.setSource(CALCULATE_FROM_STOCK_CARD);
+    String tag = "received";
+    column.setTag(tag);
+    when(columnSectionRepository
+        .findByRequisitionTemplateId(requisitionV2Dto.getTemplate().getId()))
+        .thenReturn(mockSection);
+    StockCardRangeSummaryDto summaryDto = new StockCardRangeSummaryDto();
+    summaryDto.setOrderable(new ObjectReferenceDto(kitProduct.getId(), ""));
+    Map<String, Integer> tagAmount = new HashMap<>();
+    tagAmount.put(tag, Integer.valueOf(20));
+    summaryDto.setTags(tagAmount);
+    VersionIdentityDto versionIdentityDto =
+        new VersionIdentityDto(kitProduct.getId(), kitProduct.getVersionNumber());
+    HashSet kitProducts = new HashSet();
+    kitProducts.add(versionIdentityDto);
+    when(stockCardRangeSummaryStockManagementService
+        .search(kitProduct.getProgramOrderables().get(0).getProgram().getId(),
+            facilityId, kitProducts, null, getActualDate(extraData, ACTUAL_START_DATE),
+            getActualDate(extraData, ACTUAL_END_DATE)))
+        .thenReturn(Arrays.asList(summaryDto));
+    KitUsageLineItem lineItem = getMockKitUsageLineItem();
+    lineItem.setCollection("kitColumn");
+    lineItem.setValue(20);
+    when(kitUsageRepository.save(Arrays.asList(lineItem))).thenReturn(Arrays.asList(lineItem));
+
+    // when
+    SiglusRequisitionDto resultDto = siglusUsageReportService
+        .initiateUsageReport(requisitionV2Dto);
+
+    // then
+    assertEquals(Integer.valueOf(20),
+        resultDto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
+  }
+
+  private LocalDate getActualDate(Map<String, Object> extraData, String field) {
+    DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    return LocalDate.parse((String) extraData.get(field), dateTimeFormatter);
   }
 
   private List<UsageTemplateColumnSection> getMockKitSection() {
@@ -244,6 +357,14 @@ public class SiglusUsageReportServiceTest {
     return Arrays.asList(templateColumnSection, templateServiceSection);
   }
 
+  private KitUsageLineItem getMockKitUsageLineItem() {
+    KitUsageLineItem lineItem = new KitUsageLineItem();
+    lineItem.setRequisitionId(requisitionV2Dto.getId());
+    lineItem.setCollection(COLLECTION);
+    lineItem.setService("HF");
+    lineItem.setValue(10);
+    return lineItem;
+  }
 
   private List<AvailableUsageColumn> getAvailableUsageColumns() {
     AvailableUsageColumn availableUsageColumn = new AvailableUsageColumn();
