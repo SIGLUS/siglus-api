@@ -435,7 +435,7 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  public void shouldCallUsegeReportInitialWhenInitialRequisition() {
+  public void shouldCallUsageReportInitialWhenInitialRequisition() {
     // given
     UUID suggestedPeriod = UUID.randomUUID();
     String physicalInventoryDateStr = "date_str";
@@ -480,16 +480,62 @@ public class SiglusRequisitionServiceTest {
     HttpServletResponse httpServletResponse = new MockHttpServletResponse();
     when(requisitionV2Controller.updateRequisition(requisitionId, siglusRequisitionDto,
         httpServletRequest, httpServletResponse)).thenReturn(requisitionV2Dto);
+    SiglusRequisitionDto updatedDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto, updatedDto);
+    when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto))
+        .thenReturn(updatedDto);
 
     // when
-    siglusRequisitionService.updateRequisition(requisitionId, siglusRequisitionDto,
+    SiglusRequisitionDto requisitionDto =
+        siglusRequisitionService.updateRequisition(requisitionId, siglusRequisitionDto,
         httpServletRequest, httpServletResponse);
 
     // then
     verify(requisitionV2Controller).updateRequisition(requisitionId, siglusRequisitionDto,
         httpServletRequest, httpServletResponse);
     verify(siglusUsageReportService).saveUsageReport(siglusRequisitionDto, requisitionV2Dto);
+    assertEquals(0, requisitionDto.getLineItems().size());
+  }
 
+  @Test
+  public void shouldUpdateRequisitionLineItemExtensionWhenUpdateRequisition() {
+    // given
+    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
+    OrderableDto productDto = new OrderableDto();
+    productDto.setId(UUID.randomUUID());
+    lineItemV2Dto.setOrderable(productDto);
+    lineItemV2Dto.setId(UUID.randomUUID());
+    lineItemV2Dto.setAuthorizedQuantity(10);
+    requisitionV2Dto.setRequisitionLineItems(Arrays.asList(lineItemV2Dto));
+    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItemV2Dto));
+    HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+    HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+    when(requisitionV2Controller.updateRequisition(requisitionId, siglusRequisitionDto,
+        httpServletRequest, httpServletResponse)).thenReturn(requisitionV2Dto);
+    SiglusRequisitionDto updatedDto = new SiglusRequisitionDto();
+    BeanUtils.copyProperties(requisitionV2Dto, updatedDto);
+    RequisitionLineItemExtension requisitionLineItemExtension = RequisitionLineItemExtension
+        .builder()
+        .requisitionLineItemId(lineItemV2Dto.getId())
+        .authorizedQuantity(10)
+        .build();
+    when(lineItemExtensionRepository.findLineItems(Arrays.asList(lineItemV2Dto.getId())))
+        .thenReturn(Arrays.asList(requisitionLineItemExtension));
+    when(lineItemExtensionRepository.save(Arrays.asList(requisitionLineItemExtension)))
+        .thenReturn(Arrays.asList(requisitionLineItemExtension));
+    when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto))
+        .thenReturn(updatedDto);
+
+    // when
+    SiglusRequisitionDto requisitionDto =
+        siglusRequisitionService.updateRequisition(requisitionId, siglusRequisitionDto,
+            httpServletRequest, httpServletResponse);
+
+    // then
+    verify(requisitionV2Controller).updateRequisition(requisitionId, siglusRequisitionDto,
+        httpServletRequest, httpServletResponse);
+    verify(siglusUsageReportService).saveUsageReport(siglusRequisitionDto, requisitionV2Dto);
+    assertEquals(Integer.valueOf(10), requisitionDto.getLineItems().get(0).getAuthorizedQuantity());
   }
 
   private Requisition createRequisition() {
