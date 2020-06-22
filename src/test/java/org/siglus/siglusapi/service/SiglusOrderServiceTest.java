@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -45,6 +46,7 @@ import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
@@ -52,6 +54,7 @@ import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -81,6 +84,9 @@ public class SiglusOrderServiceTest {
   @Mock
   private SiglusStockCardSummariesSiglusController siglusStockCardSummariesSiglusController;
 
+  @Mock
+  private OrderableReferenceDataService orderableReferenceDataService;
+
   @InjectMocks
   private SiglusOrderService siglusOrderService;
 
@@ -95,6 +101,7 @@ public class SiglusOrderServiceTest {
   private UUID orderableId1 = UUID.randomUUID();
   private UUID orderableId2 = UUID.randomUUID();
   private UUID orderableId3 = UUID.randomUUID();
+  private UUID lotId = UUID.randomUUID();
 
   @Test
   public void shouldGetValidAvailableProductsWithOrder() {
@@ -127,6 +134,26 @@ public class SiglusOrderServiceTest {
     assertEquals(1, availableProducts.size());
     assertTrue(filteredProduct.getId().equals(orderableId1));
     assertTrue(filteredProduct.getVersionNumber().equals(new Long(1)));
+  }
+
+  @Test
+  public void shouldCreateOrderLineItem() {
+    // given
+    when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
+    when(orderableReferenceDataService.findByIds(Lists.newArrayList(orderableId1)))
+        .thenReturn(Lists.newArrayList(createOrderableDto(orderableId1)));
+    when(siglusStockCardSummariesSiglusController
+        .searchStockCardSummaries(any(), any())).thenReturn(createSummaryPage());
+
+    // when
+    List<SiglusOrderLineItemDto> response =
+        siglusOrderService.createOrderLineItem(Lists.newArrayList(orderableId1));
+    SiglusOrderLineItemDto lineItemDto = response.get(0);
+
+    // then
+    assertEquals(1, response.size());
+    assertEquals(orderableId1, lineItemDto.getOrderLineItem().getOrderable().getId());
+    assertEquals(lotId, lineItemDto.getLots().get(0).getId());
   }
 
   private ApproveProductsAggregator createApproverAggregator() {
@@ -222,9 +249,21 @@ public class SiglusOrderServiceTest {
     summaryV2Dto.setOrderable(new ObjectReferenceDto("", "", orderableId1));
     CanFulfillForMeEntryDto canFulfillForMeEntryDto = new CanFulfillForMeEntryDto();
     canFulfillForMeEntryDto.setStockOnHand(2);
+    canFulfillForMeEntryDto.setLot(createLot());
     Set<CanFulfillForMeEntryDto> set = new HashSet<>();
     set.add(canFulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(set);
     return summaryV2Dto;
   }
+
+  private OrderableDto createOrderableDto(UUID orderableId) {
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    return orderableDto;
+  }
+
+  private ObjectReferenceDto createLot() {
+    return new ObjectReferenceDto("", "lots", lotId);
+  }
+
 }

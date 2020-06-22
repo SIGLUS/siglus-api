@@ -182,7 +182,7 @@ public class SiglusOrderService {
     ));
   }
 
-  public List<SiglusOrderLineItemDto> createOrderLineItem(UUID orderId, List<UUID> orderableIds) {
+  public List<SiglusOrderLineItemDto> createOrderLineItem(List<UUID> orderableIds) {
     Map<UUID, StockCardSummaryV2Dto> summaryMap = getOrderableIdSohMap(
         authenticationHelper.getCurrentUser().getHomeFacilityId());
 
@@ -190,13 +190,13 @@ public class SiglusOrderService {
         .findByIds(orderableIds).stream()
         .collect(toMap(OrderableDto::getId, orderableDto -> orderableDto));
     return orderableIds.stream()
-        .filter(orderableId -> orderableMap.containsKey(orderableId))
+        .filter(orderableMap::containsKey)
         .map(orderableId -> {
           OrderLineItemDto orderLineItemDto = new OrderLineItemDto();
           OrderableDto orderableDto = orderableMap.get(orderableId);
           orderLineItemDto.setOrderable(orderableDto);
           // no order quantity/packsToOrder, manually input by user
-          orderLineItemDto.setOrderedQuantity(new Long(0));
+          orderLineItemDto.setOrderedQuantity(Long.valueOf(0));
 
           List<ObjectReferenceDto> lotList = summaryMap.get(orderableId).getCanFulfillForMe()
               .stream()
