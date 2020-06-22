@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
@@ -24,6 +26,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 
 import com.google.common.collect.Sets;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -36,15 +39,21 @@ import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.FacilityDto;
+import org.openlmis.requisition.dto.OrderLineItemDto;
+import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
+import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
+import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,6 +90,9 @@ public class SiglusOrderService {
   @Autowired
   private SiglusStockCardSummariesSiglusController siglusStockCardSummariesSiglusController;
 
+  @Autowired
+  private OrderableReferenceDataService orderableReferenceDataService;
+
   @Value("${service.url}")
   private String serviceUrl;
 
@@ -114,7 +126,8 @@ public class SiglusOrderService {
     Set<UUID> archivedOrderableIds = getArchivedOrderableIds(Sets.newHashSet(
         requisition.getFacilityId(), approverFacility.getId(), userHomeFacility.getId()));
 
-    Map<UUID, Integer> orderableSohMap = getOrderableIdSohMap(userHomeFacility.getId());
+    Map<UUID, StockCardSummaryV2Dto> orderableSohMap =
+        getOrderableIdSohMap(userHomeFacility.getId());
 
     return Optional
         .ofNullable(requisition.getAvailableProducts())
@@ -126,7 +139,7 @@ public class SiglusOrderService {
           if (!archivedOrderableIds.contains(orderableId)
               && approverOrderableIds.contains(orderableId)
               && userOrderableIds.contains(orderableId)) {
-            Integer soh = orderableSohMap.get(orderableId);
+            Integer soh = orderableSohMap.get(orderableId).getStockOnHand();
             return soh != null && soh > 0;
           }
           return false;
@@ -154,7 +167,7 @@ public class SiglusOrderService {
         .collect(Collectors.toSet());
   }
 
-  private Map<UUID, Integer> getOrderableIdSohMap(UUID userFacilityId) {
+  private Map<UUID, StockCardSummaryV2Dto> getOrderableIdSohMap(UUID userFacilityId) {
     MultiValueMap<String, String> multiValueMap = new LinkedMultiValueMap<>();
     multiValueMap.set(FACILITY_ID, userFacilityId.toString());
     multiValueMap.set(PROGRAM_ID, ALL_PRODUCTS_PROGRAM_ID.toString());
@@ -165,9 +178,34 @@ public class SiglusOrderService {
     // to map stockCardSummaryV2Dto.getStockOnHand() return null cause NPE
     return stockCardSummary.getContent().stream().collect(Collectors.toMap(
         stockCardSummaryV2Dto -> stockCardSummaryV2Dto.getOrderable().getId(),
-        stockCardSummaryV2Dto ->
-            stockCardSummaryV2Dto.getStockOnHand() == null ? 0 :
-                stockCardSummaryV2Dto.getStockOnHand()
+        stockCardSummaryV2Dto -> stockCardSummaryV2Dto
     ));
+  }
+
+  public List<SiglusOrderLineItemDto> createOrderLineItem(UUID orderId, List<UUID> orderableIds) {
+    Map<UUID, StockCardSummaryV2Dto> summaryMap = getOrderableIdSohMap(
+        authenticationHelper.getCurrentUser().getHomeFacilityId());
+
+    Map<UUID, OrderableDto> orderableMap = orderableReferenceDataService
+        .findByIds(orderableIds).stream()
+        .collect(toMap(OrderableDto::getId, orderableDto -> orderableDto));
+    return orderableIds.stream()
+        .filter(orderableId -> orderableMap.containsKey(orderableId))
+        .map(orderableId -> {
+          OrderLineItemDto orderLineItemDto = new OrderLineItemDto();
+          OrderableDto orderableDto = orderableMap.get(orderableId);
+          orderLineItemDto.setOrderable(orderableDto);
+          // no order quantity/packsToOrder, manually input by user
+          orderLineItemDto.setOrderedQuantity(new Long(0));
+
+          List<ObjectReferenceDto> lotList = summaryMap.get(orderableId).getCanFulfillForMe()
+              .stream()
+              .filter(canFulfillForMeEntryDto -> canFulfillForMeEntryDto.getStockOnHand() > 0)
+              .map(CanFulfillForMeEntryDto::getLot)
+              .collect(Collectors.toList());
+          return SiglusOrderLineItemDto.builder()
+              .orderLineItem(orderLineItemDto)
+              .lots(lotList).build();
+        }).collect(toList());
   }
 }

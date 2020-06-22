@@ -15,9 +15,11 @@
 
 package org.openlmis.requisition.service.referencedata;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -68,4 +70,14 @@ public class OrderableReferenceDataService
 
     return getPage("/search", RequestParameters.init(), payload).getContent();
   }
+
+  // [SIGLUS change start]
+  // [change reason]: need find orderable by ids without version
+  public List<OrderableDto> findByIds(Collection<UUID> ids) {
+    if (CollectionUtils.isEmpty(ids)) {
+      return Collections.emptyList();
+    }
+    return getPage(RequestParameters.init().set("id", ids)).getContent();
+  }
+  // [SIGLUS change end]
 }

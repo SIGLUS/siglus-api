@@ -21,6 +21,7 @@ import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -60,6 +62,13 @@ public class SiglusOrderController {
   @GetMapping("/{id}")
   public SiglusOrderDto getOrder(@PathVariable("id") UUID orderId) {
     return siglusOrderService.searchOrderById(orderId);
+  }
+
+  @PostMapping("/createLineItem")
+  public List<SiglusOrderLineItemDto> createOrderLineItem(
+      @RequestParam(value = "orderId") UUID orderId,
+      @RequestBody List<UUID> orderableIds) {
+    return siglusOrderService.createOrderLineItem(orderId, orderableIds);
   }
 
 }
