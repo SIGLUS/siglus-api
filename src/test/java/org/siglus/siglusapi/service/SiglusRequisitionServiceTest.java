@@ -212,9 +212,9 @@ public class SiglusRequisitionServiceTest {
   private UUID processingperiodId = UUID.randomUUID();
 
   private UUID productId1 = UUID.randomUUID();
-  private Long productVersion1 = new Long(1);
+  private Long productVersion1 = 1L;
   private UUID productId2 = UUID.randomUUID();
-  private Long productVersion2 = new Long(1);
+  private Long productVersion2 = 1L;
   private VersionObjectReferenceDto productVersionObjectReference1
       = createVersionObjectReferenceDto(productId1, productVersion1);
   private VersionObjectReferenceDto productVersionObjectReference2
@@ -583,7 +583,7 @@ public class SiglusRequisitionServiceTest {
 
   private MetadataDto createMetadataDto() {
     MetadataDto meta = new MetadataDto();
-    meta.setVersionNumber(new Long(1));
+    meta.setVersionNumber(1L);
     return meta;
   }
 
@@ -606,7 +606,7 @@ public class SiglusRequisitionServiceTest {
 
   private ApproveProductsAggregator createApproveProductsAggregator() {
     MetadataDto meta = new MetadataDto();
-    meta.setVersionNumber(new Long(1));
+    meta.setVersionNumber(1L);
     OrderableDto orderable = new OrderableDto();
     orderable.setId(productId2);
     orderable.setMeta(meta);

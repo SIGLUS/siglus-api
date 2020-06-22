@@ -16,16 +16,12 @@
 package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.stockmanagement.service.StockCardSummaries;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,32 +31,19 @@ import org.springframework.util.MultiValueMap;
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusStockCardSummariesSiglusControllerTest {
 
-  private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
-
   @InjectMocks
   private SiglusStockCardSummariesSiglusController controller;
 
   @Mock
   private SiglusStockCardSummariesService service;
 
-  @Mock
-  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
-
   @Test
   public void shouldCallServiceAndBuilderWhenSearchStockCardSummaries() {
     MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-    StockCardSummaries mockSummaries = new StockCardSummaries();
-    mockSummaries.setStockCardsForFulfillOrderables(Collections.emptyList());
-    mockSummaries.setOrderableFulfillMap(Collections.emptyMap());
-    when(service.findSiglusStockCard(parameters)).thenReturn(mockSummaries);
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
     controller.searchStockCardSummaries(parameters, pageable);
 
-    verify(service).findSiglusStockCard(parameters);
-    verify(stockCardSummariesV2DtoBuilder).build(mockSummaries.getStockCardsForFulfillOrderables(),
-        mockSummaries.getOrderableFulfillMap(),
-        Boolean.parseBoolean(parameters.getFirst(NON_EMPTY_ONLY))
-    );
+    verify(service).searchStockCardSummaryV2Dtos(parameters, pageable);
   }
 
 }

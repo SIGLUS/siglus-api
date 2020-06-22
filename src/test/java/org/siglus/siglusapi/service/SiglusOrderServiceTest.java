@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -31,6 +32,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
@@ -40,13 +43,11 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.MetadataDto;
-import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
@@ -56,6 +57,7 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2D
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
+import org.springframework.beans.BeanUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
@@ -85,7 +87,10 @@ public class SiglusOrderServiceTest {
   private SiglusStockCardSummariesSiglusController siglusStockCardSummariesSiglusController;
 
   @Mock
-  private OrderableReferenceDataService orderableReferenceDataService;
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+
+  @Mock
+  private FulfillmentOrderableReferenceDataService fulfillmentOrderableReferenceDataService;
 
   @InjectMocks
   private SiglusOrderService siglusOrderService;
@@ -122,8 +127,8 @@ public class SiglusOrderServiceTest {
         .thenReturn(createUserAggregator());
     when(siglusArchiveProductService.searchArchivedProducts(any()))
         .thenReturn(createArchivedProducts());
-    when(siglusStockCardSummariesSiglusController
-        .searchStockCardSummaries(any(), any())).thenReturn(createSummaryPage());
+    when(siglusStockCardSummariesService
+        .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
 
     // when
     SiglusOrderDto response = siglusOrderService.searchOrderById(orderId);
@@ -133,17 +138,17 @@ public class SiglusOrderServiceTest {
     // then
     assertEquals(1, availableProducts.size());
     assertTrue(filteredProduct.getId().equals(orderableId1));
-    assertTrue(filteredProduct.getVersionNumber().equals(new Long(1)));
+    assertTrue(filteredProduct.getVersionNumber().equals(1L));
   }
 
   @Test
   public void shouldCreateOrderLineItem() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
-    when(orderableReferenceDataService.findByIds(Lists.newArrayList(orderableId1)))
+    when(fulfillmentOrderableReferenceDataService.findByIds(Lists.newArrayList(orderableId1)))
         .thenReturn(Lists.newArrayList(createOrderableDto(orderableId1)));
-    when(siglusStockCardSummariesSiglusController
-        .searchStockCardSummaries(any(), any())).thenReturn(createSummaryPage());
+    when(siglusStockCardSummariesService
+        .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
 
     // when
     List<SiglusOrderLineItemDto> response =
@@ -176,14 +181,14 @@ public class SiglusOrderServiceTest {
 
   private ApprovedProductDto createApprovedProductDto(UUID orderableId) {
     MetadataDto meta = new MetadataDto();
-    meta.setVersionNumber(new Long(1));
+    meta.setVersionNumber(1L);
     OrderableDto orderable = new OrderableDto();
     orderable.setId(orderableId);
-    orderable.setMeta(meta);
+    orderable.setMeta(convertMetadataDto(meta));
     ApprovedProductDto productDto = new ApprovedProductDto();
     productDto.setId(UUID.randomUUID());
     productDto.setMeta(meta);
-    productDto.setOrderable(orderable);
+    productDto.setOrderable(convertOrderableDto(orderable));
     return productDto;
   }
 
@@ -214,12 +219,12 @@ public class SiglusOrderServiceTest {
     requisition.setFacilityId(requisitionFacilityId);
     requisition.setProgramId(programId);
     Set<ApprovedProductReference> set = new HashSet<>();
-    set.add(new ApprovedProductReference(UUID.randomUUID(), new Long(1), orderableId1,
-        new Long(1)));
-    set.add(new ApprovedProductReference(UUID.randomUUID(), new Long(1), orderableId2,
-            new Long(1)));
-    set.add(new ApprovedProductReference(UUID.randomUUID(), new Long(1), orderableId3,
-            new Long(1)));
+    set.add(new ApprovedProductReference(UUID.randomUUID(), 1L, orderableId1,
+        1L));
+    set.add(new ApprovedProductReference(UUID.randomUUID(), 1L, orderableId2,
+            1L));
+    set.add(new ApprovedProductReference(UUID.randomUUID(), 1L, orderableId3,
+            1L));
     requisition.setAvailableProducts(set);
     return requisition;
   }
@@ -259,11 +264,26 @@ public class SiglusOrderServiceTest {
   private OrderableDto createOrderableDto(UUID orderableId) {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
+    orderableDto.setPrograms(Collections.emptySet());
     return orderableDto;
   }
 
   private ObjectReferenceDto createLot() {
     return new ObjectReferenceDto("", "lots", lotId);
+  }
+
+  private org.openlmis.requisition.dto.OrderableDto convertOrderableDto(OrderableDto sourceDto) {
+    org.openlmis.requisition.dto.OrderableDto orderableDto = new
+        org.openlmis.requisition.dto.OrderableDto();
+    BeanUtils.copyProperties(sourceDto, orderableDto);
+    return orderableDto;
+  }
+
+  private org.openlmis.fulfillment.web.util.MetadataDto convertMetadataDto(MetadataDto sourceMeta) {
+    org.openlmis.fulfillment.web.util.MetadataDto meta = new
+        org.openlmis.fulfillment.web.util.MetadataDto();
+    BeanUtils.copyProperties(sourceMeta, meta);
+    return meta;
   }
 
 }

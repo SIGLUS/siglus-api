@@ -15,10 +15,6 @@
 
 package org.siglus.siglusapi.web;
 
-import java.util.List;
-import org.openlmis.requisition.utils.Pagination;
-import org.openlmis.stockmanagement.service.StockCardSummaries;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,27 +31,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/stockCardSummaries")
 public class SiglusStockCardSummariesSiglusController {
 
-  private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
-
   @Autowired
   private SiglusStockCardSummariesService stockCardSummariesSiglusService;
-
-  @Autowired
-  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
 
   @GetMapping
   public Page<StockCardSummaryV2Dto> searchStockCardSummaries(
       @RequestParam MultiValueMap<String, String> parameters,
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
-    // reason: support all program && archive
-    StockCardSummaries summaries = stockCardSummariesSiglusService.findSiglusStockCard(parameters);
 
-    List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
-        summaries.getStockCardsForFulfillOrderables(),
-        summaries.getOrderableFulfillMap(),
-        Boolean.parseBoolean(parameters.getFirst(NON_EMPTY_ONLY)));
-
-    return Pagination.getPage(dtos, pageable);
+    return stockCardSummariesSiglusService
+        .searchStockCardSummaryV2Dtos(parameters, pageable);
   }
 
 }

@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
+import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
@@ -41,9 +42,13 @@ import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
 import org.openlmis.stockmanagement.util.Message;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
@@ -54,6 +59,7 @@ public class SiglusStockCardSummariesService {
   private static final String PROGRAM_ID = "programId";
   private static final String EXCLUDE_ARCHIVED = "excludeArchived";
   private static final String ARCHIVED_ONLY = "archivedOnly";
+  private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
   @Autowired
   private ProgramExtensionRepository programExtensionRepository;
@@ -69,6 +75,9 @@ public class SiglusStockCardSummariesService {
 
   @Autowired
   private SiglusArchiveProductService archiveProductService;
+
+  @Autowired
+  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
 
   public StockCardSummaries findSiglusStockCard(
       MultiValueMap<String, String> parameters) {
@@ -109,6 +118,19 @@ public class SiglusStockCardSummariesService {
       siglusSummaries.getOrderableFulfillMap().putAll(summaries.getOrderableFulfillMap());
     }
     return siglusSummaries;
+  }
+
+  public Page<StockCardSummaryV2Dto> searchStockCardSummaryV2Dtos(
+      MultiValueMap<String, String> parameters, Pageable pageable) {
+    // reason: support all program && archive
+    StockCardSummaries summaries = findSiglusStockCard(parameters);
+
+    List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
+        summaries.getStockCardsForFulfillOrderables(),
+        summaries.getOrderableFulfillMap(),
+        Boolean.parseBoolean(parameters.getFirst(NON_EMPTY_ONLY)));
+
+    return Pagination.getPage(dtos, pageable);
   }
 
   private Predicate<StockCard> isArchived(Set<String> archivedProducts) {

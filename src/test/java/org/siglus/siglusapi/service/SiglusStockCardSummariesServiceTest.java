@@ -44,6 +44,7 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
@@ -51,6 +52,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusStockCardSummariesServiceTest {
 
   @Mock
@@ -71,6 +73,9 @@ public class SiglusStockCardSummariesServiceTest {
   @Mock
   private PermissionStrings.Handler permissionStringsHandler;
 
+  @Mock
+  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
+
   @InjectMocks
   private SiglusStockCardSummariesService service;
 
@@ -83,6 +88,8 @@ public class SiglusStockCardSummariesServiceTest {
   private UUID realProgramId = UUID.randomUUID();
 
   private String rightName = "STOCK_CARDS_VIEW";
+
+  private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
   @Before
   public void prepare() {
