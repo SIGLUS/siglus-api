@@ -15,20 +15,20 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.List;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SiglusOrderLineItemDto {
-
-  private OrderLineItemDto orderLineItem;
-
-  private List<ObjectReferenceDto> lots;
+public class OrderLineItemDto {
+  private UUID id;
+  private VersionObjectReferenceDto orderable;
+  private Long orderedQuantity;
+  private Long totalDispensingUnits;
 }
