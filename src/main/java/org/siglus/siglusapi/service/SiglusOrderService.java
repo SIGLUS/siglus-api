@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.service.ResourceNames;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
@@ -53,9 +54,11 @@ import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.OrderLineItemDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
+import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -94,12 +97,15 @@ public class SiglusOrderService {
   @Autowired
   private FulfillmentOrderableReferenceDataService fulfillmentOrderableReferenceDataService;
 
+  @Autowired
+  private OrderLineItemExtensionRepository lineItemExtensionRepository;
+
   @Value("${service.url}")
   private String serviceUrl;
 
   public SiglusOrderDto searchOrderById(UUID orderId) {
     OrderDto orderDto = orderController.getOrder(orderId, Collections.emptySet());
-
+    setOrderLineItemExtension(orderDto);
     return SiglusOrderDto.builder()
         .order(orderDto)
         .availableProducts(getAllUserAvailableProductAggregator(orderDto)).build();
@@ -182,7 +188,7 @@ public class SiglusOrderService {
           return false;
         })
         .map(orderable -> new VersionObjectReferenceDto(
-              orderable.getId(), serviceUrl, ORDERABLES, orderable.getVersionNumber())
+            orderable.getId(), serviceUrl, ORDERABLES, orderable.getVersionNumber())
         ).collect(Collectors.toSet());
   }
 
@@ -218,4 +224,20 @@ public class SiglusOrderService {
         stockCardSummaryV2Dto -> stockCardSummaryV2Dto
     ));
   }
+
+  private void setOrderLineItemExtension(OrderDto orderDto) {
+    List<org.openlmis.fulfillment.web.util.OrderLineItemDto> lineItems = orderDto.orderLineItems();
+    Set<UUID> lineItemIds = lineItems.stream().map(OrderLineItem.Importer::getId)
+        .collect(Collectors.toSet());
+    Map<UUID, OrderLineItemExtension> lineItemExtensionMap = lineItemExtensionRepository
+        .findByOrderLineItemIdIn(lineItemIds).stream()
+        .collect(toMap(OrderLineItemExtension::getOrderLineItemId, extension -> extension));
+    lineItems.forEach(lineItem -> {
+      OrderLineItemExtension extension = lineItemExtensionMap.get(lineItem.getId());
+      if (null != extension) {
+        lineItem.setSkipped(extension.isSkipped());
+      }
+    });
+  }
+
 }

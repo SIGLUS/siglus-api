@@ -129,6 +129,13 @@ public class OrderDto implements Order.Importer, Order.Exporter, UpdateDetails.E
     );
   }
 
+  // [SIGLUS change start]
+  // [change reason]: support for skip products.
+  public List<OrderLineItemDto> orderLineItems() {
+    return orderLineItems;
+  }
+  // [SIGLUS change end]
+
   @Override
   public List<FulfillmentStatusMessage.Importer> getStatusMessages() {
     return new ArrayList<>(Optional.ofNullable(statusMessages).orElse(Collections.emptyList()));

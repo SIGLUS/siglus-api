@@ -109,5 +109,10 @@ public class OrderLineItem extends BaseEntity {
     Long getOrderedQuantity();
 
     Long getTotalDispensingUnits();
+
+    // [SIGLUS change start]
+    // [change reason]: support for skip products.
+    boolean isSkipped();
+    // [SIGLUS change end]
   }
 }

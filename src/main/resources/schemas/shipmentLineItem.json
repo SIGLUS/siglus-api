@@ -17,10 +17,6 @@
     "quantityShipped": {
       "type": "integer",
       "title": "quantity shipped"
-    },
-    "skipped": {
-      "type": "boolean",
-      "title": "skipped"
     }
   },
   "required": [

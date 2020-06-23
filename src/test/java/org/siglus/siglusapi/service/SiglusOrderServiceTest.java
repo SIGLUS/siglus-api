@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -38,6 +40,7 @@ import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -54,8 +57,10 @@ import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
+import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.BeanUtils;
 
@@ -92,6 +97,9 @@ public class SiglusOrderServiceTest {
   @Mock
   private FulfillmentOrderableReferenceDataService fulfillmentOrderableReferenceDataService;
 
+  @Mock
+  private OrderLineItemExtensionRepository lineItemExtensionRepository;
+
   @InjectMocks
   private SiglusOrderService siglusOrderService;
 
@@ -107,6 +115,7 @@ public class SiglusOrderServiceTest {
   private UUID orderableId2 = UUID.randomUUID();
   private UUID orderableId3 = UUID.randomUUID();
   private UUID lotId = UUID.randomUUID();
+  private UUID lineItemId = UUID.randomUUID();
 
   @Test
   public void shouldGetValidAvailableProductsWithOrder() {
@@ -129,6 +138,12 @@ public class SiglusOrderServiceTest {
         .thenReturn(createArchivedProducts());
     when(siglusStockCardSummariesService
         .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
+    OrderLineItemExtension extension = OrderLineItemExtension.builder()
+        .orderLineItemId(lineItemId)
+        .skipped(true)
+        .build();
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
+        .thenReturn(newArrayList(extension));
 
     // when
     SiglusOrderDto response = siglusOrderService.searchOrderById(orderId);
@@ -139,6 +154,7 @@ public class SiglusOrderServiceTest {
     assertEquals(1, availableProducts.size());
     assertTrue(filteredProduct.getId().equals(orderableId1));
     assertTrue(filteredProduct.getVersionNumber().equals(1L));
+    response.getOrder().getOrderLineItems().forEach(lineItem -> assertTrue(lineItem.isSkipped()));
   }
 
   @Test
@@ -203,6 +219,9 @@ public class SiglusOrderServiceTest {
     order.setId(orderId);
     order.setExternalId(requisitionId);
     order.setCreatedBy(createUser(approverId, approverFacilityId));
+    OrderLineItemDto lineItemDto = new OrderLineItemDto();
+    lineItemDto.setId(lineItemId);
+    order.setOrderLineItems(newArrayList(lineItemDto));
     return order;
   }
 
