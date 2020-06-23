@@ -224,7 +224,7 @@ public class SiglusOrderService {
         org.openlmis.requisition.dto.OrderableDto();
     BeanUtils.copyProperties(sourceDto, orderableDto);
     orderableDto.setPrograms(sourceDto.getPrograms().stream()
-            .map(programOrderableDto -> convertProgramOrderable(programOrderableDto))
+            .map(this::convertProgramOrderable)
             .collect(toSet()));
     return orderableDto;
   }

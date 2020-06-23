@@ -1037,7 +1037,6 @@ public class RequisitionService {
   // [change reason]: provide associated approved product
   public ApproveProductsAggregator getApproveProduct(FacilityDto facility,
       ProgramDto program, RequisitionTemplate template) {
-    approvedProductReferenceDataService.getApprovedProducts(facility.getId(), program.getId());
     ApproveProductsAggregator approveProductsAggregator = approvedProductReferenceDataService
         .getApprovedProducts(facility.getId(), program.getId());
     Set<UUID> associateProgramIds = getAssociateProgram(template.getId());
@@ -1047,15 +1046,13 @@ public class RequisitionService {
     List<ApprovedProductDto> approvedProducts = approveProductsAggregator.getFullSupplyProducts();
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
         .findUserSupportedVirtualPrograms();
-    associateProgramIds.stream().forEach(associateProgram -> {
-          if (supportedVirtualPrograms.contains(associateProgram)) {
-            ApproveProductsAggregator productsAggregator = approvedProductReferenceDataService
-                .getApprovedProducts(facility.getId(), associateProgram);
-            approvedProducts.addAll(productsAggregator.getFullSupplyProducts());
-          }
-        }
-    );
-
+    associateProgramIds.forEach(associateProgram -> {
+      if (supportedVirtualPrograms.contains(associateProgram)) {
+        ApproveProductsAggregator productsAggregator = approvedProductReferenceDataService
+            .getApprovedProducts(facility.getId(), associateProgram);
+        approvedProducts.addAll(productsAggregator.getFullSupplyProducts());
+      }
+    });
     return new ApproveProductsAggregator(approvedProducts, program.getId());
   }
 
@@ -1066,7 +1063,6 @@ public class RequisitionService {
         .map(RequisitionTemplateAssociateProgram::getAssociatedProgramId)
         .collect(Collectors.toSet());
   }
-
   // [SIGLUS change end]
 
   private boolean isRequisitionNewest(Requisition requisition) {

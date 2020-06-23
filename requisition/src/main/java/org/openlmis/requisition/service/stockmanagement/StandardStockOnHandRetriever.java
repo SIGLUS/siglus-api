@@ -16,6 +16,7 @@
 package org.openlmis.requisition.service.stockmanagement;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -38,8 +39,8 @@ final class StandardStockOnHandRetriever implements StockOnHandRetriever {
   // [SIGLUS change start]
   // [change reason]: call our modify stock card.
   // private StockCardSummariesStockManagementService stockCardSummariesService;
-  private StockCardSummariesService stockCardSummariesService;
-  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
+  private final StockCardSummariesService stockCardSummariesService;
+  private final StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
   // [SIGLUS change end]
 
   private ApproveProductsAggregator products;
@@ -71,8 +72,7 @@ final class StandardStockOnHandRetriever implements StockOnHandRetriever {
     StockCardSummaries summaries = stockCardSummariesService
         .findStockCards(v2SearchParams);
     List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
-        summaries.getStockCardsForFulfillOrderables().stream()
-            .collect(Collectors.toList()),
+        new ArrayList<>(summaries.getStockCardsForFulfillOrderables()),
         summaries.getOrderableFulfillMap(),
         false);
     return dtos.stream()
