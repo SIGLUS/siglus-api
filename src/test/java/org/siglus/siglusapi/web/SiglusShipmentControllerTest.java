@@ -17,45 +17,32 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
-import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
-import org.siglus.siglusapi.service.SiglusShipmentDraftService;
+import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.siglus.siglusapi.service.SiglusShipmentService;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusShipmentDraftControllerTest {
+public class SiglusShipmentControllerTest {
 
   @InjectMocks
-  private SiglusShipmentDraftController siglusShipmentDraftController;
+  private SiglusShipmentController siglusShipmentController;
 
   @Mock
-  private SiglusShipmentDraftService siglusShipmentDraftService;
-
-  private UUID draftId = UUID.randomUUID();
+  private SiglusShipmentService siglusShipmentService;
 
   @Test
-  public void shouldCallServiceWhenUpdateShipmentDraft() {
+  public void shouldCallServiceWhenCreateShipment() {
     // given
-    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+    ShipmentDto shipmentDto = new ShipmentDto();
 
     // when
-    siglusShipmentDraftController.updateShipmentDraft(draftId, draftDto);
+    siglusShipmentController.createShipment(shipmentDto);
 
     // then
-    verify(siglusShipmentDraftService).updateShipmentDraft(draftId, draftDto);
+    verify(siglusShipmentService).createShipment(shipmentDto);
   }
-
-  @Test
-  public void shouldCallServiceWhenDeleteShipmentDraft() {
-    // when
-    siglusShipmentDraftController.deleteShipmentDraft(draftId);
-
-    // then
-    verify(siglusShipmentDraftService).deleteShipmentDraft(draftId);
-  }
-
 }

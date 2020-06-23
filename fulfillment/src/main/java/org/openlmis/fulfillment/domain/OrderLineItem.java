@@ -52,6 +52,10 @@ public class OrderLineItem extends BaseEntity {
       @AttributeOverride(name = "versionNumber", column = @Column(name = "orderableVersionNumber"))
   })
   @Getter
+  // [SIGLUS change start]
+  // [change reason]: support for skip products.
+  @Setter
+  // [SIGLUS change end]
   private VersionEntityReference orderable;
 
   @Column(nullable = false)

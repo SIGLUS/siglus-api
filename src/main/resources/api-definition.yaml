@@ -62,6 +62,17 @@ schemas:
   - basicRequisitionDtoPage: !include schemas/basicRequisitionDtoPage.json
   - orderDto: !include schemas/orderDto.json
   - shipmentDraft: !include schemas/shipmentDraft.json
+  - shipment: !include schemas/shipment.json
+  - shipmentExample: |
+      {
+          "order": {"id": "316c9b76-c90f-4040-8d53-61277112b947"},
+          "notes": "some notes",
+          "lineItems": [{
+              "orderable": {"id": "2a3484ce-4e45-46b1-901e-19a4fd770f73"},
+              "lot": {"id": "1d16ed3d-d4e5-474d-99fc-0ece0f5ddd67"},
+              "quantityShipped": 20
+          }]
+      }
 resourceTypes:
   - collection:
       get:
@@ -1489,3 +1500,33 @@ traits:
               body:
                 application/json:
                   schema: localizedMessage
+
+    /shipments:
+      post:
+        is: [ secured ]
+        description: Create a shipment. This endpoint requires SHIPMENT_EDIT right.
+        body:
+          application/json:
+            schema: shipment
+            example: shipmentExample
+        responses:
+          201:
+            description: Shipment created.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: shipment
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+          401:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
