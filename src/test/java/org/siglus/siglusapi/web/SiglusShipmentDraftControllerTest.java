@@ -15,10 +15,8 @@
 
 package org.siglus.siglusapi.web;
 
-import static com.google.common.collect.Sets.newHashSet;
 import static org.mockito.Mockito.verify;
 
-import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,7 +25,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
-import org.springframework.data.domain.Pageable;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusShipmentDraftControllerTest {
@@ -38,12 +35,7 @@ public class SiglusShipmentDraftControllerTest {
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
 
-  @Mock
-  private Pageable pageable;
-
   private UUID draftId = UUID.randomUUID();
-
-  private UUID orderId = UUID.randomUUID();
 
   @Test
   public void callServiceWhenUpdateShipmentDraft() {
@@ -55,27 +47,6 @@ public class SiglusShipmentDraftControllerTest {
 
     // then
     verify(siglusShipmentDraftService).updateShipmentDraft(draftId, draftDto);
-  }
-
-  @Test
-  public void callServiceWhenSearchShipmentDraft() {
-    // given
-    Set<String> expand = newHashSet();
-
-    // when
-    siglusShipmentDraftController.searchShipmentDraft(draftId, expand);
-
-    // then
-    verify(siglusShipmentDraftService).searchShipmentDraft(draftId, expand);
-  }
-
-  @Test
-  public void callServiceWhenSearchShipmentDrafts() {
-    // when
-    siglusShipmentDraftController.searchShipmentDrafts(orderId, pageable);
-
-    // then
-    verify(siglusShipmentDraftService).searchShipmentDrafts(orderId, pageable);
   }
 
   @Test

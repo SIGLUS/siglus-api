@@ -65,13 +65,6 @@ public final class ShipmentLineItemDto
   @Setter
   private Map<String, String> extraData;
 
-  // [SIGLUS change start]
-  // [change reason]: support for skip products.
-  @Getter
-  @Setter
-  private boolean skipped = false;
-  // [SIGLUS change end]
-
   @Override
   @JsonIgnore
   public void setOrderable(OrderableDto orderableDto) {

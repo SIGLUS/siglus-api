@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,19 +31,21 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
-import org.openlmis.referencedata.util.Pagination;
-import org.siglus.siglusapi.domain.ShipmentDraftLineItemExtension;
-import org.siglus.siglusapi.repository.ShipmentDraftLineItemExtensionRepository;
+import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
-import org.springframework.data.domain.Pageable;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusShipmentDraftServiceTest {
 
   @Captor
-  private ArgumentCaptor<List<ShipmentDraftLineItemExtension>> lineItemExtensionsArgumentCaptor;
+  private ArgumentCaptor<List<OrderLineItemExtension>> lineItemExtensionsArgumentCaptor;
 
   @InjectMocks
   private SiglusShipmentDraftService siglusShipmentDraftService;
@@ -53,10 +54,10 @@ public class SiglusShipmentDraftServiceTest {
   private SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
 
   @Mock
-  private ShipmentDraftLineItemExtensionRepository lineItemExtensionRepository;
+  private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
   @Mock
-  private Pageable pageable;
+  private OrderRepository orderRepository;
 
   private UUID draftId = UUID.randomUUID();
 
@@ -67,129 +68,75 @@ public class SiglusShipmentDraftServiceTest {
   @Test
   public void shouldUpdateLineItemExtensionWhenUpdateShipmentDraftIfExtensionExist() {
     // given
-    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    OrderLineItemDto lineItemDto = new OrderLineItemDto();
     lineItemDto.setId(lineItemId);
     lineItemDto.setSkipped(true);
+    OrderObjectReferenceDto order = new OrderObjectReferenceDto(orderId);
+    order.setOrderLineItems(newArrayList(lineItemDto));
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    draftDto.setLineItems(newArrayList(lineItemDto));
-    ShipmentLineItemDto updatedLineItemDto = new ShipmentLineItemDto();
-    updatedLineItemDto.setId(lineItemId);
-    updatedLineItemDto.setSkipped(false);
-    ShipmentDraftDto updatedDraftDto = new ShipmentDraftDto();
-    updatedDraftDto.setLineItems(newArrayList(updatedLineItemDto));
+    draftDto.setOrder(order);
     when(siglusShipmentDraftFulfillmentService.updateShipmentDraft(draftId, draftDto))
-        .thenReturn(updatedDraftDto);
-    ShipmentDraftLineItemExtension extension = ShipmentDraftLineItemExtension.builder()
-        .shipmentDraftLineItemId(lineItemId)
+        .thenReturn(draftDto);
+    OrderLineItemExtension extension = OrderLineItemExtension.builder()
+        .orderLineItemId(lineItemId)
         .skipped(false)
         .build();
-    when(lineItemExtensionRepository.findByShipmentDraftLineItemIdIn(newHashSet(lineItemId)))
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
         .thenReturn(newArrayList(extension));
 
     // when
-    updatedDraftDto = siglusShipmentDraftService.updateShipmentDraft(draftId, draftDto);
+    siglusShipmentDraftService.updateShipmentDraft(draftId, draftDto);
 
     // then
     verify(lineItemExtensionRepository).save(lineItemExtensionsArgumentCaptor.capture());
-    List<ShipmentDraftLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
+    List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
         .getValue();
     lineItemExtensions.forEach(lineItemExtension -> assertTrue(lineItemExtension.isSkipped()));
-    updatedDraftDto.lineItems().forEach(lineItem -> assertTrue(lineItem.isSkipped()));
   }
 
   @Test
   public void shouldCreateLineItemExtensionWhenUpdateShipmentDraftIfExtensionNotExist() {
     // given
-    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    OrderLineItemDto lineItemDto = new OrderLineItemDto();
     lineItemDto.setId(lineItemId);
     lineItemDto.setSkipped(true);
+    OrderObjectReferenceDto order = new OrderObjectReferenceDto(orderId);
+    order.setOrderLineItems(newArrayList(lineItemDto));
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    draftDto.setLineItems(newArrayList(lineItemDto));
-    ShipmentLineItemDto updatedLineItemDto = new ShipmentLineItemDto();
-    updatedLineItemDto.setId(lineItemId);
-    updatedLineItemDto.setSkipped(false);
-    ShipmentDraftDto updatedDraftDto = new ShipmentDraftDto();
-    updatedDraftDto.setLineItems(newArrayList(updatedLineItemDto));
+    draftDto.setOrder(order);
     when(siglusShipmentDraftFulfillmentService.updateShipmentDraft(draftId, draftDto))
-        .thenReturn(updatedDraftDto);
-    when(lineItemExtensionRepository.findByShipmentDraftLineItemIdIn(newHashSet(lineItemId)))
+        .thenReturn(draftDto);
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
         .thenReturn(newArrayList());
 
     // when
-    updatedDraftDto = siglusShipmentDraftService.updateShipmentDraft(draftId, draftDto);
+    siglusShipmentDraftService.updateShipmentDraft(draftId, draftDto);
 
     // then
     verify(lineItemExtensionRepository).save(lineItemExtensionsArgumentCaptor.capture());
-    List<ShipmentDraftLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
+    List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
         .getValue();
     lineItemExtensions.forEach(lineItemExtension -> assertTrue(lineItemExtension.isSkipped()));
-    updatedDraftDto.lineItems().forEach(lineItem -> assertTrue(lineItem.isSkipped()));
-  }
-
-  @Test
-  public void shouldSetLineItemExtensionWhenSearchShipmentDrafts() {
-    // given
-    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
-    lineItemDto.setId(lineItemId);
-    lineItemDto.setSkipped(false);
-    ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    draftDto.setLineItems(newArrayList(lineItemDto));
-    when(siglusShipmentDraftFulfillmentService.searchShipmentDrafts(orderId, pageable))
-        .thenReturn(Pagination.getPage(newArrayList(draftDto)));
-    ShipmentDraftLineItemExtension extension = ShipmentDraftLineItemExtension.builder()
-        .shipmentDraftLineItemId(lineItemId)
-        .skipped(true)
-        .build();
-    when(lineItemExtensionRepository.findByShipmentDraftLineItemIdIn(newHashSet(lineItemId)))
-        .thenReturn(newArrayList(extension));
-
-    // when
-    siglusShipmentDraftService.searchShipmentDrafts(orderId, pageable);
-
-    // then
-    assertTrue(lineItemDto.isSkipped());
-  }
-
-  @Test
-  public void shouldSetLineItemExtensionWhenSearchShipmentDraft() {
-    // given
-    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
-    lineItemDto.setId(lineItemId);
-    lineItemDto.setSkipped(false);
-    ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    draftDto.setLineItems(newArrayList(lineItemDto));
-    final Set<String> expand = newHashSet();
-    when(siglusShipmentDraftFulfillmentService.searchShipmentDraft(draftId, expand))
-        .thenReturn(draftDto);
-    ShipmentDraftLineItemExtension extension = ShipmentDraftLineItemExtension.builder()
-        .shipmentDraftLineItemId(lineItemId)
-        .skipped(true)
-        .build();
-    when(lineItemExtensionRepository.findByShipmentDraftLineItemIdIn(newHashSet(lineItemId)))
-        .thenReturn(newArrayList(extension));
-
-    // when
-    siglusShipmentDraftService.searchShipmentDraft(draftId, expand);
-
-    // then
-    assertTrue(lineItemDto.isSkipped());
   }
 
   @Test
   public void shouldDeleteLineItemExtensionWhenDeleteShipmentDraft() {
     // given
-    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
-    lineItemDto.setId(lineItemId);
-    lineItemDto.setSkipped(false);
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
-    draftDto.setLineItems(newArrayList(lineItemDto));
-    when(siglusShipmentDraftFulfillmentService.searchShipmentDraft(draftId, null))
+    draftDto.setOrder(orderDto);
+    when(siglusShipmentDraftFulfillmentService.searchShipmentDraft(draftId))
         .thenReturn(draftDto);
-    ShipmentDraftLineItemExtension extension = ShipmentDraftLineItemExtension.builder()
-        .shipmentDraftLineItemId(lineItemId)
+    OrderLineItem lineItem = new OrderLineItem();
+    lineItem.setId(lineItemId);
+    Order order = new Order();
+    order.setOrderLineItems(newArrayList(lineItem));
+    when(orderRepository.findOne(orderId)).thenReturn(order);
+    OrderLineItemExtension extension = OrderLineItemExtension.builder()
+        .orderLineItemId(lineItemId)
         .skipped(true)
         .build();
-    when(lineItemExtensionRepository.findByShipmentDraftLineItemIdIn(newHashSet(lineItemId)))
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
         .thenReturn(newArrayList(extension));
 
     // when
@@ -197,7 +144,7 @@ public class SiglusShipmentDraftServiceTest {
 
     // then
     verify(lineItemExtensionRepository).delete(lineItemExtensionsArgumentCaptor.capture());
-    List<ShipmentDraftLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
+    List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
         .getValue();
     assertEquals(1, lineItemExtensions.size());
   }

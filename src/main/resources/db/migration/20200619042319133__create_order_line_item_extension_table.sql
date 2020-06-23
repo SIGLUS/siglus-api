@@ -2,9 +2,9 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-CREATE TABLE siglusintegration.shipment_draft_line_item_extension
+CREATE TABLE siglusintegration.order_line_item_extension
 (
     id uuid PRIMARY KEY,
-    shipmentdraftlineitemid uuid NOT NULL UNIQUE,
+    orderlineitemid uuid NOT NULL UNIQUE,
     skipped boolean DEFAULT false
 );

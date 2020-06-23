@@ -36,6 +36,11 @@ public class OrderLineItemDto implements OrderLineItem.Importer, OrderLineItem.E
   private Long orderedQuantity;
   private Long totalDispensingUnits;
 
+  // [SIGLUS change start]
+  // [change reason]: support for skip products.
+  private boolean skipped = false;
+  // [SIGLUS change end]
+
   /**
    * Create new instance of TemplateParameterDto based on given {@link OrderLineItem}.
    * @param line instance of Template

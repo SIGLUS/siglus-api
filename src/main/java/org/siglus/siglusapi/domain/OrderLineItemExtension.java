@@ -13,17 +13,27 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.domain;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ShipmentDraftLineItemExtension;
-import org.springframework.data.jpa.repository.JpaRepository;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-public interface ShipmentDraftLineItemExtensionRepository extends
-    JpaRepository<ShipmentDraftLineItemExtension, UUID> {
+@Entity
+@Data
+@Builder
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "order_line_item_extension", schema = "siglusintegration")
+public class OrderLineItemExtension extends BaseEntity {
 
-  List<ShipmentDraftLineItemExtension> findByShipmentDraftLineItemIdIn(
-      Collection<UUID> shipmentDraftLineItemId);
+  private UUID orderLineItemId;
+
+  private boolean skipped;
 }

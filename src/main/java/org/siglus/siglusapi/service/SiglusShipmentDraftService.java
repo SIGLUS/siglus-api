@@ -23,16 +23,17 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
-import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
-import org.siglus.siglusapi.domain.ShipmentDraftLineItemExtension;
-import org.siglus.siglusapi.repository.ShipmentDraftLineItemExtensionRepository;
+import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SiglusShipmentDraftService {
@@ -41,49 +42,35 @@ public class SiglusShipmentDraftService {
   private SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
 
   @Autowired
-  private ShipmentDraftLineItemExtensionRepository lineItemExtensionRepository;
+  private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
+  @Autowired
+  private OrderRepository orderRepository;
+
+  @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
-    ShipmentDraftDto updatedDraftDto = siglusShipmentDraftFulfillmentService
-        .updateShipmentDraft(id, draftDto);
-    updateLineItemExtension(updatedDraftDto, draftDto);
-    return updatedDraftDto;
+    updateOrderLineItemExtension(draftDto);
+    return siglusShipmentDraftFulfillmentService.updateShipmentDraft(id, draftDto);
   }
 
-  public Page<ShipmentDraftDto> searchShipmentDrafts(UUID orderId, Pageable pageable) {
-    Page<ShipmentDraftDto> page = siglusShipmentDraftFulfillmentService
-        .searchShipmentDrafts(orderId, pageable);
-    setLineItemExtension(page.getContent());
-    return page;
-  }
-
-  public ShipmentDraftDto searchShipmentDraft(UUID id, Set<String> expand) {
-    ShipmentDraftDto draftDto = siglusShipmentDraftFulfillmentService
-        .searchShipmentDraft(id, expand);
-    setLineItemExtension(newArrayList(draftDto));
-    return draftDto;
-  }
-
+  @Transactional
   public void deleteShipmentDraft(UUID id) {
-    ShipmentDraftDto draftDto = siglusShipmentDraftFulfillmentService
-        .searchShipmentDraft(id, null);
+    deleteOrderLineItemExtension(id);
     siglusShipmentDraftFulfillmentService.deleteShipmentDraft(id);
-    deleteLineItemExtension(draftDto);
   }
 
-  private void updateLineItemExtension(ShipmentDraftDto updatedDraftDto,
-      ShipmentDraftDto draftDto) {
-    List<ShipmentLineItemDto> lineItems = updatedDraftDto.lineItems();
-    Set<UUID> lineItemIds = lineItems.stream().map(Importer::getId).collect(Collectors.toSet());
-    Map<UUID, ShipmentDraftLineItemExtension> lineItemExtensionMap = lineItemExtensionRepository
-        .findByShipmentDraftLineItemIdIn(lineItemIds).stream()
-        .collect(toMap(ShipmentDraftLineItemExtension::getShipmentDraftLineItemId,
-            extension -> extension));
-    Map<UUID, Boolean> lineItemSkippedMap = draftDto.lineItems().stream().collect(toMap(
-        ShipmentLineItemDto::getId, ShipmentLineItemDto::isSkipped));
-    List<ShipmentDraftLineItemExtension> extensionsToUpdate = newArrayList();
+  private void updateOrderLineItemExtension(ShipmentDraftDto draftDto) {
+    List<OrderLineItemDto> lineItems = draftDto.getOrder().getOrderLineItems();
+    Set<UUID> lineItemIds = lineItems.stream().map(OrderLineItemDto::getId)
+        .collect(Collectors.toSet());
+    Map<UUID, OrderLineItemExtension> lineItemExtensionMap = lineItemExtensionRepository
+        .findByOrderLineItemIdIn(lineItemIds).stream()
+        .collect(toMap(OrderLineItemExtension::getOrderLineItemId, extension -> extension));
+    Map<UUID, Boolean> lineItemSkippedMap = lineItems.stream()
+        .collect(toMap(OrderLineItemDto::getId, OrderLineItemDto::isSkipped));
+    List<OrderLineItemExtension> extensionsToUpdate = newArrayList();
     lineItems.forEach(lineItem -> {
-      ShipmentDraftLineItemExtension extension = lineItemExtensionMap.get(lineItem.getId());
+      OrderLineItemExtension extension = lineItemExtensionMap.get(lineItem.getId());
       boolean skipped = lineItemSkippedMap.get(lineItem.getId());
       lineItem.setSkipped(skipped);
       if (null != extension) {
@@ -91,8 +78,8 @@ public class SiglusShipmentDraftService {
         extensionsToUpdate.add(extension);
       } else {
         extensionsToUpdate.add(
-            ShipmentDraftLineItemExtension.builder()
-                .shipmentDraftLineItemId(lineItem.getId())
+            OrderLineItemExtension.builder()
+                .orderLineItemId(lineItem.getId())
                 .skipped(lineItem.isSkipped())
                 .build());
       }
@@ -100,28 +87,16 @@ public class SiglusShipmentDraftService {
     lineItemExtensionRepository.save(extensionsToUpdate);
   }
 
-  private void setLineItemExtension(List<ShipmentDraftDto> draftDtos) {
-    draftDtos.forEach(draftDto -> {
-      List<ShipmentLineItemDto> lineItems = draftDto.lineItems();
-      Set<UUID> lineItemIds = lineItems.stream().map(Importer::getId).collect(Collectors.toSet());
-      Map<UUID, ShipmentDraftLineItemExtension> lineItemExtensionMap = lineItemExtensionRepository
-          .findByShipmentDraftLineItemIdIn(lineItemIds).stream()
-          .collect(toMap(ShipmentDraftLineItemExtension::getShipmentDraftLineItemId,
-              extension -> extension));
-      lineItems.forEach(lineItem -> {
-        ShipmentDraftLineItemExtension extension = lineItemExtensionMap.get(lineItem.getId());
-        if (null != extension) {
-          lineItem.setSkipped(extension.isSkipped());
-        }
-      });
-    });
-  }
-
-  private void deleteLineItemExtension(ShipmentDraftDto draftDto) {
-    List<ShipmentLineItemDto> lineItems = draftDto.lineItems();
-    Set<UUID> lineItemIds = lineItems.stream().map(Importer::getId).collect(Collectors.toSet());
-    List<ShipmentDraftLineItemExtension> extensions = lineItemExtensionRepository
-        .findByShipmentDraftLineItemIdIn(lineItemIds);
+  private void deleteOrderLineItemExtension(UUID id) {
+    ShipmentDraftDto draftDto = siglusShipmentDraftFulfillmentService
+        .searchShipmentDraft(id);
+    UUID orderId = draftDto.getOrder().getId();
+    Order order = orderRepository.findOne(orderId);
+    List<OrderLineItem> lineItems = order.getOrderLineItems();
+    Set<UUID> lineItemIds = lineItems.stream().map(OrderLineItem::getId)
+        .collect(Collectors.toSet());
+    List<OrderLineItemExtension> extensions = lineItemExtensionRepository
+        .findByOrderLineItemIdIn(lineItemIds);
     lineItemExtensionRepository.delete(extensions);
   }
 

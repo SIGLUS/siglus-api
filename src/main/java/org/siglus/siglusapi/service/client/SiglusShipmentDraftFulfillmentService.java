@@ -15,16 +15,9 @@
 
 package org.siglus.siglusapi.service.client;
 
-import static org.siglus.siglusapi.constant.FieldConstants.EXPAND;
-import static org.siglus.siglusapi.constant.FieldConstants.ORDER_ID;
-
-import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.stockmanagement.util.RequestParameters;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -50,16 +43,8 @@ public class SiglusShipmentDraftFulfillmentService extends
     return put(id.toString(), draftDto, getResultClass(), true);
   }
 
-  public Page<ShipmentDraftDto> searchShipmentDrafts(UUID orderId, Pageable pageable) {
-    RequestParameters queryParams = RequestParameters.init()
-        .set(ORDER_ID, orderId)
-        .setPage(pageable);
-    return getPage("", queryParams, null, HttpMethod.GET, getResultClass(), true);
-  }
-
-  public ShipmentDraftDto searchShipmentDraft(UUID id, Set<String> expand) {
-    RequestParameters queryParams = RequestParameters.init().set(EXPAND, expand);
-    return findOne(id.toString(), queryParams, true);
+  public ShipmentDraftDto searchShipmentDraft(UUID id) {
+    return findOne(id.toString(), RequestParameters.init(), true);
   }
 
   public void deleteShipmentDraft(UUID id) {

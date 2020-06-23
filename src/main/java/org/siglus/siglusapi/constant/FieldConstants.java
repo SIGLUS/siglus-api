@@ -31,8 +31,6 @@ public class FieldConstants {
 
   public static final String ORDERABLE_ID = "orderableId";
 
-  public static final String ORDER_ID = "orderId";
-
   public static final String REASON_TYPE = "reasonType";
 
   public static final String REASON = "reason";
@@ -57,5 +55,4 @@ public class FieldConstants {
 
   public static final String IS_BASIC = "isBasic";
 
-  public static final String EXPAND = "expand";
 }
