@@ -1419,6 +1419,22 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+      put:
+        is: [ secured ]
+        description: Update order
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: orderDto
+          404:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
 
     /orders/createLineItem:
       post:

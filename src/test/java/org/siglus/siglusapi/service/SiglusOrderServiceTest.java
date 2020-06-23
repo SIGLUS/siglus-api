@@ -34,11 +34,15 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
+import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -100,6 +104,12 @@ public class SiglusOrderServiceTest {
   @Mock
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
+  @Mock
+  private OrderRepository orderRepository;
+
+  @Mock
+  private FulfillmentOrderDtoBuilder fulfillmentOrderDtoBuilder;
+
   @InjectMocks
   private SiglusOrderService siglusOrderService;
 
@@ -142,7 +152,7 @@ public class SiglusOrderServiceTest {
         .orderLineItemId(lineItemId)
         .skipped(true)
         .build();
-    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn((newHashSet(lineItemId))))
         .thenReturn(newArrayList(extension));
 
     // when
@@ -175,6 +185,21 @@ public class SiglusOrderServiceTest {
     assertEquals(1, response.size());
     assertEquals(orderableId1, lineItemDto.getOrderLineItem().getOrderable().getId());
     assertEquals(lotId, lineItemDto.getLots().get(0).getId());
+  }
+
+  @Test
+  public void shouldUpdateOrderLineItem() {
+    // given
+    when(orderRepository.findOne(orderId)).thenReturn(createOrder());
+    when(orderRepository.save(any(Order.class))).thenReturn(createSavedOrder());
+    when(fulfillmentOrderDtoBuilder.build(any())).thenReturn(createOrderDto());
+    // when
+    OrderDto response = siglusOrderService.updateOrderLineItems(orderId,
+        createOrderDto());
+
+    // then
+    assertEquals(1, response.getOrderLineItems().size());
+    assertEquals(orderableId1, response.getOrderLineItems().get(0).getOrderableIdentity().getId());
   }
 
   private ApproveProductsAggregator createApproverAggregator() {
@@ -219,9 +244,11 @@ public class SiglusOrderServiceTest {
     order.setId(orderId);
     order.setExternalId(requisitionId);
     order.setCreatedBy(createUser(approverId, approverFacilityId));
-    OrderLineItemDto lineItemDto = new OrderLineItemDto();
-    lineItemDto.setId(lineItemId);
-    order.setOrderLineItems(newArrayList(lineItemDto));
+    OrderLineItemDto orderLineItemDto = new OrderLineItemDto();
+    orderLineItemDto.setId(lineItemId);
+    orderLineItemDto.setOrderable(createOrderableDto(orderableId1));
+    orderLineItemDto.setOrderedQuantity(1L);
+    order.setOrderLineItems(newArrayList(orderLineItemDto));
     return order;
   }
 
@@ -305,4 +332,19 @@ public class SiglusOrderServiceTest {
     return meta;
   }
 
+  private Order createOrder() {
+    Order order = new Order();
+    List<OrderLineItem> list = new ArrayList<>();
+    order.setOrderLineItems(list);
+    return order;
+  }
+
+  private Order createSavedOrder() {
+    Order order = createOrder();
+    OrderLineItemDto orderLineItemDto = new OrderLineItemDto();
+    orderLineItemDto.setOrderable(createOrderableDto(orderableId1));
+    orderLineItemDto.setOrderedQuantity(1L);
+    order.getOrderLineItems().add(OrderLineItem.newInstance(orderLineItemDto));
+    return order;
+  }
 }

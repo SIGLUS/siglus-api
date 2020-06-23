@@ -33,12 +33,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.ResourceNames;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
+import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -100,6 +103,12 @@ public class SiglusOrderService {
   @Autowired
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
+  @Autowired
+  private OrderRepository orderRepository;
+
+  @Autowired
+  private FulfillmentOrderDtoBuilder fulfillmentOrderDtoBuilder;
+
   @Value("${service.url}")
   private String serviceUrl;
 
@@ -122,6 +131,23 @@ public class SiglusOrderService {
         .filter(orderableMap::containsKey)
         .map(orderableId -> buildOrderLineItem(summaryMap, orderableMap, orderableId))
         .collect(toList());
+  }
+
+  public OrderDto updateOrderLineItems(UUID orderId, OrderDto orderDto) {
+    Order order = orderRepository.findOne(orderId);
+    List<OrderLineItem> orderLineItems = order.getOrderLineItems();
+
+    orderLineItems.clear();
+    orderDto.getOrderLineItems().stream()
+        .map(OrderLineItem::newInstance).forEach(orderLineItem -> {
+          orderLineItem.setOrder(order);
+          orderLineItems.add(orderLineItem);
+        });
+
+    order.setOrderLineItems(orderLineItems);
+
+    Order saved = orderRepository.save(order);
+    return fulfillmentOrderDtoBuilder.build(saved);
   }
 
   private SiglusOrderLineItemDto buildOrderLineItem(Map<UUID, StockCardSummaryV2Dto> summaryMap,
