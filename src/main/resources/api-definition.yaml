@@ -1417,6 +1417,27 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /orders/createLineItem:
+      post:
+        is: [ secured, idempotent ]
+        description: create LineItem for emergency requisition.
+        responses:
+          "201":
+            body:
+              application/json:
+          "400":
+            body:
+              application/json:
+                schema: localizedMessage
+          "403":
+            body:
+              application/json:
+                schema: localizedMessage
+          "409":
+            body:
+              application/json:
+                schema: localizedMessage
+
     /shipmentDrafts:
       get:
         is: [ secured, paginated ]

@@ -38,6 +38,7 @@ import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramOrderableDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
+import org.openlmis.fulfillment.web.util.MetadataDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -226,6 +227,7 @@ public class SiglusOrderService {
     orderableDto.setPrograms(sourceDto.getPrograms().stream()
             .map(this::convertProgramOrderable)
             .collect(toSet()));
+    orderableDto.setMeta(convertMetadataDto(sourceDto.getMeta()));
     return orderableDto;
   }
 
@@ -235,5 +237,11 @@ public class SiglusOrderService {
         new org.openlmis.requisition.dto.ProgramOrderableDto();
     BeanUtils.copyProperties(sourceProgram, program);
     return program;
+  }
+
+  private org.openlmis.requisition.dto.MetadataDto convertMetadataDto(MetadataDto sourceMeta) {
+    org.openlmis.requisition.dto.MetadataDto meta = new org.openlmis.requisition.dto.MetadataDto();
+    BeanUtils.copyProperties(sourceMeta, meta);
+    return meta;
   }
 }
