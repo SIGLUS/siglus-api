@@ -383,11 +383,11 @@ public class SiglusRequisitionService {
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     List<UUID> ids = findLineItemIds(requisition);
     siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
-    log.info("find line item extension", ids);
+    log.info("find line item extension: {}", ids);
     List<RequisitionLineItemExtension> extensions = ids.isEmpty() ? new ArrayList<>() :
         lineItemExtensionRepository.findLineItems(ids);
     if (!extensions.isEmpty()) {
-      log.info("delete line item extension", extensions);
+      log.info("delete line item extension: {}", extensions);
       lineItemExtensionRepository.delete(extensions);
     }
     siglusUsageReportService.deleteUsageReport(requisitionId);
@@ -576,7 +576,7 @@ public class SiglusRequisitionService {
         .map(Importer::getId)
         .collect(Collectors.toList());
     if (!lineItemsId.isEmpty()) {
-      log.info("find line item extension", lineItemsId);
+      log.info("find line item extension: {}", lineItemsId);
       List<RequisitionLineItemExtension> lineItemExtension =
           lineItemExtensionRepository.findLineItems(lineItemsId);
       lineItems.forEach(lineItem -> {

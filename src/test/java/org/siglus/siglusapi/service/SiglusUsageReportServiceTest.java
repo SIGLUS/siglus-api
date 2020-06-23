@@ -248,7 +248,7 @@ public class SiglusUsageReportServiceTest {
   }
 
   @Test
-  public void shouldEqualNullIfColumnIsUsageInput() {
+  public void shouldReturnEqualNullIfColumnIsUsageInput() {
     // given
     extensionDto.setEnableKitUsage(true);
     requisitionTemplateDto.setExtension(extensionDto);
@@ -268,7 +268,7 @@ public class SiglusUsageReportServiceTest {
   }
 
   @Test
-  public void shouldCalculateKitValueIfColumnIsStockCard() {
+  public void shouldReturnCalculatedKitValueIfColumnIsStockCard() {
     // given
     extensionDto.setEnableKitUsage(true);
     requisitionTemplateDto.setExtension(extensionDto);
