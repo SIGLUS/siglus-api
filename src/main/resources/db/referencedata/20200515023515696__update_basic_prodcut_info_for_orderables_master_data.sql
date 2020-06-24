@@ -1,6 +1,0 @@
--- WHEN COMMITTING OR REVIEWING THIS FILE: Make sure that the timestamp in the file name (that serves as a version) is the latest timestamp, and that no new migration have been added in the meanwhile.
--- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
--- Migrations should NOT BE EDITED. Add a new migration to apply changes.
-
-UPDATE referencedata.orderables SET extradata = '{"isBasic": true}' WHERE code IN(
-'02A01','02E02','04B04Z','04B07Z','04B05Z','04F0XX','04B07','06A07Y','07A03','07A06','07D06','08A02','08A04','08A08','08A07','08F01','08H03','08N06','08N01Z','08K04','08N01','08N04Z','08R01','08O0XZ','08O13','11A19','12A0ZX','12C04','12D1ZZ','14A03Z','08O05','22A05','22A07','15C08','04B05','20A0Y','10A07','04F0XY','22A06','17C07Trac','18C05','20A08Z','20A09ZY','23D02','23C03','23C01','22A08','26B07','25A04','07A02','13A01','08A07X','23B01','13A02','04A03Z','08I01','08I03','08A06','11A22','11A23','05A09','23A02Y','08Q07','24W026','24B08','10A07Z','24W031','24W032','24W034','26A01','24W033','24W035','20A03','05A01','04F07Z','04F07','04F06','04F06W','04F08Z','26B02','25A03','08A01','08F06','08G01','12D0XY','12D0XZ','27A01','25C01','25B07','25B06','24W028','24W029','24W030','24W027','24W025','08O05Z','26A02','08O05Y','08O05X');
