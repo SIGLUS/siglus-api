@@ -57,6 +57,9 @@ public class SiglusShipmentDraftServiceTest {
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
   @Mock
+  private SiglusOrderService siglusOrderService;
+
+  @Mock
   private OrderRepository orderRepository;
 
   private UUID draftId = UUID.randomUUID();
@@ -83,6 +86,7 @@ public class SiglusShipmentDraftServiceTest {
         .build();
     when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
         .thenReturn(newArrayList(extension));
+    when(siglusOrderService.updateOrderLineItems(draftDto)).thenReturn(newHashSet(lineItemId));
 
     // when
     siglusShipmentDraftService.updateShipmentDraft(draftId, draftDto);
@@ -108,6 +112,7 @@ public class SiglusShipmentDraftServiceTest {
         .thenReturn(draftDto);
     when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
         .thenReturn(newArrayList());
+    when(siglusOrderService.updateOrderLineItems(draftDto)).thenReturn(newHashSet(lineItemId));
 
     // when
     siglusShipmentDraftService.updateShipmentDraft(draftId, draftDto);

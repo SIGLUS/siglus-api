@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 
 import com.google.common.collect.Sets;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,7 +42,7 @@ import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableRefere
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
-import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
+import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -106,9 +107,6 @@ public class SiglusOrderService {
   @Autowired
   private OrderRepository orderRepository;
 
-  @Autowired
-  private FulfillmentOrderDtoBuilder fulfillmentOrderDtoBuilder;
-
   @Value("${service.url}")
   private String serviceUrl;
 
@@ -133,21 +131,42 @@ public class SiglusOrderService {
         .collect(toList());
   }
 
-  public OrderDto updateOrderLineItems(UUID orderId, OrderDto orderDto) {
-    Order order = orderRepository.findOne(orderId);
+  // manually fill no-id lineitem
+  public Set<UUID> updateOrderLineItems(ShipmentDraftDto draftDto) {
+    Order order = orderRepository.findOne(draftDto.getOrder().getId());
     List<OrderLineItem> orderLineItems = order.getOrderLineItems();
+    Set<UUID> addedOrderableIds = new HashSet<>();
 
-    orderLineItems.clear();
-    orderDto.getOrderLineItems().stream()
+    draftDto.getOrder().getOrderLineItems().stream()
+        .filter(orderLineItemDto -> orderLineItemDto.getId() == null)
         .map(OrderLineItem::newInstance).forEach(orderLineItem -> {
           orderLineItem.setOrder(order);
           orderLineItems.add(orderLineItem);
+          addedOrderableIds.add(orderLineItem.getOrderable().getId());
         });
 
-    order.setOrderLineItems(orderLineItems);
+    if (addedOrderableIds.size() == 0) {
+      return Collections.emptySet();
+    }
 
     Order saved = orderRepository.save(order);
-    return fulfillmentOrderDtoBuilder.build(saved);
+    Set<UUID> addedLineItemIds = new HashSet<>();
+    // orderable-id : lineItem-id
+    Map<UUID, UUID> addedLineItemMap = saved.getOrderLineItems()
+        .stream().collect(toMap(
+            orderLineItem -> orderLineItem.getOrderable().getId(),
+            orderLineItem -> orderLineItem.getId()));
+
+    draftDto.getOrder().getOrderLineItems().forEach(orderLineItemDto -> {
+      if (orderLineItemDto.getId() == null) {
+        UUID orderableId = orderLineItemDto.getOrderable().getId();
+        UUID lineItemId = addedLineItemMap.get(orderableId);
+        orderLineItemDto.setId(lineItemId);
+        addedLineItemIds.add(lineItemId);
+      }
+    });
+
+    return addedLineItemIds;
   }
 
   private SiglusOrderLineItemDto buildOrderLineItem(Map<UUID, StockCardSummaryV2Dto> summaryMap,
@@ -262,6 +281,7 @@ public class SiglusOrderService {
       OrderLineItemExtension extension = lineItemExtensionMap.get(lineItem.getId());
       if (null != extension) {
         lineItem.setSkipped(extension.isSkipped());
+        lineItem.setAdded(extension.isAdded());
       }
     });
   }

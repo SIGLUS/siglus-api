@@ -187,21 +187,6 @@ public class SiglusOrderServiceTest {
     assertEquals(lotId, lineItemDto.getLots().get(0).getId());
   }
 
-  @Test
-  public void shouldUpdateOrderLineItem() {
-    // given
-    when(orderRepository.findOne(orderId)).thenReturn(createOrder());
-    when(orderRepository.save(any(Order.class))).thenReturn(createSavedOrder());
-    when(fulfillmentOrderDtoBuilder.build(any())).thenReturn(createOrderDto());
-    // when
-    OrderDto response = siglusOrderService.updateOrderLineItems(orderId,
-        createOrderDto());
-
-    // then
-    assertEquals(1, response.getOrderLineItems().size());
-    assertEquals(orderableId1, response.getOrderLineItems().get(0).getOrderableIdentity().getId());
-  }
-
   private ApproveProductsAggregator createApproverAggregator() {
     ApprovedProductDto productDto = createApprovedProductDto(orderableId1);
     List<ApprovedProductDto> list = new ArrayList<>();

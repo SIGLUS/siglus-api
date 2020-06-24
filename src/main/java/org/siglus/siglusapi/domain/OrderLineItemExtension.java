@@ -36,4 +36,6 @@ public class OrderLineItemExtension extends BaseEntity {
   private UUID orderLineItemId;
 
   private boolean skipped;
+
+  private boolean added;
 }

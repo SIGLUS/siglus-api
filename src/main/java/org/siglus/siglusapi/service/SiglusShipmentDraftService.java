@@ -47,6 +47,9 @@ public class SiglusShipmentDraftService {
   @Autowired
   private OrderRepository orderRepository;
 
+  @Autowired
+  private SiglusOrderService siglusOrderService;
+
   @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
     updateOrderLineItemExtension(draftDto);
@@ -60,6 +63,8 @@ public class SiglusShipmentDraftService {
   }
 
   private void updateOrderLineItemExtension(ShipmentDraftDto draftDto) {
+    Set<UUID> addedLineItemIds = siglusOrderService.updateOrderLineItems(draftDto);
+
     List<OrderLineItemDto> lineItems = draftDto.getOrder().getOrderLineItems();
     Set<UUID> lineItemIds = lineItems.stream().map(OrderLineItemDto::getId)
         .collect(Collectors.toSet());
@@ -75,12 +80,14 @@ public class SiglusShipmentDraftService {
       lineItem.setSkipped(skipped);
       if (null != extension) {
         extension.setSkipped(lineItem.isSkipped());
+        extension.setAdded(addedLineItemIds.contains(lineItem.getId()));
         extensionsToUpdate.add(extension);
       } else {
         extensionsToUpdate.add(
             OrderLineItemExtension.builder()
                 .orderLineItemId(lineItem.getId())
                 .skipped(lineItem.isSkipped())
+                .added(addedLineItemIds.contains(lineItem.getId()))
                 .build());
       }
     });

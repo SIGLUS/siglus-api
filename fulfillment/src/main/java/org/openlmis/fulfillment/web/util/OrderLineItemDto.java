@@ -37,8 +37,9 @@ public class OrderLineItemDto implements OrderLineItem.Importer, OrderLineItem.E
   private Long totalDispensingUnits;
 
   // [SIGLUS change start]
-  // [change reason]: support for skip products.
+  // [change reason]: support for skip & added products.
   private boolean skipped = false;
+  private boolean added = false;
   // [SIGLUS change end]
 
   /**
