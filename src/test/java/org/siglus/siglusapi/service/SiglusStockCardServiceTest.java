@@ -35,8 +35,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
+import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
+import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
@@ -49,6 +52,7 @@ import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
 import org.springframework.beans.BeanUtils;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusStockCardServiceTest {
 
@@ -135,7 +139,7 @@ public class SiglusStockCardServiceTest {
   }
 
   @Test
-  public void shouldEqualStockCardLineItemNumeberAddFistInventoryLineItemIfOnlyOneStockCard() {
+  public void shouldEqualStockCardLineItemNumberAddFistInventoryLineItemIfOnlyOneStockCard() {
     StockCard stockCard = createStockCardOne();
     when(stockCardRepository.findByFacilityIdAndOrderableId(homefacilityId, orderableId))
         .thenReturn(Arrays.asList(stockCard));
@@ -155,7 +159,7 @@ public class SiglusStockCardServiceTest {
   }
 
   @Test
-  public void shouldEqualStockCardLineItemNumeberIfOnlyOneStockCardAndNoMatchExtension() {
+  public void shouldEqualStockCardLineItemNumberIfOnlyOneStockCardAndNoMatchExtension() {
     StockCard stockCard = createStockCardOne();
     when(stockCardRepository.findByFacilityIdAndOrderableId(homefacilityId, orderableId))
         .thenReturn(Arrays.asList(stockCard));
@@ -202,6 +206,52 @@ public class SiglusStockCardServiceTest {
     StockCardDto stockCardDto = siglusStockCardService.findStockCardByOrderable(orderableId);
     assertEquals(6, stockCardDto.getLineItems().size());
     assertEquals(Integer.valueOf(82), stockCardDto.getLineItems().get(5).getStockOnHand());
+  }
+
+  @Test
+  public void shouldDeleteReasonWhenStockContainSource() {
+    // given
+    StockCard stockCardOne = createStockCardOne();
+    Node sourceNode = new Node();
+    stockCardOne.getLineItems().get(1).setSource(sourceNode);
+    when(stockCardRepository.findOne(stockCardOne.getId())).thenReturn(stockCardOne);
+    StockCardExtension stockCardExtensionOne = StockCardExtension.builder()
+        .stockCardId(stockCardOne.getId())
+        .createDate(stockCardOne.getLineItems().get(0).getOccurredDate())
+        .build();
+    when(stockCardExtensionRepository.findByStockCardId(stockCardOne.getId()))
+        .thenReturn(stockCardExtensionOne);
+    when(stockCardStockManagementService.getStockCard(stockCardOne.getId()))
+        .thenReturn(getFromStockCard(stockCardOne));
+
+    // when
+    StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardOne.getId());
+
+    // then
+    StockCardLineItemDto lineItemDto = stockCardDto.getLineItems().get(1);
+    assertEquals(null, lineItemDto.getReason());
+  }
+
+  @Test
+  public void shouldNoDeleteReasonWhenStockLineItemNotContainSource() {
+    // given
+    StockCard stockCardOne = createStockCardOne();
+    when(stockCardRepository.findOne(stockCardOne.getId())).thenReturn(stockCardOne);
+    StockCardExtension stockCardExtensionOne = StockCardExtension.builder()
+        .stockCardId(stockCardOne.getId())
+        .createDate(stockCardOne.getLineItems().get(0).getOccurredDate())
+        .build();
+    when(stockCardExtensionRepository.findByStockCardId(stockCardOne.getId()))
+        .thenReturn(stockCardExtensionOne);
+    when(stockCardStockManagementService.getStockCard(stockCardOne.getId()))
+        .thenReturn(getFromStockCard(stockCardOne));
+
+    // when
+    StockCardDto stockCardDto = siglusStockCardService.findStockCardById(stockCardOne.getId());
+
+    // then
+    StockCardLineItemDto lineItemDto = stockCardDto.getLineItems().get(1);
+    assertEquals("CREDIT", lineItemDto.getReason().getType());
   }
 
   private StockCard createStockCardOne() {
@@ -256,6 +306,13 @@ public class SiglusStockCardServiceTest {
     dto.setLineItems(stockCard.getLineItems().stream().map(stockCardLineItem -> {
       StockCardLineItemDto lineItemDto = new StockCardLineItemDto();
       BeanUtils.copyProperties(stockCardLineItem, lineItemDto);
+      if (stockCardLineItem.getReason() != null) {
+        lineItemDto.setReason(StockCardLineItemReasonDto
+            .newInstance(stockCardLineItem.getReason()));
+      }
+      if (stockCardLineItem.getSource() != null) {
+        lineItemDto.setSource(new FacilityDto());
+      }
       return lineItemDto;
     }).collect(Collectors.toList()));
     return dto;

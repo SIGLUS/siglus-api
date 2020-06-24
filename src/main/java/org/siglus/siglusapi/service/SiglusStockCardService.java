@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -108,14 +109,20 @@ public class SiglusStockCardService {
     List<StockCardLineItemDto> calculateNewLineItemDtos =
         calculateStockOnHandByOrderable(stockCardLineItemDtos, lineItemsSource);
     addCreateInventory(calculateNewLineItemDtos, stockCards);
+    List<StockCardLineItemDto> reasonFilter = calculateNewLineItemDtos.stream().map(dto -> {
+      if (dto.getSource() != null || dto.getDestination() != null) {
+        dto.setReason(null);
+      }
+      return dto;
+    }).collect(Collectors.toList());
 
-    return createStockCardDto(stockCardDtos, calculateNewLineItemDtos, byLot);
+    return createStockCardDto(stockCardDtos, reasonFilter, byLot);
   }
 
   private List<StockCardLineItemDto> calculateStockOnHandByOrderable(
       List<StockCardLineItemDto> lineItemDtos,
       Map<UUID, StockCardLineItem> lineItemsSource) {
-    lineItemDtos.stream().forEach(stockCardLineItemDto -> {
+    lineItemDtos.forEach(stockCardLineItemDto -> {
       StockCardLineItem lineitemSource = lineItemsSource.get(stockCardLineItemDto.getId());
       stockCardLineItemDto.setProcessedDate(lineitemSource.getProcessedDate());
       stockCardLineItemDto.setStockCard(lineitemSource.getStockCard());
