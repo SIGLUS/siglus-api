@@ -17,12 +17,15 @@ package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentFulfillmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,10 +40,15 @@ public class SiglusShipmentService {
   @Autowired
   private OrderRepository orderRepository;
 
+  @Autowired
+  private OrderLineItemExtensionRepository lineItemExtensionRepository;
+
   @Transactional
   public ShipmentDto createShipment(ShipmentDto shipmentDto) {
+    Set<UUID> skippedOrderLineItemIds = getSkippedOrderLineItemIds(shipmentDto);
+    removeSkippedOrderLineItemsAndExtensions(skippedOrderLineItemIds,
+        shipmentDto.getOrder().getId());
     Set<UUID> skippedOrderableIds = getSkippedOrderableIds(shipmentDto);
-    removeSkippedOrderLineItems(skippedOrderableIds, shipmentDto.getOrder().getId());
     shipmentDto.lineItems()
         .removeIf(lineItem -> skippedOrderableIds.contains(lineItem.getOrderable().getId()));
     return siglusShipmentFulfillmentService.createShipment(shipmentDto);
@@ -48,15 +56,26 @@ public class SiglusShipmentService {
 
   private Set<UUID> getSkippedOrderableIds(ShipmentDto shipmentDto) {
     return shipmentDto.getOrder().getOrderLineItems().stream()
-          .filter(OrderLineItemDto::isSkipped)
-          .map(orderLineItemDto -> orderLineItemDto.getOrderable().getId())
-          .collect(toSet());
+        .filter(OrderLineItemDto::isSkipped)
+        .map(orderLineItemDto -> orderLineItemDto.getOrderable().getId())
+        .collect(toSet());
   }
 
-  private void removeSkippedOrderLineItems(Set<UUID> skippedOrderableIds, UUID orderId) {
+  private Set<UUID> getSkippedOrderLineItemIds(ShipmentDto shipmentDto) {
+    return shipmentDto.getOrder().getOrderLineItems().stream()
+        .filter(OrderLineItemDto::isSkipped)
+        .map(OrderLineItemDto::getId)
+        .collect(toSet());
+  }
+
+  private void removeSkippedOrderLineItemsAndExtensions(Set<UUID> skippedOrderLineItemIds,
+      UUID orderId) {
     Order order = orderRepository.findOne(orderId);
     order.getOrderLineItems().removeIf(
-        orderLineItem -> skippedOrderableIds.contains(orderLineItem.getOrderable().getId()));
+        orderLineItem -> skippedOrderLineItemIds.contains(orderLineItem.getId()));
     orderRepository.save(order);
+    List<OrderLineItemExtension> extensions = lineItemExtensionRepository
+        .findByOrderLineItemIdIn(skippedOrderLineItemIds);
+    lineItemExtensionRepository.delete(extensions);
   }
 }
