@@ -25,6 +25,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.PreRemove;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -62,6 +63,15 @@ public class OrderLineItem extends BaseEntity {
   @Getter
   @Setter
   private Long orderedQuantity;
+
+  // [SIGLUS change start]
+  // [change reason]: synchronized the relationship PERSISTED IN CURRENT SESSION
+  @PreRemove
+  private void removeFromOrder() {
+    order.getOrderLineItems()
+        .removeIf(orderLineItem -> orderLineItem.getId().equals(this.id));
+  }
+  // [SIGLUS change end]
 
   /**
    * Create new instance of OrderLineItem based on given {@link Importer}.
