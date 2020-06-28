@@ -42,9 +42,11 @@ import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
+import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -187,6 +189,38 @@ public class SiglusOrderServiceTest {
     assertEquals(lotId, lineItemDto.getLots().get(0).getId());
   }
 
+  @Test
+  public void shouldUpdateOrderLineItemsAndFillLineItemId() {
+    // given
+    ShipmentDraftDto draftDto = createShipmentDraftDto();
+    when(orderRepository.findOne(orderId)).thenReturn(createOrder());
+    when(orderRepository.save(any(Order.class))).thenReturn(createSavedOrder());
+
+    // when
+    Set<UUID> response = siglusOrderService.updateOrderLineItems(draftDto);
+
+    // then
+    assertEquals(1, response.size());
+    assertTrue(response.contains(lineItemId));
+    assertTrue(draftDto.getOrder().getOrderLineItems().get(0).getId().equals(lineItemId));
+  }
+
+  private ShipmentDraftDto createShipmentDraftDto() {
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+    draftDto.setOrder(createOrderObjectReferenceDto());
+
+    return draftDto;
+  }
+
+  private OrderObjectReferenceDto createOrderObjectReferenceDto() {
+    OrderObjectReferenceDto dto = new OrderObjectReferenceDto(orderId);
+    OrderLineItemDto orderLineItemDto = new OrderLineItemDto();
+    orderLineItemDto.setOrderable(createOrderableDto(orderableId1));
+    orderLineItemDto.setOrderedQuantity(1L);
+    dto.setOrderLineItems(newArrayList(orderLineItemDto));
+    return dto;
+  }
+
   private ApproveProductsAggregator createApproverAggregator() {
     ApprovedProductDto productDto = createApprovedProductDto(orderableId1);
     List<ApprovedProductDto> list = new ArrayList<>();
@@ -321,14 +355,16 @@ public class SiglusOrderServiceTest {
     Order order = new Order();
     List<OrderLineItem> list = new ArrayList<>();
     order.setOrderLineItems(list);
+    order.setId(orderId);
     return order;
   }
 
   private Order createSavedOrder() {
-    Order order = createOrder();
     OrderLineItemDto orderLineItemDto = new OrderLineItemDto();
     orderLineItemDto.setOrderable(createOrderableDto(orderableId1));
     orderLineItemDto.setOrderedQuantity(1L);
+    orderLineItemDto.setId(lineItemId);
+    Order order = createOrder();
     order.getOrderLineItems().add(OrderLineItem.newInstance(orderLineItemDto));
     return order;
   }

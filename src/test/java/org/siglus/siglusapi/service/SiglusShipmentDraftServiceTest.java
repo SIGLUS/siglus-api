@@ -47,6 +47,9 @@ public class SiglusShipmentDraftServiceTest {
   @Captor
   private ArgumentCaptor<List<OrderLineItemExtension>> lineItemExtensionsArgumentCaptor;
 
+  @Captor
+  private ArgumentCaptor<Order> orderCaptor;
+
   @InjectMocks
   private SiglusShipmentDraftService siglusShipmentDraftService;
 
@@ -95,7 +98,10 @@ public class SiglusShipmentDraftServiceTest {
     verify(lineItemExtensionRepository).save(lineItemExtensionsArgumentCaptor.capture());
     List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
         .getValue();
-    lineItemExtensions.forEach(lineItemExtension -> assertTrue(lineItemExtension.isSkipped()));
+    lineItemExtensions.forEach(lineItemExtension -> {
+      assertTrue(lineItemExtension.isSkipped());
+      assertTrue(lineItemExtension.isAdded());
+    });
   }
 
   @Test
@@ -121,7 +127,10 @@ public class SiglusShipmentDraftServiceTest {
     verify(lineItemExtensionRepository).save(lineItemExtensionsArgumentCaptor.capture());
     List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
         .getValue();
-    lineItemExtensions.forEach(lineItemExtension -> assertTrue(lineItemExtension.isSkipped()));
+    lineItemExtensions.forEach(lineItemExtension -> {
+      assertTrue(lineItemExtension.isSkipped());
+      assertTrue(lineItemExtension.isAdded());
+    });
   }
 
   @Test
@@ -140,6 +149,7 @@ public class SiglusShipmentDraftServiceTest {
     OrderLineItemExtension extension = OrderLineItemExtension.builder()
         .orderLineItemId(lineItemId)
         .skipped(true)
+        .added(true)
         .build();
     when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
         .thenReturn(newArrayList(extension));
@@ -149,9 +159,12 @@ public class SiglusShipmentDraftServiceTest {
 
     // then
     verify(lineItemExtensionRepository).delete(lineItemExtensionsArgumentCaptor.capture());
+    verify(orderRepository).save(orderCaptor.capture());
     List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
         .getValue();
+    Order order1 = orderCaptor.getValue();
     assertEquals(1, lineItemExtensions.size());
+    assertEquals(0, order1.getOrderLineItems().size());
   }
 
 }

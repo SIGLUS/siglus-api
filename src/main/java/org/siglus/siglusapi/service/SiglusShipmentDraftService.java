@@ -109,7 +109,7 @@ public class SiglusShipmentDraftService {
         .map(extension -> extension.getOrderLineItemId())
         .collect(Collectors.toSet());
     List<OrderLineItem> orderLineItems = order.getOrderLineItems();
-    orderLineItems.removeIf(orderLineItem -> addedLineItemIds.contains(orderLineItem));
+    orderLineItems.removeIf(orderLineItem -> addedLineItemIds.contains(orderLineItem.getId()));
     orderRepository.save(order);
     lineItemExtensionRepository.delete(extensions);
   }
