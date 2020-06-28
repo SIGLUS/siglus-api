@@ -104,6 +104,13 @@ public class SiglusShipmentDraftService {
         .collect(Collectors.toSet());
     List<OrderLineItemExtension> extensions = lineItemExtensionRepository
         .findByOrderLineItemIdIn(lineItemIds);
+    Set<UUID> addedLineItemIds = extensions.stream()
+        .filter(extension -> extension.isAdded())
+        .map(extension -> extension.getOrderLineItemId())
+        .collect(Collectors.toSet());
+    List<OrderLineItem> orderLineItems = order.getOrderLineItems();
+    orderLineItems.removeIf(orderLineItem -> addedLineItemIds.contains(orderLineItem));
+    orderRepository.save(order);
     lineItemExtensionRepository.delete(extensions);
   }
 
