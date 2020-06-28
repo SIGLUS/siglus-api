@@ -30,6 +30,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -54,11 +55,13 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.siglus.common.util.SupportedVirtualProgramsHelper;
+import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
+import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings("PMD.UnusedPrivateField")
+@SuppressWarnings({"PMD.TooManyMethods","PMD.UnusedPrivateField"})
 public class SiglusPhysicalInventoryServiceTest {
 
   @Captor
@@ -91,6 +94,9 @@ public class SiglusPhysicalInventoryServiceTest {
   @Mock
   private PhysicalInventoriesRepository physicalInventoriesRepository;
 
+  @Mock
+  private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
+
   private UUID facilityId = UUID.randomUUID();
 
   private UUID orderableId = UUID.randomUUID();
@@ -98,6 +104,10 @@ public class SiglusPhysicalInventoryServiceTest {
   private UUID programIdOne = UUID.randomUUID();
 
   private UUID programIdTwo = UUID.randomUUID();
+
+  private UUID inventoryOne = UUID.randomUUID();
+
+  private UUID inventoryTwo = UUID.randomUUID();
 
   private UUID id = UUID.randomUUID();
 
@@ -107,6 +117,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Test
   public void shouldCallV3MultipleTimesWhenCreateNewDraftForAllProducts() {
+    // given
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
     when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
@@ -114,14 +125,17 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto))
         .thenReturn(physicalInventoryDto);
 
+    // when
     siglusPhysicalInventoryService.createNewDraftForAllProducts(physicalInventoryDto);
 
+    // then
     verify(physicalInventoryStockManagementService, times(2))
         .createEmptyPhysicalInventory(physicalInventoryDto);
   }
 
   @Test
   public void shouldCallV3MultipleTimesWhenSaveDraftForAllProducts() {
+    // given
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
         .programId(programIdOne)
         .build();
@@ -148,19 +162,23 @@ public class SiglusPhysicalInventoryServiceTest {
             .build()
         ));
 
+    // when
     siglusPhysicalInventoryService.saveDraftForAllProducts(physicalInventoryDto);
 
+    // then
     verify(physicalInventoryStockManagementService, times(2))
         .savePhysicalInventory(any(), any());
   }
 
   @Test
   public void shouldCallV3MultipleTimesWhenDeletePhysicalInventoryForAllProducts() {
+    // given
     when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
         true))
         .thenReturn(newArrayList(PhysicalInventoryDto.builder()
+            .id(inventoryOne)
             .programId(programIdOne)
             .facilityId(facilityId)
             .build()
@@ -168,25 +186,32 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdTwo, facilityId,
         true))
         .thenReturn(newArrayList(PhysicalInventoryDto.builder()
+            .id(inventoryTwo)
             .programId(programIdTwo)
             .facilityId(facilityId)
             .build()
         ));
 
+    // when
     siglusPhysicalInventoryService.deletePhysicalInventoryForAllProducts(facilityId);
 
+    // then
     verify(physicalInventoryStockManagementService, times(2)).deletePhysicalInventory(any());
+    verify(lineItemsExtensionRepository,times(1)).deleteByPhysicalInventoryIdIn(any());
   }
 
   @Test
   public void shouldCallV3WhenGetPhysicalInventory() {
+    // when
     siglusPhysicalInventoryService.getPhysicalInventory(id);
 
+    // then
     verify(physicalInventoryStockManagementService).getPhysicalInventory(id);
   }
 
   @Test
   public void shouldCallV3MultipleTimesWhenGetPhysicalInventoryForAllProducts() {
+    // given
     when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
@@ -204,22 +229,113 @@ public class SiglusPhysicalInventoryServiceTest {
             .build()
         ));
 
+    // when
     siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId);
 
+    // then
     verify(physicalInventoryStockManagementService, times(2))
         .searchPhysicalInventory(any(), any(), any());
   }
 
   @Test
+  public void shouldSaveExtensionTextWhenSaveDraftForAllProducts() {
+    // given
+    PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
+        .orderableId(orderableId)
+        .programId(programIdOne)
+        .build();
+    UUID orderableIdTwo = UUID.randomUUID();
+    PhysicalInventoryLineItemDto lineItemDtoTwo = PhysicalInventoryLineItemDto.builder()
+        .orderableId(orderableIdTwo)
+        .programId(programIdOne)
+        .reasonFreeText("saveText")
+        .build();
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .programId(ALL_PRODUCTS_PROGRAM_ID)
+        .facilityId(facilityId)
+        .lineItems(newArrayList(lineItemDtoOne, lineItemDtoTwo))
+        .build();
+    when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
+        true))
+        .thenReturn(newArrayList(PhysicalInventoryDto.builder()
+            .programId(programIdOne)
+            .facilityId(facilityId)
+            .build()
+        ));
+    PhysicalInventoryLineItemsExtension extensionOne = PhysicalInventoryLineItemsExtension.builder()
+        .orderableId(orderableId)
+        .build();
+    PhysicalInventoryLineItemsExtension extensionTwo = PhysicalInventoryLineItemsExtension.builder()
+        .orderableId(orderableIdTwo)
+        .reasonFreeText("saveText")
+        .build();
+    when(lineItemsExtensionRepository.save(Arrays.asList(extensionOne, extensionTwo)))
+        .thenReturn(Arrays.asList(extensionOne, extensionTwo));
+
+    // when
+    PhysicalInventoryDto dto = siglusPhysicalInventoryService
+        .saveDraftForAllProducts(physicalInventoryDto);
+
+    // then
+    assertEquals(null, dto.getLineItems().get(0).getReasonFreeText());
+    assertEquals("saveText", dto.getLineItems().get(1).getReasonFreeText());
+  }
+
+  @Test
+  public void shouldGetExtensionTextWhenGetPhysicalInventoryForAllProducts() {
+    // given
+    when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
+        .thenReturn(Sets.newHashSet(programIdOne));
+    PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
+        .lotId(null)
+        .orderableId(orderableId)
+        .programId(programIdOne)
+        .build();
+    UUID orderableIdTwo = UUID.randomUUID();
+    PhysicalInventoryLineItemDto lineItemDtoTwo = PhysicalInventoryLineItemDto.builder()
+        .lotId(null)
+        .orderableId(orderableIdTwo)
+        .programId(programIdOne)
+        .build();
+    when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
+        true))
+        .thenReturn(newArrayList(PhysicalInventoryDto.builder()
+            .id(inventoryOne)
+            .programId(programIdOne)
+            .lineItems(newArrayList(lineItemDtoOne, lineItemDtoTwo))
+            .facilityId(facilityId)
+            .build()
+        ));
+    PhysicalInventoryLineItemsExtension extensionOne = PhysicalInventoryLineItemsExtension.builder()
+        .lotId(null)
+        .orderableId(orderableId)
+        .reasonFreeText("extension")
+        .build();
+    when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(
+        Arrays.asList(inventoryOne))).thenReturn(Arrays.asList(extensionOne));
+
+    // when
+    PhysicalInventoryDto dto = siglusPhysicalInventoryService
+        .getPhysicalInventoryForAllProducts(facilityId);
+
+    // then
+    assertEquals("extension", dto.getLineItems().get(0).getReasonFreeText());
+    assertEquals(null, dto.getLineItems().get(1).getReasonFreeText());
+  }
+
+  @Test
   public void shouldThrowExceptionWhenGetDtosForAllProductsIfSupportedVirtualProgramsIsEmpty() {
+    // then
     exception.expect(PermissionMessageException.class);
     exception.expectMessage(containsString(ERROR_PROGRAM_NOT_SUPPORTED));
 
+    // when
     siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facilityId, true, true);
   }
 
   @Test
   public void shouldCreateInitialInventoryDraftForAllProductsWhenInitialInventory() {
+    // given
     when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
         .thenReturn(Sets.newHashSet(programIdOne));
     Map<String, String> extraData = newHashMap();
@@ -234,8 +350,10 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(any()))
         .thenReturn(PhysicalInventoryDto.builder().build());
 
+    // when
     siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facilityId, true, true);
 
+    // then
     verify(physicalInventoryStockManagementService).createEmptyPhysicalInventory(
         physicalInventoryDtoArgumentCaptor.capture());
     PhysicalInventoryDto physicalInventoryDto = physicalInventoryDtoArgumentCaptor.getValue();
@@ -245,6 +363,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Test
   public void shouldReturnDistinctOccurredDatesWhenFindPhysicalInventoryDates() {
+    // given
     PhysicalInventory physicalInventory1 = new PhysicalInventory();
     physicalInventory1.setOccurredDate(LocalDate.of(2020, 6, 10));
     PhysicalInventory physicalInventory2 = new PhysicalInventory();
@@ -255,9 +374,11 @@ public class SiglusPhysicalInventoryServiceTest {
         endDate))
         .thenReturn(newArrayList(physicalInventory1, physicalInventory2, physicalInventory3));
 
+    // when
     Set<String> occurredDates = siglusPhysicalInventoryService.findPhysicalInventoryDates(
         facilityId, startDate, endDate);
 
+    // then
     assertEquals(2, occurredDates.size());
     assertTrue(occurredDates.contains("2020-06-10"));
     assertTrue(occurredDates.contains("2020-06-13"));
@@ -265,6 +386,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Test
   public void shouldReturnLatestPhysicalInventoryWhenFindLatestPhysicalInventory() {
+    // given
     PhysicalInventory physicalInventory1 = new PhysicalInventory();
     physicalInventory1.setOccurredDate(LocalDate.of(2020, 6, 10));
     PhysicalInventory physicalInventory2 = new PhysicalInventory();
@@ -272,9 +394,11 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoriesRepository.findByFacilityId(facilityId))
         .thenReturn(newArrayList(physicalInventory1, physicalInventory2));
 
+    // when
     PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService
         .findLatestPhysicalInventory(facilityId);
 
+    // then
     assertEquals(LocalDate.of(2020, 6, 13), physicalInventoryDto.getOccurredDate());
   }
 }

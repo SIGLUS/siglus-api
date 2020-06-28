@@ -42,8 +42,10 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.siglus.common.util.SupportedVirtualProgramsHelper;
+import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
 import org.siglus.siglusapi.exception.NotAcceptableException;
+import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.util.Message;
@@ -76,6 +78,9 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private SupportedVirtualProgramsHelper supportedVirtualProgramsHelper;
 
+  @Autowired
+  private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
+
   public PhysicalInventoryDto createNewDraft(PhysicalInventoryDto dto) {
     return physicalInventoryStockManagementService.createEmptyPhysicalInventory(dto);
   }
@@ -90,7 +95,7 @@ public class SiglusPhysicalInventoryService {
           return createNewDraft(dto);
         }).collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(inventories)) {
-      return getResultInventory(inventories);
+      return getResultInventory(inventories, Collections.emptyList());
     }
     return null;
   }
@@ -117,7 +122,7 @@ public class SiglusPhysicalInventoryService {
         .map(inventory -> saveDraft(inventory, inventory.getId()))
         .collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(inventories)) {
-      return getResultInventory(inventories);
+      return getResultInventory(inventories, updateExtension(dto, inventories));
     }
     return null;
   }
@@ -135,6 +140,9 @@ public class SiglusPhysicalInventoryService {
             facilityId,
             Boolean.TRUE)).flatMap(Collection::stream).collect(Collectors.toList());
     inventories.forEach(inventory -> deletePhysicalInventory(inventory.getId()));
+    List<UUID> ids =
+        inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+    lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(ids);
   }
 
   public PhysicalInventoryDto getPhysicalInventory(UUID id) {
@@ -172,7 +180,11 @@ public class SiglusPhysicalInventoryService {
         supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facilityId,
             isDraft)).flatMap(Collection::stream).collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(inventories)) {
-      PhysicalInventoryDto resultInventory = getResultInventory(inventories);
+      List<UUID> updatePhysicalInventoryIds =
+          inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+      List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
+          .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
+      PhysicalInventoryDto resultInventory = getResultInventory(inventories, extensions);
       return Collections.singletonList(resultInventory);
     }
     PhysicalInventoryDto dto = createInitialInventoryDraftForAllProducts(supportedVirtualPrograms,
@@ -182,6 +194,68 @@ public class SiglusPhysicalInventoryService {
     }
     return inventories;
   }
+
+  private List<PhysicalInventoryLineItemsExtension> updateExtension(
+      PhysicalInventoryDto inventoryDto,
+      List<PhysicalInventoryDto> updatedDto) {
+    List<UUID> updatePhysicalInventoryIds =
+        updatedDto.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+    List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
+        .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
+    List<PhysicalInventoryLineItemsExtension> updateExtensions = new ArrayList<>();
+    updatedDto.forEach(dto -> {
+      if (dto.getLineItems() == null || dto.getLineItems().isEmpty()) {
+        return;
+      }
+      dto.getLineItems().forEach(lineItem -> {
+        PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
+        if (extension == null) {
+          extension = PhysicalInventoryLineItemsExtension.builder()
+              .orderableId(lineItem.getOrderableId())
+              .lotId(lineItem.getLotId())
+              .physicalInventoryId(dto.getId())
+              .build();
+        }
+        extension.setReasonFreeText(getFreeTextByInput(inventoryDto, lineItem));
+        updateExtensions.add(extension);
+      });
+    });
+
+    return lineItemsExtensionRepository.save(updateExtensions);
+  }
+
+  private PhysicalInventoryLineItemsExtension getExtension(
+      List<PhysicalInventoryLineItemsExtension> extensions, PhysicalInventoryLineItemDto lineItem) {
+    return extensions.stream()
+        .filter(extension -> compareTwoId(extension.getLotId(), lineItem.getLotId())
+            && compareTwoId(extension.getOrderableId(),lineItem.getOrderableId()))
+        .findFirst()
+        .orElse(null);
+  }
+
+  private boolean compareTwoId(UUID oneId, UUID secondId) {
+    return oneId == null ? oneId == secondId : oneId.equals(secondId);
+  }
+
+  private String getFreeTextByInput(PhysicalInventoryDto inventoryDto,
+      PhysicalInventoryLineItemDto lineItem) {
+    PhysicalInventoryLineItemDto lineItemDto = inventoryDto.getLineItems().stream()
+        .filter(itemDto -> itemDto.getLotId() == lineItem.getLotId()
+            && itemDto.getOrderableId() == lineItem.getOrderableId())
+        .findFirst()
+        .orElse(null);
+    return lineItemDto == null ? null : lineItemDto.getReasonFreeText();
+  }
+
+  private String getFreeTextByExtension(List<PhysicalInventoryLineItemsExtension> extensions,
+      PhysicalInventoryLineItemDto lineItem) {
+    if (extensions.isEmpty()) {
+      return null;
+    }
+    PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
+    return extension == null ? null : extension.getReasonFreeText();
+  }
+
 
   private PhysicalInventoryDto createInitialInventoryDraftForAllProducts(
       Set<UUID> supportedVirtualPrograms, UUID facilityId, boolean canInitialInventory) {
@@ -221,7 +295,8 @@ public class SiglusPhysicalInventoryService {
     return physicalInventoryLineItemDtos;
   }
 
-  private PhysicalInventoryDto getResultInventory(List<PhysicalInventoryDto> inventories) {
+  private PhysicalInventoryDto getResultInventory(List<PhysicalInventoryDto> inventories,
+      List<PhysicalInventoryLineItemsExtension> extensions) {
     return PhysicalInventoryDto.builder()
         .id(ALL_PRODUCTS_UUID)
         .programId(ALL_PRODUCTS_PROGRAM_ID)
@@ -237,8 +312,11 @@ public class SiglusPhysicalInventoryService {
                   .ofNullable(inventory.getLineItems());
               optionalList
                   .ifPresent(physicalInventoryLineItemDtos -> physicalInventoryLineItemDtos.forEach(
-                      physicalInventoryLineItemDto -> physicalInventoryLineItemDto
-                          .setProgramId(inventory.getProgramId())));
+                      physicalInventoryLineItemDto -> {
+                        physicalInventoryLineItemDto.setProgramId(inventory.getProgramId());
+                        physicalInventoryLineItemDto.setReasonFreeText(
+                            getFreeTextByExtension(extensions, physicalInventoryLineItemDto));
+                      }));
               return optionalList.orElse(new ArrayList<>());
             })
             .flatMap(Collection::stream)
