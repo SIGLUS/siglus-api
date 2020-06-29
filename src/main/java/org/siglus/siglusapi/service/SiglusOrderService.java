@@ -145,7 +145,7 @@ public class SiglusOrderService {
           addedOrderableIds.add(orderLineItem.getOrderable().getId());
         });
 
-    if (addedOrderableIds.size() == 0) {
+    if (addedOrderableIds.isEmpty()) {
       return Collections.emptySet();
     }
 
@@ -155,7 +155,7 @@ public class SiglusOrderService {
     Map<UUID, UUID> addedLineItemMap = saved.getOrderLineItems()
         .stream().collect(toMap(
             orderLineItem -> orderLineItem.getOrderable().getId(),
-            orderLineItem -> orderLineItem.getId()));
+            OrderLineItem::getId));
 
     draftDto.getOrder().getOrderLineItems().forEach(orderLineItemDto -> {
       if (orderLineItemDto.getId() == null) {

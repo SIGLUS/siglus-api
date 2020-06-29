@@ -114,8 +114,8 @@ public class SiglusShipmentDraftService {
 
   private void deleteAddedOrderLineItems(List<OrderLineItemExtension> extensions, Order order) {
     extensions.stream()
-        .filter(extension -> extension.isAdded())
-        .map(extension -> extension.getOrderLineItemId())
+        .filter(OrderLineItemExtension::isAdded)
+        .map(OrderLineItemExtension::getOrderLineItemId)
         .forEach(lineItemId -> {
           order.getOrderLineItems()
               .removeIf(orderLineItem -> orderLineItem.getId().equals(lineItemId));
