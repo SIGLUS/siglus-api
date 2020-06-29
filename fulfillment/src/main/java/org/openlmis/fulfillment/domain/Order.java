@@ -53,6 +53,7 @@ import org.openlmis.fulfillment.web.util.StatusMessageDto;
 @Table(name = "orders", schema = "fulfillment")
 @NoArgsConstructor
 @AllArgsConstructor
+@SuppressWarnings("PMD.TooManyMethods")
 public class Order extends BaseEntity {
   public static final String SUPPLYING_FACILITY_ID = "supplyingFacilityId";
   public static final String REQUESTING_FACILITY_ID = "requestingFacilityId";
@@ -199,6 +200,14 @@ public class Order extends BaseEntity {
     forEachStatus(status -> status.setOrder(this));
     forEachStatusChange(change -> change.setOrder(this));
   }
+
+  // [SIGLUS change start]
+  // [change reason]: synchronized the relationship PERSISTED IN CURRENT SESSION
+  public void removeOrderLineItem(OrderLineItem orderLineItem) {
+    this.orderLineItems
+        .removeIf(lineItem -> lineItem.getId().equals(orderLineItem.getId()));
+  }
+  // [SIGLUS change end]
 
   public boolean isOrdered() {
     return OrderStatus.ORDERED.equals(status);

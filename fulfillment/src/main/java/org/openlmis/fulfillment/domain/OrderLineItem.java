@@ -68,8 +68,7 @@ public class OrderLineItem extends BaseEntity {
   // [change reason]: synchronized the relationship PERSISTED IN CURRENT SESSION
   @PreRemove
   private void removeFromOrder() {
-    order.getOrderLineItems()
-        .removeIf(orderLineItem -> orderLineItem.getId().equals(this.id));
+    order.removeOrderLineItem(this);
   }
   // [SIGLUS change end]
 

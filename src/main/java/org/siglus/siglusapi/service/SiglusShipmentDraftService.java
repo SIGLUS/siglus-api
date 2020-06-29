@@ -108,20 +108,15 @@ public class SiglusShipmentDraftService {
         .collect(Collectors.toSet());
     List<OrderLineItemExtension> extensions = lineItemExtensionRepository
         .findByOrderLineItemIdIn(lineItemIds);
-    deleteAddedOrderLineItems(extensions, order);
+    deleteAddedOrderLineItems(extensions);
     lineItemExtensionRepository.delete(extensions);
   }
 
-  private void deleteAddedOrderLineItems(List<OrderLineItemExtension> extensions, Order order) {
+  private void deleteAddedOrderLineItems(List<OrderLineItemExtension> extensions) {
     extensions.stream()
         .filter(OrderLineItemExtension::isAdded)
         .map(OrderLineItemExtension::getOrderLineItemId)
-        .forEach(lineItemId -> {
-          order.getOrderLineItems()
-              .removeIf(orderLineItem -> orderLineItem.getId().equals(lineItemId));
-          orderLineItemRepository.delete(lineItemId);
-        });
-    orderRepository.save(order);
+        .forEach(lineItemId -> orderLineItemRepository.delete(lineItemId));
   }
 
 }
