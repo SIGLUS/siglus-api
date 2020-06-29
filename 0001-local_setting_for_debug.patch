@@ -1,0 +1,77 @@
+From c921dce737ae34ca2cfa1a5bb4b5c890bfd24cb4 Mon Sep 17 00:00:00 2001
+From: jingzhao <jingzhao@jingzhaodeMacBook-Pro.local>
+Date: Mon, 29 Jun 2020 15:37:22 +0800
+Subject: [PATCH] local_setting_for_debug
+
+---
+ consul/config.json                        |  2 +-
+ consul/registration.js                    |  2 +-
+ src/main/resources/application.properties | 12 ++++++++----
+ 3 files changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/consul/config.json b/consul/config.json
+index ab2e851..35687bd 100755
+--- a/consul/config.json
++++ b/consul/config.json
+@@ -1,7 +1,7 @@
+ {
+   "service": {
+     "Name": "siglusapi",
+-    "Port": 8080,
++    "Port": 8090,
+     "Tags": ["openlmis-service"],
+     "check": {
+       "interval": "10s",
+diff --git a/consul/registration.js b/consul/registration.js
+index 5b661eb..f735a58 100755
+--- a/consul/registration.js
++++ b/consul/registration.js
+@@ -385,7 +385,7 @@ function CommandLineResolver() {
+     return false;
+   }
+ 
+-  var consulHost = process.env.CONSUL_HOST || 'consul';
++  var consulHost = process.env.CONSUL_HOST || 'localhost';
+   var consulPort = process.env.CONSUL_PORT || '8500';
+ 
+   if (!awaitConsul(consulHost, consulPort)) {
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+index 6b2dc52..b907153 100755
+--- a/src/main/resources/application.properties
++++ b/src/main/resources/application.properties
+@@ -8,9 +8,9 @@ spring.application.name=siglusapi
+ spring.data.rest.base-path=/api
+ spring.data.rest.maxPageSize=2147483647
+ 
+-spring.datasource.url=${DATABASE_URL}?stringtype=unspecified
+-spring.datasource.username=${POSTGRES_USER}
+-spring.datasource.password=${POSTGRES_PASSWORD}
++spring.datasource.url=jdbc:postgresql://localhost:5432/open_lmis?stringtype=unspecified
++spring.datasource.username=postgres
++spring.datasource.password=p@ssw0rd
+ spring.datasource.driver-class-name=org.postgresql.Driver
+ 
+ spring.datasource.tomcat.max-active=${DB_MAX_ACTIVE:20}
+@@ -52,9 +52,11 @@ decimalSeparator=${DECIMAL_SEPARATOR:.}
+ dateFormat=${DATE_FORMAT:dd/MM/yyyy}
+ dateTimeFormat=${DATE_TIME_FORMAT:dd/MM/yyyy HH:mm:ss}
+ 
++BASE_URL=http://localhost
++
+ service.url=${BASE_URL}
+ 
+-redis.url=${REDIS_URL:redis}
++redis.url=${REDIS_URL:localhost}
+ redis.port=${REDIS_PORT:6379}
+ redis.password=${REDIS_PASSWORD:}
+ 
+@@ -91,3 +93,5 @@ email.urlToInitiateRequisition=${publicUrl}/#!/requisitions/initiate?facility={0
+ request.maxUrlLength=10000
+ 
+ stockmanagement.kit.unpack.reasonId = ${KIT_UNPACK_REASON_ID:9b4b653a-f319-4a1b-bb80-8d6b4dd6cc12}
++
++server.port=8090
+\ No newline at end of file
+-- 
+2.21.1 (Apple Git-122.3)
+
