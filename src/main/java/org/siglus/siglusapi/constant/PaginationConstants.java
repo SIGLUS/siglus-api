@@ -13,27 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.requisition.dto;
+package org.siglus.siglusapi.constant;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
-@EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
-// [SIGLUS change start]
-// [change reason]: #169 incoming shippedBy missing field 'username'
-@NoArgsConstructor
-// [SIGLUS change end]
-public final class UserObjectReferenceDto extends ObjectReferenceDto {
+public final class PaginationConstants {
 
-  @Getter
-  // [SIGLUS change start]
-  // [change reason]: #169 incoming shippedBy missing field 'username'
-  // private final String username;
-  private String username;
-  // [SIGLUS change end]
+  public static final int DEFAULT_PAGE_NUMBER = 0;
+
+  public static final int NO_PAGINATION = Integer.MAX_VALUE;
+
+  public static final Pageable UNPAGED = new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION);
 
 
 }

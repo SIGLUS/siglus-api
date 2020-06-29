@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
@@ -24,16 +25,21 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_A
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
+import static org.openlmis.requisition.dto.OrderStatus.SHIPPED;
+import static org.siglus.siglusapi.constant.PaginationConstants.UNPAGED;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -52,17 +58,23 @@ import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BaseDto;
+import org.openlmis.requisition.dto.BaseRequisitionDto;
+import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.MetadataDto;
+import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.ShipmentDto;
+import org.openlmis.requisition.dto.ShipmentLineItemDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
@@ -75,6 +87,8 @@ import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
+import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
+import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
@@ -96,6 +110,7 @@ import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,6 +121,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -180,6 +196,15 @@ public class SiglusRequisitionService {
 
   @Autowired
   private SiglusUsageReportService siglusUsageReportService;
+
+  @Autowired
+  private OrderFulfillmentService orderFulfillmentService;
+
+  @Autowired
+  private ShipmentFulfillmentService shipmentFulfillmentService;
+
+  @Autowired
+  private SiglusOrderableReferenceDataService orderableReferenceDataService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -515,16 +540,136 @@ public class SiglusRequisitionService {
     setTemplateExtension(requisitionDto);
     setLineItemExtension(requisitionDto);
 
+    filterProductsIfEmergency(requisitionDto);
     // set available products in approve page
-    requisitionDto.setAvailableProducts(setAvailableProductsForApprovePage(requisitionDto));
+    setAvailableProductsForApprovePage(requisitionDto);
 
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService
         .searchUsageReport(requisitionDto);
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
-  private Set<VersionObjectReferenceDto> setAvailableProductsForApprovePage(
-      RequisitionV2Dto requisitionDto) {
+  private void filterProductsIfEmergency(RequisitionV2Dto requisition) {
+    if (!requisition.getEmergency()) {
+      return;
+    }
+    List<RequisitionV2Dto> otherEmergencyReqs = getOtherEmergencyRequisition(requisition);
+    if (otherEmergencyReqs.isEmpty()) {
+      return;
+    }
+    Set<UUID> productIdsInProgress = otherEmergencyReqs.stream()
+        .filter(this::isRequisitionInProgress)
+        .map(RequisitionV2Dto::getLineItems)
+        .flatMap(Collection::stream)
+        .map(lineItem -> lineItem.getOrderableIdentity().getId())
+        .collect(toSet());
+    filterProductsInRequisition(requisition, productIdsInProgress);
+    Set<UUID> productIdsNotFullyShipped = otherEmergencyReqs.stream()
+        .filter(req -> req.getStatus() == RELEASED)
+        .map(this::mapToNotFullyShippedProductIds)
+        .flatMap(Collection::stream)
+        .collect(toSet());
+    filterProductsInRequisition(requisition, productIdsNotFullyShipped);
+  }
+
+  private List<RequisitionV2Dto> getOtherEmergencyRequisition(BaseRequisitionDto requisition) {
+    MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+    queryParams.set(QueryRequisitionSearchParams.EMERGENCY, Boolean.TRUE.toString());
+    String periodId = requisition.getProcessingPeriod().getId().toString();
+    queryParams.set(QueryRequisitionSearchParams.PROCESSING_PERIOD, periodId);
+    String facilityId = requisition.getFacility().getId().toString();
+    queryParams.set(QueryRequisitionSearchParams.FACILITY, facilityId);
+    return siglusRequisitionRequisitionService
+        .searchRequisitions(new QueryRequisitionSearchParams(queryParams), UNPAGED)
+        .getContent().stream()
+        .filter(req -> !req.getId().equals(requisition.getId()))
+        .map(BaseDto::getId)
+        .map(siglusRequisitionRequisitionService::searchRequisition)
+        .collect(toList());
+  }
+
+  private boolean isRequisitionInProgress(BaseRequisitionDto requisition) {
+    RequisitionStatus status = requisition.getStatus();
+    return status == SUBMITTED || status == AUTHORIZED || status == IN_APPROVAL
+        || status == APPROVED;
+  }
+
+  private void filterProductsInRequisition(RequisitionV2Dto requisition,
+      Set<UUID> productIdsToBeFiltered) {
+    requisition.getAvailableProducts()
+        .removeIf(product -> productIdsToBeFiltered.contains(product.getId()));
+  }
+
+  private Set<UUID> mapToNotFullyShippedProductIds(RequisitionV2Dto requisition) {
+    HashMap<UUID, Integer> reqProductCountMap = requisition.getLineItems().stream()
+        .collect(HashMap::new, this::mergeReqLineItem, this::mergeProductCount);
+    searchOrders(requisition);
+    HashMap<UUID, Integer> shipmentProductCountMap = searchOrders(requisition).stream()
+        .filter(order -> order.getStatus() == SHIPPED)
+        .map(BaseDto::getId)
+        .map(shipmentFulfillmentService::getShipments)
+        .flatMap(Collection::stream)
+        .map(ShipmentDto::getLineItems)
+        .flatMap(Collection::stream)
+        // caution: may cause bad performance
+        .map(this::convertFromPacksToDoses)
+        .collect(HashMap::new, this::mergeShipmentLineItem, this::mergeProductCount);
+    return reqProductCountMap.entrySet().stream()
+        .filter(entry -> !shipmentProductCountMap.containsKey(entry.getKey())
+            || entry.getValue() > shipmentProductCountMap.get(entry.getKey()))
+        .map(Entry::getKey)
+        .collect(Collectors.toSet());
+  }
+
+  private List<OrderDto> searchOrders(BaseRequisitionDto requisition) {
+    return orderFulfillmentService
+        .search(requisition.getSupplyingFacility(), requisition.getFacilityId(),
+            requisition.getProgramId(), requisition.getProcessingPeriodId(), null/*ignore status*/)
+        .stream()
+        .filter(order -> requisition.getId().equals(order.getExternalId()))
+        .collect(Collectors.toList());
+  }
+
+  private ShipmentLineItemDto convertFromPacksToDoses(ShipmentLineItemDto lineItem) {
+    org.openlmis.referencedata.dto.OrderableDto product = orderableReferenceDataService
+        .findOne(lineItem.getOrderable().getId());
+    long shippedQuantity = lineItem.getQuantityShipped() * product.getNetContent();
+    ShipmentLineItemDto convertedLineItem = new ShipmentLineItemDto();
+    convertedLineItem.setOrderable(lineItem.getOrderable());
+    convertedLineItem.setLot(lineItem.getLot());
+    convertedLineItem.setQuantityShipped(shippedQuantity);
+    return convertedLineItem;
+  }
+
+  private void mergeShipmentLineItem(Map<UUID, Integer> map, ShipmentLineItemDto newValue) {
+    UUID id = newValue.getOrderable().getId();
+    if (map.containsKey(id)) {
+      map.put(id, newValue.getQuantityShipped().intValue() + map.get(id));
+    } else {
+      map.put(id, newValue.getQuantityShipped().intValue());
+    }
+  }
+
+  private void mergeReqLineItem(Map<UUID, Integer> map, BaseRequisitionLineItemDto newValue) {
+    UUID id = newValue.getOrderableIdentity().getId();
+    if (map.containsKey(id)) {
+      map.put(id, newValue.getApprovedQuantity() + map.get(id));
+    } else {
+      map.put(id, newValue.getApprovedQuantity());
+    }
+  }
+
+  private void mergeProductCount(Map<UUID, Integer> map1, Map<UUID, Integer> map2) {
+    map2.forEach((k, v) -> {
+      if (map1.containsKey(k)) {
+        map1.put(k, v + map1.get(k));
+      } else {
+        map1.put(k, v);
+      }
+    });
+  }
+
+  private void setAvailableProductsForApprovePage(RequisitionV2Dto requisitionDto) {
     UUID requisitionId = requisitionDto.getId();
     Profiler profiler = requisitionController
         .getProfiler("GET_REQUISITION_TO_APPROVE", requisitionId);
@@ -555,11 +700,11 @@ public class SiglusRequisitionService {
       // keep only products in approver facility main & associate programs
       // toggle no/full-supply will update the version
       // version mismatch in VersionObjectReferenceDto is not needed here
-      return availableProducts.stream().filter(product ->
-          approverMainProgramAndAssociateProgramApprovedProducts.contains(product.getId()))
-          .collect(toSet());
+      requisitionDto.setAvailableProducts(availableProducts.stream()
+          .filter(product ->
+              approverMainProgramAndAssociateProgramApprovedProducts.contains(product.getId()))
+          .collect(toSet()));
     }
-    return requisitionDto.getAvailableProducts();
   }
 
   private void setTemplateExtension(RequisitionV2Dto requisitionDto) {

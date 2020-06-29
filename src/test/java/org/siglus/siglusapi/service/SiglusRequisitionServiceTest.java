@@ -16,7 +16,13 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.apache.commons.lang3.RandomUtils.nextInt;
+import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -37,7 +43,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -62,17 +67,23 @@ import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItemDataBuilder;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
+import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.OrderDto;
+import org.openlmis.requisition.dto.OrderStatus;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.ShipmentDto;
+import org.openlmis.requisition.dto.ShipmentLineItemDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
@@ -84,6 +95,8 @@ import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
+import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
+import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
@@ -104,9 +117,11 @@ import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -117,6 +132,10 @@ import org.springframework.util.MultiValueMap;
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusRequisitionServiceTest {
+
+  private static final long OVERFLOW_QUANTITY = 1000L;
+
+  private static final long NOT_FULLY_SHIPPED_QUANTITY = 0L;
 
   @Captor
   private ArgumentCaptor<RequisitionSearchParams> requisitionSearchParamsArgumentCaptor;
@@ -164,6 +183,7 @@ public class SiglusRequisitionServiceTest {
   private ProofOfDeliveryService proofOfDeliveryService;
 
   @Mock
+  @SuppressWarnings("unused")
   private StockOnHandRetrieverBuilderFactory stockOnHandRetrieverBuilderFactory;
 
   @Mock
@@ -209,7 +229,7 @@ public class SiglusRequisitionServiceTest {
 
   private UUID supervisoryNodeId = UUID.randomUUID();
 
-  private UUID processingperiodId = UUID.randomUUID();
+  private UUID processingPeriodId = UUID.randomUUID();
 
   private UUID productId1 = UUID.randomUUID();
   private Long productVersion1 = 1L;
@@ -236,6 +256,37 @@ public class SiglusRequisitionServiceTest {
 
   private SiglusRequisitionDto siglusRequisitionDto;
 
+  //fields for emergency req test start
+  private BasicRequisitionDto newBasicReq;
+
+  private UUID preReqId1 = UUID.randomUUID();
+
+  private UUID preReqId2 = UUID.randomUUID();
+
+  private BasicRequisitionDto previousBasicReq1;
+
+  private BasicRequisitionDto previousBasicReq2;
+
+  private RequisitionV2Dto previousV2Req1;
+
+  private int preReqProduct1ApprovedQuantity = randomQuantity();
+
+  private List<OrderDto> preReqOrders = new ArrayList<>();
+
+  private List<ShipmentDto> preReqOrderShipments1;
+
+  private List<ShipmentDto> preReqOrderShipments2;
+
+  @Mock
+  private OrderFulfillmentService orderFulfillmentService;
+
+  @Mock
+  private ShipmentFulfillmentService shipmentFulfillmentService;
+
+  @Mock
+  private SiglusOrderableReferenceDataService orderableReferenceDataService;
+  //fields for emergency req test end
+
   @Before
   public void prepare() {
     siglusRequisitionDto = new SiglusRequisitionDto();
@@ -247,7 +298,7 @@ public class SiglusRequisitionServiceTest {
         .findByRequisitionTemplateId(templateId)).thenReturn(createTemplateExtension());
     when(requisitionController.getProfiler(
         profilerName, requisitionId)).thenReturn(profiler);
-    when(requisitionController.findRequisition(requisitionId, profiler)).thenReturn(requisition);
+    when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(requisitionController.findProgram(programId, profiler)).thenReturn(programDto);
     when(requisitionController.findFacility(facilityId, profiler)).thenReturn(facilityDto);
@@ -335,7 +386,7 @@ public class SiglusRequisitionServiceTest {
     RequisitionSearchParams requisitionSearchParams = requisitionSearchParamsArgumentCaptor
         .getValue();
     Set<RequisitionStatus> requisitionStatuses = requisitionSearchParams.getRequisitionStatuses();
-    assertTrue(requisitionStatuses.size() == requisitionStatusesDisplayWhenCanAuth.size());
+    assertEquals(requisitionStatuses.size(), requisitionStatusesDisplayWhenCanAuth.size());
     assertTrue(requisitionStatuses.containsAll(requisitionStatusesDisplayWhenCanAuth));
   }
 
@@ -357,7 +408,7 @@ public class SiglusRequisitionServiceTest {
     RequisitionSearchParams requisitionSearchParams = requisitionSearchParamsArgumentCaptor
         .getValue();
     Set<RequisitionStatus> requisitionStatuses = requisitionSearchParams.getRequisitionStatuses();
-    assertTrue(requisitionStatuses.size() == requisitionStatusesDisplayWhenCanCreate.size());
+    assertEquals(requisitionStatuses.size(), requisitionStatusesDisplayWhenCanCreate.size());
     assertTrue(requisitionStatuses.containsAll(requisitionStatusesDisplayWhenCanCreate));
   }
 
@@ -395,14 +446,14 @@ public class SiglusRequisitionServiceTest {
     when(requisitionController.findFacility(userDto.getHomeFacilityId(), profiler))
         .thenReturn(createUserFacility());
     when(programExtensionService.getProgram(programId)).thenReturn(createSiglusProgramDto());
-    when(periodService.getPeriod(processingperiodId)).thenReturn(createProcessingPeriod());
+    when(periodService.getPeriod(processingPeriodId)).thenReturn(createProcessingPeriod());
     when(stockCardRangeSummaryStockManagementService.search(any(), any(), any(), any(), any()))
         .thenReturn(createStockCardRangeSummaryList());
     List<ProcessingPeriodDto> processingPeriodDtos = new ArrayList<>();
     when(periodService.getPeriods(any())).thenReturn(processingPeriodDtos);
     when(simulateAuthenticationHelper.simulateCrossServiceAuth()).thenReturn(null);
     when(proofOfDeliveryService.get(any())).thenReturn(new ProofOfDeliveryDto());
-    when(idealStockAmountReferenceDataService.search(facilityId, processingperiodId))
+    when(idealStockAmountReferenceDataService.search(facilityId, processingPeriodId))
         .thenReturn(createIdealStockAmountDtoList());
     when(requisitionService.getApproveProduct(any(), any(), any()))
         .thenReturn(createApproveProductsAggregator(orderableId2));
@@ -461,15 +512,15 @@ public class SiglusRequisitionServiceTest {
     when(requisitionRepository.findOne(requisitionId)).thenReturn(createRequisition());
     RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
     extension.setId(UUID.randomUUID());
-    when(lineItemExtensionRepository.findLineItems(Arrays.asList(any(UUID.class))))
-        .thenReturn(Arrays.asList(extension));
+    when(lineItemExtensionRepository.findLineItems(singletonList(any(UUID.class))))
+        .thenReturn(singletonList(extension));
 
     // when
     siglusRequisitionService.deleteRequisition(requisitionId);
 
     // then
     verify(siglusRequisitionRequisitionService).deleteRequisition(requisitionId);
-    verify(lineItemExtensionRepository).delete(Arrays.asList(extension));
+    verify(lineItemExtensionRepository).delete(singletonList(extension));
     verify(siglusUsageReportService).deleteUsageReport(requisitionId);
   }
 
@@ -506,8 +557,8 @@ public class SiglusRequisitionServiceTest {
     lineItemV2Dto.setOrderable(productDto);
     lineItemV2Dto.setId(UUID.randomUUID());
     lineItemV2Dto.setAuthorizedQuantity(10);
-    requisitionV2Dto.setRequisitionLineItems(Arrays.asList(lineItemV2Dto));
-    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItemV2Dto));
+    requisitionV2Dto.setRequisitionLineItems(singletonList(lineItemV2Dto));
+    siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItemV2Dto));
     HttpServletRequest httpServletRequest = new MockHttpServletRequest();
     HttpServletResponse httpServletResponse = new MockHttpServletResponse();
     when(requisitionV2Controller.updateRequisition(requisitionId, siglusRequisitionDto,
@@ -519,10 +570,10 @@ public class SiglusRequisitionServiceTest {
         .requisitionLineItemId(lineItemV2Dto.getId())
         .authorizedQuantity(10)
         .build();
-    when(lineItemExtensionRepository.findLineItems(Arrays.asList(lineItemV2Dto.getId())))
-        .thenReturn(Arrays.asList(requisitionLineItemExtension));
-    when(lineItemExtensionRepository.save(Arrays.asList(requisitionLineItemExtension)))
-        .thenReturn(Arrays.asList(requisitionLineItemExtension));
+    when(lineItemExtensionRepository.findLineItems(singletonList(lineItemV2Dto.getId())))
+        .thenReturn(singletonList(requisitionLineItemExtension));
+    when(lineItemExtensionRepository.save(singletonList(requisitionLineItemExtension)))
+        .thenReturn(singletonList(requisitionLineItemExtension));
     when(siglusUsageReportService.saveUsageReport(siglusRequisitionDto, requisitionV2Dto))
         .thenReturn(updatedDto);
 
@@ -538,17 +589,314 @@ public class SiglusRequisitionServiceTest {
     assertEquals(Integer.valueOf(10), requisitionDto.getLineItems().get(0).getAuthorizedQuantity());
   }
 
+  @Test
+  public void shouldFilterNoProductWhenGetEmergencyRequisitionGivenFirstEmergencyRequisition() {
+    // given
+    mockEmergencyRequisition();
+    when(requisitionService
+        .validateCanApproveRequisition(any(), any())).thenReturn(ValidationResult.success());
+    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
+        .thenReturn(new PageImpl<>(singletonList(newBasicReq)));
+
+    // when
+    SiglusRequisitionDto requisition = siglusRequisitionService.searchRequisition(requisitionId);
+
+    // then
+    Set<VersionObjectReferenceDto> availableProducts = requisition.getAvailableProducts();
+    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    assertEquals(2, availableProducts.size());
+    assertThat(availableProducts,
+        hasItems(productVersionObjectReference1, productVersionObjectReference2));
+  }
+
+  @Test
+  public void shouldFilterNoProductWhenGetEmergencyRequisitionGivenFullyShippedProduct1() {
+    // given
+    mockEmergencyRequisition();
+    mockPreviousEmergencyRequisition1(RELEASED);
+    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
+        .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
+    initFullyShippedProduct1();
+
+    // when
+    siglusRequisitionService.searchRequisition(requisitionId);
+
+    // then
+    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
+    assertEquals(2, availableProducts.size());
+    assertThat(availableProducts,
+        hasItems(productVersionObjectReference1, productVersionObjectReference2));
+  }
+
+  @Test
+  public void shouldFilterProduct1WhenGetEmergencyRequisitionGivenNotFullyFulfilledProduct1() {
+    // given
+    mockEmergencyRequisition();
+    mockPreviousEmergencyRequisition1(RELEASED);
+    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
+        .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
+    initNotFullyFulfilledProduct1();
+
+    // when
+    siglusRequisitionService.searchRequisition(requisitionId);
+
+    // then
+    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
+    assertEquals(1, availableProducts.size());
+    assertThat(availableProducts,
+        hasItems(productVersionObjectReference2));
+  }
+
+  @Test
+  public void shouldFilterProduct1WhenGetEmergencyRequisitionGivenFulfillSkippedProduct1() {
+    // given
+    mockEmergencyRequisition();
+    mockPreviousEmergencyRequisition1(RELEASED);
+    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
+        .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
+    initNotFulfilledProduct1();
+
+    // when
+    siglusRequisitionService.searchRequisition(requisitionId);
+
+    // then
+    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
+    assertEquals(1, availableProducts.size());
+    assertThat(availableProducts,
+        hasItems(productVersionObjectReference2));
+  }
+
+  @Test
+  public void shouldFilterProduct1WhenGetEmergencyRequisitionGivenProduct1InProgress() {
+    // given
+    mockEmergencyRequisition();
+    mockPreviousEmergencyRequisition1(IN_APPROVAL);
+    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
+        .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
+    initProduct1InProgress();
+
+    // when
+    siglusRequisitionService.searchRequisition(requisitionId);
+
+    // then
+    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
+    assertEquals(1, availableProducts.size());
+    assertThat(availableProducts,
+        hasItems(productVersionObjectReference2));
+  }
+
+  @Test
+  public void shouldFilterProduct1WhenGetEmergencyRequisitionGivenOverflowReq1AndNotFullyReq2() {
+    // given
+    mockEmergencyRequisition();
+    mockPreviousEmergencyRequisition1(RELEASED);
+    mockPreviousEmergencyRequisition2();
+    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
+        .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1, previousBasicReq2)));
+    initOverflowShippedProduct1InPrevReq1();
+    initNotFullyShippedProduct1InPrevReq2();
+
+    // when
+    siglusRequisitionService.searchRequisition(requisitionId);
+
+    // then
+    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
+    assertEquals(1, availableProducts.size());
+    assertThat(availableProducts,
+        hasItems(productVersionObjectReference2));
+  }
+
+  private int randomQuantity() {
+    return nextInt(1, 100);
+  }
+
+  private void mockEmergencyRequisition() {
+    final RequisitionStatus randomStatus = AUTHORIZED;
+    newBasicReq = new BasicRequisitionDto();
+    newBasicReq.setEmergency(true);
+    newBasicReq.setId(requisitionId);
+    newBasicReq.setStatus(randomStatus);
+    BasicProcessingPeriodDto basicPeriod = new BasicProcessingPeriodDto();
+    basicPeriod.setId(processingPeriodId);
+    newBasicReq.setProcessingPeriod(basicPeriod);
+    RequisitionV2Dto newV2Req = new RequisitionV2Dto();
+    newV2Req.setEmergency(true);
+    newV2Req.setStatus(randomStatus);
+    newV2Req.setProcessingPeriod(new ObjectReferenceDto(processingPeriodId));
+    newV2Req.setId(requisitionId);
+    newV2Req.setFacility(new ObjectReferenceDto(facilityId));
+    Set<VersionObjectReferenceDto> products = new HashSet<>();
+    products.add(productVersionObjectReference1);
+    products.add(productVersionObjectReference2);
+    newV2Req.setAvailableProducts(products);
+    newV2Req.setTemplate(createTemplateDto());
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
+        .thenReturn(newV2Req);
+    when(requisitionService.validateCanApproveRequisition(any(), any()))
+        .thenReturn(ValidationResult.failedValidation("skip method"));
+    org.openlmis.referencedata.dto.OrderableDto simpleProduct =
+        new org.openlmis.referencedata.dto.OrderableDto();
+    simpleProduct.setNetContent(1L);
+    when(orderableReferenceDataService.findOne(any())).thenReturn(simpleProduct);
+  }
+
+  private void mockPreviousEmergencyRequisition1(RequisitionStatus status) {
+    previousBasicReq1 = new BasicRequisitionDto();
+    previousBasicReq1.setEmergency(true);
+    BasicProcessingPeriodDto basicPeriod = new BasicProcessingPeriodDto();
+    basicPeriod.setId(processingPeriodId);
+    previousBasicReq1.setProcessingPeriod(basicPeriod);
+    previousBasicReq1.setId(preReqId1);
+    previousBasicReq1.setStatus(status);
+    previousV2Req1 = new RequisitionV2Dto();
+    previousV2Req1.setEmergency(true);
+    previousV2Req1.setProcessingPeriod(new ObjectReferenceDto(processingPeriodId));
+    previousV2Req1.setId(preReqId1);
+    previousV2Req1.setStatus(status);
+    previousV2Req1.setFacility(new ObjectReferenceDto(facilityId));
+    Set<VersionObjectReferenceDto> products = new HashSet<>();
+    products.add(productVersionObjectReference1);
+    products.add(productVersionObjectReference2);
+    previousV2Req1.setAvailableProducts(products);
+    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
+    lineItem.setOrderable(productVersionObjectReference1);
+    lineItem.setRequestedQuantity(preReqProduct1ApprovedQuantity);
+    lineItem.setAuthorizedQuantity(preReqProduct1ApprovedQuantity);
+    lineItem.setApprovedQuantity(preReqProduct1ApprovedQuantity);
+    previousV2Req1.setRequisitionLineItems(singletonList(lineItem));
+    previousV2Req1.setTemplate(createTemplateDto());
+    when(siglusRequisitionRequisitionService.searchRequisition(preReqId1))
+        .thenReturn(previousV2Req1);
+  }
+
+  private void mockPreviousEmergencyRequisition2() {
+    previousBasicReq2 = new BasicRequisitionDto();
+    previousBasicReq2.setEmergency(true);
+    BasicProcessingPeriodDto basicPeriod = new BasicProcessingPeriodDto();
+    basicPeriod.setId(processingPeriodId);
+    previousBasicReq2.setProcessingPeriod(basicPeriod);
+    previousBasicReq2.setId(preReqId2);
+    previousBasicReq2.setStatus(RequisitionStatus.RELEASED);
+    RequisitionV2Dto previousV2Req2 = new RequisitionV2Dto();
+    previousV2Req2.setEmergency(true);
+    previousV2Req2.setProcessingPeriod(new ObjectReferenceDto(processingPeriodId));
+    previousV2Req2.setId(preReqId2);
+    previousV2Req2.setStatus(RequisitionStatus.RELEASED);
+    previousV2Req2.setFacility(new ObjectReferenceDto(facilityId));
+    Set<VersionObjectReferenceDto> products = new HashSet<>();
+    products.add(productVersionObjectReference1);
+    products.add(productVersionObjectReference2);
+    previousV2Req2.setAvailableProducts(products);
+    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
+    lineItem.setOrderable(productVersionObjectReference1);
+    lineItem.setRequestedQuantity(preReqProduct1ApprovedQuantity);
+    lineItem.setAuthorizedQuantity(preReqProduct1ApprovedQuantity);
+    lineItem.setApprovedQuantity(preReqProduct1ApprovedQuantity);
+    previousV2Req2.setRequisitionLineItems(singletonList(lineItem));
+    previousV2Req2.setTemplate(createTemplateDto());
+    when(siglusRequisitionRequisitionService.searchRequisition(preReqId2))
+        .thenReturn(previousV2Req2);
+  }
+
+  private void mockOrderService() {
+    when(orderFulfillmentService.search(any(), any(), any(), any(), any()))
+        .thenReturn(preReqOrders);
+  }
+
+  private void mockShippedOrderAndShipmentForPreviousEmergencyRequisition1() {
+    mockOrderService();
+    OrderDto order = new OrderDto();
+    order.setId(UUID.randomUUID());
+    order.setStatus(OrderStatus.SHIPPED);
+    order.setExternalId(preReqId1);
+    preReqOrders.add(order);
+    ShipmentDto shipment = new ShipmentDto();
+    preReqOrderShipments1 = singletonList(shipment);
+    when(shipmentFulfillmentService.getShipments(order.getId()))
+        .thenReturn(preReqOrderShipments1);
+  }
+
+  private void mockShippedOrderAndShipmentForPreviousEmergencyRequisition2() {
+    mockOrderService();
+    OrderDto order = new OrderDto();
+    order.setId(UUID.randomUUID());
+    order.setStatus(OrderStatus.SHIPPED);
+    order.setExternalId(preReqId1);
+    preReqOrders.add(order);
+    ShipmentDto shipment = new ShipmentDto();
+    preReqOrderShipments2 = singletonList(shipment);
+    when(shipmentFulfillmentService.getShipments(order.getId()))
+        .thenReturn(preReqOrderShipments2);
+  }
+
+  private void initFullyShippedProduct1() {
+    mockShippedOrderAndShipmentForPreviousEmergencyRequisition1();
+    ShipmentLineItemDto lineItem = new ShipmentLineItemDto();
+    lineItem.setOrderable(new ObjectReferenceDto(productVersionObjectReference1.getId()));
+    lineItem.setQuantityShipped((long) preReqProduct1ApprovedQuantity);
+    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(singletonList(lineItem)));
+  }
+
+  private void initNotFullyFulfilledProduct1() {
+    mockShippedOrderAndShipmentForPreviousEmergencyRequisition1();
+    ShipmentLineItemDto lineItem = new ShipmentLineItemDto();
+    lineItem.setOrderable(new ObjectReferenceDto(productVersionObjectReference1.getId()));
+    lineItem.setQuantityShipped(NOT_FULLY_SHIPPED_QUANTITY);
+    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(singletonList(lineItem)));
+  }
+
+  private void initNotFulfilledProduct1() {
+    mockShippedOrderAndShipmentForPreviousEmergencyRequisition1();
+    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(emptyList()));
+  }
+
+  private void initProduct1InProgress() {
+    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
+    lineItem.setOrderable(productVersionObjectReference1);
+    lineItem.setRequestedQuantity(preReqProduct1ApprovedQuantity);
+    lineItem.setAuthorizedQuantity(preReqProduct1ApprovedQuantity);
+    previousV2Req1.setRequisitionLineItems(singletonList(lineItem));
+  }
+
+  private void initOverflowShippedProduct1InPrevReq1() {
+    mockShippedOrderAndShipmentForPreviousEmergencyRequisition1();
+    ShipmentLineItemDto lineItem = new ShipmentLineItemDto();
+    lineItem.setOrderable(new ObjectReferenceDto(productVersionObjectReference1.getId()));
+    lineItem.setQuantityShipped(OVERFLOW_QUANTITY);
+    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(singletonList(lineItem)));
+  }
+
+  private void initNotFullyShippedProduct1InPrevReq2() {
+    mockShippedOrderAndShipmentForPreviousEmergencyRequisition2();
+    ShipmentLineItemDto lineItem = new ShipmentLineItemDto();
+    lineItem.setOrderable(new ObjectReferenceDto(productVersionObjectReference1.getId()));
+    lineItem.setQuantityShipped(0L);
+    preReqOrderShipments2.forEach(shipment -> shipment.setLineItems(singletonList(lineItem)));
+  }
+
+  private Set<VersionObjectReferenceDto> verifyEmergencyReqResult() {
+    ArgumentCaptor<RequisitionV2Dto> captor = ArgumentCaptor.forClass(RequisitionV2Dto.class);
+    verify(siglusUsageReportService).searchUsageReport(captor.capture());
+    return captor.getValue().getAvailableProducts();
+  }
+
   private Requisition createRequisition() {
     RequisitionLineItem lineItem = new RequisitionLineItemDataBuilder()
         .withOrderable(orderableId, 1L)
         .build();
     Requisition requisition = new Requisition();
     requisition.setId(requisitionId);
+    requisition.setEmergency(false);
     requisition.setProgramId(programId);
     requisition.setFacilityId(facilityId);
     requisition.setRequisitionLineItems(Lists.newArrayList(lineItem));
     requisition.setTemplate(createTemplate());
-    requisition.setProcessingPeriodId(processingperiodId);
+    requisition.setProcessingPeriodId(processingPeriodId);
     Map<String, Object> extraData = new HashMap<>();
     extraData.put("actualStartDate", "2020-01-23");
     extraData.put("actualEndDate", "2020-01-30");
@@ -566,7 +914,7 @@ public class SiglusRequisitionServiceTest {
     when(requisition.getProgramId()).thenReturn(programId);
     when(requisition.getFacilityId()).thenReturn(facilityId);
     when(requisition.getTemplate()).thenReturn(createTemplate());
-    when(requisition.getProcessingPeriodId()).thenReturn(processingperiodId);
+    when(requisition.getProcessingPeriodId()).thenReturn(processingPeriodId);
     when(requisition.getActualStartDate()).thenReturn(LocalDate.of(2020, 1, 23));
     when(requisition.getActualEndDate()).thenReturn(LocalDate.of(2020, 1, 30));
     List<Requisition> previousRequisions = new ArrayList<>();
@@ -593,6 +941,7 @@ public class SiglusRequisitionServiceTest {
     requisitionV2Dto.setFacility(facility);
     ObjectReferenceDto program = new ObjectReferenceDto(programId);
     requisitionV2Dto.setProgram(program);
+    requisitionV2Dto.setEmergency(false);
     requisitionV2Dto.setAvailableProducts(products);
     requisitionV2Dto.setTemplate(createTemplateDto());
     requisitionV2Dto.setStatus(RequisitionStatus.AUTHORIZED);
@@ -646,8 +995,7 @@ public class SiglusRequisitionServiceTest {
     ApprovedProductDto productDto = createApprovedProductDto(orderable, meta);
     List<ApprovedProductDto> list = new ArrayList<>();
     list.add(productDto);
-    ApproveProductsAggregator aggregator = new ApproveProductsAggregator(list, programId);
-    return aggregator;
+    return new ApproveProductsAggregator(list, programId);
   }
 
   private ApproveProductsAggregator createApproveProductsAggregator() {
@@ -662,8 +1010,7 @@ public class SiglusRequisitionServiceTest {
     productDto.setOrderable(orderable);
     List<ApprovedProductDto> list = new ArrayList<>();
     list.add(productDto);
-    ApproveProductsAggregator aggregator = new ApproveProductsAggregator(list, programId);
-    return aggregator;
+    return new ApproveProductsAggregator(list, programId);
   }
 
 
@@ -721,7 +1068,7 @@ public class SiglusRequisitionServiceTest {
 
   private ProcessingPeriodDto createProcessingPeriod() {
     ProcessingPeriodDto processingPeriodDto = new ProcessingPeriodDto();
-    processingPeriodDto.setId(processingperiodId);
+    processingPeriodDto.setId(processingPeriodId);
     return processingPeriodDto;
   }
 
