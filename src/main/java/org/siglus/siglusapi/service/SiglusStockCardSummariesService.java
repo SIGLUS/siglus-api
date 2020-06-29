@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_UUID_WRONG_FORMAT;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
@@ -37,7 +36,6 @@ import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
-import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
@@ -46,6 +44,7 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.common.util.FormatHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -183,18 +182,7 @@ public class SiglusStockCardSummariesService {
 
   private UUID getId(String fieldName, MultiValueMap<String, String> parameters) {
     String id = parameters.getFirst(fieldName);
-    return formatId(id, fieldName);
+    return FormatHelper.formatId(id, fieldName);
   }
 
-  private UUID formatId(String id, String fieldName) {
-    if (null != id) {
-      try {
-        return UUID.fromString(id);
-      } catch (IllegalArgumentException ex) {
-        throw new ValidationMessageException(ex,
-            new Message(ERROR_UUID_WRONG_FORMAT, id, fieldName));
-      }
-    }
-    return null;
-  }
 }
