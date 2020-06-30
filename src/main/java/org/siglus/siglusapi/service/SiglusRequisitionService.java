@@ -602,6 +602,8 @@ public class SiglusRequisitionService {
 
   private Set<UUID> mapToNotFullyShippedProductIds(RequisitionV2Dto requisition) {
     HashMap<UUID, Integer> reqProductCountMap = requisition.getLineItems().stream()
+        .filter(lineItem -> lineItem.getApprovedQuantity() > 0)
+        .filter(lineItem -> !lineItem.getSkipped())
         .collect(HashMap::new, this::mergeReqLineItem, this::mergeProductCount);
     searchOrders(requisition);
     HashMap<UUID, Integer> shipmentProductCountMap = searchOrders(requisition).stream()
