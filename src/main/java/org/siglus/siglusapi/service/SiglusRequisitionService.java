@@ -110,7 +110,6 @@ import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -202,9 +201,6 @@ public class SiglusRequisitionService {
 
   @Autowired
   private ShipmentFulfillmentService shipmentFulfillmentService;
-
-  @Autowired
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -553,26 +549,15 @@ public class SiglusRequisitionService {
     if (!requisition.getEmergency()) {
       return;
     }
-    List<RequisitionV2Dto> otherEmergencyReqs = getOtherEmergencyRequisition(requisition);
-    if (otherEmergencyReqs.isEmpty()) {
+    List<RequisitionV2Dto> previousEmergencyReqs = getPreviousEmergencyRequisition(requisition);
+    if (previousEmergencyReqs.isEmpty()) {
       return;
     }
-    Set<UUID> productIdsInProgress = otherEmergencyReqs.stream()
-        .filter(this::isRequisitionInProgress)
-        .map(RequisitionV2Dto::getLineItems)
-        .flatMap(Collection::stream)
-        .map(lineItem -> lineItem.getOrderableIdentity().getId())
-        .collect(toSet());
-    filterProductsInRequisition(requisition, productIdsInProgress);
-    Set<UUID> productIdsNotFullyShipped = otherEmergencyReqs.stream()
-        .filter(req -> req.getStatus() == RELEASED)
-        .map(this::mapToNotFullyShippedProductIds)
-        .flatMap(Collection::stream)
-        .collect(toSet());
-    filterProductsInRequisition(requisition, productIdsNotFullyShipped);
+    filterInProgressProducts(previousEmergencyReqs, requisition);
+    filterNotFullyShippedProducts(previousEmergencyReqs, requisition);
   }
 
-  private List<RequisitionV2Dto> getOtherEmergencyRequisition(BaseRequisitionDto requisition) {
+  private List<RequisitionV2Dto> getPreviousEmergencyRequisition(BaseRequisitionDto requisition) {
     MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
     queryParams.set(QueryRequisitionSearchParams.EMERGENCY, Boolean.TRUE.toString());
     String periodId = requisition.getProcessingPeriod().getId().toString();
@@ -588,10 +573,25 @@ public class SiglusRequisitionService {
         .collect(toList());
   }
 
-  private boolean isRequisitionInProgress(BaseRequisitionDto requisition) {
-    RequisitionStatus status = requisition.getStatus();
-    return status == SUBMITTED || status == AUTHORIZED || status == IN_APPROVAL
-        || status == APPROVED;
+  private void filterInProgressProducts(List<RequisitionV2Dto> previousEmergencyReqs,
+      RequisitionV2Dto requisition) {
+    Set<UUID> productIdsInProgress = previousEmergencyReqs.stream()
+        .filter(req -> req.getStatus().isInProgress())
+        .map(RequisitionV2Dto::getLineItems)
+        .flatMap(Collection::stream)
+        .map(lineItem -> lineItem.getOrderableIdentity().getId())
+        .collect(toSet());
+    filterProductsInRequisition(requisition, productIdsInProgress);
+  }
+
+  private void filterNotFullyShippedProducts(List<RequisitionV2Dto> previousEmergencyReqs,
+      RequisitionV2Dto requisition) {
+    Set<UUID> productIdsNotFullyShipped = previousEmergencyReqs.stream()
+        .filter(req -> req.getStatus() == RELEASED)
+        .map(this::mapToNotFullyShippedProductIds)
+        .flatMap(Collection::stream)
+        .collect(toSet());
+    filterProductsInRequisition(requisition, productIdsNotFullyShipped);
   }
 
   private void filterProductsInRequisition(RequisitionV2Dto requisition,
@@ -601,24 +601,21 @@ public class SiglusRequisitionService {
   }
 
   private Set<UUID> mapToNotFullyShippedProductIds(RequisitionV2Dto requisition) {
-    HashMap<UUID, Integer> reqProductCountMap = requisition.getLineItems().stream()
+    HashMap<UUID, Long> reqProductQuantityMap = requisition.getLineItems().stream()
         .filter(lineItem -> lineItem.getApprovedQuantity() > 0)
         .filter(lineItem -> !lineItem.getSkipped())
-        .collect(HashMap::new, this::mergeReqLineItem, this::mergeProductCount);
-    searchOrders(requisition);
-    HashMap<UUID, Integer> shipmentProductCountMap = searchOrders(requisition).stream()
+        .collect(HashMap::new, this::mergeReqLineItem, this::mergeProductQuantity);
+    HashMap<UUID, Long> shipmentProductQuantityMap = searchOrders(requisition).stream()
         .filter(order -> order.getStatus() == SHIPPED)
         .map(BaseDto::getId)
         .map(shipmentFulfillmentService::getShipments)
         .flatMap(Collection::stream)
         .map(ShipmentDto::getLineItems)
         .flatMap(Collection::stream)
-        // caution: may cause bad performance
-        .map(this::convertFromPacksToDoses)
-        .collect(HashMap::new, this::mergeShipmentLineItem, this::mergeProductCount);
-    return reqProductCountMap.entrySet().stream()
-        .filter(entry -> !shipmentProductCountMap.containsKey(entry.getKey())
-            || entry.getValue() > shipmentProductCountMap.get(entry.getKey()))
+        .collect(HashMap::new, this::mergeShipmentLineItem, this::mergeProductQuantity);
+    return reqProductQuantityMap.entrySet().stream()
+        .filter(entry -> !shipmentProductQuantityMap.containsKey(entry.getKey())
+            || entry.getValue() > shipmentProductQuantityMap.get(entry.getKey()))
         .map(Entry::getKey)
         .collect(Collectors.toSet());
   }
@@ -632,36 +629,25 @@ public class SiglusRequisitionService {
         .collect(Collectors.toList());
   }
 
-  private ShipmentLineItemDto convertFromPacksToDoses(ShipmentLineItemDto lineItem) {
-    org.openlmis.referencedata.dto.OrderableDto product = orderableReferenceDataService
-        .findOne(lineItem.getOrderable().getId());
-    long shippedQuantity = lineItem.getQuantityShipped() * product.getNetContent();
-    ShipmentLineItemDto convertedLineItem = new ShipmentLineItemDto();
-    convertedLineItem.setOrderable(lineItem.getOrderable());
-    convertedLineItem.setLot(lineItem.getLot());
-    convertedLineItem.setQuantityShipped(shippedQuantity);
-    return convertedLineItem;
-  }
-
-  private void mergeShipmentLineItem(Map<UUID, Integer> map, ShipmentLineItemDto newValue) {
+  private void mergeShipmentLineItem(Map<UUID, Long> map, ShipmentLineItemDto newValue) {
     UUID id = newValue.getOrderable().getId();
     if (map.containsKey(id)) {
-      map.put(id, newValue.getQuantityShipped().intValue() + map.get(id));
+      map.put(id, newValue.getQuantityShipped() + map.get(id));
     } else {
-      map.put(id, newValue.getQuantityShipped().intValue());
+      map.put(id, newValue.getQuantityShipped());
     }
   }
 
-  private void mergeReqLineItem(Map<UUID, Integer> map, BaseRequisitionLineItemDto newValue) {
+  private void mergeReqLineItem(Map<UUID, Long> map, BaseRequisitionLineItemDto newValue) {
     UUID id = newValue.getOrderableIdentity().getId();
     if (map.containsKey(id)) {
-      map.put(id, newValue.getApprovedQuantity() + map.get(id));
+      map.put(id, newValue.getPacksToShip() + map.get(id));
     } else {
-      map.put(id, newValue.getApprovedQuantity());
+      map.put(id, newValue.getPacksToShip());
     }
   }
 
-  private void mergeProductCount(Map<UUID, Integer> map1, Map<UUID, Integer> map2) {
+  private void mergeProductQuantity(Map<UUID, Long> map1, Map<UUID, Long> map2) {
     map2.forEach((k, v) -> {
       if (map1.containsKey(k)) {
         map1.put(k, v + map1.get(k));

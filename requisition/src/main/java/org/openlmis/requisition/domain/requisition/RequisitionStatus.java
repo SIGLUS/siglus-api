@@ -79,4 +79,11 @@ public enum RequisitionStatus {
     return EnumSet.of(AUTHORIZED, IN_APPROVAL, APPROVED, RELEASED, RELEASED_WITHOUT_ORDER);
   }
   // [SIGLUS change end]
+
+  // [SIGLUS change start]
+  // [change reason]: #169 add new method for siglus
+  public boolean isInProgress() {
+    return value > 0 && value < 5;
+  }
+  // [SIGLUS change end]
 }

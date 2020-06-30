@@ -117,7 +117,6 @@ import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
@@ -269,7 +268,7 @@ public class SiglusRequisitionServiceTest {
 
   private RequisitionV2Dto previousV2Req1;
 
-  private int preReqProduct1ApprovedQuantity = randomQuantity();
+  private long preReqProduct1ApprovedQuantity = randomQuantity();
 
   private List<OrderDto> preReqOrders = new ArrayList<>();
 
@@ -282,9 +281,6 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private ShipmentFulfillmentService shipmentFulfillmentService;
-
-  @Mock
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
   //fields for emergency req test end
 
   @Before
@@ -780,10 +776,6 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(newV2Req);
     when(requisitionService.validateCanApproveRequisition(any(), any()))
         .thenReturn(ValidationResult.failedValidation("skip method"));
-    org.openlmis.referencedata.dto.OrderableDto simpleProduct =
-        new org.openlmis.referencedata.dto.OrderableDto();
-    simpleProduct.setNetContent(1L);
-    when(orderableReferenceDataService.findOne(any())).thenReturn(simpleProduct);
   }
 
   private void mockPreviousEmergencyRequisition1(RequisitionStatus status) {
@@ -807,9 +799,8 @@ public class SiglusRequisitionServiceTest {
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setOrderable(productVersionObjectReference1);
     lineItem.setSkipped(false);
-    lineItem.setRequestedQuantity(preReqProduct1ApprovedQuantity);
-    lineItem.setAuthorizedQuantity(preReqProduct1ApprovedQuantity);
-    lineItem.setApprovedQuantity(preReqProduct1ApprovedQuantity);
+    lineItem.setPacksToShip(preReqProduct1ApprovedQuantity);
+    lineItem.setApprovedQuantity((int) preReqProduct1ApprovedQuantity);
     previousV2Req1.setRequisitionLineItems(singletonList(lineItem));
     previousV2Req1.setTemplate(createTemplateDto());
     when(siglusRequisitionRequisitionService.searchRequisition(preReqId1))
@@ -837,9 +828,8 @@ public class SiglusRequisitionServiceTest {
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setSkipped(false);
     lineItem.setOrderable(productVersionObjectReference1);
-    lineItem.setRequestedQuantity(preReqProduct1ApprovedQuantity);
-    lineItem.setAuthorizedQuantity(preReqProduct1ApprovedQuantity);
-    lineItem.setApprovedQuantity(preReqProduct1ApprovedQuantity);
+    lineItem.setPacksToShip(preReqProduct1ApprovedQuantity);
+    lineItem.setApprovedQuantity((int) preReqProduct1ApprovedQuantity);
     previousV2Req2.setRequisitionLineItems(singletonList(lineItem));
     previousV2Req2.setTemplate(createTemplateDto());
     when(siglusRequisitionRequisitionService.searchRequisition(preReqId2))
@@ -898,8 +888,6 @@ public class SiglusRequisitionServiceTest {
   private void mockProduct1InProgress() {
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setOrderable(productVersionObjectReference1);
-    lineItem.setRequestedQuantity(preReqProduct1ApprovedQuantity);
-    lineItem.setAuthorizedQuantity(preReqProduct1ApprovedQuantity);
     previousV2Req1.setRequisitionLineItems(singletonList(lineItem));
   }
 
