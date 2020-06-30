@@ -84,7 +84,6 @@ public class SiglusShipmentDraftService {
       lineItem.setSkipped(skipped);
       if (null != extension) {
         extension.setSkipped(lineItem.isSkipped());
-        extension.setAdded(addedLineItemIds.contains(lineItem.getId()));
         extensionsToUpdate.add(extension);
       } else {
         extensionsToUpdate.add(

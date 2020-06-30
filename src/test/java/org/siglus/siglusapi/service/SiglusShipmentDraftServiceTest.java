@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -101,7 +102,7 @@ public class SiglusShipmentDraftServiceTest {
         .getValue();
     lineItemExtensions.forEach(lineItemExtension -> {
       assertTrue(lineItemExtension.isSkipped());
-      assertTrue(lineItemExtension.isAdded());
+      assertFalse(lineItemExtension.isAdded());
     });
   }
 
