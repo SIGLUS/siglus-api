@@ -40,7 +40,6 @@ import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
-import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.siglus.common.util.SupportedVirtualProgramsHelper;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
@@ -65,9 +64,6 @@ public class SiglusPhysicalInventoryService {
 
   @Autowired
   private StockCardRepository stockCardRepository;
-
-  @Autowired
-  private StockmanagementPermissionService permissionService;
 
   @Autowired
   private SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
@@ -326,11 +322,12 @@ public class SiglusPhysicalInventoryService {
 
   public InitialInventoryFieldDto canInitialInventory(UUID facility) {
     boolean canEditPhysicalInventory = true;
-    try {
-      permissionService.canEditPhysicalInventory(null, facility);
-    } catch (org.openlmis.stockmanagement.exception.PermissionMessageException ex) {
-      canEditPhysicalInventory = false;
-    }
+    // #359 no stock management permission still needs to init inventory
+    // try {
+    //  permissionService.canEditPhysicalInventory(null, facility);
+    // } catch (org.openlmis.stockmanagement.exception.PermissionMessageException ex) {
+    //  canEditPhysicalInventory = false;
+    //}
     List<StockCard> stockCards = stockCardRepository.findByFacilityId(facility);
     boolean canInitialInventory = canEditPhysicalInventory && CollectionUtils.isEmpty(stockCards);
     return new InitialInventoryFieldDto(canInitialInventory);
