@@ -16,44 +16,30 @@
 package org.siglus.siglusapi.domain;
 
 import java.util.UUID;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
 
-@MappedSuperclass
-@EqualsAndHashCode
-@ToString
-public abstract class BaseEntity {
+@Entity
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "stock_adjustments_draft", schema = "siglusintegration")
+public class StockAdjustmentDraft extends BaseEntity {
 
-  private static final String UUID_TYPE = "pg-uuid";
+  @Column(nullable = false)
+  private Integer quantity;
 
-  protected static final int STANDARD_BATCH_SIZE = 25;
-
-  @Id
-  @GeneratedValue(generator = "uuid-gen")
-  @GenericGenerator(name = "uuid-gen",
-      strategy = "org.siglus.siglusapi.domain.ConditionalUuidGenerator")
-  @Type(type = UUID_TYPE)
-  @Getter
-  @Setter
-  private UUID id;
-
-  public interface BaseExporter {
-
-    void setId(UUID id);
-
-  }
-
-  public interface BaseImporter {
-
-    UUID getId();
-
-  }
+  @Column(nullable = false)
+  private UUID reasonId;
 
 }
