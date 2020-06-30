@@ -21,7 +21,12 @@ import org.openlmis.referencedata.util.Message;
 import org.springframework.stereotype.Component;
 
 @Component
-public class FormatHelper {
+public final class FormatHelper {
+
+  // private or protected constructor
+  // because all public fields and methods are static
+  private FormatHelper() {
+  }
 
   public static UUID formatId(String id, String fieldName) {
     if (id == null) {
