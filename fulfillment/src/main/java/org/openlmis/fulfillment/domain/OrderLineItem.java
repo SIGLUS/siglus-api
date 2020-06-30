@@ -42,10 +42,13 @@ import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 @EqualsAndHashCode(callSuper = true)
 public class OrderLineItem extends BaseEntity {
 
-  @ManyToOne(cascade = CascadeType.REFRESH)
+  // [SIGLUS change start]
+  // [change reason]: detach when remove.
+  @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.DETACH})
   @JoinColumn(name = "orderId", nullable = false)
   @Setter
   private Order order;
+  // [SIGLUS change end]
 
   @Embedded
   @AttributeOverrides({
