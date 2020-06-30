@@ -30,7 +30,6 @@ import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,9 +49,6 @@ public class SiglusShipmentDraftService {
 
   @Autowired
   private SiglusOrderService siglusOrderService;
-
-  @Autowired
-  private OrderLineItemRepository orderLineItemRepository;
 
   @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
@@ -107,15 +103,20 @@ public class SiglusShipmentDraftService {
         .collect(Collectors.toSet());
     List<OrderLineItemExtension> extensions = lineItemExtensionRepository
         .findByOrderLineItemIdIn(lineItemIds);
-    deleteAddedOrderLineItems(extensions);
+    deleteAddedOrderLineItems(extensions, order);
     lineItemExtensionRepository.delete(extensions);
   }
 
-  private void deleteAddedOrderLineItems(List<OrderLineItemExtension> extensions) {
-    extensions.stream()
+  private void deleteAddedOrderLineItems(List<OrderLineItemExtension> extensions, Order order) {
+    Set<UUID> addedIds = extensions.stream()
         .filter(OrderLineItemExtension::isAdded)
         .map(OrderLineItemExtension::getOrderLineItemId)
-        .forEach(lineItemId -> orderLineItemRepository.delete(lineItemId));
+        .collect(Collectors.toSet());
+
+    order.getOrderLineItems().removeIf(
+        orderLineItem -> addedIds.contains(orderLineItem.getId()));
+    orderRepository.save(order);
+
   }
 
 }

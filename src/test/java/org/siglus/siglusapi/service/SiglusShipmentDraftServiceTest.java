@@ -40,7 +40,6 @@ import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -63,9 +62,6 @@ public class SiglusShipmentDraftServiceTest {
 
   @Mock
   private OrderRepository orderRepository;
-
-  @Mock
-  private OrderLineItemRepository orderLineItemRepository;
 
   private UUID draftId = UUID.randomUUID();
 
@@ -161,7 +157,6 @@ public class SiglusShipmentDraftServiceTest {
 
     // then
     verify(lineItemExtensionRepository).delete(lineItemExtensionsArgumentCaptor.capture());
-    verify(orderLineItemRepository).delete(lineItemId);
     List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
         .getValue();
     assertEquals(1, lineItemExtensions.size());

@@ -25,7 +25,6 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.PreRemove;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -42,13 +41,10 @@ import org.openlmis.fulfillment.web.util.VersionIdentityDto;
 @EqualsAndHashCode(callSuper = true)
 public class OrderLineItem extends BaseEntity {
 
-  // [SIGLUS change start]
-  // [change reason]: detach when remove.
-  @ManyToOne(cascade = {CascadeType.REFRESH, CascadeType.DETACH})
+  @ManyToOne(cascade = CascadeType.REFRESH)
   @JoinColumn(name = "orderId", nullable = false)
   @Setter
   private Order order;
-  // [SIGLUS change end]
 
   @Embedded
   @AttributeOverrides({
@@ -66,15 +62,6 @@ public class OrderLineItem extends BaseEntity {
   @Getter
   @Setter
   private Long orderedQuantity;
-
-  // [SIGLUS change start]
-  // [change reason]: synchronized the relationship PERSISTED IN CURRENT SESSION
-  @PreRemove
-  private void removeFromOrder() {
-    this.orderable = null;
-    order.removeOrderLineItem(this);
-  }
-  // [SIGLUS change end]
 
   /**
    * Create new instance of OrderLineItem based on given {@link Importer}.
