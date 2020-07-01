@@ -25,6 +25,8 @@ public interface IUsageReportDataProcessor {
   void initiate(SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections);
 
+  void get(SiglusRequisitionDto siglusRequisitionDto);
+
   void delete(UUID requisitionId);
 
   boolean isDisabled(SiglusRequisitionDto siglusRequisitionDto);

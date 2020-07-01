@@ -85,6 +85,7 @@ public class SiglusUsageReportService {
 
   public SiglusRequisitionDto searchUsageReport(RequisitionV2Dto requisitionV2Dto) {
     SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
+    usageReportDataProcessors.forEach(processor -> processor.get(siglusRequisitionDto));
     log.info("get all kit line items: {}", requisitionV2Dto.getId());
     List<KitUsageLineItem> items = kitUsageRepository.findByRequisitionId(requisitionV2Dto.getId());
     siglusRequisitionDto.setKitUsageLineItems(getKitUsageLineItemDtos(items));

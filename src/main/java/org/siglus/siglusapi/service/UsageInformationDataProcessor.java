@@ -63,6 +63,16 @@ public class UsageInformationDataProcessor implements IUsageReportDataProcessor 
   }
 
   @Override
+  public void get(SiglusRequisitionDto siglusRequisitionDto) {
+    log.info("find usage information line items by requisition id: {}",
+        siglusRequisitionDto.getId());
+    List<UsageInformationLineItem> lineItems = usageInformationLineItemRepository
+        .findByRequisitionId(siglusRequisitionDto.getId());
+    List<UsageInformationServiceDto> serviceDtos = UsageInformationServiceDto.from(lineItems);
+    siglusRequisitionDto.setUsageInformationLineItems(serviceDtos);
+  }
+
+  @Override
   public void delete(UUID requisitionId) {
     log.info("find usage information line items by requisition id: {}", requisitionId);
     List<UsageInformationLineItem> lineItems = usageInformationLineItemRepository
