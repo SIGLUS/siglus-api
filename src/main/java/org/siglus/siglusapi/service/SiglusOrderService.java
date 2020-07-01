@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
@@ -72,6 +73,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @Service
+@Slf4j
 public class SiglusOrderService {
 
   @Autowired
@@ -135,11 +137,15 @@ public class SiglusOrderService {
   public Set<UUID> updateOrderLineItems(ShipmentDraftDto draftDto) {
     Order order = orderRepository.findOne(draftDto.getOrder().getId());
     List<OrderLineItem> orderLineItems = order.getOrderLineItems();
+    List<org.openlmis.fulfillment.web.util.OrderLineItemDto> draftOrderLineItems
+        = draftDto.getOrder().getOrderLineItems();
+
     Set<UUID> addedOrderableIds = new HashSet<>();
 
-    draftDto.getOrder().getOrderLineItems().stream()
+    draftOrderLineItems.stream()
         .filter(orderLineItemDto -> orderLineItemDto.getId() == null)
-        .map(OrderLineItem::newInstance).forEach(orderLineItem -> {
+        .map(OrderLineItem::newInstance)
+        .forEach(orderLineItem -> {
           orderLineItem.setOrder(order);
           orderLineItems.add(orderLineItem);
           addedOrderableIds.add(orderLineItem.getOrderable().getId());
@@ -148,7 +154,8 @@ public class SiglusOrderService {
     if (addedOrderableIds.isEmpty()) {
       return Collections.emptySet();
     }
-
+    log.info("save order id: {}", order.getId());
+    log.info("added Orderable Ids: {}", addedOrderableIds);
     Order saved = orderRepository.save(order);
     Set<UUID> addedLineItemIds = new HashSet<>();
     // orderable-id : lineItem-id
@@ -157,7 +164,7 @@ public class SiglusOrderService {
             orderLineItem -> orderLineItem.getOrderable().getId(),
             OrderLineItem::getId));
 
-    draftDto.getOrder().getOrderLineItems().forEach(orderLineItemDto -> {
+    draftOrderLineItems.forEach(orderLineItemDto -> {
       if (orderLineItemDto.getId() == null) {
         UUID orderableId = orderLineItemDto.getOrderable().getId();
         UUID lineItemId = addedLineItemMap.get(orderableId);
@@ -166,6 +173,7 @@ public class SiglusOrderService {
       }
     });
 
+    log.info("added OrderLineItem Ids: {}", addedLineItemIds);
     return addedLineItemIds;
   }
 
