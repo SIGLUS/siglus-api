@@ -910,6 +910,7 @@ public class SiglusRequisitionServiceTest {
   private void mockZeroAppQtyProduct1InPrevReq1() {
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setOrderable(productVersionObjectReference1);
+    lineItem.setSkipped(false);
     lineItem.setRequestedQuantity(0);
     lineItem.setAuthorizedQuantity(0);
     lineItem.setApprovedQuantity(0);
