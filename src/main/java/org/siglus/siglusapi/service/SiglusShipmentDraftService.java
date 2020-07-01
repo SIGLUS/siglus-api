@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
@@ -37,7 +36,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Slf4j
 public class SiglusShipmentDraftService {
 
   @Autowired
@@ -60,7 +58,7 @@ public class SiglusShipmentDraftService {
 
   @Transactional
   public void deleteShipmentDraft(UUID id) {
-    deleteOrderLineItemAndExtension(id);
+    deleteOrderLineItemExtension(id);
     siglusShipmentDraftFulfillmentService.deleteShipmentDraft(id);
   }
 
@@ -95,7 +93,7 @@ public class SiglusShipmentDraftService {
     lineItemExtensionRepository.save(extensionsToUpdate);
   }
 
-  private void deleteOrderLineItemAndExtension(UUID id) {
+  private void deleteOrderLineItemExtension(UUID id) {
     ShipmentDraftDto draftDto = siglusShipmentDraftFulfillmentService
         .searchShipmentDraft(id);
     UUID orderId = draftDto.getOrder().getId();
@@ -114,9 +112,6 @@ public class SiglusShipmentDraftService {
         .filter(OrderLineItemExtension::isAdded)
         .map(OrderLineItemExtension::getOrderLineItemId)
         .collect(Collectors.toSet());
-
-    log.info("removed shipment draft of order id: {}", order.getId());
-    log.info("removed OrderLineItem Ids: {}", addedIds);
 
     order.getOrderLineItems().removeIf(
         orderLineItem -> addedIds.contains(orderLineItem.getId()));
