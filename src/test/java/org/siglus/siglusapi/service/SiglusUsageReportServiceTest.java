@@ -67,6 +67,7 @@ import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
 import org.springframework.beans.BeanUtils;
 
+@SuppressWarnings({"PMD.UnusedPrivateField"})
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusUsageReportServiceTest {
 
@@ -88,6 +89,9 @@ public class SiglusUsageReportServiceTest {
 
   @Mock
   KitUsageLineItemRepository kitUsageRepository;
+
+  @Mock
+  private List<IUsageReportDataProcessor> usageReportDataProcessors;
 
   @InjectMocks
   SiglusUsageReportService siglusUsageReportService;

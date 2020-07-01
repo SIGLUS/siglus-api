@@ -13,28 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
-
-import static com.google.common.collect.Lists.newArrayList;
+package org.siglus.siglusapi.service;
 
 import java.util.List;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.springframework.beans.BeanUtils;
+import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class SiglusRequisitionDto extends RequisitionV2Dto {
-  private Boolean isFinalApproval;
-  private List<KitUsageLineItemDto> kitUsageLineItems = newArrayList();
-  private List<UsageInformationServiceDto> usageInformationLineItems = newArrayList();
-  private SiglusUsageTemplateDto usageTemplate;
+public interface IUsageReportDataProcessor {
 
-  public static SiglusRequisitionDto from(RequisitionV2Dto v2Dto) {
-    SiglusRequisitionDto dto = new SiglusRequisitionDto();
-    BeanUtils.copyProperties(v2Dto, dto);
-    return dto;
-  }
+  void initiate(SiglusRequisitionDto siglusRequisitionDto,
+      List<UsageTemplateColumnSection> templateColumnSections);
 
+  boolean isDisabled(SiglusRequisitionDto siglusRequisitionDto);
 }

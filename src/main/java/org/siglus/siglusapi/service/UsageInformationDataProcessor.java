@@ -1,0 +1,101 @@
+/*
+ * This program is part of the OpenLMIS logistics management information system platform software.
+ * Copyright © 2017 VillageReach
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details. You should have received a copy of
+ * the GNU Affero General Public License along with this program. If not, see
+ * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
+ */
+
+package org.siglus.siglusapi.service;
+
+import static com.google.common.collect.Lists.newArrayList;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.dto.BaseDto;
+import org.siglus.siglusapi.domain.UsageCategory;
+import org.siglus.siglusapi.domain.UsageInformationLineItem;
+import org.siglus.siglusapi.domain.UsageTemplateColumn;
+import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.UsageInformationServiceDto;
+import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+@Slf4j
+public class UsageInformationDataProcessor implements IUsageReportDataProcessor {
+
+  private static final String INFORMATION = "information";
+
+  private static final String SERVICE = "service";
+
+  @Autowired
+  private SiglusUsageReportService siglusUsageReportService;
+
+  @Autowired
+  private UsageInformationLineItemRepository usageInformationLineItemRepository;
+
+  @Override
+  public void initiate(SiglusRequisitionDto siglusRequisitionDto,
+      List<UsageTemplateColumnSection> templateColumnSections) {
+    if (isDisabled(siglusRequisitionDto)) {
+      return;
+    }
+    List<UsageInformationLineItem> lineItems = createUsageInformationLineItems(
+        siglusRequisitionDto, templateColumnSections);
+    log.info("save usage information line items: {}", lineItems);
+    List<UsageInformationLineItem> lineItemsSaved = usageInformationLineItemRepository
+        .save(lineItems);
+    List<UsageInformationServiceDto> serviceDtos = UsageInformationServiceDto.from(lineItemsSaved);
+    siglusRequisitionDto.setUsageInformationLineItems(serviceDtos);
+  }
+
+  @Override
+  public boolean isDisabled(SiglusRequisitionDto siglusRequisitionDto) {
+    return !siglusRequisitionDto.getTemplate().getExtension().isEnableUsageInformation();
+  }
+
+  private List<UsageInformationLineItem> createUsageInformationLineItems(
+      SiglusRequisitionDto siglusRequisitionDto,
+      List<UsageTemplateColumnSection> templateColumnSections) {
+    UsageTemplateColumnSection service = siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, SERVICE);
+    UsageTemplateColumnSection information = siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, INFORMATION);
+    Set<UUID> orderableIds = siglusRequisitionDto.getAvailableProducts().stream()
+        .map(BaseDto::getId)
+        .collect(Collectors.toSet());
+    List<UsageInformationLineItem> usageInformationLineItems = newArrayList();
+    for (UsageTemplateColumn templateServiceColumn : service.getColumns()) {
+      if (!Boolean.TRUE.equals(templateServiceColumn.getIsDisplayed())) {
+        continue;
+      }
+      for (UsageTemplateColumn templateInformationColumn : information.getColumns()) {
+        if (!Boolean.TRUE.equals(templateInformationColumn.getIsDisplayed())) {
+          continue;
+        }
+        orderableIds.forEach(orderableId ->
+            usageInformationLineItems.add(UsageInformationLineItem.builder()
+                .requisitionId(siglusRequisitionDto.getId())
+                .information(templateInformationColumn.getName())
+                .service(templateServiceColumn.getName())
+                .orderableId(orderableId)
+                .build()));
+      }
+    }
+    return usageInformationLineItems;
+  }
+
+}

@@ -80,6 +80,9 @@ public class SiglusUsageReportService {
   @Autowired
   KitUsageLineItemRepository kitUsageRepository;
 
+  @Autowired
+  private List<IUsageReportDataProcessor> usageReportDataProcessors;
+
   public SiglusRequisitionDto searchUsageReport(RequisitionV2Dto requisitionV2Dto) {
     SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
     log.info("get all kit line items: {}", requisitionV2Dto.getId());
@@ -139,6 +142,8 @@ public class SiglusUsageReportService {
     if (templateColumnSections.isEmpty()) {
       return siglusRequisitionDto;
     }
+    usageReportDataProcessors
+        .forEach(processor -> processor.initiate(siglusRequisitionDto, templateColumnSections));
     updateKitUsage(requisitionV2Dto, templateColumnSections, siglusRequisitionDto);
     setUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
     return siglusRequisitionDto;
@@ -202,7 +207,7 @@ public class SiglusUsageReportService {
             .equals(CALCULATE_FROM_STOCK_CARD));
   }
 
-  private UsageTemplateColumnSection getColumnSection(
+  public UsageTemplateColumnSection getColumnSection(
       List<UsageTemplateColumnSection> templateColumnSections,
       UsageCategory category, String sectionName) {
     return templateColumnSections.stream()

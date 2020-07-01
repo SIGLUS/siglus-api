@@ -279,13 +279,13 @@ public abstract class BaseRequisitionController extends BaseController {
 
     profiler.start("FIND_APPROVED_PRODUCTS");
     // [SIGLUS change start]
-    // [change reason]: 1.only product section , we can have approve products
+    // [change reason]: 1.only product & usage information sections, we can have approve products
     //                  2.associated program + filter kit product .
     //                  3.support usage report which is no product section.
     // ApproveProductsAggregator approvedProducts = approvedProductReferenceDataService
     //     .getApprovedProducts(facility.getId(), program.getId());
     List<ApprovedProductDto> approvedProductDtos = new ArrayList<>();
-    if (templateExtension.getEnableProduct()) {
+    if (templateExtension.getEnableProduct() || templateExtension.getEnableUsageInformation()) {
       ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(
           facility, program, requisitionTemplate);
       List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
