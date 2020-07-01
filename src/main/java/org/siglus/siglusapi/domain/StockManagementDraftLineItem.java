@@ -43,8 +43,7 @@ import org.springframework.beans.BeanUtils;
 @Builder
 @EqualsAndHashCode(callSuper = true)
 @Table(name = "stock_management_draft_line_items", schema = "siglusintegration")
-public class StockManagementDraftLineItem
-    extends BaseEntity {
+public class StockManagementDraftLineItem extends BaseEntity {
   @ManyToOne
   @JoinColumn(nullable = false)
   private StockManagementDraft stockManagementDraft;

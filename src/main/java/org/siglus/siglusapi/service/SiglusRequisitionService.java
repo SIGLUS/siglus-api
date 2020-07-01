@@ -217,43 +217,16 @@ public class SiglusRequisitionService {
     return siglusUsageReportService.saveUsageReport(requisitionDto, upadateRequsitionDto);
   }
 
-  private void saveLineItemExtension(RequisitionV2Dto toUpdatedDto, RequisitionV2Dto updatedDto) {
-    List<RequisitionLineItem.Importer> lineItems = updatedDto.getRequisitionLineItems();
-    if (!lineItems.isEmpty()) {
-      List<UUID> lineItemsId = updatedDto.getRequisitionLineItems()
-          .stream()
-          .map(Importer::getId)
-          .collect(Collectors.toList());
-      List<RequisitionLineItemExtension> updateExtension = new ArrayList<>();
-      List<RequisitionLineItemExtension> extensions =
-          lineItemExtensionRepository.findLineItems(lineItemsId);
-      lineItems.forEach(lineItem -> {
-        RequisitionLineItemV2Dto dto = findDto(lineItem, toUpdatedDto);
-        RequisitionLineItemExtension requisitionLineItemExtension =
-            findLineItemExtension(extensions, dto);
-        if (requisitionLineItemExtension != null) {
-          requisitionLineItemExtension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
-          updateExtension.add(requisitionLineItemExtension);
-        } else if (dto != null && dto.getAuthorizedQuantity() != null) {
-          RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
-          extension.setRequisitionLineItemId(lineItem.getId());
-          extension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
-          updateExtension.add(extension);
-        }
-      });
-      lineItemExtensionRepository.save(updateExtension);
-    }
-  }
-
-  private RequisitionLineItemV2Dto findDto(RequisitionLineItem.Importer lineItem,
-      RequisitionV2Dto dto) {
-    for (RequisitionLineItem.Importer lineItemV2Dto : dto.getRequisitionLineItems()) {
-      if (lineItemV2Dto.getOrderableIdentity().getId()
-          .equals(lineItem.getOrderableIdentity().getId())) {
-        return (RequisitionLineItemV2Dto) lineItemV2Dto;
-      }
-    }
-    return null;
+  @Transactional
+  public SiglusRequisitionDto initiate(UUID programId, UUID facilityId,
+      UUID suggestedPeriod,
+      boolean emergency,
+      String physicalInventoryDateStr,
+      HttpServletRequest request, HttpServletResponse response) {
+    RequisitionV2Dto v2Dto = requisitionV2Controller
+        .initiate(programId, facilityId, suggestedPeriod, emergency,
+            physicalInventoryDateStr, request, response);
+    return siglusUsageReportService.initiateUsageReport(v2Dto);
   }
 
   @Transactional
@@ -299,6 +272,75 @@ public class SiglusRequisitionService {
     boolean isExternalApprove = isApprove && !isInternalFacility;
 
     return buildSiglusLineItem(lineItemList, isExternalApprove);
+  }
+
+  public SiglusRequisitionDto searchRequisition(UUID requisitionId) {
+    // call origin OpenLMIS API
+    // reason: 1. set template extension
+    //         1. 2. set line item authorized quality extension
+    RequisitionV2Dto requisitionDto =
+        siglusRequisitionRequisitionService.searchRequisition(requisitionId);
+    setTemplateExtension(requisitionDto);
+    setLineItemExtension(requisitionDto);
+
+    filterProductsIfEmergency(requisitionDto);
+    // set available products in approve page
+    setAvailableProductsForApprovePage(requisitionDto);
+
+    SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService
+        .searchUsageReport(requisitionDto);
+    return setIsFinalApproval(siglusRequisitionDto);
+  }
+
+  public Page<BasicRequisitionDto> searchRequisitions(MultiValueMap<String, String> queryParams,
+      Pageable pageable) {
+    Set<RequisitionStatus> requisitionStatusDisplayInRequisitionHistory =
+        getRequisitionStatusDisplayInRequisitionHistory(
+            UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.FACILITY)),
+            UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.PROGRAM)));
+    requisitionStatusDisplayInRequisitionHistory.forEach(requisitionStatus -> queryParams
+        .add(QueryRequisitionSearchParams.REQUISITION_STATUS, requisitionStatus.toString()));
+    RequisitionSearchParams params = new QueryRequisitionSearchParams(queryParams);
+    return siglusRequisitionRequisitionService.searchRequisitions(params, pageable);
+  }
+
+  private void saveLineItemExtension(RequisitionV2Dto toUpdatedDto, RequisitionV2Dto updatedDto) {
+    List<RequisitionLineItem.Importer> lineItems = updatedDto.getRequisitionLineItems();
+    if (!lineItems.isEmpty()) {
+      List<UUID> lineItemsId = updatedDto.getRequisitionLineItems()
+          .stream()
+          .map(Importer::getId)
+          .collect(Collectors.toList());
+      List<RequisitionLineItemExtension> updateExtension = new ArrayList<>();
+      List<RequisitionLineItemExtension> extensions =
+          lineItemExtensionRepository.findLineItems(lineItemsId);
+      lineItems.forEach(lineItem -> {
+        RequisitionLineItemV2Dto dto = findDto(lineItem, toUpdatedDto);
+        RequisitionLineItemExtension requisitionLineItemExtension =
+            findLineItemExtension(extensions, dto);
+        if (requisitionLineItemExtension != null) {
+          requisitionLineItemExtension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
+          updateExtension.add(requisitionLineItemExtension);
+        } else if (dto != null && dto.getAuthorizedQuantity() != null) {
+          RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
+          extension.setRequisitionLineItemId(lineItem.getId());
+          extension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
+          updateExtension.add(extension);
+        }
+      });
+      lineItemExtensionRepository.save(updateExtension);
+    }
+  }
+
+  private RequisitionLineItemV2Dto findDto(RequisitionLineItem.Importer lineItem,
+      RequisitionV2Dto dto) {
+    for (RequisitionLineItem.Importer lineItemV2Dto : dto.getRequisitionLineItems()) {
+      if (lineItemV2Dto.getOrderableIdentity().getId()
+          .equals(lineItem.getOrderableIdentity().getId())) {
+        return (RequisitionLineItemV2Dto) lineItemV2Dto;
+      }
+    }
+    return null;
   }
 
   private List<RequisitionLineItem> constructLineItem(Requisition requisition, ProgramDto program,
@@ -527,24 +569,6 @@ public class SiglusRequisitionService {
     }
   }
 
-  public SiglusRequisitionDto searchRequisition(UUID requisitionId) {
-    // call origin OpenLMIS API
-    // reason: 1. set template extension
-    //         1. 2. set line item authorized quality extension
-    RequisitionV2Dto requisitionDto =
-        siglusRequisitionRequisitionService.searchRequisition(requisitionId);
-    setTemplateExtension(requisitionDto);
-    setLineItemExtension(requisitionDto);
-
-    filterProductsIfEmergency(requisitionDto);
-    // set available products in approve page
-    setAvailableProductsForApprovePage(requisitionDto);
-
-    SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService
-        .searchUsageReport(requisitionDto);
-    return setIsFinalApproval(siglusRequisitionDto);
-  }
-
   private void filterProductsIfEmergency(RequisitionV2Dto requisition) {
     if (!requisition.getEmergency()) {
       return;
@@ -763,18 +787,6 @@ public class SiglusRequisitionService {
         .collect(Collectors.toSet());
   }
 
-  public Page<BasicRequisitionDto> searchRequisitions(MultiValueMap<String, String> queryParams,
-      Pageable pageable) {
-    Set<RequisitionStatus> requisitionStatusDisplayInRequisitionHistory =
-        getRequisitionStatusDisplayInRequisitionHistory(
-            UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.FACILITY)),
-            UUID.fromString(queryParams.getFirst(QueryRequisitionSearchParams.PROGRAM)));
-    requisitionStatusDisplayInRequisitionHistory.forEach(requisitionStatus -> queryParams
-        .add(QueryRequisitionSearchParams.REQUISITION_STATUS, requisitionStatus.toString()));
-    RequisitionSearchParams params = new QueryRequisitionSearchParams(queryParams);
-    return siglusRequisitionRequisitionService.searchRequisitions(params, pageable);
-  }
-
   private Set<RequisitionStatus> getRequisitionStatusDisplayInRequisitionHistory(UUID facilityId,
       UUID programId) {
     Requisition requisition = new Requisition();
@@ -799,15 +811,4 @@ public class SiglusRequisitionService {
     return canSeeRequisitionStatus;
   }
 
-  @Transactional
-  public SiglusRequisitionDto initiate(UUID programId, UUID facilityId,
-      UUID suggestedPeriod,
-      boolean emergency,
-      String physicalInventoryDateStr,
-      HttpServletRequest request, HttpServletResponse response) {
-    RequisitionV2Dto v2Dto = requisitionV2Controller
-        .initiate(programId, facilityId, suggestedPeriod, emergency,
-            physicalInventoryDateStr, request, response);
-    return siglusUsageReportService.initiateUsageReport(v2Dto);
-  }
 }

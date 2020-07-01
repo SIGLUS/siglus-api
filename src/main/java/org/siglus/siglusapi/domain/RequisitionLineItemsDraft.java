@@ -25,6 +25,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -47,6 +48,10 @@ import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 @Builder
 @Table(name = "requisition_line_items_draft", schema = "siglusintegration")
 public class RequisitionLineItemsDraft extends BaseEntity {
+
+  @ManyToOne()
+  @JoinColumn(name = "requisitiondraftid", nullable = false)
+  private RequisitionDraft requisitionDraft;
 
   @Embedded
   @AttributeOverrides({

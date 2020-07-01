@@ -5,6 +5,7 @@
 
 CREATE TABLE requisition_line_items_draft (
     id uuid PRIMARY KEY NOT NULL,
+    requisitiondraftid uuid NOT NULL,
     requisitionlineitemid uuid NOT NULL,
     adjustedconsumption integer,
     approvedquantity integer,
@@ -36,5 +37,6 @@ CREATE TABLE requisition_line_items_draft (
     orderableversionnumber bigint,
     facilitytypeapprovedproductid uuid,
     facilitytypeapprovedproductversionnumber bigint,
-    authorizedQuantity integer
+    authorizedQuantity integer,
+    FOREIGN KEY(requisitiondraftid) REFERENCES siglusintegration.requisitions_draft(id)
 );
