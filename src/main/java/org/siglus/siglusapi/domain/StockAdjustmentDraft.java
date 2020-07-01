@@ -25,6 +25,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.openlmis.requisition.domain.requisition.StockAdjustment;
+import org.springframework.beans.BeanUtils;
 
 @Entity
 @Getter
@@ -42,4 +44,9 @@ public class StockAdjustmentDraft extends BaseEntity {
   @Column(nullable = false)
   private UUID reasonId;
 
+  public static StockAdjustmentDraft from(StockAdjustment.Importer adjustment) {
+    StockAdjustmentDraft draft = new StockAdjustmentDraft();
+    BeanUtils.copyProperties(adjustment, draft);
+    return draft;
+  }
 }

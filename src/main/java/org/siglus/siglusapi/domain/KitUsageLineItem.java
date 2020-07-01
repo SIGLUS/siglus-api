@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -24,6 +27,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.siglus.siglusapi.dto.KitUsageLineItemDto;
+import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
 @Entity
 @Getter
@@ -43,4 +49,24 @@ public class KitUsageLineItem extends BaseEntity {
 
   private Integer value;
 
+  public static List<KitUsageLineItem> from(List<KitUsageLineItemDto> kitUsageLineItemDtos,
+      SiglusRequisitionDto requisitionDto) {
+    List<KitUsageLineItem> lineItems = new ArrayList<>();
+    for (KitUsageLineItemDto lineItemDto : kitUsageLineItemDtos) {
+      String collection = lineItemDto.getCollection();
+      for (Map.Entry<String, KitUsageServiceLineItemDto> serviceDto :
+          lineItemDto.getServices().entrySet()) {
+        KitUsageServiceLineItemDto service = serviceDto.getValue();
+        KitUsageLineItem kitUsageLineItem = KitUsageLineItem.builder()
+            .requisitionId(requisitionDto.getId())
+            .collection(collection)
+            .service(serviceDto.getKey())
+            .value(service.getValue())
+            .build();
+        kitUsageLineItem.setId(service.getId());
+        lineItems.add(kitUsageLineItem);
+      }
+    }
+    return lineItems;
+  }
 }

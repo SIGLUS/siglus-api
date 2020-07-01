@@ -15,12 +15,15 @@
 
 package org.siglus.siglusapi.domain;
 
-import static javax.persistence.CascadeType.ALL;
 import static org.hibernate.annotations.LazyCollectionOption.FALSE;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -29,6 +32,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.LazyCollection;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
 @Entity
 @Data
@@ -44,11 +48,32 @@ public class RequisitionDraft extends BaseEntity {
   private UUID facilityid;
 
   @LazyCollection(FALSE)
-  @OneToMany(cascade = ALL, mappedBy = "requisitionDraft")
-  private List<RequisitionLineItemsDraft> LineItems;
+  @OneToMany(
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.REMOVE},
+      fetch = FetchType.LAZY,
+      orphanRemoval = true)
+  @JoinColumn(name = "requisitiondraftid", nullable = false)
+  private List<RequisitionLineItemDraft> lineItems;
 
   @LazyCollection(FALSE)
-  @OneToMany(cascade = ALL, mappedBy = "requisitionDraft")
+  @OneToMany(
+      cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.REMOVE},
+      fetch = FetchType.LAZY,
+      orphanRemoval = true)
+  @JoinColumn(name = "requisitiondraftid", nullable = false)
   private List<KitUsageLineItemDraft> kitUsageLineItems;
+
+  public static RequisitionDraft from(SiglusRequisitionDto requisitionDto,
+      UUID draftId) {
+    RequisitionDraft draft = new RequisitionDraft();
+    draft.setId(draftId);
+    draft.setFacilityid(requisitionDto.getFacilityId());
+    draft.setRequisitionid(requisitionDto.getId());
+    draft.setLineItems(requisitionDto.getRequisitionLineItems().stream().map(lineItem ->
+        RequisitionLineItemDraft.from(draft, lineItem)).collect(Collectors.toList()));
+    //usage darft line item map
+    draft.setKitUsageLineItems(KitUsageLineItemDraft.from(draft, requisitionDto));
+    return draft;
+  }
 }
 

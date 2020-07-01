@@ -15,10 +15,10 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +26,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.siglus.siglusapi.dto.KitUsageLineItemDto;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.springframework.beans.BeanUtils;
 
 @Entity
 @Getter
@@ -37,10 +40,6 @@ import lombok.Setter;
 @Table(name = "kit_usage_line_items_draft", schema = "siglusintegration")
 public class KitUsageLineItemDraft extends BaseEntity {
 
-  @ManyToOne()
-  @JoinColumn(name = "requisitiondraftid", nullable = false)
-  private RequisitionDraft requisitionDraft;
-
   private UUID requisitionId;
 
   private String collection;
@@ -48,4 +47,15 @@ public class KitUsageLineItemDraft extends BaseEntity {
   private String service;
 
   private Integer value;
+
+  public static List<KitUsageLineItemDraft> from(RequisitionDraft requisitionDraft,
+      SiglusRequisitionDto requisitionDto) {
+    List<KitUsageLineItemDto> kitUsageLineItemDtos = requisitionDto.getKitUsageLineItems();
+    List<KitUsageLineItem> lineItems = KitUsageLineItem.from(kitUsageLineItemDtos, requisitionDto);
+    return lineItems.stream().map(lineItem -> {
+      KitUsageLineItemDraft lineItemDraft = new KitUsageLineItemDraft();
+      BeanUtils.copyProperties(lineItem, lineItemDraft);
+      return lineItemDraft;
+    }).collect(Collectors.toList());
+  }
 }

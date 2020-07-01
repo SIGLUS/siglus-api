@@ -6,7 +6,7 @@
 CREATE TABLE requisition_line_items_draft (
     id uuid PRIMARY KEY NOT NULL,
     requisitiondraftid uuid NOT NULL,
-    requisitionlineitemid uuid NOT NULL,
+    requisitionlineitemid uuid,
     adjustedconsumption integer,
     approvedquantity integer,
     averageconsumption integer,
@@ -14,7 +14,7 @@ CREATE TABLE requisition_line_items_draft (
     calculatedorderquantity integer,
     maxperiodsofstock numeric(19,2),
     maximumstockquantity integer,
-    nonfullsupply boolean NOT NULL,
+    nonfullsupply boolean,
     numberofnewpatientsadded integer,
     orderableid uuid,
     packstoship bigint,

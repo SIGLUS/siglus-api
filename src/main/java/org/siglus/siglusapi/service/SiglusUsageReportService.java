@@ -113,22 +113,7 @@ public class SiglusUsageReportService {
   private void updateKitUsageLineItem(SiglusRequisitionDto requisitionDto,
       SiglusRequisitionDto updatedDto) {
     List<KitUsageLineItemDto> kitUsageLineItemDtos = requisitionDto.getKitUsageLineItems();
-    List<KitUsageLineItem> lineItems = new ArrayList<>();
-    for (KitUsageLineItemDto lineItemDto : kitUsageLineItemDtos) {
-      String collection = lineItemDto.getCollection();
-      for (Map.Entry<String, KitUsageServiceLineItemDto> serviceDto :
-          lineItemDto.getServices().entrySet()) {
-        KitUsageServiceLineItemDto service = serviceDto.getValue();
-        KitUsageLineItem kitUsageLineItem = KitUsageLineItem.builder()
-            .requisitionId(requisitionDto.getId())
-            .collection(collection)
-            .service(serviceDto.getKey())
-            .value(service.getValue())
-            .build();
-        kitUsageLineItem.setId(service.getId());
-        lineItems.add(kitUsageLineItem);
-      }
-    }
+    List<KitUsageLineItem> lineItems = KitUsageLineItem.from(kitUsageLineItemDtos, requisitionDto);
     log.info("save all kit line item: {}", lineItems);
     List<KitUsageLineItem> kitUsageLineUpdate = kitUsageRepository.save(lineItems);
     updatedDto.setKitUsageLineItems(getKitUsageLineItemDtos(kitUsageLineUpdate));

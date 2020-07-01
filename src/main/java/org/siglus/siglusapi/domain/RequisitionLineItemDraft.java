@@ -17,6 +17,7 @@ package org.siglus.siglusapi.domain;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
 import javax.persistence.CascadeType;
@@ -25,7 +26,6 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -37,7 +37,9 @@ import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Type;
 import org.joda.money.Money;
+import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
+import org.springframework.beans.BeanUtils;
 
 @Entity
 @Getter
@@ -47,11 +49,7 @@ import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 @NoArgsConstructor
 @Builder
 @Table(name = "requisition_line_items_draft", schema = "siglusintegration")
-public class RequisitionLineItemsDraft extends BaseEntity {
-
-  @ManyToOne()
-  @JoinColumn(name = "requisitiondraftid", nullable = false)
-  private RequisitionDraft requisitionDraft;
+public class RequisitionLineItemDraft extends BaseEntity {
 
   @Embedded
   @AttributeOverrides({
@@ -134,4 +132,22 @@ public class RequisitionLineItemsDraft extends BaseEntity {
 
   private Integer authorizedQuantity;
 
+  public static RequisitionLineItemDraft from(RequisitionDraft draft,
+      RequisitionLineItem.Importer lineItemV2Dto) {
+    RequisitionLineItemDraft lineItemDraft = new RequisitionLineItemDraft();
+    BeanUtils.copyProperties(lineItemV2Dto, lineItemDraft);
+    lineItemDraft.setRequisitionLineItemId(lineItemV2Dto.getId());
+    VersionEntityReference orderable = new VersionEntityReference();
+    orderable.setId(lineItemV2Dto.getOrderableIdentity().getId());
+    orderable.setVersionNumber(lineItemV2Dto.getOrderableIdentity().getVersionNumber());
+    lineItemDraft.setOrderable(orderable);
+    VersionEntityReference approvedProduct = new VersionEntityReference();
+    approvedProduct.setId(lineItemV2Dto.getApprovedProductIdentity().getId());
+    approvedProduct.setVersionNumber(lineItemV2Dto.getApprovedProductIdentity().getVersionNumber());
+    lineItemDraft.setFacilityTypeApprovedProduct(approvedProduct);
+    lineItemDraft.setRequisitionId(draft.getRequisitionid());
+    lineItemDraft.setStockAdjustments(lineItemV2Dto.getStockAdjustments().stream()
+        .map(StockAdjustmentDraft::from).collect(Collectors.toList()));
+    return lineItemDraft;
+  }
 }
