@@ -63,6 +63,15 @@ public class UsageInformationDataProcessor implements IUsageReportDataProcessor 
   }
 
   @Override
+  public void delete(UUID requisitionId) {
+    log.info("find usage information line items by requisition id: {}", requisitionId);
+    List<UsageInformationLineItem> lineItems = usageInformationLineItemRepository
+        .findByRequisitionId(requisitionId);
+    log.info("delete usage information line items: {}", lineItems);
+    usageInformationLineItemRepository.delete(lineItems);
+  }
+
+  @Override
   public boolean isDisabled(SiglusRequisitionDto siglusRequisitionDto) {
     return !siglusRequisitionDto.getTemplate().getExtension().isEnableUsageInformation();
   }

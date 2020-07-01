@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import java.util.List;
+import java.util.UUID;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
@@ -23,6 +24,8 @@ public interface IUsageReportDataProcessor {
 
   void initiate(SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections);
+
+  void delete(UUID requisitionId);
 
   boolean isDisabled(SiglusRequisitionDto siglusRequisitionDto);
 }

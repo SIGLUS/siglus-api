@@ -95,6 +95,7 @@ public class SiglusUsageReportService {
   }
 
   public void deleteUsageReport(UUID requisitionId) {
+    usageReportDataProcessors.forEach(processor -> processor.delete(requisitionId));
     log.info("find kit requisition line item: {}", requisitionId);
     List<KitUsageLineItem> items = kitUsageRepository.findByRequisitionId(requisitionId);
     if (!items.isEmpty()) {
