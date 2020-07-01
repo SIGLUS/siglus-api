@@ -321,15 +321,8 @@ public class SiglusPhysicalInventoryService {
   }
 
   public InitialInventoryFieldDto canInitialInventory(UUID facility) {
-    boolean canEditPhysicalInventory = true;
-    // #359 no stock management permission still needs to init inventory
-    // try {
-    //  permissionService.canEditPhysicalInventory(null, facility);
-    // } catch (org.openlmis.stockmanagement.exception.PermissionMessageException ex) {
-    //  canEditPhysicalInventory = false;
-    //}
     List<StockCard> stockCards = stockCardRepository.findByFacilityId(facility);
-    boolean canInitialInventory = canEditPhysicalInventory && CollectionUtils.isEmpty(stockCards);
+    boolean canInitialInventory = CollectionUtils.isEmpty(stockCards);
     return new InitialInventoryFieldDto(canInitialInventory);
   }
 
