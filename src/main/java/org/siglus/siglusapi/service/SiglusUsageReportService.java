@@ -108,6 +108,8 @@ public class SiglusUsageReportService {
   public SiglusRequisitionDto saveUsageReport(SiglusRequisitionDto requisitionDto,
       RequisitionV2Dto updatedDto) {
     SiglusRequisitionDto siglusUpdatedDto = SiglusRequisitionDto.from(updatedDto);
+    usageReportDataProcessors.forEach(processor -> processor.update(requisitionDto,
+        siglusUpdatedDto));
     updateKitUsageLineItem(requisitionDto, siglusUpdatedDto);
     return siglusUpdatedDto;
   }

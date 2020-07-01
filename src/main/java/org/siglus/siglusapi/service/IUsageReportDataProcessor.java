@@ -27,6 +27,9 @@ public interface IUsageReportDataProcessor {
 
   void get(SiglusRequisitionDto siglusRequisitionDto);
 
+  void update(SiglusRequisitionDto siglusRequisitionDto,
+      SiglusRequisitionDto siglusRequisitionUpdatedDto);
+
   void delete(UUID requisitionId);
 
   boolean isDisabled(SiglusRequisitionDto siglusRequisitionDto);

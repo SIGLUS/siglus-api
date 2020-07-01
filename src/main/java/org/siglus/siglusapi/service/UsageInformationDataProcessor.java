@@ -55,7 +55,8 @@ public class UsageInformationDataProcessor implements IUsageReportDataProcessor 
     }
     List<UsageInformationLineItem> lineItems = createUsageInformationLineItems(
         siglusRequisitionDto, templateColumnSections);
-    log.info("save usage information line items: {}", lineItems);
+    log.info("save usage information line items by requisition id: {}",
+        siglusRequisitionDto.getId());
     List<UsageInformationLineItem> lineItemsSaved = usageInformationLineItemRepository
         .save(lineItems);
     List<UsageInformationServiceDto> serviceDtos = UsageInformationServiceDto.from(lineItemsSaved);
@@ -73,11 +74,24 @@ public class UsageInformationDataProcessor implements IUsageReportDataProcessor 
   }
 
   @Override
+  public void update(SiglusRequisitionDto siglusRequisitionDto,
+      SiglusRequisitionDto siglusRequisitionUpdatedDto) {
+    List<UsageInformationServiceDto> serviceDtos = siglusRequisitionDto
+        .getUsageInformationLineItems();
+    siglusRequisitionUpdatedDto.setUsageInformationLineItems(serviceDtos);
+    List<UsageInformationLineItem> lineItems = UsageInformationLineItem
+        .from(serviceDtos, siglusRequisitionDto.getId());
+    log.info("update usage information line items by requisition id: {}",
+        siglusRequisitionDto.getId());
+    usageInformationLineItemRepository.save(lineItems);
+  }
+
+  @Override
   public void delete(UUID requisitionId) {
     log.info("find usage information line items by requisition id: {}", requisitionId);
     List<UsageInformationLineItem> lineItems = usageInformationLineItemRepository
         .findByRequisitionId(requisitionId);
-    log.info("delete usage information line items: {}", lineItems);
+    log.info("delete usage information line items by requisition id: {}", requisitionId);
     usageInformationLineItemRepository.delete(lineItems);
   }
 

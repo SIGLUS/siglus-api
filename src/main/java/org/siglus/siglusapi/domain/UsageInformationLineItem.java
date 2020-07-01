@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.domain;
 
+import static com.google.common.collect.Lists.newArrayList;
+
+import java.util.List;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -23,6 +26,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.dto.UsageInformationServiceDto;
 
 @Entity
 @Data
@@ -42,5 +46,27 @@ public class UsageInformationLineItem extends BaseEntity {
   private UUID orderableId;
 
   private Integer value;
+
+  public static List<UsageInformationLineItem> from(List<UsageInformationServiceDto> serviceDtos,
+      UUID requisitionId) {
+    List<UsageInformationLineItem> lineItems = newArrayList();
+    serviceDtos.forEach(serviceDto -> {
+      String service = serviceDto.getService();
+      serviceDto.getInformations()
+          .forEach((informationKey, informationValue) -> informationValue.getOrderables()
+              .forEach((orderableKey, orderableValue) -> {
+                UsageInformationLineItem lineItem = UsageInformationLineItem.builder()
+                    .requisitionId(requisitionId)
+                    .service(service)
+                    .information(informationKey)
+                    .orderableId(orderableKey)
+                    .value(orderableValue.getValue())
+                    .build();
+                lineItem.setId(orderableValue.getUsageInformationLineItemId());
+                lineItems.add(lineItem);
+              }));
+    });
+    return lineItems;
+  }
 
 }
