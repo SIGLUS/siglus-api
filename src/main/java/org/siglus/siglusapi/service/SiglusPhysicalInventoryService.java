@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
@@ -53,6 +54,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusPhysicalInventoryService {
 
@@ -178,6 +180,7 @@ public class SiglusPhysicalInventoryService {
     if (CollectionUtils.isNotEmpty(inventories)) {
       List<UUID> updatePhysicalInventoryIds =
           inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+      log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
       List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
           .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
       PhysicalInventoryDto resultInventory = getResultInventory(inventories, extensions);
@@ -196,6 +199,7 @@ public class SiglusPhysicalInventoryService {
       List<PhysicalInventoryDto> updatedDto) {
     List<UUID> updatePhysicalInventoryIds =
         updatedDto.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+    log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
     List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
         .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
     List<PhysicalInventoryLineItemsExtension> updateExtensions = new ArrayList<>();
@@ -337,6 +341,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   public PhysicalInventoryDto findLatestPhysicalInventory(UUID facilityId) {
+    log.info("find physicalInventories Repository: {}", facilityId);
     List<PhysicalInventory> found = physicalInventoriesRepository.findByFacilityId(facilityId);
 
     if (found == null) {
