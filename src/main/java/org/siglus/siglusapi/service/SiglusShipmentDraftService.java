@@ -115,8 +115,7 @@ public class SiglusShipmentDraftService {
         .map(OrderLineItemExtension::getOrderLineItemId)
         .collect(Collectors.toSet());
 
-    log.info("removed shipment draft of order id: {}", order.getId());
-    log.info("removed OrderLineItem Ids: {}", addedIds);
+    log.info("orderId: {}, deleteOrderLineItemIds: {}", order.getId(), addedIds);
 
     order.getOrderLineItems().removeIf(
         orderLineItem -> addedIds.contains(orderLineItem.getId()));

@@ -154,8 +154,7 @@ public class SiglusOrderService {
     if (addedOrderableIds.isEmpty()) {
       return Collections.emptySet();
     }
-    log.info("save order id: {}", order.getId());
-    log.info("added Orderable Ids: {}", addedOrderableIds);
+    log.info("orderId: {}, addedOrderableIds: {}", order.getId(), addedOrderableIds);
     Order saved = orderRepository.save(order);
     Set<UUID> addedLineItemIds = new HashSet<>();
     // orderable-id : lineItem-id
@@ -173,7 +172,7 @@ public class SiglusOrderService {
       }
     });
 
-    log.info("added OrderLineItem Ids: {}", addedLineItemIds);
+    log.info("orderId: {}, addedOrderLineItemIds: {}", order.getId(), addedLineItemIds);
     return addedLineItemIds;
   }
 
