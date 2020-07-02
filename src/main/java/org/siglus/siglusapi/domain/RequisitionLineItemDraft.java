@@ -21,7 +21,9 @@ import java.util.stream.Collectors;
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -39,6 +41,12 @@ import org.hibernate.annotations.Type;
 import org.joda.money.Money;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
+import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.MetadataDto;
+import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.dto.RequisitionLineItemDto;
+import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
+import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.springframework.beans.BeanUtils;
 
 @Entity
@@ -110,6 +118,14 @@ public class RequisitionLineItemDraft extends BaseEntity {
 
   private Integer adjustedConsumption;
 
+  @ElementCollection
+  @CollectionTable(name = "previous_adjusted_consumptions_draft", schema = "siglusintegration",
+      joinColumns = @JoinColumn(name = "requisitionLineItemId"))
+  @Column(name = "previousAdjustedConsumption")
+  @Setter
+  @Getter
+  private List<Integer> previousAdjustedConsumptions;
+
   private Integer averageConsumption;
 
   private Integer maximumStockQuantity;
@@ -149,5 +165,25 @@ public class RequisitionLineItemDraft extends BaseEntity {
     lineItemDraft.setStockAdjustments(lineItemV2Dto.getStockAdjustments().stream()
         .map(StockAdjustmentDraft::from).collect(Collectors.toList()));
     return lineItemDraft;
+  }
+
+  public static RequisitionLineItemV2Dto getLineItemDto(RequisitionLineItemDraft lineItemDraft) {
+    RequisitionLineItemV2Dto dto = new RequisitionLineItemV2Dto();
+    BeanUtils.copyProperties(lineItemDraft, dto);
+    dto.setId(lineItemDraft.getRequisitionLineItemId());
+    OrderableDto orderable = new OrderableDto();
+    orderable.setId(lineItemDraft.getOrderable().getId());
+    orderable.setMeta(new MetadataDto(lineItemDraft.getOrderable().getVersionNumber(), null));
+    ApprovedProductDto approvedProduct = new ApprovedProductDto(
+        lineItemDraft.getFacilityTypeApprovedProduct().getId(), null, null, null,
+        null, null, new MetadataDto(
+        lineItemDraft.getFacilityTypeApprovedProduct().getVersionNumber(), null));
+    dto.setOrderable(orderable);
+    dto.setApprovedProduct(approvedProduct);
+    dto.setStockAdjustments(lineItemDraft.getStockAdjustments()
+        .stream()
+        .map(StockAdjustmentDraft::getStockAdjustmentDto)
+        .collect(Collectors.toList()));
+    return dto;
   }
 }

@@ -20,5 +20,4 @@ import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RequisitionDraftRepository extends JpaRepository<RequisitionDraft, UUID> {
-
 }

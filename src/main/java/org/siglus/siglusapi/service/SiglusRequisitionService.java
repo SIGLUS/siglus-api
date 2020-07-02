@@ -28,6 +28,7 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELE
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 import static org.openlmis.requisition.dto.OrderStatus.SHIPPED;
+import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.siglus.siglusapi.constant.PaginationConstants.UNPAGED;
 
 import com.google.common.collect.Lists;
@@ -41,6 +42,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -105,10 +107,14 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
+import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
+import org.siglus.siglusapi.domain.RequisitionDraft;
+import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.slf4j.profiler.Profiler;
@@ -202,19 +208,20 @@ public class SiglusRequisitionService {
   @Autowired
   private ShipmentFulfillmentService shipmentFulfillmentService;
 
+  @Autowired
+  private RequisitionDraftRepository draftRepository;
+
   @Value("${service.url}")
   private String serviceUrl;
 
   @Transactional
   public SiglusRequisitionDto updateRequisition(UUID requisitionId,
-      @RequestBody SiglusRequisitionDto requisitionDto,
-      HttpServletRequest request, HttpServletResponse response) {
-    // call modify OpenLMIS API
-    RequisitionV2Dto upadateRequsitionDto = requisitionV2Controller
-        .updateRequisition(requisitionId, requisitionDto, request, response);
-    saveLineItemExtension(requisitionDto, upadateRequsitionDto);
-
-    return siglusUsageReportService.saveUsageReport(requisitionDto, upadateRequsitionDto);
+      SiglusRequisitionDto requisitionDto) {
+    if (null != requisitionDto.getId()
+        && !Objects.equals(requisitionDto.getId(), requisitionId)) {
+      throw new ValidationMessageException(ERROR_ID_MISMATCH);
+    }
+    return saveRequisitionDraft(requisitionDto);
   }
 
   @Transactional
@@ -286,10 +293,17 @@ public class SiglusRequisitionService {
     filterProductsIfEmergency(requisitionDto);
     // set available products in approve page
     setAvailableProductsForApprovePage(requisitionDto);
-
-    SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService
-        .searchUsageReport(requisitionDto);
-    return setIsFinalApproval(siglusRequisitionDto);
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    RequisitionDraft draft = draftRepository.findByRequisitionidAndFacilityid(requisitionId,
+        userDto.getHomeFacilityId());
+    if (draft == null) {
+      SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService
+          .searchUsageReport(requisitionDto);
+      return setIsFinalApproval(siglusRequisitionDto);
+    }
+    SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionDto);
+    fillRequisitionDraft(draft, siglusRequisitionDto);
+    return siglusRequisitionDto;
   }
 
   public Page<BasicRequisitionDto> searchRequisitions(MultiValueMap<String, String> queryParams,
@@ -302,6 +316,28 @@ public class SiglusRequisitionService {
         .add(QueryRequisitionSearchParams.REQUISITION_STATUS, requisitionStatus.toString()));
     RequisitionSearchParams params = new QueryRequisitionSearchParams(queryParams);
     return siglusRequisitionRequisitionService.searchRequisitions(params, pageable);
+  }
+
+  private SiglusRequisitionDto saveRequisitionDraft(SiglusRequisitionDto requisitionDto) {
+    UserDto user = authenticationHelper.getCurrentUser();
+    RequisitionDraft draft = draftRepository
+        .findByRequisitionidAndFacilityid(requisitionDto.getId(), requisitionDto.getFacilityId());
+    RequisitionDraft requisitionDraft = RequisitionDraft
+        .from(requisitionDto, (draft == null ? null : draft.getId()), user);
+    log.info("save requisition draft extension: {}", requisitionDraft);
+    draft = draftRepository.save(requisitionDraft);
+    fillRequisitionDraft(draft, requisitionDto);
+    return requisitionDto;
+  }
+
+  private SiglusRequisitionDto saveRequisition(UUID requisitionId,
+      SiglusRequisitionDto requisitionDto, HttpServletRequest request,
+      HttpServletResponse response) {
+    // call modify OpenLMIS API
+    RequisitionV2Dto upadateRequsitionDto = requisitionV2Controller
+        .updateRequisition(requisitionId, requisitionDto, request, response);
+    saveLineItemExtension(requisitionDto, upadateRequsitionDto);
+    return siglusUsageReportService.saveUsageReport(requisitionDto, upadateRequsitionDto);
   }
 
   private void saveLineItemExtension(RequisitionV2Dto toUpdatedDto, RequisitionV2Dto updatedDto) {
@@ -783,6 +819,18 @@ public class SiglusRequisitionService {
     }
 
     return canSeeRequisitionStatus;
+  }
+
+  private void fillRequisitionDraft(RequisitionDraft draft, SiglusRequisitionDto dto) {
+    if (dto.getTemplate().getExtension().isEnableProduct()) {
+      dto.setRequisitionLineItems(draft.getLineItems()
+          .stream()
+          .map(lineItemDraft -> RequisitionLineItemDraft.getLineItemDto(lineItemDraft))
+          .collect(toList()));
+    }
+    if (dto.getTemplate().getExtension().isEnableKitUsage()) {
+      dto.setKitUsageLineItems(KitUsageLineItemDraft.from(draft.getKitUsageLineItems()));
+    }
   }
 
 }

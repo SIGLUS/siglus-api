@@ -15,7 +15,11 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.Entity;
@@ -27,6 +31,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.siglus.siglusapi.dto.KitUsageLineItemDto;
+import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.springframework.beans.BeanUtils;
 
@@ -57,5 +62,26 @@ public class KitUsageLineItemDraft extends BaseEntity {
       BeanUtils.copyProperties(lineItem, lineItemDraft);
       return lineItemDraft;
     }).collect(Collectors.toList());
+  }
+
+  public static List<KitUsageLineItemDto> from(List<KitUsageLineItemDraft> draftList) {
+    List<KitUsageLineItemDto> kitDtos = new ArrayList<>();
+    Map<String, List<KitUsageLineItemDraft>> groupKitUsages = draftList.stream()
+        .collect(Collectors.groupingBy(KitUsageLineItemDraft::getCollection));
+    for (Entry<String, List<KitUsageLineItemDraft>> groupKitUsage : groupKitUsages.entrySet()) {
+      KitUsageLineItemDto kitUsageLineItemDto = new KitUsageLineItemDto();
+      kitUsageLineItemDto.setCollection(groupKitUsage.getKey());
+      Map<String, KitUsageServiceLineItemDto> services = new HashMap<>();
+      groupKitUsage.getValue().forEach(lineItem -> {
+        KitUsageServiceLineItemDto dto = KitUsageServiceLineItemDto.builder()
+            .id(lineItem.getId())
+            .value(lineItem.getValue())
+            .build();
+        services.put(lineItem.getService(), dto);
+      });
+      kitUsageLineItemDto.setServices(services);
+      kitDtos.add(kitUsageLineItemDto);
+    }
+    return kitDtos;
   }
 }

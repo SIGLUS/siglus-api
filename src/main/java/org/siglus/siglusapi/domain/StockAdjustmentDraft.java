@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openlmis.requisition.domain.requisition.StockAdjustment;
+import org.openlmis.requisition.dto.stockmanagement.StockAdjustmentDto;
 import org.springframework.beans.BeanUtils;
 
 @Entity
@@ -49,4 +50,11 @@ public class StockAdjustmentDraft extends BaseEntity {
     BeanUtils.copyProperties(adjustment, draft);
     return draft;
   }
+
+  public static StockAdjustmentDto getStockAdjustmentDto(StockAdjustmentDraft draft) {
+    StockAdjustmentDto dto = new StockAdjustmentDto();
+    BeanUtils.copyProperties(draft, dto);
+    return dto;
+  }
+
 }

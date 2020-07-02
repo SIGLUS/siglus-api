@@ -77,10 +77,8 @@ public class SiglusRequisitionController {
 
   @PutMapping("/{id}")
   public SiglusRequisitionDto updateRequisition(@PathVariable("id") UUID requisitionId,
-      @RequestBody SiglusRequisitionDto requisitionDto,
-      HttpServletRequest request, HttpServletResponse response) {
-    return siglusRequisitionService
-        .updateRequisition(requisitionId, requisitionDto, request, response);
+      @RequestBody SiglusRequisitionDto requisitionDto) {
+    return siglusRequisitionService.updateRequisition(requisitionId, requisitionDto);
   }
 
   @DeleteMapping("/{id}")

@@ -32,6 +32,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.LazyCollection;
+
+import org.openlmis.requisition.dto.UserDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
 @Entity
@@ -64,15 +66,18 @@ public class RequisitionDraft extends BaseEntity {
   private List<KitUsageLineItemDraft> kitUsageLineItems;
 
   public static RequisitionDraft from(SiglusRequisitionDto requisitionDto,
-      UUID draftId) {
+      UUID draftId, UserDto userDto) {
     RequisitionDraft draft = new RequisitionDraft();
     draft.setId(draftId);
-    draft.setFacilityid(requisitionDto.getFacilityId());
+    draft.setFacilityid(userDto.getHomeFacilityId());
     draft.setRequisitionid(requisitionDto.getId());
-    draft.setLineItems(requisitionDto.getRequisitionLineItems().stream().map(lineItem ->
-        RequisitionLineItemDraft.from(draft, lineItem)).collect(Collectors.toList()));
-    //usage darft line item map
-    draft.setKitUsageLineItems(KitUsageLineItemDraft.from(draft, requisitionDto));
+    if (requisitionDto.getTemplate().getExtension().isEnableProduct()) {
+      draft.setLineItems(requisitionDto.getRequisitionLineItems().stream().map(lineItem ->
+          RequisitionLineItemDraft.from(draft, lineItem)).collect(Collectors.toList()));
+    }
+    if (requisitionDto.getTemplate().getExtension().isEnableKitUsage()) {
+      draft.setKitUsageLineItems(KitUsageLineItemDraft.from(draft, requisitionDto));
+    }
     return draft;
   }
 }
