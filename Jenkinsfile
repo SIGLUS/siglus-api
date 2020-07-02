@@ -20,6 +20,9 @@ pipeline {
             }
         }
         stage('SonarQube Analysis') {
+            when {
+                branch 'master'
+            }
             steps {
                 withCredentials([string(credentialsId: 'sonarqube_token', variable: 'SONARQUBE_TOKEN')]) {
                     sh 'docker run --rm -v ${PWD}:/app -w /app siglusdevops/gradle:4.10.3 gradle sonarqube -Dsonar.projectKey=siglus-api -Dsonar.host.url=http://13.234.176.65:9000 -Dsonar.login=$SONARQUBE_TOKEN'
