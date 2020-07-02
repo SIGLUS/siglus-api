@@ -134,10 +134,10 @@ def deploy(app_env) {
                 sed -i "s#<APP_ENV>#${APP_ENV}#g" settings.env
                 echo "OL_SIGLUSAPI_VERSION=${IMAGE_TAG}" > .env
 
-                if [ ${app_env} = "dev" ] ||  [ ${app_env} = "qa" ]
+                if [ ${APP_ENV} = "dev" ] ||  [ ${APP_ENV} = "qa" ]
                 then
                     echo "OL_TIME_ZONE_ID=Asia/Shanghai" >> .env
-                elif [ ${app_env} = "integ" ] ||  [ ${app_env} = "uat" ]
+                elif [ ${APP_ENV} = "integ" ] ||  [ ${APP_ENV} = "uat" ]
                 then
                     echo "OL_TIME_ZONE_ID=Africa/Maputo" >> .env
                 fi
