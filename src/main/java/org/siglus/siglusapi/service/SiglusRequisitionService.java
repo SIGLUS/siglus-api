@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.reducing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -36,7 +38,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -60,7 +61,6 @@ import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BaseRequisitionDto;
-import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
@@ -625,17 +625,19 @@ public class SiglusRequisitionService {
   }
 
   private Set<UUID> mapToNotFullyShippedProductIds(RequisitionV2Dto requisition) {
-    HashMap<UUID, Long> reqProductQuantityMap = requisition.getLineItems().stream()
+    Map<UUID, Long> reqProductQuantityMap = requisition.getLineItems().stream()
         .filter(lineItem -> !lineItem.getSkipped() && lineItem.getApprovedQuantity() > 0)
-        .collect(HashMap::new, this::mergeReqLineItem, this::mergeProductQuantity);
-    HashMap<UUID, Long> shipmentProductQuantityMap = searchOrders(requisition).stream()
+        .collect(groupingBy(lineItem -> lineItem.getOrderableIdentity().getId(),
+            reducing(0L, req -> req.getApprovedQuantity().longValue(), Long::sum)));
+    Map<UUID, Long> shipmentProductQuantityMap = searchOrders(requisition).stream()
         .filter(order -> order.getStatus() == SHIPPED)
         .map(BaseDto::getId)
         .map(shipmentFulfillmentService::getShipments)
         .flatMap(Collection::stream)
         .map(ShipmentDto::getLineItems)
         .flatMap(Collection::stream)
-        .collect(HashMap::new, this::mergeShipmentLineItem, this::mergeProductQuantity);
+        .collect(groupingBy(lineItem -> lineItem.getOrderable().getId(),
+            reducing(0L, ShipmentLineItemDto::getQuantityShipped, Long::sum)));
     return reqProductQuantityMap.entrySet().stream()
         .filter(entry -> !shipmentProductQuantityMap.containsKey(entry.getKey())
             || entry.getValue() > shipmentProductQuantityMap.get(entry.getKey()))
@@ -650,34 +652,6 @@ public class SiglusRequisitionService {
         .stream()
         .filter(order -> requisition.getId().equals(order.getExternalId()))
         .collect(Collectors.toList());
-  }
-
-  private void mergeShipmentLineItem(Map<UUID, Long> map, ShipmentLineItemDto newValue) {
-    UUID id = newValue.getOrderable().getId();
-    if (map.containsKey(id)) {
-      map.put(id, newValue.getQuantityShipped() + map.get(id));
-    } else {
-      map.put(id, newValue.getQuantityShipped());
-    }
-  }
-
-  private void mergeReqLineItem(Map<UUID, Long> map, BaseRequisitionLineItemDto newValue) {
-    UUID id = newValue.getOrderableIdentity().getId();
-    if (map.containsKey(id)) {
-      map.put(id, newValue.getPacksToShip() + map.get(id));
-    } else {
-      map.put(id, newValue.getPacksToShip());
-    }
-  }
-
-  private void mergeProductQuantity(Map<UUID, Long> map1, Map<UUID, Long> map2) {
-    map2.forEach((k, v) -> {
-      if (map1.containsKey(k)) {
-        map1.put(k, v + map1.get(k));
-      } else {
-        map1.put(k, v);
-      }
-    });
   }
 
   private void setAvailableProductsForApprovePage(RequisitionV2Dto requisitionDto) {

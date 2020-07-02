@@ -666,13 +666,33 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  public void shouldFilterProduct1WhenGetEmergencyRequisitionGivenProduct1InProgress() {
+  public void shouldFilterProduct1WhenGetEmergencyRequisitionGivenProduct1ReqInProgress() {
     // given
     mockEmergencyRequisition();
     mockPreviousEmergencyRequisition1(IN_APPROVAL);
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
         .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
-    mockProduct1InProgress();
+    mockProduct1ReqInProgress();
+
+    // when
+    siglusRequisitionService.searchRequisition(requisitionId);
+
+    // then
+    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
+    assertEquals(1, availableProducts.size());
+    assertThat(availableProducts,
+        hasItems(productVersionObjectReference2));
+  }
+
+  @Test
+  public void shouldFilterProduct1WhenGetEmergencyRequisitionGivenProduct1OrderInProgress() {
+    // given
+    mockEmergencyRequisition();
+    mockPreviousEmergencyRequisition1(RELEASED);
+    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
+        .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
+    mockProduct1OrderInProgress();
 
     // when
     siglusRequisitionService.searchRequisition(requisitionId);
@@ -841,17 +861,28 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(preReqOrders);
   }
 
+  private void mockInProgressOrder(UUID reqId) {
+    mockOrderService();
+    preReqOrders.add(mockOrder(reqId, OrderStatus.FULFILLING));
+  }
+
   private List<ShipmentDto> mockShippedOrder(UUID reqId) {
     mockOrderService();
-    OrderDto order = new OrderDto();
-    order.setId(UUID.randomUUID());
-    order.setStatus(OrderStatus.SHIPPED);
-    order.setExternalId(reqId);
+    OrderDto order = mockOrder(reqId, OrderStatus.SHIPPED);
     preReqOrders.add(order);
     List<ShipmentDto> shipments = new ArrayList<>();
     when(shipmentFulfillmentService.getShipments(order.getId()))
         .thenReturn(shipments);
     return shipments;
+  }
+
+  private OrderDto mockOrder(UUID reqId, OrderStatus status) {
+    mockOrderService();
+    OrderDto order = new OrderDto();
+    order.setId(UUID.randomUUID());
+    order.setStatus(status);
+    order.setExternalId(reqId);
+    return order;
   }
 
   private void mockShippedOrderAndShipmentForPreviousEmergencyRequisition1() {
@@ -885,10 +916,14 @@ public class SiglusRequisitionServiceTest {
     preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(emptyList()));
   }
 
-  private void mockProduct1InProgress() {
+  private void mockProduct1ReqInProgress() {
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setOrderable(productVersionObjectReference1);
     previousV2Req1.setRequisitionLineItems(singletonList(lineItem));
+  }
+
+  private void mockProduct1OrderInProgress() {
+    mockInProgressOrder(preReqId1);
   }
 
   private void mockOverflowShippedProduct1InPrevReq1() {
