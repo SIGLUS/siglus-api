@@ -35,7 +35,7 @@ pipeline {
                     sh '''
                         set +x
                         docker login -u $USER -p $PASS
-                        IMAGE_TAG=$(git rev-parse HEAD)
+                        IMAGE_TAG=${BRANCH_NAME}-$(git rev-parse HEAD)
                         IMAGE_REPO=siglusdevops/siglusapi
                         IMAGE_NAME=${IMAGE_REPO}:${IMAGE_TAG}
                         docker build -t ${IMAGE_NAME} .
@@ -127,7 +127,7 @@ def deploy(app_env) {
                 rm -f settings.env
                 wget https://raw.githubusercontent.com/SIGLUS/siglus-ref-distro/master/docker-compose.yml
 
-                IMAGE_TAG=$(git rev-parse HEAD)
+                IMAGE_TAG=${BRANCH_NAME}-$(git rev-parse HEAD)
                 SERVICE_NAME=siglusapi
 
                 cp $SETTING_ENV settings.env
