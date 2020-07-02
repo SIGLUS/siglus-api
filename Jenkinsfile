@@ -81,7 +81,7 @@ pipeline {
                 branch 'release-1.0'
             }
             steps {
-                deploy "intg"
+                deploy "integ"
             }
         }
         stage('Deploy To UAT') {
