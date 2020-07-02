@@ -205,4 +205,8 @@ public class SiglusArchiveProductService {
   public Set<String> searchArchivedProducts(UUID facilityId) {
     return stockCardExtensionRepository.findArchivedProducts(facilityId);
   }
+
+  public Set<String> searchArchivedProductsByFacilityIds(Set<UUID> facilityIds) {
+    return stockCardExtensionRepository.findArchivedProductsByFacilityIds(facilityIds);
+  }
 }

@@ -255,9 +255,7 @@ public class SiglusOrderService {
   }
 
   private Set<UUID> getArchivedOrderableIds(Set<UUID> facilityIds) {
-    return facilityIds.stream()
-        .flatMap(facilityId -> siglusArchiveProductService.searchArchivedProducts(facilityId)
-            .stream())
+    return siglusArchiveProductService.searchArchivedProductsByFacilityIds(facilityIds).stream()
         .map(UUID::fromString)
         .collect(Collectors.toSet());
   }

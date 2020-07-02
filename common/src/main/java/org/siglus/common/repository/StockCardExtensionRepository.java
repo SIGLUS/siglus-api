@@ -37,4 +37,12 @@ public interface StockCardExtensionRepository extends JpaRepository<StockCardExt
       + "and sc.facilityId = :facilityId "
       + "and sce.archived = true", nativeQuery = true)
   Set<String> findArchivedProducts(@Param("facilityId") UUID facilityId);
+
+  @Query(value = "select cast(orderableId as varchar) orderableId "
+      + "from stockmanagement.stock_cards sc, "
+      + "siglusintegration.stock_card_extension sce "
+      + "where sc.id = sce.stockcardid "
+      + "and sc.facilityId in (:facilityIds) "
+      + "and sce.archived = true", nativeQuery = true)
+  Set<String> findArchivedProductsByFacilityIds(@Param("facilityIds") Set<UUID> facilityIds);
 }
