@@ -221,6 +221,7 @@ public class SiglusPhysicalInventoryService {
       });
     });
 
+    log.info("save physical inventory extension: {}", updateExtensions);
     return lineItemsExtensionRepository.save(updateExtensions);
   }
 

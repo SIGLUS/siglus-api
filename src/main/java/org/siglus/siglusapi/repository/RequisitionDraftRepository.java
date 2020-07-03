@@ -15,13 +15,10 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RequisitionDraftRepository extends JpaRepository<RequisitionDraft, UUID> {
-
-  List<RequisitionDraft> findByRequisitionidAndFacilityid(UUID requisitionid, UUID facilityid);
 
 }
