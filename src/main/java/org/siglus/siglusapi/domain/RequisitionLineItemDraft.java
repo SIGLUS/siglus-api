@@ -122,7 +122,7 @@ public class RequisitionLineItemDraft extends BaseEntity {
       orphanRemoval = true)
   @Getter
   @Setter
-  @JoinColumn(name = "requisitionLineItemId")
+  @JoinColumn(name = "id")
   @BatchSize(size = STANDARD_BATCH_SIZE)
   private List<StockAdjustmentDraft> stockAdjustments;
 
