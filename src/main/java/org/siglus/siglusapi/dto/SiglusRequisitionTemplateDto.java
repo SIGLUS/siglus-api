@@ -51,7 +51,7 @@ public class SiglusRequisitionTemplateDto extends RequisitionTemplateDto {
 
   private List<UsageTemplateSectionDto> consultationNumber;
 
-  private List<UsageTemplateSectionDto> rapidTestConsumption;
+  private List<UsageTemplateSectionDto> testConsumption;
 
   private List<UsageTemplateSectionDto> usageInformation;
 

@@ -256,7 +256,7 @@ public class SiglusRequisitionTemplateService {
     allUsageTemplateCategoryDto.put(UsageCategory.CONSULTATIONNUMBER,
         requestDto.getConsultationNumber());
     allUsageTemplateCategoryDto.put(UsageCategory.RAPIDTESTCONSUMPTION,
-        requestDto.getRapidTestConsumption());
+        requestDto.getTestConsumption());
     allUsageTemplateCategoryDto.put(UsageCategory.USAGEINFORMATION,
         requestDto.getUsageInformation());
     return allUsageTemplateCategoryDto;
@@ -272,7 +272,7 @@ public class SiglusRequisitionTemplateService {
     templateDto.setRegimen(getCategoryDto(categoryListMap, UsageCategory.REGIMEN));
     templateDto
         .setConsultationNumber(getCategoryDto(categoryListMap, UsageCategory.CONSULTATIONNUMBER));
-    templateDto.setRapidTestConsumption(
+    templateDto.setTestConsumption(
         getCategoryDto(categoryListMap, UsageCategory.RAPIDTESTCONSUMPTION));
     templateDto
         .setUsageInformation(getCategoryDto(categoryListMap, UsageCategory.USAGEINFORMATION));
