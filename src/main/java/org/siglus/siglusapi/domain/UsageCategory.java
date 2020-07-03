@@ -24,7 +24,7 @@ public enum UsageCategory {
   PATIENT("patient"),
   REGIMEN("regimen"),
   CONSULTATIONNUMBER("consultationNumber"),
-  RAPIDTESTCONSUMPTION("testConsumption"),
+  RAPIDTESTCONSUMPTION("rapidTestConsumption"),
   USAGEINFORMATION("usageInformation");
 
   private final String name;
