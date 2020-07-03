@@ -45,6 +45,7 @@ import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
 import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.repository.StockCardExtensionRepository;
+import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
@@ -90,6 +91,9 @@ public class SiglusStockEventsService {
 
   @Autowired
   private SiglusArchiveProductService archiveProductService;
+
+  @Autowired
+  private SiglusDateHelper dateHelper;
 
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;
@@ -214,7 +218,7 @@ public class SiglusStockEventsService {
     } else {
       throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
     }
-    lotDto.setManufactureDate(LocalDate.now());
+    lotDto.setManufactureDate(dateHelper.getCurrentDate());
     lotDto.setExpirationDate(expirationDate);
     lotDto.setActive(true);
     lotDto.setLotCode(lotCode);

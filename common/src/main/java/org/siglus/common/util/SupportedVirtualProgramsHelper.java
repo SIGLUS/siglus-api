@@ -42,6 +42,9 @@ public class SupportedVirtualProgramsHelper {
   @Autowired
   private ProgramExtensionRepository programExtensionRepository;
 
+  @Autowired
+  private SiglusDateHelper dateHelper;
+
   public Set<UUID> findUserSupportedVirtualPrograms() {
     UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     FacilityDto homeFacility = facilityController.getFacility(homeFacilityId);
@@ -51,7 +54,7 @@ public class SupportedVirtualProgramsHelper {
           LocalDate supportStartDate = supportedProgramDto.getSupportStartDate();
           return supportedProgramDto.isProgramActive()
               && supportedProgramDto.isSupportActive()
-              && supportStartDate.isBefore(LocalDate.now());
+              && supportStartDate.isBefore(dateHelper.getCurrentDate());
         })
         .map(SupportedProgramDto::getId)
         .collect(Collectors.toSet());

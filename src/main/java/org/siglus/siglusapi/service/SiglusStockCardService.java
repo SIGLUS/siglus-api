@@ -19,7 +19,6 @@ import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byOccurre
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byProcessedDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonPriority;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -44,6 +43,7 @@ import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.repository.StockCardExtensionRepository;
+import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +72,9 @@ public class SiglusStockCardService {
 
   @Autowired
   private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+
+  @Autowired
+  private SiglusDateHelper dateHelper;
 
   public StockCardDto findStockCardByOrderable(UUID orderableId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -176,7 +179,7 @@ public class SiglusStockCardService {
       Optional<CalculatedStockOnHand> calculatedStockOnHandOptional =
           calculatedStockOnHandRepository
               .findFirstByStockCardIdAndOccurredDateLessThanEqualOrderByOccurredDateDesc(
-                  stockCardDto.getId(), LocalDate.now());
+                  stockCardDto.getId(), dateHelper.getCurrentDate());
       stockOnHand += calculatedStockOnHandOptional.isPresent()
           ? calculatedStockOnHandOptional.get().getStockOnHand() : 0;
 

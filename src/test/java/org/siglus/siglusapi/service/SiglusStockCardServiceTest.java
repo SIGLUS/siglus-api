@@ -31,6 +31,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -48,6 +49,7 @@ import org.openlmis.stockmanagement.testutils.StockCardLineItemDataBuilder;
 import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.repository.StockCardExtensionRepository;
+import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
 import org.springframework.beans.BeanUtils;
@@ -77,12 +79,17 @@ public class SiglusStockCardServiceTest {
   @Mock
   private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
 
+  @Mock
+  private SiglusDateHelper dateHelper;
+
   @InjectMocks
   private SiglusStockCardService siglusStockCardService;
 
   private UUID orderableId;
 
   private UUID homefacilityId;
+
+  private static final LocalDate CURRENT_DATE = LocalDate.now();
 
   @Before
   public void prepare() {
@@ -100,6 +107,7 @@ public class SiglusStockCardServiceTest {
     when(calculatedStockOnHandRepository
         .findFirstByStockCardIdAndOccurredDateLessThanEqualOrderByOccurredDateDesc(any(UUID.class),
         any(LocalDate.class))).thenReturn(Optional.ofNullable(calculatedStockOnHand));
+    Mockito.when(dateHelper.getCurrentDate()).thenReturn(CURRENT_DATE);
   }
 
   @Test

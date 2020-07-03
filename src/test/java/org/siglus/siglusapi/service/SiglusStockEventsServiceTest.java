@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.Rule;
@@ -55,6 +56,7 @@ import org.openlmis.stockmanagement.testutils.StockCardLineItemDataBuilder;
 import org.openlmis.stockmanagement.testutils.StockEventLineItemDtoDataBuilder;
 import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.repository.StockCardExtensionRepository;
+import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
@@ -108,11 +110,16 @@ public class SiglusStockEventsServiceTest {
   @Mock
   private SiglusArchiveProductService archiveProductService;
 
-  private UUID orderableId = UUID.randomUUID();
+  @Mock
+  private SiglusDateHelper dateHelper;
 
-  private UUID tradeItemId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
-  private UUID lotId = UUID.randomUUID();
+  private final UUID tradeItemId = UUID.randomUUID();
+
+  private final UUID lotId = UUID.randomUUID();
+
+  private static final LocalDate CURRENT_DATE = LocalDate.now();
 
   @Test
   public void shouldCallStockEventProcessorWhenCreateStockEventForPhysicalInventory() {
@@ -187,6 +194,7 @@ public class SiglusStockEventsServiceTest {
     extraData.put(FieldConstants.EXPIRATION_DATE, "2020-06-16");
     lineItemDto.setExtraData(extraData);
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
+    when(dateHelper.getCurrentDate()).thenReturn(CURRENT_DATE);
 
     siglusStockEventsService.createAndFillLotId(eventDto);
 
