@@ -91,7 +91,7 @@ public class SiglusUsageReportServiceTest {
   KitUsageLineItemRepository kitUsageRepository;
 
   @Mock
-  private List<IUsageReportDataProcessor> usageReportDataProcessors;
+  private List<UsageReportDataProcessor> usageReportDataProcessors;
 
   @InjectMocks
   SiglusUsageReportService siglusUsageReportService;

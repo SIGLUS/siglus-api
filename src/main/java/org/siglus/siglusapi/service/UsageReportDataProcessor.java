@@ -20,7 +20,7 @@ import java.util.UUID;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
-public interface IUsageReportDataProcessor {
+public interface UsageReportDataProcessor {
 
   void initiate(SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections);

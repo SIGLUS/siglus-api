@@ -81,7 +81,7 @@ public class SiglusUsageReportService {
   KitUsageLineItemRepository kitUsageRepository;
 
   @Autowired
-  private List<IUsageReportDataProcessor> usageReportDataProcessors;
+  private List<UsageReportDataProcessor> usageReportDataProcessors;
 
   public SiglusRequisitionDto searchUsageReport(RequisitionV2Dto requisitionV2Dto) {
     SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);

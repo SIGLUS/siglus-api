@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class UsageInformationDataProcessor implements IUsageReportDataProcessor {
+public class UsageInformationDataProcessor implements UsageReportDataProcessor {
 
   private static final String INFORMATION = "information";
 
