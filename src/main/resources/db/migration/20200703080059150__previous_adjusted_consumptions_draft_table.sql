@@ -3,8 +3,10 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 CREATE TABLE previous_adjusted_consumptions_draft (
-    requisitionlineitemid uuid  NOT NULL,
+    draftlineitemid uuid  NOT NULL,
     previousadjustedconsumption INTEGER,
-    FOREIGN KEY(requisitionlineitemid) REFERENCES
-    siglusintegration.requisition_line_items_draft(requisitionlineitemid)
+    FOREIGN KEY(draftlineitemid) REFERENCES
+    siglusintegration.requisition_line_items_draft(id)
 );
+
+CREATE INDEX ON siglusintegration.previous_adjusted_consumptions_draft(draftlineitemid);

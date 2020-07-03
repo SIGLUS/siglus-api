@@ -120,7 +120,7 @@ public class RequisitionLineItemDraft extends BaseEntity {
 
   @ElementCollection
   @CollectionTable(name = "previous_adjusted_consumptions_draft", schema = "siglusintegration",
-      joinColumns = @JoinColumn(name = "requisitionLineItemId"))
+      joinColumns = @JoinColumn(name = "draftlineitemid"))
   @Column(name = "previousAdjustedConsumption")
   @Setter
   @Getter

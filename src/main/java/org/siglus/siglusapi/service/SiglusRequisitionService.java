@@ -117,6 +117,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -211,17 +212,25 @@ public class SiglusRequisitionService {
   @Autowired
   private RequisitionDraftRepository draftRepository;
 
+  @Autowired
+  private OperatePermissionService operatePermissionService;
+
   @Value("${service.url}")
   private String serviceUrl;
 
   @Transactional
   public SiglusRequisitionDto updateRequisition(UUID requisitionId,
-      SiglusRequisitionDto requisitionDto) {
+      SiglusRequisitionDto requisitionDto,  HttpServletRequest request,
+      HttpServletResponse response) {
     if (null != requisitionDto.getId()
         && !Objects.equals(requisitionDto.getId(), requisitionId)) {
       throw new ValidationMessageException(ERROR_ID_MISMATCH);
     }
-    return saveRequisitionDraft(requisitionDto);
+    if (operatePermissionService.canSubmit(requisitionDto)) {
+      return saveRequisition(requisitionId, requisitionDto, request, response);
+    } else {
+      return saveRequisitionDraft(requisitionDto);
+    }
   }
 
   @Transactional
@@ -293,16 +302,24 @@ public class SiglusRequisitionService {
     filterProductsIfEmergency(requisitionDto);
     // set available products in approve page
     setAvailableProductsForApprovePage(requisitionDto);
-    UserDto userDto = authenticationHelper.getCurrentUser();
-    RequisitionDraft draft = draftRepository.findByRequisitionidAndFacilityid(requisitionId,
-        userDto.getHomeFacilityId());
-    if (draft == null) {
-      SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService
-          .searchUsageReport(requisitionDto);
-      return setIsFinalApproval(siglusRequisitionDto);
+    SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId,
+        requisitionDto);
+    return setIsFinalApproval(siglusRequisitionDto);
+  }
+
+  private SiglusRequisitionDto getSiglusRequisitionDto(UUID requisitionId,
+      RequisitionV2Dto requisitionDto) {
+    SiglusRequisitionDto siglusRequisitionDto;
+    if (operatePermissionService.isEditable(requisitionDto)) {
+      RequisitionDraft draft = draftRepository.findOne(requisitionId);
+      if (draft != null) {
+        siglusRequisitionDto = SiglusRequisitionDto.from(requisitionDto);
+        fillRequisitionDraft(draft, siglusRequisitionDto);
+        return siglusRequisitionDto;
+      }
     }
-    SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionDto);
-    fillRequisitionDraft(draft, siglusRequisitionDto);
+    siglusRequisitionDto = siglusUsageReportService
+          .searchUsageReport(requisitionDto);
     return siglusRequisitionDto;
   }
 
@@ -321,7 +338,7 @@ public class SiglusRequisitionService {
   private SiglusRequisitionDto saveRequisitionDraft(SiglusRequisitionDto requisitionDto) {
     UserDto user = authenticationHelper.getCurrentUser();
     RequisitionDraft draft = draftRepository
-        .findByRequisitionidAndFacilityid(requisitionDto.getId(), requisitionDto.getFacilityId());
+        .findOne(requisitionDto.getId());
     RequisitionDraft requisitionDraft = RequisitionDraft
         .from(requisitionDto, (draft == null ? null : draft.getId()), user);
     log.info("save requisition draft extension: {}", requisitionDraft);
