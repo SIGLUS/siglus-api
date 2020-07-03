@@ -134,14 +134,6 @@ def deploy(app_env) {
                 sed -i "s#<APP_ENV>#${APP_ENV}#g" settings.env
                 echo "OL_SIGLUSAPI_VERSION=${IMAGE_TAG}" > .env
 
-                if [ ${APP_ENV} = "dev" ] ||  [ ${APP_ENV} = "qa" ]
-                then
-                    echo "OL_TIME_ZONE_ID=Asia/Shanghai" >> .env
-                elif [ ${APP_ENV} = "integ" ] ||  [ ${APP_ENV} = "uat" ]
-                then
-                    echo "OL_TIME_ZONE_ID=Africa/Maputo" >> .env
-                fi
-
                 echo "deregister ${SERVICE_NAME} on ${APP_ENV} consul"
                 curl -s http://${CONSUL_HOST}/v1/health/service/${SERVICE_NAME} | \
                 jq -r '.[] | "curl -XPUT http://${CONSUL_HOST}/v1/agent/service/deregister/" + .Service.ID' > clear.sh
