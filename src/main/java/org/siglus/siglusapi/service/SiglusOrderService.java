@@ -42,7 +42,6 @@ import org.openlmis.fulfillment.service.ResourceNames;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -64,6 +63,7 @@ import org.siglus.siglusapi.dto.OrderLineItemDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusOrderFulfillmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -75,9 +75,6 @@ import org.springframework.util.MultiValueMap;
 @Service
 @Slf4j
 public class SiglusOrderService {
-
-  @Autowired
-  private OrderController orderController;
 
   @Autowired
   private RequisitionController requisitionController;
@@ -107,13 +104,17 @@ public class SiglusOrderService {
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
   @Autowired
+  private SiglusOrderFulfillmentService siglusOrderFulfillmentService;
+
+  @Autowired
   private OrderRepository orderRepository;
 
   @Value("${service.url}")
   private String serviceUrl;
 
   public SiglusOrderDto searchOrderById(UUID orderId) {
-    OrderDto orderDto = orderController.getOrder(orderId, Collections.emptySet());
+    //totalDispensingUnits not present in lineitem of previous OrderFulfillmentService
+    OrderDto orderDto = siglusOrderFulfillmentService.findOne(orderId);
     setOrderLineItemExtension(orderDto);
     return SiglusOrderDto.builder()
         .order(orderDto)
