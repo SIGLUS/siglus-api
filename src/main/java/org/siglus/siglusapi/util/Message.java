@@ -31,7 +31,7 @@ import org.springframework.context.MessageSource;
 public class Message {
 
   private static final String MESSAGE_KEY = "messageKey";
-  private static final String MESSAGE = "message";
+  private static final String MESSAGE_STR = "message";
 
   @Getter
   private final String key;
@@ -67,8 +67,8 @@ public class Message {
         return null;
       }
       HashMap<String,String> hashMap = new ObjectMapper().readValue(messageStr, HashMap.class);
-      if (StringUtils.isNotEmpty(hashMap.get(MESSAGE))) {
-        return new Message(hashMap.get(MESSAGE));
+      if (StringUtils.isNotEmpty(hashMap.get(MESSAGE_STR))) {
+        return new Message(hashMap.get(MESSAGE_STR));
       }
       return new Message(hashMap.get(MESSAGE_KEY));
     } catch (IOException e) {
