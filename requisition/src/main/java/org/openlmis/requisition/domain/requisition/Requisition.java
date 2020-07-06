@@ -42,6 +42,7 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_SKIP_FAILED_WRONG_
 import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
 import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
 import static org.siglus.common.constant.FieldConstants.EXTRA_DATA_IS_SAVED;
+import static org.siglus.common.constant.FieldConstants.EXTRA_DATA_SIGNATURE;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -835,6 +836,12 @@ public class Requisition extends BaseTimestampedEntity {
     setModifiedDate(ZonedDateTime.now());
     supervisoryNodeId = null;
 
+    // [SIGLUS change start]
+    // [change reason]: #344 clear all signature and save flag after rejection
+    clearSignature();
+    setIsSavedExtraData(false);
+    // [SIGLUS change end]
+
     statusChanges.add(StatusChange.newStatusChange(this, rejector));
   }
 
@@ -1060,6 +1067,16 @@ public class Requisition extends BaseTimestampedEntity {
   private boolean isDisplayedTemplateColumn(String name) {
     RequisitionTemplateColumn column = template.findColumn(name);
     return column != null && column.getIsDisplayed();
+  }
+  // [SIGLUS change end]
+
+  // [SIGLUS change start]
+  // [change reason]: #344 clear the signature from extra data
+  private void clearSignature() {
+    if (this.extraData.containsKey(EXTRA_DATA_SIGNATURE)) {
+      Map<String, Object> extra = this.extraData.getExtraData();
+      extra.entrySet().removeIf(entry -> entry.getKey().equals(EXTRA_DATA_SIGNATURE));
+    }
   }
   // [SIGLUS change end]
 
