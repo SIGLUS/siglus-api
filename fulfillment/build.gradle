@@ -71,6 +71,11 @@ dependencies {
     compile 'org.javers:javers-spring-boot-starter-sql:2.8.2'
     compile "org.slf4j:slf4j-ext:1.7.25"
 
+    compileTestJava.dependsOn tasks.getByPath(':requisition:classes')
+    compileTestJava.dependsOn tasks.getByPath(':common:classes')
+    testCompile project(':requisition').sourceSets.main.output
+    testCompile project(':common').sourceSets.main.output
+
     testCompile 'io.rest-assured:rest-assured:3.0.0'
     testCompile 'io.rest-assured:json-schema-validator:3.0.0'
     testCompile 'io.rest-assured:spring-mock-mvc:3.0.0'
