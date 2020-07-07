@@ -919,5 +919,11 @@ public class RequisitionLineItem extends BaseEntity {
     Integer getCalculatedOrderQuantityIsa();
 
     Integer getAdditionalQuantityRequired();
+
+    // [SIGLUS change start]
+    // [change reason]: add for requisition line item draft.
+    // }
+    List<Integer> getPreviousAdjustedConsumptions();
+    // [SIGLUS change end]
   }
 }

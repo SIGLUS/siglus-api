@@ -28,6 +28,7 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -44,20 +45,24 @@ import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.OrderableDto;
-import org.openlmis.requisition.dto.RequisitionLineItemDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
-import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.springframework.beans.BeanUtils;
 
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Table(name = "requisition_line_items_draft", schema = "siglusintegration")
 public class RequisitionLineItemDraft extends BaseEntity {
+
+  @ManyToOne(cascade = CascadeType.REFRESH)
+  @JoinColumn(name = "requisitionDraftId")
+  @Getter
+  @Setter
+  private RequisitionDraft requisitionDraft;
 
   @Embedded
   @AttributeOverrides({
@@ -120,7 +125,7 @@ public class RequisitionLineItemDraft extends BaseEntity {
 
   @ElementCollection
   @CollectionTable(name = "previous_adjusted_consumptions_draft", schema = "siglusintegration",
-      joinColumns = @JoinColumn(name = "draftlineitemid"))
+      joinColumns = @JoinColumn(name = "draftLineItemId"))
   @Column(name = "previousAdjustedConsumption")
   @Setter
   @Getter
@@ -138,7 +143,7 @@ public class RequisitionLineItemDraft extends BaseEntity {
       orphanRemoval = true)
   @Getter
   @Setter
-  @JoinColumn(name = "id")
+  @JoinColumn(name = "draftLineItemId")
   @BatchSize(size = STANDARD_BATCH_SIZE)
   private List<StockAdjustmentDraft> stockAdjustments;
 
@@ -152,6 +157,7 @@ public class RequisitionLineItemDraft extends BaseEntity {
       RequisitionLineItem.Importer lineItemV2Dto) {
     RequisitionLineItemDraft lineItemDraft = new RequisitionLineItemDraft();
     BeanUtils.copyProperties(lineItemV2Dto, lineItemDraft);
+    lineItemDraft.setId(null);
     lineItemDraft.setRequisitionLineItemId(lineItemV2Dto.getId());
     VersionEntityReference orderable = new VersionEntityReference();
     orderable.setId(lineItemV2Dto.getOrderableIdentity().getId());
@@ -160,8 +166,10 @@ public class RequisitionLineItemDraft extends BaseEntity {
     VersionEntityReference approvedProduct = new VersionEntityReference();
     approvedProduct.setId(lineItemV2Dto.getApprovedProductIdentity().getId());
     approvedProduct.setVersionNumber(lineItemV2Dto.getApprovedProductIdentity().getVersionNumber());
+    lineItemDraft.setRequisitionDraft(draft);
+    lineItemDraft.setPreviousAdjustedConsumptions(lineItemV2Dto.getPreviousAdjustedConsumptions());
     lineItemDraft.setFacilityTypeApprovedProduct(approvedProduct);
-    lineItemDraft.setRequisitionId(draft.getRequisitionid());
+    lineItemDraft.setRequisitionId(draft.getRequisitionId());
     lineItemDraft.setStockAdjustments(lineItemV2Dto.getStockAdjustments().stream()
         .map(StockAdjustmentDraft::from).collect(Collectors.toList()));
     return lineItemDraft;

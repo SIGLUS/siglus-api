@@ -31,8 +31,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.LazyCollection;
 
+import org.javers.core.metamodel.annotation.DiffIgnore;
+import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.dto.UserDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
@@ -45,37 +48,37 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 @Table(name = "requisitions_draft", schema = "siglusintegration")
 public class RequisitionDraft extends BaseEntity {
 
-  private UUID requisitionid;
+  private UUID requisitionId;
 
   private UUID facilityid;
 
-  @LazyCollection(FALSE)
   @OneToMany(
-      cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.REMOVE},
+      mappedBy = "requisitionDraft",
+      cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.REMOVE},
       fetch = FetchType.LAZY,
       orphanRemoval = true)
-  @JoinColumn(name = "requisitiondraftid", nullable = false)
+  @DiffIgnore
   private List<RequisitionLineItemDraft> lineItems;
 
-  @LazyCollection(FALSE)
   @OneToMany(
-      cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.REMOVE},
+      mappedBy = "requisitionDraft",
+      cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.REMOVE},
       fetch = FetchType.LAZY,
       orphanRemoval = true)
-  @JoinColumn(name = "requisitiondraftid", nullable = false)
+  @DiffIgnore
   private List<KitUsageLineItemDraft> kitUsageLineItems;
 
   public static RequisitionDraft from(SiglusRequisitionDto requisitionDto,
-      UUID draftId, UserDto userDto) {
+      RequisitionTemplate template, UUID draftId, UserDto userDto) {
     RequisitionDraft draft = new RequisitionDraft();
     draft.setId(draftId);
     draft.setFacilityid(userDto.getHomeFacilityId());
-    draft.setRequisitionid(requisitionDto.getId());
-    if (requisitionDto.getTemplate().getExtension().isEnableProduct()) {
+    draft.setRequisitionId(requisitionDto.getId());
+    if (template.getTemplateExtension().getEnableProduct()) {
       draft.setLineItems(requisitionDto.getRequisitionLineItems().stream().map(lineItem ->
           RequisitionLineItemDraft.from(draft, lineItem)).collect(Collectors.toList()));
     }
-    if (requisitionDto.getTemplate().getExtension().isEnableKitUsage()) {
+    if (template.getTemplateExtension().getEnableKitUsage()) {
       draft.setKitUsageLineItems(KitUsageLineItemDraft.from(draft, requisitionDto));
     }
     return draft;

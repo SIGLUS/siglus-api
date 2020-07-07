@@ -116,10 +116,13 @@ import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -208,7 +211,13 @@ public class SiglusRequisitionServiceTest {
   private RequisitionV2Controller requisitionV2Controller;
 
   @Mock
+  private RequisitionDraftRepository draftRepository;
+
+  @Mock
   private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
+
+  @Mock
+  private OperatePermissionService operatePermissionService;
 
   private UUID facilityId = UUID.randomUUID();
 
@@ -301,6 +310,10 @@ public class SiglusRequisitionServiceTest {
     when(requisitionService.getApproveProduct(any(), any(), any()))
         .thenReturn(createApproveProductsAggregator());
     when(supervisoryNodeService.findOne(supervisoryNodeId)).thenReturn(createSupervisoryNodeDto());
+    when(draftRepository.findByRequisitionId(any(UUID.class))).thenReturn(null);
+    when(operatePermissionService.canSubmit(any())).thenReturn(true);
+    when(operatePermissionService.isEditable(any())).thenReturn(false);
+
   }
 
   @Test

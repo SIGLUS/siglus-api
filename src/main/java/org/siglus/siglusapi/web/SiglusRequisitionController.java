@@ -112,6 +112,7 @@ public class SiglusRequisitionController {
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
+    siglusRequisitionService.saveRequisition(requisitionId, null, request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .authorizeRequisition(requisitionId, request, response);
     siglusRequisitionService
@@ -124,6 +125,7 @@ public class SiglusRequisitionController {
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
+    siglusRequisitionService.saveRequisition(requisitionId, null, request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
     siglusRequisitionService.activateArchivedProducts(requisitionId,
@@ -145,7 +147,10 @@ public class SiglusRequisitionController {
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
-    return requisitionController.rejectRequisition(requisitionId, request, response);
+    BasicRequisitionDto dto =
+        requisitionController.rejectRequisition(requisitionId, request, response);
+    siglusRequisitionService.deleteRequisition(requisitionId);
+    return dto;
   }
 
   @PostMapping("/createLineItem")

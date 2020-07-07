@@ -62,6 +62,7 @@ public class OperatePermissionService {
     requisition.setId(dto.getId());
     requisition.setProgramId(dto.getProgramId());
     requisition.setFacilityId(dto.getFacilityId());
+    requisition.setStatus(dto.getStatus());
     requisition.setSupervisoryNodeId(dto.getSupervisoryNode());
     return requisition;
   }

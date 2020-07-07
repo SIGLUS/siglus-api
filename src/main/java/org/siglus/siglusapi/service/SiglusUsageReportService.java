@@ -89,9 +89,7 @@ public class SiglusUsageReportService {
     log.info("get all kit line items: {}", requisitionV2Dto.getId());
     List<KitUsageLineItem> items = kitUsageRepository.findByRequisitionId(requisitionV2Dto.getId());
     siglusRequisitionDto.setKitUsageLineItems(getKitUsageLineItemDtos(items));
-    List<UsageTemplateColumnSection> templateColumnSections =
-        columnSectionRepository.findByRequisitionTemplateId(requisitionV2Dto.getTemplate().getId());
-    setUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
+    setUsageTemplateDto(requisitionV2Dto, siglusRequisitionDto);
     return siglusRequisitionDto;
   }
 
@@ -103,6 +101,13 @@ public class SiglusUsageReportService {
       log.info("delete kit requisition line item: {}", items);
       kitUsageRepository.delete(items);
     }
+  }
+
+  public SiglusRequisitionDto saveNoDraftUsageReport(SiglusRequisitionDto requisitionDto,
+      SiglusRequisitionDto updatedDto) {
+    usageReportDataProcessors.forEach(processor -> processor.update(requisitionDto,
+        updatedDto));
+    return updatedDto;
   }
 
   public SiglusRequisitionDto saveUsageReport(SiglusRequisitionDto requisitionDto,
@@ -136,6 +141,34 @@ public class SiglusUsageReportService {
     updateKitUsage(requisitionV2Dto, templateColumnSections, siglusRequisitionDto);
     setUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
     return siglusRequisitionDto;
+  }
+
+  public void setUsageTemplateDto(RequisitionV2Dto requisitionV2Dto,
+      SiglusRequisitionDto siglusRequisitionDto) {
+    List<UsageTemplateColumnSection> templateColumnSections =
+        columnSectionRepository.findByRequisitionTemplateId(requisitionV2Dto.getTemplate().getId());
+    setUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
+  }
+
+  private void setUsageTemplateDto(SiglusRequisitionDto requisitionDto,
+      List<UsageTemplateColumnSection> columnSections) {
+    SiglusUsageTemplateDto templateDto = new SiglusUsageTemplateDto();
+    SiglusRequisitionTemplateService templateService = new SiglusRequisitionTemplateService();
+    Map<UsageCategory, List<UsageTemplateSectionDto>> categoryListMap =
+        templateService.getUsageTempateDto(columnSections);
+    templateDto
+        .setKitUsage(templateService.getCategoryDto(categoryListMap, UsageCategory.KITUSAGE));
+    templateDto.setPatient(templateService.getCategoryDto(categoryListMap, UsageCategory.PATIENT));
+    templateDto.setRegimen(templateService.getCategoryDto(categoryListMap, UsageCategory.REGIMEN));
+    templateDto
+        .setConsultationNumber(
+            templateService.getCategoryDto(categoryListMap, UsageCategory.CONSULTATIONNUMBER));
+    templateDto.setRapidTestConsumption(
+        templateService.getCategoryDto(categoryListMap, UsageCategory.RAPIDTESTCONSUMPTION));
+    templateDto
+        .setUsageInformation(
+            templateService.getCategoryDto(categoryListMap, UsageCategory.USAGEINFORMATION));
+    requisitionDto.setUsageTemplate(templateDto);
   }
 
   private void updateKitUsage(RequisitionV2Dto requisitionV2Dto,
@@ -336,27 +369,6 @@ public class SiglusUsageReportService {
       kitDtos.add(kitUsageLineItemDto);
     }
     return kitDtos;
-  }
-
-  private void setUsageTemplateDto(SiglusRequisitionDto requisitionDto,
-      List<UsageTemplateColumnSection> columnSections) {
-    SiglusUsageTemplateDto templateDto = new SiglusUsageTemplateDto();
-    SiglusRequisitionTemplateService templateService = new SiglusRequisitionTemplateService();
-    Map<UsageCategory, List<UsageTemplateSectionDto>> categoryListMap =
-        templateService.getUsageTempateDto(columnSections);
-    templateDto
-        .setKitUsage(templateService.getCategoryDto(categoryListMap, UsageCategory.KITUSAGE));
-    templateDto.setPatient(templateService.getCategoryDto(categoryListMap, UsageCategory.PATIENT));
-    templateDto.setRegimen(templateService.getCategoryDto(categoryListMap, UsageCategory.REGIMEN));
-    templateDto
-        .setConsultationNumber(
-            templateService.getCategoryDto(categoryListMap, UsageCategory.CONSULTATIONNUMBER));
-    templateDto.setRapidTestConsumption(
-        templateService.getCategoryDto(categoryListMap, UsageCategory.RAPIDTESTCONSUMPTION));
-    templateDto
-        .setUsageInformation(
-            templateService.getCategoryDto(categoryListMap, UsageCategory.USAGEINFORMATION));
-    requisitionDto.setUsageTemplate(templateDto);
   }
 
   private void throwError(String messageKey, Object... params) {

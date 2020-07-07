@@ -220,7 +220,7 @@ public class SiglusRequisitionService {
 
   @Transactional
   public SiglusRequisitionDto updateRequisition(UUID requisitionId,
-      SiglusRequisitionDto requisitionDto,  HttpServletRequest request,
+      SiglusRequisitionDto requisitionDto, HttpServletRequest request,
       HttpServletResponse response) {
     if (null != requisitionDto.getId()
         && !Objects.equals(requisitionDto.getId(), requisitionId)) {
@@ -296,30 +296,31 @@ public class SiglusRequisitionService {
     //         1. 2. set line item authorized quality extension
     RequisitionV2Dto requisitionDto =
         siglusRequisitionRequisitionService.searchRequisition(requisitionId);
-    setTemplateExtension(requisitionDto);
     setLineItemExtension(requisitionDto);
+    RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
 
     filterProductsIfEmergency(requisitionDto);
     // set available products in approve page
     setAvailableProductsForApprovePage(requisitionDto);
     SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId,
-        requisitionDto);
+        extension, requisitionDto);
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
   private SiglusRequisitionDto getSiglusRequisitionDto(UUID requisitionId,
-      RequisitionV2Dto requisitionDto) {
+      RequisitionTemplateExtension extension, RequisitionV2Dto requisitionDto) {
     SiglusRequisitionDto siglusRequisitionDto;
     if (operatePermissionService.isEditable(requisitionDto)) {
-      RequisitionDraft draft = draftRepository.findOne(requisitionId);
+      RequisitionDraft draft = draftRepository.findByRequisitionId(requisitionId);
       if (draft != null) {
         siglusRequisitionDto = SiglusRequisitionDto.from(requisitionDto);
-        fillRequisitionDraft(draft, siglusRequisitionDto);
+        siglusUsageReportService.setUsageTemplateDto(requisitionDto, siglusRequisitionDto);
+        fillRequisitionDraft(draft, extension, siglusRequisitionDto);
         return siglusRequisitionDto;
       }
     }
     siglusRequisitionDto = siglusUsageReportService
-          .searchUsageReport(requisitionDto);
+        .searchUsageReport(requisitionDto);
     return siglusRequisitionDto;
   }
 
@@ -337,24 +338,46 @@ public class SiglusRequisitionService {
 
   private SiglusRequisitionDto saveRequisitionDraft(SiglusRequisitionDto requisitionDto) {
     UserDto user = authenticationHelper.getCurrentUser();
-    RequisitionDraft draft = draftRepository
-        .findOne(requisitionDto.getId());
+    RequisitionDraft draft = draftRepository.findByRequisitionId(requisitionDto.getId());
+    RequisitionTemplate template = requisitionRepository.findOne(requisitionDto.getId())
+        .getTemplate();
+    RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
+        .findByRequisitionTemplateId(template.getId());
+    template.setTemplateExtension(templateExtension);
     RequisitionDraft requisitionDraft = RequisitionDraft
-        .from(requisitionDto, (draft == null ? null : draft.getId()), user);
+        .from(requisitionDto, template, (draft == null ? null : draft.getId()), user);
     log.info("save requisition draft extension: {}", requisitionDraft);
     draft = draftRepository.save(requisitionDraft);
-    fillRequisitionDraft(draft, requisitionDto);
+
+    fillRequisitionDraft(draft, template.getTemplateExtension(), requisitionDto);
+    siglusUsageReportService.saveNoDraftUsageReport(requisitionDto, requisitionDto);
     return requisitionDto;
   }
 
-  private SiglusRequisitionDto saveRequisition(UUID requisitionId,
+  public SiglusRequisitionDto saveRequisition(UUID requisitionId,
       SiglusRequisitionDto requisitionDto, HttpServletRequest request,
       HttpServletResponse response) {
     // call modify OpenLMIS API
-    RequisitionV2Dto upadateRequsitionDto = requisitionV2Controller
+    RequisitionDraft draft = null;
+    if (requisitionDto == null) {
+      RequisitionV2Dto dto =
+          siglusRequisitionRequisitionService.searchRequisition(requisitionId);
+      requisitionDto = SiglusRequisitionDto.from(dto);
+      draft = draftRepository.findByRequisitionId(requisitionDto.getId());
+      if (draft != null) {
+        RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
+            .findByRequisitionTemplateId(dto.getTemplate().getId());
+        fillRequisitionDraft(draft, templateExtension, requisitionDto);
+      }
+    }
+    RequisitionV2Dto updateRequisitionDto = requisitionV2Controller
         .updateRequisition(requisitionId, requisitionDto, request, response);
-    saveLineItemExtension(requisitionDto, upadateRequsitionDto);
-    return siglusUsageReportService.saveUsageReport(requisitionDto, upadateRequsitionDto);
+    if (draft != null) {
+      draftRepository.delete(draft.getId());
+    }
+
+    saveLineItemExtension(requisitionDto, updateRequisitionDto);
+    return siglusUsageReportService.saveUsageReport(requisitionDto, updateRequisitionDto);
   }
 
   private void saveLineItemExtension(RequisitionV2Dto toUpdatedDto, RequisitionV2Dto updatedDto) {
@@ -498,6 +521,14 @@ public class SiglusRequisitionService {
   public void deleteRequisition(UUID requisitionId) {
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     List<UUID> ids = findLineItemIds(requisition);
+    RequisitionDraft draft = draftRepository.findByRequisitionId(requisitionId);
+    if (draft != null) {
+      draftRepository.delete(draft.getId());
+    }
+    deleteSiglusExtension(requisitionId, ids);
+  }
+
+  public void deleteSiglusExtension(UUID requisitionId, List<UUID> ids) {
     siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
     log.info("find line item extension: {}", ids);
     List<RequisitionLineItemExtension> extensions = ids.isEmpty() ? new ArrayList<>() :
@@ -505,6 +536,10 @@ public class SiglusRequisitionService {
     if (!extensions.isEmpty()) {
       log.info("delete line item extension: {}", extensions);
       lineItemExtensionRepository.delete(extensions);
+    }
+    RequisitionDraft draft = draftRepository.findByRequisitionId(requisitionId);
+    if (draft != null) {
+      draftRepository.delete(draft.getId());
     }
     siglusUsageReportService.deleteUsageReport(requisitionId);
   }
@@ -745,12 +780,13 @@ public class SiglusRequisitionService {
     }
   }
 
-  private void setTemplateExtension(RequisitionV2Dto requisitionDto) {
+  private RequisitionTemplateExtension setTemplateExtension(RequisitionV2Dto requisitionDto) {
     BasicRequisitionTemplateDto templateDto = requisitionDto.getTemplate();
     RequisitionTemplateExtension extension = requisitionTemplateExtensionRepository
         .findByRequisitionTemplateId(requisitionDto.getTemplate().getId());
     templateDto.setExtension(RequisitionTemplateExtensionDto.from(extension));
     requisitionDto.setTemplate(templateDto);
+    return extension;
   }
 
   private void setLineItemExtension(RequisitionV2Dto requisitionDto) {
@@ -838,14 +874,16 @@ public class SiglusRequisitionService {
     return canSeeRequisitionStatus;
   }
 
-  private void fillRequisitionDraft(RequisitionDraft draft, SiglusRequisitionDto dto) {
-    if (dto.getTemplate().getExtension().isEnableProduct()) {
+  private void fillRequisitionDraft(RequisitionDraft draft,
+      RequisitionTemplateExtension templateExtension,
+      SiglusRequisitionDto dto) {
+    if (templateExtension.getEnableProduct()) {
       dto.setRequisitionLineItems(draft.getLineItems()
           .stream()
           .map(lineItemDraft -> RequisitionLineItemDraft.getLineItemDto(lineItemDraft))
           .collect(toList()));
     }
-    if (dto.getTemplate().getExtension().isEnableKitUsage()) {
+    if (templateExtension.getEnableKitUsage()) {
       dto.setKitUsageLineItems(KitUsageLineItemDraft.from(draft.getKitUsageLineItems()));
     }
   }

@@ -22,7 +22,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,12 +41,20 @@ import org.springframework.beans.BeanUtils;
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @Table(name = "kit_usage_line_items_draft", schema = "siglusintegration")
 public class KitUsageLineItemDraft extends BaseEntity {
+
+  @ManyToOne(cascade = CascadeType.REFRESH)
+  @JoinColumn(name = "requisitionDraftId")
+  @Getter
+  @Setter
+  private RequisitionDraft requisitionDraft;
+
+  private UUID kitUsageLineItemId;
 
   private UUID requisitionId;
 
@@ -53,13 +64,16 @@ public class KitUsageLineItemDraft extends BaseEntity {
 
   private Integer value;
 
-  public static List<KitUsageLineItemDraft> from(RequisitionDraft requisitionDraft,
+  public static List<KitUsageLineItemDraft> from(RequisitionDraft draft,
       SiglusRequisitionDto requisitionDto) {
     List<KitUsageLineItemDto> kitUsageLineItemDtos = requisitionDto.getKitUsageLineItems();
     List<KitUsageLineItem> lineItems = KitUsageLineItem.from(kitUsageLineItemDtos, requisitionDto);
     return lineItems.stream().map(lineItem -> {
       KitUsageLineItemDraft lineItemDraft = new KitUsageLineItemDraft();
       BeanUtils.copyProperties(lineItem, lineItemDraft);
+      lineItemDraft.setKitUsageLineItemId(lineItem.getId());
+      lineItemDraft.setId(null);
+      lineItemDraft.setRequisitionDraft(draft);
       return lineItemDraft;
     }).collect(Collectors.toList());
   }
@@ -74,7 +88,7 @@ public class KitUsageLineItemDraft extends BaseEntity {
       Map<String, KitUsageServiceLineItemDto> services = new HashMap<>();
       groupKitUsage.getValue().forEach(lineItem -> {
         KitUsageServiceLineItemDto dto = KitUsageServiceLineItemDto.builder()
-            .id(lineItem.getId())
+            .id(lineItem.getKitUsageLineItemId())
             .value(lineItem.getValue())
             .build();
         services.put(lineItem.getService(), dto);
