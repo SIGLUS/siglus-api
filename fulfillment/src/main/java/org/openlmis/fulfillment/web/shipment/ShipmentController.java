@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.CreationDetails;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
@@ -67,6 +68,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+@Slf4j
 @Controller
 @Transactional
 @RequestMapping(RESOURCE_PATH)
@@ -153,10 +155,17 @@ public class ShipmentController extends BaseController {
     findAndRemoveShipmentDraftsForOrder(order);
 
     profiler.start("BUILD_STOCK_EVENT_FROM_SHIPMENT");
-    StockEventDto stockEventDto = stockEventBuilder.fromShipment(shipment);
+    // [SIGLUS change start]
+    // [change reason]: #374 submit the stock event by main&associate program
+    List<StockEventDto> stockEventDtos =
+        stockEventBuilder.fromShipmentAndAllAssociatePrograms(shipment);
+
+    log.info("orderId: {}, submitStockEvents: {}", order.getId(), stockEventDtos);
 
     profiler.start("SUBMIT_STOCK_EVENT");
-    stockEventService.submit(stockEventDto);
+    stockEventDtos.stream()
+        .forEach(stockEventDto -> stockEventService.submit(stockEventDto));
+    // [SIGLUS change end]
 
     profiler.start("BUILD_SHIPMENT_DTO");
     ShipmentDto dto = shipmentDtoBuilder.build(shipment);

@@ -36,13 +36,13 @@ import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
+import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.service.client.SiglusShipmentFulfillmentService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusShipmentServiceTest {
@@ -60,10 +60,10 @@ public class SiglusShipmentServiceTest {
   private SiglusShipmentService siglusShipmentService;
 
   @Mock
-  private SiglusShipmentFulfillmentService siglusShipmentFulfillmentService;
+  private OrderRepository orderRepository;
 
   @Mock
-  private OrderRepository orderRepository;
+  private ShipmentController shipmentController;
 
   @Mock
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
@@ -107,7 +107,7 @@ public class SiglusShipmentServiceTest {
     // then
     verify(orderRepository).save(orderArgumentCaptor.capture());
     verify(lineItemExtensionRepository).delete(lineItemExtensionArgumentCaptor.capture());
-    verify(siglusShipmentFulfillmentService).createShipment(shipmentDtoArgumentCaptor.capture());
+    verify(shipmentController).createShipment(shipmentDtoArgumentCaptor.capture());
     Order orderToSave = orderArgumentCaptor.getValue();
     List<OrderLineItemExtension> lineItemExtensionsToDelete = lineItemExtensionArgumentCaptor
         .getValue();
@@ -148,7 +148,7 @@ public class SiglusShipmentServiceTest {
     // then
     verify(orderRepository).save(orderArgumentCaptor.capture());
     verify(lineItemExtensionRepository).delete(lineItemExtensionArgumentCaptor.capture());
-    verify(siglusShipmentFulfillmentService).createShipment(shipmentDtoArgumentCaptor.capture());
+    verify(shipmentController).createShipment(shipmentDtoArgumentCaptor.capture());
     Order orderToSave = orderArgumentCaptor.getValue();
     List<OrderLineItemExtension> lineItemExtensionsToDelete = lineItemExtensionArgumentCaptor
         .getValue();

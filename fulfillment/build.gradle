@@ -35,6 +35,8 @@ repositories {
 }
 
 dependencies {
+    compile project(":common")
+    compile project(':requisition')
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-data-jpa"
     compile "org.projectlombok:lombok:1.16.8"

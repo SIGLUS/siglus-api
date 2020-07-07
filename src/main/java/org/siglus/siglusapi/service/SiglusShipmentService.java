@@ -22,11 +22,11 @@ import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.service.client.SiglusShipmentFulfillmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,13 +35,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class SiglusShipmentService {
 
   @Autowired
-  private SiglusShipmentFulfillmentService siglusShipmentFulfillmentService;
-
-  @Autowired
   private OrderRepository orderRepository;
 
   @Autowired
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
+
+  @Autowired
+  private ShipmentController shipmentController;
 
   @Transactional
   public ShipmentDto createShipment(ShipmentDto shipmentDto) {
@@ -51,7 +51,8 @@ public class SiglusShipmentService {
     Set<UUID> skippedOrderableIds = getSkippedOrderableIds(shipmentDto);
     shipmentDto.lineItems()
         .removeIf(lineItem -> skippedOrderableIds.contains(lineItem.getOrderable().getId()));
-    return siglusShipmentFulfillmentService.createShipment(shipmentDto);
+
+    return shipmentController.createShipment(shipmentDto);
   }
 
   private Set<UUID> getSkippedOrderableIds(ShipmentDto shipmentDto) {
