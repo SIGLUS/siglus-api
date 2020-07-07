@@ -875,8 +875,7 @@ public class SiglusRequisitionService {
   }
 
   private void fillRequisitionDraft(RequisitionDraft draft,
-      RequisitionTemplateExtension templateExtension,
-      SiglusRequisitionDto dto) {
+      RequisitionTemplateExtension templateExtension, SiglusRequisitionDto dto) {
     if (templateExtension.getEnableProduct()) {
       dto.setRequisitionLineItems(draft.getLineItems()
           .stream()
