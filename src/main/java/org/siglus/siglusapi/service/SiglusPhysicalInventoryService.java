@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
+import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
@@ -171,8 +171,7 @@ public class SiglusPhysicalInventoryService {
         .findUserSupportedVirtualPrograms();
     if (CollectionUtils.isEmpty(supportedVirtualPrograms)) {
       throw new PermissionMessageException(
-          new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
-              ALL_PRODUCTS_PROGRAM_ID));
+          new org.openlmis.stockmanagement.util.Message(ERROR_PERMISSION_NOT_SUPPORTED));
     }
     List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
         supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facilityId,

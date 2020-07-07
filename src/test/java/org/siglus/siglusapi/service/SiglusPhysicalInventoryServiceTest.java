@@ -24,7 +24,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
+import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
@@ -327,7 +327,7 @@ public class SiglusPhysicalInventoryServiceTest {
   public void shouldThrowExceptionWhenGetDtosForAllProductsIfSupportedVirtualProgramsIsEmpty() {
     // then
     exception.expect(PermissionMessageException.class);
-    exception.expectMessage(containsString(ERROR_PROGRAM_NOT_SUPPORTED));
+    exception.expectMessage(containsString(ERROR_PERMISSION_NOT_SUPPORTED));
 
     // when
     siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facilityId, true, true);
