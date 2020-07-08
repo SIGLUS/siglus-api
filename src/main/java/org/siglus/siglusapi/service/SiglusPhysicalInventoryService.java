@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
+import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
@@ -55,7 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.PreserveStackTrace"})
 public class SiglusPhysicalInventoryService {
 
   @Autowired
@@ -167,30 +168,37 @@ public class SiglusPhysicalInventoryService {
       UUID facilityId,
       Boolean isDraft,
       boolean canInitialInventory) {
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
-        .findUserSupportedVirtualPrograms();
-    if (CollectionUtils.isEmpty(supportedVirtualPrograms)) {
+    try {
+      Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+          .findUserSupportedVirtualPrograms();
+      if (CollectionUtils.isEmpty(supportedVirtualPrograms)) {
+        throw new PermissionMessageException(
+            new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
+                ALL_PRODUCTS_PROGRAM_ID));
+      }
+      List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
+          supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facilityId,
+              isDraft)).flatMap(Collection::stream).collect(Collectors.toList());
+
+      if (CollectionUtils.isNotEmpty(inventories)) {
+        List<UUID> updatePhysicalInventoryIds =
+            inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+        log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
+        List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
+            .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
+        PhysicalInventoryDto resultInventory = getResultInventory(inventories, extensions);
+        return Collections.singletonList(resultInventory);
+      }
+      PhysicalInventoryDto dto = createInitialInventoryDraftForAllProducts(supportedVirtualPrograms,
+          facilityId, canInitialInventory);
+      if (dto != null) {
+        inventories.add(dto);
+      }
+      return inventories;
+    } catch (PermissionMessageException e) {
       throw new PermissionMessageException(
           new org.openlmis.stockmanagement.util.Message(ERROR_PERMISSION_NOT_SUPPORTED));
     }
-    List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
-        supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facilityId,
-            isDraft)).flatMap(Collection::stream).collect(Collectors.toList());
-    if (CollectionUtils.isNotEmpty(inventories)) {
-      List<UUID> updatePhysicalInventoryIds =
-          inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
-      log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
-      List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
-          .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
-      PhysicalInventoryDto resultInventory = getResultInventory(inventories, extensions);
-      return Collections.singletonList(resultInventory);
-    }
-    PhysicalInventoryDto dto = createInitialInventoryDraftForAllProducts(supportedVirtualPrograms,
-        facilityId, canInitialInventory);
-    if (dto != null) {
-      inventories.add(dto);
-    }
-    return inventories;
   }
 
   private List<PhysicalInventoryLineItemsExtension> updateExtension(
