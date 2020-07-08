@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Sets.newHashSet;
+import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
@@ -53,6 +55,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 
 @Service
+@SuppressWarnings({"PMD.PreserveStackTrace"})
 public class SiglusStockCardSummariesService {
 
   private static final String PROGRAM_ID = "programId";
@@ -121,15 +124,24 @@ public class SiglusStockCardSummariesService {
 
   public Page<StockCardSummaryV2Dto> searchStockCardSummaryV2Dtos(
       MultiValueMap<String, String> parameters, Pageable pageable) {
-    // reason: support all program && archive
-    StockCardSummaries summaries = findSiglusStockCard(parameters);
+    try {
+      // reason: support all program && archive
+      StockCardSummaries summaries = findSiglusStockCard(parameters);
 
-    List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
-        summaries.getStockCardsForFulfillOrderables(),
-        summaries.getOrderableFulfillMap(),
-        Boolean.parseBoolean(parameters.getFirst(NON_EMPTY_ONLY)));
+      List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
+          summaries.getStockCardsForFulfillOrderables(),
+          summaries.getOrderableFulfillMap(),
+          Boolean.parseBoolean(parameters.getFirst(NON_EMPTY_ONLY)));
 
-    return Pagination.getPage(dtos, pageable);
+      return Pagination.getPage(dtos, pageable);
+    } catch (PermissionMessageException e) {
+      if (parameters.getFirst(RIGHT_NAME).equals(STOCK_INVENTORIES_EDIT)) {
+        throw new PermissionMessageException(
+            new org.openlmis.stockmanagement.util.Message(ERROR_PERMISSION_NOT_SUPPORTED));
+      }
+
+      throw e;
+    }
   }
 
   private Predicate<StockCard> isArchived(Set<String> archivedProducts) {
