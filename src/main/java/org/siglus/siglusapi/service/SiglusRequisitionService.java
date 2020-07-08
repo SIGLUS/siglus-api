@@ -214,6 +214,9 @@ public class SiglusRequisitionService {
   @Autowired
   private OperatePermissionService operatePermissionService;
 
+  @Autowired
+  private SiglusNotificationService notificationService;
+
   @Value("${service.url}")
   private String serviceUrl;
 
@@ -311,6 +314,7 @@ public class SiglusRequisitionService {
     saveRequisition(requisitionId, null, request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .authorizeRequisition(requisitionId, request, response);
+    notificationService.postAuthorize(basicRequisitionDto);
     activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
     return basicRequisitionDto;
   }
@@ -320,6 +324,7 @@ public class SiglusRequisitionService {
     saveRequisition(requisitionId, null, request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
+    notificationService.postApprove(basicRequisitionDto);
     activateArchivedProducts(requisitionId,
         basicRequisitionDto.getFacility().getId());
     return basicRequisitionDto;

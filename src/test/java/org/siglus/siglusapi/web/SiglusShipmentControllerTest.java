@@ -23,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -33,6 +34,10 @@ public class SiglusShipmentControllerTest {
 
   @Mock
   private SiglusShipmentService siglusShipmentService;
+
+  @Mock
+  @SuppressWarnings("unused")
+  private SiglusNotificationService notificationService;
 
   @Test
   public void shouldCallServiceWhenCreateShipment() {

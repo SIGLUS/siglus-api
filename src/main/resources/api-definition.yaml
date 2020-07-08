@@ -73,6 +73,11 @@ schemas:
               "quantityShipped": 20
           }]
       }
+  - notifications: |
+      {
+        "type": "array",
+        "items": {"type": "object", "$ref": "schemas/notificationDto.json"}
+      }
 resourceTypes:
   - collection:
       get:
@@ -1546,3 +1551,39 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+    /notifications:
+      get:
+        is: [ secured ]
+        description: Get a list of notifications.
+        queryParameters:
+          size:
+            type: integer
+            required: false
+            repeat: false
+          latestOnTop:
+            type: boolean
+            required: false
+            repeat: false
+        responses:
+          200:
+            description: list of notifications.
+            body:
+              application/json:
+                schema: notifications
+    /notifications/{id}:
+      patch:
+        is: [ secured ]
+        description: view a single notification.
+        queryParameters:
+          id:
+            displayName: id
+            type: string
+            required: true
+            repeat: false
+        responses:
+          204:
+            description: not viewed ye.
+          410:
+            description: already viewd
+          409:
+            description: already processed

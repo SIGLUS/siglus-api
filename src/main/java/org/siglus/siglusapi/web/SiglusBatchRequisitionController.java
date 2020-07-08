@@ -16,7 +16,9 @@
 package org.siglus.siglusapi.web;
 
 import org.openlmis.requisition.dto.ReleasableRequisitionBatchDto;
+import org.openlmis.requisition.dto.RequisitionsProcessingStatusDto;
 import org.openlmis.requisition.web.BatchRequisitionController;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,17 +36,25 @@ public class SiglusBatchRequisitionController {
   @Autowired
   private BatchRequisitionController batchRequisitionController;
 
+  @Autowired
+  private SiglusNotificationService notificationService;
+
   /**
-   * why we redo this api? to support #245?<br>
-   * we refactor
-   * the {@linkplain org.openlmis.fulfillment.service.OrderService#setOrderStatus}  method}
+   * why we redo this api? to support #245?<br> we refactor the {@linkplain
+   * org.openlmis.fulfillment.service.OrderService#setOrderStatus}  method}
    */
   @PostMapping("/batchReleases")
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
-  public ResponseEntity batchReleaseRequisitions(
-          @RequestBody ReleasableRequisitionBatchDto releaseDto) {
-    return batchRequisitionController.batchReleaseRequisitions(releaseDto);
+  public ResponseEntity<RequisitionsProcessingStatusDto> batchReleaseRequisitions(
+      @RequestBody ReleasableRequisitionBatchDto releaseDto) {
+    @SuppressWarnings("unchecked")
+    ResponseEntity<RequisitionsProcessingStatusDto> responseEntity = batchRequisitionController
+        .batchReleaseRequisitions(releaseDto);
+    RequisitionsProcessingStatusDto body = responseEntity.getBody();
+    body.getRequisitionDtos()
+        .forEach(requisition -> notificationService.postConvertToOrder(requisition));
+    return responseEntity;
   }
 
 }

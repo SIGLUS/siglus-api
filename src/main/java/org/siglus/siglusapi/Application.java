@@ -19,7 +19,7 @@ import com.google.gson.internal.bind.TypeAdapters;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.util.Locale;
-
+import java.util.UUID;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
@@ -48,16 +48,20 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.data.domain.AuditorAware;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 
 @SpringBootApplication
 @EnableAsync
+@EnableJpaAuditing
 @ComponentScan(basePackages = {"org.siglus", "org.openlmis"})
 @EntityScan(basePackages = {"org.siglus", "org.openlmis"})
 @EnableJpaRepositories(basePackages = {"org.siglus", "org.openlmis"})
@@ -129,6 +133,7 @@ public class Application {
   }
 
   // copy from stockmanagement Application.java start
+
   /**
    * Creates new MessageSource.
    *
@@ -235,6 +240,7 @@ public class Application {
   // copy from referencedata Application.java end
 
   // copy from fulfillment Application.java start
+
   /**
    * Creates new camelContext.
    *
@@ -265,4 +271,10 @@ public class Application {
     return messageSource;
   }
   // copy from fulfillment Application.java end
+
+  @Bean
+  public AuditorAware<UUID> auditorAware() {
+    return () -> (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+  }
+
 }

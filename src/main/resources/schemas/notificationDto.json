@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "NotificationDto",
+  "description": "Notification.",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "emergencyFlag": {
+      "type": "boolean",
+      "title": "emergencyFlag"
+    },
+    "sourceFacilityName": {
+      "type": "string",
+      "title": "sourceFacilityName"
+    },
+    "refId": {
+      "type": "string",
+      "title": "refId"
+    },
+    "status": {
+      "enum": [
+        "REJECTED",
+        "SUBMITTED",
+        "AUTHORIZED",
+        "IN_APPROVAL",
+        "APPROVED",
+        "ORDERED",
+        "SHIPPED"
+      ],
+      "title": "status"
+    }
+  }
+}

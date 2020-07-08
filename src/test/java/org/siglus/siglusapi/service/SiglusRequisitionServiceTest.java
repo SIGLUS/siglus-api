@@ -224,6 +224,9 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private OperatePermissionService operatePermissionService;
 
+  @Mock
+  private SiglusNotificationService notificationService;
+
   private UUID facilityId = UUID.randomUUID();
 
   private UUID userFacilityId = UUID.randomUUID();
@@ -805,11 +808,13 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(requisitionV2Dto);
 
     // when
-    siglusRequisitionService.authorizeRequisition(requisitionId, request, response);
+    BasicRequisitionDto requisitionDto = siglusRequisitionService
+        .authorizeRequisition(requisitionId, request, response);
 
     // then
     verify(requisitionController).authorizeRequisition(requisitionId, request, response);
     verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(notificationService).postAuthorize(requisitionDto);
   }
 
   @Test
@@ -830,11 +835,13 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(requisitionV2Dto);
 
     // when
-    siglusRequisitionService.approveRequisition(requisitionId, request, response);
+    BasicRequisitionDto requisitionDto = siglusRequisitionService
+        .approveRequisition(requisitionId, request, response);
 
     // then
     verify(requisitionController).approveRequisition(requisitionId, request, response);
     verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(notificationService).postApprove(requisitionDto);
   }
 
   @Test

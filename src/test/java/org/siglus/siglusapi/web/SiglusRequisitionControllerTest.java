@@ -35,6 +35,7 @@ import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.data.domain.Pageable;
@@ -63,6 +64,9 @@ public class SiglusRequisitionControllerTest {
   @Mock
   private HttpServletRequest request;
 
+  @Mock
+  private SiglusNotificationService notificationService;
+
   private UUID uuid;
 
   private BasicRequisitionDto basicRequisitionDto;
@@ -88,11 +92,13 @@ public class SiglusRequisitionControllerTest {
         .thenReturn(basicRequisitionDto);
 
     // when
-    siglusRequisitionController.submitRequisition(uuid, request, response);
+    BasicRequisitionDto requisition = siglusRequisitionController
+        .submitRequisition(uuid, request, response);
 
     // then
     verify(requisitionController).submitRequisition(uuid, request, response);
     verify(siglusRequisitionService).activateArchivedProducts(any(), any());
+    verify(notificationService).postSubmit(requisition);
   }
 
   @Test
@@ -144,12 +150,16 @@ public class SiglusRequisitionControllerTest {
 
   @Test
   public void shouldCallV3ControllerWhenRejectRequisition() {
-    // when
+    // given
     UUID requisitionId = UUID.randomUUID();
-    siglusRequisitionController.rejectRequisition(requisitionId, request, response);
+
+    // when
+    BasicRequisitionDto requisition = siglusRequisitionController
+        .rejectRequisition(requisitionId, request, response);
 
     // then
     verify(requisitionController).rejectRequisition(requisitionId, request, response);
+    verify(notificationService).postReject(requisition);
   }
 
   @Test
