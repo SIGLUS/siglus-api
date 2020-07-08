@@ -76,8 +76,6 @@ public abstract class MessageKeys {
       + ".authorization.program.not.supported";
   public static final String ERROR_PERMISSION_CHECK_FAILED = ERROR_PREFIX
       + ".authorization.failed";
-  public static final String ERROR_PERMISSION_NOT_SUPPORTED = ERROR_PREFIX
-      + ".authorization.permission.not.supported";
   //stock card line item reason
   public static final String ERROR_LINE_ITEM_REASON_NAME_MISSING = ERROR_PREFIX
       + ".lineItem.reason.name.missing";

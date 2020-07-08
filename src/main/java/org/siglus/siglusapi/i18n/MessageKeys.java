@@ -36,6 +36,9 @@ public abstract class MessageKeys {
   private static final String EVENT_ERROR_PREFIX = ERROR_PREFIX + ".event";
   private static final String STOCK_MANAGEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockManagement";
 
+  public static final String ERROR_PERMISSION_NOT_SUPPORTED = ERROR_PREFIX
+      + ".authorization.permission.not.supported";
+
   public static final String ERROR_WIDGET_CODE_DUPLICATED =
       join(ERROR_PREFIX, WIDGET, CODE, DUPLICATED);
 
