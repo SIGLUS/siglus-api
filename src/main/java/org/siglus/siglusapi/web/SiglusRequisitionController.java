@@ -112,12 +112,7 @@ public class SiglusRequisitionController {
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
-    siglusRequisitionService.saveRequisition(requisitionId, null, request, response);
-    BasicRequisitionDto basicRequisitionDto = requisitionController
-        .authorizeRequisition(requisitionId, request, response);
-    siglusRequisitionService
-        .activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
-    return basicRequisitionDto;
+    return siglusRequisitionService.authorizeRequisition(requisitionId, request,response);
   }
 
   @PostMapping("/{id}/approve")
@@ -125,12 +120,7 @@ public class SiglusRequisitionController {
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
-    siglusRequisitionService.saveRequisition(requisitionId, null, request, response);
-    BasicRequisitionDto basicRequisitionDto = requisitionController
-        .approveRequisition(requisitionId, request, response);
-    siglusRequisitionService.activateArchivedProducts(requisitionId,
-        basicRequisitionDto.getFacility().getId());
-    return basicRequisitionDto;
+    return siglusRequisitionService.approveRequisition(requisitionId, request, response);
   }
 
   /**

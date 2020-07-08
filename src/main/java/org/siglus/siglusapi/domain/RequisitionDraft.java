@@ -15,15 +15,12 @@
 
 package org.siglus.siglusapi.domain;
 
-import static org.hibernate.annotations.LazyCollectionOption.FALSE;
-
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -31,8 +28,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.BatchSize;
-import org.hibernate.annotations.LazyCollection;
 
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.openlmis.requisition.domain.RequisitionTemplate;

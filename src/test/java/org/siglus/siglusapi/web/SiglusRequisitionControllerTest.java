@@ -83,44 +83,49 @@ public class SiglusRequisitionControllerTest {
 
   @Test
   public void shouldCallOpenlmisControllerWhenSubmitRequisition() {
+    // given
     when(requisitionController.submitRequisition(uuid, request, response))
         .thenReturn(basicRequisitionDto);
 
+    // when
     siglusRequisitionController.submitRequisition(uuid, request, response);
 
+    // then
     verify(requisitionController).submitRequisition(uuid, request, response);
     verify(siglusRequisitionService).activateArchivedProducts(any(), any());
   }
 
   @Test
   public void shouldCallOpenlmisControllerWhenAuthorizeRequisition() {
-    when(requisitionController.authorizeRequisition(uuid, request, response))
-        .thenReturn(basicRequisitionDto);
-
+    // given
     siglusRequisitionController.authorizeRequisition(uuid, request, response);
 
-    verify(requisitionController).authorizeRequisition(uuid, request, response);
-    verify(siglusRequisitionService).activateArchivedProducts(any(), any());
+    // then
+    verify(siglusRequisitionService).authorizeRequisition(uuid, request, response);
   }
 
   @Test
   public void shouldCallOpenlmisControllerWhenSearchRequisitionsForApproval() {
+    // when
     siglusRequisitionController.searchRequisitionsForApproval(programId, pageable);
 
+    // then
     verify(requisitionController).requisitionsForApproval(programId, pageable);
   }
 
   @Test
   public void shouldCallSiglusRequisitionServiceWhenSearchRequisitions() {
     MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
-
+    // when
     siglusRequisitionController.searchRequisitions(queryParams, pageable);
 
+    // then
     verify(siglusRequisitionService).searchRequisitions(queryParams, pageable);
   }
 
   @Test
   public void shouldCallV3ControllerAndServiceWhenApproveRequisition() {
+    // given
     UUID requisitionId = UUID.randomUUID();
     UUID facilityId = UUID.randomUUID();
     MinimalFacilityDto mockFacility = new MinimalFacilityDto();
@@ -130,41 +135,49 @@ public class SiglusRequisitionControllerTest {
     when(requisitionController.approveRequisition(requisitionId, request, response))
         .thenReturn(mockBasicRequisitionDto);
 
+    // when
     siglusRequisitionController.approveRequisition(requisitionId, request, response);
 
-    verify(requisitionController).approveRequisition(requisitionId, request, response);
-    verify(siglusRequisitionService).activateArchivedProducts(requisitionId, facilityId);
+    // then
+    verify(siglusRequisitionService).approveRequisition(requisitionId, request, response);
   }
 
   @Test
   public void shouldCallV3ControllerWhenRejectRequisition() {
+    // when
     UUID requisitionId = UUID.randomUUID();
     siglusRequisitionController.rejectRequisition(requisitionId, request, response);
 
+    // then
     verify(requisitionController).rejectRequisition(requisitionId, request, response);
   }
 
   @Test
   public void shouldCallServiceWhenCreateRequisitionLineItem() {
+    // when
     UUID requisitionId = UUID.randomUUID();
     List<UUID> orderableIds = Collections.emptyList();
     siglusRequisitionController.createRequisitionLineItem(requisitionId, orderableIds);
 
+    // then
     verify(siglusRequisitionService).createRequisitionLineItem(requisitionId, orderableIds);
   }
 
   @Test
   public void shouldCallServiceWhenSearchProcessingPeriodIds() {
+    // when
     UUID programId = UUID.randomUUID();
     UUID facilityId = UUID.randomUUID();
     boolean emergency = nextBoolean();
     siglusRequisitionController.searchProcessingPeriodIds(programId, facilityId, emergency);
 
+    // then
     verify(siglusProcessingPeriodService).getPeriods(programId, facilityId, emergency);
   }
 
   @Test
   public void shouldCallV2ControllerWhenInitiate() {
+    // when
     UUID programId = UUID.randomUUID();
     UUID facilityId = UUID.randomUUID();
     UUID suggestedPeriod = UUID.randomUUID();
@@ -174,6 +187,7 @@ public class SiglusRequisitionControllerTest {
         .initiate(programId, facilityId, suggestedPeriod, emergency, physicalInventoryDateStr,
             request, response);
 
+    // then
     verify(siglusRequisitionService)
         .initiate(programId, facilityId, suggestedPeriod, emergency, physicalInventoryDateStr,
             request, response);
@@ -181,27 +195,33 @@ public class SiglusRequisitionControllerTest {
 
   @Test
   public void shouldCallServiceWhenSearchRequisition() {
+    // when
     UUID requisitionId = UUID.randomUUID();
     siglusRequisitionController.searchRequisition(requisitionId);
 
+    // then
     verify(siglusRequisitionService).searchRequisition(requisitionId);
   }
 
   @Test
   public void shouldCallServiceWhenUpdateRequisition() {
+    // when
     UUID requisitionId = UUID.randomUUID();
     SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
     siglusRequisitionController.updateRequisition(requisitionId, requisitionDto, request, response);
 
+    // then
     verify(siglusRequisitionService)
         .updateRequisition(requisitionId, requisitionDto, request, response);
   }
 
   @Test
   public void shouldCallServiceWhenDeleteRequisition() {
+    // when
     UUID requisitionId = UUID.randomUUID();
     siglusRequisitionController.deleteRequisition(requisitionId);
 
+    // then
     verify(siglusRequisitionService).deleteRequisition(requisitionId);
   }
 

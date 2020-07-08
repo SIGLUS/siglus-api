@@ -58,6 +58,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusUsageReportService {
 
   static final String KIT_COLLECTION = "collection";

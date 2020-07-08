@@ -129,7 +129,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Service
 @Slf4j
@@ -307,6 +306,25 @@ public class SiglusRequisitionService {
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
+  public BasicRequisitionDto authorizeRequisition(UUID requisitionId, HttpServletRequest request,
+      HttpServletResponse response) {
+    saveRequisition(requisitionId, null, request, response);
+    BasicRequisitionDto basicRequisitionDto = requisitionController
+        .authorizeRequisition(requisitionId, request, response);
+    activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
+    return basicRequisitionDto;
+  }
+
+  public BasicRequisitionDto approveRequisition(UUID requisitionId, HttpServletRequest request,
+      HttpServletResponse response) {
+    saveRequisition(requisitionId, null, request, response);
+    BasicRequisitionDto basicRequisitionDto = requisitionController
+        .approveRequisition(requisitionId, request, response);
+    activateArchivedProducts(requisitionId,
+        basicRequisitionDto.getFacility().getId());
+    return basicRequisitionDto;
+  }
+
   private SiglusRequisitionDto getSiglusRequisitionDto(UUID requisitionId,
       RequisitionTemplateExtension extension, RequisitionV2Dto requisitionDto) {
     SiglusRequisitionDto siglusRequisitionDto;
@@ -354,7 +372,7 @@ public class SiglusRequisitionService {
     return requisitionDto;
   }
 
-  public SiglusRequisitionDto saveRequisition(UUID requisitionId,
+  private SiglusRequisitionDto saveRequisition(UUID requisitionId,
       SiglusRequisitionDto requisitionDto, HttpServletRequest request,
       HttpServletResponse response) {
     // call modify OpenLMIS API

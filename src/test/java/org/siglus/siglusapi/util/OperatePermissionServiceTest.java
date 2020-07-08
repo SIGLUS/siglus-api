@@ -64,7 +64,8 @@ public class OperatePermissionServiceTest {
 
     //when
     ValidationResult validationResult = new ValidationResult();
-    when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(validationResult);
+    when(permissionService.canSubmitRequisition(any(Requisition.class)))
+        .thenReturn(validationResult);
 
     // then
     assertEquals(true, operatePermissionService.isEditable(dto));
@@ -72,46 +73,49 @@ public class OperatePermissionServiceTest {
   }
 
   @Test
-  public void shouldReturnTrueWhenStatusSUBMITTEDAndCanAuthorize() {
+  public void shouldReturnTrueWhenStatusSubmittedAndCanAuthorize() {
     // given
     dto.setStatus(RequisitionStatus.SUBMITTED);
 
     //when
     ValidationResult validationResult = new ValidationResult();
-    when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(validationResult);
+    when(permissionService.canAuthorizeRequisition(any(Requisition.class)))
+        .thenReturn(validationResult);
 
     // then
     assertEquals(true, operatePermissionService.isEditable(dto));
   }
 
   @Test
-  public void shouldReturnTrueWhenStatusAUTHORIZEDAndCanApprove() {
+  public void shouldReturnTrueWhenStatusAuthorizedAndCanApprove() {
     // given
     dto.setStatus(RequisitionStatus.AUTHORIZED);
 
     //when
     ValidationResult validationResult = new ValidationResult();
-    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(validationResult);
+    when(permissionService.canApproveRequisition(any(Requisition.class)))
+        .thenReturn(validationResult);
 
     // then
     assertEquals(true, operatePermissionService.isEditable(dto));
   }
 
   @Test
-  public void shouldReturnFalseWhenStatusREJECTED() {
+  public void shouldReturnFalseWhenStatusRejected() {
     // given
     dto.setStatus(RequisitionStatus.RELEASED);
 
     //when
     ValidationResult validationResult = new ValidationResult();
-    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(validationResult);
+    when(permissionService.canApproveRequisition(any(Requisition.class)))
+        .thenReturn(validationResult);
 
     // then
     assertEquals(false, operatePermissionService.isEditable(dto));
   }
 
   @Test
-  public void shouldReturnFalseWhenStatusAUTHORIZEDAndCanSubmit() {
+  public void shouldReturnFalseWhenStatusAuthorizedAndCanSubmit() {
     // given
     dto.setStatus(RequisitionStatus.AUTHORIZED);
 

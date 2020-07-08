@@ -43,6 +43,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -66,6 +67,7 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItemDataBuilder;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
@@ -73,6 +75,7 @@ import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.MetadataDto;
+import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.OrderStatus;
@@ -112,6 +115,9 @@ import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
+import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
+import org.siglus.siglusapi.domain.RequisitionDraft;
+import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -122,7 +128,6 @@ import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -548,7 +553,7 @@ public class SiglusRequisitionServiceTest {
     // when
     SiglusRequisitionDto requisitionDto =
         siglusRequisitionService.updateRequisition(requisitionId, siglusRequisitionDto,
-        httpServletRequest, httpServletResponse);
+            httpServletRequest, httpServletResponse);
 
     // then
     verify(requisitionV2Controller).updateRequisition(requisitionId, siglusRequisitionDto,
@@ -760,6 +765,135 @@ public class SiglusRequisitionServiceTest {
     assertThat(availableProducts,
         hasItems(productVersionObjectReference1, productVersionObjectReference2));
   }
+
+  @Test
+  public void shouldFillDraftWhenRequisitionCanEditAndHaveDraft() {
+    // given
+    mockEmergencyRequisition();
+    when(requisitionService
+        .validateCanApproveRequisition(any(), any())).thenReturn(ValidationResult.success());
+    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
+        .thenReturn(new PageImpl<>(singletonList(newBasicReq)));
+    when(operatePermissionService.isEditable(any())).thenReturn(true);
+    RequisitionDraft draft = getRequisitionDraft(requisitionId);
+    when(draftRepository.findByRequisitionId(requisitionId))
+        .thenReturn(getRequisitionDraft(requisitionId));
+
+    // when
+    SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisition(requisitionId);
+
+    // then
+    assertEquals(draft.getKitUsageLineItems().get(0).getValue(),
+        requisitionDto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
+  }
+
+  @Test
+  public void shouldAuthorizeRequisition() {
+    // given
+    BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    MinimalFacilityDto facilityDto = new MinimalFacilityDto();
+    facilityDto.setId(UUID.randomUUID());
+    mockBasicRequisitionDto.setFacility(facilityDto);
+    HttpServletRequest request = new MockHttpServletRequest();
+    HttpServletResponse response = new MockHttpServletResponse();
+    when(requisitionController.authorizeRequisition(requisitionId, request, response))
+        .thenReturn(mockBasicRequisitionDto);
+    requisition.setRequisitionLineItems(emptyList());
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
+    when(requisitionV2Controller
+        .updateRequisition(requisitionId, siglusRequisitionDto, request, response))
+        .thenReturn(requisitionV2Dto);
+
+    // when
+    siglusRequisitionService.authorizeRequisition(requisitionId, request, response);
+
+    // then
+    verify(requisitionController).authorizeRequisition(requisitionId, request, response);
+    verify(archiveProductService).activateArchivedProducts(any(), any());
+  }
+
+  @Test
+  public void shouldApproveRequisition() {
+    // given
+    BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    MinimalFacilityDto facilityDto = new MinimalFacilityDto();
+    facilityDto.setId(UUID.randomUUID());
+    mockBasicRequisitionDto.setFacility(facilityDto);
+    HttpServletRequest request = new MockHttpServletRequest();
+    HttpServletResponse response = new MockHttpServletResponse();
+    when(requisitionController.approveRequisition(requisitionId, request, response))
+        .thenReturn(mockBasicRequisitionDto);
+    requisition.setRequisitionLineItems(emptyList());
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
+    when(requisitionV2Controller
+        .updateRequisition(requisitionId, siglusRequisitionDto, request, response))
+        .thenReturn(requisitionV2Dto);
+
+    // when
+    siglusRequisitionService.approveRequisition(requisitionId, request, response);
+
+    // then
+    verify(requisitionController).approveRequisition(requisitionId, request, response);
+    verify(archiveProductService).activateArchivedProducts(any(), any());
+  }
+
+  @Test
+  public void shouldSaveDraftWhenRequisitionUpdate() {
+    // given
+    OrderableDto productDto = new OrderableDto();
+    productDto.setId(UUID.randomUUID());
+    RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
+    lineItemV2Dto.setOrderable(productDto);
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
+    approvedProductDto.setId(UUID.randomUUID());
+    lineItemV2Dto.setApprovedProduct(approvedProductDto);
+    lineItemV2Dto.setId(UUID.randomUUID());
+    lineItemV2Dto.setAuthorizedQuantity(10);
+    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItemV2Dto));
+    when(operatePermissionService.canSubmit(siglusRequisitionDto)).thenReturn(false);
+    RequisitionTemplate requisitionTemplate = new RequisitionTemplate();
+    requisitionTemplate.setId(templateId);
+    RequisitionTemplateExtension templateExtension = createTemplateExtension();
+    requisitionTemplate.setTemplateExtension(templateExtension);
+    requisition.setTemplate(requisitionTemplate);
+    when(requisitionRepository.findOne(siglusRequisitionDto.getId()))
+        .thenReturn(requisition);
+    when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(
+        siglusRequisitionDto.getId())).thenReturn(templateExtension);
+    RequisitionDraft draft = getRequisitionDraft(siglusRequisitionDto.getId());
+    when(draftRepository.save(any(RequisitionDraft.class))).thenReturn(draft);
+
+    // when
+    SiglusRequisitionDto requisitionDto = siglusRequisitionService.updateRequisition(
+        siglusRequisitionDto.getId(), siglusRequisitionDto, new MockHttpServletRequest(),
+        new MockHttpServletResponse());
+
+    // then
+    assertEquals(Integer.valueOf(20),
+        requisitionDto.getLineItems().get(0).getApprovedQuantity());
+  }
+
+  private RequisitionDraft getRequisitionDraft(UUID requisitionId) {
+    RequisitionDraft draft = new RequisitionDraft();
+    draft.setRequisitionId(requisitionId);
+    RequisitionLineItemDraft lineItemDraft1 = new RequisitionLineItemDraft();
+    lineItemDraft1.setRequisitionLineItemId(UUID.randomUUID());
+    lineItemDraft1.setOrderable(
+        new VersionEntityReference(UUID.randomUUID(), (long) 1));
+    lineItemDraft1.setFacilityTypeApprovedProduct(new VersionEntityReference(UUID.randomUUID(),
+        (long) 1));
+    lineItemDraft1.setStockAdjustments(emptyList());
+    lineItemDraft1.setApprovedQuantity(20);
+    draft.setLineItems(Arrays.asList(lineItemDraft1));
+    KitUsageLineItemDraft usageLineItemDraft = new KitUsageLineItemDraft();
+    usageLineItemDraft.setCollection("collection");
+    usageLineItemDraft.setService("HF");
+    usageLineItemDraft.setValue(10);
+    usageLineItemDraft.setKitUsageLineItemId(UUID.randomUUID());
+    draft.setKitUsageLineItems(Arrays.asList(usageLineItemDraft));
+    return draft;
+  }
+
 
   @Test
   public void shouldFilterNoProductWhenGetEmergencyRequisitionGivenApproveSkippedProduct1() {
