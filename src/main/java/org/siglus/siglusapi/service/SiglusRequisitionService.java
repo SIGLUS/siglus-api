@@ -448,7 +448,7 @@ public class SiglusRequisitionService {
     List<Requisition> previousRequisitions = requisition.getPreviousRequisitions();
 
     SiglusProgramDto programDto = programExtensionService.getProgram(program.getId());
-    UUID virtualProgramId = programDto.getIsVirtual() ? programDto.getId()
+    UUID virtualProgramId = Boolean.TRUE.equals(programDto.getIsVirtual()) ? programDto.getId()
         : programDto.getParentId();
     if (requisitionTemplate.isPopulateStockOnHandFromStockCards()) {
       ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
@@ -471,7 +471,7 @@ public class SiglusRequisitionService {
             .min(Comparator.comparing(Requisition::getActualStartDate))
             .orElseThrow(() -> new NotFoundException("Earlier Rquisition Not Found"))
             .getActualStartDate();
-        if (requisition.getEmergency()) {
+        if (Boolean.TRUE.equals(requisition.getEmergency())) {
           List<Requisition> requisitions =
               requisitionService.searchAfterAuthorizedRequisitions(requisition.getFacilityId(),
                   requisition.getProgramId(),
@@ -676,7 +676,7 @@ public class SiglusRequisitionService {
   }
 
   private void filterProductsIfEmergency(RequisitionV2Dto requisition) {
-    if (!requisition.getEmergency()) {
+    if (!Boolean.TRUE.equals(requisition.getEmergency())) {
       return;
     }
     List<RequisitionV2Dto> previousEmergencyReqs = getPreviousEmergencyRequisition(requisition);
@@ -894,13 +894,13 @@ public class SiglusRequisitionService {
 
   private void fillRequisitionDraft(RequisitionDraft draft,
       RequisitionTemplateExtension templateExtension, SiglusRequisitionDto dto) {
-    if (templateExtension.getEnableProduct()) {
+    if (Boolean.TRUE.equals(templateExtension.getEnableProduct())) {
       dto.setRequisitionLineItems(draft.getLineItems()
           .stream()
-          .map(lineItemDraft -> RequisitionLineItemDraft.getLineItemDto(lineItemDraft))
+          .map(RequisitionLineItemDraft::getLineItemDto)
           .collect(toList()));
     }
-    if (templateExtension.getEnableKitUsage()) {
+    if (Boolean.TRUE.equals(templateExtension.getEnableKitUsage())) {
       dto.setKitUsageLineItems(KitUsageLineItemDraft.from(draft.getKitUsageLineItems()));
     }
   }

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -53,7 +54,7 @@ public class RequisitionDraft extends BaseEntity {
       fetch = FetchType.LAZY,
       orphanRemoval = true)
   @DiffIgnore
-  private List<RequisitionLineItemDraft> lineItems;
+  private List<RequisitionLineItemDraft> lineItems = Collections.emptyList();
 
   @OneToMany(
       mappedBy = "requisitionDraft",
@@ -61,7 +62,7 @@ public class RequisitionDraft extends BaseEntity {
       fetch = FetchType.LAZY,
       orphanRemoval = true)
   @DiffIgnore
-  private List<KitUsageLineItemDraft> kitUsageLineItems;
+  private List<KitUsageLineItemDraft> kitUsageLineItems = Collections.emptyList();
 
   public static RequisitionDraft from(SiglusRequisitionDto requisitionDto,
       RequisitionTemplate template, UUID draftId, UserDto userDto) {
@@ -69,11 +70,11 @@ public class RequisitionDraft extends BaseEntity {
     draft.setId(draftId);
     draft.setFacilityid(userDto.getHomeFacilityId());
     draft.setRequisitionId(requisitionDto.getId());
-    if (template.getTemplateExtension().getEnableProduct()) {
+    if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableProduct())) {
       draft.setLineItems(requisitionDto.getRequisitionLineItems().stream().map(lineItem ->
           RequisitionLineItemDraft.from(draft, lineItem)).collect(Collectors.toList()));
     }
-    if (template.getTemplateExtension().getEnableKitUsage()) {
+    if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableKitUsage())) {
       draft.setKitUsageLineItems(KitUsageLineItemDraft.from(draft, requisitionDto));
     }
     return draft;
