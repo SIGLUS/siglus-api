@@ -17,10 +17,12 @@ package org.siglus.siglusapi.web;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -173,4 +175,10 @@ public class SiglusRequisitionController {
       Pageable pageable) {
     return requisitionController.requisitionsForApproval(programId, pageable);
   }
+
+  @GetMapping("/facilitiesForApproval")
+  public Set<FacilityDto> getFacilitiesForApproval() {
+    return siglusRequisitionService.searchFacilitiesForApproval();
+  }
+
 }

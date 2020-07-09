@@ -1371,6 +1371,12 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /requisitions/facilitiesForApproval:
+      get:
+        is: [ secured ]
+        description: Get facilities to approve
+
+
     /orders/batch:
       post:
         is: [ secured, idempotent ]
@@ -1587,3 +1593,4 @@ traits:
             description: already viewd
           409:
             description: already processed
+

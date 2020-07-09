@@ -75,6 +75,9 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.RightDto;
+import org.openlmis.requisition.dto.RoleAssignmentDto;
+import org.openlmis.requisition.dto.RoleDto;
 import org.openlmis.requisition.dto.ShipmentDto;
 import org.openlmis.requisition.dto.ShipmentLineItemDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
@@ -95,6 +98,9 @@ import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
+import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
+import org.openlmis.requisition.service.referencedata.RightReferenceDataService;
+import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
@@ -213,6 +219,18 @@ public class SiglusRequisitionService {
 
   @Autowired
   private OperatePermissionService operatePermissionService;
+
+  @Autowired
+  private RightReferenceDataService rightReferenceDataService;
+
+  @Autowired
+  private RoleReferenceDataService roleReferenceDataService;
+
+  @Autowired
+  private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+
+  @Autowired
+  private RequisitionGroupReferenceDataService requisitionGroupReferenceDataService;
 
   @Autowired
   private SiglusNotificationService notificationService;
@@ -357,6 +375,33 @@ public class SiglusRequisitionService {
         .add(QueryRequisitionSearchParams.REQUISITION_STATUS, requisitionStatus.toString()));
     RequisitionSearchParams params = new QueryRequisitionSearchParams(queryParams);
     return siglusRequisitionRequisitionService.searchRequisitions(params, pageable);
+  }
+
+  public Set<FacilityDto> searchFacilitiesForApproval() {
+    RightDto right = rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE);
+    List<RoleDto> roleDtos = roleReferenceDataService.search(right.getId());
+    Set<UUID> roleIds = roleDtos.stream().map(RoleDto::getId).collect(toSet());
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    Set<UUID> supervisoryNodeIds = userDto.getRoleAssignments()
+        .stream()
+        .filter(roleAssignment -> roleIds.contains(roleAssignment.getRoleId()))
+        .map(RoleAssignmentDto::getSupervisoryNodeId)
+        .filter(id -> id != null)
+        .collect(toSet());
+
+    List<SupervisoryNodeDto> supervisoryNodeDtos =
+        supervisoryNodeReferenceDataService.findByIds(supervisoryNodeIds);
+
+    // check if internal only
+
+    return supervisoryNodeDtos
+        .stream()
+        .map(SupervisoryNodeDto::getRequisitionGroupId)
+        .filter(id -> id != null)
+        // needs optimize
+        .map(id -> requisitionGroupReferenceDataService.findOne(id))
+        .flatMap(requisitionGroupDto -> requisitionGroupDto.getMemberFacilities().stream())
+        .collect(toSet());
   }
 
   private SiglusRequisitionDto saveRequisitionDraft(SiglusRequisitionDto requisitionDto) {
