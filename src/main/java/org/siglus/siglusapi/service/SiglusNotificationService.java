@@ -206,6 +206,7 @@ public class SiglusNotificationService {
 
   private boolean canBeInternalApproved(BasicRequisitionDto requisition) {
     return rightAssignRepo.count((root, query, cb) -> cb.and(
+        cb.equal(root.get("user").get("homeFacilityId"), requisition.getFacility().getId()),
         cb.equal(root.get("facilityId"), requisition.getFacility().getId()),
         cb.equal(root.get("programId"), requisition.getProgram().getId()),
         cb.equal(root.get("rightName"), PermissionService.REQUISITION_APPROVE)
