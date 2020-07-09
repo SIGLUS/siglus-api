@@ -104,13 +104,6 @@ public class SiglusUsageReportService {
     }
   }
 
-  public SiglusRequisitionDto saveNoDraftUsageReport(SiglusRequisitionDto requisitionDto,
-      SiglusRequisitionDto updatedDto) {
-    usageReportDataProcessors.forEach(processor -> processor.update(requisitionDto,
-        updatedDto));
-    return updatedDto;
-  }
-
   public SiglusRequisitionDto saveUsageReport(SiglusRequisitionDto requisitionDto,
       RequisitionV2Dto updatedDto) {
     SiglusRequisitionDto siglusUpdatedDto = SiglusRequisitionDto.from(updatedDto);

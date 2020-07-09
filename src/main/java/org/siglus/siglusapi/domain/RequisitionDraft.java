@@ -64,6 +64,15 @@ public class RequisitionDraft extends BaseEntity {
   @DiffIgnore
   private List<KitUsageLineItemDraft> kitUsageLineItems = Collections.emptyList();
 
+  @OneToMany(
+      mappedBy = "requisitionDraft",
+      cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.REMOVE},
+      fetch = FetchType.LAZY,
+      orphanRemoval = true)
+  @DiffIgnore
+  private List<UsageInformationLineItemDraft> usageInformationLineItemDrafts = Collections
+      .emptyList();
+
   public static RequisitionDraft from(SiglusRequisitionDto requisitionDto,
       RequisitionTemplate template, UUID draftId, UserDto userDto) {
     RequisitionDraft draft = new RequisitionDraft();
@@ -76,6 +85,10 @@ public class RequisitionDraft extends BaseEntity {
     }
     if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableKitUsage())) {
       draft.setKitUsageLineItems(KitUsageLineItemDraft.from(draft, requisitionDto));
+    }
+    if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableUsageInformation())) {
+      draft.setUsageInformationLineItemDrafts(
+          UsageInformationLineItemDraft.from(draft, requisitionDto));
     }
     return draft;
   }

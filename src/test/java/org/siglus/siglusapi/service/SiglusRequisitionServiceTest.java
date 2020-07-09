@@ -129,6 +129,7 @@ import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
@@ -817,7 +818,7 @@ public class SiglusRequisitionServiceTest {
     when(operatePermissionService.isEditable(any())).thenReturn(true);
     RequisitionDraft draft = getRequisitionDraft(requisitionId);
     when(draftRepository.findByRequisitionId(requisitionId))
-        .thenReturn(getRequisitionDraft(requisitionId));
+        .thenReturn(draft);
 
     // when
     SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisition(requisitionId);
@@ -825,6 +826,11 @@ public class SiglusRequisitionServiceTest {
     // then
     assertEquals(draft.getKitUsageLineItems().get(0).getValue(),
         requisitionDto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
+    UsageInformationLineItemDraft usageLineItemDraft = draft.getUsageInformationLineItemDrafts()
+        .get(0);
+    assertEquals(usageLineItemDraft.getValue(),
+        requisitionDto.getUsageInformationLineItems().get(0).getInformations().get("information")
+            .getOrderables().get(usageLineItemDraft.getOrderableId()).getValue());
   }
 
   @Test
@@ -915,6 +921,11 @@ public class SiglusRequisitionServiceTest {
     // then
     assertEquals(Integer.valueOf(20),
         requisitionDto.getLineItems().get(0).getApprovedQuantity());
+    UsageInformationLineItemDraft usageLineItemDraft = draft.getUsageInformationLineItemDrafts()
+        .get(0);
+    assertEquals(usageLineItemDraft.getValue(),
+        requisitionDto.getUsageInformationLineItems().get(0).getInformations().get("information")
+            .getOrderables().get(usageLineItemDraft.getOrderableId()).getValue());
   }
 
   @Test
@@ -963,13 +974,32 @@ public class SiglusRequisitionServiceTest {
     lineItemDraft1.setStockAdjustments(emptyList());
     lineItemDraft1.setApprovedQuantity(20);
     draft.setLineItems(Arrays.asList(lineItemDraft1));
+    KitUsageLineItemDraft usageLineItemDraft = getKitUsageLineItemDraft();
+    draft.setKitUsageLineItems(Arrays.asList(usageLineItemDraft));
+    UsageInformationLineItemDraft usageLineItem = getUsageInformationLineItemDraft();
+    draft.setUsageInformationLineItemDrafts(Arrays.asList(usageLineItem));
+    return draft;
+  }
+
+  private KitUsageLineItemDraft getKitUsageLineItemDraft() {
     KitUsageLineItemDraft usageLineItemDraft = new KitUsageLineItemDraft();
     usageLineItemDraft.setCollection("collection");
     usageLineItemDraft.setService("HF");
     usageLineItemDraft.setValue(10);
     usageLineItemDraft.setKitUsageLineItemId(UUID.randomUUID());
-    draft.setKitUsageLineItems(Arrays.asList(usageLineItemDraft));
-    return draft;
+    return usageLineItemDraft;
+  }
+
+  private UsageInformationLineItemDraft getUsageInformationLineItemDraft() {
+    UsageInformationLineItemDraft usageLineItem =
+        new UsageInformationLineItemDraft();
+    usageLineItem.setUsageLineItemId(UUID.randomUUID());
+    usageLineItem.setService("CHW");
+    usageLineItem.setInformation("information");
+    usageLineItem.setService("testService");
+    usageLineItem.setValue(20);
+    usageLineItem.setOrderableId(UUID.randomUUID());
+    return usageLineItem;
   }
 
 

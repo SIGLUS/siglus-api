@@ -119,6 +119,7 @@ import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
@@ -332,7 +333,6 @@ public class SiglusRequisitionService {
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
-  @Transactional
   public BasicRequisitionDto authorizeRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
     saveRequisition(requisitionId, null, request, response);
@@ -343,7 +343,6 @@ public class SiglusRequisitionService {
     return basicRequisitionDto;
   }
 
-  @Transactional
   public BasicRequisitionDto approveRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
     saveRequisition(requisitionId, null, request, response);
@@ -504,7 +503,6 @@ public class SiglusRequisitionService {
     draft = draftRepository.save(requisitionDraft);
 
     fillRequisitionDraft(draft, template.getTemplateExtension(), requisitionDto);
-    siglusUsageReportService.saveNoDraftUsageReport(requisitionDto, requisitionDto);
     return requisitionDto;
   }
 
@@ -1037,6 +1035,10 @@ public class SiglusRequisitionService {
     }
     if (Boolean.TRUE.equals(templateExtension.getEnableKitUsage())) {
       dto.setKitUsageLineItems(KitUsageLineItemDraft.from(draft.getKitUsageLineItems()));
+    }
+    if (Boolean.TRUE.equals(templateExtension.getEnableUsageInformation())) {
+      dto.setUsageInformationLineItems(
+          UsageInformationLineItemDraft.getLineItemDto(draft.getUsageInformationLineItemDrafts()));
     }
   }
 
