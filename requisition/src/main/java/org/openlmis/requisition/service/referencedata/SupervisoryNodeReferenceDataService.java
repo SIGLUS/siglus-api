@@ -66,4 +66,11 @@ public class SupervisoryNodeReferenceDataService
     }
     return getPage(RequestParameters.init().set("id", ids)).getContent();
   }
+
+  // [SIGLUS change start]
+  // [change reason]: need find all.
+  public List<SupervisoryNodeDto> findAll() {
+    return getPage(RequestParameters.init()).getContent();
+  }
+  // [SIGLUS change end]
 }

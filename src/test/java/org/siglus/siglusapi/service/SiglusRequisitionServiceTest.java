@@ -44,12 +44,14 @@ import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.junit.Before;
@@ -83,8 +85,12 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
+import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.RightDto;
+import org.openlmis.requisition.dto.RoleAssignmentDto;
+import org.openlmis.requisition.dto.RoleDto;
 import org.openlmis.requisition.dto.ShipmentDto;
 import org.openlmis.requisition.dto.ShipmentLineItemDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
@@ -101,8 +107,12 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
+import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
+import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
+import org.openlmis.requisition.service.referencedata.RightReferenceDataService;
+import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
@@ -227,7 +237,24 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private SiglusNotificationService notificationService;
 
+  @Mock
+  private RightReferenceDataService rightReferenceDataService;
+
+  @Mock
+  private RoleReferenceDataService roleReferenceDataService;
+
+  @Mock
+  private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+
+  @Mock
+  private RequisitionGroupReferenceDataService requisitionGroupReferenceDataService;
+
+  @Mock
+  private FacilityReferenceDataService facilityReferenceDataService;
+
   private UUID facilityId = UUID.randomUUID();
+
+  private UUID facilityId2 = UUID.randomUUID();
 
   private UUID userFacilityId = UUID.randomUUID();
 
@@ -244,6 +271,12 @@ public class SiglusRequisitionServiceTest {
   private UUID templateId = UUID.randomUUID();
 
   private UUID supervisoryNodeId = UUID.randomUUID();
+
+  private UUID supervisoryNodeId2 = UUID.randomUUID();
+
+  private UUID requisitionGroupId = UUID.randomUUID();
+
+  private UUID requisitionGroupId2 = UUID.randomUUID();
 
   private UUID processingPeriodId = UUID.randomUUID();
 
@@ -292,6 +325,10 @@ public class SiglusRequisitionServiceTest {
   private List<ShipmentDto> preReqOrderShipments1;
 
   private List<ShipmentDto> preReqOrderShipments2;
+
+  private UUID rightId = UUID.randomUUID();
+
+  private UUID roleId = UUID.randomUUID();
 
   @Mock
   private OrderFulfillmentService orderFulfillmentService;
@@ -880,6 +917,40 @@ public class SiglusRequisitionServiceTest {
         requisitionDto.getLineItems().get(0).getApprovedQuantity());
   }
 
+  @Test
+  public void shouldGetFacilitiesForInternalApproval() {
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
+        .thenReturn(mockRightDto());
+    when(roleReferenceDataService.search(rightId)).thenReturn(mockRoleDto());
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockInternalUserDto());
+    when(supervisoryNodeReferenceDataService.findAll()).thenReturn(mockAllSupervisoryNode());
+    when(requisitionGroupReferenceDataService.findAll()).thenReturn(mockAllRequisitionGroup());
+    when(facilityReferenceDataService.findAll()).thenReturn(mockAllFacilityDto());
+
+    Set<FacilityDto> response = siglusRequisitionService.searchFacilitiesForApproval();
+
+    assertEquals(response.size(), 1);
+    assertEquals(response.stream().findFirst().get().getId(), userFacilityId);
+  }
+
+  @Test
+  public void shouldGetFacilitiesForExternalApproval() {
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
+        .thenReturn(mockRightDto());
+    when(roleReferenceDataService.search(rightId)).thenReturn(mockRoleDto());
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockExternalUserDto());
+    when(supervisoryNodeReferenceDataService.findAll()).thenReturn(mockAllSupervisoryNode());
+    when(requisitionGroupReferenceDataService.findAll()).thenReturn(mockAllRequisitionGroup());
+    when(facilityReferenceDataService.findAll()).thenReturn(mockAllFacilityDto());
+
+    Set<FacilityDto> response = siglusRequisitionService.searchFacilitiesForApproval();
+
+    Set<UUID> uuids = response.stream().map(FacilityDto::getId).collect(Collectors.toSet());
+    assertEquals(response.size(), 2);
+    assertTrue(uuids.contains(facilityId));
+    assertTrue(uuids.contains(userFacilityId));
+  }
+
   private RequisitionDraft getRequisitionDraft(UUID requisitionId) {
     RequisitionDraft draft = new RequisitionDraft();
     draft.setRequisitionId(requisitionId);
@@ -920,6 +991,96 @@ public class SiglusRequisitionServiceTest {
     assertEquals(2, availableProducts.size());
     assertThat(availableProducts,
         hasItems(productVersionObjectReference1, productVersionObjectReference2));
+  }
+
+  private RightDto mockRightDto() {
+    RightDto rightDto = new RightDto();
+    rightDto.setId(rightId);
+    rightDto.setName(PermissionService.REQUISITION_APPROVE);
+    return rightDto;
+  }
+
+  private List<RoleDto> mockRoleDto() {
+    RoleDto roleDto = new RoleDto();
+    roleDto.setId(roleId);
+    roleDto.setName("Requisition Approver");
+    roleDto.setRights(Sets.newHashSet(mockRightDto()));
+    return Lists.newArrayList(roleDto);
+  }
+
+  private UserDto mockInternalUserDto() {
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    userDto.setHomeFacilityId(userFacilityId);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(roleId);
+    roleAssignmentDto.setSupervisoryNodeId(supervisoryNodeId);
+    userDto.setRoleAssignments(Sets.newHashSet(roleAssignmentDto));
+    return userDto;
+  }
+
+  private UserDto mockExternalUserDto() {
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    userDto.setHomeFacilityId(facilityId2);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(roleId);
+    roleAssignmentDto.setSupervisoryNodeId(supervisoryNodeId);
+    userDto.setRoleAssignments(
+        Sets.newHashSet(roleAssignmentDto));
+    return userDto;
+  }
+
+  private List<SupervisoryNodeDto> mockAllSupervisoryNode() {
+    return Lists.newArrayList(
+        mockSupervisoryNodeWithChild(supervisoryNodeId, supervisoryNodeId2),
+        mockSupervisoryNodeDto(supervisoryNodeId2, requisitionGroupId2));
+  }
+
+  private List<RequisitionGroupDto> mockAllRequisitionGroup() {
+    return Lists.newArrayList(
+        mockRequisitionGroupDto(requisitionGroupId, userFacilityId),
+        mockRequisitionGroupDto(requisitionGroupId2, facilityId));
+  }
+
+  private List<FacilityDto> mockAllFacilityDto() {
+    return Lists.newArrayList(mockFacilityDto(facilityId),
+        mockFacilityDto(userFacilityId));
+  }
+
+  private SupervisoryNodeDto mockSupervisoryNodeDto(UUID id, UUID groupId) {
+    SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
+    supervisoryNodeDto.setId(id);
+    supervisoryNodeDto.setRequisitionGroup(new ObjectReferenceDto(groupId));
+    supervisoryNodeDto.setChildNodes(Collections.emptySet());
+    return supervisoryNodeDto;
+  }
+
+  private SupervisoryNodeDto mockSupervisoryNodeWithChild(UUID id, UUID childId) {
+    SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
+    supervisoryNodeDto.setId(id);
+    supervisoryNodeDto.setRequisitionGroup(new ObjectReferenceDto(requisitionGroupId));
+    SupervisoryNodeDto child = new SupervisoryNodeDto();
+    child.setId(childId);
+    child.setRequisitionGroup(new ObjectReferenceDto(requisitionGroupId2));
+    child.setChildNodes(Collections.emptySet());
+    supervisoryNodeDto.setChildNodes(
+        Sets.newHashSet(new ObjectReferenceDto(childId)));
+    return supervisoryNodeDto;
+  }
+
+  private RequisitionGroupDto mockRequisitionGroupDto(UUID id, UUID facilityId) {
+    RequisitionGroupDto requisitionGroupDto = new RequisitionGroupDto();
+    requisitionGroupDto.setId(id);
+    requisitionGroupDto.setMemberFacilities(
+        Sets.newHashSet(mockFacilityDto(facilityId)));
+    return requisitionGroupDto;
+  }
+
+  private FacilityDto mockFacilityDto(UUID id) {
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(id);
+    return facilityDto;
   }
 
   private int randomQuantity() {

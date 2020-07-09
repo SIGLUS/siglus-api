@@ -73,6 +73,7 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
+import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
@@ -96,6 +97,7 @@ import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
+import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
@@ -234,6 +236,9 @@ public class SiglusRequisitionService {
 
   @Autowired
   private SiglusNotificationService notificationService;
+
+  @Autowired
+  private FacilityReferenceDataService facilityReferenceDataService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -382,26 +387,107 @@ public class SiglusRequisitionService {
     List<RoleDto> roleDtos = roleReferenceDataService.search(right.getId());
     Set<UUID> roleIds = roleDtos.stream().map(RoleDto::getId).collect(toSet());
     UserDto userDto = authenticationHelper.getCurrentUser();
-    Set<UUID> supervisoryNodeIds = userDto.getRoleAssignments()
+
+    // id : supervisory node
+    Map<UUID, SupervisoryNodeDto> nodeDtoMap =
+        supervisoryNodeReferenceDataService.findAll()
+        .stream()
+        .collect(toMap(SupervisoryNodeDto::getId, node -> node));
+
+    // id : requisition group
+    Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap =
+        requisitionGroupReferenceDataService.findAll()
+        .stream()
+        .collect(toMap(RequisitionGroupDto::getId, groupDto -> groupDto));
+
+    // id : facility
+    Map<UUID, FacilityDto> facilityDtoMap =
+        facilityReferenceDataService.findAll()
+        .stream()
+        .collect(toMap(FacilityDto::getId, facilityDto -> facilityDto));
+
+    Set<SupervisoryNodeDto> supervisoryNodeDtos = userDto.getRoleAssignments()
         .stream()
         .filter(roleAssignment -> roleIds.contains(roleAssignment.getRoleId()))
         .map(RoleAssignmentDto::getSupervisoryNodeId)
         .filter(id -> id != null)
+        .map(id -> nodeDtoMap.get(id))
         .collect(toSet());
 
-    List<SupervisoryNodeDto> supervisoryNodeDtos =
-        supervisoryNodeReferenceDataService.findByIds(supervisoryNodeIds);
-
-    // check if internal only
-
+    UUID homeId = userDto.getHomeFacilityId();
     return supervisoryNodeDtos
         .stream()
-        .map(SupervisoryNodeDto::getRequisitionGroupId)
-        .filter(id -> id != null)
-        // needs optimize
-        .map(id -> requisitionGroupReferenceDataService.findOne(id))
-        .flatMap(requisitionGroupDto -> requisitionGroupDto.getMemberFacilities().stream())
+        .filter(supervisoryNodeDto -> supervisoryNodeDto.getRequisitionGroupId() != null)
+        .flatMap(supervisoryNodeDto ->
+            getAllFacilityDtos(homeId, supervisoryNodeDto, requisitionGroupDtoMap,
+                facilityDtoMap, nodeDtoMap).stream())
         .collect(toSet());
+  }
+
+  // check if internal only
+  private boolean isInternalApproveOnly(UUID userHomeFacilityId,
+      SupervisoryNodeDto supervisoryNodeDto,
+      Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap) {
+    UUID requisitionGroupId = supervisoryNodeDto.getRequisitionGroupId();
+    Set<UUID> idsToApprove = requisitionGroupDtoMap.get(requisitionGroupId)
+        .getMemberFacilities()
+        .stream()
+        .map(FacilityDto::getId)
+        .collect(toSet());
+
+    return idsToApprove.contains(userHomeFacilityId);
+  }
+
+  // get all facilities of this supervisoryNode
+  private Set<FacilityDto> getAllFacilityDtos(UUID userHomeFacilityId,
+      SupervisoryNodeDto supervisoryNodeDto,
+      Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap,
+      Map<UUID, FacilityDto> facilityDtoMap,
+      Map<UUID, SupervisoryNodeDto> nodeDtoMap) {
+
+    if (isInternalApproveOnly(userHomeFacilityId, supervisoryNodeDto,
+        requisitionGroupDtoMap)) {
+      return Sets.newHashSet(facilityDtoMap.get(userHomeFacilityId));
+    }
+
+    return getFacilityDtosByOwnAndChildSupervisoryNode(supervisoryNodeDto,
+        requisitionGroupDtoMap, nodeDtoMap);
+
+  }
+
+  // get facilities to approve of its own node
+  private Set<FacilityDto> getFacilityDtosBySupervisoryNode(
+      SupervisoryNodeDto supervisoryNodeDto,
+      Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap) {
+    if (supervisoryNodeDto.getRequisitionGroupId() != null) {
+      return requisitionGroupDtoMap.get(supervisoryNodeDto.getRequisitionGroupId())
+          .getMemberFacilities();
+    }
+    return Collections.emptySet();
+  }
+
+  // get facilities to approve of its own and all child supervisory node
+  private Set<FacilityDto> getFacilityDtosByOwnAndChildSupervisoryNode(
+      SupervisoryNodeDto supervisoryNodeDto,
+      Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap,
+      Map<UUID, SupervisoryNodeDto> nodeDtoMap) {
+    if (supervisoryNodeDto.getChildNodes().isEmpty()) {
+      return getFacilityDtosBySupervisoryNode(supervisoryNodeDto, requisitionGroupDtoMap);
+    } else {
+      return supervisoryNodeDto.getChildNodes()
+          .stream()
+          .flatMap(child -> {
+            // needs optimize
+            SupervisoryNodeDto childNode = nodeDtoMap.get(child.getId());
+            Set<FacilityDto> childSet = getFacilityDtosByOwnAndChildSupervisoryNode(childNode,
+                requisitionGroupDtoMap, nodeDtoMap);
+            Set<FacilityDto> allSet =
+                getFacilityDtosBySupervisoryNode(supervisoryNodeDto, requisitionGroupDtoMap);
+
+            allSet.addAll(childSet);
+            return allSet.stream();
+          }).collect(toSet());
+    }
   }
 
   private SiglusRequisitionDto saveRequisitionDraft(SiglusRequisitionDto requisitionDto) {
