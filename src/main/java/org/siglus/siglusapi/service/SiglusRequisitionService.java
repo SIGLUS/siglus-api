@@ -309,6 +309,7 @@ public class SiglusRequisitionService {
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
+  @Transactional
   public BasicRequisitionDto authorizeRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
     saveRequisition(requisitionId, null, request, response);
@@ -319,14 +320,14 @@ public class SiglusRequisitionService {
     return basicRequisitionDto;
   }
 
+  @Transactional
   public BasicRequisitionDto approveRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
     saveRequisition(requisitionId, null, request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
     notificationService.postApprove(basicRequisitionDto);
-    activateArchivedProducts(requisitionId,
-        basicRequisitionDto.getFacility().getId());
+    activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
     return basicRequisitionDto;
   }
 
@@ -342,8 +343,7 @@ public class SiglusRequisitionService {
         return siglusRequisitionDto;
       }
     }
-    siglusRequisitionDto = siglusUsageReportService
-        .searchUsageReport(requisitionDto);
+    siglusRequisitionDto = siglusUsageReportService.searchUsageReport(requisitionDto);
     return siglusRequisitionDto;
   }
 
@@ -391,6 +391,8 @@ public class SiglusRequisitionService {
         RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
             .findByRequisitionTemplateId(dto.getTemplate().getId());
         fillRequisitionDraft(draft, templateExtension, requisitionDto);
+      } else {
+        setLineItemExtension(requisitionDto);
       }
     }
     RequisitionV2Dto updateRequisitionDto = requisitionV2Controller
@@ -427,6 +429,7 @@ public class SiglusRequisitionService {
           updateExtension.add(extension);
         }
       });
+      log.info("lineItem Extension Repository", updateExtension);
       lineItemExtensionRepository.save(updateExtension);
     }
   }
@@ -559,10 +562,6 @@ public class SiglusRequisitionService {
     if (!extensions.isEmpty()) {
       log.info("delete line item extension: {}", extensions);
       lineItemExtensionRepository.delete(extensions);
-    }
-    RequisitionDraft draft = draftRepository.findByRequisitionId(requisitionId);
-    if (draft != null) {
-      draftRepository.delete(draft.getId());
     }
     siglusUsageReportService.deleteUsageReport(requisitionId);
   }
