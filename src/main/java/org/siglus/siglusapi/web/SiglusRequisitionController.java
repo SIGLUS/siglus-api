@@ -146,8 +146,8 @@ public class SiglusRequisitionController {
       HttpServletResponse response) {
     BasicRequisitionDto dto =
         requisitionController.rejectRequisition(requisitionId, request, response);
+    siglusRequisitionService.deleteExtensionForRequisition(requisitionId);
     notificationService.postReject(dto);
-    siglusRequisitionService.deleteRequisition(requisitionId);
     return dto;
   }
 
