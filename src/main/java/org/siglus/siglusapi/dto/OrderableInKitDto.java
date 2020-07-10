@@ -19,16 +19,32 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.openlmis.referencedata.dto.BaseDto;
+import org.openlmis.referencedata.dto.DispensableDto;
 import org.openlmis.referencedata.dto.LotDto;
-import org.openlmis.referencedata.dto.OrderableDto;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class OrderableInKitDto extends OrderableDto {
+public class OrderableInKitDto extends BaseDto {
+
+  private String productCode;
+
+  private DispensableDto dispensable;
+
+  private String fullProductName;
+
+  private String description;
+
+  private Long netContent;
+
+  private Long packRoundingThreshold;
+
+  private Boolean roundToZero;
 
   private UUID parentProgramId;
 
   private Long quantity;
 
   private Set<LotDto> lots;
+
 }
