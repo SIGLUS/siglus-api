@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,10 +26,14 @@ import java.util.stream.Collectors;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.OrderableExpirationDateDto;
 import org.openlmis.referencedata.repository.OrderableRepository;
+import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.siglusapi.dto.SiglusOrderableDto;
+import org.siglus.siglusapi.dto.SiglusProgramOrderableDto;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -47,7 +54,7 @@ public class SiglusOrderableService {
   @Autowired
   private OrderableRepository orderableRepository;
 
-  public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
+  public Page<SiglusOrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
     Map<UUID, ProgramExtension> programExtensions =
         programExtensionRepository.findAll().stream().collect(Collectors.toMap(
@@ -56,16 +63,28 @@ public class SiglusOrderableService {
     Page<OrderableDto> orderableDtoPage = orderableReferenceDataService
         .searchOrderables(searchParams, pageable);
     Set<String> archivedProducts = archiveProductService.searchArchivedProducts(facilityId);
+    List<SiglusOrderableDto> siglusOrderableDtos = newArrayList();
     orderableDtoPage.getContent().forEach(orderableDto -> {
-      orderableDto.setArchived(false);
+      SiglusOrderableDto siglusOrderableDto = new SiglusOrderableDto();
+      siglusOrderableDtos.add(siglusOrderableDto);
+      BeanUtils.copyProperties(orderableDto, siglusOrderableDto);
+      Set<SiglusProgramOrderableDto> siglusProgramOrderableDtos = newHashSet();
+      orderableDto.getPrograms().forEach(programOrderableDto -> {
+        SiglusProgramOrderableDto siglusProgramOrderableDto = new SiglusProgramOrderableDto();
+        siglusProgramOrderableDtos.add(siglusProgramOrderableDto);
+        BeanUtils.copyProperties(programOrderableDto, siglusProgramOrderableDto);
+      });
+      siglusOrderableDto.setPrograms(siglusProgramOrderableDtos);
+      siglusOrderableDto.setArchived(false);
       if (archivedProducts.contains(orderableDto.getId().toString())) {
-        orderableDto.setArchived(true);
+        siglusOrderableDto.setArchived(true);
       }
-      orderableDto.getPrograms()
+      siglusOrderableDto.getPrograms()
           .forEach(programOrderableDto -> programOrderableDto.setParentId(
               programExtensions.get(programOrderableDto.getProgramId()).getParentId()));
     });
-    return orderableDtoPage;
+    return Pagination.getPage(siglusOrderableDtos, pageable,
+        orderableDtoPage.getNumberOfElements());
   }
 
   public List<OrderableExpirationDateDto> getOrderableExpirationDate(Set<UUID> orderableIds) {

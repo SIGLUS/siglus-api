@@ -172,8 +172,8 @@ public class SiglusStockEventsService {
         .collect(Collectors.toMap(OrderableDto::getId, orderableDto -> orderableDto));
     for (StockEventLineItemDto stockEventLineItem : lineItems) {
       UUID orderableId = stockEventLineItem.getOrderableId();
-      boolean orderableIsKit = orderableDtos.get(orderableId).getIsKit();
-      if (!orderableIsKit) {
+      boolean orderableIsNotKit = orderableDtos.get(orderableId).getChildren().isEmpty();
+      if (orderableIsNotKit) {
         fillLotIdForNormalOrderable(stockEventLineItem,
             orderableDtos.get(stockEventLineItem.getOrderableId()).getIdentifiers().get(
                 FieldConstants.TRADE_ITEM));

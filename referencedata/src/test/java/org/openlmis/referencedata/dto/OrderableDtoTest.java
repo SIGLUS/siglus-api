@@ -37,12 +37,12 @@ public class OrderableDtoTest {
   public void setUp() {
     orderableDto = new OrderableDto();
   }
-  
+
   @Test
   public void getVersionNumberShouldGetInitialVersionIfRepositoryIsNotSet() {
     assertEquals(1L, orderableDto.getVersionNumber().longValue());
   }
-  
+
   @Test
   public void getVersionNumberShouldGetLatestVersionFromRepositoryIfSet() {
     //given
@@ -62,10 +62,6 @@ public class OrderableDtoTest {
     EqualsVerifier
         .forClass(OrderableDto.class)
         .withRedefinedSuperclass()
-        // [SIGLUS change start]
-        // [change reason]: need to be extend
-        .suppress(Warning.STRICT_INHERITANCE)
-        // [SIGLUS change end]
         .suppress(Warning.NONFINAL_FIELDS) // we can't make fields as final in DTO
         .verify();
   }

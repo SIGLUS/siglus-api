@@ -38,6 +38,7 @@ import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.siglusapi.dto.SiglusOrderableDto;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
 import org.springframework.data.domain.Page;
@@ -95,11 +96,13 @@ public class SiglusOrderableServiceTest {
   public void shouldReturnDataWithParentIdWhenSearchOrderables() {
     when(archiveProductService.searchArchivedProducts(facilityId)).thenReturn(newHashSet());
 
-    Page<OrderableDto> orderableDtoPage = siglusOrderableService
+    Page<SiglusOrderableDto> orderableDtoPage = siglusOrderableService
         .searchOrderables(searchParams, pageable, facilityId);
 
+    assertEquals(1, orderableDtoPage.getContent().size());
     orderableDtoPage.getContent().forEach(orderable -> {
       assertFalse(orderable.getArchived());
+      assertEquals(1, orderable.getPrograms().size());
       orderable.getPrograms().forEach(programOrderable ->
           assertEquals(parentId, programOrderable.getParentId()));
     });
@@ -110,9 +113,10 @@ public class SiglusOrderableServiceTest {
     when(archiveProductService.searchArchivedProducts(facilityId))
         .thenReturn(newHashSet(orderableId.toString()));
 
-    Page<OrderableDto> orderableDtoPage = siglusOrderableService
+    Page<SiglusOrderableDto> orderableDtoPage = siglusOrderableService
         .searchOrderables(searchParams, pageable, facilityId);
 
+    assertEquals(1, orderableDtoPage.getContent().size());
     orderableDtoPage.getContent().forEach(orderable -> assertTrue(orderable.getArchived()));
   }
 

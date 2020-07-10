@@ -16,9 +16,9 @@
 package org.siglus.siglusapi.web;
 
 import java.util.UUID;
-import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
+import org.siglus.siglusapi.dto.SiglusOrderableDto;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -40,7 +40,7 @@ public class SiglusOrderableController {
   private ReferencedataAuthenticationHelper authenticationHelper;
 
   @GetMapping
-  public Page<OrderableDto> searchOrderables(
+  public Page<SiglusOrderableDto> searchOrderables(
       @RequestParam MultiValueMap<String, Object> queryParams, Pageable pageable) {
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();

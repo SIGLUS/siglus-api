@@ -15,10 +15,7 @@
 
 package org.openlmis.referencedata.dto;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
@@ -43,7 +40,7 @@ import org.openlmis.referencedata.repository.OrderableRepository;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class OrderableDto extends BaseDto implements Orderable.Importer,
+public final class OrderableDto extends BaseDto implements Orderable.Importer,
     Orderable.Exporter {
 
   private String productCode;
@@ -75,12 +72,6 @@ public class OrderableDto extends BaseDto implements Orderable.Importer,
   private TemperatureMeasurementDto maximumTemperature;
 
   private VolumeMeasurementDto inBoxCubeDimension;
-
-  // [SIGLUS change start]
-  // [change reason]: support for archive.
-  @JsonInclude(NON_NULL)
-  private Boolean archived;
-  // [SIGLUS change end]
 
   @JsonIgnore
   private OrderableRepository orderableRepository;
@@ -148,24 +139,24 @@ public class OrderableDto extends BaseDto implements Orderable.Importer,
 
   @JsonSetter("minimumTemperature")
   public void setMinimumTemperature(
-          TemperatureMeasurementDto minimumTemperature) {
+      TemperatureMeasurementDto minimumTemperature) {
     this.minimumTemperature = minimumTemperature;
   }
 
   public void setMinimumTemperature(
-          TemperatureMeasurement minimumTemperature) {
+      TemperatureMeasurement minimumTemperature) {
     this.minimumTemperature = new TemperatureMeasurementDto();
     minimumTemperature.export(this.minimumTemperature);
   }
 
   @JsonSetter("maximumTemperature")
   public void setMaximumTemperature(
-          TemperatureMeasurementDto maximumTemperature) {
+      TemperatureMeasurementDto maximumTemperature) {
     this.maximumTemperature = maximumTemperature;
   }
 
   public void setMaximumTemperature(
-          TemperatureMeasurement maximumTemperature) {
+      TemperatureMeasurement maximumTemperature) {
     this.maximumTemperature = new TemperatureMeasurementDto();
     maximumTemperature.export(this.maximumTemperature);
   }
@@ -180,12 +171,4 @@ public class OrderableDto extends BaseDto implements Orderable.Importer,
     this.inBoxCubeDimension = new VolumeMeasurementDto();
     inBoxCubeDimension.export(this.inBoxCubeDimension);
   }
-
-  // [SIGLUS change start]
-  // [change reason]: need return isKit.
-  public boolean getIsKit() {
-    return !children.isEmpty();
-  }
-  // [SIGLUS change end]
-
 }
