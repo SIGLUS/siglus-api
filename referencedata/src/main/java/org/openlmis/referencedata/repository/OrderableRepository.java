@@ -30,7 +30,6 @@ import java.util.UUID;
 import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.VersionIdentity;
-import org.openlmis.referencedata.dto.OrderableExpirationDateDto;
 import org.openlmis.referencedata.repository.custom.OrderableRepositoryCustom;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,10 +40,7 @@ import org.springframework.data.repository.query.Param;
 /**
  * Persistence repository for saving/finding {@link Orderable}.
  */
-// [SIGLUS change start]
-// [change reason]: suppress warning for "ids" appear 4 times
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
-// [SIGLUS change end]
+@SuppressWarnings({"PMD.TooManyMethods"})
 public interface OrderableRepository extends
     JpaRepository<Orderable, VersionIdentity>, OrderableRepositoryCustom,
     BaseAuditableRepository<Orderable, VersionIdentity> {
@@ -143,9 +139,4 @@ public interface OrderableRepository extends
   )
   Timestamp findLatestModifiedDateByIds(@Param("ids") Iterable<UUID> ids);
 
-  // [SIGLUS change start]
-  // [change reason]: call named query
-  @Query(name = "Orderable.findExpirationDate", nativeQuery = true)
-  List<OrderableExpirationDateDto> findExpirationDate(@Param("ids") Iterable<UUID> ids);
-  // [SIGLUS change end]
 }

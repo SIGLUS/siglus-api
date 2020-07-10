@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.joda.money.CurrencyUnit;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,7 +41,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.domain.Code;
+import org.openlmis.referencedata.domain.Dispensable;
 import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.domain.OrderableDisplayCategory;
 import org.openlmis.referencedata.domain.Program;
 import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.referencedata.dto.OrderableDto;
@@ -134,11 +137,12 @@ public class SiglusUsageReportServiceTest {
     BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
     when(columnSectionRepository.findByRequisitionTemplateId(templateId))
         .thenReturn(getMockKitSection());
-    kitProduct = new Orderable(Code.code("kitProduct"), null, 10,
+    kitProduct = new Orderable(Code.code("kitProduct"), Dispensable.createNew("each"), 10,
         7, true, UUID.randomUUID(), 1L);
-    ProgramOrderable programOrderable = new ProgramOrderable();
     Program program = new Program(programId);
-    programOrderable.setProgram(program);
+    OrderableDisplayCategory category = OrderableDisplayCategory.createNew(Code.code("category"));
+    ProgramOrderable programOrderable = ProgramOrderable
+        .createNew(program, category, kitProduct, CurrencyUnit.USD);
     kitProduct.setProgramOrderables(Arrays.asList(programOrderable));
     when(orderableKitRepository.findAllKitProduct()).thenReturn(Arrays.asList(kitProduct));
     usageLineItem = KitUsageLineItem.builder()

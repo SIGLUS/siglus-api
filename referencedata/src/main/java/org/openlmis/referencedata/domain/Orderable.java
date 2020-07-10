@@ -15,7 +15,6 @@
 
 package org.openlmis.referencedata.domain;
 
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,8 +29,6 @@ import javax.persistence.Cacheable;
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.ColumnResult;
-import javax.persistence.ConstructorResult;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.EmbeddedId;
@@ -41,13 +38,9 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.NamedAttributeNode;
 import javax.persistence.NamedEntityGraph;
-import javax.persistence.NamedNativeQueries;
-import javax.persistence.NamedNativeQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
-import javax.persistence.SqlResultSetMapping;
-import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -68,7 +61,6 @@ import org.openlmis.referencedata.domain.VersionIdentity.VersionImporter;
 import org.openlmis.referencedata.domain.measurement.TemperatureMeasurement;
 import org.openlmis.referencedata.domain.measurement.VolumeMeasurement;
 import org.openlmis.referencedata.dto.OrderableChildDto;
-import org.openlmis.referencedata.dto.OrderableExpirationDateDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
 
 /**
@@ -80,39 +72,6 @@ import org.openlmis.referencedata.dto.ProgramOrderableDto;
 @Table(name = "orderables", schema = "referencedata",
     uniqueConstraints = @UniqueConstraint(name = "unq_productcode_versionid",
         columnNames = {"code", "versionnumber"}))
-// TODO: how to set "resultSetMapping" in @Query in repository?
-// [SIGLUS change start]
-// [change reason]: named native query string & sql result mapping
-@NamedNativeQueries({
-    @NamedNativeQuery(name = "Orderable.findExpirationDate",
-        query = "SELECT o.id as orderableId, MIN(lots.expirationDate) as expirationDate "
-            + " FROM referencedata.orderables o "
-            + " INNER JOIN referencedata.orderable_identifiers oi "
-            + " ON o.id = oi.orderableid "
-            + " INNER JOIN referencedata.lots "
-            + " ON oi.value = CAST(lots.tradeitemid AS varchar)"
-            + " WHERE lots.expirationDate >= now()"
-            + " AND o.id IN :ids"
-            + " GROUP BY o.id ",
-        resultSetMapping = "Orderable.OrderableExpirationDateDto")
-})
-@SqlResultSetMappings({
-    @SqlResultSetMapping(
-        name = "Orderable.OrderableExpirationDateDto",
-        classes = {
-            @ConstructorResult(
-                targetClass = OrderableExpirationDateDto.class,
-                columns = {
-                    @ColumnResult(name = "orderableId",
-                        type = UUID.class),
-                    @ColumnResult(name = "expirationDate",
-                        type = LocalDate.class)
-                }
-            )
-        }
-    )
-})
-// [SIGLUS change end]
 @NoArgsConstructor
 @Cacheable
 @Cache(usage =  CacheConcurrencyStrategy.READ_WRITE)
@@ -161,7 +120,6 @@ public class Orderable implements Versionable {
   @BatchSize(size = FETCH_SIZE)
   @DiffIgnore
   @Setter
-  @Getter
   @Cache(usage =  CacheConcurrencyStrategy.READ_WRITE)
   private List<ProgramOrderable> programOrderables;
 

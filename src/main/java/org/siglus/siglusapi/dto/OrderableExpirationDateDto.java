@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.referencedata.dto;
+package org.siglus.siglusapi.dto;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -22,8 +22,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-// [SIGLUS change start]
-// [change reason]: dto to store the most recent expirationDate of orderable
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,6 +29,7 @@ import lombok.Setter;
 public class OrderableExpirationDateDto {
 
   private UUID orderableId;
+
   private LocalDate expirationDate;
+
 }
-// [SIGLUS change end]

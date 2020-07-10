@@ -33,12 +33,12 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.referencedata.dto.ProgramOrderableDto;
-import org.openlmis.referencedata.repository.OrderableRepository;
 import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.siglusapi.dto.SiglusOrderableDto;
+import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
 import org.springframework.data.domain.Page;
@@ -61,7 +61,7 @@ public class SiglusOrderableServiceTest {
   private SiglusArchiveProductService archiveProductService;
 
   @Mock
-  private OrderableRepository orderableRepository;
+  private SiglusOrderableRepository siglusOrderableRepository;
 
   @Mock
   private QueryOrderableSearchParams searchParams;
@@ -126,6 +126,6 @@ public class SiglusOrderableServiceTest {
 
     siglusOrderableService.getOrderableExpirationDate(orderableIds);
 
-    verify(orderableRepository).findExpirationDate(orderableIds);
+    verify(siglusOrderableRepository).findExpirationDate(orderableIds);
   }
 }

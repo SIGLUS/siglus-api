@@ -24,14 +24,14 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.referencedata.dto.OrderableDto;
-import org.openlmis.referencedata.dto.OrderableExpirationDateDto;
-import org.openlmis.referencedata.repository.OrderableRepository;
 import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.SiglusOrderableDto;
 import org.siglus.siglusapi.dto.SiglusProgramOrderableDto;
+import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +52,7 @@ public class SiglusOrderableService {
   private ProgramExtensionRepository programExtensionRepository;
 
   @Autowired
-  private OrderableRepository orderableRepository;
+  private SiglusOrderableRepository siglusOrderableRepository;
 
   public Page<SiglusOrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
@@ -88,6 +88,6 @@ public class SiglusOrderableService {
   }
 
   public List<OrderableExpirationDateDto> getOrderableExpirationDate(Set<UUID> orderableIds) {
-    return orderableRepository.findExpirationDate(orderableIds);
+    return siglusOrderableRepository.findExpirationDate(orderableIds);
   }
 }
