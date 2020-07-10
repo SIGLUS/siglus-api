@@ -409,8 +409,8 @@ public class SiglusRequisitionService {
         .stream()
         .filter(roleAssignment -> roleIds.contains(roleAssignment.getRoleId()))
         .map(RoleAssignmentDto::getSupervisoryNodeId)
-        .filter(id -> id != null)
-        .map(id -> nodeDtoMap.get(id))
+        .filter(Objects::nonNull)
+        .map(nodeDtoMap::get)
         .collect(toSet());
 
     UUID homeId = userDto.getHomeFacilityId();

@@ -940,7 +940,7 @@ public class SiglusRequisitionServiceTest {
 
     Set<FacilityDto> response = siglusRequisitionService.searchFacilitiesForApproval();
 
-    assertEquals(response.size(), 1);
+    assertEquals(1, response.size());
     assertEquals(response.stream().findFirst().get().getId(), userFacilityId);
   }
 
@@ -957,7 +957,7 @@ public class SiglusRequisitionServiceTest {
     Set<FacilityDto> response = siglusRequisitionService.searchFacilitiesForApproval();
 
     Set<UUID> uuids = response.stream().map(FacilityDto::getId).collect(Collectors.toSet());
-    assertEquals(response.size(), 2);
+    assertEquals(2, response.size());
     assertTrue(uuids.contains(facilityId));
     assertTrue(uuids.contains(userFacilityId));
   }
