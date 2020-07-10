@@ -78,6 +78,7 @@ schemas:
         "type": "array",
         "items": {"type": "object", "$ref": "schemas/notificationDto.json"}
       }
+  - pod: !include schemas/pod.json
 resourceTypes:
   - collection:
       get:
@@ -1593,4 +1594,18 @@ traits:
             description: already viewd
           409:
             description: already processed
+
+    /proofsOfDelivery/{id}:
+      put:
+        is: [ secured ]
+        description: update a single pod.
+        body:
+          application/json:
+            schema: pod
+        responses:
+          200:
+            description: saved pod.
+            body:
+              application/json:
+                schema: pod
 
