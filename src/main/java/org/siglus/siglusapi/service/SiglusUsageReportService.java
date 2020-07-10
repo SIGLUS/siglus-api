@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.referencedata.domain.Orderable;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
@@ -199,9 +200,13 @@ public class SiglusUsageReportService {
       log.info("get all program extension");
       List<ProgramExtension> programExtensions = programExtensionRepository.findAll();
       Map<UUID, List<Orderable>> groupKitProducts = allKitProducts.stream()
-          .collect(Collectors.groupingBy(kitProduct ->
-              getVirtualProgram(programExtensions,
-                  kitProduct.getProgramOrderables().get(0).getProgram().getId())));
+          .collect(Collectors.groupingBy(kitProduct -> {
+            OrderableDto kitProductDto = new OrderableDto();
+            kitProduct.export(kitProductDto);
+            final UUID programId = kitProductDto.getPrograms().stream().findFirst().get()
+                .getProgramId();
+            return getVirtualProgram(programExtensions, programId);
+          }));
       for (Map.Entry<UUID, List<Orderable>> gropuKit : groupKitProducts.entrySet()) {
         updateSupportProgramStockCardRange(requisitionV2Dto, supportPrograms, summaryDtos,
             gropuKit);

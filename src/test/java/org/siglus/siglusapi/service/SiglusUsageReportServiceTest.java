@@ -43,6 +43,7 @@ import org.openlmis.referencedata.domain.Code;
 import org.openlmis.referencedata.domain.Orderable;
 import org.openlmis.referencedata.domain.Program;
 import org.openlmis.referencedata.domain.ProgramOrderable;
+import org.openlmis.referencedata.dto.OrderableDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
@@ -299,10 +300,13 @@ public class SiglusUsageReportServiceTest {
         new VersionIdentityDto(kitProduct.getId(), kitProduct.getVersionNumber());
     HashSet kitProducts = new HashSet();
     kitProducts.add(versionIdentityDto);
+    OrderableDto kitProductDto = new OrderableDto();
+    kitProduct.export(kitProductDto);
+    final UUID programId = kitProductDto.getPrograms().stream().findFirst().get()
+        .getProgramId();
     when(stockCardRangeSummaryStockManagementService
-        .search(kitProduct.getProgramOrderables().get(0).getProgram().getId(),
-            facilityId, kitProducts, null, getActualDate(extraData, ACTUAL_START_DATE),
-            getActualDate(extraData, ACTUAL_END_DATE)))
+        .search(programId, facilityId, kitProducts, null,
+            getActualDate(extraData, ACTUAL_START_DATE), getActualDate(extraData, ACTUAL_END_DATE)))
         .thenReturn(Arrays.asList(summaryDto));
     KitUsageLineItem lineItem = getMockKitUsageLineItem();
     lineItem.setCollection("kitColumn");
