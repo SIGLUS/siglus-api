@@ -407,6 +407,22 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getFacility().getId(), notification.getNotifyFacilityId());
   }
 
+  @Test
+  public void shouldCallRepoWhenPostConfirmPod() {
+    // given
+    mockAuthentication();
+    org.openlmis.fulfillment.web.util.ProofOfDeliveryDto pod =
+        new org.openlmis.fulfillment.web.util.ProofOfDeliveryDto();
+    pod.setId(randomUUID());
+    // when
+    service.postConfirmPod(pod);
+
+    // then
+    verify(repo)
+        .updateLastNotificationProcessed(pod.getId(), currentUserHomeFacilityId,
+            NotificationStatus.SHIPPED);
+  }
+
   private void mockFinalApproved() {
     requisition.setStatus(RequisitionStatus.APPROVED);
   }

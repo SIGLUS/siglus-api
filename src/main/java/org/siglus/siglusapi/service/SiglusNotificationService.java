@@ -186,6 +186,11 @@ public class SiglusNotificationService {
     });
   }
 
+  public void postConfirmPod(org.openlmis.fulfillment.web.util.ProofOfDeliveryDto pod) {
+    repo.updateLastNotificationProcessed(pod.getId(), findCurrentUserFacilityId(),
+        NotificationStatus.SHIPPED);
+  }
+
   private void saveNotificationFromRequisition(BasicRequisitionDto requisition,
       Consumer<Notification> setStatusAndNotifyFacility) {
     Notification notification = from(requisition);
