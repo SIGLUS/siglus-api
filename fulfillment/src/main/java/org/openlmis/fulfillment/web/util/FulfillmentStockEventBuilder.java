@@ -278,11 +278,11 @@ public class FulfillmentStockEventBuilder {
             (x1, x2) -> x1));
 
 
-    // destination use the main program
+    // destination use the virtual program
     UUID destinationId = getDestinationId(
         shipment.getSupplyingFacilityId(),
         shipment.getReceivingFacilityId(),
-        shipment.getProgramId()
+        programId
     );
 
     return targetLineItems
