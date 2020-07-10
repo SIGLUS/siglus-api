@@ -55,7 +55,9 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -98,6 +100,7 @@ import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
+import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
 import org.openlmis.requisition.service.PeriodService;
@@ -154,6 +157,9 @@ public class SiglusRequisitionServiceTest {
   private static final long OVERFLOW_QUANTITY = 1000L;
 
   private static final long NOT_FULLY_SHIPPED_QUANTITY = 0L;
+
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
 
   @Captor
   private ArgumentCaptor<RequisitionSearchParams> requisitionSearchParamsArgumentCaptor;
@@ -844,8 +850,19 @@ public class SiglusRequisitionServiceTest {
     HttpServletResponse response = new MockHttpServletResponse();
     when(requisitionController.authorizeRequisition(requisitionId, request, response))
         .thenReturn(mockBasicRequisitionDto);
-    requisition.setRequisitionLineItems(emptyList());
+    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
+    lineItem.setId(UUID.randomUUID());
+    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
+        .thenReturn(siglusRequisitionDto);
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
+    RequisitionLineItemExtension requisitionLineItemExtension = RequisitionLineItemExtension
+        .builder()
+        .requisitionLineItemId(lineItem.getId())
+        .authorizedQuantity(10)
+        .build();
+    when(lineItemExtensionRepository.findLineItems(singletonList(lineItem.getId())))
+        .thenReturn(singletonList(requisitionLineItemExtension));
     when(requisitionV2Controller
         .updateRequisition(requisitionId, siglusRequisitionDto, request, response))
         .thenReturn(requisitionV2Dto);
@@ -882,6 +899,37 @@ public class SiglusRequisitionServiceTest {
         .approveRequisition(requisitionId, request, response);
 
     // then
+    verify(requisitionController).approveRequisition(requisitionId, request, response);
+    verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(notificationService).postApprove(requisitionDto);
+  }
+
+  @Test
+  public void shouldDeleteDraftIfDraftExistWhenApproval() {
+    // given
+    BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    MinimalFacilityDto facilityDto = new MinimalFacilityDto();
+    facilityDto.setId(UUID.randomUUID());
+    mockBasicRequisitionDto.setFacility(facilityDto);
+    HttpServletRequest request = new MockHttpServletRequest();
+    HttpServletResponse response = new MockHttpServletResponse();
+    when(requisitionController.approveRequisition(requisitionId, request, response))
+        .thenReturn(mockBasicRequisitionDto);
+    requisition.setRequisitionLineItems(emptyList());
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
+    when(requisitionV2Controller
+        .updateRequisition(any(UUID.class), any(RequisitionV2Dto.class),
+            any(HttpServletRequest.class), any(HttpServletResponse.class)))
+        .thenReturn(requisitionV2Dto);
+    when(draftRepository.findByRequisitionId(requisitionId))
+        .thenReturn(getRequisitionDraft(requisitionId));
+
+    // when
+    BasicRequisitionDto requisitionDto = siglusRequisitionService
+        .approveRequisition(requisitionId, request, response);
+
+    // then
+    verify(draftRepository).delete(any(UUID.class));
     verify(requisitionController).approveRequisition(requisitionId, request, response);
     verify(archiveProductService).activateArchivedProducts(any(), any());
     verify(notificationService).postApprove(requisitionDto);
@@ -929,6 +977,14 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
+  public void shouldReceiveExceptionWhenRequisitionIdIsError() {
+    exception.expect(ValidationMessageException.class);
+
+    siglusRequisitionService.updateRequisition(UUID.randomUUID(), siglusRequisitionDto,
+        new MockHttpServletRequest(), new MockHttpServletResponse());
+  }
+
+  @Test
   public void shouldGetFacilitiesForInternalApproval() {
     when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
         .thenReturn(mockRightDto());
@@ -964,6 +1020,7 @@ public class SiglusRequisitionServiceTest {
 
   private RequisitionDraft getRequisitionDraft(UUID requisitionId) {
     RequisitionDraft draft = new RequisitionDraft();
+    draft.setId(UUID.randomUUID());
     draft.setRequisitionId(requisitionId);
     RequisitionLineItemDraft lineItemDraft1 = new RequisitionLineItemDraft();
     lineItemDraft1.setRequisitionLineItemId(UUID.randomUUID());
