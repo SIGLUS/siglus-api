@@ -20,9 +20,11 @@ import org.openlmis.referencedata.domain.User;
 import org.openlmis.referencedata.repository.UserRepository;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.OrderDto;
+import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.ShipmentDto;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
+import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.siglus.siglusapi.domain.Notification;
@@ -52,6 +54,9 @@ public class NotificationMapperImpl implements NotificationMapper {
   @Autowired
   private UserRepository userRepository;
 
+  @Autowired
+  private ProofOfDeliveryFulfillmentService podService;
+
   @Override
   public NotificationDto from(Notification notification) {
     if (notification == null) {
@@ -73,7 +78,8 @@ public class NotificationMapperImpl implements NotificationMapper {
       OrderDto order = orderService.findOne(notification.getRefId());
       requisitionId = order.getExternalId();
     } else if (notification.getRefStatus().isShipmentPeriod()) {
-      ShipmentDto shipment = shipmentService.findOne(notification.getRefId());
+      ProofOfDeliveryDto pod = podService.findOne(notification.getRefId());
+      ShipmentDto shipment = shipmentService.findOne(pod.getShipment().getId());
       OrderDto order = orderService.findOne(shipment.getOrder().getId());
       requisitionId = order.getExternalId();
     } else {

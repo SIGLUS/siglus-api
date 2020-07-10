@@ -38,9 +38,12 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.OrderDto;
+import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
+import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
+import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.dto.NotificationDto;
@@ -75,6 +78,10 @@ public class SiglusNotificationService {
 
   private final RightAssignmentRepository rightAssignRepo;
 
+  private final SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+
+  private final ProofOfDeliveryFulfillmentService podService;
+
   public Page<NotificationDto> searchNotifications(Pageable pageable) {
     User currentUser = authenticationHelper.getCurrentUser();
     Set<RightAssignment> rightAssignments = currentUser.getRightAssignments();
@@ -86,11 +93,12 @@ public class SiglusNotificationService {
     Notification notification = repo.findOne(notificationId);
     if (notification.getViewed()) {
       return ViewableStatus.VIEWED;
-    } else if (notification.getProcessed()) {
-      return ViewableStatus.PROCESSED;
     }
     notification.setViewed(true);
     repo.save(notification);
+    if (notification.getProcessed()) {
+      return ViewableStatus.PROCESSED;
+    }
     return ViewableStatus.NOT_VIEWED;
   }
 
@@ -165,15 +173,17 @@ public class SiglusNotificationService {
     OrderDto order = orderService.findOne(shipment.getOrder().getId());
     repo.updateLastNotificationProcessed(order.getId(), findCurrentUserFacilityId(),
         NotificationStatus.ORDERED);
-
-    Notification notification = new Notification();
-    notification.setRefId(shipment.getId());
     RequisitionV2Dto requisition = requisitionService.searchRequisition(order.getExternalId());
-    notification.setRefFacilityId(requisition.getFacility().getId());
-    notification.setRefProgramId(requisition.getProgram().getId());
-    notification.setRefStatus(NotificationStatus.SHIPPED);
-    notification.setNotifyFacilityId(requisition.getFacility().getId());
-    repo.save(notification);
+    List<ProofOfDeliveryDto> pods = podService.getProofOfDeliveries(order.getId());
+    pods.forEach(pod -> {
+      Notification notification = new Notification();
+      notification.setRefId(pod.getId());
+      notification.setRefFacilityId(requisition.getFacility().getId());
+      notification.setRefProgramId(requisition.getProgram().getId());
+      notification.setRefStatus(NotificationStatus.SHIPPED);
+      notification.setNotifyFacilityId(requisition.getFacility().getId());
+      repo.save(notification);
+    });
   }
 
   private void saveNotificationFromRequisition(BasicRequisitionDto requisition,
@@ -216,7 +226,12 @@ public class SiglusNotificationService {
   private UUID findSupervisorFacilityId(BasicRequisitionDto requisition) {
     UUID supervisoryNodeId = requisitionService.searchRequisition(requisition.getId())
         .getSupervisoryNode();
-    return supervisoryNodeRepo.findOne(supervisoryNodeId).getFacility().getId();
+    if (supervisoryNodeId != null) {
+      return supervisoryNodeRepo.findOne(supervisoryNodeId).getFacility().getId();
+    }
+    RequisitionV2Dto requisitionV2Dto = requisitionService.searchRequisition(requisition.getId());
+    return supervisoryNodeReferenceDataService.findSupervisoryNode(
+        requisitionV2Dto.getProgramId(), requisitionV2Dto.getFacilityId()).getFacility().getId();
   }
 
   private List<OrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {

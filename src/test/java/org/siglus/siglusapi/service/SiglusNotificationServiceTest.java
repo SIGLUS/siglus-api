@@ -53,8 +53,10 @@ import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
+import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.repository.NotificationRepository;
@@ -89,6 +91,9 @@ public class SiglusNotificationServiceTest {
 
   @Mock
   private SupervisoryNodeRepository supervisoryNodeRepo;
+
+  @Mock
+  private ProofOfDeliveryFulfillmentService podService;
 
   @Mock
   private OrderFulfillmentService orderService;
@@ -374,6 +379,10 @@ public class SiglusNotificationServiceTest {
     order.setExternalId(randomUUID());
     when(orderService.findOne(order.getId())).thenReturn(order);
 
+    ProofOfDeliveryDto pod = new ProofOfDeliveryDto();
+    pod.setId(randomUUID());
+    when(podService.getProofOfDeliveries(order.getId())).thenReturn(singletonList(pod));
+
     RequisitionV2Dto requisition = new RequisitionV2Dto();
     requisition.setId(randomUUID());
     ObjectReferenceDto facility = new ObjectReferenceDto();
@@ -391,7 +400,7 @@ public class SiglusNotificationServiceTest {
         .updateLastNotificationProcessed(order.getId(), currentUserHomeFacilityId,
             NotificationStatus.ORDERED);
     Notification notification = verifySavedNotification();
-    assertEquals(shipment.getId(), notification.getRefId());
+    assertEquals(pod.getId(), notification.getRefId());
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
     assertEquals(NotificationStatus.SHIPPED, notification.getRefStatus());

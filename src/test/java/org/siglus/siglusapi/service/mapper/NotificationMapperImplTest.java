@@ -31,9 +31,11 @@ import org.openlmis.referencedata.repository.UserRepository;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderDto;
+import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.ShipmentDto;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
+import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.siglus.siglusapi.domain.Notification;
@@ -64,6 +66,9 @@ public class NotificationMapperImplTest {
 
   @Mock
   private UserRepository userRepository;
+
+  @Mock
+  private ProofOfDeliveryFulfillmentService podService;
 
   private Notification notification;
 
@@ -128,11 +133,17 @@ public class NotificationMapperImplTest {
     notification.setId(randomUUID());
     notification.setRefId(randomUUID());
     notification.setRefStatus(NotificationStatus.SHIPPED);
+    ProofOfDeliveryDto pod = new ProofOfDeliveryDto();
+    pod.setId(notification.getRefId());
+    ObjectReferenceDto shipmentDto = new ObjectReferenceDto();
+    shipmentDto.setId(randomUUID());
+    pod.setShipment(shipmentDto);
+    when(podService.findOne(pod.getId())).thenReturn(pod);
     ShipmentDto shipment = new ShipmentDto();
     ObjectReferenceDto order = new ObjectReferenceDto();
     order.setId(randomUUID());
     shipment.setOrder(order);
-    when(shipmentService.findOne(notification.getRefId())).thenReturn(shipment);
+    when(shipmentService.findOne(shipmentDto.getId())).thenReturn(shipment);
     OrderDto orderDto = new OrderDto();
     orderDto.setExternalId(randomUUID());
     when(orderService.findOne(order.getId())).thenReturn(orderDto);
