@@ -13,17 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.referencedata.repository;
+package org.siglus.siglusapi.repository;
 
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.referencedata.domain.RightAssignment;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
-public interface RightAssignmentRepository extends
-    PagingAndSortingRepository<RightAssignment, UUID> {
+public interface SiglusRightAssignmentRepository extends
+    // [SIGLUS change start]
+    // [change reason]: isPreAuthorize cannot edit skip, only duringApproval can edit skip.
+    // PagingAndSortingRepository<RightAssignment, UUID> {
+    PagingAndSortingRepository<RightAssignment, UUID>, JpaSpecificationExecutor<RightAssignment> {
+  // [SIGLUS change end]
 
   @Query(value = "SELECT"
       + "   CASE WHEN ra.programid IS NULL AND ra.facilityid IS NULL THEN ra.rightname"

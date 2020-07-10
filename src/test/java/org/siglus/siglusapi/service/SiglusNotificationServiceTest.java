@@ -42,7 +42,6 @@ import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.referencedata.domain.Facility;
 import org.openlmis.referencedata.domain.SupervisoryNode;
 import org.openlmis.referencedata.domain.User;
-import org.openlmis.referencedata.repository.RightAssignmentRepository;
 import org.openlmis.referencedata.repository.SupervisoryNodeRepository;
 import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -60,6 +59,7 @@ import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentSe
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.repository.NotificationRepository;
+import org.siglus.siglusapi.repository.SiglusRightAssignmentRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
@@ -84,7 +84,7 @@ public class SiglusNotificationServiceTest {
   private ReferencedataAuthenticationHelper authenticationHelper;
 
   @Mock
-  private RightAssignmentRepository rightAssignRepo;
+  private SiglusRightAssignmentRepository rightAssignRepo;
 
   @Mock
   private SiglusRequisitionRequisitionService requisitionService;

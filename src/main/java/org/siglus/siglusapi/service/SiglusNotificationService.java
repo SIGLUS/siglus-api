@@ -31,7 +31,6 @@ import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.referencedata.domain.RightAssignment;
 import org.openlmis.referencedata.domain.User;
-import org.openlmis.referencedata.repository.RightAssignmentRepository;
 import org.openlmis.referencedata.repository.SupervisoryNodeRepository;
 import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -48,6 +47,7 @@ import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
+import org.siglus.siglusapi.repository.SiglusRightAssignmentRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
 import org.springframework.data.domain.Page;
@@ -76,7 +76,7 @@ public class SiglusNotificationService {
 
   private final SupervisoryNodeRepository supervisoryNodeRepo;
 
-  private final RightAssignmentRepository rightAssignRepo;
+  private final SiglusRightAssignmentRepository rightAssignRepo;
 
   private final SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
 
