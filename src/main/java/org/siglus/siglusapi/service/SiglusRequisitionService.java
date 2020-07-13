@@ -423,7 +423,7 @@ public class SiglusRequisitionService {
         .collect(toSet());
   }
 
-  // check if internal only
+  // check if internal only && not final approve
   private boolean isInternalApproveOnly(UUID userHomeFacilityId,
       SupervisoryNodeDto supervisoryNodeDto,
       Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap) {
@@ -434,7 +434,7 @@ public class SiglusRequisitionService {
         .map(FacilityDto::getId)
         .collect(toSet());
 
-    return idsToApprove.contains(userHomeFacilityId);
+    return idsToApprove.contains(userHomeFacilityId) && supervisoryNodeDto.getParentNode() != null;
   }
 
   // get all facilities of this supervisoryNode
