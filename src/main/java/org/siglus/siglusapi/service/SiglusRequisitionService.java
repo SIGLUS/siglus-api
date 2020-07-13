@@ -674,8 +674,8 @@ public class SiglusRequisitionService {
 
   @Transactional
   public void deleteRequisition(UUID requisitionId) {
-    deleteExtensionForRequisition(requisitionId);
     siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
+    deleteExtensionForRequisition(requisitionId);
     siglusUsageReportService.deleteUsageReport(requisitionId);
   }
 
