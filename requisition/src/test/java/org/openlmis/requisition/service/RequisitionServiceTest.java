@@ -528,9 +528,12 @@ public class RequisitionServiceTest {
     rights.add(approveRequisitionRight);
     role.setRights(rights);
 
+    // [SIGLUS change start]
+    // [change reason]: #368 add requisition facility search param
     // when
     Page<Requisition> requisitionsForApproval =
-        requisitionService.getRequisitionsForApproval(user, null, pageRequest);
+        requisitionService.getRequisitionsForApproval(user, null, null, pageRequest);
+    // [SIGLUS change end]
 
     // then
     assertEquals(2, requisitionsForApproval.getTotalElements());
@@ -547,8 +550,11 @@ public class RequisitionServiceTest {
     rights.add(approveRequisitionRight);
     role.setRights(rights);
 
+    // [SIGLUS change start]
+    // [change reason]: #368 add requisition facility search param
     Page<Requisition> requisitionsForApproval = requisitionService
-                .getRequisitionsForApproval(user, program.getId(), pageRequest);
+                .getRequisitionsForApproval(user, program.getId(), null, pageRequest);
+    // [SIGLUS change end]
 
     assertEquals(2, requisitionsForApproval.getTotalElements());
     assertTrue(requisitionsForApproval.getContent().contains(requisitions.get(0)));
@@ -564,12 +570,15 @@ public class RequisitionServiceTest {
     // [change reason]: support for filter approve list for internal approve.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         any(Set.class), any(Pageable.class),
-        user.getHomeFacilityId()))
+        user.getHomeFacilityId(), null))
         .thenReturn(getPage(emptyList(), pageRequest));
     // [SIGLUS change end]
 
+    // [SIGLUS change start]
+    // [change reason]: #368 add requisition facility search param
     Page<Requisition> requisitionsForApproval =
-        requisitionService.getRequisitionsForApproval(user, null, pageRequest);
+        requisitionService.getRequisitionsForApproval(user, null, null, pageRequest);
+    // [SIGLUS change end]
 
     assertEquals(0, requisitionsForApproval.getTotalElements());
   }
@@ -584,12 +593,15 @@ public class RequisitionServiceTest {
     // [change reason]: support for filter approve list for internal approve.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         any(Set.class), any(Pageable.class),
-        user.getHomeFacilityId()))
+        user.getHomeFacilityId(), null))
         .thenReturn(getPage(emptyList(), pageRequest));
     // [SIGLUS change end]
 
+    // [SIGLUS change start]
+    // [change reason]: #368 add requisition facility search param
     Page<Requisition> requisitionsForApproval =
-        requisitionService.getRequisitionsForApproval(user, null, pageRequest);
+        requisitionService.getRequisitionsForApproval(user, null, null, pageRequest);
+    // [SIGLUS change end]
 
     assertEquals(0, requisitionsForApproval.getTotalElements());
   }
@@ -604,12 +616,15 @@ public class RequisitionServiceTest {
     // [change reason]: support for filter approve list for internal approve.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         any(Set.class), any(Pageable.class),
-        user.getHomeFacilityId()))
+        user.getHomeFacilityId(), null))
         .thenReturn(getPage(emptyList(), pageRequest));
     // [SIGLUS change end]
 
+    // [SIGLUS change start]
+    // [change reason]: #368 add requisition facility search param
     Page<Requisition> requisitionsForApproval =
-        requisitionService.getRequisitionsForApproval(user, null, pageRequest);
+        requisitionService.getRequisitionsForApproval(user, null, null, pageRequest);
+    // [SIGLUS change end]
 
     assertEquals(0, requisitionsForApproval.getTotalElements());
   }
@@ -1647,7 +1662,7 @@ public class RequisitionServiceTest {
     // [change reason]: support for filter approve list for internal approve.
     when(requisitionRepository.searchApprovableRequisitionsByProgramSupervisoryNodePairs(
         newHashSet(new ImmutablePair<>(program.getId(), supervisoryNode.getId())), pageRequest,
-        user.getHomeFacilityId()))
+        user.getHomeFacilityId(), null))
         .thenReturn(getPage(requisitions, pageRequest));
     // [SIGLUS change end]
     return requisitions;

@@ -42,6 +42,7 @@ public interface RequisitionRepositoryCustom {
   // [SIGLUS change start]
   // [change reason]: support for filter approve list for internal approve.
   Page<Requisition> searchApprovableRequisitionsByProgramSupervisoryNodePairs(
-      Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable, UUID facilityId);
+      Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable, UUID facilityId,
+      UUID selectedFacilityId);
   // [SIGLUS change end]
 }

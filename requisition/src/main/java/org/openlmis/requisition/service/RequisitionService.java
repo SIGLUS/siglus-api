@@ -677,7 +677,7 @@ public class RequisitionService {
    * Get requisitions to approve for the specified user.
    */
   public Page<Requisition> getRequisitionsForApproval(UserDto user, UUID programId,
-      Pageable pageable) {
+      UUID selectedFacilityId, Pageable pageable) {
     Profiler profiler = new Profiler("REQUISITION_SERVICE_GET_FOR_APPROVAL");
     profiler.setLogger(LOGGER);
 
@@ -700,7 +700,7 @@ public class RequisitionService {
       // [change reason]: support for filter approve list for internal approve.
       requisitionsForApproval = requisitionRepository
           .searchApprovableRequisitionsByProgramSupervisoryNodePairs(programNodePairs, pageable,
-              user.getHomeFacilityId());
+              user.getHomeFacilityId(), selectedFacilityId);
       // [SIGLUS change end]
     }
 

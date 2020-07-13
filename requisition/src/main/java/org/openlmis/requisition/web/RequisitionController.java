@@ -489,13 +489,14 @@ public class RequisitionController extends BaseRequisitionController {
   @ResponseBody
   public Page<BasicRequisitionDto> requisitionsForApproval(
       @RequestParam(value = "program", required = false) UUID programId,
+      UUID facilityId,
       Pageable pageable) {
     Profiler profiler = getProfiler("REQUISITIONS_FOR_APPROVAL", programId, pageable);
     UserDto user = getCurrentUser(profiler);
 
     profiler.start("REQUISITION_SERVICE_GET_FOR_APPROVAL");
     Page<Requisition> approvalRequisitions = requisitionService
-        .getRequisitionsForApproval(user, programId, pageable);
+        .getRequisitionsForApproval(user, programId, facilityId, pageable);
 
     profiler.start(BUILD_DTO_LIST);
     Page<BasicRequisitionDto> dtoPage = Pagination.getPage(

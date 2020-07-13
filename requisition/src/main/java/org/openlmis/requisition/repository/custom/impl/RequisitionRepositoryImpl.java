@@ -255,7 +255,8 @@ public class RequisitionRepositoryImpl
   // [SIGLUS change start]
   // [change reason]: support for filter approve list for internal approve.
   public Page<Requisition> searchApprovableRequisitionsByProgramSupervisoryNodePairs(
-      Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable, UUID facilityId) {
+      Set<Pair<UUID, UUID>> programNodePairs, Pageable pageable, UUID facilityId,
+      UUID selectedFacilityId) {
     // [SIGLUS change end]
     XLOGGER.entry(programNodePairs, pageable);
 
@@ -270,7 +271,7 @@ public class RequisitionRepositoryImpl
     // [SIGLUS change start]
     // [change reason]: support for filter approve list for internal approve.
     countQuery = prepareApprovableQuery(builder, countQuery, programNodePairs, true, pageable,
-        facilityId);
+        facilityId, selectedFacilityId);
     // [SIGLUS change end]
 
     profiler.start("EXECUTE_COUNT_QUERY");
@@ -294,7 +295,7 @@ public class RequisitionRepositoryImpl
     // [SIGLUS change start]
     // [change reason]: support for filter approve list for internal approve.
     query = prepareApprovableQuery(builder, query, programNodePairs, false, pageable,
-        facilityId);
+        facilityId, selectedFacilityId);
     // [SIGLUS change end]
 
     profiler.start("EXECUTE_MAIN_QUERY");
@@ -415,7 +416,8 @@ public class RequisitionRepositoryImpl
   // [change reason]: support for filter approve list for internal approve.
   private <T> CriteriaQuery<T> prepareApprovableQuery(CriteriaBuilder builder,
       CriteriaQuery<T> query, Set<Pair<UUID, UUID>> programNodePairs,
-      boolean isCountQuery, Pageable pageable, UUID facilityId) {
+      boolean isCountQuery, Pageable pageable, UUID facilityId,
+      UUID selectedFacilityId) {
     // [SIGLUS change end]
 
     Root<Requisition> root = query.from(Requisition.class);
@@ -440,6 +442,9 @@ public class RequisitionRepositoryImpl
     Predicate internalApprovePredicate = createInternalApprovePredicate(builder, facilityId, root);
     predicate = builder
         .and(predicate, builder.or(higherLevelApprovePredicate, internalApprovePredicate));
+    if (selectedFacilityId != null) {
+      predicate = builder.and(predicate, builder.equal(root.get(FACILITY_ID), selectedFacilityId));
+    }
     // [SIGLUS change end]
 
     if (!isCountQuery) {

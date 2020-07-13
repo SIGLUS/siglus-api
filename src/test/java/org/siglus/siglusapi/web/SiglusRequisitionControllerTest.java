@@ -76,6 +76,8 @@ public class SiglusRequisitionControllerTest {
 
   private UUID programId = UUID.randomUUID();
 
+  private UUID facilityId = UUID.randomUUID();
+
   @Before
   public void prepare() {
     uuid = UUID.randomUUID();
@@ -113,10 +115,13 @@ public class SiglusRequisitionControllerTest {
   @Test
   public void shouldCallOpenlmisControllerWhenSearchRequisitionsForApproval() {
     // when
-    siglusRequisitionController.searchRequisitionsForApproval(programId, pageable);
+    siglusRequisitionController.searchRequisitionsForApproval(programId, facilityId, pageable);
 
+    // [SIGLUS change start]
+    // [change reason]: #368 add requisition facility search param
     // then
-    verify(requisitionController).requisitionsForApproval(programId, pageable);
+    verify(requisitionController).requisitionsForApproval(programId, facilityId, pageable);
+    // [SIGLUS change end]
   }
 
   @Test

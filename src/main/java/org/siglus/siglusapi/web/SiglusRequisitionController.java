@@ -172,8 +172,9 @@ public class SiglusRequisitionController {
   @GetMapping("/requisitionsForApproval")
   public Page<BasicRequisitionDto> searchRequisitionsForApproval(
       @RequestParam(value = "program", required = false) UUID programId,
+      @RequestParam(value = "facility", required = false) UUID facilityId,
       Pageable pageable) {
-    return requisitionController.requisitionsForApproval(programId, pageable);
+    return requisitionController.requisitionsForApproval(programId, facilityId, pageable);
   }
 
   @GetMapping("/facilitiesForApproval")
