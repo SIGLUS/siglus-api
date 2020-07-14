@@ -18,7 +18,7 @@ package org.openlmis.stockmanagement.util;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Lists;
 import java.util.List;
-import org.openlmis.referencedata.util.CustomSortDeserializer;
+import org.siglus.common.util.referencedata.CustomSortDeserializer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
