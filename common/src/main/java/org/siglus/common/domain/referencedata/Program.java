@@ -28,6 +28,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Getter
@@ -71,15 +72,6 @@ public class Program extends BaseEntity {
    */
   public Program(UUID id) {
     setId(id);
-  }
-
-  /**
-   * Creates a new Program with given code.
-   *
-   * @param programCode the program code
-   */
-  public Program(String programCode) {
-    this.code = Code.code(programCode);
   }
 
   @PrePersist

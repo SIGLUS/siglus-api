@@ -16,8 +16,7 @@
 package org.siglus.common.util;
 
 import java.util.UUID;
-import org.siglus.common.exception.referencedata.ValidationMessageException;
-import org.siglus.common.util.referencedata.Message;
+import org.siglus.common.exception.ValidationMessageException;
 import org.springframework.stereotype.Component;
 
 @Component

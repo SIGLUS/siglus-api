@@ -16,7 +16,6 @@
 package org.siglus.common.dto.referencedata;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
@@ -100,11 +99,6 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
     return orderableDto;
   }
 
-  @JsonSetter("dispensable")
-  public void setDispensable(DispensableDto dispensable) {
-    this.dispensable = dispensable;
-  }
-
   @Override
   public void setDispensable(Dispensable dispensable) {
     this.dispensable = new DispensableDto();
@@ -127,33 +121,16 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
     meta.setLastUpdated(lastUpdated);
   }
 
-  @JsonSetter("minimumTemperature")
-  public void setMinimumTemperature(
-      TemperatureMeasurementDto minimumTemperature) {
-    this.minimumTemperature = minimumTemperature;
-  }
-
   public void setMinimumTemperature(
       TemperatureMeasurement minimumTemperature) {
     this.minimumTemperature = new TemperatureMeasurementDto();
     minimumTemperature.export(this.minimumTemperature);
   }
 
-  @JsonSetter("maximumTemperature")
-  public void setMaximumTemperature(
-      TemperatureMeasurementDto maximumTemperature) {
-    this.maximumTemperature = maximumTemperature;
-  }
-
   public void setMaximumTemperature(
       TemperatureMeasurement maximumTemperature) {
     this.maximumTemperature = new TemperatureMeasurementDto();
     maximumTemperature.export(this.maximumTemperature);
-  }
-
-  @JsonSetter("inBoxCubeDimension")
-  public void setInBoxCubeDimension(VolumeMeasurementDto inBoxCubeDimension) {
-    this.inBoxCubeDimension = inBoxCubeDimension;
   }
 
   @Override

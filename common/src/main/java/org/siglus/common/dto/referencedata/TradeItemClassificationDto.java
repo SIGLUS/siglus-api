@@ -16,49 +16,18 @@
 package org.siglus.common.dto.referencedata;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.TradeItemClassification;
 
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @EqualsAndHashCode
-public class TradeItemClassificationDto implements TradeItemClassification.Exporter,
-    TradeItemClassification.Importer {
+public class TradeItemClassificationDto {
 
   private String classificationSystem;
 
   private String classificationId;
 
-  /**
-   * Creates new list based on given {@link TradeItemClassification} iterable.
-   *
-   * @param classifications iterable of TradeItemClassification.
-   */
-  public static List<TradeItemClassificationDto> newInstance(
-      Iterable<TradeItemClassification> classifications) {
-    List<TradeItemClassificationDto> classificationDtos = new ArrayList<>();
-    classifications.forEach(c -> classificationDtos.add(newInstance(c)));
-    return classificationDtos;
-  }
-
-  /**
-   * Creates new instance based on given {@link TradeItemClassification}.
-   *
-   * @param tic instance of TradeItemClassification.
-   * @return new instance of TradeItemClassificationDto.
-   */
-  public static TradeItemClassificationDto newInstance(TradeItemClassification tic) {
-    if (tic == null) {
-      return null;
-    }
-    TradeItemClassificationDto classificationDto = new TradeItemClassificationDto();
-    tic.export(classificationDto);
-
-    return classificationDto;
-  }
 }

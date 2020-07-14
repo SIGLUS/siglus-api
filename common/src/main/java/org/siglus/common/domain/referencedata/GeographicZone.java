@@ -35,6 +35,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.spatial.JTSGeometryJavaTypeDescriptor;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
 
 @Entity
@@ -93,69 +94,6 @@ public class GeographicZone extends BaseEntity implements FhirLocation {
   @Embedded
   @Setter(AccessLevel.PRIVATE)
   private ExtraDataEntity extraData = new ExtraDataEntity();
-
-  /**
-   * Creates new geographic zone object based on data from {@link Importer}.
-   *
-   * @param importer instance of {@link Importer}
-   * @return new instance of geographic zone.
-   */
-  public static GeographicZone newGeographicZone(Importer importer) {
-    GeographicZone geographicZone = new GeographicZone();
-    geographicZone.setId(importer.getId());
-    geographicZone.setLevel(GeographicLevel.newGeographicLevel(importer.getLevel()));
-
-    if (null != importer.getParent()) {
-      geographicZone.setParent(GeographicZone.newGeographicZone(importer.getParent()));
-    }
-
-    geographicZone.updateFrom(importer);
-
-    return geographicZone;
-  }
-
-  /**
-   * Updates data based on data from {@link Importer}.
-   *
-   * @param importer instance of {@link Importer}
-   */
-  public void updateFrom(Importer importer) {
-    code = importer.getCode();
-    name = importer.getName();
-
-    catchmentPopulation = importer.getCatchmentPopulation();
-    latitude = importer.getLatitude();
-    longitude = importer.getLongitude();
-
-    boundary = importer.getBoundary();
-
-    extraData = ExtraDataEntity.defaultEntity(extraData);
-    extraData.updateFrom(importer.getExtraData());
-  }
-
-  /**
-   * Exports current state of geographic zone object.
-   *
-   * @param exporter instance of {@link Exporter}
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setCode(code);
-    exporter.setName(name);
-    exporter.setLevel(level);
-
-    if (null != parent) {
-      exporter.setParent(parent);
-    }
-
-    exporter.setCatchmentPopulation(catchmentPopulation);
-    exporter.setLatitude(latitude);
-    exporter.setLongitude(longitude);
-    exporter.setBoundary(boundary);
-
-    extraData = ExtraDataEntity.defaultEntity(extraData);
-    extraData.export(exporter);
-  }
 
   @Override
   public Map<String, Object> getExtraData() {

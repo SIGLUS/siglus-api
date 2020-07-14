@@ -18,9 +18,10 @@ package org.siglus.common.dto.referencedata;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import org.siglus.common.domain.referencedata.measurement.Measurement;
 import org.siglus.common.domain.referencedata.measurement.VolumeMeasurement;
 
-public class VolumeMeasurementDto implements VolumeMeasurement.Importer,
+public class VolumeMeasurementDto implements Measurement.Importer,
         VolumeMeasurement.Exporter {
 
   @Getter
@@ -34,8 +35,4 @@ public class VolumeMeasurementDto implements VolumeMeasurement.Importer,
   @Setter
   private List<String> codeListVersion;
 
-  @Override
-  public List<String> getCodeListVersion() {
-    return new VolumeMeasurement().getCodeListVersion();
-  }
 }

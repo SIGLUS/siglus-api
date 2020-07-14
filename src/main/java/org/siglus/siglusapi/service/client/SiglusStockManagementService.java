@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.client;
 
-import java.util.List;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.util.RequestParameters;
@@ -42,15 +41,6 @@ public class SiglusStockManagementService
 
   public StockCardDto getStockCard(UUID stockCardId) {
     return findOne(stockCardId.toString(), RequestParameters.init(), StockCardDto.class);
-  }
-
-  public List<StockCardDto> getStockCards(UUID facility, UUID program) {
-    RequestParameters params = RequestParameters.init()
-        .set("size", Integer.MAX_VALUE)
-        .set("facility", facility.toString())
-        .set("program", program.toString());
-
-    return getPage(params).getContent();
   }
 
 }

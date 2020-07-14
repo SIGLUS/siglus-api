@@ -13,20 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi;
+package org.siglus.common.exception;
 
-import be.joengenduvel.java.verifiers.ToStringVerifier;
+/**
+ * Exception for indicating that an entity explicitly asked for wasn't found.  This should result
+ * in a NOT FOUND api response.
+ */
+public class NotFoundException extends BaseMessageException {
 
-public class ToStringTestUtils {
-
-  /**
-   * Checks if given class has proper toString method.
-   */
-  public static <T> void verify(Class<T> clazz, T object, String... ignore) {
-    ToStringVerifier
-        .forClass(clazz)
-        .ignore("$jacocoData") // external library is checking for this field, has to be ignored
-        .ignore(ignore)
-        .containsAllPrivateFields(object);
+  public NotFoundException(String messageKey) {
+    super(messageKey);
   }
 }

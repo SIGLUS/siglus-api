@@ -23,7 +23,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -31,8 +30,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.collections4.MapUtils;
-import org.siglus.common.exception.referencedata.ValidationMessageException;
-import org.siglus.common.util.referencedata.Message;
+import org.siglus.common.exception.ValidationMessageException;
+import org.siglus.common.util.Message;
 import org.siglus.common.util.referencedata.UuidUtil;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -76,14 +75,6 @@ public final class SearchParams {
     return params.get(key);
   }
 
-  public Map getMap(String key) {
-    return (Map) params.getFirst(key);
-  }
-
-  public LinkedMultiValueMap<String, Object> asMultiValueMap() {
-    return new LinkedMultiValueMap<>(params);
-  }
-
   public Collection<String> keySet() {
     return params.keySet();
   }
@@ -108,17 +99,6 @@ public final class SearchParams {
       throw new ValidationMessageException(cause,
           new Message(ERROR_INVALID_FORMAT_DATE, value, key));
     }
-  }
-
-  /**
-   * Parses String value into {@link Boolean}.
-   * If format is wrong null value will be returned.
-   *
-   * @param key key for value be parsed into LocalDate
-   * @return parsed local date
-   */
-  public Boolean getBoolean(String key) {
-    return Boolean.valueOf(params.getFirst(key).toString());
   }
 
   /**
@@ -148,20 +128,6 @@ public final class SearchParams {
         .orElse(Collections.emptyList())
         .stream()
         .map(value -> parse((String) value, key))
-        .collect(toSet());
-  }
-
-  /**
-   * Gets set of {@link String} based on given key.
-   *
-   * @param key key for getting string values
-   * @return parsed set of strings
-   */
-  public Set<String> getStrings(String key) {
-    return Optional.ofNullable(get(key))
-        .orElse(Collections.emptyList())
-        .stream()
-        .map(value -> (String) value)
         .collect(toSet());
   }
 

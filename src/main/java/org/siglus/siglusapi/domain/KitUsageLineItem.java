@@ -27,6 +27,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.KitUsageLineItemDto;
 import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;

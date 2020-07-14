@@ -24,9 +24,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockManagementDraft;
-import org.siglus.siglusapi.exception.ValidationMessageException;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")

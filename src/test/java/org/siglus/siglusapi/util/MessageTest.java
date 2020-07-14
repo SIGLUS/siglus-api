@@ -22,7 +22,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.siglus.siglusapi.util.Message.createFromMessageKeyStr;
+import static org.siglus.common.util.Message.createFromMessageKeyStr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -34,7 +34,8 @@ import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.siglus.siglusapi.util.Message.LocalizedMessage;
+import org.siglus.common.util.Message;
+import org.siglus.common.util.Message.LocalizedMessage;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
 

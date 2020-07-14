@@ -37,6 +37,7 @@ import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.openlmis.requisition.domain.ExtraDataEntity;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.dto.UserDto;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
 @Entity

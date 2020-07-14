@@ -32,8 +32,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.Table;
 import lombok.Getter;
-import org.siglus.common.exception.referencedata.ValidationMessageException;
-import org.siglus.common.util.referencedata.messagekeys.OrderableMessageKeys;
+import org.siglus.common.domain.BaseEntity;
 
 /**
  * A dispensable describes how product is dispensed/given to a patient.
@@ -63,10 +62,13 @@ public abstract class Dispensable extends BaseEntity {
     attributes = new HashMap<>();
   }
 
+  @Override
   public abstract boolean equals(Object object);
 
+  @Override
   public abstract int hashCode();
 
+  @Override
   public abstract String toString();
 
   /**
@@ -81,37 +83,6 @@ public abstract class Dispensable extends BaseEntity {
 
   public static Dispensable createNew(String dispensingUnit) {
     return new DefaultDispensable(dispensingUnit);
-  }
-
-  /**
-   * Create a Dispensable based on a set of dispensable-related attributes. If there is a sizeCode
-   * and a routeOfAdministration, create a VaccineDispensable. If there is just a sizeCode, create
-   * a ContainerDispensable. If there is a dispensingUnit, create a DefaultDispensable. If none of
-   * these are provided, or the Map is null, throw an Exception indicating dispensable is required.
-   *
-   * @param importer instance of {@link Importer}
-   * @return appropriate dispensable
-   */
-  public static Dispensable createNew(Importer importer) {
-    if (null == importer || null == importer.getAttributes()) {
-      throw new ValidationMessageException(OrderableMessageKeys.ERROR_DISPENSABLE_REQUIRED);
-    }
-
-    Map<String, String> attributesCopy = new HashMap<>(importer.getAttributes());
-
-    String sizeCode = attributesCopy.get(KEY_SIZE_CODE);
-    String routeOfAdministration = attributesCopy.get(KEY_ROUTE_OF_ADMINISTRATION);
-    String dispensingUnit = attributesCopy.get(KEY_DISPENSING_UNIT);
-
-    if (null != sizeCode && null != routeOfAdministration) {
-      return new VaccineDispensable(sizeCode, routeOfAdministration);
-    } else if (null != sizeCode) {
-      return new ContainerDispensable(sizeCode);
-    } else if (null != dispensingUnit) {
-      return new DefaultDispensable(dispensingUnit);
-    } else {
-      throw new ValidationMessageException(OrderableMessageKeys.ERROR_DISPENSABLE_REQUIRED);
-    }
   }
 
   public interface Importer {

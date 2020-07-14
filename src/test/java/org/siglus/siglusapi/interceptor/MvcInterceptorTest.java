@@ -28,7 +28,7 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.siglusapi.i18n.MessageKeys;
 
 public class MvcInterceptorTest {

@@ -33,6 +33,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.openlmis.stockmanagement.domain.ExtraDataConverter;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
 import org.springframework.beans.BeanUtils;
 

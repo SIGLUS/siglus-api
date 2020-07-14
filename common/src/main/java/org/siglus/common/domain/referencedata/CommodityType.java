@@ -15,9 +15,7 @@
 
 package org.siglus.common.domain.referencedata;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -31,10 +29,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.siglus.common.dto.referencedata.CommodityTypeDto;
-import org.siglus.common.exception.referencedata.ValidationMessageException;
-import org.siglus.common.util.referencedata.Message;
-import org.siglus.common.util.referencedata.messagekeys.CommodityTypeMessageKeys;
+import org.siglus.common.domain.BaseEntity;
 
 /**
  * CommodityTypes are generic commodities to simplify ordering and use.  A CommodityType doesn't
@@ -74,85 +69,4 @@ public final class CommodityType extends BaseEntity {
   @DiffIgnore
   private List<CommodityType> children;
 
-  /**
-   * Validates and assigns a parent to this commodity type.
-   * No cycles in the hierarchy are allowed.
-   *
-   * @param parent the parent to assign
-   */
-  public void assignParent(CommodityType parent) {
-    validateIsNotDescendant(parent);
-
-    this.parent = parent;
-    parent.children.add(this);
-  }
-
-  private void validateIsNotDescendant(CommodityType commodityType) {
-    for (CommodityType child : children) {
-      if (child.equals(commodityType)) {
-        throw new ValidationMessageException(new Message(
-            CommodityTypeMessageKeys.ERROR_PARENT_IS_DESCENDANT,
-            commodityType.getId(), id));
-      }
-      child.validateIsNotDescendant(commodityType);
-    }
-  }
-
-  /**
-   * Creates new instance based on data from {@link Importer}.
-   *
-   * @param importer instance of {@link Importer}
-   * @return new instance of TradeItem.
-   */
-  public static CommodityType newInstance(Importer importer) {
-    if (importer == null) {
-      return null;
-    }
-    CommodityType commodityType = new CommodityType();
-    commodityType.id = importer.getId();
-    commodityType.name = importer.getName();
-    commodityType.classificationSystem = importer.getClassificationSystem();
-    commodityType.classificationId = importer.getClassificationId();
-    commodityType.parent = CommodityType.newInstance(importer.getParent());
-    commodityType.children = new ArrayList<>();
-
-    return commodityType;
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setName(name);
-    exporter.setClassificationSystem(classificationSystem);
-    exporter.setClassificationId(classificationId);
-    exporter.setParent(CommodityTypeDto.newInstance(parent));
-  }
-
-  public interface Importer {
-    UUID getId();
-
-    String getName();
-
-    String getClassificationSystem();
-
-    String getClassificationId();
-
-    CommodityTypeDto getParent();
-  }
-
-  public interface Exporter {
-    void setId(UUID id);
-
-    void setName(String name);
-
-    void setClassificationSystem(String classificationSystem);
-
-    void setClassificationId(String classificationId);
-
-    void setParent(CommodityTypeDto parent);
-  }
 }

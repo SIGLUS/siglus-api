@@ -18,7 +18,6 @@ package org.siglus.common.domain.referencedata;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -32,6 +31,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Table(name = "rights", schema = "referencedata")
@@ -68,80 +68,6 @@ public class Right extends BaseEntity {
   @DiffIgnore
   private Set<Role> roles;
 
-  private Right(String name, RightType type) {
-    this.name = name;
-    this.type = type;
-  }
-
-  /**
-   * Static factory method for constructing a new right with a name and type.
-   *
-   * @param name right name
-   * @param type right type
-   */
-  public static Right newRight(String name, RightType type) {
-    return new Right(name, type);
-  }
-
-  /**
-   * Static factory method for constructing a new right using an importer (DTO).
-   *
-   * @param importer the right importer (DTO)
-   */
-  public static Right newRight(Importer importer) {
-    Right newRight = new Right(importer.getName(), importer.getType());
-    newRight.id = importer.getId();
-    newRight.description = importer.getDescription();
-    for (Importer attachmentImporter : importer.getAttachments()) {
-      Right newAttachment = newRight(attachmentImporter);
-      newRight.attach(newAttachment);
-    }
-    return newRight;
-  }
-
-  /**
-   * Attach other rights to this one, to create relationships between rights. The attachment is
-   * one-way with this method call. The attached rights must be of the same type; only attachments
-   * of the same type are attached.
-   *
-   * @param attachments the rights being attached
-   */
-  public void attach(Right... attachments) {
-    for (Right attachment : attachments) {
-      if (attachment.type == type) {
-        this.attachments.add(attachment);
-      }
-    }
-  }
-
-  public void clearAttachments() {
-    this.attachments.clear();
-  }
-
-  /**
-   * Copy values of attributes into new or updated Right.
-   *
-   * @param right Right with new values.
-   */
-  public void updateFrom(Right right) {
-    this.name = right.getName();
-    this.type = right.getType();
-    this.description = right.getDescription();
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setName(name);
-    exporter.setType(type);
-    exporter.setDescription(description);
-    exporter.setAttachments(attachments);
-  }
-
   @Override
   public int hashCode() {
     return name.hashCode();
@@ -159,27 +85,4 @@ public class Right extends BaseEntity {
     return Objects.equals(name, right.name);
   }
 
-  public interface Exporter {
-    void setId(UUID id);
-
-    void setName(String name);
-
-    void setType(RightType type);
-
-    void setDescription(String description);
-
-    void setAttachments(Set<Right> attachments);
-  }
-
-  public interface Importer {
-    UUID getId();
-
-    String getName();
-
-    RightType getType();
-
-    String getDescription();
-
-    Set<Importer> getAttachments();
-  }
 }

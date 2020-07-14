@@ -30,6 +30,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Table(name = "supply_lines", schema = "referencedata",
@@ -76,62 +77,6 @@ public class SupplyLine extends BaseEntity {
     this.supervisoryNode = supervisoryNode;
     this.program = program;
     this.supplyingFacility = supplyingFacility;
-  }
-
-  /**
-   * Static factory method for constructing a new supply line using an importer (DTO).
-   *
-   * @param importer the supply line importer (DTO)
-   */
-  public static SupplyLine newSupplyLine(Importer importer) {
-    SupervisoryNode supervisoryNode = null;
-
-    if (importer.getSupervisoryNode() != null) {
-      supervisoryNode = SupervisoryNode.newSupervisoryNode(importer.getSupervisoryNode());
-    }
-
-    Program program = null;
-
-    if (importer.getProgram() != null) {
-      program = Program.newProgram(importer.getProgram());
-    }
-
-    Facility supplyingFacility = null;
-
-    if (importer.getSupplyingFacility() != null) {
-      supplyingFacility = Facility.newFacility(importer.getSupplyingFacility());
-    }
-
-    SupplyLine supplyLine = new SupplyLine(supervisoryNode, program, supplyingFacility);
-    supplyLine.id = importer.getId();
-    supplyLine.description = importer.getDescription();
-
-    return supplyLine;
-  }
-
-  /**
-   * Copy values of attributes into new or updated SupplyLine.
-   *
-   * @param supplyLine SupplyLine with new values.
-   */
-  public void updateFrom(SupplyLine supplyLine) {
-    this.supervisoryNode = supplyLine.getSupervisoryNode();
-    this.description = supplyLine.getDescription();
-    this.program = supplyLine.getProgram();
-    this.supplyingFacility = supplyLine.getSupplyingFacility();
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setSupervisoryNode(supervisoryNode);
-    exporter.setDescription(description);
-    exporter.setProgram(program);
-    exporter.setSupplyingFacility(supplyingFacility);
   }
 
   @Override

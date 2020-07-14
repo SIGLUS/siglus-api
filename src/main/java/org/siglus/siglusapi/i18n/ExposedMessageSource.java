@@ -15,11 +15,8 @@
 
 package org.siglus.siglusapi.i18n;
 
-import java.util.Locale;
-import java.util.Map;
 import org.springframework.context.MessageSource;
 
 public interface ExposedMessageSource extends MessageSource {
 
-  Map<String, String> getAllMessages(Locale locale);
 }

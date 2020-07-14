@@ -15,7 +15,7 @@
 
 package org.siglus.common.domain.referencedata;
 
-import static org.siglus.common.domain.referencedata.BaseEntity.UUID_TYPE;
+import static org.siglus.common.domain.BaseEntity.UUID_TYPE;
 
 import java.io.Serializable;
 import java.util.Optional;

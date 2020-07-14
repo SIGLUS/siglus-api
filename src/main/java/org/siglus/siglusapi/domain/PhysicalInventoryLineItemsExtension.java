@@ -23,6 +23,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Data

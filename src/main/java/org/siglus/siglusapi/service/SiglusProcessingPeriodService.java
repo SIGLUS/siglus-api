@@ -32,7 +32,7 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.dto.referencedata.ProcessingPeriodSearchParams;
-import org.siglus.common.exception.referencedata.NotFoundException;
+import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;

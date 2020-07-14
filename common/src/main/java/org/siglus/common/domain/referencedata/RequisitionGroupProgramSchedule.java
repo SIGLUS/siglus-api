@@ -16,7 +16,6 @@
 package org.siglus.common.domain.referencedata;
 
 import java.util.Objects;
-import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -28,6 +27,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 
 /**
  * RequisitionGroupProgramSchedule represents the schedule to be mapped for a given program and
@@ -86,40 +86,6 @@ public class RequisitionGroupProgramSchedule extends BaseEntity {
   }
 
   /**
-   * Construct new RequisitionGroupProgramSchedule based on an importer (DTO).
-   *
-   * @param importer importer (DTO) to use
-   * @return new RequisitionGroupProgramSchedule
-   */
-  public static RequisitionGroupProgramSchedule newRequisitionGroupProgramSchedule(
-      Importer importer) {
-    RequisitionGroup requisitionGroup = null;
-
-    if (importer.getRequisitionGroup() != null) {
-      requisitionGroup = RequisitionGroup.newRequisitionGroup(importer.getRequisitionGroup());
-    }
-
-    Program program = null;
-
-    if (importer.getProgram() != null) {
-      program = Program.newProgram(importer.getProgram());
-    }
-
-    RequisitionGroupProgramSchedule newRequisitionGroupProgramSchedule =
-        new RequisitionGroupProgramSchedule(requisitionGroup, program,
-            importer.getProcessingSchedule(), importer.getDirectDelivery());
-
-    newRequisitionGroupProgramSchedule.id = importer.getId();
-
-    if (importer.getDropOffFacility() != null) {
-      newRequisitionGroupProgramSchedule.dropOffFacility =
-          Facility.newFacility(importer.getDropOffFacility());
-    }
-
-    return newRequisitionGroupProgramSchedule;
-  }
-
-  /**
    * Copy properties from the given instance.
    *
    * @param instance an instance whose properties will be applied to this object
@@ -130,20 +96,6 @@ public class RequisitionGroupProgramSchedule extends BaseEntity {
     processingSchedule = instance.getProcessingSchedule();
     directDelivery = instance.isDirectDelivery();
     dropOffFacility = instance.getDropOffFacility();
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setRequisitionGroup(requisitionGroup);
-    exporter.setProcessingSchedule(processingSchedule);
-    exporter.setProgram(program);
-    exporter.setDropOffFacility(dropOffFacility);
-    exporter.setDirectDelivery(directDelivery);
   }
 
   @Override
@@ -165,31 +117,4 @@ public class RequisitionGroupProgramSchedule extends BaseEntity {
     return Objects.hash(requisitionGroup, program, processingSchedule);
   }
 
-  public interface Exporter {
-    void setId(UUID id);
-
-    void setRequisitionGroup(RequisitionGroup requisitionGroup);
-
-    void setProgram(Program program);
-
-    void setProcessingSchedule(ProcessingSchedule schedule);
-
-    void setDirectDelivery(Boolean directDelivery);
-
-    void setDropOffFacility(Facility facility);
-  }
-
-  public interface Importer {
-    UUID getId();
-
-    RequisitionGroup.Importer getRequisitionGroup();
-
-    Program.Importer getProgram();
-
-    ProcessingSchedule getProcessingSchedule();
-
-    Boolean getDirectDelivery();
-
-    Facility.Importer getDropOffFacility();
-  }
 }

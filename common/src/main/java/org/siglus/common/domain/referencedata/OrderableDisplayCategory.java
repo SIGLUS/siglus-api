@@ -15,15 +15,13 @@
 
 package org.siglus.common.domain.referencedata;
 
-import static org.apache.commons.lang3.BooleanUtils.isFalse;
-
 import java.util.Objects;
-import java.util.UUID;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.Getter;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 
 /**
  * Informative category a Product is in when assigned to a {@link Program}.
@@ -45,13 +43,6 @@ public class OrderableDisplayCategory extends BaseEntity {
   }
 
   /**
-   * Creates a new OrderableDisplayCategory with given id.
-   */
-  public OrderableDisplayCategory(UUID id) {
-    this.id = id;
-  }
-
-  /**
    * Creates a new OrderableDisplayCategory.
    *
    * @param code         this OrderableDisplayCategory's unique implementation code
@@ -63,16 +54,6 @@ public class OrderableDisplayCategory extends BaseEntity {
     Objects.requireNonNull(displayValue);
     this.code = code;
     this.orderedDisplayValue = displayValue;
-  }
-
-  /**
-   * Update this from another. Copies display values from the other OrderableDisplayCategory
-   * into this one.
-   *
-   * @param orderableDisplayCategory OrderableDisplayCategory to update from.
-   */
-  public void updateFrom(OrderableDisplayCategory orderableDisplayCategory) {
-    this.orderedDisplayValue = orderableDisplayCategory.orderedDisplayValue;
   }
 
   /**
@@ -116,50 +97,6 @@ public class OrderableDisplayCategory extends BaseEntity {
   @Override
   public int hashCode() {
     return Objects.hash(code);
-  }
-
-  /**
-   * Creates new instance of OrderableDisplayCategory.
-   */
-  public static OrderableDisplayCategory newInstance(Importer importer) {
-    OrderableDisplayCategory category = OrderableDisplayCategory.createNew(
-        Code.code(importer.getCode()),
-        new OrderedDisplayValue(importer.getDisplayName(), importer.getDisplayOrder()));
-    category.setId(importer.getId());
-    return category;
-  }
-
-  /**
-   * Exports domain object to dto.
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    String codeString = code.toString();
-    if (isFalse(codeString.isEmpty())) {
-      exporter.setCode(codeString);
-    }
-    exporter.setDisplayName(orderedDisplayValue.getDisplayName());
-    exporter.setDisplayOrder(orderedDisplayValue.getDisplayOrder());
-  }
-
-  public interface Exporter {
-    void setId(UUID id);
-
-    void setCode(String code);
-
-    void setDisplayName(String name);
-
-    void setDisplayOrder(Integer displayOrder);
-  }
-
-  public interface Importer {
-    UUID getId();
-
-    String getCode();
-
-    String getDisplayName();
-
-    Integer getDisplayOrder();
   }
 
 }

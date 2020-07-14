@@ -18,10 +18,8 @@ package org.siglus.common.domain.referencedata;
 import static java.util.Collections.singleton;
 import static org.siglus.common.domain.referencedata.RightType.SUPERVISION;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -50,44 +48,6 @@ public class SupervisionRoleAssignment extends RoleAssignment {
   @JoinColumn(name = "supervisorynodeid")
   @Getter
   private SupervisoryNode supervisoryNode;
-
-  private SupervisionRoleAssignment(Role role, User user) {
-    super(role, user);
-  }
-
-  /**
-   * Constructor for home facility supervision. Must always have a role, a user and a program.
-   *
-   * @param role    the role being assigned
-   * @param user    the user to which the role is being assigned
-   * @param program the program where the role applies
-   * @throws org.siglus.common.exception.referencedata.ValidationMessageException if role passed in
-   *      has rights which are not an acceptable right type
-   */
-  public SupervisionRoleAssignment(Role role, User user, Program program) {
-    this(role, user);
-    this.program = program;
-    addRightAssignments();
-  }
-
-  /**
-   * Constructor for supervisory supervision. Must always have a role, a user, a program and a
-   * supervisory node.
-   *
-   * @param role            the role being assigned
-   * @param user            the user to which the role is being assigned
-   * @param program         the program where the role applies
-   * @param supervisoryNode the supervisory node where the role applies
-   * @throws org.siglus.common.exception.referencedata.ValidationMessageException if role passed in
-   *      has rights which are not an acceptable right type
-   */
-  public SupervisionRoleAssignment(Role role, User user, Program program,
-                                   SupervisoryNode supervisoryNode) {
-    this(role, user);
-    this.program = program;
-    this.supervisoryNode = supervisoryNode;
-    addRightAssignments();
-  }
 
   @Override
   protected Set<RightType> getAcceptableRightTypes() {
@@ -125,64 +85,6 @@ public class SupervisionRoleAssignment extends RoleAssignment {
     profiler.stop().log();
 
     return roleContainsRight && programMatches && facilityFound;
-  }
-
-  private void addRightAssignments() {
-    if (null != supervisoryNode) {
-      Set<Facility> supervisedFacilities = supervisoryNode.getAllSupervisedFacilities(program);
-      for (Right right : role.getRights()) {
-        for (Facility facility : supervisedFacilities) {
-          user.addRightAssignment(right.getName(), facility.getId(), program.getId());
-        }
-      }
-    } else if (user.getHomeFacilityId() != null) {
-      for (Right right : role.getRights()) {
-        user.addRightAssignment(right.getName(), user.getHomeFacilityId(), program.getId());
-      }
-    }
-  }
-
-  /**
-   * Get all facilities being supervised by this role assignment, by right and program.
-   *
-   * @param right   right to check
-   * @param program program to check
-   * @return set of supervised facilities
-   */
-  public Set<Facility> getSupervisedFacilities(Right right, Program program) {
-    Profiler profiler = new Profiler("GET_SUPERVISED_FACILITIES_FOR_RIGHT_AND_PROGRAM");
-    profiler.setLogger(LOGGER);
-
-    Set<Facility> possibleFacilities = new HashSet<>();
-    
-    if (supervisoryNode == null) {
-      return possibleFacilities;
-    }
-
-    profiler.start("GET_ALL_SUPERVISED_FACILITIES_FROM_NODE");
-    possibleFacilities = supervisoryNode.getAllSupervisedFacilities(program);
-
-    profiler.start("HAS_RIGHT_CHECK");
-    Set<Facility> facilities = possibleFacilities.stream()
-        .filter(possibleFacility -> hasRight(new RightQuery(right, program, possibleFacility)))
-        .collect(Collectors.toSet());
-
-    profiler.stop().log();
-
-    return facilities;
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setRole(role);
-    exporter.setProgram(program);
-    if (supervisoryNode != null) {
-      exporter.setSupervisoryNode(supervisoryNode);
-    }
   }
 
   @Override

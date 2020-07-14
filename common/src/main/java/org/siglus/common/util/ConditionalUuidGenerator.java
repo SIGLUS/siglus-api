@@ -13,11 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.util.referencedata.messagekeys;
+package org.siglus.common.util;
 
-public abstract class OrderedDisplayValueMessageKeys extends MessageKeys {
-  private static final String ERROR = join(SERVICE_ERROR, ORDERED_DISPLAY_VALUE);
-  private static final String DISPLAY_NAME = "displayName";
+import java.io.Serializable;
+import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.id.UUIDGenerator;
+import org.siglus.common.domain.BaseEntity;
 
-  public static final String ERROR_DISPLAY_NAME_EMPTY = join(ERROR, DISPLAY_NAME, EMPTY);
+public class ConditionalUuidGenerator extends UUIDGenerator {
+
+  @Override
+  public Serializable generate(SessionImplementor session, Object object) {
+    if ((((BaseEntity) object).getId()) == null) {
+      return super.generate(session, object);
+    } else {
+      return ((BaseEntity) object).getId();
+    }
+  }
 }

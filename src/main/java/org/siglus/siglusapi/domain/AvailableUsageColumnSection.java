@@ -31,6 +31,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.LazyCollection;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Getter

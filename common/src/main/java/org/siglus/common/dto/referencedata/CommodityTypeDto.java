@@ -15,22 +15,18 @@
 
 package org.siglus.common.dto.referencedata;
 
-import java.util.LinkedList;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.CommodityType;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-public class CommodityTypeDto extends BaseDto
-    implements CommodityType.Importer, CommodityType.Exporter {
+public class CommodityTypeDto extends BaseDto {
 
   private String name;
 
@@ -40,31 +36,4 @@ public class CommodityTypeDto extends BaseDto
 
   private CommodityTypeDto parent;
 
-  /**
-   * Create new list of CommodityTypeDto based on given list of {@link CommodityType}.
-   *
-   * @param commodityTypes list of {@link CommodityType}
-   * @return new list of CommodityTypeDto.
-   */
-  public static List<CommodityTypeDto> newInstance(Iterable<CommodityType> commodityTypes) {
-    List<CommodityTypeDto> commodityTypeDtos = new LinkedList<>();
-    commodityTypes.forEach(ct -> commodityTypeDtos.add(newInstance(ct)));
-    return commodityTypeDtos;
-  }
-
-  /**
-   * Creates new instance based on given {@link CommodityType}.
-   *
-   * @param ct instance of CommodityType.
-   * @return new instance of CommodityTypeDto.
-   */
-  public static CommodityTypeDto newInstance(CommodityType ct) {
-    if (ct == null) {
-      return null;
-    }
-    CommodityTypeDto commodityTypeDto = new CommodityTypeDto();
-    ct.export(commodityTypeDto);
-
-    return commodityTypeDto;
-  }
 }

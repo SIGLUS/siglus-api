@@ -17,7 +17,6 @@ package org.siglus.common.util;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -26,14 +25,6 @@ public class SiglusDateHelper {
 
   @Autowired
   private Clock clock;
-
-  /**
-   * Obtains the current date time from the system clock in the system time zone.
-   * @return the current date time using the system clock
-   */
-  public ZonedDateTime getCurrentDateTimeWithSystemZone() {
-    return ZonedDateTime.now(clock);
-  }
 
   public LocalDate getCurrentDate() {
     return LocalDate.now(clock);

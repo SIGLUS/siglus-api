@@ -32,6 +32,7 @@ import org.hibernate.annotations.Type;
 import org.javers.core.metamodel.annotation.TypeName;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Table(name = "program_orderables", schema = "referencedata",
@@ -102,15 +103,6 @@ public class ProgramOrderable extends BaseEntity {
 
   /**
    * Create program orderable association.
-   * See {@link #createNew(Program,
-   *  OrderableDisplayCategory,
-   *  Orderable,
-   *  Integer,
-   *  boolean,
-   *  boolean,
-   *  int,
-   *  Money,
-   *  CurrencyUnit)}.
    * Uses sensible defaults.
    * @param program see other
    * @param category see other
@@ -123,37 +115,6 @@ public class ProgramOrderable extends BaseEntity {
                                                  CurrencyUnit currencyUnit) {
     ProgramOrderable programOrderable = new ProgramOrderable(program, product, category);
     programOrderable.pricePerPack = Money.of(currencyUnit, BigDecimal.ZERO);
-    return programOrderable;
-  }
-
-  /**
-   * Create program orderable.
-   * @param program The Program this Product will be in.
-   * @param category the category this Product will be in, in this Program.
-   * @param product the Product.
-   * @param dosesPerPatient the number of doses a patient needs of this orderable.
-   * @param active weather this orderable is active in this program at this time.
-   * @param displayOrder the display order of this Product in this category of this Program.
-   * @param pricePerPack the price of one pack.
-   * @return a new ProgramOrderable.
-   */
-  public static final ProgramOrderable createNew(Program program,
-                                                 OrderableDisplayCategory category,
-                                                 Orderable product,
-                                                 Integer dosesPerPatient,
-                                                 boolean active,
-                                                 boolean fullSupply,
-                                                 int displayOrder,
-                                                 Money pricePerPack,
-                                                 CurrencyUnit currencyUnit) {
-    ProgramOrderable programOrderable = createNew(program, category, product, currencyUnit);
-    programOrderable.dosesPerPatient = dosesPerPatient;
-    programOrderable.active = active;
-    programOrderable.fullSupply = fullSupply;
-    programOrderable.displayOrder = displayOrder;
-    if (pricePerPack != null) {
-      programOrderable.pricePerPack = pricePerPack;
-    }
     return programOrderable;
   }
 
@@ -178,25 +139,6 @@ public class ProgramOrderable extends BaseEntity {
   @Override
   public int hashCode() {
     return Objects.hash(program, product);
-  }
-
-  /**
-   * Creates new instance based on data from {@link Importer}.
-   *
-   * @param importer instance of {@link Importer}
-   * @return new instance of ProgramOrderable.
-   */
-  public static ProgramOrderable newInstance(Importer importer) {
-    ProgramOrderable programOrderable = new ProgramOrderable();
-    programOrderable.orderableDisplayCategory =
-        new OrderableDisplayCategory(importer.getOrderableDisplayCategoryId());
-    programOrderable.active = importer.isActive();
-    programOrderable.fullSupply = importer.isFullSupply();
-    programOrderable.displayOrder = importer.getDisplayOrder();
-    programOrderable.dosesPerPatient = importer.getDosesPerPatient();
-    programOrderable.pricePerPack = importer.getPricePerPack();
-
-    return programOrderable;
   }
 
   /**

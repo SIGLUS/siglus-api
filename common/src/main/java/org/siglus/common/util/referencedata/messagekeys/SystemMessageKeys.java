@@ -16,11 +16,8 @@
 package org.siglus.common.util.referencedata.messagekeys;
 
 public abstract class SystemMessageKeys extends MessageKeys {
-  public static final String ERROR_UNAUTHORIZED = join(SERVICE_ERROR, UNAUTHORIZED);
-  public static final String ERROR_UNAUTHORIZED_GENERIC = join(ERROR_UNAUTHORIZED, GENERIC);
 
   public static final String ERROR_INVALID_FORMAT = join(SERVICE_ERROR, INVALID, FORMAT);
   public static final String ERROR_INVALID_FORMAT_UUID = join(ERROR_INVALID_FORMAT, UUID);
   public static final String ERROR_INVALID_FORMAT_DATE = join(ERROR_INVALID_FORMAT, DATE);
-  public static final String ERROR_INVALID_FORMAT_BOOLEAN = join(ERROR_INVALID_FORMAT, BOOLEAN);
 }

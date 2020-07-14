@@ -15,14 +15,9 @@
 
 package org.siglus.common.domain.referencedata;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -39,6 +34,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 
 /**
  * RequisitionGroup represents a group of facilities which follow a particular schedule for a
@@ -88,138 +84,11 @@ public class RequisitionGroup extends BaseEntity {
   private Set<Facility> memberFacilities;
 
   /**
-   * Create a new requisition group with a specified supervisory node, program schedules and
-   * facilities.
-   *
-   * @param code            specified code
-   * @param name            specified name
-   * @param supervisoryNode specified supervisory node
-   */
-  public RequisitionGroup(String code, String name, SupervisoryNode supervisoryNode) {
-    this.code = Objects.requireNonNull(code);
-    this.name = Objects.requireNonNull(name);
-    this.supervisoryNode = Objects.requireNonNull(supervisoryNode);
-    this.requisitionGroupProgramSchedules = new ArrayList<>();
-    this.memberFacilities = new HashSet<>();
-  }
-
-  /**
-   * Static factory method for constructing a new requisition group using an importer (DTO).
-   *
-   * @param importer the requisition group importer (DTO)
-   */
-  public static RequisitionGroup newRequisitionGroup(Importer importer) {
-    SupervisoryNode supervisoryNode = null;
-    if (importer.getSupervisoryNode() != null) {
-      supervisoryNode = SupervisoryNode.newSupervisoryNode(importer.getSupervisoryNode());
-    }
-
-    RequisitionGroup newRequisitionGroup = new RequisitionGroup(importer.getCode(),
-        importer.getName(), supervisoryNode);
-    newRequisitionGroup.id = importer.getId();
-    newRequisitionGroup.description = importer.getDescription();
-
-    if (importer.getRequisitionGroupProgramSchedules() != null) {
-      List<RequisitionGroupProgramSchedule> requisitionGroupProgramSchedules = new ArrayList<>();
-
-      for (RequisitionGroupProgramSchedule.Importer scheduleImporter :
-          importer.getRequisitionGroupProgramSchedules()) {
-        RequisitionGroupProgramSchedule newRequisitionGroupProgramSchedule =
-            RequisitionGroupProgramSchedule.newRequisitionGroupProgramSchedule(scheduleImporter);
-        newRequisitionGroupProgramSchedule.setRequisitionGroup(newRequisitionGroup);
-        requisitionGroupProgramSchedules.add(newRequisitionGroupProgramSchedule);
-      }
-
-      newRequisitionGroup.requisitionGroupProgramSchedules = requisitionGroupProgramSchedules;
-    }
-
-    if (importer.getMemberFacilities() != null) {
-      Set<Facility> memberFacilities = new HashSet<>();
-
-      for (Facility.Importer facilityImporter : importer.getMemberFacilities()) {
-        memberFacilities.add(Facility.newFacility(facilityImporter));
-      }
-
-      newRequisitionGroup.memberFacilities = memberFacilities;
-    }
-
-    return newRequisitionGroup;
-  }
-
-  /**
    * Check to see if this requisition group supports the specified program.
    */
   public boolean supports(Program program) {
     return requisitionGroupProgramSchedules.stream().anyMatch(
         rgps -> rgps.getProgram().equals(program));
-  }
-
-  /**
-   * Copy properties from the given instance.
-   *
-   * @param requisitionGroup an instance from which properties will be used to update current
-   *                         instance
-   */
-  public void updateFrom(RequisitionGroup requisitionGroup) {
-    code = requisitionGroup.getCode();
-    name = requisitionGroup.getName();
-    description = requisitionGroup.getDescription();
-    supervisoryNode = requisitionGroup.getSupervisoryNode();
-    memberFacilities = requisitionGroup.getMemberFacilities();
-
-    updateProgramSchedulesListFrom(requisitionGroup.getRequisitionGroupProgramSchedules());
-  }
-
-  private void updateProgramSchedulesListFrom(List<RequisitionGroupProgramSchedule> schedules) {
-    if (requisitionGroupProgramSchedules == null) {
-      requisitionGroupProgramSchedules = new ArrayList<>();
-    }
-
-    List<UUID> existentIds = requisitionGroupProgramSchedules
-        .stream().map(BaseEntity::getId).collect(Collectors.toList());
-
-    List<UUID> replacementIds = schedules
-        .stream().map(BaseEntity::getId).collect(Collectors.toList());
-
-    List<RequisitionGroupProgramSchedule> added = schedules
-        .stream()
-        .filter(schedule -> !existentIds.contains(schedule.getId()))
-        .collect(Collectors.toList());
-
-    List<RequisitionGroupProgramSchedule> removed = requisitionGroupProgramSchedules
-        .stream()
-        .filter(schedule -> !replacementIds.contains(schedule.getId()))
-        .collect(Collectors.toList());
-
-    requisitionGroupProgramSchedules.removeAll(removed);
-
-    for (RequisitionGroupProgramSchedule schedule : requisitionGroupProgramSchedules) {
-      Optional<RequisitionGroupProgramSchedule> replacement = schedules
-          .stream()
-          .filter(obj -> obj.getId().equals(schedule.getId()))
-          .findFirst();
-
-      if (replacement.isPresent()) {
-        schedule.updateFrom(replacement.get());
-      }
-    }
-
-    requisitionGroupProgramSchedules.addAll(added);
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setCode(code);
-    exporter.setName(name);
-    exporter.setDescription(description);
-    exporter.setSupervisoryNode(supervisoryNode);
-    exporter.setRequisitionGroupProgramSchedules(requisitionGroupProgramSchedules);
-    exporter.setMemberFacilities(memberFacilities);
   }
 
   @Override
@@ -239,35 +108,4 @@ public class RequisitionGroup extends BaseEntity {
     return Objects.hash(code);
   }
 
-  public interface Exporter {
-    void setId(UUID id);
-
-    void setCode(String code);
-
-    void setName(String name);
-
-    void setDescription(String description);
-
-    void setSupervisoryNode(SupervisoryNode supervisoryNode);
-
-    void setRequisitionGroupProgramSchedules(List<RequisitionGroupProgramSchedule> schedules);
-
-    void setMemberFacilities(Set<Facility> memberFacilities);
-  }
-
-  public interface Importer {
-    UUID getId();
-
-    String getCode();
-
-    String getName();
-
-    String getDescription();
-
-    SupervisoryNode.Importer getSupervisoryNode();
-
-    List<RequisitionGroupProgramSchedule.Importer> getRequisitionGroupProgramSchedules();
-
-    Set<Facility.Importer> getMemberFacilities();
-  }
 }

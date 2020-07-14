@@ -25,9 +25,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.ToString;
-import org.apache.commons.lang3.tuple.Pair;
-import org.siglus.common.exception.referencedata.ValidationMessageException;
-import org.siglus.common.util.referencedata.Message;
+import org.siglus.common.exception.ValidationMessageException;
+import org.siglus.common.util.Message;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
 
@@ -95,10 +94,6 @@ public class QueryOrderableSearchParams {
     return defaultIfBlank(queryParams.getFirst(PROGRAM_CODE), EMPTY);
   }
 
-  public Set<Pair<UUID, Long>> getIdentityPairs() {
-    return Collections.emptySet();
-  }
-
   /**
    * Gets and collection of {@link UUID} for "ids" key from params.
    */
@@ -107,13 +102,6 @@ public class QueryOrderableSearchParams {
       return Collections.emptySet();
     }
     return queryParams.getUuids(ID);
-  }
-
-  /**
-   * Check if all params are empty.
-   */
-  public boolean isEmpty() {
-    return queryParams.isEmpty();
   }
 
   private void validate() {

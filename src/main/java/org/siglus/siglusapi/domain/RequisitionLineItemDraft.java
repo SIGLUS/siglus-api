@@ -46,6 +46,7 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
+import org.siglus.common.domain.BaseEntity;
 import org.springframework.beans.BeanUtils;
 
 @Entity

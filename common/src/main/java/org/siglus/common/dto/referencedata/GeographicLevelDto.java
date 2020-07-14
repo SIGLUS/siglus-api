@@ -16,17 +16,17 @@
 package org.siglus.common.dto.referencedata;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.GeographicLevel;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 @Getter
 @Setter
-public class GeographicLevelDto extends BaseDto implements
-    GeographicLevel.Exporter, GeographicLevel.Importer {
+public class GeographicLevelDto extends BaseDto {
   private String code;
   private String name;
   private Integer levelNumber;

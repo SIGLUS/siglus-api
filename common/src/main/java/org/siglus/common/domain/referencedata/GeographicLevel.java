@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Table(name = "geographic_levels", schema = "referencedata")
@@ -46,11 +47,6 @@ public class GeographicLevel extends BaseEntity {
   @Getter
   @Setter
   private Integer levelNumber;
-
-  public GeographicLevel(String code, int levelNumber) {
-    this.code = code;
-    this.levelNumber = levelNumber;
-  }
 
   @Override
   public boolean equals(Object obj) {
@@ -83,18 +79,6 @@ public class GeographicLevel extends BaseEntity {
     geographicLevel.setLevelNumber(importer.getLevelNumber());
 
     return geographicLevel;
-  }
-
-  /**
-   * Exports current state of geographic level object.
-   *
-   * @param exporter instance of {@link Exporter}
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setCode(code);
-    exporter.setName(name);
-    exporter.setLevelNumber(levelNumber);
   }
 
   public interface Exporter extends BaseExporter {

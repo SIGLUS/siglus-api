@@ -15,15 +15,12 @@
 
 package org.siglus.common.dto.referencedata;
 
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.Right;
 import org.siglus.common.domain.referencedata.RightType;
 
-public class RightDto extends BaseDto implements Right.Exporter, Right.Importer {
+public class RightDto extends BaseDto {
 
   @Getter
   @Setter
@@ -36,24 +33,6 @@ public class RightDto extends BaseDto implements Right.Exporter, Right.Importer 
   @Getter
   @Setter
   private String description;
-
-  private Set<RightDto> attachments = new HashSet<>();
-
-  @Override
-  public void setAttachments(Set<Right> attachments) {
-    for (Right attachment : attachments) {
-      RightDto attachmentDto = new RightDto();
-      attachment.export(attachmentDto);
-      this.attachments.add(attachmentDto);
-    }
-  }
-  
-  @Override
-  public Set<Right.Importer> getAttachments() {
-    Set<Right.Importer> attachments = new HashSet<>();
-    attachments.addAll(this.attachments);
-    return attachments;
-  }
 
   @Override
   public int hashCode() {

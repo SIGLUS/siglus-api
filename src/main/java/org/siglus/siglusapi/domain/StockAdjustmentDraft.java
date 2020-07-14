@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openlmis.requisition.domain.requisition.StockAdjustment;
 import org.openlmis.requisition.dto.stockmanagement.StockAdjustmentDto;
+import org.siglus.common.domain.BaseEntity;
 import org.springframework.beans.BeanUtils;
 
 @Entity

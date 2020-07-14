@@ -28,6 +28,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Table(name = "processing_schedules", schema = "referencedata")
@@ -64,36 +65,10 @@ public class ProcessingSchedule extends BaseEntity {
     this.name = Objects.requireNonNull(name);
   }
 
-  /**
-   * Static factory method for constructing a new processing schedule using an importer (DTO). 
-   * Uses the {@link #ProcessingSchedule(Code, String)} constructor} to help create the object.
-   *
-   * @param importer the importer (DTO)
-   */
-  public static ProcessingSchedule newProcessingSchedule(Importer importer) {
-    ProcessingSchedule newProcessingSchedule = new ProcessingSchedule(
-        Code.code(importer.getCode()), importer.getName());
-    newProcessingSchedule.id = importer.getId();
-    newProcessingSchedule.description = importer.getDescription();
-    return newProcessingSchedule;
-  }
-
   @PrePersist
   @PreUpdate
   private void setModifiedDate() {
     this.modifiedDate = ZonedDateTime.now();
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setName(name);
-    exporter.setCode(code.toString());
-    exporter.setDescription(description);
   }
 
   @Override

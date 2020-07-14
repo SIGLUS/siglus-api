@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import javax.persistence.Embeddable;
 import lombok.Getter;
-import org.siglus.common.exception.referencedata.ValidationMessageException;
+import org.siglus.common.exception.ValidationMessageException;
 
 /**
  * An OrderedDisplayValue is used for unique values/categories that a user would select.  This is

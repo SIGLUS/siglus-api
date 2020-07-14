@@ -29,7 +29,7 @@ import org.siglus.common.domain.referencedata.OrderableChild;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-public class OrderableChildDto implements OrderableChild.Exporter, OrderableChild.Importer {
+public class OrderableChildDto implements OrderableChild.Exporter {
 
   @Getter
   private ObjectReferenceDto orderable;

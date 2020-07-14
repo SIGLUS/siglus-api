@@ -16,9 +16,9 @@
 package org.siglus.siglusapi.errorhandling;
 
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.exception.BaseMessageException;
+import org.siglus.common.exception.BaseMessageException;
+import org.siglus.common.util.Message;
 import org.siglus.siglusapi.i18n.MessageService;
-import org.siglus.siglusapi.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 

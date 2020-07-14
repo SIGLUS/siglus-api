@@ -34,28 +34,11 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public final class VolumeMeasurement extends Measurement {
 
-  public VolumeMeasurement(Double value, String measurementUnitCode) {
-    super(value, measurementUnitCode);
-  }
-
   @Override
   public List<String> getCodeListVersion() {
     return Stream.of(VolumeUnitCode.values())
                           .map(VolumeUnitCode::name)
                           .collect(Collectors.toList());
-  }
-
-  /**
-   * Static factory method for constructing a new Volume Measurement using an importer (DTO).
-   *
-   * @param importer the Volume Measurement importer (DTO)
-   */
-  public static VolumeMeasurement newVolumeMeasurement(
-          Importer importer) {
-    VolumeMeasurement newVolumeMeasurement = new VolumeMeasurement();
-    newVolumeMeasurement.setMeasurementUnitCode(importer.getMeasurementUnitCode());
-    newVolumeMeasurement.setValue(importer.getValue());
-    return newVolumeMeasurement;
   }
 
   /**
@@ -75,9 +58,4 @@ public final class VolumeMeasurement extends Measurement {
 
   }
 
-  public interface Importer extends Measurement.Importer {
-
-    List<String> getCodeListVersion();
-
-  }
 }

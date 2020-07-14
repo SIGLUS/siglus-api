@@ -15,20 +15,14 @@
 
 package org.siglus.common.util.referencedata;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
-import org.springframework.util.MultiValueMap;
 
 /**
  * Generic utility functions for {@link UUID}.
  */
 public final class UuidUtil {
 
-  private static final String ID = "id";
   public static final String UUID_PATTERN =
       "^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$";
 
@@ -56,42 +50,4 @@ public final class UuidUtil {
     }
   }
 
-  /**
-   * Null-safe check to ensure Ids are equal.  See {@link UUID#equals(Object)}
-   * @param first the first UUID
-   * @param second the second UUID
-   * @return true if equal, false if not equal or either is null.e
-   */
-  public static boolean sameId(UUID first, UUID second) {
-    if (null == first) {
-      return false;
-    }
-
-    return first.equals(second);
-  }
-
-  /**
-   * Gets a set of UUID from the query multi value map. It looks up the map key "id" and returns
-   * all values associated with that key parsed to UUIDS.
-   *
-   * @param queryMap a multi value map that should contain {@code id} as key
-   *                 and UUID strings as values for that key. May be null
-   * @return a set of {@link UUID} extracted from map where key is {@code id}. Empty set when query
-   *     map is null or no results found.
-   * @throws ClassCastException when value for key {@code id} is not {@code String}
-   * @throws IllegalArgumentException when value for key {@code id} is not parsable to {@link UUID}
-   */
-  public static Set<UUID> getIds(MultiValueMap<String, Object> queryMap) {
-    if (queryMap == null) {
-      return Collections.emptySet();
-    }
-    Set<UUID> ids = new HashSet<>();
-    queryMap.forEach((key, value) -> {
-      if (Objects.equals(key, ID)) {
-        value.forEach(id -> ids.add(UUID.fromString((String)id)));
-      }
-    });
-
-    return ids;
-  }
 }

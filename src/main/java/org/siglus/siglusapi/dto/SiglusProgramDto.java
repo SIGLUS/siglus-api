@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -39,9 +37,4 @@ public class SiglusProgramDto extends ProgramDto {
     return siglusProgramDto;
   }
 
-  public static List<SiglusProgramDto> from(List<ProgramDto> programDtos) {
-    List<SiglusProgramDto> siglusProgramDtos = new ArrayList<>(programDtos.size());
-    programDtos.forEach(programDto -> siglusProgramDtos.add(from(programDto)));
-    return siglusProgramDtos;
-  }
 }

@@ -15,11 +15,8 @@
 
 package org.siglus.common.domain.referencedata;
 
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -38,6 +35,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;
 import org.slf4j.Logger;
@@ -104,68 +102,6 @@ public class SupervisoryNode extends BaseEntity {
   private ExtraDataEntity extraData = new ExtraDataEntity();
 
   /**
-   * Static factory method for constructing a new supervisory node using an importer (DTO).
-   *
-   * @param importer the supervisory node importer (DTO)
-   */
-  public static SupervisoryNode newSupervisoryNode(Importer importer) {
-    Facility facility = null;
-
-    if (importer.getFacilityId() != null) {
-      facility = new Facility();
-      facility.setId(importer.getFacilityId());
-    }
-
-    SupervisoryNode parentNode = null;
-    if (importer.getParentNodeId() != null) {
-      parentNode = new SupervisoryNode();
-      parentNode.setId(importer.getParentNodeId());
-    }
-
-    RequisitionGroup requisitionGroup = null;
-    if (importer.getRequisitionGroupId() != null) {
-      requisitionGroup = new RequisitionGroup();
-      requisitionGroup.setId(importer.getRequisitionGroupId());
-    }
-
-    Set<SupervisoryNode> childNodes = new HashSet<>();
-    if (importer.getChildNodeIds() != null) {
-      for (UUID childNodeId : importer.getChildNodeIds()) {
-        SupervisoryNode child = new SupervisoryNode();
-        child.setId(childNodeId);
-
-        childNodes.add(child);
-      }
-    }
-
-    SupervisoryNode partnerNodeOf = null;
-    if (importer.getPartnerNodeOfId() != null) {
-      partnerNodeOf = new SupervisoryNode();
-      partnerNodeOf.setId(importer.getPartnerNodeOfId());
-    }
-
-    Set<SupervisoryNode> partnerNodes = new HashSet<>();
-    if (importer.getChildNodeIds() != null) {
-      for (UUID partnerNodeId : importer.getPartnerNodeIds()) {
-        SupervisoryNode partnerNode = new SupervisoryNode();
-        partnerNode.setId(partnerNodeId);
-
-        partnerNodes.add(partnerNode);
-      }
-    }
-
-    Map<String, Object> extraData = importer.getExtraData();
-    ExtraDataEntity extraDataEntity = new ExtraDataEntity(extraData);
-
-    SupervisoryNode newSupervisoryNode = new SupervisoryNode(importer.getCode(), importer.getName(),
-        importer.getDescription(), facility, parentNode, partnerNodeOf, childNodes, partnerNodes,
-        requisitionGroup, extraDataEntity);
-    newSupervisoryNode.setId(importer.getId());
-
-    return newSupervisoryNode;
-  }
-
-  /**
    * Assign this node's parent supervisory node. Also add this node to the parent's set of child
    * nodes.
    *
@@ -179,41 +115,6 @@ public class SupervisoryNode extends BaseEntity {
       this.parentNode.childNodes.remove(this);
       this.parentNode = null;
     }
-  }
-
-  /**
-   * Assign this node's set of child supervisory nodes. Also add this node to the child's parent
-   * nodes.
-   */
-  public void assignChildNodes(Set<SupervisoryNode> childNodes) {
-    if (null == this.childNodes) {
-      this.childNodes = new HashSet<>();
-    }
-
-    this.childNodes.forEach(childNode -> childNode.parentNode = null);
-    this.childNodes.clear();
-
-    Optional
-        .ofNullable(childNodes)
-        .orElse(Collections.emptySet())
-        .forEach(child -> child.assignParentNode(this));
-  }
-
-  /**
-   * Assign partner nodes for this supervisory node.
-   */
-  public void assignPartnerNodes(Set<SupervisoryNode> partnerNodes) {
-    if (null == this.partnerNodes) {
-      this.partnerNodes = new HashSet<>();
-    }
-
-    this.partnerNodes.forEach(partner -> partner.partnerNodeOf = null);
-    this.partnerNodes.clear();
-
-    Optional
-        .ofNullable(partnerNodes)
-        .orElse(Collections.emptySet())
-        .forEach(partner -> partner.assignPartnerNodeOf(this));
   }
 
   /**
@@ -274,50 +175,6 @@ public class SupervisoryNode extends BaseEntity {
    */
   public boolean supervises(Facility facility, Program program) {
     return getAllSupervisedFacilities(program).contains(facility);
-  }
-
-  /**
-   * Copy values of attributes into new or updated SupervisoryNode.
-   *
-   * @param importer importer with new values.
-   */
-  public void updateFrom(Importer importer) {
-    this.code = importer.getCode();
-    this.name = importer.getName();
-    this.description = importer.getDescription();
-
-    extraData = ExtraDataEntity.defaultEntity(extraData);
-    extraData.updateFrom(importer.getExtraData());
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setCode(code);
-    exporter.setName(name);
-    exporter.setDescription(description);
-    exporter.setFacility(facility);
-    exporter.setParentNode(parentNode);
-    exporter.setPartnerNodeOf(partnerNodeOf);
-    exporter.assignChildNodes(childNodes);
-    exporter.assignPartnerNodes(partnerNodes);
-    exporter.setRequisitionGroup(requisitionGroup);
-
-    extraData = ExtraDataEntity.defaultEntity(extraData);
-    extraData.export(exporter);
-  }
-
-  public Map<String, Object> getExtraData() {
-    return this.extraData.getExtraData();
-  }
-
-  public void setExtraData(Map<String, Object> extraData) {
-    this.extraData = ExtraDataEntity.defaultEntity(this.extraData);
-    this.extraData.updateFrom(extraData);
   }
 
   @Override

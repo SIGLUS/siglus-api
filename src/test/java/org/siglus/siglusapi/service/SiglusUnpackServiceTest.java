@@ -57,6 +57,7 @@ import org.siglus.common.domain.referencedata.Program;
 import org.siglus.common.domain.referencedata.ProgramOrderable;
 import org.siglus.common.domain.referencedata.User;
 import org.siglus.common.dto.referencedata.LotDto;
+import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.OrderableRepository;
 import org.siglus.common.repository.ProgramExtensionRepository;
@@ -64,7 +65,6 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.dto.OrderableInKitDto;
 import org.siglus.siglusapi.dto.SiglusOrdeableKitDto;
-import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.springframework.data.domain.Page;
 

@@ -89,8 +89,6 @@ public class SiglusStockCardSummariesServiceTest {
 
   private String rightName = "STOCK_CARDS_VIEW";
 
-  private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
-
   @Before
   public void prepare() {
     User user = new User();

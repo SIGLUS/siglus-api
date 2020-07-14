@@ -15,14 +15,6 @@
 
 package org.siglus.common.domain.referencedata;
 
-import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toSet;
-import static java.util.stream.Stream.concat;
-import static org.siglus.common.util.referencedata.messagekeys.RoleMessageKeys.ERROR_MUST_HAVE_A_RIGHT;
-import static org.siglus.common.util.referencedata.messagekeys.RoleMessageKeys.ERROR_RIGHTS_ARE_DIFFERENT_TYPES;
-
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -38,8 +30,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.siglus.common.exception.referencedata.ValidationMessageException;
-import org.siglus.common.util.referencedata.Message;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Table(name = "roles", schema = "referencedata")
@@ -67,91 +58,8 @@ public class Role extends BaseEntity {
   @DiffIgnore
   private Set<Right> rights;
 
-  private Role(String name, Right... rights) {
-    this.name = name;
-    group(rights);
-  }
-
-  /**
-   * Static factory method for constructing a new role with a name and rights.
-   *
-   * @param name   the role name
-   * @param rights the rights to group
-   * @throws ValidationMessageException if the rights do not have the same right type
-   */
-  public static Role newRole(String name, Right... rights) {
-    return new Role(name, rights);
-  }
-
-  /**
-   * Static factory method for constructing a new role using an importer (DTO).
-   *
-   * @param importer the role importer (DTO)
-   * @throws ValidationMessageException if the rights do not have the same right type
-   */
-  public static Role newRole(Importer importer) {
-    Set<Right> importedRights = importer.getRights().stream()
-        .map(Right::newRight)
-        .collect(toSet());
-
-    Role newRole = new Role(importer.getName(),
-        importedRights.toArray(new Right[importedRights.size()]));
-    newRole.id = importer.getId();
-    newRole.description = importer.getDescription();
-
-    return newRole;
-  }
-
-  /**
-   * Group rights together and assign to this role. These rights replace any previously existing
-   * rights.
-   *
-   * @param rights the rights to group
-   * @throws ValidationMessageException if the rights do not have the same right type
-   */
-  public void group(Right... rights) {
-    Set<Right> rightsList = new HashSet<>(asList(rights));
-    if (rightsList.size() == 0) {
-      throw new ValidationMessageException(
-          new Message(ERROR_MUST_HAVE_A_RIGHT));
-    }
-    if (checkRightTypesMatch(rightsList)) {
-      this.rights = rightsList;
-    } else {
-      throw new ValidationMessageException(
-          new Message(ERROR_RIGHTS_ARE_DIFFERENT_TYPES));
-    }
-  }
-
   public RightType getRightType() {
     return rights.iterator().next().getType();
-  }
-
-  private static boolean checkRightTypesMatch(Set<Right> rightSet) {
-    if (rightSet.isEmpty()) {
-      return true;
-    } else {
-      RightType rightType = rightSet.iterator().next().getType();
-      return rightSet.stream().allMatch(right -> right.getType() == rightType);
-    }
-  }
-
-  /**
-   * Add additional rights to the role.
-   *
-   * @param additionalRights the rights to add
-   * @throws ValidationMessageException if the resulting rights do not have the same right type
-   */
-  public void add(Right... additionalRights) {
-    Set<Right> allRights = concat(rights.stream(), Arrays.stream(additionalRights))
-        .collect(toSet());
-
-    if (checkRightTypesMatch(allRights)) {
-      rights.addAll(Arrays.asList(additionalRights));
-    } else {
-      throw new ValidationMessageException(
-          new Message(ERROR_RIGHTS_ARE_DIFFERENT_TYPES));
-    }
   }
 
   /**
@@ -163,18 +71,6 @@ public class Role extends BaseEntity {
    */
   public boolean contains(Right right) {
     return rights.contains(right);
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setName(name);
-    exporter.setDescription(description);
-    exporter.setRights(rights);
   }
 
   @Override
@@ -205,13 +101,4 @@ public class Role extends BaseEntity {
     void setRights(Set<Right> rights);
   }
 
-  public interface Importer {
-    UUID getId();
-
-    String getName();
-
-    String getDescription();
-
-    Set<Right.Importer> getRights();
-  }
 }

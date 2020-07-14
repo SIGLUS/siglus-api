@@ -13,21 +13,30 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.exception.referencedata;
+package org.siglus.common.serializer;
 
-import org.siglus.common.util.referencedata.Message;
+import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import java.io.IOException;
+import org.joda.money.CurrencyUnit;
+import org.joda.money.Money;
 
 /**
- * Exception for indicating that an entity explicitly asked for wasn't found.  This should result
- * in a NOT FOUND api response.
+ * MoneyDeserializer class represents the deserializer for Money.
  */
-public class NotFoundException extends BaseMessageException {
+public class MoneyDeserializer extends JsonDeserializer<Money> {
 
-  public NotFoundException(Message message) {
-    super(message);
-  }
+  private static final String CURRENCY_CODE = System.getenv("CURRENCY_CODE");
 
-  public NotFoundException(String messageKey) {
-    super(messageKey);
+  @Override
+  public Money deserialize(JsonParser jsonParser, DeserializationContext ctxt)
+      throws IOException {
+
+    String currencyString = defaultIfBlank(CURRENCY_CODE, "USD");
+    return Money.parse(
+        CurrencyUnit.of(currencyString).getCode() + " " + jsonParser.getText());
   }
 }

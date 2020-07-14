@@ -13,9 +13,9 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.exception;
+package org.siglus.common.exception;
 
-import org.siglus.siglusapi.util.Message;
+import org.siglus.common.util.Message;
 
 /**
  * Exception for indicating that some input or constraint is invalid.  This should result in a

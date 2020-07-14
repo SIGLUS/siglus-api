@@ -16,22 +16,19 @@
 package org.siglus.common.dto.referencedata;
 
 import java.time.LocalDate;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.Lot;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = true)
-public class LotDto extends BaseDto implements Lot.Exporter, Lot.Importer {
+public class LotDto extends BaseDto {
 
   private String lotCode;
   private boolean active;
@@ -39,31 +36,4 @@ public class LotDto extends BaseDto implements Lot.Exporter, Lot.Importer {
   private LocalDate expirationDate;
   private LocalDate manufactureDate;
 
-  /**
-   * Create new set of LotDto based on given iterable of {@link Lot}.
-   *
-   * @param lots list of {@link Lot}
-   * @return new list of LotDto.
-   */
-  public static List<LotDto> newInstance(Iterable<Lot> lots) {
-    List<LotDto> lotDtos = new LinkedList<>();
-    lots.forEach(lot -> lotDtos.add(newInstance(lot)));
-    return lotDtos;
-  }
-
-  /**
-   * Creates new instance based on given {@link Lot}.
-   *
-   * @param lot instance of Lot.
-   * @return new instance of LotDto.
-   */
-  public static LotDto newInstance(Lot lot) {
-    if (lot == null) {
-      return null;
-    }
-    LotDto lotDto = new LotDto();
-    lot.export(lotDto);
-
-    return lotDto;
-  }
 }

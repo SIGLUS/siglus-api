@@ -111,7 +111,7 @@ import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
-import org.siglus.common.exception.referencedata.NotFoundException;
+import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;

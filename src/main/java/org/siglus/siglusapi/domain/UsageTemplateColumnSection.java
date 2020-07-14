@@ -35,6 +35,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.LazyCollection;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.springframework.beans.BeanUtils;
 

@@ -27,11 +27,11 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.common.exception.ValidationMessageException;
+import org.siglus.common.util.Message;
+import org.siglus.common.util.Message.LocalizedMessage;
 import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.i18n.MessageService;
-import org.siglus.siglusapi.util.Message;
-import org.siglus.siglusapi.util.Message.LocalizedMessage;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
 

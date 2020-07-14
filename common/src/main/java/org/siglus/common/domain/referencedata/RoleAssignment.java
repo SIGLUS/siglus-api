@@ -37,10 +37,11 @@ import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.dto.referencedata.CountResource;
 import org.siglus.common.dto.referencedata.RoleAssignmentDto;
-import org.siglus.common.exception.referencedata.ValidationMessageException;
-import org.siglus.common.util.referencedata.Message;
+import org.siglus.common.exception.ValidationMessageException;
+import org.siglus.common.util.Message;
 
 @Entity
 @Table(name = "role_assignments", schema = "referencedata")

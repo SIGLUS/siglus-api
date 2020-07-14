@@ -47,7 +47,7 @@ import lombok.Setter;
 import org.hibernate.spatial.JTSGeometryJavaTypeDescriptor;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.dto.referencedata.NamedResource;
 
 @Entity
@@ -82,7 +82,6 @@ import org.siglus.common.dto.referencedata.NamedResource;
 public class Facility extends BaseEntity implements FhirLocation {
 
   public static final String TEXT = "text";
-  public static final String WAREHOUSE_CODE = "warehouse";
 
   @Column(nullable = false, unique = true, columnDefinition = TEXT)
   @Getter
@@ -110,12 +109,6 @@ public class Facility extends BaseEntity implements FhirLocation {
   @Getter
   @Setter
   private FacilityType type;
-
-  @ManyToOne
-  @JoinColumn(name = "operatedbyid")
-  @Getter
-  @Setter
-  private FacilityOperator operator;
 
   @Column(nullable = false)
   @Getter
@@ -160,14 +153,6 @@ public class Facility extends BaseEntity implements FhirLocation {
   @Embedded
   private ExtraDataEntity extraData = new ExtraDataEntity();
 
-  public Facility(String code) {
-    this.code = code;
-  }
-
-  public Facility(UUID id) {
-    this.id = id;
-  }
-
   /**
    * Equal by a Facility's code.
    *
@@ -189,80 +174,6 @@ public class Facility extends BaseEntity implements FhirLocation {
     return Objects.hash(code);
   }
 
-  /**
-   * Creates new facility object based on data from {@link Importer}.
-   *
-   * @param importer instance of {@link Importer}
-   * @return new instance of facility.
-   */
-  public static Facility newFacility(Importer importer) {
-    Facility facility = new Facility();
-    facility.setId(importer.getId());
-    facility.setCode(importer.getCode());
-    facility.setName(importer.getName());
-    facility.setDescription(importer.getDescription());
-
-    if (null != importer.getGeographicZone()) {
-      facility.setGeographicZone(GeographicZone.newGeographicZone(importer.getGeographicZone()));
-    }
-
-    if (null != importer.getType()) {
-      facility.setType(FacilityType.newFacilityType(importer.getType()));
-    }
-
-    if (null != importer.getOperator()) {
-      facility.setOperator(FacilityOperator.newFacilityOperator(importer.getOperator()));
-    }
-
-    facility.setExtraData(importer.getExtraData());
-    facility.setActive(importer.getActive());
-    facility.setGoLiveDate(importer.getGoLiveDate());
-    facility.setGoDownDate(importer.getGoDownDate());
-    facility.setComment(importer.getComment());
-    facility.setEnabled(importer.getEnabled());
-    facility.setOpenLmisAccessible(importer.getOpenLmisAccessible());
-    
-    facility.setLocation(importer.getLocation());
-
-    return facility;
-  }
-
-  /**
-   * Update this from another.
-   *
-   * @param importer object to update from.
-   */
-  public void updateFrom(Importer importer) {
-    code = importer.getCode();
-    name = importer.getName();
-    description = importer.getDescription();
-
-    extraData = ExtraDataEntity.defaultEntity(extraData);
-    extraData.updateFrom(importer.getExtraData());
-
-    active = importer.getActive();
-    goLiveDate = importer.getGoLiveDate();
-    goDownDate = importer.getGoDownDate();
-    comment = importer.getComment();
-    enabled = importer.getEnabled();
-    openLmisAccessible = importer.getOpenLmisAccessible();
-    location = importer.getLocation();
-  }
-
-  /**
-   * Removes all supported programs from this facility.
-   */
-  public void removeAllSupportedPrograms() {
-    supportedPrograms.clear();
-  }
-
-  /**
-   * Adds supported program to this facility.
-   */
-  public void addSupportedProgram(SupportedProgram supportedProgram) {
-    supportedPrograms.add(supportedProgram);
-  }
-
   private void writeObject(java.io.ObjectOutputStream out) throws IOException {
     if (null != location) {
       out.writeObject(JTSGeometryJavaTypeDescriptor.INSTANCE.toString(location));
@@ -275,50 +186,6 @@ public class Facility extends BaseEntity implements FhirLocation {
       Geometry geometry = JTSGeometryJavaTypeDescriptor.INSTANCE.fromString(locationAsString);
       location = JTSGeometryJavaTypeDescriptor.INSTANCE.unwrap(geometry, Point.class, null);
     }
-  }
-
-  /**
-   * Exports current state of facility object.
-   *
-   * @param exporter instance of {@link Exporter}
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setCode(code);
-    exporter.setName(name);
-    exporter.setDescription(description);
-
-    if (null != geographicZone) {
-      exporter.setGeographicZone(geographicZone);
-    }
-
-    if (null != type) {
-      exporter.setType(type);
-    }
-
-    if (null != operator) {
-      exporter.setOperator(operator);
-    }
-
-    exporter.setActive(active);
-    exporter.setGoLiveDate(goLiveDate);
-    exporter.setGoDownDate(goDownDate);
-    exporter.setComment(comment);
-    exporter.setEnabled(enabled);
-    exporter.setOpenLmisAccessible(openLmisAccessible);
-
-    if (null != supportedPrograms) {
-      exporter.setSupportedPrograms(supportedPrograms);
-    }
-    
-    exporter.setLocation(location);
-
-    extraData = ExtraDataEntity.defaultEntity(extraData);
-    extraData.export(exporter);
-  }
-
-  public boolean isWarehouse() {
-    return WAREHOUSE_CODE.equalsIgnoreCase(type.getCode());
   }
 
   /**
@@ -340,38 +207,6 @@ public class Facility extends BaseEntity implements FhirLocation {
     return ExtraDataEntity.defaultEntity(extraData).getExtraData();
   }
 
-  public interface Exporter extends BaseExporter, ExtraDataExporter {
-
-    void setCode(String code);
-
-    void setName(String name);
-
-    void setDescription(String description);
-
-    void setGeographicZone(GeographicZone geographicZone);
-
-    void setType(FacilityType type);
-
-    void setOperator(FacilityOperator operator);
-
-    void setActive(Boolean active);
-
-    void setGoLiveDate(LocalDate goLiveDate);
-
-    void setGoDownDate(LocalDate goDownDate);
-
-    void setComment(String comment);
-
-    void setEnabled(Boolean enabled);
-
-    void setOpenLmisAccessible(Boolean openLmisAccessible);
-
-    void setSupportedPrograms(Set<SupportedProgram> supportedPrograms);
-    
-    void setLocation(Point location);
-
-  }
-
   public interface Importer extends FhirLocation {
 
     String getCode();
@@ -383,8 +218,6 @@ public class Facility extends BaseEntity implements FhirLocation {
     GeographicZone.Importer getGeographicZone();
 
     FacilityType.Importer getType();
-
-    FacilityOperator.Importer getOperator();
 
     Boolean getActive();
 

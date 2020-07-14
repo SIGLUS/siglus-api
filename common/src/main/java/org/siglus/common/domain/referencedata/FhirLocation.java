@@ -15,34 +15,9 @@
 
 package org.siglus.common.domain.referencedata;
 
-import static org.apache.commons.lang3.BooleanUtils.isTrue;
-import static org.apache.commons.lang3.BooleanUtils.toBooleanObject;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.Collections;
-import java.util.Optional;
-import org.siglus.common.domain.referencedata.BaseEntity.BaseImporter;
+import org.siglus.common.domain.BaseEntity.BaseImporter;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;
 
 public interface FhirLocation extends BaseImporter, ExtraDataImporter {
-
-  /**
-   * Checks if <strong>isManagedExternally</strong> flag is set.
-   */
-  @JsonIgnore
-  default boolean isManagedExternally() {
-    Object value = Optional
-        .ofNullable(getExtraData())
-        .orElse(Collections.emptyMap())
-        .get("isManagedExternally");
-
-    if (value instanceof String) {
-      String valueAsString = (String) value;
-      return !isBlank(valueAsString) && isTrue(toBooleanObject(valueAsString));
-    }
-
-    return false;
-  }
 
 }

@@ -15,7 +15,6 @@
 
 package org.siglus.common.dto.referencedata;
 
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -29,6 +28,7 @@ import org.siglus.common.domain.referencedata.Program;
 @Setter
 @EqualsAndHashCode(callSuper = false)
 public class ProgramDto extends BaseDto implements Program.Exporter, Program.Importer {
+
   private String code;
   private String name;
   private String description;
@@ -38,22 +38,4 @@ public class ProgramDto extends BaseDto implements Program.Exporter, Program.Imp
   private Boolean showNonFullSupplyTab;
   private Boolean enableDatePhysicalStockCountCompleted;
 
-  public ProgramDto(UUID id) {
-    setId(id);
-  }
-
-  /**
-   * Creates new programDto based on given {@link Program}.
-   *
-   * @param program instance of Program
-   * @return new instance of ProgramDto.
-   */
-  public static ProgramDto newInstance(Program program) {
-    if (program == null) {
-      return null;
-    }
-    ProgramDto programDto = new ProgramDto();
-    program.export(programDto);
-    return programDto;
-  }
 }

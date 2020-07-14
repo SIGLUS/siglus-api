@@ -69,13 +69,4 @@ public class SiglusProcessingPeriodReferenceDataService
     return getPage(parameters);
   }
 
-  public Collection<ProcessingPeriodDto> searchByProgramAndFacility(UUID programId,
-      UUID facilityId) {
-    RequestParameters parameters = RequestParameters
-        .init()
-        .set("programId", programId)
-        .set("facilityId", facilityId);
-
-    return getPage(parameters).getContent();
-  }
 }

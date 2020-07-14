@@ -28,8 +28,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.joda.money.Money;
 import org.siglus.common.domain.referencedata.ProgramOrderable;
-import org.siglus.common.serializer.referencedata.MoneyDeserializer;
-import org.siglus.common.serializer.referencedata.MoneySerializer;
+import org.siglus.common.serializer.MoneyDeserializer;
+import org.siglus.common.serializer.MoneySerializer;
 
 @Getter
 @Setter

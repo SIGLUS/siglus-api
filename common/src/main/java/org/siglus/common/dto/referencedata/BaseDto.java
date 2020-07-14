@@ -23,8 +23,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.siglus.common.domain.referencedata.BaseEntity.BaseExporter;
-import org.siglus.common.domain.referencedata.BaseEntity.BaseImporter;
+import org.siglus.common.domain.BaseEntity.BaseExporter;
+import org.siglus.common.domain.BaseEntity.BaseImporter;
 import org.siglus.common.domain.referencedata.Identifiable;
 
 @Getter

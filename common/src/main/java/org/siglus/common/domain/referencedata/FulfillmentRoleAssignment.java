@@ -38,27 +38,6 @@ public class FulfillmentRoleAssignment extends RoleAssignment {
   @Getter
   private Facility warehouse;
 
-  private FulfillmentRoleAssignment(Role role, User user) {
-    super(role, user);
-  }
-
-  /**
-   * Default constructor. Must always have a role, a user and a facility.
-   *
-   * @param role      the role being assigned
-   * @param user      the user to which the role is being assigned
-   * @param warehouse the warehouse where the role applies
-   */
-  public FulfillmentRoleAssignment(Role role, User user, Facility warehouse) {
-    this(role, user);
-
-    this.warehouse = warehouse;
-
-    for (Right right : role.getRights()) {
-      user.addRightAssignment(right.getName(), warehouse.getId());
-    }
-  }
-
   @Override
   protected Set<RightType> getAcceptableRightTypes() {
     return singleton(RightType.ORDER_FULFILLMENT);
@@ -74,16 +53,6 @@ public class FulfillmentRoleAssignment extends RoleAssignment {
     boolean warehouseMatches = warehouse.equals(rightQuery.getWarehouse());
 
     return roleMatches && warehouseMatches;
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setRole(role);
-    exporter.setWarehouse(warehouse);
   }
 
   @Override
@@ -108,7 +77,4 @@ public class FulfillmentRoleAssignment extends RoleAssignment {
     return Objects.hash(super.hashCode(), warehouse);
   }
 
-  public interface Exporter extends RoleAssignment.Exporter {
-    void setWarehouse(Facility warehouse);
-  }
 }

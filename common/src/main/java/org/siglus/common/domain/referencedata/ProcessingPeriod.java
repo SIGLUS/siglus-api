@@ -16,11 +16,9 @@
 package org.siglus.common.domain.referencedata;
 
 import java.time.LocalDate;
-import java.time.Period;
 import java.util.Objects;
 import java.util.Optional;
 import javax.persistence.Column;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -29,6 +27,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;
 
@@ -64,9 +63,6 @@ public class ProcessingPeriod extends BaseEntity {
   @Setter
   private LocalDate endDate;
 
-  @Embedded
-  private ExtraDataEntity extraData = new ExtraDataEntity();
-
   private ProcessingPeriod(String name, ProcessingSchedule schedule,
                            LocalDate startDate, LocalDate endDate) {
     this.processingSchedule = schedule;
@@ -78,69 +74,6 @@ public class ProcessingPeriod extends BaseEntity {
   public static ProcessingPeriod newPeriod(String name, ProcessingSchedule schedule,
                                             LocalDate startDate, LocalDate endDate) {
     return new ProcessingPeriod(name, schedule, startDate, endDate);
-  }
-
-  /**
-   * Construct new processing period based on an importer (DTO).
-   *
-   * @param importer importer (DTO) to use
-   * @return new processing period
-   */
-  public static ProcessingPeriod newPeriod(Importer importer) {
-    ProcessingPeriod newPeriod = new ProcessingPeriod(
-          importer.getName(),
-          ProcessingSchedule.newProcessingSchedule(importer.getProcessingSchedule()),
-          importer.getStartDate(),
-          importer.getEndDate());
-    newPeriod.id = importer.getId();
-    newPeriod.description = importer.getDescription();
-    newPeriod.extraData = ExtraDataEntity.defaultEntity(newPeriod.extraData);
-    newPeriod.extraData.updateFrom(importer.getExtraData());
-    return newPeriod;
-  }
-
-  /**
-   * Returns duration of period in months.
-   *
-   * @return number of months.
-   */
-  public int getDurationInMonths() {
-    Period length = Period.between(startDate, endDate);
-    int months = length.getMonths();
-    months += length.getYears() * 12;
-    if (length.getDays() >= 15 || months == 0) {
-      months++;
-    }
-
-    return months;
-  }
-
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setName(name);
-    exporter.setDescription(description);
-    exporter.setStartDate(startDate);
-    exporter.setEndDate(endDate);
-
-    extraData = ExtraDataEntity.defaultEntity(extraData);
-    extraData.export(exporter);
-
-    Optional<ProcessingSchedule.Exporter> exporterOptional =
-        exporter.provideProcessingScheduleExporter();
-    if (exporterOptional.isPresent()) {
-      ProcessingSchedule.Exporter scheduleExporter = exporterOptional.get();
-      processingSchedule.export(scheduleExporter);
-      exporter.includeProcessingSchedule(scheduleExporter);
-    }
-
-    if (exporter.supportsDurationInMonths()) {
-      exporter.setDurationInMonths(getDurationInMonths());
-    }
   }
 
   @Override

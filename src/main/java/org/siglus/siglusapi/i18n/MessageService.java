@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.i18n;
 
-import org.siglus.siglusapi.util.Message;
+import org.siglus.common.util.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;

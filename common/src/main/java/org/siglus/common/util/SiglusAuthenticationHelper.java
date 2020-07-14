@@ -17,7 +17,7 @@ package org.siglus.common.util;
 
 import java.util.UUID;
 import org.siglus.common.domain.referencedata.User;
-import org.siglus.common.exception.referencedata.NotFoundException;
+import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.repository.UserRepository;
 import org.siglus.common.util.referencedata.messagekeys.UserMessageKeys;
 import org.springframework.beans.factory.annotation.Autowired;

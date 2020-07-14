@@ -15,18 +15,14 @@
 
 package org.siglus.common.dto.referencedata;
 
-import java.util.HashSet;
-import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.OrderableDisplayCategory;
 
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = false)
-public class OrderableDisplayCategoryDto extends BaseDto implements
-    OrderableDisplayCategory.Exporter, OrderableDisplayCategory.Importer {
+public class OrderableDisplayCategoryDto extends BaseDto {
 
   private String code;
 
@@ -34,23 +30,4 @@ public class OrderableDisplayCategoryDto extends BaseDto implements
 
   private Integer displayOrder;
 
-  /**
-   * Creates new set of OrderableDisplayCategoryDto based on
-   * {@link OrderableDisplayCategory} iterable.
-   */
-  public static Set<OrderableDisplayCategoryDto> newInstance(
-      Iterable<OrderableDisplayCategory> iterable) {
-    Set<OrderableDisplayCategoryDto> categoryDtos = new HashSet<>();
-    iterable.forEach(i -> categoryDtos.add(newInstance(i)));
-    return categoryDtos;
-  }
-
-  /**
-   * Creates new instance of OrderableDisplayCategoryDto based on {@link OrderableDisplayCategory}.
-   */
-  public static OrderableDisplayCategoryDto newInstance(OrderableDisplayCategory category) {
-    OrderableDisplayCategoryDto categoryDto = new OrderableDisplayCategoryDto();
-    category.export(categoryDto);
-    return categoryDto;
-  }
 }

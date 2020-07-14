@@ -26,7 +26,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.BaseEntity;
 
 @Entity
 @Getter

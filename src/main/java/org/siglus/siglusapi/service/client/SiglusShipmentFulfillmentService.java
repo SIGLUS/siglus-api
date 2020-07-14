@@ -37,7 +37,4 @@ public class SiglusShipmentFulfillmentService extends
     return ShipmentDto[].class;
   }
 
-  public ShipmentDto createShipment(ShipmentDto shipmentDto) {
-    return postResult("", shipmentDto, getResultClass(), true);
-  }
 }

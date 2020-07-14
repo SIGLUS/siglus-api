@@ -13,20 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.dto.referencedata;
+package org.siglus.common.serializer;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import java.io.IOException;
+import org.joda.money.Money;
 
-@NoArgsConstructor
-public class UploadResultDto {
+/**
+ * MoneySerializer class represents the serializer for Money.
+ */
 
-  @Getter
-  @Setter
-  private Integer amount;
+public class MoneySerializer extends JsonSerializer<Money> {
 
-  public UploadResultDto(int amount) {
-    this.amount = amount;
+  @Override
+  public void serialize(Money value, JsonGenerator generator, SerializerProvider provider)
+      throws IOException {
+    generator.writeNumber(value.getAmount());
   }
 }

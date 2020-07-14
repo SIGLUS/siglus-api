@@ -27,15 +27,6 @@ public class RightQuery {
   private Facility warehouse;
 
   /**
-   * Constructor to create query if user has a right. This is for general admin and report rights.
-   *
-   * @param right the right to check
-   */
-  public RightQuery(Right right) {
-    this.right = right;
-  }
-
-  /**
    * Constructor to create query if user has a right in a specified program at a specified facility.
    * This is for all supervision rights.
    *

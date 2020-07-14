@@ -41,39 +41,4 @@ public final class RightAssignmentDto {
   private UUID programId;
   private UUID supervisoryNodeId;
 
-  /**
-   * Constructor of the key fields.
-   * 
-   * @param userId user ID
-   * @param rightName right name
-   * @param facilityId facility ID
-   * @param programId program ID
-   */
-  public RightAssignmentDto(UUID userId, String rightName, UUID facilityId, UUID programId) {
-    this.userId = userId;
-    this.rightName = rightName;
-    this.facilityId = facilityId;
-    this.programId = programId;
-  }
-
-  /**
-   * Converts to an Array suitable for SQL insert.  The order:
-   * <ol>
-   *   <li>ID - randomly generated</li>
-   *   <li>userId</li>
-   *   <li>rightName</li>
-   *   <li>facilityId - may be null</li>
-   *   <li>programId - may be null</li>
-   * </ol>
-   * @return as an Array of Strings, some elements may be null
-   */
-  public String[] toColumnArray() {
-    String[] columns = new String[5];
-    columns[0] = UUID.randomUUID().toString();
-    columns[1] = userId.toString();
-    columns[2] = rightName;
-    columns[3] = facilityId != null ? facilityId.toString() : null;
-    columns[4] = programId != null ? programId.toString() : null;
-    return columns;
-  }
 }

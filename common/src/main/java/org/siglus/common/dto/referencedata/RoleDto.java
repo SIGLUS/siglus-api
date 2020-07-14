@@ -20,10 +20,8 @@ import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.Right;
-import org.siglus.common.domain.referencedata.Role;
 
-public class RoleDto extends BaseDto implements Role.Exporter, Role.Importer {
+public class RoleDto extends BaseDto {
 
   @Getter
   @Setter
@@ -38,22 +36,6 @@ public class RoleDto extends BaseDto implements Role.Exporter, Role.Importer {
   @Getter
   @Setter
   private Long count;
-
-  @Override
-  public void setRights(Set<Right> rights) {
-    for (Right right : rights) {
-      RightDto rightDto = new RightDto();
-      right.export(rightDto);
-      this.rights.add(rightDto);
-    }
-  }
-
-  @Override
-  public Set<Right.Importer> getRights() {
-    Set<Right.Importer> rights = new HashSet<>();
-    rights.addAll(this.rights);
-    return rights;
-  }
 
   @Override
   public boolean equals(Object obj) {

@@ -23,9 +23,6 @@ import org.apache.commons.lang3.Validate;
  */
 public final class LocalizedMessage {
 
-  public static final String MESSAGE_KEY_FIELD = "messageKey";
-  public static final String MESSAGE_FIELD = "message";
-
   @JsonProperty(access = JsonProperty.Access.READ_ONLY)
   private String messageKey;
 
@@ -43,7 +40,4 @@ public final class LocalizedMessage {
     return messageKey + ": " + message;
   }
 
-  public String asMessage() {
-    return message;
-  }
 }

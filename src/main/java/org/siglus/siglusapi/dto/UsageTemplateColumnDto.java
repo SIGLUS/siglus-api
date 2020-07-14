@@ -20,8 +20,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.openlmis.requisition.dto.AvailableRequisitionColumnOptionDto;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.domain.AvailableUsageColumn;
-import org.siglus.siglusapi.domain.BaseEntity;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.springframework.beans.BeanUtils;
 

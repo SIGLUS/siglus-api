@@ -15,7 +15,6 @@
 
 package org.siglus.common.dto.referencedata;
 
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -33,8 +32,6 @@ import org.siglus.common.domain.referencedata.Program;
 public final class ProgramObjectReferenceDto extends ObjectReferenceDto
     implements Program.Exporter {
 
-  private static final String PROGRAMS = "programs";
-
   private String code;
   private String name;
   private String description;
@@ -44,7 +41,4 @@ public final class ProgramObjectReferenceDto extends ObjectReferenceDto
   private Boolean showNonFullSupplyTab;
   private Boolean enableDatePhysicalStockCountCompleted;
 
-  public ProgramObjectReferenceDto(UUID id, String serviceUrl) {
-    super(serviceUrl, PROGRAMS, id);
-  }
 }

@@ -15,13 +15,9 @@
 
 package org.openlmis.requisition.dto;
 
-import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
-import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
-
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,25 +62,6 @@ public final class BasicRequisitionDto extends BaseDto implements Requisition.Ex
   private BasicProgramDto program;
 
   private Map<String, Object> extraData;
-
-  // [SIGLUS change start]
-  // [change reason]: get actual start date && get end date
-  public LocalDate getActualStartDate() {
-    if (extraData != null && extraData.get(ACTUAL_START_DATE) != null) {
-      DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-      return LocalDate.parse((String) extraData.get(ACTUAL_START_DATE), dateTimeFormatter);
-    }
-    return null;
-  }
-
-  public LocalDate getActualEndDate() {
-    if (extraData != null && extraData.get(ACTUAL_END_DATE) != null) {
-      DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-      return LocalDate.parse((String) extraData.get(ACTUAL_END_DATE), dateTimeFormatter);
-    }
-    return null;
-  }
-  // [SIGLUS change end]
 
   @Override
   public void addStatusChange(StatusChange.Exporter statusChangeExporter) {

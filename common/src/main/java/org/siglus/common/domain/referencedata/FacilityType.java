@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Table(name = "facility_types", schema = "referencedata")
@@ -55,22 +56,6 @@ public class FacilityType extends BaseEntity {
   @Setter
   private Boolean active;
 
-  public FacilityType(String code) {
-    this.code = code;
-  }
-
-  /**
-   * Copy method. TODO: eventually replace with importer/exporter pattern (e.g. Right.Importer and
-   * Right.Exporter with export() method and importer constructor.
-   */
-  public void updateFrom(FacilityType facilityType) {
-    this.code = facilityType.code;
-    this.name = facilityType.name;
-    this.description = facilityType.description;
-    this.displayOrder = facilityType.displayOrder;
-    this.active = facilityType.active;
-  }
-
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
@@ -86,38 +71,6 @@ public class FacilityType extends BaseEntity {
   @Override
   public int hashCode() {
     return Objects.hash(code);
-  }
-
-  /**
-   * Creates new facility type object based on data from {@link Importer}.
-   *
-   * @param importer instance of {@link Importer}
-   * @return new instance of facility type.
-   */
-  public static FacilityType newFacilityType(Importer importer) {
-    FacilityType facilityType = new FacilityType();
-    facilityType.setId(importer.getId());
-    facilityType.setCode(importer.getCode());
-    facilityType.setName(importer.getName());
-    facilityType.setDescription(importer.getDescription());
-    facilityType.setDisplayOrder(importer.getDisplayOrder());
-    facilityType.setActive(importer.getActive());
-
-    return facilityType;
-  }
-
-  /**
-   * Exports current state of facility type object.
-   *
-   * @param exporter instance of {@link Exporter}
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(getId());
-    exporter.setCode(code);
-    exporter.setName(name);
-    exporter.setDescription(description);
-    exporter.setDisplayOrder(displayOrder);
-    exporter.setActive(active);
   }
 
   public interface Exporter extends BaseExporter {

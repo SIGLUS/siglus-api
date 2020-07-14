@@ -15,7 +15,8 @@
 
 package org.siglus.siglusapi.exception;
 
-import org.siglus.siglusapi.util.Message;
+import org.siglus.common.exception.BaseMessageException;
+import org.siglus.common.util.Message;
 
 public class NotAcceptableException extends BaseMessageException {
 

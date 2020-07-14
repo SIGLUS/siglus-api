@@ -13,38 +13,47 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.domain.referencedata;
+package org.siglus.common.domain;
 
-import static org.siglus.common.domain.referencedata.BaseEntity.UUID_TYPE;
-
-import java.time.ZonedDateTime;
 import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import lombok.AllArgsConstructor;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
-@Embeddable
-@NoArgsConstructor
-@AllArgsConstructor
+@MappedSuperclass
 @EqualsAndHashCode
 @ToString
-@Getter
-public final class CreationDetails {
+public abstract class BaseEntity {
 
-  @Column(nullable = false)
+  public static final String UUID_TYPE = "pg-uuid";
+
+  protected static final int STANDARD_BATCH_SIZE = 25;
+
+  @Id
+  @GeneratedValue(generator = "uuid-gen")
+  @GenericGenerator(name = "uuid-gen",
+      strategy = "org.siglus.common.util.ConditionalUuidGenerator")
   @Type(type = UUID_TYPE)
-  private UUID createdBy;
+  @Getter
+  @Setter
+  private UUID id;
 
-  @Column(columnDefinition = "timestamp with time zone", nullable = false)
-  private ZonedDateTime createdDate;
+  public interface BaseExporter {
 
-  public CreationDetails(UUID createdBy) {
-    this(createdBy, ZonedDateTime.now());
+    void setId(UUID id);
+
+  }
+
+  public interface BaseImporter {
+
+    UUID getId();
+
   }
 
 }

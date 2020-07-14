@@ -50,8 +50,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.siglus.common.domain.referencedata.BaseEntity.BaseExporter;
-import org.siglus.common.domain.referencedata.BaseEntity.BaseImporter;
+import org.siglus.common.domain.BaseEntity.BaseExporter;
+import org.siglus.common.domain.BaseEntity.BaseImporter;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;
 import org.siglus.common.domain.referencedata.VersionIdentity.VersionExporter;
@@ -216,79 +216,13 @@ public class Orderable implements Versionable {
     return identity.getId();
   }
 
-  public void setId(UUID id) {
-    identity.setId(id);
-  }
-
   @Override
   public Long getVersionNumber() {
     return identity.getVersionNumber();
   }
 
-  /**
-   * Get the association to a {@link Program}.
-   *
-   * @param program the Program this product is (maybe) in.
-   * @return the association to the given {@link Program}, or null if this product is not in the
-   *     given program or is marked inactive.
-   */
-  public ProgramOrderable getProgramOrderable(Program program) {
-    for (ProgramOrderable programOrderable : programOrderables) {
-      if (programOrderable.isForProgram(program) && programOrderable.isActive()) {
-        return programOrderable;
-      }
-    }
-
-    return null;
-  }
-
-  /**
-   * Returns the number of packs to order. For this Orderable given a desired number of dispensing
-   * units, will return the number of packs that should be ordered.
-   *
-   * @param dispensingUnits # of dispensing units we'd like to order for
-   * @return the number of packs that should be ordered.
-   */
-  public long packsToOrder(long dispensingUnits) {
-    if (dispensingUnits <= 0 || netContent == 0) {
-      return 0;
-    }
-
-    long packsToOrder = dispensingUnits / netContent;
-    long remainderQuantity = dispensingUnits % netContent;
-
-    if (remainderQuantity > 0 && remainderQuantity > packRoundingThreshold) {
-      packsToOrder += 1;
-    }
-
-    if (packsToOrder == 0 && !roundToZero) {
-      packsToOrder = 1;
-    }
-
-    return packsToOrder;
-  }
-
   public String getTradeItemIdentifier() {
     return identifiers.get(TRADE_ITEM);
-  }
-
-  public String getCommodityTypeIdentifier() {
-    return identifiers.get(COMMODITY_TYPE);
-  }
-
-  public boolean hasDispensable(Dispensable dispensable) {
-    return this.dispensable.equals(dispensable);
-  }
-
-  /**
-   * Checks whether this resource was modified since the provided date. If date is null,
-   * this method will always return true.
-   *
-   * @param date date to check against, can be null
-   * @return true if resource was modified since the provided date, false otherwise
-   */
-  public boolean wasModifiedSince(ZonedDateTime date) {
-    return date == null || lastUpdated.isAfter(date);
   }
 
   /**
@@ -299,8 +233,7 @@ public class Orderable implements Versionable {
    */
   @Override
   public final boolean equals(Object object) {
-    return null != object
-        && object instanceof Orderable
+    return object instanceof Orderable
         && Objects.equals(productCode, ((Orderable) object).productCode);
   }
 
@@ -341,11 +274,6 @@ public class Orderable implements Versionable {
     if (inBoxCubeDimension != null) {
       exporter.setInBoxCubeDimension(inBoxCubeDimension);
     }
-  }
-
-  public void setExtraData(Map<String, Object> extraData) {
-    this.extraData = ExtraDataEntity.defaultEntity(this.extraData);
-    this.extraData.updateFrom(extraData);
   }
 
   public interface Exporter extends BaseExporter, ExtraDataExporter, VersionExporter {
@@ -405,6 +333,5 @@ public class Orderable implements Versionable {
 
     TemperatureMeasurement.Importer getMaximumTemperature();
 
-    VolumeMeasurement.Importer getInBoxCubeDimension();
   }
 }

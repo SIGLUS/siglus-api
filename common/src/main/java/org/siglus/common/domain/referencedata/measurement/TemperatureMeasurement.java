@@ -36,30 +36,11 @@ public final class TemperatureMeasurement extends BaseMeasurement {
 
   private String temperatureMeasurementUnitCode;
 
-  public TemperatureMeasurement(Double value, String temperatureMeasurementUnitCode) {
-    super(value);
-    this.temperatureMeasurementUnitCode = temperatureMeasurementUnitCode;
-  }
-
   @Override
   public List<String> getCodeListVersion() {
     return Stream.of(TemperatureUnitCode.values())
             .map(TemperatureUnitCode::name)
             .collect(Collectors.toList());
-  }
-
-  /**
-   * Static factory method for constructing a new Temperature Measurement using an importer (DTO).
-   *
-   * @param importer the TemperatureMeasurement importer (DTO)
-   */
-  public static TemperatureMeasurement newTemperatureMeasurement(
-          Importer importer) {
-    TemperatureMeasurement newTemperatureMeasurement = new TemperatureMeasurement();
-    newTemperatureMeasurement.temperatureMeasurementUnitCode =
-            importer.getTemperatureMeasurementUnitCode();
-    newTemperatureMeasurement.setValue(importer.getValue());
-    return newTemperatureMeasurement;
   }
 
   /**

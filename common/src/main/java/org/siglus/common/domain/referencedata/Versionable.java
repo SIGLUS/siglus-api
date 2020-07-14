@@ -19,8 +19,4 @@ public interface Versionable extends Identifiable {
 
   Long getVersionNumber();
 
-  default VersionIdentity getVersionIdentity() {
-    return new VersionIdentity(getId(), getVersionNumber());
-  }
-
 }

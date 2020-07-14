@@ -36,15 +36,9 @@ public final class CustomSingleColumnMoneyUserType
 
   private static final String CURRENCY_CODE = System.getenv("CURRENCY_CODE");
 
-  private Properties parameterValues;
-
   @Override
   public void setParameterValues(Properties parameters) {
-    this.parameterValues = parameters;
-  }
-
-  protected Properties getParameterValues() {
-    return parameterValues;
+    // do nothing
   }
 
   @Override

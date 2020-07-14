@@ -27,9 +27,9 @@ import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockManagementDraft;
-import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

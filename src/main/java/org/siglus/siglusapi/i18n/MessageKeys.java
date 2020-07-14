@@ -93,10 +93,6 @@ public abstract class MessageKeys {
   public static final String ERROR_SIZE_NULL = ERROR_PREFIX + ".pageable.size.null";
   public static final String ERROR_SIZE_NOT_POSITIVE = ERROR_PREFIX + ".pageable.size.notPositive";
 
-  protected MessageKeys() {
-    throw new UnsupportedOperationException();
-  }
-
   protected static String join(String... params) {
     return String.join(DELIMITER, Arrays.asList(params));
   }

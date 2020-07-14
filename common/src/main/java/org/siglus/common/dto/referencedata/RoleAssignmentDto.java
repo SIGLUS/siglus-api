@@ -22,8 +22,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.Facility;
-import org.siglus.common.domain.referencedata.FulfillmentRoleAssignment;
 import org.siglus.common.domain.referencedata.Program;
 import org.siglus.common.domain.referencedata.Role;
 import org.siglus.common.domain.referencedata.RoleAssignment;
@@ -34,7 +32,7 @@ import org.siglus.common.domain.referencedata.SupervisoryNode;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RoleAssignmentDto implements RoleAssignment.Exporter,
-    SupervisionRoleAssignment.Exporter, FulfillmentRoleAssignment.Exporter {
+    SupervisionRoleAssignment.Exporter {
 
   @Getter
   @Setter
@@ -87,9 +85,5 @@ public class RoleAssignmentDto implements RoleAssignment.Exporter,
     supervisoryNodeId = supervisoryNode.getId();
   }
   
-  @Override
-  public void setWarehouse(Facility warehouse) {
-    warehouseId = warehouse.getId();
-  }
 }
 

@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.TypeName;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Table(name = "orderable_children", schema = "referencedata",
@@ -65,22 +66,6 @@ public class OrderableChild extends BaseEntity {
   private Long quantity;
 
   /**
-   * Create a new instance of OrderableChild to represent what is in a kit.
-   *
-   * @param parent parent orderable.
-   * @param child kit constituent.
-   * @param quantity quantity of constituent contained in kit.
-   * @return OrderableChild.
-   */
-  public static OrderableChild newInstance(Orderable parent, Orderable child, Long quantity) {
-    OrderableChild orderableChild = new OrderableChild();
-    orderableChild.setOrderable(child);
-    orderableChild.setParent(parent);
-    orderableChild.setQuantity(quantity);
-    return orderableChild;
-  }
-
-  /**
    * Exports current state of Orderable Child object.
    *
    * @param exporter instance of {@link Exporter}
@@ -95,11 +80,6 @@ public class OrderableChild extends BaseEntity {
     void setOrderable(Orderable orderable);
 
     void setQuantity(Long quantity);
-  }
-
-  public interface Importer {
-
-    Long getQuantity();
   }
 
 }

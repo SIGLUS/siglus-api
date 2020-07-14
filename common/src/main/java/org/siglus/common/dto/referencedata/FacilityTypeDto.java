@@ -16,35 +16,21 @@
 package org.siglus.common.dto.referencedata;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.FacilityType;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 @Getter
 @Setter
-public class FacilityTypeDto extends BaseDto
-    implements FacilityType.Exporter, FacilityType.Importer {
+public class FacilityTypeDto extends BaseDto {
   private String code;
   private String name;
   private String description;
   private Integer displayOrder;
   private Boolean active;
 
-  /**
-   * Creates new facilityTypeDto based on given {@link FacilityType}.
-   *
-   * @param facilityType instance of FacilityType
-   * @return new instance of FacilityTypeDto.
-   */
-  public static FacilityTypeDto newInstance(FacilityType facilityType) {
-    if (facilityType == null) {
-      return null;
-    }
-    FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
-    facilityType.export(facilityTypeDto);
-    return facilityTypeDto;
-  }
 }

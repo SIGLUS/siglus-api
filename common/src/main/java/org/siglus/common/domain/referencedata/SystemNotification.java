@@ -28,6 +28,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Getter
@@ -56,45 +57,6 @@ public class SystemNotification extends BaseEntity {
   @ManyToOne
   @JoinColumn(name = "authorid", nullable = false)
   private User author;
-
-  /**
-   * Creates new system notification object based on data from {@link Importer}
-   * and author argument.
-   *
-   * @param importer instance of {@link Importer}
-   * @param author notification author to set.
-   * @return new instance of facility.
-   */
-  public static SystemNotification newInstance(Importer importer, User author) {
-    SystemNotification systemNotification = new SystemNotification();
-    systemNotification.setId(importer.getId());
-    systemNotification.setTitle(importer.getTitle());
-    systemNotification.setMessage(importer.getMessage());
-    systemNotification.setStartDate(importer.getStartDate());
-    systemNotification.setExpiryDate(importer.getExpiryDate());
-    systemNotification.setCreatedDate(importer.getCreatedDate());
-    systemNotification.setActive(importer.isActive());
-    systemNotification.setAuthor(author);
-    return systemNotification;
-  }
-
-  /**
-   * Exports current state of system notification object.
-   *
-   * @param exporter instance of {@link Exporter}
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(id);
-    exporter.setTitle(title);
-    exporter.setMessage(message);
-    exporter.setStartDate(startDate);
-    exporter.setExpiryDate(expiryDate);
-    exporter.setCreatedDate(createdDate);
-    exporter.setActive(active);
-    if (author != null) {
-      exporter.setAuthor(author);
-    }
-  }
 
   public interface Exporter extends BaseExporter {
 

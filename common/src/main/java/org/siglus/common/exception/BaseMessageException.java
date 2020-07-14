@@ -13,9 +13,40 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.util.referencedata.messagekeys;
+package org.siglus.common.exception;
 
-public class DtoExpansionMessageKeys extends MessageKeys {
+import org.siglus.common.util.Message;
 
-  public static final String ERROR = join(SERVICE_ERROR, "dtoExpansion");
+/**
+ * Base class for exceptions using Message.
+ */
+public class BaseMessageException extends RuntimeException {
+  private final transient Message message;
+
+  public BaseMessageException(Message message) {
+    this.message = message;
+  }
+
+  public BaseMessageException(Message message, Throwable cause) {
+    super(cause);
+    this.message = message;
+  }
+
+  public BaseMessageException(String messageKey) {
+    this.message = new Message(messageKey);
+  }
+
+  public Message asMessage() {
+    return message;
+  }
+
+  /**
+   * Overrides RuntimeException's public String getMessage().
+   *
+   * @return a localized string description
+   */
+  @Override
+  public String getMessage() {
+    return this.message.toString();
+  }
 }
