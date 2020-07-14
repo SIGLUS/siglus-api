@@ -65,7 +65,6 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @EntityScan(basePackages = {"org.siglus", "org.openlmis"})
 @EnableJpaRepositories(basePackages = {"org.siglus", "org.openlmis"})
 @PropertySource("classpath:application.properties")
-@PropertySource("classpath:referencedata-application.properties")
 @PropertySource("classpath:stockmanagement-application.properties")
 @PropertySource("classpath:requisition-application.properties")
 @PropertySource("classpath:fulfillment-application.properties")
