@@ -49,6 +49,7 @@ public final class SupportedProgram {
 
   @SuppressWarnings("squid:S3437")
   // https://github.com/jhipster/generator-jhipster/issues/4553
+  @Getter
   private LocalDate startDate;
 
   public boolean isActiveFor(Program program) {
