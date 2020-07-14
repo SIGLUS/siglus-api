@@ -13,29 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.util.referencedata;
+package org.siglus.common.serializer.referencedata;
 
-import org.siglus.common.domain.referencedata.IdealStockAmount;
-import org.openlmis.referencedata.dto.IdealStockAmountDto;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import java.io.IOException;
+import org.joda.money.Money;
 
-@Component
-public class IdealStockAmountDtoBuilder {
+/**
+ * MoneySerializer class represents the serializer for Money.
+ */
 
-  @Value("${service.url}")
-  private String serviceUrl;
+public class MoneySerializer extends JsonSerializer<Money> {
 
-  /**
-   * Builds Ideal Stock Amount dto from {@link IdealStockAmount}.
-   *
-   * @param idealStockAmount instance of {@link IdealStockAmount}
-   * @return instance of Ideal Stock Amount dto.
-   */
-  public IdealStockAmountDto build(IdealStockAmount idealStockAmount) {
-    IdealStockAmountDto dto = new IdealStockAmountDto();
-    dto.setServiceUrl(serviceUrl);
-    idealStockAmount.export(dto);
-    return dto;
+  @Override
+  public void serialize(Money value, JsonGenerator generator, SerializerProvider provider)
+      throws IOException {
+    generator.writeNumber(value.getAmount());
   }
 }
