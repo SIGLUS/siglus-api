@@ -207,61 +207,6 @@ public class Orderable implements Versionable {
     this.lastUpdated = ZonedDateTime.now();
   }
 
-  /**
-   * Creates a new instance of orderable with an updated version from importer.
-   *
-   * @param persistedOrderable persisted orderable.
-   * @param importer importer.
-   * @return a new Orderable.
-   */
-  public static Orderable updateFrom(Orderable persistedOrderable, Importer importer) {
-    Orderable orderable = newInstance(importer);
-    orderable.identity = new VersionIdentity(persistedOrderable.getId(),
-        persistedOrderable.getVersionNumber() + 1);
-    return orderable;
-  }
-
-  /**
-   * Creates new instance based on data from {@link Importer}.
-   *
-   * @param importer instance of {@link Importer}
-   * @return new instance of Orderable.
-   */
-  public static Orderable newInstance(Importer importer) {
-    Orderable orderable = new Orderable();
-    orderable.productCode = Code.code(importer.getProductCode());
-    orderable.dispensable = Dispensable.createNew(importer.getDispensable());
-    orderable.fullProductName = importer.getFullProductName();
-    orderable.description = importer.getDescription();
-    orderable.netContent = importer.getNetContent();
-    orderable.packRoundingThreshold = importer.getPackRoundingThreshold();
-    orderable.roundToZero = importer.getRoundToZero();
-    orderable.programOrderables = new ArrayList<>();
-    orderable.children = new HashSet<>();
-
-    orderable.identifiers = importer.getIdentifiers();
-
-    orderable.extraData = ExtraDataEntity.defaultEntity(orderable.extraData);
-    orderable.extraData.updateFrom(importer.getExtraData());
-
-    orderable.identity = new VersionIdentity(importer.getId(), importer.getVersionNumber());
-    orderable.lastUpdated = ZonedDateTime.now();
-    if (importer.getMinimumTemperature() != null) {
-      orderable.minimumTemperature = TemperatureMeasurement
-              .newTemperatureMeasurement(importer.getMinimumTemperature());
-    }
-    if (importer.getMaximumTemperature() != null) {
-      orderable.maximumTemperature = TemperatureMeasurement
-              .newTemperatureMeasurement(importer.getMaximumTemperature());
-    }
-    if (importer.getInBoxCubeDimension() != null) {
-      orderable.inBoxCubeDimension = VolumeMeasurement
-              .newVolumeMeasurement(importer.getInBoxCubeDimension());
-    }
-
-    return orderable;
-  }
-
   @PrePersist
   @PreUpdate
   public void updateLastUpdatedDate() {

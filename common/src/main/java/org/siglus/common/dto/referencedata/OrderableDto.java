@@ -32,7 +32,6 @@ import org.siglus.common.domain.referencedata.Dispensable;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.domain.referencedata.measurement.TemperatureMeasurement;
 import org.siglus.common.domain.referencedata.measurement.VolumeMeasurement;
-import org.openlmis.referencedata.repository.OrderableRepository;
 
 @Getter
 @Setter
@@ -72,9 +71,6 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
   private TemperatureMeasurementDto maximumTemperature;
 
   private VolumeMeasurementDto inBoxCubeDimension;
-
-  @JsonIgnore
-  private OrderableRepository orderableRepository;
 
   /**
    * Create new set of OrderableDto based on given iterable of {@link Orderable}.
@@ -118,13 +114,7 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
   @Override
   @JsonIgnore
   public Long getVersionNumber() {
-    if (null == orderableRepository) {
       return 1L;
-    } else {
-      Orderable latestOrderable = orderableRepository
-          .findFirstByIdentityIdOrderByIdentityVersionNumberDesc(getId());
-      return latestOrderable.getVersionNumber();
-    }
   }
 
   @Override

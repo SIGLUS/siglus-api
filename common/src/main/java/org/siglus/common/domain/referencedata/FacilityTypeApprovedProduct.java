@@ -117,24 +117,6 @@ public class FacilityTypeApprovedProduct implements Versionable {
     this.active = toBooleanDefaultIfNull(active, true);
   }
 
-  /**
-   * Creates new FacilityTypeApprovedProduct based on data from {@link
-   * Importer}.
-   *
-   * @param importer instance of {@link Importer}
-   * @return new instance of FacilityTypeApprovedProduct.
-   */
-  public static FacilityTypeApprovedProduct newFacilityTypeApprovedProduct(Importer importer) {
-    FacilityTypeApprovedProduct ftap = new FacilityTypeApprovedProduct(
-        importer.getId(), importer.getVersionNumber(), importer.getOrderableId(),
-        null, null, importer.getMaxPeriodsOfStock(), importer.getActive()
-    );
-    ftap.setMinPeriodsOfStock(importer.getMinPeriodsOfStock());
-    ftap.setEmergencyOrderPoint(importer.getEmergencyOrderPoint());
-
-    return ftap;
-  }
-
   @Override
   public UUID getId() {
     return identity.getId();
