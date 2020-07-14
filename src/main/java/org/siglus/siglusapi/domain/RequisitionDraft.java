@@ -15,11 +15,14 @@
 
 package org.siglus.siglusapi.domain;
 
+import static org.siglus.common.constant.FieldConstants.EXTRA_DATA_IS_SAVED;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
@@ -31,6 +34,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import org.javers.core.metamodel.annotation.DiffIgnore;
+import org.openlmis.requisition.domain.ExtraDataEntity;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.dto.UserDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -73,12 +77,17 @@ public class RequisitionDraft extends BaseEntity {
   private List<UsageInformationLineItemDraft> usageInformationLineItemDrafts = Collections
       .emptyList();
 
+  @Embedded
+  private ExtraDataEntity extraData = new ExtraDataEntity();
+
   public static RequisitionDraft from(SiglusRequisitionDto requisitionDto,
       RequisitionTemplate template, UUID draftId, UserDto userDto) {
     RequisitionDraft draft = new RequisitionDraft();
     draft.setId(draftId);
     draft.setFacilityid(userDto.getHomeFacilityId());
     draft.setRequisitionId(requisitionDto.getId());
+    draft.extraData.updateFrom(requisitionDto.getExtraData());
+    draft.extraData.put(EXTRA_DATA_IS_SAVED, true);
     if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableProduct())) {
       draft.setLineItems(requisitionDto.getRequisitionLineItems().stream().map(lineItem ->
           RequisitionLineItemDraft.from(draft, lineItem)).collect(Collectors.toList()));
@@ -92,5 +101,6 @@ public class RequisitionDraft extends BaseEntity {
     }
     return draft;
   }
+
 }
 

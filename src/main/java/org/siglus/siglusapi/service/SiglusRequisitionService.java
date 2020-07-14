@@ -1035,6 +1035,7 @@ public class SiglusRequisitionService {
 
   private void fillRequisitionDraft(RequisitionDraft draft,
       RequisitionTemplateExtension templateExtension, SiglusRequisitionDto dto) {
+    dto.setExtraData(draft.getExtraData().getExtraData());
     if (Boolean.TRUE.equals(templateExtension.getEnableProduct())) {
       dto.setRequisitionLineItems(draft.getLineItems()
           .stream()
@@ -1049,5 +1050,4 @@ public class SiglusRequisitionService {
           UsageInformationLineItemDraft.getLineItemDto(draft.getUsageInformationLineItemDrafts()));
     }
   }
-
 }
