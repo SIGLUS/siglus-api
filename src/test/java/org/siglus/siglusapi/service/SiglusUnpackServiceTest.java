@@ -50,7 +50,7 @@ import org.openlmis.referencedata.domain.OrderableDisplayCategory;
 import org.openlmis.referencedata.domain.Program;
 import org.openlmis.referencedata.domain.ProgramOrderable;
 import org.openlmis.referencedata.domain.User;
-import org.openlmis.referencedata.dto.LotDto;
+import org.siglus.common.dto.referencedata.LotDto;
 import org.openlmis.referencedata.repository.OrderableRepository;
 import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.referencedata.util.Pagination;

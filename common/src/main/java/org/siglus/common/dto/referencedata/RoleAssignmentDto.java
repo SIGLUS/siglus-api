@@ -22,13 +22,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.domain.FulfillmentRoleAssignment;
-import org.openlmis.referencedata.domain.Program;
-import org.openlmis.referencedata.domain.Role;
-import org.openlmis.referencedata.domain.RoleAssignment;
-import org.openlmis.referencedata.domain.SupervisionRoleAssignment;
-import org.openlmis.referencedata.domain.SupervisoryNode;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.domain.referencedata.FulfillmentRoleAssignment;
+import org.siglus.common.domain.referencedata.Program;
+import org.siglus.common.domain.referencedata.Role;
+import org.siglus.common.domain.referencedata.RoleAssignment;
+import org.siglus.common.domain.referencedata.SupervisionRoleAssignment;
+import org.siglus.common.domain.referencedata.SupervisoryNode;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @NoArgsConstructor

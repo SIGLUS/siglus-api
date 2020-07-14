@@ -52,16 +52,16 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.openlmis.referencedata.domain.BaseEntity.BaseExporter;
-import org.openlmis.referencedata.domain.BaseEntity.BaseImporter;
-import org.openlmis.referencedata.domain.ExtraDataEntity.ExtraDataExporter;
-import org.openlmis.referencedata.domain.ExtraDataEntity.ExtraDataImporter;
-import org.openlmis.referencedata.domain.VersionIdentity.VersionExporter;
-import org.openlmis.referencedata.domain.VersionIdentity.VersionImporter;
-import org.openlmis.referencedata.domain.measurement.TemperatureMeasurement;
-import org.openlmis.referencedata.domain.measurement.VolumeMeasurement;
-import org.openlmis.referencedata.dto.OrderableChildDto;
-import org.openlmis.referencedata.dto.ProgramOrderableDto;
+import org.siglus.common.domain.referencedata.BaseEntity.BaseExporter;
+import org.siglus.common.domain.referencedata.BaseEntity.BaseImporter;
+import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
+import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;
+import org.siglus.common.domain.referencedata.VersionIdentity.VersionExporter;
+import org.siglus.common.domain.referencedata.VersionIdentity.VersionImporter;
+import org.siglus.common.domain.referencedata.measurement.TemperatureMeasurement;
+import org.siglus.common.domain.referencedata.measurement.VolumeMeasurement;
+import org.siglus.common.dto.referencedata.OrderableChildDto;
+import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 
 /**
  * Products that are Orderable by Program.  An Orderable represent any medical commodities that may

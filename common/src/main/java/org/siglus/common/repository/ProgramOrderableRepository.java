@@ -17,7 +17,7 @@ package org.siglus.common.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.openlmis.referencedata.domain.ProgramOrderable;
+import org.siglus.common.domain.referencedata.ProgramOrderable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProgramOrderableRepository

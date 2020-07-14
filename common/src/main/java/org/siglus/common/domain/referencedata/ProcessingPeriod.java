@@ -29,8 +29,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.openlmis.referencedata.domain.ExtraDataEntity.ExtraDataExporter;
-import org.openlmis.referencedata.domain.ExtraDataEntity.ExtraDataImporter;
+import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
+import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;
 
 @Entity
 @Table(name = "processing_periods", schema = "referencedata")

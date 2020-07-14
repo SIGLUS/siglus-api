@@ -16,7 +16,7 @@
 package org.siglus.common.domain.referencedata;
 
 import static java.util.Collections.singleton;
-import static org.openlmis.referencedata.domain.RightType.SUPERVISION;
+import static org.siglus.common.domain.referencedata.RightType.SUPERVISION;
 
 import java.util.HashSet;
 import java.util.Objects;

@@ -28,8 +28,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.domain.GeographicLevel;
-import org.openlmis.referencedata.domain.GeographicZone;
+import org.siglus.common.domain.referencedata.GeographicLevel;
+import org.siglus.common.domain.referencedata.GeographicZone;
 
 @NoArgsConstructor
 @AllArgsConstructor

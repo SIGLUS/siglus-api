@@ -47,8 +47,8 @@ import lombok.Setter;
 import org.hibernate.spatial.JTSGeometryJavaTypeDescriptor;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.openlmis.referencedata.domain.ExtraDataEntity.ExtraDataExporter;
-import org.openlmis.referencedata.dto.NamedResource;
+import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
+import org.siglus.common.dto.referencedata.NamedResource;
 
 @Entity
 @NoArgsConstructor

@@ -23,8 +23,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.domain.OrderableChild;
+import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.domain.referencedata.OrderableChild;
 
 @NoArgsConstructor
 @AllArgsConstructor

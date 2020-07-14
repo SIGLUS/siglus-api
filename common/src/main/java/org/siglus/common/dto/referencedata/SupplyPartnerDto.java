@@ -25,9 +25,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.domain.SupplyPartner;
-import org.openlmis.referencedata.domain.SupplyPartnerAssociation;
-import org.openlmis.referencedata.domain.SupplyPartnerAssociation.Importer;
+import org.siglus.common.domain.referencedata.SupplyPartner;
+import org.siglus.common.domain.referencedata.SupplyPartnerAssociation;
+import org.siglus.common.domain.referencedata.SupplyPartnerAssociation.Importer;
 
 @NoArgsConstructor
 @AllArgsConstructor

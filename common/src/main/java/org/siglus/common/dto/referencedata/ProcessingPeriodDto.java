@@ -23,8 +23,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.ProcessingPeriod;
-import org.openlmis.referencedata.domain.ProcessingSchedule;
+import org.siglus.common.domain.referencedata.ProcessingPeriod;
+import org.siglus.common.domain.referencedata.ProcessingSchedule;
 
 @NoArgsConstructor
 @AllArgsConstructor

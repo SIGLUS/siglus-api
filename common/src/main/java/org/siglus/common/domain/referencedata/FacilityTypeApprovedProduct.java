@@ -35,10 +35,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.openlmis.referencedata.domain.BaseEntity.BaseExporter;
-import org.openlmis.referencedata.domain.BaseEntity.BaseImporter;
-import org.openlmis.referencedata.domain.VersionIdentity.VersionExporter;
-import org.openlmis.referencedata.domain.VersionIdentity.VersionImporter;
+import org.siglus.common.domain.referencedata.BaseEntity.BaseExporter;
+import org.siglus.common.domain.referencedata.BaseEntity.BaseImporter;
+import org.siglus.common.domain.referencedata.VersionIdentity.VersionExporter;
+import org.siglus.common.domain.referencedata.VersionIdentity.VersionImporter;
 
 @Entity
 @Table(name = "facility_type_approved_products", schema = "referencedata",

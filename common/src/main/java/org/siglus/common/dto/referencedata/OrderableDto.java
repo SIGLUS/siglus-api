@@ -28,10 +28,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.domain.Dispensable;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.domain.measurement.TemperatureMeasurement;
-import org.openlmis.referencedata.domain.measurement.VolumeMeasurement;
+import org.siglus.common.domain.referencedata.Dispensable;
+import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.domain.referencedata.measurement.TemperatureMeasurement;
+import org.siglus.common.domain.referencedata.measurement.VolumeMeasurement;
 import org.openlmis.referencedata.repository.OrderableRepository;
 
 @Getter

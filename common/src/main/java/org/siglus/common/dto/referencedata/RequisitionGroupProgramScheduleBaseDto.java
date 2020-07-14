@@ -23,11 +23,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.domain.ProcessingSchedule;
-import org.openlmis.referencedata.domain.Program;
-import org.openlmis.referencedata.domain.RequisitionGroup;
-import org.openlmis.referencedata.domain.RequisitionGroupProgramSchedule;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.domain.referencedata.ProcessingSchedule;
+import org.siglus.common.domain.referencedata.Program;
+import org.siglus.common.domain.referencedata.RequisitionGroup;
+import org.siglus.common.domain.referencedata.RequisitionGroupProgramSchedule;
 
 @NoArgsConstructor
 @AllArgsConstructor

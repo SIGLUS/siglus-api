@@ -15,7 +15,7 @@
 
 package org.siglus.common.dto.referencedata;
 
-import org.openlmis.referencedata.domain.ProcessingPeriod;
+import org.siglus.common.domain.referencedata.ProcessingPeriod;
 
 public class IsaProcessingPeriodDto extends ProcessingPeriodDto
     implements ProcessingPeriod.Exporter, ProcessingPeriod.Importer {

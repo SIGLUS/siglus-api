@@ -23,7 +23,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.openlmis.referencedata.domain.Dispensable;
+import org.siglus.common.domain.referencedata.Dispensable;
 
 @Getter
 @NoArgsConstructor

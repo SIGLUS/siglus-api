@@ -24,10 +24,10 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.domain.RequisitionGroup;
-import org.openlmis.referencedata.domain.RequisitionGroupProgramSchedule;
-import org.openlmis.referencedata.domain.SupervisoryNode;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.domain.referencedata.RequisitionGroup;
+import org.siglus.common.domain.referencedata.RequisitionGroupProgramSchedule;
+import org.siglus.common.domain.referencedata.SupervisoryNode;
 
 @NoArgsConstructor
 public class RequisitionGroupBaseDto extends BaseDto implements RequisitionGroup.Importer,

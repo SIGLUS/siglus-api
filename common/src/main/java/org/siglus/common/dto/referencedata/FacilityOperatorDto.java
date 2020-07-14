@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.FacilityOperator;
+import org.siglus.common.domain.referencedata.FacilityOperator;
 
 @NoArgsConstructor
 @AllArgsConstructor

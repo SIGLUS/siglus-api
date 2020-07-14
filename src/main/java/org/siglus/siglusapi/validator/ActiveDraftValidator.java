@@ -26,7 +26,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.UUID;
-import org.openlmis.referencedata.domain.User;
+import org.siglus.common.domain.referencedata.User;
 import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.exception.ValidationMessageException;

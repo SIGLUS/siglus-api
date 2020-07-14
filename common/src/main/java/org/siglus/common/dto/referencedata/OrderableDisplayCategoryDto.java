@@ -20,7 +20,7 @@ import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.OrderableDisplayCategory;
+import org.siglus.common.domain.referencedata.OrderableDisplayCategory;
 
 @Getter
 @Setter

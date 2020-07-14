@@ -29,7 +29,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.BaseEntity;
+import org.siglus.common.domain.referencedata.BaseEntity;
 import org.openlmis.requisition.domain.ColumnType;
 
 @Entity

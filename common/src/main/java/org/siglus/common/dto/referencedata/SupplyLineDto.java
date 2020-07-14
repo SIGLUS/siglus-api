@@ -24,10 +24,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.domain.Program;
-import org.openlmis.referencedata.domain.SupervisoryNode;
-import org.openlmis.referencedata.domain.SupplyLine;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.domain.referencedata.Program;
+import org.siglus.common.domain.referencedata.SupervisoryNode;
+import org.siglus.common.domain.referencedata.SupplyLine;
 
 @Getter
 @Setter

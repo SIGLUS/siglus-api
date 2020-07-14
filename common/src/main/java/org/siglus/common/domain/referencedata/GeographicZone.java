@@ -35,7 +35,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.spatial.JTSGeometryJavaTypeDescriptor;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.openlmis.referencedata.domain.ExtraDataEntity.ExtraDataExporter;
+import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
 
 @Entity
 @Table(name = "geographic_zones", schema = "referencedata")

@@ -26,8 +26,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.domain.SystemNotification;
-import org.openlmis.referencedata.domain.User;
+import org.siglus.common.domain.referencedata.SystemNotification;
+import org.siglus.common.domain.referencedata.User;
 import org.openlmis.referencedata.web.BaseController;
 
 @NoArgsConstructor

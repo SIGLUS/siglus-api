@@ -18,7 +18,7 @@ package org.siglus.common.dto.referencedata;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.ProcessingSchedule;
+import org.siglus.common.domain.referencedata.ProcessingSchedule;
 
 @Getter
 @Setter

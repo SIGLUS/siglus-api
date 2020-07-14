@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.openlmis.referencedata.dto.TradeItemClassificationDto;
+import org.siglus.common.dto.referencedata.TradeItemClassificationDto;
 
 /**
  * TradeItems represent branded/produced/physical products.  A TradeItem is used for Product's that

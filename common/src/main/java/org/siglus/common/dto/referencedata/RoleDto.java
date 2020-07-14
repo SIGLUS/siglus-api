@@ -20,8 +20,8 @@ import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.Right;
-import org.openlmis.referencedata.domain.Role;
+import org.siglus.common.domain.referencedata.Right;
+import org.siglus.common.domain.referencedata.Role;
 
 public class RoleDto extends BaseDto implements Role.Exporter, Role.Importer {
 

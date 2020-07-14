@@ -21,7 +21,7 @@ import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.TradeItemClassification;
+import org.siglus.common.domain.referencedata.TradeItemClassification;
 
 @Getter
 @Setter

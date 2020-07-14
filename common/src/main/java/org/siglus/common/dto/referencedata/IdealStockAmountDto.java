@@ -17,10 +17,10 @@ package org.siglus.common.dto.referencedata;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.CommodityType;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.domain.IdealStockAmount;
-import org.openlmis.referencedata.domain.ProcessingPeriod;
+import org.siglus.common.domain.referencedata.CommodityType;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.domain.referencedata.IdealStockAmount;
+import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.openlmis.referencedata.web.BaseController;
 import org.openlmis.referencedata.web.CommodityTypeController;
 import org.openlmis.referencedata.web.FacilityController;

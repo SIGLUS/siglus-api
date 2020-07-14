@@ -18,7 +18,7 @@ package org.siglus.common.dto.referencedata;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.measurement.TemperatureMeasurement;
+import org.siglus.common.domain.referencedata.measurement.TemperatureMeasurement;
 
 public class TemperatureMeasurementDto implements TemperatureMeasurement.Importer,
         TemperatureMeasurement.Exporter {

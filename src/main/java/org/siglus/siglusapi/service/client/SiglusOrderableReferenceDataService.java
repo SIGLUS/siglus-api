@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import org.openlmis.referencedata.dto.OrderableDto;
+import org.siglus.common.dto.referencedata.OrderableDto;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
 import org.openlmis.requisition.service.RequestParameters;
 import org.openlmis.requisition.service.referencedata.BaseReferenceDataService;

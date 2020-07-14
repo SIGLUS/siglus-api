@@ -22,8 +22,8 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Collections;
 import java.util.Optional;
-import org.openlmis.referencedata.domain.BaseEntity.BaseImporter;
-import org.openlmis.referencedata.domain.ExtraDataEntity.ExtraDataImporter;
+import org.siglus.common.domain.referencedata.BaseEntity.BaseImporter;
+import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;
 
 public interface FhirLocation extends BaseImporter, ExtraDataImporter {
 

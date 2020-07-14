@@ -16,8 +16,8 @@
 package org.siglus.common.repository;
 
 import java.util.List;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.domain.VersionIdentity;
+import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.domain.referencedata.VersionIdentity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

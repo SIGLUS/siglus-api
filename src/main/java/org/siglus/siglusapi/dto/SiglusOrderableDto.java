@@ -23,12 +23,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.dto.BaseDto;
-import org.openlmis.referencedata.dto.DispensableDto;
-import org.openlmis.referencedata.dto.MetadataDto;
-import org.openlmis.referencedata.dto.OrderableChildDto;
-import org.openlmis.referencedata.dto.TemperatureMeasurementDto;
-import org.openlmis.referencedata.dto.VolumeMeasurementDto;
+import org.siglus.common.dto.referencedata.BaseDto;
+import org.siglus.common.dto.referencedata.DispensableDto;
+import org.siglus.common.dto.referencedata.MetadataDto;
+import org.siglus.common.dto.referencedata.OrderableChildDto;
+import org.siglus.common.dto.referencedata.TemperatureMeasurementDto;
+import org.siglus.common.dto.referencedata.VolumeMeasurementDto;
 
 @Getter
 @Setter

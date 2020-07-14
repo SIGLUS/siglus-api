@@ -23,9 +23,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.domain.BaseEntity.BaseExporter;
-import org.openlmis.referencedata.domain.BaseEntity.BaseImporter;
-import org.openlmis.referencedata.domain.Identifiable;
+import org.siglus.common.domain.referencedata.BaseEntity.BaseExporter;
+import org.siglus.common.domain.referencedata.BaseEntity.BaseImporter;
+import org.siglus.common.domain.referencedata.Identifiable;
 
 @Getter
 @Setter

@@ -26,10 +26,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.domain.FacilityType;
-import org.openlmis.referencedata.domain.FacilityTypeApprovedProduct;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.domain.Program;
+import org.siglus.common.domain.referencedata.FacilityType;
+import org.siglus.common.domain.referencedata.FacilityTypeApprovedProduct;
+import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.domain.referencedata.Program;
 
 @Getter
 @Setter

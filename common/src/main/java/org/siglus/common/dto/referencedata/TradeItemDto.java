@@ -20,7 +20,7 @@ import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.TradeItem;
+import org.siglus.common.domain.referencedata.TradeItem;
 
 @Getter
 @Setter

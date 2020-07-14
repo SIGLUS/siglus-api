@@ -17,7 +17,7 @@ package org.siglus.siglusapi.repository;
 
 import java.util.Set;
 import java.util.UUID;
-import org.openlmis.referencedata.domain.RightAssignment;
+import org.siglus.common.domain.referencedata.RightAssignment;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;

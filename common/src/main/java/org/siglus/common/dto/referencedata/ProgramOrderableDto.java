@@ -27,7 +27,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.joda.money.Money;
-import org.openlmis.referencedata.domain.ProgramOrderable;
+import org.siglus.common.domain.referencedata.ProgramOrderable;
 import org.openlmis.referencedata.serializer.MoneyDeserializer;
 import org.openlmis.referencedata.serializer.MoneySerializer;
 

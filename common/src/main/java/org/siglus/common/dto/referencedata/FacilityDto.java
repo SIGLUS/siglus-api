@@ -29,9 +29,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.domain.FacilityOperator;
-import org.openlmis.referencedata.domain.SupportedProgram;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.domain.referencedata.FacilityOperator;
+import org.siglus.common.domain.referencedata.SupportedProgram;
 
 @NoArgsConstructor
 @AllArgsConstructor

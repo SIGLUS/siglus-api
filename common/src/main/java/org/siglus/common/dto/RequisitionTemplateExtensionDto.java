@@ -21,7 +21,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.openlmis.referencedata.dto.BaseDto;
+import org.siglus.common.dto.referencedata.BaseDto;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.springframework.beans.BeanUtils;
 

@@ -29,8 +29,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.domain.RequisitionGroup;
-import org.openlmis.referencedata.domain.SupervisoryNode;
+import org.siglus.common.domain.referencedata.RequisitionGroup;
+import org.siglus.common.domain.referencedata.SupervisoryNode;
 import org.openlmis.referencedata.web.RequisitionGroupController;
 import org.openlmis.referencedata.web.SupervisoryNodeController;
 

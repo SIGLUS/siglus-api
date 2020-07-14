@@ -93,7 +93,7 @@ import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
-import org.openlmis.referencedata.domain.SupervisoryNode;
+import org.siglus.common.domain.referencedata.SupervisoryNode;
 import org.openlmis.requisition.domain.BaseTimestampedEntity;
 import org.openlmis.requisition.domain.ExtraDataEntity;
 import org.openlmis.requisition.domain.ExtraDataEntity.ExtraDataExporter;

@@ -37,7 +37,7 @@ import javax.persistence.SqlResultSetMappings;
 import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.openlmis.referencedata.dto.RoleAssignmentDto;
+import org.siglus.common.dto.referencedata.RoleAssignmentDto;
 import org.openlmis.referencedata.exception.ValidationMessageException;
 import org.openlmis.referencedata.repository.CountResource;
 import org.openlmis.referencedata.util.Message;

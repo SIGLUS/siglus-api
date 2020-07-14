@@ -23,9 +23,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.NoArgsConstructor;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.domain.RequisitionGroupProgramSchedule;
-import org.openlmis.referencedata.domain.SupervisoryNode;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.domain.referencedata.RequisitionGroupProgramSchedule;
+import org.siglus.common.domain.referencedata.SupervisoryNode;
 
 @NoArgsConstructor
 public class RequisitionGroupDto extends RequisitionGroupBaseDto {

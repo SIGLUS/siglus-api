@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.Lot;
+import org.siglus.common.domain.referencedata.Lot;
 
 @NoArgsConstructor
 @AllArgsConstructor

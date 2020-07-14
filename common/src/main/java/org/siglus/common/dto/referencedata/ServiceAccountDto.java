@@ -21,7 +21,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.domain.ServiceAccount;
+import org.siglus.common.domain.referencedata.ServiceAccount;
 
 @Getter
 @Setter

@@ -20,8 +20,8 @@ import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
-import org.openlmis.referencedata.domain.Right;
-import org.openlmis.referencedata.domain.RightType;
+import org.siglus.common.domain.referencedata.Right;
+import org.siglus.common.domain.referencedata.RightType;
 
 public class RightDto extends BaseDto implements Right.Exporter, Right.Importer {
 

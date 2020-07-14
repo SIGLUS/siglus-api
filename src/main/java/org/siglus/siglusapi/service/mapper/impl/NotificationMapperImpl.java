@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.service.mapper.impl;
 
 import java.util.UUID;
-import org.openlmis.referencedata.domain.User;
+import org.siglus.common.domain.referencedata.User;
 import org.openlmis.referencedata.repository.UserRepository;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.OrderDto;

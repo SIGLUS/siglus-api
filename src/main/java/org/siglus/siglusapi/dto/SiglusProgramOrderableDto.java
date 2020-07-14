@@ -18,7 +18,7 @@ package org.siglus.siglusapi.dto;
 import java.util.UUID;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.openlmis.referencedata.dto.ProgramOrderableDto;
+import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

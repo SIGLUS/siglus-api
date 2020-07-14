@@ -16,9 +16,9 @@
 package org.siglus.common.dto.referencedata;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.domain.Program;
-import org.openlmis.referencedata.domain.RequisitionGroup;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.domain.referencedata.Program;
+import org.siglus.common.domain.referencedata.RequisitionGroup;
 
 public class RequisitionGroupProgramScheduleDto extends RequisitionGroupProgramScheduleBaseDto {
 

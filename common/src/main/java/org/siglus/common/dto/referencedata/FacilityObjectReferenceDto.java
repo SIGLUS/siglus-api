@@ -30,11 +30,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.domain.FacilityOperator;
-import org.openlmis.referencedata.domain.FacilityType;
-import org.openlmis.referencedata.domain.GeographicZone;
-import org.openlmis.referencedata.domain.SupportedProgram;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.domain.referencedata.FacilityOperator;
+import org.siglus.common.domain.referencedata.FacilityType;
+import org.siglus.common.domain.referencedata.GeographicZone;
+import org.siglus.common.domain.referencedata.SupportedProgram;
 
 @Getter
 @Setter

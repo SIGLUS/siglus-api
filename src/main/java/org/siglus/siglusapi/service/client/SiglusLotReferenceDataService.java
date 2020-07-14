@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.service.client;
 
 import java.util.List;
-import org.openlmis.referencedata.dto.LotDto;
+import org.siglus.common.dto.referencedata.LotDto;
 import org.openlmis.referencedata.service.LotSearchParams;
 import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.constant.FieldConstants;
