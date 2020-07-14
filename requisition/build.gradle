@@ -62,9 +62,7 @@ dependencies {
     compile 'org.springframework:spring-context-support'
     compile 'org.webjars.npm:api-console:3.0.17'
 
-    compileTestJava.dependsOn tasks.getByPath(':referencedata:classes')
     compileTestJava.dependsOn tasks.getByPath(':common:classes')
-    testCompile project(':referencedata').sourceSets.main.output
     testCompile project(':common').sourceSets.main.output
 
     testCompile "be.joengenduvel.java.verifiers:to-string:1.0.2"

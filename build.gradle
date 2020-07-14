@@ -35,7 +35,6 @@ repositories {
 }
 
 dependencies {
-    compile project(':referencedata')
     compile project(':stockmanagement')
     compile project(':requisition')
     compile project(':fulfillment')

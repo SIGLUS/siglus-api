@@ -38,7 +38,6 @@ repositories {
 }
 
 dependencies {
-    compile(project(":referencedata"))
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-data-rest"
     compile "org.springframework.boot:spring-boot-starter-data-jpa"
