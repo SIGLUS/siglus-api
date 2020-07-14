@@ -990,7 +990,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(mockRightDto());
     when(roleReferenceDataService.search(rightId)).thenReturn(mockRoleDto());
     when(authenticationHelper.getCurrentUser()).thenReturn(mockInternalUserDto());
-    when(supervisoryNodeReferenceDataService.findAll())
+    when(supervisoryNodeReferenceDataService.findAllSupervisoryNodes())
         .thenReturn(mockAllSupervisoryNodeForInternal());
     when(requisitionGroupReferenceDataService.findAll()).thenReturn(mockAllRequisitionGroup());
     when(facilityReferenceDataService.findAll()).thenReturn(mockAllFacilityDto());
@@ -1007,7 +1007,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(mockRightDto());
     when(roleReferenceDataService.search(rightId)).thenReturn(mockRoleDto());
     when(authenticationHelper.getCurrentUser()).thenReturn(mockExternalUserDto());
-    when(supervisoryNodeReferenceDataService.findAll())
+    when(supervisoryNodeReferenceDataService.findAllSupervisoryNodes())
         .thenReturn(mockAllSupervisoryNodeForExternal());
     when(requisitionGroupReferenceDataService.findAll()).thenReturn(mockAllRequisitionGroup());
     when(facilityReferenceDataService.findAll()).thenReturn(mockAllFacilityDto());

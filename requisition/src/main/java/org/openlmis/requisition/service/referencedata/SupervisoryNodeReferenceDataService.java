@@ -69,7 +69,7 @@ public class SupervisoryNodeReferenceDataService
 
   // [SIGLUS change start]
   // [change reason]: need find all.
-  public List<SupervisoryNodeDto> findAll() {
+  public List<SupervisoryNodeDto> findAllSupervisoryNodes() {
     return getPage(RequestParameters.init()).getContent();
   }
   // [SIGLUS change end]

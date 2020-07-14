@@ -43,7 +43,6 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -196,10 +195,6 @@ public abstract class BaseCommunicationServiceTest<T> {
     verify(authService, times(2)).obtainAccessToken();
   }
 
-  // [SIGLUS change start]
-  // [change reason]: v3 findAll has bug, can't fetch
-  @Ignore
-  // [SIGLUS change end]
   @Test
   public void shouldFindAllResources() {
     // when

@@ -79,6 +79,11 @@ schemas:
         "items": {"type": "object", "$ref": "schemas/notificationDto.json"}
       }
   - pod: !include schemas/pod.json
+  - facilityList: |
+      {
+        "type": "array",
+        "items": { "type": "object", "$ref": "facility.json" }
+      }
 resourceTypes:
   - collection:
       get:
@@ -1376,6 +1381,13 @@ traits:
       get:
         is: [ secured ]
         description: Get facilities to approve
+        responses:
+          200:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: facilityList
 
 
     /orders/batch:

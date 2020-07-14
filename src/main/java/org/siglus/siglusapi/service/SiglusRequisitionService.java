@@ -389,7 +389,7 @@ public class SiglusRequisitionService {
 
     // id : supervisory node
     Map<UUID, SupervisoryNodeDto> nodeDtoMap =
-        supervisoryNodeReferenceDataService.findAll()
+        supervisoryNodeReferenceDataService.findAllSupervisoryNodes()
         .stream()
         .collect(toMap(SupervisoryNodeDto::getId, node -> node));
 
