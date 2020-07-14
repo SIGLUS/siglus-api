@@ -15,7 +15,7 @@
 
 package org.siglus.common.util.referencedata;
 
-import org.openlmis.referencedata.domain.IdealStockAmount;
+import org.siglus.common.domain.referencedata.IdealStockAmount;
 import org.openlmis.referencedata.dto.IdealStockAmountDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

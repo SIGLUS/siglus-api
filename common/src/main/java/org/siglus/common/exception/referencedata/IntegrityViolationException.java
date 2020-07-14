@@ -15,7 +15,7 @@
 
 package org.siglus.common.exception.referencedata;
 
-import org.openlmis.referencedata.util.Message;
+import org.siglus.common.util.referencedata.Message;
 
 public class IntegrityViolationException extends BaseMessageException {
 

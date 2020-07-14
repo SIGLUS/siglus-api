@@ -34,7 +34,7 @@ public abstract class BaseEntity implements Identifiable {
   @Id
   @GeneratedValue(generator = "uuid-gen")
   @GenericGenerator(name = "uuid-gen",
-      strategy = "org.openlmis.referencedata.util.ConditionalUuidGenerator")
+      strategy = "org.siglus.common.util.referencedata.ConditionalUuidGenerator")
   @Type(type = UUID_TYPE)
   @Getter
   @Setter

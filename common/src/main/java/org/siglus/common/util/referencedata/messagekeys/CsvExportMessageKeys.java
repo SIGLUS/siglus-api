@@ -15,7 +15,7 @@
 
 package org.siglus.common.util.referencedata.messagekeys;
 
-import static org.openlmis.referencedata.util.messagekeys.MessageKeys.SERVICE_ERROR;
+import static org.siglus.common.util.referencedata.messagekeys.MessageKeys.SERVICE_ERROR;
 
 public class CsvExportMessageKeys {
 

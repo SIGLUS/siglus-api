@@ -76,7 +76,7 @@ public class ProgramOrderable extends BaseEntity {
 
   @Getter
   @Setter
-  @Type(type = "org.openlmis.referencedata.util.CustomSingleColumnMoneyUserType")
+  @Type(type = "org.siglus.common.util.referencedata.CustomSingleColumnMoneyUserType")
   private Money pricePerPack;
   
   private ProgramOrderable(Program program,

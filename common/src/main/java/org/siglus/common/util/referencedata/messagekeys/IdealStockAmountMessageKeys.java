@@ -15,13 +15,13 @@
 
 package org.siglus.common.util.referencedata.messagekeys;
 
-import static org.openlmis.referencedata.util.messagekeys.MessageKeys.COMMODITY_TYPE;
-import static org.openlmis.referencedata.util.messagekeys.MessageKeys.FACILITY;
-import static org.openlmis.referencedata.util.messagekeys.MessageKeys.NOT_FOUND;
-import static org.openlmis.referencedata.util.messagekeys.MessageKeys.PROCESSING_PERIOD;
-import static org.openlmis.referencedata.util.messagekeys.MessageKeys.REQUIRED;
-import static org.openlmis.referencedata.util.messagekeys.MessageKeys.SERVICE_ERROR;
-import static org.openlmis.referencedata.util.messagekeys.MessageKeys.join;
+import static org.siglus.common.util.referencedata.messagekeys.MessageKeys.COMMODITY_TYPE;
+import static org.siglus.common.util.referencedata.messagekeys.MessageKeys.FACILITY;
+import static org.siglus.common.util.referencedata.messagekeys.MessageKeys.NOT_FOUND;
+import static org.siglus.common.util.referencedata.messagekeys.MessageKeys.PROCESSING_PERIOD;
+import static org.siglus.common.util.referencedata.messagekeys.MessageKeys.REQUIRED;
+import static org.siglus.common.util.referencedata.messagekeys.MessageKeys.SERVICE_ERROR;
+import static org.siglus.common.util.referencedata.messagekeys.MessageKeys.join;
 
 public class IdealStockAmountMessageKeys {
   private static final String ERROR = join(SERVICE_ERROR, "idealStockAmount");

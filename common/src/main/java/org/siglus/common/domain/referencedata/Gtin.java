@@ -15,15 +15,15 @@
 
 package org.siglus.common.domain.referencedata;
 
-import static org.openlmis.referencedata.util.messagekeys.TradeItemMessageKeys.ERROR_GTIN_INVALID_LENGTH;
-import static org.openlmis.referencedata.util.messagekeys.TradeItemMessageKeys.ERROR_GTIN_NUMERIC;
+import static org.siglus.common.util.referencedata.messagekeys.TradeItemMessageKeys.ERROR_GTIN_INVALID_LENGTH;
+import static org.siglus.common.util.referencedata.messagekeys.TradeItemMessageKeys.ERROR_GTIN_NUMERIC;
 
 import javax.persistence.Embeddable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.openlmis.referencedata.exception.ValidationMessageException;
-import org.openlmis.referencedata.util.Message;
+import org.siglus.common.exception.referencedata.ValidationMessageException;
+import org.siglus.common.util.referencedata.Message;
 
 /**
  * Global Trade Item Number, associated with TradeItem.

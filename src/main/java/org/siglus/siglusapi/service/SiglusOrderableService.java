@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.siglus.common.dto.referencedata.OrderableDto;
-import org.openlmis.referencedata.util.Pagination;
+import org.siglus.common.util.referencedata.Pagination;
 import org.openlmis.referencedata.web.QueryOrderableSearchParams;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.repository.ProgramExtensionRepository;

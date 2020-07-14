@@ -18,8 +18,8 @@ package org.siglus.common.domain.referencedata;
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
-import static org.openlmis.referencedata.util.messagekeys.RoleMessageKeys.ERROR_MUST_HAVE_A_RIGHT;
-import static org.openlmis.referencedata.util.messagekeys.RoleMessageKeys.ERROR_RIGHTS_ARE_DIFFERENT_TYPES;
+import static org.siglus.common.util.referencedata.messagekeys.RoleMessageKeys.ERROR_MUST_HAVE_A_RIGHT;
+import static org.siglus.common.util.referencedata.messagekeys.RoleMessageKeys.ERROR_RIGHTS_ARE_DIFFERENT_TYPES;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -38,8 +38,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.openlmis.referencedata.exception.ValidationMessageException;
-import org.openlmis.referencedata.util.Message;
+import org.siglus.common.exception.referencedata.ValidationMessageException;
+import org.siglus.common.util.referencedata.Message;
 
 @Entity
 @Table(name = "roles", schema = "referencedata")

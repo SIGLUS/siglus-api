@@ -18,7 +18,7 @@ package org.siglus.common.util.referencedata;
 import java.io.Serializable;
 import org.hibernate.engine.spi.SessionImplementor;
 import org.hibernate.id.UUIDGenerator;
-import org.openlmis.referencedata.domain.BaseEntity;
+import org.siglus.common.domain.referencedata.BaseEntity;
 
 public class ConditionalUuidGenerator extends UUIDGenerator {
 

@@ -61,7 +61,7 @@ public class SupervisionRoleAssignment extends RoleAssignment {
    * @param role    the role being assigned
    * @param user    the user to which the role is being assigned
    * @param program the program where the role applies
-   * @throws org.openlmis.referencedata.exception.ValidationMessageException if role passed in
+   * @throws org.siglus.common.exception.referencedata.ValidationMessageException if role passed in
    *      has rights which are not an acceptable right type
    */
   public SupervisionRoleAssignment(Role role, User user, Program program) {
@@ -78,7 +78,7 @@ public class SupervisionRoleAssignment extends RoleAssignment {
    * @param user            the user to which the role is being assigned
    * @param program         the program where the role applies
    * @param supervisoryNode the supervisory node where the role applies
-   * @throws org.openlmis.referencedata.exception.ValidationMessageException if role passed in
+   * @throws org.siglus.common.exception.referencedata.ValidationMessageException if role passed in
    *      has rights which are not an acceptable right type
    */
   public SupervisionRoleAssignment(Role role, User user, Program program,

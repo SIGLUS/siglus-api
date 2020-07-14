@@ -19,7 +19,7 @@ import com.google.common.collect.Maps;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
-import org.openlmis.referencedata.domain.BaseEntity;
+import org.siglus.common.domain.referencedata.BaseEntity;
 
 public class EntityCollection<T extends BaseEntity> {
 

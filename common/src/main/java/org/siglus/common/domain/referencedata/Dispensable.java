@@ -32,8 +32,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.MapKeyColumn;
 import javax.persistence.Table;
 import lombok.Getter;
-import org.openlmis.referencedata.exception.ValidationMessageException;
-import org.openlmis.referencedata.util.messagekeys.OrderableMessageKeys;
+import org.siglus.common.exception.referencedata.ValidationMessageException;
+import org.siglus.common.util.referencedata.messagekeys.OrderableMessageKeys;
 
 /**
  * A dispensable describes how product is dispensed/given to a patient.

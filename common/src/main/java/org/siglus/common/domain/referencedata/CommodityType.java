@@ -32,9 +32,9 @@ import lombok.Setter;
 import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.javers.core.metamodel.annotation.TypeName;
 import org.siglus.common.dto.referencedata.CommodityTypeDto;
-import org.openlmis.referencedata.exception.ValidationMessageException;
-import org.openlmis.referencedata.util.Message;
-import org.openlmis.referencedata.util.messagekeys.CommodityTypeMessageKeys;
+import org.siglus.common.exception.referencedata.ValidationMessageException;
+import org.siglus.common.util.referencedata.Message;
+import org.siglus.common.util.referencedata.messagekeys.CommodityTypeMessageKeys;
 
 /**
  * CommodityTypes are generic commodities to simplify ordering and use.  A CommodityType doesn't

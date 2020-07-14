@@ -15,8 +15,8 @@
 
 package org.siglus.common.domain.referencedata;
 
-import static org.openlmis.referencedata.util.messagekeys.SupplyPartnerMessageKeys.ERROR_CODE_REQUIRED;
-import static org.openlmis.referencedata.util.messagekeys.SupplyPartnerMessageKeys.ERROR_NAME_REQUIRED;
+import static org.siglus.common.util.referencedata.messagekeys.SupplyPartnerMessageKeys.ERROR_CODE_REQUIRED;
+import static org.siglus.common.util.referencedata.messagekeys.SupplyPartnerMessageKeys.ERROR_NAME_REQUIRED;
 
 import com.google.common.collect.Lists;
 import java.util.List;
@@ -35,7 +35,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.javers.core.metamodel.annotation.TypeName;
-import org.openlmis.referencedata.exception.ValidationMessageException;
+import org.siglus.common.exception.referencedata.ValidationMessageException;
 
 @Getter
 @Setter
