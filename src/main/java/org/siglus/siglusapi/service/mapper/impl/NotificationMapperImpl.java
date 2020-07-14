@@ -16,8 +16,6 @@
 package org.siglus.siglusapi.service.mapper.impl;
 
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.User;
-import org.openlmis.referencedata.repository.UserRepository;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
@@ -27,6 +25,8 @@ import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
+import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.repository.UserRepository;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;

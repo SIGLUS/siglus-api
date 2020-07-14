@@ -22,10 +22,10 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUBMIT_START_DATE_IS_B
 import java.time.LocalDate;
 import java.util.List;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
-import org.openlmis.referencedata.repository.ProcessingPeriodRepository;
-import org.openlmis.referencedata.repository.ProcessingScheduleRepository;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.common.repository.ProcessingPeriodRepository;
+import org.siglus.common.repository.ProcessingScheduleRepository;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

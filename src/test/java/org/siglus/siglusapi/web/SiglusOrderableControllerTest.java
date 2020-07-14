@@ -24,8 +24,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.domain.User;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
+import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
@@ -40,7 +40,7 @@ public class SiglusOrderableControllerTest {
   private SiglusOrderableService siglusOrderableService;
 
   @Mock
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @Mock
   private MultiValueMap<String, Object> queryParams;

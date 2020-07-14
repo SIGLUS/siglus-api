@@ -34,7 +34,6 @@ import org.javers.repository.sql.SqlRepositoryBuilder;
 import org.javers.spring.boot.sql.JaversSqlProperties;
 import org.javers.spring.jpa.TransactionalJaversBuilder;
 import org.openlmis.fulfillment.i18n.FulfillmentExposedMessageSourceImpl;
-import org.openlmis.referencedata.validate.ProcessingPeriodValidator;
 import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
 import org.openlmis.stockmanagement.i18n.StockmanagementExposedMessageSourceImpl;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
@@ -151,15 +150,6 @@ public class Application {
   // copy from stockmanagement Application.java end
 
   // copy from requisition Application.java start
-  @Bean
-  public ProcessingPeriodValidator beforeCreatePeriodValidator() {
-    return new ProcessingPeriodValidator();
-  }
-
-  @Bean
-  public ProcessingPeriodValidator beforeSavePeriodValidator() {
-    return new ProcessingPeriodValidator();
-  }
 
   /**
    * Creates new MessageSource.

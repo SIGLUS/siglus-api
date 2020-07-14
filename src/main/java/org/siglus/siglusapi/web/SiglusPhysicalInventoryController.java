@@ -23,8 +23,8 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -46,7 +46,7 @@ public class SiglusPhysicalInventoryController {
   private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
 
   @Autowired
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @GetMapping
   public List<PhysicalInventoryDto> searchPhysicalInventories(

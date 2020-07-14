@@ -31,23 +31,23 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
-import org.siglus.common.domain.referencedata.Orderable;
-import org.siglus.common.domain.referencedata.OrderableChild;
-import org.siglus.common.domain.referencedata.User;
-import org.siglus.common.dto.referencedata.LotDto;
-import org.siglus.common.dto.referencedata.OrderableChildDto;
-import org.siglus.common.dto.referencedata.OrderableDto;
-import org.openlmis.referencedata.exception.NotFoundException;
-import org.openlmis.referencedata.repository.OrderableRepository;
-import org.openlmis.referencedata.service.LotSearchParams;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
 import org.siglus.common.domain.ProgramExtension;
+import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.domain.referencedata.OrderableChild;
+import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.LotDto;
+import org.siglus.common.dto.referencedata.LotSearchParams;
+import org.siglus.common.dto.referencedata.OrderableChildDto;
+import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.common.exception.referencedata.NotFoundException;
 import org.siglus.common.repository.OrderableKitRepository;
+import org.siglus.common.repository.OrderableRepository;
 import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.OrderableInKitDto;
 import org.siglus.siglusapi.dto.SiglusOrdeableKitDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
@@ -71,7 +71,7 @@ public class SiglusUnpackService {
   private OrderableRepository orderableRepository;
 
   @Autowired
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @Autowired
   PermissionService permissionService;

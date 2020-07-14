@@ -35,8 +35,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.domain.User;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
@@ -46,7 +44,9 @@ import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.siglus.common.domain.ProgramExtension;
+import org.siglus.common.domain.referencedata.User;
 import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -59,7 +59,7 @@ public class SiglusStockCardSummariesServiceTest {
   private ProgramExtensionRepository programExtensionRepository;
 
   @Mock
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @Mock
   private StockCardSummariesService stockCardSummariesService;

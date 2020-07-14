@@ -22,11 +22,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.openlmis.referencedata.domain.Orderable.COMMODITY_TYPE;
-import static org.openlmis.referencedata.domain.Orderable.TRADE_ITEM;
 import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_ADJUST;
 import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
 import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
+import static org.siglus.common.domain.referencedata.Orderable.COMMODITY_TYPE;
+import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
@@ -42,26 +42,26 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.domain.Code;
-import org.openlmis.referencedata.domain.Dispensable;
-import org.openlmis.referencedata.domain.Orderable;
-import org.openlmis.referencedata.domain.OrderableChild;
-import org.openlmis.referencedata.domain.OrderableDisplayCategory;
-import org.openlmis.referencedata.domain.Program;
-import org.openlmis.referencedata.domain.ProgramOrderable;
-import org.openlmis.referencedata.domain.User;
-import org.siglus.common.dto.referencedata.LotDto;
-import org.openlmis.referencedata.repository.OrderableRepository;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
-import org.openlmis.referencedata.util.Pagination;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.PermissionStrings.Handler;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
 import org.siglus.common.domain.ProgramExtension;
+import org.siglus.common.domain.referencedata.Code;
+import org.siglus.common.domain.referencedata.Dispensable;
+import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.domain.referencedata.OrderableChild;
+import org.siglus.common.domain.referencedata.OrderableDisplayCategory;
+import org.siglus.common.domain.referencedata.Program;
+import org.siglus.common.domain.referencedata.ProgramOrderable;
+import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.repository.OrderableKitRepository;
+import org.siglus.common.repository.OrderableRepository;
 import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.dto.OrderableInKitDto;
 import org.siglus.siglusapi.dto.SiglusOrdeableKitDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
@@ -82,7 +82,7 @@ public class SiglusUnpackServiceTest {
   private OrderableRepository orderableRepository;
 
   @Mock
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @Mock
   PermissionService permissionService;

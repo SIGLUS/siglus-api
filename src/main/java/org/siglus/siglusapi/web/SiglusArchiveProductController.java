@@ -17,7 +17,7 @@ package org.siglus.siglusapi.web;
 
 import java.util.Set;
 import java.util.UUID;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +35,7 @@ public class SiglusArchiveProductController {
   private SiglusArchiveProductService archiveProductService;
 
   @Autowired
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @PostMapping("/{orderableId}/archive")
   public void archiveProduct(@PathVariable UUID orderableId) {

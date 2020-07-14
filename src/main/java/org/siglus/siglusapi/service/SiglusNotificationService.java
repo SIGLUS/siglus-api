@@ -29,10 +29,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
-import org.siglus.common.domain.referencedata.RightAssignment;
-import org.siglus.common.domain.referencedata.User;
-import org.openlmis.referencedata.repository.SupervisoryNodeRepository;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
@@ -43,6 +39,10 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.siglus.common.domain.referencedata.RightAssignment;
+import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.repository.SupervisoryNodeRepository;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.dto.NotificationDto;
@@ -68,7 +68,7 @@ public class SiglusNotificationService {
 
   private final NotificationMapper mapper;
 
-  private final ReferencedataAuthenticationHelper authenticationHelper;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   private final OrderFulfillmentService orderService;
 

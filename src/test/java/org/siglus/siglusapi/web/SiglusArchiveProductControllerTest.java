@@ -25,15 +25,15 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.domain.User;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
+import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusArchiveProductControllerTest {
 
   @Mock
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @Mock
   private SiglusArchiveProductService archiveProductService;

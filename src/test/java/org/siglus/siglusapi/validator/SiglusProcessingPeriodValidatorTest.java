@@ -31,14 +31,14 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.domain.ProcessingPeriod;
-import org.openlmis.referencedata.domain.ProcessingSchedule;
-import org.openlmis.referencedata.repository.ProcessingPeriodRepository;
-import org.openlmis.referencedata.repository.ProcessingScheduleRepository;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProcessingScheduleDto;
 import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.siglus.common.domain.referencedata.ProcessingPeriod;
+import org.siglus.common.domain.referencedata.ProcessingSchedule;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.common.repository.ProcessingPeriodRepository;
+import org.siglus.common.repository.ProcessingScheduleRepository;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 
 @RunWith(MockitoJUnitRunner.class)

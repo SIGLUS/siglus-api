@@ -18,8 +18,8 @@ package org.siglus.siglusapi.web;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import java.util.UUID;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.stockmanagement.dto.StockEventDto;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +35,7 @@ public class SiglusStockEventsController {
   private SiglusStockEventsService stockEventsService;
 
   @Autowired
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @PostMapping
   public UUID createStockEvent(@RequestBody StockEventDto eventDto) {

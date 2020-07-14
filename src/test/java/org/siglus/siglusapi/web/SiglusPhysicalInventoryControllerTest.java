@@ -26,9 +26,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.referencedata.domain.User;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
+import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -42,7 +42,7 @@ public class SiglusPhysicalInventoryControllerTest {
   private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
 
   @Mock
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   private UUID programId = UUID.randomUUID();
 

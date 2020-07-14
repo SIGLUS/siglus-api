@@ -27,7 +27,7 @@ import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.common.domain.referencedata.User;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,7 @@ public class ActiveDraftValidator {
       Lists.newArrayList("adjustment", "issue", "receive");
 
   @Autowired
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   public void validateFacilityId(UUID facilityId) {
     if (facilityId == null || new UUID(0L, 0L).equals(facilityId)) {

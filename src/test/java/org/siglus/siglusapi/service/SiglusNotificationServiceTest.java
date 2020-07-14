@@ -39,11 +39,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
-import org.openlmis.referencedata.domain.Facility;
-import org.openlmis.referencedata.domain.SupervisoryNode;
-import org.openlmis.referencedata.domain.User;
-import org.openlmis.referencedata.repository.SupervisoryNodeRepository;
-import org.openlmis.referencedata.service.ReferencedataAuthenticationHelper;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
@@ -56,6 +51,11 @@ import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.domain.referencedata.SupervisoryNode;
+import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.repository.SupervisoryNodeRepository;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.repository.NotificationRepository;
@@ -81,7 +81,7 @@ public class SiglusNotificationServiceTest {
   private NotificationRepository repo;
 
   @Mock
-  private ReferencedataAuthenticationHelper authenticationHelper;
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @Mock
   private SiglusRightAssignmentRepository rightAssignRepo;
