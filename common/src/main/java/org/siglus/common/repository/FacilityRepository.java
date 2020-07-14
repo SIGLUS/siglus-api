@@ -19,6 +19,6 @@ import java.util.UUID;
 import org.siglus.common.domain.referencedata.Facility;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface FacilityRepository extends JpaRepository<Facility, UUID>{
+public interface FacilityRepository extends JpaRepository<Facility, UUID> {
 
 }

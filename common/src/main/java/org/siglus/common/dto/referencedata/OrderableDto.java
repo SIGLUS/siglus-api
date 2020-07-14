@@ -114,7 +114,7 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
   @Override
   @JsonIgnore
   public Long getVersionNumber() {
-      return 1L;
+    return 1L;
   }
 
   @Override

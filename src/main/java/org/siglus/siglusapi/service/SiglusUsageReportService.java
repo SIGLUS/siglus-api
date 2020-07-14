@@ -31,8 +31,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.common.domain.referencedata.Orderable;
-import org.siglus.common.dto.referencedata.OrderableDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
@@ -41,6 +39,8 @@ import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummarySto
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.util.Message;
 import org.siglus.common.domain.ProgramExtension;
+import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.siglusapi.domain.KitUsageLineItem;
