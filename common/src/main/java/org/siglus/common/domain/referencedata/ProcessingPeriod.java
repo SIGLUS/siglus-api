@@ -26,7 +26,6 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.javers.core.metamodel.annotation.TypeName;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;

@@ -20,7 +20,6 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.Getter;
-import org.javers.core.metamodel.annotation.TypeName;
 import org.siglus.common.domain.BaseEntity;
 
 /**
