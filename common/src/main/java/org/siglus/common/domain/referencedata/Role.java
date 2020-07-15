@@ -15,89 +15,72 @@
 
 package org.siglus.common.domain.referencedata;
 
-import com.fasterxml.jackson.annotation.JsonView;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.OneToMany;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.javers.core.metamodel.annotation.DiffIgnore;
-import org.openlmis.util.View;
 import org.siglus.common.domain.BaseEntity;
 
 @Entity
-@Table(name = "users", schema = "referencedata")
+@Table(name = "roles", schema = "referencedata")
 @NoArgsConstructor
-@AllArgsConstructor
-public class User extends BaseEntity {
+public class Role extends BaseEntity {
+  private static final String TEXT = "text";
 
-  @JsonView(View.BasicInformation.class)
-  @Column(nullable = false, unique = true, columnDefinition = "text")
+  @Column(nullable = false, unique = true, columnDefinition = TEXT)
   @Getter
   @Setter
-  private String username;
+  private String name;
 
-  @Column(nullable = false, columnDefinition = "text")
+  @Column(columnDefinition = TEXT)
   @Getter
   @Setter
-  private String firstName;
+  private String description;
 
-  @Column(nullable = false, columnDefinition = "text")
+  @ManyToMany(fetch = FetchType.EAGER)
+  @JoinTable(name = "role_rights", schema = "referencedata",
+      joinColumns = @JoinColumn(name = "roleid", nullable = false),
+      inverseJoinColumns = @JoinColumn(name = "rightid", nullable = false))
   @Getter
-  @Setter
-  private String lastName;
-
-  @Getter
-  @Setter
-  private String jobTitle;
-
-  @Column
-  @Getter
-  @Setter
-  private String timezone;
-
-  @Getter
-  @Setter
-  private UUID homeFacilityId;
-
-  @Column(nullable = false, columnDefinition = "boolean DEFAULT false")
-  @Getter
-  @Setter
-  private boolean active;
-
-  @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
   @DiffIgnore
-  @Getter
-  private Set<RoleAssignment> roleAssignments = new HashSet<>();
+  private Set<Right> rights;
 
-  @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
-  @DiffIgnore
-  @Getter
-  private Set<RightAssignment> rightAssignments = new HashSet<>();
+  /**
+   * Check if the role contains a specified right. Attached rights are also checked, but only one
+   * level down and it is assumed that the attached rights structure is a "tree" with no loops.
+   *
+   * @param right the right to check
+   * @return true if the role contains the right, false otherwise
+   */
+  public boolean contains(Right right) {
+    return rights.contains(right);
+  }
 
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
       return true;
     }
-    if (!(obj instanceof User)) {
+    if (!(obj instanceof Role)) {
       return false;
     }
-    User user = (User) obj;
-    return Objects.equals(username, user.username);
+    Role role = (Role) obj;
+    return Objects.equals(name, role.name)
+        && Objects.equals(rights, role.rights);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(username);
+    return Objects.hash(name, rights);
   }
 
 }
