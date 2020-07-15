@@ -53,21 +53,6 @@ public class RightAssignment extends BaseEntity {
   @Getter
   private UUID programId;
 
-  public RightAssignment(User user, String rightName) {
-    this.user = user;
-    this.rightName = rightName;
-  }
-  
-  public RightAssignment(User user, String rightName, UUID facilityId) {
-    this(user, rightName);
-    this.facilityId = facilityId;
-  }
-
-  public RightAssignment(User user, String rightName, UUID facilityId, UUID programId) {
-    this(user, rightName, facilityId);
-    this.programId = programId;
-  }
-
   @Override
   public String toString() {
     return rightName 

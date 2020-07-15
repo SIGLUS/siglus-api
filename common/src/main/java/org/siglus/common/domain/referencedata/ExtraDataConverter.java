@@ -23,14 +23,13 @@ import java.io.IOException;
 import java.util.Map;
 import javax.persistence.AttributeConverter;
 import javax.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
+@Slf4j
 public class ExtraDataConverter implements AttributeConverter<Map<String, Object>, String> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(ExtraDataConverter.class);
   private static final TypeReference<Map<String, Object>> TYPE_REF =
       new TypeReference<Map<String, Object>>() {
       };
@@ -54,7 +53,7 @@ public class ExtraDataConverter implements AttributeConverter<Map<String, Object
     try {
       return objectMapper.writeValueAsString(extraData);
     } catch (JsonProcessingException ex) {
-      LOGGER.error("Can't convert extraData to database column", ex);
+      log.error("Can't convert extraData to database column", ex);
       return null;
     }
   }
@@ -70,7 +69,7 @@ public class ExtraDataConverter implements AttributeConverter<Map<String, Object
       // IMPORTANT: any type of collection (array, list, set) will be converted to list.
       return objectMapper.readValue(extraDataDataAsString, TYPE_REF);
     } catch (IOException ex) {
-      LOGGER.error("Can't convert string to extraData", ex);
+      log.error("Can't convert string to extraData", ex);
       return Maps.newHashMap();
     }
   }

@@ -21,7 +21,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.siglus.common.domain.referencedata.Program;
 
 @Getter
 @Setter
@@ -29,8 +28,7 @@ import org.siglus.common.domain.referencedata.Program;
 @AllArgsConstructor
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public final class ProgramObjectReferenceDto extends ObjectReferenceDto
-    implements Program.Exporter {
+public final class ProgramObjectReferenceDto extends ObjectReferenceDto {
 
   private String code;
   private String name;

@@ -29,8 +29,6 @@ import lombok.Setter;
 import lombok.ToString;
 import org.siglus.common.domain.referencedata.Dispensable;
 import org.siglus.common.domain.referencedata.Orderable;
-import org.siglus.common.domain.referencedata.measurement.TemperatureMeasurement;
-import org.siglus.common.domain.referencedata.measurement.VolumeMeasurement;
 
 @Getter
 @Setter
@@ -64,12 +62,6 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
   private Map<String, Object> extraData;
 
   private MetadataDto meta = new MetadataDto();
-
-  private TemperatureMeasurementDto minimumTemperature;
-
-  private TemperatureMeasurementDto maximumTemperature;
-
-  private VolumeMeasurementDto inBoxCubeDimension;
 
   /**
    * Create new set of OrderableDto based on given iterable of {@link Orderable}.
@@ -121,21 +113,4 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
     meta.setLastUpdated(lastUpdated);
   }
 
-  public void setMinimumTemperature(
-      TemperatureMeasurement minimumTemperature) {
-    this.minimumTemperature = new TemperatureMeasurementDto();
-    minimumTemperature.export(this.minimumTemperature);
-  }
-
-  public void setMaximumTemperature(
-      TemperatureMeasurement maximumTemperature) {
-    this.maximumTemperature = new TemperatureMeasurementDto();
-    maximumTemperature.export(this.maximumTemperature);
-  }
-
-  @Override
-  public void setInBoxCubeDimension(VolumeMeasurement inBoxCubeDimension) {
-    this.inBoxCubeDimension = new VolumeMeasurementDto();
-    inBoxCubeDimension.export(this.inBoxCubeDimension);
-  }
 }

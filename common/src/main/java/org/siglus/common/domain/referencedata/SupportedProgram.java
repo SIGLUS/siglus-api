@@ -52,33 +52,8 @@ public final class SupportedProgram {
   @Getter
   private LocalDate startDate;
 
-  public boolean isActiveFor(Program program) {
-    return facilityProgram.getProgram().equals(program) && active;
-  }
-
   public UUID programId() {
     return facilityProgram.getProgram().getId();
   }
 
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setProgram(facilityProgram.getProgram());
-    exporter.setSupportActive(active);
-    exporter.setSupportStartDate(startDate);
-    exporter.setSupportLocallyFulfilled(locallyFulfilled);
-  }
-
-  public interface Exporter {
-    void setProgram(Program program);
-
-    void setSupportActive(boolean supportActive);
-
-    void setSupportLocallyFulfilled(boolean supportLocallyFulfilled);
-
-    void setSupportStartDate(LocalDate supportStartDate);
-  }
 }

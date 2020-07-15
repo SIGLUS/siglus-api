@@ -20,14 +20,13 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.siglus.common.domain.referencedata.Program;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode(callSuper = false)
-public class ProgramDto extends BaseDto implements Program.Exporter, Program.Importer {
+public class ProgramDto extends BaseDto {
 
   private String code;
   private String name;

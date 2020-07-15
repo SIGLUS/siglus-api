@@ -27,8 +27,6 @@ import org.siglus.common.dto.referencedata.BaseDto;
 import org.siglus.common.dto.referencedata.DispensableDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableChildDto;
-import org.siglus.common.dto.referencedata.TemperatureMeasurementDto;
-import org.siglus.common.dto.referencedata.VolumeMeasurementDto;
 
 @Getter
 @Setter
@@ -65,12 +63,6 @@ public class SiglusOrderableDto extends BaseDto {
   private Map<String, Object> extraData;
 
   private MetadataDto meta = new MetadataDto();
-
-  private TemperatureMeasurementDto minimumTemperature;
-
-  private TemperatureMeasurementDto maximumTemperature;
-
-  private VolumeMeasurementDto inBoxCubeDimension;
 
   // [SIGLUS change start]
   // [change reason]: support for archive.

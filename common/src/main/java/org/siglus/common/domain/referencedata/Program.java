@@ -15,8 +15,6 @@
 
 package org.siglus.common.domain.referencedata;
 
-import static org.apache.commons.lang3.BooleanUtils.isFalse;
-
 import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -108,83 +106,4 @@ public class Program extends BaseEntity {
     return Objects.hashCode(code);
   }
 
-  /**
-   * Creates new program object based on data from {@link Importer}.
-   *
-   * @param importer instance of {@link Importer}
-   * @return new instance of program.
-   */
-  public static Program newProgram(Importer importer) {
-    Program program = new Program();
-    program.setId(importer.getId());
-    program.setCode(Code.code(importer.getCode()));
-    program.setName(importer.getName());
-    program.setDescription(importer.getDescription());
-    program.setActive(importer.getActive());
-    program.setPeriodsSkippable(importer.getPeriodsSkippable());
-    program.setSkipAuthorization(importer.getSkipAuthorization());
-    program.setShowNonFullSupplyTab(importer.getShowNonFullSupplyTab());
-    program.setEnableDatePhysicalStockCountCompleted(
-        importer.getEnableDatePhysicalStockCountCompleted());
-
-    return program;
-  }
-
-  /**
-   * Exports current state of program object.
-   *
-   * @param exporter instance of {@link Exporter}
-   */
-  public void export(Exporter exporter) {
-    exporter.setId(getId());
-    String codeString = this.code.toString();
-    if (isFalse(codeString.isEmpty())) {
-      exporter.setCode(codeString);
-    }
-    exporter.setName(name);
-    exporter.setDescription(description);
-    exporter.setActive(active);
-    exporter.setPeriodsSkippable(periodsSkippable);
-    exporter.setSkipAuthorization(skipAuthorization);
-    exporter.setShowNonFullSupplyTab(showNonFullSupplyTab);
-    exporter.setEnableDatePhysicalStockCountCompleted(enableDatePhysicalStockCountCompleted);
-  }
-
-  public interface Exporter extends BaseExporter {
-
-    void setCode(String code);
-
-    void setName(String name);
-
-    void setDescription(String description);
-
-    void setActive(Boolean active);
-
-    void setPeriodsSkippable(Boolean periodsSkippable);
-
-    void setSkipAuthorization(Boolean skipAuthorization);
-
-    void setShowNonFullSupplyTab(Boolean showNonFullSupplyTab);
-
-    void setEnableDatePhysicalStockCountCompleted(Boolean enableDatePhysicalStockCountCompleted);
-  }
-
-  public interface Importer extends BaseImporter {
-
-    String getCode();
-
-    String getName();
-
-    String getDescription();
-
-    Boolean getActive();
-
-    Boolean getPeriodsSkippable();
-
-    Boolean getSkipAuthorization();
-
-    Boolean getShowNonFullSupplyTab();
-
-    Boolean getEnableDatePhysicalStockCountCompleted();
-  }
 }

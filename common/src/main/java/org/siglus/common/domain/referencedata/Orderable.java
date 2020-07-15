@@ -21,8 +21,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import javax.persistence.AttributeOverride;
-import javax.persistence.AttributeOverrides;
 import javax.persistence.Cacheable;
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
@@ -56,8 +54,6 @@ import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;
 import org.siglus.common.domain.referencedata.VersionIdentity.VersionExporter;
 import org.siglus.common.domain.referencedata.VersionIdentity.VersionImporter;
-import org.siglus.common.domain.referencedata.measurement.TemperatureMeasurement;
-import org.siglus.common.domain.referencedata.measurement.VolumeMeasurement;
 import org.siglus.common.dto.referencedata.OrderableChildDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 
@@ -150,39 +146,6 @@ public class Orderable implements Versionable {
   @Setter
   private ZonedDateTime lastUpdated;
 
-  @Getter
-  @Setter
-  @Embedded
-  @AttributeOverrides({
-          @AttributeOverride(name = VALUE, column = @Column(
-                  name = "minimumTemperatureValue")),
-          @AttributeOverride(name = "temperatureMeasurementUnitCode", column = @Column(
-                  name = "minimumTemperatureCode"))
-  })
-  private TemperatureMeasurement minimumTemperature;
-
-  @Getter
-  @Setter
-  @Embedded
-  @AttributeOverrides({
-          @AttributeOverride(name = VALUE, column = @Column(
-                  name = "maximumTemperatureValue")),
-          @AttributeOverride(name = "temperatureMeasurementUnitCode", column = @Column(
-                  name = "maximumTemperatureCode"))
-  })
-  private TemperatureMeasurement maximumTemperature;
-
-  @Getter
-  @Setter
-  @Embedded
-  @AttributeOverrides({
-          @AttributeOverride(name = VALUE, column = @Column(
-                  name = "inBoxCubeDimensionValue")),
-          @AttributeOverride(name = "measurementUnitCode", column = @Column(
-                  name = "inBoxCubeDimensionCode"))
-  })
-  private VolumeMeasurement inBoxCubeDimension;
-
   /**
    * Default constructor.
    *
@@ -265,15 +228,6 @@ public class Orderable implements Versionable {
 
     exporter.setVersionNumber(identity.getVersionNumber());
     exporter.setLastUpdated(lastUpdated);
-    if (minimumTemperature != null) {
-      exporter.setMinimumTemperature(minimumTemperature);
-    }
-    if (maximumTemperature != null) {
-      exporter.setMaximumTemperature(maximumTemperature);
-    }
-    if (inBoxCubeDimension != null) {
-      exporter.setInBoxCubeDimension(inBoxCubeDimension);
-    }
   }
 
   public interface Exporter extends BaseExporter, ExtraDataExporter, VersionExporter {
@@ -299,12 +253,6 @@ public class Orderable implements Versionable {
     void setIdentifiers(Map<String, String> identifiers);
 
     void setLastUpdated(ZonedDateTime lastUpdated);
-
-    void setMinimumTemperature(TemperatureMeasurement minimumTemperature);
-
-    void setMaximumTemperature(TemperatureMeasurement maximumTemperature);
-
-    void setInBoxCubeDimension(VolumeMeasurement inBoxCubeDimension);
   }
 
   public interface Importer extends BaseImporter, ExtraDataImporter, VersionImporter {
@@ -328,10 +276,5 @@ public class Orderable implements Versionable {
     Set<OrderableChildDto> getChildren();
 
     Map<String, String> getIdentifiers();
-
-    TemperatureMeasurement.Importer getMinimumTemperature();
-
-    TemperatureMeasurement.Importer getMaximumTemperature();
-
   }
 }

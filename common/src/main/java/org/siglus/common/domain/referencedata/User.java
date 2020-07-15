@@ -77,11 +77,6 @@ public class User extends BaseEntity {
   @Setter
   private boolean active;
 
-  @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
-  @DiffIgnore
-  @Getter
-  private Set<RoleAssignment> roleAssignments = new HashSet<>();
-
   @Embedded
   private ExtraDataEntity extraData = new ExtraDataEntity();
 
