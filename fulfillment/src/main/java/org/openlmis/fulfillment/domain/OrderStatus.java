@@ -18,6 +18,10 @@ package org.openlmis.fulfillment.domain;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
 public enum OrderStatus {
+  // [SIGLUS change start]
+  // [change reason]: partial order.
+  PARTIALLY_FULFILLED,
+  // [SIGLUS change end]
   ORDERED,
   FULFILLING,
   SHIPPED,

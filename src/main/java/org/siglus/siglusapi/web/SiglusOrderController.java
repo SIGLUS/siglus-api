@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import java.util.List;
 import java.util.UUID;
+import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
@@ -24,6 +25,8 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,6 +59,11 @@ public class SiglusOrderController {
   public Iterable<BasicOrderDto> batchCreateOrders(@RequestBody List<OrderDto> orders,
       OAuth2Authentication authentication) {
     return orderController.batchCreateOrders(orders, authentication);
+  }
+  @GetMapping()
+  @ResponseBody
+  public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
+    return siglusOrderService.searchOrders(params, pageable);
   }
 
   @GetMapping("/{id}")
