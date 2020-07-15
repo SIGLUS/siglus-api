@@ -674,32 +674,27 @@ public class SiglusRequisitionService {
 
   @Transactional
   public void deleteRequisition(UUID requisitionId) {
-    siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
     deleteExtensionForRequisition(requisitionId);
+    deleteSiglusDraft(requisitionId);
     siglusUsageReportService.deleteUsageReport(requisitionId);
+    siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
   }
 
-  @Transactional
-  public void deleteExtensionForRequisition(UUID requisitionId) {
+  private void deleteExtensionForRequisition(UUID requisitionId) {
     Requisition requisition = requisitionRepository.findOne(requisitionId);
-    deleteSiglusDraft(requisitionId);
     List<UUID> ids = findLineItemIds(requisition);
-    deleteSiglusExtension(ids);
+    List<RequisitionLineItemExtension> extensions = ids.isEmpty() ? new ArrayList<>() :
+        lineItemExtensionRepository.findLineItems(ids);
+    if (!extensions.isEmpty()) {
+      log.info("delete line item extension: {}", extensions);
+      lineItemExtensionRepository.delete(extensions);
+    }
   }
 
   public void deleteSiglusDraft(UUID requisitionId) {
     RequisitionDraft draft = draftRepository.findByRequisitionId(requisitionId);
     if (draft != null) {
       draftRepository.delete(draft.getId());
-    }
-  }
-
-  public void deleteSiglusExtension(List<UUID> ids) {
-    List<RequisitionLineItemExtension> extensions = ids.isEmpty() ? new ArrayList<>() :
-        lineItemExtensionRepository.findLineItems(ids);
-    if (!extensions.isEmpty()) {
-      log.info("delete line item extension: {}", extensions);
-      lineItemExtensionRepository.delete(extensions);
     }
   }
 
