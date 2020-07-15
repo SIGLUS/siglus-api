@@ -31,7 +31,6 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
       Specification<Notification> rightFilter) {
     return findAll(
         (root, query, cb) -> cb.and(
-            cb.equal(root.get("notifyFacilityId"), facilityId),
             cb.equal(root.get("viewed"), false),
             rightFilter.toPredicate(root, query, cb)
         ),

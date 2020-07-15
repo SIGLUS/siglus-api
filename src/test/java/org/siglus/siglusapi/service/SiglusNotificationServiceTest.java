@@ -21,6 +21,7 @@ import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -30,6 +31,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,10 +54,7 @@ import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
-import org.siglus.common.domain.referencedata.Facility;
-import org.siglus.common.domain.referencedata.SupervisoryNode;
 import org.siglus.common.domain.referencedata.User;
-import org.siglus.common.repository.SupervisoryNodeRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
@@ -90,9 +90,6 @@ public class SiglusNotificationServiceTest {
   private SiglusRequisitionRequisitionService requisitionService;
 
   @Mock
-  private SupervisoryNodeRepository supervisoryNodeRepo;
-
-  @Mock
   private ProofOfDeliveryFulfillmentService podService;
 
   @Mock
@@ -104,7 +101,9 @@ public class SiglusNotificationServiceTest {
 
   private BasicRequisitionDto requisition;
 
-  private UUID supervisoryNodeFacilityId;
+  private UUID supervisoryNodeId;
+
+  private UUID userId;
 
   @Test
   public void shouldCallRepoAndMapperWhenSearchNotifications() {
@@ -131,6 +130,7 @@ public class SiglusNotificationServiceTest {
   public void shouldSetViewedTrueWhenViewNotificationGivenNotViewedAndNotProcessedNotification() {
     // given
     mockNotification(false, false);
+    mockAuthentication();
 
     // when
     service.viewNotification(notificationId);
@@ -138,13 +138,19 @@ public class SiglusNotificationServiceTest {
     // then
     ArgumentCaptor<Notification> argument = ArgumentCaptor.forClass(Notification.class);
     verify(repo).save(argument.capture());
-    assertTrue(argument.getValue().getViewed());
+    Notification notification = argument.getValue();
+    assertTrue(notification.getViewed());
+    assertEquals(userId, notification.getViewedUserId());
+    assertTrue(
+        Duration.between(LocalDateTime.now(), notification.getViewedDate())
+            .compareTo(Duration.ofSeconds(1)) < 0);
   }
 
   @Test
   public void shouldReturnNotViewedWhenViewNotificationGivenNotViewedAndNotProcessedNotification() {
     // given
     mockNotification(false, false);
+    mockAuthentication();
 
     // when
     ViewableStatus status = service.viewNotification(notificationId);
@@ -169,6 +175,7 @@ public class SiglusNotificationServiceTest {
   public void shouldReturnViewedWhenViewNotificationGivenViewedAndNotProcessedNotification() {
     // given
     mockNotification(true, false);
+    mockAuthentication();
 
     // when
     ViewableStatus status = service.viewNotification(notificationId);
@@ -181,6 +188,7 @@ public class SiglusNotificationServiceTest {
   public void shouldReturnProcessedWhenViewNotificationGivenNotViewedAndProcessedNotification() {
     // given
     mockNotification(false, true);
+    mockAuthentication();
 
     // when
     ViewableStatus status = service.viewNotification(notificationId);
@@ -222,6 +230,8 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(NotificationStatus.SUBMITTED, notification.getRefStatus());
+    assertEquals(requisition.getFacility().getId(), notification.getNotifyFacilityId());
+    assertNull(notification.getSupervisoryNodeId());
   }
 
   @Test
@@ -230,6 +240,7 @@ public class SiglusNotificationServiceTest {
     mockAuthentication();
     mockCanBeInternalApproved();
     mockBasicRequisition();
+    mockSupervisorNode();
 
     // when
     service.postAuthorize(requisition);
@@ -244,6 +255,8 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(NotificationStatus.AUTHORIZED, notification.getRefStatus());
+    assertEquals(supervisoryNodeId, notification.getSupervisoryNodeId());
+    assertNull(notification.getNotifyFacilityId());
   }
 
   @Test
@@ -266,7 +279,8 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
     assertEquals(NotificationStatus.AUTHORIZED, notification.getRefStatus());
-    assertEquals(supervisoryNodeFacilityId, notification.getNotifyFacilityId());
+    assertEquals(supervisoryNodeId, notification.getSupervisoryNodeId());
+    assertNull(notification.getNotifyFacilityId());
   }
 
   @Test
@@ -289,6 +303,7 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
     assertEquals(NotificationStatus.APPROVED, notification.getRefStatus());
     assertEquals(currentUserHomeFacilityId, notification.getNotifyFacilityId());
+    assertNull(notification.getSupervisoryNodeId());
   }
 
   @Test
@@ -311,7 +326,8 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
     assertEquals(NotificationStatus.IN_APPROVAL, notification.getRefStatus());
-    assertEquals(supervisoryNodeFacilityId, notification.getNotifyFacilityId());
+    assertEquals(supervisoryNodeId, notification.getSupervisoryNodeId());
+    assertNull(notification.getNotifyFacilityId());
   }
 
   @Test
@@ -333,6 +349,7 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
     assertEquals(NotificationStatus.REJECTED, notification.getRefStatus());
     assertEquals(requisition.getFacility().getId(), notification.getNotifyFacilityId());
+    assertNull(notification.getSupervisoryNodeId());
   }
 
   @Test
@@ -365,6 +382,7 @@ public class SiglusNotificationServiceTest {
     assertEquals(order.getProgram().getId(), notification.getRefProgramId());
     assertEquals(NotificationStatus.ORDERED, notification.getRefStatus());
     assertEquals(currentUserHomeFacilityId, notification.getNotifyFacilityId());
+    assertNull(notification.getSupervisoryNodeId());
   }
 
   @Test
@@ -404,7 +422,8 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
     assertEquals(NotificationStatus.SHIPPED, notification.getRefStatus());
-    assertEquals(requisition.getFacility().getId(), notification.getNotifyFacilityId());
+    assertNull(notification.getNotifyFacilityId());
+    assertNull(notification.getSupervisoryNodeId());
   }
 
   @Test
@@ -443,20 +462,16 @@ public class SiglusNotificationServiceTest {
   }
 
   private void mockSupervisorNode() {
+    supervisoryNodeId = randomUUID();
     RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
-    requisitionV2Dto.setSupervisoryNode(randomUUID());
+    requisitionV2Dto.setSupervisoryNode(supervisoryNodeId);
     when(requisitionService.searchRequisition(requisition.getId())).thenReturn(requisitionV2Dto);
-    supervisoryNodeFacilityId = randomUUID();
-    SupervisoryNode supervisoryNode = new SupervisoryNode();
-    Facility facility = new Facility();
-    facility.setId(supervisoryNodeFacilityId);
-    supervisoryNode.setFacility(facility);
-    when(supervisoryNodeRepo.findOne(requisitionV2Dto.getSupervisoryNode()))
-        .thenReturn(supervisoryNode);
   }
 
   private void mockAuthentication() {
+    userId = randomUUID();
     User user = new User();
+    user.setId(userId);
     user.setHomeFacilityId(currentUserHomeFacilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
   }

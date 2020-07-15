@@ -15,18 +15,20 @@
 
 package org.siglus.siglusapi.service;
 
-import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toSet;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
@@ -39,9 +41,12 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
+import org.siglus.common.domain.BaseEntity;
+import org.siglus.common.domain.referencedata.Right;
 import org.siglus.common.domain.referencedata.RightAssignment;
+import org.siglus.common.domain.referencedata.SupervisionRoleAssignment;
 import org.siglus.common.domain.referencedata.User;
-import org.siglus.common.repository.SupervisoryNodeRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
@@ -57,12 +62,21 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusNotificationService {
 
   public enum ViewableStatus {
     NOT_VIEWED, VIEWED, PROCESSED
   }
+
+  private static final String refFacilityId = "refFacilityId";
+
+  private static final String refProgramId = "refProgramId";
+
+  private static final String refStatus = "refStatus";
+
+  private static final String notifyFacilityId = "notifyFacilityId";
 
   private final NotificationRepository repo;
 
@@ -73,8 +87,6 @@ public class SiglusNotificationService {
   private final OrderFulfillmentService orderService;
 
   private final SiglusRequisitionRequisitionService requisitionService;
-
-  private final SupervisoryNodeRepository supervisoryNodeRepo;
 
   private final SiglusRightAssignmentRepository rightAssignRepo;
 
@@ -95,6 +107,8 @@ public class SiglusNotificationService {
       return ViewableStatus.VIEWED;
     }
     notification.setViewed(true);
+    notification.setViewedDate(LocalDateTime.now());
+    notification.setViewedUserId(authenticationHelper.getCurrentUser().getId());
     repo.save(notification);
     if (notification.getProcessed()) {
       return ViewableStatus.PROCESSED;
@@ -118,11 +132,7 @@ public class SiglusNotificationService {
 
     saveNotificationFromRequisition(requisition, notification -> {
       notification.setRefStatus(NotificationStatus.AUTHORIZED);
-      if (canBeInternalApproved(requisition)) {
-        notification.setNotifyFacilityId(requisition.getFacility().getId());
-      } else {
-        notification.setNotifyFacilityId(findSupervisorFacilityId(requisition));
-      }
+      notification.setSupervisoryNodeId(findSupervisorNodeId(requisition));
     });
   }
 
@@ -133,7 +143,7 @@ public class SiglusNotificationService {
     saveNotificationFromRequisition(requisition, notification -> {
       if (requisition.getStatus() == RequisitionStatus.IN_APPROVAL) {
         notification.setRefStatus(NotificationStatus.IN_APPROVAL);
-        notification.setNotifyFacilityId(findSupervisorFacilityId(requisition));
+        notification.setSupervisoryNodeId(findSupervisorNodeId(requisition));
       } else {
         notification.setRefStatus(NotificationStatus.APPROVED);
         notification.setRefFacilityId(findCurrentUserFacilityId());
@@ -181,7 +191,6 @@ public class SiglusNotificationService {
       notification.setRefFacilityId(requisition.getFacility().getId());
       notification.setRefProgramId(requisition.getProgram().getId());
       notification.setRefStatus(NotificationStatus.SHIPPED);
-      notification.setNotifyFacilityId(requisition.getFacility().getId());
       repo.save(notification);
     });
   }
@@ -210,6 +219,23 @@ public class SiglusNotificationService {
     return authenticationHelper.getCurrentUser().getHomeFacilityId();
   }
 
+  private Set<UUID> findCurrentUserSupervisoryNodeIds() {
+    return authenticationHelper.getCurrentUser().getRoleAssignments()
+        .stream()
+        .filter(roleAssignment -> roleAssignment instanceof SupervisionRoleAssignment)
+        .map(roleAssignment -> (SupervisionRoleAssignment) roleAssignment)
+        .filter(this::canThisRoleApproveRequisition)
+        .map(SupervisionRoleAssignment::getSupervisoryNode)
+        .map(BaseEntity::getId)
+        .collect(toSet());
+  }
+
+  private boolean canThisRoleApproveRequisition(SupervisionRoleAssignment roleAssignment) {
+    return roleAssignment.getRole().getRights().stream()
+        .map(Right::getName)
+        .anyMatch(PermissionService.REQUISITION_APPROVE::equals);
+  }
+
   private boolean canBeAuthorizedBySubmitter(BasicRequisitionDto requisition) {
     return rightAssignRepo.count((root, query, cb) -> cb.and(
         cb.equal(root.get("facilityId"), requisition.getFacility().getId()),
@@ -219,24 +245,15 @@ public class SiglusNotificationService {
     )) > 0;
   }
 
-  private boolean canBeInternalApproved(BasicRequisitionDto requisition) {
-    return rightAssignRepo.count((root, query, cb) -> cb.and(
-        cb.equal(root.get("user").get("homeFacilityId"), requisition.getFacility().getId()),
-        cb.equal(root.get("facilityId"), requisition.getFacility().getId()),
-        cb.equal(root.get("programId"), requisition.getProgram().getId()),
-        cb.equal(root.get("rightName"), PermissionService.REQUISITION_APPROVE)
-    )) > 0;
-  }
-
-  private UUID findSupervisorFacilityId(BasicRequisitionDto requisition) {
+  private UUID findSupervisorNodeId(BasicRequisitionDto requisition) {
     UUID supervisoryNodeId = requisitionService.searchRequisition(requisition.getId())
         .getSupervisoryNode();
-    if (supervisoryNodeId != null) {
-      return supervisoryNodeRepo.findOne(supervisoryNodeId).getFacility().getId();
+    if (supervisoryNodeId == null) {
+      RequisitionV2Dto requisitionV2Dto = requisitionService.searchRequisition(requisition.getId());
+      supervisoryNodeId = supervisoryNodeReferenceDataService.findSupervisoryNode(
+          requisitionV2Dto.getProgramId(), requisitionV2Dto.getFacilityId()).getId();
     }
-    RequisitionV2Dto requisitionV2Dto = requisitionService.searchRequisition(requisition.getId());
-    return supervisoryNodeReferenceDataService.findSupervisoryNode(
-        requisitionV2Dto.getProgramId(), requisitionV2Dto.getFacilityId()).getFacility().getId();
+    return supervisoryNodeId;
   }
 
   private List<OrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {
@@ -251,70 +268,75 @@ public class SiglusNotificationService {
   }
 
   private Specification<Notification> getFilterByRights(Set<RightAssignment> rightAssignments) {
+    log.info("current user has {} rights", rightAssignments.size());
+    UUID currentUserFacilityId = findCurrentUserFacilityId();
+    Set<UUID> currentUserSupervisoryNodeIds = findCurrentUserSupervisoryNodeIds();
+    log.info("current user has supervisoryNode {}", currentUserSupervisoryNodeIds);
+    boolean canEditShipments = rightAssignments.stream().anyMatch(
+        rightAssignment -> FulfillmentPermissionService.SHIPMENTS_EDIT
+            .equals(rightAssignment.getRightName()));
     return (root, query, cb) -> rightAssignments.stream()
-        .map(this::mapRightNameToFilters)
-        .flatMap(Collection::stream)
-        .map(e -> cb.and(
-            cb.equal(root.get("refFacilityId"), e.getFacilityId()),
-            ofNullable(e.programId)
-                .map(programId -> cb.equal(root.get("refProgramId"), programId))
-                .orElse(cb.conjunction()),
-            cb.equal(root.get("refStatus"), e.getStatus())
-        ))
+        .map(right -> mapRightToPredicate(right, root, cb, currentUserFacilityId,
+            currentUserSupervisoryNodeIds, canEditShipments))
+        .filter(Objects::nonNull)
         .reduce(cb::or)
         .orElse(cb.disjunction());
   }
 
-  private Collection<FacilityProgramStatusFilter> mapRightNameToFilters(RightAssignment right) {
-    Set<FacilityProgramStatusFilter> statuses = new HashSet<>();
+  private Predicate mapRightToPredicate(RightAssignment right, Root<Notification> root,
+      CriteriaBuilder cb, UUID currentUserFacilityId, Set<UUID> currentUserSupervisoryNodeIds,
+      boolean canEditShipments) {
     switch (right.getRightName()) {
       case PermissionService.REQUISITION_CREATE:
-        statuses.add(new FacilityProgramStatusFilter(right, NotificationStatus.REJECTED));
-        break;
+        return cb.and(
+            cb.equal(root.get(refFacilityId), right.getFacilityId()),
+            cb.equal(root.get(refProgramId), right.getProgramId()),
+            cb.equal(root.get(refProgramId), NotificationStatus.REJECTED),
+            cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
+        );
       case PermissionService.REQUISITION_AUTHORIZE:
-        statuses.add(new FacilityProgramStatusFilter(right, NotificationStatus.SUBMITTED));
-        break;
+        return cb.and(
+            cb.equal(root.get(refFacilityId), right.getFacilityId()),
+            cb.equal(root.get(refProgramId), right.getProgramId()),
+            cb.equal(root.get(refProgramId), NotificationStatus.SUBMITTED),
+            cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
+        );
       case PermissionService.REQUISITION_APPROVE:
-        statuses.add(new FacilityProgramStatusFilter(right, NotificationStatus.AUTHORIZED));
-        statuses.add(new FacilityProgramStatusFilter(right, NotificationStatus.IN_APPROVAL));
-        break;
+        if (currentUserSupervisoryNodeIds.isEmpty()) {
+          return null;
+        }
+        return cb.and(
+            cb.equal(root.get(refFacilityId), right.getFacilityId()),
+            cb.equal(root.get(refProgramId), right.getProgramId()),
+            root.get(refProgramId)
+                .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
+            root.get("supervisoryNodeId").in(currentUserSupervisoryNodeIds)
+        );
       case PermissionService.ORDERS_EDIT:
-        statuses.add(
-            new FacilityProgramStatusFilter(right.getFacilityId(), NotificationStatus.APPROVED));
-        break;
-      case FulfillmentPermissionService.SHIPMENTS_EDIT:
-        statuses.add(
-            new FacilityProgramStatusFilter(right.getFacilityId(), NotificationStatus.ORDERED));
-        break;
+        return cb.and(
+            cb.equal(root.get(refFacilityId), right.getFacilityId()),
+            cb.equal(root.get(refProgramId), NotificationStatus.APPROVED),
+            cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
+        );
+      case StockmanagementPermissionService.STOCK_CARDS_VIEW:
+        if (!canEditShipments) {
+          return null;
+        }
+        return cb.and(
+            cb.equal(root.get(refFacilityId), right.getFacilityId()),
+            cb.equal(root.get(refProgramId), right.getProgramId()),
+            cb.equal(root.get(refProgramId), NotificationStatus.ORDERED),
+            cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
+        );
       case FulfillmentPermissionService.PODS_MANAGE:
-        statuses.add(new FacilityProgramStatusFilter(right, NotificationStatus.SHIPPED));
-        break;
+        return cb.and(
+            cb.equal(root.get(refFacilityId), right.getFacilityId()),
+            cb.equal(root.get(refProgramId), right.getProgramId()),
+            cb.equal(root.get(refProgramId), NotificationStatus.SHIPPED)
+        );
       default:
+        return null;
     }
-    return statuses;
-  }
-
-  @Setter
-  @Getter
-  private static class FacilityProgramStatusFilter {
-
-    private UUID facilityId;
-
-    private UUID programId;
-
-    private NotificationStatus status;
-
-    FacilityProgramStatusFilter(RightAssignment right, NotificationStatus status) {
-      facilityId = right.getFacilityId();
-      programId = right.getProgramId();
-      this.status = status;
-    }
-
-    FacilityProgramStatusFilter(UUID facilityId, NotificationStatus status) {
-      this.facilityId = facilityId;
-      this.status = status;
-    }
-
   }
 
 }

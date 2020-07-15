@@ -60,6 +60,8 @@ public class Notification extends BaseEntity {
    */
   private UUID notifyFacilityId;
 
+  private UUID supervisoryNodeId;
+
   private Boolean viewed = false;
 
   private Boolean processed = false;
