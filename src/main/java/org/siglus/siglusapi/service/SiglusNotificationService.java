@@ -24,7 +24,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.persistence.EntityManager;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import lombok.AllArgsConstructor;
@@ -47,6 +49,7 @@ import org.siglus.common.domain.referencedata.Right;
 import org.siglus.common.domain.referencedata.RightAssignment;
 import org.siglus.common.domain.referencedata.SupervisionRoleAssignment;
 import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.repository.FacilityRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
@@ -94,6 +97,10 @@ public class SiglusNotificationService {
 
   private final ProofOfDeliveryFulfillmentService podService;
 
+  private final FacilityRepository facilityRepo;
+
+  private final EntityManager em;
+
   public Page<NotificationDto> searchNotifications(Pageable pageable) {
     User currentUser = authenticationHelper.getCurrentUser();
     Set<RightAssignment> rightAssignments = currentUser.getRightAssignments();
@@ -120,6 +127,7 @@ public class SiglusNotificationService {
     if (canBeAuthorizedBySubmitter(requisition)) {
       return;
     }
+    repo.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.REJECTED);
     saveNotificationFromRequisition(requisition, notification -> {
       notification.setRefStatus(NotificationStatus.SUBMITTED);
       notification.setNotifyFacilityId(requisition.getFacility().getId());
@@ -127,8 +135,8 @@ public class SiglusNotificationService {
   }
 
   public void postAuthorize(BasicRequisitionDto requisition) {
-    repo.updateLastNotificationProcessed(requisition.getId(), findCurrentUserFacilityId(),
-        NotificationStatus.SUBMITTED);
+    repo.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.SUBMITTED,
+        NotificationStatus.REJECTED);
 
     saveNotificationFromRequisition(requisition, notification -> {
       notification.setRefStatus(NotificationStatus.AUTHORIZED);
@@ -137,8 +145,8 @@ public class SiglusNotificationService {
   }
 
   public void postApprove(BasicRequisitionDto requisition) {
-    repo.updateLastNotificationProcessed(requisition.getId(), findCurrentUserFacilityId(),
-        NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL);
+    repo.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
+        NotificationStatus.IN_APPROVAL);
 
     saveNotificationFromRequisition(requisition, notification -> {
       if (requisition.getStatus() == RequisitionStatus.IN_APPROVAL) {
@@ -153,8 +161,8 @@ public class SiglusNotificationService {
   }
 
   public void postReject(BasicRequisitionDto requisition) {
-    repo.updateLastNotificationProcessed(requisition.getId(), findCurrentUserFacilityId(),
-        NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL);
+    repo.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
+        NotificationStatus.IN_APPROVAL);
 
     saveNotificationFromRequisition(requisition, notification -> {
       notification.setRefStatus(NotificationStatus.REJECTED);
@@ -162,16 +170,28 @@ public class SiglusNotificationService {
     });
   }
 
+  public void postDelete(UUID requisitionId) {
+    CriteriaBuilder cb = em.getCriteriaBuilder();
+    CriteriaUpdate<Notification> update = cb.createCriteriaUpdate(Notification.class);
+    Root<Notification> root = update.from(Notification.class);
+    update.set(root.get("processed"), true);
+    update.where(cb.and(
+        cb.equal(root.get("refId"), requisitionId),
+        root.get(refStatus).in(NotificationStatus.requisitionStatuses())
+    ));
+    em.createQuery(update).executeUpdate();
+  }
+
   public void postConvertToOrder(ApproveRequisitionDto requisition) {
-    repo.updateLastNotificationProcessed(requisition.getId(), findCurrentUserFacilityId(),
-        NotificationStatus.APPROVED);
+    repo.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.APPROVED);
 
     searchOrders(requisition).forEach(
         order -> {
-          Notification notification = new Notification();
+          Notification notification = newNotification();
           notification.setRefId(order.getId());
           notification.setRefFacilityId(findCurrentUserFacilityId());
           notification.setRefProgramId(order.getProgram().getId());
+          notification.setEmergency(requisition.getEmergency());
           notification.setRefStatus(NotificationStatus.ORDERED);
           notification.setNotifyFacilityId(findCurrentUserFacilityId());
           repo.save(notification);
@@ -181,23 +201,29 @@ public class SiglusNotificationService {
 
   public void postConfirmShipment(ShipmentDto shipment) {
     OrderDto order = orderService.findOne(shipment.getOrder().getId());
-    repo.updateLastNotificationProcessed(order.getId(), findCurrentUserFacilityId(),
-        NotificationStatus.ORDERED);
+    repo.updateLastNotificationProcessed(order.getId(), NotificationStatus.ORDERED);
     RequisitionV2Dto requisition = requisitionService.searchRequisition(order.getExternalId());
     List<ProofOfDeliveryDto> pods = podService.getProofOfDeliveries(order.getId());
     pods.forEach(pod -> {
-      Notification notification = new Notification();
+      Notification notification = newNotification();
       notification.setRefId(pod.getId());
       notification.setRefFacilityId(requisition.getFacility().getId());
       notification.setRefProgramId(requisition.getProgram().getId());
+      notification.setEmergency(requisition.getEmergency());
       notification.setRefStatus(NotificationStatus.SHIPPED);
       repo.save(notification);
     });
   }
 
   public void postConfirmPod(org.openlmis.fulfillment.web.util.ProofOfDeliveryDto pod) {
-    repo.updateLastNotificationProcessed(pod.getId(), findCurrentUserFacilityId(),
-        NotificationStatus.SHIPPED);
+    repo.updateLastNotificationProcessed(pod.getId(), NotificationStatus.SHIPPED);
+  }
+
+  private Notification newNotification() {
+    Notification notification = new Notification();
+    String currentFacilityName = facilityRepo.findOne(findCurrentUserFacilityId()).getName();
+    notification.setSourceFacilityName(currentFacilityName);
+    return notification;
   }
 
   private void saveNotificationFromRequisition(BasicRequisitionDto requisition,
@@ -208,10 +234,11 @@ public class SiglusNotificationService {
   }
 
   private Notification from(BasicRequisitionDto requisition) {
-    Notification notification = new Notification();
+    Notification notification = newNotification();
     notification.setRefId(requisition.getId());
     notification.setRefFacilityId(requisition.getFacility().getId());
     notification.setRefProgramId(requisition.getProgram().getId());
+    notification.setEmergency(requisition.getEmergency());
     return notification;
   }
 
@@ -220,6 +247,7 @@ public class SiglusNotificationService {
   }
 
   private Set<UUID> findCurrentUserSupervisoryNodeIds() {
+    System.out.println(authenticationHelper.getCurrentUser().getRoleAssignments());
     return authenticationHelper.getCurrentUser().getRoleAssignments()
         .stream()
         .filter(roleAssignment -> roleAssignment instanceof SupervisionRoleAssignment)
@@ -291,14 +319,14 @@ public class SiglusNotificationService {
         return cb.and(
             cb.equal(root.get(refFacilityId), right.getFacilityId()),
             cb.equal(root.get(refProgramId), right.getProgramId()),
-            cb.equal(root.get(refProgramId), NotificationStatus.REJECTED),
+            cb.equal(root.get(refStatus), NotificationStatus.REJECTED),
             cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
         );
       case PermissionService.REQUISITION_AUTHORIZE:
         return cb.and(
             cb.equal(root.get(refFacilityId), right.getFacilityId()),
             cb.equal(root.get(refProgramId), right.getProgramId()),
-            cb.equal(root.get(refProgramId), NotificationStatus.SUBMITTED),
+            cb.equal(root.get(refStatus), NotificationStatus.SUBMITTED),
             cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
         );
       case PermissionService.REQUISITION_APPROVE:
@@ -308,14 +336,14 @@ public class SiglusNotificationService {
         return cb.and(
             cb.equal(root.get(refFacilityId), right.getFacilityId()),
             cb.equal(root.get(refProgramId), right.getProgramId()),
-            root.get(refProgramId)
+            root.get(refStatus)
                 .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
             root.get("supervisoryNodeId").in(currentUserSupervisoryNodeIds)
         );
       case PermissionService.ORDERS_EDIT:
         return cb.and(
             cb.equal(root.get(refFacilityId), right.getFacilityId()),
-            cb.equal(root.get(refProgramId), NotificationStatus.APPROVED),
+            cb.equal(root.get(refStatus), NotificationStatus.APPROVED),
             cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
         );
       case StockmanagementPermissionService.STOCK_CARDS_VIEW:
@@ -325,14 +353,14 @@ public class SiglusNotificationService {
         return cb.and(
             cb.equal(root.get(refFacilityId), right.getFacilityId()),
             cb.equal(root.get(refProgramId), right.getProgramId()),
-            cb.equal(root.get(refProgramId), NotificationStatus.ORDERED),
+            cb.equal(root.get(refStatus), NotificationStatus.ORDERED),
             cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
         );
       case FulfillmentPermissionService.PODS_MANAGE:
         return cb.and(
             cb.equal(root.get(refFacilityId), right.getFacilityId()),
             cb.equal(root.get(refProgramId), right.getProgramId()),
-            cb.equal(root.get(refProgramId), NotificationStatus.SHIPPED)
+            cb.equal(root.get(refStatus), NotificationStatus.SHIPPED)
         );
       default:
         return null;

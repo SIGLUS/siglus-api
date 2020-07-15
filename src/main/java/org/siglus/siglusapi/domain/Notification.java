@@ -55,6 +55,10 @@ public class Notification extends BaseEntity {
 
   private UUID refProgramId;
 
+  private Boolean emergency;
+
+  private String sourceFacilityName;
+
   /**
    * id of next-step node facility
    */

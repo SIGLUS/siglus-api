@@ -678,6 +678,7 @@ public class SiglusRequisitionService {
     deleteSiglusDraft(requisitionId);
     siglusUsageReportService.deleteUsageReport(requisitionId);
     siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
+    notificationService.postDelete(requisitionId);
   }
 
   private void deleteExtensionForRequisition(UUID requisitionId) {

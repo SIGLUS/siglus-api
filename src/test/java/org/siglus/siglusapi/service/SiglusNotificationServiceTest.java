@@ -18,6 +18,8 @@ package org.siglus.siglusapi.service;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
+import static org.apache.commons.lang.RandomStringUtils.random;
+import static org.apache.commons.lang3.RandomUtils.nextBoolean;
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
@@ -54,7 +56,9 @@ import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
+import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.repository.FacilityRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
@@ -70,6 +74,8 @@ import org.springframework.data.domain.Pageable;
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusNotificationServiceTest {
+
+  private static final int NOT_LONG = 5;
 
   @InjectMocks
   private SiglusNotificationService service;
@@ -95,9 +101,14 @@ public class SiglusNotificationServiceTest {
   @Mock
   private OrderFulfillmentService orderService;
 
+  @Mock
+  private FacilityRepository facilityRepo;
+
   private UUID notificationId;
 
   private UUID currentUserHomeFacilityId = randomUUID();
+
+  private String currentUserHomeFacilityName = random(NOT_LONG);
 
   private BasicRequisitionDto requisition;
 
@@ -217,6 +228,7 @@ public class SiglusNotificationServiceTest {
   @Test
   public void shouldCallRepoWhenPostSubmitGivenSubmitAndAuthorizeInTwoStep() {
     // given
+    mockAuthentication();
     mockSubmitAndAuthorizeInTwoStep();
     mockBasicRequisition();
 
@@ -228,6 +240,8 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
+    assertEquals(requisition.getEmergency(), notification.getEmergency());
+    assertEquals(currentUserHomeFacilityName, notification.getSourceFacilityName());
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(NotificationStatus.SUBMITTED, notification.getRefStatus());
     assertEquals(requisition.getFacility().getId(), notification.getNotifyFacilityId());
@@ -247,12 +261,14 @@ public class SiglusNotificationServiceTest {
 
     // then
     verify(repo)
-        .updateLastNotificationProcessed(requisition.getId(), currentUserHomeFacilityId,
-            NotificationStatus.SUBMITTED);
+        .updateLastNotificationProcessed(requisition.getId(),
+            NotificationStatus.SUBMITTED, NotificationStatus.REJECTED);
     Notification notification = verifySavedNotification();
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
+    assertEquals(requisition.getEmergency(), notification.getEmergency());
+    assertEquals(currentUserHomeFacilityName, notification.getSourceFacilityName());
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(NotificationStatus.AUTHORIZED, notification.getRefStatus());
     assertEquals(supervisoryNodeId, notification.getSupervisoryNodeId());
@@ -272,12 +288,14 @@ public class SiglusNotificationServiceTest {
 
     // then
     verify(repo)
-        .updateLastNotificationProcessed(requisition.getId(), currentUserHomeFacilityId,
-            NotificationStatus.SUBMITTED);
+        .updateLastNotificationProcessed(requisition.getId(), NotificationStatus.SUBMITTED,
+            NotificationStatus.REJECTED);
     Notification notification = verifySavedNotification();
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
+    assertEquals(requisition.getEmergency(), notification.getEmergency());
+    assertEquals(currentUserHomeFacilityName, notification.getSourceFacilityName());
     assertEquals(NotificationStatus.AUTHORIZED, notification.getRefStatus());
     assertEquals(supervisoryNodeId, notification.getSupervisoryNodeId());
     assertNull(notification.getNotifyFacilityId());
@@ -295,12 +313,14 @@ public class SiglusNotificationServiceTest {
 
     // then
     verify(repo)
-        .updateLastNotificationProcessed(requisition.getId(), currentUserHomeFacilityId,
-            NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL);
+        .updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
+            NotificationStatus.IN_APPROVAL);
     Notification notification = verifySavedNotification();
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(currentUserHomeFacilityId, notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
+    assertEquals(requisition.getEmergency(), notification.getEmergency());
+    assertEquals(currentUserHomeFacilityName, notification.getSourceFacilityName());
     assertEquals(NotificationStatus.APPROVED, notification.getRefStatus());
     assertEquals(currentUserHomeFacilityId, notification.getNotifyFacilityId());
     assertNull(notification.getSupervisoryNodeId());
@@ -319,12 +339,14 @@ public class SiglusNotificationServiceTest {
 
     // then
     verify(repo)
-        .updateLastNotificationProcessed(requisition.getId(), currentUserHomeFacilityId,
-            NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL);
+        .updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
+            NotificationStatus.IN_APPROVAL);
     Notification notification = verifySavedNotification();
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
+    assertEquals(requisition.getEmergency(), notification.getEmergency());
+    assertEquals(currentUserHomeFacilityName, notification.getSourceFacilityName());
     assertEquals(NotificationStatus.IN_APPROVAL, notification.getRefStatus());
     assertEquals(supervisoryNodeId, notification.getSupervisoryNodeId());
     assertNull(notification.getNotifyFacilityId());
@@ -341,12 +363,14 @@ public class SiglusNotificationServiceTest {
 
     // then
     verify(repo)
-        .updateLastNotificationProcessed(requisition.getId(), currentUserHomeFacilityId,
-            NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL);
+        .updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
+            NotificationStatus.IN_APPROVAL);
     Notification notification = verifySavedNotification();
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
+    assertEquals(requisition.getEmergency(), notification.getEmergency());
+    assertEquals(currentUserHomeFacilityName, notification.getSourceFacilityName());
     assertEquals(NotificationStatus.REJECTED, notification.getRefStatus());
     assertEquals(requisition.getFacility().getId(), notification.getNotifyFacilityId());
     assertNull(notification.getSupervisoryNodeId());
@@ -358,6 +382,7 @@ public class SiglusNotificationServiceTest {
     mockAuthentication();
     ApproveRequisitionDto requisition = new ApproveRequisitionDto();
     requisition.setId(randomUUID());
+    requisition.setEmergency(nextBoolean());
     RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
     requisitionV2Dto.setId(requisition.getId());
     when(requisitionService.searchRequisition(requisition.getId()))
@@ -374,12 +399,13 @@ public class SiglusNotificationServiceTest {
 
     // then
     verify(repo)
-        .updateLastNotificationProcessed(requisition.getId(), currentUserHomeFacilityId,
-            NotificationStatus.APPROVED);
+        .updateLastNotificationProcessed(requisition.getId(), NotificationStatus.APPROVED);
     Notification notification = verifySavedNotification();
     assertEquals(order.getId(), notification.getRefId());
     assertEquals(currentUserHomeFacilityId, notification.getRefFacilityId());
     assertEquals(order.getProgram().getId(), notification.getRefProgramId());
+    assertEquals(requisition.getEmergency(), notification.getEmergency());
+    assertEquals(currentUserHomeFacilityName, notification.getSourceFacilityName());
     assertEquals(NotificationStatus.ORDERED, notification.getRefStatus());
     assertEquals(currentUserHomeFacilityId, notification.getNotifyFacilityId());
     assertNull(notification.getSupervisoryNodeId());
@@ -403,6 +429,7 @@ public class SiglusNotificationServiceTest {
 
     RequisitionV2Dto requisition = new RequisitionV2Dto();
     requisition.setId(randomUUID());
+    requisition.setEmergency(nextBoolean());
     ObjectReferenceDto facility = new ObjectReferenceDto();
     facility.setId(randomUUID());
     requisition.setFacility(facility);
@@ -415,12 +442,13 @@ public class SiglusNotificationServiceTest {
 
     // then
     verify(repo)
-        .updateLastNotificationProcessed(order.getId(), currentUserHomeFacilityId,
-            NotificationStatus.ORDERED);
+        .updateLastNotificationProcessed(order.getId(), NotificationStatus.ORDERED);
     Notification notification = verifySavedNotification();
     assertEquals(pod.getId(), notification.getRefId());
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
+    assertEquals(requisition.getEmergency(), notification.getEmergency());
+    assertEquals(currentUserHomeFacilityName, notification.getSourceFacilityName());
     assertEquals(NotificationStatus.SHIPPED, notification.getRefStatus());
     assertNull(notification.getNotifyFacilityId());
     assertNull(notification.getSupervisoryNodeId());
@@ -438,8 +466,7 @@ public class SiglusNotificationServiceTest {
 
     // then
     verify(repo)
-        .updateLastNotificationProcessed(pod.getId(), currentUserHomeFacilityId,
-            NotificationStatus.SHIPPED);
+        .updateLastNotificationProcessed(pod.getId(), NotificationStatus.SHIPPED);
   }
 
   private void mockFinalApproved() {
@@ -453,6 +480,7 @@ public class SiglusNotificationServiceTest {
   private void mockBasicRequisition() {
     requisition = new BasicRequisitionDto();
     requisition.setId(randomUUID());
+    requisition.setEmergency(nextBoolean());
     MinimalFacilityDto facility = new MinimalFacilityDto();
     facility.setId(randomUUID());
     requisition.setFacility(facility);
@@ -474,6 +502,10 @@ public class SiglusNotificationServiceTest {
     user.setId(userId);
     user.setHomeFacilityId(currentUserHomeFacilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    Facility facility = new Facility();
+    facility.setId(currentUserHomeFacilityId);
+    facility.setName(currentUserHomeFacilityName);
+    when(facilityRepo.findOne(currentUserHomeFacilityId)).thenReturn(facility);
   }
 
   private void mockCanBeInternalApproved() {

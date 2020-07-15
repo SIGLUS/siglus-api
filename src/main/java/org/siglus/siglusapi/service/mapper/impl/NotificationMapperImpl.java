@@ -15,47 +15,13 @@
 
 package org.siglus.siglusapi.service.mapper.impl;
 
-import java.util.UUID;
-import org.openlmis.requisition.dto.FacilityDto;
-import org.openlmis.requisition.dto.OrderDto;
-import org.openlmis.requisition.dto.ProofOfDeliveryDto;
-import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.openlmis.requisition.dto.ShipmentDto;
-import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
-import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
-import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
-import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
-import org.siglus.common.domain.referencedata.User;
-import org.siglus.common.repository.UserRepository;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.dto.NotificationDto;
-import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
 public class NotificationMapperImpl implements NotificationMapper {
-
-  @Autowired
-  private SiglusRequisitionRequisitionService requisitionService;
-
-  @Autowired
-  @Qualifier("facilityReferenceDataService")
-  private FacilityReferenceDataService facilityService;
-
-  @Autowired
-  private OrderFulfillmentService orderService;
-
-  @Autowired
-  private ShipmentFulfillmentService shipmentService;
-
-  @Autowired
-  private UserRepository userRepository;
-
-  @Autowired
-  private ProofOfDeliveryFulfillmentService podService;
 
   @Override
   public NotificationDto from(Notification notification) {
@@ -64,33 +30,11 @@ public class NotificationMapperImpl implements NotificationMapper {
     }
     NotificationDto dto = new NotificationDto();
     dto.setId(notification.getId());
-    setEmergencyAndFacilityName(notification, dto);
+    dto.setEmergencyFlag(notification.getEmergency());
+    dto.setSourceFacilityName(notification.getSourceFacilityName());
     dto.setRefId(notification.getRefId());
     dto.setStatus(notification.getRefStatus());
     return dto;
-  }
-
-  private void setEmergencyAndFacilityName(Notification notification, NotificationDto dto) {
-    UUID requisitionId;
-    if (notification.getRefStatus().isRequisitionPeriod()) {
-      requisitionId = notification.getRefId();
-    } else if (notification.getRefStatus().isOrderPeriod()) {
-      OrderDto order = orderService.findOne(notification.getRefId());
-      requisitionId = order.getExternalId();
-    } else if (notification.getRefStatus().isShipmentPeriod()) {
-      ProofOfDeliveryDto pod = podService.findOne(notification.getRefId());
-      ShipmentDto shipment = shipmentService.findOne(pod.getShipment().getId());
-      OrderDto order = orderService.findOne(shipment.getOrder().getId());
-      requisitionId = order.getExternalId();
-    } else {
-      throw new UnsupportedOperationException();
-    }
-    RequisitionV2Dto requisition = requisitionService.searchRequisition(requisitionId);
-    dto.setEmergencyFlag(requisition.getEmergency());
-
-    User operator = userRepository.findOne(notification.getOperatorId());
-    final FacilityDto facility = facilityService.findOne(operator.getHomeFacilityId());
-    dto.setSourceFacilityName(facility.getName());
   }
 
 }

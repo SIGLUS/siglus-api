@@ -37,12 +37,10 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
         pageable);
   }
 
-  default void updateLastNotificationProcessed(UUID refId, UUID currentFacilityId,
-      NotificationStatus... statuses) {
+  default void updateLastNotificationProcessed(UUID refId, NotificationStatus... statuses) {
     Notification notification = findOne(
         (root, query, cb) -> cb.and(
             cb.equal(root.get("refId"), refId),
-            cb.equal(root.get("notifyFacilityId"), currentFacilityId),
             root.<NotificationStatus>get("refStatus").in(statuses),
             cb.equal(root.get("processed"), false)
         )

@@ -13,30 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.common.domain.referencedata;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import lombok.NoArgsConstructor;
+import org.javers.core.metamodel.annotation.TypeName;
 
-public enum NotificationStatus {
-  REJECTED,
-  SUBMITTED,
-  AUTHORIZED,
-  IN_APPROVAL,
-  APPROVED,
-  ORDERED,
-  SHIPPED;
+@Entity
+@DiscriminatorValue("direct")
+@NoArgsConstructor
+@TypeName("DirectRoleAssignment")
+public class DirectRoleAssignment extends RoleAssignment {
 
-  public static Collection<NotificationStatus> requisitionStatuses() {
-    return Stream.of(NotificationStatus.values())
-        .filter(NotificationStatus::isRequisitionPeriod)
-        .collect(Collectors.toList());
+  /**
+   * Export this object to the specified exporter (DTO).
+   *
+   * @param exporter exporter to export to
+   */
+  public void export(Exporter exporter) {
+    exporter.setRole(role);
   }
-
-  public boolean isRequisitionPeriod() {
-    return this == REJECTED || this == SUBMITTED || this == AUTHORIZED || this == IN_APPROVAL
-        || this == APPROVED;
-  }
-
 }
