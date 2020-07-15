@@ -28,7 +28,6 @@ import org.siglus.common.domain.BaseEntity;
  */
 @Entity
 @Table(name = "orderable_display_categories", schema = "referencedata")
-@TypeName("OrderableDisplayCategory")
 public class OrderableDisplayCategory extends BaseEntity {
 
   @Embedded

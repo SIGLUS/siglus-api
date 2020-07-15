@@ -34,7 +34,6 @@ import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;
 @Entity
 @Table(name = "processing_periods", schema = "referencedata")
 @NoArgsConstructor
-@TypeName("ProcessingPeriod")
 public class ProcessingPeriod extends BaseEntity {
 
   @ManyToOne

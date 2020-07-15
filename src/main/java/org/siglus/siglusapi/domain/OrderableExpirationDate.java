@@ -33,7 +33,6 @@ import org.siglus.common.domain.referencedata.Versionable;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 
 @Entity
-@TypeName("OrderableExpirationDate")
 @Table(name = "orderables", schema = "referencedata",
     uniqueConstraints = @UniqueConstraint(name = "unq_productcode_versionid",
         columnNames = {"code", "versionnumber"}))

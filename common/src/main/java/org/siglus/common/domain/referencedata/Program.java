@@ -33,7 +33,6 @@ import org.siglus.common.domain.BaseEntity;
 @Setter
 @AllArgsConstructor
 @Table(name = "programs", schema = "referencedata")
-@TypeName("Program")
 public class Program extends BaseEntity {
 
   @Column(nullable = false, unique = true, columnDefinition = "text")

@@ -42,7 +42,6 @@ import org.siglus.common.domain.BaseEntity;
     )
 @NoArgsConstructor
 @AllArgsConstructor
-@TypeName("ProgramOrderable")
 public class ProgramOrderable extends BaseEntity {
 
   @ManyToOne

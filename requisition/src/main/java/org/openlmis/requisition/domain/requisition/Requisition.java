@@ -236,6 +236,7 @@ public class Requisition extends BaseTimestampedEntity {
   // [change reason]: support for filter approve list for internal approve.
   @ManyToOne
   @JoinColumn(name = "supervisoryNodeId", insertable = false, updatable = false)
+  @DiffIgnore
   private SupervisoryNode supervisoryNode;
   // [SIGLUS change end]
 

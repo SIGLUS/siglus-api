@@ -25,13 +25,11 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.javers.core.metamodel.annotation.TypeName;
 
 @Entity
 @Table(name = "supported_programs", schema = "referencedata")
 @NoArgsConstructor
 @AllArgsConstructor
-@TypeName("SupportedProgram")
 @EqualsAndHashCode(of = "facilityProgram")
 public final class SupportedProgram {
 

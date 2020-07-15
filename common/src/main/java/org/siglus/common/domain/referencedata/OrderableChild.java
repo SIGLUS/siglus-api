@@ -26,7 +26,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.javers.core.metamodel.annotation.TypeName;
 import org.siglus.common.domain.BaseEntity;
 
 @Entity
@@ -37,7 +36,6 @@ import org.siglus.common.domain.BaseEntity;
 )
 @NoArgsConstructor
 @AllArgsConstructor
-@TypeName("OrderableChild")
 @EqualsAndHashCode(callSuper = false, of = {"parent", "orderable"})
 public class OrderableChild extends BaseEntity {
 

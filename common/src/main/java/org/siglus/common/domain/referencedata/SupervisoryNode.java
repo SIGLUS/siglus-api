@@ -35,7 +35,6 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "supervisory_nodes", schema = "referencedata")
 @NoArgsConstructor
 @AllArgsConstructor
-@TypeName("SupervisoryNode")
 public class SupervisoryNode extends BaseEntity {
 
   @Column(nullable = false, unique = true, columnDefinition = "text")

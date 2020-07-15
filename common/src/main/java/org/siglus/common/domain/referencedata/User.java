@@ -37,7 +37,6 @@ import org.siglus.common.domain.BaseEntity;
 
 @SuppressWarnings({"PMD.UnusedPrivateField", "PMD.TooManyMethods"})
 @Entity
-@TypeName("User")
 @Table(name = "users", schema = "referencedata")
 @NoArgsConstructor
 @AllArgsConstructor

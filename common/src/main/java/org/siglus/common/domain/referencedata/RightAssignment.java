@@ -32,7 +32,6 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "right_assignments", schema = "referencedata", uniqueConstraints =
     @UniqueConstraint(columnNames = {"userid", "rightName", "facilityId", "programId"}))
 @NoArgsConstructor
-@TypeName("RightAssignment")
 @EqualsAndHashCode(of = {"rightName", "facilityId", "programId"}, callSuper = false)
 public class RightAssignment extends BaseEntity {
 

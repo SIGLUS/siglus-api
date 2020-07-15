@@ -47,7 +47,6 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.javers.core.metamodel.annotation.DiffIgnore;
-import org.javers.core.metamodel.annotation.TypeName;
 import org.siglus.common.domain.BaseEntity.BaseExporter;
 import org.siglus.common.domain.BaseEntity.BaseImporter;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
@@ -62,7 +61,6 @@ import org.siglus.common.dto.referencedata.ProgramOrderableDto;
  * be ordered/requisitioned, typically by a {@link Program}.
  */
 @Entity
-@TypeName("Orderable")
 @Table(name = "orderables", schema = "referencedata",
     uniqueConstraints = @UniqueConstraint(name = "unq_productcode_versionid",
         columnNames = {"code", "versionnumber"}))

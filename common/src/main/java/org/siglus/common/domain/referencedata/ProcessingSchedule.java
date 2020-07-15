@@ -34,7 +34,6 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "processing_schedules", schema = "referencedata")
 @NoArgsConstructor
 @AllArgsConstructor
-@TypeName("ProcessingSchedule")
 public class ProcessingSchedule extends BaseEntity {
 
   @Column(nullable = false, unique = true, columnDefinition = "text")
