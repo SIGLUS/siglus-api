@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -37,11 +38,15 @@ public class UsageTemplateSectionDto {
 
   private Integer displayOrder;
 
+  @JsonProperty("isDefault")
+  private Boolean defaultFlag;
+
   private List<UsageTemplateColumnDto> columns;
 
   public static UsageTemplateSectionDto from(UsageTemplateColumnSection section) {
     UsageTemplateSectionDto sectionDto = new UsageTemplateSectionDto();
     BeanUtils.copyProperties(section, sectionDto);
+    sectionDto.setDefaultFlag(section.getSection() != null);
     sectionDto.columns = section.getColumns()
         .stream()
         .map(UsageTemplateColumnDto::from)
