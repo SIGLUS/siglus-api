@@ -15,9 +15,9 @@
 
 package org.siglus.siglusapi.validator;
 
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUBMIT_END_DATE_BEFORE_SUBMIT_START_DATE;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUBMIT_START_DATE_BEFORE_START_DATE;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE;
+import static org.siglus.common.i18n.MessageKeys.ERROR_SUBMIT_END_DATE_BEFORE_SUBMIT_START_DATE;
+import static org.siglus.common.i18n.MessageKeys.ERROR_SUBMIT_START_DATE_BEFORE_START_DATE;
+import static org.siglus.common.i18n.MessageKeys.ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE;
 
 import java.time.LocalDate;
 import java.util.List;

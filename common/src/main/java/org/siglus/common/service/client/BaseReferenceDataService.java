@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.client;
+package org.siglus.common.service.client;
 
 import org.springframework.beans.factory.annotation.Value;
 

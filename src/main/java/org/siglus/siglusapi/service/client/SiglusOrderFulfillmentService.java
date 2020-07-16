@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.client;
 
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.siglus.common.service.client.BaseReferenceDataService;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -38,11 +38,11 @@ import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.domain.referencedata.OrderableChild;
-import org.siglus.common.domain.referencedata.User;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.LotSearchParams;
 import org.siglus.common.dto.referencedata.OrderableChildDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.OrderableKitRepository;
@@ -95,7 +95,7 @@ public class SiglusUnpackService {
 
   public List<SiglusOrdeableKitDto> getKitsByFacilityId(UUID facilityId) {
     List<OrderableDto> kitOrderables = searchKitOrderables();
-    User user = authenticationHelper.getCurrentUser();
+    UserDto user = authenticationHelper.getCurrentUser();
     Set<PermissionStringDto> permissionStrings = permissionService
         .getPermissionStrings(user.getId()).get();
     return kitOrderables.stream()

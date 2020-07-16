@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.i18n;
+package org.siglus.common.i18n;
 
 import java.util.Arrays;
 
@@ -38,6 +38,7 @@ public abstract class MessageKeys {
 
   public static final String ERROR_PERMISSION_NOT_SUPPORTED = ERROR_PREFIX
       + ".authorization.permission.not.supported";
+  public static final String ERROR_USER_NOT_FOUND = ERROR_PREFIX + "authorization.user.notFound";
 
   public static final String ERROR_WIDGET_CODE_DUPLICATED =
       join(ERROR_PREFIX, WIDGET, CODE, DUPLICATED);

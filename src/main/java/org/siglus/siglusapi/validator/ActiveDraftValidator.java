@@ -15,18 +15,18 @@
 
 package org.siglus.siglusapi.validator;
 
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EVENT_FACILITY_INVALID;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IS_DRAFT_MISSING;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_USER_DRAFT;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PROGRAM_MISSING;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
+import static org.siglus.common.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
+import static org.siglus.common.i18n.MessageKeys.ERROR_EVENT_FACILITY_INVALID;
+import static org.siglus.common.i18n.MessageKeys.ERROR_IS_DRAFT_MISSING;
+import static org.siglus.common.i18n.MessageKeys.ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR;
+import static org.siglus.common.i18n.MessageKeys.ERROR_NOT_EXPECTED_USER_DRAFT;
+import static org.siglus.common.i18n.MessageKeys.ERROR_PROGRAM_MISSING;
+import static org.siglus.common.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockManagementDraft;
@@ -69,14 +69,14 @@ public class ActiveDraftValidator {
   }
 
   public void validateDraftUser(StockManagementDraft drafts) {
-    User user = authenticationHelper.getCurrentUser();
+    UserDto user = authenticationHelper.getCurrentUser();
     if (!user.getId().equals(drafts.getUserId())) {
       throw new ValidationMessageException(ERROR_NOT_EXPECTED_USER_DRAFT);
     }
   }
 
   public void validateUserId(UUID userId) {
-    User user = authenticationHelper.getCurrentUser();
+    UserDto user = authenticationHelper.getCurrentUser();
     if (userId == null || new UUID(0L, 0L).equals(userId)) {
       throw new ValidationMessageException(ERROR_USER_ID_MISSING);
     }

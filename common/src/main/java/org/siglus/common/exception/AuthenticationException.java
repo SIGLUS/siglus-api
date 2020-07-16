@@ -13,19 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.client;
+package org.siglus.common.exception;
 
-import org.siglus.common.service.client.BaseCommunicationService;
-import org.springframework.beans.factory.annotation.Value;
+import org.siglus.common.util.Message;
 
-public abstract class BaseFulfillmentService<T> extends BaseCommunicationService<T> {
+public class AuthenticationException extends BaseMessageException {
 
-  @Value("${fulfillment.url}")
-  private String fulfillmentUrl;
-
-  @Override
-  protected String getServiceUrl() {
-    return fulfillmentUrl;
+  public AuthenticationException(Message message) {
+    super(message);
   }
 
 }

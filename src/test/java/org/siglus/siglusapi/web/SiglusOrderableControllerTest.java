@@ -24,7 +24,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.springframework.data.domain.Pageable;
@@ -50,7 +50,7 @@ public class SiglusOrderableControllerTest {
 
   @Test
   public void shouldCallSiglusOrderableServiceWhenSearchOrderables() {
-    when(authenticationHelper.getCurrentUser()).thenReturn(new User());
+    when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
 
     siglusOrderableController.searchOrderables(queryParams, pageable);
 

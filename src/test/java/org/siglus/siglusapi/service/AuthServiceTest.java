@@ -15,29 +15,42 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.apache.commons.lang3.RandomUtils.nextBoolean;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.ImmutableMap;
+import java.net.URI;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.service.StockmanagementAuthService;
+import org.siglus.common.service.AuthService;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
 
 @RunWith(MockitoJUnitRunner.class)
 public class AuthServiceTest {
 
-  @InjectMocks
-  private AuthService service;
-
-  @Mock
-  private StockmanagementAuthService stockmanagementAuthService;
+  private AuthService service = new AuthService();
 
   @Mock
   private OAuth2Authentication authentication;
@@ -45,10 +58,28 @@ public class AuthServiceTest {
   @Mock
   private OAuth2AuthenticationDetails authenticationDetails;
 
+  @Mock
+  private RestTemplate restTemplate;
+
+  @Captor
+  private ArgumentCaptor<HttpEntity<String>> entityStringCaptor;
+
+  private static final String TOKEN = UUID.randomUUID().toString();
+  private static final String AUTHORIZATION_URL = "http://localhost/auth/oauth/token";
+  private static final URI AUTHORIZATION_URI = URI.create(
+      AUTHORIZATION_URL + "?grant_type=client_credentials"
+  );
+
+  ResponseEntity<Object> response = mock(ResponseEntity.class);
+
   @Before
   public void prepare() {
     SecurityContextHolder.getContext().setAuthentication(authentication);
     when(authentication.getDetails()).thenReturn(authenticationDetails);
+    ReflectionTestUtils.setField(service, "restTemplate", restTemplate);
+    ReflectionTestUtils.setField(service, "clientId", "trusted-client");
+    ReflectionTestUtils.setField(service, "clientSecret", "secret");
+    ReflectionTestUtils.setField(service, "authorizationUrl", AUTHORIZATION_URL);
   }
 
   @Test
@@ -69,43 +100,25 @@ public class AuthServiceTest {
     // given
     when(authentication.isClientOnly()).thenReturn(true);
     final boolean obtainUserToken = true;
+    Map<String, String> body = ImmutableMap.of(StockmanagementAuthService.ACCESS_TOKEN, TOKEN);
+    when(response.getBody()).thenReturn(body);
+    when(restTemplate.exchange(
+        eq(AUTHORIZATION_URI), eq(HttpMethod.POST), any(HttpEntity.class), eq(Object.class)
+    )).thenReturn(response);
 
     // when
-    service.obtainAccessToken(obtainUserToken);
+    String token = service.obtainAccessToken(obtainUserToken);
 
     // then
-    verify(stockmanagementAuthService).obtainAccessToken();
-  }
-
-  @Test
-  public void shouldReadFromTokenWhenObtainAccessTokenGivenNotObtainUserToken() {
-    // given
-    when(authentication.isClientOnly()).thenReturn(nextBoolean());
-    final boolean obtainUserToken = false;
-
-    // when
-    service.obtainAccessToken(obtainUserToken);
-
-    // then
-    verify(stockmanagementAuthService).obtainAccessToken();
-  }
-
-  @Test
-  public void shouldCallStockAuthServiceWhenObtainAccessToken() {
-    // when
-    service.obtainAccessToken();
-
-    // then
-    verify(stockmanagementAuthService).obtainAccessToken();
-  }
-
-  @Test
-  public void shouldCallStockAuthServiceWhenClearTokenCache() {
-    // when
-    service.clearTokenCache();
-
-    // then
-    verify(stockmanagementAuthService).clearTokenCache();
+    assertThat(token, is(equalTo(TOKEN)));
+    verify(restTemplate).exchange(
+        eq(AUTHORIZATION_URI), eq(HttpMethod.POST), entityStringCaptor.capture(), eq(Object.class)
+    );
+    HttpEntity<String> entity = entityStringCaptor.getValue();
+    assertThat(
+        entity.getHeaders().get("Authorization"),
+        contains("Basic dHJ1c3RlZC1jbGllbnQ6c2VjcmV0")
+    );
   }
 
 }

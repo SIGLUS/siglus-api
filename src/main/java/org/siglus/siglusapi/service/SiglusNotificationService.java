@@ -102,7 +102,7 @@ public class SiglusNotificationService {
   private final EntityManager em;
 
   public Page<NotificationDto> searchNotifications(Pageable pageable) {
-    User currentUser = authenticationHelper.getCurrentUser();
+    User currentUser = authenticationHelper.getCurrentUserDomain();
     Set<RightAssignment> rightAssignments = currentUser.getRightAssignments();
     return repo.findViewable(pageable, currentUser.getHomeFacilityId(),
         getFilterByRights(rightAssignments)).map(mapper::from);
@@ -115,7 +115,7 @@ public class SiglusNotificationService {
     }
     notification.setViewed(true);
     notification.setViewedDate(LocalDateTime.now());
-    notification.setViewedUserId(authenticationHelper.getCurrentUser().getId());
+    notification.setViewedUserId(authenticationHelper.getCurrentUserDomain().getId());
     repo.save(notification);
     if (notification.getProcessed()) {
       return ViewableStatus.PROCESSED;
@@ -243,11 +243,11 @@ public class SiglusNotificationService {
   }
 
   private UUID findCurrentUserFacilityId() {
-    return authenticationHelper.getCurrentUser().getHomeFacilityId();
+    return authenticationHelper.getCurrentUserDomain().getHomeFacilityId();
   }
 
   private Set<UUID> findCurrentUserSupervisoryNodeIds() {
-    return authenticationHelper.getCurrentUser().getRoleAssignments()
+    return authenticationHelper.getCurrentUserDomain().getRoleAssignments()
         .stream()
         .filter(roleAssignment -> roleAssignment instanceof SupervisionRoleAssignment)
         .map(roleAssignment -> (SupervisionRoleAssignment) roleAssignment)
@@ -267,7 +267,7 @@ public class SiglusNotificationService {
     return rightAssignRepo.count((root, query, cb) -> cb.and(
         cb.equal(root.get("facilityId"), requisition.getFacility().getId()),
         cb.equal(root.get("programId"), requisition.getProgram().getId()),
-        cb.equal(root.get("user").get("id"), authenticationHelper.getCurrentUser().getId()),
+        cb.equal(root.get("user").get("id"), authenticationHelper.getCurrentUserDomain().getId()),
         cb.equal(root.get("rightName"), PermissionService.REQUISITION_AUTHORIZE)
     )) > 0;
   }

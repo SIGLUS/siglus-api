@@ -55,8 +55,8 @@ import org.siglus.common.domain.referencedata.OrderableChild;
 import org.siglus.common.domain.referencedata.OrderableDisplayCategory;
 import org.siglus.common.domain.referencedata.Program;
 import org.siglus.common.domain.referencedata.ProgramOrderable;
-import org.siglus.common.domain.referencedata.User;
 import org.siglus.common.dto.referencedata.LotDto;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.OrderableRepository;
@@ -111,7 +111,7 @@ public class SiglusUnpackServiceTest {
   private final UUID programId = UUID.randomUUID();
   private final UUID programParentId = UUID.randomUUID();
   private final ProgramExtension programExtension = new ProgramExtension();
-  private final User user = new User();
+  private final UserDto user = new UserDto();
 
   @Before
   public void setup() {

@@ -13,19 +13,26 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.client;
+package org.siglus.common.service.client;
 
-import org.siglus.common.service.client.BaseCommunicationService;
-import org.springframework.beans.factory.annotation.Value;
+import org.siglus.common.dto.referencedata.UserDto;
+import org.springframework.stereotype.Service;
 
-public abstract class BaseFulfillmentService<T> extends BaseCommunicationService<T> {
-
-  @Value("${fulfillment.url}")
-  private String fulfillmentUrl;
+@Service
+public class SiglusUserReferenceDataService extends BaseReferenceDataService<UserDto>  {
 
   @Override
-  protected String getServiceUrl() {
-    return fulfillmentUrl;
+  protected String getUrl() {
+    return "/api/users/";
   }
 
+  @Override
+  protected Class<UserDto> getResultClass() {
+    return UserDto.class;
+  }
+
+  @Override
+  protected Class<UserDto[]> getArrayResultClass() {
+    return UserDto[].class;
+  }
 }

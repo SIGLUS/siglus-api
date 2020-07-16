@@ -28,7 +28,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.StockEventDto;
-import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 
@@ -46,7 +46,7 @@ public class SiglusStockEventsControllerTest {
 
   @Before
   public void prepare() {
-    User user = new User();
+    UserDto user = new UserDto();
     user.setId(UUID.randomUUID());
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
   }

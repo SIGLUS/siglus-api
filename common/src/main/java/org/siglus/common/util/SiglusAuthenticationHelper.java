@@ -15,10 +15,15 @@
 
 package org.siglus.common.util;
 
+import static org.siglus.common.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
+
 import java.util.UUID;
 import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.exception.AuthenticationException;
 import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.repository.UserRepository;
+import org.siglus.common.service.client.SiglusUserReferenceDataService;
 import org.siglus.common.util.referencedata.messagekeys.UserMessageKeys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -28,15 +33,12 @@ import org.springframework.stereotype.Component;
 public class SiglusAuthenticationHelper {
 
   @Autowired
+  private SiglusUserReferenceDataService userReferenceDataService;
+
+  @Autowired
   private UserRepository userRepository;
 
-  /**
-   * Method returns current user based on Spring context.
-   *
-   * @return User entity of current user.
-   * @throws NotFoundException if user cannot be found.
-   */
-  public User getCurrentUser() {
+  public User getCurrentUserDomain() {
     UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     User user = userRepository.findOne(userId);
 
@@ -44,6 +46,15 @@ public class SiglusAuthenticationHelper {
       throw new NotFoundException(UserMessageKeys.ERROR_NOT_FOUND);
     }
 
+    return user;
+  }
+
+  public UserDto getCurrentUser() {
+    UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    UserDto user = userReferenceDataService.findOne(userId);
+    if (user == null) {
+      throw new AuthenticationException(new Message(ERROR_USER_NOT_FOUND, userId));
+    }
     return user;
   }
 

@@ -15,9 +15,9 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_CODE_IS_EMPTY;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
+import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_CODE_IS_EMPTY;
+import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
+import static org.siglus.common.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 
 import java.time.LocalDate;
 import java.util.Collection;

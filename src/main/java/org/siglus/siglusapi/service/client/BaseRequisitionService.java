@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.client;
 
+import org.siglus.common.service.client.BaseCommunicationService;
 import org.springframework.beans.factory.annotation.Value;
 
 public abstract class BaseRequisitionService<T> extends BaseCommunicationService<T> {

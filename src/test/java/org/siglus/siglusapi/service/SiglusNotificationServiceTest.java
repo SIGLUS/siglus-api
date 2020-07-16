@@ -123,7 +123,7 @@ public class SiglusNotificationServiceTest {
     Notification notification1 = new Notification();
     Notification notification2 = new Notification();
     Notification notification3 = new Notification();
-    when(authenticationHelper.getCurrentUser()).thenReturn(new User());
+    when(authenticationHelper.getCurrentUserDomain()).thenReturn(new User());
     when(repo.findViewable(eq(pageable), any(), any()))
         .thenReturn(new PageImpl<>(asList(notification1, notification2, notification3)));
 
@@ -501,7 +501,7 @@ public class SiglusNotificationServiceTest {
     User user = new User();
     user.setId(userId);
     user.setHomeFacilityId(currentUserHomeFacilityId);
-    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    when(authenticationHelper.getCurrentUserDomain()).thenReturn(user);
     Facility facility = new Facility();
     facility.setId(currentUserHomeFacilityId);
     facility.setName(currentUserHomeFacilityName);

@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockManagementDraft;
@@ -95,7 +95,7 @@ public class ActiveDraftValidatorTest {
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowValidationMessageExceptionWhenDraftUserIsNotCurrentUser() {
-    User user = new User();
+    UserDto user = new UserDto();
     user.setId(UUID.randomUUID());
     StockManagementDraft drafts = new StockManagementDraft();
     drafts.setUserId(UUID.randomUUID());
@@ -107,7 +107,7 @@ public class ActiveDraftValidatorTest {
 
   @Test
   public void shouldNotThrowValidationMessageExceptionWhenDraftUserIsCurrentUser() {
-    User user = new User();
+    UserDto user = new UserDto();
     UUID uuid = UUID.randomUUID();
     user.setId(uuid);
     StockManagementDraft drafts = new StockManagementDraft();
@@ -130,7 +130,7 @@ public class ActiveDraftValidatorTest {
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenUserIdIsNotCurrentUserId() {
-    User user = new User();
+    UserDto user = new UserDto();
     user.setId(UUID.randomUUID());
 
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
@@ -140,7 +140,7 @@ public class ActiveDraftValidatorTest {
 
   @Test
   public void shouldNotThrowExceptionUserIdIsCurrentUserId() {
-    User user = new User();
+    UserDto user = new UserDto();
     UUID uuid = UUID.randomUUID();
     user.setId(uuid);
 

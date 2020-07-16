@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.i18n;
 
+import org.siglus.common.i18n.MessageKeys;
+
 public class PermissionMessageKeys extends MessageKeys {
 
   public static final String ERROR_NO_FOLLOWING_PERMISSION = ERROR_PREFIX

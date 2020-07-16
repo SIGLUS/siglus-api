@@ -17,7 +17,7 @@ package org.siglus.siglusapi.service.client;
 
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.StockCardDto;
-import org.openlmis.stockmanagement.util.RequestParameters;
+import org.siglus.common.util.RequestParameters;
 import org.springframework.stereotype.Service;
 
 @Service

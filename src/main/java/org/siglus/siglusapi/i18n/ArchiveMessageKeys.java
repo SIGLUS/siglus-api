@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.i18n;
 
+import org.siglus.common.i18n.MessageKeys;
+
 public class ArchiveMessageKeys extends MessageKeys {
 
   private static final String ARCHIVE = "archive";

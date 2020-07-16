@@ -48,7 +48,7 @@ import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.siglus.common.domain.ProgramExtension;
-import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
@@ -97,7 +97,7 @@ public class SiglusStockCardSummariesServiceTest {
 
   @Before
   public void prepare() {
-    User user = new User();
+    UserDto user = new UserDto();
     user.setId(userId);
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
 

@@ -27,7 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
-import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 
@@ -77,7 +77,7 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldCallGetForAllProductsWhenSearchByIdIfIdIsAllProducts() {
-    User user = new User();
+    UserDto user = new UserDto();
     user.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
 
@@ -135,7 +135,7 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldCallDeleteForAllProductsWhenDeleteIfIdIsAllProducts() {
-    User user = new User();
+    UserDto user = new UserDto();
     user.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
 

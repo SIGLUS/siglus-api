@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.client;
+package org.siglus.common.service.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.MapType;
@@ -28,23 +28,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.openlmis.stockmanagement.dto.referencedata.ResultDto;
-import org.openlmis.stockmanagement.service.RequestHeaders;
-import org.openlmis.stockmanagement.service.ServiceResponse;
-import org.openlmis.stockmanagement.service.referencedata.DataRetrievalException;
-import org.openlmis.stockmanagement.util.DynamicPageTypeReference;
-import org.openlmis.stockmanagement.util.DynamicParametrizedTypeReference;
-import org.openlmis.stockmanagement.util.Merger;
-import org.openlmis.stockmanagement.util.PageImplRepresentation;
-import org.openlmis.stockmanagement.util.RequestHelper;
-import org.openlmis.stockmanagement.util.RequestParameters;
+import org.siglus.common.exception.DataRetrievalException;
 import org.siglus.common.exception.ValidationMessageException;
+import org.siglus.common.service.AuthService;
+import org.siglus.common.util.DynamicPageTypeReference;
+import org.siglus.common.util.Merger;
 import org.siglus.common.util.Message;
-import org.siglus.siglusapi.service.AuthService;
+import org.siglus.common.util.PageImplRepresentation;
+import org.siglus.common.util.RequestHeaders;
+import org.siglus.common.util.RequestHelper;
+import org.siglus.common.util.RequestParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -157,18 +152,6 @@ public abstract class BaseCommunicationService<T> {
     }
   }
 
-  public List<T> findAll() {
-    return findAll("");
-  }
-
-  public List<T> findAll(String resourceUrl) {
-    return findAll(resourceUrl, getArrayResultClass());
-  }
-
-  public <P> List<P> findAll(String resourceUrl, Class<P[]> type) {
-    return findAll(resourceUrl, RequestParameters.init(), type);
-  }
-
   /**
    * Return all reference data T objects.
    *
@@ -178,40 +161,6 @@ public abstract class BaseCommunicationService<T> {
    */
   protected Collection<T> findAll(String resourceUrl, Map<String, Object> parameters) {
     return findAll(resourceUrl, parameters, Boolean.FALSE);
-  }
-
-  /**
-   * Return all reference data T objects.
-   *
-   * @param resourceUrl Endpoint url.
-   * @param parameters  Map of query parameters.
-   * @return all reference data T objects.
-   */
-  public List<T> findAll(String resourceUrl, RequestParameters parameters) {
-    return findAll(resourceUrl, parameters, getArrayResultClass());
-  }
-
-  public <P> List<P> findAll(String resourceUrl, RequestParameters parameters, Class<P[]> type) {
-    return findAll(resourceUrl, parameters, null, HttpMethod.GET, type);
-  }
-
-  protected <P> List<P> findAll(String resourceUrl, RequestParameters parameters,
-      Object payload, HttpMethod method, Class<P[]> type) {
-    String url = getServiceUrl() + getUrl() + resourceUrl;
-
-    RequestParameters params = RequestParameters
-        .init()
-        .setAll(parameters);
-
-    try {
-      ResponseEntity<P[]> response = runWithTokenRetry(
-          () -> doListRequest(url, params, payload, method, type)
-      );
-
-      return Stream.of(response.getBody()).collect(Collectors.toList());
-    } catch (HttpStatusCodeException ex) {
-      throw buildDataRetrievalException(ex);
-    }
   }
 
   protected Collection<T> findAll(String resourceUrl, Map<String, Object> parameters,
@@ -225,47 +174,6 @@ public abstract class BaseCommunicationService<T> {
           () -> doListRequest(url, params, HttpMethod.GET, getArrayResultClass(), obtainUserToken)
       );
       return new ArrayList<>(Arrays.asList(responseEntity.getBody()));
-    } catch (HttpStatusCodeException ex) {
-      throw buildDataRetrievalException(ex);
-    }
-  }
-
-  protected <P> ServiceResponse<List<P>> tryFindAll(String resourceUrl, Class<P[]> type,
-      String etag) {
-    String url = getServiceUrl() + getUrl() + resourceUrl;
-    log.info("permissionStrings url: {}", url);
-
-    try {
-      RequestHeaders headers = RequestHeaders.init().setIfNoneMatch(etag);
-      ResponseEntity<P[]> response = restTemplate.exchange(
-          url, HttpMethod.GET, RequestHelper.createEntity(null, addAuthHeader(headers)), type
-      );
-      log.info("permissionStrings responseEntity: {}", response);
-
-      if (response.getStatusCode() == HttpStatus.NOT_MODIFIED) {
-        return new ServiceResponse<>(null, response.getHeaders(), false);
-      } else {
-        List<P> list = Stream.of(response.getBody()).collect(Collectors.toList());
-        return new ServiceResponse<>(list, response.getHeaders(), true);
-      }
-    } catch (HttpStatusCodeException ex) {
-      throw buildDataRetrievalException(ex);
-    }
-  }
-
-  protected <P> ServiceResponse<List<P>> tryFindAll(String resourceUrl, Class<P[]> type) {
-    String url = getServiceUrl() + getUrl() + resourceUrl;
-    log.info("permissionStrings url: {}", url);
-
-    try {
-      RequestHeaders headers = RequestHeaders.init();
-      ResponseEntity<P[]> response = restTemplate.exchange(
-              url, HttpMethod.GET, RequestHelper.createEntity(null, addAuthHeader(headers)), type
-      );
-      log.info("permissionStrings responseEntity: {}", response);
-
-      List<P> list = Stream.of(response.getBody()).collect(Collectors.toList());
-      return new ServiceResponse<>(list, response.getHeaders(), false);
     } catch (HttpStatusCodeException ex) {
       throw buildDataRetrievalException(ex);
     }
@@ -365,20 +273,6 @@ public abstract class BaseCommunicationService<T> {
     }
   }
 
-  protected <P> ResultDto<P> getResult(String resourceUrl, RequestParameters parameters,
-                                       Class<P> type) {
-    String url = getServiceUrl() + getUrl() + resourceUrl;
-
-    ResponseEntity<ResultDto<P>> response = runWithTokenRetry(() -> restTemplate.exchange(
-        RequestHelper.createUri(url, parameters),
-        HttpMethod.GET,
-        createEntity(),
-        new DynamicParametrizedTypeReference<>(type)
-    ));
-
-    return response.getBody();
-  }
-
   protected <P, R> R postResult(String resourceUrl, P payload, Class<R> type) {
     return postResult(resourceUrl, payload, type, Boolean.FALSE);
   }
@@ -472,25 +366,6 @@ public abstract class BaseCommunicationService<T> {
     return new ResponseEntity<>(body, HttpStatus.OK);
   }
 
-  private <E> ResponseEntity<E[]> doListRequest(String url, RequestParameters parameters,
-      Object payload, HttpMethod method,
-      Class<E[]> type) {
-    HttpEntity<Object> entity = RequestHelper
-        .createEntity(payload, authService.obtainAccessToken());
-    List<E[]> arrays = new ArrayList<>();
-
-    for (URI uri : RequestHelper.splitRequest(url, parameters, maxUrlLength)) {
-      arrays.add(restTemplate.exchange(uri, method, entity, type).getBody());
-    }
-
-    E[] body = Merger
-        .ofArrays(arrays)
-        .withDefaultValue(() -> (E[]) Array.newInstance(type.getComponentType(), 0))
-        .merge();
-
-    return new ResponseEntity<>(body, HttpStatus.OK);
-  }
-
   private <E> ResponseEntity<PageImplRepresentation<E>> doPageRequest(String url,
                                                                       RequestParameters parameters,
                                                                       Object payload,
@@ -555,12 +430,6 @@ public abstract class BaseCommunicationService<T> {
 
   private <E> HttpEntity<E> createEntity() {
     return RequestHelper.createEntity(createHeadersWithAuth());
-  }
-
-  private RequestHeaders addAuthHeader(RequestHeaders headers) {
-    return null == headers
-        ? RequestHeaders.init().setAuth(authService.obtainAccessToken())
-        : headers.setAuth(authService.obtainAccessToken());
   }
 
   private RequestHeaders createHeadersWithAuth() {

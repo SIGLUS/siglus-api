@@ -25,7 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 
@@ -47,7 +47,7 @@ public class SiglusArchiveProductControllerTest {
 
   @Before
   public void prepare() {
-    User user = new User();
+    UserDto user = new UserDto();
     user.setHomeFacilityId(facilityId);
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
   }
