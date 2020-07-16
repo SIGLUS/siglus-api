@@ -44,11 +44,11 @@ public class RequisitionVersionValidator {
    */
   public ValidationResult validateRequisitionTimestamps(ZonedDateTime incomingModifiedDate,
       Requisition existingReq) {
-    if (incomingModifiedDate != null
-        && !incomingModifiedDate.isEqual(existingReq.getModifiedDate())) {
-      return ValidationResult.conflict(ERROR_DATE_MODIFIED_MISMATCH,
-          existingReq.getId().toString());
-    }
+//    if (incomingModifiedDate != null
+//        && !incomingModifiedDate.isEqual(existingReq.getModifiedDate())) {
+//      return ValidationResult.conflict(ERROR_DATE_MODIFIED_MISMATCH,
+//          existingReq.getId().toString());
+//    }
     return ValidationResult.success();
   }
 

@@ -26,6 +26,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.Sets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -42,8 +44,11 @@ import org.openlmis.fulfillment.service.ResourceNames;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
+import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
@@ -59,15 +64,20 @@ import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.domain.RequisitionExternal;
 import org.siglus.siglusapi.dto.OrderLineItemDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.RequisitionExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderFulfillmentService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -111,6 +121,12 @@ public class SiglusOrderService {
 
   @Value("${service.url}")
   private String serviceUrl;
+
+  @Autowired
+  private RequisitionExternalRepository requisitionExternalIdRepository;
+
+  @Autowired
+  private OrderController orderController;
 
   public SiglusOrderDto searchOrderById(UUID orderId) {
     //totalDispensingUnits not present in lineitem of previous OrderFulfillmentService
@@ -175,6 +191,80 @@ public class SiglusOrderService {
 
     log.info("orderId: {}, addedOrderLineItemIds: {}", order.getId(), addedLineItemIds);
     return addedLineItemIds;
+  }
+
+  public Iterable<BasicOrderDto> createSubOrder(OrderObjectReferenceDto order,
+      List<org.openlmis.fulfillment.web.util.OrderLineItemDto>
+          orderLineItemDtos) {
+    RequisitionExternal external = requisitionExternalIdRepository.findOne(order.getExternalId());
+    List<RequisitionExternal> externals;
+    if (external == null) {
+      RequisitionExternal firstExternal = RequisitionExternal.builder()
+          .requisitionId(order.getExternalId()).build();
+      RequisitionExternal secondExternal = RequisitionExternal.builder()
+          .requisitionId(order.getExternalId()).build();
+      externals = requisitionExternalIdRepository
+          .save(Arrays.asList(firstExternal, secondExternal));
+      updateExistOrderForSubOrder(order, externals);
+    } else {
+      externals = requisitionExternalIdRepository
+          .findByRequisitionId(external.getRequisitionId());
+      RequisitionExternal newExternal = RequisitionExternal.builder()
+          .requisitionId(order.getExternalId()).build();
+      newExternal = requisitionExternalIdRepository.save(newExternal);
+      externals.add(newExternal);
+    }
+
+    Iterable<BasicOrderDto> orderDtos = createNewOrder(order, orderLineItemDtos, externals);
+
+    return orderDtos;
+  }
+
+  private void updateExistOrderForSubOrder(OrderObjectReferenceDto order,
+      List<RequisitionExternal> externals) {
+    Order originOrder = orderRepository.findByOrderCode(order.getOrderCode());
+    originOrder.setExternalId(externals.get(0).getExternalId());
+    originOrder.setOrderCode(order.getOrderCode().concat("-" + 1));
+    orderRepository.save(originOrder);
+  }
+
+  private Iterable<BasicOrderDto> createNewOrder(OrderObjectReferenceDto order,
+      List<org.openlmis.fulfillment.web.util.OrderLineItemDto> orderLineItemDtos,
+      List<RequisitionExternal> externals) {
+    OrderDto newOrder = new OrderDto();
+    BeanUtils.copyProperties(order, newOrder);
+    newOrder.setId(null);
+    newOrder.setExternalId(externals.get(externals.size() - 1).getExternalId());
+    newOrder.setOrderCode(order.getOrderCode().concat("-" + externals.size()));
+    newOrder.setOrderLineItems(orderLineItemDtos);
+    Iterable<BasicOrderDto> orderDtos = orderController.batchCreateOrders(Arrays.asList(newOrder),
+        (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication());
+    if (orderDtos.iterator().hasNext()) {
+      updateOrderExtension(orderLineItemDtos, orderDtos);
+    }
+    return orderDtos;
+  }
+
+  private void updateOrderExtension(
+      List<org.openlmis.fulfillment.web.util.OrderLineItemDto> orderLineItemDtos,
+      Iterable<BasicOrderDto> orderDtos) {
+    OrderDto orderDto = siglusOrderFulfillmentService
+        .findOne(orderDtos.iterator().next().getId());
+    Map<UUID, org.openlmis.fulfillment.web.util.OrderLineItemDto> orderLineItemDtoMap =
+        orderLineItemDtos.stream()
+            .collect(toMap(orderLineItemDto -> orderLineItemDto.getOrderableIdentity().getId(),
+                orderLineItemDto -> orderLineItemDto));
+
+    List<OrderLineItemExtension> extensions = new ArrayList<>();
+    for (OrderLineItem.Importer importer : orderDto.getOrderLineItems()) {
+      OrderLineItemExtension extension = new OrderLineItemExtension();
+      extension.setPartialFulfilledQuantity(
+          orderLineItemDtoMap.get(importer.getOrderableIdentity().getId())
+              .getPartialFulfilledQuantity());
+      extensions.add(extension);
+    }
+    log.info("save requisition line item extension: {}", extensions);
+    lineItemExtensionRepository.save(extensions);
   }
 
   private SiglusOrderLineItemDto buildOrderLineItem(Map<UUID, StockCardSummaryV2Dto> summaryMap,
@@ -288,6 +378,7 @@ public class SiglusOrderService {
       if (null != extension) {
         lineItem.setSkipped(extension.isSkipped());
         lineItem.setAdded(extension.isAdded());
+        lineItem.setPartialFulfilledQuantity(extension.getPartialFulfilledQuantity());
       }
     });
   }

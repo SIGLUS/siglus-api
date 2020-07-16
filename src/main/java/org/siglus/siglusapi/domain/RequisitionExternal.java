@@ -17,28 +17,28 @@ package org.siglus.siglusapi.domain;
 
 import java.util.UUID;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Builder
-@EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "order_line_item_extension", schema = "siglusintegration")
-public class OrderLineItemExtension extends BaseEntity {
+@Table(name = "requisition_external_id_extension", schema = "siglusintegration")
+public class RequisitionExternal {
 
-  private UUID orderLineItemId;
+  @Id
+  @GeneratedValue(generator = "uuid-gen")
+  @GenericGenerator(name = "uuid-gen",
+      strategy = "org.siglus.siglusapi.domain.ConditionalUuidGenerator")
+  @Type(type = "pg-uuid")
+  private UUID externalId;
 
-  private boolean skipped;
-
-  private boolean added;
-
-  private Long partialFulfilledQuantity;
+  private UUID requisitionId;
 }

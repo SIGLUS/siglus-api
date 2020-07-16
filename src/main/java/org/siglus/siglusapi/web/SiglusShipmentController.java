@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,9 +39,17 @@ public class SiglusShipmentController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ShipmentDto createShipment(@RequestBody ShipmentDto shipmentDto) {
-    ShipmentDto shipment = siglusShipmentService.createShipment(shipmentDto);
-    notificationService.postConfirmShipment(shipment);
+  public ShipmentDto createShipment(
+      @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
+          boolean isSubOrder, @RequestBody ShipmentDto shipmentDto) {
+    ShipmentDto shipment;
+    if (isSubOrder == true) {
+      siglusShipmentService.createSubOrder(shipmentDto);
+      shipment = siglusShipmentService.createShipment(shipmentDto);
+    } else {
+      shipment = siglusShipmentService.createShipment(shipmentDto);
+      notificationService.postConfirmShipment(shipment);
+    }
     return shipment;
   }
 

@@ -38,6 +38,7 @@ public class OrderLineItemDto implements OrderLineItem.Importer, OrderLineItem.E
 
   // [SIGLUS change start]
   // [change reason]: support for skip & added products.
+  private Long partialFulfilledQuantity = Long.valueOf(0);
   private boolean skipped = false;
   private boolean added = false;
   // [SIGLUS change end]

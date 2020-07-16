@@ -17,14 +17,20 @@ package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
+import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +48,22 @@ public class SiglusShipmentService {
 
   @Autowired
   private ShipmentController shipmentController;
+
+  @Autowired
+  private SiglusOrderService siglusOrderService;
+
+  public void createSubOrder(ShipmentDto shipmentDto) {
+    Set<UUID> skippedOrderLineItemIds = getSkippedOrderLineItemIds(shipmentDto);
+    Map<UUID, List<ShipmentLineItem.Importer>> groupShipment = shipmentDto.getLineItems().stream()
+        .collect(Collectors.groupingBy(lineItem -> lineItem.getOrderableIdentity().getId()));
+    OrderObjectReferenceDto order = shipmentDto.getOrder();
+    List<OrderLineItemDto> orderLineItems = order.getOrderLineItems();
+    List<OrderLineItemDto> subOrderLineItems = getSubOrderLineItemDtos(skippedOrderLineItemIds,
+        groupShipment, orderLineItems);
+    if (!subOrderLineItems.isEmpty()) {
+      siglusOrderService.createSubOrder(order, subOrderLineItems);
+    }
+  }
 
   @Transactional
   public ShipmentDto createShipment(ShipmentDto shipmentDto) {
@@ -79,4 +101,41 @@ public class SiglusShipmentService {
         .findByOrderLineItemIdIn(skippedOrderLineItemIds);
     lineItemExtensionRepository.delete(extensions);
   }
+
+  private List<OrderLineItemDto> getSubOrderLineItemDtos(Set<UUID> skippedOrderLineItemIds,
+      Map<UUID, List<Importer>> groupShipment, List<OrderLineItemDto> orderLineItems) {
+    List<OrderLineItemDto> subOrderLineItems = new ArrayList<>();
+    for (OrderLineItemDto dto : orderLineItems) {
+      if (!skippedOrderLineItemIds.contains(dto.getId()) && dto.getOrderedQuantity() > 0) {
+        calculateSubOrderPartialFulfilledValue(groupShipment, subOrderLineItems, dto);
+      }
+    }
+    return subOrderLineItems;
+  }
+
+  private void calculateSubOrderPartialFulfilledValue(Map<UUID, List<Importer>> groupShipment,
+      List<OrderLineItemDto> subOrderLineItems, OrderLineItemDto dto) {
+    if (groupShipment.containsKey(dto.getOrderable().getId())) {
+      Long shippedValue = getShippedValue(groupShipment, dto.getOrderable().getId());
+      if (dto.getPartialFulfilledQuantity() + shippedValue < dto.getOrderedQuantity()) {
+        Long partialFulfilledQuantity = dto.getOrderedQuantity() -
+            dto.getPartialFulfilledQuantity() - shippedValue;
+        dto.setPartialFulfilledQuantity(partialFulfilledQuantity);
+        subOrderLineItems.add(dto);
+      }
+    } else {
+      subOrderLineItems.add(dto);
+    }
+  }
+
+  private Long getShippedValue(Map<UUID, List<ShipmentLineItem.Importer>> groupShipment,
+      UUID orderableId) {
+    List<ShipmentLineItem.Importer> shipments = groupShipment.get(orderableId);
+    Long shipmentValue = Long.valueOf(0);
+    for (ShipmentLineItem.Importer shipment : shipments) {
+      shipmentValue = +shipment.getQuantityShipped();
+    }
+    return shipmentValue;
+  }
+
 }
