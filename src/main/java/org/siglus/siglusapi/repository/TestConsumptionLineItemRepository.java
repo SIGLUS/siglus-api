@@ -13,29 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
-
-import static com.google.common.collect.Lists.newArrayList;
+package org.siglus.siglusapi.repository;
 
 import java.util.List;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.springframework.beans.BeanUtils;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.TestConsumptionLineItem;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class SiglusRequisitionDto extends RequisitionV2Dto {
-  private Boolean isFinalApproval;
-  private List<KitUsageLineItemDto> kitUsageLineItems = newArrayList();
-  private List<UsageInformationServiceDto> usageInformationLineItems = newArrayList();
-  private List<TestConsumptionServiceDto> testConsumptionLineItems = newArrayList();
-  private SiglusUsageTemplateDto usageTemplate;
+public interface TestConsumptionLineItemRepository
+    extends JpaRepository<TestConsumptionLineItem, UUID> {
 
-  public static SiglusRequisitionDto from(RequisitionV2Dto v2Dto) {
-    SiglusRequisitionDto dto = new SiglusRequisitionDto();
-    BeanUtils.copyProperties(v2Dto, dto);
-    return dto;
-  }
+  List<TestConsumptionLineItem> findByRequisitionId(UUID requisitionId);
 
 }

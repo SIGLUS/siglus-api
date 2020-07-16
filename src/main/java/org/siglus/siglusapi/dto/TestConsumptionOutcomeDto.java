@@ -15,27 +15,22 @@
 
 package org.siglus.siglusapi.dto;
 
-import static com.google.common.collect.Lists.newArrayList;
-
-import java.util.List;
+import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.springframework.beans.BeanUtils;
+import lombok.NoArgsConstructor;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class SiglusRequisitionDto extends RequisitionV2Dto {
-  private Boolean isFinalApproval;
-  private List<KitUsageLineItemDto> kitUsageLineItems = newArrayList();
-  private List<UsageInformationServiceDto> usageInformationLineItems = newArrayList();
-  private List<TestConsumptionServiceDto> testConsumptionLineItems = newArrayList();
-  private SiglusUsageTemplateDto usageTemplate;
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class TestConsumptionOutcomeDto {
 
-  public static SiglusRequisitionDto from(RequisitionV2Dto v2Dto) {
-    SiglusRequisitionDto dto = new SiglusRequisitionDto();
-    BeanUtils.copyProperties(v2Dto, dto);
-    return dto;
-  }
+  private UUID testConsumptionLineItemId;
+
+  private String outcome;
+
+  private Integer value;
 
 }
