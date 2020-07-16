@@ -15,6 +15,7 @@
 
 package org.siglus.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,6 +41,7 @@ public class RequisitionTemplateExtensionDto extends BaseDto {
 
   private boolean enableProduct = false;
 
+  @JsonProperty("enablePatient")
   private boolean enablePatientLineItem = false;
 
   private boolean enableRegimen = false;
