@@ -16,10 +16,12 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Maps.newHashMap;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
@@ -27,6 +29,7 @@ import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
@@ -39,6 +42,7 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.dto.referencedata.OrderableFulfillDto;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
@@ -88,6 +92,8 @@ public class SiglusStockCardSummariesServiceTest {
   private UUID realProgramId = UUID.randomUUID();
 
   private String rightName = "STOCK_CARDS_VIEW";
+
+  private UUID orderableId = UUID.randomUUID();
 
   @Before
   public void prepare() {
@@ -268,6 +274,34 @@ public class SiglusStockCardSummariesServiceTest {
 
     StockCardSummaries resultSummaries = service.findSiglusStockCard(params);
     assertEquals(1, resultSummaries.getStockCardsForFulfillOrderables().size());
+  }
+
+  @Test
+  public void shouldReturnSpecifiedOrderablesIfOrderableIdsNotEmpty() {
+    Map<UUID, OrderableFulfillDto> orderableFulfillMap = newHashMap();
+    orderableFulfillMap.put(orderableId, new OrderableFulfillDto(newArrayList(orderableId), null));
+    orderableFulfillMap.put(UUID.randomUUID(),
+        new OrderableFulfillDto(newArrayList(UUID.randomUUID()), null));
+    StockCardSummaries summaries = new StockCardSummaries();
+    summaries.setOrderableFulfillMap(orderableFulfillMap);
+    summaries.setAsOfDate(LocalDate.now());
+    StockCard stockCard = StockCard.builder()
+        .stockOnHand(15)
+        .orderableId(orderableId)
+        .build();
+    StockCard stockCard2 = StockCard.builder()
+        .stockOnHand(20)
+        .orderableId(UUID.randomUUID())
+        .build();
+    summaries.setStockCardsForFulfillOrderables(newArrayList(stockCard, stockCard2));
+    when(stockCardSummariesService.findStockCards(any()))
+        .thenReturn(summaries);
+    MultiValueMap<String, String> params = getVirtualParms();
+    params.add(ORDERABLE_ID, orderableId.toString());
+
+    StockCardSummaries resultSummaries = service.findSiglusStockCard(params);
+    assertEquals(1, resultSummaries.getStockCardsForFulfillOrderables().size());
+    assertEquals(1, resultSummaries.getOrderableFulfillMap().size());
   }
 
   private MultiValueMap<String, String> getVirtualParms() {

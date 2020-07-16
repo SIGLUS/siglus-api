@@ -24,17 +24,19 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORT
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.dto.referencedata.OrderableFulfillDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
@@ -50,7 +52,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 
 @Service
@@ -93,32 +94,48 @@ public class SiglusStockCardSummariesService {
     siglusSummaries.setOrderableFulfillMap(new HashMap<>());
     Set<String> archivedProducts = archiveProductService
         .searchArchivedProducts(UUID.fromString(parameters.getFirst(FACILITY_ID)));
+    StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams(
+        parameters);
+    List<UUID> orderableIds = v2SearchParams.getOrderableIds();
     for (UUID programId : programIds) {
-      parameters.put(PROGRAM_ID, Collections.singletonList(programId.toString()));
-      StockCardSummariesV2SearchParams v2SearchParams = new
-          StockCardSummariesV2SearchParams(parameters);
+      v2SearchParams.setProgramId(programId);
       // call modify stockCardSummariesService for orderable support virtual program
       StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
       siglusSummaries.setAsOfDate(summaries.getAsOfDate());
+      List<StockCard> stockCardsForFulfillOrderables = summaries
+          .getStockCardsForFulfillOrderables();
+      Map<UUID, OrderableFulfillDto> orderableFulfillMap = summaries.getOrderableFulfillMap();
+      filterByOrderableIds(orderableIds, stockCardsForFulfillOrderables, orderableFulfillMap);
       if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED))) {
         siglusSummaries.getStockCardsForFulfillOrderables()
-            .addAll(summaries.getStockCardsForFulfillOrderables()
+            .addAll(stockCardsForFulfillOrderables
                 .stream()
                 .filter(isNotArchived(archivedProducts))
                 .collect(Collectors.toList()));
       } else if (Boolean.parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
         siglusSummaries.getStockCardsForFulfillOrderables()
-            .addAll(summaries.getStockCardsForFulfillOrderables()
+            .addAll(stockCardsForFulfillOrderables
                 .stream()
                 .filter(isArchived(archivedProducts))
                 .collect(Collectors.toList()));
       } else {
         siglusSummaries.getStockCardsForFulfillOrderables()
-            .addAll(summaries.getStockCardsForFulfillOrderables());
+            .addAll(stockCardsForFulfillOrderables);
       }
-      siglusSummaries.getOrderableFulfillMap().putAll(summaries.getOrderableFulfillMap());
+      siglusSummaries.getOrderableFulfillMap().putAll(orderableFulfillMap);
     }
     return siglusSummaries;
+  }
+
+  private void filterByOrderableIds(List<UUID> orderableIds,
+      List<StockCard> stockCardsForFulfillOrderables,
+      Map<UUID, OrderableFulfillDto> orderableFulfillMap) {
+    if (CollectionUtils.isEmpty(orderableIds)) {
+      return;
+    }
+    stockCardsForFulfillOrderables
+        .removeIf(stockCard -> !orderableIds.contains(stockCard.getOrderableId()));
+    orderableFulfillMap.entrySet().removeIf(entry -> !orderableIds.contains(entry.getKey()));
   }
 
   public Page<StockCardSummaryV2Dto> searchStockCardSummaryV2Dtos(
