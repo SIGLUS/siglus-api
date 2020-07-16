@@ -320,7 +320,8 @@ public class SiglusOrderService {
   }
 
   private Set<VersionObjectReferenceDto> getAllUserAvailableProductAggregator(OrderDto orderDto) {
-    UUID requisitionId = orderDto.getExternalId();
+    RequisitionExternal external = requisitionExternalRepository.findOne(orderDto.getExternalId());
+    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
     Requisition requisition = requisitionController.findRequisition(requisitionId,
         requisitionController.getProfiler("GET_ORDER"));
 

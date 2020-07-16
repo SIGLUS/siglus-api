@@ -31,7 +31,10 @@ import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.siglus.common.exception.ValidationMessageException;
+import org.siglus.common.util.Message;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -60,9 +63,11 @@ public class SiglusShipmentService {
     List<OrderLineItemDto> orderLineItems = order.getOrderLineItems();
     List<OrderLineItemDto> subOrderLineItems = getSubOrderLineItemDtos(skippedOrderLineItemIds,
         groupShipment, orderLineItems);
-    if (!subOrderLineItems.isEmpty()) {
-      siglusOrderService.createSubOrder(order, subOrderLineItems);
+    if (subOrderLineItems.isEmpty()) {
+      throw new ValidationMessageException(
+          new Message(MessageKeys.ERROR_SUB_ORDER_LINE_ITEM));
     }
+    siglusOrderService.createSubOrder(order, subOrderLineItems);
   }
 
   @Transactional

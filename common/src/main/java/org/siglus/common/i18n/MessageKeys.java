@@ -45,6 +45,8 @@ public abstract class MessageKeys {
 
   public static final String ERROR_NOT_ACCEPTABLE = ERROR_PREFIX
       + ".not.acceptable";
+  public static final String ERROR_SUB_ORDER_LINE_ITEM = ERROR_PREFIX
+      + ".suborder.line.item.not.exist";
   public static final String ERROR_LOT_CODE_IS_EMPTY = ERROR_PREFIX + ".lotcode.is.empty";
   public static final String ERROR_TRADE_ITEM_IS_EMPTY = ERROR_PREFIX + ".tradeItem.is.empty";
   public static final String ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY = ERROR_PREFIX
