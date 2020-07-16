@@ -52,7 +52,7 @@ public class TestConsumptionServiceDto {
         TestConsumptionProjectDto projectDto = new TestConsumptionProjectDto();
         projectDto.setProject(projectKey);
         Map<String, TestConsumptionOutcomeDto> outcomeMap = projectLineItems.stream()
-            .collect(Collectors.toMap(lineItem -> lineItem.getOutcome(),
+            .collect(Collectors.toMap(TestConsumptionLineItem::getOutcome,
                 lineItem -> TestConsumptionOutcomeDto
                 .builder()
                 .testConsumptionLineItemId(lineItem.getId())
