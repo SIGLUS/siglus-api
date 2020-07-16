@@ -4,6 +4,6 @@
 
 CREATE TABLE siglusintegration.requisition_external_id_extension
 (
-   externalid UUID PRIMARY KEY NOT NOT NULL,
+   id UUID PRIMARY KEY NOT NULL,
    requisitionid UUID NOT NULL
 )

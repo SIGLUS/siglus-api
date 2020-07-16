@@ -2,5 +2,5 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-ALTER TABLE siglusintegration.order_line_items_extension ADD
-partialfulfilledquantity bigint NOT NULL;
+ALTER TABLE siglusintegration.order_line_item_extension ADD
+partialfulfilledquantity bigint default 0;

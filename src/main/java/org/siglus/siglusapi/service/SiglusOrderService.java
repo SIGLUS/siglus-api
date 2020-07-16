@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.ResourceNames;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
@@ -205,7 +206,8 @@ public class SiglusOrderService {
           .requisitionId(order.getExternalId()).build();
       externals = requisitionExternalIdRepository
           .save(Arrays.asList(firstExternal, secondExternal));
-      updateExistOrderForSubOrder(order, externals);
+      updateExistOrderForSubOrder(order.getId(), externals.get(0).getId(),
+          order.getOrderCode().concat("-" + 1));
     } else {
       externals = requisitionExternalIdRepository
           .findByRequisitionId(external.getRequisitionId());
@@ -214,17 +216,17 @@ public class SiglusOrderService {
       newExternal = requisitionExternalIdRepository.save(newExternal);
       externals.add(newExternal);
     }
-
     Iterable<BasicOrderDto> orderDtos = createNewOrder(order, orderLineItemDtos, externals);
 
     return orderDtos;
   }
 
-  private void updateExistOrderForSubOrder(OrderObjectReferenceDto order,
-      List<RequisitionExternal> externals) {
-    Order originOrder = orderRepository.findByOrderCode(order.getOrderCode());
-    originOrder.setExternalId(externals.get(0).getExternalId());
-    originOrder.setOrderCode(order.getOrderCode().concat("-" + 1));
+  private void updateExistOrderForSubOrder(UUID orderId,
+      UUID externalId, String orderCode) {
+    Order originOrder = orderRepository.findOne(orderId);
+    originOrder.setExternalId(externalId);
+    originOrder.setOrderCode(orderCode);
+    log.info("update exist order for subOrder: {}", originOrder);
     orderRepository.save(originOrder);
   }
 
@@ -234,12 +236,16 @@ public class SiglusOrderService {
     OrderDto newOrder = new OrderDto();
     BeanUtils.copyProperties(order, newOrder);
     newOrder.setId(null);
-    newOrder.setExternalId(externals.get(externals.size() - 1).getExternalId());
+    newOrder.setExternalId(externals.get(externals.size() - 1).getId());
     newOrder.setOrderCode(order.getOrderCode().concat("-" + externals.size()));
     newOrder.setOrderLineItems(orderLineItemDtos);
+    newOrder.setStatus(OrderStatus.ORDERED);
     Iterable<BasicOrderDto> orderDtos = orderController.batchCreateOrders(Arrays.asList(newOrder),
         (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication());
     if (orderDtos.iterator().hasNext()) {
+      UUID newOrderId = orderDtos.iterator().next().getId();
+      updateExistOrderForSubOrder(newOrderId, newOrder.getExternalId(),
+          newOrder.getOrderCode());
       updateOrderExtension(orderLineItemDtos, orderDtos);
     }
     return orderDtos;
@@ -258,6 +264,7 @@ public class SiglusOrderService {
     List<OrderLineItemExtension> extensions = new ArrayList<>();
     for (OrderLineItem.Importer importer : orderDto.getOrderLineItems()) {
       OrderLineItemExtension extension = new OrderLineItemExtension();
+      extension.setOrderLineItemId(importer.getId());
       extension.setPartialFulfilledQuantity(
           orderLineItemDtoMap.get(importer.getOrderableIdentity().getId())
               .getPartialFulfilledQuantity());
@@ -375,10 +382,11 @@ public class SiglusOrderService {
         .collect(toMap(OrderLineItemExtension::getOrderLineItemId, extension -> extension));
     lineItems.forEach(lineItem -> {
       OrderLineItemExtension extension = lineItemExtensionMap.get(lineItem.getId());
+      lineItem.setPartialFulfilledQuantity(null != extension ?
+          extension.getPartialFulfilledQuantity(): Long.valueOf(0));
       if (null != extension) {
         lineItem.setSkipped(extension.isSkipped());
         lineItem.setAdded(extension.isAdded());
-        lineItem.setPartialFulfilledQuantity(extension.getPartialFulfilledQuantity());
       }
     });
   }

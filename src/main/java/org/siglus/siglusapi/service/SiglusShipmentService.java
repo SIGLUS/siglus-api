@@ -117,9 +117,9 @@ public class SiglusShipmentService {
       List<OrderLineItemDto> subOrderLineItems, OrderLineItemDto dto) {
     if (groupShipment.containsKey(dto.getOrderable().getId())) {
       Long shippedValue = getShippedValue(groupShipment, dto.getOrderable().getId());
+      dto.setId(null);
       if (dto.getPartialFulfilledQuantity() + shippedValue < dto.getOrderedQuantity()) {
-        Long partialFulfilledQuantity = dto.getOrderedQuantity() -
-            dto.getPartialFulfilledQuantity() - shippedValue;
+        Long partialFulfilledQuantity = dto.getPartialFulfilledQuantity() + shippedValue;
         dto.setPartialFulfilledQuantity(partialFulfilledQuantity);
         subOrderLineItems.add(dto);
       }
@@ -133,7 +133,7 @@ public class SiglusShipmentService {
     List<ShipmentLineItem.Importer> shipments = groupShipment.get(orderableId);
     Long shipmentValue = Long.valueOf(0);
     for (ShipmentLineItem.Importer shipment : shipments) {
-      shipmentValue = +shipment.getQuantityShipped();
+      shipmentValue += shipment.getQuantityShipped();
     }
     return shipmentValue;
   }

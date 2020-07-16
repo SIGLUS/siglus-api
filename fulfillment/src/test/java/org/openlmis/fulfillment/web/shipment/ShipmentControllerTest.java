@@ -25,7 +25,6 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.UUID;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -131,10 +130,6 @@ public class ShipmentControllerTest {
     verify(shipmentDraftRepository).delete(draft);
   }
 
-  // [SIGLUS change start]
-  // [change reason]: #374 test ignore
-  @Ignore
-  // [SIGLUS change end]
   @Test
   public void shouldSendStockEvent() {
     shipmentController.createShipment(shipmentDto);

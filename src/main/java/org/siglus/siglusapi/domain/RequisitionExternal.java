@@ -17,28 +17,21 @@ package org.siglus.siglusapi.domain;
 
 import java.util.UUID;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
-@Getter
-@Setter
+@Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "requisition_external_id_extension", schema = "siglusintegration")
-public class RequisitionExternal {
-
-  @Id
-  @GeneratedValue(generator = "uuid-gen")
-  @GenericGenerator(name = "uuid-gen",
-      strategy = "org.siglus.siglusapi.domain.ConditionalUuidGenerator")
-  @Type(type = "pg-uuid")
-  private UUID externalId;
+public class RequisitionExternal extends BaseEntity {
 
   private UUID requisitionId;
+
 }
