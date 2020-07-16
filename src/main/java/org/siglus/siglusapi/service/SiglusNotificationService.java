@@ -73,13 +73,13 @@ public class SiglusNotificationService {
     NOT_VIEWED, VIEWED, PROCESSED
   }
 
-  private static final String refFacilityId = "refFacilityId";
+  private static final String REF_FACILITY_ID = "refFacilityId";
 
-  private static final String refProgramId = "refProgramId";
+  private static final String REF_PROGRAM_ID = "refProgramId";
 
-  private static final String refStatus = "refStatus";
+  private static final String REF_STATUS = "refStatus";
 
-  private static final String notifyFacilityId = "notifyFacilityId";
+  private static final String NOTIFY_FACILITY_ID = "notifyFacilityId";
 
   private final NotificationRepository repo;
 
@@ -177,7 +177,7 @@ public class SiglusNotificationService {
     update.set(root.get("processed"), true);
     update.where(cb.and(
         cb.equal(root.get("refId"), requisitionId),
-        root.get(refStatus).in(NotificationStatus.requisitionStatuses())
+        root.get(REF_STATUS).in(NotificationStatus.requisitionStatuses())
     ));
     em.createQuery(update).executeUpdate();
   }
@@ -247,7 +247,6 @@ public class SiglusNotificationService {
   }
 
   private Set<UUID> findCurrentUserSupervisoryNodeIds() {
-    System.out.println(authenticationHelper.getCurrentUser().getRoleAssignments());
     return authenticationHelper.getCurrentUser().getRoleAssignments()
         .stream()
         .filter(roleAssignment -> roleAssignment instanceof SupervisionRoleAssignment)
@@ -317,50 +316,50 @@ public class SiglusNotificationService {
     switch (right.getRightName()) {
       case PermissionService.REQUISITION_CREATE:
         return cb.and(
-            cb.equal(root.get(refFacilityId), right.getFacilityId()),
-            cb.equal(root.get(refProgramId), right.getProgramId()),
-            cb.equal(root.get(refStatus), NotificationStatus.REJECTED),
-            cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
+            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
+            cb.equal(root.get(REF_PROGRAM_ID), right.getProgramId()),
+            cb.equal(root.get(REF_STATUS), NotificationStatus.REJECTED),
+            cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       case PermissionService.REQUISITION_AUTHORIZE:
         return cb.and(
-            cb.equal(root.get(refFacilityId), right.getFacilityId()),
-            cb.equal(root.get(refProgramId), right.getProgramId()),
-            cb.equal(root.get(refStatus), NotificationStatus.SUBMITTED),
-            cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
+            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
+            cb.equal(root.get(REF_PROGRAM_ID), right.getProgramId()),
+            cb.equal(root.get(REF_STATUS), NotificationStatus.SUBMITTED),
+            cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       case PermissionService.REQUISITION_APPROVE:
         if (currentUserSupervisoryNodeIds.isEmpty()) {
           return null;
         }
         return cb.and(
-            cb.equal(root.get(refFacilityId), right.getFacilityId()),
-            cb.equal(root.get(refProgramId), right.getProgramId()),
-            root.get(refStatus)
+            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
+            cb.equal(root.get(REF_PROGRAM_ID), right.getProgramId()),
+            root.get(REF_STATUS)
                 .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
             root.get("supervisoryNodeId").in(currentUserSupervisoryNodeIds)
         );
       case PermissionService.ORDERS_EDIT:
         return cb.and(
-            cb.equal(root.get(refFacilityId), right.getFacilityId()),
-            cb.equal(root.get(refStatus), NotificationStatus.APPROVED),
-            cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
+            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
+            cb.equal(root.get(REF_STATUS), NotificationStatus.APPROVED),
+            cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       case StockmanagementPermissionService.STOCK_CARDS_VIEW:
         if (!canEditShipments) {
           return null;
         }
         return cb.and(
-            cb.equal(root.get(refFacilityId), right.getFacilityId()),
-            cb.equal(root.get(refProgramId), right.getProgramId()),
-            cb.equal(root.get(refStatus), NotificationStatus.ORDERED),
-            cb.equal(root.get(notifyFacilityId), currentUserFacilityId)
+            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
+            cb.equal(root.get(REF_PROGRAM_ID), right.getProgramId()),
+            cb.equal(root.get(REF_STATUS), NotificationStatus.ORDERED),
+            cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       case FulfillmentPermissionService.PODS_MANAGE:
         return cb.and(
-            cb.equal(root.get(refFacilityId), right.getFacilityId()),
-            cb.equal(root.get(refProgramId), right.getProgramId()),
-            cb.equal(root.get(refStatus), NotificationStatus.SHIPPED)
+            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
+            cb.equal(root.get(REF_PROGRAM_ID), right.getProgramId()),
+            cb.equal(root.get(REF_STATUS), NotificationStatus.SHIPPED)
         );
       default:
         return null;
