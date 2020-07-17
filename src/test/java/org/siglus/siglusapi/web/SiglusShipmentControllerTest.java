@@ -45,7 +45,7 @@ public class SiglusShipmentControllerTest {
     ShipmentDto shipmentDto = new ShipmentDto();
 
     // when
-    siglusShipmentController.createShipment(shipmentDto);
+    siglusShipmentController.createShipment(false, shipmentDto);
 
     // then
     verify(siglusShipmentService).createShipment(shipmentDto);

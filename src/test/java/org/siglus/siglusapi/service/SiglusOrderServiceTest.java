@@ -67,6 +67,7 @@ import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.RequisitionExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderFulfillmentService;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.BeanUtils;
@@ -116,6 +117,9 @@ public class SiglusOrderServiceTest {
   @Mock
   private SiglusOrderFulfillmentService siglusOrderFulfillmentService;
 
+  @Mock
+  private RequisitionExternalRepository requisitionExternalRepository;
+
   @InjectMocks
   private SiglusOrderService siglusOrderService;
 
@@ -136,7 +140,9 @@ public class SiglusOrderServiceTest {
   @Test
   public void shouldGetValidAvailableProductsWithOrder() {
     // given
-    when(siglusOrderFulfillmentService.findOne(orderId)).thenReturn(createOrderDto());
+    OrderDto orderDto = createOrderDto();
+    when(siglusOrderFulfillmentService.findOne(orderId)).thenReturn(orderDto);
+    when(requisitionExternalRepository.findOne(orderDto.getExternalId())).thenReturn(null);
     when(requisitionController.findRequisition(any(), any())).thenReturn(createRequisition());
     when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
     when(facilityReferenceDataService.findOne(approverFacilityId))

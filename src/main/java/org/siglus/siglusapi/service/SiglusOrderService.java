@@ -146,8 +146,8 @@ public class SiglusOrderService {
         .map(RequisitionExternal::getId).collect(Collectors.toList());
     if (!exsitExternalIds.isEmpty()) {
       orderDtos.forEach(basicOrderDto -> {
-        if (basicOrderDto.getStatus().equals(OrderStatus.ORDERED) &&
-            exsitExternalIds.contains(basicOrderDto.getExternalId())) {
+        if (basicOrderDto.getStatus().equals(OrderStatus.ORDERED)
+            && exsitExternalIds.contains(basicOrderDto.getExternalId())) {
           basicOrderDto.setStatus(OrderStatus.PARTIALLY_FULFILLED);
         }
       });
@@ -407,8 +407,8 @@ public class SiglusOrderService {
         .collect(toMap(OrderLineItemExtension::getOrderLineItemId, extension -> extension));
     lineItems.forEach(lineItem -> {
       OrderLineItemExtension extension = lineItemExtensionMap.get(lineItem.getId());
-      lineItem.setPartialFulfilledQuantity(null != extension ?
-          extension.getPartialFulfilledQuantity() : Long.valueOf(0));
+      lineItem.setPartialFulfilledQuantity(null != extension
+          ? extension.getPartialFulfilledQuantity() : Long.valueOf(0));
       if (null != extension) {
         lineItem.setSkipped(extension.isSkipped());
         lineItem.setAdded(extension.isAdded());

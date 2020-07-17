@@ -60,6 +60,7 @@ public class SiglusOrderController {
       OAuth2Authentication authentication) {
     return orderController.batchCreateOrders(orders, authentication);
   }
+
   @GetMapping()
   @ResponseBody
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
