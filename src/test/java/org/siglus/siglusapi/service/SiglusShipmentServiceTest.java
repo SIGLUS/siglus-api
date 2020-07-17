@@ -179,7 +179,7 @@ public class SiglusShipmentServiceTest {
   @Test
   public void shouldCreateSubOrderWhenLineItemShippedQualityLessOrderQuality() {
     // given
-    ShipmentDto shipmentDto =  createShipmentDto();
+    ShipmentDto shipmentDto = createShipmentDto();
 
     // when
     siglusShipmentService.createSubOrder(shipmentDto);
@@ -194,9 +194,8 @@ public class SiglusShipmentServiceTest {
   }
 
   @Test(expected = ValidationMessageException.class)
-  public void shouldDontCreateSubOrderIfShippedQualityGreaterOrderQualityWhenSubLineItemEmpty()
-  {
-    ShipmentDto shipmentDto =  createShipmentDto();
+  public void shouldDontCreateSubOrderIfShippedQualityGreaterOrderQualityWhenSubLineItemEmpty() {
+    ShipmentDto shipmentDto = createShipmentDto();
     VersionObjectReferenceDto orderReferenceDto = new VersionObjectReferenceDto(orderableId,
         "", "", Long.valueOf(1));
     ShipmentLineItemDto shipmentLineItem1 = new ShipmentLineItemDto();
@@ -219,7 +218,7 @@ public class SiglusShipmentServiceTest {
     orderableDto.setId(orderableId);
     lineItem.setOrderable(orderableDto);
     lineItem.setSkipped(true);
-    ShipmentDto shipmentDto =  createShipmentDto();
+    ShipmentDto shipmentDto = createShipmentDto();
     OrderObjectReferenceDto order = shipmentDto.getOrder();
     order.setOrderLineItems(Arrays.asList(lineItem));
     shipmentDto.setOrder(order);
@@ -236,7 +235,7 @@ public class SiglusShipmentServiceTest {
 
   @Test
   public void shouldCreateSubOrderWhenLineItemOrderQualityGreaterThan0AndShipmentEmpty() {
-    ShipmentDto shipmentDto =  createShipmentDto();
+    ShipmentDto shipmentDto = createShipmentDto();
     shipmentDto.setLineItems(new ArrayList<>());
 
     // when

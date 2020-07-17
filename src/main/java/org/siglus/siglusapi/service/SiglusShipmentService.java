@@ -120,9 +120,9 @@ public class SiglusShipmentService {
 
   private void calculateSubOrderPartialFulfilledValue(Map<UUID, List<Importer>> groupShipment,
       List<OrderLineItemDto> subOrderLineItems, OrderLineItemDto dto) {
+    dto.setId(null);
     if (groupShipment.containsKey(dto.getOrderable().getId())) {
       Long shippedValue = getShippedValue(groupShipment, dto.getOrderable().getId());
-      dto.setId(null);
       if (dto.getPartialFulfilledQuantity() + shippedValue < dto.getOrderedQuantity()) {
         Long partialFulfilledQuantity = dto.getPartialFulfilledQuantity() + shippedValue;
         dto.setPartialFulfilledQuantity(partialFulfilledQuantity);
