@@ -118,6 +118,7 @@ import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.TestConsumptionLineItemDraft;
 import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
@@ -1041,5 +1042,11 @@ public class SiglusRequisitionService {
       dto.setUsageInformationLineItems(
           UsageInformationLineItemDraft.getLineItemDto(draft.getUsageInformationLineItemDrafts()));
     }
+    if (Boolean.TRUE.equals(templateExtension.getEnableRapidTestConsumption())) {
+      dto.setTestConsumptionLineItems(
+          TestConsumptionLineItemDraft.getLineItemDto(draft.getTestConsumptionLineItemDrafts())
+      );
+    }
+
   }
 }

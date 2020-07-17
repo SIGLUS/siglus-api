@@ -46,6 +46,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "requisitions_draft", schema = "siglusintegration")
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class RequisitionDraft extends BaseEntity {
 
   private UUID requisitionId;
@@ -77,6 +78,15 @@ public class RequisitionDraft extends BaseEntity {
   private List<UsageInformationLineItemDraft> usageInformationLineItemDrafts = Collections
       .emptyList();
 
+  @OneToMany(
+      mappedBy = "requisitionDraft",
+      cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.REMOVE},
+      fetch = FetchType.LAZY,
+      orphanRemoval = true)
+  @DiffIgnore
+  private List<TestConsumptionLineItemDraft> testConsumptionLineItemDrafts = Collections
+      .emptyList();
+
   @Embedded
   private ExtraDataEntity extraData = new ExtraDataEntity();
 
@@ -98,6 +108,10 @@ public class RequisitionDraft extends BaseEntity {
     if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableUsageInformation())) {
       draft.setUsageInformationLineItemDrafts(
           UsageInformationLineItemDraft.from(draft, requisitionDto));
+    }
+    if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableRapidTestConsumption())) {
+      draft.setTestConsumptionLineItemDrafts(
+          TestConsumptionLineItemDraft.from(draft, requisitionDto));
     }
     return draft;
   }
