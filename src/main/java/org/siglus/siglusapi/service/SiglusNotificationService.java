@@ -49,7 +49,7 @@ import org.siglus.common.domain.referencedata.Right;
 import org.siglus.common.domain.referencedata.RightAssignment;
 import org.siglus.common.domain.referencedata.SupervisionRoleAssignment;
 import org.siglus.common.domain.referencedata.User;
-import org.siglus.common.repository.FacilityRepository;
+import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
@@ -97,7 +97,7 @@ public class SiglusNotificationService {
 
   private final ProofOfDeliveryFulfillmentService podService;
 
-  private final FacilityRepository facilityRepo;
+  private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   private final EntityManager em;
 
@@ -221,7 +221,8 @@ public class SiglusNotificationService {
 
   private Notification newNotification() {
     Notification notification = new Notification();
-    String currentFacilityName = facilityRepo.findOne(findCurrentUserFacilityId()).getName();
+    String currentFacilityName = facilityReferenceDataService.findOne(findCurrentUserFacilityId())
+        .getName();
     notification.setSourceFacilityName(currentFacilityName);
     return notification;
   }

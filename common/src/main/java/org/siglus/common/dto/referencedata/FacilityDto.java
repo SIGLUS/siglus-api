@@ -13,45 +13,31 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.domain.referencedata;
+package org.siglus.common.dto.referencedata;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Entity
-@Table(name = "supported_programs", schema = "referencedata")
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = "facilityProgram")
-public final class SupportedProgram {
+public class FacilityDto {
 
-  @EmbeddedId
-  @Getter
-  private SupportedProgramPrimaryKey facilityProgram;
-
-  @Column(nullable = false)
-  @Getter
+  private UUID id;
+  private String code;
+  private String name;
+  private String description;
   private Boolean active;
-
-  @Column(nullable = false)
-  @Getter
-  private Boolean locallyFulfilled;
-
-  @SuppressWarnings("squid:S3437")
-  // https://github.com/jhipster/generator-jhipster/issues/4553
-  @Getter
-  private LocalDate startDate;
-
-  public UUID programId() {
-    return facilityProgram.getProgram().getId();
-  }
+  private LocalDate goLiveDate;
+  private LocalDate goDownDate;
+  private String comment;
+  private Boolean enabled;
+  private List<SupportedProgramDto> supportedPrograms;
 
 }

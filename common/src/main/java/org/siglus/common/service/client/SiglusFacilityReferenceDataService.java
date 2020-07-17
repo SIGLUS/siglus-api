@@ -13,12 +13,26 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.repository;
+package org.siglus.common.service.client;
 
-import java.util.UUID;
-import org.siglus.common.domain.referencedata.Facility;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.siglus.common.dto.referencedata.FacilityDto;
+import org.springframework.stereotype.Service;
 
-public interface FacilityRepository extends JpaRepository<Facility, UUID> {
+@Service
+public class SiglusFacilityReferenceDataService extends BaseReferenceDataService<FacilityDto>  {
 
+  @Override
+  protected String getUrl() {
+    return "/api/facilities/";
+  }
+
+  @Override
+  protected Class<FacilityDto> getResultClass() {
+    return FacilityDto.class;
+  }
+
+  @Override
+  protected Class<FacilityDto[]> getArrayResultClass() {
+    return FacilityDto[].class;
+  }
 }

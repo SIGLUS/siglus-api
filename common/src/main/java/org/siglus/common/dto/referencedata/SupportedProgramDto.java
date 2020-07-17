@@ -13,12 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.repository;
+package org.siglus.common.dto.referencedata;
 
+import java.time.LocalDate;
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.SupervisoryNode;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.Getter;
+import lombok.Setter;
 
-public interface SupervisoryNodeRepository extends JpaRepository<SupervisoryNode, UUID> {
-
+@Getter
+@Setter
+public class SupportedProgramDto {
+  private UUID id;
+  private String code;
+  private String name;
+  private String description;
+  private boolean programActive;
+  private boolean showNonFullSupplyTab;
+  private boolean supportActive;
+  private LocalDate supportStartDate;
 }

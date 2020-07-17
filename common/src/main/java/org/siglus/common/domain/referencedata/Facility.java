@@ -18,19 +18,13 @@ package org.siglus.common.domain.referencedata;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.siglus.common.domain.BaseEntity;
 
 @Entity
@@ -82,13 +76,6 @@ public class Facility extends BaseEntity {
   @Getter
   @Setter
   private Boolean openLmisAccessible;
-
-  @OneToMany(mappedBy = "facilityProgram.facility", cascade = CascadeType.ALL, orphanRemoval = true,
-      fetch = FetchType.LAZY)
-  @DiffIgnore
-  @Getter
-  @Setter
-  private Set<SupportedProgram> supportedPrograms = new HashSet<>();
 
   /**
    * Equal by a Facility's code.

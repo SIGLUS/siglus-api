@@ -22,10 +22,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.siglus.common.domain.ProgramExtension;
-import org.siglus.common.domain.referencedata.Facility;
-import org.siglus.common.domain.referencedata.SupportedProgram;
-import org.siglus.common.repository.FacilityRepository;
+import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.repository.ProgramExtensionRepository;
+import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -35,8 +35,6 @@ public class SupportedVirtualProgramsHelper {
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
 
-  @Autowired
-  private FacilityRepository facilityRepository;
 
   @Autowired
   private ProgramExtensionRepository programExtensionRepository;
@@ -44,18 +42,21 @@ public class SupportedVirtualProgramsHelper {
   @Autowired
   private SiglusDateHelper dateHelper;
 
+  @Autowired
+  private SiglusFacilityReferenceDataService facilityReferenceDataService;
+
   public Set<UUID> findUserSupportedVirtualPrograms() {
     UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    Facility homeFacility = facilityRepository.findOne(homeFacilityId);
+    FacilityDto homeFacility = facilityReferenceDataService.findOne(homeFacilityId);
     Set<UUID> supportedPrograms = homeFacility.getSupportedPrograms()
         .stream()
         .filter(supportedProgramDto -> {
-          LocalDate supportStartDate = supportedProgramDto.getStartDate();
-          return supportedProgramDto.getFacilityProgram().getProgram().getActive()
-              && supportedProgramDto.getActive()
+          LocalDate supportStartDate = supportedProgramDto.getSupportStartDate();
+          return supportedProgramDto.isProgramActive()
+              && supportedProgramDto.isSupportActive()
               && supportStartDate.isBefore(dateHelper.getCurrentDate());
         })
-        .map(SupportedProgram::programId)
+        .map(SupportedProgramDto::getId)
         .collect(Collectors.toSet());
     List<ProgramExtension> programExtensions = programExtensionRepository.findAll();
     return programExtensions.stream()

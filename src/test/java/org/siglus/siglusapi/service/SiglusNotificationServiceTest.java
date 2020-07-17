@@ -56,9 +56,9 @@ import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
-import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.domain.referencedata.User;
-import org.siglus.common.repository.FacilityRepository;
+import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
@@ -102,7 +102,7 @@ public class SiglusNotificationServiceTest {
   private OrderFulfillmentService orderService;
 
   @Mock
-  private FacilityRepository facilityRepo;
+  private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   private UUID notificationId;
 
@@ -502,10 +502,10 @@ public class SiglusNotificationServiceTest {
     user.setId(userId);
     user.setHomeFacilityId(currentUserHomeFacilityId);
     when(authenticationHelper.getCurrentUserDomain()).thenReturn(user);
-    Facility facility = new Facility();
+    FacilityDto facility = new FacilityDto();
     facility.setId(currentUserHomeFacilityId);
     facility.setName(currentUserHomeFacilityName);
-    when(facilityRepo.findOne(currentUserHomeFacilityId)).thenReturn(facility);
+    when(facilityReferenceDataService.findOne(currentUserHomeFacilityId)).thenReturn(facility);
   }
 
   private void mockCanBeInternalApproved() {
