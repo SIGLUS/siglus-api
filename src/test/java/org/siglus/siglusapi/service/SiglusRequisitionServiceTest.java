@@ -131,6 +131,7 @@ import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.TestConsumptionLineItemDraft;
 import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
@@ -835,6 +836,11 @@ public class SiglusRequisitionServiceTest {
     assertEquals(usageLineItemDraft.getValue(),
         requisitionDto.getUsageInformationLineItems().get(0).getInformations().get("information")
             .getOrderables().get(usageLineItemDraft.getOrderableId()).getValue());
+    TestConsumptionLineItemDraft testConsumptionLineItemDraft =
+        draft.getTestConsumptionLineItemDrafts().get(0);
+    assertEquals(testConsumptionLineItemDraft.getValue(),
+        requisitionDto.getTestConsumptionLineItems().get(0).getProjects().get("HIV Determine")
+            .getOutcomes().get("Positive").getValue());
   }
 
   @Test
@@ -972,6 +978,11 @@ public class SiglusRequisitionServiceTest {
     assertEquals(usageLineItemDraft.getValue(),
         requisitionDto.getUsageInformationLineItems().get(0).getInformations().get("information")
             .getOrderables().get(usageLineItemDraft.getOrderableId()).getValue());
+    TestConsumptionLineItemDraft testConsumptionLineItemDraft =
+        draft.getTestConsumptionLineItemDrafts().get(0);
+    assertEquals(testConsumptionLineItemDraft.getValue(),
+        requisitionDto.getTestConsumptionLineItems().get(0).getProjects().get("HIV Determine")
+            .getOutcomes().get("Positive").getValue());
   }
 
   @Test
@@ -1035,6 +1046,8 @@ public class SiglusRequisitionServiceTest {
     draft.setKitUsageLineItems(Arrays.asList(usageLineItemDraft));
     UsageInformationLineItemDraft usageLineItem = getUsageInformationLineItemDraft();
     draft.setUsageInformationLineItemDrafts(Arrays.asList(usageLineItem));
+    TestConsumptionLineItemDraft testConsumptionLineItemDraft = getTestConsumptionLineItemDraft();
+    draft.setTestConsumptionLineItemDrafts(Arrays.asList(testConsumptionLineItemDraft));
     return draft;
   }
 
@@ -1057,6 +1070,16 @@ public class SiglusRequisitionServiceTest {
     usageLineItem.setValue(20);
     usageLineItem.setOrderableId(UUID.randomUUID());
     return usageLineItem;
+  }
+
+  private TestConsumptionLineItemDraft getTestConsumptionLineItemDraft() {
+    TestConsumptionLineItemDraft draft = new TestConsumptionLineItemDraft();
+    draft.setTestConsumptionLineItemId(UUID.randomUUID());
+    draft.setService("Total");
+    draft.setProject("HIV Determine");
+    draft.setOutcome("Positive");
+    draft.setValue(3);
+    return draft;
   }
 
 
