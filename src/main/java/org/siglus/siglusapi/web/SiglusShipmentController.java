@@ -43,7 +43,7 @@ public class SiglusShipmentController {
       @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
           boolean isSubOrder, @RequestBody ShipmentDto shipmentDto) {
     ShipmentDto shipment;
-    if (isSubOrder == true) {
+    if (isSubOrder) {
       siglusShipmentService.createSubOrder(shipmentDto);
       shipment = siglusShipmentService.createShipment(shipmentDto);
     } else {
