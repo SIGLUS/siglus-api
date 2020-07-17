@@ -20,10 +20,12 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,13 +38,17 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
+import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
@@ -64,6 +70,7 @@ import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
+import org.siglus.siglusapi.domain.RequisitionExternal;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
@@ -71,10 +78,14 @@ import org.siglus.siglusapi.repository.RequisitionExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderFulfillmentService;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusOrderServiceTest {
+
   @Mock
   private OrderController orderController;
 
@@ -215,6 +226,47 @@ public class SiglusOrderServiceTest {
     assertTrue(draftDto.getOrder().getOrderLineItems().get(0).getId().equals(lineItemId));
   }
 
+  @Test
+  public void shouldGetEmptyIfOrderDtoIsEmptyWhenSearchOrders() {
+    // given
+    Pageable pageable = mock(Pageable.class);
+    OrderSearchParams searchParams = new OrderSearchParams();
+    when(siglusOrderFulfillmentService.searchOrders(searchParams, pageable)).thenReturn(
+        Pagination.getPage(Collections.emptyList(), pageable, 0));
+
+    // when
+    Page<BasicOrderDto> orderDtos = siglusOrderService.searchOrders(searchParams, pageable);
+
+    // then
+    assertEquals(0, orderDtos.getContent().size());
+  }
+
+  @Test
+  public void shouldGetPartialFulfilledIfOrderStatusIsOrderedAndExistInExternalWhenSearchOrders() {
+    // given
+    BasicOrderDto orderDto = new BasicOrderDto();
+    orderDto.setId(UUID.randomUUID());
+    orderDto.setStatus(OrderStatus.ORDERED);
+    UUID externalId = UUID.randomUUID();
+    orderDto.setExternalId(externalId);
+    Pageable pageable = new PageRequest(1, 10, null);
+    OrderSearchParams searchParams = mock(OrderSearchParams.class);
+    when(siglusOrderFulfillmentService.searchOrders(searchParams, pageable))
+        .thenReturn(Pagination.getPage(Arrays.asList(orderDto), pageable, 0));
+    RequisitionExternal external = new RequisitionExternal();
+    external.setId(externalId);
+    external.setRequisitionId(UUID.randomUUID());
+    when(requisitionExternalRepository.findAll(Arrays.asList(externalId)))
+        .thenReturn(Arrays.asList(external));
+
+    // when
+    Page<BasicOrderDto> orderDtos = siglusOrderService.searchOrders(searchParams, pageable);
+
+    // then
+    assertEquals(1, orderDtos.getContent().size());
+    assertEquals(OrderStatus.PARTIALLY_FULFILLED, orderDtos.getContent().get(0).getStatus());
+  }
+
   private ShipmentDraftDto createShipmentDraftDto() {
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
     draftDto.setOrder(createOrderObjectReferenceDto());
@@ -297,9 +349,9 @@ public class SiglusOrderServiceTest {
     set.add(new ApprovedProductReference(UUID.randomUUID(), 1L, orderableId1,
         1L));
     set.add(new ApprovedProductReference(UUID.randomUUID(), 1L, orderableId2,
-            1L));
+        1L));
     set.add(new ApprovedProductReference(UUID.randomUUID(), 1L, orderableId3,
-            1L));
+        1L));
     requisition.setAvailableProducts(set);
     return requisition;
   }

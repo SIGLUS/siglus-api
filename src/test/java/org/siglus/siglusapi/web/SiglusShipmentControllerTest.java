@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Test;
@@ -40,7 +41,7 @@ public class SiglusShipmentControllerTest {
   private SiglusNotificationService notificationService;
 
   @Test
-  public void shouldCallServiceWhenCreateShipment() {
+  public void shouldCallServiceWhenCreateShipmentIfSubOrderIsFalse() {
     // given
     ShipmentDto shipmentDto = new ShipmentDto();
 
@@ -48,6 +49,20 @@ public class SiglusShipmentControllerTest {
     siglusShipmentController.createShipment(false, shipmentDto);
 
     // then
+    verify(siglusShipmentService, times(0)).createSubOrder(shipmentDto);
+    verify(siglusShipmentService).createShipment(shipmentDto);
+  }
+
+  @Test
+  public void shouldCallServiceWhenCreateShipmentIfSubOrderIsTrue() {
+    // given
+    ShipmentDto shipmentDto = new ShipmentDto();
+
+    // when
+    siglusShipmentController.createShipment(true, shipmentDto);
+
+    // then
+    verify(siglusShipmentService).createSubOrder(shipmentDto);
     verify(siglusShipmentService).createShipment(shipmentDto);
   }
 }

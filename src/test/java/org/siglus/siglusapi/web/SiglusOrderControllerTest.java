@@ -26,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.siglus.siglusapi.service.SiglusOrderService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -38,6 +39,9 @@ public class SiglusOrderControllerTest {
   private OrderController actualController;
 
   @Mock
+  private SiglusOrderService siglusOrderService;
+
+  @Mock
   private OAuth2Authentication authentication;
 
   @Mock
@@ -45,9 +49,20 @@ public class SiglusOrderControllerTest {
 
   @Test
   public void shouldCallOpenlmisControllerWhenBatchCreateOrders() {
+    // when
     controller.batchCreateOrders(orders, authentication);
 
+    // then
     verify(actualController).batchCreateOrders(orders, authentication);
+  }
+
+  @Test
+  public void shouldCallSiglusOrderServiceWhenSearchOrders() {
+    // when
+    controller.searchOrders(null, null);
+
+    // then
+    verify(siglusOrderService).searchOrders(null, null);
   }
 
 }
