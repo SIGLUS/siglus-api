@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,6 @@ import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.Message;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.i18n.MessageKeys;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -65,7 +65,7 @@ public class SiglusShipmentService {
         groupShipment, orderLineItems);
     if (subOrderLineItems.isEmpty()) {
       throw new ValidationMessageException(
-          new Message(MessageKeys.ERROR_SUB_ORDER_LINE_ITEM));
+          new Message(ERROR_SUB_ORDER_LINE_ITEM));
     }
     siglusOrderService.createSubOrder(order, subOrderLineItems);
   }
