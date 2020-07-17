@@ -89,6 +89,7 @@ public class SiglusShipmentDraftService {
                 .orderLineItemId(lineItem.getId())
                 .skipped(lineItem.isSkipped())
                 .added(addedLineItemIds.contains(lineItem.getId()))
+                .partialFulfilledQuantity(lineItem.getPartialFulfilledQuantity())
                 .build());
       }
     });

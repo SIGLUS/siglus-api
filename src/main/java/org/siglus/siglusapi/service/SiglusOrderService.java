@@ -224,15 +224,22 @@ public class SiglusOrderService {
           .save(Arrays.asList(firstExternal, secondExternal));
       updateExistOrderForSubOrder(order.getId(), externals.get(0).getId(),
           order.getOrderCode().concat("-" + 1));
+      order.setOrderCode(order.getOrderCode().concat("-" + 2));
     } else {
       externals = requisitionExternalRepository
           .findByRequisitionId(external.getRequisitionId());
       RequisitionExternal newExternal = RequisitionExternal.builder()
-          .requisitionId(order.getExternalId()).build();
+          .requisitionId(external.getRequisitionId()).build();
       newExternal = requisitionExternalRepository.save(newExternal);
       externals.add(newExternal);
+      order.setOrderCode(replaceLast(order.getOrderCode(), "-" + (externals.size() - 1),
+          "-" + externals.size()));
     }
     return createNewOrder(order, orderLineItemDtos, externals);
+  }
+
+  private String replaceLast(String text, String regex, String replacement) {
+    return text.replaceFirst("(?s)(.*)" + regex, "$1" + replacement);
   }
 
   private void updateExistOrderForSubOrder(UUID orderId,
@@ -251,7 +258,7 @@ public class SiglusOrderService {
     BeanUtils.copyProperties(order, newOrder);
     newOrder.setId(null);
     newOrder.setExternalId(externals.get(externals.size() - 1).getId());
-    newOrder.setOrderCode(order.getOrderCode().concat("-" + externals.size()));
+    newOrder.setOrderCode(order.getOrderCode());
     newOrder.setOrderLineItems(orderLineItemDtos);
     newOrder.setStatus(OrderStatus.ORDERED);
     Iterable<BasicOrderDto> orderDtos = orderController.batchCreateOrders(Arrays.asList(newOrder),

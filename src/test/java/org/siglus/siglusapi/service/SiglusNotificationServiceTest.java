@@ -63,6 +63,7 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.repository.NotificationRepository;
+import org.siglus.siglusapi.repository.RequisitionExternalRepository;
 import org.siglus.siglusapi.repository.SiglusRightAssignmentRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -100,6 +101,9 @@ public class SiglusNotificationServiceTest {
 
   @Mock
   private OrderFulfillmentService orderService;
+
+  @Mock
+  private RequisitionExternalRepository requisitionExternalRepository;
 
   @Mock
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
@@ -414,6 +418,8 @@ public class SiglusNotificationServiceTest {
   @Test
   public void shouldCallRepoWhenPostConfirmShipment() {
     // given
+    when(requisitionExternalRepository.findOne(any(UUID.class)))
+        .thenReturn(null);
     mockAuthentication();
     ShipmentDto shipment = new ShipmentDto();
     OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(randomUUID());
@@ -437,6 +443,7 @@ public class SiglusNotificationServiceTest {
     program.setId(randomUUID());
     requisition.setProgram(program);
     when(requisitionService.searchRequisition(order.getExternalId())).thenReturn(requisition);
+
     // when
     service.postConfirmShipment(shipment);
 

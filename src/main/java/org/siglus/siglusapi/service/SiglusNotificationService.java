@@ -53,8 +53,10 @@ import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
+import org.siglus.siglusapi.domain.RequisitionExternal;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
+import org.siglus.siglusapi.repository.RequisitionExternalRepository;
 import org.siglus.siglusapi.repository.SiglusRightAssignmentRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
@@ -98,6 +100,8 @@ public class SiglusNotificationService {
   private final ProofOfDeliveryFulfillmentService podService;
 
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
+
+  private RequisitionExternalRepository requisitionExternalRepository;
 
   private final EntityManager em;
 
@@ -202,7 +206,9 @@ public class SiglusNotificationService {
   public void postConfirmShipment(ShipmentDto shipment) {
     OrderDto order = orderService.findOne(shipment.getOrder().getId());
     repo.updateLastNotificationProcessed(order.getId(), NotificationStatus.ORDERED);
-    RequisitionV2Dto requisition = requisitionService.searchRequisition(order.getExternalId());
+    RequisitionExternal external = requisitionExternalRepository.findOne(order.getExternalId());
+    UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
+    RequisitionV2Dto requisition = requisitionService.searchRequisition(requisitionId);
     List<ProofOfDeliveryDto> pods = podService.getProofOfDeliveries(order.getId());
     pods.forEach(pod -> {
       Notification notification = newNotification();
