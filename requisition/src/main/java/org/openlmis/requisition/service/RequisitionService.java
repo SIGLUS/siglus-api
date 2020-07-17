@@ -1035,10 +1035,10 @@ public class RequisitionService {
 
   // [SIGLUS change start]
   // [change reason]: provide associated approved product
-  public ApproveProductsAggregator getApproveProduct(FacilityDto facility,
-      ProgramDto program, RequisitionTemplate template) {
+  public ApproveProductsAggregator getApproveProduct(UUID facilityId,
+      UUID programId, RequisitionTemplate template) {
     ApproveProductsAggregator approveProductsAggregator = approvedProductReferenceDataService
-        .getApprovedProducts(facility.getId(), program.getId());
+        .getApprovedProducts(facilityId, programId);
     Set<UUID> associateProgramIds = getAssociateProgram(template.getId());
     if (associateProgramIds.isEmpty()) {
       return approveProductsAggregator;
@@ -1049,11 +1049,11 @@ public class RequisitionService {
     associateProgramIds.forEach(associateProgram -> {
       if (supportedVirtualPrograms.contains(associateProgram)) {
         ApproveProductsAggregator productsAggregator = approvedProductReferenceDataService
-            .getApprovedProducts(facility.getId(), associateProgram);
+            .getApprovedProducts(facilityId, associateProgram);
         approvedProducts.addAll(productsAggregator.getFullSupplyProducts());
       }
     });
-    return new ApproveProductsAggregator(approvedProducts, program.getId());
+    return new ApproveProductsAggregator(approvedProducts, programId);
   }
 
   public Set<UUID> getAssociateProgram(UUID templateId) {

@@ -59,14 +59,11 @@ import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
-import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.MetadataDto;
-import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
@@ -104,9 +101,6 @@ public class SiglusOrderServiceTest {
 
   @Mock
   private FacilityReferenceDataService facilityReferenceDataService;
-
-  @Mock
-  private ProgramReferenceDataService programReferenceDataService;
 
   @Mock
   private SiglusArchiveProductService siglusArchiveProductService;
@@ -160,16 +154,9 @@ public class SiglusOrderServiceTest {
     when(requisitionExternalRepository.findOne(orderDto.getExternalId())).thenReturn(null);
     when(requisitionController.findRequisition(any(), any())).thenReturn(createRequisition());
     when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
-    when(facilityReferenceDataService.findOne(approverFacilityId))
-        .thenReturn(createFacilityDto(approverFacilityId));
-    when(facilityReferenceDataService.findOne(userHomeFacilityId))
-        .thenReturn(createFacilityDto(userHomeFacilityId));
-    when(programReferenceDataService.findOne(programId)).thenReturn(createProgramDto());
-    when(requisitionService.getApproveProduct(
-        createFacilityDto(approverFacilityId), createProgramDto(), null))
+    when(requisitionService.getApproveProduct(approverFacilityId, programId, null))
         .thenReturn(createApproverAggregator());
-    when(requisitionService.getApproveProduct(
-        createFacilityDto(userHomeFacilityId), createProgramDto(), null))
+    when(requisitionService.getApproveProduct(userHomeFacilityId, programId, null))
         .thenReturn(createUserAggregator());
     when(siglusArchiveProductService.searchArchivedProducts(any()))
         .thenReturn(createArchivedProducts());
@@ -359,12 +346,6 @@ public class SiglusOrderServiceTest {
     return productDto;
   }
 
-  private FacilityDto createFacilityDto(UUID id) {
-    FacilityDto facilityDto = new FacilityDto();
-    facilityDto.setId(id);
-    return facilityDto;
-  }
-
   private OrderDto createOrderDto() {
     OrderDto order = new OrderDto();
     order.setId(orderId);
@@ -399,12 +380,6 @@ public class SiglusOrderServiceTest {
         1L));
     requisition.setAvailableProducts(set);
     return requisition;
-  }
-
-  private ProgramDto createProgramDto() {
-    ProgramDto programDto = new ProgramDto();
-    programDto.setId(programId);
-    return programDto;
   }
 
   private Set<String> createArchivedProducts() {

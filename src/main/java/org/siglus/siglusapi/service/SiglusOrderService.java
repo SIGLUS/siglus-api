@@ -55,13 +55,9 @@ import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
-import org.openlmis.requisition.dto.FacilityDto;
-import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
-import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
@@ -98,12 +94,6 @@ public class SiglusOrderService {
 
   @Autowired
   private AuthenticationHelper authenticationHelper;
-
-  @Autowired
-  private FacilityReferenceDataService facilityReferenceDataService;
-
-  @Autowired
-  private ProgramReferenceDataService programReferenceDataService;
 
   @Autowired
   private SiglusArchiveProductService siglusArchiveProductService;
@@ -325,26 +315,21 @@ public class SiglusOrderService {
     Requisition requisition = requisitionController.findRequisition(requisitionId,
         requisitionController.getProfiler("GET_ORDER"));
 
-    FacilityDto approverFacility = facilityReferenceDataService.findOne(
-        orderDto.getCreatedBy().getHomeFacilityId());
-    FacilityDto userHomeFacility = facilityReferenceDataService.findOne(
-        authenticationHelper.getCurrentUser().getHomeFacilityId());
-    ProgramDto requisitionProgram = programReferenceDataService.findOne(
-        requisition.getProgramId());
+    UUID approverFacilityId = orderDto.getCreatedBy().getHomeFacilityId();
+    UUID userHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     // 10+ seconds cost when call following requisitionService.getApproveProduct
     ApproveProductsAggregator approverProductAggregator = requisitionService.getApproveProduct(
-        approverFacility, requisitionProgram, requisition.getTemplate());
+        approverFacilityId, requisition.getProgramId(), requisition.getTemplate());
     ApproveProductsAggregator userProductAggregator = requisitionService.getApproveProduct(
-        userHomeFacility, requisitionProgram, requisition.getTemplate());
+        userHomeFacilityId, requisition.getProgramId(), requisition.getTemplate());
 
     Set<UUID> approverOrderableIds = getOrderableIds(approverProductAggregator);
     Set<UUID> userOrderableIds = getOrderableIds(userProductAggregator);
 
     Set<UUID> archivedOrderableIds = getArchivedOrderableIds(Sets.newHashSet(
-        requisition.getFacilityId(), approverFacility.getId(), userHomeFacility.getId()));
+        requisition.getFacilityId(), approverFacilityId, userHomeFacilityId));
 
-    Map<UUID, StockCardSummaryV2Dto> orderableSohMap =
-        getOrderableIdSohMap(userHomeFacility.getId());
+    Map<UUID, StockCardSummaryV2Dto> orderableSohMap = getOrderableIdSohMap(userHomeFacilityId);
 
     return Optional
         .ofNullable(requisition.getAvailableProducts())

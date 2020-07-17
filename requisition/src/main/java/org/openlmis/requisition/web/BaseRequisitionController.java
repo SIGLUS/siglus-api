@@ -287,7 +287,7 @@ public abstract class BaseRequisitionController extends BaseController {
     List<ApprovedProductDto> approvedProductDtos = new ArrayList<>();
     if (templateExtension.getEnableProduct() || templateExtension.getEnableUsageInformation()) {
       ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(
-          facility, program, requisitionTemplate);
+          facility.getId(), program.getId(), requisitionTemplate);
       List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
           .map(Orderable::getId).collect(toList());
       approvedProductDtos =
@@ -359,7 +359,7 @@ public abstract class BaseRequisitionController extends BaseController {
         .findByRequisitionTemplateId(template.getId());
     templateDto.setExtension(RequisitionTemplateExtensionDto.from(templateExtension));
     requisitionService.getAssociateProgram(template.getId());
-    Set<ObjectReferenceDto>  associatePrograms = Optional
+    Set<ObjectReferenceDto> associatePrograms = Optional
         .ofNullable(requisitionService.getAssociateProgram(template.getId()))
         .orElse(Collections.emptySet())
         .stream()
@@ -412,10 +412,9 @@ public abstract class BaseRequisitionController extends BaseController {
     // then mismatch of these two cause in getMaxPeriodsOfStockFromApprovedProduct
     // can't find product in method of RequisitionLineItem
     UserDto userDto = authenticationHelper.getCurrentUser();
-    ProgramDto mainProgram = findProgram(requisitionToUpdate.getProgramId(), profiler);
-    FacilityDto approverFacility = findFacility(userDto.getHomeFacilityId(), profiler);
     ApproveProductsAggregator aggregator = requisitionService
-        .getApproveProduct(approverFacility, mainProgram, requisitionToUpdate.getTemplate());
+        .getApproveProduct(userDto.getHomeFacilityId(), requisitionToUpdate.getProgramId(),
+            requisitionToUpdate.getTemplate());
 
     Map<VersionEntityReference, ApprovedProductReference> productReferences = aggregator
         .getApprovedProductReferences()

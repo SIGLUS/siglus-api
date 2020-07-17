@@ -401,8 +401,6 @@ public class SiglusRequisitionServiceTest {
     verify(requisitionController).findRequisition(requisitionId, profiler);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
     verify(authenticationHelper).getCurrentUser();
-    verify(requisitionController).findProgram(programId, profiler);
-    verify(requisitionController).findFacility(null, profiler);
     verify(supervisoryNodeService).findOne(null);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
 
