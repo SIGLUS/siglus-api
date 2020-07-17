@@ -20,7 +20,10 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyList;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
@@ -81,6 +84,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
@@ -265,6 +269,47 @@ public class SiglusOrderServiceTest {
     // then
     assertEquals(1, orderDtos.getContent().size());
     assertEquals(OrderStatus.PARTIALLY_FULFILLED, orderDtos.getContent().get(0).getStatus());
+  }
+
+  @Test
+  public void shouldCreateNewOrderAndUpdateExistOrderWhenFistPartial() {
+    // given
+    OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(
+        UUID.randomUUID());
+    orderObjectReferenceDto.setExternalId(UUID.randomUUID());
+    orderObjectReferenceDto.setOrderCode("order_code");
+    OrderLineItemDto lineItemDto = new OrderLineItemDto();
+    lineItemDto.setOrderedQuantity(Long.valueOf(50));
+    lineItemDto.setPartialFulfilledQuantity(Long.valueOf(20));
+    lineItemDto.setOrderable(createOrderableDto(orderableId1));
+    orderObjectReferenceDto.setOrderLineItems(Arrays.asList(lineItemDto));
+    RequisitionExternal firstExternal = RequisitionExternal.builder()
+        .requisitionId(orderObjectReferenceDto.getExternalId()).build();
+    firstExternal.setId(UUID.randomUUID());
+    RequisitionExternal secondExternal = RequisitionExternal.builder()
+        .requisitionId(orderObjectReferenceDto.getExternalId()).build();
+    secondExternal.setId(UUID.randomUUID());
+    when(requisitionExternalRepository.findOne(orderObjectReferenceDto.getExternalId()))
+        .thenReturn(null);
+    when(requisitionExternalRepository.save(anyList()))
+        .thenReturn(Arrays.asList(firstExternal, secondExternal));
+    Order order = new Order();
+    when(orderRepository.findOne(orderObjectReferenceDto.getId())).thenReturn(order);
+    BasicOrderDto basicOrderDto = new BasicOrderDto();
+    basicOrderDto.setId(UUID.randomUUID());
+    basicOrderDto.setExternalId(secondExternal.getId());
+    basicOrderDto.setOrderCode("order_code");
+    when(orderRepository.findOne(basicOrderDto.getId())).thenReturn(order);
+    when(orderController.batchCreateOrders(anyList(), any(OAuth2Authentication.class)))
+        .thenReturn(Arrays.asList(basicOrderDto));
+    when(siglusOrderFulfillmentService.findOne(basicOrderDto.getId())).thenReturn(createOrderDto());
+
+    // when
+    siglusOrderService.createSubOrder(orderObjectReferenceDto, Arrays.asList(lineItemDto));
+
+    // then
+    verify(orderRepository, times(2)).save(any(Order.class));
+
   }
 
   private ShipmentDraftDto createShipmentDraftDto() {
