@@ -18,10 +18,10 @@ package org.siglus.common.util;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Lists;
 import java.util.List;
+import lombok.EqualsAndHashCode;
 import org.siglus.common.util.referencedata.CustomSortDeserializer;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 /**
@@ -29,6 +29,7 @@ import org.springframework.data.domain.Sort;
  * Because the former lacks a default constructor, it is inconvenient to
  * deserialize. PageImplRepresentation may be used in its stead.
  */
+@EqualsAndHashCode
 public class PageImplRepresentation<T> extends PageImpl<T> {
 
   private static final long serialVersionUID = 1L;
@@ -65,14 +66,12 @@ public class PageImplRepresentation<T> extends PageImpl<T> {
     this.content = page.getContent();
   }
 
+  @Override
   public int getNumber() {
     return number;
   }
 
-  public void setNumber(int number) {
-    this.number = number;
-  }
-
+  @Override
   public int getSize() {
     return size;
   }
@@ -81,31 +80,22 @@ public class PageImplRepresentation<T> extends PageImpl<T> {
     this.size = size;
   }
 
+  @Override
   public int getTotalPages() {
     return totalPages;
   }
 
-  public void setTotalPages(int totalPages) {
-    this.totalPages = totalPages;
-  }
-
+  @Override
   public int getNumberOfElements() {
     return numberOfElements;
   }
 
-  public void setNumberOfElements(int numberOfElements) {
-    this.numberOfElements = numberOfElements;
-  }
-
+  @Override
   public long getTotalElements() {
     return totalElements;
   }
 
-  public void setTotalElements(long totalElements) {
-    this.totalElements = totalElements;
-  }
-
-
+  @Override
   public boolean isFirst() {
     return first;
   }
@@ -114,6 +104,7 @@ public class PageImplRepresentation<T> extends PageImpl<T> {
     this.first = first;
   }
 
+  @Override
   public boolean isLast() {
     return last;
   }
@@ -122,6 +113,7 @@ public class PageImplRepresentation<T> extends PageImpl<T> {
     this.last = last;
   }
 
+  @Override
   public List<T> getContent() {
     return content;
   }
@@ -130,20 +122,14 @@ public class PageImplRepresentation<T> extends PageImpl<T> {
     this.content = content;
   }
 
+  @Override
   public Sort getSort() {
     return sort;
   }
 
-  // [SIGLUS change start]
-  // [change reason]: parse json for sort property
   @JsonDeserialize(using = CustomSortDeserializer.class)
   public void setSort(Sort sort) {
     this.sort = sort;
   }
-  // [SIGLUS change end]
 
-  public PageImpl<T> pageImpl() {
-    return new PageImpl<T>(getContent(), new PageRequest(getNumber(),
-            getSize(), getSort()), getTotalElements());
-  }
 }
