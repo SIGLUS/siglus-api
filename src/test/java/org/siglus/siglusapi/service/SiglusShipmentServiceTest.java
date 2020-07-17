@@ -194,7 +194,8 @@ public class SiglusShipmentServiceTest {
   }
 
   @Test(expected = ValidationMessageException.class)
-  public void shouldDontCreateSubOrderWhenLineItemShippedQualityGreaterOrderQuality() {
+  public void shouldDontCreateSubOrderIfShippedQualityGreaterOrderQualityWhenSubLineItemEmpty()
+  {
     ShipmentDto shipmentDto =  createShipmentDto();
     VersionObjectReferenceDto orderReferenceDto = new VersionObjectReferenceDto(orderableId,
         "", "", Long.valueOf(1));
@@ -210,6 +211,28 @@ public class SiglusShipmentServiceTest {
     expectedException.expect(ValidationMessageException.class);
     expectedException.expectMessage(ERROR_SUB_ORDER_LINE_ITEM);
   }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldDontCreateSubOrderIfLineItemSkipWhenSubLineItemEmpty() {
+    OrderLineItemDto lineItem = new OrderLineItemDto();
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    lineItem.setOrderable(orderableDto);
+    lineItem.setSkipped(true);
+    ShipmentDto shipmentDto =  createShipmentDto();
+    OrderObjectReferenceDto order = shipmentDto.getOrder();
+    order.setOrderLineItems(Arrays.asList(lineItem));
+    shipmentDto.setOrder(order);
+    shipmentDto.setLineItems(new ArrayList<>());
+
+    // when
+    siglusShipmentService.createSubOrder(shipmentDto);
+
+    // then
+    expectedException.expect(ValidationMessageException.class);
+    expectedException.expectMessage(ERROR_SUB_ORDER_LINE_ITEM);
+  }
+
 
   @Test
   public void shouldCreateSubOrderWhenLineItemOrderQualityGreaterThan0AndShipmentEmpty() {
