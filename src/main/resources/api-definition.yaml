@@ -61,6 +61,7 @@ schemas:
   - basicRequisitionDto: !include schemas/basicRequisitionDto.json
   - basicRequisitionDtoPage: !include schemas/basicRequisitionDtoPage.json
   - orderDto: !include schemas/orderDto.json
+  - basicOrderDtoPage: !include schemas/basicOrderDtoPage.json
   - shipmentDraft: !include schemas/shipmentDraft.json
   - shipment: !include schemas/shipment.json
   - shipmentExample: |
@@ -1389,6 +1390,75 @@ traits:
               application/json:
                 schema: facilityList
 
+    /orders:
+      get:
+        is: [ secured, paginated, sorted ]
+        description: >
+          Get all orders. This endpoint requires one of the following rights: ORDERS_EDIT,
+          ORDERS_VIEW, SHIPMENT_EDIT, SHIPMENT_VIEW (for supplying facility) POD_MANAGE,
+          POD_VIEW (for requesting facility)
+        queryParameters:
+          supplyingFacilityId:
+            displayName: supplyingFacility
+            description: supplyingFacility ID
+            type: string
+            required: false
+            repeat: false
+          requestingFacilityId:
+            displayName: requestingFacility
+            description: requestingFacility ID
+            type: string
+            required: false
+            repeat: false
+          programId:
+            displayName: program
+            description: program ID
+            type: string
+            required: false
+            repeat: false
+          processingPeriodId:
+            displayName: processingPeriod
+            description: processingPeriod ID
+            type: string
+            required: false
+            repeat: false
+          status:
+            displayName: status
+            description: Order status
+            type: string
+            required: false
+            repeat: true
+            enum:
+              - ORDERED
+              - FULFILLING
+              - SHIPPED
+              - RECEIVED
+              - TRANSFER_FAILED
+              - IN_ROUTE
+              - READY_TO_PACK
+          periodStartDate:
+            displayName: periodStartDate
+            type: string
+            required: false
+            repeat: false
+          periodEndDate:
+            displayName: periodEndDate
+            type: string
+            required: false
+            repeat: false
+        responses:
+          200:
+            body:
+              application/json:
+                schema: basicOrderDtoPage
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+          404:
+            body:
+              application/json:
+                schema: localizedMessage
 
     /orders/batch:
       post:
