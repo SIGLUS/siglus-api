@@ -18,8 +18,8 @@ package org.siglus.siglusapi.service.client;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
-import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.common.service.client.BaseReferenceDataService;
+import org.siglus.common.util.RequestParameters;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
@@ -62,8 +62,8 @@ public class SiglusOrderFulfillmentService extends BaseReferenceDataService<Orde
         .set(PERIOD_START_DATE, params.getPeriodStartDate())
         .set(PERIOD_END_DATE, params.getPeriodEndDate())
         .setPage(pageable);
-    return getPage("", queryParams, null, HttpMethod.GET,
-        BasicOrderDto.class, true);
+    return getPage("", queryParams, null,
+        HttpMethod.GET, BasicOrderDto.class, true);
   }
 
 }
