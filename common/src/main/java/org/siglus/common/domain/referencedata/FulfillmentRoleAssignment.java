@@ -22,12 +22,10 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.javers.core.metamodel.annotation.TypeName;
 
 @Entity
 @DiscriminatorValue("fulfillment")
 @NoArgsConstructor
-@TypeName("FulfillmentRoleAssignment")
 public class FulfillmentRoleAssignment extends RoleAssignment {
 
   @ManyToOne

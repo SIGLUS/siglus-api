@@ -46,7 +46,6 @@ import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.siglus.common.domain.BaseEntity.BaseExporter;
 import org.siglus.common.domain.BaseEntity.BaseImporter;
 import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
@@ -86,7 +85,6 @@ public class Orderable implements Versionable {
 
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "dispensableid", nullable = false)
-  @DiffIgnore // same reason as one in Facility.supportedPrograms
   @Getter
   @Cache(usage =  CacheConcurrencyStrategy.READ_WRITE)
   private Dispensable dispensable;
@@ -110,14 +108,12 @@ public class Orderable implements Versionable {
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   @BatchSize(size = FETCH_SIZE)
-  @DiffIgnore
   @Setter
   @Cache(usage =  CacheConcurrencyStrategy.READ_WRITE)
   private List<ProgramOrderable> programOrderables;
 
   @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
   @BatchSize(size = FETCH_SIZE)
-  @DiffIgnore
   @Setter
   @Getter
   @Cache(usage =  CacheConcurrencyStrategy.READ_WRITE)

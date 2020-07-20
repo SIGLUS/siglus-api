@@ -29,7 +29,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.openlmis.util.View;
 import org.siglus.common.domain.BaseEntity;
 
@@ -74,12 +73,10 @@ public class User extends BaseEntity {
   private boolean active;
 
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
-  @DiffIgnore
   @Getter
   private Set<RoleAssignment> roleAssignments = new HashSet<>();
 
   @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
-  @DiffIgnore
   @Getter
   private Set<RightAssignment> rightAssignments = new HashSet<>();
 

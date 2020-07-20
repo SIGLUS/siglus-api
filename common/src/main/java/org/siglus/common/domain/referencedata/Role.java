@@ -27,7 +27,6 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.siglus.common.domain.BaseEntity;
 
 @Entity
@@ -51,7 +50,6 @@ public class Role extends BaseEntity {
       joinColumns = @JoinColumn(name = "roleid", nullable = false),
       inverseJoinColumns = @JoinColumn(name = "rightid", nullable = false))
   @Getter
-  @DiffIgnore
   private Set<Right> rights;
 
   /**

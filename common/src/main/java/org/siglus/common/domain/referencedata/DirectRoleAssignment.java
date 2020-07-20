@@ -18,12 +18,10 @@ package org.siglus.common.domain.referencedata;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import lombok.NoArgsConstructor;
-import org.javers.core.metamodel.annotation.TypeName;
 
 @Entity
 @DiscriminatorValue("direct")
 @NoArgsConstructor
-@TypeName("DirectRoleAssignment")
 public class DirectRoleAssignment extends RoleAssignment {
 
   /**

@@ -27,7 +27,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.javers.core.metamodel.annotation.DiffIgnore;
 import org.siglus.common.domain.BaseEntity;
 
 @Entity
@@ -69,12 +68,10 @@ public class SupervisoryNode extends BaseEntity {
 
   @OneToMany(mappedBy = "parentNode")
   @Getter
-  @DiffIgnore
   private Set<SupervisoryNode> childNodes;
 
   @OneToMany(mappedBy = "partnerNodeOf")
   @Getter
-  @DiffIgnore
   private Set<SupervisoryNode> partnerNodes;
 
   @Override

@@ -61,10 +61,7 @@ dependencies {
     compile "org.slf4j:slf4j-ext:1.7.25"
     compile "com.github.tomakehurst:wiremock:1.58"
 
-    compile 'org.javers:javers-spring-boot-starter-sql:2.8.1'
-    compile 'com.bedatadriven:jackson-datatype-jts:2.2'
     compile 'org.jadira.usertype:usertype.core:5.0.0.GA'
-    compile 'org.hibernate:hibernate-spatial:5.0.11.Final'
     compile 'joda-time:joda-time:2.10.6'
 
     testCompile "junit:junit"
