@@ -91,15 +91,6 @@ public class ProgramOrderable extends BaseEntity {
   }
 
   /**
-   * Returns true if this association is for given Program.
-   * @param program the {@link Program} to ask about
-   * @return true if this association is for the given Program, false otherwise.
-   */
-  public boolean isForProgram(Program program) {
-    return this.program.equals(program);
-  }
-
-  /**
    * Create program orderable association.
    * Uses sensible defaults.
    * @param program see other

@@ -17,7 +17,6 @@ package org.siglus.common.domain.referencedata;
 
 import java.time.LocalDate;
 import java.util.Objects;
-import java.util.Optional;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -27,8 +26,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataExporter;
-import org.siglus.common.domain.referencedata.ExtraDataEntity.ExtraDataImporter;
 
 @Entity
 @Table(name = "processing_periods", schema = "referencedata")
@@ -90,40 +87,6 @@ public class ProcessingPeriod extends BaseEntity {
     ProcessingPeriod period = (ProcessingPeriod) obj;
     return Objects.equals(name, period.name)
           && Objects.equals(processingSchedule, period.processingSchedule);
-  }
-
-  public interface Exporter extends BaseExporter, ExtraDataExporter {
-
-    void setName(String name);
-
-    Optional<ProcessingSchedule.Exporter> provideProcessingScheduleExporter();
-
-    void includeProcessingSchedule(ProcessingSchedule.Exporter processingScheduleExporter);
-
-    void setDescription(String description);
-
-    void setStartDate(LocalDate startDate);
-
-    void setEndDate(LocalDate endDate);
-
-    void setDurationInMonths(Integer duration);
-
-    boolean supportsDurationInMonths();
-    
-  }
-
-  public interface Importer extends BaseImporter, ExtraDataImporter {
-
-    String getName();
-
-    ProcessingSchedule.Importer getProcessingSchedule();
-
-    String getDescription();
-
-    LocalDate getStartDate();
-
-    LocalDate getEndDate();
-    
   }
 
 }

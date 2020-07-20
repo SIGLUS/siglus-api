@@ -17,13 +17,11 @@ package org.siglus.common.dto.referencedata;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.apache.commons.lang3.StringUtils;
 
 @NoArgsConstructor
 @ToString(callSuper = true)
@@ -31,21 +29,8 @@ import org.apache.commons.lang3.StringUtils;
 @JsonInclude(Include.NON_NULL)
 public class ObjectReferenceDto extends BaseDto {
 
-  private static final String SEPARATOR = "/";
-
   @Getter
   @Setter
   private String href;
 
-  /**
-   * Returns new object reference.
-   *
-   * @param serviceUrl base URL
-   * @param path       resource path
-   * @param id         object id
-   */
-  public ObjectReferenceDto(String serviceUrl, String path, UUID id) {
-    super(id);
-    this.href = StringUtils.joinWith(SEPARATOR, serviceUrl + path, id);
-  }
 }

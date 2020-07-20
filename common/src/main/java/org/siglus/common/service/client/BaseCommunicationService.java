@@ -294,10 +294,6 @@ public abstract class BaseCommunicationService<T> {
     return response;
   }
 
-  protected <P, R> R put(String resourceUrl, P payload, Class<R> type) {
-    return put(resourceUrl, payload, type, Boolean.FALSE);
-  }
-
   protected <P, R> R put(String resourceUrl, P payload, Class<R> type, boolean obtainUserToken) {
     String url = getServiceUrl() + getUrl() + resourceUrl;
     R response;
@@ -309,10 +305,6 @@ public abstract class BaseCommunicationService<T> {
       throw new ValidationMessageException(ex, errorMessage);
     }
     return response;
-  }
-
-  protected void delete(String resourceUrl) {
-    delete(resourceUrl, Boolean.FALSE);
   }
 
   protected void delete(String resourceUrl, boolean obtainUserToken) {

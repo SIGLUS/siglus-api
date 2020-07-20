@@ -30,14 +30,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public final class MetadataDto {
+
   private Long versionNumber;
   private ZonedDateTime lastUpdated;
 
-  /**
-   * A copy constructor.
-   */
-  public MetadataDto(MetadataDto original) {
-    this.versionNumber = original.versionNumber;
-    this.lastUpdated = original.lastUpdated;
-  }
 }

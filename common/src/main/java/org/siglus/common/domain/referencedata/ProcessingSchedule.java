@@ -17,7 +17,6 @@ package org.siglus.common.domain.referencedata;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
-import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.PrePersist;
@@ -55,14 +54,6 @@ public class ProcessingSchedule extends BaseEntity {
   @Setter
   private String name;
 
-  /**
-   * Constructor for processing schedule. Code and name must not be null.
-   */
-  public ProcessingSchedule(Code code, String name) {
-    this.code = Objects.requireNonNull(code);
-    this.name = Objects.requireNonNull(name);
-  }
-
   @PrePersist
   @PreUpdate
   private void setModifiedDate() {
@@ -86,23 +77,4 @@ public class ProcessingSchedule extends BaseEntity {
     return Objects.hash(code.hashCode());
   }
 
-  public interface Exporter {
-    void setId(UUID id);
-
-    void setName(String name);
-
-    void setCode(String code);
-
-    void setDescription(String description);
-  }
-
-  public interface Importer {
-    UUID getId();
-
-    String getName();
-
-    String getCode();
-
-    String getDescription();
-  }
 }
