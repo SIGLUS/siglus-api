@@ -13,23 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.domain.referencedata;
+package org.siglus.common.dto.referencedata;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import lombok.NoArgsConstructor;
+import java.util.UUID;
+import lombok.Getter;
+import lombok.Setter;
 
-@Entity
-@DiscriminatorValue("direct")
-@NoArgsConstructor
-public class DirectRoleAssignment extends RoleAssignment {
+@Getter
+@Setter
+public class RoleAssignmentDto {
 
-  /**
-   * Export this object to the specified exporter (DTO).
-   *
-   * @param exporter exporter to export to
-   */
-  public void export(Exporter exporter) {
-    exporter.setRole(role);
-  }
+  protected UUID roleId;
+
+  protected UUID programId;
+
+  protected UUID supervisoryNodeId;
+
+  protected UUID warehouseId;
+
 }

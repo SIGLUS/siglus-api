@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang.RandomStringUtils.random;
@@ -35,6 +37,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,17 +57,19 @@ import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
-import org.siglus.common.domain.referencedata.User;
+import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.common.util.PermissionString;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.repository.RequisitionExternalRepository;
-import org.siglus.siglusapi.repository.SiglusRightAssignmentRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
@@ -91,9 +96,6 @@ public class SiglusNotificationServiceTest {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Mock
-  private SiglusRightAssignmentRepository rightAssignRepo;
-
-  @Mock
   private SiglusRequisitionRequisitionService requisitionService;
 
   @Mock
@@ -107,6 +109,10 @@ public class SiglusNotificationServiceTest {
 
   @Mock
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
+
+  @Mock
+  @SuppressWarnings("unused")
+  private SupervisoryNodeReferenceDataService supervisoryNodeService;
 
   private UUID notificationId;
 
@@ -127,7 +133,9 @@ public class SiglusNotificationServiceTest {
     Notification notification1 = new Notification();
     Notification notification2 = new Notification();
     Notification notification3 = new Notification();
-    when(authenticationHelper.getCurrentUserDomain()).thenReturn(new User());
+    UserDto user = new UserDto();
+    user.setRoleAssignments(emptySet());
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
     when(repo.findViewable(eq(pageable), any(), any()))
         .thenReturn(new PageImpl<>(asList(notification1, notification2, notification3)));
 
@@ -215,12 +223,15 @@ public class SiglusNotificationServiceTest {
   @Test
   public void shouldNotCallRepoWhenPostSubmitGivenSubmitAndAuthorizeInOneStep() {
     // given
-    mockSubmitAndAuthorizeInOneStep();
+    mockAuthentication();
     requisition = new BasicRequisitionDto();
     MinimalFacilityDto facility = new MinimalFacilityDto();
+    facility.setId(randomUUID());
     requisition.setFacility(facility);
     BasicProgramDto program = new BasicProgramDto();
+    program.setId(randomUUID());
     requisition.setProgram(program);
+    mockSubmitAndAuthorizeInOneStep();
 
     // when
     service.postSubmit(requisition);
@@ -253,10 +264,9 @@ public class SiglusNotificationServiceTest {
   }
 
   @Test
-  public void shouldCallRepoWhenPostAuthorizeGivenCanBeInternalApproved() {
+  public void shouldCallRepoWhenPostAuthorize() {
     // given
     mockAuthentication();
-    mockCanBeInternalApproved();
     mockBasicRequisition();
     mockSupervisorNode();
 
@@ -274,32 +284,6 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getEmergency(), notification.getEmergency());
     assertEquals(currentUserHomeFacilityName, notification.getSourceFacilityName());
     assertEquals(requisition.getId(), notification.getRefId());
-    assertEquals(NotificationStatus.AUTHORIZED, notification.getRefStatus());
-    assertEquals(supervisoryNodeId, notification.getSupervisoryNodeId());
-    assertNull(notification.getNotifyFacilityId());
-  }
-
-  @Test
-  public void shouldCallRepoWhenPostAuthorizeGivenCanNotBeInternalApproved() {
-    // given
-    mockAuthentication();
-    mockCanNotBeInternalApproved();
-    mockBasicRequisition();
-    mockSupervisorNode();
-
-    // when
-    service.postAuthorize(requisition);
-
-    // then
-    verify(repo)
-        .updateLastNotificationProcessed(requisition.getId(), NotificationStatus.SUBMITTED,
-            NotificationStatus.REJECTED);
-    Notification notification = verifySavedNotification();
-    assertEquals(requisition.getId(), notification.getRefId());
-    assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
-    assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
-    assertEquals(requisition.getEmergency(), notification.getEmergency());
-    assertEquals(currentUserHomeFacilityName, notification.getSourceFacilityName());
     assertEquals(NotificationStatus.AUTHORIZED, notification.getRefStatus());
     assertEquals(supervisoryNodeId, notification.getSupervisoryNodeId());
     assertNull(notification.getNotifyFacilityId());
@@ -505,30 +489,27 @@ public class SiglusNotificationServiceTest {
 
   private void mockAuthentication() {
     userId = randomUUID();
-    User user = new User();
+    UserDto user = new UserDto();
     user.setId(userId);
     user.setHomeFacilityId(currentUserHomeFacilityId);
-    when(authenticationHelper.getCurrentUserDomain()).thenReturn(user);
+    when(authenticationHelper.getCurrentUserId()).thenReturn(Optional.of(userId));
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
     FacilityDto facility = new FacilityDto();
     facility.setId(currentUserHomeFacilityId);
     facility.setName(currentUserHomeFacilityName);
     when(facilityReferenceDataService.findOne(currentUserHomeFacilityId)).thenReturn(facility);
   }
 
-  private void mockCanBeInternalApproved() {
-    when(rightAssignRepo.count(any())).thenReturn(1L);
-  }
-
-  private void mockCanNotBeInternalApproved() {
-    when(rightAssignRepo.count(any())).thenReturn(0L);
-  }
-
   private void mockSubmitAndAuthorizeInOneStep() {
-    when(rightAssignRepo.count(any())).thenReturn(1L);
+    PermissionString permissionString = new PermissionString(
+        PermissionService.REQUISITION_AUTHORIZE + "|" + requisition.getFacility().getId()
+            + "|" + requisition.getProgram().getId());
+    when(authenticationHelper.getCurrentUserPermissionStrings())
+        .thenReturn(singletonList(permissionString));
   }
 
   private void mockSubmitAndAuthorizeInTwoStep() {
-    when(rightAssignRepo.count(any())).thenReturn(0L);
+    when(authenticationHelper.getCurrentUserPermissionStrings()).thenReturn(emptyList());
   }
 
   private Notification verifySavedNotification() {

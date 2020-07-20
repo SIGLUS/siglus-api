@@ -17,45 +17,63 @@ package org.siglus.common.util;
 
 import static org.siglus.common.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
 
+import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.User;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.AuthenticationException;
-import org.siglus.common.exception.NotFoundException;
-import org.siglus.common.repository.UserRepository;
 import org.siglus.common.service.client.SiglusUserReferenceDataService;
-import org.siglus.common.util.referencedata.messagekeys.UserMessageKeys;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class SiglusAuthenticationHelper {
 
-  @Autowired
-  private SiglusUserReferenceDataService userReferenceDataService;
+  private final SiglusUserReferenceDataService userService;
 
-  @Autowired
-  private UserRepository userRepository;
-
-  public User getCurrentUserDomain() {
-    UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    User user = userRepository.findOne(userId);
-
-    if (user == null) {
-      throw new NotFoundException(UserMessageKeys.ERROR_NOT_FOUND);
+  public Optional<UUID> getCurrentUserId() {
+    Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    if (principal instanceof UUID) {
+      return Optional.of((UUID) principal);
+    } else if (principal instanceof UserDto) {
+      UserDto userDto = (UserDto) principal;
+      return Optional.ofNullable(userDto.getId());
     }
-
-    return user;
+    throw new UnsupportedOperationException(principal.getClass() + ":" + principal);
   }
 
   public UserDto getCurrentUser() {
-    UUID userId = (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    UserDto user = userReferenceDataService.findOne(userId);
-    if (user == null) {
-      throw new AuthenticationException(new Message(ERROR_USER_NOT_FOUND, userId));
+    Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    if (principal instanceof UUID) {
+      UUID userId = (UUID) principal;
+      UserDto user = userService.findOne(userId);
+      if (user == null) {
+        throw new AuthenticationException(new Message(ERROR_USER_NOT_FOUND, userId));
+      }
+      Authentication authentication = new UsernamePasswordAuthenticationToken(user, "N/A");
+      SecurityContextHolder.getContext().setAuthentication(authentication);
+      return user;
+    } else if (principal instanceof UserDto) {
+      return (UserDto) principal;
     }
-    return user;
+    throw new UnsupportedOperationException(principal.getClass() + ":" + principal);
+  }
+
+  public Collection<PermissionString> getCurrentUserPermissionStrings() {
+    return userService
+        .getPermissionStrings(getCurrentUserId().orElseThrow(this::authenticateFail))
+        .stream()
+        .map(PermissionString::new)
+        .collect(Collectors.toList());
+  }
+
+  private AuthenticationException authenticateFail() {
+    return new AuthenticationException(new Message(ERROR_USER_NOT_FOUND, "null"));
   }
 
 }

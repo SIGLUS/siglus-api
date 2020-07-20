@@ -27,22 +27,19 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.dto.NotificationDto;
-import org.siglus.siglusapi.service.mapper.impl.NotificationMapperImpl;
 
 @RunWith(MockitoJUnitRunner.class)
-public class NotificationMapperImplTest {
+public class NotificationMapperTest {
 
   private static final int NOT_TOO_LONG = 10;
 
   @InjectMocks
-  private NotificationMapperImpl mapper;
-
-  private Notification notification;
+  private NotificationMapper mapper;
 
   @Test
   public void shouldCallRepoWhenSearchNotifications() {
     // given
-    notification = new Notification();
+    Notification notification = new Notification();
     notification.setId(randomUUID());
     notification.setRefId(randomUUID());
     notification.setEmergency(nextBoolean());

@@ -20,8 +20,19 @@ import org.siglus.siglusapi.dto.NotificationDto;
 import org.springframework.stereotype.Component;
 
 @Component
-public interface NotificationMapper {
+public class NotificationMapper {
 
-  NotificationDto from(Notification notification);
+  public NotificationDto from(Notification notification) {
+    if (notification == null) {
+      return null;
+    }
+    NotificationDto dto = new NotificationDto();
+    dto.setId(notification.getId());
+    dto.setEmergencyFlag(notification.getEmergency());
+    dto.setSourceFacilityName(notification.getSourceFacilityName());
+    dto.setRefId(notification.getRefId());
+    dto.setStatus(notification.getRefStatus());
+    return dto;
+  }
 
 }

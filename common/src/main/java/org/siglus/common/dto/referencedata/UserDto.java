@@ -15,6 +15,7 @@
 
 package org.siglus.common.dto.referencedata;
 
+import java.util.Set;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,6 +23,11 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UserDto {
+
   private UUID id;
+
   private UUID homeFacilityId;
+
+  private Set<RoleAssignmentDto> roleAssignments;
+
 }

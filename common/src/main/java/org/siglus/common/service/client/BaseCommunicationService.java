@@ -160,18 +160,27 @@ public abstract class BaseCommunicationService<T> {
    * @return all reference data T objects.
    */
   protected Collection<T> findAll(String resourceUrl, Map<String, Object> parameters) {
-    return findAll(resourceUrl, parameters, Boolean.FALSE);
+    return findAll(resourceUrl, parameters, Boolean.FALSE, getArrayResultClass());
+  }
+
+  public <P> Collection<P> findAll(String resourceUrl, Class<P[]> type) {
+    return findAll(resourceUrl, Collections.<String, Object>emptyMap(), false, type);
   }
 
   protected Collection<T> findAll(String resourceUrl, Map<String, Object> parameters,
       boolean obtainUserToken) {
+    return findAll(resourceUrl, parameters, obtainUserToken, getArrayResultClass());
+  }
+
+  protected <P> Collection<P> findAll(String resourceUrl, Map<String, Object> parameters,
+      boolean obtainUserToken, Class<P[]> type) {
     String url = getServiceUrl() + getUrl() + resourceUrl;
 
     RequestParameters params = RequestParameters.of(parameters);
 
     try {
-      ResponseEntity<T[]> responseEntity = runWithTokenRetry(
-          () -> doListRequest(url, params, HttpMethod.GET, getArrayResultClass(), obtainUserToken)
+      ResponseEntity<P[]> responseEntity = runWithTokenRetry(
+          () -> doListRequest(url, params, HttpMethod.GET, type, obtainUserToken)
       );
       return new ArrayList<>(Arrays.asList(responseEntity.getBody()));
     } catch (HttpStatusCodeException ex) {

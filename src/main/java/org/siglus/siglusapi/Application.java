@@ -36,6 +36,7 @@ import org.javers.spring.jpa.TransactionalJaversBuilder;
 import org.openlmis.fulfillment.i18n.FulfillmentExposedMessageSourceImpl;
 import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
 import org.openlmis.stockmanagement.i18n.StockmanagementExposedMessageSourceImpl;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,7 +54,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
@@ -262,8 +262,8 @@ public class Application {
   // copy from fulfillment Application.java end
 
   @Bean
-  public AuditorAware<UUID> auditorAware() {
-    return () -> (UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+  public AuditorAware<UUID> auditorAware(SiglusAuthenticationHelper authenticationHelper) {
+    return () -> authenticationHelper.getCurrentUserId().orElse(null);
   }
 
 }

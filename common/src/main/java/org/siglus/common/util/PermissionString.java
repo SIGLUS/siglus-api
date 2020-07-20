@@ -13,12 +13,34 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.repository;
+package org.siglus.common.util;
+
+import static java.util.Optional.ofNullable;
 
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import lombok.Getter;
+import lombok.ToString;
 
-public interface UserRepository extends JpaRepository<User, UUID> {
+@Getter
+@ToString
+public final class PermissionString {
+
+  private static final Pattern PATTERN = Pattern.compile("^([^|]*)(\\|([^|]*)(\\|([^|]*))?)?$");
+
+  private final String rightName;
+  private final UUID facilityId;
+  private final UUID programId;
+
+  public PermissionString(String permissionString) {
+    Matcher matcher = PATTERN.matcher(permissionString);
+    if (!matcher.matches()) {
+      throw new IllegalArgumentException(permissionString);
+    }
+    rightName = matcher.group(1);
+    facilityId = ofNullable(matcher.group(3)).map(UUID::fromString).orElse(null);
+    programId = ofNullable(matcher.group(5)).map(UUID::fromString).orElse(null);
+  }
 
 }

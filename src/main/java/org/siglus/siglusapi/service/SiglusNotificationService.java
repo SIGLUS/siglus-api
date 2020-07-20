@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toSet;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -29,27 +30,28 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
+import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.dto.RightDto;
+import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
+import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
-import org.siglus.common.domain.BaseEntity;
-import org.siglus.common.domain.referencedata.Right;
-import org.siglus.common.domain.referencedata.RightAssignment;
-import org.siglus.common.domain.referencedata.SupervisionRoleAssignment;
-import org.siglus.common.domain.referencedata.User;
+import org.siglus.common.dto.referencedata.RoleAssignmentDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.common.util.PermissionString;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
@@ -57,7 +59,6 @@ import org.siglus.siglusapi.domain.RequisitionExternal;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.repository.RequisitionExternalRepository;
-import org.siglus.siglusapi.repository.SiglusRightAssignmentRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
 import org.springframework.data.domain.Page;
@@ -65,8 +66,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusNotificationService {
@@ -93,23 +95,22 @@ public class SiglusNotificationService {
 
   private final SiglusRequisitionRequisitionService requisitionService;
 
-  private final SiglusRightAssignmentRepository rightAssignRepo;
-
-  private final SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
+  private final SupervisoryNodeReferenceDataService supervisoryNodeService;
 
   private final ProofOfDeliveryFulfillmentService podService;
 
-  private SiglusFacilityReferenceDataService facilityReferenceDataService;
+  private final SiglusFacilityReferenceDataService facilityReferenceDataService;
 
-  private RequisitionExternalRepository requisitionExternalRepository;
+  private final RequisitionExternalRepository requisitionExternalRepository;
+
+  private final RoleReferenceDataService roleService;
 
   private final EntityManager em;
 
   public Page<NotificationDto> searchNotifications(Pageable pageable) {
-    User currentUser = authenticationHelper.getCurrentUserDomain();
-    Set<RightAssignment> rightAssignments = currentUser.getRightAssignments();
-    return repo.findViewable(pageable, currentUser.getHomeFacilityId(),
-        getFilterByRights(rightAssignments)).map(mapper::from);
+    return repo
+        .findViewable(pageable, findCurrentUserFacilityId(), getFilterByRights())
+        .map(mapper::from);
   }
 
   public ViewableStatus viewNotification(UUID notificationId) {
@@ -119,7 +120,7 @@ public class SiglusNotificationService {
     }
     notification.setViewed(true);
     notification.setViewedDate(LocalDateTime.now());
-    notification.setViewedUserId(authenticationHelper.getCurrentUserDomain().getId());
+    notification.setViewedUserId(authenticationHelper.getCurrentUserId().orElse(null));
     repo.save(notification);
     if (notification.getProcessed()) {
       return ViewableStatus.PROCESSED;
@@ -250,44 +251,44 @@ public class SiglusNotificationService {
   }
 
   private UUID findCurrentUserFacilityId() {
-    return authenticationHelper.getCurrentUserDomain().getHomeFacilityId();
+    return authenticationHelper.getCurrentUser().getHomeFacilityId();
   }
 
   private Set<UUID> findCurrentUserSupervisoryNodeIds() {
-    return authenticationHelper.getCurrentUserDomain().getRoleAssignments()
-        .stream()
-        .filter(roleAssignment -> roleAssignment instanceof SupervisionRoleAssignment)
-        .map(roleAssignment -> (SupervisionRoleAssignment) roleAssignment)
+    return authenticationHelper.getCurrentUser().getRoleAssignments().stream()
+        .filter(roleAssignment -> roleAssignment.getSupervisoryNodeId() != null)
         .filter(this::canThisRoleApproveRequisition)
-        .map(SupervisionRoleAssignment::getSupervisoryNode)
-        .map(BaseEntity::getId)
+        .map(RoleAssignmentDto::getSupervisoryNodeId)
         .collect(toSet());
   }
 
-  private boolean canThisRoleApproveRequisition(SupervisionRoleAssignment roleAssignment) {
-    return roleAssignment.getRole().getRights().stream()
-        .map(Right::getName)
+  private boolean canCurrentUserInternalApprove(Set<UUID> supervisoryNodeIds) {
+    UUID currentUserFacilityId = findCurrentUserFacilityId();
+    return supervisoryNodeIds.stream()
+        .map(supervisoryNodeService::findOne)
+        .map(SupervisoryNodeDto::getFacility)
+        .map(BaseDto::getId)
+        .noneMatch(facilityId -> facilityId.equals(currentUserFacilityId));
+  }
+
+  private boolean canThisRoleApproveRequisition(RoleAssignmentDto roleAssignment) {
+    return roleService.findOne(roleAssignment.getRoleId()).getRights().stream()
+        .map(RightDto::getName)
         .anyMatch(PermissionService.REQUISITION_APPROVE::equals);
   }
 
   private boolean canBeAuthorizedBySubmitter(BasicRequisitionDto requisition) {
-    return rightAssignRepo.count((root, query, cb) -> cb.and(
-        cb.equal(root.get("facilityId"), requisition.getFacility().getId()),
-        cb.equal(root.get("programId"), requisition.getProgram().getId()),
-        cb.equal(root.get("user").get("id"), authenticationHelper.getCurrentUserDomain().getId()),
-        cb.equal(root.get("rightName"), PermissionService.REQUISITION_AUTHORIZE)
-    )) > 0;
+    return authenticationHelper.getCurrentUserPermissionStrings().stream()
+        .anyMatch(permissionString ->
+            requisition.getFacility().getId().equals(permissionString.getFacilityId())
+                && requisition.getProgram().getId().equals(permissionString.getProgramId())
+                && PermissionService.REQUISITION_AUTHORIZE.equals(permissionString.getRightName())
+        );
   }
 
   private UUID findSupervisorNodeId(BasicRequisitionDto requisition) {
-    UUID supervisoryNodeId = requisitionService.searchRequisition(requisition.getId())
+    return requisitionService.searchRequisition(requisition.getId())
         .getSupervisoryNode();
-    if (supervisoryNodeId == null) {
-      RequisitionV2Dto requisitionV2Dto = requisitionService.searchRequisition(requisition.getId());
-      supervisoryNodeId = supervisoryNodeReferenceDataService.findSupervisoryNode(
-          requisitionV2Dto.getProgramId(), requisitionV2Dto.getFacilityId()).getId();
-    }
-    return supervisoryNodeId;
   }
 
   private List<OrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {
@@ -301,37 +302,42 @@ public class SiglusNotificationService {
         .collect(Collectors.toList());
   }
 
-  private Specification<Notification> getFilterByRights(Set<RightAssignment> rightAssignments) {
-    log.info("current user has {} rights", rightAssignments.size());
+  private Specification<Notification> getFilterByRights() {
+    Collection<PermissionString> permissionStrings = authenticationHelper
+        .getCurrentUserPermissionStrings();
+    log.info("current user has {} rights", permissionStrings.size());
     UUID currentUserFacilityId = findCurrentUserFacilityId();
     Set<UUID> currentUserSupervisoryNodeIds = findCurrentUserSupervisoryNodeIds();
     log.info("current user has supervisoryNode {}", currentUserSupervisoryNodeIds);
-    boolean canEditShipments = rightAssignments.stream().anyMatch(
-        rightAssignment -> FulfillmentPermissionService.SHIPMENTS_EDIT
-            .equals(rightAssignment.getRightName()));
-    return (root, query, cb) -> rightAssignments.stream()
+    boolean canCurrentUserInternalApprove = canCurrentUserInternalApprove(
+        currentUserSupervisoryNodeIds);
+    log.info("can current user internal approve {}", canCurrentUserInternalApprove);
+    boolean canEditShipments = permissionStrings.stream().anyMatch(
+        rightAssignment ->
+            FulfillmentPermissionService.SHIPMENTS_EDIT.equals(rightAssignment.getRightName()));
+    return (root, query, cb) -> permissionStrings.stream()
         .map(right -> mapRightToPredicate(right, root, cb, currentUserFacilityId,
-            currentUserSupervisoryNodeIds, canEditShipments))
+            currentUserSupervisoryNodeIds, canEditShipments, canCurrentUserInternalApprove))
         .filter(Objects::nonNull)
         .reduce(cb::or)
         .orElse(cb.disjunction());
   }
 
-  private Predicate mapRightToPredicate(RightAssignment right, Root<Notification> root,
+  private Predicate mapRightToPredicate(PermissionString permissionString, Root<Notification> root,
       CriteriaBuilder cb, UUID currentUserFacilityId, Set<UUID> currentUserSupervisoryNodeIds,
-      boolean canEditShipments) {
-    switch (right.getRightName()) {
+      boolean canEditShipments, boolean canCurrentUserInternalApprove) {
+    switch (permissionString.getRightName()) {
       case PermissionService.REQUISITION_CREATE:
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), right.getProgramId()),
+            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
             cb.equal(root.get(REF_STATUS), NotificationStatus.REJECTED),
             cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       case PermissionService.REQUISITION_AUTHORIZE:
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), right.getProgramId()),
+            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
             cb.equal(root.get(REF_STATUS), NotificationStatus.SUBMITTED),
             cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
@@ -339,16 +345,23 @@ public class SiglusNotificationService {
         if (currentUserSupervisoryNodeIds.isEmpty()) {
           return null;
         }
+        if (canCurrentUserInternalApprove) {
+          return cb.and(
+              cb.equal(root.get(REF_FACILITY_ID), currentUserFacilityId),
+              cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
+              cb.equal(root.get(REF_STATUS), NotificationStatus.AUTHORIZED)
+          );
+        }
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), right.getProgramId()),
+            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
             root.get(REF_STATUS)
                 .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
             root.get("supervisoryNodeId").in(currentUserSupervisoryNodeIds)
         );
       case PermissionService.ORDERS_EDIT:
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
+            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(REF_STATUS), NotificationStatus.APPROVED),
             cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
@@ -357,15 +370,15 @@ public class SiglusNotificationService {
           return null;
         }
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), right.getProgramId()),
+            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
             cb.equal(root.get(REF_STATUS), NotificationStatus.ORDERED),
             cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       case FulfillmentPermissionService.PODS_MANAGE:
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), right.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), right.getProgramId()),
+            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
             cb.equal(root.get(REF_STATUS), NotificationStatus.SHIPPED)
         );
       default:

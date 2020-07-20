@@ -15,6 +15,8 @@
 
 package org.siglus.common.service.client;
 
+import java.util.Collection;
+import java.util.UUID;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.springframework.stereotype.Service;
 
@@ -35,4 +37,15 @@ public class SiglusUserReferenceDataService extends BaseReferenceDataService<Use
   protected Class<UserDto[]> getArrayResultClass() {
     return UserDto[].class;
   }
+
+  /**
+   * Get user's permission strings (a list of strings that outlines the permissions of the user).
+   *
+   * @param userId id of user
+   * @return a set of permission strings.
+   */
+  public Collection<String> getPermissionStrings(UUID userId) {
+    return findAll(userId + "/permissionStrings", String[].class);
+  }
+
 }
