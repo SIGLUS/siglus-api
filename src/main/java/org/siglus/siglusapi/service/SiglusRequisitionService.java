@@ -417,7 +417,6 @@ public class SiglusRequisitionService {
     UUID homeId = userDto.getHomeFacilityId();
     return supervisoryNodeDtos
         .stream()
-        .filter(supervisoryNodeDto -> supervisoryNodeDto.getRequisitionGroupId() != null)
         .flatMap(supervisoryNodeDto ->
             getAllFacilityDtos(homeId, supervisoryNodeDto, requisitionGroupDtoMap,
                 facilityDtoMap, nodeDtoMap).stream())
@@ -429,6 +428,9 @@ public class SiglusRequisitionService {
       SupervisoryNodeDto supervisoryNodeDto,
       Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap) {
     UUID requisitionGroupId = supervisoryNodeDto.getRequisitionGroupId();
+    if (requisitionGroupId == null) {
+      return false;
+    }
     Set<UUID> idsToApprove = requisitionGroupDtoMap.get(requisitionGroupId)
         .getMemberFacilities()
         .stream()
@@ -484,10 +486,22 @@ public class SiglusRequisitionService {
             Set<FacilityDto> allSet =
                 getFacilityDtosBySupervisoryNode(supervisoryNodeDto, requisitionGroupDtoMap);
 
-            allSet.addAll(childSet);
-            return allSet.stream();
+            return mergeSets(allSet, childSet).stream();
           }).collect(toSet());
     }
+  }
+
+  private Set<FacilityDto> mergeSets(Set<FacilityDto> set1, Set<FacilityDto> set2) {
+    if (set1.isEmpty()) {
+      return set2;
+    }
+
+    if (set2.isEmpty()) {
+      return set1;
+    }
+
+    set1.addAll(set2);
+    return set1;
   }
 
   private SiglusRequisitionDto saveRequisitionDraft(SiglusRequisitionDto requisitionDto) {
