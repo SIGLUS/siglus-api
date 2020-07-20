@@ -30,6 +30,7 @@ import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
+import org.siglus.siglusapi.service.SiglusProofOfDeliveryService;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -46,6 +47,9 @@ public class SiglusProofOfDeliveryControllerTest {
 
   @Mock
   private OAuth2Authentication auth2Authentication;
+
+  @Mock
+  private SiglusProofOfDeliveryService proofOfDeliveryService;
 
   @Test
   public void shouldCallOpenlmisControllerWhenUpdateProofOfDelivery() {
@@ -72,6 +76,18 @@ public class SiglusProofOfDeliveryControllerTest {
     verify(actualController).updateProofOfDelivery(id, dto, auth2Authentication);
 
     verify(notificationService).postConfirmPod(dto);
+  }
+
+  @Test
+  public void shouldCallSiglusServiceWhenGetProofOfDelivery() {
+    // given
+    UUID podId = UUID.randomUUID();
+
+    // when
+    controller.getProofOfDelivery(podId, null);
+
+    // then
+    verify(proofOfDeliveryService).getProofOfDelivery(podId, null);
   }
 
 }

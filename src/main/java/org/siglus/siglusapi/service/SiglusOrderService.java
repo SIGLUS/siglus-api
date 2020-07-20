@@ -238,6 +238,11 @@ public class SiglusOrderService {
     return createNewOrder(order, orderLineItemDtos, externals);
   }
 
+  public OrderObjectReferenceDto getExtensionOrder(OrderObjectReferenceDto orderDto) {
+    setOrderLineItemExtension(orderDto.getOrderLineItems());
+    return orderDto;
+  }
+
   private String replaceLast(String text, String regex, String replacement) {
     return text.replaceFirst("(?s)(.*)" + regex, "$1" + replacement);
   }
@@ -400,7 +405,11 @@ public class SiglusOrderService {
   }
 
   private void setOrderLineItemExtension(OrderDto orderDto) {
-    List<org.openlmis.fulfillment.web.util.OrderLineItemDto> lineItems = orderDto.orderLineItems();
+    setOrderLineItemExtension(orderDto.orderLineItems());
+  }
+
+  private List<org.openlmis.fulfillment.web.util.OrderLineItemDto> setOrderLineItemExtension(
+      List<org.openlmis.fulfillment.web.util.OrderLineItemDto> lineItems) {
     Set<UUID> lineItemIds = lineItems.stream().map(OrderLineItem.Importer::getId)
         .collect(Collectors.toSet());
     Map<UUID, OrderLineItemExtension> lineItemExtensionMap = lineItemExtensionRepository
@@ -415,6 +424,7 @@ public class SiglusOrderService {
         lineItem.setAdded(extension.isAdded());
       }
     });
+    return lineItems;
   }
 
 }

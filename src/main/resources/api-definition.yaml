@@ -163,6 +163,13 @@ traits:
           type: integer
           required: false
           repeat: false
+  - expandable:
+      queryParameters:
+        expand:
+          description: Allows to specify which reference fields should contain an expanded representation.
+          type: string
+          required: false
+          repeat: true
   - sorted:
       queryParameters:
         sort:
@@ -1678,6 +1685,25 @@ traits:
             description: already processed
 
     /proofsOfDelivery/{id}:
+      get:
+        is: [ secured, expandable ]
+        description: >
+          Get chosen proofOfDelivery. This endpoint requires one of the following rights:
+          PODS_MANAGE, PODS_VIEW (for requesting facility), SHIPMENTS_EDIT (for supplying
+          facility)
+        responses:
+          200:
+            body:
+              application/json:
+                schema: proofOfDeliveryDto
+          404:
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
       put:
         is: [ secured ]
         description: update a single POD.
