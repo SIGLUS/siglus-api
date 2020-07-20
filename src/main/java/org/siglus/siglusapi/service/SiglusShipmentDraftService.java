@@ -60,7 +60,7 @@ public class SiglusShipmentDraftService {
 
   @Transactional
   public void deleteShipmentDraft(UUID id) {
-    deleteOrderLineItemAndExtension(id);
+    deleteOrderLineItemAndInitialedExtension(id);
     siglusShipmentDraftFulfillmentService.deleteShipmentDraft(id);
   }
 
@@ -96,7 +96,7 @@ public class SiglusShipmentDraftService {
     lineItemExtensionRepository.save(extensionsToUpdate);
   }
 
-  private void deleteOrderLineItemAndExtension(UUID id) {
+  private void deleteOrderLineItemAndInitialedExtension(UUID id) {
     ShipmentDraftDto draftDto = siglusShipmentDraftFulfillmentService
         .searchShipmentDraft(id);
     UUID orderId = draftDto.getOrder().getId();
@@ -106,11 +106,23 @@ public class SiglusShipmentDraftService {
         .collect(Collectors.toSet());
     List<OrderLineItemExtension> extensions = lineItemExtensionRepository
         .findByOrderLineItemIdIn(lineItemIds);
-    deleteAddedOrderLineItems(extensions, order);
-    lineItemExtensionRepository.delete(extensions);
+    deleteAddedOrderLineItemsInOrder(extensions, order);
+    Set<OrderLineItemExtension> addedLineItemExtensions = deleteAddedLineItemsInExtension(
+        extensions);
+    initialedExtension(extensions, addedLineItemExtensions);
   }
 
-  private void deleteAddedOrderLineItems(List<OrderLineItemExtension> extensions, Order order) {
+  private void initialedExtension(List<OrderLineItemExtension> extensions,
+      Set<OrderLineItemExtension> addedLineItemExtensions) {
+    extensions.removeAll(addedLineItemExtensions);
+    extensions.forEach(extension -> extension.setSkipped(false));
+    if (!extensions.isEmpty()) {
+      lineItemExtensionRepository.save(extensions);
+    }
+  }
+
+  private void deleteAddedOrderLineItemsInOrder(List<OrderLineItemExtension> extensions,
+      Order order) {
     Set<UUID> addedIds = extensions.stream()
         .filter(OrderLineItemExtension::isAdded)
         .map(OrderLineItemExtension::getOrderLineItemId)
@@ -122,6 +134,19 @@ public class SiglusShipmentDraftService {
         orderLineItem -> addedIds.contains(orderLineItem.getId()));
     orderRepository.save(order);
 
+  }
+
+  private Set<OrderLineItemExtension> deleteAddedLineItemsInExtension(
+      List<OrderLineItemExtension> extensions) {
+    Set<OrderLineItemExtension> addedExtension = extensions.stream()
+        .filter(OrderLineItemExtension::isAdded)
+        .collect(Collectors.toSet());
+
+    if (!addedExtension.isEmpty()) {
+      log.info("delete extension line item: {}", addedExtension);
+      lineItemExtensionRepository.delete(addedExtension);
+    }
+    return addedExtension;
   }
 
 }

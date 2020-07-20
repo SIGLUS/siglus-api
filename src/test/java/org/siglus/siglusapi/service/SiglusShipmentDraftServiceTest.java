@@ -20,10 +20,13 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anySet;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -157,9 +160,44 @@ public class SiglusShipmentDraftServiceTest {
 
     // then
     verify(lineItemExtensionRepository).delete(lineItemExtensionsArgumentCaptor.capture());
-    List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor
-        .getValue();
+    Set<OrderLineItemExtension> lineItemExtensions = (Set<OrderLineItemExtension>)
+        lineItemExtensionsArgumentCaptor.getValue();
     assertEquals(1, lineItemExtensions.size());
+  }
+
+  @Test
+  public void shouldNotDeleteLineItemExtensionIfIsAddedFalseWhenDeleteShipmentDraft() {
+    // given
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+    draftDto.setOrder(orderDto);
+    when(siglusShipmentDraftFulfillmentService.searchShipmentDraft(draftId))
+        .thenReturn(draftDto);
+    OrderLineItem lineItem = new OrderLineItem();
+    lineItem.setId(lineItemId);
+    Order order = new Order();
+    order.setOrderLineItems(newArrayList(lineItem));
+    when(orderRepository.findOne(orderId)).thenReturn(order);
+    OrderLineItemExtension extension = OrderLineItemExtension.builder()
+        .orderLineItemId(lineItemId)
+        .skipped(true)
+        .added(false)
+        .partialFulfilledQuantity((long) 10)
+        .build();
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
+        .thenReturn(newArrayList(extension));
+
+    // when
+    siglusShipmentDraftService.deleteShipmentDraft(draftId);
+
+    // then
+    verify(lineItemExtensionRepository, times(0)).delete(anySet());
+    verify(lineItemExtensionRepository).save(lineItemExtensionsArgumentCaptor.capture());
+    List<OrderLineItemExtension> lineItemExtensions = lineItemExtensionsArgumentCaptor.getValue();
+    assertEquals(1, lineItemExtensions.size());
+    assertEquals(Long.valueOf(10),
+        lineItemExtensions.iterator().next().getPartialFulfilledQuantity());
+    assertEquals(false, lineItemExtensions.iterator().next().isSkipped());
   }
 
 }
