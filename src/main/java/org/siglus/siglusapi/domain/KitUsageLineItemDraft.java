@@ -51,8 +51,6 @@ public class KitUsageLineItemDraft extends BaseEntity {
 
   @ManyToOne(cascade = CascadeType.REFRESH)
   @JoinColumn(name = "requisitionDraftId")
-  @Getter
-  @Setter
   private RequisitionDraft requisitionDraft;
 
   private UUID kitUsageLineItemId;
