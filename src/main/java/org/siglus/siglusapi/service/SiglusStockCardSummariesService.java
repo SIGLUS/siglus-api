@@ -83,20 +83,22 @@ public class SiglusStockCardSummariesService {
 
   public StockCardSummaries findSiglusStockCard(
       MultiValueMap<String, String> parameters) {
-    UUID inputProgramId = getId(PROGRAM_ID, parameters);
-
-    UUID userId = authenticationHelper.getCurrentUser().getId();
-    Set<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME),
-        parameters.getFirst(FACILITY_ID));
-
-    StockCardSummaries siglusSummaries = new StockCardSummaries();
-    siglusSummaries.setStockCardsForFulfillOrderables(new ArrayList<>());
-    siglusSummaries.setOrderableFulfillMap(new HashMap<>());
-    Set<String> archivedProducts = archiveProductService
-        .searchArchivedProducts(UUID.fromString(parameters.getFirst(FACILITY_ID)));
+    Set<String> archivedProducts = null;
+    if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)) || Boolean
+        .parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
+      archivedProducts = archiveProductService
+          .searchArchivedProducts(UUID.fromString(parameters.getFirst(FACILITY_ID)));
+    }
     StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams(
         parameters);
     List<UUID> orderableIds = v2SearchParams.getOrderableIds();
+    UUID inputProgramId = getId(PROGRAM_ID, parameters);
+    UUID userId = authenticationHelper.getCurrentUser().getId();
+    Set<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME),
+        parameters.getFirst(FACILITY_ID));
+    StockCardSummaries siglusSummaries = new StockCardSummaries();
+    siglusSummaries.setStockCardsForFulfillOrderables(new ArrayList<>());
+    siglusSummaries.setOrderableFulfillMap(new HashMap<>());
     for (UUID programId : programIds) {
       v2SearchParams.setProgramId(programId);
       // call modify stockCardSummariesService for orderable support virtual program

@@ -327,11 +327,20 @@ public class SiglusOrderService {
     // 10+ seconds cost when call following requisitionService.getApproveProduct
     ApproveProductsAggregator approverProductAggregator = requisitionService.getApproveProduct(
         approverFacilityId, requisition.getProgramId(), requisition.getTemplate());
-    ApproveProductsAggregator userProductAggregator = requisitionService.getApproveProduct(
-        userHomeFacilityId, requisition.getProgramId(), requisition.getTemplate());
-
+    ApproveProductsAggregator userProductAggregator;
+    if (approverFacilityId.equals(userHomeFacilityId)) {
+      userProductAggregator = approverProductAggregator;
+    } else {
+      userProductAggregator = requisitionService.getApproveProduct(userHomeFacilityId,
+          requisition.getProgramId(), requisition.getTemplate());
+    }
     Set<UUID> approverOrderableIds = getOrderableIds(approverProductAggregator);
-    Set<UUID> userOrderableIds = getOrderableIds(userProductAggregator);
+    Set<UUID> userOrderableIds;
+    if (approverFacilityId.equals(userHomeFacilityId)) {
+      userOrderableIds = approverOrderableIds;
+    } else {
+      userOrderableIds = getOrderableIds(userProductAggregator);
+    }
 
     Set<UUID> archivedOrderableIds = getArchivedOrderableIds(Sets.newHashSet(
         requisition.getFacilityId(), approverFacilityId, userHomeFacilityId));
