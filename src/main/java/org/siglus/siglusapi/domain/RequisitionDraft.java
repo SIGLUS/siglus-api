@@ -37,6 +37,7 @@ import org.openlmis.requisition.domain.ExtraDataEntity;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.dto.UserDto;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
 @Entity
@@ -98,18 +99,19 @@ public class RequisitionDraft extends BaseEntity {
     draft.setRequisitionId(requisitionDto.getId());
     draft.extraData.updateFrom(requisitionDto.getExtraData());
     draft.extraData.put(EXTRA_DATA_IS_SAVED, true);
-    if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableProduct())) {
+    RequisitionTemplateExtension extension = template.getTemplateExtension();
+    if (Boolean.TRUE.equals(extension.getEnableProduct())) {
       draft.setLineItems(requisitionDto.getRequisitionLineItems().stream().map(lineItem ->
           RequisitionLineItemDraft.from(draft, lineItem)).collect(Collectors.toList()));
     }
-    if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableKitUsage())) {
+    if (Boolean.TRUE.equals(extension.getEnableKitUsage())) {
       draft.setKitUsageLineItems(KitUsageLineItemDraft.from(draft, requisitionDto));
     }
-    if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableUsageInformation())) {
+    if (Boolean.TRUE.equals(extension.getEnableUsageInformation())) {
       draft.setUsageInformationLineItemDrafts(
           UsageInformationLineItemDraft.from(draft, requisitionDto));
     }
-    if (Boolean.TRUE.equals(template.getTemplateExtension().getEnableRapidTestConsumption())) {
+    if (Boolean.TRUE.equals(extension.getEnableRapidTestConsumption())) {
       draft.setTestConsumptionLineItemDrafts(
           TestConsumptionLineItemDraft.from(draft, requisitionDto));
     }
