@@ -13,24 +13,13 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.util;
+package org.siglus.siglusapi.repository;
 
-import java.io.Serializable;
-import org.hibernate.engine.spi.SessionImplementor;
-import org.hibernate.id.UUIDGenerator;
-import org.siglus.common.domain.BaseEntity;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public class ConditionalUuidGenerator extends UUIDGenerator {
+public interface RequisitionExtensionRepository extends
+    JpaRepository<RequisitionExtension, UUID> {
 
-  @Override
-  public Serializable generate(SessionImplementor session, Object object) {
-    if (object instanceof BaseEntity) {
-      if ((((BaseEntity) object).getId()) == null) {
-        return super.generate(session, object);
-      } else {
-        return ((BaseEntity) object).getId();
-      }
-    }
-    return super.generate(session, object);
-  }
 }
