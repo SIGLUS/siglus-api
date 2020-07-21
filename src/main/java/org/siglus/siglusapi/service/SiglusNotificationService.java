@@ -153,11 +153,15 @@ public class SiglusNotificationService {
     repo.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
         NotificationStatus.IN_APPROVAL);
 
+    RequisitionStatus status = requisition.getStatus();
+    if (status != RequisitionStatus.IN_APPROVAL && status != RequisitionStatus.APPROVED) {
+      return;
+    }
     saveNotificationFromRequisition(requisition, notification -> {
-      if (requisition.getStatus() == RequisitionStatus.IN_APPROVAL) {
+      if (status == RequisitionStatus.IN_APPROVAL) {
         notification.setRefStatus(NotificationStatus.IN_APPROVAL);
         notification.setSupervisoryNodeId(findSupervisorNodeId(requisition));
-      } else if (requisition.getStatus() == RequisitionStatus.APPROVED) {
+      } else {
         notification.setRefStatus(NotificationStatus.APPROVED);
         notification.setRefFacilityId(findCurrentUserFacilityId());
         notification.setNotifyFacilityId(findCurrentUserFacilityId());
