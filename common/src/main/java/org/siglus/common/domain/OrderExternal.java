@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.common.domain;
 
 import java.util.UUID;
 import javax.persistence.Entity;
@@ -22,15 +22,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "requisition_external_id_extension", schema = "siglusintegration")
-public class RequisitionExternal extends BaseEntity {
+@Table(name = "order_external_ids", schema = "siglusintegration")
+public class OrderExternal extends BaseEntity {
 
   private UUID requisitionId;
 

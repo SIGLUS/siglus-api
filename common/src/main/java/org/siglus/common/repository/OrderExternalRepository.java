@@ -13,15 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.common.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.RequisitionExternal;
+import org.siglus.common.domain.OrderExternal;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RequisitionExternalRepository extends JpaRepository<RequisitionExternal, UUID> {
+public interface OrderExternalRepository extends JpaRepository<OrderExternal, UUID> {
 
-  List<RequisitionExternal> findByRequisitionId(UUID requisitionId);
+  List<OrderExternal> findByRequisitionId(UUID requisitionId);
 
 }

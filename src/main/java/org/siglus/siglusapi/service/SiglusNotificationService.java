@@ -55,10 +55,10 @@ import org.siglus.common.util.PermissionString;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
-import org.siglus.siglusapi.domain.RequisitionExternal;
+import org.siglus.common.domain.OrderExternal;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
-import org.siglus.siglusapi.repository.RequisitionExternalRepository;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
 import org.springframework.data.domain.Page;
@@ -99,7 +99,7 @@ public class SiglusNotificationService {
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
 
-  private final RequisitionExternalRepository requisitionExternalRepository;
+  private final OrderExternalRepository requisitionExternalRepository;
 
   private final RoleReferenceDataService roleService;
 
@@ -211,7 +211,7 @@ public class SiglusNotificationService {
   public void postConfirmShipment(ShipmentDto shipment) {
     OrderDto order = orderService.findOne(shipment.getOrder().getId());
     repo.updateLastNotificationProcessed(order.getId(), NotificationStatus.ORDERED);
-    RequisitionExternal external = requisitionExternalRepository.findOne(order.getExternalId());
+    OrderExternal external = requisitionExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
     RequisitionV2Dto requisition = requisitionService.searchRequisition(requisitionId);
     List<ProofOfDeliveryDto> pods = podService.getProofOfDeliveries(order.getId());

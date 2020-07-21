@@ -69,7 +69,7 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.repository.NotificationRepository;
-import org.siglus.siglusapi.repository.RequisitionExternalRepository;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
@@ -105,7 +105,7 @@ public class SiglusNotificationServiceTest {
   private OrderFulfillmentService orderService;
 
   @Mock
-  private RequisitionExternalRepository requisitionExternalRepository;
+  private OrderExternalRepository requisitionExternalRepository;
 
   @Mock
   private SiglusFacilityReferenceDataService facilityReferenceDataService;

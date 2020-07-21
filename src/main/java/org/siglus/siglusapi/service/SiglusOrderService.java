@@ -62,13 +62,13 @@ import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.domain.RequisitionExternal;
 import org.siglus.siglusapi.dto.OrderLineItemDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.RequisitionExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderFulfillmentService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,7 +117,7 @@ public class SiglusOrderService {
   private String serviceUrl;
 
   @Autowired
-  private RequisitionExternalRepository requisitionExternalRepository;
+  private OrderExternalRepository orderExternalRepository;
 
   @Autowired
   private OrderController orderController;
@@ -131,9 +131,9 @@ public class SiglusOrderService {
     List<UUID> orderedExternalIds = orderDtos.stream()
         .filter(order -> order.getStatus().equals(OrderStatus.ORDERED))
         .map(BasicOrderDto::getExternalId).collect(Collectors.toList());
-    List<UUID> exsitExternalIds = requisitionExternalRepository
+    List<UUID> exsitExternalIds = orderExternalRepository
         .findAll(orderedExternalIds).stream()
-        .map(RequisitionExternal::getId).collect(Collectors.toList());
+        .map(OrderExternal::getId).collect(Collectors.toList());
     if (!exsitExternalIds.isEmpty()) {
       orderDtos.forEach(basicOrderDto -> {
         if (basicOrderDto.getStatus().equals(OrderStatus.ORDERED)
@@ -213,24 +213,24 @@ public class SiglusOrderService {
   public Iterable<BasicOrderDto> createSubOrder(OrderObjectReferenceDto order,
       List<org.openlmis.fulfillment.web.util.OrderLineItemDto>
           orderLineItemDtos) {
-    RequisitionExternal external = requisitionExternalRepository.findOne(order.getExternalId());
-    List<RequisitionExternal> externals;
+    OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
+    List<OrderExternal> externals;
     if (external == null) {
-      RequisitionExternal firstExternal = RequisitionExternal.builder()
+      OrderExternal firstExternal = OrderExternal.builder()
           .requisitionId(order.getExternalId()).build();
-      RequisitionExternal secondExternal = RequisitionExternal.builder()
+      OrderExternal secondExternal = OrderExternal.builder()
           .requisitionId(order.getExternalId()).build();
-      externals = requisitionExternalRepository
+      externals = orderExternalRepository
           .save(Arrays.asList(firstExternal, secondExternal));
       updateExistOrderForSubOrder(order.getId(), externals.get(0).getId(),
           order.getOrderCode().concat("-" + 1));
       order.setOrderCode(order.getOrderCode().concat("-" + 2));
     } else {
-      externals = requisitionExternalRepository
+      externals = orderExternalRepository
           .findByRequisitionId(external.getRequisitionId());
-      RequisitionExternal newExternal = RequisitionExternal.builder()
+      OrderExternal newExternal = OrderExternal.builder()
           .requisitionId(external.getRequisitionId()).build();
-      newExternal = requisitionExternalRepository.save(newExternal);
+      newExternal = orderExternalRepository.save(newExternal);
       externals.add(newExternal);
       order.setOrderCode(replaceLast(order.getOrderCode(), "-" + (externals.size() - 1),
           "-" + externals.size()));
@@ -258,7 +258,7 @@ public class SiglusOrderService {
 
   private Iterable<BasicOrderDto> createNewOrder(OrderObjectReferenceDto order,
       List<org.openlmis.fulfillment.web.util.OrderLineItemDto> orderLineItemDtos,
-      List<RequisitionExternal> externals) {
+      List<OrderExternal> externals) {
     OrderDto newOrder = new OrderDto();
     BeanUtils.copyProperties(order, newOrder);
     newOrder.setId(null);
@@ -322,7 +322,7 @@ public class SiglusOrderService {
   }
 
   private Set<VersionObjectReferenceDto> getAllUserAvailableProductAggregator(OrderDto orderDto) {
-    RequisitionExternal external = requisitionExternalRepository.findOne(orderDto.getExternalId());
+    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
     UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
     Requisition requisition = requisitionController.findRequisition(requisitionId,
         requisitionController.getProfiler("GET_ORDER"));

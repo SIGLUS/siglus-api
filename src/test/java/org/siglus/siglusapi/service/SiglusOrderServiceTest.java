@@ -70,11 +70,11 @@ import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.domain.RequisitionExternal;
+import org.siglus.common.domain.OrderExternal;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.repository.RequisitionExternalRepository;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderFulfillmentService;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.BeanUtils;
@@ -127,7 +127,7 @@ public class SiglusOrderServiceTest {
   private SiglusOrderFulfillmentService siglusOrderFulfillmentService;
 
   @Mock
-  private RequisitionExternalRepository requisitionExternalRepository;
+  private OrderExternalRepository requisitionExternalRepository;
 
   @InjectMocks
   private SiglusOrderService siglusOrderService;
@@ -244,7 +244,7 @@ public class SiglusOrderServiceTest {
     OrderSearchParams searchParams = mock(OrderSearchParams.class);
     when(siglusOrderFulfillmentService.searchOrders(searchParams, pageable))
         .thenReturn(Pagination.getPage(Arrays.asList(orderDto), pageable, 0));
-    RequisitionExternal external = new RequisitionExternal();
+    OrderExternal external = new OrderExternal();
     external.setId(externalId);
     external.setRequisitionId(UUID.randomUUID());
     when(requisitionExternalRepository.findAll(Arrays.asList(externalId)))
@@ -270,10 +270,10 @@ public class SiglusOrderServiceTest {
     lineItemDto.setPartialFulfilledQuantity(Long.valueOf(20));
     lineItemDto.setOrderable(createOrderableDto(orderableId1));
     orderObjectReferenceDto.setOrderLineItems(Arrays.asList(lineItemDto));
-    RequisitionExternal firstExternal = RequisitionExternal.builder()
+    OrderExternal firstExternal = OrderExternal.builder()
         .requisitionId(orderObjectReferenceDto.getExternalId()).build();
     firstExternal.setId(UUID.randomUUID());
-    RequisitionExternal secondExternal = RequisitionExternal.builder()
+    OrderExternal secondExternal = OrderExternal.builder()
         .requisitionId(orderObjectReferenceDto.getExternalId()).build();
     secondExternal.setId(UUID.randomUUID());
     when(requisitionExternalRepository.findOne(orderObjectReferenceDto.getExternalId()))
