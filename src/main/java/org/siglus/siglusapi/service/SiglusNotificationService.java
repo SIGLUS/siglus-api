@@ -157,7 +157,7 @@ public class SiglusNotificationService {
       if (requisition.getStatus() == RequisitionStatus.IN_APPROVAL) {
         notification.setRefStatus(NotificationStatus.IN_APPROVAL);
         notification.setSupervisoryNodeId(findSupervisorNodeId(requisition));
-      } else {
+      } else if (requisition.getStatus() == RequisitionStatus.APPROVED) {
         notification.setRefStatus(NotificationStatus.APPROVED);
         notification.setRefFacilityId(findCurrentUserFacilityId());
         notification.setNotifyFacilityId(findCurrentUserFacilityId());
