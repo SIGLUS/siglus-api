@@ -1559,6 +1559,30 @@ traits:
                 schema: localizedMessage
 
     /shipmentDrafts:
+      post:
+        is: [ secured ]
+        description: Create a shipment draft. Only one draft can exist in the system for a given order. This endpoint requires SHIPMENT_EDIT right.
+        body:
+          application/json:
+            schema: shipmentDraft
+        responses:
+          201:
+            description: Draft created.
+            body:
+              application/json:
+                schema: shipmentDraft
+                example: shipmentExample
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+          401:
+            body:
+              application/json:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
       /{id}:
         uriParameters:
           id:
