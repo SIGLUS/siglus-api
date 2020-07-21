@@ -60,7 +60,7 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
-import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
@@ -111,8 +111,7 @@ public class SiglusNotificationServiceTest {
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
-  @SuppressWarnings("unused")
-  private SupervisoryNodeReferenceDataService supervisoryNodeService;
+  private RequisitionGroupReferenceDataService requisitionGroupService;
 
   private UUID notificationId;
 
@@ -129,13 +128,14 @@ public class SiglusNotificationServiceTest {
   @Test
   public void shouldCallRepoAndMapperWhenSearchNotifications() {
     // given
+    UserDto user = new UserDto();
+    user.setRoleAssignments(emptySet());
+    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    when(requisitionGroupService.findAll()).thenReturn(emptyList());
     Pageable pageable = new PageRequest(nextInt(), nextInt());
     Notification notification1 = new Notification();
     Notification notification2 = new Notification();
     Notification notification3 = new Notification();
-    UserDto user = new UserDto();
-    user.setRoleAssignments(emptySet());
-    when(authenticationHelper.getCurrentUser()).thenReturn(user);
     when(repo.findViewable(eq(pageable), any(), any()))
         .thenReturn(new PageImpl<>(asList(notification1, notification2, notification3)));
 

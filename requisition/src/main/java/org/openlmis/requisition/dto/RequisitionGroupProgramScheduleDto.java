@@ -15,9 +15,6 @@
 
 package org.openlmis.requisition.dto;
 
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -25,40 +22,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+// [SIGLUS change start]
+// [change reason]: need program information.
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public final class RequisitionGroupDto extends BaseDto {
+public final class RequisitionGroupProgramScheduleDto extends BaseDto {
 
-  private String code;
-  private String name;
-  private String description;
-  private Set<FacilityDto> memberFacilities;
-  // [SIGLUS change start]
-  // [change reason]: need program information.
-  private SupervisoryNodeDto supervisoryNode;
-  private Set<RequisitionGroupProgramScheduleDto> requisitionGroupProgramSchedules;
-  // [SIGLUS change end]
+  private Boolean directDelivery;
+  private BasicProgramDto program;
 
-  /**
-   * Checks if there is a facility with the given ID in this requisition group.
-   */
-  public boolean hasFacility(UUID facilityId) {
-    return memberFacilities
-        .stream()
-        .anyMatch(facility -> Objects.equals(facilityId, facility.getId()));
-  }
-
-  // [SIGLUS change start]
-  // [change reason]: need program information.
-  public boolean supportsProgram(UUID programId) {
-    return requisitionGroupProgramSchedules.stream()
-        .map(RequisitionGroupProgramScheduleDto::getProgram)
-        .map(BaseDto::getId)
-        .anyMatch(programId::equals);
-  }
-  // [SIGLUS change end]
 }
+// [SIGLUS change end]

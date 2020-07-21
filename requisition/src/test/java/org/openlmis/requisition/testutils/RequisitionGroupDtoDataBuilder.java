@@ -15,6 +15,8 @@
 
 package org.openlmis.requisition.testutils;
 
+import static java.util.Collections.emptySet;
+
 import java.util.HashSet;
 import java.util.Set;
 import org.openlmis.requisition.dto.FacilityDto;
@@ -41,6 +43,10 @@ public class RequisitionGroupDtoDataBuilder implements DtoDataBuilder<Requisitio
 
   @Override
   public RequisitionGroupDto buildAsDto() {
-    return new RequisitionGroupDto(code, name, description, memberFacilities);
+    // [SIGLUS change start]
+    // [change reason]: need program information.
+    // return new RequisitionGroupDto(code, name, description, memberFacilities);
+    return new RequisitionGroupDto(code, name, description, memberFacilities, null, emptySet());
+    // [SIGLUS change end]
   }
 }

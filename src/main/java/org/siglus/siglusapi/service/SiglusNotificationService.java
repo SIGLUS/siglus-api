@@ -40,14 +40,14 @@ import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
+import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
-import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
+import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
-import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.siglus.common.dto.referencedata.RoleAssignmentDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
@@ -95,8 +95,6 @@ public class SiglusNotificationService {
 
   private final SiglusRequisitionRequisitionService requisitionService;
 
-  private final SupervisoryNodeReferenceDataService supervisoryNodeService;
-
   private final ProofOfDeliveryFulfillmentService podService;
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
@@ -104,6 +102,8 @@ public class SiglusNotificationService {
   private final RequisitionExternalRepository requisitionExternalRepository;
 
   private final RoleReferenceDataService roleService;
+
+  private final RequisitionGroupReferenceDataService requisitionGroupService;
 
   private final EntityManager em;
 
@@ -262,15 +262,6 @@ public class SiglusNotificationService {
         .collect(toSet());
   }
 
-  private boolean canCurrentUserInternalApprove(Set<UUID> supervisoryNodeIds) {
-    UUID currentUserFacilityId = findCurrentUserFacilityId();
-    return supervisoryNodeIds.stream()
-        .map(supervisoryNodeService::findOne)
-        .map(SupervisoryNodeDto::getFacility)
-        .map(BaseDto::getId)
-        .noneMatch(facilityId -> facilityId.equals(currentUserFacilityId));
-  }
-
   private boolean canThisRoleApproveRequisition(RoleAssignmentDto roleAssignment) {
     return roleService.findOne(roleAssignment.getRoleId()).getRights().stream()
         .map(RightDto::getName)
@@ -309,23 +300,35 @@ public class SiglusNotificationService {
     UUID currentUserFacilityId = findCurrentUserFacilityId();
     Set<UUID> currentUserSupervisoryNodeIds = findCurrentUserSupervisoryNodeIds();
     log.info("current user has supervisoryNode {}", currentUserSupervisoryNodeIds);
-    boolean canCurrentUserInternalApprove = canCurrentUserInternalApprove(
-        currentUserSupervisoryNodeIds);
-    log.info("can current user internal approve {}", canCurrentUserInternalApprove);
+    //CAUTION: bad performance, about 5.4 MB data, using 2.5s
+    List<RequisitionGroupDto> requisitionGroups = requisitionGroupService.findAll();
     boolean canEditShipments = permissionStrings.stream().anyMatch(
         rightAssignment ->
             FulfillmentPermissionService.SHIPMENTS_EDIT.equals(rightAssignment.getRightName()));
     return (root, query, cb) -> permissionStrings.stream()
         .map(right -> mapRightToPredicate(right, root, cb, currentUserFacilityId,
-            currentUserSupervisoryNodeIds, canEditShipments, canCurrentUserInternalApprove))
+            currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups))
         .filter(Objects::nonNull)
         .reduce(cb::or)
         .orElse(cb.disjunction());
   }
 
+  private boolean canCurrentUserInternalApprove(UUID currentUserFacilityId,
+      List<RequisitionGroupDto> requisitionGroups,
+      Set<UUID> currentUserSupervisoryNodeIds, UUID programId) {
+    return requisitionGroups.stream()
+        .filter(requisitionGroup -> currentUserSupervisoryNodeIds
+            .contains(requisitionGroup.getSupervisoryNode().getId()))
+        .filter(requisitionGroup -> requisitionGroup.supportsProgram(programId))
+        .map(RequisitionGroupDto::getMemberFacilities)
+        .flatMap(Collection::stream)
+        .map(BaseDto::getId)
+        .anyMatch(currentUserFacilityId::equals);
+  }
+
   private Predicate mapRightToPredicate(PermissionString permissionString, Root<Notification> root,
       CriteriaBuilder cb, UUID currentUserFacilityId, Set<UUID> currentUserSupervisoryNodeIds,
-      boolean canEditShipments, boolean canCurrentUserInternalApprove) {
+      boolean canEditShipments, List<RequisitionGroupDto> requisitionGroups) {
     switch (permissionString.getRightName()) {
       case PermissionService.REQUISITION_CREATE:
         return cb.and(
@@ -345,7 +348,8 @@ public class SiglusNotificationService {
         if (currentUserSupervisoryNodeIds.isEmpty()) {
           return null;
         }
-        if (canCurrentUserInternalApprove) {
+        if (canCurrentUserInternalApprove(currentUserFacilityId, requisitionGroups,
+            currentUserSupervisoryNodeIds, permissionString.getProgramId())) {
           return cb.and(
               cb.equal(root.get(REF_FACILITY_ID), currentUserFacilityId),
               cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
