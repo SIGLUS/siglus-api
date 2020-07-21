@@ -35,6 +35,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -117,6 +119,9 @@ public class SiglusOrderServiceTest {
 
   @Mock
   private OrderExternalRepository orderExternalRepository;
+
+  @Captor
+  private ArgumentCaptor<List<OrderDto>> orderDtoArgumentCaptor;
 
   @InjectMocks
   private SiglusOrderService siglusOrderService;
@@ -224,8 +229,7 @@ public class SiglusOrderServiceTest {
     OrderExternal secondExternal = OrderExternal.builder()
         .requisitionId(orderObjectReferenceDto.getExternalId()).build();
     secondExternal.setId(UUID.randomUUID());
-    when(orderExternalRepository.findOne(orderObjectReferenceDto.getExternalId()))
-        .thenReturn(null);
+    when(orderExternalRepository.findOne(orderObjectReferenceDto.getExternalId())).thenReturn(null);
     when(orderExternalRepository.save(anyList()))
         .thenReturn(Arrays.asList(firstExternal, secondExternal));
     Order order = new Order();
@@ -244,8 +248,62 @@ public class SiglusOrderServiceTest {
     siglusOrderService.createSubOrder(orderObjectReferenceDto, Arrays.asList(lineItemDto));
 
     // then
+    verify(orderController).batchCreateOrders(orderDtoArgumentCaptor.capture(), any());
+    OrderDto orderDto = orderDtoArgumentCaptor.getValue().get(0);
     verify(orderRepository, times(2)).save(any(Order.class));
+    assertEquals("order_code-2", orderDto.getOrderCode());
+    assertEquals(secondExternal.getId(), orderDto.getExternalId());
+  }
 
+  @Test
+  public void shouldCreateNewOrderWhenSecondPartial() {
+    // given
+    UUID requisitionId = UUID.randomUUID();
+    OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(
+        UUID.randomUUID());
+    OrderExternal secondExternal = OrderExternal.builder().requisitionId(requisitionId).build();
+    secondExternal.setId(UUID.randomUUID());
+    orderObjectReferenceDto.setExternalId(secondExternal.getId());
+    orderObjectReferenceDto.setOrderCode("order_code-2");
+    OrderLineItemDto lineItemDto = new OrderLineItemDto();
+    lineItemDto.setOrderedQuantity(Long.valueOf(50));
+    lineItemDto.setPartialFulfilledQuantity(Long.valueOf(20));
+    lineItemDto.setOrderable(createOrderableDto(orderableId1));
+    orderObjectReferenceDto.setOrderLineItems(Arrays.asList(lineItemDto));
+    OrderExternal firstExternal = OrderExternal.builder().requisitionId(requisitionId).build();
+    firstExternal.setId(UUID.randomUUID());
+    OrderExternal thirdExternal = OrderExternal.builder().requisitionId(requisitionId).build();
+    thirdExternal.setId(UUID.randomUUID());
+    when(orderExternalRepository.findOne(orderObjectReferenceDto.getExternalId()))
+        .thenReturn(secondExternal);
+    List<OrderExternal> existOrderExternals = new ArrayList<>();
+    existOrderExternals.add(firstExternal);
+    existOrderExternals.add(secondExternal);
+    when(orderExternalRepository.findByRequisitionId(secondExternal.getRequisitionId()))
+        .thenReturn(existOrderExternals);
+    when(orderExternalRepository.save(any(OrderExternal.class)))
+        .thenReturn(thirdExternal);
+    Order order = new Order();
+    when(orderRepository.findOne(orderObjectReferenceDto.getId())).thenReturn(order);
+    BasicOrderDto basicOrderDto = new BasicOrderDto();
+    basicOrderDto.setId(UUID.randomUUID());
+    basicOrderDto.setExternalId(thirdExternal.getId());
+    basicOrderDto.setOrderCode("order_code-2");
+    when(orderRepository.findOne(basicOrderDto.getId())).thenReturn(order);
+    when(orderController.batchCreateOrders(anyList(), any(OAuth2Authentication.class)))
+        .thenReturn(Arrays.asList(basicOrderDto));
+    when(orderController.getOrder(basicOrderDto.getId(), null))
+        .thenReturn(createOrderDto());
+
+    // when
+    siglusOrderService.createSubOrder(orderObjectReferenceDto, Arrays.asList(lineItemDto));
+
+    // then
+    verify(orderController).batchCreateOrders(orderDtoArgumentCaptor.capture(), any());
+    OrderDto orderDto = orderDtoArgumentCaptor.getValue().get(0);
+    verify(orderRepository, times(1)).save(any(Order.class));
+    assertEquals("order_code-3", orderDto.getOrderCode());
+    assertEquals(thirdExternal.getId(), orderDto.getExternalId());
   }
 
   private ShipmentDraftDto createShipmentDraftDto() {
