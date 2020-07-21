@@ -44,8 +44,10 @@ import org.openlmis.fulfillment.web.stockmanagement.StockEventDto;
 import org.openlmis.fulfillment.web.stockmanagement.StockEventLineItemDto;
 import org.openlmis.fulfillment.web.stockmanagement.ValidSourceDestinationDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
 import org.slf4j.Logger;
@@ -92,6 +94,12 @@ public class FulfillmentStockEventBuilder {
 
   @Autowired
   private FulfillmentDateHelper dateHelper;
+
+  // [SIGLUS change start]
+  // [change reason]: #374 generate stock event list by programs
+  @Autowired
+  private OrderExternalRepository orderExternalRepository;
+  // [SIGLUS change end]
 
   /**
    * Builds a stock event DTO from the given shipment.
@@ -178,7 +186,9 @@ public class FulfillmentStockEventBuilder {
   // [SIGLUS change start]
   // [change reason]: #374 get all associate program and main program ids
   private Set<UUID> getShipmentProgramAndAssociatePrograms(Shipment shipment) {
-    UUID requisitionId = shipment.getOrder().getExternalId();
+    UUID externalId = shipment.getOrder().getExternalId();
+    OrderExternal external = orderExternalRepository.findOne(externalId);
+    UUID requisitionId = external == null ? externalId : external.getRequisitionId();
     UUID templateId = requisitionRepository.findOne(requisitionId).getTemplate().getId();
 
     Set<UUID> associateProgramIds =
