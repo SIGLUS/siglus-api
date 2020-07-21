@@ -201,7 +201,11 @@ public class Order extends BaseEntity {
   }
 
   public boolean isOrdered() {
-    return OrderStatus.ORDERED.equals(status);
+    // [SIGLUS change start]
+    // [change reason]: support for partial order.
+    // return OrderStatus.ORDERED.equals(status);
+    return OrderStatus.ORDERED.equals(status) || OrderStatus.PARTIALLY_FULFILLED.equals(status);
+    // [SIGLUS change end]
   }
 
   public void prepareToLocalFulfill() {
@@ -209,7 +213,12 @@ public class Order extends BaseEntity {
   }
 
   public boolean canBeFulfilled() {
-    return OrderStatus.ORDERED == status || OrderStatus.FULFILLING == status;
+    // [SIGLUS change start]
+    // [change reason]: support for partial order.
+    // return OrderStatus.ORDERED == status || OrderStatus.FULFILLING == status;
+    return OrderStatus.ORDERED == status || OrderStatus.FULFILLING == status
+        || OrderStatus.PARTIALLY_FULFILLED.equals(status);
+    // [SIGLUS change end]
   }
 
   /**

@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,14 +40,11 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
-import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
-import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
-import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
@@ -69,18 +65,14 @@ import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.common.repository.OrderExternalRepository;
-import org.siglus.siglusapi.service.client.SiglusOrderFulfillmentService;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -124,10 +116,7 @@ public class SiglusOrderServiceTest {
   private FulfillmentOrderDtoBuilder fulfillmentOrderDtoBuilder;
 
   @Mock
-  private SiglusOrderFulfillmentService siglusOrderFulfillmentService;
-
-  @Mock
-  private OrderExternalRepository requisitionExternalRepository;
+  private OrderExternalRepository orderExternalRepository;
 
   @InjectMocks
   private SiglusOrderService siglusOrderService;
@@ -150,8 +139,8 @@ public class SiglusOrderServiceTest {
   public void shouldGetValidAvailableProductsWithOrder() {
     // given
     OrderDto orderDto = createOrderDto();
-    when(siglusOrderFulfillmentService.findOne(orderId)).thenReturn(orderDto);
-    when(requisitionExternalRepository.findOne(orderDto.getExternalId())).thenReturn(null);
+    when(orderController.getOrder(orderId, null)).thenReturn(orderDto);
+    when(orderExternalRepository.findOne(orderDto.getExternalId())).thenReturn(null);
     when(requisitionController.findRequisition(any(), any())).thenReturn(createRequisition());
     when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
     when(requisitionService.getApproveProduct(approverFacilityId, programId, null))
@@ -218,47 +207,6 @@ public class SiglusOrderServiceTest {
   }
 
   @Test
-  public void shouldGetEmptyIfOrderDtoIsEmptyWhenSearchOrders() {
-    // given
-    Pageable pageable = mock(Pageable.class);
-    OrderSearchParams searchParams = new OrderSearchParams();
-    when(siglusOrderFulfillmentService.searchOrders(searchParams, pageable)).thenReturn(
-        Pagination.getPage(Collections.emptyList(), pageable, 0));
-
-    // when
-    Page<BasicOrderDto> orderDtos = siglusOrderService.searchOrders(searchParams, pageable);
-
-    // then
-    assertEquals(0, orderDtos.getContent().size());
-  }
-
-  @Test
-  public void shouldGetPartialFulfilledIfOrderStatusIsOrderedAndExistInExternalWhenSearchOrders() {
-    // given
-    BasicOrderDto orderDto = new BasicOrderDto();
-    orderDto.setId(UUID.randomUUID());
-    orderDto.setStatus(OrderStatus.ORDERED);
-    UUID externalId = UUID.randomUUID();
-    orderDto.setExternalId(externalId);
-    Pageable pageable = new PageRequest(1, 10, null);
-    OrderSearchParams searchParams = mock(OrderSearchParams.class);
-    when(siglusOrderFulfillmentService.searchOrders(searchParams, pageable))
-        .thenReturn(Pagination.getPage(Arrays.asList(orderDto), pageable, 0));
-    OrderExternal external = new OrderExternal();
-    external.setId(externalId);
-    external.setRequisitionId(UUID.randomUUID());
-    when(requisitionExternalRepository.findAll(Arrays.asList(externalId)))
-        .thenReturn(Arrays.asList(external));
-
-    // when
-    Page<BasicOrderDto> orderDtos = siglusOrderService.searchOrders(searchParams, pageable);
-
-    // then
-    assertEquals(1, orderDtos.getContent().size());
-    assertEquals(OrderStatus.PARTIALLY_FULFILLED, orderDtos.getContent().get(0).getStatus());
-  }
-
-  @Test
   public void shouldCreateNewOrderAndUpdateExistOrderWhenFistPartial() {
     // given
     OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(
@@ -276,9 +224,9 @@ public class SiglusOrderServiceTest {
     OrderExternal secondExternal = OrderExternal.builder()
         .requisitionId(orderObjectReferenceDto.getExternalId()).build();
     secondExternal.setId(UUID.randomUUID());
-    when(requisitionExternalRepository.findOne(orderObjectReferenceDto.getExternalId()))
+    when(orderExternalRepository.findOne(orderObjectReferenceDto.getExternalId()))
         .thenReturn(null);
-    when(requisitionExternalRepository.save(anyList()))
+    when(orderExternalRepository.save(anyList()))
         .thenReturn(Arrays.asList(firstExternal, secondExternal));
     Order order = new Order();
     when(orderRepository.findOne(orderObjectReferenceDto.getId())).thenReturn(order);
@@ -289,7 +237,8 @@ public class SiglusOrderServiceTest {
     when(orderRepository.findOne(basicOrderDto.getId())).thenReturn(order);
     when(orderController.batchCreateOrders(anyList(), any(OAuth2Authentication.class)))
         .thenReturn(Arrays.asList(basicOrderDto));
-    when(siglusOrderFulfillmentService.findOne(basicOrderDto.getId())).thenReturn(createOrderDto());
+    when(orderController.getOrder(basicOrderDto.getId(), null))
+        .thenReturn(createOrderDto());
 
     // when
     siglusOrderService.createSubOrder(orderObjectReferenceDto, Arrays.asList(lineItemDto));

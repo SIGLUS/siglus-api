@@ -15,26 +15,12 @@
 
 package org.siglus.siglusapi.service.client;
 
-import org.openlmis.fulfillment.service.OrderSearchParams;
-import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.siglus.common.service.client.BaseReferenceDataService;
-import org.siglus.common.util.RequestParameters;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SiglusOrderFulfillmentService extends BaseReferenceDataService<OrderDto> {
-
-  public static final String SUPPLYING_FACILITY_ID = "supplyingFacilityId";
-  public static final String REQUESTING_FACILITY_ID = "requestingFacilityId";
-  public static final String PROGRAM_ID = "programId";
-  public static final String PROCESSING_PERIOD_ID = "processingPeriodId";
-  public static final String STATUS = "status";
-  public static final String PERIOD_START_DATE = "periodStartDate";
-  public static final String PERIOD_END_DATE = "periodEndDate";
 
   @Override
   protected String getUrl() {
@@ -49,21 +35,6 @@ public class SiglusOrderFulfillmentService extends BaseReferenceDataService<Orde
   @Override
   protected Class<OrderDto[]> getArrayResultClass() {
     return OrderDto[].class;
-  }
-
-  public Page<BasicOrderDto> searchOrders(OrderSearchParams params,
-      Pageable pageable) {
-    RequestParameters queryParams = RequestParameters.init()
-        .set(SUPPLYING_FACILITY_ID, params.getSupplyingFacilityId())
-        .set(REQUESTING_FACILITY_ID, params.getRequestingFacilityId())
-        .set(PROGRAM_ID, params.getProgramId())
-        .set(PROCESSING_PERIOD_ID, params.getProcessingPeriodId())
-        .set(STATUS, params.getStatus())
-        .set(PERIOD_START_DATE, params.getPeriodStartDate())
-        .set(PERIOD_END_DATE, params.getPeriodEndDate())
-        .setPage(pageable);
-    return getPage("", queryParams, null,
-        HttpMethod.GET, BasicOrderDto.class, true);
   }
 
 }

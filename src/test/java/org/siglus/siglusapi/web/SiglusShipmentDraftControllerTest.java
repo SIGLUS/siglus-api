@@ -23,6 +23,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 
@@ -34,6 +35,9 @@ public class SiglusShipmentDraftControllerTest {
 
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
+
+  @Mock
+  private ShipmentDraftController draftController;
 
   private UUID draftId = UUID.randomUUID();
 
@@ -56,6 +60,16 @@ public class SiglusShipmentDraftControllerTest {
 
     // then
     verify(siglusShipmentDraftService).deleteShipmentDraft(draftId);
+  }
+
+  @Test
+  public void shouldCallV3ControllerWhenCreateShipmentDraft() {
+    // when
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+    siglusShipmentDraftController.createShipmentDraft(draftDto);
+
+    // then
+    verify(draftController).createShipmentDraft(draftDto);
   }
 
 }

@@ -64,7 +64,7 @@ public class SiglusOrderController {
   @GetMapping()
   @ResponseBody
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
-    return siglusOrderService.searchOrders(params, pageable);
+    return orderController.searchOrders(params, pageable);
   }
 
   @GetMapping("/{id}")

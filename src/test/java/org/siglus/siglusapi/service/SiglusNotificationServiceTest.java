@@ -63,13 +63,13 @@ import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentSe
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.PermissionString;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.repository.NotificationRepository;
-import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
@@ -105,7 +105,7 @@ public class SiglusNotificationServiceTest {
   private OrderFulfillmentService orderService;
 
   @Mock
-  private OrderExternalRepository requisitionExternalRepository;
+  private OrderExternalRepository orderExternalRepository;
 
   @Mock
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
@@ -402,7 +402,7 @@ public class SiglusNotificationServiceTest {
   @Test
   public void shouldCallRepoWhenPostConfirmShipment() {
     // given
-    when(requisitionExternalRepository.findOne(any(UUID.class)))
+    when(orderExternalRepository.findOne(any(UUID.class)))
         .thenReturn(null);
     mockAuthentication();
     ShipmentDto shipment = new ShipmentDto();
