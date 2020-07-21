@@ -155,10 +155,17 @@ public class ShipmentController extends BaseController {
     findAndRemoveShipmentDraftsForOrder(order);
 
     profiler.start("BUILD_STOCK_EVENT_FROM_SHIPMENT");
-    StockEventDto stockEventDto = stockEventBuilder.fromShipment(shipment);
+    // [SIGLUS change start]
+    // [change reason]: #374 submit the stock event by main&associate program
+    List<StockEventDto> stockEventDtos =
+        stockEventBuilder.fromShipmentAndAllAssociatePrograms(shipment);
+
+    log.info("orderId: {}, submitStockEvents: {}", order.getId(), stockEventDtos);
 
     profiler.start("SUBMIT_STOCK_EVENT");
-    stockEventService.submit(stockEventDto);
+    stockEventDtos.stream()
+        .forEach(stockEventDto -> stockEventService.submit(stockEventDto));
+    // [SIGLUS change end]
 
     profiler.start("BUILD_SHIPMENT_DTO");
     ShipmentDto dto = shipmentDtoBuilder.build(shipment);
