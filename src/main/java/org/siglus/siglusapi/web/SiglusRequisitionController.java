@@ -17,7 +17,6 @@ package org.siglus.siglusapi.web;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -178,7 +177,7 @@ public class SiglusRequisitionController {
   }
 
   @GetMapping("/facilitiesForApproval")
-  public Set<FacilityDto> getFacilitiesForApproval() {
+  public List<FacilityDto> getFacilitiesForApproval() {
     return siglusRequisitionService.searchFacilitiesForApproval();
   }
 

@@ -282,9 +282,13 @@ public class SiglusRequisitionServiceTest {
 
   private UUID supervisoryNodeId2 = UUID.randomUUID();
 
+  private UUID childSupervisoryNodeId = UUID.randomUUID();
+
   private UUID requisitionGroupId = UUID.randomUUID();
 
   private UUID requisitionGroupId2 = UUID.randomUUID();
+
+  private UUID childRequisitionGroupId = UUID.randomUUID();
 
   private UUID processingPeriodId = UUID.randomUUID();
 
@@ -1004,7 +1008,7 @@ public class SiglusRequisitionServiceTest {
     when(requisitionGroupReferenceDataService.findAll()).thenReturn(mockAllRequisitionGroup());
     when(facilityReferenceDataService.findAll()).thenReturn(mockAllFacilityDto());
 
-    Set<FacilityDto> response = siglusRequisitionService.searchFacilitiesForApproval();
+    List<FacilityDto> response = siglusRequisitionService.searchFacilitiesForApproval();
 
     assertEquals(1, response.size());
     assertEquals(response.stream().findFirst().get().getId(), userFacilityId);
@@ -1021,12 +1025,30 @@ public class SiglusRequisitionServiceTest {
     when(requisitionGroupReferenceDataService.findAll()).thenReturn(mockAllRequisitionGroup());
     when(facilityReferenceDataService.findAll()).thenReturn(mockAllFacilityDto());
 
-    Set<FacilityDto> response = siglusRequisitionService.searchFacilitiesForApproval();
+    List<FacilityDto> response = siglusRequisitionService.searchFacilitiesForApproval();
 
     Set<UUID> uuids = response.stream().map(FacilityDto::getId).collect(Collectors.toSet());
     assertEquals(2, response.size());
     assertTrue(uuids.contains(facilityId));
     assertTrue(uuids.contains(userFacilityId));
+  }
+
+  @Test
+  public void shouldGetFacilitiesForInternalAndExternalApproval() {
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
+        .thenReturn(mockRightDto());
+    when(roleReferenceDataService.search(rightId)).thenReturn(mockRoleDto());
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockInternalAndExternalUserDto());
+    when(supervisoryNodeReferenceDataService.findAllSupervisoryNodes())
+        .thenReturn(mockAllSupervisoryNodeForInternalAndExternal());
+    when(requisitionGroupReferenceDataService.findAll()).thenReturn(mockAllRequisitionGroup());
+    when(facilityReferenceDataService.findAll()).thenReturn(mockAllFacilityDto());
+
+    List<FacilityDto> response = siglusRequisitionService.searchFacilitiesForApproval();
+
+    assertEquals(2, response.size());
+    assertEquals(response.get(0).getId(), userFacilityId);
+    assertEquals(response.get(1).getId(), facilityId);
   }
 
   private RequisitionDraft getRequisitionDraft(UUID requisitionId) {
@@ -1141,6 +1163,20 @@ public class SiglusRequisitionServiceTest {
     return userDto;
   }
 
+  private UserDto mockInternalAndExternalUserDto() {
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    userDto.setHomeFacilityId(userFacilityId);
+    RoleAssignmentDto roleAssignmentDto2 = new RoleAssignmentDto();
+    roleAssignmentDto2.setRoleId(roleId);
+    roleAssignmentDto2.setSupervisoryNodeId(supervisoryNodeId2);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(roleId);
+    roleAssignmentDto.setSupervisoryNodeId(supervisoryNodeId);
+    userDto.setRoleAssignments(Sets.newHashSet(roleAssignmentDto2, roleAssignmentDto));
+    return userDto;
+  }
+
   private List<SupervisoryNodeDto> mockAllSupervisoryNodeForInternal() {
     return Lists.newArrayList(
         mockSupervisoryNodeWithChildForInternal(supervisoryNodeId, supervisoryNodeId2),
@@ -1150,6 +1186,12 @@ public class SiglusRequisitionServiceTest {
   private List<SupervisoryNodeDto> mockAllSupervisoryNodeForExternal() {
     return Lists.newArrayList(
         mockSupervisoryNodeWithChild(supervisoryNodeId, supervisoryNodeId2),
+        mockSupervisoryNodeDto(supervisoryNodeId2, requisitionGroupId2));
+  }
+
+  private List<SupervisoryNodeDto> mockAllSupervisoryNodeForInternalAndExternal() {
+    return Lists.newArrayList(
+        mockSupervisoryNodeWithChildForInternal(supervisoryNodeId, childSupervisoryNodeId),
         mockSupervisoryNodeDto(supervisoryNodeId2, requisitionGroupId2));
   }
 
@@ -1192,7 +1234,7 @@ public class SiglusRequisitionServiceTest {
     supervisoryNodeDto.setParentNode(new ObjectReferenceDto());
     SupervisoryNodeDto child = new SupervisoryNodeDto();
     child.setId(childId);
-    child.setRequisitionGroup(new ObjectReferenceDto(requisitionGroupId2));
+    child.setRequisitionGroup(new ObjectReferenceDto(childRequisitionGroupId));
     child.setChildNodes(Collections.emptySet());
     supervisoryNodeDto.setChildNodes(
         Sets.newHashSet(new ObjectReferenceDto(childId)));

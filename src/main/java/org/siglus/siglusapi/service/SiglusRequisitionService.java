@@ -382,7 +382,7 @@ public class SiglusRequisitionService {
     return siglusRequisitionRequisitionService.searchRequisitions(params, pageable);
   }
 
-  public Set<FacilityDto> searchFacilitiesForApproval() {
+  public List<FacilityDto> searchFacilitiesForApproval() {
     RightDto right = rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE);
     List<RoleDto> roleDtos = roleReferenceDataService.search(right.getId());
     Set<UUID> roleIds = roleDtos.stream().map(RoleDto::getId).collect(toSet());
@@ -415,12 +415,25 @@ public class SiglusRequisitionService {
         .collect(toSet());
 
     UUID homeId = userDto.getHomeFacilityId();
-    return supervisoryNodeDtos
+
+    Set<FacilityDto> facilityDtos = supervisoryNodeDtos
         .stream()
         .flatMap(supervisoryNodeDto ->
             getAllFacilityDtos(homeId, supervisoryNodeDto, requisitionGroupDtoMap,
                 facilityDtoMap, nodeDtoMap).stream())
         .collect(toSet());
+    return convertToList(facilityDtos, facilityDtoMap.get(homeId));
+  }
+
+  // move homeFacility to first position
+  private List<FacilityDto> convertToList(Set<FacilityDto> set, FacilityDto homeFacility) {
+    List<FacilityDto> list = new ArrayList<>();
+    if (set.contains(homeFacility) && set.size() > 1) {
+      set.remove(homeFacility);
+      list.add(homeFacility);
+    }
+    list.addAll(set);
+    return list;
   }
 
   // check if internal only && not final approve
