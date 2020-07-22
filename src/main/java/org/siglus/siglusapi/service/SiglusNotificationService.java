@@ -304,7 +304,7 @@ public class SiglusNotificationService {
     UUID currentUserFacilityId = findCurrentUserFacilityId();
     Set<UUID> currentUserSupervisoryNodeIds = findCurrentUserSupervisoryNodeIds();
     log.info("current user has supervisoryNode {}", currentUserSupervisoryNodeIds);
-    //CAUTION: bad performance, about 5.4 MB data, using 2.5s
+    // CAUTION: bad performance, about 5.4 MB data, using 2.5s
     List<RequisitionGroupDto> requisitionGroups = requisitionGroupService.findAll();
     boolean canEditShipments = permissionStrings.stream().anyMatch(
         rightAssignment ->

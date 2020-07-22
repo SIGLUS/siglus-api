@@ -315,12 +315,12 @@ public class SiglusNotificationServiceTest {
   }
 
   @Test
-  public void shouldCallRepoWhenPostApproveGivenNotFinalApproved() {
+  public void shouldCallRepoWhenPostApproveGivenInApproval() {
     // given
     mockAuthentication();
     mockBasicRequisition();
     mockSupervisorNode();
-    mockNotFinalApproved();
+    mockInApproval();
 
     // when
     service.postApprove(requisition);
@@ -338,6 +338,24 @@ public class SiglusNotificationServiceTest {
     assertEquals(NotificationStatus.IN_APPROVAL, notification.getRefStatus());
     assertEquals(supervisoryNodeId, notification.getSupervisoryNodeId());
     assertNull(notification.getNotifyFacilityId());
+  }
+
+  @Test
+  public void shouldCallRepoWhenPostApproveGivenReleaseWithoutOrder() {
+    // given
+    mockAuthentication();
+    mockBasicRequisition();
+    mockSupervisorNode();
+    mockReleasedWithoutOrder();
+
+    // when
+    service.postApprove(requisition);
+
+    // then
+    verify(repo)
+        .updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
+            NotificationStatus.IN_APPROVAL);
+    verify(repo, never()).save(any(Notification.class));
   }
 
   @Test
@@ -464,8 +482,12 @@ public class SiglusNotificationServiceTest {
     requisition.setStatus(RequisitionStatus.APPROVED);
   }
 
-  private void mockNotFinalApproved() {
+  private void mockInApproval() {
     requisition.setStatus(RequisitionStatus.IN_APPROVAL);
+  }
+
+  private void mockReleasedWithoutOrder() {
+    requisition.setStatus(RequisitionStatus.RELEASED_WITHOUT_ORDER);
   }
 
   private void mockBasicRequisition() {
