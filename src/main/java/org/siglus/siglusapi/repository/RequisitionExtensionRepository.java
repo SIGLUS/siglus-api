@@ -22,4 +22,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RequisitionExtensionRepository extends
     JpaRepository<RequisitionExtension, UUID> {
 
+  RequisitionExtension findByRequisitionId(UUID requisitionId);
 }

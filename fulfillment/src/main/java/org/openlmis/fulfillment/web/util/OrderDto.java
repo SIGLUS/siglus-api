@@ -122,6 +122,13 @@ public class OrderDto implements Order.Importer, Order.Exporter, UpdateDetails.E
   @Getter
   private ZonedDateTime lastUpdatedDate;
 
+  // [SIGLUS change start]
+  // [change reason]: support for requisition number.
+  @Getter
+  @Setter
+  private String requisitionNumber;
+  // [SIGLUS change end]
+
   @Override
   public List<OrderLineItem.Importer> getOrderLineItems() {
     return new ArrayList<>(

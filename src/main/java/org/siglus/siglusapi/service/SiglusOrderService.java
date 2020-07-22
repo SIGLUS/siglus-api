@@ -115,10 +115,17 @@ public class SiglusOrderService {
   @Autowired
   private OrderController orderController;
 
+  @Autowired
+  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+
   public SiglusOrderDto searchOrderById(UUID orderId) {
     //totalDispensingUnits not present in lineitem of previous OrderFulfillmentService
     OrderDto orderDto = orderController.getOrder(orderId, null);
     setOrderLineItemExtension(orderDto);
+    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
+    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
+    orderDto.setRequisitionNumber(
+        siglusRequisitionExtensionService.getRequisitionNumber(requisitionId));
     return SiglusOrderDto.builder()
         .order(orderDto)
         .availableProducts(getAllUserAvailableProductAggregator(orderDto)).build();

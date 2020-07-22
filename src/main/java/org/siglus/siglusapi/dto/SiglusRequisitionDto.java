@@ -31,6 +31,7 @@ public class SiglusRequisitionDto extends RequisitionV2Dto {
   private List<UsageInformationServiceDto> usageInformationLineItems = newArrayList();
   private List<TestConsumptionServiceDto> testConsumptionLineItems = newArrayList();
   private SiglusUsageTemplateDto usageTemplate;
+  private String requisitionNumber;
 
   public static SiglusRequisitionDto from(RequisitionV2Dto v2Dto) {
     SiglusRequisitionDto dto = new SiglusRequisitionDto();

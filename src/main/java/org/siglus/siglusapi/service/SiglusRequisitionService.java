@@ -116,6 +116,7 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.TestConsumptionLineItemDraft;
@@ -242,6 +243,9 @@ public class SiglusRequisitionService {
   @Autowired
   private FacilityReferenceDataService facilityReferenceDataService;
 
+  @Autowired
+  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+
   @Value("${service.url}")
   private String serviceUrl;
 
@@ -269,7 +273,9 @@ public class SiglusRequisitionService {
     RequisitionV2Dto v2Dto = requisitionV2Controller
         .initiate(programId, facilityId, suggestedPeriod, emergency,
             physicalInventoryDateStr, request, response);
-    return siglusUsageReportService.initiateUsageReport(v2Dto);
+    SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
+    initiateRequisitionNumber(siglusRequisitionDto);
+    return siglusRequisitionDto;
   }
 
   @Transactional
@@ -331,6 +337,8 @@ public class SiglusRequisitionService {
     setAvailableProductsForApprovePage(requisitionDto);
     SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId,
         extension, requisitionDto);
+    siglusRequisitionDto.setRequisitionNumber(
+        siglusRequisitionExtensionService.getRequisitionNumber(requisitionId));
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
@@ -391,20 +399,20 @@ public class SiglusRequisitionService {
     // id : supervisory node
     Map<UUID, SupervisoryNodeDto> nodeDtoMap =
         supervisoryNodeReferenceDataService.findAllSupervisoryNodes()
-        .stream()
-        .collect(toMap(SupervisoryNodeDto::getId, node -> node));
+            .stream()
+            .collect(toMap(SupervisoryNodeDto::getId, node -> node));
 
     // id : requisition group
     Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap =
         requisitionGroupReferenceDataService.findAll()
-        .stream()
-        .collect(toMap(RequisitionGroupDto::getId, groupDto -> groupDto));
+            .stream()
+            .collect(toMap(RequisitionGroupDto::getId, groupDto -> groupDto));
 
     // id : facility
     Map<UUID, FacilityDto> facilityDtoMap =
         facilityReferenceDataService.findAll()
-        .stream()
-        .collect(toMap(FacilityDto::getId, facilityDto -> facilityDto));
+            .stream()
+            .collect(toMap(FacilityDto::getId, facilityDto -> facilityDto));
 
     Set<SupervisoryNodeDto> supervisoryNodeDtos = userDto.getRoleAssignments()
         .stream()
@@ -705,6 +713,7 @@ public class SiglusRequisitionService {
     deleteExtensionForRequisition(requisitionId);
     deleteSiglusDraft(requisitionId);
     siglusUsageReportService.deleteUsageReport(requisitionId);
+    siglusRequisitionExtensionService.deleteRequisitionExtension(requisitionId);
     siglusRequisitionRequisitionService.deleteRequisition(requisitionId);
     notificationService.postDelete(requisitionId);
   }
@@ -1076,4 +1085,15 @@ public class SiglusRequisitionService {
     }
 
   }
+
+  private void initiateRequisitionNumber(SiglusRequisitionDto siglusRequisitionDto) {
+    UUID facilityId = siglusRequisitionDto.getFacilityId();
+    String facilityCode = facilityReferenceDataService.findOne(facilityId).getCode();
+    RequisitionExtension requisitionExtension = siglusRequisitionExtensionService
+        .createRequisitionExtension(siglusRequisitionDto.getId(),
+            siglusRequisitionDto.getEmergency(), facilityCode);
+    siglusRequisitionDto.setRequisitionNumber(
+        siglusRequisitionExtensionService.getRequisitionNumber(requisitionExtension));
+  }
+
 }

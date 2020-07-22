@@ -19,6 +19,8 @@ import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
+import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusProofOfDeliveryFulfillmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,10 +34,20 @@ public class SiglusProofOfDeliveryService {
   @Autowired
   private SiglusOrderService siglusOrderService;
 
+  @Autowired
+  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+
+  @Autowired
+  private OrderExternalRepository orderExternalRepository;
+
   public ProofOfDeliveryDto getProofOfDelivery(UUID id,
       Set<String> expand) {
     ProofOfDeliveryDto proofOfDeliveryDto = fulfillmentService.searchProofOfDelivery(id, expand);
     OrderObjectReferenceDto order = proofOfDeliveryDto.getShipment().getOrder();
+    OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
+    UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
+    order.setRequisitionNumber(
+        siglusRequisitionExtensionService.getRequisitionNumber(requisitionId));
     if (!order.getOrderLineItems().isEmpty()) {
       proofOfDeliveryDto.getShipment().setOrder(siglusOrderService.getExtensionOrder(order));
     }

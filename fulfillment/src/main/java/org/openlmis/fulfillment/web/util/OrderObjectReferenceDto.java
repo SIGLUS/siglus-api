@@ -55,6 +55,11 @@ public final class OrderObjectReferenceDto extends ObjectReferenceDto {
   private UserObjectReferenceDto lastUpdater;
   private ZonedDateTime lastUpdatedDate;
 
+  // [SIGLUS change start]
+  // [change reason]: support for requisition number.
+  private String requisitionNumber;
+  // [SIGLUS change end]
+
   public OrderObjectReferenceDto(UUID id) {
     this(id, null);
   }
