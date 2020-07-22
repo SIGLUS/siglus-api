@@ -38,6 +38,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
@@ -64,6 +65,9 @@ public class SiglusShipmentDraftServiceTest {
   private SiglusOrderService siglusOrderService;
 
   @Mock
+  private ShipmentDraftController draftController;
+
+  @Mock
   private OrderRepository orderRepository;
 
   private UUID draftId = UUID.randomUUID();
@@ -82,7 +86,7 @@ public class SiglusShipmentDraftServiceTest {
     order.setOrderLineItems(newArrayList(lineItemDto));
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
     draftDto.setOrder(order);
-    when(siglusShipmentDraftFulfillmentService.updateShipmentDraft(draftId, draftDto))
+    when(draftController.updateShipmentDraft(draftId, draftDto))
         .thenReturn(draftDto);
     OrderLineItemExtension extension = OrderLineItemExtension.builder()
         .orderLineItemId(lineItemId)
@@ -115,7 +119,7 @@ public class SiglusShipmentDraftServiceTest {
     order.setOrderLineItems(newArrayList(lineItemDto));
     ShipmentDraftDto draftDto = new ShipmentDraftDto();
     draftDto.setOrder(order);
-    when(siglusShipmentDraftFulfillmentService.updateShipmentDraft(draftId, draftDto))
+    when(draftController.updateShipmentDraft(draftId, draftDto))
         .thenReturn(draftDto);
     when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
         .thenReturn(newArrayList());

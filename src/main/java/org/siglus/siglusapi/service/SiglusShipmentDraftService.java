@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
@@ -44,6 +45,9 @@ public class SiglusShipmentDraftService {
   private SiglusShipmentDraftFulfillmentService siglusShipmentDraftFulfillmentService;
 
   @Autowired
+  private ShipmentDraftController draftController;
+
+  @Autowired
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
   @Autowired
@@ -55,13 +59,13 @@ public class SiglusShipmentDraftService {
   @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
     updateOrderLineItemExtension(draftDto);
-    return siglusShipmentDraftFulfillmentService.updateShipmentDraft(id, draftDto);
+    return draftController.updateShipmentDraft(id, draftDto);
   }
 
   @Transactional
   public void deleteShipmentDraft(UUID id) {
     deleteOrderLineItemAndInitialedExtension(id);
-    siglusShipmentDraftFulfillmentService.deleteShipmentDraft(id);
+    draftController.deleteShipmentDraft(id);
   }
 
   private void updateOrderLineItemExtension(ShipmentDraftDto draftDto) {

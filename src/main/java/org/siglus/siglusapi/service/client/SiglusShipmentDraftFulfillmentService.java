@@ -39,15 +39,7 @@ public class SiglusShipmentDraftFulfillmentService extends
     return ShipmentDraftDto[].class;
   }
 
-  public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
-    return put(id.toString(), draftDto, getResultClass(), true);
-  }
-
   public ShipmentDraftDto searchShipmentDraft(UUID id) {
     return findOne(id.toString(), RequestParameters.init(), true);
-  }
-
-  public void deleteShipmentDraft(UUID id) {
-    delete(id.toString(), true);
   }
 }

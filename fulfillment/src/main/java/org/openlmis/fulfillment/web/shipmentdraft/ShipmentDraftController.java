@@ -42,6 +42,8 @@ import org.openlmis.fulfillment.web.BaseController;
 import org.openlmis.fulfillment.web.NotFoundException;
 import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.fulfillment.web.util.ObjectReferenceDto;
+import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -89,6 +91,9 @@ public class ShipmentDraftController extends BaseController {
 
   @Autowired
   private FulfillmentDateHelper dateHelper;
+
+  @Autowired
+  private OrderExternalRepository orderExternalRepository;
 
   /**
    * Allows creating new shipment. If the id is specified, it will be ignored.
@@ -274,7 +279,14 @@ public class ShipmentDraftController extends BaseController {
     Order order = orderRepository.findOne(shipment.getOrder().getId());
 
     profiler.start("UPDATE_ORDER");
-    updateOrderStatus(order, OrderStatus.ORDERED);
+
+    // [SIGLUS change start]
+    // [change reason]: support for partial fulfill.
+    // updateOrderStatus(order, OrderStatus.ORDERED);
+    OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
+    OrderStatus status = external == null ? OrderStatus.ORDERED : OrderStatus.PARTIALLY_FULFILLED;
+    updateOrderStatus(order, status);
+    // [SIGLUS change end]
     orderRepository.save(order);
 
     profiler.stop().log();
