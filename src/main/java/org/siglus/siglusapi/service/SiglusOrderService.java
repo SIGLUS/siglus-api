@@ -190,6 +190,7 @@ public class SiglusOrderService {
           .requisitionId(order.getExternalId()).build();
       OrderExternal secondExternal = OrderExternal.builder()
           .requisitionId(order.getExternalId()).build();
+      log.info("save order external : {}", Arrays.asList(firstExternal, secondExternal));
       externals = orderExternalRepository
           .save(Arrays.asList(firstExternal, secondExternal));
       updateExistOrderForSubOrder(order.getId(), externals.get(0).getId(),
@@ -200,6 +201,7 @@ public class SiglusOrderService {
           .findByRequisitionId(external.getRequisitionId());
       OrderExternal newExternal = OrderExternal.builder()
           .requisitionId(external.getRequisitionId()).build();
+      log.info("save new external : {}", newExternal);
       newExternal = orderExternalRepository.save(newExternal);
       externals.add(newExternal);
       order.setOrderCode(replaceLast(order.getOrderCode(), "-" + (externals.size() - 1),

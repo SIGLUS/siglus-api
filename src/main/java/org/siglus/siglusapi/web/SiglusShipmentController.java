@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web;
 
+import javax.transaction.Transactional;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
@@ -38,6 +39,7 @@ public class SiglusShipmentController {
   private SiglusNotificationService notificationService;
 
   @PostMapping
+  @Transactional
   @ResponseStatus(HttpStatus.CREATED)
   public ShipmentDto createShipment(
       @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
