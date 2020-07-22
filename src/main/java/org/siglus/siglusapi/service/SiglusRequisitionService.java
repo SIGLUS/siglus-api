@@ -440,7 +440,15 @@ public class SiglusRequisitionService {
       set.remove(homeFacility);
       list.add(homeFacility);
     }
-    list.addAll(set);
+    List<FacilityDto> sorted = sortFacility(set);
+    list.addAll(sorted);
+    return list;
+  }
+
+  private List<FacilityDto> sortFacility(Set<FacilityDto> set) {
+    List<FacilityDto> list = new ArrayList<>(set);
+    Collections.sort(list,
+        (FacilityDto f1, FacilityDto f2) -> f1.getName().compareToIgnoreCase(f2.getName()));
     return list;
   }
 

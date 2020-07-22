@@ -54,6 +54,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1272,6 +1273,7 @@ public class SiglusRequisitionServiceTest {
   private FacilityDto mockFacilityDto(UUID id) {
     FacilityDto facilityDto = new FacilityDto();
     facilityDto.setId(id);
+    facilityDto.setName(RandomStringUtils.random(6));
     return facilityDto;
   }
 
