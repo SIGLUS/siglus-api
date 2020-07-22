@@ -17,6 +17,8 @@ package org.siglus.siglusapi.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -117,5 +119,18 @@ public class SiglusRequisitionExtensionServiceTest {
 
     // then
     verify(requisitionExtensionRepository).delete(requisitionExtension);
+  }
+
+  @Test
+  public void shouldNotDeleteRequisitionExtensionIfRequisitionExtensionNotExist() {
+    // given
+    when(requisitionExtensionRepository.findByRequisitionId(requisitionId))
+        .thenReturn(null);
+
+    // when
+    siglusRequisitionExtensionService.deleteRequisitionExtension(requisitionId);
+
+    // then
+    verify(requisitionExtensionRepository, times(0)).delete(any(RequisitionExtension.class));
   }
 }

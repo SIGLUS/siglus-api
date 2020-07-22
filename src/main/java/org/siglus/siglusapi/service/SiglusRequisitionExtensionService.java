@@ -56,6 +56,9 @@ public class SiglusRequisitionExtensionService {
   public void deleteRequisitionExtension(UUID requisitionId) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository
         .findByRequisitionId(requisitionId);
+    if (null == requisitionExtension) {
+      return;
+    }
     log.info("delete requisition extension by requisition id: {}", requisitionId);
     requisitionExtensionRepository.delete(requisitionExtension);
   }
