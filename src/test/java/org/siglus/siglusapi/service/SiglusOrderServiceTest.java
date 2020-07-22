@@ -123,6 +123,9 @@ public class SiglusOrderServiceTest {
   @Captor
   private ArgumentCaptor<List<OrderDto>> orderDtoArgumentCaptor;
 
+  @Mock
+  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+
   @InjectMocks
   private SiglusOrderService siglusOrderService;
 
@@ -141,7 +144,7 @@ public class SiglusOrderServiceTest {
   private UUID lineItemId = UUID.randomUUID();
 
   @Test
-  public void shouldGetValidAvailableProductsWithOrder() {
+  public void shouldGetValidAvailableProductsAndRequisitionNumberWithOrder() {
     // given
     OrderDto orderDto = createOrderDto();
     when(orderController.getOrder(orderId, null)).thenReturn(orderDto);
@@ -162,6 +165,8 @@ public class SiglusOrderServiceTest {
         .build();
     when(lineItemExtensionRepository.findByOrderLineItemIdIn((newHashSet(lineItemId))))
         .thenReturn(newArrayList(extension));
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId))
+        .thenReturn("requisitionNumber");
 
     // when
     SiglusOrderDto response = siglusOrderService.searchOrderById(orderId);
@@ -173,6 +178,7 @@ public class SiglusOrderServiceTest {
     assertTrue(filteredProduct.getId().equals(orderableId1));
     assertTrue(filteredProduct.getVersionNumber().equals(1L));
     response.getOrder().getOrderLineItems().forEach(lineItem -> assertTrue(lineItem.isSkipped()));
+    assertEquals("requisitionNumber", response.getOrder().getRequisitionNumber());
   }
 
   @Test

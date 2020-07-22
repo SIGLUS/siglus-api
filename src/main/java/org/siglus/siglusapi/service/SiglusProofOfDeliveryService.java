@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import java.util.Set;
 import java.util.UUID;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.common.domain.OrderExternal;
@@ -47,8 +48,8 @@ public class SiglusProofOfDeliveryService {
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
     order.setRequisitionNumber(
-        siglusRequisitionExtensionService.getRequisitionNumber(requisitionId));
-    if (!order.getOrderLineItems().isEmpty()) {
+        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
+    if (CollectionUtils.isNotEmpty(order.getOrderLineItems())) {
       proofOfDeliveryDto.getShipment().setOrder(siglusOrderService.getExtensionOrder(order));
     }
     return proofOfDeliveryDto;

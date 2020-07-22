@@ -33,13 +33,13 @@ public class SiglusRequisitionExtensionService {
       String facilityCode) {
     RequisitionExtension requisitionExtension = RequisitionExtension.builder()
         .requisitionId(requisitionId)
-        .requisitionNumberPrefix(Boolean.TRUE.equals(emergency) ? "EM" : "NO" + facilityCode)
+        .requisitionNumberPrefix((Boolean.TRUE.equals(emergency) ? "EM" : "NO") + facilityCode)
         .build();
     log.info("save requisition extension by requisition id: {}", requisitionId);
     return requisitionExtensionRepository.save(requisitionExtension);
   }
 
-  public String getRequisitionNumber(RequisitionExtension requisitionExtension) {
+  public String formatRequisitionNumber(RequisitionExtension requisitionExtension) {
     if (null == requisitionExtension) {
       return null;
     }
@@ -47,10 +47,10 @@ public class SiglusRequisitionExtensionService {
         requisitionExtension.getRequisitionNumber());
   }
 
-  public String getRequisitionNumber(UUID requisitionId) {
+  public String formatRequisitionNumber(UUID requisitionId) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository
         .findByRequisitionId(requisitionId);
-    return getRequisitionNumber(requisitionExtension);
+    return formatRequisitionNumber(requisitionExtension);
   }
 
   public void deleteRequisitionExtension(UUID requisitionId) {

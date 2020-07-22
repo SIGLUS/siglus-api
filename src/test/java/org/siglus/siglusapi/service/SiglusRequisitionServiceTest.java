@@ -129,6 +129,7 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.TestConsumptionLineItemDraft;
@@ -158,6 +159,8 @@ public class SiglusRequisitionServiceTest {
   private static final long OVERFLOW_QUANTITY = 1000L;
 
   private static final long NOT_FULLY_SHIPPED_QUANTITY = 0L;
+
+  private static final String REQUISITION_NUMBER = "requisitionNumber";
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -259,6 +262,9 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private FacilityReferenceDataService facilityReferenceDataService;
+
+  @Mock
+  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
 
   private UUID facilityId = UUID.randomUUID();
 
@@ -397,8 +403,10 @@ public class SiglusRequisitionServiceTest {
     BeanUtils.copyProperties(filteredRequisitionDto, siglusRequisitionDto);
     when(siglusUsageReportService.searchUsageReport(any(RequisitionV2Dto.class)))
         .thenReturn(siglusRequisitionDto);
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId))
+        .thenReturn(REQUISITION_NUMBER);
 
-    RequisitionV2Dto response = siglusRequisitionService.searchRequisition(requisitionId);
+    SiglusRequisitionDto response = siglusRequisitionService.searchRequisition(requisitionId);
 
     verify(siglusRequisitionRequisitionService).searchRequisition(requisitionId);
     verify(requisitionTemplateExtensionRepository).findByRequisitionTemplateId(templateId);
@@ -412,6 +420,7 @@ public class SiglusRequisitionServiceTest {
     Set<VersionObjectReferenceDto> availableProducts = response.getAvailableProducts();
     assertEquals(1, availableProducts.size());
     assertTrue(availableProducts.contains(productVersionObjectReference2));
+    assertEquals(REQUISITION_NUMBER, response.getRequisitionNumber());
   }
 
   @Test
@@ -550,7 +559,7 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  public void shouldCallUsageReportInitialWhenInitialRequisition() {
+  public void shouldCallUsageReportInitialAndSetRequisitionNumberWhenInitialRequisition() {
     // given
     UUID suggestedPeriod = UUID.randomUUID();
     String physicalInventoryDateStr = "date_str";
@@ -559,19 +568,29 @@ public class SiglusRequisitionServiceTest {
     when(requisitionV2Controller.initiate(programId, facilityId, suggestedPeriod, true,
         physicalInventoryDateStr, httpServletRequest, httpServletResponse))
         .thenReturn(requisitionV2Dto);
+    when(siglusUsageReportService.initiateUsageReport(requisitionV2Dto))
+        .thenReturn(SiglusRequisitionDto.from(requisitionV2Dto));
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(new FacilityDto());
+    RequisitionExtension requisitionExtension = new RequisitionExtension();
+    when(siglusRequisitionExtensionService.createRequisitionExtension(requisitionId, false, null))
+        .thenReturn(requisitionExtension);
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionExtension))
+        .thenReturn(REQUISITION_NUMBER);
 
     // when
-    siglusRequisitionService.initiate(programId, facilityId, suggestedPeriod, true,
-        physicalInventoryDateStr, httpServletRequest, httpServletResponse);
+    SiglusRequisitionDto siglusRequisitionDto = siglusRequisitionService.initiate(programId,
+        facilityId, suggestedPeriod, true, physicalInventoryDateStr, httpServletRequest,
+        httpServletResponse);
 
     // then
     verify(requisitionV2Controller).initiate(programId, facilityId, suggestedPeriod, true,
         physicalInventoryDateStr, httpServletRequest, httpServletResponse);
     verify(siglusUsageReportService).initiateUsageReport(requisitionV2Dto);
+    assertEquals(REQUISITION_NUMBER, siglusRequisitionDto.getRequisitionNumber());
   }
 
   @Test
-  public void shouldCallDeleteUsegeReportWhenDelteRequisition() {
+  public void shouldCallDeleteUsageReportWhenDeleteRequisition() {
     // given
     when(requisitionRepository.findOne(requisitionId)).thenReturn(createRequisition());
     RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
@@ -586,6 +605,7 @@ public class SiglusRequisitionServiceTest {
     verify(siglusRequisitionRequisitionService).deleteRequisition(requisitionId);
     verify(lineItemExtensionRepository).delete(singletonList(extension));
     verify(siglusUsageReportService).deleteUsageReport(requisitionId);
+    verify(siglusRequisitionExtensionService).deleteRequisitionExtension(requisitionId);
   }
 
   @Test

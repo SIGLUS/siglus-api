@@ -36,7 +36,7 @@ import org.hibernate.annotations.Type;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@IdClass(RequisitionExtensionPK.class)
+@IdClass(RequisitionExtensionPk.class)
 @Table(name = "requisition_extension", schema = "siglusintegration")
 public class RequisitionExtension implements Serializable {
 

@@ -125,7 +125,7 @@ public class SiglusOrderService {
     OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
     UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
     orderDto.setRequisitionNumber(
-        siglusRequisitionExtensionService.getRequisitionNumber(requisitionId));
+        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
     return SiglusOrderDto.builder()
         .order(orderDto)
         .availableProducts(getAllUserAvailableProductAggregator(orderDto)).build();

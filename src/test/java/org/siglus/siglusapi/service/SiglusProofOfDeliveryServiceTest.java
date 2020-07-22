@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anySet;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -32,6 +31,7 @@ import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusProofOfDeliveryFulfillmentService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -46,6 +46,14 @@ public class SiglusProofOfDeliveryServiceTest {
   @Mock
   private SiglusOrderService siglusOrderService;
 
+  @Mock
+  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+
+  @Mock
+  private OrderExternalRepository orderExternalRepository;
+
+  private UUID externalId = UUID.randomUUID();
+
   @Test
   public void shouldGetPartialQualityWhenGetProofOfDelivery() {
     // given
@@ -57,11 +65,10 @@ public class SiglusProofOfDeliveryServiceTest {
     shipmentDto.setOrder(orderDto);
     ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
     dto.setShipment(shipmentDto);
-    when(fulfillmentService.searchProofOfDelivery(any(UUID.class), anySet()))
-        .thenReturn(dto);
+    when(fulfillmentService.searchProofOfDelivery(any(UUID.class), any())).thenReturn(dto);
     OrderLineItemDto lineItemDtoExtension = new OrderLineItemDto();
     lineItemDtoExtension.setId(UUID.randomUUID());
-    lineItemDtoExtension.setPartialFulfilledQuantity(Long.valueOf(10));
+    lineItemDtoExtension.setPartialFulfilledQuantity(10L);
     OrderObjectReferenceDto orderExtensionDto = new OrderObjectReferenceDto(UUID.randomUUID());
     orderExtensionDto.setOrderLineItems(Arrays.asList(lineItemDtoExtension));
     when(siglusOrderService.getExtensionOrder(any(OrderObjectReferenceDto.class)))
@@ -77,4 +84,26 @@ public class SiglusProofOfDeliveryServiceTest {
     assertEquals(Long.valueOf(10), lineItem.getPartialFulfilledQuantity());
   }
 
+  @Test
+  public void shouldSetRequisitionNumberWhenGetProofOfDelivery() {
+    // given
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(UUID.randomUUID());
+    orderDto.setExternalId(externalId);
+    ShipmentObjectReferenceDto shipmentDto = new ShipmentObjectReferenceDto(UUID.randomUUID());
+    shipmentDto.setOrder(orderDto);
+    ProofOfDeliveryDto dto = new ProofOfDeliveryDto();
+    dto.setShipment(shipmentDto);
+    when(fulfillmentService.searchProofOfDelivery(any(UUID.class), any())).thenReturn(dto);
+    when(orderExternalRepository.findOne(externalId)).thenReturn(null);
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(externalId))
+        .thenReturn("requisitionNumber");
+
+    // when
+    ProofOfDeliveryDto proofOfDeliveryDto = service.getProofOfDelivery(UUID.randomUUID(),
+        Collections.emptySet());
+
+    // then
+    assertEquals("requisitionNumber",
+        proofOfDeliveryDto.getShipment().getOrder().getRequisitionNumber());
+  }
 }

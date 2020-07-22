@@ -17,8 +17,10 @@ package org.siglus.siglusapi.domain;
 
 import java.io.Serializable;
 import java.util.UUID;
+import lombok.Data;
 
-public class RequisitionExtensionPK implements Serializable {
+@Data
+public class RequisitionExtensionPk implements Serializable {
 
   private UUID id;
 

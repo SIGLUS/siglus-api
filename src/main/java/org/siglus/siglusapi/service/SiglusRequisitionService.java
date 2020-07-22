@@ -338,7 +338,7 @@ public class SiglusRequisitionService {
     SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId,
         extension, requisitionDto);
     siglusRequisitionDto.setRequisitionNumber(
-        siglusRequisitionExtensionService.getRequisitionNumber(requisitionId));
+        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
@@ -1093,7 +1093,7 @@ public class SiglusRequisitionService {
         .createRequisitionExtension(siglusRequisitionDto.getId(),
             siglusRequisitionDto.getEmergency(), facilityCode);
     siglusRequisitionDto.setRequisitionNumber(
-        siglusRequisitionExtensionService.getRequisitionNumber(requisitionExtension));
+        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionExtension));
   }
 
 }
