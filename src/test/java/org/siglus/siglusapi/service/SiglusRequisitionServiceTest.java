@@ -846,8 +846,11 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(new PageImpl<>(singletonList(newBasicReq)));
     when(operatePermissionService.isEditable(any())).thenReturn(true);
     RequisitionDraft draft = getRequisitionDraft(requisitionId);
-    when(draftRepository.findByRequisitionId(requisitionId))
-        .thenReturn(draft);
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(UUID.randomUUID());
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    when(draftRepository.findRequisitionDraftByRequisitionIdAndFacilityId(requisitionId,
+        userDto.getHomeFacilityId())).thenReturn(draft);
 
     // when
     SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisition(requisitionId);
@@ -855,6 +858,7 @@ public class SiglusRequisitionServiceTest {
     // then
     assertEquals(draft.getKitUsageLineItems().get(0).getValue(),
         requisitionDto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
+    assertEquals("draft status", requisitionDto.getDraftStatusMessage());
     UsageInformationLineItemDraft usageLineItemDraft = draft.getUsageInformationLineItemDrafts()
         .get(0);
     assertEquals(usageLineItemDraft.getValue(),
@@ -1075,6 +1079,7 @@ public class SiglusRequisitionServiceTest {
     RequisitionDraft draft = new RequisitionDraft();
     draft.setId(UUID.randomUUID());
     draft.setRequisitionId(requisitionId);
+    draft.setDraftStatusMessage("draft status");
     RequisitionLineItemDraft lineItemDraft1 = new RequisitionLineItemDraft();
     lineItemDraft1.setRequisitionLineItemId(UUID.randomUUID());
     lineItemDraft1.setOrderable(

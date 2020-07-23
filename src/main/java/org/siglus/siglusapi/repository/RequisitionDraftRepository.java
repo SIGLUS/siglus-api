@@ -23,4 +23,7 @@ public interface RequisitionDraftRepository extends JpaRepository<RequisitionDra
 
   RequisitionDraft findByRequisitionId(UUID requisitionId);
 
+  RequisitionDraft findRequisitionDraftByRequisitionIdAndFacilityId(UUID requisitionId,
+      UUID facilityId);
+
 }

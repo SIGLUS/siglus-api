@@ -52,7 +52,7 @@ public class RequisitionDraft extends BaseEntity {
 
   private UUID requisitionId;
 
-  private UUID facilityid;
+  private UUID facilityId;
 
   private String draftStatusMessage;
 
@@ -97,7 +97,7 @@ public class RequisitionDraft extends BaseEntity {
       RequisitionTemplate template, UUID draftId, UserDto userDto) {
     RequisitionDraft draft = new RequisitionDraft();
     draft.setId(draftId);
-    draft.setFacilityid(userDto.getHomeFacilityId());
+    draft.setFacilityId(userDto.getHomeFacilityId());
     draft.setRequisitionId(requisitionDto.getId());
     draft.setDraftStatusMessage(requisitionDto.getDraftStatusMessage());
     draft.extraData.updateFrom(requisitionDto.getExtraData());

@@ -366,7 +366,10 @@ public class SiglusRequisitionService {
       RequisitionTemplateExtension extension, RequisitionV2Dto requisitionDto) {
     SiglusRequisitionDto siglusRequisitionDto;
     if (operatePermissionService.isEditable(requisitionDto)) {
-      RequisitionDraft draft = draftRepository.findByRequisitionId(requisitionId);
+      UserDto user = authenticationHelper.getCurrentUser();
+      RequisitionDraft draft = draftRepository
+          .findRequisitionDraftByRequisitionIdAndFacilityId(requisitionId,
+              user.getHomeFacilityId());
       if (draft != null) {
         siglusRequisitionDto = SiglusRequisitionDto.from(requisitionDto);
         siglusUsageReportService.setUsageTemplateDto(requisitionDto, siglusRequisitionDto);
