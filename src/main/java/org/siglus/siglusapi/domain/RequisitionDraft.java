@@ -54,6 +54,8 @@ public class RequisitionDraft extends BaseEntity {
 
   private UUID facilityid;
 
+  private String draftStatusMessage;
+
   @OneToMany(
       mappedBy = "requisitionDraft",
       cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.REMOVE},
@@ -97,6 +99,7 @@ public class RequisitionDraft extends BaseEntity {
     draft.setId(draftId);
     draft.setFacilityid(userDto.getHomeFacilityId());
     draft.setRequisitionId(requisitionDto.getId());
+    draft.setDraftStatusMessage(requisitionDto.getDraftStatusMessage());
     draft.extraData.updateFrom(requisitionDto.getExtraData());
     draft.extraData.put(EXTRA_DATA_IS_SAVED, true);
     RequisitionTemplateExtension extension = template.getTemplateExtension();

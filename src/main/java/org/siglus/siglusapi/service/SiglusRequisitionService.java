@@ -1073,6 +1073,7 @@ public class SiglusRequisitionService {
   private void fillRequisitionDraft(RequisitionDraft draft,
       RequisitionTemplateExtension templateExtension, SiglusRequisitionDto dto) {
     dto.setExtraData(draft.getExtraData().getExtraData());
+    dto.setDraftStatusMessage(draft.getDraftStatusMessage());
     if (Boolean.TRUE.equals(templateExtension.getEnableProduct())) {
       dto.setRequisitionLineItems(draft.getLineItems()
           .stream()
