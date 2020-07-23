@@ -16,10 +16,10 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.domain.GeneratedNumber;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RequisitionExtensionRepository extends JpaRepository<RequisitionExtension, UUID> {
+public interface GeneratedNumberRepository extends JpaRepository<GeneratedNumber, UUID> {
 
-  RequisitionExtension findByRequisitionId(UUID requisitionId);
+  GeneratedNumber findByFacilityId(UUID facilityId);
 }

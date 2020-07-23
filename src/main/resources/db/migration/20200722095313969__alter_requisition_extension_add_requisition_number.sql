@@ -5,4 +5,4 @@
 ALTER TABLE siglusintegration.requisition_extension DROP COLUMN actualstartdate;
 ALTER TABLE siglusintegration.requisition_extension DROP COLUMN actualenddate;
 ALTER TABLE siglusintegration.requisition_extension ADD requisitionnumberprefix VARCHAR(255);
-ALTER TABLE siglusintegration.requisition_extension ADD requisitionnumber SERIAL;
+ALTER TABLE siglusintegration.requisition_extension ADD requisitionnumber INTEGER;

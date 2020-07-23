@@ -15,49 +15,26 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.io.Serializable;
 import java.util.UUID;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.IdClass;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
+import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@IdClass(RequisitionExtensionPk.class)
 @Table(name = "requisition_extension", schema = "siglusintegration")
-public class RequisitionExtension implements Serializable {
-
-  @Id
-  @GeneratedValue(generator = "uuid-gen")
-  @GenericGenerator(name = "uuid-gen",
-      strategy = "org.siglus.common.util.ConditionalUuidGenerator")
-  @Type(type = "pg-uuid")
-  private UUID id;
+public class RequisitionExtension extends BaseEntity {
 
   private UUID requisitionId;
 
   private String requisitionNumberPrefix;
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "sequence-gen")
-  @SequenceGenerator(
-      name = "sequence-gen",
-      sequenceName = "requisition_extension_requisitionnumber_seq",
-      schema = "siglusintegration",
-      allocationSize = 1
-  )
   private Integer requisitionNumber;
 }

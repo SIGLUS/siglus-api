@@ -30,11 +30,15 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusRequisitionExtensionServiceTest {
+
+  private static final String FACILITY_CODE = "facilityCode";
 
   @Captor
   private ArgumentCaptor<RequisitionExtension> requisitionExtensionArgumentCaptor;
@@ -43,36 +47,54 @@ public class SiglusRequisitionExtensionServiceTest {
   private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
 
   @Mock
+  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+
+  @Mock
+  private SiglusGeneratedNumberService siglusGeneratedNumberService;
+
+  @Mock
   private RequisitionExtensionRepository requisitionExtensionRepository;
 
   private UUID requisitionId = UUID.randomUUID();
 
-  private String facilityCode = "facilityCode";
+  private UUID facilityId = UUID.randomUUID();
 
   @Test
   public void shouldSaveRequisitionExtensionWhenCreateRequisitionExtensionIfNotEmergency() {
+    // given
+    FacilityDto facilityDto = FacilityDto.builder().code(FACILITY_CODE).build();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(siglusGeneratedNumberService.getGeneratedNumber(facilityId)).thenReturn(3);
+
     // when
     siglusRequisitionExtensionService.createRequisitionExtension(requisitionId, false,
-        facilityCode);
+        facilityId);
 
     // then
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("NO" + "facilityCode", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("NO" + FACILITY_CODE, requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
   @Test
   public void shouldSaveRequisitionExtensionWhenCreateRequisitionExtensionIfIsEmergency() {
+    // given
+    FacilityDto facilityDto = FacilityDto.builder().code(FACILITY_CODE).build();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+    when(siglusGeneratedNumberService.getGeneratedNumber(facilityId)).thenReturn(3);
+
     // when
     siglusRequisitionExtensionService.createRequisitionExtension(requisitionId, true,
-        facilityCode);
+        facilityId);
 
     // then
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("EM" + "facilityCode", requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("EM" + FACILITY_CODE, requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
   @Test

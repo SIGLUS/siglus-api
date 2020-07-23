@@ -1096,11 +1096,9 @@ public class SiglusRequisitionService {
   }
 
   private void initiateRequisitionNumber(SiglusRequisitionDto siglusRequisitionDto) {
-    UUID facilityId = siglusRequisitionDto.getFacilityId();
-    String facilityCode = facilityReferenceDataService.findOne(facilityId).getCode();
     RequisitionExtension requisitionExtension = siglusRequisitionExtensionService
         .createRequisitionExtension(siglusRequisitionDto.getId(),
-            siglusRequisitionDto.getEmergency(), facilityCode);
+            siglusRequisitionDto.getEmergency(), siglusRequisitionDto.getFacilityId());
     siglusRequisitionDto.setRequisitionNumber(
         siglusRequisitionExtensionService.formatRequisitionNumber(requisitionExtension));
   }

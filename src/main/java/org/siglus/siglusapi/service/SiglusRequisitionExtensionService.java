@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +28,22 @@ import org.springframework.stereotype.Service;
 public class SiglusRequisitionExtensionService {
 
   @Autowired
+  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+
+  @Autowired
+  private SiglusGeneratedNumberService siglusGeneratedNumberService;
+
+  @Autowired
   private RequisitionExtensionRepository requisitionExtensionRepository;
 
   public RequisitionExtension createRequisitionExtension(UUID requisitionId, Boolean emergency,
-      String facilityCode) {
+      UUID facilityId) {
+    String facilityCode = siglusFacilityReferenceDataService.findOne(facilityId).getCode();
+    Integer requisitionNumber = siglusGeneratedNumberService.getGeneratedNumber(facilityId);
     RequisitionExtension requisitionExtension = RequisitionExtension.builder()
         .requisitionId(requisitionId)
         .requisitionNumberPrefix((Boolean.TRUE.equals(emergency) ? "EM" : "NO") + facilityCode)
+        .requisitionNumber(requisitionNumber)
         .build();
     log.info("save requisition extension by requisition id: {}", requisitionId);
     return requisitionExtensionRepository.save(requisitionExtension);

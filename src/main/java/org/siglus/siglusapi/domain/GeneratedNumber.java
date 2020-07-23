@@ -15,14 +15,24 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.io.Serializable;
 import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
+@Entity
 @Data
-public class RequisitionExtensionPk implements Serializable {
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "generated_number", schema = "siglusintegration")
+public class GeneratedNumber extends BaseEntity {
 
-  private UUID id;
+  private UUID facilityId;
 
-  private Integer requisitionNumber;
+  private Integer number;
 }

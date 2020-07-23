@@ -24,13 +24,10 @@ public class ConditionalUuidGenerator extends UUIDGenerator {
 
   @Override
   public Serializable generate(SessionImplementor session, Object object) {
-    if (object instanceof BaseEntity) {
-      if ((((BaseEntity) object).getId()) == null) {
-        return super.generate(session, object);
-      } else {
-        return ((BaseEntity) object).getId();
-      }
+    if ((((BaseEntity) object).getId()) == null) {
+      return super.generate(session, object);
+    } else {
+      return ((BaseEntity) object).getId();
     }
-    return super.generate(session, object);
   }
 }
