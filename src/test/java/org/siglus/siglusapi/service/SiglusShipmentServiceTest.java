@@ -84,6 +84,9 @@ public class SiglusShipmentServiceTest {
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
   @Mock
+  private SiglusNotificationService notificationService;
+
+  @Mock
   private SiglusOrderService siglusOrderService;
 
   private UUID orderId = UUID.randomUUID();
@@ -120,7 +123,7 @@ public class SiglusShipmentServiceTest {
         .thenReturn(newArrayList(orderLineItemExtension));
 
     // when
-    siglusShipmentService.createShipment(shipmentDto);
+    siglusShipmentService.createOrderAndShipment(false, shipmentDto);
 
     // then
     verify(orderRepository).save(orderArgumentCaptor.capture());
@@ -161,7 +164,7 @@ public class SiglusShipmentServiceTest {
         .thenReturn(newArrayList());
 
     // when
-    siglusShipmentService.createShipment(shipmentDto);
+    siglusShipmentService.createOrderAndShipment(false, shipmentDto);
 
     // then
     verify(orderRepository).save(orderArgumentCaptor.capture());
@@ -174,15 +177,23 @@ public class SiglusShipmentServiceTest {
     assertTrue(CollectionUtils.isNotEmpty(orderToSave.getOrderLineItems()));
     assertTrue(CollectionUtils.isEmpty(lineItemExtensionsToDelete));
     assertTrue(CollectionUtils.isNotEmpty(shipmentDtoToSave.getLineItems()));
+    verify(notificationService).postConfirmShipment(any());
   }
 
   @Test
   public void shouldCreateSubOrderWhenLineItemShippedQualityLessOrderQuality() {
     // given
     ShipmentDto shipmentDto = createShipmentDto();
+    Order order = new Order();
+    OrderLineItem lineItem = new OrderLineItem();
+    lineItem.setId(lineItemId);
+    order.setOrderLineItems(newArrayList(lineItem));
+    when(orderRepository.findOne(shipmentDto.getOrder().getId())).thenReturn(order);
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet()))
+        .thenReturn(newArrayList());
 
     // when
-    siglusShipmentService.createSubOrder(shipmentDto);
+    siglusShipmentService.createOrderAndShipment(true, shipmentDto);
 
     // then
     verify(siglusOrderService).createSubOrder(any(OrderObjectReferenceDto.class),
@@ -191,6 +202,7 @@ public class SiglusShipmentServiceTest {
     assertEquals(1, lineItemDtos.size());
     assertEquals(Long.valueOf(10), lineItemDtos.get(0).getPartialFulfilledQuantity());
     assertEquals(Long.valueOf(40), lineItemDtos.get(0).getOrderedQuantity());
+    verify(notificationService).postConfirmShipment(any());
   }
 
   @Test(expected = ValidationMessageException.class)
@@ -204,7 +216,7 @@ public class SiglusShipmentServiceTest {
     shipmentDto.setLineItems(Arrays.asList(shipmentLineItem1));
 
     // when
-    siglusShipmentService.createSubOrder(shipmentDto);
+    siglusShipmentService.createOrderAndShipment(true, shipmentDto);
 
     // then
     expectedException.expect(ValidationMessageException.class);
@@ -225,7 +237,7 @@ public class SiglusShipmentServiceTest {
     shipmentDto.setLineItems(new ArrayList<>());
 
     // when
-    siglusShipmentService.createSubOrder(shipmentDto);
+    siglusShipmentService.createOrderAndShipment(true, shipmentDto);
 
     // then
     expectedException.expect(ValidationMessageException.class);
@@ -237,9 +249,16 @@ public class SiglusShipmentServiceTest {
   public void shouldCreateSubOrderWhenLineItemOrderQualityGreaterThan0AndShipmentEmpty() {
     ShipmentDto shipmentDto = createShipmentDto();
     shipmentDto.setLineItems(new ArrayList<>());
+    Order order = new Order();
+    OrderLineItem lineItem = new OrderLineItem();
+    lineItem.setId(lineItemId);
+    order.setOrderLineItems(newArrayList(lineItem));
+    when(orderRepository.findOne(shipmentDto.getOrder().getId())).thenReturn(order);
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet()))
+        .thenReturn(newArrayList());
 
     // when
-    siglusShipmentService.createSubOrder(shipmentDto);
+    siglusShipmentService.createOrderAndShipment(true, shipmentDto);
 
     // then
     verify(siglusOrderService).createSubOrder(any(OrderObjectReferenceDto.class),

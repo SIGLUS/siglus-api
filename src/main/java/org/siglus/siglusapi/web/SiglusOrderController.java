@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -55,14 +54,12 @@ public class SiglusOrderController {
    */
   @PostMapping("/batch")
   @ResponseStatus(HttpStatus.CREATED)
-  @ResponseBody
   public Iterable<BasicOrderDto> batchCreateOrders(@RequestBody List<OrderDto> orders,
       OAuth2Authentication authentication) {
     return orderController.batchCreateOrders(orders, authentication);
   }
 
   @GetMapping()
-  @ResponseBody
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
     return orderController.searchOrders(params, pageable);
   }

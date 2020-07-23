@@ -15,9 +15,7 @@
 
 package org.siglus.siglusapi.web;
 
-import javax.transaction.Transactional;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
-import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusShipmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,24 +33,12 @@ public class SiglusShipmentController {
   @Autowired
   private SiglusShipmentService siglusShipmentService;
 
-  @Autowired
-  private SiglusNotificationService notificationService;
-
   @PostMapping
-  @Transactional
   @ResponseStatus(HttpStatus.CREATED)
   public ShipmentDto createShipment(
       @RequestParam(name = "isSubOrder", required = false, defaultValue = "false")
           boolean isSubOrder, @RequestBody ShipmentDto shipmentDto) {
-    ShipmentDto shipment;
-    if (isSubOrder) {
-      siglusShipmentService.createSubOrder(shipmentDto);
-      shipment = siglusShipmentService.createShipment(shipmentDto);
-    } else {
-      shipment = siglusShipmentService.createShipment(shipmentDto);
-      notificationService.postConfirmShipment(shipment);
-    }
-    return shipment;
+    return siglusShipmentService.createOrderAndShipment(isSubOrder, shipmentDto);
   }
 
 }

@@ -55,7 +55,20 @@ public class SiglusShipmentService {
   @Autowired
   private SiglusOrderService siglusOrderService;
 
-  public void createSubOrder(ShipmentDto shipmentDto) {
+  @Autowired
+  private SiglusNotificationService notificationService;
+
+  @Transactional
+  public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
+    if (isSubOrder) {
+      createSubOrder(shipmentDto);
+    }
+    ShipmentDto shipment = createShipment(shipmentDto);
+    notificationService.postConfirmShipment(shipment);
+    return shipment;
+  }
+
+  private void createSubOrder(ShipmentDto shipmentDto) {
     Set<UUID> skippedOrderLineItemIds = getSkippedOrderLineItemIds(shipmentDto);
     Map<UUID, List<ShipmentLineItem.Importer>> groupShipment = shipmentDto.getLineItems().stream()
         .collect(Collectors.groupingBy(lineItem -> lineItem.getOrderableIdentity().getId()));
@@ -70,8 +83,7 @@ public class SiglusShipmentService {
     siglusOrderService.createSubOrder(order, subOrderLineItems);
   }
 
-  @Transactional
-  public ShipmentDto createShipment(ShipmentDto shipmentDto) {
+  private ShipmentDto createShipment(ShipmentDto shipmentDto) {
     Set<UUID> skippedOrderLineItemIds = getSkippedOrderLineItemIds(shipmentDto);
     removeSkippedOrderLineItemsAndExtensions(skippedOrderLineItemIds,
         shipmentDto.getOrder().getId());
