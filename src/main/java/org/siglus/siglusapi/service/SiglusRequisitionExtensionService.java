@@ -42,7 +42,8 @@ public class SiglusRequisitionExtensionService {
     Integer requisitionNumber = siglusGeneratedNumberService.getGeneratedNumber(facilityId);
     RequisitionExtension requisitionExtension = RequisitionExtension.builder()
         .requisitionId(requisitionId)
-        .requisitionNumberPrefix((Boolean.TRUE.equals(emergency) ? "EM" : "NO") + facilityCode)
+        .requisitionNumberPrefix("RNR-" + (Boolean.TRUE.equals(emergency) ? "EM" : "NO")
+            + facilityCode)
         .requisitionNumber(requisitionNumber)
         .build();
     log.info("save requisition extension by requisition id: {}", requisitionId);

@@ -74,7 +74,7 @@ public class SiglusRequisitionExtensionServiceTest {
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("NO" + FACILITY_CODE, requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("RNR-NO" + FACILITY_CODE, requisitionExtension.getRequisitionNumberPrefix());
     assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
@@ -93,7 +93,7 @@ public class SiglusRequisitionExtensionServiceTest {
     verify(requisitionExtensionRepository).save(requisitionExtensionArgumentCaptor.capture());
     RequisitionExtension requisitionExtension = requisitionExtensionArgumentCaptor.getValue();
     assertEquals(requisitionId, requisitionExtension.getRequisitionId());
-    assertEquals("EM" + FACILITY_CODE, requisitionExtension.getRequisitionNumberPrefix());
+    assertEquals("RNR-EM" + FACILITY_CODE, requisitionExtension.getRequisitionNumberPrefix());
     assertEquals(3, requisitionExtension.getRequisitionNumber().intValue());
   }
 
