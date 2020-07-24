@@ -40,7 +40,10 @@ public class SiglusStockEventsController {
   @PostMapping
   public UUID createStockEvent(@RequestBody StockEventDto eventDto) {
     stockEventsService.createAndFillLotId(eventDto);
-    eventDto.setUserId(authenticationHelper.getCurrentUser().getId());
+    // api sent by fulfilment with context is "trust-client", already has user-id.
+    if (eventDto.getUserId() == null) {
+      eventDto.setUserId(authenticationHelper.getCurrentUser().getId());
+    }
     if (ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId())) {
       return stockEventsService.createStockEventForAllProducts(eventDto);
     }

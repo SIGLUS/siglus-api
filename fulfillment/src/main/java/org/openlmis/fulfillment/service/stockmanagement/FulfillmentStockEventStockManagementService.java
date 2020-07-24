@@ -80,7 +80,7 @@ public class FulfillmentStockEventStockManagementService
 
   @Override
   protected String getUrl() {
-    return "/api/stockEvents";
+    return "/api/siglusapi/stockEvents";
   }
 
   @Override
