@@ -571,6 +571,7 @@ public class SiglusRequisitionService {
         setLineItemExtension(requisitionDto);
       }
     }
+    filterApprovedQualityForPreAuthorize(requisitionDto);
     RequisitionV2Dto updateRequisitionDto = requisitionV2Controller
         .updateRequisition(requisitionId, requisitionDto, request, response);
     if (draft != null) {
@@ -579,6 +580,16 @@ public class SiglusRequisitionService {
 
     saveLineItemExtension(requisitionDto, updateRequisitionDto);
     return siglusUsageReportService.saveUsageReport(requisitionDto, updateRequisitionDto);
+  }
+
+  private void filterApprovedQualityForPreAuthorize(SiglusRequisitionDto requisitionDto) {
+    if (requisitionDto.getStatus().isPreAuthorize()) {
+      List<RequisitionLineItem.Importer> lineItems = requisitionDto.getRequisitionLineItems();
+      lineItems.forEach(lineItem -> {
+        RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
+        lineItemV2Dto.setApprovedQuantity(null);
+      });
+    }
   }
 
   private void saveLineItemExtension(RequisitionV2Dto toUpdatedDto, RequisitionV2Dto updatedDto) {

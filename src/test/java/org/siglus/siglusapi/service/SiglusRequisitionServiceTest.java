@@ -324,6 +324,9 @@ public class SiglusRequisitionServiceTest {
 
   private SiglusRequisitionDto siglusRequisitionDto;
 
+  @Captor
+  private ArgumentCaptor<SiglusRequisitionDto> siglusRequisitionDtoCaptor;
+
   //fields for emergency req test start
   private BasicRequisitionDto newBasicReq;
 
@@ -910,6 +913,53 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
+  public void shouldFilterApproveQualityForBeforeAuthorizedRequisition() {
+    // given
+    BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    mockBasicRequisitionDto.setStatus(SUBMITTED);
+    MinimalFacilityDto facilityDto = new MinimalFacilityDto();
+    facilityDto.setId(UUID.randomUUID());
+    mockBasicRequisitionDto.setFacility(facilityDto);
+    HttpServletRequest request = new MockHttpServletRequest();
+    HttpServletResponse response = new MockHttpServletResponse();
+    when(requisitionController.authorizeRequisition(requisitionId, request, response))
+        .thenReturn(mockBasicRequisitionDto);
+    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
+    lineItem.setApprovedQuantity(10);
+    lineItem.setId(UUID.randomUUID());
+    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
+    siglusRequisitionDto.setStatus(SUBMITTED);
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
+        .thenReturn(siglusRequisitionDto);
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
+    RequisitionLineItemExtension requisitionLineItemExtension = RequisitionLineItemExtension
+        .builder()
+        .requisitionLineItemId(lineItem.getId())
+        .authorizedQuantity(10)
+        .build();
+    when(lineItemExtensionRepository.findLineItems(singletonList(lineItem.getId())))
+        .thenReturn(singletonList(requisitionLineItemExtension));
+    when(requisitionV2Controller
+        .updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
+            any(HttpServletRequest.class), any(HttpServletResponse.class)))
+        .thenReturn(requisitionV2Dto);
+
+    // when
+    BasicRequisitionDto requisitionDto = siglusRequisitionService
+        .authorizeRequisition(requisitionId, request, response);
+
+    // then
+    verify(notificationService).postAuthorize(requisitionDto);
+    verify(requisitionV2Controller).updateRequisition(any(UUID.class),
+        siglusRequisitionDtoCaptor.capture(), any(HttpServletRequest.class),
+        any(HttpServletResponse.class));
+    SiglusRequisitionDto dto = siglusRequisitionDtoCaptor.getValue();
+    assertEquals(null, dto.getRequisitionLineItems().get(0).getApprovedQuantity());
+    verify(requisitionController).authorizeRequisition(requisitionId, request, response);
+    verify(archiveProductService).activateArchivedProducts(any(), any());
+  }
+
+  @Test
   public void shouldApproveRequisition() {
     // given
     BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
@@ -920,10 +970,17 @@ public class SiglusRequisitionServiceTest {
     HttpServletResponse response = new MockHttpServletResponse();
     when(requisitionController.approveRequisition(requisitionId, request, response))
         .thenReturn(mockBasicRequisitionDto);
-    requisition.setRequisitionLineItems(emptyList());
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
+        .thenReturn(siglusRequisitionDto);
+    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
+    lineItem.setApprovedQuantity(10);
+    lineItem.setId(UUID.randomUUID());
+    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
+    siglusRequisitionDto.setStatus(AUTHORIZED);
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     when(requisitionV2Controller
-        .updateRequisition(requisitionId, siglusRequisitionDto, request, response))
+        .updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
+            any(HttpServletRequest.class), any(HttpServletResponse.class)))
         .thenReturn(requisitionV2Dto);
 
     // when
@@ -931,9 +988,14 @@ public class SiglusRequisitionServiceTest {
         .approveRequisition(requisitionId, request, response);
 
     // then
+    verify(notificationService).postApprove(requisitionDto);
+    verify(requisitionV2Controller).updateRequisition(any(UUID.class),
+        siglusRequisitionDtoCaptor.capture(), any(HttpServletRequest.class),
+        any(HttpServletResponse.class));
+    SiglusRequisitionDto dto = siglusRequisitionDtoCaptor.getValue();
+    assertEquals(Integer.valueOf(10), dto.getRequisitionLineItems().get(0).getApprovedQuantity());
     verify(requisitionController).approveRequisition(requisitionId, request, response);
     verify(archiveProductService).activateArchivedProducts(any(), any());
-    verify(notificationService).postApprove(requisitionDto);
   }
 
   @Test
