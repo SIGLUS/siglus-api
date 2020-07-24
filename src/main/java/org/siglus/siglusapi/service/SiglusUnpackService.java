@@ -99,7 +99,7 @@ public class SiglusUnpackService {
     Set<PermissionStringDto> permissionStrings = permissionService
         .getPermissionStrings(user.getId()).get();
     return kitOrderables.stream()
-        .filter(orderableDto -> isUnpackPermission(permissionStrings, orderableDto))
+        .filter(orderableDto -> isUnpackPermission(permissionStrings, orderableDto, facilityId))
         .map(kitOrderable -> getKitDto(kitOrderable, facilityId))
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
@@ -131,21 +131,21 @@ public class SiglusUnpackService {
   }
 
   private Boolean isUnpackPermission(Set<PermissionStringDto> permissionDtos,
-      OrderableDto orderableDto) {
+      OrderableDto orderableDto, UUID facilityId) {
     UUID virtualProgramId = programExtensionService.findByProgramId(
         orderableDto.getPrograms().stream().findFirst().orElseThrow(() ->
             new NotFoundException("Orderable's program Not Found")).getProgramId()).getParentId();
-    List<String> rights = getPermissionRightBy(permissionDtos, virtualProgramId);
+    List<String> rights = getPermissionRightBy(permissionDtos, virtualProgramId, facilityId);
     return rights.containsAll(Arrays.asList(STOCK_INVENTORIES_EDIT,
         STOCK_ADJUST, STOCK_CARDS_VIEW));
   }
 
   private List<String> getPermissionRightBy(Set<PermissionStringDto> permissionDtos,
-      UUID programId) {
+      UUID programId, UUID facilityId) {
     return permissionDtos
         .stream()
-        .filter(permissionStringDto -> permissionStringDto.getProgramId() != null
-            && permissionStringDto.getProgramId().equals(programId))
+        .filter(permissionStringDto -> facilityId.equals(permissionStringDto.getFacilityId())
+            && programId.equals(permissionStringDto.getProgramId()))
         .map(PermissionStringDto::getRightName)
         .collect(Collectors.toList());
   }
