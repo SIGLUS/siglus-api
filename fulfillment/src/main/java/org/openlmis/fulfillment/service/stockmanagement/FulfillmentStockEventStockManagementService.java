@@ -78,10 +78,13 @@ public class FulfillmentStockEventStockManagementService
     }
   }
 
+  // [SIGLUS change start]
+  // [change reason]: #416 event should be submit to siglus api
   @Override
   protected String getUrl() {
     return "/api/siglusapi/stockEvents";
   }
+  // [SIGLUS change end]
 
   @Override
   protected Class<StockEventDto> getResultClass() {
