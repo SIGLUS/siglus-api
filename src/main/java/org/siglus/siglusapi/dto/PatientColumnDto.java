@@ -13,32 +13,20 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service;
+package org.siglus.siglusapi.dto;
 
-import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
-import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface UsageReportDataProcessor {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class PatientColumnDto {
 
-  default void initiate(SiglusRequisitionDto siglusRequisitionDto,
-      List<UsageTemplateColumnSection> templateColumnSections) {
-    if (isDisabled(siglusRequisitionDto)) {
-      return;
-    }
-    doInitiate(siglusRequisitionDto, templateColumnSections);
-  }
+  private UUID id;
 
-  void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
-      List<UsageTemplateColumnSection> templateColumnSections);
+  private Integer value;
 
-  void get(SiglusRequisitionDto siglusRequisitionDto);
-
-  void update(SiglusRequisitionDto siglusRequisitionDto,
-      SiglusRequisitionDto siglusRequisitionUpdatedDto);
-
-  void delete(UUID requisitionId);
-
-  boolean isDisabled(SiglusRequisitionDto siglusRequisitionDto);
 }

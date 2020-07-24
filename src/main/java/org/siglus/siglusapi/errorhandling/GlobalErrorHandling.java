@@ -17,6 +17,8 @@ package org.siglus.siglusapi.errorhandling;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import javax.validation.ConstraintViolation;
 import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
@@ -81,4 +83,18 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
 
     return getLocalizedMessage(new Message(ex.getMessage()));
   }
+
+  @ExceptionHandler(javax.validation.ConstraintViolationException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ResponseBody
+  public Message.LocalizedMessage handleConstraintViolationException(
+      javax.validation.ConstraintViolationException ex) {
+    Set<ConstraintViolation<?>> constraintViolations = ex.getConstraintViolations();
+    String message = constraintViolations.stream()
+        .findFirst()
+        .map(ConstraintViolation::getMessage)
+        .orElse(null);
+    return getLocalizedMessage(new Message(message));
+  }
+
 }

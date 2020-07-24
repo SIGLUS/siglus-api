@@ -47,12 +47,8 @@ public class TestConsumptionDataProcessor implements UsageReportDataProcessor {
   private TestConsumptionLineItemRepository testConsumptionLineItemRepository;
 
   @Override
-  public void initiate(SiglusRequisitionDto siglusRequisitionDto,
+  public void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections) {
-    if (isDisabled(siglusRequisitionDto)) {
-      return;
-    }
-
     List<TestConsumptionLineItem> testConsumptionLineItems =
         createTestConsumptionLineItems(siglusRequisitionDto, templateColumnSections);
     log.info("save test consumption line items by requisition id: {}",

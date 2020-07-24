@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.web;
 
 import static org.apache.commons.lang3.RandomUtils.nextBoolean;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -94,13 +93,10 @@ public class SiglusRequisitionControllerTest {
         .thenReturn(basicRequisitionDto);
 
     // when
-    BasicRequisitionDto requisition = siglusRequisitionController
-        .submitRequisition(uuid, request, response);
+    siglusRequisitionController.submitRequisition(uuid, request, response);
 
     // then
-    verify(requisitionController).submitRequisition(uuid, request, response);
-    verify(siglusRequisitionService).activateArchivedProducts(any(), any());
-    verify(notificationService).postSubmit(requisition);
+    verify(siglusRequisitionService).submitRequisition(uuid, request, response);
   }
 
   @Test

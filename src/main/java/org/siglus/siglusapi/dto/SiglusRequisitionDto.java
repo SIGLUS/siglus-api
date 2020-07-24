@@ -17,19 +17,23 @@ package org.siglus.siglusapi.dto;
 
 import static com.google.common.collect.Lists.newArrayList;
 
+import java.util.Collections;
 import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.siglus.siglusapi.dto.validation.constraint.PatientDataConstraint;
 import org.springframework.beans.BeanUtils;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@PatientDataConstraint
 public class SiglusRequisitionDto extends RequisitionV2Dto {
   private Boolean isFinalApproval;
   private List<KitUsageLineItemDto> kitUsageLineItems = newArrayList();
   private List<UsageInformationServiceDto> usageInformationLineItems = newArrayList();
   private List<TestConsumptionServiceDto> testConsumptionLineItems = newArrayList();
+  private List<PatientGroupDto> patientLineItems = Collections.emptyList();
   private SiglusUsageTemplateDto usageTemplate;
   private String requisitionNumber;
 

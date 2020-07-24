@@ -115,6 +115,7 @@ import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
+import org.siglus.siglusapi.domain.PatientLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
@@ -258,7 +259,7 @@ public class SiglusRequisitionService {
       throw new ValidationMessageException(ERROR_ID_MISMATCH);
     }
     if (operatePermissionService.canSubmit(requisitionDto)) {
-      return saveRequisition(requisitionId, requisitionDto, request, response);
+      return saveRequisitionWithoutValidation(requisitionId, requisitionDto, request, response);
     } else {
       return saveRequisitionDraft(requisitionDto);
     }
@@ -280,13 +281,13 @@ public class SiglusRequisitionService {
 
   @Transactional
   public List<SiglusRequisitionLineItemDto> createRequisitionLineItem(
-      UUID requisitonId,
+      UUID requisitionId,
       List<UUID> orderableIds) {
 
     Profiler profiler = requisitionController
         .getProfiler("ADD_NEW_REQUISITION_LINE_ITEM_FOR_SPEC_ORDERABLE");
 
-    Requisition existedRequisition = requisitionController.findRequisition(requisitonId, profiler);
+    Requisition existedRequisition = requisitionController.findRequisition(requisitionId, profiler);
 
     for (UUID orderableId : orderableIds) {
       boolean alreadyHaveCurrentOrderable = existedRequisition.getRequisitionLineItems().stream()
@@ -342,9 +343,21 @@ public class SiglusRequisitionService {
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
+  @Transactional
+  public BasicRequisitionDto submitRequisition(UUID requisitionId, HttpServletRequest request,
+      HttpServletResponse response) {
+    saveRequisitionWithValidation(requisitionId, request, response);
+    BasicRequisitionDto basicRequisitionDto = requisitionController
+        .submitRequisition(requisitionId, request, response);
+    notificationService.postSubmit(basicRequisitionDto);
+    activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
+    return basicRequisitionDto;
+  }
+
+  @Transactional
   public BasicRequisitionDto authorizeRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
-    saveRequisition(requisitionId, null, request, response);
+    saveRequisitionWithValidation(requisitionId, request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .authorizeRequisition(requisitionId, request, response);
     notificationService.postAuthorize(basicRequisitionDto);
@@ -352,9 +365,10 @@ public class SiglusRequisitionService {
     return basicRequisitionDto;
   }
 
+  @Transactional
   public BasicRequisitionDto approveRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
-    saveRequisition(requisitionId, null, request, response);
+    saveRequisitionWithValidation(requisitionId, request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
     notificationService.postApprove(basicRequisitionDto);
@@ -450,8 +464,7 @@ public class SiglusRequisitionService {
 
   private List<FacilityDto> sortFacility(Set<FacilityDto> set) {
     List<FacilityDto> list = new ArrayList<>(set);
-    Collections.sort(list,
-        (FacilityDto f1, FacilityDto f2) -> f1.getName().compareToIgnoreCase(f2.getName()));
+    list.sort((FacilityDto f1, FacilityDto f2) -> f1.getName().compareToIgnoreCase(f2.getName()));
     return list;
   }
 
@@ -553,9 +566,20 @@ public class SiglusRequisitionService {
     return requisitionDto;
   }
 
-  private SiglusRequisitionDto saveRequisition(UUID requisitionId,
+  private SiglusRequisitionDto saveRequisitionWithoutValidation(UUID requisitionId,
       SiglusRequisitionDto requisitionDto, HttpServletRequest request,
       HttpServletResponse response) {
+    return saveRequisition(requisitionId, requisitionDto, request, response, false);
+  }
+
+  private void saveRequisitionWithValidation(UUID requisitionId,
+      HttpServletRequest request, HttpServletResponse response) {
+    saveRequisition(requisitionId, null, request, response, true);
+  }
+
+  private SiglusRequisitionDto saveRequisition(UUID requisitionId,
+      SiglusRequisitionDto requisitionDto, HttpServletRequest request,
+      HttpServletResponse response, boolean validate) {
     // call modify OpenLMIS API
     RequisitionDraft draft = null;
     if (requisitionDto == null) {
@@ -569,6 +593,8 @@ public class SiglusRequisitionService {
         fillRequisitionDraft(draft, templateExtension, requisitionDto);
       } else {
         setLineItemExtension(requisitionDto);
+        RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
+        requisitionDto = getSiglusRequisitionDto(requisitionId, extension, requisitionDto);
       }
     }
     filterApprovedQualityForPreAuthorize(requisitionDto);
@@ -579,6 +605,10 @@ public class SiglusRequisitionService {
     }
 
     saveLineItemExtension(requisitionDto, updateRequisitionDto);
+    if (validate) {
+      return siglusUsageReportService
+          .saveUsageReportWithValidation(requisitionDto, updateRequisitionDto);
+    }
     return siglusUsageReportService.saveUsageReport(requisitionDto, updateRequisitionDto);
   }
 
@@ -616,7 +646,7 @@ public class SiglusRequisitionService {
           updateExtension.add(extension);
         }
       });
-      log.info("lineItem Extension Repository", updateExtension);
+      log.info("lineItem Extension Repository {}", updateExtension);
       lineItemExtensionRepository.save(updateExtension);
     }
   }
@@ -1104,6 +1134,10 @@ public class SiglusRequisitionService {
     if (Boolean.TRUE.equals(templateExtension.getEnableRapidTestConsumption())) {
       dto.setTestConsumptionLineItems(
           TestConsumptionLineItemDraft.getLineItemDto(draft.getTestConsumptionLineItemDrafts())
+      );
+    }
+    if (Boolean.TRUE.equals(templateExtension.getEnablePatientLineItem())) {
+      dto.setPatientLineItems(PatientLineItemDraft.getLineItemDto(draft.getPatientLineItemDrafts())
       );
     }
 

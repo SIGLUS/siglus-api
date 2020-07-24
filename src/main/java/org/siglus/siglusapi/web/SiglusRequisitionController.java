@@ -105,12 +105,7 @@ public class SiglusRequisitionController {
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
-    BasicRequisitionDto basicRequisitionDto = requisitionController
-        .submitRequisition(requisitionId, request, response);
-    notificationService.postSubmit(basicRequisitionDto);
-    siglusRequisitionService
-        .activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
-    return basicRequisitionDto;
+    return siglusRequisitionService.submitRequisition(requisitionId, request, response);
   }
 
   @PostMapping("/{id}/authorize")

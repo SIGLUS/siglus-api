@@ -875,6 +875,34 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
+  public void shouldSubmitRequisition() {
+    // given
+    BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    MinimalFacilityDto facilityDto = new MinimalFacilityDto();
+    facilityDto.setId(UUID.randomUUID());
+    mockBasicRequisitionDto.setFacility(facilityDto);
+    HttpServletRequest request = new MockHttpServletRequest();
+    HttpServletResponse response = new MockHttpServletResponse();
+    when(requisitionController.submitRequisition(requisitionId, request, response))
+        .thenReturn(mockBasicRequisitionDto);
+    requisition.setRequisitionLineItems(emptyList());
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
+    when(requisitionV2Controller
+        .updateRequisition(requisitionId, siglusRequisitionDto, request, response))
+        .thenReturn(requisitionV2Dto);
+
+    // when
+    BasicRequisitionDto requisitionDto = siglusRequisitionService
+        .submitRequisition(requisitionId, request, response);
+
+    // then
+    verify(requisitionController).submitRequisition(requisitionId, request, response);
+    verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
+    verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(notificationService).postSubmit(requisitionDto);
+  }
+
+  @Test
   public void shouldAuthorizeRequisition() {
     // given
     BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
@@ -908,6 +936,7 @@ public class SiglusRequisitionServiceTest {
 
     // then
     verify(requisitionController).authorizeRequisition(requisitionId, request, response);
+    verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
     verify(archiveProductService).activateArchivedProducts(any(), any());
     verify(notificationService).postAuthorize(requisitionDto);
   }
@@ -995,6 +1024,7 @@ public class SiglusRequisitionServiceTest {
     SiglusRequisitionDto dto = siglusRequisitionDtoCaptor.getValue();
     assertEquals(Integer.valueOf(10), dto.getRequisitionLineItems().get(0).getApprovedQuantity());
     verify(requisitionController).approveRequisition(requisitionId, request, response);
+    verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
     verify(archiveProductService).activateArchivedProducts(any(), any());
   }
 

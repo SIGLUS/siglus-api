@@ -30,6 +30,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.ValidatorFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
@@ -85,6 +88,9 @@ public class SiglusUsageReportService {
   @Autowired
   private List<UsageReportDataProcessor> usageReportDataProcessors;
 
+  @Autowired
+  private ValidatorFactory validatorFactory;
+
   public SiglusRequisitionDto searchUsageReport(RequisitionV2Dto requisitionV2Dto) {
     SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
     usageReportDataProcessors.forEach(processor -> processor.get(siglusRequisitionDto));
@@ -103,6 +109,16 @@ public class SiglusUsageReportService {
       log.info("delete kit requisition line item: {}", items);
       kitUsageRepository.delete(items);
     }
+  }
+
+  public SiglusRequisitionDto saveUsageReportWithValidation(SiglusRequisitionDto requisition,
+      RequisitionV2Dto updatedDto) {
+    Set<ConstraintViolation<SiglusRequisitionDto>> constraintViolations =
+        validatorFactory.getValidator().validate(requisition);
+    if (!constraintViolations.isEmpty()) {
+      throw new ConstraintViolationException(constraintViolations);
+    }
+    return saveUsageReport(requisition, updatedDto);
   }
 
   public SiglusRequisitionDto saveUsageReport(SiglusRequisitionDto requisitionDto,

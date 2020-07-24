@@ -48,11 +48,8 @@ public class UsageInformationDataProcessor implements UsageReportDataProcessor {
   private UsageInformationLineItemRepository usageInformationLineItemRepository;
 
   @Override
-  public void initiate(SiglusRequisitionDto siglusRequisitionDto,
+  public void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections) {
-    if (isDisabled(siglusRequisitionDto)) {
-      return;
-    }
     List<UsageInformationLineItem> lineItems = createUsageInformationLineItems(
         siglusRequisitionDto, templateColumnSections);
     log.info("save usage information line items by requisition id: {}",

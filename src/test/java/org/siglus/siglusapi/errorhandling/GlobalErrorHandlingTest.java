@@ -17,9 +17,13 @@ package org.siglus.siglusapi.errorhandling;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
+import javax.validation.ConstraintViolation;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.Before;
 import org.junit.Test;
@@ -115,6 +119,25 @@ public class GlobalErrorHandlingTest {
     // when
     mockMessage(messageKey);
     LocalizedMessage message = errorHandler.handleMessageException(exp);
+
+    // then
+    assertMessage(message, messageKey);
+  }
+
+  @Test
+  public void shouldHandleConstraintViolationException() {
+    // given
+    String messageKey = "key";
+    Set<ConstraintViolation<?>> violations = new HashSet<>();
+    ConstraintViolation<?> violation = mock(ConstraintViolation.class);
+    when(violation.getMessage()).thenReturn(messageKey);
+    violations.add(violation);
+    javax.validation.ConstraintViolationException ex =
+        new javax.validation.ConstraintViolationException(violations);
+    mockMessage(messageKey);
+
+    // when
+    LocalizedMessage message = errorHandler.handleConstraintViolationException(ex);
 
     // then
     assertMessage(message, messageKey);
