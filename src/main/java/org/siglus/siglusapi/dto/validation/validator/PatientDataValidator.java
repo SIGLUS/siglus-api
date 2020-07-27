@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.dto.validation.validator;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -122,7 +123,7 @@ public class PatientDataValidator implements
       return false;
     }
     List<UsageTemplateColumn> storedColumns = storedGroup.getColumns();
-    Map<String, PatientColumnDto> uploadedColumns = uploadedGroup.getColumns();
+    Map<String, PatientColumnDto> uploadedColumns = new HashMap<>(uploadedGroup.getColumns());
     boolean checkSum = false;
     PatientColumnDto totalColumn = null;
     List<PatientColumnDto> columnsToSum = new ArrayList<>();
