@@ -159,7 +159,7 @@ public class SiglusStockCardService {
     orderableDto.setInKit(unpackService.orderablesInKit().contains(stockCardDto.getOrderableId()));
     orderableDto.setArchived(archiveProductService.isArchived(stockCardDto.getId()));
     StockCardDto resultStockCardDto = StockCardDto.builder()
-        .id(stockCardDto.getOrderableId())
+        .id(stockCardDto.getId())
         .lineItems(lineItemDtos)
         .stockOnHand(getStockOnHand(stockCardDtos))
         .facility(stockCardDto.getFacility())
