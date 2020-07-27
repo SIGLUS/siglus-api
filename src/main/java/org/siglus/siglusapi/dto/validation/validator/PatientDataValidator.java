@@ -195,6 +195,9 @@ public class PatientDataValidator implements
           .addConstraintViolation();
       return false;
     }
+    if (totalColumn == null) {
+      return true;
+    }
     int sum;
     try {
       sum = columnsToSum.stream()
@@ -207,7 +210,7 @@ public class PatientDataValidator implements
           .addConstraintViolation();
       return false;
     }
-    if (totalColumn != null && totalColumn.getValue() != sum) {
+    if (totalColumn.getValue() != sum) {
       context
           .buildConstraintViolationWithTemplate(
               "columns sum is not equals to the total column in group:" + groupName)
