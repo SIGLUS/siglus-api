@@ -144,8 +144,8 @@ public class SiglusUnpackService {
       UUID programId, UUID facilityId) {
     return permissionDtos
         .stream()
-        .filter(permissionStringDto -> facilityId.equals(permissionStringDto.getFacilityId())
-            && programId.equals(permissionStringDto.getProgramId()))
+        .filter(permissionStringDto -> facilityId.equals(permissionStringDto.getFacilityId()))
+        .filter(permissionStringDto -> programId.equals(permissionStringDto.getProgramId()))
         .map(PermissionStringDto::getRightName)
         .collect(Collectors.toList());
   }
