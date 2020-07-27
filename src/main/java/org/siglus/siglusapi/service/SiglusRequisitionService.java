@@ -372,7 +372,9 @@ public class SiglusRequisitionService {
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
     notificationService.postApprove(basicRequisitionDto);
-    activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
+    if (checkIsInternalApprove(basicRequisitionDto, authenticationHelper.getCurrentUser())) {
+      activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
+    }
     return basicRequisitionDto;
   }
 
@@ -547,6 +549,11 @@ public class SiglusRequisitionService {
 
     set1.addAll(set2);
     return set1;
+  }
+
+  private boolean checkIsInternalApprove(BasicRequisitionDto requisitionDto, UserDto userDto) {
+    // permission check needs requisition, ignore requisitionService.validateCanApproveRequisition
+    return userDto.getHomeFacilityId().equals(requisitionDto.getFacility().getId());
   }
 
   private SiglusRequisitionDto saveRequisitionDraft(SiglusRequisitionDto requisitionDto) {

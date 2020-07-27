@@ -993,7 +993,7 @@ public class SiglusRequisitionServiceTest {
     // given
     BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
     MinimalFacilityDto facilityDto = new MinimalFacilityDto();
-    facilityDto.setId(UUID.randomUUID());
+    facilityDto.setId(facilityId);
     mockBasicRequisitionDto.setFacility(facilityDto);
     HttpServletRequest request = new MockHttpServletRequest();
     HttpServletResponse response = new MockHttpServletResponse();
@@ -1001,6 +1001,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(mockBasicRequisitionDto);
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
         .thenReturn(siglusRequisitionDto);
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setApprovedQuantity(10);
     lineItem.setId(UUID.randomUUID());
@@ -1033,7 +1034,7 @@ public class SiglusRequisitionServiceTest {
     // given
     BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
     MinimalFacilityDto facilityDto = new MinimalFacilityDto();
-    facilityDto.setId(UUID.randomUUID());
+    facilityDto.setId(facilityId);
     mockBasicRequisitionDto.setFacility(facilityDto);
     HttpServletRequest request = new MockHttpServletRequest();
     HttpServletResponse response = new MockHttpServletResponse();
@@ -1047,6 +1048,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(requisitionV2Dto);
     when(draftRepository.findByRequisitionId(requisitionId))
         .thenReturn(getRequisitionDraft(requisitionId));
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -1240,6 +1242,12 @@ public class SiglusRequisitionServiceTest {
     assertEquals(2, availableProducts.size());
     assertThat(availableProducts,
         hasItems(productVersionObjectReference1, productVersionObjectReference2));
+  }
+
+  private UserDto mockUserDto(UUID facilityId) {
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    return userDto;
   }
 
   private RightDto mockRightDto() {
