@@ -683,6 +683,8 @@ public class SiglusRequisitionServiceTest {
     when(requisitionService
         .validateCanApproveRequisition(any(), any())).thenReturn(ValidationResult.success());
     when(operatePermissionService.isEditable(any())).thenReturn(true);
+    when(siglusUsageReportService.searchUsageReport(any(RequisitionV2Dto.class)))
+        .thenAnswer(i -> convert((RequisitionV2Dto)i.getArguments()[0]));
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
         .thenReturn(new PageImpl<>(singletonList(newBasicReq)));
 
@@ -1168,6 +1170,10 @@ public class SiglusRequisitionServiceTest {
     assertEquals(2, response.size());
     assertEquals(response.get(0).getId(), userFacilityId);
     assertEquals(response.get(1).getId(), facilityId);
+  }
+
+  private SiglusRequisitionDto convert(RequisitionV2Dto requisitionV2Dto) {
+    return SiglusRequisitionDto.from(requisitionV2Dto);
   }
 
   private RequisitionDraft getRequisitionDraft(UUID requisitionId) {
