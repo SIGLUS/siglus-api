@@ -63,7 +63,6 @@ public class SiglusProcessingPeriodReferenceDataService
             .set("programId", programId)
             .set("facilityId", facilityId)
             .set("startDate", startDate)
-            .set("startDate", startDate)
             .set("endDate", endDate)
             .set("id", ids)
             .setPage(pageable);

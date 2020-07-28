@@ -29,6 +29,12 @@ public abstract class MessageKeys {
 
   protected static final String SEARCH = "search";
 
+  private static final String SHIPMENT = "shipment";
+
+  private static final String ORDER = "order";
+
+  protected static final String INVALID = "invalid";
+
   private static final String DUPLICATED = "duplicated";
   protected static final String INVALID_PARAMS = "invalidParams";
 
@@ -92,6 +98,9 @@ public abstract class MessageKeys {
       + ".submitEndDate.before.submitStartDate";
   public static final String ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE = ERROR_PREFIX
       + ".submitStartDate.before.last.submitEndDate";
+
+  public static final String SHIPMENT_ORDER_STATUS_INVALID =
+      join(ERROR_PREFIX, SHIPMENT, ORDER, "status", INVALID);
 
   public static final String ERROR_SIZE_NULL = ERROR_PREFIX + ".pageable.size.null";
   public static final String ERROR_SIZE_NOT_POSITIVE = ERROR_PREFIX + ".pageable.size.notPositive";

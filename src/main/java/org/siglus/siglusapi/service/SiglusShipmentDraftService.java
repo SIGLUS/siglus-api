@@ -64,8 +64,27 @@ public class SiglusShipmentDraftService {
 
   @Transactional
   public void deleteShipmentDraft(UUID id) {
-    deleteOrderLineItemAndInitialedExtension(id);
+    deleteOrderLineItemAndInitialedExtension(getDraftOrder(id));
     draftController.deleteShipmentDraft(id);
+  }
+
+  public void deleteOrderLineItemAndInitialedExtension(Order order) {
+    List<OrderLineItem> lineItems = order.getOrderLineItems();
+    Set<UUID> lineItemIds = lineItems.stream().map(OrderLineItem::getId)
+        .collect(Collectors.toSet());
+    List<OrderLineItemExtension> extensions = lineItemExtensionRepository
+        .findByOrderLineItemIdIn(lineItemIds);
+    deleteAddedOrderLineItemsInOrder(extensions, order);
+    Set<OrderLineItemExtension> addedLineItemExtensions = deleteAddedLineItemsInExtension(
+        extensions);
+    initialedExtension(extensions, addedLineItemExtensions);
+  }
+
+  private Order getDraftOrder(UUID draftId) {
+    ShipmentDraftDto draftDto = siglusShipmentDraftFulfillmentService
+        .searchShipmentDraft(draftId);
+    Order order = orderRepository.findOne(draftDto.getOrder().getId());
+    return order;
   }
 
   private void updateOrderLineItemExtension(ShipmentDraftDto draftDto) {
@@ -98,22 +117,6 @@ public class SiglusShipmentDraftService {
       }
     });
     lineItemExtensionRepository.save(extensionsToUpdate);
-  }
-
-  private void deleteOrderLineItemAndInitialedExtension(UUID id) {
-    ShipmentDraftDto draftDto = siglusShipmentDraftFulfillmentService
-        .searchShipmentDraft(id);
-    UUID orderId = draftDto.getOrder().getId();
-    Order order = orderRepository.findOne(orderId);
-    List<OrderLineItem> lineItems = order.getOrderLineItems();
-    Set<UUID> lineItemIds = lineItems.stream().map(OrderLineItem::getId)
-        .collect(Collectors.toSet());
-    List<OrderLineItemExtension> extensions = lineItemExtensionRepository
-        .findByOrderLineItemIdIn(lineItemIds);
-    deleteAddedOrderLineItemsInOrder(extensions, order);
-    Set<OrderLineItemExtension> addedLineItemExtensions = deleteAddedLineItemsInExtension(
-        extensions);
-    initialedExtension(extensions, addedLineItemExtensions);
   }
 
   private void initialedExtension(List<OrderLineItemExtension> extensions,

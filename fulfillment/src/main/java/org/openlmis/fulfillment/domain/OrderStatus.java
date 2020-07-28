@@ -19,8 +19,9 @@ import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
 public enum OrderStatus {
   // [SIGLUS change start]
-  // [change reason]: partial order.
+  // [change reason]: partial order && clolse
   PARTIALLY_FULFILLED,
+  CLOSED,
   // [SIGLUS change end]
   ORDERED,
   FULFILLING,
