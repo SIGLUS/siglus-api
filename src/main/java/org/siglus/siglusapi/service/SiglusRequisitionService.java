@@ -340,6 +340,9 @@ public class SiglusRequisitionService {
         extension, requisitionDto);
     siglusRequisitionDto.setRequisitionNumber(
         siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
+
+    siglusRequisitionDto.setIsInternalApproval(
+        checkIsInternalApprove(requisitionDto.getFacility().getId()));
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
@@ -372,7 +375,7 @@ public class SiglusRequisitionService {
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
     notificationService.postApprove(basicRequisitionDto);
-    if (checkIsInternalApprove(basicRequisitionDto, authenticationHelper.getCurrentUser())) {
+    if (checkIsInternalApprove(basicRequisitionDto.getFacility().getId())) {
       activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
     }
     return basicRequisitionDto;
@@ -551,9 +554,10 @@ public class SiglusRequisitionService {
     return set1;
   }
 
-  private boolean checkIsInternalApprove(BasicRequisitionDto requisitionDto, UserDto userDto) {
+  private boolean checkIsInternalApprove(UUID requisitionFacilityId) {
     // permission check needs requisition, ignore requisitionService.validateCanApproveRequisition
-    return userDto.getHomeFacilityId().equals(requisitionDto.getFacility().getId());
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    return userDto.getHomeFacilityId().equals(requisitionFacilityId);
   }
 
   private SiglusRequisitionDto saveRequisitionDraft(SiglusRequisitionDto requisitionDto) {
