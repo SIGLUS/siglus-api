@@ -30,7 +30,7 @@ import org.springframework.beans.BeanUtils;
 @PatientDataConstraint
 public class SiglusRequisitionDto extends RequisitionV2Dto {
   private Boolean isFinalApproval;
-  private Boolean isInternalApproval;
+  private Boolean isExternalApproval;
   private List<KitUsageLineItemDto> kitUsageLineItems = newArrayList();
   private List<UsageInformationServiceDto> usageInformationLineItems = newArrayList();
   private List<TestConsumptionServiceDto> testConsumptionLineItems = newArrayList();

@@ -27,7 +27,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
@@ -418,7 +417,7 @@ public class SiglusRequisitionServiceTest {
     verify(requisitionController).getProfiler(profilerName, requisitionId);
     verify(requisitionController).findRequisition(requisitionId, profiler);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
-    verify(authenticationHelper, times(2)).getCurrentUser();
+    verify(authenticationHelper).getCurrentUser();
     verify(supervisoryNodeService).findOne(null);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
 
@@ -683,6 +682,7 @@ public class SiglusRequisitionServiceTest {
     mockEmergencyRequisition();
     when(requisitionService
         .validateCanApproveRequisition(any(), any())).thenReturn(ValidationResult.success());
+    when(operatePermissionService.isEditable(any())).thenReturn(true);
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
         .thenReturn(new PageImpl<>(singletonList(newBasicReq)));
 
@@ -692,9 +692,9 @@ public class SiglusRequisitionServiceTest {
     // then
     Set<VersionObjectReferenceDto> availableProducts = requisition.getAvailableProducts();
     verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
-    assertEquals(2, availableProducts.size());
+    assertEquals(1, availableProducts.size());
     assertThat(availableProducts,
-        hasItems(productVersionObjectReference1, productVersionObjectReference2));
+        hasItems(productVersionObjectReference2));
   }
 
   @Test

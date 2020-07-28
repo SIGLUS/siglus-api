@@ -334,15 +334,14 @@ public class SiglusRequisitionService {
     RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
 
     filterProductsIfEmergency(requisitionDto);
-    // set available products in approve page
-    setAvailableProductsForApprovePage(requisitionDto);
     SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId,
         extension, requisitionDto);
+    // set available products in approve page
+    setAvailableProductsForApprovePage(siglusRequisitionDto);
+
     siglusRequisitionDto.setRequisitionNumber(
         siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
 
-    siglusRequisitionDto.setIsInternalApproval(
-        checkIsInternalApprove(requisitionDto.getFacility().getId()));
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
@@ -375,7 +374,8 @@ public class SiglusRequisitionService {
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
     notificationService.postApprove(basicRequisitionDto);
-    if (checkIsInternalApprove(basicRequisitionDto.getFacility().getId())) {
+    if (checkIsInternal(basicRequisitionDto.getFacility().getId(),
+        authenticationHelper.getCurrentUser())) {
       activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
     }
     return basicRequisitionDto;
@@ -554,9 +554,8 @@ public class SiglusRequisitionService {
     return set1;
   }
 
-  private boolean checkIsInternalApprove(UUID requisitionFacilityId) {
+  private boolean checkIsInternal(UUID requisitionFacilityId, UserDto userDto) {
     // permission check needs requisition, ignore requisitionService.validateCanApproveRequisition
-    UserDto userDto = authenticationHelper.getCurrentUser();
     return userDto.getHomeFacilityId().equals(requisitionFacilityId);
   }
 
@@ -997,8 +996,8 @@ public class SiglusRequisitionService {
         .collect(Collectors.toList());
   }
 
-  private void setAvailableProductsForApprovePage(RequisitionV2Dto requisitionDto) {
-    UUID requisitionId = requisitionDto.getId();
+  private void setAvailableProductsForApprovePage(SiglusRequisitionDto siglusRequisitionDto) {
+    UUID requisitionId = siglusRequisitionDto.getId();
     Profiler profiler = requisitionController
         .getProfiler("GET_REQUISITION_TO_APPROVE", requisitionId);
     Requisition requisition = requisitionController
@@ -1007,7 +1006,11 @@ public class SiglusRequisitionService {
     if (requisitionService
         .validateCanApproveRequisition(requisition, userDto.getId()).isSuccess()) {
 
-      Set<VersionObjectReferenceDto> availableProducts = requisitionDto.getAvailableProducts();
+      siglusRequisitionDto.setIsExternalApproval(
+          !checkIsInternal(siglusRequisitionDto.getFacility().getId(), userDto));
+
+      Set<VersionObjectReferenceDto> availableProducts =
+          siglusRequisitionDto.getAvailableProducts();
 
       Set<UUID> approverMainProgramAndAssociateProgramApprovedProducts
           = Optional
@@ -1024,7 +1027,7 @@ public class SiglusRequisitionService {
       // keep only products in approver facility main & associate programs
       // toggle no/full-supply will update the version
       // version mismatch in VersionObjectReferenceDto is not needed here
-      requisitionDto.setAvailableProducts(availableProducts.stream()
+      siglusRequisitionDto.setAvailableProducts(availableProducts.stream()
           .filter(product ->
               approverMainProgramAndAssociateProgramApprovedProducts.contains(product.getId()))
           .collect(toSet()));
