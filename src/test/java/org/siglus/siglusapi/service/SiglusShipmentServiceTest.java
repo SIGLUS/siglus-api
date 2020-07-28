@@ -23,6 +23,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.common.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
+import static org.siglus.common.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -65,6 +66,7 @@ import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataSe
 import org.springframework.data.domain.Page;
 import org.springframework.test.util.ReflectionTestUtils;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusShipmentServiceTest {
 
@@ -120,6 +122,7 @@ public class SiglusShipmentServiceTest {
   @Before
   public void prepare() {
     OrderDto order = new OrderDto();
+
     order.setStatus(OrderStatus.FULFILLING);
     order.setProcessingPeriod(buildProcessingPeriod());
     when(orderController.getOrder(any(UUID.class), any())).thenReturn(order);
@@ -129,6 +132,55 @@ public class SiglusShipmentServiceTest {
         .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
         .thenReturn(periodDtos);
     ReflectionTestUtils.setField(siglusShipmentService, "timeZoneId", "UTC");
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowOrderCloseWhenOrderStatusClosed() {
+    // given
+    OrderDto order = new OrderDto();
+    order.setStatus(OrderStatus.CLOSED);
+    when(orderController.getOrder(any(UUID.class), any())).thenReturn(order);
+    ShipmentDto shipmentDto = new ShipmentDto();
+    OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(orderId);
+    shipmentDto.setOrder(orderDto);
+
+    // when
+    siglusShipmentService.createOrderAndShipment(false, shipmentDto);
+
+    // then
+    expectedException.expect(ValidationMessageException.class);
+    expectedException.expectMessage(SHIPMENT_ORDER_STATUS_INVALID);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowOrderCloseWhenCurrentDateIsAfterNextPeriodEndDate() {
+    // given
+    OrderDto orderDto = new OrderDto();
+    orderDto.setId(orderId);
+    orderDto.setStatus(OrderStatus.FULFILLING);
+    orderDto.setProcessingPeriod(buildProcessingPeriod());
+    when(orderController.getOrder(any(UUID.class), any())).thenReturn(orderDto);
+    ShipmentDto shipmentDto = new ShipmentDto();
+    OrderObjectReferenceDto orderReferenceDto = new OrderObjectReferenceDto(orderId);
+    shipmentDto.setOrder(orderReferenceDto);
+    org.openlmis.requisition.dto.ProcessingPeriodDto dto =
+        new org.openlmis.requisition.dto.ProcessingPeriodDto();
+    dto.setEndDate(LocalDate.now().minusDays(10));
+    Page<org.openlmis.requisition.dto.ProcessingPeriodDto> periodDtos = Pagination
+        .getPage(Arrays.asList(dto));
+    when(periodService
+        .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
+        .thenReturn(periodDtos);
+    Order order = new Order();
+    when(orderRepository.findOne(orderId)).thenReturn(order);
+
+    // when
+    siglusShipmentService.createOrderAndShipment(false, shipmentDto);
+
+    // then
+    verify(draftService).deleteOrderLineItemAndInitialedExtension(order);
+    expectedException.expect(ValidationMessageException.class);
+    expectedException.expectMessage(SHIPMENT_ORDER_STATUS_INVALID);
   }
 
   @Test

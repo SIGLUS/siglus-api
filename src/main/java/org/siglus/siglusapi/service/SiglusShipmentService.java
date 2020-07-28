@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
@@ -34,7 +35,6 @@ import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.web.OrderController;
-import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
@@ -53,6 +53,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class SiglusShipmentService {
 
@@ -88,7 +89,7 @@ public class SiglusShipmentService {
     validateOrderStatus(orderDto);
     if (currentDateIsAfterNextPeriodEndDate(orderDto)) {
       deleteExtensionForCurrentDateAfterNextPeriod(orderDto);
-      throw new ValidationException(SHIPMENT_ORDER_STATUS_INVALID);
+      throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
     }
     return createSubOrderAndShipment(isSubOrder, shipmentDto);
   }
@@ -106,15 +107,16 @@ public class SiglusShipmentService {
 
   @Transactional
   void deleteExtensionForCurrentDateAfterNextPeriod(OrderDto orderDto) {
-      Order order = orderRepository.findOne(orderDto.getId());
-      draftService.deleteOrderLineItemAndInitialedExtension(order);
-      order.setStatus(OrderStatus.CLOSED);
-      orderRepository.save(order);
+    Order order = orderRepository.findOne(orderDto.getId());
+    draftService.deleteOrderLineItemAndInitialedExtension(order);
+    order.setStatus(OrderStatus.CLOSED);
+    log.info("save closed order: {}", order);
+    orderRepository.save(order);
   }
 
   private void validateOrderStatus(OrderDto orderDto) {
     if (orderDto.getStatus().equals(OrderStatus.CLOSED)) {
-      throw new ValidationException(SHIPMENT_ORDER_STATUS_INVALID);
+      throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
     }
   }
 
