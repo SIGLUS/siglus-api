@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 public class SiglusProofOfDeliveryFulfillmentService extends
     BaseFulfillmentService<ProofOfDeliveryDto> {
 
-  static String EXPAND = "expand";
+  static final String EXPAND = "expand";
 
   @Override
   protected String getUrl() {
