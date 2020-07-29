@@ -60,7 +60,12 @@ public class ProofOfDeliveryLineItem extends BaseEntity {
   @Getter(AccessLevel.PACKAGE)
   private UUID lotId;
 
-  @Getter(AccessLevel.PACKAGE)
+  // [SIGLUS change start]
+  // [change reason]: #401 AC5 If accepted quantity greater than 0 ,
+  //                  it can have stock event record.
+  // @Getter(AccessLevel.PACKAGE)
+  @Getter
+  // [SIGLUS change end]
   private Integer quantityAccepted;
 
   @Enumerated(EnumType.STRING)

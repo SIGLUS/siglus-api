@@ -25,7 +25,6 @@ import javax.persistence.Convert;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
@@ -54,7 +53,12 @@ public class ShipmentLineItem extends BaseEntity {
   private UUID lotId;
 
   @Column(nullable = false)
-  @Getter(AccessLevel.PACKAGE)
+  // [SIGLUS change start]
+  // [change reason]: #401 AC5 If shipped quantity greater than 0 ,
+  //                  it can have stock event record.
+  // @Getter(AccessLevel.PACKAGE)
+  @Getter
+  // [SIGLUS change end]
   private Long quantityShipped;
 
   @Column(name = "extradata", columnDefinition = "jsonb")

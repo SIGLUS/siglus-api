@@ -264,6 +264,11 @@ public class FulfillmentStockEventBuilder {
     return proofOfDelivery
         .getLineItems()
         .stream()
+        // [SIGLUS change start]
+        // [change reason]: #401 AC5 If accepted quantity greater than 0 ,
+        //                  it can have stock event record.
+        .filter(lineItem -> lineItem.getQuantityAccepted() > 0)
+        // [SIGLUS change end]
         .map(lineItem -> createLineItem(proofOfDelivery, lineItem, orderables, sourceId))
         .collect(Collectors.toList());
   }
@@ -276,6 +281,11 @@ public class FulfillmentStockEventBuilder {
 
     List<ShipmentLineItem> targetLineItems = shipment.getLineItems()
         .stream()
+        // [SIGLUS change start]
+        // [change reason]: #401 AC5 If shipped quantity greater than 0 ,
+        //                  it can have stock event record.
+        .filter(shipmentLineItem -> shipmentLineItem.getQuantityShipped() > 0)
+        // [SIGLUS change end]
         .filter(shipmentLineItem ->
             isLineItemOfVirtualProgram(shipmentLineItem, programId, orderableDtoMap, programIdMap))
         .collect(Collectors.toList());
