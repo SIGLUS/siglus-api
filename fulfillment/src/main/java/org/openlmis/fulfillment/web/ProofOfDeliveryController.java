@@ -219,7 +219,14 @@ public class ProofOfDeliveryController extends BaseController {
 
       profiler.start("SEND_STOCK_EVENT");
       StockEventDto event = stockEventBuilder.fromProofOfDelivery(toUpdate);
-      stockEventStockManagementService.submit(event);
+      // [SIGLUS change start]
+      // [change reason]: #401 AC5 If accepted quantity greater than 0 ,
+      //                  it can have stock event record.
+      // stockEventStockManagementService.submit(event);
+      if (!event.getLineItems().isEmpty()) {
+        stockEventStockManagementService.submit(event);
+      }
+      // [SIGLUS change end]
 
       fulfillmentNotificationService.sendPodConfirmedNotification(toUpdate);
     }
