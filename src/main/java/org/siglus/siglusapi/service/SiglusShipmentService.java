@@ -129,7 +129,7 @@ public class SiglusShipmentService {
             null,
             null, pageable);
     LocalDate currentDate = LocalDate.now(ZoneId.of(timeZoneId));
-    return periodDtos.getContent().size() >= 1 && periodDtos.getContent().get(0).getEndDate()
+    return !periodDtos.getContent().isEmpty() && periodDtos.getContent().get(0).getEndDate()
         .isBefore(currentDate);
   }
 

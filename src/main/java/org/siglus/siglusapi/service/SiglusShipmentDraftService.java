@@ -83,8 +83,7 @@ public class SiglusShipmentDraftService {
   private Order getDraftOrder(UUID draftId) {
     ShipmentDraftDto draftDto = siglusShipmentDraftFulfillmentService
         .searchShipmentDraft(draftId);
-    Order order = orderRepository.findOne(draftDto.getOrder().getId());
-    return order;
+    return orderRepository.findOne(draftDto.getOrder().getId());
   }
 
   private void updateOrderLineItemExtension(ShipmentDraftDto draftDto) {

@@ -396,8 +396,7 @@ public class SiglusRequisitionService {
         return siglusRequisitionDto;
       }
     }
-    siglusRequisitionDto = siglusUsageReportService.searchUsageReport(requisitionDto);
-    return siglusRequisitionDto;
+    return siglusUsageReportService.searchUsageReport(requisitionDto);
   }
 
   public Page<BasicRequisitionDto> searchRequisitions(MultiValueMap<String, String> queryParams,
