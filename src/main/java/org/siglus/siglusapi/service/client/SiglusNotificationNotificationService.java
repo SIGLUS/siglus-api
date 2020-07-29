@@ -13,27 +13,32 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.util;
+package org.siglus.siglusapi.service.client;
 
-import java.time.Clock;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.siglus.siglusapi.dto.simam.NotificationSimamDto;
+import org.springframework.stereotype.Service;
 
-@Component
-public class SiglusDateHelper {
+@Service
+public class SiglusNotificationNotificationService extends
+    BaseNotificationService<NotificationSimamDto> {
 
-  @Autowired
-  private Clock clock;
-
-  public LocalDate getCurrentDate() {
-    return LocalDate.now(clock);
+  @Override
+  protected String getUrl() {
+    return "/api/notifications/";
   }
 
-  public static String formatDateTime(ZonedDateTime date) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    return date.format(formatter);
+  @Override
+  protected Class<NotificationSimamDto> getResultClass() {
+    return NotificationSimamDto.class;
   }
+
+  @Override
+  protected Class<NotificationSimamDto[]> getArrayResultClass() {
+    return NotificationSimamDto[].class;
+  }
+
+  public void sendNotification(NotificationSimamDto notificationSimamDto) {
+    postResult("", notificationSimamDto, Void.class);
+  }
+
 }

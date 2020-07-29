@@ -29,7 +29,10 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELE
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 import static org.openlmis.requisition.dto.OrderStatus.SHIPPED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
+import static org.openlmis.requisition.service.notification.NotificationChannelDto.EMAIL;
 import static org.siglus.siglusapi.constant.PaginationConstants.UNPAGED;
+import static org.siglus.siglusapi.i18n.SimamMessageKeys.REQUISITION_EMAIL_CONTENT_PRE;
+import static org.siglus.siglusapi.i18n.SimamMessageKeys.REQUISITION_EMAIL_SUBJECT;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -39,6 +42,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -98,9 +102,11 @@ import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDa
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
+import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RightReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
+import org.openlmis.requisition.service.referencedata.SupervisingUsersReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
@@ -129,8 +135,13 @@ import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.dto.simam.EmailAttachmentDto;
+import org.siglus.siglusapi.dto.simam.MessageSimamDto;
+import org.siglus.siglusapi.dto.simam.NotificationSimamDto;
+import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
@@ -239,6 +250,21 @@ public class SiglusRequisitionService {
   private SupervisoryNodeReferenceDataService supervisoryNodeReferenceDataService;
 
   @Autowired
+  private SupervisingUsersReferenceDataService supervisingUsersReferenceDataService;
+
+  @Autowired
+  private ProgramReferenceDataService programReferenceDataService;
+
+  @Autowired
+  private RequisitionSimamEmailService requisitionSimamEmailService;
+
+  @Autowired
+  private MessageService messageService;
+
+  @Autowired
+  private SiglusNotificationNotificationService siglusNotificationNotificationService;
+
+  @Autowired
   private RequisitionGroupReferenceDataService requisitionGroupReferenceDataService;
 
   @Autowired
@@ -344,10 +370,8 @@ public class SiglusRequisitionService {
         extension, requisitionDto);
     // set available products in approve page
     setAvailableProductsForApprovePage(siglusRequisitionDto);
-
     siglusRequisitionDto.setRequisitionNumber(
         siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
-
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
@@ -369,7 +393,15 @@ public class SiglusRequisitionService {
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .authorizeRequisition(requisitionId, request, response);
     notificationService.postAuthorize(basicRequisitionDto);
-    activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
+    UUID facilityId = basicRequisitionDto.getFacility().getId();
+    activateArchivedProducts(requisitionId, facilityId);
+    UUID programId = basicRequisitionDto.getProgram().getId();
+    SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService.findSupervisoryNode(
+        programId, facilityId);
+    Collection<UserDto> approvers = getApprovers(supervisoryNodeDto.getId(), programId);
+    if (approvers.stream().noneMatch(approver -> approver.getHomeFacilityId().equals(facilityId))) {
+      notifySimam(basicRequisitionDto, approvers);
+    }
     return basicRequisitionDto;
   }
 
@@ -380,11 +412,50 @@ public class SiglusRequisitionService {
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
     notificationService.postApprove(basicRequisitionDto);
-    if (checkIsInternal(basicRequisitionDto.getFacility().getId(),
-        authenticationHelper.getCurrentUser())) {
-      activateArchivedProducts(requisitionId, basicRequisitionDto.getFacility().getId());
+    UUID facilityId = basicRequisitionDto.getFacility().getId();
+    UUID programId = basicRequisitionDto.getProgram().getId();
+    if (checkIsInternal(facilityId, authenticationHelper.getCurrentUser())) {
+      activateArchivedProducts(requisitionId, facilityId);
+      SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService
+          .findSupervisoryNode(programId, facilityId);
+      Collection<UserDto> approvers = getApprovers(supervisoryNodeDto.getParentNodeId(), programId);
+      notifySimam(basicRequisitionDto, approvers);
     }
     return basicRequisitionDto;
+  }
+
+  private Collection<UserDto> getApprovers(UUID supervisoryNodeId, UUID programId) {
+    RightDto right = rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE);
+    return supervisingUsersReferenceDataService.findAll(supervisoryNodeId, right.getId(),
+        programId);
+  }
+
+  private void notifySimam(BasicRequisitionDto basicRequisitionDto, Collection<UserDto> approvers) {
+    log.info("start to send email to simam of the requisition id {}", basicRequisitionDto.getId());
+    ProgramDto program = programReferenceDataService
+        .findOne(basicRequisitionDto.getProgram().getId());
+    RequisitionV2Dto requisitionDto =
+        siglusRequisitionRequisitionService.searchRequisition(basicRequisitionDto.getId());
+    setLineItemExtension(requisitionDto);
+    setTemplateExtension(requisitionDto);
+    SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService
+        .searchUsageReport(requisitionDto);
+    List<EmailAttachmentDto> emailAttachments = requisitionSimamEmailService
+        .prepareEmailAttachmentsForSimam(siglusRequisitionDto, program);
+    String subject = messageService
+        .localize(new org.siglus.common.util.Message(REQUISITION_EMAIL_SUBJECT,
+            basicRequisitionDto.getId().toString())).getMessage();
+    String emailContent = messageService
+        .localize(new org.siglus.common.util.Message(REQUISITION_EMAIL_CONTENT_PRE
+            + program.getCode().toLowerCase())).getMessage();
+    approvers.forEach(approve -> {
+      log.info("send simam email to user {}", approve.getUsername());
+      Map<String, MessageSimamDto> messages = new HashMap<>();
+      messages.put(EMAIL.toString(), new MessageSimamDto(
+          subject, emailContent, "simam", emailAttachments));
+      siglusNotificationNotificationService
+          .sendNotification(new NotificationSimamDto(approve.getId(), messages));
+    });
   }
 
   private SiglusRequisitionDto getSiglusRequisitionDto(UUID requisitionId,

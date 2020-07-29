@@ -67,6 +67,9 @@ dependencies {
     compile "com.github.tomakehurst:wiremock:1.58"
     compile 'org.openlmis:openlmis-service-util:3.1.0'
     compile 'org.apache.camel:camel-core:2.18.0'
+    compile 'org.apache.poi:poi:3.13'
+    compile 'org.apache.poi:poi-ooxml:3.13'
+    compile 'com.amazonaws:aws-java-sdk-s3:1.11.627'
 
     compileTestJava.dependsOn tasks.getByPath(':stockmanagement:testClasses')
     compileTestJava.dependsOn tasks.getByPath(':requisition:testClasses')

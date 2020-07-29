@@ -13,27 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.util;
+package org.siglus.siglusapi.i18n;
 
-import java.time.Clock;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.siglus.common.i18n.MessageKeys;
 
-@Component
-public class SiglusDateHelper {
+public class SimamMessageKeys extends MessageKeys {
 
-  @Autowired
-  private Clock clock;
+  private static final String SIMAM = "simam";
 
-  public LocalDate getCurrentDate() {
-    return LocalDate.now(clock);
-  }
+  public static final String REQUISITION_EMAIL_SUBJECT = SIMAM + ".requisition.email.subject";
 
-  public static String formatDateTime(ZonedDateTime date) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    return date.format(formatter);
-  }
+  public static final String REQUISITION_EMAIL_CONTENT_PRE = SIMAM + ".requisition.email.content.";
+
+  public static final String ERROR_FILE_NOT_FOUND = ERROR_PREFIX + ".fileNotFound";
 }

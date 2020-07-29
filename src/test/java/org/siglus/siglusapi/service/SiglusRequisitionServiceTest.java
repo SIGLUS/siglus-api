@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -113,9 +114,11 @@ import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityTypeApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.IdealStockAmountReferenceDataService;
+import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RightReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
+import org.openlmis.requisition.service.referencedata.SupervisingUsersReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
@@ -127,6 +130,7 @@ import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
+import org.siglus.common.util.Message;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
@@ -141,12 +145,15 @@ import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.MessageSource;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -164,6 +171,8 @@ public class SiglusRequisitionServiceTest {
   private static final long NOT_FULLY_SHIPPED_QUANTITY = 0L;
 
   private static final String REQUISITION_NUMBER = "requisitionNumber";
+  private static final String CODE = "code";
+  private static final String MESSAGE = "message";
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -268,6 +277,24 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+
+  @Mock
+  private SupervisingUsersReferenceDataService supervisingUsersReferenceDataService;
+
+  @Mock
+  private ProgramReferenceDataService programReferenceDataService;
+
+  @Mock
+  private RequisitionSimamEmailService requisitionSimamEmailService;
+
+  @Mock
+  private MessageService messageService;
+
+  @Mock
+  private SiglusNotificationNotificationService siglusNotificationNotificationService;
+
+  @Mock
+  private MessageSource messageSource;
 
   @Mock
   private RegimenDataProcessor regimenDataProcessor;
@@ -693,7 +720,7 @@ public class SiglusRequisitionServiceTest {
         .validateCanApproveRequisition(any(), any())).thenReturn(ValidationResult.success());
     when(operatePermissionService.isEditable(any())).thenReturn(true);
     when(siglusUsageReportService.searchUsageReport(any(RequisitionV2Dto.class)))
-        .thenAnswer(i -> convert((RequisitionV2Dto)i.getArguments()[0]));
+        .thenAnswer(i -> convert((RequisitionV2Dto) i.getArguments()[0]));
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
         .thenReturn(new PageImpl<>(singletonList(newBasicReq)));
 
@@ -920,9 +947,14 @@ public class SiglusRequisitionServiceTest {
   public void shouldAuthorizeRequisition() {
     // given
     BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    mockBasicRequisitionDto.setId(requisitionId);
     MinimalFacilityDto facilityDto = new MinimalFacilityDto();
-    facilityDto.setId(UUID.randomUUID());
+    facilityDto.setId(facilityId);
     mockBasicRequisitionDto.setFacility(facilityDto);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    programDto.setCode(CODE);
+    mockBasicRequisitionDto.setProgram(programDto);
     HttpServletRequest request = new MockHttpServletRequest();
     HttpServletResponse response = new MockHttpServletResponse();
     when(requisitionController.authorizeRequisition(requisitionId, request, response))
@@ -943,6 +975,21 @@ public class SiglusRequisitionServiceTest {
     when(requisitionV2Controller
         .updateRequisition(requisitionId, siglusRequisitionDto, request, response))
         .thenReturn(requisitionV2Dto);
+    SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
+    supervisoryNodeDto.setId(supervisoryNodeId);
+    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId))
+        .thenReturn(supervisoryNodeDto);
+    RightDto right = new RightDto();
+    right.setId(rightId);
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
+        .thenReturn(right);
+    when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
+    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
+      Message message = invocation.getArgumentAt(0, Message.class);
+      return message.localMessage(messageSource, Locale.ENGLISH);
+    });
+    when(messageSource.getMessage(any(), any(), any()))
+        .thenReturn(MESSAGE);
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -953,16 +1000,22 @@ public class SiglusRequisitionServiceTest {
     verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
     verify(archiveProductService).activateArchivedProducts(any(), any());
     verify(notificationService).postAuthorize(requisitionDto);
+    verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 
   @Test
   public void shouldFilterApproveQualityForBeforeAuthorizedRequisition() {
     // given
     BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    mockBasicRequisitionDto.setId(requisitionId);
     mockBasicRequisitionDto.setStatus(SUBMITTED);
     MinimalFacilityDto facilityDto = new MinimalFacilityDto();
-    facilityDto.setId(UUID.randomUUID());
+    facilityDto.setId(facilityId);
     mockBasicRequisitionDto.setFacility(facilityDto);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    programDto.setCode(CODE);
+    mockBasicRequisitionDto.setProgram(programDto);
     HttpServletRequest request = new MockHttpServletRequest();
     HttpServletResponse response = new MockHttpServletResponse();
     when(requisitionController.authorizeRequisition(requisitionId, request, response))
@@ -986,6 +1039,21 @@ public class SiglusRequisitionServiceTest {
         .updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
             any(HttpServletRequest.class), any(HttpServletResponse.class)))
         .thenReturn(requisitionV2Dto);
+    SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
+    supervisoryNodeDto.setId(supervisoryNodeId);
+    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId))
+        .thenReturn(supervisoryNodeDto);
+    RightDto right = new RightDto();
+    right.setId(rightId);
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
+        .thenReturn(right);
+    when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
+    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
+      Message message = invocation.getArgumentAt(0, Message.class);
+      return message.localMessage(messageSource, Locale.ENGLISH);
+    });
+    when(messageSource.getMessage(any(), any(), any()))
+        .thenReturn(MESSAGE);
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -1000,15 +1068,21 @@ public class SiglusRequisitionServiceTest {
     assertEquals(null, dto.getRequisitionLineItems().get(0).getApprovedQuantity());
     verify(requisitionController).authorizeRequisition(requisitionId, request, response);
     verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 
   @Test
   public void shouldApproveRequisition() {
     // given
     BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    mockBasicRequisitionDto.setId(requisitionId);
     MinimalFacilityDto facilityDto = new MinimalFacilityDto();
     facilityDto.setId(facilityId);
     mockBasicRequisitionDto.setFacility(facilityDto);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    programDto.setCode(CODE);
+    mockBasicRequisitionDto.setProgram(programDto);
     HttpServletRequest request = new MockHttpServletRequest();
     HttpServletResponse response = new MockHttpServletResponse();
     when(requisitionController.approveRequisition(requisitionId, request, response))
@@ -1026,6 +1100,21 @@ public class SiglusRequisitionServiceTest {
         .updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
             any(HttpServletRequest.class), any(HttpServletResponse.class)))
         .thenReturn(requisitionV2Dto);
+    SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
+    supervisoryNodeDto.setId(supervisoryNodeId);
+    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId))
+        .thenReturn(supervisoryNodeDto);
+    RightDto right = new RightDto();
+    right.setId(rightId);
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
+        .thenReturn(right);
+    when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
+    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
+      Message message = invocation.getArgumentAt(0, Message.class);
+      return message.localMessage(messageSource, Locale.ENGLISH);
+    });
+    when(messageSource.getMessage(any(), any(), any()))
+        .thenReturn(MESSAGE);
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -1041,15 +1130,21 @@ public class SiglusRequisitionServiceTest {
     verify(requisitionController).approveRequisition(requisitionId, request, response);
     verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
     verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 
   @Test
   public void shouldDeleteDraftIfDraftExistWhenApproval() {
     // given
     BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    mockBasicRequisitionDto.setId(requisitionId);
     MinimalFacilityDto facilityDto = new MinimalFacilityDto();
     facilityDto.setId(facilityId);
     mockBasicRequisitionDto.setFacility(facilityDto);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    programDto.setCode(CODE);
+    mockBasicRequisitionDto.setProgram(programDto);
     HttpServletRequest request = new MockHttpServletRequest();
     HttpServletResponse response = new MockHttpServletResponse();
     when(requisitionController.approveRequisition(requisitionId, request, response))
@@ -1063,6 +1158,22 @@ public class SiglusRequisitionServiceTest {
     when(draftRepository.findByRequisitionId(requisitionId))
         .thenReturn(getRequisitionDraft(requisitionId));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
+    SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
+    supervisoryNodeDto.setId(supervisoryNodeId);
+    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId))
+        .thenReturn(supervisoryNodeDto);
+    RightDto right = new RightDto();
+    right.setId(rightId);
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
+        .thenReturn(right);
+    when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
+    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
+      Message message = invocation.getArgumentAt(0, Message.class);
+      return message.localMessage(messageSource, Locale.ENGLISH);
+    });
+    when(messageSource.getMessage(any(), any(), any()))
+        .thenReturn(MESSAGE);
+
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
     when(regimenDataProcessor.getRegimenDispatchLineDtoMap()).thenReturn(mockDispatchLineMap());
     // when
@@ -1074,6 +1185,7 @@ public class SiglusRequisitionServiceTest {
     verify(requisitionController).approveRequisition(requisitionId, request, response);
     verify(archiveProductService).activateArchivedProducts(any(), any());
     verify(notificationService).postApprove(requisitionDto);
+    verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 
   @Test

@@ -13,27 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.util;
+package org.siglus.siglusapi.dto.simam;
 
-import java.time.Clock;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-@Component
-public class SiglusDateHelper {
+@Data
+@AllArgsConstructor
+public class MessageSimamDto {
 
-  @Autowired
-  private Clock clock;
+  private String subject;
 
-  public LocalDate getCurrentDate() {
-    return LocalDate.now(clock);
-  }
+  private String body;
 
-  public static String formatDateTime(ZonedDateTime date) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    return date.format(formatter);
-  }
+  private String tag;
+
+  private List<EmailAttachmentDto> emailAttachments;
+
 }

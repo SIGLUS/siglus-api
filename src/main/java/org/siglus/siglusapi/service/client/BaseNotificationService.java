@@ -13,27 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.util;
+package org.siglus.siglusapi.service.client;
 
-import java.time.Clock;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.siglus.common.service.client.BaseCommunicationService;
+import org.springframework.beans.factory.annotation.Value;
 
-@Component
-public class SiglusDateHelper {
+public abstract class BaseNotificationService<T> extends BaseCommunicationService<T> {
 
-  @Autowired
-  private Clock clock;
+  @Value("${notification.url}")
+  private String notificationUrl;
 
-  public LocalDate getCurrentDate() {
-    return LocalDate.now(clock);
+  @Override
+  protected String getServiceUrl() {
+    return notificationUrl;
   }
 
-  public static String formatDateTime(ZonedDateTime date) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    return date.format(formatter);
-  }
 }
