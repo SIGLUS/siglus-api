@@ -15,24 +15,22 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.Map;
-import javax.validation.Valid;
+import java.util.UUID;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.NotEmpty;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PatientGroupDto implements UsageGroupDto<PatientColumnDto> {
+public class ConsultationNumberColumnDto {
 
-  @NotEmpty
-  private String name;
+  private UUID id;
 
-  @Valid
   @NotNull
-  private Map<String, PatientColumnDto> columns;
+  @Min(value = 0)
+  private Integer value;
 
 }

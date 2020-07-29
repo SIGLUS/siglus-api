@@ -17,6 +17,7 @@ package org.siglus.siglusapi.domain;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum UsageCategory {
@@ -27,6 +28,7 @@ public enum UsageCategory {
   RAPIDTESTCONSUMPTION("rapidTestConsumption"),
   USAGEINFORMATION("usageInformation");
 
+  @Getter
   private final String name;
 
   @Override

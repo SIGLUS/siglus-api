@@ -19,22 +19,32 @@ import static com.google.common.collect.Lists.newArrayList;
 
 import java.util.Collections;
 import java.util.List;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.siglus.siglusapi.dto.validation.constraint.ConsultationNumberConstraint;
 import org.siglus.siglusapi.dto.validation.constraint.PatientDataConstraint;
+import org.siglus.siglusapi.service.SiglusUsageReportService.Extended;
 import org.springframework.beans.BeanUtils;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@PatientDataConstraint
+@PatientDataConstraint(groups = Extended.class)
+@ConsultationNumberConstraint(groups = Extended.class)
 public class SiglusRequisitionDto extends RequisitionV2Dto {
+
   private Boolean isFinalApproval;
   private Boolean isExternalApproval;
   private List<KitUsageLineItemDto> kitUsageLineItems = newArrayList();
   private List<UsageInformationServiceDto> usageInformationLineItems = newArrayList();
   private List<TestConsumptionServiceDto> testConsumptionLineItems = newArrayList();
+  @Valid
+  @NotNull
   private List<PatientGroupDto> patientLineItems = Collections.emptyList();
+  @Valid
+  private ConsultationNumberGroupDto consultationNumberLineItem;
   private SiglusUsageTemplateDto usageTemplate;
   private String requisitionNumber;
 

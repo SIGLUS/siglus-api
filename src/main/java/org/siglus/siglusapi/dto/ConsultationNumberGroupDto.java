@@ -26,13 +26,13 @@ import org.hibernate.validator.constraints.NotEmpty;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PatientGroupDto implements UsageGroupDto<PatientColumnDto> {
+public class ConsultationNumberGroupDto implements UsageGroupDto<ConsultationNumberColumnDto> {
 
   @NotEmpty
   private String name;
 
   @Valid
   @NotNull
-  private Map<String, PatientColumnDto> columns;
+  private Map<String, ConsultationNumberColumnDto> columns;
 
 }

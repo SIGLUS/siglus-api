@@ -98,6 +98,15 @@ public class RequisitionDraft extends BaseEntity {
   @DiffIgnore
   private List<PatientLineItemDraft> patientLineItemDrafts = Collections.emptyList();
 
+  @OneToMany(
+      mappedBy = "requisitionDraft",
+      cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.REMOVE},
+      fetch = FetchType.LAZY,
+      orphanRemoval = true)
+  @DiffIgnore
+  private List<ConsultationNumberLineItemDraft> consultationNumberLineItemDrafts = Collections
+      .emptyList();
+
   @Embedded
   private ExtraDataEntity extraData = new ExtraDataEntity();
 
@@ -128,6 +137,10 @@ public class RequisitionDraft extends BaseEntity {
     }
     if (Boolean.TRUE.equals(extension.getEnablePatientLineItem())) {
       draft.setPatientLineItemDrafts(PatientLineItemDraft.from(draft, requisitionDto));
+    }
+    if (Boolean.TRUE.equals(extension.getEnableConsultationNumber())) {
+      draft.setConsultationNumberLineItemDrafts(
+          ConsultationNumberLineItemDraft.from(draft, requisitionDto));
     }
     return draft;
   }

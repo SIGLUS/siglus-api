@@ -13,26 +13,38 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.domain;
 
-import java.util.Map;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.NotEmpty;
+import lombok.Setter;
+import org.siglus.common.domain.BaseEntity;
 
-@Data
+@Entity
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class PatientGroupDto implements UsageGroupDto<PatientColumnDto> {
+@Builder
+@Table(name = "consultation_number_line_items", schema = "siglusintegration")
+public class ConsultationNumberLineItem extends BaseEntity {
 
-  @NotEmpty
-  private String name;
+  private UUID requisitionId;
 
-  @Valid
-  @NotNull
-  private Map<String, PatientColumnDto> columns;
+  @Column(name = "groupname")
+  private String group;
+
+  @Column(name = "columnname")
+  private String column;
+
+  private Integer value;
 
 }

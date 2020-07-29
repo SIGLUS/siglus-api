@@ -32,7 +32,9 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import javax.validation.GroupSequence;
 import javax.validation.ValidatorFactory;
+import javax.validation.groups.Default;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
@@ -109,6 +111,15 @@ public class SiglusUsageReportService {
       log.info("delete kit requisition line item: {}", items);
       kitUsageRepository.delete(items);
     }
+  }
+
+  public interface Extended {
+
+  }
+
+  @GroupSequence({Default.class, Extended.class})
+  public interface MySequence {
+
   }
 
   public SiglusRequisitionDto saveUsageReportWithValidation(SiglusRequisitionDto requisition,

@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -55,6 +56,7 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 
@@ -74,6 +76,8 @@ public class Application {
 
   private static final String CLASSPATH_MESSAGES = "classpath:messages";
   private static final String UTF_8 = "UTF-8";
+  private static final String HIBERNATE_VALIDATION_MESSAGES =
+      "classpath:org/hibernate/validator/ValidationMessages";
 
   @Value("${defaultLocale}")
   private Locale locale;
@@ -264,6 +268,24 @@ public class Application {
   @Bean
   public AuditorAware<UUID> auditorAware(SiglusAuthenticationHelper authenticationHelper) {
     return () -> authenticationHelper.getCurrentUserId().orElse(null);
+  }
+
+  private MessageSource validationMessageSource() {
+    ExposedMessageSourceImpl messageSource = new ExposedMessageSourceImpl();
+    messageSource
+        .setBasenames(HIBERNATE_VALIDATION_MESSAGES, CLASSPATH_MESSAGES);
+    messageSource.setDefaultEncoding(UTF_8);
+    // https://stackoverflow.com/questions/38714521/hibernate-expression-language-does-not-work
+    // it works but i don't know why
+    messageSource.setUseCodeAsDefaultMessage(false);
+    return messageSource;
+  }
+
+  @Bean
+  public LocalValidatorFactoryBean getValidator() {
+    LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean();
+    bean.setValidationMessageSource(validationMessageSource());
+    return bean;
   }
 
 }

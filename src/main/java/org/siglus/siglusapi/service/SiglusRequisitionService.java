@@ -114,6 +114,7 @@ import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
+import org.siglus.siglusapi.domain.ConsultationNumberLineItemDraft;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.PatientLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
@@ -1151,6 +1152,11 @@ public class SiglusRequisitionService {
     }
     if (Boolean.TRUE.equals(templateExtension.getEnablePatientLineItem())) {
       dto.setPatientLineItems(PatientLineItemDraft.getLineItemDto(draft.getPatientLineItemDrafts())
+      );
+    }
+    if (Boolean.TRUE.equals(templateExtension.getEnableConsultationNumber())) {
+      dto.setConsultationNumberLineItem(ConsultationNumberLineItemDraft
+          .getLineItemDto(draft.getConsultationNumberLineItemDrafts())
       );
     }
 

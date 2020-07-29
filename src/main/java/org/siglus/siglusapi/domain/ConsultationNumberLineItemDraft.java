@@ -18,9 +18,7 @@ package org.siglus.siglusapi.domain;
 import static java.util.Collections.emptyList;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
@@ -36,19 +34,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.PatientColumnDto;
-import org.siglus.siglusapi.dto.PatientGroupDto;
+import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
+import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
 @Entity
 @Getter
 @Setter
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "patient_line_item_drafts", schema = "siglusintegration")
-public class PatientLineItemDraft extends BaseEntity {
+@Table(name = "consultation_number_line_item_drafts", schema = "siglusintegration")
+public class ConsultationNumberLineItemDraft extends BaseEntity {
 
   @ManyToOne(cascade = CascadeType.REFRESH)
   @JoinColumn(name = "requisitionDraftId")
@@ -66,14 +64,11 @@ public class PatientLineItemDraft extends BaseEntity {
 
   private Integer value;
 
-  public static List<PatientLineItemDraft> from(RequisitionDraft draft,
+  public static List<ConsultationNumberLineItemDraft> from(RequisitionDraft draft,
       SiglusRequisitionDto requisitionDto) {
-    List<PatientGroupDto> patientGroups = requisitionDto.getPatientLineItems();
-    List<PatientLineItemDraft> list = patientGroups.stream()
-        .map(PatientLineItemDraft::from)
-        .flatMap(Collection::stream)
-        .collect(Collectors.toList());
-    for (PatientLineItemDraft lineItemDraft : list) {
+    ConsultationNumberGroupDto group = requisitionDto.getConsultationNumberLineItem();
+    List<ConsultationNumberLineItemDraft> list = fromGroup(group);
+    for (ConsultationNumberLineItemDraft lineItemDraft : list) {
       lineItemDraft.setRequisitionDraft(draft);
       lineItemDraft.setRequisitionId(requisitionDto.getId());
     }
@@ -81,21 +76,18 @@ public class PatientLineItemDraft extends BaseEntity {
     return list;
   }
 
-  private static List<PatientLineItemDraft> from(PatientGroupDto patientGroup) {
-    if (patientGroup == null) {
-      return null;
-    }
-    if (isEmpty(patientGroup.getColumns())) {
+  private static List<ConsultationNumberLineItemDraft> fromGroup(ConsultationNumberGroupDto group) {
+    if (group == null || isEmpty(group.getColumns())) {
       return emptyList();
     }
-    return patientGroup.getColumns().entrySet().stream()
+    return group.getColumns().entrySet().stream()
         .map(entry -> {
           String columnName = entry.getKey();
-          PatientColumnDto columnDto = entry.getValue();
-          PatientLineItemDraft draft = new PatientLineItemDraft();
+          ConsultationNumberColumnDto columnDto = entry.getValue();
+          ConsultationNumberLineItemDraft draft = new ConsultationNumberLineItemDraft();
           draft.setPatientLineItemId(columnDto.getId());
           draft.setId(null);
-          draft.setGroup(patientGroup.getName());
+          draft.setGroup(group.getName());
           draft.setColumn(columnName);
           draft.setValue(columnDto.getValue());
           return draft;
@@ -103,42 +95,29 @@ public class PatientLineItemDraft extends BaseEntity {
         .collect(Collectors.toList());
   }
 
-  public static List<PatientGroupDto> getLineItemDto(List<PatientLineItemDraft> lineItemDrafts) {
-    if (isEmpty(lineItemDrafts)) {
-      return emptyList();
+  public static ConsultationNumberGroupDto getLineItemDto(
+      List<ConsultationNumberLineItemDraft> drafts) {
+    if (isEmpty(drafts)) {
+      return null;
     }
-    return lineItemDrafts.stream()
-        .collect(Collectors.groupingBy(PatientLineItemDraft::getGroup))
-        .entrySet().stream()
-        .map(PatientLineItemDraft::entryToDto)
-        .collect(Collectors.toList());
+    String groupName = drafts.stream().findAny().map(ConsultationNumberLineItemDraft::getGroup)
+        .get();
+    ConsultationNumberGroupDto group = new ConsultationNumberGroupDto();
+    group.setName(groupName);
+    group.setColumns(drafts.stream().collect(Collectors
+        .toMap(ConsultationNumberLineItemDraft::getColumn,
+            ConsultationNumberLineItemDraft::draftToDto)));
+    return group;
   }
 
-  private static PatientGroupDto entryToDto(Entry<String, List<PatientLineItemDraft>> entry) {
-    if (entry == null) {
+  private static ConsultationNumberColumnDto draftToDto(ConsultationNumberLineItemDraft draft) {
+    if (draft == null) {
       return null;
     }
-    List<PatientLineItemDraft> lineItemDrafts = entry.getValue();
-    if (isEmpty(lineItemDrafts)) {
-      return null;
-    }
-    PatientGroupDto dto = new PatientGroupDto();
-    dto.setName(entry.getKey());
-    dto.setColumns(
-        lineItemDrafts.stream()
-            .collect(
-                Collectors
-                    .toMap(PatientLineItemDraft::getColumn, PatientLineItemDraft::draftToDto)));
+    ConsultationNumberColumnDto dto = new ConsultationNumberColumnDto();
+    dto.setId(draft.getPatientLineItemId());
+    dto.setValue(draft.getValue());
     return dto;
   }
 
-  private static PatientColumnDto draftToDto(PatientLineItemDraft lineItemDraft) {
-    if (lineItemDraft == null) {
-      return null;
-    }
-    PatientColumnDto dto = new PatientColumnDto();
-    dto.setId(lineItemDraft.getPatientLineItemId());
-    dto.setValue(lineItemDraft.getValue());
-    return dto;
-  }
 }

@@ -13,26 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.repository;
 
-import java.util.Map;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.NotEmpty;
+import java.util.List;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class PatientGroupDto implements UsageGroupDto<PatientColumnDto> {
+public interface ConsultationNumberLineItemRepository extends
+    JpaRepository<ConsultationNumberLineItem, UUID> {
 
-  @NotEmpty
-  private String name;
-
-  @Valid
-  @NotNull
-  private Map<String, PatientColumnDto> columns;
+  List<ConsultationNumberLineItem> findByRequisitionId(UUID requisitionId);
 
 }

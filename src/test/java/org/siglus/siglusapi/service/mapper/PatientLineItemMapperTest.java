@@ -19,7 +19,7 @@ import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang.RandomStringUtils.random;
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,7 +85,7 @@ public class PatientLineItemMapperTest {
     List<PatientLineItem> lineItems = mapper.from((PatientGroupDto) null);
 
     // then
-    assertNull(lineItems);
+    assertTrue(lineItems.isEmpty());
   }
 
   @Test

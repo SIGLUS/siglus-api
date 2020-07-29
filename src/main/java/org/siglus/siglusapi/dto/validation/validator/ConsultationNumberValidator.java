@@ -15,64 +15,49 @@
 
 package org.siglus.siglusapi.dto.validation.validator;
 
-import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.domain.UsageCategory;
-import org.siglus.siglusapi.dto.PatientColumnDto;
-import org.siglus.siglusapi.dto.PatientGroupDto;
+import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
+import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
-import org.siglus.siglusapi.dto.validation.constraint.PatientDataConstraint;
+import org.siglus.siglusapi.dto.validation.constraint.ConsultationNumberConstraint;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.springframework.stereotype.Component;
 
-/**
- * Validate patientLineItems in {@linkplain SiglusRequisitionDto#getPatientLineItems()
- * SiglusRequisitionDto}.
- * <p>
- * Check following:
- * <ul>
- *   <li>No missing or extra groups and columns</li>
- *   <li>Total column equals the sum of the rest column values
- *   if the source of the total column is calculated</li>
- *   <li>No value overflow</li>
- * </ul>
- * </p>
- */
 @Component
 @Slf4j
-public class PatientDataValidator extends
-    UsageLineItemValidator<PatientDataConstraint, PatientGroupDto, PatientColumnDto> {
+public class ConsultationNumberValidator extends UsageLineItemValidator
+    <ConsultationNumberConstraint, ConsultationNumberGroupDto, ConsultationNumberColumnDto> {
 
-  public PatientDataValidator(
+  public ConsultationNumberValidator(
       RequisitionTemplateExtensionRepository templateExtensionRepo,
       SiglusRequisitionRequisitionService requisitionService,
       UsageTemplateColumnSectionRepository columnSectionRepo) {
-    super(templateExtensionRepo, requisitionService, columnSectionRepo, UsageCategory.PATIENT,
-        "patientLineItems");
+    super(templateExtensionRepo, requisitionService, columnSectionRepo,
+        UsageCategory.CONSULTATIONNUMBER, "consultationNumberLineItem");
   }
+
 
   @Override
   protected boolean checkEnable(RequisitionTemplateExtension templateExtension) {
-    return templateExtension.getEnablePatientLineItem();
+    return templateExtension.getEnableConsultationNumber();
   }
 
   @Override
   protected boolean isPlural() {
-    return true;
+    return false;
   }
 
   @Override
-  protected Collection<PatientGroupDto> getUploadedGroups(SiglusRequisitionDto uploadedValue) {
-    return uploadedValue.getPatientLineItems();
+  protected ConsultationNumberGroupDto getUploadedGroup(SiglusRequisitionDto uploadedValue) {
+    return uploadedValue.getConsultationNumberLineItem();
   }
 
   @Override
-  protected int mapColumnToInt(PatientColumnDto column) {
+  protected int mapColumnToInt(ConsultationNumberColumnDto column) {
     return column.getValue();
   }
-
-
 }

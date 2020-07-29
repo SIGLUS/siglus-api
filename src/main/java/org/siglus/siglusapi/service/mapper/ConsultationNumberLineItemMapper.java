@@ -19,27 +19,26 @@ import static java.util.Collections.emptyList;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import org.siglus.siglusapi.domain.PatientLineItem;
-import org.siglus.siglusapi.dto.PatientColumnDto;
-import org.siglus.siglusapi.dto.PatientGroupDto;
+import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
+import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
+import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PatientLineItemMapper {
+public class ConsultationNumberLineItemMapper {
 
-  public List<PatientLineItem> from(PatientGroupDto patientGroup) {
-    if (patientGroup == null || isEmpty(patientGroup.getColumns())) {
+  public List<ConsultationNumberLineItem> from(ConsultationNumberGroupDto group) {
+    if (group == null || isEmpty(group.getColumns())) {
       return emptyList();
     }
-    return patientGroup.getColumns().entrySet().stream()
+    return group.getColumns().entrySet().stream()
         .map(entry -> {
           String columnName = entry.getKey();
-          PatientColumnDto columnDto = entry.getValue();
-          PatientLineItem lineItem = new PatientLineItem();
+          ConsultationNumberColumnDto columnDto = entry.getValue();
+          ConsultationNumberLineItem lineItem = new ConsultationNumberLineItem();
           lineItem.setId(columnDto.getId());
-          lineItem.setGroup(patientGroup.getName());
+          lineItem.setGroup(group.getName());
           lineItem.setColumn(columnName);
           lineItem.setValue(columnDto.getValue());
           return lineItem;
@@ -47,28 +46,20 @@ public class PatientLineItemMapper {
         .collect(Collectors.toList());
   }
 
-  public List<PatientGroupDto> from(List<PatientLineItem> lineItems) {
+  public ConsultationNumberGroupDto from(List<ConsultationNumberLineItem> lineItems) {
     if (isEmpty(lineItems)) {
-      return emptyList();
+      return null;
     }
-    return lineItems.stream()
-        .collect(Collectors.groupingBy(PatientLineItem::getGroup))
-        .entrySet().stream()
-        .map(this::from)
-        .collect(Collectors.toList());
+    String groupName = lineItems.stream().findAny().map(ConsultationNumberLineItem::getGroup).get();
+    ConsultationNumberGroupDto group = new ConsultationNumberGroupDto();
+    group.setName(groupName);
+    group.setColumns(lineItems.stream().collect(Collectors
+        .toMap(ConsultationNumberLineItem::getColumn, this::toColumnDto)));
+    return group;
   }
 
-  private PatientGroupDto from(Entry<String, List<PatientLineItem>> entry) {
-    List<PatientLineItem> lineItems = entry.getValue();
-    PatientGroupDto dto = new PatientGroupDto();
-    dto.setName(entry.getKey());
-    dto.setColumns(
-        lineItems.stream().collect(Collectors.toMap(PatientLineItem::getColumn, this::from)));
-    return dto;
-  }
-
-  private PatientColumnDto from(PatientLineItem lineItem) {
-    PatientColumnDto dto = new PatientColumnDto();
+  private ConsultationNumberColumnDto toColumnDto(ConsultationNumberLineItem lineItem) {
+    ConsultationNumberColumnDto dto = new ConsultationNumberColumnDto();
     dto.setId(lineItem.getId());
     dto.setValue(lineItem.getValue());
     return dto;

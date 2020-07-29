@@ -16,23 +16,11 @@
 package org.siglus.siglusapi.dto;
 
 import java.util.Map;
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.NotEmpty;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class PatientGroupDto implements UsageGroupDto<PatientColumnDto> {
+public interface UsageGroupDto<C> {
 
-  @NotEmpty
-  private String name;
+  String getName();
 
-  @Valid
-  @NotNull
-  private Map<String, PatientColumnDto> columns;
+  Map<String, C> getColumns();
 
 }
