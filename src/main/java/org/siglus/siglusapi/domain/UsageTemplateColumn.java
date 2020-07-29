@@ -83,7 +83,7 @@ public class UsageTemplateColumn extends BaseEntity {
     usageTemplateColumn.setId(null);
     usageTemplateColumn.columnDefinition = column;
     usageTemplateColumn.availableSources = column.getSources();
-    usageTemplateColumn.isDisplayed = true;
+    usageTemplateColumn.isDisplayed = isDisplayedByDefault(column, section);
     usageTemplateColumn.source = column.getSources().isEmpty() ? null
         : Arrays.asList(column.getSources().split("\\|")).get(0);
     usageTemplateColumn.usageTemplateColumnSection = section;
@@ -111,6 +111,17 @@ public class UsageTemplateColumn extends BaseEntity {
     usageTemplateColumn.setRequisitionTemplateId(requisitionTemplateId);
 
     return usageTemplateColumn;
+  }
+
+  private static boolean isDisplayedByDefault(AvailableUsageColumn column,
+      UsageTemplateColumnSection section) {
+    return !isTotalColumnInConsultationNumber(column, section);
+  }
+
+  private static boolean isTotalColumnInConsultationNumber(AvailableUsageColumn column,
+      UsageTemplateColumnSection section) {
+    return section.getCategory() == UsageCategory.CONSULTATIONNUMBER && "total"
+        .equals(column.getName());
   }
 
   private static AvailableUsageColumn findAvailableUsageColumn(UUID availableId,
