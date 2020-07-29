@@ -101,11 +101,12 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
 
   protected abstract boolean isPlural();
 
-  protected G getUploadedGroup(SiglusRequisitionDto uploadedValue) {
+  protected G getUploadedGroup(@SuppressWarnings("unused") SiglusRequisitionDto uploadedValue) {
     return null;
   }
 
-  protected Collection<G> getUploadedGroups(SiglusRequisitionDto uploadedValue) {
+  protected Collection<G> getUploadedGroups(
+      @SuppressWarnings("unused") SiglusRequisitionDto uploadedValue) {
     return Collections.emptyList();
   }
 

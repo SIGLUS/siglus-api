@@ -82,10 +82,7 @@ public class PatientLineItemDraft extends BaseEntity {
   }
 
   private static List<PatientLineItemDraft> from(PatientGroupDto patientGroup) {
-    if (patientGroup == null) {
-      return null;
-    }
-    if (isEmpty(patientGroup.getColumns())) {
+    if (patientGroup == null || isEmpty(patientGroup.getColumns())) {
       return emptyList();
     }
     return patientGroup.getColumns().entrySet().stream()
