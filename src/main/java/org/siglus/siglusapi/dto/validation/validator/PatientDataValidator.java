@@ -60,11 +60,6 @@ public class PatientDataValidator extends
   }
 
   @Override
-  protected boolean isPlural() {
-    return true;
-  }
-
-  @Override
   protected Collection<PatientGroupDto> getUploadedGroups(SiglusRequisitionDto uploadedValue) {
     return uploadedValue.getPatientLineItems();
   }

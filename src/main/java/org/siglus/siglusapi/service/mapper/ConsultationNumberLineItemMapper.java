@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.mapper;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.util.List;
@@ -28,7 +29,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class ConsultationNumberLineItemMapper {
 
-  public List<ConsultationNumberLineItem> from(ConsultationNumberGroupDto group) {
+  public List<ConsultationNumberLineItem> fromGroups(List<ConsultationNumberGroupDto> groups) {
+    ConsultationNumberGroupDto group = groups.stream().findFirst().orElse(null);
     if (group == null || isEmpty(group.getColumns())) {
       return emptyList();
     }
@@ -46,7 +48,8 @@ public class ConsultationNumberLineItemMapper {
         .collect(Collectors.toList());
   }
 
-  public ConsultationNumberGroupDto from(List<ConsultationNumberLineItem> lineItems) {
+  public List<ConsultationNumberGroupDto> fromLineItems(
+      List<ConsultationNumberLineItem> lineItems) {
     if (isEmpty(lineItems)) {
       return null;
     }
@@ -55,7 +58,7 @@ public class ConsultationNumberLineItemMapper {
     group.setName(groupName);
     group.setColumns(lineItems.stream().collect(Collectors
         .toMap(ConsultationNumberLineItem::getColumn, this::toColumnDto)));
-    return group;
+    return singletonList(group);
   }
 
   private ConsultationNumberColumnDto toColumnDto(ConsultationNumberLineItem lineItem) {

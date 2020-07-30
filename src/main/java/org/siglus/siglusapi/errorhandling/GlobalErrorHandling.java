@@ -15,14 +15,16 @@
 
 package org.siglus.siglusapi.errorhandling;
 
+import static org.siglus.common.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
+
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
-import javax.validation.ConstraintViolation;
 import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
 import org.siglus.common.util.Message;
+import org.siglus.common.util.Message.LocalizedMessage;
+import org.siglus.siglusapi.errorhandling.message.ValidationFailMessage;
 import org.siglus.siglusapi.exception.NotAcceptableException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -87,14 +89,10 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
   @ExceptionHandler(javax.validation.ConstraintViolationException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ResponseBody
-  public Message.LocalizedMessage handleConstraintViolationException(
+  public ValidationFailMessage handleConstraintViolationException(
       javax.validation.ConstraintViolationException ex) {
-    Set<ConstraintViolation<?>> constraintViolations = ex.getConstraintViolations();
-    String message = constraintViolations.stream()
-        .findFirst()
-        .map(ConstraintViolation::getMessage)
-        .orElse(null);
-    return getLocalizedMessage(new Message(message));
+    LocalizedMessage localizedMessage = getLocalizedMessage(new Message(ERROR_VALIDATION_FAIL));
+    return new ValidationFailMessage(localizedMessage, ex.getConstraintViolations());
   }
 
 }

@@ -21,50 +21,22 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
-@Entity
-@Getter
-@Setter
 @EqualsAndHashCode(callSuper = false)
-@AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Entity
 @Table(name = "patient_line_item_drafts", schema = "siglusintegration")
-public class PatientLineItemDraft extends BaseEntity {
-
-  @ManyToOne(cascade = CascadeType.REFRESH)
-  @JoinColumn(name = "requisitionDraftId")
-  private RequisitionDraft requisitionDraft;
-
-  private UUID patientLineItemId;
-
-  private UUID requisitionId;
-
-  @Column(name = "groupname")
-  private String group;
-
-  @Column(name = "columnname")
-  private String column;
-
-  private Integer value;
+public class PatientLineItemDraft extends AbstractUsageLineItemDraft {
 
   public static List<PatientLineItemDraft> from(RequisitionDraft draft,
       SiglusRequisitionDto requisitionDto) {

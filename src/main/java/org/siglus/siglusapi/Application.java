@@ -134,7 +134,7 @@ public class Application {
     return messageSource;
   }
 
-  // copy from stockmanagement Application.java start
+  // copy fromGroups stockmanagement Application.java start
 
   /**
    * Creates new MessageSource.
@@ -150,9 +150,9 @@ public class Application {
     messageSource.setUseCodeAsDefaultMessage(true);
     return messageSource;
   }
-  // copy from stockmanagement Application.java end
+  // copy fromGroups stockmanagement Application.java end
 
-  // copy from requisition Application.java start
+  // copy fromGroups requisition Application.java start
 
   /**
    * Creates new MessageSource.
@@ -172,9 +172,9 @@ public class Application {
   public Clock clock() {
     return Clock.system(ZoneId.of(timeZoneId));
   }
-  // copy from requisition Application.java end
+  // copy fromGroups requisition Application.java end
 
-  // copy from referencedata Application.java start
+  // copy fromGroups referencedata Application.java start
   /**
    * Create and return an instance of JaVers precisely configured as necessary.
    * This is particularly helpful for getting JaVers to create and use tables
@@ -230,9 +230,9 @@ public class Application {
     redisTemplate.setConnectionFactory(factory);
     return redisTemplate;
   }
-  // copy from referencedata Application.java end
+  // copy fromGroups referencedata Application.java end
 
-  // copy from fulfillment Application.java start
+  // copy fromGroups fulfillment Application.java start
 
   /**
    * Creates new camelContext.
@@ -263,7 +263,7 @@ public class Application {
     messageSource.setUseCodeAsDefaultMessage(true);
     return messageSource;
   }
-  // copy from fulfillment Application.java end
+  // copy fromGroups fulfillment Application.java end
 
   @Bean
   public AuditorAware<UUID> auditorAware(SiglusAuthenticationHelper authenticationHelper) {

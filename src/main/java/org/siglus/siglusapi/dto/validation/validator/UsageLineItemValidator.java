@@ -18,7 +18,6 @@ package org.siglus.siglusapi.dto.validation.validator;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -99,16 +98,7 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
 
   protected abstract boolean checkEnable(RequisitionTemplateExtension templateExtension);
 
-  protected abstract boolean isPlural();
-
-  protected G getUploadedGroup(@SuppressWarnings("unused") SiglusRequisitionDto uploadedValue) {
-    return null;
-  }
-
-  protected Collection<G> getUploadedGroups(
-      @SuppressWarnings("unused") SiglusRequisitionDto uploadedValue) {
-    return Collections.emptyList();
-  }
+  protected abstract Collection<G> getUploadedGroups(SiglusRequisitionDto uploadedValue);
 
   protected abstract int mapColumnToInt(C column);
 
@@ -122,27 +112,13 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
         .findByRequisitionTemplateId(templateId).stream()
         .filter(sectionTemplate -> sectionTemplate.getCategory() == usageCategory)
         .collect(Collectors.toMap(UsageTemplateColumnSection::getName, Function.identity()));
-    Map<String, G> uploadedGroupMap;
-    if (isPlural()) {
-      Collection<G> uploadedGroups = getUploadedGroups(uploadedValue);
-      uploadedGroupMap = uploadedGroups.stream()
-          .collect(Collectors.toMap(G::getName, Function.identity(),
-              (oldValue, newValue) -> {
-                throw new IllegalStateException(String.format("Duplicate key %s", oldValue));
-              }, LinkedHashMap::new)
-          );
-    } else {
-      G uploadedGroup = getUploadedGroup(uploadedValue);
-      if (uploadedGroup == null) {
-        context
-            .buildConstraintViolationWithTemplate("{javax.validation.constraints.NotNull.message}")
-            .addPropertyNode(propertyPath)
-            .addConstraintViolation();
-        return false;
-      }
-      uploadedGroupMap = new HashMap<>(1);
-      uploadedGroupMap.put(uploadedGroup.getName(), uploadedGroup);
-    }
+    Collection<G> uploadedGroups = getUploadedGroups(uploadedValue);
+    Map<String, G> uploadedGroupMap = uploadedGroups.stream()
+        .collect(Collectors.toMap(G::getName, Function.identity(),
+            (oldValue, newValue) -> {
+              throw new IllegalStateException(String.format("Duplicate key %s", oldValue));
+            }, LinkedHashMap::new)
+        );
     int index = 0;
     for (Entry<String, UsageTemplateColumnSection> group : storedGroupMap.entrySet()) {
       int groupIndex = index++;
@@ -227,11 +203,7 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
           .buildConstraintViolationWithTemplate(
               "{siglus.validation.requisition.patientLineItems.columns.missingColumn}")
           .addPropertyNode(propertyPath).addPropertyNode("columns");
-      if (isPlural()) {
-        propertyNode.inIterable().atIndex(groupIndex).addConstraintViolation();
-      } else {
-        propertyNode.addConstraintViolation();
-      }
+      propertyNode.inIterable().atIndex(groupIndex).addConstraintViolation();
       return false;
     }
     // not need to check each value's overflow, json framework will do the job

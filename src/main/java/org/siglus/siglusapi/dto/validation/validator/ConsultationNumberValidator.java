@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.validation.validator;
 
+import java.util.Collection;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
@@ -47,13 +48,9 @@ public class ConsultationNumberValidator extends UsageLineItemValidator
   }
 
   @Override
-  protected boolean isPlural() {
-    return false;
-  }
-
-  @Override
-  protected ConsultationNumberGroupDto getUploadedGroup(SiglusRequisitionDto uploadedValue) {
-    return uploadedValue.getConsultationNumberLineItem();
+  protected Collection<ConsultationNumberGroupDto> getUploadedGroups(
+      SiglusRequisitionDto uploadedValue) {
+    return uploadedValue.getConsultationNumberLineItems();
   }
 
   @Override

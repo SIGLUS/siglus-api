@@ -26,7 +26,7 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.provider.token.UserAuthenticationConverter;
 
 /**
- * Implementation of {@link UserAuthenticationConverter}. Converts from an Authentication
+ * Implementation of {@link UserAuthenticationConverter}. Converts fromGroups an Authentication
  * using only referencedata user id.
  *
  */

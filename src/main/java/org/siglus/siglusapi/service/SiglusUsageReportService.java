@@ -32,9 +32,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
-import javax.validation.GroupSequence;
 import javax.validation.ValidatorFactory;
-import javax.validation.groups.Default;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
@@ -57,6 +55,7 @@ import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusUsageTemplateDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
+import org.siglus.siglusapi.dto.validation.group.sequence.RequisitionActionSequence;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -113,19 +112,10 @@ public class SiglusUsageReportService {
     }
   }
 
-  public interface Extended {
-
-  }
-
-  @GroupSequence({Default.class, Extended.class})
-  public interface MySequence {
-
-  }
-
   public SiglusRequisitionDto saveUsageReportWithValidation(SiglusRequisitionDto requisition,
       RequisitionV2Dto updatedDto) {
     Set<ConstraintViolation<SiglusRequisitionDto>> constraintViolations =
-        validatorFactory.getValidator().validate(requisition);
+        validatorFactory.getValidator().validate(requisition, RequisitionActionSequence.class);
     if (!constraintViolations.isEmpty()) {
       throw new ConstraintViolationException(constraintViolations);
     }

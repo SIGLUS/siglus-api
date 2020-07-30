@@ -64,9 +64,9 @@ public class SiglusApprovedProductReferenceDataService extends
   private ProgramOrderableRepository programOrderableRepository;
 
   /**
-   * Retrieves all facility approved products from the reference data service, based on the provided
-   * facility and full supply flag. It can be optionally filtered by the program ID. The result is
-   * wrapped to a separate class to improve the performance
+   * Retrieves all facility approved products fromGroups the reference data service, based on the
+   * provided facility and full supply flag. It can be optionally filtered by the program ID. The
+   * result is wrapped to a separate class to improve the performance
    *
    * @param facilityId id of the facility
    * @param programId  id of the program

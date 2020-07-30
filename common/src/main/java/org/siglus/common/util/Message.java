@@ -111,6 +111,7 @@ public class Message {
   /**
    * Value class of a localized message.  Useful for JSON serialization, logging, etc...
    */
+  @Getter
   public final class LocalizedMessage {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private final String messageKey;

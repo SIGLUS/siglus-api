@@ -48,27 +48,28 @@ public class ConsultationNumberDataProcessor implements UsageReportDataProcessor
       List<UsageTemplateColumnSection> sectionTemplates) {
     List<ConsultationNumberLineItem> saved = createLineItemsFromTemplate(requisition.getId(),
         sectionTemplates);
-    requisition.setConsultationNumberLineItem(mapper.from(saved));
+    requisition.setConsultationNumberLineItems(mapper.fromLineItems(saved));
   }
 
   @Override
   public void get(SiglusRequisitionDto requisition) {
     requisition
-        .setConsultationNumberLineItem(mapper.from(repo.findByRequisitionId(requisition.getId())));
+        .setConsultationNumberLineItems(
+            mapper.fromLineItems(repo.findByRequisitionId(requisition.getId())));
   }
 
   @Override
   public void update(SiglusRequisitionDto requisition,
       SiglusRequisitionDto siglusRequisitionUpdatedDto) {
     List<ConsultationNumberLineItem> lineItems =
-        mapper.from(requisition.getConsultationNumberLineItem());
+        mapper.fromGroups(requisition.getConsultationNumberLineItems());
     for (ConsultationNumberLineItem lineItem : lineItems) {
       lineItem.setRequisitionId(requisition.getId());
     }
 
     List<ConsultationNumberLineItem> updated = repo.save(lineItems);
     log.info("update consultation number line items by requisition id: {}", requisition.getId());
-    siglusRequisitionUpdatedDto.setConsultationNumberLineItem(mapper.from(updated));
+    siglusRequisitionUpdatedDto.setConsultationNumberLineItems(mapper.fromLineItems(updated));
   }
 
   @Override

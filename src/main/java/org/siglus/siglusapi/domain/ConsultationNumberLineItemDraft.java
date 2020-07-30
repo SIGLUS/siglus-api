@@ -16,57 +16,31 @@
 package org.siglus.siglusapi.domain;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
 import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 
-@Entity
-@Getter
-@Setter
 @EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Entity
 @Table(name = "consultation_number_line_item_drafts", schema = "siglusintegration")
-public class ConsultationNumberLineItemDraft extends BaseEntity {
-
-  @ManyToOne(cascade = CascadeType.REFRESH)
-  @JoinColumn(name = "requisitionDraftId")
-  private RequisitionDraft requisitionDraft;
-
-  private UUID patientLineItemId;
-
-  private UUID requisitionId;
-
-  @Column(name = "groupname")
-  private String group;
-
-  @Column(name = "columnname")
-  private String column;
-
-  private Integer value;
+public class ConsultationNumberLineItemDraft extends AbstractUsageLineItemDraft {
 
   public static List<ConsultationNumberLineItemDraft> from(RequisitionDraft draft,
       SiglusRequisitionDto requisitionDto) {
-    ConsultationNumberGroupDto group = requisitionDto.getConsultationNumberLineItem();
+    ConsultationNumberGroupDto group = requisitionDto.getConsultationNumberLineItems().stream()
+        .findFirst().orElse(null);
     List<ConsultationNumberLineItemDraft> list = fromGroup(group);
     for (ConsultationNumberLineItemDraft lineItemDraft : list) {
       lineItemDraft.setRequisitionDraft(draft);
@@ -95,7 +69,7 @@ public class ConsultationNumberLineItemDraft extends BaseEntity {
         .collect(Collectors.toList());
   }
 
-  public static ConsultationNumberGroupDto getLineItemDto(
+  public static List<ConsultationNumberGroupDto> getLineItemDto(
       List<ConsultationNumberLineItemDraft> drafts) {
     if (isEmpty(drafts)) {
       return null;
@@ -107,7 +81,7 @@ public class ConsultationNumberLineItemDraft extends BaseEntity {
     group.setColumns(drafts.stream().collect(Collectors
         .toMap(ConsultationNumberLineItemDraft::getColumn,
             ConsultationNumberLineItemDraft::draftToDto)));
-    return group;
+    return singletonList(group);
   }
 
   private static ConsultationNumberColumnDto draftToDto(ConsultationNumberLineItemDraft draft) {

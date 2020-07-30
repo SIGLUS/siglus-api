@@ -16,14 +16,18 @@
 package org.siglus.siglusapi.errorhandling;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.siglus.common.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import javax.validation.ConstraintViolation;
+import javax.validation.Path;
 import org.hibernate.exception.ConstraintViolationException;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +39,8 @@ import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.Message.LocalizedMessage;
+import org.siglus.siglusapi.errorhandling.message.ValidationFailField;
+import org.siglus.siglusapi.errorhandling.message.ValidationFailMessage;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.springframework.context.MessageSource;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -127,20 +133,32 @@ public class GlobalErrorHandlingTest {
   @Test
   public void shouldHandleConstraintViolationException() {
     // given
-    String messageKey = "key";
     Set<ConstraintViolation<?>> violations = new HashSet<>();
     ConstraintViolation<?> violation = mock(ConstraintViolation.class);
-    when(violation.getMessage()).thenReturn(messageKey);
     violations.add(violation);
+    String messageText = "text";
+    when(violation.getMessage()).thenReturn(messageText);
+    String propertyPathText = "propertyPath";
+    Path mockedPath = mock(Path.class);
+    when(mockedPath.toString()).thenReturn(propertyPathText);
+    when(violation.getPropertyPath()).thenReturn(mockedPath);
     javax.validation.ConstraintViolationException ex =
         new javax.validation.ConstraintViolationException(violations);
-    mockMessage(messageKey);
+    mockMessage(ERROR_VALIDATION_FAIL);
 
     // when
-    LocalizedMessage message = errorHandler.handleConstraintViolationException(ex);
+    ValidationFailMessage validationFailMessage = errorHandler
+        .handleConstraintViolationException(ex);
 
     // then
-    assertMessage(message, messageKey);
+    assertEquals(ERROR_VALIDATION_FAIL, validationFailMessage.getMessageKey());
+    assertEquals(ERROR_MESSAGE, validationFailMessage.getMessage());
+    List<ValidationFailField> fields = validationFailMessage.getFields();
+    assertEquals(1, fields.size());
+    ValidationFailField validationFailField = fields.get(0);
+    assertEquals(messageText, validationFailField.getMessage());
+    assertEquals(propertyPathText, validationFailField.getPropertyPath());
+
   }
 
   private void assertMessage(LocalizedMessage localized, String key) {

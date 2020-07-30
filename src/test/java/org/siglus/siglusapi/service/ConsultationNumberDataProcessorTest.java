@@ -116,14 +116,15 @@ public class ConsultationNumberDataProcessorTest {
     List<ConsultationNumberLineItem> savedLineItems =
         singletonList(mock(ConsultationNumberLineItem.class));
     when(repo.save(anyListOf(ConsultationNumberLineItem.class))).thenReturn(savedLineItems);
-    ConsultationNumberGroupDto mappedGroup = mock(ConsultationNumberGroupDto.class);
-    when(mapper.from(savedLineItems)).thenReturn(mappedGroup);
+    List<ConsultationNumberGroupDto> mappedGroups = singletonList(
+        mock(ConsultationNumberGroupDto.class));
+    when(mapper.fromLineItems(savedLineItems)).thenReturn(mappedGroups);
 
     // when
     processor.doInitiate(requisition, asList(nonMatchedTemplate, matchedTemplate));
 
     // then
-    assertEquals(mappedGroup, requisition.getConsultationNumberLineItem());
+    assertEquals(mappedGroups, requisition.getConsultationNumberLineItems());
     verify(repo).save(captor.capture());
     List<ConsultationNumberLineItem> lineItemsToSave = captor.getValue();
     assertEquals(1, lineItemsToSave.size());
@@ -141,14 +142,15 @@ public class ConsultationNumberDataProcessorTest {
     List<ConsultationNumberLineItem> lineItems =
         singletonList(mock(ConsultationNumberLineItem.class));
     when(repo.findByRequisitionId(requisitionId)).thenReturn(lineItems);
-    ConsultationNumberGroupDto mappedGroup = mock(ConsultationNumberGroupDto.class);
-    when(mapper.from(lineItems)).thenReturn(mappedGroup);
+    List<ConsultationNumberGroupDto> mappedGroups = singletonList(
+        mock(ConsultationNumberGroupDto.class));
+    when(mapper.fromLineItems(lineItems)).thenReturn(mappedGroups);
 
     // when
     processor.get(requisition);
 
     // then
-    assertEquals(mappedGroup, requisition.getConsultationNumberLineItem());
+    assertEquals(mappedGroups, requisition.getConsultationNumberLineItems());
   }
 
   @Test
@@ -156,15 +158,17 @@ public class ConsultationNumberDataProcessorTest {
     // given
     SiglusRequisitionDto requisition = new SiglusRequisitionDto();
     requisition.setId(requisitionId);
-    ConsultationNumberGroupDto groupDto = mock(ConsultationNumberGroupDto.class);
-    requisition.setConsultationNumberLineItem(groupDto);
+    List<ConsultationNumberGroupDto> groupDtos = singletonList(
+        mock(ConsultationNumberGroupDto.class));
+    requisition.setConsultationNumberLineItems(groupDtos);
     ConsultationNumberLineItem lineItem = mock(ConsultationNumberLineItem.class);
-    when(mapper.from(groupDto)).thenReturn(singletonList(lineItem));
+    when(mapper.fromGroups(groupDtos)).thenReturn(singletonList(lineItem));
     List<ConsultationNumberLineItem> savedLineItems =
         singletonList(mock(ConsultationNumberLineItem.class));
     when(repo.save(anyListOf(ConsultationNumberLineItem.class))).thenReturn(savedLineItems);
-    ConsultationNumberGroupDto mappedGroup = mock(ConsultationNumberGroupDto.class);
-    when(mapper.from(savedLineItems)).thenReturn(mappedGroup);
+    List<ConsultationNumberGroupDto> mappedGroups = singletonList(
+        mock(ConsultationNumberGroupDto.class));
+    when(mapper.fromLineItems(savedLineItems)).thenReturn(mappedGroups);
     SiglusRequisitionDto requisitionUpdated = new SiglusRequisitionDto();
 
     // when
@@ -175,7 +179,7 @@ public class ConsultationNumberDataProcessorTest {
     List<ConsultationNumberLineItem> lineItemsToUpdate = captor.getValue();
     assertThat(lineItemsToUpdate, hasItems(lineItem));
     verify(lineItem).setRequisitionId(requisitionId);
-    assertEquals(mappedGroup, requisitionUpdated.getConsultationNumberLineItem());
+    assertEquals(mappedGroups, requisitionUpdated.getConsultationNumberLineItems());
   }
 
   @Test

@@ -1155,7 +1155,7 @@ public class SiglusRequisitionService {
       );
     }
     if (Boolean.TRUE.equals(templateExtension.getEnableConsultationNumber())) {
-      dto.setConsultationNumberLineItem(ConsultationNumberLineItemDraft
+      dto.setConsultationNumberLineItems(ConsultationNumberLineItemDraft
           .getLineItemDto(draft.getConsultationNumberLineItemDrafts())
       );
     }

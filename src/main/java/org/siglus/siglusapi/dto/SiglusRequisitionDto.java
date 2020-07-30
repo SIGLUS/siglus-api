@@ -26,13 +26,13 @@ import lombok.EqualsAndHashCode;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.siglus.siglusapi.dto.validation.constraint.ConsultationNumberConstraint;
 import org.siglus.siglusapi.dto.validation.constraint.PatientDataConstraint;
-import org.siglus.siglusapi.service.SiglusUsageReportService.Extended;
+import org.siglus.siglusapi.dto.validation.group.RequisitionActionGroup;
 import org.springframework.beans.BeanUtils;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@PatientDataConstraint(groups = Extended.class)
-@ConsultationNumberConstraint(groups = Extended.class)
+@PatientDataConstraint(groups = RequisitionActionGroup.class)
+@ConsultationNumberConstraint(groups = RequisitionActionGroup.class)
 public class SiglusRequisitionDto extends RequisitionV2Dto {
 
   private Boolean isFinalApproval;
@@ -44,7 +44,8 @@ public class SiglusRequisitionDto extends RequisitionV2Dto {
   @NotNull
   private List<PatientGroupDto> patientLineItems = Collections.emptyList();
   @Valid
-  private ConsultationNumberGroupDto consultationNumberLineItem;
+  @NotNull
+  private List<ConsultationNumberGroupDto> consultationNumberLineItems = Collections.emptyList();
   private SiglusUsageTemplateDto usageTemplate;
   private String requisitionNumber;
 
