@@ -15,9 +15,11 @@
 
 package org.openlmis.fulfillment.repository;
 
+import java.util.List;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.custom.OrderRepositoryCustom;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.repository.query.Param;
 
@@ -26,4 +28,11 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, UUID>
 
   Order findByOrderCode(@Param("orderCode") String orderNumber);
 
+  // [SIGLUS change start]
+  // [change reason]: siglus find can Fulfill Order.
+  @Query(value = "select * "
+      + "from fulfillment.orders "
+      + "where status in ('FULFILLING','PARTIALLY_FULFILLED', 'ORDERED')", nativeQuery = true)
+  List<Order> findCanFulfillOrder();
+  // [SIGLUS change end]
 }

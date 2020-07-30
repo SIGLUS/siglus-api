@@ -69,6 +69,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -223,7 +224,7 @@ public class ProofOfDeliveryController extends BaseController {
       // [change reason]: #401 AC5 If accepted quantity greater than 0 ,
       //                  it can have stock event record.
       // stockEventStockManagementService.submit(event);
-      if (!event.getLineItems().isEmpty()) {
+      if (!CollectionUtils.isEmpty(event.getLineItems())) {
         stockEventStockManagementService.submit(event);
       }
       // [SIGLUS change end]

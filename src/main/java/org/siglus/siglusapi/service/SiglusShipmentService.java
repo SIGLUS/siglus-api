@@ -48,11 +48,11 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 @Slf4j
 @Service
@@ -89,7 +89,7 @@ public class SiglusShipmentService {
     OrderDto orderDto = orderController.getOrder(shipmentDto.getOrder().getId(), null);
     validateOrderStatus(orderDto);
     if (currentDateIsAfterNextPeriodEndDate(orderDto)) {
-      deleteExtensionForCurrentDateAfterNextPeriod(orderDto);
+      revertOrderToCloseStatus(orderRepository.findOne(orderDto.getId()));
       throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
     }
     // save order lineitems
@@ -107,10 +107,8 @@ public class SiglusShipmentService {
     return shipment;
   }
 
-
   @Transactional
-  void deleteExtensionForCurrentDateAfterNextPeriod(OrderDto orderDto) {
-    Order order = orderRepository.findOne(orderDto.getId());
+  void revertOrderToCloseStatus(Order order) {
     draftService.deleteOrderLineItemAndInitialedExtension(order);
     order.setStatus(OrderStatus.CLOSED);
     log.info("save closed order: {}", order);
@@ -124,16 +122,23 @@ public class SiglusShipmentService {
   }
 
   private boolean currentDateIsAfterNextPeriodEndDate(OrderDto orderDto) {
-    ProcessingPeriodDto period = orderDto.getProcessingPeriod();
-    Pageable pageable = new PageRequest(0, 1);
-    Page<org.openlmis.requisition.dto.ProcessingPeriodDto> periodDtos = periodService
-        .searchProcessingPeriods(period.getProcessingSchedule().getId(),
-            null,  null, period.getEndDate().plusDays(1),
-            null,
-            null, pageable);
     LocalDate currentDate = LocalDate.now(ZoneId.of(timeZoneId));
-    return !periodDtos.getContent().isEmpty() && periodDtos.getContent().get(0).getEndDate()
-        .isBefore(currentDate);
+    ProcessingPeriodDto period = orderDto.getProcessingPeriod();
+    List<org.openlmis.requisition.dto.ProcessingPeriodDto> periodDtos =
+        getNextProcessingPeriodDto(period);
+    return !CollectionUtils.isEmpty(periodDtos)
+        && periodDtos.get(0).getEndDate().isBefore(currentDate);
+  }
+
+  private List<org.openlmis.requisition.dto.ProcessingPeriodDto> getNextProcessingPeriodDto(
+      ProcessingPeriodDto period) {
+    Pageable pageable = new PageRequest(0, 1);
+    return periodService
+        .searchProcessingPeriods(period.getProcessingSchedule().getId(),
+            null, null, period.getEndDate().plusDays(1),
+            null,
+            null, pageable)
+        .getContent();
   }
 
   private void createSubOrder(ShipmentDto shipmentDto) {

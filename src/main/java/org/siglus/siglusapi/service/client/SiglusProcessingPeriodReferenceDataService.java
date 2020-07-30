@@ -17,6 +17,8 @@ package org.siglus.siglusapi.service.client;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.siglus.common.service.client.BaseReferenceDataService;
@@ -24,6 +26,7 @@ import org.siglus.common.util.RequestParameters;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 @Service
 public class SiglusProcessingPeriodReferenceDataService
@@ -47,6 +50,13 @@ public class SiglusProcessingPeriodReferenceDataService
 
   public ProcessingPeriodDto saveProcessingPeriod(ProcessingPeriodDto processingPeriodDto) {
     return postResult("", processingPeriodDto, getResultClass());
+  }
+
+  public List<ProcessingPeriodDto> findByIds(Collection<UUID> ids) {
+    if (CollectionUtils.isEmpty(ids)) {
+      return Collections.emptyList();
+    }
+    return getPage(RequestParameters.init().set("id", ids)).getContent();
   }
 
   public Page<ProcessingPeriodDto> searchProcessingPeriods(
