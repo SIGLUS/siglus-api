@@ -38,7 +38,6 @@ import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -69,7 +68,10 @@ public class NearExpiryNotifier {
    * Check stock cards with lots that have a certain expiration date. If any are found, notify stock
    * card owners.
    */
-  @Scheduled(cron = "${stockmanagement.nearExpiry.cron}", zone = "${time.zoneId}")
+  // [SIGLUS change start]
+  // [change reason]: it will be fire in self service
+  // @Scheduled(cron = "${stockmanagement.nearExpiry.cron}", zone = "${time.zoneId}")
+  // [SIGLUS change end]
   public void checkNearExpiryAndNotify() {
     // Expiration of six months from today, OLMIS-3186
     expirationDate = LocalDate.now(ZoneId.of(timeZoneId)).plusMonths(6);
