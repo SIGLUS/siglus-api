@@ -319,7 +319,7 @@ public class SiglusOrderServiceTest {
     dto.setStartDate(current.minusMonths(1));
     dto.setEndDate(current.minusDays(1));
     Page<ProcessingPeriodDto> periodDtos = Pagination
-        .getPage(Arrays.asList(dto));
+        .getPage(Collections.singletonList(dto));
     when(periodService
         .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
         .thenReturn(periodDtos);

@@ -68,17 +68,12 @@ public class SiglusShipmentService {
   @Autowired
   private OrderController orderController;
 
-  @Autowired
-  private SiglusShipmentDraftService draftService;
-
-
-  @Transactional(noRollbackFor = ValidationMessageException.class)
+  @Transactional
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
     OrderDto orderDto = orderController.getOrder(shipmentDto.getOrder().getId(), null);
     validateOrderStatus(orderDto);
     if (siglusOrderService.currentDateIsAfterNextPeriodEndDate(orderDto)) {
       if (siglusOrderService.isSuborder(orderDto.getExternalId())) {
-        revertOrderToCloseStatus(orderRepository.findOne(orderDto.getId()));
         throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
       }
       return createSubOrderAndShipment(false, shipmentDto);
@@ -95,13 +90,6 @@ public class SiglusShipmentService {
     ShipmentDto shipment = createShipment(shipmentDto);
     notificationService.postConfirmShipment(shipment);
     return shipment;
-  }
-
-  void revertOrderToCloseStatus(Order order) {
-    draftService.deleteOrderLineItemAndInitialedExtension(order);
-    order.setStatus(OrderStatus.CLOSED);
-    log.info("save closed order: {}", order);
-    orderRepository.save(order);
   }
 
   private void validateOrderStatus(OrderDto orderDto) {

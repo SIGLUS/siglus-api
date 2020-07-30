@@ -61,7 +61,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
   private ArgumentCaptor<Order> orderArgumentCaptor;
 
   @Mock
-  private SiglusShipmentService shipmentService;
+  private SiglusOrderService orderService;
 
   @Mock
   private OrderRepository orderRepository;
@@ -131,7 +131,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
     siglusOrderCloseSchedulerService.closeFulfillmentIfCurrentDateIsAfterNextPeriodEndDate();
 
     // then
-    verify(shipmentService).revertOrderToCloseStatus(orderArgumentCaptor.capture());
+    verify(orderService).revertOrderToCloseStatus(orderArgumentCaptor.capture());
     Order convertOrder = orderArgumentCaptor.getValue();
     assertEquals(order.getId(), convertOrder.getId());
   }
@@ -181,7 +181,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
     siglusOrderCloseSchedulerService.closeFulfillmentIfCurrentDateIsAfterNextPeriodEndDate();
 
     // then
-    verify(shipmentService, times(0)).revertOrderToCloseStatus(orderArgumentCaptor.capture());
+    verify(orderService, times(0)).revertOrderToCloseStatus(orderArgumentCaptor.capture());
   }
 
   @Test
@@ -224,7 +224,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
     siglusOrderCloseSchedulerService.closeFulfillmentIfCurrentDateIsAfterNextPeriodEndDate();
 
     // then
-    verify(shipmentService, times(0)).revertOrderToCloseStatus(orderArgumentCaptor.capture());
+    verify(orderService, times(0)).revertOrderToCloseStatus(orderArgumentCaptor.capture());
   }
 
 }

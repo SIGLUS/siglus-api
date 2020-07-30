@@ -45,7 +45,7 @@ import org.springframework.stereotype.Service;
 public class SiglusOrderCloseSchedulerService {
 
   @Autowired
-  private SiglusShipmentService shipmentService;
+  private SiglusOrderService orderService;
 
   @Autowired
   private OrderRepository orderRepository;
@@ -78,7 +78,7 @@ public class SiglusOrderCloseSchedulerService {
       List<CompletableFuture<Void>> futures = Lists.newArrayList();
       for (Order order : needClosedOrders) {
         CompletableFuture<Void> future = CompletableFuture.runAsync(
-            () -> shipmentService.revertOrderToCloseStatus(order), executorService);
+            () -> orderService.revertOrderToCloseStatus(order), executorService);
         futures.add(future);
       }
       futures.forEach(CompletableFuture::join);

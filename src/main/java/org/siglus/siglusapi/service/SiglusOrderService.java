@@ -130,6 +130,9 @@ public class SiglusOrderService {
   @Autowired
   private SiglusProcessingPeriodReferenceDataService periodService;
 
+  @Autowired
+  private SiglusShipmentDraftService draftService;
+
   @Value("${time.zoneId}")
   private String timeZoneId;
 
@@ -142,6 +145,10 @@ public class SiglusOrderService {
     OrderStatusDto orderStatusDto = new OrderStatusDto();
     orderStatusDto.setClosed(currentDateIsAfterNextPeriodEndDate(orderDto));
     orderStatusDto.setSuborder(isSuborder(orderDto.getExternalId()));
+    if (orderStatusDto.isClosed() && orderStatusDto.isSuborder()) {
+      Order order = orderRepository.findOne(orderId);
+      revertOrderToCloseStatus(order);
+    }
     return orderStatusDto;
   }
 
@@ -157,6 +164,13 @@ public class SiglusOrderService {
         getNextProcessingPeriodDto(period);
     return !CollectionUtils.isEmpty(periodDtos)
         && periodDtos.get(0).getEndDate().isBefore(currentDate);
+  }
+
+  void revertOrderToCloseStatus(Order order) {
+    draftService.deleteOrderLineItemAndInitialedExtension(order);
+    order.setStatus(OrderStatus.CLOSED);
+    log.info("save closed order: {}", order);
+    orderRepository.save(order);
   }
 
   public SiglusOrderDto searchOrderById(UUID orderId) {

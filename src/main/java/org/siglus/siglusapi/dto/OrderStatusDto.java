@@ -18,12 +18,14 @@ package org.siglus.siglusapi.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Getter
 public class OrderStatusDto {
   private boolean isSuborder;
   private boolean isClosed;
