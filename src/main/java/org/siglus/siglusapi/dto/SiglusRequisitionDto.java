@@ -46,6 +46,8 @@ public class SiglusRequisitionDto extends RequisitionV2Dto {
   @Valid
   @NotNull
   private List<ConsultationNumberGroupDto> consultationNumberLineItems = Collections.emptyList();
+  private List<RegimenLineDto> regimenLineItems = newArrayList();
+  private List<RegimenDto> customRegimens = newArrayList();
   private SiglusUsageTemplateDto usageTemplate;
   private String requisitionNumber;
 
