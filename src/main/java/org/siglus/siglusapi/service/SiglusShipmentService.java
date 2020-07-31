@@ -29,6 +29,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
@@ -91,6 +92,8 @@ public class SiglusShipmentService {
       deleteExtensionForCurrentDateAfterNextPeriod(orderDto);
       throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
     }
+    // save order lineitems
+    updateOrderLineItems(shipmentDto.getOrder());
     return createSubOrderAndShipment(isSubOrder, shipmentDto);
   }
 
@@ -218,6 +221,24 @@ public class SiglusShipmentService {
       shipmentValue += shipment.getQuantityShipped();
     }
     return shipmentValue;
+  }
+
+  private void updateOrderLineItems(OrderObjectReferenceDto orderDto) {
+    Order order = orderRepository.findOne(orderDto.getId());
+    List<OrderLineItemDto> orderLineItemDtos = orderDto.getOrderLineItems();
+
+    List<OrderLineItem> original = order.getOrderLineItems();
+
+    orderLineItemDtos.stream()
+        .filter(orderLineItemDto -> orderLineItemDto.getId() == null)
+        .map(OrderLineItem::newInstance)
+        .forEach(orderLineItem -> {
+          orderLineItem.setOrder(order);
+          original.add(orderLineItem);
+        });
+
+    log.info("update orderId: {}, orderLineItem: {}", order.getId(), original);
+    orderRepository.save(order);
   }
 
 }

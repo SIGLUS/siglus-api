@@ -20,6 +20,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.common.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
@@ -214,7 +215,7 @@ public class SiglusShipmentServiceTest {
     siglusShipmentService.createOrderAndShipment(false, shipmentDto);
 
     // then
-    verify(orderRepository).save(orderArgumentCaptor.capture());
+    verify(orderRepository, times(2)).save(orderArgumentCaptor.capture());
     verify(lineItemExtensionRepository).delete(lineItemExtensionArgumentCaptor.capture());
     verify(shipmentController).createShipment(shipmentDtoArgumentCaptor.capture());
     Order orderToSave = orderArgumentCaptor.getValue();
@@ -255,7 +256,7 @@ public class SiglusShipmentServiceTest {
     siglusShipmentService.createOrderAndShipment(false, shipmentDto);
 
     // then
-    verify(orderRepository).save(orderArgumentCaptor.capture());
+    verify(orderRepository, times(2)).save(orderArgumentCaptor.capture());
     verify(lineItemExtensionRepository).delete(lineItemExtensionArgumentCaptor.capture());
     verify(shipmentController).createShipment(shipmentDtoArgumentCaptor.capture());
     Order orderToSave = orderArgumentCaptor.getValue();
@@ -302,6 +303,7 @@ public class SiglusShipmentServiceTest {
     shipmentLineItem1.setOrderable(orderReferenceDto);
     shipmentLineItem1.setQuantityShipped(Long.valueOf(50));
     shipmentDto.setLineItems(Arrays.asList(shipmentLineItem1));
+    when(orderRepository.findOne(any())).thenReturn(mockOrder());
 
     // when
     siglusShipmentService.createOrderAndShipment(true, shipmentDto);
@@ -323,6 +325,7 @@ public class SiglusShipmentServiceTest {
     order.setOrderLineItems(Arrays.asList(lineItem));
     shipmentDto.setOrder(order);
     shipmentDto.setLineItems(new ArrayList<>());
+    when(orderRepository.findOne(any())).thenReturn(mockOrder());
 
     // when
     siglusShipmentService.createOrderAndShipment(true, shipmentDto);
@@ -387,5 +390,12 @@ public class SiglusShipmentServiceTest {
     dto.setStartDate(LocalDate.now());
     dto.setEndDate(LocalDate.now());
     return dto;
+  }
+
+  private Order mockOrder() {
+    Order order = new Order();
+    order.setId(orderId);
+    order.setOrderLineItems(newArrayList());
+    return order;
   }
 }
