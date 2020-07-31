@@ -67,7 +67,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
         .map(RegimenDto::from)
         .collect(Collectors.toList());
 
-    List<RegimenLineItem> regimenLineItems = createTestConsumptionLineItems(siglusRequisitionDto,
+    List<RegimenLineItem> regimenLineItems = createRegimenLineItems(siglusRequisitionDto,
         templateColumnSections, defaultRegimenDtos);
 
     log.info("save regimen line items by requisition id: {}",
@@ -116,7 +116,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     return !siglusRequisitionDto.getTemplate().getExtension().isEnableRegimen();
   }
 
-  private List<RegimenLineItem> createTestConsumptionLineItems(
+  private List<RegimenLineItem> createRegimenLineItems(
       SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections,
       List<RegimenDto> defaultRegimenDtos
@@ -133,7 +133,6 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
             || REFERENCE_DATA.equals(templateColumn.getSource())) {
           continue;
         }
-
 
         regimenLineItems.add(RegimenLineItem.builder()
             .requisitionId(siglusRequisitionDto.getId())
