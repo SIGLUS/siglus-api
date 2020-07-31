@@ -34,6 +34,8 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "order_line_item_extension", schema = "siglusintegration")
 public class OrderLineItemExtension extends BaseEntity {
 
+  private UUID orderId;
+
   private UUID orderLineItemId;
 
   private boolean skipped;

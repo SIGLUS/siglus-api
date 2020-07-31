@@ -24,6 +24,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface OrderLineItemExtensionRepository extends
     JpaRepository<OrderLineItemExtension, UUID> {
 
+  List<OrderLineItemExtension> findByOrderId(UUID orderId);
+
   List<OrderLineItemExtension> findByOrderLineItemIdIn(
       Collection<UUID> orderLineItemIds);
 }

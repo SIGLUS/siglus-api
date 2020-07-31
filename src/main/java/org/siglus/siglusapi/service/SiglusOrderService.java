@@ -266,6 +266,7 @@ public class SiglusOrderService {
     List<OrderLineItemExtension> extensions = new ArrayList<>();
     for (OrderLineItem.Importer importer : orderDto.getOrderLineItems()) {
       OrderLineItemExtension extension = new OrderLineItemExtension();
+      extension.setOrderId(orderDto.getId());
       extension.setOrderLineItemId(importer.getId());
       extension.setPartialFulfilledQuantity(
           orderLineItemDtoMap.get(importer.getOrderableIdentity().getId())

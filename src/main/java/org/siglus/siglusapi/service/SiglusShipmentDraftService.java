@@ -25,7 +25,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
-import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
@@ -69,11 +68,8 @@ public class SiglusShipmentDraftService {
   }
 
   public void deleteOrderLineItemAndInitialedExtension(Order order) {
-    List<OrderLineItem> lineItems = order.getOrderLineItems();
-    Set<UUID> lineItemIds = lineItems.stream().map(OrderLineItem::getId)
-        .collect(Collectors.toSet());
     List<OrderLineItemExtension> extensions = lineItemExtensionRepository
-        .findByOrderLineItemIdIn(lineItemIds);
+        .findByOrderId(order.getId());
     deleteAddedOrderLineItemsInOrder(extensions, order);
     Set<OrderLineItemExtension> addedLineItemExtensions = deleteAddedLineItemsInExtension(
         extensions);
@@ -98,16 +94,19 @@ public class SiglusShipmentDraftService {
     Map<UUID, Boolean> lineItemSkippedMap = lineItems.stream()
         .collect(toMap(OrderLineItemDto::getId, OrderLineItemDto::isSkipped));
     List<OrderLineItemExtension> extensionsToUpdate = newArrayList();
+    UUID orderId = draftDto.getOrder().getId();
     lineItems.forEach(lineItem -> {
       OrderLineItemExtension extension = lineItemExtensionMap.get(lineItem.getId());
       boolean skipped = lineItemSkippedMap.get(lineItem.getId());
       lineItem.setSkipped(skipped);
       if (null != extension) {
         extension.setSkipped(lineItem.isSkipped());
+        extension.setOrderId(orderId);
         extensionsToUpdate.add(extension);
       } else {
         extensionsToUpdate.add(
             OrderLineItemExtension.builder()
+                .orderId(orderId)
                 .orderLineItemId(lineItem.getId())
                 .skipped(lineItem.isSkipped())
                 .added(addedLineItemIds.contains(lineItem.getId()))
