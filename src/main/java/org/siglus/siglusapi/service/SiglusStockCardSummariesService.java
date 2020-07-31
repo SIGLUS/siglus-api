@@ -170,7 +170,7 @@ public class SiglusStockCardSummariesService {
     return stockCard -> !archivedProducts.contains(stockCard.getOrderableId().toString());
   }
 
-  private Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName,
+  public Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName,
       String facilityId) {
     Set<UUID> programIds = newHashSet();
     Set<PermissionStringDto> permissionStrings = permissionService

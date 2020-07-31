@@ -145,7 +145,7 @@ public class StockCardSummariesService extends StockCardBaseService {
         .findByFacilityIdProgramId(params.getFacilityId(), params.getProgramId());
 
     profiler.start("FIND_STOCK_CARD_BY_PROGRAM_AND_FACILITY");
-    
+
     List<StockCard> stockCards = calculatedStockOnHandService
         .getStockCardsWithStockOnHand(params.getProgramId(), params.getFacilityId(),
                                         params.getAsOfDate());
@@ -168,6 +168,25 @@ public class StockCardSummariesService extends StockCardBaseService {
   public List<StockCardDto> findStockCards(UUID programId, UUID facilityId) {
     return cardsToDtos(stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId));
   }
+
+  // [SIGLUS change start]
+  // [change reason]: find stock cards by programIds to improve performance
+  /**
+   * Find all stock cards by program ids and facility id. No paging, all in one.
+   * Used for generating pdf file of all stock cards.
+   *
+   * @param programIds  program ids.
+   * @param facilityId facility id.
+   * @return found stock cards.
+   */
+  public List<StockCardDto> findStockCards(Set<UUID> programIds, UUID facilityId) {
+    List<StockCard> cards = new ArrayList<>();
+    for (UUID programId: programIds) {
+      cards.addAll(stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId));
+    }
+    return cardsToDtos(cards);
+  }
+  // [SIGLUS change end]
 
   /**
    * Get a page of stock cards.
