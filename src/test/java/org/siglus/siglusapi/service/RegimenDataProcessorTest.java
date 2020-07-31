@@ -132,7 +132,7 @@ public class RegimenDataProcessorTest {
         .thenReturn(newArrayList(mockCustomRegimen(),mockNoCustomRegimen()));
     when(regimenRepository.findAllByProgramIdInAndActiveTrue(any()))
         .thenReturn(newArrayList(mockNoCustomRegimen()));
-    when(regimenRepository.findAllByProgramIdInAndActiveTrueAndIsCustom(any()))
+    when(regimenRepository.findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen()));
 
     // when

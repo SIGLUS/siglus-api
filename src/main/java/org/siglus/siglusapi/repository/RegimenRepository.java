@@ -25,6 +25,6 @@ public interface RegimenRepository
 
   List<Regimen> findAllByProgramIdInAndActiveTrue(List<UUID> programIds);
 
-  List<Regimen> findAllByProgramIdInAndActiveTrueAndIsCustom(List<UUID> programIds);
+  List<Regimen> findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(List<UUID> programIds);
 
 }
