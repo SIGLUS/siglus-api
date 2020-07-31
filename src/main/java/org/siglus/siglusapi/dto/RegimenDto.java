@@ -16,14 +16,12 @@
 package org.siglus.siglusapi.dto;
 
 import java.util.UUID;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.openlmis.requisition.dto.BaseDto;
 import org.siglus.siglusapi.domain.Regimen;
 import org.springframework.beans.BeanUtils;
 
-@Getter
-@Setter
+@Data
 public class RegimenDto extends BaseDto {
 
   private String code;

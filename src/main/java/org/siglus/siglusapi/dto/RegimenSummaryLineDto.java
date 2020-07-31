@@ -24,42 +24,44 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.RegimenLineItem;
+import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegimenLineDto {
+public class RegimenSummaryLineDto {
 
-  private RegimenDto regimen;
+  private RegimenDispatchLineDto regimenDispatchLine;
 
   // column: value
   private Map<String, RegimenColumnDto> columns;
 
-  public static List<RegimenLineDto> from(List<RegimenLineItem> lineItems,
-      Map<UUID, RegimenDto> regimenDtoMap) {
-    List<RegimenLineDto> regimenLineDtos = newArrayList();
+  public static List<RegimenSummaryLineDto> from(List<RegimenSummaryLineItem> lineItems,
+      Map<UUID, RegimenDispatchLineDto> regimenDispatchLineDtoMap) {
+    List<RegimenSummaryLineDto> regimenSummaryLineDtos = newArrayList();
 
-    Map<UUID, List<RegimenLineItem>> groupByRegimen =
-        lineItems.stream().collect(Collectors.groupingBy(RegimenLineItem::getRegimenId));
+    Map<UUID, List<RegimenSummaryLineItem>> groupByRegimenDispatchLine = lineItems.stream()
+        .collect(Collectors.groupingBy(RegimenSummaryLineItem::getRegimenDispatchLineId));
 
-    groupByRegimen.forEach((regimenId, regimenLineItems) -> {
+    groupByRegimenDispatchLine.forEach((regimenDispatchLineId, regimenSummaryLineItems) -> {
 
-      Map<String, RegimenColumnDto> columnMap = regimenLineItems.stream()
-          .collect(Collectors.toMap(RegimenLineItem::getColumn,
-              regimenLineItem -> RegimenColumnDto.builder()
-                  .id(regimenLineItem.getId())
-                  .value(regimenLineItem.getValue())
+      Map<String, RegimenColumnDto> columnMap = regimenSummaryLineItems.stream()
+          .collect(Collectors.toMap(RegimenSummaryLineItem::getColumn,
+              regimenSummaryLineItem -> RegimenColumnDto.builder()
+                  .id(regimenSummaryLineItem.getId())
+                  .value(regimenSummaryLineItem.getValue())
                   .build()));
 
-      RegimenLineDto lineDto = new RegimenLineDto();
+      RegimenSummaryLineDto lineDto = new RegimenSummaryLineDto();
       lineDto.setColumns(columnMap);
-      lineDto.setRegimen(regimenDtoMap.get(regimenId));
+      lineDto.setRegimenDispatchLine(
+          regimenDispatchLineDtoMap.get(regimenDispatchLineId));
 
-      regimenLineDtos.add(lineDto);
+      regimenSummaryLineDtos.add(lineDto);
     });
 
-    return regimenLineDtos;
+    return regimenSummaryLineDtos;
 
   }
+
 }

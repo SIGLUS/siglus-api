@@ -1,0 +1,76 @@
+/*
+ * This program is part of the OpenLMIS logistics management information system platform software.
+ * Copyright © 2017 VillageReach
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details. You should have received a copy of
+ * the GNU Affero General Public License along with this program. If not, see
+ * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
+ */
+
+package org.siglus.siglusapi.domain;
+
+import static com.google.common.collect.Lists.newArrayList;
+
+import java.util.List;
+import java.util.UUID;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.RegimenDispatchLineDto;
+import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
+
+@Entity
+@Data
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "regimen_summary_line_items", schema = "siglusintegration")
+public class RegimenSummaryLineItem extends BaseEntity {
+
+  private UUID requisitionId;
+
+  private UUID regimenDispatchLineId;
+
+  @Column(name = "columnname")
+  private String column;
+
+  private Integer value;
+
+  public static List<RegimenSummaryLineItem> from(List<RegimenSummaryLineDto> lineDtos,
+      UUID requisitionId) {
+    List<RegimenSummaryLineItem> lineItems = newArrayList();
+
+    lineDtos.forEach(regimenSummaryLineDto -> {
+      RegimenDispatchLineDto regimenDispatchLine =
+          regimenSummaryLineDto.getRegimenDispatchLine();
+
+      regimenSummaryLineDto.getColumns().forEach((columnName, regimenColumnDto) -> {
+        RegimenSummaryLineItem regimenSummaryLineItem = RegimenSummaryLineItem.builder()
+            .requisitionId(requisitionId)
+            .regimenDispatchLineId(regimenDispatchLine.getId())
+            .column(columnName)
+            .value(regimenColumnDto.getValue())
+            .build();
+
+        regimenSummaryLineItem.setId(regimenColumnDto.getId());
+        lineItems.add(regimenSummaryLineItem);
+      });
+
+    });
+
+    return lineItems;
+  }
+}

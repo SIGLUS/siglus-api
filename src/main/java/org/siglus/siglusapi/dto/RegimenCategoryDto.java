@@ -15,14 +15,12 @@
 
 package org.siglus.siglusapi.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.openlmis.requisition.dto.BaseDto;
 import org.siglus.siglusapi.domain.RegimenCategory;
 import org.springframework.beans.BeanUtils;
 
-@Getter
-@Setter
+@Data
 public class RegimenCategoryDto extends BaseDto {
 
   private String code;

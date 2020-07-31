@@ -40,7 +40,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class RegimenDataProcessor implements UsageReportDataProcessor {
 
-  private static final String Regimen = "regimen";
+  private static final String REGIMEN = "regimen";
 
   private static final String REFERENCE_DATA = "REFERENCE_DATA";
 
@@ -123,7 +123,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   ) {
 
     UsageTemplateColumnSection regimen = siglusUsageReportService
-        .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, Regimen);
+        .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, REGIMEN);
 
     List<RegimenLineItem> regimenLineItems = newArrayList();
 
