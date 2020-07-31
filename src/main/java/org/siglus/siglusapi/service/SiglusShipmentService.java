@@ -231,6 +231,7 @@ public class SiglusShipmentService {
 
     orderLineItemDtos.stream()
         .filter(orderLineItemDto -> orderLineItemDto.getId() == null)
+        .filter(orderLineItemDto -> !orderLineItemDto.isSkipped())
         .map(OrderLineItem::newInstance)
         .forEach(orderLineItem -> {
           orderLineItem.setOrder(order);
