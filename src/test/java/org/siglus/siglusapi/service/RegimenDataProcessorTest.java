@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
@@ -36,6 +37,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
+import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.siglusapi.domain.Regimen;
@@ -62,6 +64,9 @@ public class RegimenDataProcessorTest {
   @Mock
   private RegimenLineItemRepository regimenLineItemRepository;
 
+  @Mock
+  private RequisitionService requisitionService;
+
   @Captor
   private ArgumentCaptor<List<RegimenLineItem>> lineItemsArgumentCaptor;
 
@@ -77,6 +82,10 @@ public class RegimenDataProcessorTest {
   private UUID regimenId1 = UUID.randomUUID();
 
   private UUID regimenId2 = UUID.randomUUID();
+
+  private UUID programId = UUID.randomUUID();
+
+  private UUID templateId = UUID.randomUUID();
 
   private UUID id = UUID.randomUUID();
 
@@ -107,6 +116,7 @@ public class RegimenDataProcessorTest {
     RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
         .enableRegimen(true).build();
     BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
+    template.setId(templateId);
     template.setExtension(extension);
     SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
     siglusRequisitionDto.setId(requisitionId);
@@ -134,6 +144,7 @@ public class RegimenDataProcessorTest {
         .thenReturn(newArrayList(mockNoCustomRegimen()));
     when(regimenRepository.findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen()));
+    when(requisitionService.getAssociateProgram(any())).thenReturn(newHashSet(programId));
 
     // when
     regimenDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);
@@ -157,6 +168,9 @@ public class RegimenDataProcessorTest {
     // given
     SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
     siglusRequisitionDto.setId(requisitionId);
+    BasicRequisitionTemplateDto templateDto = new BasicRequisitionTemplateDto();
+    templateDto.setId(templateId);
+    siglusRequisitionDto.setTemplate(templateDto);
     RegimenLineItem lineItem = RegimenLineItem.builder()
         .requisitionId(requisitionId)
         .regimenId(regimenId1).column(PATIENTS)
@@ -167,6 +181,7 @@ public class RegimenDataProcessorTest {
         .thenReturn(lineItems);
     when(regimenRepository.findAll())
         .thenReturn(newArrayList(mockCustomRegimen(),mockNoCustomRegimen()));
+    when(requisitionService.getAssociateProgram(any())).thenReturn(newHashSet(programId));
 
     // when
     regimenDataProcessor.get(siglusRequisitionDto);

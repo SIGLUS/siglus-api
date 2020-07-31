@@ -19,9 +19,11 @@ import static com.google.common.collect.Lists.newArrayList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
@@ -51,12 +53,15 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   @Autowired
   private RegimenLineItemRepository regimenLineItemRepository;
 
+  @Autowired
+  private RequisitionService requisitionService;
+
   @Override
   public void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections) {
 
     List<RegimenDto> defaultRegimenDtos = regimenRepository.findAllByProgramIdInAndActiveTrue(
-        newArrayList(siglusRequisitionDto.getProgramId()))
+        getProgramIds(siglusRequisitionDto))
         .stream()
         .filter(regimen -> !regimen.getIsCustom())
         .map(RegimenDto::from)
@@ -151,11 +156,18 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   private void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto) {
     List<RegimenDto> customRegimenDtos = regimenRepository
         .findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(
-            newArrayList(siglusRequisitionDto.getProgramId()))
+            getProgramIds(siglusRequisitionDto))
         .stream()
         .map(RegimenDto::from)
         .collect(Collectors.toList());
     siglusRequisitionDto.setCustomRegimens(customRegimenDtos);
+  }
+
+  private Set<UUID> getProgramIds(SiglusRequisitionDto siglusRequisitionDto) {
+    Set<UUID> ids = requisitionService
+        .getAssociateProgram(siglusRequisitionDto.getTemplate().getId());
+    ids.add(siglusRequisitionDto.getProgramId());
+    return ids;
   }
 
 }

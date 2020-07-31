@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.Regimen;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,8 +24,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RegimenRepository
     extends JpaRepository<Regimen, UUID> {
 
-  List<Regimen> findAllByProgramIdInAndActiveTrue(List<UUID> programIds);
+  List<Regimen> findAllByProgramIdInAndActiveTrue(Set<UUID> programIds);
 
-  List<Regimen> findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(List<UUID> programIds);
+  List<Regimen> findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(Set<UUID> programIds);
 
 }
