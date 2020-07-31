@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,6 +34,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 import org.joda.money.CurrencyUnit;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,6 +69,7 @@ import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
 import org.siglus.siglusapi.dto.KitUsageLineItemDto;
 import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.validation.group.sequence.RequisitionActionSequence;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
@@ -96,6 +100,9 @@ public class SiglusUsageReportServiceTest {
 
   @Mock
   private List<UsageReportDataProcessor> usageReportDataProcessors;
+
+  @Mock
+  private ValidatorFactory validatorFactory;
 
   @InjectMocks
   SiglusUsageReportService siglusUsageReportService;
@@ -324,6 +331,21 @@ public class SiglusUsageReportServiceTest {
     // then
     assertEquals(Integer.valueOf(20),
         resultDto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
+  }
+
+  @Test
+  public void shouldNotDeleteKitLineItemIfListIsEmptyWhenRequisitionDelete1() {
+    // given
+    SiglusRequisitionDto siglusRequisitionDto = mock(SiglusRequisitionDto.class);
+    RequisitionV2Dto updatedDto = mock(RequisitionV2Dto.class);
+    Validator validator = mock(Validator.class);
+    when(validatorFactory.getValidator()).thenReturn(validator);
+
+    // when
+    siglusUsageReportService.saveUsageReportWithValidation(siglusRequisitionDto, updatedDto);
+
+    // then
+    verify(validator).validate(siglusRequisitionDto, RequisitionActionSequence.class);
   }
 
   private LocalDate getActualDate(Map<String, Object> extraData, String field) {
