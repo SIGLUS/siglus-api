@@ -51,7 +51,7 @@ public class ConsultationNumberLineItemMapper {
   public List<ConsultationNumberGroupDto> fromLineItems(
       List<ConsultationNumberLineItem> lineItems) {
     if (isEmpty(lineItems)) {
-      return null;
+      return emptyList();
     }
     String groupName = lineItems.stream().findAny().map(ConsultationNumberLineItem::getGroup).get();
     ConsultationNumberGroupDto group = new ConsultationNumberGroupDto();

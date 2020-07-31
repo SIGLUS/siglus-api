@@ -72,7 +72,7 @@ public class ConsultationNumberLineItemDraft extends AbstractUsageLineItemDraft 
   public static List<ConsultationNumberGroupDto> getLineItemDto(
       List<ConsultationNumberLineItemDraft> drafts) {
     if (isEmpty(drafts)) {
-      return null;
+      return emptyList();
     }
     String groupName = drafts.stream().findAny().map(ConsultationNumberLineItemDraft::getGroup)
         .get();
