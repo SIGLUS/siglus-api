@@ -75,7 +75,7 @@ public class ConsultationNumberLineItemDraft extends AbstractUsageLineItemDraft 
       return emptyList();
     }
     String groupName = drafts.stream().findAny().map(ConsultationNumberLineItemDraft::getGroup)
-        .get();
+        .orElseThrow(NullPointerException::new);
     ConsultationNumberGroupDto group = new ConsultationNumberGroupDto();
     group.setName(groupName);
     group.setColumns(drafts.stream().collect(Collectors

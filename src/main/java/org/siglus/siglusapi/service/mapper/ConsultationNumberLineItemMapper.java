@@ -53,7 +53,8 @@ public class ConsultationNumberLineItemMapper {
     if (isEmpty(lineItems)) {
       return emptyList();
     }
-    String groupName = lineItems.stream().findAny().map(ConsultationNumberLineItem::getGroup).get();
+    String groupName = lineItems.stream().findAny().map(ConsultationNumberLineItem::getGroup)
+        .orElseThrow(NullPointerException::new);
     ConsultationNumberGroupDto group = new ConsultationNumberGroupDto();
     group.setName(groupName);
     group.setColumns(lineItems.stream().collect(Collectors
