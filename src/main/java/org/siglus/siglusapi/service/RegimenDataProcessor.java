@@ -150,7 +150,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
 
   private void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto) {
     List<RegimenDto> customRegimenDtos = regimenRepository
-        .findAllByProgramIdInAndActiveTrueaAndIsCustom(
+        .findAllByProgramIdInAndActiveTrueAndIsCustom(
             newArrayList(siglusRequisitionDto.getProgramId()))
         .stream()
         .map(RegimenDto::from)
