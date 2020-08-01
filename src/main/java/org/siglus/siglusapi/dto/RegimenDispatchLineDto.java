@@ -33,6 +33,7 @@ public class RegimenDispatchLineDto extends BaseDto {
     }
     RegimenDispatchLineDto regimenDispatchLineDto = new RegimenDispatchLineDto();
     BeanUtils.copyProperties(regimenDispatchLine, regimenDispatchLineDto);
+    regimenDispatchLineDto.setCode(regimenDispatchLine.getCode().toString());
     return regimenDispatchLineDto;
   }
 }

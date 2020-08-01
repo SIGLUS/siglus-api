@@ -24,7 +24,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RegimenRepository
     extends JpaRepository<Regimen, UUID> {
 
-  List<Regimen> findAllByProgramIdInAndActiveTrue(Set<UUID> programIds);
+  List<Regimen> findAllByProgramIdInAndActiveTrueAndIsCustomIsFalse(Set<UUID> programIds);
 
   List<Regimen> findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(Set<UUID> programIds);
 

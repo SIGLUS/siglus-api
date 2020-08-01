@@ -43,7 +43,7 @@ public class RegimenDispatchLine extends BaseEntity {
   @Column(nullable = false)
   private Integer displayOrder;
 
-  private RegimenDispatchLine() {
+  public RegimenDispatchLine() {
     code = null;
   }
 

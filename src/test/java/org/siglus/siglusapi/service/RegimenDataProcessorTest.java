@@ -41,16 +41,22 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.siglusapi.domain.Regimen;
+import org.siglus.siglusapi.domain.RegimenDispatchLine;
 import org.siglus.siglusapi.domain.RegimenLineItem;
+import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
 import org.siglus.siglusapi.dto.RegimenColumnDto;
+import org.siglus.siglusapi.dto.RegimenDispatchLineDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
+import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.repository.RegimenDispatchLineRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
+import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RegimenDataProcessorTest {
@@ -62,7 +68,13 @@ public class RegimenDataProcessorTest {
   private RegimenRepository regimenRepository;
 
   @Mock
+  private RegimenDispatchLineRepository regimenDispatchLineRepository;
+
+  @Mock
   private RegimenLineItemRepository regimenLineItemRepository;
+
+  @Mock
+  private RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
 
   @Mock
   private RequisitionService requisitionService;
@@ -70,10 +82,15 @@ public class RegimenDataProcessorTest {
   @Captor
   private ArgumentCaptor<List<RegimenLineItem>> lineItemsArgumentCaptor;
 
+  @Captor
+  private ArgumentCaptor<List<RegimenSummaryLineItem>> summaryArgumentCaptor;
+
   @InjectMocks
   private RegimenDataProcessor regimenDataProcessor;
 
   private static final String REGIMEN = "regimen";
+
+  private static final String SUMMARY = "summary";
 
   private static final String PATIENTS = "patients";
 
@@ -82,6 +99,8 @@ public class RegimenDataProcessorTest {
   private UUID regimenId1 = UUID.randomUUID();
 
   private UUID regimenId2 = UUID.randomUUID();
+
+  private UUID lineId = UUID.randomUUID();
 
   private UUID programId = UUID.randomUUID();
 
@@ -134,13 +153,24 @@ public class RegimenDataProcessorTest {
         .columns(newArrayList(regimenColumn))
         .build();
 
+    UsageTemplateColumnSection regimenSummarySection = UsageTemplateColumnSection.builder()
+        .category(UsageCategory.REGIMEN)
+        .name(SUMMARY)
+        .columns(newArrayList(regimenColumn))
+        .build();
+
     List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
     when(siglusUsageReportService
         .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, REGIMEN))
         .thenReturn(regimenSection);
+    when(siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, SUMMARY))
+        .thenReturn(regimenSummarySection);
     when(regimenRepository.findAll())
         .thenReturn(newArrayList(mockCustomRegimen(),mockNoCustomRegimen()));
-    when(regimenRepository.findAllByProgramIdInAndActiveTrue(any()))
+    when(regimenDispatchLineRepository.findAll())
+        .thenReturn(newArrayList(mockDispatchLine()));
+    when(regimenRepository.findAllByProgramIdInAndActiveTrueAndIsCustomIsFalse(any()))
         .thenReturn(newArrayList(mockNoCustomRegimen()));
     when(regimenRepository.findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen()));
@@ -152,12 +182,19 @@ public class RegimenDataProcessorTest {
     // then
     verify(regimenLineItemRepository).save(lineItemsArgumentCaptor.capture());
     List<RegimenLineItem> regimenLineItems = lineItemsArgumentCaptor.getValue();
-
     assertEquals(1, regimenLineItems.size());
     RegimenLineItem lineItem = regimenLineItems.get(0);
     assertEquals(regimenId1, lineItem.getRegimenId());
     assertEquals(PATIENTS, lineItem.getColumn());
     assertNull(lineItem.getValue());
+
+    verify(regimenSummaryLineItemRepository).save(summaryArgumentCaptor.capture());
+    List<RegimenSummaryLineItem> summaryLineItems = summaryArgumentCaptor.getValue();
+    assertEquals(1, summaryLineItems.size());
+    RegimenSummaryLineItem summaryLineItem = summaryLineItems.get(0);
+    assertEquals(lineId, summaryLineItem.getRegimenDispatchLineId());
+    assertEquals(PATIENTS, summaryLineItem.getColumn());
+    assertNull(summaryLineItem.getValue());
 
     assertEquals(1, siglusRequisitionDto.getCustomRegimens().size());
     assertEquals(regimenId2, siglusRequisitionDto.getCustomRegimens().get(0).getId());
@@ -173,14 +210,26 @@ public class RegimenDataProcessorTest {
     siglusRequisitionDto.setTemplate(templateDto);
     RegimenLineItem lineItem = RegimenLineItem.builder()
         .requisitionId(requisitionId)
-        .regimenId(regimenId1).column(PATIENTS)
+        .regimenId(regimenId1)
+        .column(PATIENTS)
         .value(value)
         .build();
     List<RegimenLineItem> lineItems = newArrayList(lineItem);
     when(regimenLineItemRepository.findByRequisitionId(requisitionId))
         .thenReturn(lineItems);
+    RegimenSummaryLineItem summaryLineItem = RegimenSummaryLineItem.builder()
+        .requisitionId(requisitionId)
+        .regimenDispatchLineId(lineId)
+        .column(PATIENTS)
+        .value(value)
+        .build();
+    List<RegimenSummaryLineItem> summaryLineItems = newArrayList(summaryLineItem);
+    when(regimenSummaryLineItemRepository.findByRequisitionId(requisitionId))
+        .thenReturn(summaryLineItems);
     when(regimenRepository.findAll())
         .thenReturn(newArrayList(mockCustomRegimen(),mockNoCustomRegimen()));
+    when(regimenDispatchLineRepository.findAll())
+        .thenReturn(newArrayList(mockDispatchLine()));
     when(requisitionService.getAssociateProgram(any())).thenReturn(newHashSet(programId));
 
     // when
@@ -193,6 +242,13 @@ public class RegimenDataProcessorTest {
     RegimenColumnDto columnDto = lineDtos.get(0).getColumns().get(PATIENTS);
     assertEquals(value, columnDto.getValue());
     assertEquals(regimenId1, lineDtos.get(0).getRegimen().getId());
+
+    List<RegimenSummaryLineDto> dispatchLineDtos = siglusRequisitionDto
+        .getRegimenDispatchLineItems();
+    assertEquals(1, dispatchLineDtos.size());
+    RegimenColumnDto columnDto1 = dispatchLineDtos.get(0).getColumns().get(PATIENTS);
+    assertEquals(value, columnDto1.getValue());
+    assertEquals(lineId, dispatchLineDtos.get(0).getRegimenDispatchLine().getId());
   }
 
   @Test
@@ -210,11 +266,18 @@ public class RegimenDataProcessorTest {
     RegimenLineDto lineDto = new RegimenLineDto();
     lineDto.setRegimen(regimenDto);
     lineDto.setColumns(columnDtoMap);
+    RegimenDispatchLineDto dispatchLineDto = new RegimenDispatchLineDto();
+    dispatchLineDto.setId(lineId);
+    RegimenSummaryLineDto summaryLineDto = new RegimenSummaryLineDto();
+    summaryLineDto.setRegimenDispatchLine(dispatchLineDto);
+    summaryLineDto.setColumns(columnDtoMap);
 
     List<RegimenLineDto> lineDtos = newArrayList(lineDto);
+    List<RegimenSummaryLineDto> summaryLineDtos = newArrayList(summaryLineDto);
     SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
     siglusRequisitionDto.setId(requisitionId);
     siglusRequisitionDto.setRegimenLineItems(lineDtos);
+    siglusRequisitionDto.setRegimenDispatchLineItems(summaryLineDtos);
     SiglusRequisitionDto siglusRequisitionUpdatedDto = new SiglusRequisitionDto();
 
     // when
@@ -229,6 +292,15 @@ public class RegimenDataProcessorTest {
     assertEquals(regimenId1, lineItems.get(0).getRegimenId());
     assertEquals(PATIENTS, lineItems.get(0).getColumn());
     assertEquals(value, lineItems.get(0).getValue());
+
+    verify(regimenSummaryLineItemRepository).save(summaryArgumentCaptor.capture());
+    List<RegimenSummaryLineItem> summaryLineItems = summaryArgumentCaptor.getValue();
+    assertEquals(1, summaryLineItems.size());
+    assertEquals(id, summaryLineItems.get(0).getId());
+    assertEquals(requisitionId, summaryLineItems.get(0).getRequisitionId());
+    assertEquals(lineId, summaryLineItems.get(0).getRegimenDispatchLineId());
+    assertEquals(PATIENTS, summaryLineItems.get(0).getColumn());
+    assertEquals(value, summaryLineItems.get(0).getValue());
   }
 
   @Test
@@ -237,6 +309,10 @@ public class RegimenDataProcessorTest {
     List<RegimenLineItem> lineItems = newArrayList(new RegimenLineItem());
     when(regimenLineItemRepository.findByRequisitionId(requisitionId))
         .thenReturn(lineItems);
+    List<RegimenSummaryLineItem> summaryLineItems =
+        newArrayList(new RegimenSummaryLineItem());
+    when(regimenSummaryLineItemRepository.findByRequisitionId(requisitionId))
+        .thenReturn(summaryLineItems);
 
     // when
     regimenDataProcessor.delete(requisitionId);
@@ -244,6 +320,8 @@ public class RegimenDataProcessorTest {
     // then
     verify(regimenLineItemRepository).findByRequisitionId(requisitionId);
     verify(regimenLineItemRepository).delete(lineItems);
+    verify(regimenSummaryLineItemRepository).findByRequisitionId(requisitionId);
+    verify(regimenSummaryLineItemRepository).delete(summaryLineItems);
   }
 
   private Regimen mockNoCustomRegimen() {
@@ -260,5 +338,12 @@ public class RegimenDataProcessorTest {
     regimen.setCode(Code.code("ABC+3TC+DTG"));
     regimen.setIsCustom(true);
     return regimen;
+  }
+
+  private RegimenDispatchLine mockDispatchLine() {
+    RegimenDispatchLine line = new RegimenDispatchLine();
+    line.setId(lineId);
+    line.setCode(Code.code("Outros"));
+    return line;
   }
 }

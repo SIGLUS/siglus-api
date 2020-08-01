@@ -17,11 +17,12 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.RegimenLineItem;
+import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RegimenLineItemRepository extends JpaRepository<RegimenLineItem, UUID> {
+public interface RegimenSummaryLineItemRepository
+    extends JpaRepository<RegimenSummaryLineItem, UUID> {
 
-  List<RegimenLineItem> findByRequisitionId(UUID requisitionId);
+  List<RegimenSummaryLineItem> findByRequisitionId(UUID requisitionId);
 
 }
