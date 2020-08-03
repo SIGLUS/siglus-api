@@ -82,7 +82,7 @@ public class OrderFulfillmentService extends BaseFulfillmentService<OrderDto> {
     // [SIGLUS change start]
     // [change reason]: missing / in url
     // return "/api/orders";
-    return "/api/orders/";
+    return "/api/siglusapi/orders/";
     // [SIGLUS change end]
   }
 
