@@ -65,9 +65,8 @@ public class PatientDataValidator extends
   }
 
   @Override
-  protected int mapColumnToInt(PatientColumnDto column) {
+  protected Integer mapColumnToInt(PatientColumnDto column) {
     return column.getValue();
   }
-
 
 }

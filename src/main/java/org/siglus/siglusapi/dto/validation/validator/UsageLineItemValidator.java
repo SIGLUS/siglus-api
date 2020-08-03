@@ -28,7 +28,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
-import javax.validation.ConstraintValidatorContext.ConstraintViolationBuilder.NodeBuilderCustomizableContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
@@ -105,7 +104,7 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
 
   protected abstract Collection<G> getUploadedGroups(SiglusRequisitionDto uploadedValue);
 
-  protected abstract int mapColumnToInt(C column);
+  protected abstract Integer mapColumnToInt(C column);
 
   protected boolean isThisColumnTotalColumn(UsageTemplateColumn column) {
     return "CALCULATED".equalsIgnoreCase(column.getSource());
@@ -138,7 +137,7 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
       context
           .addExpressionVariable("groupNames", uploadedGroupMap.keySet())
           .buildConstraintViolationWithTemplate(
-              "{}siglus.validation.requisition.usageLineItems.extraGroups")
+              "{siglus.validation.requisition.usageLineItems.extraGroups}")
           .addPropertyNode(propertyPath)
           .addConstraintViolation();
       return false;
@@ -202,13 +201,23 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
   private boolean validateColumn(C uploadedColumn, UsageTemplateColumn storedColumn,
       HibernateConstraintValidatorContext context, String groupName, int groupIndex) {
     if (uploadedColumn == null) {
-      NodeBuilderCustomizableContext propertyNode = context
+      context
           .addExpressionVariable(GROUP_NAME, groupName)
           .addExpressionVariable("columnName", storedColumn.getName())
           .buildConstraintViolationWithTemplate(
-              "{siglus.validation.requisition.patientLineItems.columns.missingColumn}")
-          .addPropertyNode(propertyPath).addPropertyNode("columns");
-      propertyNode.inIterable().atIndex(groupIndex).addConstraintViolation();
+              "{siglus.validation.requisition.usageLineItems.columns.missingColumn}")
+          .addPropertyNode(propertyPath).addPropertyNode("columns").inIterable().atIndex(groupIndex)
+          .addConstraintViolation();
+      return false;
+    }
+    Integer value = mapColumnToInt(uploadedColumn);
+    if (value == null) {
+      context
+          .buildConstraintViolationWithTemplate(
+              "{javax.validation.constraints.NotNull.message}")
+          .addPropertyNode(propertyPath).addPropertyNode("columns").inIterable().atIndex(groupIndex)
+          .addPropertyNode("value").inIterable().atKey(storedColumn.getName())
+          .addConstraintViolation();
       return false;
     }
     // not need to check each value's overflow, json framework will do the job

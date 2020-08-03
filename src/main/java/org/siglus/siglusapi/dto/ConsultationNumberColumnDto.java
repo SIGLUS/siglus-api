@@ -17,7 +17,6 @@ package org.siglus.siglusapi.dto;
 
 import java.util.UUID;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,7 +28,6 @@ public class ConsultationNumberColumnDto {
 
   private UUID id;
 
-  @NotNull
   @Min(value = 0)
   private Integer value;
 

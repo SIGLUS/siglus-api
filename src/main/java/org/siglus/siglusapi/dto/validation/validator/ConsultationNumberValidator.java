@@ -41,7 +41,6 @@ public class ConsultationNumberValidator extends UsageLineItemValidator
         UsageCategory.CONSULTATIONNUMBER, "consultationNumberLineItem");
   }
 
-
   @Override
   protected boolean checkEnable(RequisitionTemplateExtension templateExtension) {
     return templateExtension.getEnableConsultationNumber();
@@ -54,7 +53,8 @@ public class ConsultationNumberValidator extends UsageLineItemValidator
   }
 
   @Override
-  protected int mapColumnToInt(ConsultationNumberColumnDto column) {
+  protected Integer mapColumnToInt(ConsultationNumberColumnDto column) {
     return column.getValue();
   }
+
 }
