@@ -117,6 +117,8 @@ import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItemDraft;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.PatientLineItemDraft;
+import org.siglus.siglusapi.domain.RegimenLineItemDraft;
+import org.siglus.siglusapi.domain.RegimenSummaryLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
@@ -247,6 +249,9 @@ public class SiglusRequisitionService {
 
   @Autowired
   private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+
+  @Autowired
+  private RegimenDataProcessor regimenDataProcessor;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -1158,6 +1163,14 @@ public class SiglusRequisitionService {
       dto.setConsultationNumberLineItems(ConsultationNumberLineItemDraft
           .getLineItemDto(draft.getConsultationNumberLineItemDrafts())
       );
+    }
+
+    if (Boolean.TRUE.equals(templateExtension.getEnableRegimen())) {
+      dto.setRegimenLineItems(RegimenLineItemDraft.getRegimenLineDtos(
+          draft.getRegimenLineItemDrafts(), regimenDataProcessor.getRegimenDtoMap()));
+      dto.setRegimenDispatchLineItems(RegimenSummaryLineItemDraft.getRegimenSummaryLineDtos(
+          draft.getRegimenSummaryLineItemDrafts(),
+          regimenDataProcessor.getRegimenDispatchLineDtoMap()));
     }
 
   }

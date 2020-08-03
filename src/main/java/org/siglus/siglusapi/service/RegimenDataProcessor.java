@@ -216,14 +216,14 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     return regimenSummaryLineItems;
   }
 
-  private Map<UUID, RegimenDto> getRegimenDtoMap() {
+  public Map<UUID, RegimenDto> getRegimenDtoMap() {
     return regimenRepository.findAll()
         .stream()
         .map(RegimenDto::from)
         .collect(Collectors.toMap(RegimenDto::getId, regimenDto -> regimenDto));
   }
 
-  private Map<UUID, RegimenDispatchLineDto> getRegimenDispatchLineDtoMap() {
+  public Map<UUID, RegimenDispatchLineDto> getRegimenDispatchLineDtoMap() {
     return regimenDispatchLineRepository.findAll()
         .stream()
         .map(RegimenDispatchLineDto::from)
