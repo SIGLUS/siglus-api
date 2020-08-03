@@ -85,6 +85,7 @@ public class SiglusShipmentService {
   @Value("${time.zoneId}")
   private String timeZoneId;
 
+  @Transactional(noRollbackFor = ValidationMessageException.class)
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
     OrderDto orderDto = orderController.getOrder(shipmentDto.getOrder().getId(), null);
     validateOrderStatus(orderDto);
@@ -97,7 +98,6 @@ public class SiglusShipmentService {
     return createSubOrderAndShipment(isSubOrder, shipmentDto);
   }
 
-  @Transactional
   ShipmentDto createSubOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
     if (isSubOrder) {
       createSubOrder(shipmentDto);
@@ -107,7 +107,6 @@ public class SiglusShipmentService {
     return shipment;
   }
 
-  @Transactional
   void revertOrderToCloseStatus(Order order) {
     draftService.deleteOrderLineItemAndInitialedExtension(order);
     order.setStatus(OrderStatus.CLOSED);

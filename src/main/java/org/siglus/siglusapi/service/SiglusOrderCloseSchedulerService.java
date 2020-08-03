@@ -15,12 +15,16 @@
 
 package org.siglus.siglusapi.service;
 
+import com.google.common.collect.Lists;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -64,8 +68,15 @@ public class SiglusOrderCloseSchedulerService {
       List<Order> needClosedOrders = getNeedClosedOrder(orders, processingPeriodMap);
       log.info("get need close order : {}", needClosedOrders);
 
-      needClosedOrders.forEach(order ->
-          shipmentService.revertOrderToCloseStatus(order));
+      ExecutorService executor = Executors.newFixedThreadPool(needClosedOrders.size());
+      List<CompletableFuture<Void>> futures = Lists.newArrayList();
+      for (Order order : needClosedOrders) {
+        CompletableFuture<Void> future = CompletableFuture.runAsync(
+            () -> shipmentService.revertOrderToCloseStatus(order), executor);
+        futures.add(future);
+      }
+      futures.forEach(CompletableFuture::join);
+      log.info("close all orders");
     }
   }
 
@@ -75,18 +86,32 @@ public class SiglusOrderCloseSchedulerService {
 
   private HashMap<UUID, ProcessingPeriodDto> getNextProcessingPeriodDtoHashMap(List<Order> orders) {
     Set<UUID> periodIds = orders.stream()
-        .map(order -> order.getProcessingPeriodId())
+        .map(Order::getProcessingPeriodId)
         .collect(Collectors.toSet());
     List<ProcessingPeriodDto> periodDtos = periodService.findByIds(periodIds);
     log.info("get orders period dtos: {}", periodDtos);
 
     HashMap<UUID, ProcessingPeriodDto> processingPeriodDtoHashMap = new HashMap<>();
-    periodDtos.forEach(periodDto -> {
-      List<ProcessingPeriodDto> nextPeriods = getNextProcessingPeriodDto(periodDto);
+    List<CompletableFuture<List<ProcessingPeriodDto>>> futures = Lists.newArrayList();
+    ExecutorService executor = Executors.newFixedThreadPool(periodDtos.size());
+    for (ProcessingPeriodDto periodDto : periodDtos) {
+      CompletableFuture<List<ProcessingPeriodDto>> future = CompletableFuture.supplyAsync(() ->
+          getNextProcessingPeriodDto(periodDto), executor);
+      futures.add(future);
+    }
+    List<List<ProcessingPeriodDto>> nextPeriodCollections = futures.stream()
+        .map(CompletableFuture::join)
+        .collect(Collectors.toList());
+    log.info("get next periods: {}", nextPeriodCollections);
+
+    for (int i = 0; i < nextPeriodCollections.size(); i++) {
+      List<ProcessingPeriodDto> nextPeriods = nextPeriodCollections.get(i);
       if (!CollectionUtils.isEmpty(nextPeriods)) {
-        processingPeriodDtoHashMap.put(periodDto.getId(), nextPeriods.get(0));
+        processingPeriodDtoHashMap.put(periodDtos.get(i).getId(), nextPeriods.get(0));
       }
-    });
+    }
+
+    log.info("get processingPeriodDtoHashMap : {}", processingPeriodDtoHashMap);
     return processingPeriodDtoHashMap;
   }
 
@@ -94,7 +119,7 @@ public class SiglusOrderCloseSchedulerService {
     Pageable pageable = new PageRequest(0, 1);
     return periodService
         .searchProcessingPeriods(period.getProcessingSchedule().getId(),
-            null, null, period.getStartDate(),
+            null, null, period.getEndDate().plusDays(1),
             null,
             null, pageable)
         .getContent();
@@ -107,9 +132,9 @@ public class SiglusOrderCloseSchedulerService {
         .filter(order -> {
           if (processingPeriodMap.containsKey(order.getProcessingPeriodId())) {
             ProcessingPeriodDto nextPeriod = processingPeriodMap.get(order.getProcessingPeriodId());
-            return nextPeriod.getEndDate().isAfter(currentDate);
+            return nextPeriod.getEndDate().isBefore(currentDate);
           }
-          return true;
+          return false;
         }).collect(Collectors.toList());
   }
 

@@ -25,16 +25,19 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 @Service
 @Slf4j
@@ -48,6 +51,9 @@ public class SiglusShipmentDraftService {
 
   @Autowired
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
+
+  @Autowired
+  private OrderLineItemRepository orderLineItemRepository;
 
   @Autowired
   private OrderRepository orderRepository;
@@ -135,10 +141,13 @@ public class SiglusShipmentDraftService {
 
     log.info("orderId: {}, deleteAddedOrderLineItemIds: {}", order.getId(), addedIds);
 
-    order.getOrderLineItems().removeIf(
-        orderLineItem -> addedIds.contains(orderLineItem.getId()));
-    orderRepository.save(order);
-
+    if (!CollectionUtils.isEmpty(addedIds)) {
+        List<OrderLineItem> orderLineItems = orderLineItemRepository
+            .findByOrderId(order.getId())
+            .stream().filter(orderLineItem -> addedIds.contains(orderLineItem.getId()))
+            .collect(Collectors.toList());
+        orderLineItemRepository.delete(orderLineItems);
+    }
   }
 
   private Set<OrderLineItemExtension> deleteAddedLineItemsInExtension(
