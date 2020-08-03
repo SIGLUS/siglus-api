@@ -16,6 +16,11 @@
 package org.openlmis.requisition.dto;
 
 public enum OrderStatus {
+  // [SIGLUS change start]
+  // [change reason]: partial order && clolse
+  PARTIALLY_FULFILLED,
+  CLOSED,
+  // [SIGLUS change end]
   ORDERED,
   FULFILLING,
   SHIPPED,
