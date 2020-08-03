@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -52,6 +51,9 @@ public class SiglusOrderCloseSchedulerService {
   @Autowired
   private SiglusProcessingPeriodReferenceDataService periodService;
 
+  @Autowired
+  ExecutorService executor;
+
   @Value("${time.zoneId}")
   private String timeZoneId;
 
@@ -68,7 +70,6 @@ public class SiglusOrderCloseSchedulerService {
       List<Order> needClosedOrders = getNeedClosedOrder(orders, processingPeriodMap);
       log.info("get need close order : {}", needClosedOrders);
 
-      ExecutorService executor = Executors.newFixedThreadPool(needClosedOrders.size());
       List<CompletableFuture<Void>> futures = Lists.newArrayList();
       for (Order order : needClosedOrders) {
         CompletableFuture<Void> future = CompletableFuture.runAsync(
@@ -93,7 +94,6 @@ public class SiglusOrderCloseSchedulerService {
 
     HashMap<UUID, ProcessingPeriodDto> processingPeriodDtoHashMap = new HashMap<>();
     List<CompletableFuture<List<ProcessingPeriodDto>>> futures = Lists.newArrayList();
-    ExecutorService executor = Executors.newFixedThreadPool(periodDtos.size());
     for (ProcessingPeriodDto periodDto : periodDtos) {
       CompletableFuture<List<ProcessingPeriodDto>> future = CompletableFuture.supplyAsync(() ->
           getNextProcessingPeriodDto(periodDto), executor);
@@ -107,12 +107,27 @@ public class SiglusOrderCloseSchedulerService {
     for (int i = 0; i < nextPeriodCollections.size(); i++) {
       List<ProcessingPeriodDto> nextPeriods = nextPeriodCollections.get(i);
       if (!CollectionUtils.isEmpty(nextPeriods)) {
-        processingPeriodDtoHashMap.put(periodDtos.get(i).getId(), nextPeriods.get(0));
+        ProcessingPeriodDto nextPeriod = nextPeriods.get(0);
+        ProcessingPeriodDto currentPeriod = getProcessingPeriod(periodDtos, nextPeriod);
+        if (currentPeriod != null) {
+          processingPeriodDtoHashMap.put(currentPeriod.getId(), nextPeriods.get(0));
+        }
       }
     }
 
     log.info("get processingPeriodDtoHashMap : {}", processingPeriodDtoHashMap);
     return processingPeriodDtoHashMap;
+  }
+
+  private ProcessingPeriodDto getProcessingPeriod(List<ProcessingPeriodDto> periodDtos,
+      ProcessingPeriodDto nextPeriod) {
+    List<ProcessingPeriodDto> currentPeriods = periodDtos.stream()
+        .filter(periodDto ->
+            periodDto.getProcessingSchedule().getId()
+                .equals(nextPeriod.getProcessingSchedule().getId())
+                && periodDto.getEndDate().plusDays(1).equals(nextPeriod.getStartDate()))
+        .collect(Collectors.toList());
+    return CollectionUtils.isEmpty(currentPeriods) ? null : currentPeriods.get(0);
   }
 
   private List<ProcessingPeriodDto> getNextProcessingPeriodDto(ProcessingPeriodDto period) {

@@ -20,6 +20,8 @@ import java.time.Clock;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
@@ -224,6 +226,11 @@ public class Application {
     factory.setPassword(redisPassword);
     factory.setUsePool(true);
     return factory;
+  }
+
+  @Bean
+  ExecutorService executorService() {
+    return  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
   }
 
   @Bean
