@@ -163,10 +163,10 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
     C totalColumn = null;
     List<C> columnsToSum = new ArrayList<>();
     for (UsageTemplateColumn storedColumn : storedColumns) {
+      C uploadedColumn = uploadedColumns.remove(storedColumn.getName());
       if (!storedColumn.getIsDisplayed()) {
         continue;
       }
-      C uploadedColumn = uploadedColumns.remove(storedColumn.getName());
       if (!validateColumn(uploadedColumn, storedColumn, context, groupName, groupIndex)) {
         return false;
       }
