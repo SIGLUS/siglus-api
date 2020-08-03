@@ -25,7 +25,7 @@ import org.springframework.beans.BeanUtils;
 public class RegimenDto extends BaseDto {
 
   private String code;
-  private String name;
+  private String fullProductName;
   private Boolean active;
   private Boolean isCustom;
   private Integer displayOrder;
@@ -38,6 +38,7 @@ public class RegimenDto extends BaseDto {
     RegimenDto regimenDto = new RegimenDto();
     BeanUtils.copyProperties(regimen, regimenDto);
     regimenDto.setCode(regimen.getCode().toString());
+    regimenDto.setFullProductName(regimen.getName());
     regimenDto.regimenCategory = RegimenCategoryDto.from(regimen.getRegimenCategory());
     regimenDto.regimenDispatchLine =
         RegimenDispatchLineDto.from(regimen.getRegimenDispatchLine());
