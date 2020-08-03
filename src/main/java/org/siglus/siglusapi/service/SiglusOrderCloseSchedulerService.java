@@ -52,7 +52,7 @@ public class SiglusOrderCloseSchedulerService {
   private SiglusProcessingPeriodReferenceDataService periodService;
 
   @Autowired
-  ExecutorService executor;
+  private ExecutorService executorService;
 
   @Value("${time.zoneId}")
   private String timeZoneId;
@@ -73,7 +73,7 @@ public class SiglusOrderCloseSchedulerService {
       List<CompletableFuture<Void>> futures = Lists.newArrayList();
       for (Order order : needClosedOrders) {
         CompletableFuture<Void> future = CompletableFuture.runAsync(
-            () -> shipmentService.revertOrderToCloseStatus(order), executor);
+            () -> shipmentService.revertOrderToCloseStatus(order), executorService);
         futures.add(future);
       }
       futures.forEach(CompletableFuture::join);
@@ -96,7 +96,7 @@ public class SiglusOrderCloseSchedulerService {
     List<CompletableFuture<List<ProcessingPeriodDto>>> futures = Lists.newArrayList();
     for (ProcessingPeriodDto periodDto : periodDtos) {
       CompletableFuture<List<ProcessingPeriodDto>> future = CompletableFuture.supplyAsync(() ->
-          getNextProcessingPeriodDto(periodDto), executor);
+          getNextProcessingPeriodDto(periodDto), executorService);
       futures.add(future);
     }
     List<List<ProcessingPeriodDto>> nextPeriodCollections = futures.stream()
