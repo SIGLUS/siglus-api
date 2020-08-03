@@ -90,6 +90,11 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
           usageCategory.getName());
       return true;
     }
+    if (storedRequisition.getEmergency()) {
+      log.info("requisition {} is emergency, skip validation {}", requisitionId,
+          usageCategory.getName());
+      return true;
+    }
     log.info("start to validate {} of requisition {}", usageCategory.getName(), requisitionId);
     HibernateConstraintValidatorContext actualContext =
         context.unwrap(HibernateConstraintValidatorContext.class);
