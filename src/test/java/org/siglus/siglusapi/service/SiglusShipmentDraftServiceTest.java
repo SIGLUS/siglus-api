@@ -44,6 +44,7 @@ import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.service.client.SiglusShipmentDraftFulfillmentService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -63,6 +64,9 @@ public class SiglusShipmentDraftServiceTest {
 
   @Mock
   private SiglusOrderService siglusOrderService;
+
+  @Mock
+  private OrderLineItemRepository orderLineItemRepository;
 
   @Mock
   private ShipmentDraftController draftController;
@@ -149,6 +153,7 @@ public class SiglusShipmentDraftServiceTest {
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(lineItemId);
     Order order = new Order();
+    order.setId(orderId);
     order.setOrderLineItems(newArrayList(lineItem));
     when(orderRepository.findOne(orderId)).thenReturn(order);
     OrderLineItemExtension extension = OrderLineItemExtension.builder()
@@ -156,7 +161,7 @@ public class SiglusShipmentDraftServiceTest {
         .skipped(true)
         .added(true)
         .build();
-    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
+    when(lineItemExtensionRepository.findByOrderId(orderId))
         .thenReturn(newArrayList(extension));
 
     // when
@@ -164,6 +169,7 @@ public class SiglusShipmentDraftServiceTest {
 
     // then
     verify(lineItemExtensionRepository).delete(lineItemExtensionsArgumentCaptor.capture());
+    verify(orderLineItemRepository).delete(anySet());
     Set<OrderLineItemExtension> lineItemExtensions = (Set<OrderLineItemExtension>)
         lineItemExtensionsArgumentCaptor.getValue();
     assertEquals(1, lineItemExtensions.size());
@@ -180,6 +186,7 @@ public class SiglusShipmentDraftServiceTest {
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(lineItemId);
     Order order = new Order();
+    order.setId(orderId);
     order.setOrderLineItems(newArrayList(lineItem));
     when(orderRepository.findOne(orderId)).thenReturn(order);
     OrderLineItemExtension extension = OrderLineItemExtension.builder()
@@ -188,8 +195,7 @@ public class SiglusShipmentDraftServiceTest {
         .added(false)
         .partialFulfilledQuantity((long) 10)
         .build();
-    when(lineItemExtensionRepository.findByOrderLineItemIdIn(newHashSet(lineItemId)))
-        .thenReturn(newArrayList(extension));
+    when(lineItemExtensionRepository.findByOrderId(orderId)).thenReturn(newArrayList(extension));
 
     // when
     siglusShipmentDraftService.deleteShipmentDraft(draftId);

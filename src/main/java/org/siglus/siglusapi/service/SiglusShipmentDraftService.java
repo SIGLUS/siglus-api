@@ -142,11 +142,11 @@ public class SiglusShipmentDraftService {
     log.info("orderId: {}, deleteAddedOrderLineItemIds: {}", order.getId(), addedIds);
 
     if (!CollectionUtils.isEmpty(addedIds)) {
-        List<OrderLineItem> orderLineItems = orderLineItemRepository
-            .findByOrderId(order.getId())
-            .stream().filter(orderLineItem -> addedIds.contains(orderLineItem.getId()))
-            .collect(Collectors.toList());
-        orderLineItemRepository.delete(orderLineItems);
+      List<OrderLineItem> orderLineItems = orderLineItemRepository
+          .findByOrderId(order.getId())
+          .stream().filter(orderLineItem -> addedIds.contains(orderLineItem.getId()))
+          .collect(Collectors.toList());
+      orderLineItemRepository.delete(orderLineItems);
     }
   }
 
