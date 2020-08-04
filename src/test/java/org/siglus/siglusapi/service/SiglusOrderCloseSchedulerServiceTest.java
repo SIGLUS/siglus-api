@@ -46,6 +46,8 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProcessingScheduleDto;
+import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -69,6 +71,9 @@ public class SiglusOrderCloseSchedulerServiceTest {
 
   @Mock
   private ExecutorService executorService;
+
+  @Mock
+  private OrderExternalRepository orderExternalRepository;
 
   @InjectMocks
   private SiglusOrderCloseSchedulerService siglusOrderCloseSchedulerService;
@@ -95,6 +100,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
     order.setOrderLineItems(list);
     order.setId(UUID.randomUUID());
     order.setStatus(OrderStatus.FULFILLING);
+    order.setExternalId(UUID.randomUUID());
     UUID processingPeriodId = UUID.randomUUID();
     order.setProcessingPeriodId(processingPeriodId);
     when(orderRepository.findCanFulfillOrder()).thenReturn(Arrays.asList(order));
@@ -117,6 +123,9 @@ public class SiglusOrderCloseSchedulerServiceTest {
     when(periodService.searchProcessingPeriods(processingScheduleDto.getId(), null, null,
         processingPeriod.getEndDate().plusDays(1), null, null, pageable))
         .thenReturn(new PageImpl<>(asList(nextPeriod)));
+    OrderExternal orderExternal = new OrderExternal();
+    when(orderExternalRepository.findOne(order.getExternalId()))
+        .thenReturn(orderExternal);
 
     // when
     siglusOrderCloseSchedulerService.closeFulfillmentIfCurrentDateIsAfterNextPeriodEndDate();
@@ -144,6 +153,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
     order.setOrderLineItems(list);
     order.setId(UUID.randomUUID());
     order.setStatus(OrderStatus.FULFILLING);
+    order.setExternalId(UUID.randomUUID());
     UUID processingPeriodId = UUID.randomUUID();
     order.setProcessingPeriodId(processingPeriodId);
     when(orderRepository.findCanFulfillOrder()).thenReturn(Arrays.asList(order));
@@ -191,6 +201,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
     order.setOrderLineItems(list);
     order.setId(UUID.randomUUID());
     order.setStatus(OrderStatus.FULFILLING);
+    order.setExternalId(UUID.randomUUID());
     UUID processingPeriodId = UUID.randomUUID();
     order.setProcessingPeriodId(processingPeriodId);
     when(orderRepository.findCanFulfillOrder()).thenReturn(Arrays.asList(order));

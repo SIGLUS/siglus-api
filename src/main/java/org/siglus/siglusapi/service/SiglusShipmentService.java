@@ -77,8 +77,11 @@ public class SiglusShipmentService {
     OrderDto orderDto = orderController.getOrder(shipmentDto.getOrder().getId(), null);
     validateOrderStatus(orderDto);
     if (siglusOrderService.currentDateIsAfterNextPeriodEndDate(orderDto)) {
-      revertOrderToCloseStatus(orderRepository.findOne(orderDto.getId()));
-      throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
+      if (siglusOrderService.isSuborder(orderDto.getExternalId())) {
+        revertOrderToCloseStatus(orderRepository.findOne(orderDto.getId()));
+        throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
+      }
+      return createSubOrderAndShipment(false, shipmentDto);
     }
     // save order lineitems
     updateOrderLineItems(shipmentDto.getOrder());

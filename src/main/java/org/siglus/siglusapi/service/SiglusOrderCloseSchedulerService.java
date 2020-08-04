@@ -30,6 +30,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
+import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +55,9 @@ public class SiglusOrderCloseSchedulerService {
 
   @Autowired
   private ExecutorService executorService;
+
+  @Autowired
+  private OrderExternalRepository orderExternalRepository;
 
   @Value("${time.zoneId}")
   private String timeZoneId;
@@ -145,7 +150,8 @@ public class SiglusOrderCloseSchedulerService {
     LocalDate currentDate = LocalDate.now(ZoneId.of(timeZoneId));
     return orders.stream()
         .filter(order -> {
-          if (processingPeriodMap.containsKey(order.getProcessingPeriodId())) {
+          OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
+          if (external != null && processingPeriodMap.containsKey(order.getProcessingPeriodId())) {
             ProcessingPeriodDto nextPeriod = processingPeriodMap.get(order.getProcessingPeriodId());
             return nextPeriod.getEndDate().isBefore(currentDate);
           }

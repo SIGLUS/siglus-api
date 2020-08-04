@@ -136,9 +136,13 @@ public class SiglusOrderService {
     OrderDto orderDto = orderController.getOrder(orderId, null);
     OrderStatusDto orderStatusDto = new OrderStatusDto();
     orderStatusDto.setClosed(currentDateIsAfterNextPeriodEndDate(orderDto));
-    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
-    orderStatusDto.setSuborder(external != null);
+    orderStatusDto.setSuborder(isSuborder(orderDto.getExternalId()));
     return orderStatusDto;
+  }
+
+  public boolean isSuborder(UUID externalId) {
+    OrderExternal external = orderExternalRepository.findOne(externalId);
+    return external != null;
   }
 
   public boolean currentDateIsAfterNextPeriodEndDate(OrderDto orderDto) {

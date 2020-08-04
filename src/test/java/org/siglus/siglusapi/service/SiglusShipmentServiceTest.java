@@ -157,8 +157,11 @@ public class SiglusShipmentServiceTest {
     dto.setEndDate(LocalDate.now().minusDays(10));
     when(siglusOrderService.currentDateIsAfterNextPeriodEndDate(any()))
         .thenReturn(true);
+    when(siglusOrderService.isSuborder(any()))
+        .thenReturn(true);
     Order order = new Order();
     when(orderRepository.findOne(orderId)).thenReturn(order);
+
 
     // when
     siglusShipmentService.createOrderAndShipment(false, shipmentDto);
