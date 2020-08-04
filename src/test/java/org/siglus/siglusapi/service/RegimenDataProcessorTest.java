@@ -174,6 +174,8 @@ public class RegimenDataProcessorTest {
         .thenReturn(newArrayList(mockNoCustomRegimen()));
     when(regimenRepository.findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen()));
+    when(regimenRepository.findAllByProgramIdInAndActiveTrue(any()))
+        .thenReturn(newArrayList(mockCustomRegimen(), mockNoCustomRegimen()));
     when(requisitionService.getAssociateProgram(any())).thenReturn(newHashSet(programId));
 
     // when
@@ -329,6 +331,7 @@ public class RegimenDataProcessorTest {
     regimen.setId(regimenId1);
     regimen.setCode(Code.code("ABC+3TC+RAL+DRV+RTV"));
     regimen.setIsCustom(false);
+    regimen.setRegimenDispatchLine(mockDispatchLine());
     return regimen;
   }
 
@@ -337,6 +340,7 @@ public class RegimenDataProcessorTest {
     regimen.setId(regimenId2);
     regimen.setCode(Code.code("ABC+3TC+DTG"));
     regimen.setIsCustom(true);
+    regimen.setRegimenDispatchLine(mockDispatchLine());
     return regimen;
   }
 

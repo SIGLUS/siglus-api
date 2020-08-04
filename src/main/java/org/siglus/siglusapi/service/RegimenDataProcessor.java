@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static com.google.common.collect.Lists.newArrayList;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.service.RequisitionService;
+import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
@@ -79,11 +78,8 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
         .stream()
         .map(RegimenDto::from)
         .collect(Collectors.toList());
-    List<RegimenDispatchLineDto> regimenDispatchLineDtos =
-        regimenDispatchLineRepository.findAll()
-        .stream()
-        .map(RegimenDispatchLineDto::from)
-        .collect(Collectors.toList());
+    Set<RegimenDispatchLineDto> regimenDispatchLineDtos =
+        getValidRegimenDispatchLines(siglusRequisitionDto);
 
     List<RegimenLineItem> regimenLineItems = createRegimenLineItems(siglusRequisitionDto,
         templateColumnSections, defaultRegimenDtos);
@@ -159,6 +155,16 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     return !siglusRequisitionDto.getTemplate().getExtension().isEnableRegimen();
   }
 
+  private Set<RegimenDispatchLineDto> getValidRegimenDispatchLines(
+      SiglusRequisitionDto requisitionDto) {
+    return regimenRepository
+        .findAllByProgramIdInAndActiveTrue(getProgramIds(requisitionDto))
+        .stream()
+        .map(Regimen::getRegimenDispatchLine)
+        .map(RegimenDispatchLineDto::from)
+        .collect(Collectors.toSet());
+  }
+
   private List<RegimenLineItem> createRegimenLineItems(
       SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections,
@@ -168,52 +174,47 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     UsageTemplateColumnSection regimen = siglusUsageReportService
         .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, REGIMEN);
 
-    List<RegimenLineItem> regimenLineItems = newArrayList();
 
-    defaultRegimenDtos.forEach(regimenDto -> {
-      for (UsageTemplateColumn templateColumn : regimen.getColumns()) {
-        if (!Boolean.TRUE.equals(templateColumn.getIsDisplayed())
-            || REFERENCE_DATA.equals(templateColumn.getSource())) {
-          continue;
-        }
+    List<UsageTemplateColumn> templateColumns = getValidColumn(regimen);
 
-        regimenLineItems.add(RegimenLineItem.builder()
-            .requisitionId(siglusRequisitionDto.getId())
-            .regimenId(regimenDto.getId())
-            .column(templateColumn.getName())
-            .build());
-      }
-    });
+    return defaultRegimenDtos.stream().flatMap(
+        regimenDto -> templateColumns.stream().map(
+            templateColumn -> RegimenLineItem.builder()
+              .requisitionId(siglusRequisitionDto.getId())
+              .regimenId(regimenDto.getId())
+              .column(templateColumn.getName())
+              .build()))
+        .collect(Collectors.toList());
+  }
 
-    return regimenLineItems;
+  private List<UsageTemplateColumn> getValidColumn(UsageTemplateColumnSection section) {
+    return section.getColumns()
+        .stream()
+        .filter(column -> Boolean.TRUE.equals(column.getIsDisplayed()))
+        .filter(column -> !REFERENCE_DATA.equals(column.getSource()))
+        .collect(Collectors.toList());
   }
 
   private List<RegimenSummaryLineItem> createRegimenSummaryLineItems(
       SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections,
-      List<RegimenDispatchLineDto> regimenDispatchLineDtos
+      Set<RegimenDispatchLineDto> regimenDispatchLineDtos
   ) {
     UsageTemplateColumnSection regimenDispatchLine = siglusUsageReportService
         .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, SUMMARY);
 
-    List<RegimenSummaryLineItem> regimenSummaryLineItems = newArrayList();
+    List<UsageTemplateColumn> templateColumns = getValidColumn(regimenDispatchLine);
 
-    regimenDispatchLineDtos.forEach(regimenDispatchLineDto -> {
-      for (UsageTemplateColumn templateColumn : regimenDispatchLine.getColumns()) {
-        if (!Boolean.TRUE.equals(templateColumn.getIsDisplayed())
-            || REFERENCE_DATA.equals(templateColumn.getSource())) {
-          continue;
-        }
+    return regimenDispatchLineDtos.stream().flatMap(
+        regimenDispatchLineDto -> templateColumns.stream().map(
+            templateColumn -> RegimenSummaryLineItem.builder()
+                .requisitionId(siglusRequisitionDto.getId())
+                .regimenDispatchLineId(regimenDispatchLineDto.getId())
+                .column(templateColumn.getName())
+                .build()
+        )
+    ).collect(Collectors.toList());
 
-        regimenSummaryLineItems.add(RegimenSummaryLineItem.builder()
-            .requisitionId(siglusRequisitionDto.getId())
-            .regimenDispatchLineId(regimenDispatchLineDto.getId())
-            .column(templateColumn.getName())
-            .build());
-      }
-    });
-
-    return regimenSummaryLineItems;
   }
 
   public Map<UUID, RegimenDto> getRegimenDtoMap() {
