@@ -21,6 +21,7 @@ import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
@@ -62,6 +63,11 @@ public class SiglusOrderController {
   @GetMapping()
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
     return orderController.searchOrders(params, pageable);
+  }
+
+  @GetMapping("/{id}/status")
+  public OrderStatusDto getOrderStatus(@PathVariable("id") UUID orderId) {
+    return siglusOrderService.searchOrderStatusById(orderId);
   }
 
   @GetMapping("/{id}")

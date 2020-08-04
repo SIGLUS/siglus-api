@@ -26,6 +26,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.Sets;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,6 +46,7 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.ResourceNames;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
+import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
@@ -64,22 +67,27 @@ import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.OrderLineItemDto;
+import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @Service
 @Slf4j
+@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusOrderService {
 
   @Autowired
@@ -117,6 +125,30 @@ public class SiglusOrderService {
 
   @Autowired
   private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+
+  @Autowired
+  private SiglusProcessingPeriodReferenceDataService periodService;
+
+  @Value("${time.zoneId}")
+  private String timeZoneId;
+
+  public OrderStatusDto searchOrderStatusById(UUID orderId) {
+    OrderDto orderDto = orderController.getOrder(orderId, null);
+    OrderStatusDto orderStatusDto = new OrderStatusDto();
+    orderStatusDto.setClosed(currentDateIsAfterNextPeriodEndDate(orderDto));
+    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
+    orderStatusDto.setSuborder(external != null);
+    return orderStatusDto;
+  }
+
+  public boolean currentDateIsAfterNextPeriodEndDate(OrderDto orderDto) {
+    LocalDate currentDate = LocalDate.now(ZoneId.of(timeZoneId));
+    ProcessingPeriodDto period = orderDto.getProcessingPeriod();
+    List<org.openlmis.requisition.dto.ProcessingPeriodDto> periodDtos =
+        getNextProcessingPeriodDto(period);
+    return !CollectionUtils.isEmpty(periodDtos)
+        && periodDtos.get(0).getEndDate().isBefore(currentDate);
+  }
 
   public SiglusOrderDto searchOrderById(UUID orderId) {
     //totalDispensingUnits not present in lineitem of previous OrderFulfillmentService
@@ -230,6 +262,17 @@ public class SiglusOrderService {
     originOrder.setStatus(orderStatus);
     log.info("update exist order for subOrder: {}", originOrder);
     orderRepository.save(originOrder);
+  }
+
+  private List<org.openlmis.requisition.dto.ProcessingPeriodDto> getNextProcessingPeriodDto(
+      ProcessingPeriodDto period) {
+    Pageable pageable = new PageRequest(0, 1);
+    return periodService
+        .searchProcessingPeriods(period.getProcessingSchedule().getId(),
+            null, null, period.getEndDate().plusDays(1),
+            null,
+            null, pageable)
+        .getContent();
   }
 
   private Iterable<BasicOrderDto> createNewOrder(OrderObjectReferenceDto order,

@@ -19,8 +19,6 @@ import static java.util.stream.Collectors.toSet;
 import static org.siglus.common.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
 import static org.siglus.common.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +32,6 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.ShipmentLineItem.Importer;
 import org.openlmis.fulfillment.repository.OrderRepository;
-import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
@@ -45,14 +42,9 @@ import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.Message;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 @Slf4j
 @Service
@@ -79,17 +71,12 @@ public class SiglusShipmentService {
   @Autowired
   private SiglusShipmentDraftService draftService;
 
-  @Autowired
-  private SiglusProcessingPeriodReferenceDataService periodService;
-
-  @Value("${time.zoneId}")
-  private String timeZoneId;
 
   @Transactional(noRollbackFor = ValidationMessageException.class)
   public ShipmentDto createOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
     OrderDto orderDto = orderController.getOrder(shipmentDto.getOrder().getId(), null);
     validateOrderStatus(orderDto);
-    if (currentDateIsAfterNextPeriodEndDate(orderDto)) {
+    if (siglusOrderService.currentDateIsAfterNextPeriodEndDate(orderDto)) {
       revertOrderToCloseStatus(orderRepository.findOne(orderDto.getId()));
       throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
     }
@@ -118,26 +105,6 @@ public class SiglusShipmentService {
     if (orderDto.getStatus().equals(OrderStatus.CLOSED)) {
       throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
     }
-  }
-
-  private boolean currentDateIsAfterNextPeriodEndDate(OrderDto orderDto) {
-    LocalDate currentDate = LocalDate.now(ZoneId.of(timeZoneId));
-    ProcessingPeriodDto period = orderDto.getProcessingPeriod();
-    List<org.openlmis.requisition.dto.ProcessingPeriodDto> periodDtos =
-        getNextProcessingPeriodDto(period);
-    return !CollectionUtils.isEmpty(periodDtos)
-        && periodDtos.get(0).getEndDate().isBefore(currentDate);
-  }
-
-  private List<org.openlmis.requisition.dto.ProcessingPeriodDto> getNextProcessingPeriodDto(
-      ProcessingPeriodDto period) {
-    Pageable pageable = new PageRequest(0, 1);
-    return periodService
-        .searchProcessingPeriods(period.getProcessingSchedule().getId(),
-            null, null, period.getEndDate().plusDays(1),
-            null,
-            null, pageable)
-        .getContent();
   }
 
   private void createSubOrder(ShipmentDto shipmentDto) {

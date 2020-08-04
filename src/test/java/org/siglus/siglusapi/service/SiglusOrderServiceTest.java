@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -73,9 +74,11 @@ import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
@@ -126,6 +129,9 @@ public class SiglusOrderServiceTest {
   @Mock
   private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
 
+  @Mock
+  private SiglusProcessingPeriodReferenceDataService periodService;
+
   @InjectMocks
   private SiglusOrderService siglusOrderService;
 
@@ -142,6 +148,11 @@ public class SiglusOrderServiceTest {
   private UUID orderableId3 = UUID.randomUUID();
   private UUID lotId = UUID.randomUUID();
   private UUID lineItemId = UUID.randomUUID();
+
+  @Before
+  public void prepare() {
+    ReflectionTestUtils.setField(siglusOrderService, "timeZoneId", "UTC");
+  }
 
   @Test
   public void shouldGetValidAvailableProductsAndRequisitionNumberWithOrder() {

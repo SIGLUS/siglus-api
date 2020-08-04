@@ -29,7 +29,6 @@ import static org.siglus.common.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.apache.commons.collections4.CollectionUtils;
@@ -51,7 +50,6 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto;
-import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipment.ShipmentController;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
@@ -63,9 +61,6 @@ import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
-import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
-import org.springframework.data.domain.Page;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
@@ -110,9 +105,6 @@ public class SiglusShipmentServiceTest {
   @Mock
   private SiglusShipmentDraftService draftService;
 
-  @Mock
-  private SiglusProcessingPeriodReferenceDataService periodService;
-
 
   private UUID orderId = UUID.randomUUID();
 
@@ -127,12 +119,8 @@ public class SiglusShipmentServiceTest {
     order.setStatus(OrderStatus.FULFILLING);
     order.setProcessingPeriod(buildProcessingPeriod());
     when(orderController.getOrder(any(UUID.class), any())).thenReturn(order);
-    Page<org.openlmis.requisition.dto.ProcessingPeriodDto> periodDtos = Pagination
-        .getPage(Collections.EMPTY_LIST);
-    when(periodService
-        .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
-        .thenReturn(periodDtos);
-    ReflectionTestUtils.setField(siglusShipmentService, "timeZoneId", "UTC");
+    when(siglusOrderService.currentDateIsAfterNextPeriodEndDate(any()))
+        .thenReturn(false);
   }
 
   @Test(expected = ValidationMessageException.class)
@@ -167,11 +155,8 @@ public class SiglusShipmentServiceTest {
     org.openlmis.requisition.dto.ProcessingPeriodDto dto =
         new org.openlmis.requisition.dto.ProcessingPeriodDto();
     dto.setEndDate(LocalDate.now().minusDays(10));
-    Page<org.openlmis.requisition.dto.ProcessingPeriodDto> periodDtos = Pagination
-        .getPage(Arrays.asList(dto));
-    when(periodService
-        .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
-        .thenReturn(periodDtos);
+    when(siglusOrderService.currentDateIsAfterNextPeriodEndDate(any()))
+        .thenReturn(true);
     Order order = new Order();
     when(orderRepository.findOne(orderId)).thenReturn(order);
 
