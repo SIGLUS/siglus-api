@@ -33,18 +33,18 @@ import javax.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.service.FulfillmentPermissionService;
+import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
-import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
@@ -91,8 +91,6 @@ public class SiglusNotificationService {
   private final NotificationMapper mapper;
 
   private final SiglusAuthenticationHelper authenticationHelper;
-
-  private final OrderFulfillmentService orderService;
 
   private final SiglusOrderService siglusOrderService;
 
@@ -290,12 +288,14 @@ public class SiglusNotificationService {
         .getSupervisoryNode();
   }
 
-  private List<OrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {
+  private List<BasicOrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {
     RequisitionV2Dto requisition = requisitionService
         .searchRequisition(approveRequisitionDto.getId());
-    return orderService
-        .search(requisition.getSupplyingFacility(), requisition.getFacilityId(),
-            requisition.getProgramId(), requisition.getProcessingPeriodId(), null/*ignore status*/)
+    OrderSearchParams params = new OrderSearchParams(
+        requisition.getSupplyingFacility(), requisition.getFacilityId(), requisition.getProgramId(),
+        requisition.getProcessingPeriodId(), null, null, null);
+    return siglusOrderService.searchOrders(params, null)
+        .getContent()
         .stream()
         .filter(order -> requisition.getId().equals(order.getExternalId()))
         .collect(Collectors.toList());

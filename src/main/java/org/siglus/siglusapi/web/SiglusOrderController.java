@@ -62,7 +62,7 @@ public class SiglusOrderController {
 
   @GetMapping()
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
-    return orderController.searchOrders(params, pageable);
+    return siglusOrderService.searchOrders(params, pageable);
   }
 
   @GetMapping("/{id}/status")

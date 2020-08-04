@@ -43,6 +43,7 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.ResourceNames;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
@@ -131,6 +132,10 @@ public class SiglusOrderService {
 
   @Value("${time.zoneId}")
   private String timeZoneId;
+
+  public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
+    return orderController.searchOrders(params, pageable);
+  }
 
   public OrderStatusDto searchOrderStatusById(UUID orderId) {
     OrderDto orderDto = orderController.getOrder(orderId, null);

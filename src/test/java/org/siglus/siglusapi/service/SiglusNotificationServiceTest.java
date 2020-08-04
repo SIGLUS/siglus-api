@@ -45,7 +45,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.service.referencedata.ProgramDto;
+import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
@@ -53,12 +56,9 @@ import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
-import org.openlmis.requisition.dto.OrderDto;
-import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.siglus.common.dto.referencedata.FacilityDto;
@@ -101,9 +101,6 @@ public class SiglusNotificationServiceTest {
 
   @Mock
   private ProofOfDeliveryFulfillmentService podService;
-
-  @Mock
-  private OrderFulfillmentService orderService;
 
   @Mock
   private OrderExternalRepository orderExternalRepository;
@@ -397,13 +394,14 @@ public class SiglusNotificationServiceTest {
     requisitionV2Dto.setId(requisition.getId());
     when(requisitionService.searchRequisition(requisition.getId()))
         .thenReturn(requisitionV2Dto);
-    OrderDto order = new OrderDto();
+    BasicOrderDto order = new BasicOrderDto();
     order.setExternalId(requisition.getId());
     ProgramDto program = new ProgramDto();
     program.setId(randomUUID());
     order.setProgram(program);
-    when(orderService.search(any(), any(), any(), any(), any()))
-        .thenReturn(singletonList(order));
+    when(siglusOrderService.searchOrders(any(),any()))
+        .thenReturn(Pagination.getPage(singletonList(order)));
+
     // when
     service.postConvertToOrder(requisition);
 
