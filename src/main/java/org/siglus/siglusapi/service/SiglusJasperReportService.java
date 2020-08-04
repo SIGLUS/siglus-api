@@ -16,10 +16,12 @@
 package org.siglus.siglusapi.service;
 
 import static java.io.File.createTempFile;
+import static java.util.Collections.singletonList;
 import static org.apache.commons.io.FileUtils.writeByteArrayToFile;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_GENERATE_REPORT_FAILED;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_IO;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_JASPER_FILE_CREATION;
+import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_REPORT_ID_NOT_FOUND;
 import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
@@ -32,6 +34,7 @@ import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +46,7 @@ import net.sf.jasperreports.engine.JasperReport;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
 import org.openlmis.stockmanagement.exception.JasperReportViewException;
+import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.util.Message;
@@ -57,10 +61,14 @@ import org.springframework.web.servlet.view.jasperreports.JasperReportsPdfView;
 @Service
 public class SiglusJasperReportService {
 
+  private static final String CARD_REPORT_URL = "/jasperTemplates/stockCard.jrxml";
   private static final String CARD_SUMMARY_REPORT_URL = "/jasperTemplates/stockCardSummary.jrxml";
 
   @Autowired
   private ApplicationContext appContext;
+
+  @Autowired
+  private SiglusStockCardService siglusStockCardService;
 
   @Autowired
   private StockCardSummariesService stockCardSummariesService;
@@ -85,6 +93,33 @@ public class SiglusJasperReportService {
 
   @Value("${groupingSize}")
   private String groupingSize;
+
+  /**
+   * Generate stock card report in PDF format.
+   *
+   * @param stockCardId stock card id
+   * @return generated stock card report.
+   */
+  public ModelAndView getStockCardReportView(UUID stockCardId, Boolean isProduct) {
+    StockCardDto stockCardDto;
+    if (isProduct == null) {
+      stockCardDto = siglusStockCardService.findStockCardById(stockCardId);
+    } else {
+      stockCardDto = siglusStockCardService.findStockCardByOrderable(stockCardId);
+    }
+    if (stockCardDto == null) {
+      throw new ResourceNotFoundException(new Message(ERROR_REPORT_ID_NOT_FOUND));
+    }
+
+    Collections.reverse(stockCardDto.getLineItems());
+    Map<String, Object> params = new HashMap<>();
+    params.put("datasource", singletonList(stockCardDto));
+    params.put("hasLot", stockCardDto.hasLot());
+    params.put("dateFormat", dateFormat);
+    params.put("decimalFormat", createDecimalFormat());
+
+    return generateReport(CARD_REPORT_URL, params);
+  }
 
   /**
    * Generate stock card summary report in PDF format.

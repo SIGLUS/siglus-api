@@ -699,6 +699,31 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+      /print:
+        get:
+          is: [ secured ]
+          description: Get stock card report in PDF format to print.
+          queryParameters:
+            isProduct:
+              required: false
+              description: Flag defining whether it is by prodcut
+              repeat: false
+              type: boolean
+          responses:
+            200:
+              body:
+                application/pdf:
+
+            403:
+              description: User does not have permission to get stock card report.
+              body:
+                application/json:
+                  schema: localizedMessage
+
+            404:
+              description: Stock card with given id does not exist, can not get report.
+              body:
+                application/json:
 
     /initialInventory:
       get:

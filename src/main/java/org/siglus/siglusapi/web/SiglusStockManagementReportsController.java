@@ -17,24 +17,32 @@ package org.siglus.siglusapi.web;
 
 import java.util.UUID;
 import org.siglus.siglusapi.service.SiglusJasperReportService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
 @RequestMapping("/api/siglusapi")
-public class SiglusStockmanagementReportsController {
-
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(SiglusStockmanagementReportsController.class);
+public class SiglusStockManagementReportsController {
 
   @Autowired
   private SiglusJasperReportService reportService;
+
+  /**
+   * Get stock card report in PDF format.
+   *
+   * @param stockCardId stock card id.
+   * @return generated PDF report
+   */
+  @GetMapping("/stockCards/{id}/print")
+  public ModelAndView getStockCard(
+      @PathVariable("id") UUID stockCardId, @RequestParam(required = false) Boolean isProduct) {
+    return reportService.getStockCardReportView(stockCardId, isProduct);
+  }
 
   /**
    * Get stock card summaries report by program and facility.
@@ -45,8 +53,6 @@ public class SiglusStockmanagementReportsController {
   public ModelAndView getStockCardSummaries(
       @RequestParam("program") UUID program,
       @RequestParam("facility") UUID facility) {
-    LOGGER.info("Try to generate stock card summaries report by program %s and facility %s.",
-        program.toString(), facility.toString());
     return reportService.getStockCardSummariesReportView(program, facility);
   }
 }
