@@ -133,7 +133,7 @@ public class RequisitionSimamEmailServiceTest {
     List<EmailAttachmentDto> emailAttachmentDtos = requisitionSimamEmailService
         .prepareEmailAttachmentsForSimam(requisition, program);
 
-    assertEquals(emailAttachmentDtos.size(), 2);
+    assertEquals(2, emailAttachmentDtos.size());
     assertEquals(emailAttachmentDtos.get(0).getAttachmentFileName(), requsitionFileName);
     assertEquals(emailAttachmentDtos.get(0).getAttachmentFileType(), fileType);
     assertEquals(emailAttachmentDtos.get(1).getAttachmentFileName(), regimenFileName);
