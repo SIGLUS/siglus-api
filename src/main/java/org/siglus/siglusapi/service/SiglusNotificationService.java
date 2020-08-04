@@ -58,6 +58,7 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.dto.NotificationDto;
+import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
@@ -92,6 +93,8 @@ public class SiglusNotificationService {
   private final SiglusAuthenticationHelper authenticationHelper;
 
   private final OrderFulfillmentService orderService;
+
+  private final SiglusOrderService siglusOrderService;
 
   private final SiglusRequisitionRequisitionService requisitionService;
 
@@ -209,7 +212,8 @@ public class SiglusNotificationService {
   }
 
   public void postConfirmShipment(ShipmentDto shipment) {
-    OrderDto order = orderService.findOne(shipment.getOrder().getId());
+    SiglusOrderDto siglusOrderDto = siglusOrderService.searchOrderById(shipment.getOrder().getId());
+    org.openlmis.fulfillment.web.util.OrderDto order = siglusOrderDto.getOrder();
     repo.updateLastNotificationProcessed(order.getId(), NotificationStatus.ORDERED);
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();

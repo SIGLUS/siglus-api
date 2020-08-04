@@ -69,6 +69,7 @@ import org.siglus.common.util.PermissionString;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
+import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -112,6 +113,9 @@ public class SiglusNotificationServiceTest {
 
   @Mock
   private RequisitionGroupReferenceDataService requisitionGroupService;
+
+  @Mock
+  private SiglusOrderService siglusOrderService;
 
   private UUID notificationId;
 
@@ -426,10 +430,13 @@ public class SiglusNotificationServiceTest {
     ShipmentDto shipment = new ShipmentDto();
     OrderObjectReferenceDto orderDto = new OrderObjectReferenceDto(randomUUID());
     shipment.setOrder(orderDto);
-    OrderDto order = new OrderDto();
+    SiglusOrderDto siglusOrderDto = new SiglusOrderDto();
+    org.openlmis.fulfillment.web.util.OrderDto order =
+        new org.openlmis.fulfillment.web.util.OrderDto();
     order.setId(orderDto.getId());
     order.setExternalId(randomUUID());
-    when(orderService.findOne(order.getId())).thenReturn(order);
+    siglusOrderDto.setOrder(order);
+    when(siglusOrderService.searchOrderById(order.getId())).thenReturn(siglusOrderDto);
 
     ProofOfDeliveryDto pod = new ProofOfDeliveryDto();
     pod.setId(randomUUID());
