@@ -20,23 +20,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.siglus.siglusapi.dto.simam.CellMeta;
-import org.slf4j.ext.XLogger;
-import org.slf4j.ext.XLoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 
+@Slf4j
 public abstract class ExcelHandler {
 
   public enum PathType {
     FILE,
     CLASSPATH
   }
-
-  protected static XLogger logger = XLoggerFactory.getXLogger(ExcelHandler.class);
 
   public static final String VARIABLE_PREFIX = "$";
   public static final String TEMPLATE_PATH = "/static/simam/";
@@ -48,7 +46,7 @@ public abstract class ExcelHandler {
       InputStream templateIn = getClasspathFileInputStream(templateFileName, type);
       wb = WorkbookFactory.create(templateIn);
     } catch (Exception e) {
-      logger.error("Read file with exception: {}", e.getMessage());
+      log.error("Read file with exception: {}", e.getMessage());
     }
     return wb;
   }
@@ -62,7 +60,7 @@ public abstract class ExcelHandler {
         try {
           inputStream = classPathResource.getInputStream();
         } catch (IOException e) {
-          logger.error("load template {} error", templateFileName);
+          log.error("load template {} error", templateFileName);
         }
         return inputStream;
       case CLASSPATH:
@@ -79,7 +77,7 @@ public abstract class ExcelHandler {
     try (FileOutputStream fileOut = new FileOutputStream(filePath)) {
       wb.write(fileOut);
     } catch (IOException e) {
-      logger.error("Create file: {} with error {}", fileName, e.getMessage());
+      log.error("Create file: {} with error {}", fileName, e.getMessage());
     }
     return filePath;
   }
