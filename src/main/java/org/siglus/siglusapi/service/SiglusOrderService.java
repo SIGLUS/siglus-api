@@ -182,6 +182,7 @@ public class SiglusOrderService {
 
   void revertOrderToCloseStatus(Order order) {
     draftService.deleteOrderLineItemAndInitialedExtension(order);
+    log.info("close order: close order id: {}", order.getId());
     order.setStatus(OrderStatus.CLOSED);
     log.info("save closed order: {}", order);
     orderRepository.save(order);

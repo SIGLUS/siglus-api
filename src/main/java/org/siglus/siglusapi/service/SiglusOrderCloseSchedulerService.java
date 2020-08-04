@@ -70,15 +70,15 @@ public class SiglusOrderCloseSchedulerService {
   @Scheduled(cron = "${fulfillment.close.cron}", zone = "${time.zoneId}")
   public void closeFulfillmentIfCurrentDateIsAfterNextPeriodEndDate() {
     List<Order> orders = getCanFulfillOrder();
-    log.info("get can Fulfill order : {}", orders);
+    log.info("close order: get can Fulfill order : {}", orders);
 
     HashMap<UUID, ProcessingPeriodDto> processingPeriodMap
         = getNextProcessingPeriodDtoHashMap(orders);
-    log.info("get next processing period map: {}", processingPeriodMap);
+    log.info("close order: get next processing period map: {}", processingPeriodMap);
 
     if (!CollectionUtils.isEmpty(processingPeriodMap.values())) {
       List<Order> needClosedOrders = getNeedClosedOrder(orders, processingPeriodMap);
-      log.info("get need close order : {}", needClosedOrders);
+      log.info("close order: get need close order : {}", needClosedOrders);
 
       List<CompletableFuture<Void>> futures = Lists.newArrayList();
       for (Order order : needClosedOrders) {
@@ -87,7 +87,7 @@ public class SiglusOrderCloseSchedulerService {
         futures.add(future);
       }
       futures.forEach(CompletableFuture::join);
-      log.info("close all orders");
+      log.info("close order: close all orders");
     }
   }
 
