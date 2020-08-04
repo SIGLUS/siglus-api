@@ -64,6 +64,11 @@ public class JasperReportService {
   private static final String CARD_REPORT_URL = "/jasperTemplates/stockCard.jrxml";
   private static final String CARD_SUMMARY_REPORT_URL = "/jasperTemplates/stockCardSummary.jrxml";
   private static final String PI_LINES_REPORT_URL = "/jasperTemplates/physicalinventoryLines.jrxml";
+  // [SIGLUS change start]
+  // [change reason]: Enable print function in stock on hand
+  private static final String DATE_FORMAT = "dateFormat";
+  private static final String DECIMAL_FORMAT = "decimalFormat";
+  // [SIGLUS change end]
 
   @Autowired
   private ApplicationContext appContext;
@@ -105,11 +110,52 @@ public class JasperReportService {
     Map<String, Object> params = new HashMap<>();
     params.put("datasource", singletonList(stockCardDto));
     params.put("hasLot", stockCardDto.hasLot());
-    params.put("dateFormat", dateFormat);
-    params.put("decimalFormat", createDecimalFormat());
+    // [SIGLUS change start]
+    // [change reason]: Enable print function in stock on hand
+    params.put(DATE_FORMAT, dateFormat);
+    params.put(DECIMAL_FORMAT, createDecimalFormat());
+    // [SIGLUS change end]
 
     return generateReport(CARD_REPORT_URL, params);
   }
+
+  // [SIGLUS change start]
+  // [change reason]: Enable print function in stock on hand
+  /**
+   * Generate stock card report in PDF format.
+   *
+   * @param stockCardDto stock card
+   * @return generated stock card report.
+   */
+  public ModelAndView getStockCardReportView(StockCardDto stockCardDto) {
+    if (stockCardDto == null) {
+      throw new ResourceNotFoundException(new Message(ERROR_REPORT_ID_NOT_FOUND));
+    }
+
+    Collections.reverse(stockCardDto.getLineItems());
+    Map<String, Object> params = new HashMap<>();
+    params.put("datasource", singletonList(stockCardDto));
+    params.put("hasLot", stockCardDto.hasLot());
+    params.put(DATE_FORMAT, dateFormat);
+    params.put(DECIMAL_FORMAT, createDecimalFormat());
+
+    return generateReport(CARD_REPORT_URL, params);
+  }
+
+  /**
+   * Generate stock card summary report in PDF format.
+   *
+   * @param params  params
+   * @return generated stock card summary report.
+   */
+  public ModelAndView getStockCardSummariesReportView(Map<String, Object> params) {
+    params.put(DATE_FORMAT, dateFormat);
+    params.put("dateTimeFormat", dateTimeFormat);
+    params.put(DECIMAL_FORMAT, createDecimalFormat());
+
+    return generateReport(CARD_SUMMARY_REPORT_URL, params);
+  }
+  // [SIGLUS change end]
 
   /**
    * Generate stock card summary report in PDF format.
@@ -132,9 +178,12 @@ public class JasperReportService {
     params.put("showProgram", getCount(cards, card -> card.getProgram().getId().toString()) > 1);
     params.put("showFacility", getCount(cards, card -> card.getFacility().getId().toString()) > 1);
     params.put("showLot", cards.stream().anyMatch(card -> card.getLotId() != null));
-    params.put("dateFormat", dateFormat);
+    // [SIGLUS change start]
+    // [change reason]: Enable print function in stock on hand
+    params.put(DATE_FORMAT, dateFormat);
     params.put("dateTimeFormat", dateTimeFormat);
-    params.put("decimalFormat", createDecimalFormat());
+    params.put(DECIMAL_FORMAT, createDecimalFormat());
+    // [SIGLUS change end]
 
     return generateReport(CARD_SUMMARY_REPORT_URL, params);
   }
