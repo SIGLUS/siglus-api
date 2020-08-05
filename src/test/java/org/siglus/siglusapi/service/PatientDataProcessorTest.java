@@ -112,6 +112,7 @@ public class PatientDataProcessorTest {
     UsageTemplateColumn patientColumn = new UsageTemplateColumn();
     String columnName = "patientColumn";
     patientColumn.setName(columnName);
+    patientColumn.setIsDisplayed(true);
     patientTemplate.setColumns(singletonList(patientColumn));
     List<PatientLineItem> savedLineItems = singletonList(mock(PatientLineItem.class));
     when(repo.save(anyListOf(PatientLineItem.class))).thenReturn(savedLineItems);

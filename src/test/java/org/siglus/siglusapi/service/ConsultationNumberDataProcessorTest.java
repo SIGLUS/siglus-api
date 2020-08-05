@@ -112,6 +112,7 @@ public class ConsultationNumberDataProcessorTest {
     UsageTemplateColumn column = new UsageTemplateColumn();
     String columnName = "cnColumn";
     column.setName(columnName);
+    column.setIsDisplayed(true);
     matchedTemplate.setColumns(singletonList(column));
     List<ConsultationNumberLineItem> savedLineItems =
         singletonList(mock(ConsultationNumberLineItem.class));

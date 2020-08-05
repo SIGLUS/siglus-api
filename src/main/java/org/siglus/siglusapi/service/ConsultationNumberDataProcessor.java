@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
+import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
@@ -96,6 +97,7 @@ public class ConsultationNumberDataProcessor implements UsageReportDataProcessor
 
   private List<ConsultationNumberLineItem> toLineItems(UsageTemplateColumnSection sectionTemplate) {
     return sectionTemplate.getColumns().stream()
+        .filter(UsageTemplateColumn::getIsDisplayed)
         .map(columnTemplate -> {
           ConsultationNumberLineItem lineItem = new ConsultationNumberLineItem();
           lineItem.setGroup(sectionTemplate.getName());
