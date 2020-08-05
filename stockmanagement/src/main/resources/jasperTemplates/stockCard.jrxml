@@ -377,7 +377,7 @@
 								<reportElement x="0" y="0" width="75" height="30" uuid="f0f02791-44c8-44d8-96e0-15d78068606b"/>
 								<box padding="2"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle"/>
-								<textFieldExpression><![CDATA[$F{lineItem}.getSourceFreeText() != null ? MessageFormat.format("{0} : {1}", $F{source}.getName(), $F{lineItem}.getSourceFreeText()) :  $F{source}.getName()]]></textFieldExpression>
+								<textFieldExpression><![CDATA[$F{source}.getName()]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
@@ -396,7 +396,7 @@
 								<reportElement x="0" y="0" width="65" height="30" uuid="45281874-eba8-42a9-824b-62e4b04cdf75"/>
 								<box padding="2"/>
 								<textElement textAlignment="Center" verticalAlignment="Middle"/>
-								<textFieldExpression><![CDATA[$F{lineItem}.getDestinationFreeText() != null ? MessageFormat.format("{0} : {1}", $F{destination}.getName(), $F{lineItem}.getDestinationFreeText()) : $F{destination}.getName()]]></textFieldExpression>
+								<textFieldExpression><![CDATA[$F{destination}.getName()]]></textFieldExpression>
 							</textField>
 						</jr:detailCell>
 					</jr:column>
