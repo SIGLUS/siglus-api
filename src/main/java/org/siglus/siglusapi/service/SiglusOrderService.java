@@ -145,7 +145,9 @@ public class SiglusOrderService {
     OrderStatusDto orderStatusDto = new OrderStatusDto();
     orderStatusDto.setClosed(currentDateIsAfterNextPeriodEndDate(orderDto));
     orderStatusDto.setSuborder(isSuborder(orderDto.getExternalId()));
-    if (orderStatusDto.isClosed() && orderStatusDto.isSuborder()) {
+    if (orderStatusDto.isClosed()
+        && orderStatusDto.isSuborder()
+        && orderDto.getStatus() != OrderStatus.CLOSED) {
       Order order = orderRepository.findOne(orderId);
       revertOrderToCloseStatus(order);
     }

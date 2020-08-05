@@ -44,6 +44,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
@@ -135,6 +136,9 @@ public class SiglusOrderServiceTest {
 
   @Mock
   private SiglusProcessingPeriodReferenceDataService periodService;
+
+  @Mock
+  private SiglusShipmentDraftService draftService;
 
   @InjectMocks
   private SiglusOrderService siglusOrderService;
@@ -364,6 +368,164 @@ public class SiglusOrderServiceTest {
     assertEquals(false, isAfterNextPeriodEndDate);
   }
 
+  @Test
+  public void shouldRevertOrderWhenCurrentDateIsAfterNextPeriodEndDateAndIsSubOrder() {
+    // given
+    OrderDto orderDto = new OrderDto();
+    UUID externalId = UUID.randomUUID();
+    orderDto.setExternalId(externalId);
+    orderDto.setStatus(OrderStatus.FULFILLING);
+    LocalDate current = LocalDate.now();
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto currentDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    currentDto.setStartDate(current.minusMonths(2));
+    currentDto.setEndDate(current.minusMonths(1));
+    org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto processingScheduleDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto();
+    processingScheduleDto.setId(UUID.randomUUID());
+    currentDto.setProcessingSchedule(processingScheduleDto);
+    orderDto.setProcessingPeriod(currentDto);
+    ProcessingPeriodDto dto = new ProcessingPeriodDto();
+    dto.setStartDate(current.minusMonths(1));
+    dto.setEndDate(current.minusDays(1));
+    Page<ProcessingPeriodDto> periodDtos = Pagination
+        .getPage(Collections.singletonList(dto));
+    when(periodService
+        .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
+        .thenReturn(periodDtos);
+    when(orderController.getOrder(orderId, null)).thenReturn(orderDto);
+    when(orderExternalRepository.findOne(externalId)).thenReturn(new OrderExternal());
+    Order order = new Order();
+    order.setOrderLineItems(Collections.emptyList());
+    when(orderRepository.findOne(orderId)).thenReturn(order);
+
+    // when
+    siglusOrderService.searchOrderStatusById(orderId);
+
+    // then
+    verify(draftService).deleteOrderLineItemAndInitialedExtension(any(Order.class));
+    verify(orderRepository).save(any(Order.class));
+  }
+
+  @Test
+  public void shouldDontRevertOrderWhenOrderStatusClosed() {
+    // given
+    OrderDto orderDto = new OrderDto();
+    UUID externalId = UUID.randomUUID();
+    orderDto.setExternalId(externalId);
+    orderDto.setStatus(OrderStatus.CLOSED);
+    LocalDate current = LocalDate.now();
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto currentDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    currentDto.setStartDate(current.minusMonths(2));
+    currentDto.setEndDate(current.minusMonths(1));
+    org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto processingScheduleDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto();
+    processingScheduleDto.setId(UUID.randomUUID());
+    currentDto.setProcessingSchedule(processingScheduleDto);
+    orderDto.setProcessingPeriod(currentDto);
+    ProcessingPeriodDto dto = new ProcessingPeriodDto();
+    dto.setStartDate(current.minusMonths(1));
+    dto.setEndDate(current.minusDays(1));
+    Page<ProcessingPeriodDto> periodDtos = Pagination
+        .getPage(Collections.singletonList(dto));
+    when(periodService
+        .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
+        .thenReturn(periodDtos);
+    when(orderController.getOrder(orderId, null)).thenReturn(orderDto);
+    when(orderExternalRepository.findOne(externalId)).thenReturn(new OrderExternal());
+    Order order = new Order();
+    order.setOrderLineItems(Collections.emptyList());
+    when(orderRepository.findOne(orderId)).thenReturn(order);
+
+    // when
+    siglusOrderService.searchOrderStatusById(orderId);
+
+    // then
+    verify(draftService, times(0))
+        .deleteOrderLineItemAndInitialedExtension(any(Order.class));
+    verify(orderRepository,times(0)).save(any(Order.class));
+  }
+
+  @Test
+  public void shouldDontRevertOrderWhenOrderNoSubOrder() {
+    // given
+    OrderDto orderDto = new OrderDto();
+    UUID externalId = UUID.randomUUID();
+    orderDto.setExternalId(externalId);
+    orderDto.setStatus(OrderStatus.CLOSED);
+    LocalDate current = LocalDate.now();
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto currentDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    currentDto.setStartDate(current.minusMonths(2));
+    currentDto.setEndDate(current.minusMonths(1));
+    org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto processingScheduleDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto();
+    processingScheduleDto.setId(UUID.randomUUID());
+    currentDto.setProcessingSchedule(processingScheduleDto);
+    orderDto.setProcessingPeriod(currentDto);
+    ProcessingPeriodDto dto = new ProcessingPeriodDto();
+    dto.setStartDate(current.minusMonths(1));
+    dto.setEndDate(current.minusDays(1));
+    Page<ProcessingPeriodDto> periodDtos = Pagination
+        .getPage(Collections.singletonList(dto));
+    when(periodService
+        .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
+        .thenReturn(periodDtos);
+    when(orderController.getOrder(orderId, null)).thenReturn(orderDto);
+    when(orderExternalRepository.findOne(externalId)).thenReturn(null);
+    Order order = new Order();
+    order.setOrderLineItems(Collections.emptyList());
+    when(orderRepository.findOne(orderId)).thenReturn(order);
+
+    // when
+    siglusOrderService.searchOrderStatusById(orderId);
+
+    // then
+    verify(draftService, times(0))
+        .deleteOrderLineItemAndInitialedExtension(any(Order.class));
+    verify(orderRepository,times(0)).save(any(Order.class));
+  }
+
+  @Test
+  public void shouldDontRevertOrderWhenCurrentDateIsBeforeNextPeriodEndDate() {
+    // given
+    OrderDto orderDto = new OrderDto();
+    UUID externalId = UUID.randomUUID();
+    orderDto.setExternalId(externalId);
+    orderDto.setStatus(OrderStatus.CLOSED);
+    LocalDate current = LocalDate.now();
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto currentDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    currentDto.setStartDate(current.minusMonths(2));
+    currentDto.setEndDate(current.minusMonths(1));
+    org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto processingScheduleDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto();
+    processingScheduleDto.setId(UUID.randomUUID());
+    currentDto.setProcessingSchedule(processingScheduleDto);
+    orderDto.setProcessingPeriod(currentDto);
+    ProcessingPeriodDto dto = new ProcessingPeriodDto();
+    dto.setStartDate(current.minusMonths(1));
+    dto.setEndDate(current.plusDays(10));
+    Page<ProcessingPeriodDto> periodDtos = Pagination
+        .getPage(Collections.singletonList(dto));
+    when(periodService
+        .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
+        .thenReturn(periodDtos);
+    when(orderController.getOrder(orderId, null)).thenReturn(orderDto);
+    when(orderExternalRepository.findOne(externalId)).thenReturn(null);
+    Order order = new Order();
+    order.setOrderLineItems(Collections.emptyList());
+    when(orderRepository.findOne(orderId)).thenReturn(order);
+
+    // when
+    siglusOrderService.searchOrderStatusById(orderId);
+
+    // then
+    verify(draftService, times(0))
+        .deleteOrderLineItemAndInitialedExtension(any(Order.class));
+    verify(orderRepository,times(0)).save(any(Order.class));
+  }
 
   @Test
   public void shouldCreateNewOrderWhenSecondPartial() {

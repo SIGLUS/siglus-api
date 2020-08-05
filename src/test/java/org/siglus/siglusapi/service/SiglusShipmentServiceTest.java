@@ -155,10 +155,8 @@ public class SiglusShipmentServiceTest {
     org.openlmis.requisition.dto.ProcessingPeriodDto dto =
         new org.openlmis.requisition.dto.ProcessingPeriodDto();
     dto.setEndDate(LocalDate.now().minusDays(10));
-    when(siglusOrderService.currentDateIsAfterNextPeriodEndDate(any()))
-        .thenReturn(true);
-    when(siglusOrderService.isSuborder(any()))
-        .thenReturn(true);
+    when(siglusOrderService.currentDateIsAfterNextPeriodEndDate(any())).thenReturn(true);
+    when(siglusOrderService.isSuborder(any())).thenReturn(true);
     Order order = new Order();
     when(orderRepository.findOne(orderId)).thenReturn(order);
 

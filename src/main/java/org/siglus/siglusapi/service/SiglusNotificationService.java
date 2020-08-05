@@ -36,6 +36,7 @@ import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
+import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BaseDto;
@@ -211,7 +212,7 @@ public class SiglusNotificationService {
 
   public void postConfirmShipment(ShipmentDto shipment) {
     SiglusOrderDto siglusOrderDto = siglusOrderService.searchOrderById(shipment.getOrder().getId());
-    org.openlmis.fulfillment.web.util.OrderDto order = siglusOrderDto.getOrder();
+    OrderDto order = siglusOrderDto.getOrder();
     repo.updateLastNotificationProcessed(order.getId(), NotificationStatus.ORDERED);
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
