@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Lists;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,6 +49,7 @@ import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableRefere
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
+import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
@@ -59,6 +61,7 @@ import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.MetadataDto;
+import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
@@ -77,6 +80,7 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -271,6 +275,95 @@ public class SiglusOrderServiceTest {
     assertEquals("order_code-2", orderDto.getOrderCode());
     assertEquals(secondExternal.getId(), orderDto.getExternalId());
   }
+
+  @Test
+  public void shouldCallControllerWhenSearchOrders() {
+    // when
+    siglusOrderService.searchOrders(null, null);
+
+    //then
+    verify(orderController).searchOrders(null, null);
+  }
+
+  @Test
+  public void shouldIsSuborderWhenExternalExist() {
+    // given
+    UUID externalId = UUID.randomUUID();
+    OrderExternal external = new OrderExternal();
+    when(orderExternalRepository.findOne(externalId)).thenReturn(external);
+
+    // when
+    boolean isSuborder = siglusOrderService.isSuborder(externalId);
+
+    //then
+    assertEquals(true, isSuborder);
+  }
+
+  @Test
+  public void shouldNoSuborderWhenExternalExist() {
+    // given
+    UUID externalId = UUID.randomUUID();
+    when(orderExternalRepository.findOne(externalId)).thenReturn(null);
+
+    // when
+    boolean isSuborder = siglusOrderService.isSuborder(externalId);
+
+    //then
+    assertEquals(false, isSuborder);
+  }
+
+  public void shouldTrueWhenCurrentDateIsAfterNextPeriodEndDate() {
+    // given
+    LocalDate current = LocalDate.now();
+    ProcessingPeriodDto dto = new ProcessingPeriodDto();
+    dto.setStartDate(current.minusMonths(1));
+    dto.setEndDate(current.minusDays(1));
+    Page<ProcessingPeriodDto> periodDtos = Pagination
+        .getPage(Arrays.asList(dto));
+    when(periodService
+        .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
+        .thenReturn(periodDtos);
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto currentDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    currentDto.setStartDate(current.minusMonths(2));
+    currentDto.setEndDate(current.minusMonths(1));
+    OrderDto orderDto = new OrderDto();
+    orderDto.setProcessingPeriod(currentDto);
+
+    // when
+    boolean isAfterNextPeriodEndDate =
+        siglusOrderService.currentDateIsAfterNextPeriodEndDate(orderDto);
+
+    //then
+    assertEquals(true, isAfterNextPeriodEndDate);
+  }
+
+  public void shouldFalseWhenCurrentDateIsAfterNextPeriodEndDate() {
+    // given
+    LocalDate current = LocalDate.now();
+    ProcessingPeriodDto dto = new ProcessingPeriodDto();
+    dto.setStartDate(current.minusMonths(1));
+    dto.setEndDate(current.minusDays(1));
+    Page<ProcessingPeriodDto> periodDtos = Pagination
+        .getPage(Arrays.asList(dto));
+    when(periodService
+        .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
+        .thenReturn(periodDtos);
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto currentDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    currentDto.setStartDate(current.minusMonths(2));
+    currentDto.setEndDate(current.minusMonths(1));
+    OrderDto orderDto = new OrderDto();
+    orderDto.setProcessingPeriod(currentDto);
+
+    // when
+    boolean isAfterNextPeriodEndDate =
+        siglusOrderService.currentDateIsAfterNextPeriodEndDate(orderDto);
+
+    //then
+    assertEquals(false, isAfterNextPeriodEndDate);
+  }
+
 
   @Test
   public void shouldCreateNewOrderWhenSecondPartial() {
