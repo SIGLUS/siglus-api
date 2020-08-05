@@ -16,9 +16,9 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Maps.newHashMap;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -27,10 +27,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.apache.commons.collections.MapUtils;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -56,8 +55,11 @@ import org.openlmis.requisition.testutils.ProcessingPeriodDtoDataBuilder;
 import org.openlmis.requisition.testutils.ProgramDtoDataBuilder;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.util.SiglusDateHelper;
+import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
+import org.siglus.siglusapi.dto.RegimenDto;
+import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
@@ -93,9 +95,10 @@ public class RequisitionSimamEmailServiceTest {
   private OrderableDto orderable = new OrderableDtoDataBuilder()
       .withProgramOrderable(program.getId(), true).buildAsDto();
   private SiglusRequisitionDto requisition = new SiglusRequisitionDto();
-  private String requsitionFileName;
+  private String requisitionFileName;
   private String regimenFileName;
   private String fileType;
+  private UUID regimemId = UUID.randomUUID();
 
   @Before
   public void setUp() {
@@ -104,11 +107,11 @@ public class RequisitionSimamEmailServiceTest {
     when(facilityReferenceDataService.findOne(requisition.getFacilityId())).thenReturn(facility);
     doNothing().when(s3FileHandler).uploadFileToS3(anyString(), anyString());
 
-    List<OrderableDto> orderableDtos = Arrays.asList(orderable);
-    when(orderableReferenceDataService.findByIdentities(anySet())).thenReturn(orderableDtos);
+    List<OrderableDto> orderableDtos = newArrayList(orderable);
+    when(orderableReferenceDataService.findByIdentities(any())).thenReturn(orderableDtos);
 
     program.setCode(RequisitionSimamEmailService.MULIPLE_PROGRAM_CODE);
-    requsitionFileName = RequisitionSimamEmailService.REQUI_FILE_NAME_PREFIX
+    requisitionFileName = RequisitionSimamEmailService.REQUI_FILE_NAME_PREFIX
         + requisition.getId() + "_" + facility.getName() + "_" + period.getName() + "_"
         + RequisitionSimamEmailService.SIMAM_PROGRAMS_MAP.get(program.getCode()) + ".xlsx";
     regimenFileName = RequisitionSimamEmailService.REGIMEN_FILE_NAME_PREFIX
@@ -134,7 +137,7 @@ public class RequisitionSimamEmailServiceTest {
         .prepareEmailAttachmentsForSimam(requisition, program);
 
     assertEquals(2, emailAttachmentDtos.size());
-    assertEquals(emailAttachmentDtos.get(0).getAttachmentFileName(), requsitionFileName);
+    assertEquals(emailAttachmentDtos.get(0).getAttachmentFileName(), requisitionFileName);
     assertEquals(emailAttachmentDtos.get(0).getAttachmentFileType(), fileType);
     assertEquals(emailAttachmentDtos.get(1).getAttachmentFileName(), regimenFileName);
     assertEquals(emailAttachmentDtos.get(1).getAttachmentFileType(), fileType);
@@ -146,7 +149,7 @@ public class RequisitionSimamEmailServiceTest {
         ExcelHandler.PathType.FILE);
     verify(singleListSheetExcelHandler, times(0)).createDataRows(any(), any());
     verify(singleListSheetExcelHandler, times(1))
-        .createXssFile(eq(workBook), eq(requsitionFileName));
+        .createXssFile(eq(workBook), eq(requisitionFileName));
     verify(singleListSheetExcelHandler, times(1)).createXssFile(eq(workBook), eq(regimenFileName));
   }
 
@@ -156,7 +159,7 @@ public class RequisitionSimamEmailServiceTest {
         orderable.getId(), null, null, orderable.getVersionNumber());
     RequisitionLineItemV2Dto requisitionLineItem = new RequisitionLineItemV2Dto();
     requisitionLineItem.setOrderable(versionObjectReferenceDto);
-    List<RequisitionLineItemV2Dto> requisitionLineItems = Arrays.asList(requisitionLineItem);
+    List<RequisitionLineItemV2Dto> requisitionLineItems = newArrayList(requisitionLineItem);
     requisition.setRequisitionLineItems(requisitionLineItems);
 
     Workbook workBook = new XSSFWorkbook();
@@ -169,6 +172,45 @@ public class RequisitionSimamEmailServiceTest {
     requisitionSimamEmailService.prepareEmailAttachmentsForSimam(requisition, program);
     verify(singleListSheetExcelHandler, times(1)).readXssTemplateFile(
         RequisitionSimamEmailService.TEMPLATE_IMPORT_RNR_XLSX, ExcelHandler.PathType.FILE);
+  }
+
+  @Test
+  public void shouldGetArvRegimenDataItems() {
+    RegimenLineItem regimenLineItem = new RegimenLineItem(requisition.getId(), regimemId,
+        "patients", 20);
+    RegimenDto regimenDto = new RegimenDto();
+    regimenDto.setFullProductName("fullProductName");
+    Map<UUID, RegimenDto> regimenDtoMap = newHashMap();
+    regimenDtoMap.put(regimemId, regimenDto);
+    List<RegimenLineDto> regimenLineItems = RegimenLineDto
+        .from(newArrayList(regimenLineItem), regimenDtoMap);
+    requisition.setRegimenLineItems(regimenLineItems);
+    requisition.getTemplate().getExtension().setEnableRegimen(true);
+
+    Workbook workBook = new XSSFWorkbook();
+    workBook.createSheet();
+    when(singleListSheetExcelHandler.readXssTemplateFile(anyString(),
+        any(ExcelHandler.PathType.class))).thenReturn(workBook);
+    when(singleListSheetExcelHandler.createXssFile(any(Workbook.class),
+        anyString())).thenReturn(anyString());
+
+    program.setCode(RequisitionSimamEmailService.ARV_PROGRAM_CODE);
+    requisitionSimamEmailService.prepareEmailAttachmentsForSimam(requisition, program);
+    verify(singleListSheetExcelHandler, times(1)).readXssTemplateFile(
+        RequisitionSimamEmailService.TEMPLATE_IMPORT_RNR_XLSX_EMPTY, ExcelHandler.PathType.FILE);
+    verify(singleListSheetExcelHandler, times(1)).readXssTemplateFile(
+        RequisitionSimamEmailService.TEMPLATE_IMPORT_REGIMEN_XLSX, ExcelHandler.PathType.FILE);
+    Map<String, String> expectedDataColumns = MapUtils.putAll(newHashMap(),
+        new String[][]{
+            {RequisitionSimamEmailService.EXCEL_MOVDESCID, "0"},
+            {RequisitionSimamEmailService.EXCEL_DATE,
+                SiglusDateHelper.formatDateTime(requisition.getCreatedDate())},
+            {RequisitionSimamEmailService.EXCEL_PROGRAM, "TARV"},
+            {RequisitionSimamEmailService.EXCEL_REGIMEN, "fullProductName"},
+            {RequisitionSimamEmailService.EXCEL_TOTAL, "20"}
+        });
+    verify(singleListSheetExcelHandler, times(1))
+        .createDataRows(eq(workBook.getSheetAt(0)), eq(newArrayList(expectedDataColumns)));
   }
 
   @Test
@@ -199,7 +241,7 @@ public class RequisitionSimamEmailServiceTest {
     verify(singleListSheetExcelHandler, times(1)).readXssTemplateFile(
         RequisitionSimamEmailService.TEMPLATE_IMPORT_REGIMEN_XLSX, ExcelHandler.PathType.FILE);
 
-    Map<String, String> expectedDataColomns = MapUtils.putAll(new HashMap(),
+    Map<String, String> expectedDataColumns = MapUtils.putAll(newHashMap(),
         new String[][]{
             {RequisitionSimamEmailService.EXCEL_MOVDESCID, "0"},
             {RequisitionSimamEmailService.EXCEL_DATE,
@@ -209,7 +251,7 @@ public class RequisitionSimamEmailServiceTest {
             {RequisitionSimamEmailService.EXCEL_TOTAL, "30"}
         });
     verify(singleListSheetExcelHandler, times(1))
-        .createDataRows(eq(workBook.getSheetAt(0)), eq(Arrays.asList(expectedDataColomns)));
+        .createDataRows(eq(workBook.getSheetAt(0)), eq(newArrayList(expectedDataColumns)));
   }
 
   @Test
@@ -239,7 +281,7 @@ public class RequisitionSimamEmailServiceTest {
     verify(singleListSheetExcelHandler, times(1)).readXssTemplateFile(
         RequisitionSimamEmailService.TEMPLATE_IMPORT_REGIMEN_XLSX, ExcelHandler.PathType.FILE);
 
-    Map<String, String> expectedDataColomns = MapUtils.putAll(new HashMap(),
+    Map<String, String> expectedDataColumns = MapUtils.putAll(newHashMap(),
         new String[][]{
             {RequisitionSimamEmailService.EXCEL_MOVDESCID, "0"},
             {RequisitionSimamEmailService.EXCEL_DATE,
@@ -249,6 +291,6 @@ public class RequisitionSimamEmailServiceTest {
             {RequisitionSimamEmailService.EXCEL_TOTAL, "10"}
         });
     verify(singleListSheetExcelHandler, times(1))
-        .createDataRows(eq(workBook.getSheetAt(0)), eq(Arrays.asList(expectedDataColomns)));
+        .createDataRows(eq(workBook.getSheetAt(0)), eq(newArrayList(expectedDataColumns)));
   }
 }

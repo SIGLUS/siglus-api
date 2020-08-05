@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
@@ -41,6 +42,8 @@ import org.openlmis.requisition.service.referencedata.OrderableReferenceDataServ
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.util.SiglusDateHelper;
+import org.siglus.siglusapi.dto.RegimenDto;
+import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.dto.UsageInformationOrderableDto;
@@ -163,7 +166,7 @@ public class RequisitionSimamEmailService {
   private EmailAttachmentDto loadSimamRequisitionExcelToS3(SiglusRequisitionDto requisition,
       ProgramDto program, ProcessingPeriodDto period, FacilityDto facility) {
     String filePath = generateRequisitionExcelForSimam(requisition, program, period, facility);
-    String fileName = fileNameForRequiItems(requisition, program, period, facility);
+    String fileName = fileNameForRequisitionItems(requisition, program, period, facility);
     s3FileHandler.uploadFileToS3(filePath, fileName);
 
     return new EmailAttachmentDto(bucketName, bucketFolder, fileName,
@@ -194,7 +197,7 @@ public class RequisitionSimamEmailService {
       singleListSheetExcelHandler.createDataRows(workbook.getSheetAt(0), requisitionItemsData);
     }
 
-    String fileName = fileNameForRequiItems(requisition, program, period, facility);
+    String fileName = fileNameForRequisitionItems(requisition, program, period, facility);
     return singleListSheetExcelHandler.createXssFile(workbook, fileName);
   }
 
@@ -281,25 +284,26 @@ public class RequisitionSimamEmailService {
 
   private List<Map<String, String>> getDataColumnsForRegimen(SiglusRequisitionDto requisition,
       ProgramDto program) {
+    List<Map<String, String>> dataColumns = newArrayList();
     RequisitionTemplateExtensionDto templateExtensionDto = requisition.getTemplate().getExtension();
     if (templateExtensionDto.isEnableUsageInformation()) {
-      return getMalariaDataColomns(requisition, program);
+      dataColumns.addAll(getMalariaDataColumns(requisition, program));
     }
     if (templateExtensionDto.isEnableRapidTestConsumption()) {
-      return getRapidTestDataColomns(requisition, program);
+      dataColumns.addAll(getRapidTestDataColumns(requisition, program));
     }
-    // if (templateExtensionDto.isEnableRegimen()) {
-    //   return getArvDataColomns(requisition, program);
-    // }
-    return new ArrayList<>();
+    if (templateExtensionDto.isEnableRegimen()) {
+      dataColumns.addAll(getArvDataColumns(requisition, program));
+    }
+    return dataColumns;
   }
 
-  private List<Map<String, String>> getMalariaDataColomns(SiglusRequisitionDto requisition,
+  private List<Map<String, String>> getMalariaDataColumns(SiglusRequisitionDto requisition,
       ProgramDto program) {
-    List<Map<String, String>> malariaDataColomns = new ArrayList<>();
+    List<Map<String, String>> malariaDataColumns = new ArrayList<>();
     List<UsageInformationServiceDto> alModuleLineItems = requisition.getUsageInformationLineItems();
     if (isEmpty(alModuleLineItems)) {
-      return malariaDataColomns;
+      return malariaDataColumns;
     }
     alModuleLineItems.forEach(alModuleLineItem -> {
       if (alModuleLineItem.getService().equals(TOTAL_SERVICE)) {
@@ -313,12 +317,12 @@ public class RequisitionSimamEmailService {
           Map<String, String> dataColumns = getCommonDataColumnsForRegimen(requisition, program);
           dataColumns.put(EXCEL_REGIMEN, getMalariaRegimeName(orderableDtoMap.get(orderableId)));
           dataColumns.put(EXCEL_TOTAL, getString(usageValue.getValue()));
-          malariaDataColomns.add(dataColumns);
+          malariaDataColumns.add(dataColumns);
         });
       }
     });
 
-    return malariaDataColomns;
+    return malariaDataColumns;
   }
 
   private String getMalariaRegimeName(OrderableDto orderable) {
@@ -329,34 +333,30 @@ public class RequisitionSimamEmailService {
     return regimenNameFromSimam == null ? orderable.getFullProductName() : regimenNameFromSimam;
   }
 
-  // private List<Map<String, String>> getArvDataColomns(SiglusRequisitionDto requisition,
-  //     ProgramDto program) {
-  //   List<Map<String, String>> arvDataColomns = new ArrayList<>();
-  //   List<RegimenLineItem> regimenLineItems = requisition.getRegimenLineItems();
-  //   if (isEmpty(regimenLineItems)) {
-  //     return arvDataColomns;
-  //   }
-
-  //   Map<UUID, RegimenDto> regimenDtoMap = findRegimens();
-  //   regimenLineItems.forEach(regimenLineItem -> {
-  //     Map<String, String> dataColomns = new HashMap<>();
-  //     dataColomns.putAll(getCommonDataColumnsForRegimen(requisition, program));
-
-  //     RegimenDto regimen = regimenDtoMap.get(regimenLineItem.getRegimenId());
-  //     dataColomns.put(EXCEL_REGIMEN, regimen.getName());
-  //     dataColomns.put(EXCEL_TOTAL, getString(regimenLineItem.getHfPatients()));
-  //     arvDataColomns.add(dataColomns);
-  //   });
-
-  //   return arvDataColomns;
-  // }
-
-  private List<Map<String, String>> getRapidTestDataColomns(SiglusRequisitionDto requisition,
+  private List<Map<String, String>> getArvDataColumns(SiglusRequisitionDto requisition,
       ProgramDto program) {
-    List<Map<String, String>> rapidTestDataColomns = new ArrayList<>();
+    List<Map<String, String>> arvDataColumns = new ArrayList<>();
+    List<RegimenLineDto> regimenLineItems = requisition.getRegimenLineItems();
+    if (isEmpty(regimenLineItems)) {
+      return arvDataColumns;
+    }
+    regimenLineItems.forEach(regimenLineItem -> {
+      Map<String, String> dataColumns = getCommonDataColumnsForRegimen(requisition, program);
+      RegimenDto regimen = regimenLineItem.getRegimen();
+      Integer value = regimenLineItem.getColumns().get("patients").getValue();
+      dataColumns.put(EXCEL_REGIMEN, regimen.getFullProductName());
+      dataColumns.put(EXCEL_TOTAL, getString(value));
+      arvDataColumns.add(dataColumns);
+    });
+    return arvDataColumns;
+  }
+
+  private List<Map<String, String>> getRapidTestDataColumns(SiglusRequisitionDto requisition,
+      ProgramDto program) {
+    List<Map<String, String>> rapidTestDataColumns = new ArrayList<>();
     List<TestConsumptionServiceDto> serviceLineItems = requisition.getTestConsumptionLineItems();
     if (isEmpty(serviceLineItems)) {
-      return rapidTestDataColomns;
+      return rapidTestDataColumns;
     }
     serviceLineItems
         .stream()
@@ -368,10 +368,10 @@ public class RequisitionSimamEmailService {
                       program);
                   dataColumns.put(EXCEL_REGIMEN, getRapidTestRegimenName(project, outcome));
                   dataColumns.put(EXCEL_TOTAL, getString(testConsumptionValue.getValue()));
-                  rapidTestDataColomns.add(dataColumns);
+                  rapidTestDataColumns.add(dataColumns);
                 })
             ));
-    return rapidTestDataColomns;
+    return rapidTestDataColumns;
   }
 
   private String getRapidTestRegimenName(String project, String outcome) {
@@ -382,7 +382,7 @@ public class RequisitionSimamEmailService {
 
   private Map<String, String> getCommonDataColumnsForRegimen(SiglusRequisitionDto requisition,
       ProgramDto program) {
-    Map<String, String> commonDataColumns = new HashMap<>();
+    Map<String, String> commonDataColumns = newHashMap();
     commonDataColumns.put(EXCEL_MOVDESCID, "0");
     commonDataColumns
         .put(EXCEL_DATE, SiglusDateHelper.formatDateTime(requisition.getCreatedDate()));
@@ -391,7 +391,7 @@ public class RequisitionSimamEmailService {
     return commonDataColumns;
   }
 
-  private String fileNameForRequiItems(SiglusRequisitionDto requisition, ProgramDto program,
+  private String fileNameForRequisitionItems(SiglusRequisitionDto requisition, ProgramDto program,
       ProcessingPeriodDto period, FacilityDto facility) {
     String programName = SIMAM_PROGRAMS_MAP.get(program.getCode());
     return REQUI_FILE_NAME_PREFIX
@@ -418,9 +418,4 @@ public class RequisitionSimamEmailService {
         .collect(Collectors.toMap(OrderableDto::getId, Function.identity()));
   }
 
-  // private Map<UUID, RegimenDto> findRegimens() {
-  //       .findAll()
-  //       .stream()
-  //       .collect(Collectors.toMap(RegimenDto::getId, Function.identity()));
-  // }
 }
