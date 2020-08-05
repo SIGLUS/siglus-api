@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.reducing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.collections4.CollectionUtils.emptyCollection;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
@@ -425,6 +426,9 @@ public class SiglusRequisitionService {
   }
 
   private Collection<UserDto> getApprovers(UUID supervisoryNodeId, UUID programId) {
+    if (supervisoryNodeId == null) {
+      return emptyCollection();
+    }
     RightDto right = rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE);
     return supervisingUsersReferenceDataService.findAll(supervisoryNodeId, right.getId(),
         programId);
