@@ -76,7 +76,7 @@ public class SiglusShipmentService {
       if (siglusOrderService.isSuborder(orderDto.getExternalId())) {
         throw new ValidationMessageException(SHIPMENT_ORDER_STATUS_INVALID);
       }
-      return createSubOrderAndShipment(false, shipmentDto);
+      isSubOrder = false;
     }
     // save order lineitems
     updateOrderLineItems(shipmentDto.getOrder());
