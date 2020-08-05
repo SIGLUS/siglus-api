@@ -162,6 +162,8 @@ import org.springframework.util.MultiValueMap;
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusRequisitionService {
 
+  public static final String SIMAM = "simam";
+
   @Autowired
   private RequisitionV2Controller requisitionV2Controller;
 
@@ -397,13 +399,18 @@ public class SiglusRequisitionService {
     UUID facilityId = basicRequisitionDto.getFacility().getId();
     activateArchivedProducts(requisitionId, facilityId);
     UUID programId = basicRequisitionDto.getProgram().getId();
+    notifySimamWhenAuthorize(basicRequisitionDto, facilityId, programId);
+    return basicRequisitionDto;
+  }
+
+  private void notifySimamWhenAuthorize(BasicRequisitionDto basicRequisitionDto, UUID facilityId,
+      UUID programId) {
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService.findSupervisoryNode(
         programId, facilityId);
     Collection<UserDto> approvers = getApprovers(supervisoryNodeDto.getId(), programId);
     if (approvers.stream().noneMatch(approver -> approver.getHomeFacilityId().equals(facilityId))) {
       notifySimam(basicRequisitionDto, approvers);
     }
-    return basicRequisitionDto;
   }
 
   @Transactional
@@ -417,12 +424,17 @@ public class SiglusRequisitionService {
     UUID programId = basicRequisitionDto.getProgram().getId();
     if (checkIsInternal(facilityId, authenticationHelper.getCurrentUser())) {
       activateArchivedProducts(requisitionId, facilityId);
-      SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService
-          .findSupervisoryNode(programId, facilityId);
-      Collection<UserDto> approvers = getApprovers(supervisoryNodeDto.getParentNodeId(), programId);
-      notifySimam(basicRequisitionDto, approvers);
+      notifySimamWhenApprove(basicRequisitionDto, facilityId, programId);
     }
     return basicRequisitionDto;
+  }
+
+  private void notifySimamWhenApprove(BasicRequisitionDto basicRequisitionDto, UUID facilityId,
+      UUID programId) {
+    SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService
+        .findSupervisoryNode(programId, facilityId);
+    Collection<UserDto> approvers = getApprovers(supervisoryNodeDto.getParentNodeId(), programId);
+    notifySimam(basicRequisitionDto, approvers);
   }
 
   private Collection<UserDto> getApprovers(UUID supervisoryNodeId, UUID programId) {
@@ -456,7 +468,7 @@ public class SiglusRequisitionService {
       log.info("send simam email to user {}", approve.getUsername());
       Map<String, MessageSimamDto> messages = new HashMap<>();
       messages.put(EMAIL.toString(), new MessageSimamDto(
-          subject, emailContent, "simam", emailAttachments));
+          subject, emailContent, SIMAM, emailAttachments));
       siglusNotificationNotificationService
           .sendNotification(new NotificationSimamDto(approve.getId(), messages));
     });

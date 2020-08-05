@@ -166,7 +166,8 @@ public class RequisitionSimamEmailService {
   private EmailAttachmentDto loadSimamRequisitionExcelToS3(SiglusRequisitionDto requisition,
       ProgramDto program, ProcessingPeriodDto period, FacilityDto facility) {
     String filePath = generateRequisitionExcelForSimam(requisition, program, period, facility);
-    String fileName = fileNameForRequisitionItems(requisition, program, period, facility);
+    String fileName = formatFileName(requisition.getId(), program, period, facility,
+        REQUI_FILE_NAME_PREFIX);
     s3FileHandler.uploadFileToS3(filePath, fileName);
 
     return new EmailAttachmentDto(bucketName, bucketFolder, fileName,
@@ -176,7 +177,8 @@ public class RequisitionSimamEmailService {
   private EmailAttachmentDto loadSimamRegimenExcelToS3(SiglusRequisitionDto requisition,
       ProgramDto program, ProcessingPeriodDto period, FacilityDto facility) {
     String filePath = generateRegimenExcelForSimam(requisition, program, period, facility);
-    String fileName = fileNameForRegimens(requisition, program, period, facility);
+    String fileName = formatFileName(requisition.getId(), program, period, facility,
+        REGIMEN_FILE_NAME_PREFIX);
     s3FileHandler.uploadFileToS3(filePath, fileName);
     return new EmailAttachmentDto(bucketName, bucketFolder, fileName,
         FILE_APPLICATION_VND_MS_EXCEL);
@@ -197,7 +199,8 @@ public class RequisitionSimamEmailService {
       singleListSheetExcelHandler.createDataRows(workbook.getSheetAt(0), requisitionItemsData);
     }
 
-    String fileName = fileNameForRequisitionItems(requisition, program, period, facility);
+    String fileName = formatFileName(requisition.getId(), program, period, facility,
+        REQUI_FILE_NAME_PREFIX);
     return singleListSheetExcelHandler.createXssFile(workbook, fileName);
   }
 
@@ -278,7 +281,8 @@ public class RequisitionSimamEmailService {
       singleListSheetExcelHandler.createDataRows(workbook.getSheetAt(0), regimenItemsData);
 
     }
-    String fileName = fileNameForRegimens(requisition, program, period, facility);
+    String fileName = formatFileName(requisition.getId(), program, period, facility,
+        REGIMEN_FILE_NAME_PREFIX);
     return singleListSheetExcelHandler.createXssFile(workbook, fileName);
   }
 
@@ -391,24 +395,11 @@ public class RequisitionSimamEmailService {
     return commonDataColumns;
   }
 
-  private String fileNameForRequisitionItems(SiglusRequisitionDto requisition, ProgramDto program,
-      ProcessingPeriodDto period, FacilityDto facility) {
+  private String formatFileName(UUID requisitionId, ProgramDto program,
+      ProcessingPeriodDto period, FacilityDto facility, String fileNamePrefix) {
     String programName = SIMAM_PROGRAMS_MAP.get(program.getCode());
-    return REQUI_FILE_NAME_PREFIX
-        + requisition.getId() + "_"
-        + facility.getName() + "_"
-        + period.getName() + "_"
-        + programName + ".xlsx";
-  }
-
-  private String fileNameForRegimens(SiglusRequisitionDto requisition, ProgramDto program,
-      ProcessingPeriodDto period, FacilityDto facility) {
-    String programName = SIMAM_PROGRAMS_MAP.get(program.getCode());
-    return REGIMEN_FILE_NAME_PREFIX
-        + requisition.getId() + "_"
-        + facility.getName() + "_"
-        + period.getName() + "_"
-        + programName + ".xlsx";
+    return String.format("%s%s_%s_%s_%s.xlsx", fileNamePrefix, requisitionId, facility.getName(),
+        period.getName(), programName);
   }
 
   private Map<UUID, OrderableDto> findOrderables(Set<VersionEntityReference> orderables) {
