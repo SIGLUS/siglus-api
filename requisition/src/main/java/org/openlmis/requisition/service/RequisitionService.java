@@ -1043,14 +1043,16 @@ public class RequisitionService {
     if (associateProgramIds.isEmpty()) {
       return approveProductsAggregator;
     }
-    List<ApprovedProductDto> approvedProducts = approveProductsAggregator.getFullSupplyProducts();
+
+    List<ApprovedProductDto> approvedProducts = new ArrayList<>();
+    approvedProducts.addAll(approveProductsAggregator.getAllProducts().values());
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
         .findUserSupportedVirtualPrograms();
     associateProgramIds.forEach(associateProgram -> {
       if (supportedVirtualPrograms.contains(associateProgram)) {
         ApproveProductsAggregator productsAggregator = approvedProductReferenceDataService
             .getApprovedProducts(facilityId, associateProgram);
-        approvedProducts.addAll(productsAggregator.getFullSupplyProducts());
+        approvedProducts.addAll(productsAggregator.getAllProducts().values());
       }
     });
     return new ApproveProductsAggregator(approvedProducts, programId);

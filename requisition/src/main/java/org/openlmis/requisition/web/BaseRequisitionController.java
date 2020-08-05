@@ -291,7 +291,8 @@ public abstract class BaseRequisitionController extends BaseController {
       List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
           .map(Orderable::getId).collect(toList());
       approvedProductDtos =
-          approvedProductsContainKit.getFullSupplyProducts()
+          approvedProductsContainKit.getAllProducts()
+              .values()
               .stream()
               .filter(approvedProductDto ->
                   !kitIds.contains(approvedProductDto.getOrderable().getId()))
