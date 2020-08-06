@@ -129,6 +129,37 @@ public class SiglusStockCardSummariesService {
     return siglusSummaries;
   }
 
+  public Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName,
+                                 String facilityId) {
+    Set<UUID> programIds = newHashSet();
+    Set<PermissionStringDto> permissionStrings = permissionService
+        .getPermissionStrings(userId).get();
+    List<ProgramExtension> programExtensions = programExtensionRepository.findByIsVirtual(true);
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
+      Set<UUID> programsByRight = permissionStrings
+          .stream()
+          .filter(permissionStringDto -> permissionStringDto.getRightName().equals(rightName)
+              && UUID.fromString(facilityId).equals(permissionStringDto.getFacilityId())
+          )
+          .map(PermissionStringDto::getProgramId)
+          .collect(Collectors.toSet());
+      if (CollectionUtils.isEmpty(programsByRight)) {
+        throw new PermissionMessageException(
+            new Message(ERROR_NO_FOLLOWING_PERMISSION, rightName, facilityId));
+      }
+      return programsByRight
+          .stream()
+          .filter(programByRight -> isVirtual(programExtensions, programByRight))
+          .collect(Collectors.toSet());
+    }
+    if (isVirtual(programExtensions, programId)) {
+      programIds.add(programId);
+    } else {
+      programIds.add(programExtensionRepository.findByProgramId(programId).getParentId());
+    }
+    return programIds;
+  }
+
   private void filterByOrderableIds(List<UUID> orderableIds,
       List<StockCard> stockCardsForFulfillOrderables,
       Map<UUID, OrderableFulfillDto> orderableFulfillMap) {
@@ -168,37 +199,6 @@ public class SiglusStockCardSummariesService {
 
   private Predicate<StockCard> isNotArchived(Set<String> archivedProducts) {
     return stockCard -> !archivedProducts.contains(stockCard.getOrderableId().toString());
-  }
-
-  public Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName,
-      String facilityId) {
-    Set<UUID> programIds = newHashSet();
-    Set<PermissionStringDto> permissionStrings = permissionService
-        .getPermissionStrings(userId).get();
-    List<ProgramExtension> programExtensions = programExtensionRepository.findByIsVirtual(true);
-    if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
-      Set<UUID> programsByRight = permissionStrings
-          .stream()
-          .filter(permissionStringDto -> permissionStringDto.getRightName().equals(rightName)
-              && UUID.fromString(facilityId).equals(permissionStringDto.getFacilityId())
-          )
-          .map(PermissionStringDto::getProgramId)
-          .collect(Collectors.toSet());
-      if (CollectionUtils.isEmpty(programsByRight)) {
-        throw new PermissionMessageException(
-            new Message(ERROR_NO_FOLLOWING_PERMISSION, rightName, facilityId));
-      }
-      return programsByRight
-          .stream()
-          .filter(programByRight -> isVirtual(programExtensions, programByRight))
-          .collect(Collectors.toSet());
-    }
-    if (isVirtual(programExtensions, programId)) {
-      programIds.add(programId);
-    } else {
-      programIds.add(programExtensionRepository.findByProgramId(programId).getParentId());
-    }
-    return programIds;
   }
 
   private boolean isVirtual(List<ProgramExtension> programVirtualExtensions, UUID programId) {

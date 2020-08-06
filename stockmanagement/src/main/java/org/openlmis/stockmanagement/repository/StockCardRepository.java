@@ -52,6 +52,13 @@ public interface StockCardRepository extends JpaRepository<StockCard, UUID> {
       @Param("programId") UUID programId,
       @Param("facilityId") UUID facilityId);
 
+  // [SIGLUS change start]
+  // [change reason]: find stock cards by programIds to improve performance
+  List<StockCard> findByProgramIdInAndFacilityId(
+      Collection<UUID> programIds,
+      UUID facilityId);
+  // [SIGLUS change end]
+
   List<StockCard> findByOrderableIdInAndProgramIdAndFacilityId(
       Collection<UUID> orderableIds, UUID programId, UUID facilityId);
 
@@ -68,7 +75,7 @@ public interface StockCardRepository extends JpaRepository<StockCard, UUID> {
       Collection<UUID> programIds, Pageable pageable);
 
   Page<StockCard> findByIdIn(Collection<UUID> ids, Pageable pageable);
-  
+
   List<StockCard> findByLotIdIn(Collection<UUID> lotIds);
 
   // [SIGLUS change start]

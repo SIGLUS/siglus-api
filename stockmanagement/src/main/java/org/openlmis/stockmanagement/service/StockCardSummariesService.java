@@ -180,10 +180,8 @@ public class StockCardSummariesService extends StockCardBaseService {
    * @return found stock cards.
    */
   public List<StockCardDto> findStockCards(Set<UUID> programIds, UUID facilityId) {
-    List<StockCard> cards = new ArrayList<>();
-    for (UUID programId: programIds) {
-      cards.addAll(stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId));
-    }
+    List<StockCard> cards = stockCardRepository
+        .findByProgramIdInAndFacilityId(programIds, facilityId);
     return cardsToDtos(cards);
   }
   // [SIGLUS change end]

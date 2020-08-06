@@ -34,14 +34,20 @@ public class SiglusStockManagementReportsControllerTest {
   @Mock
   private SiglusJasperReportService service;
 
-  private Boolean isProduct = true;
+  @Test
+  public void shouldCallServiceAndBuildReportViewWhenGetStockCardByLot() {
+    UUID stockCardId = UUID.randomUUID();
+    controller.getStockCardByLot(stockCardId);
+
+    verify(service).getStockCardByLotReportView(stockCardId);
+  }
 
   @Test
-  public void shouldCallServiceAndBuilderWhenGetStockCardReportView() {
+  public void shouldCallServiceAndBuildReportViewWhenGetStockCardByOrderable() {
     UUID stockCardId = UUID.randomUUID();
-    controller.getStockCard(stockCardId, isProduct);
+    controller.getStockCardByOrderable(stockCardId);
 
-    verify(service).getStockCardReportView(stockCardId, isProduct);
+    verify(service).getStockCardByOrderableReportView(stockCardId);
   }
 
   @Test

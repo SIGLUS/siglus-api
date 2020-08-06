@@ -39,9 +39,21 @@ public class SiglusStockManagementReportsController {
    * @return generated PDF report
    */
   @GetMapping("/stockCards/{id}/print")
-  public ModelAndView getStockCard(
-      @PathVariable("id") UUID stockCardId, @RequestParam(required = false) Boolean isProduct) {
-    return reportService.getStockCardReportView(stockCardId, isProduct);
+  public ModelAndView getStockCardByLot(
+      @PathVariable("id") UUID stockCardId) {
+    return reportService.getStockCardByLotReportView(stockCardId);
+  }
+
+  /**
+   * Get stock card report in PDF format.
+   *
+   * @param orderableId stock card id.
+   * @return generated PDF report
+   */
+  @GetMapping("/orderable/{id}/print")
+  public ModelAndView getStockCardByOrderable(
+      @PathVariable("id") UUID orderableId) {
+    return reportService.getStockCardByOrderableReportView(orderableId);
   }
 
   /**
@@ -51,9 +63,9 @@ public class SiglusStockManagementReportsController {
    */
   @GetMapping("/stockCardSummaries/print")
   public ModelAndView getStockCardSummaries(
-      @RequestParam("program") UUID program,
-      @RequestParam("facility") UUID facility) {
-    return reportService.getStockCardSummariesReportView(program, facility);
+      @RequestParam("program") UUID programId,
+      @RequestParam("facility") UUID facilityId) {
+    return reportService.getStockCardSummariesReportView(programId, facilityId);
   }
 }
 
