@@ -110,28 +110,28 @@
 	<field name="idealStockAmount" class="java.lang.Integer">
 		<fieldDescription><![CDATA[idealStockAmount]]></fieldDescription>
 	</field>
-	<group name="OrderableDisplayCategory">
-		<groupExpression><![CDATA[$F{orderable}.getProgramOrderable($P{programId}).getOrderableCategoryDisplayName()]]></groupExpression>
-		<groupHeader>
-			<band height="10">
-				<rectangle>
-					<reportElement x="9" y="0" width="943" height="10" backcolor="#CCCCCC" uuid="7079c950-9a76-43ee-954f-0349c39803cd">
-						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-					</reportElement>
-				</rectangle>
-				<textField>
-					<reportElement x="9" y="0" width="943" height="10" uuid="29f84432-f48e-467d-b3fb-fc018b725111">
-						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					</reportElement>
-					<textElement textAlignment="Center">
-						<font size="8"/>
-					</textElement>
-					<textFieldExpression><![CDATA[$F{orderable}.getProgramOrderable($P{programId}).getOrderableCategoryDisplayName()]]></textFieldExpression>
-				</textField>
-			</band>
-		</groupHeader>
-	</group>
+	<!--<group name="OrderableDisplayCategory">-->
+		<!--<groupExpression><![CDATA[$F{orderable}.getProgramOrderable($P{programId}).getOrderableCategoryDisplayName()]]></groupExpression>-->
+		<!--<groupHeader>-->
+			<!--<band height="10">-->
+				<!--<rectangle>-->
+					<!--<reportElement x="9" y="0" width="943" height="10" backcolor="#CCCCCC" uuid="7079c950-9a76-43ee-954f-0349c39803cd">-->
+						<!--<property name="com.jaspersoft.studio.unit.x" value="pixel"/>-->
+					<!--</reportElement>-->
+				<!--</rectangle>-->
+				<!--<textField>-->
+					<!--<reportElement x="9" y="0" width="943" height="10" uuid="29f84432-f48e-467d-b3fb-fc018b725111">-->
+						<!--<property name="com.jaspersoft.studio.unit.height" value="pixel"/>-->
+						<!--<property name="com.jaspersoft.studio.unit.y" value="pixel"/>-->
+					<!--</reportElement>-->
+					<!--<textElement textAlignment="Center">-->
+						<!--<font size="8"/>-->
+					<!--</textElement>-->
+					<!--<textFieldExpression><![CDATA[$F{orderable}.getProgramOrderable($P{programId}).getOrderableCategoryDisplayName()]]></textFieldExpression>-->
+				<!--</textField>-->
+			<!--</band>-->
+		<!--</groupHeader>-->
+	<!--</group>-->
 	<background>
 		<band splitType="Stretch"/>
 	</background>

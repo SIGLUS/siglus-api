@@ -195,4 +195,11 @@ public class RequisitionLineItemDraft extends BaseEntity {
         .collect(Collectors.toList()));
     return dto;
   }
+
+  public static RequisitionLineItem getLineItem(RequisitionLineItemDraft lineItemDraft) {
+    RequisitionLineItem lineItem = new RequisitionLineItem();
+    BeanUtils.copyProperties(lineItemDraft, lineItem);
+    lineItem.setId(lineItemDraft.getRequisitionLineItemId());
+    return lineItem;
+  }
 }

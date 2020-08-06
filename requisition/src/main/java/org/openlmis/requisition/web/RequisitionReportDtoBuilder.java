@@ -63,7 +63,7 @@ public class RequisitionReportDtoBuilder {
 
   @Autowired
   private RequisitionMessageService messageService;
-  
+
   /**
    * Create a {@link RequisitionReportDto} based on a given {@link Requisition}.
    *
@@ -89,9 +89,8 @@ public class RequisitionReportDtoBuilder {
 
     RequisitionReportDto reportDto = new RequisitionReportDto();
     reportDto.setRequisition(requisitionDtoBuilder.build(requisition));
-    reportDto.setFullSupply(exportLinesToDtos(fullSupply, orderables, requisition.getProgramId()));
-    reportDto.setNonFullSupply(exportLinesToDtos(nonFullSupply, orderables,
-        requisition.getProgramId()));
+    reportDto.setFullSupply(exportLinesToDtos(fullSupply, orderables));
+    reportDto.setNonFullSupply(exportLinesToDtos(nonFullSupply, orderables));
     reportDto.setFullSupplyTotalCost(requisition.getFullSupplyTotalCost(orderables));
     reportDto.setNonFullSupplyTotalCost(requisition.getNonFullSupplyTotalCost(orderables));
     reportDto.setTotalCost(requisition.getTotalCost());
@@ -127,14 +126,14 @@ public class RequisitionReportDtoBuilder {
   }
 
   List<RequisitionLineItemDto> exportLinesToDtos(List<RequisitionLineItem> lineItems,
-      Map<VersionIdentityDto, OrderableDto> orderables, UUID programId) {
+      Map<VersionIdentityDto, OrderableDto> orderables) {
     List<RequisitionLineItemDto> list = requisitionExportHelper.exportToDtos(lineItems);
-    list.sort(byDisplayOrder(orderables, programId));
+    list.sort(byDisplayOrder(orderables));
     return list;
   }
 
   private Comparator<RequisitionLineItemDto> byDisplayOrder(
-      Map<VersionIdentityDto, OrderableDto> orderables, UUID programId) {
+      Map<VersionIdentityDto, OrderableDto> orderables) {
     return comparing(r -> {
       VersionIdentityDto orderableIdentity = r.getOrderableIdentity();
       Objects.requireNonNull(orderableIdentity);
@@ -142,7 +141,8 @@ public class RequisitionReportDtoBuilder {
       OrderableDto orderable = orderables.get(orderableIdentity);
       Objects.requireNonNull(orderable);
 
-      ProgramOrderableDto programOrderable = orderable.getProgramOrderable(programId);
+      ProgramOrderableDto programOrderable = orderable.getPrograms().stream().findFirst()
+          .orElse(null);
 
       return programOrderable.getOrderableCategoryDisplayOrder();
     });

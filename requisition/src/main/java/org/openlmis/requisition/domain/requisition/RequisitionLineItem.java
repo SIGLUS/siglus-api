@@ -108,6 +108,7 @@ public class RequisitionLineItem extends BaseEntity {
       @AttributeOverride(name = "id", column = @Column(name = "orderableId")),
       @AttributeOverride(name = "versionNumber", column = @Column(name = "orderableVersionNumber"))
   })
+  @Setter
   @Getter
   private VersionEntityReference orderable;
 
@@ -452,7 +453,7 @@ public class RequisitionLineItem extends BaseEntity {
     exporter.setApprovedQuantity(approvedQuantity);
     exporter.setPricePerPack(Optional
         .ofNullable(orderableDto)
-        .map(item -> item.findProgramOrderable(requisition.getProgramId()))
+        .map(item -> orderableDto.getPrograms().stream().findFirst())
         .orElse(Optional.of(new ProgramOrderableDto()))
         .map(ProgramOrderableDto::getPricePerPack)
         .orElse(Money.of(CurrencyUnit.of(currencyCode), PRICE_PER_PACK_IF_NULL)));

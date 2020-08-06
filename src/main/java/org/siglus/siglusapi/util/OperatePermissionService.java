@@ -28,6 +28,10 @@ public class OperatePermissionService {
 
   public boolean isEditable(RequisitionV2Dto dto) {
     Requisition requisition = from(dto);
+    return isEditableRequisition(requisition);
+  }
+
+  public boolean isEditableRequisition(Requisition requisition) {
     return canSubmit(requisition) || canAuthorize(requisition) || canApprove(requisition);
   }
 

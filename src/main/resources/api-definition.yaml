@@ -1219,6 +1219,18 @@ traits:
               application/json:
                 schema: localizedMessage
 
+      /print:
+        get:
+          is: [ secured ]
+          description: Print requisition to a pdf file.
+          responses:
+            "200":
+              body:
+                application/pdf:
+            "404":
+              body:
+                application/json:
+
     /requisitions/periodsForInitiate:
       get:
         is: [ secured ]
