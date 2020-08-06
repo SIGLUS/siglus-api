@@ -990,6 +990,8 @@ public class SiglusRequisitionServiceTest {
     });
     when(messageSource.getMessage(any(), any(), any()))
         .thenReturn(MESSAGE);
+    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
+        .thenReturn(siglusRequisitionDto);
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -1054,6 +1056,8 @@ public class SiglusRequisitionServiceTest {
     });
     when(messageSource.getMessage(any(), any(), any()))
         .thenReturn(MESSAGE);
+    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
+        .thenReturn(siglusRequisitionDto);
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -1115,6 +1119,8 @@ public class SiglusRequisitionServiceTest {
     });
     when(messageSource.getMessage(any(), any(), any()))
         .thenReturn(MESSAGE);
+    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
+        .thenReturn(siglusRequisitionDto);
 
     // when
     BasicRequisitionDto requisitionDto = siglusRequisitionService
@@ -1173,6 +1179,8 @@ public class SiglusRequisitionServiceTest {
     });
     when(messageSource.getMessage(any(), any(), any()))
         .thenReturn(MESSAGE);
+    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
+        .thenReturn(siglusRequisitionDto);
 
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
     when(regimenDataProcessor.getRegimenDispatchLineDtoMap()).thenReturn(mockDispatchLineMap());

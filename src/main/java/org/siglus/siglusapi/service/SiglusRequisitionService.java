@@ -392,31 +392,33 @@ public class SiglusRequisitionService {
   @Transactional
   public BasicRequisitionDto authorizeRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
-    saveRequisitionWithValidation(requisitionId, request, response);
+    SiglusRequisitionDto siglusRequisitionDto = saveRequisitionWithValidation(requisitionId,
+        request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .authorizeRequisition(requisitionId, request, response);
     notificationService.postAuthorize(basicRequisitionDto);
     UUID facilityId = basicRequisitionDto.getFacility().getId();
     activateArchivedProducts(requisitionId, facilityId);
     UUID programId = basicRequisitionDto.getProgram().getId();
-    notifySimamWhenAuthorize(basicRequisitionDto, facilityId, programId);
+    notifySimamWhenAuthorize(siglusRequisitionDto, facilityId, programId);
     return basicRequisitionDto;
   }
 
-  private void notifySimamWhenAuthorize(BasicRequisitionDto basicRequisitionDto, UUID facilityId,
+  private void notifySimamWhenAuthorize(SiglusRequisitionDto siglusRequisitionDto, UUID facilityId,
       UUID programId) {
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService.findSupervisoryNode(
         programId, facilityId);
     Collection<UserDto> approvers = getApprovers(supervisoryNodeDto.getId(), programId);
     if (approvers.stream().noneMatch(approver -> approver.getHomeFacilityId().equals(facilityId))) {
-      notifySimam(basicRequisitionDto, approvers);
+      notifySimam(siglusRequisitionDto, approvers);
     }
   }
 
   @Transactional
   public BasicRequisitionDto approveRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
-    saveRequisitionWithValidation(requisitionId, request, response);
+    SiglusRequisitionDto siglusRequisitionDto = saveRequisitionWithValidation(requisitionId,
+        request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
     notificationService.postApprove(basicRequisitionDto);
@@ -424,17 +426,17 @@ public class SiglusRequisitionService {
     UUID programId = basicRequisitionDto.getProgram().getId();
     if (checkIsInternal(facilityId, authenticationHelper.getCurrentUser())) {
       activateArchivedProducts(requisitionId, facilityId);
-      notifySimamWhenApprove(basicRequisitionDto, facilityId, programId);
+      notifySimamWhenApprove(siglusRequisitionDto, facilityId, programId);
     }
     return basicRequisitionDto;
   }
 
-  private void notifySimamWhenApprove(BasicRequisitionDto basicRequisitionDto, UUID facilityId,
+  private void notifySimamWhenApprove(SiglusRequisitionDto siglusRequisitionDto, UUID facilityId,
       UUID programId) {
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService
         .findSupervisoryNode(programId, facilityId);
     Collection<UserDto> approvers = getApprovers(supervisoryNodeDto.getParentNodeId(), programId);
-    notifySimam(basicRequisitionDto, approvers);
+    notifySimam(siglusRequisitionDto, approvers);
   }
 
   private Collection<UserDto> getApprovers(UUID supervisoryNodeId, UUID programId) {
@@ -446,21 +448,17 @@ public class SiglusRequisitionService {
         programId);
   }
 
-  private void notifySimam(BasicRequisitionDto basicRequisitionDto, Collection<UserDto> approvers) {
-    log.info("start to send email to simam of the requisition id {}", basicRequisitionDto.getId());
+  private void notifySimam(SiglusRequisitionDto siglusRequisitionDto,
+      Collection<UserDto> approvers) {
+    log.info("start to send email to simam of the requisition id {}", siglusRequisitionDto.getId());
     ProgramDto program = programReferenceDataService
-        .findOne(basicRequisitionDto.getProgram().getId());
-    RequisitionV2Dto requisitionDto =
-        siglusRequisitionRequisitionService.searchRequisition(basicRequisitionDto.getId());
-    setLineItemExtension(requisitionDto);
-    setTemplateExtension(requisitionDto);
-    SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService
-        .searchUsageReport(requisitionDto);
+        .findOne(siglusRequisitionDto.getProgram().getId());
+    setLineItemExtension(siglusRequisitionDto);
     List<EmailAttachmentDto> emailAttachments = requisitionSimamEmailService
         .prepareEmailAttachmentsForSimam(siglusRequisitionDto, program);
     String subject = messageService
         .localize(new org.siglus.common.util.Message(REQUISITION_EMAIL_SUBJECT,
-            basicRequisitionDto.getId().toString())).getMessage();
+            siglusRequisitionDto.getId().toString())).getMessage();
     String emailContent = messageService
         .localize(new org.siglus.common.util.Message(REQUISITION_EMAIL_CONTENT_PRE
             + program.getCode().toLowerCase())).getMessage();
@@ -674,9 +672,9 @@ public class SiglusRequisitionService {
     return saveRequisition(requisitionId, requisitionDto, request, response, false);
   }
 
-  private void saveRequisitionWithValidation(UUID requisitionId,
+  private SiglusRequisitionDto saveRequisitionWithValidation(UUID requisitionId,
       HttpServletRequest request, HttpServletResponse response) {
-    saveRequisition(requisitionId, null, request, response, true);
+    return saveRequisition(requisitionId, null, request, response, true);
   }
 
   private SiglusRequisitionDto saveRequisition(UUID requisitionId,
