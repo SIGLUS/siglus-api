@@ -15,8 +15,9 @@
 
 package org.siglus.common.repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
-
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -24,5 +25,7 @@ public interface ProcessingPeriodExtensionRepository extends
     JpaRepository<ProcessingPeriodExtension, UUID> {
 
   ProcessingPeriodExtension findByProcessingPeriodId(UUID processingPeriodId);
+
+  List<ProcessingPeriodExtension> findByProcessingPeriodIdIn(Collection<UUID> processingPeriodIds);
 
 }

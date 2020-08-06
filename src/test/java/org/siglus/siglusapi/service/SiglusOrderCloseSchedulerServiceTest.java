@@ -47,7 +47,9 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProcessingScheduleDto;
 import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -74,6 +76,9 @@ public class SiglusOrderCloseSchedulerServiceTest {
 
   @Mock
   private OrderExternalRepository orderExternalRepository;
+
+  @Mock
+  private ProcessingPeriodExtensionRepository periodExtensionRepository;
 
   @InjectMocks
   private SiglusOrderCloseSchedulerService siglusOrderCloseSchedulerService;
@@ -119,6 +124,13 @@ public class SiglusOrderCloseSchedulerServiceTest {
     nextPeriod.setProcessingSchedule(processingScheduleDto);
     when(periodService.findByIds(Sets.newHashSet(processingPeriodId)))
         .thenReturn(Arrays.asList(processingPeriod));
+    ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
+    extension.setProcessingPeriodId(nextPeriod.getId());
+    extension.setSubmitStartDate(processingPeriod.getEndDate().plusDays(1));
+    extension.setSubmitEndDate(localDate.minusDays(1));
+    when(periodExtensionRepository
+        .findByProcessingPeriodIdIn(Arrays.asList(nextPeriod.getId())))
+        .thenReturn(Arrays.asList(extension));
     Pageable pageable = new PageRequest(0, 1);
     when(periodService.searchProcessingPeriods(processingScheduleDto.getId(), null, null,
         processingPeriod.getEndDate().plusDays(1), null, null, pageable))
@@ -172,6 +184,13 @@ public class SiglusOrderCloseSchedulerServiceTest {
     nextPeriod.setProcessingSchedule(processingScheduleDto);
     when(periodService.findByIds(Sets.newHashSet(processingPeriodId)))
         .thenReturn(Arrays.asList(processingPeriod));
+    ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
+    extension.setProcessingPeriodId(nextPeriod.getId());
+    extension.setSubmitStartDate(localDate.plusDays(1));
+    extension.setSubmitEndDate(localDate.plusDays(10));
+    when(periodExtensionRepository
+        .findByProcessingPeriodIdIn(Arrays.asList(nextPeriod.getId())))
+        .thenReturn(Arrays.asList(extension));
     Pageable pageable = new PageRequest(0, 1);
     when(periodService.searchProcessingPeriods(processingScheduleDto.getId(), null, null,
         processingPeriod.getEndDate().plusDays(1), null, null, pageable))

@@ -65,7 +65,9 @@ import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.OrderLineItemDto;
 import org.siglus.siglusapi.dto.OrderStatusDto;
@@ -133,6 +135,9 @@ public class SiglusOrderService {
   @Autowired
   private SiglusShipmentDraftService draftService;
 
+  @Autowired
+  private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
+
   @Value("${time.zoneId}")
   private String timeZoneId;
 
@@ -164,8 +169,15 @@ public class SiglusOrderService {
     ProcessingPeriodDto period = orderDto.getProcessingPeriod();
     List<org.openlmis.requisition.dto.ProcessingPeriodDto> periodDtos =
         getNextProcessingPeriodDto(period);
-    return !CollectionUtils.isEmpty(periodDtos)
-        && periodDtos.get(0).getEndDate().isBefore(currentDate);
+    if (!CollectionUtils.isEmpty(periodDtos)) {
+      org.openlmis.requisition.dto.ProcessingPeriodDto nextPeriod = periodDtos.get(0);
+      ProcessingPeriodExtension extension =
+          processingPeriodExtensionRepository.findByProcessingPeriodId(nextPeriod.getId());
+      if (extension != null) {
+        return extension.getSubmitEndDate().isBefore(currentDate);
+      }
+    }
+    return false;
   }
 
   void revertOrderToCloseStatus(Order order) {

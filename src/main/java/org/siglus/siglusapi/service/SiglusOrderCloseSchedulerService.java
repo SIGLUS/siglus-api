@@ -31,7 +31,9 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,6 +60,9 @@ public class SiglusOrderCloseSchedulerService {
 
   @Autowired
   private OrderExternalRepository orderExternalRepository;
+
+  @Autowired
+  private ProcessingPeriodExtensionRepository periodExtensionRepository;
 
   @Value("${time.zoneId}")
   private String timeZoneId;
@@ -124,6 +129,21 @@ public class SiglusOrderCloseSchedulerService {
     return processingPeriodDtoHashMap;
   }
 
+  private HashMap<UUID, ProcessingPeriodExtension> getExtensions(HashMap<UUID, ProcessingPeriodDto>
+      periodDtoHashMap) {
+    List<UUID> periodIds = periodDtoHashMap.values()
+        .stream()
+        .map(periodDto -> periodDto.getId())
+        .collect(Collectors.toList());
+    List<ProcessingPeriodExtension> extensions = periodExtensionRepository
+        .findByProcessingPeriodIdIn(periodIds);
+    HashMap<UUID, ProcessingPeriodExtension> periodExtensionHashMap = new HashMap<>();
+    extensions.forEach(extension ->
+        periodExtensionHashMap.put(extension.getProcessingPeriodId(), extension));
+    return periodExtensionHashMap;
+  }
+
+
   private ProcessingPeriodDto getProcessingPeriod(List<ProcessingPeriodDto> periodDtos,
       ProcessingPeriodDto nextPeriod) {
     List<ProcessingPeriodDto> currentPeriods = periodDtos.stream()
@@ -148,12 +168,16 @@ public class SiglusOrderCloseSchedulerService {
   private List<Order> getNeedClosedOrder(List<Order> orders,
       HashMap<UUID, ProcessingPeriodDto> processingPeriodMap) {
     LocalDate currentDate = LocalDate.now(ZoneId.of(timeZoneId));
+    HashMap<UUID, ProcessingPeriodExtension> extensionHashMap = getExtensions(processingPeriodMap);
     return orders.stream()
         .filter(order -> {
           OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
           if (external != null && processingPeriodMap.containsKey(order.getProcessingPeriodId())) {
             ProcessingPeriodDto nextPeriod = processingPeriodMap.get(order.getProcessingPeriodId());
-            return nextPeriod.getEndDate().isBefore(currentDate);
+            if (extensionHashMap.containsKey(nextPeriod.getId())) {
+              ProcessingPeriodExtension extension = extensionHashMap.get(nextPeriod.getId());
+              return extension.getSubmitEndDate().isBefore(currentDate);
+            }
           }
           return false;
         }).collect(Collectors.toList());

@@ -73,7 +73,9 @@ import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
+import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
@@ -139,6 +141,9 @@ public class SiglusOrderServiceTest {
 
   @Mock
   private SiglusShipmentDraftService draftService;
+
+  @Mock
+  private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
   @InjectMocks
   private SiglusOrderService siglusOrderService;
@@ -316,7 +321,7 @@ public class SiglusOrderServiceTest {
     assertEquals(false, isSuborder);
   }
 
-  public void shouldTrueWhenCurrentDateIsAfterNextPeriodEndDate() {
+  public void shouldTrueWhenCurrentDateIsAfterNextPeriodSubmitEndDate() {
     // given
     LocalDate current = LocalDate.now();
     ProcessingPeriodDto dto = new ProcessingPeriodDto();
@@ -369,7 +374,7 @@ public class SiglusOrderServiceTest {
   }
 
   @Test
-  public void shouldRevertOrderWhenCurrentDateIsAfterNextPeriodEndDateAndIsSubOrder() {
+  public void shouldRevertOrderWhenCurrentDateIsAfterNextPeriodSubmitEndDateAndIsSubOrder() {
     // given
     OrderDto orderDto = new OrderDto();
     UUID externalId = UUID.randomUUID();
@@ -387,7 +392,13 @@ public class SiglusOrderServiceTest {
     orderDto.setProcessingPeriod(currentDto);
     ProcessingPeriodDto dto = new ProcessingPeriodDto();
     dto.setStartDate(current.minusMonths(1));
-    dto.setEndDate(current.minusDays(1));
+    dto.setEndDate(current.plusDays(1));
+    dto.setId(UUID.randomUUID());
+    ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
+    extension.setSubmitStartDate(current.minusDays(10));
+    extension.setSubmitEndDate(current.minusDays(1));
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(dto.getId()))
+        .thenReturn(extension);
     Page<ProcessingPeriodDto> periodDtos = Pagination
         .getPage(Collections.singletonList(dto));
     when(periodService
@@ -427,6 +438,12 @@ public class SiglusOrderServiceTest {
     ProcessingPeriodDto dto = new ProcessingPeriodDto();
     dto.setStartDate(current.minusMonths(1));
     dto.setEndDate(current.minusDays(1));
+    dto.setId(UUID.randomUUID());
+    ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
+    extension.setSubmitStartDate(current.minusDays(10));
+    extension.setSubmitEndDate(current.minusDays(1));
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(dto.getId()))
+        .thenReturn(extension);
     Page<ProcessingPeriodDto> periodDtos = Pagination
         .getPage(Collections.singletonList(dto));
     when(periodService
@@ -444,7 +461,7 @@ public class SiglusOrderServiceTest {
     // then
     verify(draftService, times(0))
         .deleteOrderLineItemAndInitialedExtension(any(Order.class));
-    verify(orderRepository,times(0)).save(any(Order.class));
+    verify(orderRepository, times(0)).save(any(Order.class));
   }
 
   @Test
@@ -466,7 +483,13 @@ public class SiglusOrderServiceTest {
     orderDto.setProcessingPeriod(currentDto);
     ProcessingPeriodDto dto = new ProcessingPeriodDto();
     dto.setStartDate(current.minusMonths(1));
-    dto.setEndDate(current.minusDays(1));
+    dto.setEndDate(current.plusDays(10));
+    dto.setId(UUID.randomUUID());
+    ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
+    extension.setSubmitStartDate(current.minusDays(10));
+    extension.setSubmitEndDate(current.minusDays(1));
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(dto.getId()))
+        .thenReturn(extension);
     Page<ProcessingPeriodDto> periodDtos = Pagination
         .getPage(Collections.singletonList(dto));
     when(periodService
@@ -484,11 +507,11 @@ public class SiglusOrderServiceTest {
     // then
     verify(draftService, times(0))
         .deleteOrderLineItemAndInitialedExtension(any(Order.class));
-    verify(orderRepository,times(0)).save(any(Order.class));
+    verify(orderRepository, times(0)).save(any(Order.class));
   }
 
   @Test
-  public void shouldDontRevertOrderWhenCurrentDateIsBeforeNextPeriodEndDate() {
+  public void shouldDontRevertOrderWhenCurrentDateIsBeforeNextPeriodSubmitEndDate() {
     // given
     OrderDto orderDto = new OrderDto();
     UUID externalId = UUID.randomUUID();
@@ -506,7 +529,13 @@ public class SiglusOrderServiceTest {
     orderDto.setProcessingPeriod(currentDto);
     ProcessingPeriodDto dto = new ProcessingPeriodDto();
     dto.setStartDate(current.minusMonths(1));
-    dto.setEndDate(current.plusDays(10));
+    dto.setEndDate(current.minusDays(1));
+    dto.setId(UUID.randomUUID());
+    ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
+    extension.setSubmitStartDate(current.minusDays(10));
+    extension.setSubmitEndDate(current.plusDays(10));
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(dto.getId()))
+        .thenReturn(extension);
     Page<ProcessingPeriodDto> periodDtos = Pagination
         .getPage(Collections.singletonList(dto));
     when(periodService
@@ -524,7 +553,7 @@ public class SiglusOrderServiceTest {
     // then
     verify(draftService, times(0))
         .deleteOrderLineItemAndInitialedExtension(any(Order.class));
-    verify(orderRepository,times(0)).save(any(Order.class));
+    verify(orderRepository, times(0)).save(any(Order.class));
   }
 
   @Test
