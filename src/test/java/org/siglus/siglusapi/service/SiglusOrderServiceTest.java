@@ -396,7 +396,7 @@ public class SiglusOrderServiceTest {
     dto.setId(UUID.randomUUID());
     ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
     extension.setSubmitStartDate(current.minusDays(10));
-    extension.setSubmitEndDate(current.minusDays(1));
+    extension.setSubmitEndDate(current.minusDays(2));
     when(processingPeriodExtensionRepository.findByProcessingPeriodId(dto.getId()))
         .thenReturn(extension);
     Page<ProcessingPeriodDto> periodDtos = Pagination

@@ -127,7 +127,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
     ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
     extension.setProcessingPeriodId(nextPeriod.getId());
     extension.setSubmitStartDate(processingPeriod.getEndDate().plusDays(1));
-    extension.setSubmitEndDate(localDate.minusDays(1));
+    extension.setSubmitEndDate(localDate.minusDays(2));
     when(periodExtensionRepository
         .findByProcessingPeriodIdIn(Arrays.asList(nextPeriod.getId())))
         .thenReturn(Arrays.asList(extension));
