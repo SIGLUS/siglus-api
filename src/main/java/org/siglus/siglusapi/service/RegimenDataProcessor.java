@@ -254,7 +254,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
         .collect(Collectors.toMap(RegimenDispatchLineDto::getId, dto -> dto));
   }
 
-  private void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto) {
+  public void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto) {
     List<RegimenDto> customRegimenDtos = regimenRepository
         .findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(
             getProgramIds(siglusRequisitionDto))

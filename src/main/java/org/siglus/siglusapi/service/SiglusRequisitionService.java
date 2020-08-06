@@ -1241,6 +1241,7 @@ public class SiglusRequisitionService {
     }
 
     if (Boolean.TRUE.equals(templateExtension.getEnableRegimen())) {
+      regimenDataProcessor.setCustomRegimen(dto);
       dto.setRegimenLineItems(RegimenLineItemDraft.getRegimenLineDtos(
           draft.getRegimenLineItemDrafts(), regimenDataProcessor.getRegimenDtoMap()));
       dto.setRegimenDispatchLineItems(RegimenSummaryLineItemDraft.getRegimenSummaryLineDtos(
