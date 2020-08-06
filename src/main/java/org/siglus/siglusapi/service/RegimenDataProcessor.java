@@ -129,13 +129,20 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
         siglusRequisitionDto.getRegimenDispatchLineItems();
     siglusRequisitionUpdatedDto.setRegimenDispatchLineItems(summaryLineDtos);
 
-    List<RegimenLineItem> regimenLineItems =
+    List<RegimenLineItem> regimenLineItemsFromRequest =
         RegimenLineItem.from(lineDtos, siglusRequisitionDto.getId());
+    List<RegimenLineItem> regimenLineItemsFromDb =
+        regimenLineItemRepository.findByRequisitionId(siglusRequisitionDto.getId());
+
+    List<RegimenLineItem> regimenLineItemsToRemove =
+        getLineItemToRemove(regimenLineItemsFromRequest, regimenLineItemsFromDb);
+    regimenLineItemRepository.delete(regimenLineItemsToRemove);
+
     List<RegimenSummaryLineItem> summaryLineItems =
         RegimenSummaryLineItem.from(summaryLineDtos, siglusRequisitionDto.getId());
     log.info("update regimen line items by requisition id: {}",
         siglusRequisitionDto.getId());
-    regimenLineItemRepository.save(regimenLineItems);
+    regimenLineItemRepository.save(regimenLineItemsFromRequest);
     regimenSummaryLineItemRepository.save(summaryLineItems);
   }
 
@@ -153,6 +160,22 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   @Override
   public boolean isDisabled(SiglusRequisitionDto siglusRequisitionDto) {
     return !siglusRequisitionDto.getTemplate().getExtension().isEnableRegimen();
+  }
+
+  private List<RegimenLineItem> getLineItemToRemove(
+      List<RegimenLineItem> regimenLineItemsFromRequest,
+      List<RegimenLineItem> regimenLineItemsFromDb
+  ) {
+    Set<UUID> ids = regimenLineItemsFromRequest
+        .stream()
+        .map(RegimenLineItem::getId)
+        .filter(id -> id != null)
+        .collect(Collectors.toSet());
+
+    return regimenLineItemsFromDb
+        .stream()
+        .filter(lineItem -> !ids.contains(lineItem.getId()))
+        .collect(Collectors.toList());
   }
 
   private Set<RegimenDispatchLineDto> getValidRegimenDispatchLines(
