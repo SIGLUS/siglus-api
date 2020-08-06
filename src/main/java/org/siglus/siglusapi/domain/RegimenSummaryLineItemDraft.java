@@ -30,6 +30,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.RegimenDispatchLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
@@ -42,6 +43,7 @@ import org.springframework.beans.BeanUtils;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString(exclude = "requisitionDraft")
 @Table(name = "regimen_summary_line_item_draft", schema = "siglusintegration")
 public class RegimenSummaryLineItemDraft extends BaseEntity {
 
