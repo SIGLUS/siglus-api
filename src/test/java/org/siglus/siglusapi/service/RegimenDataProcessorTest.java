@@ -36,7 +36,10 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.requisition.domain.RequisitionTemplate;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
+import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
@@ -78,6 +81,9 @@ public class RegimenDataProcessorTest {
 
   @Mock
   private RequisitionService requisitionService;
+
+  @Mock
+  private RequisitionRepository requisitionRepository;
 
   @Captor
   private ArgumentCaptor<List<RegimenLineItem>> lineItemsArgumentCaptor;
@@ -177,6 +183,7 @@ public class RegimenDataProcessorTest {
     when(regimenRepository.findAllByProgramIdInAndActiveTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen(), mockNoCustomRegimen()));
     when(requisitionService.getAssociateProgram(any())).thenReturn(newHashSet(programId));
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(mockRequisition());
 
     // when
     regimenDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);
@@ -233,6 +240,7 @@ public class RegimenDataProcessorTest {
     when(regimenDispatchLineRepository.findAll())
         .thenReturn(newArrayList(mockDispatchLine()));
     when(requisitionService.getAssociateProgram(any())).thenReturn(newHashSet(programId));
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(mockRequisition());
 
     // when
     regimenDataProcessor.get(siglusRequisitionDto);
@@ -349,5 +357,13 @@ public class RegimenDataProcessorTest {
     line.setId(lineId);
     line.setCode(Code.code("Outros"));
     return line;
+  }
+
+  private Requisition mockRequisition() {
+    Requisition requisition = new Requisition();
+    RequisitionTemplate template = new RequisitionTemplate();
+    template.setId(templateId);
+    requisition.setTemplate(template);
+    return requisition;
   }
 }
