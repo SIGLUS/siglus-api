@@ -78,7 +78,7 @@ pipeline {
         }
         stage('Deploy To Integ') {
             when {
-                branch 'release-1.0'
+                branch 'release-1.1'
             }
             steps {
                 deploy "integ"
@@ -86,7 +86,7 @@ pipeline {
         }
         stage('Deploy To UAT') {
             when {
-                branch 'release-1.0'
+                branch 'release-1.1'
             }
             steps {
                 script {
