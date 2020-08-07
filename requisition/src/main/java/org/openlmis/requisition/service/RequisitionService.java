@@ -1044,15 +1044,14 @@ public class RequisitionService {
       return approveProductsAggregator;
     }
 
-    List<ApprovedProductDto> approvedProducts = new ArrayList<>();
-    approvedProducts.addAll(approveProductsAggregator.getAllProducts().values());
+    List<ApprovedProductDto> approvedProducts = approveProductsAggregator.getFullSupplyProducts();
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
         .findUserSupportedVirtualPrograms();
     associateProgramIds.forEach(associateProgram -> {
       if (supportedVirtualPrograms.contains(associateProgram)) {
         ApproveProductsAggregator productsAggregator = approvedProductReferenceDataService
             .getApprovedProducts(facilityId, associateProgram);
-        approvedProducts.addAll(productsAggregator.getAllProducts().values());
+        approvedProducts.addAll(productsAggregator.getFullSupplyProducts());
       }
     });
     return new ApproveProductsAggregator(approvedProducts, programId);

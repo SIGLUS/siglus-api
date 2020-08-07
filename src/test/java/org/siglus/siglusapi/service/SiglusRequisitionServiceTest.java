@@ -87,6 +87,7 @@ import org.openlmis.requisition.dto.OrderStatus;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
@@ -1825,6 +1826,9 @@ public class SiglusRequisitionServiceTest {
   private ApproveProductsAggregator createApproveProductsAggregator(UUID orderableId) {
     MetadataDto meta = createMetadataDto();
     OrderableDto orderable = createOrderableDto(meta);
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setFullSupply(true);
+    orderable.setPrograms(Sets.newHashSet(programOrderableDto));
     ApprovedProductDto productDto = createApprovedProductDto(orderable, meta);
     List<ApprovedProductDto> list = new ArrayList<>();
     list.add(productDto);
@@ -1836,6 +1840,9 @@ public class SiglusRequisitionServiceTest {
     meta.setVersionNumber(1L);
     OrderableDto orderable = new OrderableDto();
     orderable.setId(productId2);
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setFullSupply(true);
+    orderable.setPrograms(Sets.newHashSet(programOrderableDto));
     orderable.setMeta(meta);
     ApprovedProductDto productDto = new ApprovedProductDto();
     productDto.setId(UUID.randomUUID());
