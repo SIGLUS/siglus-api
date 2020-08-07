@@ -973,6 +973,8 @@ public class SiglusRequisitionService {
           if (isExternalApprove) {
             lineDto.setRequestedQuantity(0);
             lineDto.setAuthorizedQuantity(0);
+            lineDto.setRequestedQuantityExplanation("0");
+            lineDto.setAdditionalQuantityRequired(0);
           }
 
           SiglusRequisitionLineItemDto siglusRequisitionLineItemDto =
