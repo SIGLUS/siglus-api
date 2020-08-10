@@ -50,6 +50,8 @@ public class RequisitionTemplateExtensionDto extends BaseDto {
 
   private boolean enableUsageInformation = false;
 
+  private boolean enableQuicklyFill = false;
+
   public static RequisitionTemplateExtensionDto from(
       RequisitionTemplateExtension entity) {
     if (entity == null) {

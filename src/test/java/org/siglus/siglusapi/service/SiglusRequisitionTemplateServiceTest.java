@@ -438,6 +438,7 @@ public class SiglusRequisitionTemplateServiceTest {
             .enableRapidTestConsumption(false)
             .enableRegimen(false)
             .enableUsageInformation(false)
+            .enableQuicklyFill(false)
             .build();
     requisitionTemplateExtension.setId(tempalteExtensionId);
     return requisitionTemplateExtension;

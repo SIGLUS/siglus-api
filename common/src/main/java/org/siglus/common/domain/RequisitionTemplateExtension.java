@@ -62,6 +62,9 @@ public class RequisitionTemplateExtension extends BaseEntity {
   @Column
   private Boolean enableUsageInformation;
 
+  @Column
+  private Boolean enableQuicklyFill;
+
   public static RequisitionTemplateExtension from(UUID id, RequisitionTemplateExtensionDto dto) {
     if (dto == null) {
       return null;

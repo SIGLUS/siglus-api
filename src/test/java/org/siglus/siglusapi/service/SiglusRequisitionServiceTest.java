@@ -1799,6 +1799,7 @@ public class SiglusRequisitionServiceTest {
     extension.setEnableRapidTestConsumption(true);
     extension.setEnableRegimen(true);
     extension.setEnableUsageInformation(true);
+    extension.setEnableQuicklyFill(true);
     return extension;
   }
 
