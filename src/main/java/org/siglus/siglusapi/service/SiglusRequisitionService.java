@@ -409,7 +409,7 @@ public class SiglusRequisitionService {
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService.findSupervisoryNode(
         programId, facilityId);
     Collection<UserDto> approvers = getApprovers(supervisoryNodeDto.getId(), programId);
-    if (approvers.stream().noneMatch(approver -> approver.getHomeFacilityId().equals(facilityId))) {
+    if (approvers.stream().noneMatch(approver -> facilityId.equals(approver.getHomeFacilityId()))) {
       notifySimam(siglusRequisitionDto, approvers);
     }
   }
