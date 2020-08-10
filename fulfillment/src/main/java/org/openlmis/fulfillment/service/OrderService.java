@@ -16,6 +16,7 @@
 package org.openlmis.fulfillment.service;
 
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.openlmis.fulfillment.domain.OrderStatus.IN_ROUTE;
@@ -139,6 +140,17 @@ public class OrderService {
    * @return ist of Orders with matched parameters.
    */
   public Page<Order> searchOrders(OrderSearchParams params, Pageable pageable) {
+    // [SIGLUS change start]
+    // [change reason]: #447 DDM users with pod rights can see requesting order in fulfill page
+    return internalSearchOrders(params, pageable, true);
+  }
+
+  public Page<Order> searchOrdersForFulfillPage(OrderSearchParams params, Pageable pageable) {
+    return internalSearchOrders(params, pageable, false);
+  }
+
+  private Page<Order> internalSearchOrders(OrderSearchParams params, Pageable pageable,
+      boolean filterByRequestingFacility) {
     XLOGGER.debug("order service search startDate {}", params.getPeriodStartDate());
     XLOGGER.debug("order service search endDate {}", params.getPeriodEndDate());
 
@@ -170,17 +182,23 @@ public class OrderService {
     if (null != user) {
       FulfillmentPermissionStrings.Handler handler = permissionService.getPermissionStrings(
           user.getId());
-
+      Set<UUID> requestingFacilityIds;
+      if (filterByRequestingFacility) {
+        requestingFacilityIds = handler.getFacilityIds(PODS_MANAGE, PODS_VIEW);
+      } else {
+        requestingFacilityIds = emptySet();
+      }
       return orderRepository.searchOrders(
           params, processingPeriodIds, pageable,
           handler.getFacilityIds(ORDERS_EDIT, ORDERS_VIEW, SHIPMENTS_EDIT, SHIPMENTS_VIEW),
-          handler.getFacilityIds(PODS_MANAGE, PODS_VIEW)
+          requestingFacilityIds
       );
 
     } else {
       return orderRepository.searchOrders(params, processingPeriodIds, pageable);
     }
   }
+  // [SIGLUS change end]
 
   /**
    * Saves a new instance of order. The method also stores the order in local directory and try to

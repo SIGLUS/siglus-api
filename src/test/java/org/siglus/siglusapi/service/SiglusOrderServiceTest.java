@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,6 +48,8 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.service.OrderSearchParams;
+import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
@@ -55,6 +58,7 @@ import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
+import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
@@ -86,6 +90,7 @@ import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataSe
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -95,6 +100,12 @@ public class SiglusOrderServiceTest {
 
   @Mock
   private OrderController orderController;
+
+  @Mock
+  private OrderService orderService;
+
+  @Mock
+  private BasicOrderDtoBuilder basicOrderDtoBuilder;
 
   @Mock
   private RequisitionController requisitionController;
@@ -289,11 +300,25 @@ public class SiglusOrderServiceTest {
 
   @Test
   public void shouldCallControllerWhenSearchOrders() {
+    // given
+    @SuppressWarnings("unchecked")
+    Page<Order> page = (Page<Order>) mock(Page.class);
+    @SuppressWarnings("unchecked")
+    List<Order> list = (List<Order>) mock(List.class);
+    when(page.getContent()).thenReturn(list);
+    when(orderService.searchOrdersForFulfillPage(any(), any())).thenReturn(page);
+    List<BasicOrderDto> returnList = Collections.singletonList(mock(BasicOrderDto.class));
+    when(basicOrderDtoBuilder.build(list)).thenReturn(returnList);
+    OrderSearchParams params = mock(OrderSearchParams.class);
+    Pageable pageable = mock(Pageable.class);
+
     // when
-    siglusOrderService.searchOrders(null, null);
+    Page<BasicOrderDto> basicOrderDtos = siglusOrderService.searchOrders(params, pageable);
 
     //then
-    verify(orderController).searchOrders(null, null);
+    verify(orderService).searchOrdersForFulfillPage(params, pageable);
+    verify(basicOrderDtoBuilder).build(list);
+    assertEquals(basicOrderDtos.getContent(), returnList);
   }
 
   @Test
