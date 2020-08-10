@@ -255,7 +255,12 @@ public class RequisitionReportDtoBuilderTest {
         .thenReturn(Lists.newArrayList(fullSupplyDtos, nonFullSupplyDtos, extra));
 
     List<RequisitionLineItemDto> lineItemDtos = requisitionReportDtoBuilder
-        .exportLinesToDtos(Lists.newArrayList(fullSupply), orderables, requisition.getProgramId());
+        // [SIGLUS change start]
+        // [change reason]: enable print requisition
+        //.exportLinesToDtos(Lists.newArrayList(fullSupply),
+        // orderables, requisition.getProgramId());
+        .exportLinesToDtos(Lists.newArrayList(fullSupply), orderables);
+    // [SIGLUS change end]
 
     assertTrue(getOrderableCategoryDisplayOrder(lineItemDtos.get(0))
         <= getOrderableCategoryDisplayOrder(lineItemDtos.get(1)));

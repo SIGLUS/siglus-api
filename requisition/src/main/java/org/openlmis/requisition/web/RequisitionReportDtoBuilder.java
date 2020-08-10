@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -89,8 +88,13 @@ public class RequisitionReportDtoBuilder {
 
     RequisitionReportDto reportDto = new RequisitionReportDto();
     reportDto.setRequisition(requisitionDtoBuilder.build(requisition));
-    reportDto.setFullSupply(exportLinesToDtos(fullSupply, orderables));
-    reportDto.setNonFullSupply(exportLinesToDtos(nonFullSupply, orderables));
+    // [SIGLUS change start]
+    // [change reason]: enable print requisition
+    reportDto.setFullSupply(exportLinesToDtos(fullSupply, orderables
+        /*, requisition.getProgramId()*/));
+    reportDto.setNonFullSupply(exportLinesToDtos(nonFullSupply, orderables/*,
+        requisition.getProgramId()*/));
+    // [SIGLUS change end]
     reportDto.setFullSupplyTotalCost(requisition.getFullSupplyTotalCost(orderables));
     reportDto.setNonFullSupplyTotalCost(requisition.getNonFullSupplyTotalCost(orderables));
     reportDto.setTotalCost(requisition.getTotalCost());
@@ -125,15 +129,18 @@ public class RequisitionReportDtoBuilder {
     return reportDto;
   }
 
+  // [SIGLUS change start]
+  // [change reason]: enable print requisition
   List<RequisitionLineItemDto> exportLinesToDtos(List<RequisitionLineItem> lineItems,
-      Map<VersionIdentityDto, OrderableDto> orderables) {
+                                                 Map<VersionIdentityDto,
+                                                 OrderableDto> orderables/*, UUID programId*/) {
     List<RequisitionLineItemDto> list = requisitionExportHelper.exportToDtos(lineItems);
-    list.sort(byDisplayOrder(orderables));
+    list.sort(byDisplayOrder(orderables/*, programId*/));
     return list;
   }
 
   private Comparator<RequisitionLineItemDto> byDisplayOrder(
-      Map<VersionIdentityDto, OrderableDto> orderables) {
+      Map<VersionIdentityDto, OrderableDto> orderables/*, UUID programId*/) {
     return comparing(r -> {
       VersionIdentityDto orderableIdentity = r.getOrderableIdentity();
       Objects.requireNonNull(orderableIdentity);
@@ -141,8 +148,10 @@ public class RequisitionReportDtoBuilder {
       OrderableDto orderable = orderables.get(orderableIdentity);
       Objects.requireNonNull(orderable);
 
+      //ProgramOrderableDto programOrderable = orderable.getProgramOrderable(programId);
       ProgramOrderableDto programOrderable = orderable.getPrograms().stream().findFirst()
           .orElse(null);
+      // [SIGLUS change end]
 
       return programOrderable.getOrderableCategoryDisplayOrder();
     });

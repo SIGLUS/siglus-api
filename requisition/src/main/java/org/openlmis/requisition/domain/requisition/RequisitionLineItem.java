@@ -31,6 +31,7 @@ import static org.openlmis.requisition.domain.requisition.LineItemFieldsCalculat
 import static org.openlmis.requisition.domain.requisition.LineItemFieldsCalculator.calculateTotalConsumedQuantity;
 import static org.openlmis.requisition.domain.requisition.LineItemFieldsCalculator.calculateTotalLossesAndAdjustments;
 
+import com.google.common.collect.Sets;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -108,7 +109,10 @@ public class RequisitionLineItem extends BaseEntity {
       @AttributeOverride(name = "id", column = @Column(name = "orderableId")),
       @AttributeOverride(name = "versionNumber", column = @Column(name = "orderableVersionNumber"))
   })
+  // [SIGLUS change start]
+  // [change reason]: enable print requisition
   @Setter
+  // [SIGLUS change end]
   @Getter
   private VersionEntityReference orderable;
 
@@ -453,7 +457,13 @@ public class RequisitionLineItem extends BaseEntity {
     exporter.setApprovedQuantity(approvedQuantity);
     exporter.setPricePerPack(Optional
         .ofNullable(orderableDto)
-        .map(item -> orderableDto.getPrograms().stream().findFirst())
+        // [SIGLUS change start]
+        // [change reason]: enable print requisition
+        //.map(item -> item.findProgramOrderable(requisition.getProgramId()))
+        .map(item -> Optional
+        .ofNullable(orderableDto.getPrograms())
+            .orElse(Sets.newHashSet(new ProgramOrderableDto())).stream().findFirst())
+        // [SIGLUS change end]
         .orElse(Optional.of(new ProgramOrderableDto()))
         .map(ProgramOrderableDto::getPricePerPack)
         .orElse(Money.of(CurrencyUnit.of(currencyCode), PRICE_PER_PACK_IF_NULL)));
