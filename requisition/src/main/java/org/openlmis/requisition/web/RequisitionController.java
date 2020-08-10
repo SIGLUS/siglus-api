@@ -469,9 +469,12 @@ public class RequisitionController extends BaseRequisitionController {
 
     BasicRequisitionDto requisitionDto = buildBasicDto(profiler, requisition);
 
-    if (!requisition.getTemplate().isPopulateStockOnHandFromStockCards()) {
-      submitStockEvent(requisition, user.getId(), orderables);
-    }
+    // [SIGLUS change start]
+    // [change reason]: #465 needn't to submit stock event when final approve.
+    // if (!requisition.getTemplate().isPopulateStockOnHandFromStockCards()) {
+    //   submitStockEvent(requisition, user.getId(), orderables);
+    // }
+    // [SIGLUS change end]
 
     addLocationHeader(request, response, requisitionDto.getId(), profiler);
 
