@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
@@ -23,9 +24,11 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -56,12 +59,29 @@ public class SiglusOrderControllerTest {
   }
 
   @Test
-  public void shouldCallSiglusOrderServiceWhenSearchOrders() {
+  public void shouldCallOpenlmisControllerWhenBatchCreateOrdersForFulfill() {
+    // given
+    OrderSearchParams params = mock(OrderSearchParams.class);
+    Pageable pageable = mock(Pageable.class);
+
     // when
-    controller.searchOrders(null, null);
+    controller.searchOrdersForFulfill(params, pageable);
 
     // then
-    verify(siglusOrderService).searchOrders(null, null);
+    verify(siglusOrderService).searchOrdersForFulfill(params, pageable);
+  }
+
+  @Test
+  public void shouldCallSiglusOrderServiceWhenSearchOrders() {
+    // given
+    OrderSearchParams params = mock(OrderSearchParams.class);
+    Pageable pageable = mock(Pageable.class);
+
+    // when
+    controller.searchOrders(params, pageable);
+
+    // then
+    verify(siglusOrderService).searchOrders(params, pageable);
   }
 
 }

@@ -151,6 +151,10 @@ public class SiglusOrderService {
   private String timeZoneId;
 
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
+    return orderController.searchOrders(params, pageable);
+  }
+
+  public Page<BasicOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
     Page<Order> orders = orderService.searchOrdersForFulfillPage(params, pageable);
     List<BasicOrderDto> dtos = basicOrderDtoBuilder.build(orders.getContent());
     return new PageImpl<>(
