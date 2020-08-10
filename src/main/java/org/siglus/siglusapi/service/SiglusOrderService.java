@@ -44,6 +44,7 @@ import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.OrderSearchParams;
+import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.fulfillment.service.ResourceNames;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
@@ -52,6 +53,7 @@ import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
+import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -79,6 +81,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -138,11 +141,21 @@ public class SiglusOrderService {
   @Autowired
   private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
+  @Autowired
+  private OrderService orderService;
+
+  @Autowired
+  private BasicOrderDtoBuilder basicOrderDtoBuilder;
+
   @Value("${time.zoneId}")
   private String timeZoneId;
 
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
-    return orderController.searchOrders(params, pageable);
+    Page<Order> orders = orderService.searchOrdersForFulfillPage(params, pageable);
+    List<BasicOrderDto> dtos = basicOrderDtoBuilder.build(orders.getContent());
+    return new PageImpl<>(
+        dtos,
+        pageable, orders.getTotalElements());
   }
 
   public OrderStatusDto searchOrderStatusById(UUID orderId) {
