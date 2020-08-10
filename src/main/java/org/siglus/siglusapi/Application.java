@@ -15,12 +15,9 @@
 
 package org.siglus.siglusapi;
 
-import com.google.gson.Gson;
 import com.google.gson.internal.bind.TypeAdapters;
 import java.time.Clock;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -59,8 +56,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -221,19 +216,6 @@ public class Application {
         .registerValueGsonTypeAdapter(float.class, TypeAdapters.FLOAT)
         .registerValueGsonTypeAdapter(Float.class, TypeAdapters.FLOAT)
         .build();
-  }
-
-  @Bean
-  public GsonHttpMessageConverter gsonHttpMessageConverter(Gson gson) {
-    GsonHttpMessageConverter converter = new GsonHttpMessageConverter();
-    converter.setGson(gson);
-    List<MediaType> supportedMediaTypes = converter.getSupportedMediaTypes();
-    if (! supportedMediaTypes.contains(MediaType.APPLICATION_PDF_VALUE)) {
-      supportedMediaTypes = new ArrayList<>(supportedMediaTypes);
-      supportedMediaTypes.add(MediaType.valueOf(MediaType.APPLICATION_PDF_VALUE));
-      converter.setSupportedMediaTypes(supportedMediaTypes);
-    }
-    return converter;
   }
 
   @Bean

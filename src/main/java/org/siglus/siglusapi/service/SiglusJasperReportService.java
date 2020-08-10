@@ -49,9 +49,9 @@ import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
 import org.openlmis.stockmanagement.exception.JasperReportViewException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
+import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.util.Message;
 import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.siglusapi.service.client.SiglusStockCardSummariesPrintService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -81,7 +81,7 @@ public class SiglusJasperReportService {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Autowired
-  private SiglusStockCardSummariesPrintService siglusStockCardSummariesPrintService;
+  private StockmanagementPermissionService permissionService;
 
   @Value("${dateFormat}")
   private String dateFormat;
@@ -126,27 +126,34 @@ public class SiglusJasperReportService {
    */
   public ModelAndView getStockCardSummariesReportView(
       UUID programId, UUID facilityId) {
+    List<StockCardDto> cards;
     if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
       UUID userId = authenticationHelper.getCurrentUser().getId();
       Set<UUID> programIds = siglusStockCardSummariesService
           .getProgramIds(programId, userId, STOCK_CARDS_VIEW, facilityId.toString());
-      List<StockCardDto> cards = stockCardSummariesService.findStockCards(programIds, facilityId);
-      StockCardDto firstCard = cards.get(0);
-      Map<String, Object> params = new HashMap<>();
-      params.put("stockCardSummaries", cards);
-      ProgramDto programDto = firstCard.getProgram();
+      cards = stockCardSummariesService.findStockCards(programIds, facilityId);
+    } else {
+      permissionService.canViewStockCard(programId, facilityId);
+      cards = stockCardSummariesService.findStockCards(programId, facilityId);
+    }
+    if (cards == null) {
+      throw new ResourceNotFoundException(new Message(ERROR_REPORT_ID_NOT_FOUND));
+    }
+    StockCardDto firstCard = cards.get(0);
+    Map<String, Object> params = new HashMap<>();
+    params.put("stockCardSummaries", cards);
+    ProgramDto programDto = firstCard.getProgram();
+    params.put("program", firstCard.getProgram());
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
       programDto.setName(ALL_PRODUCTS_PROGRAM_NAME);
       programDto.setCode(ALL_PRODUCTS_PROGRAM_CODE);
-      params.put("program", programDto);
-      params.put("facility", firstCard.getFacility());
-      params.put("showLot", cards.stream().anyMatch(card -> card.getLotId() != null));
-      params.put("dateFormat", dateFormat);
-      params.put("dateTimeFormat", dateTimeFormat);
-      params.put("decimalFormat", createDecimalFormat());
-      return generateReport(CARD_SUMMARY_REPORT_URL, params);
     }
-    return siglusStockCardSummariesPrintService
-        .getStockCardSummariesReportView(programId, facilityId);
+    params.put("facility", firstCard.getFacility());
+    params.put("showLot", cards.stream().anyMatch(card -> card.getLotId() != null));
+    params.put("dateFormat", dateFormat);
+    params.put("dateTimeFormat", dateTimeFormat);
+    params.put("decimalFormat", createDecimalFormat());
+    return generateReport(CARD_SUMMARY_REPORT_URL, params);
   }
 
   private ModelAndView getStockCardReportView(StockCardDto stockCardDto) {
