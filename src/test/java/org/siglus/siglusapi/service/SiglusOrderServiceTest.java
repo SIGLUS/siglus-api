@@ -300,6 +300,15 @@ public class SiglusOrderServiceTest {
 
   @Test
   public void shouldCallControllerWhenSearchOrders() {
+    // when
+    siglusOrderService.searchOrders(null, null);
+
+    //then
+    verify(orderController).searchOrders(null, null);
+  }
+
+  @Test
+  public void shouldCallControllerWhenSearchOrdersForFulfill() {
     // given
     @SuppressWarnings("unchecked")
     Page<Order> page = (Page<Order>) mock(Page.class);
@@ -313,7 +322,8 @@ public class SiglusOrderServiceTest {
     Pageable pageable = mock(Pageable.class);
 
     // when
-    Page<BasicOrderDto> basicOrderDtos = siglusOrderService.searchOrders(params, pageable);
+    Page<BasicOrderDto> basicOrderDtos = siglusOrderService
+        .searchOrdersForFulfill(params, pageable);
 
     //then
     verify(orderService).searchOrdersForFulfillPage(params, pageable);

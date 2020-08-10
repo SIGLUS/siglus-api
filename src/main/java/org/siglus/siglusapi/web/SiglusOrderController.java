@@ -65,6 +65,11 @@ public class SiglusOrderController {
     return siglusOrderService.searchOrders(params, pageable);
   }
 
+  @GetMapping("/fulfill")
+  public Page<BasicOrderDto> searchOrdersForFulfill(OrderSearchParams params, Pageable pageable) {
+    return siglusOrderService.searchOrdersForFulfill(params, pageable);
+  }
+
   @GetMapping("/{id}/status")
   public OrderStatusDto getOrderStatus(@PathVariable("id") UUID orderId) {
     return siglusOrderService.searchOrderStatusById(orderId);
