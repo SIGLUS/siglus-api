@@ -44,8 +44,6 @@ import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
 import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.siglus.common.domain.ProgramExtension;
-import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.util.FormatHelper;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,9 +60,6 @@ public class SiglusStockCardSummariesService {
   private static final String EXCLUDE_ARCHIVED = "excludeArchived";
   private static final String ARCHIVED_ONLY = "archivedOnly";
   private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
-
-  @Autowired
-  private ProgramExtensionRepository programExtensionRepository;
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
@@ -134,7 +129,6 @@ public class SiglusStockCardSummariesService {
     Set<UUID> programIds = newHashSet();
     Set<PermissionStringDto> permissionStrings = permissionService
         .getPermissionStrings(userId).get();
-    List<ProgramExtension> programExtensions = programExtensionRepository.findByIsVirtual(true);
     if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
       Set<UUID> programsByRight = permissionStrings
           .stream()
@@ -147,16 +141,11 @@ public class SiglusStockCardSummariesService {
         throw new PermissionMessageException(
             new Message(ERROR_NO_FOLLOWING_PERMISSION, rightName, facilityId));
       }
-      return programsByRight
-          .stream()
-          .filter(programByRight -> isVirtual(programExtensions, programByRight))
-          .collect(Collectors.toSet());
+      return programsByRight;
     }
-    if (isVirtual(programExtensions, programId)) {
-      programIds.add(programId);
-    } else {
-      programIds.add(programExtensionRepository.findByProgramId(programId).getParentId());
-    }
+
+    programIds.add(programId);
+
     return programIds;
   }
 
@@ -199,15 +188,6 @@ public class SiglusStockCardSummariesService {
 
   private Predicate<StockCard> isNotArchived(Set<String> archivedProducts) {
     return stockCard -> !archivedProducts.contains(stockCard.getOrderableId().toString());
-  }
-
-  private boolean isVirtual(List<ProgramExtension> programVirtualExtensions, UUID programId) {
-    for (ProgramExtension extension : programVirtualExtensions) {
-      if (extension.getProgramId().equals(programId)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private UUID getId(String fieldName, MultiValueMap<String, String> parameters) {

@@ -47,20 +47,14 @@ import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
-import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusStockCardSummariesServiceTest {
-
-  @Mock
-  private ProgramExtensionRepository programExtensionRepository;
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
@@ -87,9 +81,7 @@ public class SiglusStockCardSummariesServiceTest {
 
   private UUID facilityId = UUID.randomUUID();
 
-  private UUID virtualProgramId = UUID.randomUUID();
-
-  private UUID realProgramId = UUID.randomUUID();
+  private UUID programId = UUID.randomUUID();
 
   private String rightName = "STOCK_CARDS_VIEW";
 
@@ -102,22 +94,11 @@ public class SiglusStockCardSummariesServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
 
     Set<PermissionStringDto> dtos = new HashSet<>();
-    dtos.add(PermissionStringDto.create(rightName, facilityId, virtualProgramId));
+    dtos.add(PermissionStringDto.create(rightName, facilityId, programId));
     when(permissionStringsHandler.get())
         .thenReturn(dtos);
     when(permissionService.getPermissionStrings(userId))
         .thenReturn(permissionStringsHandler);
-    ProgramExtension programExtension = new ProgramExtensionDataBuilder()
-        .withProgramId(virtualProgramId)
-        .build();
-    ProgramExtension programExtensionForReal = new ProgramExtensionDataBuilder()
-        .withProgramId(realProgramId)
-        .withParentId(virtualProgramId)
-        .build();
-    when(programExtensionRepository.findByIsVirtual(true))
-        .thenReturn(newArrayList(programExtension));
-    when(programExtensionRepository.findByProgramId(realProgramId))
-        .thenReturn(programExtensionForReal);
     when(archiveProductService.searchArchivedProducts(facilityId)).thenReturn(new HashSet<>());
   }
 
@@ -130,7 +111,7 @@ public class SiglusStockCardSummariesServiceTest {
     when(stockCardSummariesService.findStockCards(any(StockCardSummariesV2SearchParams.class)))
         .thenReturn(summaries);
 
-    StockCardSummaries resultSummaries = service.findSiglusStockCard(getVirtualParms());
+    StockCardSummaries resultSummaries = service.findSiglusStockCard(getProgramsParms());
 
     assertEquals(true, resultSummaries.getStockCardsForFulfillOrderables().isEmpty());
   }
@@ -152,15 +133,15 @@ public class SiglusStockCardSummariesServiceTest {
     when(stockCardSummariesService.findStockCards(any(StockCardSummariesV2SearchParams.class)))
         .thenReturn(summaries);
 
-    StockCardSummaries resultSummaries = service.findSiglusStockCard(getVirtualParms());
+    StockCardSummaries resultSummaries = service.findSiglusStockCard(getProgramsParms());
 
     assertEquals(2, resultSummaries.getStockCardsForFulfillOrderables().size());
   }
 
   @Test
   public void shouldHaveTwoValueIfStockCardHaveTwoValueForParentProgram() {
-    MultiValueMap<String, String> params = getVirtualParms();
-    params.set("programId", realProgramId.toString());
+    MultiValueMap<String, String> params = getProgramsParms();
+    params.set("programId", programId.toString());
     StockCardSummaries summaries = new StockCardSummaries();
     summaries.setOrderableFulfillMap(new HashMap<>());
     summaries.setAsOfDate(LocalDate.now());
@@ -174,7 +155,7 @@ public class SiglusStockCardSummariesServiceTest {
         .build();
     summaries.setStockCardsForFulfillOrderables(Arrays.asList(stockCard, stockCard2));
     StockCardSummariesV2SearchParams v2SearchParams = new
-        StockCardSummariesV2SearchParams(getVirtualParms());
+        StockCardSummariesV2SearchParams(getProgramsParms());
     when(stockCardSummariesService.findStockCards(v2SearchParams))
         .thenReturn(summaries);
 
@@ -185,7 +166,7 @@ public class SiglusStockCardSummariesServiceTest {
 
   @Test
   public void shouldHaveTwoValueIfStockCardHaveTwoValueForExistProgram() {
-    MultiValueMap<String, String> params = getVirtualParms();
+    MultiValueMap<String, String> params = getProgramsParms();
     params.set("programId", ALL_PRODUCTS_PROGRAM_ID.toString());
     StockCardSummaries summaries = new StockCardSummaries();
     summaries.setOrderableFulfillMap(new HashMap<>());
@@ -200,7 +181,7 @@ public class SiglusStockCardSummariesServiceTest {
         .build();
     summaries.setStockCardsForFulfillOrderables(Arrays.asList(stockCard, stockCard2));
     StockCardSummariesV2SearchParams v2SearchParams = new
-        StockCardSummariesV2SearchParams(getVirtualParms());
+        StockCardSummariesV2SearchParams(getProgramsParms());
     when(stockCardSummariesService.findStockCards(v2SearchParams))
         .thenReturn(summaries);
 
@@ -211,7 +192,7 @@ public class SiglusStockCardSummariesServiceTest {
 
   @Test
   public void shouldExcludeArchivedProductIfSearchExcludeArchived() {
-    MultiValueMap<String, String> params = getVirtualParms();
+    MultiValueMap<String, String> params = getProgramsParms();
     params.add("excludeArchived", Boolean.toString(true));
     StockCardSummaries summaries = new StockCardSummaries();
     summaries.setOrderableFulfillMap(new HashMap<>());
@@ -234,7 +215,7 @@ public class SiglusStockCardSummariesServiceTest {
     when(archiveProductService.searchArchivedProducts(facilityId))
         .thenReturn(archivedProduct);
     StockCardSummariesV2SearchParams v2SearchParams = new
-        StockCardSummariesV2SearchParams(getVirtualParms());
+        StockCardSummariesV2SearchParams(getProgramsParms());
     when(stockCardSummariesService.findStockCards(v2SearchParams))
         .thenReturn(summaries);
 
@@ -245,7 +226,7 @@ public class SiglusStockCardSummariesServiceTest {
 
   @Test
   public void shouldGetArchivedProductIfSearchArchived() {
-    MultiValueMap<String, String> params = getVirtualParms();
+    MultiValueMap<String, String> params = getProgramsParms();
     params.add("archivedOnly", Boolean.toString(true));
     StockCardSummaries summaries = new StockCardSummaries();
     summaries.setOrderableFulfillMap(new HashMap<>());
@@ -268,7 +249,7 @@ public class SiglusStockCardSummariesServiceTest {
     when(archiveProductService.searchArchivedProducts(facilityId))
         .thenReturn(archivedProduct);
     StockCardSummariesV2SearchParams v2SearchParams = new
-        StockCardSummariesV2SearchParams(getVirtualParms());
+        StockCardSummariesV2SearchParams(getProgramsParms());
     when(stockCardSummariesService.findStockCards(v2SearchParams))
         .thenReturn(summaries);
 
@@ -296,7 +277,7 @@ public class SiglusStockCardSummariesServiceTest {
     summaries.setStockCardsForFulfillOrderables(newArrayList(stockCard, stockCard2));
     when(stockCardSummariesService.findStockCards(any()))
         .thenReturn(summaries);
-    MultiValueMap<String, String> params = getVirtualParms();
+    MultiValueMap<String, String> params = getProgramsParms();
     params.add(ORDERABLE_ID, orderableId.toString());
 
     StockCardSummaries resultSummaries = service.findSiglusStockCard(params);
@@ -304,9 +285,9 @@ public class SiglusStockCardSummariesServiceTest {
     assertEquals(1, resultSummaries.getOrderableFulfillMap().size());
   }
 
-  private MultiValueMap<String, String> getVirtualParms() {
+  private MultiValueMap<String, String> getProgramsParms() {
     MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-    params.add("programId", virtualProgramId.toString());
+    params.add("programId", programId.toString());
     params.add(FACILITY_ID, facilityId.toString());
     params.add(RIGHT_NAME, rightName);
     return params;
