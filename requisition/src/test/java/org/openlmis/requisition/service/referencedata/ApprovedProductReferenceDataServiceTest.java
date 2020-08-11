@@ -19,13 +19,11 @@ import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -33,18 +31,10 @@ import org.openlmis.requisition.service.BaseCommunicationService;
 import org.openlmis.requisition.testutils.ApprovedProductDtoDataBuilder;
 import org.openlmis.requisition.testutils.OrderableDtoDataBuilder;
 import org.openlmis.requisition.testutils.ProgramDtoDataBuilder;
-import org.siglus.common.domain.ProgramExtension;
-import org.siglus.common.repository.ProgramExtensionRepository;
 
 @Ignore
 public class ApprovedProductReferenceDataServiceTest
     extends BaseReferenceDataServiceTest<ApprovedProductDto> {
-
-  // [SIGLUS change start]
-  // [change reason]: support virtual program
-  @Mock
-  private ProgramExtensionRepository programExtensionRepository;
-  // [SIGLUS change end]
 
   private ApprovedProductReferenceDataService service;
 
@@ -63,16 +53,13 @@ public class ApprovedProductReferenceDataServiceTest
   public void setUp() {
     super.setUp();
     service = (ApprovedProductReferenceDataService) prepareService();
-    // [SIGLUS change start]
-    // [change reason]: support virtual program
-    service.programExtensionRepository = programExtensionRepository;
-    // [SIGLUS change end]
   }
 
   @Test
   public void shouldReturnApprovedProducts() {
     // given
     ProgramDto program = new ProgramDtoDataBuilder().buildAsDto();
+    UUID facilityId = randomUUID();
 
     ApprovedProductDto product = new ApprovedProductDtoDataBuilder()
         .withOrderable(new OrderableDtoDataBuilder()
@@ -84,14 +71,6 @@ public class ApprovedProductReferenceDataServiceTest
     // when
     mockPageResponseEntity(product);
 
-    // [SIGLUS change start]
-    // [change reason]: support virtual program
-    ProgramExtension programExtension = new ProgramExtension();
-    programExtension.setIsVirtual(false);
-    when(programExtensionRepository.findByProgramId(program.getId()))
-        .thenReturn(programExtension);
-    UUID facilityId = randomUUID();
-    // [SIGLUS change end]
     ApproveProductsAggregator response = service.getApprovedProducts(facilityId, program.getId());
 
     // then
