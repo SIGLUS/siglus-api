@@ -19,21 +19,12 @@ import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
 import org.openlmis.stockmanagement.service.referencedata.BaseReferenceDataService;
 import org.openlmis.stockmanagement.util.RequestParameters;
-import org.siglus.common.domain.ProgramExtension;
-import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.repository.ProgramOrderableRepository;
-import org.siglus.siglusapi.constant.FieldConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -58,9 +49,6 @@ public class SiglusApprovedProductReferenceDataService extends
   }
 
   @Autowired
-  private ProgramExtensionRepository programExtensionRepository;
-
-  @Autowired
   private ProgramOrderableRepository programOrderableRepository;
 
   /**
@@ -74,53 +62,21 @@ public class SiglusApprovedProductReferenceDataService extends
    */
   public OrderablesAggregator getApprovedProducts(UUID facilityId, UUID programId,
       Collection<UUID> orderableIds) {
-    List<ApprovedProductDto> approvedProductDtos = getApprovedProductsByVirtualProgram(facilityId,
-        programId, orderableIds);
-    return new OrderablesAggregator(approvedProductDtos);
-  }
-
-  private List<ApprovedProductDto> getApprovedProductsByVirtualProgram(UUID facilityId,
-      UUID programId,
-      Collection<UUID> orderableIds) {
-    List<ApprovedProductDto> approvedProducts = new ArrayList<>();
-    ProgramExtension programExtension = programExtensionRepository.findByProgramId(programId);
-    if (Boolean.FALSE.equals(programExtension.getIsVirtual())) {
-      List<ApprovedProductDto> approvedProductDtos =
-          getApprovedProductsByRealProgram(facilityId, programId, orderableIds).getContent();
-      approvedProducts.addAll(approvedProductDtos);
-
-    } else {
-      List<ProgramExtension> realPrograms = programExtensionRepository.findByParentId(programId);
-      for (ProgramExtension realProgram : realPrograms) {
-        if (!programOrderableRepository.findByProgramId(realProgram.getProgramId()).isEmpty()) {
-          List<ApprovedProductDto> approvedProductDtos =
-              getApprovedProductsByRealProgram(facilityId, realProgram.getProgramId(), orderableIds)
-                  .getContent();
-          approvedProducts.addAll(approvedProductDtos);
-        }
-      }
-    }
-    return approvedProducts.stream()
-        .filter(distinctByKey(approvedProductDto -> approvedProductDto.getOrderable().getId()))
-        .collect(Collectors.toList());
-  }
-
-  private Page<ApprovedProductDto> getApprovedProductsByRealProgram(UUID facilityId, UUID programId,
-      Collection<UUID> orderableIds) {
     RequestParameters params = RequestParameters.init();
 
-    params.set(FieldConstants.PROGRAM_ID, programId);
+    params.set("programId", programId);
 
     if (!isEmpty(orderableIds)) {
-      params.set(FieldConstants.ORDERABLE_ID, orderableIds);
+      params.set("orderableId", orderableIds);
     }
 
-    return getPage(facilityId + "/approvedProducts", params);
-  }
+    if (!programOrderableRepository.findByProgramId(programId).isEmpty()) {
+      Page<ApprovedProductDto> approvedProductPage =
+          getPage(facilityId + "/approvedProducts", params);
+      return new OrderablesAggregator(new ArrayList<>(approvedProductPage.getContent()));
+    }
 
-  private static <T> Predicate<T> distinctByKey(Function<? super T, Object> keyExtractor) {
-    Map<Object, Boolean> seen = new ConcurrentHashMap<>();
-    return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+    return new OrderablesAggregator(new ArrayList<>());
   }
 
 }
