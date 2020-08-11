@@ -61,7 +61,13 @@ public class SupportedVirtualProgramsHelper {
     List<ProgramExtension> programExtensions = programExtensionRepository.findAll();
     return programExtensions.stream()
         .filter(programExtension -> supportedPrograms.contains(programExtension.getProgramId()))
-        .map(ProgramExtension::getParentId)
+        .map(programExtension -> {
+          if (Boolean.TRUE.equals(programExtension.getIsVirtual())) {
+            return programExtension.getProgramId();
+          } else {
+            return programExtension.getParentId();
+          }
+        })
         .filter(Objects::nonNull)
         .collect(Collectors.toSet());
   }

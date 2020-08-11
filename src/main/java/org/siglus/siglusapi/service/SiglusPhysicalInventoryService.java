@@ -197,7 +197,7 @@ public class SiglusPhysicalInventoryService {
       return inventories;
     } catch (PermissionMessageException e) {
       throw new PermissionMessageException(
-          new org.openlmis.stockmanagement.util.Message(ERROR_PERMISSION_NOT_SUPPORTED));
+          new org.openlmis.stockmanagement.util.Message(ERROR_PERMISSION_NOT_SUPPORTED), e);
     }
   }
 

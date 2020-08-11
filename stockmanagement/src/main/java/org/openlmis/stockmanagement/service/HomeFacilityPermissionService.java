@@ -17,6 +17,7 @@ package org.openlmis.stockmanagement.service;
 
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 
+import java.util.Arrays;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
@@ -55,6 +56,10 @@ public class HomeFacilityPermissionService {
   }
 
   private void throwException(String errorKey, String... params) {
-    throw new PermissionMessageException(new Message(errorKey, (Object)params));
+    // [SIGLUS change start]
+    // [change reason]: pretty log print
+    // throw new PermissionMessageException(new Message(errorKey, (Object)params));
+    throw new PermissionMessageException(new Message(errorKey, Arrays.toString(params)));
+    // [SIGLUS change end]
   }
 }

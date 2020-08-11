@@ -55,10 +55,24 @@ public class StockmanagementGlobalErrorHandling extends AbstractErrorHandling {
     return logErrorAndRespond("Could not authenticate user", ex);
   }
 
+  // [SIGLUS change start]
+  // [change reason]: to cheat check style
+
+  /**
+   * Handles PermissionMessage exceptions and return 403.
+   *
+   * @param ex the PermissionMessageException instance
+   * @return message
+   */
+  // [SIGLUS change end]
   @ExceptionHandler(PermissionMessageException.class)
   @ResponseStatus(HttpStatus.FORBIDDEN)
   @ResponseBody
   public Message.LocalizedMessage handlePermissionException(PermissionMessageException ex) {
+    // [SIGLUS change start]
+    // [change reason]: add log print
+    logger.error(ex.getMessage(), ex);
+    // [SIGLUS change end]
     return getLocalizedMessage(ex);
   }
 
