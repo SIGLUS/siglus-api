@@ -85,6 +85,7 @@ schemas:
         "type": "array",
         "items": { "type": "object", "$ref": "facility.json" }
       }
+  - programAdditionalOrderablePage: !include schemas/programAdditionalOrderablePage.json
 resourceTypes:
   - collection:
       get:
@@ -1858,3 +1859,33 @@ traits:
               application/json:
                 schema: proofOfDeliveryDto
 
+    /programadditionalorderables:
+      displayName: Program Additional Orderable Product
+      get:
+        is: [ secured, paginated ]
+        queryParameters:
+          programId:
+            displayName: program id
+            type: string
+            required: true
+            repeat: false
+          code:
+            displayName: orderable code
+            type: string
+            required: false
+            repeat: false
+          name:
+            displayName: orderable name
+            type: string
+            required: false
+            repeat: false
+          orderableOriginProgramId:
+            displayName: orderable origin program id
+            type: string
+            required: false
+            repeat: false
+        responses:
+          200:
+            body:
+              application/json:
+                schema: programAdditionalOrderablePage
