@@ -22,6 +22,7 @@ import static org.siglus.common.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -45,6 +46,7 @@ import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 @Slf4j
 @Service
@@ -135,11 +137,15 @@ public class SiglusShipmentService {
     return shipmentDto.getOrder().getOrderLineItems().stream()
         .filter(OrderLineItemDto::isSkipped)
         .map(OrderLineItemDto::getId)
+        .filter(Objects::nonNull)
         .collect(toSet());
   }
 
   private void removeSkippedOrderLineItemsAndExtensions(Set<UUID> skippedOrderLineItemIds,
       UUID orderId) {
+    if (CollectionUtils.isEmpty(skippedOrderLineItemIds)) {
+      return;
+    }
     Order order = orderRepository.findOne(orderId);
     order.getOrderLineItems().removeIf(
         orderLineItem -> skippedOrderLineItemIds.contains(orderLineItem.getId()));
@@ -153,7 +159,11 @@ public class SiglusShipmentService {
       Map<UUID, List<Importer>> groupShipment, List<OrderLineItemDto> orderLineItems) {
     List<OrderLineItemDto> subOrderLineItems = new ArrayList<>();
     for (OrderLineItemDto dto : orderLineItems) {
-      if (!skippedOrderLineItemIds.contains(dto.getId()) && dto.getOrderedQuantity() > 0) {
+      boolean isSkiped = !CollectionUtils.isEmpty(skippedOrderLineItemIds)
+          && skippedOrderLineItemIds.contains(dto.getId());
+      boolean isOrderedQuantity = dto.getOrderedQuantity() != null
+          && dto.getOrderedQuantity() > 0;
+      if (!isSkiped && isOrderedQuantity) {
         calculateSubOrderPartialFulfilledValue(groupShipment, subOrderLineItems, dto);
       }
     }

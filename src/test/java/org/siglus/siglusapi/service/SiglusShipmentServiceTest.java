@@ -242,15 +242,11 @@ public class SiglusShipmentServiceTest {
     siglusShipmentService.createOrderAndShipment(false, shipmentDto);
 
     // then
-    verify(orderRepository, times(2)).save(orderArgumentCaptor.capture());
-    verify(lineItemExtensionRepository).delete(lineItemExtensionArgumentCaptor.capture());
+    verify(orderRepository, times(1)).save(orderArgumentCaptor.capture());
     verify(shipmentController).createShipment(shipmentDtoArgumentCaptor.capture());
     Order orderToSave = orderArgumentCaptor.getValue();
-    List<OrderLineItemExtension> lineItemExtensionsToDelete = lineItemExtensionArgumentCaptor
-        .getValue();
     ShipmentDto shipmentDtoToSave = shipmentDtoArgumentCaptor.getValue();
     assertTrue(CollectionUtils.isNotEmpty(orderToSave.getOrderLineItems()));
-    assertTrue(CollectionUtils.isEmpty(lineItemExtensionsToDelete));
     assertTrue(CollectionUtils.isNotEmpty(shipmentDtoToSave.getLineItems()));
     verify(notificationService).postConfirmShipment(any());
   }
