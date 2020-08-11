@@ -4,13 +4,12 @@
 
 CREATE TABLE siglusintegration.program_orderables_extension (
     id uuid PRIMARY KEY,
+    orderableid uuid,
     programcode character varying(255),
     programname character varying(255),
-    orderableid uuid,
-	additionalorderableid uuid,
     realprogramcode character varying(255),
     realprogramname character varying(255)
 );
 
 CREATE INDEX index_orderableid ON siglusintegration.program_orderables_extension(orderableid uuid_ops);
-CREATE INDEX index_additionalorderableid ON siglusintegration.program_orderables_extension(additionalorderableid uuid_ops);
+CREATE UNIQUE INDEX unq_orderable_program_realprogram ON siglusintegration.program_orderables_extension(orderableid uuid_ops,programcode text_ops,realprogramcode text_ops);
