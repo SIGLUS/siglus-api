@@ -169,7 +169,7 @@
                 <textFieldExpression><![CDATA[$F{program}.getName()]]></textFieldExpression>
             </textField>
             <staticText>
-                <reportElement x="490" y="0" width="40" height="10" uuid="f233a52e-358f-492e-972b-5893cca24c7f">
+                <reportElement x="530" y="0" width="40" height="10" uuid="f233a52e-358f-492e-972b-5893cca24c7f">
                     <property name="com.jaspersoft.studio.unit.width" value="pixel"/>
                     <property name="com.jaspersoft.studio.unit.y" value="pixel"/>
                     <property name="com.jaspersoft.studio.unit.height" value="pixel"/>
@@ -180,7 +180,7 @@
                 <text><![CDATA[SOH:]]></text>
             </staticText>
             <textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
-                <reportElement x="520" y="0" width="80" height="10" uuid="83ee175f-b7f6-47ab-97d1-e0e47cbd5ba8"/>
+                <reportElement x="560" y="0" width="80" height="10" uuid="83ee175f-b7f6-47ab-97d1-e0e47cbd5ba8"/>
                 <textElement>
                     <font size="8" isBold="false"/>
                 </textElement>
