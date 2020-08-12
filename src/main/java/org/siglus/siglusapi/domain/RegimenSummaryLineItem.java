@@ -57,6 +57,10 @@ public class RegimenSummaryLineItem extends BaseEntity {
       RegimenDispatchLineDto regimenDispatchLine =
           regimenSummaryLineDto.getRegimenDispatchLine();
 
+      if (regimenDispatchLine == null) {
+        return;
+      }
+
       regimenSummaryLineDto.getColumns().forEach((columnName, regimenColumnDto) -> {
         RegimenSummaryLineItem regimenSummaryLineItem = RegimenSummaryLineItem.builder()
             .requisitionId(requisitionId)
