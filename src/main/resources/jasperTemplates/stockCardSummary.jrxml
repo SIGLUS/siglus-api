@@ -215,7 +215,7 @@
         <band height="54" splitType="Stretch">
             <textField>
                 <reportElement x="10" y="30" width="120" height="15" uuid="93290a78-3c39-4e2b-8f2f-638d0fb3267c"/>
-                <textFieldExpression><![CDATA[DateTimeFormatter.ofPattern($P{dateTimeFormat}).format(ZonedDateTime.now())]]></textFieldExpression>
+                <textFieldExpression><![CDATA[DateTimeFormatter.ofPattern($P{dateFormat}).format(LocalDate.now())]]></textFieldExpression>
             </textField>
             <textField>
                 <reportElement x="510" y="30" width="40" height="15" uuid="ee62efa8-b6f7-4de5-8ede-1ac3db0020cd">
