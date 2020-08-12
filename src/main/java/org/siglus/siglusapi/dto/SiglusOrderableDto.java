@@ -27,6 +27,7 @@ import org.siglus.common.dto.referencedata.BaseDto;
 import org.siglus.common.dto.referencedata.DispensableDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableChildDto;
+import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 
 @Getter
 @Setter
@@ -50,11 +51,7 @@ public class SiglusOrderableDto extends BaseDto {
 
   private Boolean roundToZero;
 
-  // [SIGLUS change start]
-  // [change reason]: need return program's parent id.
-  // private Set<ProgramOrderableDto> programs;
-  private Set<SiglusProgramOrderableDto> programs;
-  // [SIGLUS change end]
+  private Set<ProgramOrderableDto> programs;
 
   private Set<OrderableChildDto> children;
 

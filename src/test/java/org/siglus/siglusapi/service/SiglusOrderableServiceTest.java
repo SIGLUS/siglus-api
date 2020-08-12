@@ -31,16 +31,13 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
-import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.dto.SiglusOrderableDto;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
-import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -50,9 +47,6 @@ public class SiglusOrderableServiceTest {
 
   @InjectMocks
   private SiglusOrderableService siglusOrderableService;
-
-  @Mock
-  private ProgramExtensionRepository programExtensionRepository;
 
   @Mock
   private SiglusOrderableReferenceDataService orderableReferenceDataService;
@@ -74,15 +68,8 @@ public class SiglusOrderableServiceTest {
 
   private UUID orderableId = UUID.randomUUID();
 
-  private UUID parentId = UUID.randomUUID();
-
   @Before
   public void prepare() {
-    ProgramExtension programExtension = new ProgramExtensionDataBuilder()
-        .withProgramId(programId)
-        .withParentId(parentId)
-        .build();
-    when(programExtensionRepository.findAll()).thenReturn(newArrayList(programExtension));
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
     programOrderableDto.setProgramId(programId);
     OrderableDto orderableDto = new OrderableDto();
@@ -103,8 +90,6 @@ public class SiglusOrderableServiceTest {
     orderableDtoPage.getContent().forEach(orderable -> {
       assertFalse(orderable.getArchived());
       assertEquals(1, orderable.getPrograms().size());
-      orderable.getPrograms().forEach(programOrderable ->
-          assertEquals(parentId, programOrderable.getParentId()));
     });
   }
 

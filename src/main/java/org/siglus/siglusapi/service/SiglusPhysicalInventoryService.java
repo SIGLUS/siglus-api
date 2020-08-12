@@ -43,7 +43,7 @@ import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.siglus.common.util.Message;
-import org.siglus.common.util.SupportedVirtualProgramsHelper;
+import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
 import org.siglus.siglusapi.exception.NotAcceptableException;
@@ -75,7 +75,7 @@ public class SiglusPhysicalInventoryService {
   private PhysicalInventoryService physicalInventoryService;
 
   @Autowired
-  private SupportedVirtualProgramsHelper supportedVirtualProgramsHelper;
+  private SupportedProgramsHelper supportedVirtualProgramsHelper;
 
   @Autowired
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
@@ -87,7 +87,7 @@ public class SiglusPhysicalInventoryService {
   @Transactional
   public PhysicalInventoryDto createNewDraftForAllProducts(PhysicalInventoryDto dto) {
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
-        .findUserSupportedVirtualPrograms();
+        .findUserSupportedPrograms();
     List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
         supportedVirtualProgram -> {
           dto.setProgramId(supportedVirtualProgram);
@@ -133,7 +133,7 @@ public class SiglusPhysicalInventoryService {
   @Transactional
   public void deletePhysicalInventoryForAllProducts(UUID facilityId) {
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
-        .findUserSupportedVirtualPrograms();
+        .findUserSupportedPrograms();
     List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
         supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram,
             facilityId,
@@ -170,7 +170,7 @@ public class SiglusPhysicalInventoryService {
       boolean canInitialInventory) {
     try {
       Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
-          .findUserSupportedVirtualPrograms();
+          .findUserSupportedPrograms();
       if (CollectionUtils.isEmpty(supportedVirtualPrograms)) {
         throw new PermissionMessageException(
             new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,

@@ -47,7 +47,6 @@ import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.PermissionStrings.Handler;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
-import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.Dispensable;
 import org.siglus.common.domain.referencedata.Orderable;
@@ -60,7 +59,6 @@ import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.OrderableRepository;
-import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.dto.OrderableInKitDto;
@@ -88,13 +86,7 @@ public class SiglusUnpackServiceTest {
   PermissionService permissionService;
 
   @Mock
-  private ProgramExtensionService programExtensionService;
-
-  @Mock
   private CalculatedStockOnHandService calculatedStockOnHandService;
-
-  @Mock
-  private ProgramExtensionRepository programExtensionRepository;
 
   @Mock
   private Handler permissionStringsHandler;
@@ -109,8 +101,6 @@ public class SiglusUnpackServiceTest {
   private final UUID kitChildTradeItemId = UUID.randomUUID();
   private final UUID kit2Id = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
-  private final UUID programParentId = UUID.randomUUID();
-  private final ProgramExtension programExtension = new ProgramExtension();
   private final UserDto user = new UserDto();
 
   @Before
@@ -134,9 +124,6 @@ public class SiglusUnpackServiceTest {
     kit1.setChildren(newHashSet(new OrderableChild(kit1, kitChild, 5L)));
     kit2.setProgramOrderables(programOrderables);
     kits = Arrays.asList(kit1, kit2);
-    programExtension.setProgramId(programId);
-    programExtension.setParentId(programParentId);
-    programExtension.setIsVirtual(false);
     user.setId(UUID.randomUUID());
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
     when(permissionService.getPermissionStrings(user.getId())).thenReturn(permissionStringsHandler);
@@ -149,10 +136,9 @@ public class SiglusUnpackServiceTest {
         .stockOnHand(10).build());
     when(orderableKitRepository.findAllKitProduct()).thenReturn(kits);
     when(permissionStringsHandler.get()).thenReturn(asSet(
-        PermissionStringDto.create("OTHER", facilityId, programParentId)
+        PermissionStringDto.create("OTHER", facilityId, programId)
     ));
-    when(programExtensionService.findByProgramId(programId)).thenReturn(programExtension);
-    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programParentId,
+    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programId,
         facilityId, Collections.singletonList(kit1Id))).thenReturn(stockCards);
 
     // when
@@ -170,11 +156,10 @@ public class SiglusUnpackServiceTest {
         .stockOnHand(10).build());
     when(orderableKitRepository.findAllKitProduct()).thenReturn(kits);
     when(permissionStringsHandler.get()).thenReturn(asSet(
-        PermissionStringDto.create(STOCK_ADJUST, facilityId, programParentId),
-        PermissionStringDto.create(STOCK_CARDS_VIEW, facilityId, programParentId)
+        PermissionStringDto.create(STOCK_ADJUST, facilityId, programId),
+        PermissionStringDto.create(STOCK_CARDS_VIEW, facilityId, programId)
     ));
-    when(programExtensionService.findByProgramId(programId)).thenReturn(programExtension);
-    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programParentId,
+    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programId,
         facilityId, Collections.singletonList(kit1Id))).thenReturn(stockCards);
 
     // when
@@ -192,11 +177,10 @@ public class SiglusUnpackServiceTest {
         .stockOnHand(10).build());
     when(orderableKitRepository.findAllKitProduct()).thenReturn(kits);
     when(permissionStringsHandler.get()).thenReturn(asSet(
-        PermissionStringDto.create(STOCK_INVENTORIES_EDIT, facilityId, programParentId),
-        PermissionStringDto.create(STOCK_CARDS_VIEW, facilityId, programParentId)
+        PermissionStringDto.create(STOCK_INVENTORIES_EDIT, facilityId, programId),
+        PermissionStringDto.create(STOCK_CARDS_VIEW, facilityId, programId)
     ));
-    when(programExtensionService.findByProgramId(programId)).thenReturn(programExtension);
-    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programParentId,
+    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programId,
         facilityId, Collections.singletonList(kit1Id))).thenReturn(stockCards);
 
     // when
@@ -214,11 +198,10 @@ public class SiglusUnpackServiceTest {
         .stockOnHand(10).build());
     when(orderableKitRepository.findAllKitProduct()).thenReturn(kits);
     when(permissionStringsHandler.get()).thenReturn(asSet(
-        PermissionStringDto.create(STOCK_INVENTORIES_EDIT, facilityId, programParentId),
-        PermissionStringDto.create(STOCK_ADJUST, facilityId, programParentId)
+        PermissionStringDto.create(STOCK_INVENTORIES_EDIT, facilityId, programId),
+        PermissionStringDto.create(STOCK_ADJUST, facilityId, programId)
     ));
-    when(programExtensionService.findByProgramId(programId)).thenReturn(programExtension);
-    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programParentId,
+    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programId,
         facilityId, Collections.singletonList(kit1Id))).thenReturn(stockCards);
 
     // when
@@ -234,12 +217,11 @@ public class SiglusUnpackServiceTest {
     // given
     when(orderableKitRepository.findAllKitProduct()).thenReturn(kits);
     when(permissionStringsHandler.get()).thenReturn(asSet(
-        PermissionStringDto.create(STOCK_INVENTORIES_EDIT, facilityId, programParentId),
-        PermissionStringDto.create(STOCK_ADJUST, facilityId, programParentId),
-        PermissionStringDto.create(STOCK_CARDS_VIEW, facilityId, programParentId)
+        PermissionStringDto.create(STOCK_INVENTORIES_EDIT, facilityId, programId),
+        PermissionStringDto.create(STOCK_ADJUST, facilityId, programId),
+        PermissionStringDto.create(STOCK_CARDS_VIEW, facilityId, programId)
     ));
-    when(programExtensionService.findByProgramId(programId)).thenReturn(programExtension);
-    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programParentId,
+    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programId,
         facilityId, Collections.singletonList(kit1Id))).thenReturn(Collections.emptyList());
 
     // when
@@ -257,12 +239,11 @@ public class SiglusUnpackServiceTest {
         .stockOnHand(10).build());
     when(orderableKitRepository.findAllKitProduct()).thenReturn(kits);
     when(permissionStringsHandler.get()).thenReturn(asSet(
-        PermissionStringDto.create(STOCK_INVENTORIES_EDIT, facilityId, programParentId),
-        PermissionStringDto.create(STOCK_ADJUST, facilityId, programParentId),
-        PermissionStringDto.create(STOCK_CARDS_VIEW, facilityId, programParentId)
+        PermissionStringDto.create(STOCK_INVENTORIES_EDIT, facilityId, programId),
+        PermissionStringDto.create(STOCK_ADJUST, facilityId, programId),
+        PermissionStringDto.create(STOCK_CARDS_VIEW, facilityId, programId)
     ));
-    when(programExtensionService.findByProgramId(programId)).thenReturn(programExtension);
-    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programParentId,
+    when(calculatedStockOnHandService.getStockCardsWithStockOnHandByOrderableIds(programId,
         facilityId, Collections.singletonList(kit1Id))).thenReturn(stockCards);
 
     // when
@@ -290,11 +271,6 @@ public class SiglusUnpackServiceTest {
     lotDto.setTradeItemId(kitChildTradeItemId);
     List<LotDto> lots = Collections.singletonList(lotDto);
     when(lotReferenceDataService.getLots(any())).thenReturn(lots);
-    ProgramExtension programExtension = new ProgramExtension();
-    programExtension.setProgramId(programId);
-    programExtension.setParentId(programParentId);
-    List<ProgramExtension> programExtensions = Collections.singletonList(programExtension);
-    when(programExtensionRepository.findAll()).thenReturn(programExtensions);
 
     // when
     List<OrderableInKitDto> result = siglusUnpackService.searchOrderablesInKit(kit1Id);
@@ -316,11 +292,6 @@ public class SiglusUnpackServiceTest {
     lotDto.setLotCode(RandomStringUtils.random(5));
     lotDto.setTradeItemId(kitChildTradeItemId);
     when(lotReferenceDataService.getLots(any())).thenReturn(Collections.emptyList());
-    ProgramExtension programExtension = new ProgramExtension();
-    programExtension.setProgramId(programId);
-    programExtension.setParentId(programParentId);
-    List<ProgramExtension> programExtensions = Collections.singletonList(programExtension);
-    when(programExtensionRepository.findAll()).thenReturn(programExtensions);
 
     // when
     List<OrderableInKitDto> result = siglusUnpackService.searchOrderablesInKit(kit1Id);

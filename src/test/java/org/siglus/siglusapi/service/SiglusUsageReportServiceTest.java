@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -49,7 +48,6 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
-import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.Dispensable;
 import org.siglus.common.domain.referencedata.Orderable;
@@ -59,7 +57,6 @@ import org.siglus.common.domain.referencedata.ProgramOrderable;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.OrderableKitRepository;
-import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.siglusapi.domain.AvailableUsageColumn;
 import org.siglus.siglusapi.domain.AvailableUsageColumnSection;
 import org.siglus.siglusapi.domain.KitUsageLineItem;
@@ -72,7 +69,6 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.validation.group.sequence.RequisitionActionSequence;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
-import org.siglus.siglusapi.testutils.ProgramExtensionDataBuilder;
 import org.springframework.beans.BeanUtils;
 
 @SuppressWarnings({"PMD.UnusedPrivateField"})
@@ -91,9 +87,6 @@ public class SiglusUsageReportServiceTest {
 
   @Mock
   StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
-
-  @Mock
-  ProgramExtensionRepository programExtensionRepository;
 
   @Mock
   KitUsageLineItemRepository kitUsageRepository;
@@ -158,13 +151,6 @@ public class SiglusUsageReportServiceTest {
         .service("HF")
         .value(10)
         .build();
-    ProgramExtension programExtension = new ProgramExtensionDataBuilder()
-        .withProgramId(programId)
-        .withParentId(null)
-        .build();
-
-    programExtension.setIsVirtual(true);
-    when(programExtensionRepository.findAll()).thenReturn(newArrayList(programExtension));
     when(stockCardRangeSummaryStockManagementService.findAll()).thenReturn(new ArrayList<>());
   }
 

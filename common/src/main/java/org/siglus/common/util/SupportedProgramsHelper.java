@@ -16,28 +16,20 @@
 package org.siglus.common.util;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
-import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SupportedVirtualProgramsHelper {
+public class SupportedProgramsHelper {
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
-
-
-  @Autowired
-  private ProgramExtensionRepository programExtensionRepository;
 
   @Autowired
   private SiglusDateHelper dateHelper;
@@ -45,10 +37,10 @@ public class SupportedVirtualProgramsHelper {
   @Autowired
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
-  public Set<UUID> findUserSupportedVirtualPrograms() {
+  public Set<UUID> findUserSupportedPrograms() {
     UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     FacilityDto homeFacility = facilityReferenceDataService.findOne(homeFacilityId);
-    Set<UUID> supportedPrograms = homeFacility.getSupportedPrograms()
+    return homeFacility.getSupportedPrograms()
         .stream()
         .filter(supportedProgramDto -> {
           LocalDate supportStartDate = supportedProgramDto.getSupportStartDate();
@@ -57,18 +49,6 @@ public class SupportedVirtualProgramsHelper {
               && supportStartDate.isBefore(dateHelper.getCurrentDate());
         })
         .map(SupportedProgramDto::getId)
-        .collect(Collectors.toSet());
-    List<ProgramExtension> programExtensions = programExtensionRepository.findAll();
-    return programExtensions.stream()
-        .filter(programExtension -> supportedPrograms.contains(programExtension.getProgramId()))
-        .map(programExtension -> {
-          if (Boolean.TRUE.equals(programExtension.getIsVirtual())) {
-            return programExtension.getProgramId();
-          } else {
-            return programExtension.getParentId();
-          }
-        })
-        .filter(Objects::nonNull)
         .collect(Collectors.toSet());
   }
 

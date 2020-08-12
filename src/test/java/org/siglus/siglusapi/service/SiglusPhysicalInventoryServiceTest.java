@@ -54,7 +54,7 @@ import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
-import org.siglus.common.util.SupportedVirtualProgramsHelper;
+import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
@@ -77,7 +77,7 @@ public class SiglusPhysicalInventoryServiceTest {
   private PhysicalInventoryStockManagementService physicalInventoryStockManagementService;
 
   @Mock
-  private SupportedVirtualProgramsHelper supportedVirtualProgramsHelper;
+  private SupportedProgramsHelper supportedVirtualProgramsHelper;
 
   @Mock
   private PhysicalInventoryService physicalInventoryService;
@@ -120,7 +120,7 @@ public class SiglusPhysicalInventoryServiceTest {
     // given
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-    when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
+    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
     when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto))
         .thenReturn(physicalInventoryDto);
@@ -173,7 +173,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldCallV3MultipleTimesWhenDeletePhysicalInventoryForAllProducts() {
     // given
-    when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
+    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
         true))
@@ -212,7 +212,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldCallV3MultipleTimesWhenGetPhysicalInventoryForAllProducts() {
     // given
-    when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
+    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
         true))
@@ -284,7 +284,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldGetExtensionTextWhenGetPhysicalInventoryForAllProducts() {
     // given
-    when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
+    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
         .thenReturn(Sets.newHashSet(programIdOne));
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
         .lotId(null)
@@ -336,7 +336,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldCreateInitialInventoryDraftForAllProductsWhenInitialInventory() {
     // given
-    when(supportedVirtualProgramsHelper.findUserSupportedVirtualPrograms())
+    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
         .thenReturn(Sets.newHashSet(programIdOne));
     Map<String, String> extraData = newHashMap();
     extraData.put(IS_BASIC, "true");

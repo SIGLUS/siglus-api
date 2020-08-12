@@ -112,7 +112,7 @@ import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepositor
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
-import org.siglus.common.util.SupportedVirtualProgramsHelper;
+import org.siglus.common.util.SupportedProgramsHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -217,7 +217,7 @@ public class RequisitionService {
   // [SIGLUS change start]
   // [change reason]: refactor it into common
   @Autowired
-  private SupportedVirtualProgramsHelper supportedVirtualProgramsHelper;
+  private SupportedProgramsHelper supportedVirtualProgramsHelper;
   // [SIGLUS change end]
 
   /**
@@ -1046,7 +1046,7 @@ public class RequisitionService {
 
     List<ApprovedProductDto> approvedProducts = approveProductsAggregator.getFullSupplyProducts();
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
-        .findUserSupportedVirtualPrograms();
+        .findUserSupportedPrograms();
     associateProgramIds.forEach(associateProgram -> {
       if (supportedVirtualPrograms.contains(associateProgram)) {
         ApproveProductsAggregator productsAggregator = approvedProductReferenceDataService

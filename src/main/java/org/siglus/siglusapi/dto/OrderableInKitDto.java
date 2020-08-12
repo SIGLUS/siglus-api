@@ -41,7 +41,7 @@ public class OrderableInKitDto extends BaseDto {
 
   private Boolean roundToZero;
 
-  private UUID parentProgramId;
+  private UUID programId;
 
   private Long quantity;
 

@@ -35,7 +35,6 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
-import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.domain.referencedata.OrderableChild;
 import org.siglus.common.dto.referencedata.LotDto;
@@ -47,7 +46,6 @@ import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.OrderableRepository;
-import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.OrderableInKitDto;
 import org.siglus.siglusapi.dto.SiglusOrdeableKitDto;
@@ -77,13 +75,7 @@ public class SiglusUnpackService {
   PermissionService permissionService;
 
   @Autowired
-  private ProgramExtensionService programExtensionService;
-
-  @Autowired
   private CalculatedStockOnHandService calculatedStockOnHandService;
-
-  @Autowired
-  private ProgramExtensionRepository programExtensionRepository;
 
   public SiglusOrdeableKitDto getKitByFacilityIdAndOrderableId(UUID facilityId, UUID orderableId) {
     List<SiglusOrdeableKitDto> siglusOrdeableKitDtos = getKitsByFacilityId(facilityId);
@@ -132,10 +124,9 @@ public class SiglusUnpackService {
 
   private Boolean isUnpackPermission(Set<PermissionStringDto> permissionDtos,
       OrderableDto orderableDto, UUID facilityId) {
-    UUID virtualProgramId = programExtensionService.findByProgramId(
-        orderableDto.getPrograms().stream().findFirst().orElseThrow(() ->
-            new NotFoundException("Orderable's program Not Found")).getProgramId()).getParentId();
-    List<String> rights = getPermissionRightBy(permissionDtos, virtualProgramId, facilityId);
+    UUID programId = orderableDto.getPrograms().stream().findFirst().orElseThrow(() ->
+            new NotFoundException("Orderable's program Not Found")).getProgramId();
+    List<String> rights = getPermissionRightBy(permissionDtos, programId, facilityId);
     return rights.containsAll(Arrays.asList(STOCK_INVENTORIES_EDIT,
         STOCK_ADJUST, STOCK_CARDS_VIEW));
   }
@@ -151,11 +142,10 @@ public class SiglusUnpackService {
   }
 
   private SiglusOrdeableKitDto getKitDto(OrderableDto kitOrderable, UUID facilityId) {
-    UUID virtualProgramId = programExtensionService.findByProgramId(
-        kitOrderable.getPrograms().stream().findFirst().orElseThrow(() ->
-            new NotFoundException("Kit's program Not Found")).getProgramId()).getParentId();
+    UUID programId = kitOrderable.getPrograms().stream().findFirst().orElseThrow(() ->
+            new NotFoundException("Kit's program Not Found")).getProgramId();
     List<StockCard> stockCards = calculatedStockOnHandService
-        .getStockCardsWithStockOnHandByOrderableIds(virtualProgramId, facilityId,
+        .getStockCardsWithStockOnHandByOrderableIds(programId, facilityId,
             Collections.singletonList(kitOrderable.getId()));
     if (CollectionUtils.isEmpty(stockCards)) {
       return null;
@@ -164,7 +154,7 @@ public class SiglusUnpackService {
     BeanUtils.copyProperties(kitOrderable, orderableKitDto);
     orderableKitDto.setStockOnHand(stockCards.get(0).getStockOnHand());
     orderableKitDto.setProductCode(kitOrderable.getProductCode());
-    orderableKitDto.setParentProgramId(virtualProgramId);
+    orderableKitDto.setProgramId(programId);
     return orderableKitDto;
   }
 
@@ -197,10 +187,6 @@ public class SiglusUnpackService {
 
   private List<OrderableInKitDto> getOrderableInKit(List<OrderableChild> children,
       Map<UUID, List<LotDto>> lotMap) {
-    Map<UUID, ProgramExtension> programExtensions =
-        programExtensionRepository.findAll().stream().collect(Collectors.toMap(
-            ProgramExtension::getProgramId,
-            programExtension -> programExtension));
     return children.stream()
         .map(orderableChild -> {
           OrderableInKitDto dto = new OrderableInKitDto();
@@ -211,9 +197,6 @@ public class SiglusUnpackService {
           dto.setLots(getLotList(lotMap, orderableChild.getOrderable().getTradeItemIdentifier()));
           OrderableDto orderableDto = new OrderableDto();
           orderable.export(orderableDto);
-          final UUID programId = orderableDto.getPrograms().stream().findFirst().get()
-              .getProgramId();
-          dto.setParentProgramId(programExtensions.get(programId).getParentId());
           return dto;
         })
         .collect(Collectors.toList());

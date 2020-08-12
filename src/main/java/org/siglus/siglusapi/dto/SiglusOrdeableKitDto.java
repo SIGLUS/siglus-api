@@ -35,5 +35,5 @@ public class SiglusOrdeableKitDto {
 
   private Integer stockOnHand;
 
-  private UUID parentProgramId;
+  private UUID programId;
 }

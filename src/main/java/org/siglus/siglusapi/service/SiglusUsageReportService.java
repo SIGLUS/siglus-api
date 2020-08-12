@@ -41,11 +41,9 @@ import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.util.Message;
-import org.siglus.common.domain.ProgramExtension;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.OrderableKitRepository;
-import org.siglus.common.repository.ProgramExtensionRepository;
 import org.siglus.siglusapi.domain.KitUsageLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
@@ -79,9 +77,6 @@ public class SiglusUsageReportService {
 
   @Autowired
   StockCardRangeSummaryStockManagementService stockCardRangeSummaryStockManagementService;
-
-  @Autowired
-  ProgramExtensionRepository programExtensionRepository;
 
   @Autowired
   KitUsageLineItemRepository kitUsageRepository;
@@ -215,14 +210,12 @@ public class SiglusUsageReportService {
     if (isExistCalculateStockCard(templateColumnSections)) {
       List<UUID> supportPrograms = reportSupportedProgram(requisitionV2Dto);
       log.info("get all program extension");
-      List<ProgramExtension> programExtensions = programExtensionRepository.findAll();
       Map<UUID, List<Orderable>> groupKitProducts = allKitProducts.stream()
           .collect(Collectors.groupingBy(kitProduct -> {
             OrderableDto kitProductDto = new OrderableDto();
             kitProduct.export(kitProductDto);
-            final UUID programId = kitProductDto.getPrograms().stream().findFirst().get()
+            return kitProductDto.getPrograms().stream().findFirst().get()
                 .getProgramId();
-            return getVirtualProgram(programExtensions, programId);
           }));
       for (Map.Entry<UUID, List<Orderable>> gropuKit : groupKitProducts.entrySet()) {
         updateSupportProgramStockCardRange(requisitionV2Dto, supportPrograms, summaryDtos,
@@ -292,16 +285,6 @@ public class SiglusUsageReportService {
       return LocalDate.parse((String) extraData.get(field), dateTimeFormatter);
     }
     return null;
-  }
-
-  private UUID getVirtualProgram(List<ProgramExtension> programExtensions, UUID program) {
-    ProgramExtension extension = programExtensions.stream()
-        .filter(programExtension -> programExtension.getProgramId().equals(program)).findFirst()
-        .orElse(null);
-    if (extension == null) {
-      return program;
-    }
-    return extension.getIsVirtual().equals(Boolean.TRUE) ? program : extension.getParentId();
   }
 
   private List<KitUsageLineItem> getKitUsageLineItems(RequisitionV2Dto requisitionV2Dto,

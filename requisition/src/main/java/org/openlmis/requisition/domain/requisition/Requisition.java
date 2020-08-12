@@ -1371,14 +1371,7 @@ public class Requisition extends BaseTimestampedEntity {
     getNonSkippedRequisitionLineItems()
         .forEach(line -> {
           OrderableDto product = products.get(new VersionIdentityDto(line.getOrderable()));
-
-          // [SIGLUS change start]
-          // [change reason]: Tw requisition is virtual program, so we need seach by real program,
-          // all real program in vitual will have same pricePerPack.
-          //ProgramOrderableDto programOrderable = product.getProgramOrderable(programId);
-          ProgramOrderableDto programOrderable = (ProgramOrderableDto)
-              product.getPrograms().toArray()[0];
-          // [SIGLUS change end]
+          ProgramOrderableDto programOrderable = product.getProgramOrderable(programId);
 
           line.updatePacksToShip(product);
           line.setTotalCost(LineItemFieldsCalculator
