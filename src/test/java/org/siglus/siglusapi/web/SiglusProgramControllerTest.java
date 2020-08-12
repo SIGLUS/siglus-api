@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.service.ProgramExtensionService;
+import org.siglus.siglusapi.service.SiglusProgramService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusProgramControllerTest {
@@ -32,7 +32,7 @@ public class SiglusProgramControllerTest {
   private SiglusProgramController controller;
 
   @Mock
-  private ProgramExtensionService service;
+  private SiglusProgramService service;
 
   @Test
   public void shouldCallServiceGetProgramsWhenSearchPrograms() {

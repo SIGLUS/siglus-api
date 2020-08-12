@@ -143,7 +143,6 @@ import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.RegimenDispatchLineDto;
 import org.siglus.siglusapi.dto.RegimenDto;
-import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.i18n.MessageService;
@@ -209,7 +208,7 @@ public class SiglusRequisitionServiceTest {
   private PermissionService permissionService;
 
   @Mock
-  private ProgramExtensionService programExtensionService;
+  private SiglusProgramService siglusProgramService;
 
   @Mock
   private PeriodService periodService;
@@ -559,7 +558,7 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(createUserDto());
     when(requisitionController.findFacility(userDto.getHomeFacilityId(), profiler))
         .thenReturn(createUserFacility());
-    when(programExtensionService.getProgram(programId)).thenReturn(createSiglusProgramDto());
+    when(siglusProgramService.getProgram(programId)).thenReturn(createProgramDto());
     when(periodService.getPeriod(processingPeriodId)).thenReturn(createProcessingPeriod());
     when(stockCardRangeSummaryStockManagementService.search(any(), any(), any(), any(), any()))
         .thenReturn(createStockCardRangeSummaryList());
@@ -1867,11 +1866,10 @@ public class SiglusRequisitionServiceTest {
     return programDto;
   }
 
-  private SiglusProgramDto createSiglusProgramDto() {
-    SiglusProgramDto siglusProgramDto = new SiglusProgramDto();
-    siglusProgramDto.setId(programId);
-    siglusProgramDto.setIsVirtual(true);
-    return siglusProgramDto;
+  private ProgramDto createProgramDto() {
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    return programDto;
   }
 
   private FacilityDto createFacility() {

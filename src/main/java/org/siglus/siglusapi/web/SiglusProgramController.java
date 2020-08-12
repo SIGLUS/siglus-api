@@ -17,9 +17,8 @@ package org.siglus.siglusapi.web;
 
 import java.util.List;
 import java.util.UUID;
-
-import org.siglus.siglusapi.dto.SiglusProgramDto;
-import org.siglus.siglusapi.service.ProgramExtensionService;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.siglus.siglusapi.service.SiglusProgramService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,18 +31,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusProgramController {
 
   @Autowired
-  private ProgramExtensionService programExtensionService;
+  private SiglusProgramService siglusProgramService;
 
   @GetMapping
-  public List<SiglusProgramDto> searchPrograms(@RequestParam(required = false) String code) {
+  public List<ProgramDto> searchPrograms(@RequestParam(required = false) String code) {
     // call origin OpenLMIS API
-    // reason: support extension virtual program.
-    return programExtensionService.getPrograms(code);
+    // reason: support extension all programs.
+    return siglusProgramService.getPrograms(code);
   }
 
   @GetMapping("/{id}")
-  public SiglusProgramDto searchChosenProgram(@PathVariable("id") UUID programId) {
+  public ProgramDto searchChosenProgram(@PathVariable("id") UUID programId) {
     // support all products program
-    return programExtensionService.getProgram(programId);
+    return siglusProgramService.getProgram(programId);
   }
 }

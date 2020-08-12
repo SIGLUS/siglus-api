@@ -133,7 +133,6 @@ import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.TestConsumptionLineItemDraft;
 import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
-import org.siglus.siglusapi.dto.SiglusProgramDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.simam.EmailAttachmentDto;
@@ -178,9 +177,6 @@ public class SiglusRequisitionService {
 
   @Autowired
   private SiglusOrderableService siglusOrderableService;
-
-  @Autowired
-  private ProgramExtensionService programExtensionService;
 
   @Autowired
   private PeriodService periodService;
@@ -772,14 +768,11 @@ public class SiglusRequisitionService {
     List<ProcessingPeriodDto> periods = null;
     List<Requisition> previousRequisitions = requisition.getPreviousRequisitions();
 
-    SiglusProgramDto programDto = programExtensionService.getProgram(program.getId());
-    UUID virtualProgramId = Boolean.TRUE.equals(programDto.getIsVirtual()) ? programDto.getId()
-        : programDto.getParentId();
     if (requisitionTemplate.isPopulateStockOnHandFromStockCards()) {
       ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
       stockCardRangeSummaryDtos =
           stockCardRangeSummaryStockManagementService
-              .search(virtualProgramId, facility.getId(), null,
+              .search(program.getId(), facility.getId(), null,
                   requisition.getActualStartDate(),
                   requisition.getActualEndDate());
 
@@ -810,7 +803,7 @@ public class SiglusRequisitionService {
 
       stockCardRangeSummariesToAverage =
           stockCardRangeSummaryStockManagementService
-              .search(virtualProgramId, facility.getId(), null,
+              .search(program.getId(), facility.getId(), null,
                   startDateForCalculateAvg,
                   endDateForCalculateAvg);
 
@@ -821,11 +814,11 @@ public class SiglusRequisitionService {
 
     OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
 
-    Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate, virtualProgramId,
+    Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate, program.getId(),
         facility.getId(), requisition.getActualEndDate());
 
     Map<UUID, Integer> orderableBeginning = getOrderableBegingningMap(requisitionTemplate,
-        virtualProgramId, facility.getId(), requisition.getActualStartDate().minusDays(1));
+        program.getId(), facility.getId(), requisition.getActualStartDate().minusDays(1));
 
     simulateAuthenticationHelper.recoveryAuth(originAuth);
 
