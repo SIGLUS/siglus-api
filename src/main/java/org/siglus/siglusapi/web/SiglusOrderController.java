@@ -23,7 +23,6 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
-import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -78,11 +77,5 @@ public class SiglusOrderController {
   @GetMapping("/{id}")
   public SiglusOrderDto getOrder(@PathVariable("id") UUID orderId) {
     return siglusOrderService.searchOrderById(orderId);
-  }
-
-  @PostMapping("/createLineItem")
-  public List<SiglusOrderLineItemDto> createOrderLineItem(
-      @RequestBody List<UUID> orderableIds) {
-    return siglusOrderService.createOrderLineItem(orderableIds);
   }
 }

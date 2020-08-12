@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
@@ -45,9 +44,6 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.OrderService;
-import org.openlmis.fulfillment.service.ResourceNames;
-import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
-import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
@@ -63,18 +59,14 @@ import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.web.RequisitionController;
-import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
-import org.siglus.siglusapi.dto.OrderLineItemDto;
 import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
-import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.beans.BeanUtils;
@@ -110,9 +102,6 @@ public class SiglusOrderService {
 
   @Autowired
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
-
-  @Autowired
-  private FulfillmentOrderableReferenceDataService fulfillmentOrderableReferenceDataService;
 
   @Autowired
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
@@ -216,19 +205,6 @@ public class SiglusOrderService {
     return SiglusOrderDto.builder()
         .order(orderDto)
         .availableProducts(getAllUserAvailableProductAggregator(orderDto)).build();
-  }
-
-  public List<SiglusOrderLineItemDto> createOrderLineItem(List<UUID> orderableIds) {
-    Map<UUID, StockCardSummaryV2Dto> summaryMap = getOrderableIdSohMap(
-        authenticationHelper.getCurrentUser().getHomeFacilityId());
-
-    Map<UUID, OrderableDto> orderableMap = fulfillmentOrderableReferenceDataService
-        .findByIds(orderableIds).stream()
-        .collect(toMap(OrderableDto::getId, orderableDto -> orderableDto));
-    return orderableIds.stream()
-        .filter(orderableMap::containsKey)
-        .map(orderableId -> buildOrderLineItem(summaryMap, orderableMap, orderableId))
-        .collect(toList());
   }
 
   // manually fill no-id lineitem
@@ -373,27 +349,6 @@ public class SiglusOrderService {
     }
     log.info("save requisition line item extension: {}", extensions);
     lineItemExtensionRepository.save(extensions);
-  }
-
-  private SiglusOrderLineItemDto buildOrderLineItem(Map<UUID, StockCardSummaryV2Dto> summaryMap,
-      Map<UUID, OrderableDto> orderableMap, UUID orderableId) {
-    OrderLineItemDto orderLineItemDto = new OrderLineItemDto();
-    OrderableDto orderableDto = orderableMap.get(orderableId);
-    orderLineItemDto.setOrderable(new VersionObjectReferenceDto(orderableDto.getId(), serviceUrl,
-        ResourceNames.ORDERABLES, orderableDto.getVersionNumber()));
-    // no order quantity/packsToOrder, manually input by user
-    orderLineItemDto.setOrderedQuantity(0L);
-
-    List<ObjectReferenceDto> lotList = summaryMap.get(orderableId).getCanFulfillForMe()
-        .stream()
-        .filter(canFulfillForMeEntryDto -> canFulfillForMeEntryDto.getStockOnHand() > 0)
-        .map(CanFulfillForMeEntryDto::getLot)
-        .collect(Collectors.toList());
-    return SiglusOrderLineItemDto
-        .builder()
-        .orderLineItem(orderLineItemDto)
-        .lots(lotList)
-        .build();
   }
 
   private Set<VersionObjectReferenceDto> getAllUserAvailableProductAggregator(OrderDto orderDto) {

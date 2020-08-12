@@ -33,7 +33,6 @@ import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentFacilityReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
-import org.openlmis.fulfillment.service.referencedata.ProgramOrderableDto;
 import org.openlmis.fulfillment.service.stockmanagement.ValidDestinationsStockManagementService;
 import org.openlmis.fulfillment.service.stockmanagement.ValidSourceDestinationsStockManagementService;
 import org.openlmis.fulfillment.service.stockmanagement.ValidSourcesStockManagementService;
@@ -43,13 +42,6 @@ import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.fulfillment.web.stockmanagement.StockEventDto;
 import org.openlmis.fulfillment.web.stockmanagement.StockEventLineItemDto;
 import org.openlmis.fulfillment.web.stockmanagement.ValidSourceDestinationDto;
-import org.openlmis.requisition.repository.RequisitionRepository;
-import org.siglus.common.domain.OrderExternal;
-import org.siglus.common.domain.ProgramExtension;
-import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
-import org.siglus.common.repository.OrderExternalRepository;
-import org.siglus.common.repository.ProgramExtensionRepository;
-import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.ext.XLogger;
@@ -83,23 +75,7 @@ public class FulfillmentStockEventBuilder {
   private FulfillmentOrderableReferenceDataService orderableReferenceDataService;
 
   @Autowired
-  private ProgramExtensionRepository programExtensionRepository;
-
-  @Autowired
-  private RequisitionRepository requisitionRepository;
-
-  @Autowired
-  private RequisitionTemplateAssociateProgramRepository
-      requisitionTemplateAssociateProgramRepository;
-
-  @Autowired
   private FulfillmentDateHelper dateHelper;
-
-  // [SIGLUS change start]
-  // [change reason]: #374 generate stock event list by programs
-  @Autowired
-  private OrderExternalRepository orderExternalRepository;
-  // [SIGLUS change end]
 
   /**
    * Builds a stock event DTO from the given shipment.
@@ -123,46 +99,6 @@ public class FulfillmentStockEventBuilder {
   }
 
   /**
-   * Builds a stock event DTO from the shipment based on main and associate programs.
-   */
-  // [SIGLUS change start]
-  // [change reason]: #374 generate stock event list by programs
-  public List<StockEventDto> fromShipmentAndAllAssociatePrograms(Shipment shipment) {
-    Set<VersionEntityReference> references = shipment.getLineItems()
-        .stream()
-        .map(ShipmentLineItem::getOrderable)
-        .collect(Collectors.toSet());
-
-    Map<VersionEntityReference, OrderableDto> orderableDtoMap =
-        orderableReferenceDataService.findByIdentities(references)
-            .stream()
-            .collect(
-                Collectors.toMap(orderableDto -> references.stream()
-                        .filter(reference -> reference.getId().equals(orderableDto.getId()))
-                        .findFirst()
-                        .orElse(null),
-                    orderableDto -> orderableDto)
-            );
-
-    //real program id: virtual program id
-    Map<UUID, UUID> programIdMap = programExtensionRepository.findAll()
-        .stream()
-        .collect(Collectors.toMap(ProgramExtension::getProgramId, extension -> {
-          if (extension.getIsVirtual().equals(Boolean.TRUE)) {
-            return extension.getProgramId();
-          }
-          return extension.getParentId();
-        }));
-
-    return getShipmentProgramAndAssociatePrograms(shipment).stream()
-        .map(programId ->
-            fromShipmentAndVirtualProgram(shipment, programId, orderableDtoMap, programIdMap))
-        .filter(stockEventDto -> stockEventDto != null)
-        .collect(Collectors.toList());
-  }
-  // [SIGLUS change end]
-
-  /**
    * Builds a stock event DTO from the given proof of delivery.
    */
   public StockEventDto fromProofOfDelivery(ProofOfDelivery proofOfDelivery) {
@@ -182,38 +118,6 @@ public class FulfillmentStockEventBuilder {
     XLOGGER.exit(stockEventDto);
     return stockEventDto;
   }
-
-  // [SIGLUS change start]
-  // [change reason]: #374 get all associate program and main program ids
-  private Set<UUID> getShipmentProgramAndAssociatePrograms(Shipment shipment) {
-    UUID externalId = shipment.getOrder().getExternalId();
-    OrderExternal external = orderExternalRepository.findOne(externalId);
-    UUID requisitionId = external == null ? externalId : external.getRequisitionId();
-    UUID templateId = requisitionRepository.findOne(requisitionId).getTemplate().getId();
-
-    Set<UUID> associateProgramIds =
-        requisitionTemplateAssociateProgramRepository.findByRequisitionTemplateId(templateId)
-            .stream()
-            .map(RequisitionTemplateAssociateProgram::getAssociatedProgramId)
-            .collect(Collectors.toSet());
-
-    associateProgramIds.add(shipment.getProgramId());
-
-    return associateProgramIds;
-  }
-
-  // generate stock event by shipment and virtual program id
-  private StockEventDto fromShipmentAndVirtualProgram(Shipment shipment, UUID programId,
-      Map<VersionEntityReference, OrderableDto> orderableDtoMap, Map<UUID, UUID> programIdMap) {
-    List<StockEventLineItemDto> list =
-        getLineItemsWithVirtualProgram(shipment, programId, orderableDtoMap, programIdMap);
-    if (list.isEmpty()) {
-      return null;
-    }
-    return new StockEventDto(programId, shipment.getSupplyingFacilityId(), list,
-        shipment.getShippedById());
-  }
-  // [SIGLUS change end]
 
   private List<StockEventLineItemDto> getLineItems(Shipment shipment, Profiler profiler) {
     profiler.start("GET_ORDERABLE_IDENTITIES");
@@ -272,62 +176,6 @@ public class FulfillmentStockEventBuilder {
         .map(lineItem -> createLineItem(proofOfDelivery, lineItem, orderables, sourceId))
         .collect(Collectors.toList());
   }
-
-  // [SIGLUS change start]
-  // [change reason]: #374 get all stock event line items belong to this virtual program id
-  private List<StockEventLineItemDto> getLineItemsWithVirtualProgram(Shipment shipment,
-      UUID programId, Map<VersionEntityReference, OrderableDto> orderableDtoMap,
-      Map<UUID, UUID> programIdMap) {
-
-    List<ShipmentLineItem> targetLineItems = shipment.getLineItems()
-        .stream()
-        // [SIGLUS change start]
-        // [change reason]: #401 AC5 If shipped quantity greater than 0 ,
-        //                  it can have stock event record.
-        .filter(shipmentLineItem -> shipmentLineItem.getQuantityShipped() > 0)
-        // [SIGLUS change end]
-        .filter(shipmentLineItem ->
-            isLineItemOfVirtualProgram(shipmentLineItem, programId, orderableDtoMap, programIdMap))
-        .collect(Collectors.toList());
-
-    Map<VersionIdentityDto, OrderableDto> orderables = targetLineItems
-        .stream()
-        .map(ShipmentLineItem::getOrderable)
-        .map(versionEntityReference -> orderableDtoMap.get(versionEntityReference))
-        .collect(Collectors.toMap(OrderableDto::getIdentity, orderable -> orderable,
-            (x1, x2) -> x1));
-
-
-    // destination use the virtual program
-    UUID destinationId = getDestinationId(
-        shipment.getSupplyingFacilityId(),
-        shipment.getReceivingFacilityId(),
-        programId
-    );
-
-    return targetLineItems
-        .stream()
-        .map(lineItem -> createLineItem(lineItem, orderables, destinationId))
-        .collect(Collectors.toList());
-  }
-
-  // check if lineitem belongs to this virtual prgram
-  private boolean isLineItemOfVirtualProgram(ShipmentLineItem shipmentLineItem, UUID programId,
-      Map<VersionEntityReference, OrderableDto> orderableDtoMap, Map<UUID, UUID> programIdMap) {
-
-    OrderableDto dto = orderableDtoMap.get(shipmentLineItem.getOrderable());
-
-    ProgramOrderableDto programOrderableDto =
-        dto.getPrograms().stream().findFirst().orElse(null);
-
-    if (programOrderableDto != null) {
-      return programIdMap.get(programOrderableDto.getProgramId()).equals(programId);
-    }
-
-    return false;
-
-  }
-  // [SIGLUS change end]
 
   private StockEventLineItemDto createLineItem(ShipmentLineItem lineItem,
       Map<VersionIdentityDto, OrderableDto> orderables, UUID destinationId) {

@@ -26,7 +26,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -84,7 +83,6 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
-import org.siglus.siglusapi.dto.SiglusOrderLineItemDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
@@ -216,26 +214,6 @@ public class SiglusOrderServiceTest {
     assertTrue(filteredProduct.getVersionNumber().equals(1L));
     response.getOrder().getOrderLineItems().forEach(lineItem -> assertTrue(lineItem.isSkipped()));
     assertEquals("requisitionNumber", response.getOrder().getRequisitionNumber());
-  }
-
-  @Test
-  public void shouldCreateOrderLineItem() {
-    // given
-    when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
-    when(fulfillmentOrderableReferenceDataService.findByIds(Lists.newArrayList(orderableId1)))
-        .thenReturn(Lists.newArrayList(createOrderableDto(orderableId1)));
-    when(siglusStockCardSummariesService
-        .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
-
-    // when
-    List<SiglusOrderLineItemDto> response =
-        siglusOrderService.createOrderLineItem(Lists.newArrayList(orderableId1));
-    SiglusOrderLineItemDto lineItemDto = response.get(0);
-
-    // then
-    assertEquals(1, response.size());
-    assertEquals(orderableId1, lineItemDto.getOrderLineItem().getOrderable().getId());
-    assertEquals(lotId, lineItemDto.getLots().get(0).getId());
   }
 
   @Test
