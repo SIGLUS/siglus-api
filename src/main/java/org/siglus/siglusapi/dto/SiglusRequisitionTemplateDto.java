@@ -15,20 +15,11 @@
 
 package org.siglus.siglusapi.dto;
 
-import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.springframework.beans.BeanUtils;
@@ -40,8 +31,6 @@ import org.springframework.beans.BeanUtils;
 public class SiglusRequisitionTemplateDto extends RequisitionTemplateDto {
 
   private RequisitionTemplateExtensionDto extension;
-
-  private Set<ObjectReferenceDto> associatePrograms;
 
   private List<UsageTemplateSectionDto> kitUsage;
 
@@ -59,25 +48,6 @@ public class SiglusRequisitionTemplateDto extends RequisitionTemplateDto {
     SiglusRequisitionTemplateDto dto = new SiglusRequisitionTemplateDto();
     BeanUtils.copyProperties(requisitionTemplateDto, dto);
     return dto;
-  }
-
-  @JsonIgnore
-  public Set<UUID> getAssociateProgramsIds() {
-    return Optional.ofNullable(associatePrograms)
-        .orElse(Collections.emptySet())
-        .stream()
-        .map(ObjectReferenceDto::getId)
-        .collect(Collectors.toSet());
-  }
-
-  @JsonIgnore
-  public void setAssociateProgramsIds(Set<UUID> associateProgramsIds) {
-    this.associatePrograms = Optional
-        .ofNullable(associateProgramsIds)
-        .orElse(Collections.emptySet())
-        .stream()
-        .map(elem -> new ObjectReferenceDto(elem, "", PROGRAMS))
-        .collect(Collectors.toSet());
   }
 
 }

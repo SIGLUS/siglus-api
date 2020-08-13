@@ -26,7 +26,6 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_PROGRAM_NOT_FOUND;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_REQUISITION_NOT_FOUND;
 import static org.openlmis.requisition.i18n.MessageKeys.IDEMPOTENCY_KEY_ALREADY_USED;
 import static org.openlmis.requisition.i18n.MessageKeys.IDEMPOTENCY_KEY_WRONG_FORMAT;
-import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -287,7 +286,7 @@ public abstract class BaseRequisitionController extends BaseController {
     List<ApprovedProductDto> approvedProductDtos = new ArrayList<>();
     if (templateExtension.getEnableProduct() || templateExtension.getEnableUsageInformation()) {
       ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(
-          facility.getId(), program.getId(), requisitionTemplate);
+          facility.getId(), program.getId());
       List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
           .map(Orderable::getId).collect(toList());
       approvedProductDtos =
@@ -358,14 +357,6 @@ public abstract class BaseRequisitionController extends BaseController {
     RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
         .findByRequisitionTemplateId(template.getId());
     templateDto.setExtension(RequisitionTemplateExtensionDto.from(templateExtension));
-    requisitionService.getAssociateProgram(template.getId());
-    Set<ObjectReferenceDto> associatePrograms = Optional
-        .ofNullable(requisitionService.getAssociateProgram(template.getId()))
-        .orElse(Collections.emptySet())
-        .stream()
-        .map(elem -> new ObjectReferenceDto(elem, baseUrl, PROGRAMS))
-        .collect(Collectors.toSet());
-    templateDto.setAssociatePrograms(associatePrograms);
     return templateDto;
   }
   // [SIGLUS change end]
@@ -413,8 +404,7 @@ public abstract class BaseRequisitionController extends BaseController {
     // can't find product in method of RequisitionLineItem
     UserDto userDto = authenticationHelper.getCurrentUser();
     ApproveProductsAggregator aggregator = requisitionService
-        .getApproveProduct(userDto.getHomeFacilityId(), requisitionToUpdate.getProgramId(),
-            requisitionToUpdate.getTemplate());
+        .getApproveProduct(userDto.getHomeFacilityId(), requisitionToUpdate.getProgramId());
 
     Map<VersionEntityReference, ApprovedProductReference> productReferences = aggregator
         .getApprovedProductReferences()

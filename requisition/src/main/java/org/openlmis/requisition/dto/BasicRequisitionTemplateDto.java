@@ -39,8 +39,6 @@ public class BasicRequisitionTemplateDto extends BaseRequisitionTemplateDto
   // [SIGLUS change start]
   // [change reason]: set requisition status.
   private RequisitionTemplateExtensionDto extension;
-
-  private Set<ObjectReferenceDto> associatePrograms;
   // [SIGLUS change end]
 
   /**

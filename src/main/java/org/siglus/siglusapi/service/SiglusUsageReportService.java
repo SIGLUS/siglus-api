@@ -34,7 +34,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.ValidatorFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
@@ -270,11 +269,6 @@ public class SiglusUsageReportService {
   private List<UUID> reportSupportedProgram(RequisitionV2Dto requisitionV2Dto) {
     List<UUID> reportSupportProgram = new ArrayList<>();
     reportSupportProgram.add(requisitionV2Dto.getProgramId());
-    reportSupportProgram.addAll(requisitionV2Dto.getTemplate()
-        .getAssociatePrograms()
-        .stream()
-        .map(ObjectReferenceDto::getId)
-        .collect(Collectors.toList()));
     return reportSupportProgram;
   }
 

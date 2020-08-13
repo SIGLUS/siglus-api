@@ -128,7 +128,6 @@ public class SiglusUsageReportServiceTest {
     extensionDto.setEnableKitUsage(false);
     requisitionTemplateDto = new BasicRequisitionTemplateDto();
     requisitionTemplateDto.setId(templateId);
-    requisitionTemplateDto.setAssociatePrograms(new HashSet<>());
     requisitionTemplateDto.setExtension(extensionDto);
     requisitionV2Dto.setTemplate(requisitionTemplateDto);
     requisitionV2Dto.setProgram(new ObjectReferenceDto(programId, ""));

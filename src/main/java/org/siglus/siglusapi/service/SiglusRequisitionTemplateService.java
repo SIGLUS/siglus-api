@@ -19,15 +19,12 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
-import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
-import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.domain.AvailableUsageColumn;
 import org.siglus.siglusapi.domain.AvailableUsageColumnSection;
@@ -54,9 +51,6 @@ public class SiglusRequisitionTemplateService {
   private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
 
   @Autowired
-  private RequisitionTemplateAssociateProgramRepository associateProgramExtensionRepository;
-
-  @Autowired
   AvailableUsageColumnSectionRepository availableUsageColumnSectionRepository;
 
   @Autowired
@@ -73,7 +67,6 @@ public class SiglusRequisitionTemplateService {
     RequisitionTemplateExtension extension = requisitionTemplateExtensionRepository
         .findByRequisitionTemplateId(id);
     templateDto.setExtension(RequisitionTemplateExtensionDto.from(extension));
-    templateDto.setAssociateProgramsIds(getAssociateProgram(id));
     log.info("find requisition template usage column Section: {}", id);
     List<UsageTemplateColumnSection> usageTemplateColumns = columnSectionRepository
         .findByRequisitionTemplateId(id);
@@ -86,7 +79,6 @@ public class SiglusRequisitionTemplateService {
       SiglusRequisitionTemplateDto requestDto) {
     SiglusRequisitionTemplateDto templateExtension = updateTemplateExtension(updatedDto,
         requestDto);
-    templateExtension = updateTemplateAsscociatedProgram(templateExtension, requestDto);
     List<UsageTemplateColumnSection> usageTemplateColumns = createUsageTemplateColumn(updatedDto);
     return setUsageTemplateDto(templateExtension, usageTemplateColumns);
   }
@@ -96,7 +88,6 @@ public class SiglusRequisitionTemplateService {
       SiglusRequisitionTemplateDto requestDto) {
     SiglusRequisitionTemplateDto templateExtension = updateTemplateExtension(updatedDto,
         requestDto);
-    templateExtension = updateTemplateAsscociatedProgram(templateExtension, requestDto);
     return updateUsageTemplateDto(templateExtension, requestDto);
   }
 
@@ -112,35 +103,6 @@ public class SiglusRequisitionTemplateService {
         updatedDto.getId(), extension);
     newDto.setExtension(RequisitionTemplateExtensionDto.from(templateExtension));
     return newDto;
-  }
-
-  private SiglusRequisitionTemplateDto updateTemplateAsscociatedProgram(
-      RequisitionTemplateDto updatedDto, SiglusRequisitionTemplateDto requestDto) {
-    SiglusRequisitionTemplateDto newDto = SiglusRequisitionTemplateDto.from(updatedDto);
-    Set<UUID> uuids = requestDto.getAssociateProgramsIds();
-    log.info("save requisition template asscociated programs: {}", uuids);
-    List<RequisitionTemplateAssociateProgram> associatePrograms =
-        associateProgramExtensionRepository.findByRequisitionTemplateId(updatedDto.getId());
-    Set<UUID> associateProgramIds = associatePrograms.stream()
-        .map(RequisitionTemplateAssociateProgram::getAssociatedProgramId)
-        .collect(Collectors.toSet());
-    if (!associateProgramIds.equals(uuids)) {
-      log.info("delete old requisition template asscociated programss: {}", associatePrograms);
-      associateProgramExtensionRepository.delete(associatePrograms);
-      log.info("create new requisition template asscociated programss: {}", uuids);
-      associateProgramExtensionRepository.save(
-          RequisitionTemplateAssociateProgram.from(updatedDto.getId(), uuids));
-    }
-    newDto.setAssociateProgramsIds(uuids);
-    return newDto;
-  }
-
-  private Set<UUID> getAssociateProgram(UUID templateId) {
-    List<RequisitionTemplateAssociateProgram> associatePrograms =
-        associateProgramExtensionRepository.findByRequisitionTemplateId(templateId);
-    return associatePrograms.stream()
-        .map(RequisitionTemplateAssociateProgram::getAssociatedProgramId)
-        .collect(Collectors.toSet());
   }
 
   private RequisitionTemplateDto getTemplateByOpenLmis(UUID id) {

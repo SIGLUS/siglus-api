@@ -361,13 +361,13 @@ public class SiglusOrderService {
     UUID userHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     // 10+ seconds cost when call following requisitionService.getApproveProduct
     ApproveProductsAggregator approverProductAggregator = requisitionService.getApproveProduct(
-        approverFacilityId, requisition.getProgramId(), requisition.getTemplate());
+        approverFacilityId, requisition.getProgramId());
     ApproveProductsAggregator userProductAggregator;
     if (approverFacilityId.equals(userHomeFacilityId)) {
       userProductAggregator = approverProductAggregator;
     } else {
       userProductAggregator = requisitionService.getApproveProduct(userHomeFacilityId,
-          requisition.getProgramId(), requisition.getTemplate());
+          requisition.getProgramId());
     }
     Set<UUID> approverOrderableIds = getOrderableIds(approverProductAggregator);
     Set<UUID> userOrderableIds;

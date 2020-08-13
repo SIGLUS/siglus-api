@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
@@ -40,7 +39,6 @@ import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.siglusapi.domain.Regimen;
@@ -80,9 +78,6 @@ public class RegimenDataProcessorTest {
   private RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
 
   @Mock
-  private RequisitionService requisitionService;
-
-  @Mock
   private RequisitionRepository requisitionRepository;
 
   @Captor
@@ -107,8 +102,6 @@ public class RegimenDataProcessorTest {
   private UUID regimenId2 = UUID.randomUUID();
 
   private UUID lineId = UUID.randomUUID();
-
-  private UUID programId = UUID.randomUUID();
 
   private UUID templateId = UUID.randomUUID();
 
@@ -182,7 +175,6 @@ public class RegimenDataProcessorTest {
         .thenReturn(newArrayList(mockCustomRegimen()));
     when(regimenRepository.findAllByProgramIdInAndActiveTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen(), mockNoCustomRegimen()));
-    when(requisitionService.getAssociateProgram(any())).thenReturn(newHashSet(programId));
     when(requisitionRepository.findOne(requisitionId)).thenReturn(mockRequisition());
 
     // when
@@ -239,7 +231,6 @@ public class RegimenDataProcessorTest {
         .thenReturn(newArrayList(mockCustomRegimen(),mockNoCustomRegimen()));
     when(regimenDispatchLineRepository.findAll())
         .thenReturn(newArrayList(mockDispatchLine()));
-    when(requisitionService.getAssociateProgram(any())).thenReturn(newHashSet(programId));
     when(requisitionRepository.findOne(requisitionId)).thenReturn(mockRequisition());
 
     // when

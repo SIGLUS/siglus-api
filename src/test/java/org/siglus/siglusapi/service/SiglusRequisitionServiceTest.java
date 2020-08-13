@@ -410,7 +410,7 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(requisitionController.findProgram(programId, profiler)).thenReturn(programDto);
     when(requisitionController.findFacility(facilityId, profiler)).thenReturn(facilityDto);
-    when(requisitionService.getApproveProduct(any(), any(), any()))
+    when(requisitionService.getApproveProduct(any(), any()))
         .thenReturn(createApproveProductsAggregator());
     when(supervisoryNodeService.findOne(supervisoryNodeId)).thenReturn(createSupervisoryNodeDto());
     when(draftRepository.findByRequisitionId(any(UUID.class))).thenReturn(null);
@@ -568,7 +568,7 @@ public class SiglusRequisitionServiceTest {
     when(proofOfDeliveryService.get(any())).thenReturn(new ProofOfDeliveryDto());
     when(idealStockAmountReferenceDataService.search(facilityId, processingPeriodId))
         .thenReturn(createIdealStockAmountDtoList());
-    when(requisitionService.getApproveProduct(any(), any(), any()))
+    when(requisitionService.getApproveProduct(any(), any()))
         .thenReturn(createApproveProductsAggregator(orderableId2));
     when(requisitionService.validateCanApproveRequisition(any(), any()))
         .thenReturn(new ValidationResult());

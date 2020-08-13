@@ -51,7 +51,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.requisition.domain.RequisitionTemplate;
@@ -104,15 +103,12 @@ import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.requisition.web.RequisitionForConvertBuilder;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
-import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.repository.OrderableKitRepository;
-import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
-import org.siglus.common.util.SupportedProgramsHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
@@ -194,9 +190,6 @@ public class RequisitionService {
   @Autowired
   private ApprovedProductReferenceDataService approvedProductReferenceDataService;
 
-  @Autowired
-  private RequisitionTemplateAssociateProgramRepository associateProgramRepository;
-
   // [SIGLUS change end]
 
   // [SIGLUS change start]
@@ -212,12 +205,6 @@ public class RequisitionService {
 
   @Autowired
   private StockCardLineItemRepository stockCardLineItemRepository;
-  // [SIGLUS change end]
-
-  // [SIGLUS change start]
-  // [change reason]: refactor it into common
-  @Autowired
-  private SupportedProgramsHelper supportedVirtualProgramsHelper;
   // [SIGLUS change end]
 
   /**
@@ -281,57 +268,30 @@ public class RequisitionService {
 
     // [SIGLUS change start]
     // [change reason]: period.getEndDate() -> requisition.getActualEndDate().
-    // [change reason]: add template associate program support
-    Set<UUID> allProgramIds = new HashSet<>();
-    allProgramIds.add(program.getId());
-    allProgramIds.addAll(getAssociateProgram(requisitionTemplate.getId()));
+
     profiler.start("FIND_STOCK_ON_HANDS");
-    // Map<UUID, Integer> orderableSoh = stockOnHandRetrieverBuilderFactory
-    //     .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
-    //     .forProgram(program.getId())
-    //     .forFacility(facility.getId())
-    //     .forProducts(approvedProducts)
-    //     .asOfDate(requisition.getActualEndDate())
-    //     .build()
-    //     .get();
-    Map<UUID, Integer> orderableSoh = allProgramIds.stream()
-        .map(programId -> stockOnHandRetrieverBuilderFactory
-            .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
-            .forProgram(programId)
-            .forFacility(facility.getId())
-            .forProducts(approvedProducts)
-            .asOfDate(requisition.getActualEndDate())
-            .build()
-            .get())
-        .map(Map::entrySet)
-        .flatMap(Collection::stream)
-        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
+    Map<UUID, Integer> orderableSoh = stockOnHandRetrieverBuilderFactory
+         .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
+         .forProgram(program.getId())
+         .forFacility(facility.getId())
+         .forProducts(approvedProducts)
+         .asOfDate(requisition.getActualEndDate())
+         .build()
+         .get();
     // [SIGLUS change end]
 
     profiler.start("FIND_BEGINNING_BALANCES");
     // [SIGLUS change start]
     // [change reason]: period.getStartDate() -> requisition.getActualStartDate().
-    // [change reason]: add template associate program support
-    // Map<UUID, Integer> orderableBeginning = stockOnHandRetrieverBuilderFactory
-    //     .getInstance(requisitionTemplate, RequisitionLineItem.BEGINNING_BALANCE)
-    //     .forProgram(program.getId())
-    //     .forFacility(facility.getId())
-    //     .forProducts(approvedProducts)
-    //     .asOfDate(requisition.getActualStartDate().minusDays(1))
-    //     .build()
-    //     .get();
-    HashMap<UUID, Integer> orderableBeginning = allProgramIds.stream()
-        .map(programId -> stockOnHandRetrieverBuilderFactory
-            .getInstance(requisitionTemplate, RequisitionLineItem.BEGINNING_BALANCE)
-            .forProgram(programId)
-            .forFacility(facility.getId())
-            .forProducts(approvedProducts)
-            .asOfDate(requisition.getActualStartDate().minusDays(1))
-            .build()
-            .get())
-        .map(Map::entrySet)
-        .flatMap(Collection::stream)
-        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
+
+    Map<UUID, Integer> orderableBeginning = stockOnHandRetrieverBuilderFactory
+         .getInstance(requisitionTemplate, RequisitionLineItem.BEGINNING_BALANCE)
+         .forProgram(program.getId())
+         .forFacility(facility.getId())
+         .forProducts(approvedProducts)
+         .asOfDate(requisition.getActualStartDate().minusDays(1))
+         .build()
+         .get();
     // [SIGLUS change end]
 
     // [SIGLUS change start]
@@ -363,20 +323,12 @@ public class RequisitionService {
       // [SIGLUS change start]
       // [change reason]: 1. period.getStartDate() -> requisition.getActualStartDate().
       //                  2. period.getEndDate() -> requisition.getActualEndDate().
-      // [change reason]: add template associate program support
-      // stockCardRangeSummaryDtos =
-      //     stockCardRangeSummaryStockManagementService
-      //         .search(program.getId(), facility.getId(),
-      //             approvedProducts.getOrderableIdentities(), null,
-      //             requisition.getActualStartDate(), requisition.getActualEndDate());
-      stockCardRangeSummaryDtos = allProgramIds.stream()
-          .map(programId ->
-              stockCardRangeSummaryStockManagementService
-                  .search(programId, facility.getId(),
-                      approvedProducts.getOrderableIdentities(), null,
-                      requisition.getActualStartDate(), requisition.getActualEndDate()))
-          .flatMap(Collection::stream)
-          .collect(toList());
+
+      stockCardRangeSummaryDtos =
+           stockCardRangeSummaryStockManagementService
+               .search(program.getId(), facility.getId(),
+                   approvedProducts.getOrderableIdentities(), null,
+                   requisition.getActualStartDate(), requisition.getActualEndDate());
       // [SIGLUS change end]
 
       profiler.start("GET_PREVIOUS_PERIODS");
@@ -1036,33 +988,9 @@ public class RequisitionService {
   // [SIGLUS change start]
   // [change reason]: provide associated approved product
   public ApproveProductsAggregator getApproveProduct(UUID facilityId,
-      UUID programId, RequisitionTemplate template) {
-    ApproveProductsAggregator approveProductsAggregator = approvedProductReferenceDataService
+      UUID programId) {
+    return approvedProductReferenceDataService
         .getApprovedProducts(facilityId, programId);
-    Set<UUID> associateProgramIds = getAssociateProgram(template.getId());
-    if (associateProgramIds.isEmpty()) {
-      return approveProductsAggregator;
-    }
-
-    List<ApprovedProductDto> approvedProducts = approveProductsAggregator.getFullSupplyProducts();
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
-        .findUserSupportedPrograms();
-    associateProgramIds.forEach(associateProgram -> {
-      if (supportedVirtualPrograms.contains(associateProgram)) {
-        ApproveProductsAggregator productsAggregator = approvedProductReferenceDataService
-            .getApprovedProducts(facilityId, associateProgram);
-        approvedProducts.addAll(productsAggregator.getFullSupplyProducts());
-      }
-    });
-    return new ApproveProductsAggregator(approvedProducts, programId);
-  }
-
-  public Set<UUID> getAssociateProgram(UUID templateId) {
-    List<RequisitionTemplateAssociateProgram> associatePrograms =
-        associateProgramRepository.findByRequisitionTemplateId(templateId);
-    return associatePrograms.stream()
-        .map(RequisitionTemplateAssociateProgram::getAssociatedProgramId)
-        .collect(Collectors.toSet());
   }
   // [SIGLUS change end]
 

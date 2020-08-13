@@ -834,7 +834,7 @@ public class SiglusRequisitionService {
 
     // including the approved product of associate program, and the user facility
     ApproveProductsAggregator approvedProducts = requisitionService.getApproveProduct(
-        userFacility.getId(), program.getId(), requisitionTemplate);
+        userFacility.getId(), program.getId());
 
     List<RequisitionLineItem> lineItemList = new ArrayList<>();
     for (ApprovedProductDto approvedProductDto : approvedProducts.getAllProducts().values()) {
@@ -1100,8 +1100,7 @@ public class SiglusRequisitionService {
       Set<UUID> approverMainProgramAndAssociateProgramApprovedProducts
           = Optional
           .ofNullable(requisitionService
-              .getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId(),
-                  requisition.getTemplate())
+              .getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId())
               .getApprovedProductReferences())
           .orElse(Collections.emptySet())
           .stream()

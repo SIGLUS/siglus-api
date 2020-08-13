@@ -18,18 +18,14 @@ package org.siglus.siglusapi.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import org.javers.common.collections.Sets;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,10 +33,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.RequisitionTemplateDto;
-import org.siglus.common.domain.RequisitionTemplateAssociateProgram;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
-import org.siglus.common.repository.RequisitionTemplateAssociateProgramRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.domain.AvailableUsageColumn;
 import org.siglus.siglusapi.domain.AvailableUsageColumnSection;
@@ -69,15 +63,6 @@ public class SiglusRequisitionTemplateServiceTest {
   private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
 
   @Mock
-  private RequisitionTemplateAssociateProgramRepository associateProgramExtensionRepository;
-
-  @Mock
-  private RequisitionTemplateAssociateProgram associateProgram1;
-
-  @Mock
-  private RequisitionTemplateAssociateProgram associateProgram2;
-
-  @Mock
   private UsageTemplateColumnSectionRepository columnSectionRepository;
 
   @Mock
@@ -93,16 +78,10 @@ public class SiglusRequisitionTemplateServiceTest {
 
   private UUID tempalteExtensionId;
 
-  private UUID programId1 = UUID.randomUUID();
-
-  private UUID programId2 = UUID.randomUUID();
-
   @Before
   public void prepare() {
     tempalteId = UUID.randomUUID();
     tempalteExtensionId = UUID.randomUUID();
-    programId1 = UUID.randomUUID();
-    programId2 = UUID.randomUUID();
 
     when(availableUsageColumnRepository.findAll()).thenReturn(getAvailableUsageColumns());
     when(availableUsageColumnSectionRepository.findAll()).thenReturn(getMockAvailableSection());
@@ -132,24 +111,16 @@ public class SiglusRequisitionTemplateServiceTest {
     RequisitionTemplateDto requisitionTemplateDto = new RequisitionTemplateDto();
     requisitionTemplateDto.setId(tempalteId);
     SiglusRequisitionTemplateDto siglusRequisitionTemplateDto = new SiglusRequisitionTemplateDto();
-    Set<UUID> associateProgramIds = Sets.asSet(associateProgram1.getId(),
-        associateProgram2.getId());
     siglusRequisitionTemplateDto.setId(tempalteId);
-    siglusRequisitionTemplateDto.setAssociateProgramsIds(associateProgramIds);
     RequisitionTemplateExtension extension = prepareExtension();
-    List<RequisitionTemplateAssociateProgram> associatePrograms = Arrays.asList(associateProgram1,
-        associateProgram2);
     when(requisitionTemplateRequisitionService.findTemplate(tempalteId)).thenReturn(
         requisitionTemplateDto);
     when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(tempalteId)).thenReturn(
         extension);
-    when(associateProgramExtensionRepository.findByRequisitionTemplateId(tempalteId)).thenReturn(
-        associatePrograms);
 
     SiglusRequisitionTemplateDto result = siglusRequisitionTemplateService.getTemplate(tempalteId);
 
     assertEquals(prepareExtensionDto(), result.getExtension());
-    assertEquals(associateProgramIds, result.getAssociateProgramsIds());
   }
 
   @Test
@@ -159,13 +130,11 @@ public class SiglusRequisitionTemplateServiceTest {
     SiglusRequisitionTemplateDto requestDto = new SiglusRequisitionTemplateDto();
     requestDto.setId(tempalteId);
     requestDto.setExtension(null);
-    requestDto.setAssociateProgramsIds(Collections.emptySet());
 
     SiglusRequisitionTemplateDto result = siglusRequisitionTemplateService
         .updateTemplate(updatedDto, requestDto);
 
     assertNull(result.getExtension());
-    assertEquals(Collections.emptySet(), result.getAssociateProgramsIds());
   }
 
   @Test
@@ -323,47 +292,6 @@ public class SiglusRequisitionTemplateServiceTest {
         .getColumns().get(0).getName());
   }
 
-  @Test
-  public void shouldNotDeleteAndCreateAssociateProgramsIfNotChangedWhenUpdateTemplate() {
-    RequisitionTemplateDto updatedDto = new RequisitionTemplateDto();
-    updatedDto.setId(tempalteId);
-    SiglusRequisitionTemplateDto requestDto = new SiglusRequisitionTemplateDto();
-    Set<UUID> uuids = prepareAssociatedProgramIds();
-    requestDto.setId(tempalteId);
-    requestDto.setAssociateProgramsIds(uuids);
-    List<RequisitionTemplateAssociateProgram> associatePrograms = prepareAssociatePrograms();
-    when(associateProgramExtensionRepository.findByRequisitionTemplateId(tempalteId)).thenReturn(
-        associatePrograms);
-
-    SiglusRequisitionTemplateDto result = siglusRequisitionTemplateService
-        .updateTemplate(updatedDto, requestDto);
-
-    verify(associateProgramExtensionRepository, never()).delete(associatePrograms);
-    verify(associateProgramExtensionRepository, never()).save(
-        anyListOf(RequisitionTemplateAssociateProgram.class));
-    assertEquals(uuids, result.getAssociateProgramsIds());
-  }
-
-  @Test
-  public void shouldDeleteAndCreateAssociateProgramsIfChangedWhenUpdateTemplate() {
-    RequisitionTemplateDto updatedDto = new RequisitionTemplateDto();
-    updatedDto.setId(tempalteId);
-    SiglusRequisitionTemplateDto requestDto = new SiglusRequisitionTemplateDto();
-    Set<UUID> uuids = prepareUpdatedAssociatedProgramIds();
-    requestDto.setId(tempalteId);
-    requestDto.setAssociateProgramsIds(uuids);
-    List<RequisitionTemplateAssociateProgram> associatePrograms = prepareAssociatePrograms();
-    when(associateProgramExtensionRepository.findByRequisitionTemplateId(tempalteId)).thenReturn(
-        associatePrograms);
-
-    SiglusRequisitionTemplateDto result = siglusRequisitionTemplateService
-        .updateTemplate(updatedDto, requestDto);
-
-    verify(associateProgramExtensionRepository).delete(associatePrograms);
-    verify(associateProgramExtensionRepository).save(
-        anyListOf(RequisitionTemplateAssociateProgram.class));
-    assertEquals(uuids, result.getAssociateProgramsIds());
-  }
 
   private UsageTemplateSectionDto getMockKitTemplateSectionDto() {
     UsageTemplateSectionDto templateSectionDto = new UsageTemplateSectionDto();
@@ -458,22 +386,6 @@ public class SiglusRequisitionTemplateServiceTest {
             .build();
     requisitionTemplateExtensionDto.setId(tempalteExtensionId);
     return requisitionTemplateExtensionDto;
-  }
-
-  private List<RequisitionTemplateAssociateProgram> prepareAssociatePrograms() {
-    RequisitionTemplateAssociateProgram associateProgram1 = new RequisitionTemplateAssociateProgram(
-        tempalteId, programId1);
-    RequisitionTemplateAssociateProgram associateProgram2 = new RequisitionTemplateAssociateProgram(
-        tempalteId, programId2);
-    return Arrays.asList(associateProgram1, associateProgram2);
-  }
-
-  private Set<UUID> prepareAssociatedProgramIds() {
-    return Sets.asSet(programId1, programId2);
-  }
-
-  private Set<UUID> prepareUpdatedAssociatedProgramIds() {
-    return Sets.asSet(programId1, UUID.randomUUID());
   }
 
 }

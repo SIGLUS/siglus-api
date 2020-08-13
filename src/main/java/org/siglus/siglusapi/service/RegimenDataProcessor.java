@@ -15,14 +15,14 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Sets.newHashSet;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.openlmis.requisition.repository.RequisitionRepository;
-import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
@@ -65,12 +65,6 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
 
   @Autowired
   private RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
-
-  @Autowired
-  private RequisitionService requisitionService;
-
-  @Autowired
-  private RequisitionRepository requisitionRepository;
 
   @Override
   public void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
@@ -269,10 +263,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   }
 
   private Set<UUID> getProgramIds(SiglusRequisitionDto siglusRequisitionDto) {
-    Set<UUID> ids = requisitionService.getAssociateProgram(
-        requisitionRepository.findOne(siglusRequisitionDto.getId()).getTemplate().getId());
-    ids.add(siglusRequisitionDto.getProgramId());
-    return ids;
+    return newHashSet(siglusRequisitionDto.getProgramId());
   }
 
 }
