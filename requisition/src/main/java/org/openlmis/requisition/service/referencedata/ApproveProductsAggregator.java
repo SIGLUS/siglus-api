@@ -64,11 +64,7 @@ public final class ApproveProductsAggregator {
           approvedProduct.getVersionNumber(), orderable.getId(), orderable.getVersionNumber()));
       allOrderableIdentities.add(orderable.getIdentity());
 
-      // [SIGLUS change start]:
-      // [change reason]: TW for additional program all fullsupply && display order.
-      // ProgramOrderableDto po = orderable.getProgramOrderable(programId);
-      ProgramOrderableDto po = (ProgramOrderableDto) orderable.getPrograms().toArray()[0];
-      // [SIGLUS change end]
+      ProgramOrderableDto po = orderable.getProgramOrderable(programId);
       if (Objects.equals(true, po.getFullSupply())) {
         fullSupplyProducts.add(approvedProduct);
         fullSupplyOrderableIds.add(orderable.getId());

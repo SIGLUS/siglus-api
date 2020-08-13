@@ -17,7 +17,6 @@ package org.openlmis.requisition.dto;
 
 import static org.apache.commons.collections.MapUtils.getString;
 import static org.apache.commons.lang.StringUtils.defaultIfBlank;
-import static org.openlmis.requisition.i18n.MessageKeys.CAN_NOT_FIND_PROGRAM_DETAILS_FROM_ORDERABLE;
 
 import java.util.Collections;
 import java.util.Map;
@@ -30,6 +29,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.exception.ValidationMessageException;
 
 @Getter
@@ -53,9 +53,13 @@ public final class OrderableDto extends BasicOrderableDto {
    * @throws ValidationMessageException if program orderable can't be found.
    */
   public ProgramOrderableDto getProgramOrderable(UUID programId) {
-    return findProgramOrderable(programId)
-        .orElseThrow(() ->
-            new ValidationMessageException(CAN_NOT_FIND_PROGRAM_DETAILS_FROM_ORDERABLE));
+    // [SIGLUS change start]
+    // [change reason]: support for additional product
+    // return findProgramOrderable(programId)
+    //    .orElseThrow(() ->
+    //        new ValidationMessageException(CAN_NOT_FIND_PROGRAM_DETAILS_FROM_ORDERABLE));
+    // [SIGLUS change end]
+    return CollectionUtils.isEmpty(programs) ? null : (ProgramOrderableDto) programs.toArray()[0];
   }
 
   /**
