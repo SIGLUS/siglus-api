@@ -15,10 +15,9 @@
 
 package org.siglus.siglusapi.service;
 
-import static com.google.common.collect.Sets.newHashSet;
-
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -71,8 +70,8 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
       List<UsageTemplateColumnSection> templateColumnSections) {
 
     List<RegimenDto> defaultRegimenDtos =
-        regimenRepository.findAllByProgramIdInAndActiveTrueAndIsCustomIsFalse(
-        getProgramIds(siglusRequisitionDto))
+        regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsFalse(
+            siglusRequisitionDto.getProgramId())
         .stream()
         .map(RegimenDto::from)
         .collect(Collectors.toList());
@@ -167,7 +166,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     Set<UUID> ids = regimenLineItemsFromRequest
         .stream()
         .map(RegimenLineItem::getId)
-        .filter(id -> id != null)
+        .filter(Objects::nonNull)
         .collect(Collectors.toSet());
 
     return regimenLineItemsFromDb
@@ -179,7 +178,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   private Set<RegimenDispatchLineDto> getValidRegimenDispatchLines(
       SiglusRequisitionDto requisitionDto) {
     return regimenRepository
-        .findAllByProgramIdInAndActiveTrue(getProgramIds(requisitionDto))
+        .findAllByProgramIdAndActiveTrue(requisitionDto.getProgramId())
         .stream()
         .map(Regimen::getRegimenDispatchLine)
         .map(RegimenDispatchLineDto::from)
@@ -254,16 +253,12 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
 
   public void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto) {
     List<RegimenDto> customRegimenDtos = regimenRepository
-        .findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(
-            getProgramIds(siglusRequisitionDto))
+        .findAllByProgramIdAndActiveTrueAndIsCustomIsTrue(
+            siglusRequisitionDto.getProgramId())
         .stream()
         .map(RegimenDto::from)
         .collect(Collectors.toList());
     siglusRequisitionDto.setCustomRegimens(customRegimenDtos);
-  }
-
-  private Set<UUID> getProgramIds(SiglusRequisitionDto siglusRequisitionDto) {
-    return newHashSet(siglusRequisitionDto.getProgramId());
   }
 
 }

@@ -169,11 +169,11 @@ public class RegimenDataProcessorTest {
         .thenReturn(newArrayList(mockCustomRegimen(),mockNoCustomRegimen()));
     when(regimenDispatchLineRepository.findAll())
         .thenReturn(newArrayList(mockDispatchLine()));
-    when(regimenRepository.findAllByProgramIdInAndActiveTrueAndIsCustomIsFalse(any()))
+    when(regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsFalse(any()))
         .thenReturn(newArrayList(mockNoCustomRegimen()));
-    when(regimenRepository.findAllByProgramIdInAndActiveTrueAndIsCustomIsTrue(any()))
+    when(regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen()));
-    when(regimenRepository.findAllByProgramIdInAndActiveTrue(any()))
+    when(regimenRepository.findAllByProgramIdAndActiveTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen(), mockNoCustomRegimen()));
     when(requisitionRepository.findOne(requisitionId)).thenReturn(mockRequisition());
 
