@@ -133,7 +133,7 @@ public class SiglusOrderCloseSchedulerService {
       periodDtoHashMap) {
     List<UUID> periodIds = periodDtoHashMap.values()
         .stream()
-        .map(periodDto -> periodDto.getId())
+        .map(ProcessingPeriodDto::getId)
         .collect(Collectors.toList());
     List<ProcessingPeriodExtension> extensions = periodExtensionRepository
         .findByProcessingPeriodIdIn(periodIds);
