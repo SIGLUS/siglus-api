@@ -118,7 +118,7 @@ public class RequisitionSimamEmailService {
       new String[][]{
           {ARV_PROGRAM_CODE, "TARV"},
           {MULIPLE_PROGRAM_CODE, "Via Clássica"},
-          {AL_PROGRAM_CODE, "AL"},
+          {AL_PROGRAM_CODE, "Malaria"},
           {RAPID_TEST_PROGRAM_CODE, "Testes Rápidos Diag."}});
 
 
