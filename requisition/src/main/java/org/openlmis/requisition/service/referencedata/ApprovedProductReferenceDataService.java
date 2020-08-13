@@ -15,16 +15,25 @@
 
 package org.openlmis.requisition.service.referencedata;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.service.RequestParameters;
+import org.siglus.common.repository.ProgramOrderableRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ApprovedProductReferenceDataService extends
     BaseReferenceDataService<ApprovedProductDto> {
+
+  // [SIGLUS change start]
+  // [change reason]: support for additional product
+  @Autowired
+  private ProgramOrderableRepository programOrderableRepository;
+  // [SIGLUS change end]
 
   @Override
   protected String getUrl() {
@@ -55,10 +64,20 @@ public class ApprovedProductReferenceDataService extends
     params.set("programId", programId);
     params.set("size", Integer.MAX_VALUE);
 
-    Page<ApprovedProductDto> page = getPage(facilityId + "/approvedProducts", params);
-    List<ApprovedProductDto> content = page.getContent();
+    // [SIGLUS change start]
+    // [change reason]: support for additional product
+    if (!programOrderableRepository.findByProgramId(programId).isEmpty()) {
+      // [SIGLUS change end]
 
-    return new ApproveProductsAggregator(content, programId);
+      Page<ApprovedProductDto> page = getPage(facilityId + "/approvedProducts", params);
+      List<ApprovedProductDto> content = page.getContent();
+      return new ApproveProductsAggregator(content, programId);
+
+      // [SIGLUS change start]
+      // [change reason]: support for additional product
+    }
+    return new ApproveProductsAggregator(Collections.EMPTY_LIST, programId);
+    // [SIGLUS change end]
   }
 
 }

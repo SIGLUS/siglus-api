@@ -144,6 +144,7 @@ public class SiglusStockEventsService {
       stockEventDto.setUserId(eventDto.getUserId());
       stockEventDto.setType(eventDto.getType());
       stockEventDto.setLineItems(eventDto.getLineItems().stream()
+          .filter(lineItem -> lineItem.getProgramId() != null)
           .filter(lineItem -> lineItem.getProgramId().equals(stockEventDto.getProgramId()))
           .collect(Collectors.toList()));
       if (eventDto.hasReason(unpackReasonId) || eventDto.isPhysicalInventory()) {

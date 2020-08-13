@@ -65,7 +65,7 @@ public final class ApproveProductsAggregator {
       allOrderableIdentities.add(orderable.getIdentity());
 
       // [SIGLUS change start]:
-      // [change reason]: TW for virtual program all fullsupply && display order.
+      // [change reason]: TW for additional program all fullsupply && display order.
       // ProgramOrderableDto po = orderable.getProgramOrderable(programId);
       ProgramOrderableDto po = (ProgramOrderableDto) orderable.getPrograms().toArray()[0];
       // [SIGLUS change end]

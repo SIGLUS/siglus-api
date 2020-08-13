@@ -20,13 +20,12 @@ import static org.openlmis.stockmanagement.service.StockmanagementPermissionServ
 import static org.siglus.common.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
+import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -35,19 +34,16 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
-import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableFulfillDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
-import org.openlmis.stockmanagement.service.StockCardSummaries;
-import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
 import org.openlmis.stockmanagement.util.Message;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.util.FormatHelper;
 import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.service.client.SiglusStockCardStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
@@ -59,13 +55,12 @@ public class SiglusStockCardSummariesService {
   private static final String PROGRAM_ID = "programId";
   private static final String EXCLUDE_ARCHIVED = "excludeArchived";
   private static final String ARCHIVED_ONLY = "archivedOnly";
-  private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Autowired
-  private StockCardSummariesService stockCardSummariesService;
+  SiglusStockCardStockManagementService siglusStockManagementService;
 
   @Autowired
   private PermissionService permissionService;
@@ -73,11 +68,8 @@ public class SiglusStockCardSummariesService {
   @Autowired
   private SiglusArchiveProductService archiveProductService;
 
-  @Autowired
-  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
-
-  public StockCardSummaries findSiglusStockCard(
-      MultiValueMap<String, String> parameters) {
+  public List<StockCardSummaryV2Dto> findSiglusStockCard(
+      MultiValueMap<String, String> parameters, Pageable pageable) {
     Set<String> archivedProducts = null;
     if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)) || Boolean
         .parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
@@ -91,37 +83,30 @@ public class SiglusStockCardSummariesService {
     UUID userId = authenticationHelper.getCurrentUser().getId();
     Set<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME),
         parameters.getFirst(FACILITY_ID));
-    StockCardSummaries siglusSummaries = new StockCardSummaries();
-    siglusSummaries.setStockCardsForFulfillOrderables(new ArrayList<>());
-    siglusSummaries.setOrderableFulfillMap(new HashMap<>());
+    List<StockCardSummaryV2Dto> summaryV2Dtos = new ArrayList<>();
     for (UUID programId : programIds) {
       v2SearchParams.setProgramId(programId);
-      // call modify stockCardSummariesService for orderable support virtual program
-      StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
-      siglusSummaries.setAsOfDate(summaries.getAsOfDate());
-      List<StockCard> stockCardsForFulfillOrderables = summaries
-          .getStockCardsForFulfillOrderables();
-      Map<UUID, OrderableFulfillDto> orderableFulfillMap = summaries.getOrderableFulfillMap();
-      filterByOrderableIds(orderableIds, stockCardsForFulfillOrderables, orderableFulfillMap);
+      if (!CollectionUtils.isEmpty(orderableIds) || filterForArchive(parameters, archivedProducts)
+          || programIds.size() > 1) {
+        pageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
+      }
+      List<StockCardSummaryV2Dto> summaries =
+          siglusStockManagementService.search(v2SearchParams, pageable);
+
+      filterByOrderableIds(orderableIds, summaries);
       if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED))) {
-        siglusSummaries.getStockCardsForFulfillOrderables()
-            .addAll(stockCardsForFulfillOrderables
-                .stream()
+        summaryV2Dtos.addAll(summaries.stream()
                 .filter(isNotArchived(archivedProducts))
                 .collect(Collectors.toList()));
       } else if (Boolean.parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
-        siglusSummaries.getStockCardsForFulfillOrderables()
-            .addAll(stockCardsForFulfillOrderables
-                .stream()
+        summaryV2Dtos.addAll(summaries.stream()
                 .filter(isArchived(archivedProducts))
                 .collect(Collectors.toList()));
       } else {
-        siglusSummaries.getStockCardsForFulfillOrderables()
-            .addAll(stockCardsForFulfillOrderables);
+        summaryV2Dtos.addAll(summaries);
       }
-      siglusSummaries.getOrderableFulfillMap().putAll(orderableFulfillMap);
     }
-    return siglusSummaries;
+    return summaryV2Dtos;
   }
 
   public Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName,
@@ -149,29 +134,29 @@ public class SiglusStockCardSummariesService {
     return programIds;
   }
 
+  private boolean filterForArchive(MultiValueMap<String, String> parameters,
+      Set<String> archiveProducts) {
+    return !CollectionUtils.isEmpty(archiveProducts)
+        && (Boolean.parseBoolean(parameters.getFirst(ARCHIVED_ONLY))
+        || Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)));
+  }
+
   private void filterByOrderableIds(List<UUID> orderableIds,
-      List<StockCard> stockCardsForFulfillOrderables,
-      Map<UUID, OrderableFulfillDto> orderableFulfillMap) {
+      List<StockCardSummaryV2Dto> summaryV2Dtos) {
     if (CollectionUtils.isEmpty(orderableIds)) {
       return;
     }
-    stockCardsForFulfillOrderables
-        .removeIf(stockCard -> !orderableIds.contains(stockCard.getOrderableId()));
-    orderableFulfillMap.entrySet().removeIf(entry -> !orderableIds.contains(entry.getKey()));
+    summaryV2Dtos.removeIf(summaryV2Dto ->
+        !orderableIds.contains(summaryV2Dto.getOrderable().getId()));
   }
 
   public Page<StockCardSummaryV2Dto> searchStockCardSummaryV2Dtos(
       MultiValueMap<String, String> parameters, Pageable pageable) {
     try {
       // reason: support all program && archive
-      StockCardSummaries summaries = findSiglusStockCard(parameters);
+      List<StockCardSummaryV2Dto> summaries = findSiglusStockCard(parameters, pageable);
 
-      List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
-          summaries.getStockCardsForFulfillOrderables(),
-          summaries.getOrderableFulfillMap(),
-          Boolean.parseBoolean(parameters.getFirst(NON_EMPTY_ONLY)));
-
-      return Pagination.getPage(dtos, pageable);
+      return Pagination.getPage(summaries, pageable);
     } catch (PermissionMessageException e) {
       if (parameters.getFirst(RIGHT_NAME).equals(STOCK_INVENTORIES_EDIT)) {
         throw new PermissionMessageException(
@@ -182,12 +167,12 @@ public class SiglusStockCardSummariesService {
     }
   }
 
-  private Predicate<StockCard> isArchived(Set<String> archivedProducts) {
-    return stockCard -> archivedProducts.contains(stockCard.getOrderableId().toString());
+  private Predicate<StockCardSummaryV2Dto> isArchived(Set<String> archivedProducts) {
+    return stockCard -> archivedProducts.contains(stockCard.getOrderable().getId().toString());
   }
 
-  private Predicate<StockCard> isNotArchived(Set<String> archivedProducts) {
-    return stockCard -> !archivedProducts.contains(stockCard.getOrderableId().toString());
+  private Predicate<StockCardSummaryV2Dto> isNotArchived(Set<String> archivedProducts) {
+    return stockCard -> !archivedProducts.contains(stockCard.getOrderable().getId().toString());
   }
 
   private UUID getId(String fieldName, MultiValueMap<String, String> parameters) {

@@ -197,6 +197,9 @@ public class SiglusUnpackService {
           dto.setLots(getLotList(lotMap, orderableChild.getOrderable().getTradeItemIdentifier()));
           OrderableDto orderableDto = new OrderableDto();
           orderable.export(orderableDto);
+          if (!CollectionUtils.isEmpty(orderableDto.getPrograms())) {
+            dto.setProgramId(orderableDto.getPrograms().stream().findFirst().get().getProgramId());
+          }
           return dto;
         })
         .collect(Collectors.toList());
