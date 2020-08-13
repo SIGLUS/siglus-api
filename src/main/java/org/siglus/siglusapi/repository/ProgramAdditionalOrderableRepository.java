@@ -29,8 +29,9 @@ public interface ProgramAdditionalOrderableRepository extends
 
   String SELECT_PROGRAM_ADDITIONAL_ORDERABLE =
       "select new org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto(ao.id, ao.programId, "
+          + "ao.additionalOrderableId, "
           + "o.productCode, o.fullProductName, o.description, ao.orderableOriginProgramId) ";
-  String FROM = "from ProgramAdditionalOrderable ao, Orderable o ";
+  String FROM = "from Orderable o, ProgramAdditionalOrderable ao ";
   String WHERE_QUERY = "where o.identity.versionNumber = "
       + "(select max(oo.identity.versionNumber) from Orderable oo "
       + "where o.identity.id = oo.identity.id) "

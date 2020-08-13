@@ -15,14 +15,17 @@
 
 package org.siglus.siglusapi.web;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.verify;
 
+import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto;
 import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.springframework.data.domain.Pageable;
 
@@ -38,6 +41,8 @@ public class SiglusProgramAdditionalOrderableControllerTest {
   private UUID id = UUID.randomUUID();
 
   private UUID programId = UUID.randomUUID();
+
+  private UUID additionalOrderableId = UUID.randomUUID();
 
   private String code = "code";
 
@@ -66,5 +71,22 @@ public class SiglusProgramAdditionalOrderableControllerTest {
 
     // then
     verify(siglusProgramAdditionalOrderableService).deleteAdditionalOrderable(id);
+  }
+
+  @Test
+  public void shouldCallCreateAdditionalOrderables() {
+    // given
+    ProgramAdditionalOrderableDto dto = ProgramAdditionalOrderableDto.builder()
+        .programId(programId)
+        .additionalOrderableId(additionalOrderableId)
+        .orderableOriginProgramId(orderableOriginProgramId)
+        .build();
+    List<ProgramAdditionalOrderableDto> dtos = newArrayList(dto);
+
+    // when
+    siglusProgramAdditionalOrderableController.createAdditionalOrderables(dtos);
+
+    // then
+    verify(siglusProgramAdditionalOrderableService).createAdditionalOrderables(dtos);
   }
 }

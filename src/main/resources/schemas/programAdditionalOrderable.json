@@ -12,6 +12,10 @@
       "type": "string",
       "title": "programId"
     },
+    "additionalOrderableId": {
+      "type": "string",
+      "title": "additionalOrderableId"
+    },
     "productCode": {
       "type": "string",
       "title": "productCode"
@@ -31,6 +35,7 @@
   },
   "required": [
     "programId",
+    "additionalOrderableId",
     "orderableOriginProgramId"
   ]
 }

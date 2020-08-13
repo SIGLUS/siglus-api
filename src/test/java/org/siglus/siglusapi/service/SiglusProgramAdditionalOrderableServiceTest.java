@@ -15,19 +15,29 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 
+import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.domain.ProgramAdditionalOrderable;
+import org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto;
 import org.siglus.siglusapi.repository.ProgramAdditionalOrderableRepository;
 import org.springframework.data.domain.Pageable;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusProgramAdditionalOrderableServiceTest {
+
+  @Captor
+  private ArgumentCaptor<List<ProgramAdditionalOrderable>> argumentCaptor;
 
   @InjectMocks
   private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
@@ -38,6 +48,8 @@ public class SiglusProgramAdditionalOrderableServiceTest {
   private UUID id = UUID.randomUUID();
 
   private UUID programId = UUID.randomUUID();
+
+  private UUID additionalOrderableId = UUID.randomUUID();
 
   private String code = "code";
 
@@ -77,5 +89,27 @@ public class SiglusProgramAdditionalOrderableServiceTest {
 
     // then
     verify(programAdditionalOrderableRepository).delete(id);
+  }
+
+  @Test
+  public void shouldCallSaveWhenCreateAdditionalOrderables() {
+    // given
+    ProgramAdditionalOrderableDto dto = ProgramAdditionalOrderableDto.builder()
+        .programId(programId)
+        .additionalOrderableId(additionalOrderableId)
+        .orderableOriginProgramId(orderableOriginProgramId)
+        .build();
+
+    // when
+    siglusProgramAdditionalOrderableService.createAdditionalOrderables(newArrayList(dto));
+
+    // then
+    verify(programAdditionalOrderableRepository).save(argumentCaptor.capture());
+    List<ProgramAdditionalOrderable> additionalOrderables = argumentCaptor.getValue();
+    assertEquals(1, additionalOrderables.size());
+    assertEquals(programId, additionalOrderables.get(0).getProgramId());
+    assertEquals(additionalOrderableId, additionalOrderables.get(0).getAdditionalOrderableId());
+    assertEquals(orderableOriginProgramId, additionalOrderables.get(0)
+        .getOrderableOriginProgramId());
   }
 }

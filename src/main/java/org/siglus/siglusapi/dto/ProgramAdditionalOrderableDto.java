@@ -17,16 +17,20 @@ package org.siglus.siglusapi.dto;
 
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import org.siglus.common.domain.referencedata.Code;
 
 @Data
 @AllArgsConstructor
+@Builder
 public class ProgramAdditionalOrderableDto {
 
   private UUID id;
 
   private UUID programId;
+
+  private UUID additionalOrderableId;
 
   private Code productCode;
 

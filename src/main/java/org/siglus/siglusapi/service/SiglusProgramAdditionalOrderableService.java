@@ -18,8 +18,10 @@ package org.siglus.siglusapi.service;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
+import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.domain.ProgramAdditionalOrderable;
 import org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto;
 import org.siglus.siglusapi.repository.ProgramAdditionalOrderableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,5 +50,10 @@ public class SiglusProgramAdditionalOrderableService {
   public void deleteAdditionalOrderable(UUID id) {
     log.info("delete additional orderable by id: {}", id);
     programAdditionalOrderableRepository.delete(id);
+  }
+
+  public void createAdditionalOrderables(List<ProgramAdditionalOrderableDto> dtos) {
+    log.info("save additional orderables, size: {}", dtos.size());
+    programAdditionalOrderableRepository.save(ProgramAdditionalOrderable.from(dtos));
   }
 }

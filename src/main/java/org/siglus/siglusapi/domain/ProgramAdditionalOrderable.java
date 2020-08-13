@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.domain;
 
+import static com.google.common.collect.Lists.newArrayList;
+
+import java.util.List;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -24,6 +27,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto;
+import org.springframework.beans.BeanUtils;
 
 @Entity
 @Data
@@ -39,4 +44,14 @@ public class ProgramAdditionalOrderable extends BaseEntity {
   private UUID additionalOrderableId;
 
   private UUID orderableOriginProgramId;
+
+  public static List<ProgramAdditionalOrderable> from(List<ProgramAdditionalOrderableDto> dtos) {
+    List<ProgramAdditionalOrderable> additionalOrderables = newArrayList();
+    dtos.forEach(dto -> {
+      ProgramAdditionalOrderable additionalOrderable = new ProgramAdditionalOrderable();
+      BeanUtils.copyProperties(dto, additionalOrderable);
+      additionalOrderables.add(additionalOrderable);
+    });
+    return additionalOrderables;
+  }
 }
