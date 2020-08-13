@@ -1889,3 +1889,16 @@ traits:
             body:
               application/json:
                 schema: programAdditionalOrderablePage
+      /{id}:
+        uriParameters:
+          id:
+            displayName: id
+            type: string
+            required: true
+            repeat: false
+        delete:
+          is: [ secured ]
+          description: Delete a program additional orderable.
+          responses:
+            204:
+              description: Program additional orderable deleted.

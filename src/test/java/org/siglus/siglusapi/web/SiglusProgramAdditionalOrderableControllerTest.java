@@ -35,6 +35,8 @@ public class SiglusProgramAdditionalOrderableControllerTest {
   @Mock
   private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
+  private UUID id = UUID.randomUUID();
+
   private UUID programId = UUID.randomUUID();
 
   private String code = "code";
@@ -55,5 +57,14 @@ public class SiglusProgramAdditionalOrderableControllerTest {
     // then
     verify(siglusProgramAdditionalOrderableService).searchAdditionalOrderables(programId, code,
         name, orderableOriginProgramId, pageable);
+  }
+
+  @Test
+  public void shouldCallDeleteAdditionalOrderable() {
+    // when
+    siglusProgramAdditionalOrderableController.deleteAdditionalOrderable(id);
+
+    // then
+    verify(siglusProgramAdditionalOrderableService).deleteAdditionalOrderable(id);
   }
 }

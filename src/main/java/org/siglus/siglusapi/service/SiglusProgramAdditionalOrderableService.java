@@ -19,6 +19,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto;
 import org.siglus.siglusapi.repository.ProgramAdditionalOrderableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class SiglusProgramAdditionalOrderableService {
 
   @Autowired
@@ -41,5 +43,10 @@ public class SiglusProgramAdditionalOrderableService {
     }
     return programAdditionalOrderableRepository.search(programId, code, name,
         orderableOriginProgramId, pageable);
+  }
+
+  public void deleteAdditionalOrderable(UUID id) {
+    log.info("delete additional orderable by id: {}", id);
+    programAdditionalOrderableRepository.delete(id);
   }
 }

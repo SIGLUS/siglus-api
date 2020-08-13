@@ -35,6 +35,8 @@ public class SiglusProgramAdditionalOrderableServiceTest {
   @Mock
   private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
 
+  private UUID id = UUID.randomUUID();
+
   private UUID programId = UUID.randomUUID();
 
   private String code = "code";
@@ -66,5 +68,14 @@ public class SiglusProgramAdditionalOrderableServiceTest {
     // then
     verify(programAdditionalOrderableRepository).search(programId, "%CODE%", "%NAME%",
         pageable);
+  }
+
+  @Test
+  public void shouldCallDelete() {
+    // when
+    siglusProgramAdditionalOrderableService.deleteAdditionalOrderable(id);
+
+    // then
+    verify(programAdditionalOrderableRepository).delete(id);
   }
 }
