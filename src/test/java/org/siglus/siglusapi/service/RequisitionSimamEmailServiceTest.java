@@ -246,7 +246,7 @@ public class RequisitionSimamEmailServiceTest {
             {RequisitionSimamEmailService.EXCEL_MOVDESCID, "0"},
             {RequisitionSimamEmailService.EXCEL_DATE,
                 SiglusDateHelper.formatDateTime(requisition.getCreatedDate())},
-            {RequisitionSimamEmailService.EXCEL_PROGRAM, "AL"},
+            {RequisitionSimamEmailService.EXCEL_PROGRAM, "Malaria"},
             {RequisitionSimamEmailService.EXCEL_REGIMEN, "Consultas AL US/APE Malaria 1x6"},
             {RequisitionSimamEmailService.EXCEL_TOTAL, "30"}
         });
