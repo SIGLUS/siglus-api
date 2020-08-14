@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
 import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.NON_EMPTY_ONLY;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
@@ -424,13 +425,15 @@ public class SiglusOrderService {
     multiValueMap.set(FACILITY_ID, userFacilityId.toString());
     multiValueMap.set(PROGRAM_ID, ALL_PRODUCTS_PROGRAM_ID.toString());
     multiValueMap.set(RIGHT_NAME, STOCK_CARDS_VIEW);
+    multiValueMap.set(NON_EMPTY_ONLY, "true");
     Page<StockCardSummaryV2Dto> stockCardSummary = siglusStockCardSummariesService
         .searchStockCardSummaryV2Dtos(multiValueMap, new PageRequest(0, Integer.MAX_VALUE));
 
     // to map stockCardSummaryV2Dto.getStockOnHand() return null cause NPE
     return stockCardSummary.getContent().stream().collect(Collectors.toMap(
         stockCardSummaryV2Dto -> stockCardSummaryV2Dto.getOrderable().getId(),
-        stockCardSummaryV2Dto -> stockCardSummaryV2Dto
+        stockCardSummaryV2Dto -> stockCardSummaryV2Dto,
+        (s1, s2) -> s1
     ));
   }
 
