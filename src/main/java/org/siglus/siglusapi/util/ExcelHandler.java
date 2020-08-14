@@ -37,8 +37,6 @@ public abstract class ExcelHandler {
   }
 
   public static final String VARIABLE_PREFIX = "$";
-  public static final String TEMPLATE_PATH = "/static/simam/";
-  public static final String CACHE_PATH = "/tmp/";
 
   public Workbook readXssTemplateFile(String templateFileName, PathType type) {
     Workbook wb = null;
@@ -55,7 +53,7 @@ public abstract class ExcelHandler {
     switch (type) {
       case FILE:
         ClassPathResource classPathResource = new ClassPathResource(
-            TEMPLATE_PATH + templateFileName);
+            "/static/simam/" + templateFileName);
         InputStream inputStream = null;
         try {
           inputStream = classPathResource.getInputStream();
@@ -73,7 +71,7 @@ public abstract class ExcelHandler {
   public abstract void createDataRows(Sheet tempSheet, List<Map<String, String>> dataList);
 
   public String createXssFile(Workbook wb, String fileName) {
-    String filePath = CACHE_PATH + fileName;
+    String filePath = "/tmp/" + fileName;
     try (FileOutputStream fileOut = new FileOutputStream(filePath)) {
       wb.write(fileOut);
     } catch (IOException e) {
