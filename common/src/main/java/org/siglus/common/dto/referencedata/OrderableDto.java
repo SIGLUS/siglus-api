@@ -63,6 +63,8 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
 
   private MetadataDto meta = new MetadataDto();
 
+  private Boolean archived;
+
   /**
    * Create new set of OrderableDto based on given iterable of {@link Orderable}.
    *
@@ -111,6 +113,10 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
   @Override
   public void setLastUpdated(ZonedDateTime lastUpdated) {
     meta.setLastUpdated(lastUpdated);
+  }
+
+  public boolean getIsKit() {
+    return !children.isEmpty();
   }
 
 }

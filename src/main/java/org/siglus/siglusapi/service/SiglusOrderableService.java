@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
 
@@ -29,11 +28,9 @@ import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.domain.ProgramAdditionalOrderable;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
-import org.siglus.siglusapi.dto.SiglusOrderableDto;
 import org.siglus.siglusapi.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -55,23 +52,18 @@ public class SiglusOrderableService {
   @Autowired
   private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
 
-  public Page<SiglusOrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
+  public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
     Page<OrderableDto> orderableDtoPage = orderableReferenceDataService
         .searchOrderables(searchParams, pageable);
     Set<String> archivedProducts = archiveProductService.searchArchivedProducts(facilityId);
-    List<SiglusOrderableDto> siglusOrderableDtos = newArrayList();
     orderableDtoPage.getContent().forEach(orderableDto -> {
-      SiglusOrderableDto siglusOrderableDto = new SiglusOrderableDto();
-      siglusOrderableDtos.add(siglusOrderableDto);
-      BeanUtils.copyProperties(orderableDto, siglusOrderableDto);
-      siglusOrderableDto.setArchived(false);
+      orderableDto.setArchived(false);
       if (archivedProducts.contains(orderableDto.getId().toString())) {
-        siglusOrderableDto.setArchived(true);
+        orderableDto.setArchived(true);
       }
     });
-    return Pagination.getPage(siglusOrderableDtos, pageable,
-        orderableDtoPage.getNumberOfElements());
+    return orderableDtoPage;
   }
 
   public List<OrderableExpirationDateDto> getOrderableExpirationDate(Set<UUID> orderableIds) {

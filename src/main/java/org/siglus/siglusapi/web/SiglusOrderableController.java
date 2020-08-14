@@ -19,7 +19,6 @@ import java.util.UUID;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.siglusapi.dto.SiglusOrderableDto;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -41,7 +40,7 @@ public class SiglusOrderableController {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @GetMapping
-  public Page<SiglusOrderableDto> searchOrderables(
+  public Page<OrderableDto> searchOrderables(
       @RequestParam MultiValueMap<String, Object> queryParams, Pageable pageable) {
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();

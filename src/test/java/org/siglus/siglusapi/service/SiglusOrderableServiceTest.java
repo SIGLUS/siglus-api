@@ -39,7 +39,6 @@ import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.domain.ProgramAdditionalOrderable;
-import org.siglus.siglusapi.dto.SiglusOrderableDto;
 import org.siglus.siglusapi.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -94,7 +93,7 @@ public class SiglusOrderableServiceTest {
   public void shouldReturnDataWithArchivedFalseWhenSearchOrderables() {
     when(archiveProductService.searchArchivedProducts(facilityId)).thenReturn(newHashSet());
 
-    Page<SiglusOrderableDto> orderableDtoPage = siglusOrderableService
+    Page<OrderableDto> orderableDtoPage = siglusOrderableService
         .searchOrderables(searchParams, pageable, facilityId);
 
     assertEquals(1, orderableDtoPage.getContent().size());
@@ -106,7 +105,7 @@ public class SiglusOrderableServiceTest {
     when(archiveProductService.searchArchivedProducts(facilityId))
         .thenReturn(newHashSet(orderableId.toString()));
 
-    Page<SiglusOrderableDto> orderableDtoPage = siglusOrderableService
+    Page<OrderableDto> orderableDtoPage = siglusOrderableService
         .searchOrderables(searchParams, pageable, facilityId);
 
     assertEquals(1, orderableDtoPage.getContent().size());
