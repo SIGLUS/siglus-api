@@ -17,6 +17,13 @@ package org.siglus.common.repository;
 
 public class RepositoryConstants {
 
+  static final String SELECT_PROGRAM_ORDERABLE = "Select * "
+      + "FROM referencedata.program_orderables po ";
+  static final String WHERE_LATEST_PROGRAM_ORDERABLE = "WHERE "
+      + "(po.orderableid, po.orderableversionnumber) "
+      + "          IN (SELECT po.orderableid, MAX(po.orderableversionnumber) "
+      + "FROM referencedata.program_orderables po GROUP BY po.orderableid) ";
+
   static final String FROM_ORDERABLES_CLAUSE = " FROM Orderable o";
   static final String WHERE_LATEST_ORDERABLE = " WHERE (o.identity.id, o.identity.versionNumber)"
       + " IN (SELECT identity.id, MAX(identity.versionNumber)"

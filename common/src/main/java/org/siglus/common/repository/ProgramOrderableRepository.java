@@ -15,12 +15,21 @@
 
 package org.siglus.common.repository;
 
+import static org.siglus.common.repository.RepositoryConstants.SELECT_PROGRAM_ORDERABLE;
+import static org.siglus.common.repository.RepositoryConstants.WHERE_LATEST_PROGRAM_ORDERABLE;
+
 import java.util.List;
 import java.util.UUID;
 import org.siglus.common.domain.referencedata.ProgramOrderable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public interface ProgramOrderableRepository
-    extends JpaRepository<ProgramOrderable, UUID> {
-  List<ProgramOrderable> findByProgramId(UUID programId);
+public interface ProgramOrderableRepository extends JpaRepository<ProgramOrderable, UUID> {
+
+  @Query(value = SELECT_PROGRAM_ORDERABLE
+      + WHERE_LATEST_PROGRAM_ORDERABLE
+      + "      AND po.programid = :programId",
+      nativeQuery = true)
+  List<ProgramOrderable> findByProgramId(@Param("programId")UUID programId);
 }
