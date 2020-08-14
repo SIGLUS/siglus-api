@@ -19,6 +19,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -48,6 +49,8 @@ public class SiglusOrderableControllerTest {
   @Mock
   private Pageable pageable;
 
+  private UUID programId = UUID.randomUUID();
+
   @Test
   public void shouldCallSiglusOrderableServiceWhenSearchOrderables() {
     when(authenticationHelper.getCurrentUser()).thenReturn(new UserDto());
@@ -55,5 +58,14 @@ public class SiglusOrderableControllerTest {
     siglusOrderableController.searchOrderables(queryParams, pageable);
 
     verify(siglusOrderableService).searchOrderables(any(), any(), any());
+  }
+
+  @Test
+  public void shouldCallAdditionalToAdd() {
+    // when
+    siglusOrderableController.searchOrderables(programId, queryParams, pageable);
+
+    // then
+    verify(siglusOrderableService).additionalToAdd(any(), any(), any());
   }
 }

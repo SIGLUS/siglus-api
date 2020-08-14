@@ -22,7 +22,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
+import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
@@ -35,12 +38,15 @@ import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.domain.ProgramAdditionalOrderable;
 import org.siglus.siglusapi.dto.SiglusOrderableDto;
+import org.siglus.siglusapi.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusOrderableServiceTest {
@@ -58,6 +64,9 @@ public class SiglusOrderableServiceTest {
   private SiglusOrderableRepository siglusOrderableRepository;
 
   @Mock
+  private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
+
+  @Mock
   private QueryOrderableSearchParams searchParams;
 
   private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
@@ -65,6 +74,8 @@ public class SiglusOrderableServiceTest {
   private UUID facilityId = UUID.randomUUID();
 
   private UUID programId = UUID.randomUUID();
+
+  private UUID inputProgramId = UUID.randomUUID();
 
   private UUID orderableId = UUID.randomUUID();
 
@@ -80,21 +91,18 @@ public class SiglusOrderableServiceTest {
   }
 
   @Test
-  public void shouldReturnDataWithParentIdWhenSearchOrderables() {
+  public void shouldReturnDataWithArchivedFalseWhenSearchOrderables() {
     when(archiveProductService.searchArchivedProducts(facilityId)).thenReturn(newHashSet());
 
     Page<SiglusOrderableDto> orderableDtoPage = siglusOrderableService
         .searchOrderables(searchParams, pageable, facilityId);
 
     assertEquals(1, orderableDtoPage.getContent().size());
-    orderableDtoPage.getContent().forEach(orderable -> {
-      assertFalse(orderable.getArchived());
-      assertEquals(1, orderable.getPrograms().size());
-    });
+    orderableDtoPage.getContent().forEach(orderable -> assertFalse(orderable.getArchived()));
   }
 
   @Test
-  public void shouldReturnDataWithArchivedWhenSearchOrderables() {
+  public void shouldReturnDataWithArchivedTrueWhenSearchOrderables() {
     when(archiveProductService.searchArchivedProducts(facilityId))
         .thenReturn(newHashSet(orderableId.toString()));
 
@@ -112,5 +120,87 @@ public class SiglusOrderableServiceTest {
     siglusOrderableService.getOrderableExpirationDate(orderableIds);
 
     verify(siglusOrderableRepository).findExpirationDate(orderableIds);
+  }
+
+  @Test
+  public void shouldFilterProgramWhenGetAdditionalToAdd() {
+    // when
+    Page<OrderableDto> orderableDtoPage = siglusOrderableService
+        .additionalToAdd(programId, searchParams, pageable);
+
+    // then
+    assertEquals(0, orderableDtoPage.getContent().size());
+  }
+
+  @Test
+  public void shouldFilterAdditionalOrderablesWhenGetAdditionalToAdd() {
+    // given
+    ProgramAdditionalOrderable additionalOrderable = ProgramAdditionalOrderable.builder()
+        .additionalOrderableId(orderableId).build();
+    when(programAdditionalOrderableRepository.findByProgramId(inputProgramId))
+        .thenReturn(newArrayList(additionalOrderable));
+
+    // when
+    Page<OrderableDto> orderableDtoPage = siglusOrderableService.additionalToAdd(inputProgramId,
+        searchParams, pageable);
+
+    // then
+    assertEquals(0, orderableDtoPage.getContent().size());
+  }
+
+  @Test
+  public void shouldSortByFullProductNameWhenGetAdditionalToAdd() {
+    // given
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setProgramId(programId);
+    OrderableDto orderableDto1 = new OrderableDto();
+    orderableDto1.setId(orderableId);
+    orderableDto1.setPrograms(newHashSet(programOrderableDto));
+    orderableDto1.setFullProductName("ProductNameLast");
+    OrderableDto orderableDto2 = new OrderableDto();
+    orderableDto2.setId(orderableId);
+    orderableDto2.setPrograms(newHashSet(programOrderableDto));
+    orderableDto2.setFullProductName("ProductNameFirst");
+    Sort sort = new Sort(FULL_PRODUCT_NAME);
+    pageable = new PageRequest(0, Integer.MAX_VALUE, sort);
+    when(orderableReferenceDataService.searchOrderables(searchParams, pageable)).thenReturn(
+        Pagination.getPage(newArrayList(orderableDto1, orderableDto2), pageable, 2));
+
+    // when
+    List<OrderableDto> orderableDtos = siglusOrderableService.additionalToAdd(inputProgramId,
+        searchParams, pageable).getContent();
+
+    // then
+    assertEquals(2, orderableDtos.size());
+    assertEquals("ProductNameFirst", orderableDtos.get(0).getFullProductName());
+    assertEquals("ProductNameLast", orderableDtos.get(1).getFullProductName());
+  }
+
+  @Test
+  public void shouldSortByProductCodeWhenGetAdditionalToAdd() {
+    // given
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setProgramId(programId);
+    OrderableDto orderableDto1 = new OrderableDto();
+    orderableDto1.setId(orderableId);
+    orderableDto1.setPrograms(newHashSet(programOrderableDto));
+    orderableDto1.setProductCode("02CODE");
+    OrderableDto orderableDto2 = new OrderableDto();
+    orderableDto2.setId(orderableId);
+    orderableDto2.setPrograms(newHashSet(programOrderableDto));
+    orderableDto2.setProductCode("01CODE");
+    Sort sort = new Sort(PRODUCT_CODE);
+    pageable = new PageRequest(0, Integer.MAX_VALUE, sort);
+    when(orderableReferenceDataService.searchOrderables(searchParams, pageable)).thenReturn(
+        Pagination.getPage(newArrayList(orderableDto1, orderableDto2), pageable, 2));
+
+    // when
+    List<OrderableDto> orderableDtos = siglusOrderableService.additionalToAdd(inputProgramId,
+        searchParams, pageable).getContent();
+
+    // then
+    assertEquals(2, orderableDtos.size());
+    assertEquals("01CODE", orderableDtos.get(0).getProductCode());
+    assertEquals("02CODE", orderableDtos.get(1).getProductCode());
   }
 }

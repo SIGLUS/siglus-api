@@ -265,6 +265,35 @@ traits:
               application/json:
                 schema: localizedErrorResponse
 
+    /orderables/additionaltoadd:
+      displayName: Additional Orderable Product To Add
+      get:
+        is: [ secured, paginated ]
+        description: >
+          Get all Orderable Products can be added to additional product if no search params
+          provided. Otherwise returns a paginated list of Orderables given either a Name or a Code.
+        queryParameters:
+          code:
+            displayName: orderable code
+            type: string
+            required: false
+            repeat: false
+          name:
+            displayName: orderable name
+            type: string
+            required: false
+            repeat: false
+          programId:
+            displayName: program id
+            type: string
+            required: true
+            repeat: false
+        responses:
+          "200":
+            body:
+              application/json:
+                schema: orderablePage
+
     /validDestinations:
       get:
         is: [ secured ]

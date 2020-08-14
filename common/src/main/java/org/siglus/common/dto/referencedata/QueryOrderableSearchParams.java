@@ -17,16 +17,12 @@ package org.siglus.common.dto.referencedata;
 
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
-import static org.siglus.common.util.referencedata.messagekeys.OrderableMessageKeys.ERROR_INVALID_PARAMS;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.ToString;
-import org.siglus.common.exception.ValidationMessageException;
-import org.siglus.common.util.Message;
+import org.siglus.common.domain.referencedata.Code;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
 
@@ -38,9 +34,6 @@ public class QueryOrderableSearchParams {
   private static final String PROGRAM_CODE = "program";
   private static final String ID = "id";
 
-  private static final List<String> ALL_PARAMETERS = Collections.unmodifiableList(Arrays.asList(
-      ID, CODE, NAME, PROGRAM_CODE));
-
   private SearchParams queryParams;
 
   /**
@@ -49,7 +42,6 @@ public class QueryOrderableSearchParams {
    */
   public QueryOrderableSearchParams(MultiValueMap<String, Object> queryMap) {
     queryParams = new SearchParams(queryMap);
-    validate();
   }
 
   /**
@@ -102,11 +94,5 @@ public class QueryOrderableSearchParams {
       return Collections.emptySet();
     }
     return queryParams.getUuids(ID);
-  }
-
-  private void validate() {
-    if (!ALL_PARAMETERS.containsAll(queryParams.keySet())) {
-      throw new ValidationMessageException(new Message(ERROR_INVALID_PARAMS));
-    }
   }
 }

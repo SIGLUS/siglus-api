@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import java.util.UUID;
+import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.SiglusOrderableDto;
@@ -47,4 +48,10 @@ public class SiglusOrderableController {
     return orderableService.searchOrderables(searchParams, pageable, facilityId);
   }
 
+  @GetMapping("/additionaltoadd")
+  public Page<OrderableDto> searchOrderables(@RequestParam UUID programId,
+      @RequestParam MultiValueMap<String, Object> queryParams, Pageable pageable) {
+    QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
+    return orderableService.additionalToAdd(programId, searchParams, pageable);
+  }
 }

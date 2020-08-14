@@ -23,6 +23,10 @@ public class FieldConstants {
 
   public static final String PROGRAM_ID = "programId";
 
+  public static final String PRODUCT_CODE = "productCode";
+
+  public static final String FULL_PRODUCT_NAME = "fullProductName";
+
   public static final String FACILITY = "facility";
 
   public static final String FACILITY_ID = "facilityId";

@@ -15,7 +15,7 @@
 
 package org.siglus.common.repository;
 
-class RepositoryConstants {
+public class RepositoryConstants {
 
   static final String FROM_ORDERABLES_CLAUSE = " FROM Orderable o";
   static final String WHERE_LATEST_ORDERABLE = " WHERE (o.identity.id, o.identity.versionNumber)"
@@ -24,5 +24,26 @@ class RepositoryConstants {
   static final String ORDER_BY_PAGEABLE = " ORDER BY ?#{#pageable}";
   static final String SELECT_ORDERABLE = "Select o";
 
-  private RepositoryConstants() {}
+
+  public static final String SELECT_PROGRAM_ADDITIONAL_ORDERABLE =
+      "select new org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto(ao.id, ao.programId, "
+          + "ao.additionalOrderableId, "
+          + "o.productCode, o.fullProductName, o.description, ao.orderableOriginProgramId) ";
+
+  public static final String FROM_ADDITIONAL_ORDERABLE = "from Orderable o, "
+      + "ProgramAdditionalOrderable ao ";
+
+  public static final String WHERE_QUERY_ADDITIONAL_ORDERABLE = "where o.identity.versionNumber = "
+      + "(select max(oo.identity.versionNumber) from Orderable oo "
+      + "where o.identity.id = oo.identity.id) "
+      + "and ao.additionalOrderableId = o.identity.id "
+      + "and ao.programId = :programId "
+      + "and upper(o.productCode.code) like :code "
+      + "and upper(o.fullProductName) like :name ";
+
+  public static final String AND_ORDERABLE_ORIGIN_PROGRAM_ID = "and ao.orderableOriginProgramId "
+      + "= :orderableOriginProgramId";
+
+  private RepositoryConstants() {
+  }
 }

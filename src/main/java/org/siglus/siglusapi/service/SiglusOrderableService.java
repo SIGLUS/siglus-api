@@ -16,20 +16,27 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
+import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.domain.ProgramAdditionalOrderable;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.SiglusOrderableDto;
+import org.siglus.siglusapi.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +51,9 @@ public class SiglusOrderableService {
 
   @Autowired
   private SiglusOrderableRepository siglusOrderableRepository;
+
+  @Autowired
+  private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
 
   public Page<SiglusOrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
@@ -66,5 +76,37 @@ public class SiglusOrderableService {
 
   public List<OrderableExpirationDateDto> getOrderableExpirationDate(Set<UUID> orderableIds) {
     return siglusOrderableRepository.findExpirationDate(orderableIds);
+  }
+
+  public Page<OrderableDto> additionalToAdd(UUID programId, QueryOrderableSearchParams searchParams,
+      Pageable pageable) {
+    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
+        Pagination.NO_PAGINATION, pageable.getSort());
+    List<OrderableDto> orderableDtos = orderableReferenceDataService
+        .searchOrderables(searchParams, noPagination).getContent();
+    Set<UUID> additionalOrderableIds = programAdditionalOrderableRepository
+        .findByProgramId(programId)
+        .stream()
+        .map(ProgramAdditionalOrderable::getAdditionalOrderableId)
+        .collect(Collectors.toSet());
+    orderableDtos = orderableDtos.stream()
+        .filter(orderableDto -> !programId.equals(orderableDto.getPrograms().stream().findFirst()
+            .get().getProgramId()))
+        .filter(orderableDto -> !additionalOrderableIds.contains(orderableDto.getId()))
+        .collect(Collectors.toList());
+    if (null == pageable.getSort()) {
+      return Pagination.getPage(orderableDtos, pageable);
+    }
+    if (pageable.getSort().toString().contains(FULL_PRODUCT_NAME)) {
+      orderableDtos = orderableDtos.stream()
+          .sorted(Comparator.comparing(OrderableDto::getFullProductName))
+          .collect(Collectors.toList());
+    }
+    if (pageable.getSort().toString().contains(PRODUCT_CODE)) {
+      orderableDtos = orderableDtos.stream()
+          .sorted(Comparator.comparing(OrderableDto::getProductCode))
+          .collect(Collectors.toList());
+    }
+    return Pagination.getPage(orderableDtos, pageable);
   }
 }
