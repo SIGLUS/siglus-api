@@ -49,7 +49,7 @@ pipeline {
         }
         stage('Deploy To Dev') {
             when {
-                branch 'master'
+                branch 'dev'
             }
             steps {
                 deploy "dev"
