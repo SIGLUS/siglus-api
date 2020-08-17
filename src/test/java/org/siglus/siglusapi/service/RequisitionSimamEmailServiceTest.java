@@ -61,8 +61,11 @@ import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.SiglusUsageTemplateDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
+import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
+import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.dto.simam.EmailAttachmentDto;
 import org.siglus.siglusapi.util.ExcelHandler;
 import org.siglus.siglusapi.util.S3FileHandler;
@@ -258,13 +261,29 @@ public class RequisitionSimamEmailServiceTest {
   public void shouldGetRapidTestRegimenDataItems() {
     TestConsumptionLineItem testConsumptionLineItem = TestConsumptionLineItem.builder()
         .service("total")
-        .project("HIV Determine")
-        .outcome("Consumo")
+        .project("projectName")
+        .outcome("columnName")
         .value(10)
         .build();
     requisition.setTestConsumptionLineItems(
         TestConsumptionServiceDto.from(newArrayList(testConsumptionLineItem)));
     requisition.getTemplate().getExtension().setEnableRapidTestConsumption(true);
+    UsageTemplateColumnDto outcomeColumnDto = new UsageTemplateColumnDto();
+    outcomeColumnDto.setName("columnName");
+    outcomeColumnDto.setLabel("Consumo");
+    UsageTemplateColumnDto projectColumnDto = new UsageTemplateColumnDto();
+    projectColumnDto.setName("projectName");
+    projectColumnDto.setLabel("HIV Determine");
+    UsageTemplateSectionDto outcomeSectionDto = new UsageTemplateSectionDto();
+    outcomeSectionDto.setName("outcome");
+    outcomeSectionDto.setColumns(newArrayList(outcomeColumnDto));
+    UsageTemplateSectionDto projectSectionDto = new UsageTemplateSectionDto();
+    projectSectionDto.setName("project");
+    projectSectionDto.setColumns(newArrayList(projectColumnDto));
+    List<UsageTemplateSectionDto> sectionDtos = newArrayList(outcomeSectionDto, projectSectionDto);
+    SiglusUsageTemplateDto usageTemplateDto = new SiglusUsageTemplateDto();
+    usageTemplateDto.setRapidTestConsumption(sectionDtos);
+    requisition.setUsageTemplate(usageTemplateDto);
 
     Workbook workBook = new XSSFWorkbook();
     workBook.createSheet();

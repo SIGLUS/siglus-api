@@ -450,6 +450,8 @@ public class SiglusRequisitionService {
     ProgramDto program = programReferenceDataService
         .findOne(siglusRequisitionDto.getProgram().getId());
     setLineItemExtension(siglusRequisitionDto);
+    siglusUsageReportService.setUsageTemplateDto(siglusRequisitionDto.getTemplate().getId(),
+        siglusRequisitionDto);
     List<EmailAttachmentDto> emailAttachments = requisitionSimamEmailService
         .prepareEmailAttachmentsForSimam(siglusRequisitionDto, program);
     String subject = messageService
@@ -478,7 +480,8 @@ public class SiglusRequisitionService {
               user.getHomeFacilityId());
       if (draft != null) {
         siglusRequisitionDto = SiglusRequisitionDto.from(requisitionDto);
-        siglusUsageReportService.setUsageTemplateDto(requisitionDto, siglusRequisitionDto);
+        siglusUsageReportService.setUsageTemplateDto(requisitionDto.getTemplate().getId(),
+            siglusRequisitionDto);
         fillRequisitionDraft(draft, extension, siglusRequisitionDto);
         return siglusRequisitionDto;
       }

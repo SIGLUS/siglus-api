@@ -48,6 +48,8 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.dto.UsageInformationOrderableDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
+import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
+import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.dto.simam.EmailAttachmentDto;
 import org.siglus.siglusapi.util.ExcelHandler;
 import org.siglus.siglusapi.util.S3FileHandler;
@@ -362,6 +364,15 @@ public class RequisitionSimamEmailService {
     if (isEmpty(serviceLineItems)) {
       return rapidTestDataColumns;
     }
+    Map<String, List<UsageTemplateColumnDto>> usageTemplateMap = requisition.getUsageTemplate()
+        .getRapidTestConsumption()
+        .stream()
+        .collect(Collectors.toMap(UsageTemplateSectionDto::getName,
+            UsageTemplateSectionDto::getColumns));
+    Map<String, String> projectLableMap = usageTemplateMap.get("project").stream().collect(
+        Collectors.toMap(UsageTemplateColumnDto::getName, UsageTemplateColumnDto::getLabel));
+    Map<String, String> outcomeLableMap = usageTemplateMap.get("outcome").stream().collect(
+        Collectors.toMap(UsageTemplateColumnDto::getName, UsageTemplateColumnDto::getLabel));
     serviceLineItems
         .stream()
         .filter(serviceLineItem -> serviceLineItem.getService().equals(TOTAL_SERVICE))
@@ -370,7 +381,9 @@ public class RequisitionSimamEmailService {
                 projectDto.getOutcomes().forEach((outcome, testConsumptionValue) -> {
                   Map<String, String> dataColumns = getCommonDataColumnsForRegimen(requisition,
                       program);
-                  dataColumns.put(EXCEL_REGIMEN, getRapidTestRegimenName(project, outcome));
+                  dataColumns.put(EXCEL_REGIMEN,
+                      getRapidTestRegimenName(projectLableMap.get(project),
+                          outcomeLableMap.get(outcome)));
                   dataColumns.put(EXCEL_TOTAL, getString(testConsumptionValue.getValue()));
                   rapidTestDataColumns.add(dataColumns);
                 })
@@ -381,7 +394,7 @@ public class RequisitionSimamEmailService {
   private String getRapidTestRegimenName(String project, String outcome) {
     String regimenNameFromSimam = RAPID_TEST_REGIMEN_MAP
         .get((outcome + "_" + project.replace(" ", "")).toUpperCase());
-    return regimenNameFromSimam == null ? project : regimenNameFromSimam;
+    return regimenNameFromSimam == null ? project + " " + outcome : regimenNameFromSimam;
   }
 
   private Map<String, String> getCommonDataColumnsForRegimen(SiglusRequisitionDto requisition,
