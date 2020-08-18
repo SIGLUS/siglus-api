@@ -29,7 +29,7 @@ import org.springframework.data.domain.Sort;
  * Because the former lacks a default constructor, it is inconvenient to
  * deserialize. PageImplRepresentation may be used in its stead.
  */
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 public class PageImplRepresentation<T> extends PageImpl<T> {
 
   private static final long serialVersionUID = 1L;
@@ -44,6 +44,7 @@ public class PageImplRepresentation<T> extends PageImpl<T> {
 
   private Sort sort;
 
+  @SuppressWarnings("squid:S1948")
   private List<T> content;
 
   public PageImplRepresentation() {

@@ -26,6 +26,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.siglus.siglusapi.dto.simam.CellMeta;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 
 @Slf4j
@@ -37,6 +38,12 @@ public abstract class ExcelHandler {
   }
 
   public static final String VARIABLE_PREFIX = "$";
+
+  @Value("${template.path:/static/simam/}")
+  private String templatePath;
+
+  @Value("${cache.path:/tmp/}")
+  private String cachePath;
 
   public Workbook readXssTemplateFile(String templateFileName, PathType type) {
     Workbook wb = null;
@@ -53,7 +60,7 @@ public abstract class ExcelHandler {
     switch (type) {
       case FILE:
         ClassPathResource classPathResource = new ClassPathResource(
-            "/static/simam/" + templateFileName);
+            templatePath + templateFileName);
         InputStream inputStream = null;
         try {
           inputStream = classPathResource.getInputStream();
@@ -71,7 +78,7 @@ public abstract class ExcelHandler {
   public abstract void createDataRows(Sheet tempSheet, List<Map<String, String>> dataList);
 
   public String createXssFile(Workbook wb, String fileName) {
-    String filePath = "/tmp/" + fileName;
+    String filePath = cachePath + fileName;
     try (FileOutputStream fileOut = new FileOutputStream(filePath)) {
       wb.write(fileOut);
     } catch (IOException e) {

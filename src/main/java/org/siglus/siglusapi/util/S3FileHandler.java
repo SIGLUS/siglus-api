@@ -22,7 +22,11 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import javax.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.exception.ServerException;
 import org.siglus.siglusapi.i18n.SimamMessageKeys;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,6 +35,7 @@ import org.springframework.util.ResourceUtils;
 
 
 @Component
+@Slf4j
 public class S3FileHandler {
 
   public static final String FOLDER_SUFFIX = "/";
@@ -71,5 +76,10 @@ public class S3FileHandler {
     }
     String keyName = bucketFolder + FOLDER_SUFFIX + fileName;
     s3Client.putObject(bucketName, keyName, file);
+    try {
+      Files.delete(Paths.get(filePath));
+    } catch (IOException e) {
+      log.error("Delete file: {} with error {}", fileName, e.getMessage());
+    }
   }
 }

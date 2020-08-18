@@ -77,7 +77,7 @@ public class SiglusOrderableService {
     List<OrderableDto> orderableDtos = orderableReferenceDataService
         .searchOrderables(searchParams, noPagination).getContent();
     Set<UUID> additionalOrderableIds = programAdditionalOrderableRepository
-        .findByProgramId(programId)
+        .findAllByProgramId(programId)
         .stream()
         .map(ProgramAdditionalOrderable::getAdditionalOrderableId)
         .collect(Collectors.toSet());

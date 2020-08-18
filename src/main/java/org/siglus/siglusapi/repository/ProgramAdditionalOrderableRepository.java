@@ -56,5 +56,5 @@ public interface ProgramAdditionalOrderableRepository extends
   Page<ProgramAdditionalOrderableDto> search(@Param("programId") UUID programId,
       @Param("code") String code, @Param("name") String name, Pageable pageable);
 
-  List<ProgramAdditionalOrderable> findByProgramId(UUID programId);
+  List<ProgramAdditionalOrderable> findAllByProgramId(UUID programId);
 }

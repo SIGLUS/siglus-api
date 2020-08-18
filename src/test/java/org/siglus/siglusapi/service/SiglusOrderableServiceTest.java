@@ -136,7 +136,7 @@ public class SiglusOrderableServiceTest {
     // given
     ProgramAdditionalOrderable additionalOrderable = ProgramAdditionalOrderable.builder()
         .additionalOrderableId(orderableId).build();
-    when(programAdditionalOrderableRepository.findByProgramId(inputProgramId))
+    when(programAdditionalOrderableRepository.findAllByProgramId(inputProgramId))
         .thenReturn(newArrayList(additionalOrderable));
 
     // when
