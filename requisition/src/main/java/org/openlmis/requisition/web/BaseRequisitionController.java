@@ -286,7 +286,7 @@ public abstract class BaseRequisitionController extends BaseController {
     List<ApprovedProductDto> approvedProductDtos = new ArrayList<>();
     if (templateExtension.getEnableProduct() || templateExtension.getEnableUsageInformation()) {
       ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(
-          facility.getId(), program.getId());
+          facility.getId(), program.getId(), reportOnly);
       List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
           .map(Orderable::getId).collect(toList());
       approvedProductDtos =
@@ -404,7 +404,8 @@ public abstract class BaseRequisitionController extends BaseController {
     // can't find product in method of RequisitionLineItem
     UserDto userDto = authenticationHelper.getCurrentUser();
     ApproveProductsAggregator aggregator = requisitionService
-        .getApproveProduct(userDto.getHomeFacilityId(), requisitionToUpdate.getProgramId());
+        .getApproveProduct(userDto.getHomeFacilityId(),
+            requisitionToUpdate.getProgramId(), period.isReportOnly());
 
     Map<VersionEntityReference, ApprovedProductReference> productReferences = aggregator
         .getApprovedProductReferences()

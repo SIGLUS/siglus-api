@@ -836,8 +836,11 @@ public class SiglusRequisitionService {
         .collect(toMap(isa -> isa.getCommodityType().getId(), IdealStockAmountDto::getAmount));
 
     // including the approved product of associate program, and the user facility
+    ProcessingPeriodDto period = periodService
+        .findPeriod(requisition.getProgramId(), requisition.getFacilityId(),
+            requisition.getProcessingPeriodId(), requisition.getEmergency());
     ApproveProductsAggregator approvedProducts = requisitionService.getApproveProduct(
-        userFacility.getId(), program.getId());
+        userFacility.getId(), program.getId(), period.isReportOnly());
 
     List<RequisitionLineItem> lineItemList = new ArrayList<>();
     for (ApprovedProductDto approvedProductDto : approvedProducts.getAllProducts().values()) {
@@ -1100,10 +1103,11 @@ public class SiglusRequisitionService {
       Set<VersionObjectReferenceDto> availableProducts =
           siglusRequisitionDto.getAvailableProducts();
 
-      Set<UUID> approverMainProgramAndAssociateProgramApprovedProducts
+      Set<UUID> approverMainProgramAndAdditionalProgramApprovedProducts
           = Optional
           .ofNullable(requisitionService
-              .getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId())
+              .getApproveProduct(userDto.getHomeFacilityId(), requisition.getProgramId(),
+                  siglusRequisitionDto.getReportOnly())
               .getApprovedProductReferences())
           .orElse(Collections.emptySet())
           .stream()
@@ -1116,7 +1120,7 @@ public class SiglusRequisitionService {
       // version mismatch in VersionObjectReferenceDto is not needed here
       siglusRequisitionDto.setAvailableProducts(availableProducts.stream()
           .filter(product ->
-              approverMainProgramAndAssociateProgramApprovedProducts.contains(product.getId()))
+              approverMainProgramAndAdditionalProgramApprovedProducts.contains(product.getId()))
           .collect(toSet()));
     }
   }

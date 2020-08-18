@@ -17,6 +17,7 @@ package org.openlmis.requisition.service;
 
 import static java.util.Collections.emptyList;
 import static java.util.Objects.isNull;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -51,6 +52,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.openlmis.requisition.domain.RequisitionTemplate;
@@ -268,30 +270,59 @@ public class RequisitionService {
 
     // [SIGLUS change start]
     // [change reason]: period.getEndDate() -> requisition.getActualEndDate().
-
+    //                  support for additional product
+    // Map<UUID, Integer> orderableSoh = stockOnHandRetrieverBuilderFactory
+    //     .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
+    //     .forProgram(program.getId())
+    //     .forFacility(facility.getId())
+    //     .forProducts(approvedProducts)
+    //     .asOfDate(requisition.getActualEndDate())
+    //     .build()
+    //     .get();
+    Map<UUID, List<ApprovedProductDto>> groupApprovedProduct =
+        approvedProducts.getFullSupplyProducts().stream()
+            .collect(groupingBy(approvedProduct->approvedProduct.getProgram().getId()));
     profiler.start("FIND_STOCK_ON_HANDS");
-    Map<UUID, Integer> orderableSoh = stockOnHandRetrieverBuilderFactory
-         .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
-         .forProgram(program.getId())
-         .forFacility(facility.getId())
-         .forProducts(approvedProducts)
-         .asOfDate(requisition.getActualEndDate())
-         .build()
-         .get();
+    Map<UUID, Integer> orderableSoh= groupApprovedProduct.keySet().stream()
+        .map(programId -> stockOnHandRetrieverBuilderFactory
+            .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
+            .forProgram(programId)
+            .forFacility(facility.getId())
+            .forProducts(new ApproveProductsAggregator(approvedProducts.getFullSupplyProducts(),
+                programId))
+            .asOfDate(requisition.getActualEndDate())
+            .build()
+            .get())
+        .map(Map::entrySet)
+        .flatMap(Collection::stream)
+        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
     // [SIGLUS change end]
 
     profiler.start("FIND_BEGINNING_BALANCES");
     // [SIGLUS change start]
     // [change reason]: period.getStartDate() -> requisition.getActualStartDate().
-
-    Map<UUID, Integer> orderableBeginning = stockOnHandRetrieverBuilderFactory
-         .getInstance(requisitionTemplate, RequisitionLineItem.BEGINNING_BALANCE)
-         .forProgram(program.getId())
-         .forFacility(facility.getId())
-         .forProducts(approvedProducts)
-         .asOfDate(requisition.getActualStartDate().minusDays(1))
-         .build()
-         .get();
+    //                  support for additional product
+    // Map<UUID, Integer> orderableBeginning = stockOnHandRetrieverBuilderFactory
+    //     .getInstance(requisitionTemplate, RequisitionLineItem.BEGINNING_BALANCE)
+    //     .forProgram(program.getId())
+    //     .forFacility(facility.getId())
+    //     .forProducts(approvedProducts)
+    //     .asOfDate(requisition.getActualStartDate().minusDays(1))
+    //     .build()
+    //     .get();
+    HashMap<UUID, Integer> orderableBeginning = groupApprovedProduct.keySet().stream()
+        .map(programId -> stockOnHandRetrieverBuilderFactory
+            .getInstance(requisitionTemplate, RequisitionLineItem.BEGINNING_BALANCE)
+            .forProgram(programId)
+            .forFacility(facility.getId())
+            .forProducts(new ApproveProductsAggregator(groupApprovedProduct.get(programId),
+                programId))
+            .asOfDate(requisition.getActualStartDate().minusDays(1))
+            .build()
+            .get())
+        .map(Map::entrySet)
+        .flatMap(Collection::stream)
+        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
     // [SIGLUS change end]
 
     // [SIGLUS change start]
@@ -324,11 +355,19 @@ public class RequisitionService {
       // [change reason]: 1. period.getStartDate() -> requisition.getActualStartDate().
       //                  2. period.getEndDate() -> requisition.getActualEndDate().
 
-      stockCardRangeSummaryDtos =
-           stockCardRangeSummaryStockManagementService
-               .search(program.getId(), facility.getId(),
-                   approvedProducts.getOrderableIdentities(), null,
-                   requisition.getActualStartDate(), requisition.getActualEndDate());
+      stockCardRangeSummaryDtos = groupApprovedProduct.keySet().stream()
+          .map(programId -> {
+            Set<VersionIdentityDto> orderableIdentities = groupApprovedProduct.get(programId)
+                .stream()
+                .map(product -> product.getIdentity())
+                .collect(Collectors.toSet());
+              return stockCardRangeSummaryStockManagementService
+                  .search(programId, facility.getId(),
+                      orderableIdentities, null,
+                      requisition.getActualStartDate(), requisition.getActualEndDate());
+              })
+          .flatMap(Collection::stream)
+          .collect(toList());
       // [SIGLUS change end]
 
       profiler.start("GET_PREVIOUS_PERIODS");
@@ -337,12 +376,30 @@ public class RequisitionService {
 
       profiler.start("FIND_IDEAL_STOCK_AMOUNTS_FOR_AVERAGE");
       if (previousPeriods.size() > 1) {
+        // [SIGLUS change start]
+        // [change reason]: support for additional product
+        // stockCardRangeSummariesToAverage =
+        //     stockCardRangeSummaryStockManagementService
+        //         .search(program.getId(), facility.getId(),
+        //             approvedProducts.getOrderableIdentities(), null,
+        //             previousPeriods.get(previousPeriods.size() - 1).getStartDate(),
+        //             period.getEndDate());
+        List<ProcessingPeriodDto> finalPreviousPeriods = previousPeriods;
         stockCardRangeSummariesToAverage =
-            stockCardRangeSummaryStockManagementService
-                .search(program.getId(), facility.getId(),
-                    approvedProducts.getOrderableIdentities(), null,
-                    previousPeriods.get(previousPeriods.size() - 1).getStartDate(),
-                    period.getEndDate());
+            groupApprovedProduct.keySet().stream()
+                .map(programId -> {
+                  Set<VersionIdentityDto> orderableIdentities = groupApprovedProduct.get(programId)
+                      .stream()
+                      .map(product -> product.getIdentity())
+                      .collect(Collectors.toSet());
+                  return stockCardRangeSummaryStockManagementService
+                      .search(programId, facility.getId(),
+                          orderableIdentities, null,
+                          finalPreviousPeriods.get(finalPreviousPeriods.size() - 1).getStartDate(),
+                          period.getEndDate());
+                })
+                .flatMap(Collection::stream)
+                .collect(toList());
       } else {
         stockCardRangeSummariesToAverage = stockCardRangeSummaryDtos;
       }
@@ -986,11 +1043,16 @@ public class RequisitionService {
   // [SIGLUS change end]
 
   // [SIGLUS change start]
-  // [change reason]: provide associated approved product
+  // [change reason]: provide additional approved product
   public ApproveProductsAggregator getApproveProduct(UUID facilityId,
-      UUID programId) {
-    return approvedProductReferenceDataService
-        .getApprovedProducts(facilityId, programId);
+      UUID programId, boolean reportOnly ) {
+    if (reportOnly) {
+      return approvedProductReferenceDataService
+          .getAdditionalApprovedProducts(facilityId, programId);
+    } else {
+      return approvedProductReferenceDataService
+          .getApprovedProducts(facilityId, programId);
+    }
   }
   // [SIGLUS change end]
 

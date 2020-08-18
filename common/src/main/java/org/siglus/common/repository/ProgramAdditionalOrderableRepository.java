@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.common.repository;
 
 import static org.siglus.common.repository.RepositoryConstants.AND_ORDERABLE_ORIGIN_PROGRAM_ID;
 import static org.siglus.common.repository.RepositoryConstants.FROM_ADDITIONAL_ORDERABLE;
@@ -22,8 +22,8 @@ import static org.siglus.common.repository.RepositoryConstants.WHERE_QUERY_ADDIT
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ProgramAdditionalOrderable;
-import org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto;
+import org.siglus.common.domain.ProgramAdditionalOrderable;
+import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

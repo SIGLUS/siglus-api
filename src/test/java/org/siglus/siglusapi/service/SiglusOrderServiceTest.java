@@ -186,9 +186,9 @@ public class SiglusOrderServiceTest {
     when(orderExternalRepository.findOne(orderDto.getExternalId())).thenReturn(null);
     when(requisitionController.findRequisition(any(), any())).thenReturn(createRequisition());
     when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
-    when(requisitionService.getApproveProduct(approverFacilityId, programId))
+    when(requisitionService.getApproveProduct(approverFacilityId, programId, false))
         .thenReturn(createApproverAggregator());
-    when(requisitionService.getApproveProduct(userHomeFacilityId, programId))
+    when(requisitionService.getApproveProduct(userHomeFacilityId, programId, false))
         .thenReturn(createUserAggregator());
     when(siglusArchiveProductService.searchArchivedProducts(any()))
         .thenReturn(createArchivedProducts());

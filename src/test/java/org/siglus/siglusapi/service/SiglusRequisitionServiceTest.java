@@ -25,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -410,7 +411,7 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(requisitionController.findProgram(programId, profiler)).thenReturn(programDto);
     when(requisitionController.findFacility(facilityId, profiler)).thenReturn(facilityDto);
-    when(requisitionService.getApproveProduct(any(), any()))
+    when(requisitionService.getApproveProduct(any(), any(), anyBoolean()))
         .thenReturn(createApproveProductsAggregator());
     when(supervisoryNodeService.findOne(supervisoryNodeId)).thenReturn(createSupervisoryNodeDto());
     when(draftRepository.findByRequisitionId(any(UUID.class))).thenReturn(null);
@@ -568,7 +569,7 @@ public class SiglusRequisitionServiceTest {
     when(proofOfDeliveryService.get(any())).thenReturn(new ProofOfDeliveryDto());
     when(idealStockAmountReferenceDataService.search(facilityId, processingPeriodId))
         .thenReturn(createIdealStockAmountDtoList());
-    when(requisitionService.getApproveProduct(any(), any()))
+    when(requisitionService.getApproveProduct(any(), any(), anyBoolean()))
         .thenReturn(createApproveProductsAggregator(orderableId2));
     when(requisitionService.validateCanApproveRequisition(any(), any()))
         .thenReturn(new ValidationResult());

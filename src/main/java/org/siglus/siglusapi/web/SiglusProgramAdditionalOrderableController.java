@@ -20,7 +20,7 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto;
+import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

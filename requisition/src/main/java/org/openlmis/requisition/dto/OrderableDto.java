@@ -18,9 +18,7 @@ package org.openlmis.requisition.dto;
 import static org.apache.commons.collections.MapUtils.getString;
 import static org.apache.commons.lang.StringUtils.defaultIfBlank;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -58,8 +56,8 @@ public final class OrderableDto extends BasicOrderableDto {
     // return findProgramOrderable(programId)
     //    .orElseThrow(() ->
     //        new ValidationMessageException(CAN_NOT_FIND_PROGRAM_DETAILS_FROM_ORDERABLE));
-    // [SIGLUS change end]
     return CollectionUtils.isEmpty(programs) ? null : (ProgramOrderableDto) programs.toArray()[0];
+    // [SIGLUS change end]
   }
 
   /**
@@ -68,12 +66,17 @@ public final class OrderableDto extends BasicOrderableDto {
    * @param programId program's UUID
    */
   public Optional<ProgramOrderableDto> findProgramOrderable(UUID programId) {
-    return Optional
-        .ofNullable(programs)
-        .orElse(Collections.emptySet())
-        .stream()
-        .filter(po -> Objects.equals(programId, po.getProgramId()))
-        .findFirst();
+    // [SIGLUS change start]
+    // [change reason]: support for additional product
+    // return Optional
+    // .ofNullable(programs)
+    // .orElse(Collections.emptySet())
+    // .stream()
+    // .filter(po -> Objects.equals(programId, po.getProgramId()))
+    // .findFirst();
+    return CollectionUtils.isEmpty(programs) ? null :
+        Optional.of((ProgramOrderableDto) programs.toArray()[0]);
+    // [SIGLUS change end]
   }
 
   /**

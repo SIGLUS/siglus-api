@@ -150,20 +150,11 @@ public class StandardStockOnHandRetrieverTest extends StockOnHandRetrieverTest {
 
   @Override
   StockOnHandRetriever getRetriever() {
-    // [SIGLUS change start]
-    // [change reason]: call our modify stock card.
-    //    return new StandardStockOnHandRetriever(
-    //        stockCardSummariesStockManagementService,
-    //        products, programId,
-    //        facilityId, asOfDate
-    //    );
     return new StandardStockOnHandRetriever(
-        stockCardSummariesService,
-        stockCardSummariesV2DtoBuilder,
+        stockCardSummariesStockManagementService,
         products, programId,
         facilityId, asOfDate
     );
-    // [SIGLUS change end]
   }
 
   @Override

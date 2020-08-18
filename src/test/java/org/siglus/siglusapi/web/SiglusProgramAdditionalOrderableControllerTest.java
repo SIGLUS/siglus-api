@@ -25,7 +25,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto;
+import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.springframework.data.domain.Pageable;
 
