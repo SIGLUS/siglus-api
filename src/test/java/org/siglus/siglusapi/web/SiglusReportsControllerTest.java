@@ -36,7 +36,7 @@ import org.openlmis.requisition.exception.JasperReportViewException;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.JasperReportsViewService;
 import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.web.ReportsController;
+import org.siglus.siglusapi.util.OperatePermissionService;
 import org.springframework.web.servlet.ModelAndView;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -51,8 +51,11 @@ public class SiglusReportsControllerTest {
   @Mock
   private JasperReportsViewService jasperReportsViewService;
 
+  @Mock
+  private OperatePermissionService operatePermissionService;
+
   @InjectMocks
-  private ReportsController reportsController;
+  private SiglusReportsController siglusReportsController;
 
   @Before
   public void setUp() {
@@ -66,7 +69,7 @@ public class SiglusReportsControllerTest {
     when(permissionService.canViewRequisition(any(UUID.class)))
         .thenReturn(ValidationResult.notFound("requisition.not.found"));
     // when
-    reportsController.print(mock(HttpServletRequest.class), UUID.randomUUID());
+    siglusReportsController.print(mock(HttpServletRequest.class), UUID.randomUUID());
   }
 
   @Test
@@ -81,9 +84,11 @@ public class SiglusReportsControllerTest {
         any(Requisition.class), any(HttpServletRequest.class))).thenReturn(view);
     when(permissionService.canViewRequisition(any(UUID.class)))
         .thenReturn(ValidationResult.success());
+    when(operatePermissionService.isEditableRequisition(any()))
+        .thenReturn(false);
 
     // when
-    ModelAndView result = reportsController.print(request, UUID.randomUUID());
+    ModelAndView result = siglusReportsController.print(request, UUID.randomUUID());
 
     // then
     assertEquals(result, view);
