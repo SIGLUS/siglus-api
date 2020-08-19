@@ -25,6 +25,8 @@ public abstract class MessageKeys {
 
   private static final String WIDGET = "widget";
 
+  private static final String ADDITIONAL_ORDERABLE = "additionalorderable";
+
   private static final String CODE = "code";
 
   protected static final String SEARCH = "search";
@@ -48,6 +50,9 @@ public abstract class MessageKeys {
 
   public static final String ERROR_WIDGET_CODE_DUPLICATED =
       join(ERROR_PREFIX, WIDGET, CODE, DUPLICATED);
+
+  public static final String ERROR_ADDITIONAL_ORDERABLE_DUPLICATED =
+      join(ERROR_PREFIX, ADDITIONAL_ORDERABLE, DUPLICATED);
 
   public static final String ERROR_NOT_ACCEPTABLE = ERROR_PREFIX
       + ".not.acceptable";

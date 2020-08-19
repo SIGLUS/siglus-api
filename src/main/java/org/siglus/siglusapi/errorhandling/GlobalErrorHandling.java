@@ -44,6 +44,8 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
 
   static {
     CONSTRAINT_MAP.put("unq_widget_code", MessageKeys.ERROR_WIDGET_CODE_DUPLICATED);
+    CONSTRAINT_MAP.put("unq_programid_additionalorderableid",
+        MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
   }
 
   @ExceptionHandler(NotAcceptableException.class)
