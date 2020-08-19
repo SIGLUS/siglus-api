@@ -108,6 +108,7 @@ public class Orderable implements Versionable {
 
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   @BatchSize(size = FETCH_SIZE)
+  @Getter
   @Setter
   @Cache(usage =  CacheConcurrencyStrategy.READ_WRITE)
   private List<ProgramOrderable> programOrderables;

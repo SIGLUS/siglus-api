@@ -425,7 +425,7 @@ public class SiglusOrderService {
     multiValueMap.set(FACILITY_ID, userFacilityId.toString());
     multiValueMap.set(PROGRAM_ID, ALL_PRODUCTS_PROGRAM_ID.toString());
     multiValueMap.set(RIGHT_NAME, STOCK_CARDS_VIEW);
-    multiValueMap.set(NON_EMPTY_ONLY, "true");
+    multiValueMap.set(NON_EMPTY_ONLY, Boolean.TRUE.toString());
     Page<StockCardSummaryV2Dto> stockCardSummary = siglusStockCardSummariesService
         .searchStockCardSummaryV2Dtos(multiValueMap, new PageRequest(0, Integer.MAX_VALUE));
 

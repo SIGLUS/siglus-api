@@ -34,9 +34,11 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import javax.validation.ValidatorFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
+import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.util.Message;
@@ -44,6 +46,7 @@ import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.siglusapi.domain.KitUsageLineItem;
+import org.siglus.siglusapi.domain.ProgramAdditionalOrderable;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
@@ -54,6 +57,7 @@ import org.siglus.siglusapi.dto.SiglusUsageTemplateDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.dto.validation.group.sequence.RequisitionActionSequence;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
+import org.siglus.siglusapi.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -85,6 +89,12 @@ public class SiglusUsageReportService {
 
   @Autowired
   private ValidatorFactory validatorFactory;
+
+  @Autowired
+  private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
+
+  @Autowired
+  private PeriodService periodService;
 
   public SiglusRequisitionDto searchUsageReport(RequisitionV2Dto requisitionV2Dto) {
     SiglusRequisitionDto siglusRequisitionDto = SiglusRequisitionDto.from(requisitionV2Dto);
@@ -181,18 +191,46 @@ public class SiglusUsageReportService {
       SiglusRequisitionDto siglusRequisitionDto) {
     if (isEnableKit(requisitionV2Dto, templateColumnSections)) {
       log.info("get all kit products");
-      List<Orderable> allKitProducts = orderableKitRepository.findAllKitProduct();
+      List<Orderable> kitProducts = getKitProducts(requisitionV2Dto);
       List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos =
           stockCardRangeSummaryDtos(templateColumnSections,
-              requisitionV2Dto, allKitProducts);
+              requisitionV2Dto, kitProducts);
       List<KitUsageLineItem> kitUsageLineItems = getKitUsageLineItems(requisitionV2Dto,
-          templateColumnSections, allKitProducts,
+          templateColumnSections, kitProducts,
           stockCardRangeSummaryDtos);
       log.info("save all kit line item: {}", kitUsageLineItems);
       List<KitUsageLineItem> kitUsageLineUpdate = kitUsageRepository.save(kitUsageLineItems);
       List<KitUsageLineItemDto> kitDtos = getKitUsageLineItemDtos(kitUsageLineUpdate);
       siglusRequisitionDto.setKitUsageLineItems(kitDtos);
     }
+  }
+
+  private List<Orderable> getKitProducts(RequisitionV2Dto requisitionV2Dto) {
+    ProcessingPeriodDto period = periodService.getPeriod(requisitionV2Dto.getProcessingPeriodId());
+    List<Orderable> allKitProducts = orderableKitRepository.findAllKitProduct();
+
+    if (period.isReportOnly()) {
+      Set<UUID> additionalOrderableIds =
+          programAdditionalOrderableRepository.findAllByProgramId(requisitionV2Dto.getProgramId())
+          .stream().map(ProgramAdditionalOrderable::getAdditionalOrderableId)
+          .collect(toSet());
+      return allKitProducts
+          .stream()
+          .filter(kit -> additionalOrderableIds.contains(kit.getId()))
+          .collect(Collectors.toList());
+    }
+
+    return allKitProducts
+        .stream()
+        .filter(kit -> isInProgram(kit, requisitionV2Dto.getProgramId()))
+        .collect(Collectors.toList());
+
+  }
+
+  private boolean isInProgram(Orderable orderable, UUID programId) {
+    return orderable.getProgramOrderables()
+        .stream()
+        .anyMatch(p -> programId.equals(p.getProgram().getId()));
   }
 
   private boolean isEnableKit(RequisitionV2Dto v2Dto,
@@ -206,7 +244,6 @@ public class SiglusUsageReportService {
       RequisitionV2Dto requisitionV2Dto, List<Orderable> allKitProducts) {
     List<StockCardRangeSummaryDto> summaryDtos = new ArrayList<>();
     if (isExistCalculateStockCard(templateColumnSections)) {
-      List<UUID> supportPrograms = reportSupportedProgram(requisitionV2Dto);
       log.info("get all program extension");
       Map<UUID, List<Orderable>> groupKitProducts = allKitProducts.stream()
           .collect(Collectors.groupingBy(kitProduct -> {
@@ -215,9 +252,9 @@ public class SiglusUsageReportService {
             return kitProductDto.getPrograms().stream().findFirst().get()
                 .getProgramId();
           }));
-      for (Map.Entry<UUID, List<Orderable>> gropuKit : groupKitProducts.entrySet()) {
-        updateSupportProgramStockCardRange(requisitionV2Dto, supportPrograms, summaryDtos,
-            gropuKit);
+      for (Map.Entry<UUID, List<Orderable>> groupKit : groupKitProducts.entrySet()) {
+        updateSupportProgramStockCardRange(requisitionV2Dto,  summaryDtos,
+            groupKit);
       }
     }
     return summaryDtos;
@@ -247,28 +284,20 @@ public class SiglusUsageReportService {
   }
 
   private void updateSupportProgramStockCardRange(RequisitionV2Dto requisitionV2Dto,
-      List<UUID> supportPrograms, List<StockCardRangeSummaryDto> summaryDtos,
-      Entry<UUID, List<Orderable>> gropuKit) {
-    if (supportPrograms.contains(gropuKit.getKey())) {
-      Set<VersionIdentityDto> kitProducts = gropuKit.getValue()
-          .stream()
-          .map(orderable -> new VersionIdentityDto(orderable.getId(),
-              orderable.getVersionNumber()))
-          .collect(toSet());
-      List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos =
-          stockCardRangeSummaryStockManagementService.search(gropuKit.getKey(),
-              requisitionV2Dto.getFacility().getId(),
-              kitProducts, null,
-              getActualDate(requisitionV2Dto.getExtraData(), ACTUAL_START_DATE),
-              getActualDate(requisitionV2Dto.getExtraData(), ACTUAL_END_DATE));
-      summaryDtos.addAll(stockCardRangeSummaryDtos);
-    }
-  }
-
-  private List<UUID> reportSupportedProgram(RequisitionV2Dto requisitionV2Dto) {
-    List<UUID> reportSupportProgram = new ArrayList<>();
-    reportSupportProgram.add(requisitionV2Dto.getProgramId());
-    return reportSupportProgram;
+      List<StockCardRangeSummaryDto> summaryDtos,
+      Entry<UUID, List<Orderable>> groupKit) {
+    Set<VersionIdentityDto> kitProducts = groupKit.getValue()
+        .stream()
+        .map(orderable -> new VersionIdentityDto(orderable.getId(),
+            orderable.getVersionNumber()))
+        .collect(toSet());
+    List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos =
+        stockCardRangeSummaryStockManagementService.search(groupKit.getKey(),
+            requisitionV2Dto.getFacility().getId(),
+            kitProducts, null,
+            getActualDate(requisitionV2Dto.getExtraData(), ACTUAL_START_DATE),
+            getActualDate(requisitionV2Dto.getExtraData(), ACTUAL_END_DATE));
+    summaryDtos.addAll(stockCardRangeSummaryDtos);
   }
 
   private LocalDate getActualDate(Map<String, Object> extraData,
