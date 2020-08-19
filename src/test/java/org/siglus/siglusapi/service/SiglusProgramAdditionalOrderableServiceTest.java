@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.UUID;
@@ -84,11 +85,16 @@ public class SiglusProgramAdditionalOrderableServiceTest {
 
   @Test
   public void shouldCallDelete() {
+    // given
+    ProgramAdditionalOrderable additionalOrderable = new ProgramAdditionalOrderable();
+    when(programAdditionalOrderableRepository.findOne(id))
+        .thenReturn(additionalOrderable);
+
     // when
     siglusProgramAdditionalOrderableService.deleteAdditionalOrderable(id);
 
     // then
-    verify(programAdditionalOrderableRepository).delete(id);
+    verify(programAdditionalOrderableRepository).delete(additionalOrderable);
   }
 
   @Test

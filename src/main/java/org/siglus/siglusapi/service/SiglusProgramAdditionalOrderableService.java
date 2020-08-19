@@ -48,8 +48,13 @@ public class SiglusProgramAdditionalOrderableService {
   }
 
   public void deleteAdditionalOrderable(UUID id) {
+    ProgramAdditionalOrderable additionalOrderable = programAdditionalOrderableRepository
+        .findOne(id);
+    if (null == additionalOrderable) {
+      return;
+    }
     log.info("delete additional orderable by id: {}", id);
-    programAdditionalOrderableRepository.delete(id);
+    programAdditionalOrderableRepository.delete(additionalOrderable);
   }
 
   public void createAdditionalOrderables(List<ProgramAdditionalOrderableDto> dtos) {
