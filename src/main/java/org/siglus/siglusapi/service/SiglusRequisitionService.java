@@ -86,6 +86,7 @@ import org.openlmis.requisition.dto.ShipmentDto;
 import org.openlmis.requisition.dto.ShipmentLineItemDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.UserDto;
+import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
 import org.openlmis.requisition.exception.ValidationMessageException;
@@ -141,6 +142,7 @@ import org.siglus.siglusapi.dto.simam.NotificationSimamDto;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.util.OperatePermissionService;
@@ -277,6 +279,9 @@ public class SiglusRequisitionService {
 
   @Autowired
   private RegimenDataProcessor regimenDataProcessor;
+
+  @Autowired
+  private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -771,13 +776,16 @@ public class SiglusRequisitionService {
     List<ProcessingPeriodDto> periods = null;
     List<Requisition> previousRequisitions = requisition.getPreviousRequisitions();
 
+    ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
+    List<ApprovedProductDto> approvedProducts = siglusApprovedReferenceDataService
+        .getApprovedProducts(
+            userFacility.getId(), program.getId(), orderableIds, period.isReportOnly());
+    Map<UUID, List<ApprovedProductDto>> groupApprovedProduct =
+        approvedProducts.stream()
+            .collect(groupingBy(approvedProduct -> approvedProduct.getProgram().getId()));
     if (requisitionTemplate.isPopulateStockOnHandFromStockCards()) {
-      ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
-      stockCardRangeSummaryDtos =
-          stockCardRangeSummaryStockManagementService
-              .search(program.getId(), facility.getId(), null,
-                  requisition.getActualStartDate(),
-                  requisition.getActualEndDate());
+      stockCardRangeSummaryDtos = getStockCardRangeSummaryDtos(facility, groupApprovedProduct,
+          requisition.getActualStartDate(), requisition.getActualEndDate());
 
       LocalDate startDateForCalculateAvg;
       LocalDate endDateForCalculateAvg = requisition.getActualEndDate();
@@ -804,25 +812,20 @@ public class SiglusRequisitionService {
         periods = Lists.newArrayList(period);
       }
 
-      stockCardRangeSummariesToAverage =
-          stockCardRangeSummaryStockManagementService
-              .search(program.getId(), facility.getId(), null,
-                  startDateForCalculateAvg,
-                  endDateForCalculateAvg);
-
+      stockCardRangeSummariesToAverage = getStockCardRangeSummaryDtos(facility,
+          groupApprovedProduct, startDateForCalculateAvg, endDateForCalculateAvg);
 
     } else if (numberOfPreviousPeriodsToAverage > previousRequisitions.size()) {
       numberOfPreviousPeriodsToAverage = previousRequisitions.size();
     }
 
     OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
-
-    Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate, program.getId(),
-        facility.getId(), requisition.getActualEndDate());
-
-    Map<UUID, Integer> orderableBeginning = getOrderableBegingningMap(requisitionTemplate,
-        program.getId(), facility.getId(), requisition.getActualStartDate().minusDays(1));
-
+    Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate,
+        facility.getId(), requisition.getActualEndDate(), RequisitionLineItem.STOCK_ON_HAND,
+        groupApprovedProduct);
+    Map<UUID, Integer> orderableBeginning = getOrderableSohMap(requisitionTemplate,
+        facility.getId(), requisition.getActualStartDate().minusDays(1),
+        RequisitionLineItem.BEGINNING_BALANCE, groupApprovedProduct);
     simulateAuthenticationHelper.recoveryAuth(originAuth);
 
     ProofOfDeliveryDto pod = null;
@@ -835,15 +838,8 @@ public class SiglusRequisitionService {
         .stream()
         .collect(toMap(isa -> isa.getCommodityType().getId(), IdealStockAmountDto::getAmount));
 
-    // including the approved product of associate program, and the user facility
-    ProcessingPeriodDto period = periodService
-        .findPeriod(requisition.getProgramId(), requisition.getFacilityId(),
-            requisition.getProcessingPeriodId(), requisition.getEmergency());
-    ApproveProductsAggregator approvedProducts = requisitionService.getApproveProduct(
-        userFacility.getId(), program.getId(), period.isReportOnly());
-
     List<RequisitionLineItem> lineItemList = new ArrayList<>();
-    for (ApprovedProductDto approvedProductDto : approvedProducts.getAllProducts().values()) {
+    for (ApprovedProductDto approvedProductDto : approvedProducts) {
       UUID orderableId = approvedProductDto.getOrderable().getId();
 
       if (orderableIds.contains(orderableId)) {
@@ -853,7 +849,7 @@ public class SiglusRequisitionService {
         lineItemList.add(requisition.constructLineItem(requisitionTemplate, stockOnHand,
             beginningBalances, approvedProductDto, numberOfPreviousPeriodsToAverage,
             idealStockAmounts, stockCardRangeSummaryDtos, stockCardRangeSummariesToAverage,
-            periods, pod, approvedProducts.getFullSupplyProducts()));
+            periods, pod, approvedProducts));
       }
     }
     return lineItemList;
@@ -894,24 +890,39 @@ public class SiglusRequisitionService {
         .collect(Collectors.toList());
   }
 
-  private Map<UUID, Integer> getOrderableBegingningMap(RequisitionTemplate requisitionTemplate,
-      UUID programId, UUID facilityId, LocalDate actualEndDate) {
-    return stockOnHandRetrieverBuilderFactory.getInstance(requisitionTemplate,
-        RequisitionLineItem.BEGINNING_BALANCE)
-        .forProgram(programId)
-        .forFacility(facilityId)
-        .asOfDate(actualEndDate)
-        .build().get();
+  private List<StockCardRangeSummaryDto> getStockCardRangeSummaryDtos(FacilityDto facility,
+      Map<UUID, List<ApprovedProductDto>> groupApprovedProduct, LocalDate startDate,
+      LocalDate endDate) {
+    return groupApprovedProduct.keySet().stream()
+        .map(programId -> {
+          Set<VersionIdentityDto> orderableIdentities = groupApprovedProduct.get(programId)
+              .stream()
+              .map(product -> product.getIdentity())
+              .collect(Collectors.toSet());
+          return stockCardRangeSummaryStockManagementService
+              .search(programId, facility.getId(),
+                  orderableIdentities, null,
+                  startDate, endDate);
+        })
+        .flatMap(Collection::stream)
+        .collect(toList());
   }
 
   private Map<UUID, Integer> getOrderableSohMap(RequisitionTemplate requisitionTemplate,
-      UUID programId, UUID facilityId, LocalDate actualEndDate) {
-    return stockOnHandRetrieverBuilderFactory.getInstance(requisitionTemplate,
-        RequisitionLineItem.STOCK_ON_HAND)
-        .forProgram(programId)
-        .forFacility(facilityId)
-        .asOfDate(actualEndDate)
-        .build().get();
+      UUID facilityId, LocalDate date, String columnName,
+      Map<UUID, List<ApprovedProductDto>> groupApprovedProduct) {
+    return groupApprovedProduct.keySet().stream()
+        .map(programId -> stockOnHandRetrieverBuilderFactory
+            .getInstance(requisitionTemplate,columnName)
+            .forProgram(programId)
+            .forFacility(facilityId)
+            .forProducts(new ApproveProductsAggregator(groupApprovedProduct.get(programId),
+                programId))
+            .asOfDate(date)
+            .build().get())
+        .map(Map::entrySet)
+        .flatMap(Collection::stream)
+        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
   }
 
   private Integer decrementOrZero(Integer numberOfPreviousPeriodsToAverage) {

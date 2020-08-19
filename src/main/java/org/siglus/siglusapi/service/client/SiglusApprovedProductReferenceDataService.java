@@ -15,18 +15,26 @@
 
 package org.siglus.siglusapi.service.client;
 
+import static java.util.stream.Collectors.groupingBy;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto;
+import java.util.stream.Collectors;
+import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
-import org.openlmis.stockmanagement.service.referencedata.BaseReferenceDataService;
-import org.openlmis.stockmanagement.util.RequestParameters;
+import org.siglus.common.domain.ProgramAdditionalOrderable;
+import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.common.repository.ProgramOrderableRepository;
+import org.siglus.common.service.client.BaseReferenceDataService;
+import org.siglus.common.util.RequestParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -51,6 +59,39 @@ public class SiglusApprovedProductReferenceDataService extends
   @Autowired
   private ProgramOrderableRepository programOrderableRepository;
 
+  @Autowired
+  private ProgramAdditionalOrderableRepository additionalOrderableRepository;
+
+
+  public List<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId,
+      Collection<UUID> orderableIds, boolean reportOnly) {
+    if (reportOnly) {
+      List<ApprovedProductDto> approvedProducts = new ArrayList<>();
+      List<ProgramAdditionalOrderable> additionalOrderables =
+          additionalOrderableRepository.findAllByProgramId(programId);
+      if (!additionalOrderables.isEmpty()) {
+        Map<UUID, List<ProgramAdditionalOrderable>> additionalMap =
+            additionalOrderables.stream()
+                .filter(additionalOrderable ->
+                    orderableIds.contains(additionalOrderable.getAdditionalOrderableId()))
+                .collect(groupingBy(ProgramAdditionalOrderable::getOrderableOriginProgramId));
+        for (UUID orderableOriginProgramId : additionalMap.keySet()) {
+          List<UUID> orderableIdsForProgram = additionalMap.get(orderableOriginProgramId)
+              .stream()
+              .map(orderable -> orderable.getAdditionalOrderableId())
+              .collect(Collectors.toList());
+          approvedProducts
+              .addAll(getRequisitionApprovedProducts(facilityId,
+                  orderableOriginProgramId, orderableIdsForProgram));
+        }
+      }
+      return approvedProducts;
+    } else {
+      return getRequisitionApprovedProducts(facilityId, programId, orderableIds);
+    }
+
+  }
+
   /**
    * Retrieves all facility approved products fromGroups the reference data service, based on the
    * provided facility and full supply flag. It can be optionally filtered by the program ID. The
@@ -69,14 +110,29 @@ public class SiglusApprovedProductReferenceDataService extends
     if (!isEmpty(orderableIds)) {
       params.set("orderableId", orderableIds);
     }
-
     if (!programOrderableRepository.findByProgramId(programId).isEmpty()) {
-      Page<ApprovedProductDto> approvedProductPage =
-          getPage(facilityId + "/approvedProducts", params);
+      Page<org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto> approvedProductPage =
+          getPage(facilityId + "/approvedProducts", params, null, HttpMethod.GET,
+              org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto.class);
       return new OrderablesAggregator(new ArrayList<>(approvedProductPage.getContent()));
     }
-
     return new OrderablesAggregator(new ArrayList<>());
+  }
+
+  private List<ApprovedProductDto> getRequisitionApprovedProducts(UUID facilityId, UUID programId,
+      Collection<UUID> orderableIds) {
+    RequestParameters params = RequestParameters.init();
+
+    params.set("programId", programId);
+
+    if (!isEmpty(orderableIds)) {
+      params.set("orderableId", orderableIds);
+    }
+    if (!programOrderableRepository.findByProgramId(programId).isEmpty()) {
+
+      return getPage(facilityId + "/approvedProducts", params).getContent();
+    }
+    return Collections.emptyList();
   }
 
 }
