@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -44,9 +46,11 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
+import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.Dispensable;
@@ -57,9 +61,11 @@ import org.siglus.common.domain.referencedata.ProgramOrderable;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.OrderableKitRepository;
+import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.siglusapi.domain.AvailableUsageColumn;
 import org.siglus.siglusapi.domain.AvailableUsageColumnSection;
 import org.siglus.siglusapi.domain.KitUsageLineItem;
+import org.siglus.siglusapi.domain.ProgramAdditionalOrderable;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
@@ -68,10 +74,11 @@ import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.validation.group.sequence.RequisitionActionSequence;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
+import org.siglus.siglusapi.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.springframework.beans.BeanUtils;
 
-@SuppressWarnings({"PMD.UnusedPrivateField"})
+@SuppressWarnings({"PMD.UnusedPrivateField", "PMD.TooManyMethods"})
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusUsageReportServiceTest {
 
@@ -97,6 +104,15 @@ public class SiglusUsageReportServiceTest {
   @Mock
   private ValidatorFactory validatorFactory;
 
+  @Mock
+  private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
+
+  @Mock
+  private PeriodService periodService;
+
+  @Mock
+  private ProgramOrderableRepository programOrderableRepository;
+
   @InjectMocks
   SiglusUsageReportService siglusUsageReportService;
 
@@ -108,6 +124,10 @@ public class SiglusUsageReportServiceTest {
 
   private UUID requisitionId = UUID.randomUUID();
 
+  private UUID kitId = UUID.randomUUID();
+
+  private UUID kitId2 = UUID.randomUUID();
+
   private RequisitionTemplateExtensionDto extensionDto;
 
   private BasicRequisitionTemplateDto requisitionTemplateDto;
@@ -117,6 +137,8 @@ public class SiglusUsageReportServiceTest {
   private SiglusRequisitionDto siglusRequisitionDto;
 
   private Orderable kitProduct;
+
+  private Orderable kitProduct2;
 
   @Before
   public void prepare() {
@@ -137,12 +159,16 @@ public class SiglusUsageReportServiceTest {
     when(columnSectionRepository.findByRequisitionTemplateId(templateId))
         .thenReturn(getMockKitSection());
     kitProduct = new Orderable(Code.code("kitProduct"), Dispensable.createNew("each"), 10,
-        7, true, UUID.randomUUID(), 1L);
+        7, true, kitId, 1L);
+    kitProduct2 = new Orderable(Code.code("kitProduct"), Dispensable.createNew("each"), 10,
+        7, true, kitId2, 1L);
+
     Program program = new Program(programId);
     OrderableDisplayCategory category = OrderableDisplayCategory.createNew(Code.code("category"));
     ProgramOrderable programOrderable = ProgramOrderable
         .createNew(program, category, kitProduct, CurrencyUnit.USD);
     kitProduct.setProgramOrderables(Arrays.asList(programOrderable));
+    kitProduct2.setProgramOrderables(Arrays.asList(programOrderable));
     when(orderableKitRepository.findAllKitProduct()).thenReturn(Arrays.asList(kitProduct));
     usageLineItem = KitUsageLineItem.builder()
         .requisitionId(requisitionId)
@@ -151,6 +177,11 @@ public class SiglusUsageReportServiceTest {
         .value(10)
         .build();
     when(stockCardRangeSummaryStockManagementService.findAll()).thenReturn(new ArrayList<>());
+    when(programAdditionalOrderableRepository.findAllByProgramId(programId))
+        .thenReturn(mockProgramAdditionalOrderableList(kitId2));
+    when((programOrderableRepository.findByProgramId(programId)))
+        .thenReturn(mockProgramOrderableList());
+    when(periodService.getPeriod(any())).thenReturn(mockProcessingPeriodDto(false));
   }
 
   @Test
@@ -269,8 +300,55 @@ public class SiglusUsageReportServiceTest {
   }
 
   @Test
-  public void shouldReturnCalculatedKitValueIfColumnIsStockCard() {
+  public void shouldReturnCalculatedKitValueIfColumnIsStockCardWithIsReportOnlyFalse() {
     // given
+    Integer tagValue = Integer.valueOf(20);
+    prepareKitTestData(kitProduct, tagValue);
+
+    // when
+    SiglusRequisitionDto resultDto = siglusUsageReportService
+        .initiateUsageReport(requisitionV2Dto);
+
+    // then
+    assertEquals(tagValue,
+        resultDto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
+  }
+
+  @Test
+  public void shouldReturnCalculatedKitValueIfColumnIsStockCardWithIsReportOnlyTrue() {
+    // given
+    when(periodService.getPeriod(any())).thenReturn(mockProcessingPeriodDto(true));
+    when(orderableKitRepository.findAllKitProduct())
+        .thenReturn(newArrayList(kitProduct, kitProduct2));
+
+    Integer tagValue = Integer.valueOf(10);
+    prepareKitTestData(kitProduct2, tagValue);
+
+    // when
+    SiglusRequisitionDto resultDto = siglusUsageReportService
+        .initiateUsageReport(requisitionV2Dto);
+
+    // then
+    assertEquals(tagValue,
+        resultDto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
+  }
+
+  @Test
+  public void shouldNotDeleteKitLineItemIfListIsEmptyWhenRequisitionDelete1() {
+    // given
+    SiglusRequisitionDto siglusRequisitionDto = mock(SiglusRequisitionDto.class);
+    RequisitionV2Dto updatedDto = mock(RequisitionV2Dto.class);
+    Validator validator = mock(Validator.class);
+    when(validatorFactory.getValidator()).thenReturn(validator);
+
+    // when
+    siglusUsageReportService.saveUsageReportWithValidation(siglusRequisitionDto, updatedDto);
+
+    // then
+    verify(validator).validate(siglusRequisitionDto, RequisitionActionSequence.class);
+  }
+
+  private void prepareKitTestData(Orderable kit, Integer tagValue) {
     extensionDto.setEnableKitUsage(true);
     requisitionTemplateDto.setExtension(extensionDto);
     UUID facilityId = UUID.randomUUID();
@@ -288,49 +366,23 @@ public class SiglusUsageReportServiceTest {
         .findByRequisitionTemplateId(requisitionV2Dto.getTemplate().getId()))
         .thenReturn(mockSection);
     StockCardRangeSummaryDto summaryDto = new StockCardRangeSummaryDto();
-    summaryDto.setOrderable(new ObjectReferenceDto(kitProduct.getId(), ""));
+    summaryDto.setOrderable(new ObjectReferenceDto(kit.getId(), ""));
     Map<String, Integer> tagAmount = new HashMap<>();
-    tagAmount.put(tag, Integer.valueOf(20));
+    tagAmount.put(tag, tagValue);
     summaryDto.setTags(tagAmount);
     VersionIdentityDto versionIdentityDto =
-        new VersionIdentityDto(kitProduct.getId(), kitProduct.getVersionNumber());
+        new VersionIdentityDto(kit.getId(), kit.getVersionNumber());
     HashSet kitProducts = new HashSet();
     kitProducts.add(versionIdentityDto);
     OrderableDto kitProductDto = new OrderableDto();
-    kitProduct.export(kitProductDto);
+    kit.export(kitProductDto);
     final UUID programId = kitProductDto.getPrograms().stream().findFirst().get()
         .getProgramId();
     when(stockCardRangeSummaryStockManagementService
         .search(programId, facilityId, kitProducts, null,
             getActualDate(extraData, ACTUAL_START_DATE), getActualDate(extraData, ACTUAL_END_DATE)))
         .thenReturn(Arrays.asList(summaryDto));
-    KitUsageLineItem lineItem = getMockKitUsageLineItem();
-    lineItem.setCollection("kitColumn");
-    lineItem.setValue(20);
-    when(kitUsageRepository.save(Arrays.asList(lineItem))).thenReturn(Arrays.asList(lineItem));
-
-    // when
-    SiglusRequisitionDto resultDto = siglusUsageReportService
-        .initiateUsageReport(requisitionV2Dto);
-
-    // then
-    assertEquals(Integer.valueOf(20),
-        resultDto.getKitUsageLineItems().get(0).getServices().get("HF").getValue());
-  }
-
-  @Test
-  public void shouldNotDeleteKitLineItemIfListIsEmptyWhenRequisitionDelete1() {
-    // given
-    SiglusRequisitionDto siglusRequisitionDto = mock(SiglusRequisitionDto.class);
-    RequisitionV2Dto updatedDto = mock(RequisitionV2Dto.class);
-    Validator validator = mock(Validator.class);
-    when(validatorFactory.getValidator()).thenReturn(validator);
-
-    // when
-    siglusUsageReportService.saveUsageReportWithValidation(siglusRequisitionDto, updatedDto);
-
-    // then
-    verify(validator).validate(siglusRequisitionDto, RequisitionActionSequence.class);
+    when(kitUsageRepository.save(any(List.class))).thenAnswer(i -> i.getArguments()[0]);
   }
 
   private LocalDate getActualDate(Map<String, Object> extraData, String field) {
@@ -392,6 +444,25 @@ public class SiglusUsageReportServiceTest {
     availableUsageColumn.setSources("USER_INPUT|STOCK_CARDS");
     availableUsageColumn.setDisplayOrder(1);
     return Arrays.asList(availableUsageColumn);
+  }
+
+  private List<ProgramAdditionalOrderable> mockProgramAdditionalOrderableList(UUID kitId) {
+    ProgramAdditionalOrderable orderable = new ProgramAdditionalOrderable();
+    orderable.setAdditionalOrderableId(kitId);
+    orderable.setProgramId(programId);
+    return newArrayList(orderable);
+  }
+
+  private List<ProgramOrderable> mockProgramOrderableList() {
+    return newArrayList(new ProgramOrderable());
+  }
+
+  private ProcessingPeriodDto mockProcessingPeriodDto(boolean isReportOnly) {
+    ProcessingPeriodDto periodDto = new ProcessingPeriodDto();
+    Map<String, String> extra = new HashMap<>();
+    extra.put("reportOnly", isReportOnly ? "true" : "false");
+    periodDto.setExtraData(extra);
+    return periodDto;
   }
 
 }
