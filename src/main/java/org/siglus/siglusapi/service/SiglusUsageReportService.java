@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_REPORTING_TEMPLATE_NOT_FOUND_WITH_NAME;
 import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
 import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
+import static org.siglus.siglusapi.constant.FieldConstants.CONSUMED;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -365,6 +366,9 @@ public class SiglusUsageReportService {
               stockCardRangeSummaryDto.getOrderable().getId().equals(kitProductId)).findFirst()
           .orElse(null);
       Integer value = summaryDto == null ? 0 : summaryDto.getTagAmount(collection.getTag());
+      if (CONSUMED.equals(collection.getTag())) {
+        value = Math.abs(value);
+      }
       valueByTag += value;
     }
     return valueByTag;

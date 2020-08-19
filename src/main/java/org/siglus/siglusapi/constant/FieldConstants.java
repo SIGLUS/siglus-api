@@ -61,4 +61,6 @@ public class FieldConstants {
 
   public static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
+  public static final String CONSUMED = "consumed";
+
 }
