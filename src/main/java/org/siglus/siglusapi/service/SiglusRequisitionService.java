@@ -780,12 +780,9 @@ public class SiglusRequisitionService {
     List<ApprovedProductDto> approvedProducts = siglusApprovedReferenceDataService
         .getApprovedProducts(
             userFacility.getId(), program.getId(), orderableIds, period.isReportOnly());
-    Map<UUID, List<ApprovedProductDto>> groupApprovedProduct =
-        approvedProducts.stream()
-            .collect(groupingBy(approvedProduct -> approvedProduct.getProgram().getId()));
-    if (requisitionTemplate.isPopulateStockOnHandFromStockCards()) {
-      stockCardRangeSummaryDtos = getStockCardRangeSummaryDtos(facility, groupApprovedProduct,
-          requisition.getActualStartDate(), requisition.getActualEndDate());
+    if (requisitionTemplate.isPopulateStockOnHandFromStockCards() && requisition.getEmergency()) {
+      stockCardRangeSummaryDtos = getStockCardRangeSummaryDtos(facility, program.getId(),
+          approvedProducts, requisition.getActualStartDate(), requisition.getActualEndDate());
 
       LocalDate startDateForCalculateAvg;
       LocalDate endDateForCalculateAvg = requisition.getActualEndDate();
@@ -812,8 +809,8 @@ public class SiglusRequisitionService {
         periods = Lists.newArrayList(period);
       }
 
-      stockCardRangeSummariesToAverage = getStockCardRangeSummaryDtos(facility,
-          groupApprovedProduct, startDateForCalculateAvg, endDateForCalculateAvg);
+      stockCardRangeSummariesToAverage = getStockCardRangeSummaryDtos(facility, program.getId(),
+          approvedProducts, startDateForCalculateAvg, endDateForCalculateAvg);
 
     } else if (numberOfPreviousPeriodsToAverage > previousRequisitions.size()) {
       numberOfPreviousPeriodsToAverage = previousRequisitions.size();
@@ -822,10 +819,10 @@ public class SiglusRequisitionService {
     OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
     Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate,
         facility.getId(), requisition.getActualEndDate(), RequisitionLineItem.STOCK_ON_HAND,
-        groupApprovedProduct);
+        program.getId(), approvedProducts);
     Map<UUID, Integer> orderableBeginning = getOrderableSohMap(requisitionTemplate,
         facility.getId(), requisition.getActualStartDate().minusDays(1),
-        RequisitionLineItem.BEGINNING_BALANCE, groupApprovedProduct);
+        RequisitionLineItem.BEGINNING_BALANCE, program.getId(), approvedProducts);
     simulateAuthenticationHelper.recoveryAuth(originAuth);
 
     ProofOfDeliveryDto pod = null;
@@ -841,16 +838,13 @@ public class SiglusRequisitionService {
     List<RequisitionLineItem> lineItemList = new ArrayList<>();
     for (ApprovedProductDto approvedProductDto : approvedProducts) {
       UUID orderableId = approvedProductDto.getOrderable().getId();
+      Integer stockOnHand = orderableSoh.get(orderableId);
+      Integer beginningBalances = orderableBeginning.get(orderableId);
 
-      if (orderableIds.contains(orderableId)) {
-        Integer stockOnHand = orderableSoh.get(orderableId);
-        Integer beginningBalances = orderableBeginning.get(orderableId);
-
-        lineItemList.add(requisition.constructLineItem(requisitionTemplate, stockOnHand,
-            beginningBalances, approvedProductDto, numberOfPreviousPeriodsToAverage,
-            idealStockAmounts, stockCardRangeSummaryDtos, stockCardRangeSummariesToAverage,
-            periods, pod, approvedProducts));
-      }
+      lineItemList.add(requisition.constructLineItem(requisitionTemplate, stockOnHand,
+          beginningBalances, approvedProductDto, numberOfPreviousPeriodsToAverage,
+          idealStockAmounts, stockCardRangeSummaryDtos, stockCardRangeSummariesToAverage,
+          periods, pod, approvedProducts));
     }
     return lineItemList;
   }
@@ -891,38 +885,30 @@ public class SiglusRequisitionService {
   }
 
   private List<StockCardRangeSummaryDto> getStockCardRangeSummaryDtos(FacilityDto facility,
-      Map<UUID, List<ApprovedProductDto>> groupApprovedProduct, LocalDate startDate,
+      UUID programId, List<ApprovedProductDto> approveProduct, LocalDate startDate,
       LocalDate endDate) {
-    return groupApprovedProduct.keySet().stream()
-        .map(programId -> {
-          Set<VersionIdentityDto> orderableIdentities = groupApprovedProduct.get(programId)
-              .stream()
-              .map(product -> product.getIdentity())
-              .collect(Collectors.toSet());
-          return stockCardRangeSummaryStockManagementService
-              .search(programId, facility.getId(),
-                  orderableIdentities, null,
-                  startDate, endDate);
-        })
-        .flatMap(Collection::stream)
-        .collect(toList());
+    Set<VersionIdentityDto> orderableIdentities = approveProduct
+        .stream()
+        .map(product -> product.getIdentity())
+        .collect(Collectors.toSet());
+    return stockCardRangeSummaryStockManagementService
+        .search(programId, facility.getId(),
+            orderableIdentities, null,
+            startDate, endDate);
   }
 
   private Map<UUID, Integer> getOrderableSohMap(RequisitionTemplate requisitionTemplate,
-      UUID facilityId, LocalDate date, String columnName,
-      Map<UUID, List<ApprovedProductDto>> groupApprovedProduct) {
-    return groupApprovedProduct.keySet().stream()
-        .map(programId -> stockOnHandRetrieverBuilderFactory
-            .getInstance(requisitionTemplate,columnName)
-            .forProgram(programId)
-            .forFacility(facilityId)
-            .forProducts(new ApproveProductsAggregator(groupApprovedProduct.get(programId),
-                programId))
-            .asOfDate(date)
-            .build().get())
-        .map(Map::entrySet)
-        .flatMap(Collection::stream)
-        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
+      UUID facilityId, LocalDate date, String columnName, UUID programId,
+      List<ApprovedProductDto> approveProduct) {
+    return stockOnHandRetrieverBuilderFactory
+        .getInstance(requisitionTemplate, columnName)
+        .forProgram(programId)
+        .forFacility(facilityId)
+        .forProducts(new ApproveProductsAggregator(approveProduct,
+            programId))
+        .asOfDate(date)
+        .build()
+        .get();
   }
 
   private Integer decrementOrZero(Integer numberOfPreviousPeriodsToAverage) {
