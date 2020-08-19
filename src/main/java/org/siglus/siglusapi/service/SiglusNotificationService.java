@@ -318,6 +318,7 @@ public class SiglusNotificationService {
         .map(right -> mapRightToPredicate(right, root, cb, currentUserFacilityId,
             currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups))
         .filter(Objects::nonNull)
+        .parallel()
         .reduce(cb::or)
         .orElse(cb.disjunction());
   }
