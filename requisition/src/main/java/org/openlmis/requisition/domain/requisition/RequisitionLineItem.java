@@ -459,7 +459,7 @@ public class RequisitionLineItem extends BaseEntity {
         .ofNullable(orderableDto)
         // [SIGLUS change start]
         // [change reason]: enable print requisition
-        //.map(item -> item.findProgramOrderable(requisition.getProgramId()))
+        // .map(item -> item.findProgramOrderable(requisition.getProgramId()))
         .map(item -> Optional
         .ofNullable(orderableDto.getPrograms())
             .orElse(Sets.newHashSet(new ProgramOrderableDto())).stream().findFirst())
