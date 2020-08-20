@@ -21,8 +21,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
@@ -31,7 +29,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -40,12 +37,6 @@ import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.testutils.ApprovedProductDtoDataBuilder;
 import org.openlmis.requisition.testutils.OrderableDtoDataBuilder;
 import org.openlmis.requisition.testutils.StockCardSummaryDtoDataBuilder;
-import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableFulfillDto;
-import org.openlmis.stockmanagement.service.StockCardSummaries;
-import org.openlmis.stockmanagement.service.StockCardSummariesService;
-import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StandardStockOnHandRetrieverTest extends StockOnHandRetrieverTest {
@@ -55,16 +46,6 @@ public class StandardStockOnHandRetrieverTest extends StockOnHandRetrieverTest {
 
   @Mock
   private StockCardSummariesStockManagementService stockCardSummariesStockManagementService;
-
-  // [SIGLUS change start]
-  // [change reason]: call our modify stock card.
-  // private StockCardSummariesStockManagementService stockCardSummariesService;
-  @Mock
-  private StockCardSummariesService stockCardSummariesService;
-
-  @InjectMocks
-  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
-  // [SIGLUS change end]
 
   private UUID programId = UUID.randomUUID();
   private UUID facilityId = UUID.randomUUID();
@@ -105,65 +86,15 @@ public class StandardStockOnHandRetrieverTest extends StockOnHandRetrieverTest {
     when(stockCardSummariesStockManagementService
         .search(programId, facilityId, products.getFullSupplyOrderableIds(), asOfDate))
         .thenReturn(Lists.newArrayList(stockCardSummary, stockCardSummary2));
-
-    // [SIGLUS change start]
-    // [change reason]: call our modify stock card.
-    // when(stockCardSummariesStockManagementService
-    //     .search(programId, facilityId, products.getFullSupplyOrderableIds(), asOfDate))
-    //     .thenReturn(Lists.newArrayList(stockCardSummary));
-    setMockDataforStockSummaries();
-    // [SIGLUS change end]
   }
-
-  // [SIGLUS change start]
-  // [change reason]: call our modify stock card.
-  private void setMockDataforStockSummaries() {
-    StockCardSummaries summaries = new StockCardSummaries();
-    StockCard stockCard = StockCard.builder()
-        .stockOnHand(15)
-        .orderableId(orderable)
-        .build();
-    StockCard stockCard2 = StockCard.builder()
-        .stockOnHand(20)
-        .orderableId(orderable2)
-        .build();
-    summaries.setStockCardsForFulfillOrderables(Arrays.asList(stockCard, stockCard2));
-    OrderableFulfillDto fulfillDto = new OrderableFulfillDto(Arrays.asList(orderable),
-        Arrays.asList(orderable));
-    OrderableFulfillDto fulfillDto2 = new OrderableFulfillDto(Arrays.asList(orderable2),
-        Arrays.asList(orderable2));
-    HashMap<UUID, OrderableFulfillDto> orderableFulfillMap = new HashMap<UUID,
-        OrderableFulfillDto>();
-    orderableFulfillMap.put(orderable, fulfillDto);
-    orderableFulfillMap.put(orderable2, fulfillDto2);
-    summaries.setOrderableFulfillMap(orderableFulfillMap);
-    StockCardSummariesV2SearchParams v2SearchParams = StockCardSummariesV2SearchParams.builder()
-        .programId(programId)
-        .facilityId(facilityId)
-        .asOfDate(asOfDate)
-        .build();
-    when(stockCardSummariesService
-        .findStockCards(v2SearchParams))
-        .thenReturn(summaries);
-  }
-  // [SIGLUS change end]
 
   @Override
   StockOnHandRetriever getRetriever() {
-    // [SIGLUS change start]
-    // [change reason]: call our modify stock card.
-    //    return new StandardStockOnHandRetriever(
-    //        stockCardSummariesStockManagementService,
-    //        products, programId,
-    //        facilityId, asOfDate
-    //    );
     return new StandardStockOnHandRetriever(
-        stockCardSummariesService,
-        stockCardSummariesV2DtoBuilder,
+        stockCardSummariesStockManagementService,
         products, programId,
         facilityId, asOfDate
     );
-    // [SIGLUS change end]
   }
 
   @Override
@@ -175,34 +106,10 @@ public class StandardStockOnHandRetrieverTest extends StockOnHandRetrieverTest {
 
   @Test
   public void shouldRetrieveAndReturnStockCardsEvenIfNotAllAreAvailable() {
-    // [SIGLUS change start]
-    // [change reason]: call our modify stock card.
-    // when(stockCardSummariesStockManagementService
-    //     .search(programId, facilityId, products.getFullSupplyOrderableIds(), asOfDate))
-    //     .thenReturn(Lists.newArrayList(stockCardSummary));
-    StockCardSummaries summaries = new StockCardSummaries();
+    when(stockCardSummariesStockManagementService
+        .search(programId, facilityId, products.getFullSupplyOrderableIds(), asOfDate))
+        .thenReturn(Lists.newArrayList(stockCardSummary));
 
-    StockCard stockCard = StockCard.builder()
-        .stockOnHand(15)
-        .orderableId(orderable)
-        .build();
-    summaries.setStockCardsForFulfillOrderables(Arrays.asList(stockCard));
-
-    OrderableFulfillDto fulfillDto = new OrderableFulfillDto(Arrays.asList(orderable),
-        Arrays.asList(orderable));
-    HashMap<UUID, OrderableFulfillDto> orderableFulfillMap = new HashMap<UUID,
-        OrderableFulfillDto>();
-    orderableFulfillMap.put(orderable, fulfillDto);
-    summaries.setOrderableFulfillMap(orderableFulfillMap);
-    StockCardSummariesV2SearchParams v2SearchParams = StockCardSummariesV2SearchParams.builder()
-        .programId(programId)
-        .facilityId(facilityId)
-        .asOfDate(asOfDate)
-        .build();
-    when(stockCardSummariesService
-        .findStockCards(v2SearchParams))
-        .thenReturn(summaries);
-    // [SIGLUS change end]
     Map<UUID, Integer> stockOnHands = getRetriever().get();
 
     assertThat(stockOnHands.size(), is(1));

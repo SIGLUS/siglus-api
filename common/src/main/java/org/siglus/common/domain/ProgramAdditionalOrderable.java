@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.common.domain;
 
 import static com.google.common.collect.Lists.newArrayList;
 
@@ -26,8 +26,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto;
+import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.springframework.beans.BeanUtils;
 
 @Entity

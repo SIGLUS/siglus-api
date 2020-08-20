@@ -33,7 +33,7 @@ public class RepositoryConstants {
 
 
   public static final String SELECT_PROGRAM_ADDITIONAL_ORDERABLE =
-      "select new org.siglus.siglusapi.dto.ProgramAdditionalOrderableDto(ao.id, ao.programId, "
+      "select new org.siglus.common.dto.ProgramAdditionalOrderableDto(ao.id, ao.programId, "
           + "ao.additionalOrderableId, "
           + "o.productCode, o.fullProductName, o.description, ao.orderableOriginProgramId) ";
 

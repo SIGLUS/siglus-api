@@ -16,32 +16,17 @@
 package org.openlmis.requisition.service.stockmanagement;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
-import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.stockmanagement.StockCardSummaryDto;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
-import org.openlmis.stockmanagement.service.StockCardSummaries;
-import org.openlmis.stockmanagement.service.StockCardSummariesService;
-import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 
 @AllArgsConstructor
 final class StandardStockOnHandRetriever implements StockOnHandRetriever {
-
-  // [SIGLUS change start]
-  // [change reason]: call our modify stock card.
-  // private StockCardSummariesStockManagementService stockCardSummariesService;
-  private final StockCardSummariesService stockCardSummariesService;
-  private final StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
-  // [SIGLUS change end]
-
+  private StockCardSummariesStockManagementService stockCardSummariesService;
   private ApproveProductsAggregator products;
   private UUID programId;
   private UUID facilityId;
@@ -53,37 +38,8 @@ final class StandardStockOnHandRetriever implements StockOnHandRetriever {
   }
 
   private List<StockCardSummaryDto> getCards() {
-    // [SIGLUS change start]
-    // [change reason]: 1. call ourself stockCardSummariesService to make sure that
-    //                  orderableFulfillService can get by virtual program.
-    //                  2. support no product section
-    // return stockCardSummariesService
-    //     .search(programId, facilityId, products.getFullSupplyOrderableIds(), asOfDate);
-    // StockCardSummariesV2SearchParams
-    if (products != null && products.getFullSupplyProducts().isEmpty()) {
-      return Collections.emptyList();
-    }
-    StockCardSummariesV2SearchParams v2SearchParams = StockCardSummariesV2SearchParams.builder()
-        .programId(programId)
-        .facilityId(facilityId)
-        .asOfDate(asOfDate)
-        .build();
-    StockCardSummaries summaries = stockCardSummariesService
-        .findStockCards(v2SearchParams);
-    List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
-        summaries.getStockCardsForFulfillOrderables(),
-        summaries.getOrderableFulfillMap(),
-        false);
-    return dtos.stream()
-        .map(stockCardSummaryV2Dto -> {
-          StockCardSummaryDto summaryDto = new StockCardSummaryDto();
-          summaryDto.setOrderable(
-              new ObjectReferenceDto(stockCardSummaryV2Dto.getOrderable().getId(),
-                  stockCardSummaryV2Dto.getOrderable().getHref()));
-          summaryDto.setStockOnHand(stockCardSummaryV2Dto.getStockOnHand());
-          return summaryDto;
-        }).collect(Collectors.toList());
-    // [SIGLUS change end]
+    return stockCardSummariesService
+        .search(programId, facilityId, products.getFullSupplyOrderableIds(), asOfDate);
   }
 
   private Map<UUID, Integer> convert(List<StockCardSummaryDto> cards) {
