@@ -17,12 +17,16 @@ package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
 
+import com.google.common.collect.Lists;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
@@ -87,6 +91,10 @@ public class SiglusNotificationService {
 
   private static final String NOTIFY_FACILITY_ID = "notifyFacilityId";
 
+  // can't find any official document to describe this size, but if you try to reduce with cb.and or
+  // cb. or more than 200 predicates in a single thread, it will throw StackOverflow.
+  private static final int MAX_PREDICATES_PER_THREAD = 103;
+
   private final NotificationRepository repo;
 
   private final NotificationMapper mapper;
@@ -108,6 +116,8 @@ public class SiglusNotificationService {
   private final RequisitionGroupReferenceDataService requisitionGroupService;
 
   private final EntityManager em;
+
+  private final ExecutorService executor;
 
   public Page<NotificationDto> searchNotifications(Pageable pageable) {
     return repo
@@ -314,13 +324,28 @@ public class SiglusNotificationService {
     boolean canEditShipments = permissionStrings.stream().anyMatch(
         rightAssignment ->
             FulfillmentPermissionService.SHIPMENTS_EDIT.equals(rightAssignment.getRightName()));
-    return (root, query, cb) -> permissionStrings.stream()
-        .map(right -> mapRightToPredicate(right, root, cb, currentUserFacilityId,
-            currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups))
-        .filter(Objects::nonNull)
-        .parallel()
-        .reduce(cb::or)
-        .orElse(cb.disjunction());
+    return (root, query, cb) -> {
+      List<Predicate> predicates = permissionStrings.stream()
+          .map(right -> mapRightToPredicate(right, root, cb, currentUserFacilityId,
+              currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups))
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
+      List<List<Predicate>> subLists = Lists.partition(predicates, MAX_PREDICATES_PER_THREAD);
+      Predicate predicate = cb.disjunction();
+      List<Future<Predicate>> futures = new ArrayList<>();
+      for (List<Predicate> list : subLists) {
+        futures.add(executor.submit(() -> list.stream().reduce(cb::or).orElse(cb.disjunction())));
+      }
+      for (Future<Predicate> future : futures) {
+        try {
+          predicate = cb.or(predicate, future.get());
+        } catch (Exception e) {
+          throw new IllegalStateException("Unable to get result from sub thread", e);
+        }
+      }
+
+      return predicate;
+    };
   }
 
   private boolean canCurrentUserInternalApprove(UUID currentUserFacilityId,
