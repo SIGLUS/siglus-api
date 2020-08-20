@@ -26,6 +26,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyCollection;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -40,6 +41,7 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMI
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_AUTHORIZE;
 import static org.openlmis.requisition.service.PermissionService.REQUISITION_CREATE;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
@@ -149,6 +151,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.util.OperatePermissionService;
@@ -299,6 +302,9 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private RegimenDataProcessor regimenDataProcessor;
+
+  @Mock
+  private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
 
   private UUID facilityId = UUID.randomUUID();
 
@@ -561,16 +567,17 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(createUserFacility());
     when(siglusProgramService.getProgram(programId)).thenReturn(createProgramDto());
     when(periodService.getPeriod(processingPeriodId)).thenReturn(createProcessingPeriod());
-    when(stockCardRangeSummaryStockManagementService.search(any(), any(), any(), any(), any()))
-        .thenReturn(createStockCardRangeSummaryList());
+    when(stockCardRangeSummaryStockManagementService.search(any(), any(),  any(),any(), any(),
+        any())).thenReturn(createStockCardRangeSummaryList());
     List<ProcessingPeriodDto> processingPeriodDtos = new ArrayList<>();
     when(periodService.getPeriods(any())).thenReturn(processingPeriodDtos);
     when(simulateAuthenticationHelper.simulateCrossServiceAuth()).thenReturn(null);
     when(proofOfDeliveryService.get(any())).thenReturn(new ProofOfDeliveryDto());
     when(idealStockAmountReferenceDataService.search(facilityId, processingPeriodId))
         .thenReturn(createIdealStockAmountDtoList());
-    when(requisitionService.getApproveProduct(any(), any(), anyBoolean()))
-        .thenReturn(createApproveProductsAggregator(orderableId2));
+    when(siglusApprovedReferenceDataService.getApprovedProducts(any(), any(),
+        anyCollection(), anyBoolean()))
+        .thenReturn(getApprovedPrdouctList());
     when(requisitionService.validateCanApproveRequisition(any(), any()))
         .thenReturn(new ValidationResult());
     when(siglusOrderableService.getOrderableExpirationDate(any()))
@@ -1542,6 +1549,7 @@ public class SiglusRequisitionServiceTest {
     newV2Req.setProcessingPeriod(new ObjectReferenceDto(processingPeriodId));
     newV2Req.setId(requisitionId);
     newV2Req.setFacility(new ObjectReferenceDto(facilityId));
+    newV2Req.setReportOnly(false);
     Set<VersionObjectReferenceDto> products = new HashSet<>();
     products.add(productVersionObjectReference1);
     products.add(productVersionObjectReference2);
@@ -1780,6 +1788,7 @@ public class SiglusRequisitionServiceTest {
     requisitionV2Dto.setTemplate(createTemplateDto());
     requisitionV2Dto.setStatus(RequisitionStatus.AUTHORIZED);
     requisitionV2Dto.setId(requisitionId);
+    requisitionV2Dto.setReportOnly(false);
     return requisitionV2Dto;
   }
 
@@ -1824,7 +1833,7 @@ public class SiglusRequisitionServiceTest {
     return orderable;
   }
 
-  private ApproveProductsAggregator createApproveProductsAggregator(UUID orderableId) {
+  private List<ApprovedProductDto> getApprovedPrdouctList() {
     MetadataDto meta = createMetadataDto();
     OrderableDto orderable = createOrderableDto(meta);
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
@@ -1833,7 +1842,7 @@ public class SiglusRequisitionServiceTest {
     ApprovedProductDto productDto = createApprovedProductDto(orderable, meta);
     List<ApprovedProductDto> list = new ArrayList<>();
     list.add(productDto);
-    return new ApproveProductsAggregator(list, programId);
+    return list;
   }
 
   private ApproveProductsAggregator createApproveProductsAggregator() {
@@ -1909,6 +1918,7 @@ public class SiglusRequisitionServiceTest {
   private ProcessingPeriodDto createProcessingPeriod() {
     ProcessingPeriodDto processingPeriodDto = new ProcessingPeriodDto();
     processingPeriodDto.setId(processingPeriodId);
+    processingPeriodDto.setExtraData(ImmutableMap.of("reportOnly", "true"));
     return processingPeriodDto;
   }
 

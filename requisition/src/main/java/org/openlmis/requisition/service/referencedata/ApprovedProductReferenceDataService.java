@@ -94,6 +94,20 @@ public class ApprovedProductReferenceDataService extends
 
   // [SIGLUS change start]
   // [change reason]: support for additional product
+
+  public Page<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId,
+      Collection<UUID> orderableIds) {
+    RequestParameters params = RequestParameters.init();
+
+    params.set("programId", programId);
+
+    if (!CollectionUtils.isEmpty(orderableIds)) {
+      params.set("orderableId", orderableIds);
+    }
+
+    return getPage(facilityId + "/approvedProducts", params);
+  }
+
   public ApproveProductsAggregator getAdditionalApprovedProducts(UUID facilityId, UUID programId) {
     List<ProgramAdditionalOrderable> additionalOrderables =
         additionalOrderableRepository.findAllByProgramId(programId);
@@ -117,20 +131,6 @@ public class ApprovedProductReferenceDataService extends
 
     return new ApproveProductsAggregator(approvedProducts, programId);
   }
-
-  public Page<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId,
-      Collection<UUID> orderableIds) {
-    RequestParameters params = RequestParameters.init();
-
-    params.set("programId", programId);
-
-    if (!CollectionUtils.isEmpty(orderableIds)) {
-      params.set("orderableId", orderableIds);
-    }
-
-    return getPage(facilityId + "/approvedProducts", params);
-  }
-
   // [SIGLUS change end]
 
 }

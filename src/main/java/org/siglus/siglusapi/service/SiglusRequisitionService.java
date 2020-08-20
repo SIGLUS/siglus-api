@@ -779,7 +779,8 @@ public class SiglusRequisitionService {
     ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
     List<ApprovedProductDto> approvedProducts = siglusApprovedReferenceDataService
         .getApprovedProducts(
-            userFacility.getId(), program.getId(), orderableIds, period.isReportOnly());
+            userFacility.getId(), program.getId(), orderableIds,
+            period.isReportOnly() && Boolean.FALSE.equals(requisition.getEmergency()));
     if (requisitionTemplate.isPopulateStockOnHandFromStockCards() && requisition.getEmergency()) {
       stockCardRangeSummaryDtos = getStockCardRangeSummaryDtos(facility, program.getId(),
           approvedProducts, requisition.getActualStartDate(), requisition.getActualEndDate());

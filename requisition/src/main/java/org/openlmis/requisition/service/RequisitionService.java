@@ -281,9 +281,9 @@ public class RequisitionService {
     //     .get();
     Map<UUID, List<ApprovedProductDto>> groupApprovedProduct =
         approvedProducts.getFullSupplyProducts().stream()
-            .collect(groupingBy(approvedProduct->approvedProduct.getProgram().getId()));
+            .collect(groupingBy(approvedProduct -> approvedProduct.getProgram().getId()));
     profiler.start("FIND_STOCK_ON_HANDS");
-    Map<UUID, Integer> orderableSoh= groupApprovedProduct.keySet().stream()
+    Map<UUID, Integer> orderableSoh = groupApprovedProduct.keySet().stream()
         .map(programId -> stockOnHandRetrieverBuilderFactory
             .getInstance(requisitionTemplate, RequisitionLineItem.STOCK_ON_HAND)
             .forProgram(programId)
@@ -361,11 +361,11 @@ public class RequisitionService {
                 .stream()
                 .map(product -> product.getIdentity())
                 .collect(Collectors.toSet());
-              return stockCardRangeSummaryStockManagementService
-                  .search(programId, facility.getId(),
-                      orderableIdentities, null,
-                      requisition.getActualStartDate(), requisition.getActualEndDate());
-              })
+            return stockCardRangeSummaryStockManagementService
+                .search(programId, facility.getId(),
+                    orderableIdentities, null,
+                    requisition.getActualStartDate(), requisition.getActualEndDate());
+          })
           .flatMap(Collection::stream)
           .collect(toList());
       // [SIGLUS change end]
@@ -1045,7 +1045,7 @@ public class RequisitionService {
   // [SIGLUS change start]
   // [change reason]: provide additional approved product
   public ApproveProductsAggregator getApproveProduct(UUID facilityId,
-      UUID programId, boolean reportOnly ) {
+      UUID programId, boolean reportOnly) {
     if (reportOnly) {
       return approvedProductReferenceDataService
           .getAdditionalApprovedProducts(facilityId, programId);

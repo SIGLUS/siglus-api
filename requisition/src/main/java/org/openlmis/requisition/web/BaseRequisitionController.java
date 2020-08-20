@@ -286,7 +286,7 @@ public abstract class BaseRequisitionController extends BaseController {
     List<ApprovedProductDto> approvedProductDtos = new ArrayList<>();
     if (templateExtension.getEnableProduct() || templateExtension.getEnableUsageInformation()) {
       ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(
-          facility.getId(), program.getId(), reportOnly);
+          facility.getId(), program.getId(), reportOnly && !emergency);
       List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
           .map(Orderable::getId).collect(toList());
       approvedProductDtos =
@@ -401,11 +401,16 @@ public abstract class BaseRequisitionController extends BaseController {
     //     * ProcessingPeriodDto, RequisitionStatus, Map, Map)
     // but actually the added product is from the current user approved product
     // then mismatch of these two cause in getMaxPeriodsOfStockFromApprovedProduct
-    // can't find product in method of RequisitionLineItem
+    // can't find product in method of RequisitionLineItem.
+    // Map<VersionEntityReference, ApprovedProductReference> productReferences = requisitionToUpdate
+    //     .getAvailableProducts()
+    //     .stream()
+    //     .collect(Collectors.toMap(ApprovedProductReference::getOrderable, Function.identity()));
     UserDto userDto = authenticationHelper.getCurrentUser();
     ApproveProductsAggregator aggregator = requisitionService
         .getApproveProduct(userDto.getHomeFacilityId(),
-            requisitionToUpdate.getProgramId(), period.isReportOnly());
+            requisitionToUpdate.getProgramId(), period.isReportOnly()
+                && !requisitionToUpdate.getEmergency());
 
     Map<VersionEntityReference, ApprovedProductReference> productReferences = aggregator
         .getApprovedProductReferences()
