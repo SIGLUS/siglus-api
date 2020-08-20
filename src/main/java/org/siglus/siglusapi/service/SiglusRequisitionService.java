@@ -771,9 +771,9 @@ public class SiglusRequisitionService {
     RequisitionTemplate requisitionTemplate = requisition.getTemplate();
     Integer numberOfPreviousPeriodsToAverage = decrementOrZero(requisitionTemplate
         .getNumberOfPeriodsToAverage());
-    List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos = null;
-    List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage = null;
-    List<ProcessingPeriodDto> periods = null;
+    List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos = Collections.emptyList();
+    List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage = Collections.emptyList();
+    List<ProcessingPeriodDto> periods = Collections.emptyList();
     List<Requisition> previousRequisitions = requisition.getPreviousRequisitions();
 
     ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
