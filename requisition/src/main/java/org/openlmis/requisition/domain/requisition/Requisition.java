@@ -598,8 +598,8 @@ public class Requisition extends BaseTimestampedEntity {
 
         RequisitionLineItem lineItem = new RequisitionLineItem(this, product);
         lineItem.setIdealStockAmount(extractIdealStockAmount(idealStockAmounts, product));
-        lineItem.setStockOnHand(stockData.getStockOnHand(orderableId));
-        lineItem.setBeginningBalance(stockData.getBeginningBalance(orderableId));
+        lineItem.setStockOnHand(initiateQuantity(stockData.getStockOnHand(orderableId)));
+        lineItem.setBeginningBalance(initiateQuantity(stockData.getBeginningBalance(orderableId)));
 
         StockCardRangeSummaryDto summary = findStockCardRangeSummary(
             stockCardRangeSummaries, lineItem.getOrderable().getId());
