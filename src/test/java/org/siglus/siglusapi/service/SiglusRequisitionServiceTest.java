@@ -306,6 +306,9 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
 
+  @Captor
+  private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
+
   private UUID facilityId = UUID.randomUUID();
 
   private UUID facilityId2 = UUID.randomUUID();
@@ -1014,73 +1017,36 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  public void shouldFilterApproveQualityForBeforeAuthorizedRequisition() {
+  public void shouldRevertRequisitionWhenReject() {
     // given
-    BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
-    mockBasicRequisitionDto.setId(requisitionId);
-    mockBasicRequisitionDto.setStatus(SUBMITTED);
-    MinimalFacilityDto facilityDto = new MinimalFacilityDto();
-    facilityDto.setId(facilityId);
-    mockBasicRequisitionDto.setFacility(facilityDto);
-    ProgramDto programDto = new ProgramDto();
-    programDto.setId(programId);
-    programDto.setCode(CODE);
-    mockBasicRequisitionDto.setProgram(programDto);
+    UUID requisitionId = UUID.randomUUID();
     HttpServletRequest request = new MockHttpServletRequest();
     HttpServletResponse response = new MockHttpServletResponse();
-    when(requisitionController.authorizeRequisition(requisitionId, request, response))
-        .thenReturn(mockBasicRequisitionDto);
-    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
-    lineItem.setApprovedQuantity(10);
+    BasicRequisitionDto dto = new BasicRequisitionDto();
+    when(requisitionController.rejectRequisition(requisitionId, request, response))
+        .thenReturn(dto);
+    RequisitionLineItem lineItem = new RequisitionLineItem();
     lineItem.setId(UUID.randomUUID());
-    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
-    siglusRequisitionDto.setStatus(SUBMITTED);
-    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
-        .thenReturn(siglusRequisitionDto);
+    lineItem.setBeginningBalance(10);
+    lineItem.setApprovedQuantity(20);
+    lineItem.setRemarks("123");
+    lineItem.setSkipped(true);
+    Requisition requisition = new Requisition();
+    requisition.setRequisitionLineItems(Arrays.asList(lineItem));
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
-    RequisitionLineItemExtension requisitionLineItemExtension = RequisitionLineItemExtension
-        .builder()
-        .requisitionLineItemId(lineItem.getId())
-        .authorizedQuantity(10)
-        .build();
-    when(lineItemExtensionRepository.findLineItems(singletonList(lineItem.getId())))
-        .thenReturn(singletonList(requisitionLineItemExtension));
-    when(requisitionV2Controller
-        .updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
-            any(HttpServletRequest.class), any(HttpServletResponse.class)))
-        .thenReturn(requisitionV2Dto);
-    SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
-    supervisoryNodeDto.setId(supervisoryNodeId);
-    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId))
-        .thenReturn(supervisoryNodeDto);
-    RightDto right = new RightDto();
-    right.setId(rightId);
-    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
-        .thenReturn(right);
-    when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
-    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
-      Message message = invocation.getArgumentAt(0, Message.class);
-      return message.localMessage(messageSource, Locale.ENGLISH);
-    });
-    when(messageSource.getMessage(any(), any(), any()))
-        .thenReturn(MESSAGE);
-    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
-        .thenReturn(siglusRequisitionDto);
 
     // when
-    BasicRequisitionDto requisitionDto = siglusRequisitionService
-        .authorizeRequisition(requisitionId, request, response);
+    siglusRequisitionService.rejectRequisition(requisitionId, request, response);
 
     // then
-    verify(notificationService).postAuthorize(requisitionDto);
-    verify(requisitionV2Controller).updateRequisition(any(UUID.class),
-        siglusRequisitionDtoCaptor.capture(), any(HttpServletRequest.class),
-        any(HttpServletResponse.class));
-    SiglusRequisitionDto dto = siglusRequisitionDtoCaptor.getValue();
-    assertEquals(null, dto.getRequisitionLineItems().get(0).getApprovedQuantity());
-    verify(requisitionController).authorizeRequisition(requisitionId, request, response);
-    verify(archiveProductService).activateArchivedProducts(any(), any());
-    verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
+    verify(requisitionRepository).save(requisitionArgumentCaptor.capture());
+    RequisitionLineItem lineItemCaptor = requisitionArgumentCaptor.getValue()
+        .getRequisitionLineItems().get(0);
+    assertEquals(Integer.valueOf(10), lineItemCaptor.getBeginningBalance());
+    assertEquals(null, lineItemCaptor.getRemarks());
+    assertEquals(false, lineItemCaptor.getSkipped());
+    assertEquals(null, lineItemCaptor.getApprovedQuantity());
+    verify(notificationService).postReject(dto);
   }
 
   @Test
