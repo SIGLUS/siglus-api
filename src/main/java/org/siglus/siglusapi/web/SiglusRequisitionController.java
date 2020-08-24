@@ -26,7 +26,6 @@ import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
-import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,9 +57,6 @@ public class SiglusRequisitionController {
 
   @Autowired
   private SiglusProcessingPeriodService siglusProcessingPeriodService;
-
-  @Autowired
-  private SiglusNotificationService notificationService;
 
   @PostMapping("/initiate")
   @ResponseStatus(HttpStatus.CREATED)
@@ -138,11 +134,7 @@ public class SiglusRequisitionController {
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,
       HttpServletResponse response) {
-    BasicRequisitionDto dto =
-        requisitionController.rejectRequisition(requisitionId, request, response);
-    siglusRequisitionService.deleteSiglusDraft(requisitionId);
-    notificationService.postReject(dto);
-    return dto;
+    return siglusRequisitionService.rejectRequisition(requisitionId, request, response);
   }
 
   @PostMapping("/createLineItem")
