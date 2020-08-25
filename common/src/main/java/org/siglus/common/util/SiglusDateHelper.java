@@ -36,4 +36,17 @@ public class SiglusDateHelper {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     return date.format(formatter);
   }
+
+  public String getYesterdayDateStr() {
+    LocalDate now = LocalDate.now(clock);
+    LocalDate yesterday = now.minusDays(1);
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    return yesterday.format(formatter);
+  }
+
+  public String getCurrentMonthStr() {
+    LocalDate now = LocalDate.now(clock);
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+    return now.format(formatter);
+  }
 }
