@@ -302,7 +302,7 @@ public class Application {
   }
 
   @Bean
-  public RestTemplate remoteRestTemplate(){
+  public RestTemplate remoteRestTemplate() {
     SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
     requestFactory.setConnectTimeout(60000);
     requestFactory.setReadTimeout(60000);
