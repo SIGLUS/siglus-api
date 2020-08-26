@@ -56,10 +56,13 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 
@@ -75,6 +78,7 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @PropertySource("classpath:fulfillment-application.properties")
 @EnableAspectJAutoProxy
 @EnableScheduling
+@EnableRetry
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class Application {
 
@@ -296,5 +300,14 @@ public class Application {
     bean.setValidationMessageSource(validationMessageSource());
     return bean;
   }
+
+  @Bean
+  public RestTemplate remoteRestTemplate() {
+    SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+    requestFactory.setConnectTimeout(60000);
+    requestFactory.setReadTimeout(60000);
+    return new RestTemplate(requestFactory);
+  }
+
 
 }
