@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto.fc;
 
+import java.util.Date;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,14 +26,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PageInfoDto {
+public class ReceiptPlanDto {
 
-  private Integer totalObjects;
+  private Date date;
 
-  private Integer totalPages = 1;
+  private String advancedPlanNumber;
 
-  private Integer pageNumber;
+  private String requisitionNumber;
 
-  private Integer pageSize;
+  private String clientName;
+
+  private Date lastUpdatedAt;
+
+  private String clientCode;
+
+  private String distributionPlanNumber;
+
+  private List<ProductDto> products;
 
 }

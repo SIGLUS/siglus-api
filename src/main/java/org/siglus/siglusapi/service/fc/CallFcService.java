@@ -15,15 +15,15 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
+import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.annotation.Backoff;
@@ -37,45 +37,31 @@ import org.springframework.web.client.RestTemplate;
 @Data
 public class CallFcService {
 
-  @Value("${fc.domain}")
-  private String domain;
-
-  @Value("${fc.key}")
-  private String key;
-
-  @Value("${fc.query.date}")
-  private String date;
-
   @Autowired
   RestTemplate remoteRestTemplate;
 
-  @Autowired
-  SiglusDateHelper dateHelper;
+  private List<IssueVoucherDto> issueVouchers = new ArrayList<>();
 
-  private List<IssueVoucherDto> issueVouchers;
+  private List<ReceiptPlanDto> receiptPlans = new ArrayList<>();
 
-  private PageInfoDto pageInfoDto;
+  private PageInfoDto pageInfoDto = new PageInfoDto();
 
   @Retryable(value = Exception.class, maxAttempts = 5, backoff = @Backoff(delay = 5000,
       multiplier = 2))
-  public void fetchIssueVouchers(int page) throws Exception {
-    String url = getUrl("/issueVoucher/issuevouchers");
-    log.info("[FC] call fetchIssueVouchers, date: {}, page: {}", date, page);
+  public <T> void fetchData(String url, Class<T[]> clazz) {
+    String param = url.split("psize=20&")[1];
+    log.info("[FC] fetch {}: {}", clazz.getSimpleName(), param);
     try {
-      ResponseEntity<IssueVoucherDto[]> issueVoucherResponse =
-          remoteRestTemplate.getForEntity(url + page, IssueVoucherDto[].class);
-
-      IssueVoucherDto[] body = issueVoucherResponse.getBody();
+      ResponseEntity<T[]> responseEntity = remoteRestTemplate.getForEntity(url, clazz);
+      T[] body = responseEntity.getBody();
       if (body.length == 0) {
-        log.info("[FC] fetchIssueVouchersFromFc: no result returned from fc");
+        log.info("[FC] fetch {}: no result returned from fc", clazz.getName());
         return;
       }
-      if (page == 1) {
-        setPageInfo(issueVoucherResponse.getHeaders());
-      }
-      this.issueVouchers.addAll(Arrays.asList(body));
+      setPageInfo(responseEntity.getHeaders());
+      updateResponseResult(clazz, body);
     } catch (Exception e) {
-      log.warn("[FC] call fetchIssueVouchers failed, date: {}, page: {}, retry...", date, page);
+      log.warn("[FC] fetch {} failed: {}, retry...", clazz.getSimpleName(), param);
       throw e;
     }
   }
@@ -84,6 +70,14 @@ public class CallFcService {
   public void recover(RuntimeException e) {
     log.error("[FC] call fc api failed with retry 5 times, message: {}", e.getMessage());
     throw e;
+  }
+
+  private <T> void updateResponseResult(Class<T[]> clazz, Object[] body) {
+    if (clazz.equals(IssueVoucherDto[].class)) {
+      this.issueVouchers.addAll(Arrays.asList((IssueVoucherDto[]) body));
+    } else if (clazz.equals(ReceiptPlanDto[].class)) {
+      this.receiptPlans.addAll(Arrays.asList((ReceiptPlanDto[]) body));
+    }
   }
 
   private void setPageInfo(HttpHeaders headers) {
@@ -97,22 +91,9 @@ public class CallFcService {
         .pageNumber(pageNumber)
         .pageSize(pageSize)
         .build();
-    log.info("[FC] page info: {}", pageInfoDto);
+    if (pageNumber == 1) {
+      log.info("[FC] page info: {}", pageInfoDto);
+    }
   }
 
-  private String getUrl(String path) {
-    return getUrl(path, false);
-  }
-
-  private String getUrl(String path, boolean isCmmOrCp) {
-    String url = domain + path + "?key=" + key + "&psize=20";
-    if (isCmmOrCp) {
-      String period = dateHelper.getCurrentMonthStr();
-      return url + "period=" + period + "&page=";
-    }
-    if (date == null || date.isEmpty()) {
-      date = dateHelper.getYesterdayDateStr();
-    }
-    return url + "&date=" + date + "&page=";
-  }
 }

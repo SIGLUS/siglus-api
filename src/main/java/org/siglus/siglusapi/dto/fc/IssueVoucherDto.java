@@ -32,7 +32,7 @@ public class IssueVoucherDto {
 
   private String supplyOrderNumber;
 
-  private String shippingDate;
+  private Date shippingDate;
 
   private String clientName;
 

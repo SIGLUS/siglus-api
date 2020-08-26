@@ -31,21 +31,32 @@ public class ProductDto {
 
   private Date expiryDate;
 
-  private int packSize;
+  private Integer packSize;
 
-  private int numberOfPallets;
+  private Integer numberOfPallets;
 
   private String fnmCode;
 
-  private int orderedQuantity;
+  private Integer orderedQuantity;
 
-  private int quantityPerPallet;
+  private Integer quantityPerPallet;
 
-  private int shippedQuantity;
+  private Integer shippedQuantity;
 
   private String batch;
 
   private String productDescription;
 
-  private int approvedQuantity;
+  private Integer approvedQuantity;
+
+  private Integer quantityPendig;
+
+  private Double price;
+
+  private Integer quantityToReceive;
+
+  private String warehouseName;
+
+  private String warehouseCode;
+
 }

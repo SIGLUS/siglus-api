@@ -15,36 +15,86 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
+
 import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.common.util.SiglusDateHelper;
+import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
+import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 @Service
 @Slf4j
 public class FcScheduleService {
 
-  @Autowired
-  RestTemplate remoteRestTemplate;
+  @Value("${fc.domain}")
+  private String domain;
+
+  @Value("${fc.key}")
+  private String key;
 
   @Autowired
-  CallFcService callFcService;
+  private SiglusDateHelper dateHelper;
+
+  @Autowired
+  private CallFcService callFcService;
+
+  @Scheduled(cron = "${fc.receiptplan.cron}", zone = "${time.zoneId}")
+  public void fetchReceiptPlansFromFc() throws Exception {
+    fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API);
+  }
 
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = "${time.zoneId}")
   public void fetchIssueVouchersFromFc() throws Exception {
+    fetchDataFromFc(IssueVoucherDto[].class, ISSUE_VOUCHER_API);
+  }
+
+  public <T> void fetchDataFromFc(Class<T[]> clazz, String path) throws Exception {
+    fetchDataFromFc(clazz, path, "20200501");
+  }
+
+  public <T> void fetchDataFromFc(Class<T[]> clazz, String path, String date) throws Exception {
     final long startTime = System.currentTimeMillis();
-    log.info("[FC] fetchIssueVouchersFromFc start");
-    callFcService.setIssueVouchers(new ArrayList<>());
-    callFcService.setPageInfoDto(new PageInfoDto());
+    initData(clazz);
     for (int page = 1; page <= callFcService.getPageInfoDto().getTotalPages(); page++) {
-      callFcService.fetchIssueVouchers(page);
+      callFcService.fetchData(getUrl(path, page, date), clazz);
     }
-    log.info("[FC] issue voucher size: {}", callFcService.getIssueVouchers().size());
-    log.info("[FC] fetchIssueVouchersFromFc finish, cost: {}ms",
-        System.currentTimeMillis() - startTime);
+    log.info("[FC] fetch {} finish, total size: {}, cost: {}ms", clazz.getSimpleName(),
+        getTotalSize(clazz), System.currentTimeMillis() - startTime);
+  }
+
+  private String getUrl(String path, int page, String date) {
+    if (date == null || date.isEmpty()) {
+      date = dateHelper.getYesterdayDateStr();
+    }
+    return domain + path + "?key=" + key + "&psize=20&page=" + page + "&date=" + date;
+  }
+
+  private String getUrlWithPeriod(String path, int page) {
+    return domain + path + "?key=" + key + "&psize=20&page=" + page+ "period="
+        + dateHelper.getCurrentMonthStr();
+  }
+
+  private <T> int getTotalSize(Class<T[]> clazz) {
+    if (clazz.equals(IssueVoucherDto[].class)) {
+      return callFcService.getIssueVouchers().size();
+    }
+    return callFcService.getReceiptPlans().size();
+  }
+
+  private <T> void initData(Class<T[]> clazz) {
+    if (clazz.equals(IssueVoucherDto[].class)) {
+      callFcService.setIssueVouchers(new ArrayList<>());
+    } else {
+      callFcService.setReceiptPlans(new ArrayList<>());
+    }
+    callFcService.setPageInfoDto(new PageInfoDto());
   }
 
 }
