@@ -141,6 +141,7 @@ import org.siglus.siglusapi.dto.simam.MessageSimamDto;
 import org.siglus.siglusapi.dto.simam.NotificationSimamDto;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
@@ -283,6 +284,9 @@ public class SiglusRequisitionService {
   @Autowired
   private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
 
+  @Autowired
+  private RequisitionExtensionRepository requisitionExtensionRepository;
+
   @Value("${service.url}")
   private String serviceUrl;
 
@@ -374,6 +378,7 @@ public class SiglusRequisitionService {
         extension, requisitionDto);
     // set available products in approve page
     setAvailableProductsForApprovePage(siglusRequisitionDto);
+    setApprovedByInternal(requisitionId, siglusRequisitionDto);
     siglusRequisitionDto.setRequisitionNumber(
         siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
     return setIsFinalApproval(siglusRequisitionDto);
@@ -434,11 +439,28 @@ public class SiglusRequisitionService {
     notificationService.postApprove(basicRequisitionDto);
     UUID facilityId = basicRequisitionDto.getFacility().getId();
     UUID programId = basicRequisitionDto.getProgram().getId();
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository
+        .findByRequisitionId(requisitionId);
+    if (requisitionExtension == null) {
+      requisitionExtension = new RequisitionExtension();
+    }
     if (checkIsInternal(facilityId, authenticationHelper.getCurrentUser())) {
       activateArchivedProducts(requisitionId, facilityId);
       notifySimamWhenApprove(siglusRequisitionDto, facilityId, programId);
+      requisitionExtension.setIsApprovedByInternal(true);
+    } else {
+      requisitionExtension.setIsApprovedByInternal(false);
     }
+    requisitionExtensionRepository.save(requisitionExtension);
     return basicRequisitionDto;
+  }
+
+  private void setApprovedByInternal(UUID requisitionId,
+      SiglusRequisitionDto siglusRequisitionDto) {
+    RequisitionExtension requisitionExtension = requisitionExtensionRepository
+        .findByRequisitionId(requisitionId);
+    siglusRequisitionDto.setIsApprovedByInternal(requisitionExtension != null
+        && requisitionExtension.getIsApprovedByInternal());
   }
 
   private void revertRequisition(UUID requisitionId) {

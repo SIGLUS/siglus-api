@@ -37,4 +37,6 @@ public class RequisitionExtension extends BaseEntity {
   private String requisitionNumberPrefix;
 
   private Integer requisitionNumber;
+
+  private Boolean isApprovedByInternal;
 }

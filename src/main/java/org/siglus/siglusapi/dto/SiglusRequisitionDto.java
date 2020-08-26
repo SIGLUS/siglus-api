@@ -37,6 +37,7 @@ public class SiglusRequisitionDto extends RequisitionV2Dto {
 
   private Boolean isFinalApproval;
   private Boolean isExternalApproval;
+  private Boolean isApprovedByInternal;
   private List<KitUsageLineItemDto> kitUsageLineItems = newArrayList();
   private List<UsageInformationServiceDto> usageInformationLineItems = newArrayList();
   private List<TestConsumptionServiceDto> testConsumptionLineItems = newArrayList();
