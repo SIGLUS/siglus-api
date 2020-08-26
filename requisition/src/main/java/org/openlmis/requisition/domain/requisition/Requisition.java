@@ -237,6 +237,8 @@ public class Requisition extends BaseTimestampedEntity {
   @ManyToOne
   @JoinColumn(name = "supervisoryNodeId", insertable = false, updatable = false)
   @DiffIgnore
+  @Getter
+  @Setter
   private SupervisoryNode supervisoryNode;
   // [SIGLUS change end]
 
