@@ -3,4 +3,4 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 ALTER TABLE siglusintegration.requisition_extension ADD
-isapprovedbyinternal boolean NOT NULL DEFAULT FALSE;
+isapprovedbyinternal BOOLEAN DEFAULT FALSE ;

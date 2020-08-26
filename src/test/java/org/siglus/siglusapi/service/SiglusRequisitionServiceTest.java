@@ -286,6 +286,9 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
 
+  @Captor
+  private ArgumentCaptor<RequisitionExtension> requisitionExtensionCaptor;
+
   @Mock
   private SupervisingUsersReferenceDataService supervisingUsersReferenceDataService;
 
@@ -1362,6 +1365,122 @@ public class SiglusRequisitionServiceTest {
     assertThat(availableProducts,
         hasItems(productVersionObjectReference1, productVersionObjectReference2));
   }
+
+  @Test
+  public void shouldSaveIsApprovedByInternalIsTrueWhenUserIdEqualRequsitionFacilityId() {
+    // given
+    BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    mockBasicRequisitionDto.setId(requisitionId);
+    MinimalFacilityDto facilityDto = new MinimalFacilityDto();
+    facilityDto.setId(facilityId);
+    mockBasicRequisitionDto.setFacility(facilityDto);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    programDto.setCode(CODE);
+    mockBasicRequisitionDto.setProgram(programDto);
+    HttpServletRequest request = new MockHttpServletRequest();
+    HttpServletResponse response = new MockHttpServletResponse();
+    when(requisitionController.approveRequisition(requisitionId, request, response))
+        .thenReturn(mockBasicRequisitionDto);
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
+        .thenReturn(siglusRequisitionDto);
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
+    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
+    lineItem.setApprovedQuantity(10);
+    lineItem.setId(UUID.randomUUID());
+    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
+    siglusRequisitionDto.setStatus(AUTHORIZED);
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
+    when(requisitionV2Controller
+        .updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
+            any(HttpServletRequest.class), any(HttpServletResponse.class)))
+        .thenReturn(requisitionV2Dto);
+    SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
+    supervisoryNodeDto.setId(supervisoryNodeId);
+    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId))
+        .thenReturn(supervisoryNodeDto);
+    RightDto right = new RightDto();
+    right.setId(rightId);
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
+        .thenReturn(right);
+    when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
+    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
+      Message message = invocation.getArgumentAt(0, Message.class);
+      return message.localMessage(messageSource, Locale.ENGLISH);
+    });
+    when(messageSource.getMessage(any(), any(), any()))
+        .thenReturn(MESSAGE);
+    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
+        .thenReturn(siglusRequisitionDto);
+
+    // when
+    siglusRequisitionService
+        .approveRequisition(requisitionId, request, response);
+
+    // then
+    verify(requisitionExtensionRepository).save(requisitionExtensionCaptor.capture());
+    RequisitionExtension captorValue = requisitionExtensionCaptor.getValue();
+    assertEquals(Boolean.TRUE, captorValue.getIsApprovedByInternal());
+  }
+
+
+  @Test
+  public void shouldSaveIsApprovedByInternalIsFalseWhenUserIdNotEqualRequsitionFacilityId() {
+    // given
+    BasicRequisitionDto mockBasicRequisitionDto = new BasicRequisitionDto();
+    mockBasicRequisitionDto.setId(requisitionId);
+    MinimalFacilityDto facilityDto = new MinimalFacilityDto();
+    facilityDto.setId(facilityId);
+    mockBasicRequisitionDto.setFacility(facilityDto);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    programDto.setCode(CODE);
+    mockBasicRequisitionDto.setProgram(programDto);
+    HttpServletRequest request = new MockHttpServletRequest();
+    HttpServletResponse response = new MockHttpServletResponse();
+    when(requisitionController.approveRequisition(requisitionId, request, response))
+        .thenReturn(mockBasicRequisitionDto);
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
+        .thenReturn(siglusRequisitionDto);
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(UUID.randomUUID()));
+    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
+    lineItem.setApprovedQuantity(10);
+    lineItem.setId(UUID.randomUUID());
+    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
+    siglusRequisitionDto.setStatus(AUTHORIZED);
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
+    when(requisitionV2Controller
+        .updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
+            any(HttpServletRequest.class), any(HttpServletResponse.class)))
+        .thenReturn(requisitionV2Dto);
+    SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
+    supervisoryNodeDto.setId(supervisoryNodeId);
+    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId))
+        .thenReturn(supervisoryNodeDto);
+    RightDto right = new RightDto();
+    right.setId(rightId);
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
+        .thenReturn(right);
+    when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
+    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
+      Message message = invocation.getArgumentAt(0, Message.class);
+      return message.localMessage(messageSource, Locale.ENGLISH);
+    });
+    when(messageSource.getMessage(any(), any(), any()))
+        .thenReturn(MESSAGE);
+    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
+        .thenReturn(siglusRequisitionDto);
+
+    // when
+    siglusRequisitionService
+        .approveRequisition(requisitionId, request, response);
+
+    // then
+    verify(requisitionExtensionRepository).save(requisitionExtensionCaptor.capture());
+    RequisitionExtension captorValue = requisitionExtensionCaptor.getValue();
+    assertEquals(Boolean.FALSE, captorValue.getIsApprovedByInternal());
+  }
+
 
   private UserDto mockUserDto(UUID facilityId) {
     UserDto userDto = new UserDto();
