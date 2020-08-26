@@ -459,7 +459,8 @@ public class SiglusRequisitionService {
       SiglusRequisitionDto siglusRequisitionDto) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository
         .findByRequisitionId(requisitionId);
-    siglusRequisitionDto.setIsApprovedByInternal(requisitionExtension != null
+    siglusRequisitionDto.setIsApprovedByInternal(null != requisitionExtension
+        && null != requisitionExtension.getIsApprovedByInternal()
         && requisitionExtension.getIsApprovedByInternal());
   }
 
