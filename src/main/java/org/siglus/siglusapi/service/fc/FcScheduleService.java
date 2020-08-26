@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.util.ArrayList;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
@@ -56,9 +57,10 @@ public class FcScheduleService {
   }
 
   public <T> void fetchDataFromFc(Class<T[]> clazz, String path) throws Exception {
-    fetchDataFromFc(clazz, path, "20200501");
+    fetchDataFromFc(clazz, path, "");
   }
 
+  @SuppressWarnings("squid:S112")
   public <T> void fetchDataFromFc(Class<T[]> clazz, String path, String date) throws Exception {
     final long startTime = System.currentTimeMillis();
     initData(clazz);
@@ -76,8 +78,9 @@ public class FcScheduleService {
     return domain + path + "?key=" + key + "&psize=20&page=" + page + "&date=" + date;
   }
 
+  @Ignore
   private String getUrlWithPeriod(String path, int page) {
-    return domain + path + "?key=" + key + "&psize=20&page=" + page+ "period="
+    return domain + path + "?key=" + key + "&psize=20&page=" + page + "period="
         + dateHelper.getCurrentMonthStr();
   }
 
