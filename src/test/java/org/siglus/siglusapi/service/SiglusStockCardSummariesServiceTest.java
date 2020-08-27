@@ -48,10 +48,12 @@ import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
 import org.openlmis.stockmanagement.testutils.CanFulfillForMeEntryDtoDataBuilder;
 import org.openlmis.stockmanagement.testutils.OrderableDtoDataBuilder;
+import org.openlmis.stockmanagement.web.Pagination;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.client.SiglusStockCardStockManagementService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.LinkedMultiValueMap;
@@ -110,14 +112,14 @@ public class SiglusStockCardSummariesServiceTest {
   public void shouldNUllIfStockCardIsEmpty() {
     // given
     when(siglusStockManagementService.search(any(StockCardSummariesV2SearchParams.class),
-        any(Pageable.class))).thenReturn(Collections.emptyList());
+        any(Pageable.class))).thenReturn(Pagination.getPage(Collections.emptyList()));
 
     // when
-    List<StockCardSummaryV2Dto> resultSummaries =
+    Page<StockCardSummaryV2Dto> resultSummaries =
         service.findSiglusStockCard(getProgramsParms(), pageable);
 
     // then
-    assertEquals(true, resultSummaries.isEmpty());
+    assertEquals(true, resultSummaries.getContent().isEmpty());
   }
 
   @Test
@@ -127,15 +129,15 @@ public class SiglusStockCardSummariesServiceTest {
     summaries.setAsOfDate(LocalDate.now());
     when(siglusStockManagementService.search(any(StockCardSummariesV2SearchParams.class),
         any(Pageable.class)))
-        .thenReturn(Arrays.asList(createSummaryV2Dto(UUID.randomUUID(), 10),
-            createSummaryV2Dto(UUID.randomUUID(), 15)));
+        .thenReturn(Pagination.getPage(Arrays.asList(createSummaryV2Dto(UUID.randomUUID(), 10),
+            createSummaryV2Dto(UUID.randomUUID(), 15))));
 
     // when
-    List<StockCardSummaryV2Dto> resultSummaries =
+    Page<StockCardSummaryV2Dto> resultSummaries =
         service.findSiglusStockCard(getProgramsParms(), pageable);
 
     // then
-    assertEquals(2, resultSummaries.size());
+    assertEquals(2, resultSummaries.getContent().size());
   }
 
   @Test
@@ -154,14 +156,14 @@ public class SiglusStockCardSummariesServiceTest {
     StockCardSummariesV2SearchParams v2SearchParams = new
         StockCardSummariesV2SearchParams(getProgramsParms());
     when(siglusStockManagementService.search(v2SearchParams, pageable))
-        .thenReturn(Arrays.asList(summaryV2Dto, summaryV2Dto2, summaryV2Dto3));
+        .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto, summaryV2Dto2, summaryV2Dto3)));
 
     // when
-    List<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params, pageable);
+    Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params, pageable);
 
     // then
-    assertEquals(2, resultSummaries.size());
-    assertEquals(summaryV2Dto2, resultSummaries.get(0));
+    assertEquals(2, resultSummaries.getContent().size());
+    assertEquals(summaryV2Dto2, resultSummaries.getContent().get(0));
   }
 
   @Test
@@ -181,12 +183,12 @@ public class SiglusStockCardSummariesServiceTest {
 
     // when
     when(siglusStockManagementService.search(v2SearchParams, pageable))
-        .thenReturn(Arrays.asList(summaryV2Dto, summaryV2Dto2));
+        .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto, summaryV2Dto2)));
 
     // then
     Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
-    List<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params, pageable);
-    assertEquals(1, resultSummaries.size());
+    Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params, pageable);
+    assertEquals(1, resultSummaries.getContent().size());
   }
 
   @Test
@@ -197,15 +199,15 @@ public class SiglusStockCardSummariesServiceTest {
     List<StockCardSummaryV2Dto> dtos = new ArrayList<>();
     dtos.addAll(Arrays.asList(summaryV2Dto, summaryV2Dto2));
     when(siglusStockManagementService.search(any(), any(Pageable.class)))
-        .thenReturn(dtos);
+        .thenReturn(Pagination.getPage(dtos));
     MultiValueMap<String, String> params = getProgramsParms();
     params.add(ORDERABLE_ID, orderableId.toString());
 
     // when
-    List<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params, pageable);
+    Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params, pageable);
 
     // then
-    assertEquals(1, resultSummaries.size());
+    assertEquals(1, resultSummaries.getContent().size());
   }
 
   private StockCardSummaryV2Dto createSummaryV2Dto(UUID orderableId, Integer stockOnHand) {

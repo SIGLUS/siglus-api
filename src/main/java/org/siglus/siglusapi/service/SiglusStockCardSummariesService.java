@@ -25,6 +25,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -68,7 +69,7 @@ public class SiglusStockCardSummariesService {
   @Autowired
   private SiglusArchiveProductService archiveProductService;
 
-  public List<StockCardSummaryV2Dto> findSiglusStockCard(
+  public Page<StockCardSummaryV2Dto> findSiglusStockCard(
       MultiValueMap<String, String> parameters, Pageable pageable) {
     Set<String> archivedProducts = null;
     if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)) || Boolean
@@ -86,31 +87,23 @@ public class SiglusStockCardSummariesService {
     List<StockCardSummaryV2Dto> summaryV2Dtos = new ArrayList<>();
     for (UUID programId : programIds) {
       v2SearchParams.setProgramId(programId);
-      if (!CollectionUtils.isEmpty(orderableIds) || filterForArchive(parameters, archivedProducts)
-          || programIds.size() > 1) {
-        pageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
-      }
-      List<StockCardSummaryV2Dto> summaries =
-          siglusStockManagementService.search(v2SearchParams, pageable);
-
-      filterByOrderableIds(orderableIds, summaries);
-      if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED))) {
-        summaryV2Dtos.addAll(summaries.stream()
-                .filter(isNotArchived(archivedProducts))
-                .collect(Collectors.toList()));
-      } else if (Boolean.parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
-        summaryV2Dtos.addAll(summaries.stream()
-                .filter(isArchived(archivedProducts))
-                .collect(Collectors.toList()));
+      Pageable searchPageable = pageable;
+      if (archiveEmptyForArchiveOnly(parameters, archivedProducts)) {
+        return Pagination.getPage(Collections.emptyList(), searchPageable);
+      } else if (needFilterOrSearchAllProgram(orderableIds, parameters, archivedProducts,
+          programIds)) {
+        searchPageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
       } else {
-        summaryV2Dtos.addAll(summaries);
+        return siglusStockManagementService.search(v2SearchParams, searchPageable);
       }
+      getSummaries(parameters, archivedProducts, v2SearchParams, orderableIds, summaryV2Dtos,
+          searchPageable);
     }
-    return summaryV2Dtos;
+    return Pagination.getPage(summaryV2Dtos, pageable);
   }
 
   public Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName,
-                                 String facilityId) {
+      String facilityId) {
     Set<UUID> programIds = newHashSet();
     Set<PermissionStringDto> permissionStrings = permissionService
         .getPermissionStrings(userId).get();
@@ -134,6 +127,39 @@ public class SiglusStockCardSummariesService {
     return programIds;
   }
 
+  private void getSummaries(MultiValueMap<String, String> parameters, Set<String> archivedProducts,
+      StockCardSummariesV2SearchParams v2SearchParams, List<UUID> orderableIds,
+      List<StockCardSummaryV2Dto> summaryV2Dtos, Pageable searchPageable) {
+    List<StockCardSummaryV2Dto> summaries =
+        siglusStockManagementService.search(v2SearchParams, searchPageable).getContent();
+    summaries = filterByOrderableIds(orderableIds, summaries);
+    if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED))) {
+      summaryV2Dtos.addAll(summaries.stream()
+          .filter(isNotArchived(archivedProducts))
+          .collect(Collectors.toList()));
+    } else if (Boolean.parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
+      summaryV2Dtos.addAll(summaries.stream()
+          .filter(isArchived(archivedProducts))
+          .collect(Collectors.toList()));
+    } else {
+      summaryV2Dtos.addAll(summaries);
+    }
+  }
+
+  private boolean archiveEmptyForArchiveOnly(MultiValueMap<String, String> parameters,
+      Set<String> archivedProducts) {
+    return CollectionUtils.isEmpty(archivedProducts)
+        && Boolean.parseBoolean(parameters.getFirst(ARCHIVED_ONLY));
+  }
+
+  private boolean needFilterOrSearchAllProgram(List<UUID> orderableIds,
+      MultiValueMap<String, String> parameters,
+      Set<String> archivedProducts, Set<UUID> programIds) {
+    return !CollectionUtils.isEmpty(orderableIds)
+        || filterForArchive(parameters, archivedProducts)
+        || programIds.size() > 1;
+  }
+
   private boolean filterForArchive(MultiValueMap<String, String> parameters,
       Set<String> archiveProducts) {
     return !CollectionUtils.isEmpty(archiveProducts)
@@ -141,22 +167,22 @@ public class SiglusStockCardSummariesService {
         || Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)));
   }
 
-  private void filterByOrderableIds(List<UUID> orderableIds,
-      List<StockCardSummaryV2Dto> summaryV2Dtos) {
+  private List<StockCardSummaryV2Dto> filterByOrderableIds(List<UUID> orderableIds,
+      List<StockCardSummaryV2Dto> summaries) {
     if (CollectionUtils.isEmpty(orderableIds)) {
-      return;
+      return summaries;
     }
-    summaryV2Dtos.removeIf(summaryV2Dto ->
-        !orderableIds.contains(summaryV2Dto.getOrderable().getId()));
+    return summaries.stream().filter(summaryV2Dto ->
+            orderableIds.contains(summaryV2Dto.getOrderable().getId()))
+        .collect(Collectors.toList());
   }
 
   public Page<StockCardSummaryV2Dto> searchStockCardSummaryV2Dtos(
       MultiValueMap<String, String> parameters, Pageable pageable) {
     try {
       // reason: support all program && archive
-      List<StockCardSummaryV2Dto> summaries = findSiglusStockCard(parameters, pageable);
+      return findSiglusStockCard(parameters, pageable);
 
-      return Pagination.getPage(summaries, pageable);
     } catch (PermissionMessageException e) {
       if (parameters.getFirst(RIGHT_NAME).equals(STOCK_INVENTORIES_EDIT)) {
         throw new PermissionMessageException(
