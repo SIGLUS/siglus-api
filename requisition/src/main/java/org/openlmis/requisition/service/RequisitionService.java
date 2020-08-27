@@ -354,12 +354,22 @@ public class RequisitionService {
       // [SIGLUS change start]
       // [change reason]: 1. period.getStartDate() -> requisition.getActualStartDate().
       //                  2. period.getEndDate() -> requisition.getActualEndDate().
+      //                  3. support for additional product
+      // stockCardRangeSummaryDtos =
+      //     stockCardRangeSummaryStockManagementService
+      //         .search(program.getId(), facility.getId(),
+      //             approvedProducts.getOrderableIdentities(), null,
+      //              period.getStartDate(), period.getEndDate());
 
       stockCardRangeSummaryDtos = groupApprovedProduct.keySet().stream()
           .map(programId -> {
             Set<VersionIdentityDto> orderableIdentities = groupApprovedProduct.get(programId)
                 .stream()
-                .map(product -> product.getIdentity())
+                .map(approveProduct -> {
+                  OrderableDto orderableDto = approveProduct.getOrderable();
+                  return new VersionIdentityDto(orderableDto.getId(),
+                      orderableDto.getVersionNumber());
+                })
                 .collect(Collectors.toSet());
             return stockCardRangeSummaryStockManagementService
                 .search(programId, facility.getId(),
@@ -390,7 +400,11 @@ public class RequisitionService {
                 .map(programId -> {
                   Set<VersionIdentityDto> orderableIdentities = groupApprovedProduct.get(programId)
                       .stream()
-                      .map(product -> product.getIdentity())
+                      .map(approveProduct -> {
+                        OrderableDto orderableDto = approveProduct.getOrderable();
+                        return new VersionIdentityDto(orderableDto.getId(),
+                            orderableDto.getVersionNumber());
+                      })
                       .collect(Collectors.toSet());
                   return stockCardRangeSummaryStockManagementService
                       .search(programId, facility.getId(),

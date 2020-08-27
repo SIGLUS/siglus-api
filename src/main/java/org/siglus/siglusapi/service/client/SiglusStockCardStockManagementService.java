@@ -16,12 +16,13 @@
 package org.siglus.siglusapi.service.client;
 
 import java.util.Collections;
-import java.util.List;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
+import org.openlmis.stockmanagement.web.Pagination;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.common.util.RequestParameters;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +33,7 @@ public class SiglusStockCardStockManagementService
   @Autowired
   private ProgramOrderableRepository programOrderableRepository;
 
-  public List<StockCardSummaryV2Dto> search(StockCardSummariesV2SearchParams v2SearchParams,
+  public Page<StockCardSummaryV2Dto> search(StockCardSummariesV2SearchParams v2SearchParams,
       Pageable pageable) {
     if (!programOrderableRepository.findByProgramId(v2SearchParams.getProgramId()).isEmpty()) {
       RequestParameters params = RequestParameters.init()
@@ -43,9 +44,9 @@ public class SiglusStockCardStockManagementService
           .set("nonEmptyOnly", v2SearchParams.isNonEmptyOnly())
           .setPage(pageable);
 
-      return getPage(params).getContent();
+      return getPage(params);
     }
-    return Collections.emptyList();
+    return Pagination.getPage(Collections.emptyList(), pageable);
   }
 
   @Override
