@@ -813,18 +813,17 @@ public class SiglusRequisitionService {
     List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage = Collections.emptyList();
     List<ProcessingPeriodDto> periods = Collections.emptyList();
     List<Requisition> previousRequisitions = requisition.getPreviousRequisitions();
-
-    ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
     List<ApprovedProductDto> approvedProducts = siglusApprovedReferenceDataService
         .getApprovedProducts(
             userFacility.getId(), program.getId(), orderableIds,
-            period.isReportOnly() && Boolean.FALSE.equals(requisition.getEmergency()));
+            requisition.getReportOnly() && Boolean.FALSE.equals(requisition.getEmergency()));
     if (requisitionTemplate.isPopulateStockOnHandFromStockCards() && requisition.getEmergency()) {
       stockCardRangeSummaryDtos = getStockCardRangeSummaryDtos(facility, program.getId(),
           approvedProducts, requisition.getActualStartDate(), requisition.getActualEndDate());
 
       LocalDate startDateForCalculateAvg;
       LocalDate endDateForCalculateAvg = requisition.getActualEndDate();
+      ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
       if (!CollectionUtils.isEmpty(previousRequisitions)) {
         Set<UUID> periodIds = previousRequisitions.stream()
             .map(Requisition::getProcessingPeriodId)
