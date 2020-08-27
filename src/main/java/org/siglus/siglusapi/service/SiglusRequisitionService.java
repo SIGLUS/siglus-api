@@ -924,11 +924,15 @@ public class SiglusRequisitionService {
   }
 
   private List<StockCardRangeSummaryDto> getStockCardRangeSummaryDtos(FacilityDto facility,
-      UUID programId, List<ApprovedProductDto> approveProduct, LocalDate startDate,
+      UUID programId, List<ApprovedProductDto> approvedProductDtos, LocalDate startDate,
       LocalDate endDate) {
-    Set<VersionIdentityDto> orderableIdentities = approveProduct
+    Set<VersionIdentityDto> orderableIdentities = approvedProductDtos
         .stream()
-        .map(product -> product.getIdentity())
+        .map(approveProduct -> {
+          OrderableDto orderableDto = approveProduct.getOrderable();
+          return new VersionIdentityDto(orderableDto.getId(),
+              orderableDto.getVersionNumber());
+        })
         .collect(Collectors.toSet());
     return stockCardRangeSummaryStockManagementService
         .search(programId, facility.getId(),
