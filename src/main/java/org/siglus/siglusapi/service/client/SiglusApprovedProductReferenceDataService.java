@@ -75,15 +75,13 @@ public class SiglusApprovedProductReferenceDataService extends
                 .filter(additionalOrderable ->
                     orderableIds.contains(additionalOrderable.getAdditionalOrderableId()))
                 .collect(groupingBy(ProgramAdditionalOrderable::getOrderableOriginProgramId));
-        for (UUID orderableOriginProgramId : additionalMap.keySet()) {
-          List<UUID> orderableIdsForProgram = additionalMap.get(orderableOriginProgramId)
-              .stream()
-              .map(orderable -> orderable.getAdditionalOrderableId())
+        additionalMap.forEach((key, value) -> {
+          List<UUID> orderableIdsForProgram = value.stream()
+              .map(ProgramAdditionalOrderable::getAdditionalOrderableId)
               .collect(Collectors.toList());
-          approvedProducts
-              .addAll(getRequisitionApprovedProducts(facilityId,
-                  orderableOriginProgramId, orderableIdsForProgram));
-        }
+          approvedProducts.addAll(getRequisitionApprovedProducts(facilityId, key,
+              orderableIdsForProgram));
+        });
       }
       return approvedProducts;
     } else {

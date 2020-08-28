@@ -60,7 +60,7 @@ public class FcScheduleService {
     fetchDataFromFc(clazz, path, "");
   }
 
-  @SuppressWarnings("squid:S112")
+  @SuppressWarnings("squid:S00112")
   public <T> void fetchDataFromFc(Class<T[]> clazz, String path, String date) throws Exception {
     final long startTime = System.currentTimeMillis();
     initData(clazz);

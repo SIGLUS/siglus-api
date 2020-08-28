@@ -18,7 +18,8 @@ package org.siglus.siglusapi.service.fc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
@@ -34,7 +35,8 @@ import org.springframework.web.client.RestTemplate;
 
 @Service
 @Slf4j
-@Data
+@Getter
+@Setter
 public class CallFcService {
 
   @Autowired
@@ -95,5 +97,4 @@ public class CallFcService {
       log.info("[FC] page info: {}", pageInfoDto);
     }
   }
-
 }
