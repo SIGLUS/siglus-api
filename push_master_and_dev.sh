@@ -16,7 +16,7 @@ echo "git checkout dev"
 git checkout dev
 
 echo "git merge master"
-git merge master
+git merge master --commit --no-edit
 
 echo "git push origin dev:dev"
 git push origin dev:dev
