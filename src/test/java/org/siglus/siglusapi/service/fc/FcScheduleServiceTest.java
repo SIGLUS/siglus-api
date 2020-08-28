@@ -36,6 +36,9 @@ import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 @RunWith(MockitoJUnitRunner.class)
 public class FcScheduleServiceTest {
 
+  public static final String YESTERDAY = "20200825";
+  public static final String CURRENT_MONTH = "2020-08";
+
   @InjectMocks
   private FcScheduleService fcScheduleService;
 
@@ -51,8 +54,8 @@ public class FcScheduleServiceTest {
     when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(dateHelper.getYesterdayDateStr()).thenReturn("20200825");
-    when(dateHelper.getCurrentMonthStr()).thenReturn("2020-08");
+    when(dateHelper.getYesterdayDateStr()).thenReturn(YESTERDAY);
+    when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
 
     // when
     fcScheduleService.fetchReceiptPlansFromFc();
@@ -67,8 +70,8 @@ public class FcScheduleServiceTest {
     when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(dateHelper.getYesterdayDateStr()).thenReturn("20200825");
-    when(dateHelper.getCurrentMonthStr()).thenReturn("2020-08");
+    when(dateHelper.getYesterdayDateStr()).thenReturn(YESTERDAY);
+    when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
 
     // when
     fcScheduleService.fetchIssueVouchersFromFc();
@@ -83,8 +86,8 @@ public class FcScheduleServiceTest {
     when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(dateHelper.getYesterdayDateStr()).thenReturn("20200825");
-    when(dateHelper.getCurrentMonthStr()).thenReturn("2020-08");
+    when(dateHelper.getYesterdayDateStr()).thenReturn(YESTERDAY);
+    when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
 
     // when
     fcScheduleService.fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API, "");
@@ -99,8 +102,8 @@ public class FcScheduleServiceTest {
     when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(dateHelper.getYesterdayDateStr()).thenReturn("20200825");
-    when(dateHelper.getCurrentMonthStr()).thenReturn("2020-08");
+    when(dateHelper.getYesterdayDateStr()).thenReturn(YESTERDAY);
+    when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
 
     // when
     fcScheduleService.fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API, null);
@@ -115,8 +118,8 @@ public class FcScheduleServiceTest {
     when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(dateHelper.getYesterdayDateStr()).thenReturn("20200825");
-    when(dateHelper.getCurrentMonthStr()).thenReturn("2020-08");
+    when(dateHelper.getYesterdayDateStr()).thenReturn(YESTERDAY);
+    when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
 
     // when
     fcScheduleService.fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API, "20200828");
