@@ -17,8 +17,10 @@ package org.siglus.siglusapi.service.fc;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.util.ArrayList;
 import org.junit.Test;
@@ -73,6 +75,54 @@ public class FcScheduleServiceTest {
 
     // then
     verify(callFcService).fetchData(anyString(), eq(IssueVoucherDto[].class));
+  }
+
+  @Test
+  public void shouldUseDefaultDateWhenFetchDataFromFcIfDateIsEmpty() throws Exception {
+    // given
+    when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
+    when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(dateHelper.getYesterdayDateStr()).thenReturn("20200825");
+    when(dateHelper.getCurrentMonthStr()).thenReturn("2020-08");
+
+    // when
+    fcScheduleService.fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API, "");
+
+    // then
+    verify(dateHelper).getYesterdayDateStr();
+  }
+
+  @Test
+  public void shouldUseDefaultDateWhenFetchDataFromFcIfDateIsNull() throws Exception {
+    // given
+    when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
+    when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(dateHelper.getYesterdayDateStr()).thenReturn("20200825");
+    when(dateHelper.getCurrentMonthStr()).thenReturn("2020-08");
+
+    // when
+    fcScheduleService.fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API, null);
+
+    // then
+    verify(dateHelper).getYesterdayDateStr();
+  }
+
+  @Test
+  public void shouldNotUseDefaultDateWhenFetchDataFromFcIfDateIsNotEmpty() throws Exception {
+    // given
+    when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
+    when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(dateHelper.getYesterdayDateStr()).thenReturn("20200825");
+    when(dateHelper.getCurrentMonthStr()).thenReturn("2020-08");
+
+    // when
+    fcScheduleService.fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API, "20200828");
+
+    // then
+    verify(dateHelper, times(0)).getYesterdayDateStr();
   }
 
 }

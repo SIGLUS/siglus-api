@@ -94,7 +94,7 @@ public class CallFcServiceTest {
     MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.add("TotalObjects", "1");
     headers.add("TotalPages", "1");
-    headers.add("PageNumber", "1");
+    headers.add("PageNumber", "2");
     headers.add("PSize", "1");
     Class<ReceiptPlanDto[]> clazz = ReceiptPlanDto[].class;
     ReceiptPlanDto[] receiptPlanDtos = {new ReceiptPlanDto()};
@@ -128,6 +128,28 @@ public class CallFcServiceTest {
     // then
     verify(remoteRestTemplate).getForEntity(eq(URL), eq(IssueVoucherDto[].class));
     Assert.assertEquals(0, callFcService.getIssueVouchers().size());
+  }
+
+  @Test
+  public void shouldNotUpdateListIfClazzIsWrong() {
+    // given
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+    headers.add("TotalObjects", "1");
+    headers.add("TotalPages", "1");
+    headers.add("PageNumber", "1");
+    headers.add("PSize", "1");
+    Class<Object[]> clazz = Object[].class;
+    Object[] objects = {new Object()};
+    when(remoteRestTemplate.getForEntity(URL, clazz))
+        .thenReturn(new ResponseEntity<>(objects, headers, HttpStatus.OK));
+
+    // when
+    callFcService.fetchData(URL, clazz);
+
+    // then
+    verify(remoteRestTemplate).getForEntity(eq(URL), eq(Object[].class));
+    Assert.assertEquals(0, callFcService.getIssueVouchers().size());
+    Assert.assertEquals(0, callFcService.getReceiptPlans().size());
   }
 
 }
