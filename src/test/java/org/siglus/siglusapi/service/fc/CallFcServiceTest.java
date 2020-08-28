@@ -70,11 +70,7 @@ public class CallFcServiceTest {
   @Test
   public void shouldGetIssueVoucherWhenFetchDataSuccess() {
     // given
-    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-    headers.add("TotalObjects", "1");
-    headers.add("TotalPages", "1");
-    headers.add("PageNumber", "1");
-    headers.add("PSize", "1");
+    MultiValueMap<String, String> headers = getHeaders("1");
     Class<IssueVoucherDto[]> clazz = IssueVoucherDto[].class;
     IssueVoucherDto[] issueVoucherDtos = {new IssueVoucherDto()};
     when(remoteRestTemplate.getForEntity(URL, clazz))
@@ -91,11 +87,7 @@ public class CallFcServiceTest {
   @Test
   public void shouldGetReceiptPlanWhenFetchDataSuccess() {
     // given
-    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-    headers.add("TotalObjects", "1");
-    headers.add("TotalPages", "1");
-    headers.add("PageNumber", "2");
-    headers.add("PSize", "1");
+    MultiValueMap<String, String> headers = getHeaders("2");
     Class<ReceiptPlanDto[]> clazz = ReceiptPlanDto[].class;
     ReceiptPlanDto[] receiptPlanDtos = {new ReceiptPlanDto()};
     when(remoteRestTemplate.getForEntity(URL, clazz))
@@ -112,11 +104,7 @@ public class CallFcServiceTest {
   @Test
   public void shouldNotGetIssueVoucherWhenFetchDataIsEmpty() {
     // given
-    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-    headers.add("TotalObjects", "1");
-    headers.add("TotalPages", "1");
-    headers.add("PageNumber", "1");
-    headers.add("PSize", "1");
+    MultiValueMap<String, String> headers = getHeaders("1");
     Class<IssueVoucherDto[]> clazz = IssueVoucherDto[].class;
     IssueVoucherDto[] issueVoucherDtos = {};
     when(remoteRestTemplate.getForEntity(URL, clazz))
@@ -133,11 +121,7 @@ public class CallFcServiceTest {
   @Test
   public void shouldNotUpdateListIfClazzIsWrong() {
     // given
-    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-    headers.add("TotalObjects", "1");
-    headers.add("TotalPages", "1");
-    headers.add("PageNumber", "1");
-    headers.add("PSize", "1");
+    MultiValueMap<String, String> headers = getHeaders("1");
     Class<Object[]> clazz = Object[].class;
     Object[] objects = {new Object()};
     when(remoteRestTemplate.getForEntity(URL, clazz))
@@ -150,6 +134,15 @@ public class CallFcServiceTest {
     verify(remoteRestTemplate).getForEntity(eq(URL), eq(Object[].class));
     Assert.assertEquals(0, callFcService.getIssueVouchers().size());
     Assert.assertEquals(0, callFcService.getReceiptPlans().size());
+  }
+
+  private MultiValueMap<String, String> getHeaders(String s) {
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+    headers.add("TotalObjects", "1");
+    headers.add("TotalPages", "1");
+    headers.add("PageNumber", s);
+    headers.add("PSize", "1");
+    return headers;
   }
 
 }
