@@ -141,6 +141,10 @@ public class FulfillmentStockEventBuilder {
     return shipment
         .getLineItems()
         .stream()
+        // [SIGLUS change start]
+        // [change reason]: #527 AC5 If shipped quantity should greater than 0
+        .filter(shipmentLineItem -> shipmentLineItem.getQuantityShipped() > 0)
+        // [SIGLUS change end]
         .map(lineItem -> createLineItem(lineItem, orderables, destinationId))
         .collect(Collectors.toList());
   }
