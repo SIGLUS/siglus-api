@@ -1,37 +1,37 @@
 #!/bin/sh
 
-echo "[Run]: git status"
+echo "=> git status"
 git status
-echo "-----------------------------------"
+echo "-----------------------------------------------------"
 
-echo "git stash"
+echo "=> git stash"
 git stash
-echo "-----------------------------------"
+echo "-----------------------------------------------------"
 
-echo "git pull origin master -r"
+echo "=> git pull origin master -r"
 git pull origin master -r
-echo "-----------------------------------"
+echo "-----------------------------------------------------"
 
-echo "git push origin master:master"
+echo "=> git push origin master:master"
 git push origin master:master
-echo "-----------------------------------"
+echo "-----------------------------------------------------"
 
-echo "git checkout dev"
+echo "=> git checkout dev"
 git checkout dev
-echo "-----------------------------------"
+echo "-----------------------------------------------------"
 
-echo "git merge master"
+echo "=> git merge master"
 git merge master --commit --no-edit
-echo "-----------------------------------"
+echo "-----------------------------------------------------"
 
-echo "git push origin dev:dev"
+echo "=> git push origin dev:dev"
 git push origin dev:dev
-echo "-----------------------------------"
+echo "-----------------------------------------------------"
 
-echo "git checkout master"
+echo "=> git checkout master"
 git checkout master
-echo "-----------------------------------"
+echo "-----------------------------------------------------"
 
-echo "git stash pop"
+echo "=> git stash pop"
 git stash pop
-echo "-----------------------------------"
+echo "-----------------------------------------------------"
