@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
+import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
@@ -22,9 +24,7 @@ import java.util.ArrayList;
 import jdk.nashorn.internal.ir.annotations.Ignore;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.util.SiglusDateHelper;
-import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
-import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -46,35 +46,45 @@ public class FcScheduleService {
   @Autowired
   private CallFcService callFcService;
 
+  @Autowired
+  private FcIntegrationResultService fcIntegrationResultService;
+
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = "${time.zoneId}")
-  public void fetchReceiptPlansFromFc() throws Exception {
-    fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API);
+  public void fetchReceiptPlansFromFc() {
+    final long startTime = System.currentTimeMillis();
+    String date = dateHelper.getYesterdayDateStr();
+    Integer callFcCostTimeInSeconds = fetchDataFromFc(RECEIPT_PLAN_API, date);
+    fcIntegrationResultService.recordFcIntegrationResult(RECEIPT_PLAN_API, date, true,
+        callFcCostTimeInSeconds, true, getTotalCostTimeInSeconds(startTime));
   }
 
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = "${time.zoneId}")
-  public void fetchIssueVouchersFromFc() throws Exception {
-    fetchDataFromFc(IssueVoucherDto[].class, ISSUE_VOUCHER_API);
+  public void fetchIssueVouchersFromFc() {
+    String date = dateHelper.getYesterdayDateStr();
+    fetchDataFromFc(ISSUE_VOUCHER_API, date);
   }
 
-  public <T> void fetchDataFromFc(Class<T[]> clazz, String path) throws Exception {
-    fetchDataFromFc(clazz, path, "");
-  }
-
-  @SuppressWarnings("squid:S00112")
-  public <T> void fetchDataFromFc(Class<T[]> clazz, String path, String date) throws Exception {
-    final long startTime = System.currentTimeMillis();
-    initData(clazz);
-    for (int page = 1; page <= callFcService.getPageInfoDto().getTotalPages(); page++) {
-      callFcService.fetchData(getUrl(path, page, date), clazz);
+  public Integer fetchDataFromFc(String api, String date) {
+    try {
+      final long startTime = System.currentTimeMillis();
+      initData(api);
+      if (date == null || date.isEmpty()) {
+        date = dateHelper.getYesterdayDateStr();
+      }
+      for (int page = 1; page <= callFcService.getPageInfoDto().getTotalPages(); page++) {
+        callFcService.fetchData(getUrl(api, page, date), api);
+      }
+      long costTime = System.currentTimeMillis() - startTime;
+      log.info("[FC] fetch {} finish, total size: {}, cost: {}ms", api, getTotalSize(api),
+          costTime);
+      return Math.toIntExact(costTime / 1000);
+    } catch (Exception e) {
+      fcIntegrationResultService.recordCallFcFailed(api, date);
+      throw e;
     }
-    log.info("[FC] fetch {} finish, total size: {}, cost: {}ms", clazz.getSimpleName(),
-        getTotalSize(clazz), System.currentTimeMillis() - startTime);
   }
 
   private String getUrl(String path, int page, String date) {
-    if (date == null || date.isEmpty()) {
-      date = dateHelper.getYesterdayDateStr();
-    }
     return domain + path + "?key=" + key + "&psize=20&page=" + page + "&date=" + date;
   }
 
@@ -84,20 +94,29 @@ public class FcScheduleService {
         + dateHelper.getCurrentMonthStr();
   }
 
-  private <T> int getTotalSize(Class<T[]> clazz) {
-    if (clazz.equals(IssueVoucherDto[].class)) {
+  private int getTotalSize(String api) {
+    if (ISSUE_VOUCHER_API.equals(api)) {
       return callFcService.getIssueVouchers().size();
+    } else if (RECEIPT_PLAN_API.equals(api)) {
+      return callFcService.getReceiptPlans().size();
     }
-    return callFcService.getReceiptPlans().size();
+    return -1;
   }
 
-  private <T> void initData(Class<T[]> clazz) {
-    if (clazz.equals(IssueVoucherDto[].class)) {
-      callFcService.setIssueVouchers(new ArrayList<>());
-    } else {
+  private void initData(String api) {
+    if (RECEIPT_PLAN_API.equals(api)) {
       callFcService.setReceiptPlans(new ArrayList<>());
+    } else if (ISSUE_VOUCHER_API.equals(api)) {
+      callFcService.setIssueVouchers(new ArrayList<>());
+    } else if (CMM_API.equals(api)) {
+      callFcService.setCmms(new ArrayList<>());
+    } else if (CP_API.equals(api)) {
+      callFcService.setCps(new ArrayList<>());
     }
     callFcService.setPageInfoDto(new PageInfoDto());
   }
 
+  private Integer getTotalCostTimeInSeconds(long startTime) {
+    return Math.toIntExact((System.currentTimeMillis() - startTime) / 1000);
+  }
 }

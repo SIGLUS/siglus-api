@@ -15,8 +15,9 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,9 +30,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.common.util.SiglusDateHelper;
-import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
-import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcScheduleServiceTest {
@@ -44,6 +43,9 @@ public class FcScheduleServiceTest {
 
   @Mock
   private CallFcService callFcService;
+
+  @Mock
+  private FcIntegrationResultService fcIntegrationResultService;
 
   @Mock
   private SiglusDateHelper dateHelper;
@@ -61,7 +63,9 @@ public class FcScheduleServiceTest {
     fcScheduleService.fetchReceiptPlansFromFc();
 
     // then
-    verify(callFcService).fetchData(anyString(), eq(ReceiptPlanDto[].class));
+    verify(callFcService).fetchData(anyString(), anyString());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(anyString(), anyString(),
+        anyBoolean(), anyInt(), anyBoolean(), anyInt());
   }
 
   @Test
@@ -77,7 +81,7 @@ public class FcScheduleServiceTest {
     fcScheduleService.fetchIssueVouchersFromFc();
 
     // then
-    verify(callFcService).fetchData(anyString(), eq(IssueVoucherDto[].class));
+    verify(callFcService).fetchData(anyString(), anyString());
   }
 
   @Test
@@ -90,7 +94,7 @@ public class FcScheduleServiceTest {
     when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
 
     // when
-    fcScheduleService.fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API, "");
+    fcScheduleService.fetchDataFromFc(RECEIPT_PLAN_API, "");
 
     // then
     verify(dateHelper).getYesterdayDateStr();
@@ -106,7 +110,7 @@ public class FcScheduleServiceTest {
     when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
 
     // when
-    fcScheduleService.fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API, null);
+    fcScheduleService.fetchDataFromFc(RECEIPT_PLAN_API, null);
 
     // then
     verify(dateHelper).getYesterdayDateStr();
@@ -122,7 +126,7 @@ public class FcScheduleServiceTest {
     when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
 
     // when
-    fcScheduleService.fetchDataFromFc(ReceiptPlanDto[].class, RECEIPT_PLAN_API, "20200828");
+    fcScheduleService.fetchDataFromFc(RECEIPT_PLAN_API, "20200828");
 
     // then
     verify(dateHelper, times(0)).getYesterdayDateStr();

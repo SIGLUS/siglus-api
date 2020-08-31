@@ -15,12 +15,19 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
+import static org.siglus.siglusapi.constant.FcConstants.CP_API;
+import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.dto.fc.CmmDto;
+import org.siglus.siglusapi.dto.fc.CpDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
@@ -39,31 +46,32 @@ import org.springframework.web.client.RestTemplate;
 @Setter
 public class CallFcService {
 
+  private List<IssueVoucherDto> issueVouchers = new ArrayList<>();
+  private List<ReceiptPlanDto> receiptPlans = new ArrayList<>();
+  private List<CmmDto> cmms = new ArrayList<>();
+  private List<CpDto> cps = new ArrayList<>();
+  private PageInfoDto pageInfoDto = new PageInfoDto();
+
   @Autowired
   RestTemplate remoteRestTemplate;
 
-  private List<IssueVoucherDto> issueVouchers = new ArrayList<>();
-
-  private List<ReceiptPlanDto> receiptPlans = new ArrayList<>();
-
-  private PageInfoDto pageInfoDto = new PageInfoDto();
-
   @Retryable(value = Exception.class, maxAttempts = 5, backoff = @Backoff(delay = 5000,
       multiplier = 2))
-  public <T> void fetchData(String url, Class<T[]> clazz) {
+  public void fetchData(String url, String api) {
     String param = url.split("psize=20&")[1];
-    log.info("[FC] fetch {}: {}", clazz.getSimpleName(), param);
+    log.info("[FC] fetch {}: {}", api, param);
     try {
-      ResponseEntity<T[]> responseEntity = remoteRestTemplate.getForEntity(url, clazz);
-      T[] body = responseEntity.getBody();
+      ResponseEntity<Object[]> responseEntity = remoteRestTemplate.getForEntity(url,
+          getClassByApi(api));
+      Object[] body = responseEntity.getBody();
       if (body.length == 0) {
-        log.info("[FC] fetch {}: no result returned from fc", clazz.getName());
+        log.info("[FC] fetch {}: no result returned from fc", api);
         return;
       }
       setPageInfo(responseEntity.getHeaders());
-      updateResponseResult(clazz, body);
+      updateResponseResult(api, body);
     } catch (Exception e) {
-      log.warn("[FC] fetch {} failed: {}, retry...", clazz.getSimpleName(), param);
+      log.warn("[FC] fetch {} failed: {}, retry...", api, param);
       throw e;
     }
   }
@@ -74,11 +82,28 @@ public class CallFcService {
     throw e;
   }
 
-  private <T> void updateResponseResult(Class<T[]> clazz, Object[] body) {
-    if (clazz.equals(IssueVoucherDto[].class)) {
-      this.issueVouchers.addAll(Arrays.asList((IssueVoucherDto[]) body));
-    } else if (clazz.equals(ReceiptPlanDto[].class)) {
+  public Class getClassByApi(String api) {
+    if (ISSUE_VOUCHER_API.equals(api)) {
+      return IssueVoucherDto[].class;
+    } else if (RECEIPT_PLAN_API.equals(api)) {
+      return ReceiptPlanDto[].class;
+    } else if (CMM_API.equals(api)) {
+      return CmmDto[].class;
+    } else if (CP_API.equals(api)) {
+      return CpDto[].class;
+    }
+    return null;
+  }
+
+  private void updateResponseResult(String api, Object[] body) {
+    if (RECEIPT_PLAN_API.equals(api)) {
       this.receiptPlans.addAll(Arrays.asList((ReceiptPlanDto[]) body));
+    } else if (ISSUE_VOUCHER_API.equals(api)) {
+      this.issueVouchers.addAll(Arrays.asList((IssueVoucherDto[]) body));
+    } else if (CMM_API.equals(api)) {
+      this.cmms.addAll(Arrays.asList((CmmDto[]) body));
+    } else if (CP_API.equals(api)) {
+      this.cps.addAll(Arrays.asList((CpDto[]) body));
     }
   }
 
@@ -97,4 +122,5 @@ public class CallFcService {
       log.info("[FC] page info: {}", pageInfoDto);
     }
   }
+
 }

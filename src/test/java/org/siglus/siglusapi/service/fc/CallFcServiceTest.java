@@ -18,6 +18,8 @@ package org.siglus.siglusapi.service.fc;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.util.ArrayList;
 import org.junit.Assert;
@@ -64,7 +66,7 @@ public class CallFcServiceTest {
         .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
     // when
-    callFcService.fetchData(URL, clazz);
+    callFcService.fetchData(URL, ISSUE_VOUCHER_API);
   }
 
   @Test
@@ -77,7 +79,7 @@ public class CallFcServiceTest {
         .thenReturn(new ResponseEntity<>(issueVoucherDtos, headers, HttpStatus.OK));
 
     // when
-    callFcService.fetchData(URL, clazz);
+    callFcService.fetchData(URL, ISSUE_VOUCHER_API);
 
     // then
     verify(remoteRestTemplate).getForEntity(eq(URL), eq(IssueVoucherDto[].class));
@@ -94,7 +96,7 @@ public class CallFcServiceTest {
         .thenReturn(new ResponseEntity<>(receiptPlanDtos, headers, HttpStatus.OK));
 
     // when
-    callFcService.fetchData(URL, clazz);
+    callFcService.fetchData(URL, RECEIPT_PLAN_API);
 
     // then
     verify(remoteRestTemplate).getForEntity(eq(URL), eq(ReceiptPlanDto[].class));
@@ -111,7 +113,7 @@ public class CallFcServiceTest {
         .thenReturn(new ResponseEntity<>(issueVoucherDtos, headers, HttpStatus.OK));
 
     // when
-    callFcService.fetchData(URL, clazz);
+    callFcService.fetchData(URL, ISSUE_VOUCHER_API);
 
     // then
     verify(remoteRestTemplate).getForEntity(eq(URL), eq(IssueVoucherDto[].class));
@@ -122,18 +124,19 @@ public class CallFcServiceTest {
   public void shouldNotUpdateListIfClazzIsWrong() {
     // given
     MultiValueMap<String, String> headers = getHeaders("1");
-    Class<Object[]> clazz = Object[].class;
-    Object[] objects = {new Object()};
-    when(remoteRestTemplate.getForEntity(URL, clazz))
-        .thenReturn(new ResponseEntity<>(objects, headers, HttpStatus.OK));
+    IssueVoucherDto[] issueVoucherDtos = {};
+    when(remoteRestTemplate.getForEntity(URL, IssueVoucherDto[].class))
+        .thenReturn(new ResponseEntity<>(issueVoucherDtos, headers, HttpStatus.OK));
 
     // when
-    callFcService.fetchData(URL, clazz);
+    callFcService.fetchData(URL, ISSUE_VOUCHER_API);
 
     // then
-    verify(remoteRestTemplate).getForEntity(eq(URL), eq(Object[].class));
+    verify(remoteRestTemplate).getForEntity(eq(URL), eq(IssueVoucherDto[].class));
     Assert.assertEquals(0, callFcService.getIssueVouchers().size());
     Assert.assertEquals(0, callFcService.getReceiptPlans().size());
+    Assert.assertEquals(0, callFcService.getCmms().size());
+    Assert.assertEquals(0, callFcService.getCps().size());
   }
 
   private MultiValueMap<String, String> getHeaders(String s) {

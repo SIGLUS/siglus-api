@@ -13,20 +13,41 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.constant;
+package org.siglus.siglusapi.domain;
 
-public class FcConstants {
+import java.util.Date;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
-  private FcConstants() { }
+@EqualsAndHashCode(callSuper = true)
+@Entity
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "fc_integration_results", schema = "siglusintegration")
+public class FcIntegrationResult extends BaseEntity {
 
-  public static final String CMM_JOB = "CMM";
-  public static final String CP_JOB = "CP";
-  public static final String RECEIPT_PLAN_JOB = "RECEIPT_PLAN";
-  public static final String ISSUE_VOUCHER_JOB = "ISSUE_VOUCHER";
+  private String job;
 
-  public static final String CMM_API = "/cmm/cmms";
-  public static final String CP_API = "/cp/cps";
-  public static final String RECEIPT_PLAN_API = "/receiptPlan/receiptplans";
-  public static final String ISSUE_VOUCHER_API = "/issueVoucher/issuevouchers";
+  private String startDate;
+
+  private String endDate;
+
+  private Date finishTime;
+
+  private Boolean callFcSuccess;
+
+  private Integer callFcCostTimeInSeconds;
+
+  private Boolean finalSuccess;
+
+  private Integer totalCostTimeInSeconds;
 
 }
