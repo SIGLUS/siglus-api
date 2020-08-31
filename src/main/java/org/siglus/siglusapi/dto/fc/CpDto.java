@@ -13,20 +13,42 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.constant;
+package org.siglus.siglusapi.dto.fc;
 
-public class FcConstants {
+import java.util.Date;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-  private FcConstants() { }
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class CpDto {
 
-  public static final String CMM_JOB = "CMM";
-  public static final String CP_JOB = "CP";
-  public static final String RECEIPT_PLAN_JOB = "RECEIPT_PLAN";
-  public static final String ISSUE_VOUCHER_JOB = "ISSUE_VOUCHER";
+  private Date date;
 
-  public static final String CMM_API = "/cmm/cmms";
-  public static final String CP_API = "/cp/cps";
-  public static final String RECEIPT_PLAN_API = "/receiptPlan/receiptplans";
-  public static final String ISSUE_VOUCHER_API = "/issueVoucher/issuevouchers";
+  private String period;
+
+  private String programDescription;
+
+  private Integer cp;
+
+  private Integer year;
+
+  private String clientDescription;
+
+  private String programCode;
+
+  private Integer max;
+
+  private Date lastUpdatedAt;
+
+  private String clientCode;
+  
+  private String productFnm;
+
+  private String productDescription;
 
 }
