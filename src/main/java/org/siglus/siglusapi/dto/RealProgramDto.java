@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RealProgramDto {
 
-  private String productCode;
+  private String programCode;
 
-  private String productName;
+  private String programName;
 }
