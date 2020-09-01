@@ -21,9 +21,9 @@ import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_JOB;
-import static org.siglus.siglusapi.constant.FcConstants.QUERY_BY_DATE_API_LIST;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_JOB;
+import static org.siglus.siglusapi.constant.FcConstants.getQueryByDateApiList;
 
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +58,7 @@ public class FcIntegrationResultService {
     FcIntegrationResult result = fcIntegrationResultRepository
         .findTopByJobAndFinalSuccessOrderByEndDateDesc(getJobName(api), true);
     if (result == null) {
-      if (QUERY_BY_DATE_API_LIST.contains(api)) {
+      if (getQueryByDateApiList().contains(api)) {
         return defaultStartDate;
       }
       return defaultStartPeriod;
@@ -81,7 +81,7 @@ public class FcIntegrationResultService {
 
   public void recordFcIntegrationResult(FcIntegrationResultDto resultDto) {
     String api = resultDto.getApi();
-    String endDate = QUERY_BY_DATE_API_LIST.contains(api) ? dateHelper.getTodayDateStr()
+    String endDate = getQueryByDateApiList().contains(api) ? dateHelper.getTodayDateStr()
         : dateHelper.getCurrentMonthStr();
     FcIntegrationResult result = FcIntegrationResult.builder()
         .job(getJobName(api))
