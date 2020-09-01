@@ -106,10 +106,10 @@ public class SiglusFcIntegrationService {
   @Autowired
   private SiglusDateHelper dateHelper;
 
-  @Value("${dpm.facilityTypeId:b6069fa4-cfad-11e9-9398-0242ac130008}")
+  @Value("${dpm.facilityTypeId}")
   private UUID dpmFacilityTypeId;
 
-  @Value("${fc.facilityTypeId:b606a26a-cfad-11e9-9398-0242ac130008}")
+  @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
   public Page<FcRequisitionDto> searchRequisitions(String date, Pageable pageable) {
@@ -129,8 +129,8 @@ public class SiglusFcIntegrationService {
           fcSupervisoryNodeIds, pageable);
     }
     List<FcRequisitionDto> fcRequisitionDtos = newArrayList();
-    requisitions.getContent()
-        .forEach(requisition -> fcRequisitionDtos.add(buildDto(requisition, fcSupervisoryNodeIds)));
+    requisitions.getContent().forEach(requisition -> fcRequisitionDtos.add(buildDto(requisition,
+        fcSupervisoryNodeIds)));
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
   }
 
@@ -172,8 +172,8 @@ public class SiglusFcIntegrationService {
       regimens.add(regimenMap);
       regimenMap.put("code", regimenLineItem.getRegimen().getCode());
       regimenMap.put("name", regimenLineItem.getRegimen().getFullProductName());
-      regimenLineItem.getColumns()
-          .forEach((key, value) -> regimenMap.put(regimenLabelMap.get(key), value.getValue()));
+      regimenLineItem.getColumns().forEach((key, value) -> regimenMap.put(regimenLabelMap.get(key),
+          value.getValue()));
     });
     fcRequisitionDto.setRegimens(regimens);
   }
@@ -188,8 +188,8 @@ public class SiglusFcIntegrationService {
           .findLineItems(lineItemIds).stream().collect(toMap(
               RequisitionLineItemExtension::getRequisitionLineItemId, lineItemExtension ->
                   Optional.ofNullable(lineItemExtension.getAuthorizedQuantity()).orElse(0)));
-      lineItems
-          .forEach(lineItem -> products.add(buildLineItemDto(lineItem, authorizedQuantityMap)));
+      lineItems.forEach(lineItem -> products.add(buildLineItemDto(lineItem,
+          authorizedQuantityMap)));
       fcRequisitionDto.setProducts(products);
     }
   }

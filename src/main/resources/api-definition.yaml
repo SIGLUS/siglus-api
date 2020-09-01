@@ -91,6 +91,7 @@ schemas:
         "type": "array",
         "items": {"type": "object", "$ref": "schemas/programAdditionalOrderable.json"}
       }
+  - fcRequisitionPage: !include schemas/fcRequisitionPage.json
 resourceTypes:
   - collection:
       get:
@@ -1892,6 +1893,32 @@ traits:
             body:
               application/json:
                 schema: proofOfDeliveryDto
+
+    /integration/requisitions:
+      displayName: Get Requisitions
+      get:
+        is: [ secured, paginated ]
+        queryParameters:
+          date:
+            displayName: date
+            type: string
+            required: true
+            repeat: false
+          page:
+            displayName: page
+            type: integer
+            required: false
+            repeat: false
+          size:
+            displayName: size
+            type: integer
+            required: false
+            repeat: false
+        responses:
+          200:
+            body:
+              application/json:
+                schema: fcRequisitionPage
 
     /programadditionalorderables:
       displayName: Program Additional Orderable Product
