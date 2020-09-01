@@ -18,8 +18,18 @@ package org.siglus.siglusapi.repository;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface RequisitionExtensionRepository extends JpaRepository<RequisitionExtension, UUID> {
 
   RequisitionExtension findByRequisitionId(UUID requisitionId);
+
+  @Query(value = "select * from siglusintegration.requisition_extension r"
+      + " where (CHAR_LENGTH(CAST(r.requisitionnumber as varchar)) > 7 and"
+      + " concat(r.requisitionnumberprefix, r.requisitionnumber) = :requisitionNumber) or"
+      + " (CHAR_LENGTH(CAST(r.requisitionnumber as varchar)) < 7 and"
+      + " concat(r.requisitionnumberprefix, "
+      + "to_char(r.requisitionnumber, 'fm0000000')) = :requisitionNumber);", nativeQuery = true)
+  RequisitionExtension findByRequisitionNumber(@Param("requisitionNumber")String requisitionNumber);
 }
