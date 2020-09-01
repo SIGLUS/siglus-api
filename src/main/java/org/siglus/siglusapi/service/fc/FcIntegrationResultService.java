@@ -21,6 +21,7 @@ import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_JOB;
+import static org.siglus.siglusapi.constant.FcConstants.QUERY_BY_DATE_API_LIST;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_JOB;
 
@@ -28,39 +29,74 @@ import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.domain.FcIntegrationResult;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.repository.FcIntegrationResultRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-@SuppressWarnings("PMD.TooManyMethods")
 public class FcIntegrationResultService {
+
+  @Value("${fc.startDate}")
+  private String defaultStartDate;
+
+  @Value("${fc.startPeriod}")
+  private String defaultStartPeriod;
 
   @Autowired
   private FcIntegrationResultRepository fcIntegrationResultRepository;
+  
+  @Autowired
+  private CallFcService callFcService;
 
   @Autowired
   private SiglusDateHelper dateHelper;
 
-  public void recordCallFcFailed(String api, String date) {
-    recordFcIntegrationResult(api, date, false, null, false, null);
+  public String getLatestSuccessDate(String api) {
+    FcIntegrationResult result = fcIntegrationResultRepository
+        .findTopByJobAndFinalSuccessOrderByEndDateDesc(getJobName(api), true);
+    if (result == null) {
+      if (QUERY_BY_DATE_API_LIST.contains(api)) {
+        return defaultStartDate;
+      }
+      return defaultStartPeriod;
+    }
+    return result.getEndDate();
   }
 
-  public void recordFcIntegrationResult(String api, String date, Boolean callFcSuccess,
-      Integer callFcCostTimeInSeconds, Boolean finalSuccess, Integer totalCostTimeInSeconds) {
+  public void recordCallFcFailed(String api, String date) {
+    FcIntegrationResultDto result = FcIntegrationResultDto.builder()
+        .api(api)
+        .date(date)
+        .callFcSuccess(false)
+        .totalObjectsFromFc(null)
+        .callFcCostTimeInSeconds(null)
+        .finalSuccess(null)
+        .totalCostTimeInSeconds(null)
+        .build();
+    recordFcIntegrationResult(result);
+  }
+
+  public void recordFcIntegrationResult(FcIntegrationResultDto resultDto) {
+    String api = resultDto.getApi();
+    String endDate = QUERY_BY_DATE_API_LIST.contains(api) ? dateHelper.getTodayDateStr()
+        : dateHelper.getCurrentMonthStr();
     FcIntegrationResult result = FcIntegrationResult.builder()
         .job(getJobName(api))
-        .startDate(date)
-        .endDate(dateHelper.getTodayDateStr())
+        .startDate(resultDto.getDate())
+        .endDate(endDate)
         .finishTime(new Date())
-        .callFcSuccess(callFcSuccess)
-        .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
-        .finalSuccess(finalSuccess)
-        .totalCostTimeInSeconds(totalCostTimeInSeconds)
+        .totalObjectsFromFc(resultDto.getTotalObjectsFromFc())
+        .callFcSuccess(resultDto.getCallFcSuccess())
+        .callFcCostTimeInSeconds(resultDto.getCallFcCostTimeInSeconds())
+        .finalSuccess(resultDto.getFinalSuccess())
+        .totalCostTimeInSeconds(resultDto.getTotalCostTimeInSeconds())
         .build();
     log.info("save fc_integration_results: {}", result);
     fcIntegrationResultRepository.save(result);
+    clearFcData(api);
   }
 
   private String getJobName(String api) {
@@ -74,6 +110,18 @@ public class FcIntegrationResultService {
       return CP_JOB;
     }
     return null;
+  }
+  
+  private void clearFcData(String api) {
+    if (RECEIPT_PLAN_API.equals(api)) {
+      callFcService.getReceiptPlans().clear();
+    } else if (ISSUE_VOUCHER_API.equals(api)) {
+      callFcService.getIssueVouchers().clear();
+    } else if (CMM_API.equals(api)) {
+      callFcService.getCmms().clear();
+    } else {
+      callFcService.getCps().clear();
+    }
   }
 
 }

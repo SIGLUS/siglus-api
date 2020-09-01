@@ -42,6 +42,8 @@ public class FcIntegrationResult extends BaseEntity {
 
   private Date finishTime;
 
+  private Integer totalObjectsFromFc;
+
   private Boolean callFcSuccess;
 
   private Integer callFcCostTimeInSeconds;

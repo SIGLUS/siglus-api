@@ -8,9 +8,10 @@ CREATE TABLE siglusintegration.fc_integration_results (
     startdate CHARACTER VARYING(255),
     enddate CHARACTER VARYING(255),
     finishtime TIMESTAMP WITH TIME ZONE,
-    callfcsuccess boolean,
+    totalObjectsFromFc INTEGER,
+    callfcsuccess BOOLEAN,
     callfccosttimeinseconds INTEGER,
-    finalsuccess boolean,
+    finalsuccess BOOLEAN,
     totalcosttimeinseconds INTEGER
 );
 
