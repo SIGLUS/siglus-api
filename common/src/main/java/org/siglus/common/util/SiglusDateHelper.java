@@ -52,7 +52,7 @@ public class SiglusDateHelper {
 
   public String getCurrentMonthStr() {
     LocalDate now = LocalDate.now(clock);
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM-yyyy");
     return now.format(formatter);
   }
 }

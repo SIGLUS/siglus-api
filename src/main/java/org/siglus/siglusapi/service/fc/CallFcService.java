@@ -71,7 +71,7 @@ public class CallFcService {
       setPageInfo(responseEntity.getHeaders());
       updateResponseResult(api, body);
     } catch (Exception e) {
-      log.warn("[FC] fetch {} failed: {}, retry...", api, param);
+      log.warn("[FC] fetch {} failed: {}, message: {}, retry...", api, e.getMessage(), param);
       throw e;
     }
   }
@@ -89,10 +89,9 @@ public class CallFcService {
       return ReceiptPlanDto[].class;
     } else if (CMM_API.equals(api)) {
       return CmmDto[].class;
-    } else if (CP_API.equals(api)) {
+    } else {
       return CpDto[].class;
     }
-    return null;
   }
 
   private void updateResponseResult(String api, Object[] body) {

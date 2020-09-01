@@ -15,28 +15,30 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
+import static org.siglus.siglusapi.constant.FcConstants.CP_API;
+import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.util.ArrayList;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.common.util.SiglusDateHelper;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcScheduleServiceTest {
 
-  public static final String YESTERDAY = "20200825";
-  public static final String CURRENT_MONTH = "2020-08";
+  public static final String DATE = "20200825";
+  public static final String PERIOD = "08-2020";
 
   @InjectMocks
   private FcScheduleService fcScheduleService;
@@ -47,89 +49,105 @@ public class FcScheduleServiceTest {
   @Mock
   private FcIntegrationResultService fcIntegrationResultService;
 
-  @Mock
-  private SiglusDateHelper dateHelper;
-
   @Test
-  public void shouldFetchReceiptPlanFromFc() throws Exception {
+  public void shouldFetchReceiptPlanFromFc() {
     // given
     when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
-    when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(dateHelper.getYesterdayDateStr()).thenReturn(YESTERDAY);
-    when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
+    when(fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API)).thenReturn(DATE);
 
     // when
     fcScheduleService.fetchReceiptPlansFromFc();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
-    verify(fcIntegrationResultService).recordFcIntegrationResult(anyString(), anyString(),
-        anyBoolean(), anyInt(), anyBoolean(), anyInt());
+    ArgumentCaptor<FcIntegrationResultDto> captor =
+        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
+    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
+    assertEquals(RECEIPT_PLAN_API, captor.getValue().getApi());
   }
 
   @Test
-  public void shouldFetchIssueVohcerFromFc() throws Exception {
+  public void shouldFetchIssueVohcerFromFc() {
     // given
-    when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(dateHelper.getYesterdayDateStr()).thenReturn(YESTERDAY);
-    when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
+    when(fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API)).thenReturn(DATE);
 
     // when
     fcScheduleService.fetchIssueVouchersFromFc();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
+    ArgumentCaptor<FcIntegrationResultDto> captor =
+        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
+    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
+    assertEquals(ISSUE_VOUCHER_API, captor.getValue().getApi());
   }
 
   @Test
-  public void shouldUseDefaultDateWhenFetchDataFromFcIfDateIsEmpty() throws Exception {
+  public void shouldFetchCmmsFromFc() {
     // given
-    when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(dateHelper.getYesterdayDateStr()).thenReturn(YESTERDAY);
-    when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
+    when(fcIntegrationResultService.getLatestSuccessDate(CMM_API)).thenReturn(PERIOD);
 
     // when
-    fcScheduleService.fetchDataFromFc(RECEIPT_PLAN_API, "");
+    fcScheduleService.fetchCmmsFromFc();
 
     // then
-    verify(dateHelper).getYesterdayDateStr();
+    verify(callFcService).fetchData(anyString(), anyString());
+    ArgumentCaptor<FcIntegrationResultDto> captor =
+        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
+    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
+    assertEquals(CMM_API, captor.getValue().getApi());
   }
 
   @Test
-  public void shouldUseDefaultDateWhenFetchDataFromFcIfDateIsNull() throws Exception {
+  public void shouldFetchCpsFromFc() {
     // given
-    when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(dateHelper.getYesterdayDateStr()).thenReturn(YESTERDAY);
-    when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
+    when(fcIntegrationResultService.getLatestSuccessDate(CP_API)).thenReturn(PERIOD);
 
     // when
-    fcScheduleService.fetchDataFromFc(RECEIPT_PLAN_API, null);
+    fcScheduleService.fetchCpsFromFc();
 
     // then
-    verify(dateHelper).getYesterdayDateStr();
+    verify(callFcService).fetchData(anyString(), anyString());
+    ArgumentCaptor<FcIntegrationResultDto> captor =
+        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
+    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
+    assertEquals(CP_API, captor.getValue().getApi());
   }
 
   @Test
-  public void shouldNotUseDefaultDateWhenFetchDataFromFcIfDateIsNotEmpty() throws Exception {
+  public void shouldUseLatestSuccessDateWhenFetchReceiptPlansFromFc() {
     // given
     when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
-    when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(dateHelper.getYesterdayDateStr()).thenReturn(YESTERDAY);
-    when(dateHelper.getCurrentMonthStr()).thenReturn(CURRENT_MONTH);
+    when(fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API)).thenReturn(DATE);
 
     // when
-    fcScheduleService.fetchDataFromFc(RECEIPT_PLAN_API, "20200828");
+    fcScheduleService.fetchReceiptPlansFromFc();
 
     // then
-    verify(dateHelper, times(0)).getYesterdayDateStr();
+    ArgumentCaptor<FcIntegrationResultDto> captor =
+        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
+    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
+    assertEquals(DATE, captor.getValue().getDate());
+  }
+
+  @Test(expected = Exception.class)
+  public void shouldRecordCallFcFailedWhenFetchDataFromFcFailed() {
+    // given
+    when(callFcService.getPageInfoDto()).thenReturn(null);
+
+    // when
+    fcScheduleService.fetchDataFromFc(ISSUE_VOUCHER_API, DATE);
+
+    // then
+    verify(fcIntegrationResultService).recordCallFcFailed(anyString(), anyString());
   }
 
 }

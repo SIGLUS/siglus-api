@@ -18,6 +18,8 @@ package org.siglus.siglusapi.service.fc;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
+import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
@@ -26,6 +28,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.siglus.siglusapi.dto.fc.CmmDto;
+import org.siglus.siglusapi.dto.fc.CpDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +60,8 @@ public class CallFcServiceTest {
   public void setup() {
     callFcService.setIssueVouchers(new ArrayList<>());
     callFcService.setReceiptPlans(new ArrayList<>());
+    callFcService.setCmms(new ArrayList<>());
+    callFcService.setCps(new ArrayList<>());
   }
 
   @Test(expected = Exception.class)
@@ -101,6 +107,40 @@ public class CallFcServiceTest {
     // then
     verify(remoteRestTemplate).getForEntity(eq(URL), eq(ReceiptPlanDto[].class));
     Assert.assertEquals(1, callFcService.getReceiptPlans().size());
+  }
+
+  @Test
+  public void shouldGetCmmWhenFetchDataSuccess() {
+    // given
+    MultiValueMap<String, String> headers = getHeaders("2");
+    Class<CmmDto[]> clazz = CmmDto[].class;
+    CmmDto[] cmmDtos = {new CmmDto()};
+    when(remoteRestTemplate.getForEntity(URL, clazz))
+        .thenReturn(new ResponseEntity<>(cmmDtos, headers, HttpStatus.OK));
+
+    // when
+    callFcService.fetchData(URL, CMM_API);
+
+    // then
+    verify(remoteRestTemplate).getForEntity(eq(URL), eq(CmmDto[].class));
+    Assert.assertEquals(1, callFcService.getCmms().size());
+  }
+
+  @Test
+  public void shouldGetCpWhenFetchDataSuccess() {
+    // given
+    MultiValueMap<String, String> headers = getHeaders("2");
+    Class<CpDto[]> clazz = CpDto[].class;
+    CpDto[] cpDtos = {new CpDto()};
+    when(remoteRestTemplate.getForEntity(URL, clazz))
+        .thenReturn(new ResponseEntity<>(cpDtos, headers, HttpStatus.OK));
+
+    // when
+    callFcService.fetchData(URL, CP_API);
+
+    // then
+    verify(remoteRestTemplate).getForEntity(eq(URL), eq(CpDto[].class));
+    Assert.assertEquals(1, callFcService.getCps().size());
   }
 
   @Test
