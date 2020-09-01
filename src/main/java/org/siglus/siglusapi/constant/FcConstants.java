@@ -32,8 +32,8 @@ public class FcConstants {
   public static final String RECEIPT_PLAN_API = "/receiptPlan/receiptplans";
   public static final String ISSUE_VOUCHER_API = "/issueVoucher/issuevouchers";
 
-  public static final List<String> QUERY_BY_DATE_API_LIST = Arrays.asList(RECEIPT_PLAN_API,
-      ISSUE_VOUCHER_API);
-  public static final List<String> QUERY_BY_PERIOD_API_LIST = Arrays.asList(CMM_API, CP_API);
+  public static List<String> getQueryByDateApiList() {
+    return Arrays.asList(RECEIPT_PLAN_API, ISSUE_VOUCHER_API);
+  }
 
 }

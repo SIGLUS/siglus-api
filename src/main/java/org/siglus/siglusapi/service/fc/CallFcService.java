@@ -71,7 +71,7 @@ public class CallFcService {
       setPageInfo(responseEntity.getHeaders());
       updateResponseResult(api, body);
     } catch (Exception e) {
-      log.warn("[FC] fetch {} failed: {}, message: {}, retry...", api, e.getMessage(), param);
+      log.warn("[FC] fetch {} {} failed: {}, retry...", api, param, e.getMessage());
       throw e;
     }
   }
