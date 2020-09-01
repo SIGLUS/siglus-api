@@ -42,6 +42,7 @@ import org.siglus.siglusapi.repository.FcIntegrationResultRepository;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("PMD.TooManyMethods")
 public class FcIntegrationResultServiceTest {
 
   public static final String YESTERDAY = "20200828";
