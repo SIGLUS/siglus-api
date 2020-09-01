@@ -47,6 +47,9 @@ public class FcIntegrationResultService {
 
   @Autowired
   private FcIntegrationResultRepository fcIntegrationResultRepository;
+  
+  @Autowired
+  private CallFcService callFcService;
 
   @Autowired
   private SiglusDateHelper dateHelper;
@@ -93,6 +96,7 @@ public class FcIntegrationResultService {
         .build();
     log.info("save fc_integration_results: {}", result);
     fcIntegrationResultRepository.save(result);
+    clearFcData(api);
   }
 
   private String getJobName(String api) {
@@ -106,6 +110,18 @@ public class FcIntegrationResultService {
       return CP_JOB;
     }
     return null;
+  }
+  
+  private void clearFcData(String api) {
+    if (RECEIPT_PLAN_API.equals(api)) {
+      callFcService.getReceiptPlans().clear();
+    } else if (ISSUE_VOUCHER_API.equals(api)) {
+      callFcService.getIssueVouchers().clear();
+    } else if (CMM_API.equals(api)) {
+      callFcService.getCmms().clear();
+    } else {
+      callFcService.getCps().clear();
+    }
   }
 
 }

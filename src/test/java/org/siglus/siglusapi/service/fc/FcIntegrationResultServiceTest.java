@@ -28,6 +28,7 @@ import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
+import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,6 +55,9 @@ public class FcIntegrationResultServiceTest {
 
   @Mock
   private SiglusDateHelper dateHelper;
+
+  @Mock
+  private CallFcService callFcService;
 
   @InjectMocks
   private FcIntegrationResultService fcIntegrationResultService;
@@ -227,6 +231,7 @@ public class FcIntegrationResultServiceTest {
         .api(CMM_API)
         .build();
     when(dateHelper.getCurrentMonthStr()).thenReturn(DEFAULT_PERIOD);
+    when(callFcService.getCmms()).thenReturn(new ArrayList<>());
 
     // when
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);
