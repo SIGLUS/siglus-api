@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.fc;
 
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.siglusapi.domain.FcIntegrationHandlerStatus;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -30,26 +31,37 @@ public class FcIntegrationIssueVoucherService {
   @Autowired
   private RequisitionExtensionRepository requisitionExtensionRepository;
 
-  public void createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
+  public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
+    boolean successHandler = true;
     for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
-      createIssueVoucher(issueVoucherDto);
+      FcIntegrationHandlerStatus handlerError = createIssueVoucher(issueVoucherDto);
+      if (handlerError.equals(FcIntegrationHandlerStatus.CALLAPIERROR)) {
+        successHandler = false;
+        break;
+      }
     }
+    return successHandler;
   }
 
-  public void createIssueVoucher(IssueVoucherDto issueVoucherDto) {
+  public FcIntegrationHandlerStatus createIssueVoucher(IssueVoucherDto issueVoucherDto) {
     String requisitionNumber = issueVoucherDto.getRequisitionNumber();
     if (requisitionNumber == null) {
       log.error("FcIntegrationErrorForIssueVoucher: requisitionNumber should not null",
           issueVoucherDto.toString());
-      return;
+      return FcIntegrationHandlerStatus.DATAERROR;
     }
     RequisitionExtension extension = requisitionExtensionRepository
         .findByRequisitionNumber(requisitionNumber);
     if (extension == null) {
       log.error("FcIntegrationErrorForIssueVoucher:requisitionNumber should not exist",
           issueVoucherDto.toString());
-      return;
+      return FcIntegrationHandlerStatus.DATAERROR;
     }
+
+
+
+    return FcIntegrationHandlerStatus.SUCCESS;
+
   }
 
 }

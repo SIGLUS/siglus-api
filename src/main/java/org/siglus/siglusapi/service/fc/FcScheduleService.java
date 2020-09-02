@@ -48,6 +48,9 @@ public class FcScheduleService {
   @Autowired
   private FcIntegrationResultService fcIntegrationResultService;
 
+  @Autowired
+  private FcIntegrationIssueVoucherService issueVoucherService;
+
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   public void fetchReceiptPlansFromFc() {
     final long startTime = currentTimeMillis();
@@ -71,14 +74,15 @@ public class FcScheduleService {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(ISSUE_VOUCHER_API, date);
-    // do business process here, call your own service, use `callFcService.getIssueVouchers()`
+    Boolean finalSuccess = issueVoucherService
+        .createIssueVouchers(callFcService.getIssueVouchers());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(ISSUE_VOUCHER_API)
         .date(date)
         .totalObjectsFromFc(callFcService.getIssueVouchers().size())
         .callFcSuccess(true)
         .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
-        .finalSuccess(true)
+        .finalSuccess(finalSuccess)
         .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
         .build();
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);

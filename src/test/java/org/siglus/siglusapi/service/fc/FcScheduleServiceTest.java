@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.fc;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,6 +26,7 @@ import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.util.ArrayList;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -48,6 +50,14 @@ public class FcScheduleServiceTest {
 
   @Mock
   private FcIntegrationResultService fcIntegrationResultService;
+
+  @Mock
+  private FcIntegrationIssueVoucherService integrationIssueVoucherService;
+
+  @Before
+  public void setup() {
+    when(integrationIssueVoucherService.createIssueVouchers(any())).thenReturn(true);
+  }
 
   @Test
   public void shouldFetchReceiptPlanFromFc() {
