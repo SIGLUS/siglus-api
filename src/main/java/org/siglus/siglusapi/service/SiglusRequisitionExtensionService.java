@@ -15,7 +15,11 @@
 
 package org.siglus.siglusapi.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -63,6 +67,17 @@ public class SiglusRequisitionExtensionService {
         .findByRequisitionId(requisitionId);
     return formatRequisitionNumber(requisitionExtension);
   }
+
+  // requisitionId: requisitionNumber
+  public Map<UUID, String> getRequisitionNumbers(Set<UUID> requisitionIds) {
+    List<RequisitionExtension> requisitionExtensions = requisitionExtensionRepository
+        .findByRequisitionIdIn(requisitionIds);
+    return requisitionExtensions
+        .stream()
+        .collect(Collectors.toMap(RequisitionExtension::getRequisitionId,
+            extension -> formatRequisitionNumber(extension)));
+  }
+
 
   public void deleteRequisitionExtension(UUID requisitionId) {
     RequisitionExtension requisitionExtension = requisitionExtensionRepository

@@ -15,25 +15,31 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface RequisitionExtensionRepository extends JpaRepository<RequisitionExtension, UUID> {
+public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDelivery, UUID> {
 
-  RequisitionExtension findByRequisitionId(UUID requisitionId);
-
-  List<RequisitionExtension> findByRequisitionIdIn(Set<UUID> requisitionIds);
-
-  @Query(value = "select * from siglusintegration.requisition_extension r"
-      + " where (CHAR_LENGTH(CAST(r.requisitionnumber as varchar)) > 7 and"
-      + " concat(r.requisitionnumberprefix, r.requisitionnumber) = :requisitionNumber) or"
-      + " (CHAR_LENGTH(CAST(r.requisitionnumber as varchar)) < 7 and"
-      + " concat(r.requisitionnumberprefix, "
-      + "to_char(r.requisitionnumber, 'fm0000000')) = :requisitionNumber);", nativeQuery = true)
-  RequisitionExtension findByRequisitionNumber(@Param("requisitionNumber")String requisitionNumber);
+  @Query(value = "select * from fulfillment.proofs_of_delivery p "
+      + "join fulfillment.shipments s2 on p.shipmentid = s2.id "
+      + "join fulfillment.orders o2 on s2.orderid = o2.id "
+      + "where p.status = 'CONFIRMED' "
+      + "and p.receiveddate >= :date "
+      + "and p.receiveddate < :today "
+      + "and p.shipmentid in ("
+      + "     select s.id from fulfillment.shipments s "
+      + "     join fulfillment.orders o "
+      + "     on s.orderid = o.id "
+      + "     where o.requestingfacilityid in :requestingFacilityIds) "
+      + "order by ?#{#pageable}",
+      nativeQuery = true)
+  Page<ProofOfDelivery> search(@Param("date") String date, @Param("today") String today,
+      @Param("requestingFacilityIds") Set<UUID> requestingFacilityIds,
+      Pageable pageable);
 }

@@ -13,18 +13,37 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.repository;
+package org.siglus.siglusapi.dto;
 
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import org.siglus.common.domain.OrderExternal;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface OrderExternalRepository extends JpaRepository<OrderExternal, UUID> {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class FcProofOfDeliveryProductDto {
 
-  List<OrderExternal> findByRequisitionId(UUID requisitionId);
+  private String productCode;
 
-  List<OrderExternal> findByIdIn(Set<UUID> ids);
+  private String productName;
 
+  private String requisitionNumber;
+
+  private String productDescription;
+
+  private List<RealProgramDto> realPorgrams;
+
+  private String lotCode;
+
+  private Integer acceptedQuantity;
+
+  private Integer rejectedQuantity;
+
+  private String rejectedReason;
+
+  private String notes;
 }

@@ -56,9 +56,13 @@ public class ProofOfDeliveryLineItem extends BaseEntity {
   @Embedded
   private VersionEntityReference orderable;
 
+  // [SIGLUS change start]
+  // [change reason]: #490 get outside
   @Type(type = UUID_TYPE)
-  @Getter(AccessLevel.PACKAGE)
+  //  @Getter(AccessLevel.PACKAGE)
+  @Getter
   private UUID lotId;
+  // [SIGLUS change end]
 
   // [SIGLUS change start]
   // [change reason]: #401 AC5 If accepted quantity greater than 0 ,
@@ -72,15 +76,27 @@ public class ProofOfDeliveryLineItem extends BaseEntity {
   @Getter(AccessLevel.PACKAGE)
   private VvmStatus vvmStatus;
 
-  @Getter(AccessLevel.PACKAGE)
+  // [SIGLUS change start]
+  // [change reason]: #490 get outside
+  //  @Getter(AccessLevel.PACKAGE)
+  @Getter
   private Integer quantityRejected;
+  // [SIGLUS change end]
 
-  @Getter(AccessLevel.PACKAGE)
+  // [SIGLUS change start]
+  // [change reason]: #490 get outside
+  //  @Getter(AccessLevel.PACKAGE)
+  @Getter
   private UUID rejectionReasonId;
+  // [SIGLUS change end]
 
   @Column(columnDefinition = TEXT_COLUMN_DEFINITION)
-  @Getter(AccessLevel.PACKAGE)
+  // [SIGLUS change start]
+  // [change reason]: #490 get outside
+  //  @Getter(AccessLevel.PACKAGE)
+  @Getter
   private String notes;
+  // [SIGLUS change end]
 
   ProofOfDeliveryLineItem(ShipmentLineItem shipmentLineItem) {
     this(

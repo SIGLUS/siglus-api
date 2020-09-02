@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +26,5 @@ public interface ProgramOrderablesExtensionRepository extends
 
   List<ProgramOrderablesExtension> findAllByOrderableId(UUID orderableId);
 
+  List<ProgramOrderablesExtension> findAllByOrderableIdIn(Set<UUID> orderableIds);
 }

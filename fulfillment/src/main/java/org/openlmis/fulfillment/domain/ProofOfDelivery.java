@@ -80,8 +80,12 @@ public class ProofOfDelivery extends BaseEntity {
   private String receivedBy;
 
   @Column(columnDefinition = TEXT_COLUMN_DEFINITION)
-  @Getter(AccessLevel.PACKAGE)
+  // [SIGLUS change start]
+  // [change reason]: 490 to get outside
+  // @Getter(AccessLevel.PACKAGE)
+  @Getter
   private String deliveredBy;
+  // [SIGLUS change end]
 
   @Getter
   private LocalDate receivedDate;

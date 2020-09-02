@@ -41,6 +41,10 @@ public class SiglusLotReferenceDataService extends BaseReferenceDataService<LotD
     return LotDto[].class;
   }
 
+  public List<LotDto> findAll() {
+    return getPage(RequestParameters.init()).getContent();
+  }
+
   public List<LotDto> getLots(LotSearchParams lotSearchParams) {
     RequestParameters requestParameters = RequestParameters.init()
         .set(FieldConstants.EXPIRATION_DATE, lotSearchParams.getExpirationDate())

@@ -15,7 +15,9 @@
 
 package org.siglus.common.service.client;
 
+import java.util.List;
 import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.util.RequestParameters;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,5 +36,9 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
   @Override
   protected Class<FacilityDto[]> getArrayResultClass() {
     return FacilityDto[].class;
+  }
+
+  public List<FacilityDto> findAll() {
+    return getPage(RequestParameters.init()).getContent();
   }
 }
