@@ -69,8 +69,10 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.requisition.domain.AvailableRequisitionColumnOption;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.RequisitionTemplateDataBuilder;
+import org.openlmis.requisition.domain.SourceType;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItemDataBuilder;
@@ -155,6 +157,7 @@ import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionReposit
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.service.fc.FcIntegrationCmmService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
@@ -178,6 +181,8 @@ public class SiglusRequisitionServiceTest {
   private static final String REQUISITION_NUMBER = "requisitionNumber";
   private static final String CODE = "code";
   private static final String MESSAGE = "message";
+
+  public static final String SUGGESTED_QUANTITY_COLUMN = "suggestedQuantity";
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -312,6 +317,9 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
+
+  @Mock
+  private FcIntegrationCmmService fcIntegrationCmmService;
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
@@ -577,7 +585,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(createUserFacility());
     when(siglusProgramService.getProgram(programId)).thenReturn(createProgramDto());
     when(periodService.getPeriod(processingPeriodId)).thenReturn(createProcessingPeriod());
-    when(stockCardRangeSummaryStockManagementService.search(any(), any(),  any(),any(), any(),
+    when(stockCardRangeSummaryStockManagementService.search(any(), any(), any(), any(), any(),
         any())).thenReturn(createStockCardRangeSummaryList());
     List<ProcessingPeriodDto> processingPeriodDtos = new ArrayList<>();
     when(periodService.getPeriods(any())).thenReturn(processingPeriodDtos);
@@ -1990,9 +1998,13 @@ public class SiglusRequisitionServiceTest {
   }
 
   private RequisitionTemplate createTemplate() {
+    AvailableRequisitionColumnOption option = new AvailableRequisitionColumnOption();
+    option.setOptionName("cmm");
     return baseTemplateBuilder()
         .withNumberOfPeriodsToAverage(3)
         .withPopulateStockOnHandFromStockCards(true)
+        .withColumn(SUGGESTED_QUANTITY_COLUMN, "SQ", SourceType.CALCULATED, option,
+            newHashSet(SourceType.CALCULATED))
         .build();
 
   }

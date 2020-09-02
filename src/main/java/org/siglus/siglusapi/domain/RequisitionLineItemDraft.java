@@ -154,6 +154,8 @@ public class RequisitionLineItemDraft extends BaseEntity {
 
   private Integer authorizedQuantity;
 
+  private Integer suggestedQuantity;
+
   public static RequisitionLineItemDraft from(RequisitionDraft draft,
       RequisitionLineItem.Importer lineItemV2Dto) {
     RequisitionLineItemDraft lineItemDraft = new RequisitionLineItemDraft();

@@ -15,34 +15,67 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.util.UUID;
-import javax.persistence.Column;
+import static com.google.common.collect.Lists.newArrayList;
+
+import java.util.Date;
+import java.util.List;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.fc.CpDto;
+import org.springframework.beans.BeanUtils;
 
 @Entity
-@Getter
-@Setter
+@Data
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "requisition_line_items_extension", schema = "siglusintegration")
-public class RequisitionLineItemExtension extends BaseEntity {
+@Table(name = "cps", schema = "siglusintegration")
+public class Cp extends BaseEntity {
 
-  @Column(nullable = false)
-  private UUID requisitionLineItemId;
+  private String facilityCode;
 
-  @Column
-  private Integer authorizedQuantity;
+  private String facilityName;
 
-  @Column
-  private Integer suggestedQuantity;
+  private String productCode;
+
+  private String productName;
+
+  private String realProgramCode;
+
+  private String realProgramName;
+
+  private Integer cp;
+
+  private Integer max;
+
+  private String period;
+
+  private Integer year;
+
+  private Date date;
+
+  private Date lastUpdatedAt;
+
+  public static List<Cp> from(List<CpDto> dtos) {
+    List<Cp> cps = newArrayList();
+    dtos.forEach(dto -> {
+      Cp cp = new Cp();
+      BeanUtils.copyProperties(dto, cp);
+      cp.setFacilityCode(dto.getClientCode());
+      cp.setFacilityName(dto.getClientDescription());
+      cp.setProductCode(dto.getProductFnm());
+      cp.setProductName(dto.getProductDescription());
+      cp.setRealProgramCode(dto.getProgramCode());
+      cp.setRealProgramName(dto.getProgramDescription());
+      cps.add(cp);
+    });
+    return cps;
+  }
 }

@@ -1977,6 +1977,23 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
+
+    /cmms:
+      displayName: Cmms From Fc
+      post:
+        is: [ secured ]
+        description: Fetch cmms from fc.
+        responses:
+          200:
+
+    /cps:
+      displayName: Cps From Fc
+      post:
+        is: [ secured ]
+        description: Fetch cps from fc.
+        responses:
+          200:
+
     /programadditionalorderables:
       displayName: Program Additional Orderable Product
       get:

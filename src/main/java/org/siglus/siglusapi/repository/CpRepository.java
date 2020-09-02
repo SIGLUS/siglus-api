@@ -15,18 +15,17 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.SupervisoryNode;
+import org.siglus.siglusapi.domain.Cp;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
-public interface SupervisoryNodeRepository extends JpaRepository<SupervisoryNode, UUID> {
+public interface CpRepository extends JpaRepository<Cp, UUID> {
 
-  @Query(value = "select s.* from referencedata.supervisory_nodes s, referencedata.facilities f"
-      + " where s.facilityid = f.id and f.typeid = :facilityTypeId", nativeQuery = true)
-  Set<SupervisoryNode> findAllByFacilityTypeId(@Param("facilityTypeId") UUID facilityTypeId);
+  Cp findCpByFacilityCodeAndProductCodeAndPeriodAndYear(String facilityCode, String productCode,
+      String period, Integer year);
 
-  Set<SupervisoryNode> findAllByFacilityId(UUID facilityId);
+  List<Cp> findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(String facilityCode,
+      Collection<String> productCode, String period, Integer year);
 }

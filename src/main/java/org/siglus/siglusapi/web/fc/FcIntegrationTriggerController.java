@@ -13,20 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.web.fc;
 
-import java.util.Set;
-import java.util.UUID;
-import org.siglus.common.domain.referencedata.SupervisoryNode;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.siglus.siglusapi.service.fc.FcScheduleService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-public interface SupervisoryNodeRepository extends JpaRepository<SupervisoryNode, UUID> {
+@RestController
+@RequestMapping("/api/siglusapi")
+public class FcIntegrationTriggerController {
 
-  @Query(value = "select s.* from referencedata.supervisory_nodes s, referencedata.facilities f"
-      + " where s.facilityid = f.id and f.typeid = :facilityTypeId", nativeQuery = true)
-  Set<SupervisoryNode> findAllByFacilityTypeId(@Param("facilityTypeId") UUID facilityTypeId);
+  @Autowired
+  private FcScheduleService fcScheduleService;
 
-  Set<SupervisoryNode> findAllByFacilityId(UUID facilityId);
+  @PostMapping("/cmms")
+  public void fetchCmmsFromFc() {
+    fcScheduleService.fetchCmmsFromFc();
+  }
+
+  @PostMapping("/cps")
+  public void fetchCpsFromFc() {
+    fcScheduleService.fetchCpsFromFc();
+  }
 }

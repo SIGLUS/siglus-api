@@ -49,6 +49,12 @@ public class FcScheduleService {
   private FcIntegrationResultService fcIntegrationResultService;
 
   @Autowired
+  private FcIntegrationCmmService fcIntegrationCmmService;
+
+  @Autowired
+  private FcIntegrationCpService fcIntegrationCpService;
+
+  @Autowired
   private FcIssueVoucherService fcIssueVoucherService;
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
@@ -93,14 +99,14 @@ public class FcScheduleService {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(CMM_API);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(CMM_API, date);
-    // do business process here, call your own service, use `callFcService.getCmms()`
+    boolean finalSuccess = fcIntegrationCmmService.dealCmmData(callFcService.getCmms());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(CMM_API)
         .date(date)
         .totalObjectsFromFc(callFcService.getCmms().size())
         .callFcSuccess(true)
         .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
-        .finalSuccess(true)
+        .finalSuccess(finalSuccess)
         .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
         .build();
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);
@@ -111,14 +117,14 @@ public class FcScheduleService {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(CP_API);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(CP_API, date);
-    // do business process here, call your own service, use `callFcService.getCps()`
+    boolean finalSuccess = fcIntegrationCpService.dealCpData(callFcService.getCps());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(CP_API)
         .date(date)
         .totalObjectsFromFc(callFcService.getCps().size())
         .callFcSuccess(true)
         .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
-        .finalSuccess(true)
+        .finalSuccess(finalSuccess)
         .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
         .build();
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);
