@@ -13,18 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.repository;
+package org.siglus.common.dto.referencedata;
 
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import org.siglus.common.domain.OrderExternal;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.Data;
 
-public interface OrderExternalRepository extends JpaRepository<OrderExternal, UUID> {
-
-  List<OrderExternal> findByRequisitionId(UUID requisitionId);
-
-  List<OrderExternal> findByIdIn(Set<UUID> ids);
-
+@Data
+public class FacilityTypeDto {
+  private UUID id;
+  private String code;
+  private String name;
+  private String description;
+  private Integer displayOrder;
+  private Boolean active;
 }

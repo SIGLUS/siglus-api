@@ -39,5 +39,6 @@ public class FacilityDto {
   private String comment;
   private Boolean enabled;
   private List<SupportedProgramDto> supportedPrograms;
+  private FacilityTypeDto type;
 
 }

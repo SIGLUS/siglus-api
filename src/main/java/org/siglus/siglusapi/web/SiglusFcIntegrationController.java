@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
 import org.siglus.siglusapi.service.SiglusFcIntegrationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,5 +41,14 @@ public class SiglusFcIntegrationController {
       pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
     }
     return siglusFcIntegrationService.searchRequisitions(date, pageable);
+  }
+
+  @GetMapping("/pods")
+  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(@RequestParam String date,
+      Pageable pageable) {
+    if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
+      pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
+    }
+    return siglusFcIntegrationService.searchProofOfDelivery(date, pageable);
   }
 }
