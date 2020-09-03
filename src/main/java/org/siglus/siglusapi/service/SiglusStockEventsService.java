@@ -206,7 +206,7 @@ public class SiglusStockEventsService {
     }
   }
 
-  public LotDto createNewLotOrReturnExisted(String lotCode, LocalDate expirationDate,
+  private LotDto createNewLotOrReturnExisted(String lotCode, LocalDate expirationDate,
       String tradeItemId, Boolean updateExpirationDate) {
     LotSearchParams lotSearchParams = new LotSearchParams();
     lotSearchParams.setLotCode(lotCode);
@@ -215,7 +215,7 @@ public class SiglusStockEventsService {
       LotDto existedLot = existedLots.get(0);
       if (updateExpirationDate && !existedLot.getExpirationDate().isEqual(expirationDate)) {
         existedLot.setExpirationDate(expirationDate);
-        lotReferenceDataService.updateLot(existedLot);
+        lotReferenceDataService.createLot(existedLot);
       }
       return existedLot;
     }

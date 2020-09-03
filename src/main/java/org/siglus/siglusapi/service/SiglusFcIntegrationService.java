@@ -51,7 +51,7 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.common.util.referencedata.Pagination;
-import org.siglus.siglusapi.domain.FcIntegrationHandlerStatus;
+import org.siglus.siglusapi.domain.FcHandlerStatus;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
@@ -73,6 +73,7 @@ import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.service.fc.FcIssueVoucherService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -132,7 +133,7 @@ public class SiglusFcIntegrationService {
   private OrderExternalRepository orderExternalRepository;
 
   @Autowired
-  private SiglusFcIntegrationIssueVoucherService issueVoucherService;
+  private FcIssueVoucherService issueVoucherService;
 
   @Autowired
   private SiglusDateHelper dateHelper;
@@ -149,9 +150,9 @@ public class SiglusFcIntegrationService {
   public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
     boolean successHandler = true;
     for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
-      FcIntegrationHandlerStatus handlerError = issueVoucherService.
+      FcHandlerStatus handlerError = issueVoucherService.
           createIssueVoucher(issueVoucherDto);
-      if (handlerError.equals(FcIntegrationHandlerStatus.CALLAPIERROR)) {
+      if (handlerError.equals(FcHandlerStatus.CALL_API_ERROR)) {
         successHandler = false;
         break;
       }

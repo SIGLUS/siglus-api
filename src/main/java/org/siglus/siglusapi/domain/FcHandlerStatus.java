@@ -15,8 +15,8 @@
 
 package org.siglus.siglusapi.domain;
 
-public enum FcIntegrationHandlerStatus {
+public enum FcHandlerStatus {
   SUCCESS,
-  CALLAPIERROR,
-  DATAERROR
+  CALL_API_ERROR,
+  DATA_ERROR
 }
