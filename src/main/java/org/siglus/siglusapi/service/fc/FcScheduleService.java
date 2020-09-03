@@ -59,6 +59,9 @@ public class FcScheduleService {
   private FcIssueVoucherService fcIssueVoucherService;
 
   @Autowired
+  private FcReceiptPlanService fcReceiptPlanService;
+
+  @Autowired
   private SiglusDateHelper dateHelper;
 
   @Autowired
@@ -69,14 +72,14 @@ public class FcScheduleService {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(RECEIPT_PLAN_API, date);
-    // do business process here, call your own service, use `callFcService.getReceiptPlans()`
+    Boolean success = fcReceiptPlanService.saveReceiptPlan(callFcService.getReceiptPlans());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(RECEIPT_PLAN_API)
         .date(date)
         .totalObjectsFromFc(callFcService.getReceiptPlans().size())
         .callFcSuccess(true)
         .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
-        .finalSuccess(true)
+        .finalSuccess(success)
         .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
         .build();
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);

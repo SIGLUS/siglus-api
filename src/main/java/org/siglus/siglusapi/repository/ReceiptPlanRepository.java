@@ -13,37 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.fc;
+package org.siglus.siglusapi.repository;
 
-import java.util.Date;
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.Set;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.ReceiptPlan;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class ReceiptPlanDto {
+public interface ReceiptPlanRepository extends JpaRepository<ReceiptPlan, UUID> {
 
-  private Date date;
-
-  private String receiptPlanNumber;
-
-  private String advancedPlanNumber;
-
-  private String requisitionNumber;
-
-  private String clientName;
-
-  private Date lastUpdatedAt;
-
-  private String clientCode;
-
-  private String distributionPlanNumber;
-
-  private List<ProductDto> products;
-
+  @Query(value = "select receiptPlanNumber "
+      + "from siglusintegration.receipt_plan", nativeQuery = true)
+  Set<String> findAllReceiptPlanNumbers();
 }
