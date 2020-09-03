@@ -89,7 +89,7 @@ public class SiglusFcIntegrationIssueVoucherService {
     try {
       RequisitionExtension extension =
           getRequisitionExtension(issueVoucherDto.getRequisitionNumber());
-      UserDto userDto = wareHouseInfo(issueVoucherDto);
+      UserDto userDto = getWareHouseInfo(issueVoucherDto);
       getClientFacility(issueVoucherDto);
       RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
           .searchRequisition(extension.getRequisitionId());
@@ -126,7 +126,7 @@ public class SiglusFcIntegrationIssueVoucherService {
     return clientCodeList.get(0);
   }
 
-  private UserDto wareHouseInfo(IssueVoucherDto issueVoucherDto) {
+  private UserDto getWareHouseInfo(IssueVoucherDto issueVoucherDto) {
     String warehouseCode = issueVoucherDto.getWarehouseCode();
     dataValidate.validateEmptyFacilityCode(warehouseCode);
     List<FacilityDto> facilityDtos = siglusFacilityReferenceDataService
@@ -137,23 +137,6 @@ public class SiglusFcIntegrationIssueVoucherService {
         .getContent();
     dataValidate.validateExistUser(userList);
     return userList.get(0);
-  }
-
-  private FcIntegrationHandlerStatus getFcIntegrationHandlerStatusForRegularException(
-      IssueVoucherDto issueVoucherDto, Exception exception) {
-    log.error("[FC] FcIntegrationError: Issue vourch - {} exception -",
-        issueVoucherDto.toString(), exception);
-    return FcIntegrationHandlerStatus.CALLAPIERROR;
-  }
-
-  private FcIntegrationHandlerStatus getFcIntegrationHandlerStatusForMessageException(
-      IssueVoucherDto issueVoucherDto, ValidationMessageException messageException) {
-    log.error("[FC] FcIntegrationError: Issue vourch - {} exception - {}", issueVoucherDto,
-        messageException.getMessage());
-    if (messageException.getMessage().contains(FcIntegrationDataValidate.DATA_ERROR)) {
-      return FcIntegrationHandlerStatus.DATAERROR;
-    }
-    return FcIntegrationHandlerStatus.CALLAPIERROR;
   }
 
   private Map<String, OrderableDto> getApprovedProductsMap(UserDto userDto, RequisitionV2Dto dto) {
@@ -201,10 +184,10 @@ public class SiglusFcIntegrationIssueVoucherService {
         .signature(FC_INTEGRATION)
         .userId(useDto.getId())
         .lineItems(eventLineItemDtos)
+        .documentNumber(FC_INTEGRATION)
+        .facilityId(useDto.getHomeFacilityId())
         .build();
 
-    eventDto.setDocumentNumber(FC_INTEGRATION);
-    eventDto.setFacilityId(useDto.getHomeFacilityId());
     stockEventsService.createAndFillLotId(eventDto, true);
     stockEventsService.createStockEvent(eventDto);
   }
@@ -226,6 +209,23 @@ public class SiglusFcIntegrationIssueVoucherService {
     lineItemDto.setExtraData(ImmutableMap.of("lotCode", productDto.getBatch(),
         "expirationDate", SiglusDateHelper.formatDate(productDto.getExpiryDate())));
     return lineItemDto;
+  }
+
+  private FcIntegrationHandlerStatus getFcIntegrationHandlerStatusForRegularException(
+      IssueVoucherDto issueVoucherDto, Exception exception) {
+    log.error("[FC] FcIntegrationError: Issue vourch - {} exception -",
+        issueVoucherDto.toString(), exception);
+    return FcIntegrationHandlerStatus.CALLAPIERROR;
+  }
+
+  private FcIntegrationHandlerStatus getFcIntegrationHandlerStatusForMessageException(
+      IssueVoucherDto issueVoucherDto, ValidationMessageException messageException) {
+    log.error("[FC] FcIntegrationError: Issue vourch - {} exception - {}", issueVoucherDto,
+        messageException.getMessage());
+    if (messageException.getMessage().contains(FcIntegrationDataValidate.DATA_ERROR)) {
+      return FcIntegrationHandlerStatus.DATAERROR;
+    }
+    return FcIntegrationHandlerStatus.CALLAPIERROR;
   }
 
 }
