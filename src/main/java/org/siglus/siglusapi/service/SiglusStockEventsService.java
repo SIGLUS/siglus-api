@@ -165,7 +165,7 @@ public class SiglusStockEventsService {
     return null;
   }
 
-  public void createAndFillLotId(StockEventDto eventDto) {
+  public void createAndFillLotId(StockEventDto eventDto, boolean updateExpirationDate) {
     final List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     Map<UUID, OrderableDto> orderableDtos = orderableReferenceDataService.findByIds(
         lineItems.stream().map(StockEventLineItemDto::getOrderableId).collect(Collectors.toSet()))
@@ -177,7 +177,7 @@ public class SiglusStockEventsService {
       if (orderableIsNotKit) {
         fillLotIdForNormalOrderable(stockEventLineItem,
             orderableDtos.get(stockEventLineItem.getOrderableId()).getIdentifiers().get(
-                FieldConstants.TRADE_ITEM));
+                FieldConstants.TRADE_ITEM), updateExpirationDate);
       } else {
         kitOrderableShouldNotContainLotInfo(stockEventLineItem);
       }
@@ -185,14 +185,15 @@ public class SiglusStockEventsService {
   }
 
   private void fillLotIdForNormalOrderable(StockEventLineItemDto stockEventLineItem,
-      String tradeItemId) {
+      String tradeItemId, boolean updateExpirationDate) {
     if (stockEventLineItem.getLotId() == null) {
       if (StringUtils.isBlank(stockEventLineItem.getLotCode())) {
         throw new ValidationMessageException(
             new Message(ERROR_LOT_CODE_IS_EMPTY));
       }
       UUID newLotId = createNewLotOrReturnExisted(stockEventLineItem.getLotCode(),
-          stockEventLineItem.getExpirationDate(), tradeItemId).getId();
+          stockEventLineItem.getExpirationDate(), tradeItemId, updateExpirationDate).getId();
+
       stockEventLineItem.setLotId(newLotId);
     }
   }
@@ -206,12 +207,17 @@ public class SiglusStockEventsService {
   }
 
   public LotDto createNewLotOrReturnExisted(String lotCode, LocalDate expirationDate,
-      String tradeItemId) {
+      String tradeItemId, Boolean updateExpirationDate) {
     LotSearchParams lotSearchParams = new LotSearchParams();
     lotSearchParams.setLotCode(lotCode);
     List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
     if (CollectionUtils.isNotEmpty(existedLots)) {
-      return existedLots.get(0);
+      LotDto existedLot = existedLots.get(0);
+      if (updateExpirationDate && !existedLot.getExpirationDate().isEqual(expirationDate)) {
+        existedLot.setExpirationDate(expirationDate);
+        lotReferenceDataService.updateLot(existedLot);
+      }
+      return existedLot;
     }
     LotDto lotDto = new LotDto();
     if (tradeItemId != null) {

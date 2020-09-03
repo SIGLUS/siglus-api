@@ -1947,6 +1947,32 @@ traits:
               application/json:
                 schema: fcPodPage
 
+    /integration/issueVouchers:
+      displayName: update issueVouchers
+      post:
+        is: [ secured ]
+        description: update issueVouchers from fc.
+        responses:
+          201:
+            description: issueVouchers update.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: issueVoucher
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+          401:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
     /programadditionalorderables:
       displayName: Program Additional Orderable Product
       get:

@@ -15,13 +15,22 @@
 
 package org.siglus.common.service.client;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.util.RequestParameters;
+import org.siglus.common.util.referencedata.Pagination;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SiglusFacilityReferenceDataService extends BaseReferenceDataService<FacilityDto>  {
+
+  public static final String FACILITY_CODE = "code";
 
   @Override
   protected String getUrl() {
@@ -40,5 +49,14 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
 
   public List<FacilityDto> findAll() {
     return getPage(RequestParameters.init()).getContent();
+  }
+
+  public Page<FacilityDto> getFacilityByCode(String code) {
+    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
+        Pagination.NO_PAGINATION);
+    Map<String, String> requestBody = new HashMap<>();
+    requestBody.put(FACILITY_CODE, code);
+    return getPage("search", RequestParameters.init().setPage(noPagination),
+        requestBody, HttpMethod.POST, getResultClass(), false);
   }
 }

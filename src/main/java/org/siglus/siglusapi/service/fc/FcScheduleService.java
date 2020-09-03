@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
+import org.siglus.siglusapi.service.SiglusFcIntegrationIssueVoucherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -49,7 +50,7 @@ public class FcScheduleService {
   private FcIntegrationResultService fcIntegrationResultService;
 
   @Autowired
-  private FcIntegrationIssueVoucherService issueVoucherService;
+  private SiglusFcIntegrationIssueVoucherService issueVoucherService;
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   public void fetchReceiptPlansFromFc() {

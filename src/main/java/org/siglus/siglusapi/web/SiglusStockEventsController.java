@@ -39,7 +39,7 @@ public class SiglusStockEventsController {
 
   @PostMapping
   public UUID createStockEvent(@RequestBody StockEventDto eventDto) {
-    stockEventsService.createAndFillLotId(eventDto);
+    stockEventsService.createAndFillLotId(eventDto, false);
     // api sent by fulfilment with context is "trust-client", already has user-id.
     if (eventDto.getUserId() == null) {
       eventDto.setUserId(authenticationHelper.getCurrentUser().getId());

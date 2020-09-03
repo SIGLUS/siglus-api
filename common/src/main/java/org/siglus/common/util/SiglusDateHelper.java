@@ -15,15 +15,20 @@
 
 package org.siglus.common.util;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SiglusDateHelper {
+
+  public static final String DATE_TYPE_YEAR_MONTH_DATE = "yyyy-MM-dd";
 
   @Autowired
   private Clock clock;
@@ -33,8 +38,13 @@ public class SiglusDateHelper {
   }
 
   public static String formatDateTime(ZonedDateTime date) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_TYPE_YEAR_MONTH_DATE);
     return date.format(formatter);
+  }
+
+  public static String formatDate(Date date) {
+    DateFormat dateFormat = new SimpleDateFormat(DATE_TYPE_YEAR_MONTH_DATE);
+    return dateFormat.format(date);
   }
 
   public String getYesterdayDateStr() {
