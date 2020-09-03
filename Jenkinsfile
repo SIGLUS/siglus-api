@@ -9,10 +9,11 @@ pipeline {
                 fetch_setting_env()
                 ansiColor('xterm') {
                     println "gradle: build()"
-                    sh 'mkdir -p /ebs2/gradle-caches/${JOB_NAME}'
-                    sh 'mkdir -p /ebs2/node-caches/${JOB_NAME}'
-                    sh 'pwd && ls -l'
-                    sh 'docker run --rm --env-file .env --add-host=log:127.0.0.1 -v ${PWD}:/app -w /app siglusdevops/gradle:4.10.3 gradle clean build'
+                    sh '''
+                      pwd && ls -l
+                      sudo npm install
+                      ./gradlew clean build
+                    '''
                 }
                 checkstyle pattern: '**/build/reports/checkstyle/*.xml'
                 pmd pattern: '**/build/reports/pmd/*.xml'
@@ -25,7 +26,7 @@ pipeline {
             }
             steps {
                 withCredentials([string(credentialsId: 'sonarqube_token', variable: 'SONARQUBE_TOKEN')]) {
-                    sh 'docker run --rm -v ${PWD}:/app -w /app siglusdevops/gradle:4.10.3 gradle sonarqube -Dsonar.projectKey=siglus-api -Dsonar.host.url=http://13.234.176.65:9000 -Dsonar.login=$SONARQUBE_TOKEN'
+                    sh './gradlew sonarqube -Dsonar.projectKey=siglus-api -Dsonar.host.url=http://13.234.176.65:9000 -Dsonar.login=$SONARQUBE_TOKEN'
                 }
             }
         }

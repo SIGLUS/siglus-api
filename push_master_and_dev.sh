@@ -20,6 +20,10 @@ echo "=> git checkout dev"
 git checkout dev
 echo "-----------------------------------------------------"
 
+echo "=> git pull origin dev -r"
+git pull origin dev -r
+echo "-----------------------------------------------------"
+
 echo "=> git merge master"
 git merge master --commit --no-edit
 echo "-----------------------------------------------------"
