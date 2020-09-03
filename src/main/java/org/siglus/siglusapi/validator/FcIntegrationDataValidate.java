@@ -23,6 +23,7 @@ import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.Message;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.springframework.stereotype.Component;
 
 @Component("FcIntegrationDataValidate")
@@ -31,21 +32,21 @@ public class FcIntegrationDataValidate {
   public static final String DATA_ERROR = "dataError";
 
   public void validateEmptyRequisitionNumber(String requisitionNumber) {
-    if (requisitionNumber == null) {
-      Log.error("[FC] FcIntegrationError: requisitionNumber should be not null");
+    if (requisitionNumber == null || requisitionNumber.isEmpty()) {
+      Log.error("[FC] FcIntegrationError: requisitionNumber should be not empty");
       throw new ValidationMessageException(new Message(DATA_ERROR));
     }
   }
 
-  public void validateExistRequisitionNumber(String requisitionNumber) {
-    if (requisitionNumber == null) {
+  public void validateExistRequisitionNumber(RequisitionExtension extension) {
+    if (extension == null || extension.getRequisitionNumber() == null) {
       Log.error("[FC] FcIntegrationError: requisitionNumber should be not null");
       throw new ValidationMessageException(new Message(DATA_ERROR));
     }
   }
 
   public void validateEmptyFacilityCode(String code) {
-    if (code == null) {
+    if (code == null || code.isEmpty()) {
       Log.error("[FC] FcIntegrationError: requisitionNumber should be not null");
       throw new ValidationMessageException(new Message(DATA_ERROR));
     }

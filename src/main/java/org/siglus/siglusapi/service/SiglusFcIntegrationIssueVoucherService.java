@@ -18,9 +18,7 @@ package org.siglus.siglusapi.service;
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -87,35 +85,6 @@ public class SiglusFcIntegrationIssueVoucherService {
   @Autowired
   private ValidSourceDestinationStockManagementService sourceDestinationService;
 
-  public void createIssueVoucherTest() {
-    IssueVoucherDto issueVoucherDto = new IssueVoucherDto();
-    issueVoucherDto.setWarehouseCode("04030101");
-    issueVoucherDto.setClientCode("04030101");
-    issueVoucherDto.setRequisitionNumber("RNR-NO010906120000192");
-    issueVoucherDto.setShippingDate(new Date());
-    ProductDto productDto = new ProductDto();
-    productDto.setApprovedQuantity(100);
-    productDto.setShippedQuantity(50);
-    productDto.setBatch("M18361");
-    productDto.setFnmCode("02E01");
-    productDto.setExpiryDate(new Date());
-    issueVoucherDto.setProducts(Arrays.asList(productDto));
-    createIssueVoucher(issueVoucherDto);
-  }
-
-  public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
-    boolean successHandler = true;
-
-    for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
-      FcIntegrationHandlerStatus handlerError = createIssueVoucher(issueVoucherDto);
-      if (handlerError.equals(FcIntegrationHandlerStatus.CALLAPIERROR)) {
-        successHandler = false;
-        break;
-      }
-    }
-    return successHandler;
-  }
-
   public FcIntegrationHandlerStatus createIssueVoucher(IssueVoucherDto issueVoucherDto) {
     try {
       RequisitionExtension extension =
@@ -144,7 +113,7 @@ public class SiglusFcIntegrationIssueVoucherService {
     dataValidate.validateEmptyRequisitionNumber(requisitionNumber);
     RequisitionExtension extension = requisitionExtensionRepository
         .findByRequisitionNumber(requisitionNumber);
-    dataValidate.validateExistRequisitionNumber(requisitionNumber);
+    dataValidate.validateExistRequisitionNumber(extension);
     return extension;
   }
 
@@ -211,7 +180,7 @@ public class SiglusFcIntegrationIssueVoucherService {
     return findProducts;
   }
 
-  public void createStockEvent(UserDto useDto, RequisitionV2Dto requisitionV2Dto,
+  private void createStockEvent(UserDto useDto, RequisitionV2Dto requisitionV2Dto,
       IssueVoucherDto issueVoucherDto, List<ProductDto> existProductDtos,
       Map<String, OrderableDto> orderableDtoMap) {
     Collection<ValidSourceDestinationDto> validSourceDtos = sourceDestinationService

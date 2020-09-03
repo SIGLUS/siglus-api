@@ -51,6 +51,7 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.domain.FcIntegrationHandlerStatus;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
@@ -62,6 +63,7 @@ import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
+import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
@@ -130,6 +132,9 @@ public class SiglusFcIntegrationService {
   private OrderExternalRepository orderExternalRepository;
 
   @Autowired
+  private SiglusFcIntegrationIssueVoucherService issueVoucherService;
+
+  @Autowired
   private SiglusDateHelper dateHelper;
 
   @Value("${dpm.facilityTypeId}")
@@ -140,6 +145,19 @@ public class SiglusFcIntegrationService {
 
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
+
+  public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
+    boolean successHandler = true;
+    for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
+      FcIntegrationHandlerStatus handlerError = issueVoucherService.
+          createIssueVoucher(issueVoucherDto);
+      if (handlerError.equals(FcIntegrationHandlerStatus.CALLAPIERROR)) {
+        successHandler = false;
+        break;
+      }
+    }
+    return successHandler;
+  }
 
   public Page<FcRequisitionDto> searchRequisitions(String date, Pageable pageable) {
     Set<UUID> dpmSupervisoryNodeIds = supervisoryNodeRepository

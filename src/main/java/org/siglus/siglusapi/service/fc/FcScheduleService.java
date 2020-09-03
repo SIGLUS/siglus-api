@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
-import org.siglus.siglusapi.service.SiglusFcIntegrationIssueVoucherService;
+import org.siglus.siglusapi.service.SiglusFcIntegrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -50,7 +50,7 @@ public class FcScheduleService {
   private FcIntegrationResultService fcIntegrationResultService;
 
   @Autowired
-  private SiglusFcIntegrationIssueVoucherService issueVoucherService;
+  private SiglusFcIntegrationService fcIntegrationService;
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   public void fetchReceiptPlansFromFc() {
@@ -75,7 +75,7 @@ public class FcScheduleService {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(ISSUE_VOUCHER_API, date);
-    Boolean finalSuccess = issueVoucherService
+    Boolean finalSuccess = fcIntegrationService
         .createIssueVouchers(callFcService.getIssueVouchers());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(ISSUE_VOUCHER_API)
