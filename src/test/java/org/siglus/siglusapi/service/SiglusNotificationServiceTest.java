@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
@@ -34,6 +35,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -45,6 +47,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
+import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.fulfillment.service.FulfillmentProofOfDeliveryService;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
@@ -56,10 +63,8 @@ import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
-import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
@@ -100,9 +105,6 @@ public class SiglusNotificationServiceTest {
   private SiglusRequisitionRequisitionService requisitionService;
 
   @Mock
-  private ProofOfDeliveryFulfillmentService podService;
-
-  @Mock
   private OrderExternalRepository orderExternalRepository;
 
   @Mock
@@ -113,6 +115,9 @@ public class SiglusNotificationServiceTest {
 
   @Mock
   private SiglusOrderService siglusOrderService;
+
+  @Mock
+  private FulfillmentProofOfDeliveryService fulfillmentProofOfDeliveryService;
 
   private UUID notificationId;
 
@@ -436,9 +441,17 @@ public class SiglusNotificationServiceTest {
     siglusOrderDto.setOrder(order);
     when(siglusOrderService.searchOrderById(order.getId())).thenReturn(siglusOrderDto);
 
-    ProofOfDeliveryDto pod = new ProofOfDeliveryDto();
-    pod.setId(randomUUID());
-    when(podService.getProofOfDeliveries(order.getId())).thenReturn(singletonList(pod));
+    ProofOfDelivery proofOfDelivery = new ProofOfDelivery(
+        new Shipment(new Order(), null, null, null, null),
+        ProofOfDeliveryStatus.INITIATED,
+        newArrayList(),
+        "",
+        "",
+        null);
+    proofOfDelivery.setId(randomUUID());
+    Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
+    when(fulfillmentProofOfDeliveryService.search(null, order.getId(), pageable)).thenReturn(
+        new PageImpl<>(singletonList(proofOfDelivery), pageable, 1));
 
     RequisitionV2Dto requisition = new RequisitionV2Dto();
     requisition.setId(randomUUID());
@@ -458,7 +471,7 @@ public class SiglusNotificationServiceTest {
     verify(repo)
         .updateLastNotificationProcessed(order.getId(), NotificationStatus.ORDERED);
     Notification notification = verifySavedNotification();
-    assertEquals(pod.getId(), notification.getRefId());
+    assertEquals(proofOfDelivery.getId(), notification.getRefId());
     assertEquals(requisition.getFacility().getId(), notification.getRefFacilityId());
     assertEquals(requisition.getProgram().getId(), notification.getRefProgramId());
     assertEquals(requisition.getEmergency(), notification.getEmergency());
