@@ -31,8 +31,6 @@ public class FcProofOfDeliveryProductDto {
 
   private String productName;
 
-  private String requisitionNumber;
-
   private String productDescription;
 
   private List<RealProgramDto> realPorgrams;

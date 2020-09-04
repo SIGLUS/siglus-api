@@ -246,7 +246,7 @@ public class SiglusFcIntegrationService {
 
     List<FcProofOfDeliveryProductDto> products = pod.getLineItems()
         .stream()
-        .map(lineItem -> buildProductDto(lineItem, requisitionNumber, orderableMap,
+        .map(lineItem -> buildProductDto(lineItem, orderableMap,
             programMap, lotMap, reasonMap))
         .collect(Collectors.toList());
 
@@ -260,7 +260,6 @@ public class SiglusFcIntegrationService {
   }
 
   private FcProofOfDeliveryProductDto buildProductDto(ProofOfDeliveryLineItem lineItem,
-      String requisitionNumber,
       Map<UUID, OrderableDto> orderableMap,
       Map<UUID, ProgramOrderablesExtension> programMap,
       Map<UUID, LotDto> lotMap,
@@ -273,7 +272,6 @@ public class SiglusFcIntegrationService {
     return FcProofOfDeliveryProductDto.builder()
         .productCode(orderableDto.getProductCode())
         .productName(orderableDto.getFullProductName())
-        .requisitionNumber(requisitionNumber)
         .productDescription(orderableDto.getDescription())
         .realPorgrams(newArrayList(program))
         .lotCode(lotMap.get(lineItem.getLotId()).getLotCode())
