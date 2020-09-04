@@ -23,22 +23,23 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.service.fc.FcDataException;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class FcValidateTest {
 
   @InjectMocks
   private FcValidate validate;
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = FcDataException.class)
   public void shouldThrowValidationMessageExceptionWhenRequisitionNumberNull() {
     // then
     validate.validateEmptyRequisitionNumber(null);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = FcDataException.class)
   public void shouldThrowValidationMessageExceptionWhenRequisitionNumberEmpty() {
     // then
     validate.validateEmptyRequisitionNumber("");
@@ -50,13 +51,13 @@ public class FcValidateTest {
     validate.validateEmptyRequisitionNumber("RNR-NO010906120000192");
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = FcDataException.class)
   public void shouldThrowValidationMessageExceptionWhenRequisitionNumberNotExist() {
     // then
     validate.validateExistRequisitionNumber(null);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = FcDataException.class)
   public void shouldThrowValidationMessageExceptionWhenRequisitionExtensionExistButNumberNull() {
     // given
     RequisitionExtension extension = new RequisitionExtension();
@@ -75,13 +76,13 @@ public class FcValidateTest {
     validate.validateExistRequisitionNumber(extension);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = FcDataException.class)
   public void shouldThrowValidationMessageExceptionWhenFacilityCodeNull() {
     // then
     validate.validateEmptyFacilityCode(null);
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = FcDataException.class)
   public void shouldThrowValidationMessageExceptionWhenFacilityCodeEmpty() {
     // then
     validate.validateEmptyFacilityCode("");
@@ -93,7 +94,7 @@ public class FcValidateTest {
     validate.validateEmptyFacilityCode("04030101");
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = FcDataException.class)
   public void shouldThrowValidationMessageExceptionWhenFacilityNotExist() {
     // then
     validate.validateExistFacility(Arrays.asList());
@@ -108,7 +109,7 @@ public class FcValidateTest {
     validate.validateExistFacility(Arrays.asList(facilityDto));
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = FcDataException.class)
   public void shouldThrowValidationMessageExceptionWhenUserNotExist() {
     // then
     validate.validateExistUser(Arrays.asList());
@@ -123,7 +124,7 @@ public class FcValidateTest {
     validate.validateExistUser(Arrays.asList(userDto));
   }
 
-  @Test(expected = ValidationMessageException.class)
+  @Test(expected = FcDataException.class)
   public void shouldThrowValidationMessageExceptionWhenSourceNull() {
     // then
     validate.validateFcSource(null);

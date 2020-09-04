@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
@@ -63,7 +62,7 @@ public class FcIssueVoucherService {
   private String timeZoneId;
 
   @Autowired
-  private FcValidate fcValidate;
+  private FcValidate fcDataValidate;
 
   @Autowired
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
@@ -86,7 +85,19 @@ public class FcIssueVoucherService {
   @Autowired
   private ValidSourceDestinationStockManagementService sourceDestinationService;
 
-  public FcHandlerStatus createIssueVoucher(IssueVoucherDto issueVoucherDto) {
+  public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
+    boolean successHandler = true;
+    for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
+      FcHandlerStatus handlerError = createIssueVoucher(issueVoucherDto);
+      if (handlerError.equals(FcHandlerStatus.CALL_API_ERROR)) {
+        successHandler = false;
+        break;
+      }
+    }
+    return successHandler;
+  }
+
+  private FcHandlerStatus createIssueVoucher(IssueVoucherDto issueVoucherDto) {
     try {
       RequisitionExtension extension =
           getRequisitionExtension(issueVoucherDto.getRequisitionNumber());
@@ -101,41 +112,41 @@ public class FcIssueVoucherService {
         createStockEvent(userDto, requisitionV2Dto, issueVoucherDto, productDtos,
             approveProductDtos);
       }
-    } catch (ValidationMessageException messageException) {
-      return getFcIntegrationHandlerStatusForMessageException(issueVoucherDto, messageException);
+    } catch (FcDataException exception) {
+      return getFcDataExceptionHandler(issueVoucherDto, exception);
     } catch (Exception exception) {
-      return getFcIntegrationHandlerStatusForRegularException(issueVoucherDto, exception);
+      return getFcExceptionHandler(issueVoucherDto, exception);
     }
     return FcHandlerStatus.SUCCESS;
   }
 
   private RequisitionExtension getRequisitionExtension(String requisitionNumber) {
-    fcValidate.validateEmptyRequisitionNumber(requisitionNumber);
+    fcDataValidate.validateEmptyRequisitionNumber(requisitionNumber);
     RequisitionExtension extension = requisitionExtensionRepository
         .findByRequisitionNumber(requisitionNumber);
-    fcValidate.validateExistRequisitionNumber(extension);
+    fcDataValidate.validateExistRequisitionNumber(extension);
     return extension;
   }
 
   private FacilityDto getClientFacility(IssueVoucherDto issueVoucherDto) {
     String clientCode = issueVoucherDto.getClientCode();
-    fcValidate.validateEmptyFacilityCode(clientCode);
+    fcDataValidate.validateEmptyFacilityCode(clientCode);
     List<FacilityDto> clientCodeList = siglusFacilityReferenceDataService
         .getFacilityByCode(clientCode).getContent();
-    fcValidate.validateExistFacility(clientCodeList);
+    fcDataValidate.validateExistFacility(clientCodeList);
     return clientCodeList.get(0);
   }
 
   private UserDto getWareHouseInfo(IssueVoucherDto issueVoucherDto) {
     String warehouseCode = issueVoucherDto.getWarehouseCode();
-    fcValidate.validateEmptyFacilityCode(warehouseCode);
+    fcDataValidate.validateEmptyFacilityCode(warehouseCode);
     List<FacilityDto> facilityDtos = siglusFacilityReferenceDataService
         .getFacilityByCode(warehouseCode).getContent();
-    fcValidate.validateExistFacility(facilityDtos);
+    fcDataValidate.validateExistFacility(facilityDtos);
     FacilityDto facilityDto = facilityDtos.get(0);
     List<UserDto> userList = userReferenceDataService.getUserInfo(facilityDto.getId())
         .getContent();
-    fcValidate.validateExistUser(userList);
+    fcDataValidate.validateExistUser(userList);
     return userList.get(0);
   }
 
@@ -172,7 +183,7 @@ public class FcIssueVoucherService {
         .filter(validSourceDto -> validSourceDto.getName().equals(FC_INTEGRATION))
         .findFirst()
         .orElse(null);
-    fcValidate.validateFcSource(fcSource);
+    fcDataValidate.validateFcSource(fcSource);
     UUID sourceId = fcSource.getNode().getId();
 
     List<StockEventLineItemDto> eventLineItemDtos = existProductDtos.stream()
@@ -211,21 +222,18 @@ public class FcIssueVoucherService {
     return lineItemDto;
   }
 
-  private FcHandlerStatus getFcIntegrationHandlerStatusForRegularException(
+  private FcHandlerStatus getFcExceptionHandler(
       IssueVoucherDto issueVoucherDto, Exception exception) {
     log.error("[FC] FcIntegrationError: Issue vourch - {} exception -",
         issueVoucherDto.toString(), exception);
     return FcHandlerStatus.CALL_API_ERROR;
   }
 
-  private FcHandlerStatus getFcIntegrationHandlerStatusForMessageException(
-      IssueVoucherDto issueVoucherDto, ValidationMessageException messageException) {
+  private FcHandlerStatus getFcDataExceptionHandler(
+      IssueVoucherDto issueVoucherDto, FcDataException dataException) {
     log.error("[FC] FcIntegrationError: Issue vourch - {} exception - {}", issueVoucherDto,
-        messageException.getMessage());
-    if (messageException.getMessage().contains(FcValidate.DATA_ERROR)) {
-      return FcHandlerStatus.DATA_ERROR;
-    }
-    return FcHandlerStatus.CALL_API_ERROR;
+        dataException.getMessage());
+    return FcHandlerStatus.DATA_ERROR;
   }
 
 }

@@ -35,7 +35,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
-import org.siglus.siglusapi.service.SiglusFcIntegrationService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcScheduleServiceTest {
@@ -53,11 +52,11 @@ public class FcScheduleServiceTest {
   private FcIntegrationResultService fcIntegrationResultService;
 
   @Mock
-  private SiglusFcIntegrationService fcIntegrationService;
+  private FcIssueVoucherService fcIssueVoucherService;
 
   @Before
   public void setup() {
-    when(fcIntegrationService.createIssueVouchers(any())).thenReturn(true);
+    when(fcIssueVoucherService.createIssueVouchers(any())).thenReturn(true);
   }
 
   @Test

@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -27,15 +28,20 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.utils.Pagination;
+import org.openlmis.stockmanagement.domain.sourcedestination.Node;
+import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
+import org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto;
+import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
+import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.service.client.SiglusUserReferenceDataService;
-import org.siglus.siglusapi.domain.FcIntegrationHandlerStatus;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
@@ -46,15 +52,13 @@ import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagement
 import org.siglus.siglusapi.service.fc.FcIssueVoucherService;
 import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusFcIntegrationIssueVoucherServiceTest {
+public class FcIssueVoucherServiceTest {
 
   @InjectMocks
   private FcIssueVoucherService service;
-
-  @Mock
-  private FcValidate dataValidate;
 
   @Mock
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
@@ -71,6 +75,9 @@ public class SiglusFcIntegrationIssueVoucherServiceTest {
   @Mock
   private SiglusApprovedProductReferenceDataService approvedProductService;
 
+  @Spy
+  private FcValidate fcDataValidate;
+
   @Mock
   private SiglusStockEventsService stockEventsService;
 
@@ -79,13 +86,20 @@ public class SiglusFcIntegrationIssueVoucherServiceTest {
 
   @Before
   public void prepare() {
-    dataValidate = new FcValidate();
+    ReflectionTestUtils.setField(service, "timeZoneId", "UTC");
+    ReflectionTestUtils.setField(service, "receiveReason",
+        "44814bc4-df64-11e9-9e7e-4c32759554d9");
+    when(stockEventsService.createStockEvent(any())).thenReturn(UUID.randomUUID());
   }
 
   @Test
-  public void ShouldReturnSuccess() {
+  public void shouldReturnSuccessIfDataAndCallApiNormal() {
+    // given
     IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
     RequisitionExtension requisitionExtension = new RequisitionExtension();
+    requisitionExtension.setRequisitionNumber(
+        Integer.valueOf("192"));
+    fcDataValidate.validateEmptyFacilityCode(issueVoucherDto.getWarehouseCode());
     requisitionExtension.setRequisitionId(UUID.randomUUID());
     when(requisitionExtensionRepository
         .findByRequisitionNumber(issueVoucherDto.getRequisitionNumber()))
@@ -95,14 +109,14 @@ public class SiglusFcIntegrationIssueVoucherServiceTest {
     when(siglusFacilityReferenceDataService
         .getFacilityByCode(issueVoucherDto.getWarehouseCode()))
         .thenReturn(Pagination
-            .getPage(Arrays.asList(facilityDto), new PageRequest(0, 10) ,0));
+            .getPage(Arrays.asList(facilityDto), new PageRequest(0, 10), 0));
     UserDto userDto = new UserDto();
     userDto.setId(UUID.randomUUID());
     userDto.setHomeFacilityId(facilityDto.getId());
     when(userReferenceDataService
         .getUserInfo(facilityDto.getId()))
         .thenReturn(Pagination
-            .getPage(Arrays.asList(userDto), new PageRequest(0, 10) ,0));
+            .getPage(Arrays.asList(userDto), new PageRequest(0, 10), 0));
     RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
     ObjectReferenceDto program = new ObjectReferenceDto();
     program.setId(randomUUID());
@@ -111,9 +125,42 @@ public class SiglusFcIntegrationIssueVoucherServiceTest {
     when(siglusRequisitionRequisitionService
         .searchRequisition(requisitionExtension.getRequisitionId()))
         .thenReturn(requisitionV2Dto);
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(UUID.randomUUID());
+    orderableDto.setProductCode("02E01");
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto(orderableDto);
+    approvedProductDto.setId(UUID.randomUUID());
     when(approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(),
-        requisitionV2Dto.getProgramId(), null, false));
-    assertEquals(FcIntegrationHandlerStatus.SUCCESS , service.createIssueVoucher(issueVoucherDto));
+        requisitionV2Dto.getProgramId(), null))
+        .thenReturn(new OrderablesAggregator(Arrays.asList(approvedProductDto)));
+    ValidSourceDestinationDto sourceDestinationDto = new ValidSourceDestinationDto();
+    sourceDestinationDto.setId(UUID.randomUUID());
+    sourceDestinationDto.setName("FC Integration");
+    Node node = new Node();
+    node.setId(UUID.randomUUID());
+    sourceDestinationDto.setNode(node);
+    when(sourceDestinationService.getValidSources(requisitionV2Dto.getProgramId(),
+        facilityDto.getId())).thenReturn(Arrays.asList(sourceDestinationDto));
+
+    // when
+    boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
+
+    // then
+    assertEquals(true, isSuccess);
+  }
+
+  @Test
+  public void shouldReturnSuccessIfDataError() {
+    // given
+    IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
+    issueVoucherDto.setRequisitionNumber("");
+
+    // when
+    boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
+
+    // then
+    assertEquals(true, isSuccess);
+
   }
 
   private IssueVoucherDto getIssueVoucherDto() {

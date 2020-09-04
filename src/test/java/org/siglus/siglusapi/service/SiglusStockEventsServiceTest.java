@@ -185,7 +185,7 @@ public class SiglusStockEventsServiceTest {
     when(orderableReferenceDataService.findByIds(any())).thenReturn(newArrayList(orderableDto));
     LotDto lotDto = new LotDto();
     lotDto.setId(lotId);
-    when(lotReferenceDataService.createLot(any())).thenReturn(lotDto);
+    when(lotReferenceDataService.saveLot(any())).thenReturn(lotDto);
     StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder()
         .withOrderableId(orderableId).build();
     lineItemDto.setLotId(null);

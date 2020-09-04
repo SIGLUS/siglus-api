@@ -21,9 +21,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.Message;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.service.fc.FcDataException;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -34,43 +34,38 @@ public class FcValidate {
 
   public void validateEmptyRequisitionNumber(String requisitionNumber) {
     if (requisitionNumber == null || requisitionNumber.isEmpty()) {
-      log.error("[FC] FcIntegrationError: requisitionNumber should be not empty");
-      throw new ValidationMessageException(new Message(DATA_ERROR, ""));
+      throw new FcDataException(new Message("requisitionNumber should be not empty"));
     }
   }
 
   public void validateExistRequisitionNumber(RequisitionExtension extension) {
     if (extension == null || extension.getRequisitionNumber() == null) {
-      log.error("[FC] FcIntegrationError: requisitionNumber not exist in our database");
-      throw new ValidationMessageException(new Message(DATA_ERROR));
+      throw new FcDataException(
+          new Message("requisitionNumber not exist in our database"));
     }
   }
 
   public void validateEmptyFacilityCode(String code) {
     if (code == null || code.isEmpty()) {
-      log.error("[FC] FcIntegrationError: requisitionNumber should be not null");
-      throw new ValidationMessageException(new Message(DATA_ERROR));
+      throw new FcDataException(new Message("requisitionNumber should be not null"));
     }
   }
 
   public void validateExistFacility(List<FacilityDto> facilityDtos) {
     if (CollectionUtils.isEmpty(facilityDtos)) {
-      log.error("[FC] FcIntegrationError: facility should be not null");
-      throw new ValidationMessageException(new Message(DATA_ERROR));
+      throw new FcDataException(new Message("facility should be not null"));
     }
   }
 
   public void validateExistUser(List<UserDto> userDtos) {
     if (CollectionUtils.isEmpty(userDtos)) {
-      log.error("[FC] FcIntegrationError: user should be not null");
-      throw new ValidationMessageException(new Message(DATA_ERROR));
+      throw new FcDataException(new Message("user should be not null"));
     }
   }
 
   public void validateFcSource(ValidSourceDestinationDto source) {
     if (source == null) {
-      log.error("[FC] FcIntegrationError: user should be not null");
-      throw new ValidationMessageException(new Message(DATA_ERROR));
+      throw new FcDataException(new Message("source should be not null"));
     }
   }
 

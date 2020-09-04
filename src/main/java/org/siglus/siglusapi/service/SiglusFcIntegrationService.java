@@ -51,7 +51,6 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.common.util.referencedata.Pagination;
-import org.siglus.siglusapi.domain.FcHandlerStatus;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
@@ -63,7 +62,6 @@ import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
-import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
@@ -73,7 +71,6 @@ import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.siglus.siglusapi.service.fc.FcIssueVoucherService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -133,9 +130,6 @@ public class SiglusFcIntegrationService {
   private OrderExternalRepository orderExternalRepository;
 
   @Autowired
-  private FcIssueVoucherService issueVoucherService;
-
-  @Autowired
   private SiglusDateHelper dateHelper;
 
   @Value("${dpm.facilityTypeId}")
@@ -146,19 +140,6 @@ public class SiglusFcIntegrationService {
 
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
-
-  public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
-    boolean successHandler = true;
-    for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
-      FcHandlerStatus handlerError = issueVoucherService.
-          createIssueVoucher(issueVoucherDto);
-      if (handlerError.equals(FcHandlerStatus.CALL_API_ERROR)) {
-        successHandler = false;
-        break;
-      }
-    }
-    return successHandler;
-  }
 
   public Page<FcRequisitionDto> searchRequisitions(String date, Pageable pageable) {
     Set<UUID> dpmSupervisoryNodeIds = supervisoryNodeRepository
