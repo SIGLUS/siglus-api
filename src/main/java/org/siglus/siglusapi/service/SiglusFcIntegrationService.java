@@ -20,6 +20,7 @@ import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -166,7 +167,7 @@ public class SiglusFcIntegrationService {
     Set<UUID> dpmRequestingFacilityIds = siglusFacilityReferenceDataService.findAll()
         .stream()
         .filter(facilityDto -> dpmFacilityTypeCode.equals(facilityDto.getType().getCode()))
-        .map(facilityDto -> facilityDto.getId())
+        .map(FacilityDto::getId)
         .collect(toSet());
 
     Page<ProofOfDelivery> page = siglusProofOfDeliveryRepository
@@ -178,16 +179,28 @@ public class SiglusFcIntegrationService {
         .collect(toSet());
 
     List<OrderExternal> externals = orderExternalRepository.findByIdIn(externalIds);
+    Set<UUID> requisitionIds = new HashSet<>();
 
     // podId: requisitionId
     Map<UUID, UUID> podRequisitionMap = page.getContent().stream().collect(toMap(
         ProofOfDelivery::getId,
-        p -> externals.stream()
-            .filter(external -> external.getId().equals(p.getShipment().getOrder().getExternalId()))
-            .findAny().get().getRequisitionId()
+        p -> {
+          OrderExternal orderExternal = externals.stream()
+              .filter(external ->
+                  external.getId().equals(p.getShipment().getOrder().getExternalId()))
+              .findAny().orElse(null);
+
+          UUID requisitionId;
+
+          if (orderExternal == null) {
+            requisitionId = p.getShipment().getOrder().getExternalId();
+          } else {
+            requisitionId = orderExternal.getRequisitionId();
+          }
+          requisitionIds.add(requisitionId);
+          return requisitionId;
+        }
     ));
-    Set<UUID> requisitionIds = externals
-        .stream().map(OrderExternal::getRequisitionId).collect(toSet());
 
     // requisitionId: requisitionNumber
     Map<UUID, String> requisitionNumberMap =
@@ -198,7 +211,6 @@ public class SiglusFcIntegrationService {
         .flatMap(pod -> pod.getLineItems()
             .stream().map(lineItem -> lineItem.getOrderable().getId()))
         .collect(toSet());
-
     Map<UUID, OrderableDto> orderableMap = orderableReferenceDataService.findByIds(orderableIds)
         .stream()
         .collect(toMap(OrderableDto::getId, o -> o));
