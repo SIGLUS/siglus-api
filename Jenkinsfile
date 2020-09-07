@@ -40,10 +40,8 @@ pipeline {
                         IMAGE_REPO=siglusdevops/siglusapi
                         IMAGE_NAME=${IMAGE_REPO}:${IMAGE_TAG}
                         docker build -t ${IMAGE_NAME} .
-                        docker tag ${IMAGE_NAME} ${IMAGE_REPO}:latest
                         docker push ${IMAGE_NAME}
-                        docker push ${IMAGE_REPO}:latest
-                        docker rmi ${IMAGE_NAME} ${IMAGE_REPO}:latest
+                        docker rmi ${IMAGE_NAME}
                     '''
                 }
             }
@@ -79,7 +77,7 @@ pipeline {
         }
         stage('Deploy To Integ') {
             when {
-                branch 'release-1.1'
+                branch 'release-1.2'
             }
             steps {
                 deploy "integ"
@@ -87,7 +85,7 @@ pipeline {
         }
         stage('Deploy To UAT') {
             when {
-                branch 'release-1.1'
+                branch 'release-1.2'
             }
             steps {
                 script {

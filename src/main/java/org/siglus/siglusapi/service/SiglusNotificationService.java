@@ -55,6 +55,7 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
+import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.dto.referencedata.RoleAssignmentDto;
@@ -69,6 +70,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
+import org.slf4j.profiler.Profiler;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -79,7 +81,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CyclomaticComplexity"})
 public class SiglusNotificationService {
 
   public enum ViewableStatus {
@@ -123,6 +125,8 @@ public class SiglusNotificationService {
   private final ExecutorService executor;
 
   private final FulfillmentProofOfDeliveryService fulfillmentProofOfDeliveryService;
+
+  private final RequisitionController requisitionController;
 
   public Page<NotificationDto> searchNotifications(Pageable pageable) {
     return repo
@@ -305,8 +309,11 @@ public class SiglusNotificationService {
   }
 
   private UUID findSupervisorNodeId(BasicRequisitionDto requisition) {
-    return requisitionService.searchRequisition(requisition.getId())
-        .getSupervisoryNode();
+    UUID requisitionId = requisition.getId();
+    Profiler profiler = requisitionController
+        .getProfiler("GET_REQUISITION", requisitionId);
+    return requisitionController.findRequisition(requisitionId, profiler)
+        .getSupervisoryNode().getId();
   }
 
   private List<BasicOrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {
@@ -393,21 +400,27 @@ public class SiglusNotificationService {
         if (currentUserSupervisoryNodeIds.isEmpty()) {
           return null;
         }
+        Predicate internalPredicate = null;
         if (canCurrentUserInternalApprove(currentUserFacilityId, requisitionGroups,
             currentUserSupervisoryNodeIds, permissionString.getProgramId())) {
-          return cb.and(
+          internalPredicate = cb.and(
               cb.equal(root.get(REF_FACILITY_ID), currentUserFacilityId),
               cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
               cb.equal(root.get(REF_STATUS), NotificationStatus.AUTHORIZED)
           );
         }
-        return cb.and(
+
+        Predicate externalPredicate = cb.and(
             cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
             root.get(REF_STATUS)
                 .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
             root.get("supervisoryNodeId").in(currentUserSupervisoryNodeIds)
         );
+
+        return internalPredicate == null ? externalPredicate :
+            cb.or(internalPredicate, externalPredicate);
+
       case PermissionService.ORDERS_EDIT:
         return cb.and(
             cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
