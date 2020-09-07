@@ -308,12 +308,12 @@ public class SiglusNotificationService {
         );
   }
 
-  private UUID findSupervisorNodeId(BasicRequisitionDto requisition) {
-    UUID requisitionId = requisition.getId();
+  private UUID findSupervisorNodeId(BasicRequisitionDto requisitionDto) {
+    UUID requisitionId = requisitionDto.getId();
     Profiler profiler = requisitionController
         .getProfiler("GET_REQUISITION", requisitionId);
     return requisitionController.findRequisition(requisitionId, profiler)
-        .getSupervisoryNode().getId();
+        .getSupervisoryNodeId();
   }
 
   private List<BasicOrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {

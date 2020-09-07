@@ -68,7 +68,6 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
-import org.siglus.common.domain.referencedata.SupervisoryNode;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -133,8 +132,6 @@ public class SiglusNotificationServiceTest {
   private String currentUserHomeFacilityName = random(NOT_LONG);
 
   private BasicRequisitionDto requisition;
-
-  private SupervisoryNode supervisoryNode;
 
   private UUID supervisoryNodeId;
 
@@ -532,9 +529,7 @@ public class SiglusNotificationServiceTest {
   private void mockSupervisorNode() {
     supervisoryNodeId = randomUUID();
     Requisition requisition = new Requisition();
-    supervisoryNode = new SupervisoryNode();
-    supervisoryNode.setId(supervisoryNodeId);
-    requisition.setSupervisoryNode(supervisoryNode);
+    requisition.setSupervisoryNodeId(supervisoryNodeId);
     Profiler profiler = new Profiler("GET_REQUISITION");
     when(requisitionController.getProfiler(any(), any())).thenReturn(profiler);
     when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
