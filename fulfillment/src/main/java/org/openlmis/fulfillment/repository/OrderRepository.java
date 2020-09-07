@@ -28,11 +28,19 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, UUID>
 
   Order findByOrderCode(@Param("orderCode") String orderNumber);
 
+  Order findByExternalId(@Param("externalId") UUID externalId);
+
   // [SIGLUS change start]
   // [change reason]: siglus find can Fulfill Order.
   @Query(value = "select * "
       + "from fulfillment.orders "
       + "where status in ('FULFILLING','PARTIALLY_FULFILLED', 'ORDERED')", nativeQuery = true)
   List<Order> findCanFulfillOrder();
+
+  @Query(value = "select * "
+      + "from fulfillment.orders "
+      + "where status in ('FULFILLING','PARTIALLY_FULFILLED', 'ORDERED')"
+      + "and externalId in :externalIds", nativeQuery = true)
+  Order findCanFulfillOrderAndInExternalId(@Param("externalIds") List<UUID> externalIds);
   // [SIGLUS change end]
 }

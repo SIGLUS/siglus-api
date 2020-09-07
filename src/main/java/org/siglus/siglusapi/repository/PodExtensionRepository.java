@@ -21,4 +21,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PodExtensionRepository extends JpaRepository<PodExtension, UUID> {
 
+  public PodExtension findByClientCodeAndIssueVoucherNumber(String clientCode,
+      String issueVoucherNumber);
+
 }

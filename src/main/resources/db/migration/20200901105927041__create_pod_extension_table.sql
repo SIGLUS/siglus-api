@@ -6,5 +6,6 @@ CREATE TABLE siglusintegration.pod_extension (
     id uuid PRIMARY KEY,
     podid uuid NOT NULL,
     issuevouchernumber CHARACTER VARYING(255),
-    fclastupdateddate DATE
+    clientcode CHARACTER VARYING(255)
+
 );
