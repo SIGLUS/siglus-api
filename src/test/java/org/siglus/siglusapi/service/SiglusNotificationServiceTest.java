@@ -57,6 +57,7 @@ import org.openlmis.fulfillment.util.Pagination;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
@@ -66,6 +67,8 @@ import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
+import org.openlmis.requisition.web.RequisitionController;
+import org.siglus.common.domain.referencedata.SupervisoryNode;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -79,6 +82,7 @@ import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
+import org.slf4j.profiler.Profiler;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -119,6 +123,9 @@ public class SiglusNotificationServiceTest {
   @Mock
   private FulfillmentProofOfDeliveryService fulfillmentProofOfDeliveryService;
 
+  @Mock
+  private RequisitionController requisitionController;
+
   private UUID notificationId;
 
   private UUID currentUserHomeFacilityId = randomUUID();
@@ -126,6 +133,8 @@ public class SiglusNotificationServiceTest {
   private String currentUserHomeFacilityName = random(NOT_LONG);
 
   private BasicRequisitionDto requisition;
+
+  private SupervisoryNode supervisoryNode;
 
   private UUID supervisoryNodeId;
 
@@ -522,9 +531,13 @@ public class SiglusNotificationServiceTest {
 
   private void mockSupervisorNode() {
     supervisoryNodeId = randomUUID();
-    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
-    requisitionV2Dto.setSupervisoryNode(supervisoryNodeId);
-    when(requisitionService.searchRequisition(requisition.getId())).thenReturn(requisitionV2Dto);
+    Requisition requisition = new Requisition();
+    supervisoryNode = new SupervisoryNode();
+    supervisoryNode.setId(supervisoryNodeId);
+    requisition.setSupervisoryNode(supervisoryNode);
+    Profiler profiler = new Profiler("GET_REQUISITION");
+    when(requisitionController.getProfiler(any(), any())).thenReturn(profiler);
+    when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
   }
 
   private void mockAuthentication() {
