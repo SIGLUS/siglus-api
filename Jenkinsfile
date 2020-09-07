@@ -40,7 +40,6 @@ pipeline {
                         IMAGE_REPO=siglusdevops/siglusapi
                         IMAGE_NAME=${IMAGE_REPO}:${IMAGE_TAG}
                         docker build -t ${IMAGE_NAME} .
-                        docker tag ${IMAGE_NAME}
                         docker push ${IMAGE_NAME}
                         docker rmi ${IMAGE_NAME}
                     '''
