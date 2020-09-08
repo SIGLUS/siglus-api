@@ -40,6 +40,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.service.FulfillmentProofOfDeliveryService;
@@ -460,6 +461,7 @@ public class SiglusNotificationService {
           return null;
         }
         Predicate internalPredicate = null;
+        Predicate externalPredicate = null;
         // if user has internal approve for specific program, should optimize
         // sn-1 & multiple for internal, sn-2 & multiple for external
         UUID nodeIdForInternalApprove = findSupervisoryNodeIdForInternalApprove(
@@ -478,16 +480,25 @@ public class SiglusNotificationService {
           );
         }
 
-        Predicate externalPredicate = cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
-            root.get(REF_STATUS)
-                .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
-            root.get("supervisoryNodeId").in(nodeIdsForExternalApprove)
-        );
+        if (!CollectionUtils.isEmpty(nodeIdsForExternalApprove)) {
+          externalPredicate = cb.and(
+              cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
+              cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
+              root.get(REF_STATUS)
+                  .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
+              root.get("supervisoryNodeId").in(nodeIdsForExternalApprove)
+          );
+        }
 
-        return internalPredicate == null ? externalPredicate :
-            cb.or(internalPredicate, externalPredicate);
+        if (internalPredicate != null && externalPredicate != null) {
+          return cb.or(internalPredicate, externalPredicate);
+        }
+
+        if (internalPredicate != null) {
+          return internalPredicate;
+        }
+
+        return externalPredicate;
 
       case PermissionService.ORDERS_EDIT:
         return cb.and(
