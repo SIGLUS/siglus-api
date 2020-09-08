@@ -414,7 +414,7 @@ public class SiglusNotificationService {
             currentUserSupervisoryNodeIds, permissionString.getProgramId());
         Set<UUID> nodeIdsForExternalApprove = currentUserSupervisoryNodeIds
             .stream()
-            .filter(id -> id != nodeIdForInternalApprove)
+            .filter(id -> !id.equals(nodeIdForInternalApprove))
             .collect(toSet());
 
         if (nodeIdForInternalApprove != null) {
