@@ -45,7 +45,7 @@ public class SiglusShipmentDraftController {
   @ResponseStatus(HttpStatus.CREATED)
   @ResponseBody
   public ShipmentDraftDto createShipmentDraft(@RequestBody ShipmentDraftDto draftDto) {
-    return draftController.createShipmentDraft(draftDto);
+    return siglusShipmentDraftService.createShipmentDraft(draftDto);
   }
 
   @PutMapping("/{id}")

@@ -251,7 +251,7 @@ public class SiglusOrderService {
     return addedLineItemIds;
   }
 
-  public void createSubOrder(OrderObjectReferenceDto order,
+  public Iterable<BasicOrderDto> createSubOrder(OrderObjectReferenceDto order,
       List<org.openlmis.fulfillment.web.util.OrderLineItemDto>
           orderLineItemDtos) {
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
@@ -278,7 +278,7 @@ public class SiglusOrderService {
       order.setOrderCode(replaceLast(order.getOrderCode(), "-" + (externals.size() - 1),
           "-" + externals.size()));
     }
-    createNewOrder(order, orderLineItemDtos, externals);
+    return createNewOrder(order, orderLineItemDtos, externals);
   }
 
   public OrderObjectReferenceDto getExtensionOrder(OrderObjectReferenceDto orderDto) {

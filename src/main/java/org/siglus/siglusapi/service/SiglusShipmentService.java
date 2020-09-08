@@ -80,9 +80,15 @@ public class SiglusShipmentService {
     return createSubOrderAndShipment(isSubOrder, shipmentDto);
   }
 
+  public ShipmentDto createSubOrderAndShipment(ShipmentDto shipmentDto) {
+    createSubOrder(shipmentDto, false);
+    ShipmentDto shipment = createShipment(shipmentDto);
+    return shipment;
+  }
+
   ShipmentDto createSubOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
     if (isSubOrder) {
-      createSubOrder(shipmentDto);
+      createSubOrder(shipmentDto, true);
     }
     ShipmentDto shipment = createShipment(shipmentDto);
     return shipment;
@@ -94,7 +100,7 @@ public class SiglusShipmentService {
     }
   }
 
-  private void createSubOrder(ShipmentDto shipmentDto) {
+  private void createSubOrder(ShipmentDto shipmentDto, boolean needValidate) {
     Set<UUID> skippedOrderLineItemIds = getSkippedOrderLineItemIds(shipmentDto);
     Map<UUID, List<ShipmentLineItem.Importer>> groupShipment = shipmentDto.getLineItems().stream()
         .collect(Collectors.groupingBy(lineItem -> lineItem.getOrderableIdentity().getId()));
@@ -102,11 +108,12 @@ public class SiglusShipmentService {
     List<OrderLineItemDto> orderLineItems = order.getOrderLineItems();
     List<OrderLineItemDto> subOrderLineItems = getSubOrderLineItemDtos(skippedOrderLineItemIds,
         groupShipment, orderLineItems);
-    if (subOrderLineItems.isEmpty()) {
+    if (subOrderLineItems.isEmpty() && needValidate) {
       throw new ValidationMessageException(
           new Message(ERROR_SUB_ORDER_LINE_ITEM));
+    } else if (!subOrderLineItems.isEmpty()) {
+      siglusOrderService.createSubOrder(order, subOrderLineItems);
     }
-    siglusOrderService.createSubOrder(order, subOrderLineItems);
   }
 
   private ShipmentDto createShipment(ShipmentDto shipmentDto) {

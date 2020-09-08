@@ -15,11 +15,21 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
+import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
+import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
+
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,18 +40,26 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.repository.OrderRepository;
-import org.openlmis.fulfillment.service.referencedata.FulfillmentProgramReferenceDataService;
+import org.openlmis.fulfillment.web.shipment.ShipmentDto;
+import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
+import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
+import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.LotDto;
+import org.siglus.common.dto.referencedata.LotSearchParams;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
@@ -56,15 +74,23 @@ import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderService;
+import org.siglus.siglusapi.service.SiglusShipmentDraftService;
+import org.siglus.siglusapi.service.SiglusShipmentService;
+import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 @Service
 @Slf4j
@@ -103,7 +129,7 @@ public class FcIssueVoucherService {
   private ValidSourceDestinationStockManagementService sourceDestinationService;
 
   @Autowired
-  private PodExtensionRepository  podExtensionRepository;
+  private PodExtensionRepository podExtensionRepository;
 
   @Autowired
   private OrderExternalRepository orderExternalRepository;
@@ -115,7 +141,16 @@ public class FcIssueVoucherService {
   private SiglusOrderService siglusOrderService;
 
   @Autowired
-  private FulfillmentProgramReferenceDataService programReferenceDataService;
+  private SiglusShipmentDraftService shipmentDraftService;
+
+  @Autowired
+  private SiglusStockCardSummariesService stockCardSummariesService;
+
+  @Autowired
+  private SiglusLotReferenceDataService lotReferenceDataService;
+
+  @Autowired
+  private SiglusShipmentService siglusShipmentService;
 
   @Autowired
   private RequisitionService requisitionService;
@@ -123,9 +158,9 @@ public class FcIssueVoucherService {
   public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
     boolean successHandler = true;
     for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
-     PodExtension podExtension = podExtensionRepository
-         .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
-          issueVoucherDto.getIssueVoucherNumber());
+      PodExtension podExtension = podExtensionRepository
+          .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
+              issueVoucherDto.getIssueVoucherNumber());
       if (podExtension != null) {
         FcHandlerStatus handlerError = createIssueVoucher(issueVoucherDto);
         if (handlerError.equals(FcHandlerStatus.CALL_API_ERROR)) {
@@ -143,17 +178,24 @@ public class FcIssueVoucherService {
           getRequisitionExtension(issueVoucherDto.getRequisitionNumber());
       FacilityDto supplyFacility = getWareHouseFacility(issueVoucherDto);
       UserDto userDto = getWareHouseUserInfo(issueVoucherDto, supplyFacility);
-      FacilityDto requestFacility =  getClientFacility(issueVoucherDto);
+      getClientFacility(issueVoucherDto);
       RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
           .searchRequisition(extension.getRequisitionId());
-      Map<String, ApprovedProductDto> approveProductDtos = getApprovedProductsMap(userDto,
-          requisitionV2Dto);
-      List<ProductDto> existProducts = getExistProducts(issueVoucherDto, approveProductDtos);
+      List<ApprovedProductDto> approvedProductDtos = getApprovedProducts(userDto, requisitionV2Dto);
+      Map<String, ApprovedProductDto> approvedProductsMap =
+          getApprovedProductsMap(approvedProductDtos);
+      List<ProductDto> existProducts = getExistProducts(issueVoucherDto, approvedProductsMap);
       if (!CollectionUtils.isEmpty(existProducts)) {
         createStockEvent(userDto, requisitionV2Dto, issueVoucherDto, existProducts,
-            approveProductDtos);
-        createOrder(issueVoucherDto, requisitionV2Dto, existProducts, supplyFacility, userDto,
-            approveProductDtos);
+            approvedProductsMap);
+        Map<String, List<ProductDto>> productMaps = existProducts.stream()
+            .collect(Collectors.groupingBy(productDto -> productDto.getFnmCode()));
+        UUID orderId = createOrder(requisitionV2Dto, productMaps, supplyFacility,
+            userDto, approvedProductsMap);
+        if (orderId != null) {
+          createShipmentDraftAndShipment(orderId, productMaps, approvedProductDtos,
+              approvedProductsMap, supplyFacility, requisitionV2Dto, issueVoucherDto);
+        }
         saveFcPodExtension(issueVoucherDto);
       }
     } catch (FcDataException exception) {
@@ -197,13 +239,20 @@ public class FcIssueVoucherService {
     return userList.get(0);
   }
 
-  private Map<String, ApprovedProductDto> getApprovedProductsMap(UserDto userDto, RequisitionV2Dto dto) {
+  private Map<String, ApprovedProductDto> getApprovedProductsMap(List<ApprovedProductDto>
+      approvedProductDtos) {
+    return approvedProductDtos.stream()
+        .collect(Collectors.toMap(product -> product.getOrderable().getProductCode(),
+            product -> product));
+  }
+
+  private List<ApprovedProductDto> getApprovedProducts(UserDto userDto, RequisitionV2Dto dto) {
     return approvedProductService
         .getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId(), null,
             false)
         .stream()
-        .collect(Collectors.toMap(product->product.getOrderable().getProductCode(),
-            product -> product));
+        .collect(Collectors.toList());
+
   }
 
   private List<ProductDto> getExistProducts(IssueVoucherDto issueVoucherDto,
@@ -251,7 +300,8 @@ public class FcIssueVoucherService {
   }
 
   private StockEventLineItemDto getStockEventLineItemDto(RequisitionV2Dto requisitionV2Dto,
-      IssueVoucherDto issueVoucherDto, Map<String, ApprovedProductDto> orderableDtoMap, UUID sourceId,
+      IssueVoucherDto issueVoucherDto, Map<String, ApprovedProductDto> orderableDtoMap,
+      UUID sourceId,
       ProductDto productDto) {
     StockEventLineItemDto lineItemDto = new StockEventLineItemDto();
     ApprovedProductDto dto = orderableDtoMap.get(productDto.getFnmCode());
@@ -269,22 +319,20 @@ public class FcIssueVoucherService {
     return lineItemDto;
   }
 
-  private void createOrder(IssueVoucherDto issueVoucherDto, RequisitionV2Dto v2Dto,
-      List<ProductDto> existProductDtos, FacilityDto supplyFacility, UserDto userDto,
+  private UUID createOrder(RequisitionV2Dto v2Dto, Map<String, List<ProductDto>> productMaps,
+      FacilityDto supplyFacility, UserDto userDto,
       Map<String, ApprovedProductDto> approveProductDtos) {
-    Map<String, List<ProductDto>> productMaps =
-        existProductDtos.stream()
-            .collect(Collectors.groupingBy(productDto -> productDto.getFnmCode()));
     List<OrderExternal> externals = orderExternalRepository.findByRequisitionId(v2Dto.getId());
     Order order = orderRepository.findByExternalId(v2Dto.getId());
     if (CollectionUtils.isEmpty(externals) && order == null) {
       convertOrder(v2Dto, productMaps, supplyFacility, userDto, approveProductDtos);
+      return orderRepository.findByExternalId(v2Dto.getId()).getId();
     } else {
-      updateSubOrder(approveProductDtos, productMaps, externals, order);
+      return updateSubOrder(approveProductDtos, productMaps, externals, order);
     }
   }
 
-  private void updateSubOrder(Map<String, ApprovedProductDto> approveProductDtos,
+  private UUID updateSubOrder(Map<String, ApprovedProductDto> approveProductDtos,
       Map<String, List<ProductDto>> productMaps, List<OrderExternal> externals, Order order) {
     List<UUID> externalIds = externals.stream().map(orderExternal -> orderExternal.getId())
         .collect(Collectors.toList());
@@ -296,38 +344,37 @@ public class FcIssueVoucherService {
       BeanUtils.copyProperties(existOrder, dto);
       List<OrderLineItem> items = getOrderLineItems(productMaps, approveProductDtos, order);
       order.setOrderLineItems(items);
-      siglusOrderService.createSubOrder(dto, getOrderLineItemsDto(items, approveProductDtos));
+      Iterable<BasicOrderDto> orderDtos = siglusOrderService
+          .createSubOrder(dto, getOrderLineItemsDto(items, approveProductDtos));
+      if (orderDtos.iterator().hasNext()) {
+        return orderDtos.iterator().next().getId();
+      }
+      return null;
     } else {
-      updateCanFulfillOrder(approveProductDtos, productMaps, order);
+      return updateCanFulfillOrder(approveProductDtos, productMaps, order);
     }
   }
 
-  private void updateCanFulfillOrder(Map<String, ApprovedProductDto> approveProductDtos,
+  private UUID updateCanFulfillOrder(Map<String, ApprovedProductDto> approveProductDtos,
       Map<String, List<ProductDto>> productMaps, Order order) {
-    List<OrderLineItem> lineItems = order.getOrderLineItems();
+    List<OrderLineItem> existLineItems = order.getOrderLineItems();
     List<OrderLineItem> items = getOrderLineItems(productMaps, approveProductDtos, order);
     List<OrderLineItemDto> orderLineItemDto = getOrderLineItemsDto(items, approveProductDtos);
     orderLineItemDto.forEach(lineItem -> {
-      if (getOrderLineItems(lineItems, lineItem.getOrderable().getId()) == null){
+      if (getOrderLineItems(existLineItems, lineItem.getOrderable().getId()) == null) {
         OrderLineItem orderItem = new OrderLineItem();
         ApprovedProductDto approvedProductDto = approveProductDtos.get(
             lineItem.getOrderable().getProductCode());
-        VersionEntityReference orderableVersion= new VersionEntityReference(
+        VersionEntityReference orderableVersion = new VersionEntityReference(
             approvedProductDto.getId(), approvedProductDto.getVersionNumber());
         orderItem.setOrderable(orderableVersion);
         orderItem.setOrderedQuantity(lineItem.getOrderedQuantity());
-        lineItems.add(orderItem);
+        existLineItems.add(orderItem);
       }
     });
-    order.setOrderLineItems(lineItems);
+    order.setOrderLineItems(existLineItems);
     orderRepository.save(order);
-  }
-
-  private OrderLineItem getOrderLineItems(List<OrderLineItem> lineItems, UUID productId) {
-    return lineItems.stream().filter(orderLineItem ->
-        orderLineItem.getOrderable().getId().equals(productId))
-        .findFirst()
-        .orElse(null);
+    return order.getId();
   }
 
   private void convertOrder(RequisitionV2Dto v2Dto, Map<String, List<ProductDto>> existProductDtos,
@@ -344,12 +391,19 @@ public class FcIssueVoucherService {
     orderRepository.save(order);
   }
 
+  private OrderLineItem getOrderLineItems(List<OrderLineItem> lineItems, UUID productId) {
+    return lineItems.stream().filter(orderLineItem ->
+        orderLineItem.getOrderable().getId().equals(productId))
+        .findFirst()
+        .orElse(null);
+  }
+
   private List<OrderLineItem> getOrderLineItems(Map<String, List<ProductDto>> existProductDtos,
       Map<String, ApprovedProductDto> approveProductDtos, Order order) {
-   return existProductDtos.entrySet().stream().map(entry -> {
+    return existProductDtos.entrySet().stream().map(entry -> {
       OrderLineItem orderLineItem = new OrderLineItem();
       ApprovedProductDto approvedProductDto = approveProductDtos.get(entry.getKey());
-      VersionEntityReference orderableVersion= new VersionEntityReference(
+      VersionEntityReference orderableVersion = new VersionEntityReference(
           approvedProductDto.getId(), approvedProductDto.getVersionNumber());
       orderLineItem.setOrderable(orderableVersion);
       orderLineItem.setOrderedQuantity(approvedProductDto.getOrderable()
@@ -360,17 +414,18 @@ public class FcIssueVoucherService {
   }
 
   private Long getApprovedQuality(List<ProductDto> productDtos) {
-    return Long.valueOf(productDtos.stream().mapToInt(productDto->
+    return Long.valueOf(productDtos.stream().mapToInt(productDto ->
         productDto.getApprovedQuantity() == null ? 0 : productDto.getApprovedQuantity()).sum());
   }
 
   private List<OrderLineItemDto> getOrderLineItemsDto(List<OrderLineItem> orderLineItems,
       Map<String, ApprovedProductDto> approveProductDtos) {
-   return orderLineItems.stream().map(orderLineItem -> {
+    return orderLineItems.stream().map(orderLineItem -> {
       OrderLineItemDto lineItemDto = new OrderLineItemDto();
       ApprovedProductDto approvedProductDto = approveProductDtos
           .get(lineItemDto.getOrderable().getProductCode());
-      org.openlmis.requisition.dto.OrderableDto existOrderableDto = approvedProductDto.getOrderable();
+      org.openlmis.requisition.dto.OrderableDto existOrderableDto = approvedProductDto
+          .getOrderable();
       org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto = new
           org.openlmis.fulfillment.service.referencedata.OrderableDto();
       BeanUtils.copyProperties(existOrderableDto, orderableDto);
@@ -400,11 +455,116 @@ public class FcIssueVoucherService {
     return FcHandlerStatus.CALL_API_ERROR;
   }
 
+  private void createShipmentDraftAndShipment(UUID orderId,
+      Map<String, List<ProductDto>> productMaps,
+      List<ApprovedProductDto> approvedProductDtos,
+      Map<String, ApprovedProductDto> approvedProductDtoMaps,
+      FacilityDto supplyFacility, RequisitionV2Dto requisitionV2Dto,
+      IssueVoucherDto issueVoucherDto) {
+    List<UUID> productIds = productMaps.keySet().stream()
+        .map(key -> approvedProductDtoMaps.get(key).getOrderable().getId())
+        .collect(Collectors.toList());
+    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos =
+        searchStockCardSummaries(supplyFacility, requisitionV2Dto, productIds);
+    Map<UUID, ApprovedProductDto> approvedProductIdMaps = approvedProductDtos.stream()
+        .collect(Collectors.toMap(product -> product.getOrderable().getId(), product -> product));
+    SiglusOrderDto orderDto = siglusOrderService.searchOrderById(orderId);
+    ShipmentDraftDto draftDto =
+        createShipmentDraft(orderDto, stockCardSummaryV2Dtos, approvedProductIdMaps);
+    ShipmentDto shipmentDto = new ShipmentDto();
+    shipmentDto.setId(draftDto.getId());
+    shipmentDto.setShippedDate(convertToDateTime(issueVoucherDto.getShippingDate()));
+    shipmentDto.setLineItems(getShipmentLineItems(draftDto.lineItems(), issueVoucherDto,
+        approvedProductIdMaps));
+    siglusShipmentService.createSubOrderAndShipment(shipmentDto);
+  }
+
+  private ShipmentDraftDto createShipmentDraft(SiglusOrderDto orderDto,
+      List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
+      Map<UUID, ApprovedProductDto> approvedProductIdMaps) {
+    List<ShipmentLineItemDto> shipmentLineItemDtos =
+        getShipmentDraftLineItems(stockCardSummaryV2Dtos, approvedProductIdMaps);
+    OrderObjectReferenceDto orderObjectReferenceDto = new OrderObjectReferenceDto(
+        orderDto.getOrder().getId());
+    BeanUtils.copyProperties(orderDto, orderObjectReferenceDto);
+    ShipmentDraftDto draftDto = new ShipmentDraftDto();
+    draftDto.setOrder(orderObjectReferenceDto);
+    draftDto.setLineItems(shipmentLineItemDtos);
+    return shipmentDraftService.createShipmentDraft(draftDto);
+  }
+
+  private List<ShipmentLineItemDto> getShipmentDraftLineItems(
+      List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
+      Map<UUID, ApprovedProductDto> approvedProductIdMaps) {
+    List<ShipmentLineItemDto> shipmentLineItemDtos = new ArrayList<>();
+    stockCardSummaryV2Dtos.stream().forEach(stockCardSummaryV2Dto -> {
+      OrderableDto orderableDto = approvedProductIdMaps
+          .get(stockCardSummaryV2Dto.getOrderable().getId()).getOrderable();
+      long netContent = orderableDto.getNetContent();
+      stockCardSummaryV2Dto.getCanFulfillForMe().forEach(fulfillForMeDto -> {
+        if (fulfillForMeDto.getStockOnHand() > netContent) {
+          ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+          VersionObjectReferenceDto orderableReferenceDto =
+              new VersionObjectReferenceDto(orderableDto.getId(),
+                  null, "orderables", orderableDto.getVersionNumber());
+          lineItemDto.setOrderable(orderableReferenceDto);
+          lineItemDto.setQuantityShipped((long) 0);
+          lineItemDto.setLotId(fulfillForMeDto.getLot().getId());
+          shipmentLineItemDtos.add(lineItemDto);
+        }
+      });
+    });
+    return shipmentLineItemDtos;
+  }
+
+  private List<ShipmentLineItemDto> getShipmentLineItems(List<ShipmentLineItemDto> draftLineItems,
+      IssueVoucherDto issueVoucherDto, Map<UUID, ApprovedProductDto> approvedProductIdMaps) {
+    List<UUID> lotIds = draftLineItems.stream()
+        .map(lineItemDto -> lineItemDto.getLot().getId()).collect(Collectors.toList());
+    LotSearchParams lotSearchParams = new LotSearchParams();
+    lotSearchParams.setId(lotIds);
+    Map<UUID, List<LotDto>> lotDtos = lotReferenceDataService.getLots(lotSearchParams).stream()
+        .collect(Collectors.groupingBy(lotDto -> lotDto.getId()));
+    draftLineItems.stream().forEach(lineItem -> {
+      ApprovedProductDto approvedProductDto = approvedProductIdMaps.get(lineItem.getId());
+      LotDto lotDto = lotDtos.get(lineItem.getLot().getId()).get(0);
+      ProductDto product = getProductDto(approvedProductDto, lotDto, issueVoucherDto.getProducts());
+      lineItem.setQuantityShipped((long) (product == null ? 0 : product.getShippedQuantity()));
+    });
+    return draftLineItems;
+  }
+
+  private ProductDto getProductDto(ApprovedProductDto productDto, LotDto lotDto,
+      List<ProductDto> products) {
+    return products.stream().filter(dto ->
+        dto.getFnmCode().equals(productDto.getOrderable().getProductCode())
+            && dto.getBatch().equals(lotDto.getLotCode()))
+        .findFirst()
+        .orElse(null);
+  }
+
+  private List<StockCardSummaryV2Dto> searchStockCardSummaries(FacilityDto supplyFacility,
+      RequisitionV2Dto requisitionV2Dto, List<UUID> productIds) {
+    MultiValueMap<String, String> parameters = new LinkedMultiValueMap();
+    parameters.set(PROGRAM_ID, requisitionV2Dto.getProgram().getId().toString());
+    parameters.set(FACILITY_ID, supplyFacility.getId().toString());
+    parameters.set(RIGHT_NAME, STOCK_CARDS_VIEW);
+    productIds.stream().forEach(productId -> {
+      parameters.set(ORDERABLE_ID, productId.toString());
+    });
+    Pageable page = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
+    return stockCardSummariesService.searchStockCardSummaryV2Dtos(parameters, page).getContent();
+  }
+
   private FcHandlerStatus getFcDataExceptionHandler(
       IssueVoucherDto issueVoucherDto, FcDataException dataException) {
     log.error("[FC] FcIntegrationError: Issue vourch - {} exception - {}", issueVoucherDto,
         dataException.getMessage());
     return FcHandlerStatus.DATA_ERROR;
+  }
+
+  private ZonedDateTime convertToDateTime(Date date) {
+    return ZonedDateTime.ofInstant(date.toInstant(), ZoneId.of(timeZoneId));
   }
 
 }
