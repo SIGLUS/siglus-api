@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -76,6 +77,10 @@ public class Facility extends BaseEntity {
   @Getter
   @Setter
   private Boolean openLmisAccessible;
+
+  @Getter
+  @Setter
+  private UUID typeId;
 
   /**
    * Equal by a Facility's code.
