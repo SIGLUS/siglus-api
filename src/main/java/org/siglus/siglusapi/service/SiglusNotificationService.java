@@ -37,6 +37,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.service.FulfillmentProofOfDeliveryService;
@@ -46,8 +47,8 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
-import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
@@ -55,6 +56,7 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
+import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.dto.referencedata.RoleAssignmentDto;
@@ -69,6 +71,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
+import org.slf4j.profiler.Profiler;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -79,7 +82,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CyclomaticComplexity"})
 public class SiglusNotificationService {
 
   public enum ViewableStatus {
@@ -123,6 +126,8 @@ public class SiglusNotificationService {
   private final ExecutorService executor;
 
   private final FulfillmentProofOfDeliveryService fulfillmentProofOfDeliveryService;
+
+  private final RequisitionController requisitionController;
 
   public Page<NotificationDto> searchNotifications(Pageable pageable) {
     return repo
@@ -304,9 +309,12 @@ public class SiglusNotificationService {
         );
   }
 
-  private UUID findSupervisorNodeId(BasicRequisitionDto requisition) {
-    return requisitionService.searchRequisition(requisition.getId())
-        .getSupervisoryNode();
+  private UUID findSupervisorNodeId(BasicRequisitionDto requisitionDto) {
+    UUID requisitionId = requisitionDto.getId();
+    Profiler profiler = requisitionController
+        .getProfiler("GET_REQUISITION", requisitionId);
+    return requisitionController.findRequisition(requisitionId, profiler)
+        .getSupervisoryNodeId();
   }
 
   private List<BasicOrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {
@@ -358,17 +366,23 @@ public class SiglusNotificationService {
     };
   }
 
-  private boolean canCurrentUserInternalApprove(UUID currentUserFacilityId,
+  private UUID findSupervisoryNodeIdForInternalApprove(UUID currentUserFacilityId,
       List<RequisitionGroupDto> requisitionGroups,
       Set<UUID> currentUserSupervisoryNodeIds, UUID programId) {
-    return requisitionGroups.stream()
+    RequisitionGroupDto requisitionGroupDto = requisitionGroups.stream()
         .filter(requisitionGroup -> currentUserSupervisoryNodeIds
             .contains(requisitionGroup.getSupervisoryNode().getId()))
         .filter(requisitionGroup -> requisitionGroup.supportsProgram(programId))
-        .map(RequisitionGroupDto::getMemberFacilities)
-        .flatMap(Collection::stream)
-        .map(BaseDto::getId)
-        .anyMatch(currentUserFacilityId::equals);
+        .filter(requisitionGroup ->
+            isInMemberFacilities(requisitionGroup.getMemberFacilities(), currentUserFacilityId))
+        .findAny()
+        .orElse(null);
+
+    return requisitionGroupDto == null ? null : requisitionGroupDto.getSupervisoryNode().getId();
+  }
+
+  private boolean isInMemberFacilities(Set<FacilityDto> memberFacilities, UUID userFacilityId) {
+    return memberFacilities.stream().map(FacilityDto::getId).anyMatch(userFacilityId::equals);
   }
 
   private Predicate mapRightToPredicate(PermissionString permissionString, Root<Notification> root,
@@ -393,21 +407,46 @@ public class SiglusNotificationService {
         if (currentUserSupervisoryNodeIds.isEmpty()) {
           return null;
         }
-        if (canCurrentUserInternalApprove(currentUserFacilityId, requisitionGroups,
-            currentUserSupervisoryNodeIds, permissionString.getProgramId())) {
-          return cb.and(
+        Predicate internalPredicate = null;
+        Predicate externalPredicate = null;
+        // if user has internal approve for specific program, should optimize
+        // sn-1 & multiple for internal, sn-2 & multiple for external
+        UUID nodeIdForInternalApprove = findSupervisoryNodeIdForInternalApprove(
+            currentUserFacilityId, requisitionGroups,
+            currentUserSupervisoryNodeIds, permissionString.getProgramId());
+        Set<UUID> nodeIdsForExternalApprove = currentUserSupervisoryNodeIds
+            .stream()
+            .filter(id -> !id.equals(nodeIdForInternalApprove))
+            .collect(toSet());
+
+        if (nodeIdForInternalApprove != null) {
+          internalPredicate = cb.and(
               cb.equal(root.get(REF_FACILITY_ID), currentUserFacilityId),
               cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
               cb.equal(root.get(REF_STATUS), NotificationStatus.AUTHORIZED)
           );
         }
-        return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
-            root.get(REF_STATUS)
-                .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
-            root.get("supervisoryNodeId").in(currentUserSupervisoryNodeIds)
-        );
+
+        if (!CollectionUtils.isEmpty(nodeIdsForExternalApprove)) {
+          externalPredicate = cb.and(
+              cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
+              cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
+              root.get(REF_STATUS)
+                  .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
+              root.get("supervisoryNodeId").in(nodeIdsForExternalApprove)
+          );
+        }
+
+        if (internalPredicate != null && externalPredicate != null) {
+          return cb.or(internalPredicate, externalPredicate);
+        }
+
+        if (internalPredicate != null) {
+          return internalPredicate;
+        }
+
+        return externalPredicate;
+
       case PermissionService.ORDERS_EDIT:
         return cb.and(
             cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),

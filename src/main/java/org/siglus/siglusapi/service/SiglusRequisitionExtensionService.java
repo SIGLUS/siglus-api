@@ -75,7 +75,7 @@ public class SiglusRequisitionExtensionService {
     return requisitionExtensions
         .stream()
         .collect(Collectors.toMap(RequisitionExtension::getRequisitionId,
-            extension -> formatRequisitionNumber(extension)));
+            this::formatRequisitionNumber));
   }
 
 
