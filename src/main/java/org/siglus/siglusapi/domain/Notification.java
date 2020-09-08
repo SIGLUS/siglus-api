@@ -84,4 +84,8 @@ public class Notification extends BaseEntity {
   @CreatedDate
   private LocalDateTime createDate;
 
+  @Enumerated(EnumType.STRING)
+  private NotificationType type;
+
+  private UUID processingPeriodId;
 }

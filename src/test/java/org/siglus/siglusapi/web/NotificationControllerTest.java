@@ -33,6 +33,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.domain.NotificationType;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
@@ -59,11 +60,11 @@ public class NotificationControllerTest {
     // given
     List<NotificationDto> notificationDtos = new ArrayList<>();
     notificationDtos.add(new NotificationDto());
-    when(service.searchNotifications(any())).thenReturn(new PageImpl<>(notificationDtos));
+    when(service.searchNotifications(any(), any())).thenReturn(new PageImpl<>(notificationDtos));
     int pageSize = nextInt();
 
     // when
-    List<NotificationDto> ret = controller.list(pageSize, true);
+    List<NotificationDto> ret = controller.list(pageSize, true, NotificationType.TODO);
 
     // then
     assertEquals(notificationDtos, ret);
@@ -77,11 +78,11 @@ public class NotificationControllerTest {
   @Test
   public void shouldCallServiceWithAscSortWhenListGiveLatestOnTopIsFalse() {
     // given
-    when(service.searchNotifications(any())).thenReturn(new PageImpl<>(emptyList()));
+    when(service.searchNotifications(any(), any())).thenReturn(new PageImpl<>(emptyList()));
     int pageSize = nextInt();
 
     // when
-    controller.list(pageSize, false);
+    controller.list(pageSize, false, NotificationType.STATUS_UPDATE);
 
     // then
     Pageable pageable = verifyPageable();
@@ -132,7 +133,8 @@ public class NotificationControllerTest {
 
   private Pageable verifyPageable() {
     ArgumentCaptor<Pageable> arg = ArgumentCaptor.forClass(Pageable.class);
-    verify(service).searchNotifications(arg.capture());
+    ArgumentCaptor<NotificationType> type = ArgumentCaptor.forClass(NotificationType.class);
+    verify(service).searchNotifications(arg.capture(), type.capture());
     return arg.getValue();
   }
 

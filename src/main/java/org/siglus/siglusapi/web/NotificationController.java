@@ -18,6 +18,7 @@ package org.siglus.siglusapi.web;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
+import org.siglus.siglusapi.domain.NotificationType;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
@@ -46,14 +47,15 @@ public class NotificationController {
 
   @GetMapping
   public List<NotificationDto> list(@RequestParam(name = "size", defaultValue = "5") int size,
-      @RequestParam(name = "latestOnTop", defaultValue = "true") boolean latestOnTop) {
+      @RequestParam(name = "latestOnTop", defaultValue = "true") boolean latestOnTop,
+      @RequestParam(name = "type", defaultValue = "TODO") NotificationType type) {
     Direction direction = Direction.ASC;
     if (latestOnTop) {
       direction = Direction.DESC;
     }
     Sort sort = new Sort(direction, "createDate");
     Pageable pageable = new PageRequest(ALWAYS_FETCH_FIRST_PAGE, size, sort);
-    Page<NotificationDto> notificationDtos = service.searchNotifications(pageable);
+    Page<NotificationDto> notificationDtos = service.searchNotifications(pageable, type);
     return notificationDtos.getContent();
   }
 

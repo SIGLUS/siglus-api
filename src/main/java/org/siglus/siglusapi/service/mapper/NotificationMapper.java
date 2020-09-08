@@ -15,14 +15,21 @@
 
 package org.siglus.siglusapi.service.mapper;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.dto.NotificationDto;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 public class NotificationMapper {
+  @Value("${time.zoneId}")
+  private String timeZoneId;
 
-  public NotificationDto from(Notification notification) {
+  public NotificationDto from(Notification notification, ProcessingPeriodDto processingPeriod,
+                              ZonedDateTime submitDate) {
     if (notification == null) {
       return null;
     }
@@ -32,7 +39,10 @@ public class NotificationMapper {
     dto.setSourceFacilityName(notification.getSourceFacilityName());
     dto.setRefId(notification.getRefId());
     dto.setStatus(notification.getRefStatus());
+    dto.setType(notification.getType());
+    dto.setCreateDate(notification.getCreateDate().atZone(ZoneId.of(timeZoneId)));
+    dto.setProcessingPeriod(processingPeriod);
+    dto.setRequisitionSubmitDate(submitDate);
     return dto;
   }
-
 }

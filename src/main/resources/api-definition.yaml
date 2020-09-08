@@ -1838,6 +1838,10 @@ traits:
             type: boolean
             required: false
             repeat: false
+          type:
+            type: string
+            required: false
+            repeat: false
         responses:
           200:
             description: list of notifications.

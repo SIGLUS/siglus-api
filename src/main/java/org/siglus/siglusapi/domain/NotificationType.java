@@ -15,29 +15,7 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-public enum NotificationStatus {
-  REJECTED,
-  SUBMITTED,
-  AUTHORIZED,
-  IN_APPROVAL,
-  APPROVED,
-  ORDERED,
-  SHIPPED,
-  RECEIVED;
-
-  public static Collection<NotificationStatus> requisitionStatuses() {
-    return Stream.of(NotificationStatus.values())
-        .filter(NotificationStatus::isRequisitionPeriod)
-        .collect(Collectors.toList());
-  }
-
-  public boolean isRequisitionPeriod() {
-    return this == REJECTED || this == SUBMITTED || this == AUTHORIZED || this == IN_APPROVAL
-        || this == APPROVED;
-  }
-
+public enum NotificationType {
+  TODO,
+  STATUS_UPDATE;
 }

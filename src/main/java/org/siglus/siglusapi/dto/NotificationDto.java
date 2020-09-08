@@ -16,12 +16,16 @@
 package org.siglus.siglusapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.siglus.siglusapi.domain.NotificationStatus;
+import org.siglus.siglusapi.domain.NotificationType;
 
 @Getter
 @Setter
@@ -41,4 +45,11 @@ public class NotificationDto {
 
   private NotificationStatus status;
 
+  private NotificationType type;
+
+  private ProcessingPeriodDto processingPeriod;
+
+  private ZonedDateTime createDate;
+
+  private ZonedDateTime requisitionSubmitDate;
 }

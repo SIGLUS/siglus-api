@@ -61,7 +61,7 @@ public class SiglusProofOfDeliveryController {
     ProofOfDeliveryDto proofOfDeliveryDto = actualController
         .updateProofOfDelivery(proofOfDeliveryId, dto, authentication);
     if (proofOfDeliveryDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
-      notificationService.postConfirmPod(proofOfDeliveryDto);
+      notificationService.postConfirmPod(dto);
     }
     return proofOfDeliveryDto;
   }

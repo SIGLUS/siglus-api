@@ -31,6 +31,13 @@
         "SHIPPED"
       ],
       "title": "status"
+    },
+    "type": {
+      "enum": [
+        "TODO",
+        "STATUS_UPDATE"
+      ],
+      "title": "type"
     }
   }
 }
