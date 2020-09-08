@@ -15,18 +15,43 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.springframework.util.CollectionUtils.isEmpty;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
+import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
+import org.siglus.common.domain.referencedata.Facility;
+import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.service.client.SiglusUserReferenceDataService;
+import org.siglus.siglusapi.domain.FcHandlerStatus;
 import org.siglus.siglusapi.domain.ReceiptPlan;
+import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
+import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.siglus.siglusapi.repository.ReceiptPlanRepository;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.service.SiglusRequisitionService;
+import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.util.OperatePermissionService;
+import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
+import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import static org.springframework.util.CollectionUtils.isEmpty;
 
 @Service
 @Slf4j
@@ -35,19 +60,197 @@ public class FcReceiptPlanService {
   @Autowired
   private ReceiptPlanRepository receiptPlanRepository;
 
+  @Autowired
+  private SiglusFacilityRepository siglusFacilityRepository;
+
+  @Autowired
+  private SiglusSimulateUserAuthHelper siglusSimulateUserAuthHelper;
+
+  @Autowired
+  private SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
+
+  @Autowired
+  private RequisitionExtensionRepository requisitionExtensionRepository;
+
+  @Autowired
+  private SiglusUserReferenceDataService userReferenceDataService;
+
+  @Autowired
+  private SiglusApprovedProductReferenceDataService approvedProductService;
+
+  @Autowired
+  private SiglusRequisitionService siglusRequisitionService;
+
+  @Autowired
+  private OperatePermissionService operatePermissionService;
+
+  @Autowired
+  private FcValidate fcDataValidate;
+
+  @Autowired
+  private HttpServletRequest request;
+
+  @Autowired
+  private HttpServletResponse response;
+
+  @Value("${fc.facilityTypeId}")
+  private UUID fcFacilityTypeId;
+
   public boolean saveReceiptPlan(List<ReceiptPlanDto> receiptPlanDtos) {
+    boolean successHandler = true;
     if (isEmpty(receiptPlanDtos)) {
-      return true;
+      return successHandler;
     }
+
     List<ReceiptPlanDto> nonexistentReceiptPlans = getNonexistentReceiptPlan(receiptPlanDtos);
-    if (isEmpty(nonexistentReceiptPlans)) {
-      return true;
+    if (!isEmpty(nonexistentReceiptPlans)) {
+      for (ReceiptPlanDto receiptPlanDto : nonexistentReceiptPlans) {
+        ReceiptPlan receiptPlan = ReceiptPlan.from(receiptPlanDto);
+        receiptPlanRepository.save(receiptPlan);
+      }
     }
-    nonexistentReceiptPlans.forEach(receiptPlanDto -> {
-      ReceiptPlan receiptPlan = ReceiptPlan.from(receiptPlanDto);
-      receiptPlanRepository.save(receiptPlan);
-    });
-    return true;
+
+    UserDto userDto = getFcUserInfo();
+    siglusSimulateUserAuthHelper.simulateUserAuth(userDto.getId());
+
+    for (ReceiptPlanDto receiptPlanDto : receiptPlanDtos) {
+      FcHandlerStatus handlerError = updateRequisition(receiptPlanDto, userDto);
+      if (handlerError.equals(FcHandlerStatus.CALL_API_ERROR)) {
+        successHandler = false;
+        break;
+      }
+    }
+    return successHandler;
+  }
+
+  private FcHandlerStatus updateRequisition(ReceiptPlanDto receiptPlanDto, UserDto userDto) {
+    try {
+      RequisitionExtension extension =
+          getRequisitionExtension(receiptPlanDto.getRequisitionNumber());
+      UUID requisitionId = extension.getRequisitionId();
+
+      SiglusRequisitionDto requisitionDto = siglusRequisitionService
+          .searchRequisition(requisitionId);
+      if (operatePermissionService.isEditable(requisitionDto)) {
+        List<RequisitionLineItemV2Dto> requisitionLineItems =
+            requisitionDto
+                .getLineItems()
+                .stream()
+                .map(lineItem -> (RequisitionLineItemV2Dto)lineItem)
+                .collect(Collectors.toList());
+        Map<String, OrderableDto> approveProductDtos = getApprovedProductsMap(userDto,
+            requisitionDto);
+        List<ProductDto> productDtos = getExistProducts(receiptPlanDto, approveProductDtos);
+        List<RequisitionLineItemV2Dto> lineItems = updateRequisitionLineItems(
+            requisitionLineItems, productDtos, approveProductDtos, requisitionId);
+        requisitionDto.setRequisitionLineItems(lineItems);
+        siglusRequisitionService.updateRequisition(requisitionId, requisitionDto, request, response);
+        siglusRequisitionService.approveRequisition(requisitionId, request, response);
+      }
+    } catch (FcDataException exception) {
+      return getFcDataExceptionHandler(receiptPlanDto, exception);
+    } catch (Exception exception) {
+      return getFcExceptionHandler(receiptPlanDto, exception);
+    }
+    return FcHandlerStatus.SUCCESS;
+  }
+
+  private RequisitionExtension getRequisitionExtension(String requisitionNumber) {
+    fcDataValidate.validateEmptyRequisitionNumber(requisitionNumber);
+    RequisitionExtension extension = requisitionExtensionRepository
+        .findByRequisitionNumber(requisitionNumber);
+    fcDataValidate.validateExistRequisitionNumber(extension);
+    return extension;
+  }
+
+  private UserDto getFcUserInfo() {
+    Facility facility = siglusFacilityRepository.findFirstByTypeId(fcFacilityTypeId);
+    List<UserDto> userList = userReferenceDataService.getUserInfo(facility.getId()).getContent();
+    fcDataValidate.validateExistUser(userList);
+    return userList.get(0);
+  }
+
+  private Map<String, OrderableDto> getApprovedProductsMap(UserDto userDto, RequisitionV2Dto dto) {
+    return approvedProductService
+        .getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId(), null)
+        .getOrderablesPage()
+        .getContent()
+        .stream()
+        .collect(Collectors.toMap(OrderableDto::getProductCode, orderableDto -> orderableDto));
+  }
+
+  private List<ProductDto> getExistProducts(ReceiptPlanDto receiptPlanDto,
+                                            Map<String, OrderableDto> approvedProducts) {
+    List<ProductDto> receiptPlanProducts = receiptPlanDto.getProducts();
+    List<ProductDto> findProducts = receiptPlanProducts.stream()
+        .filter(productDto -> approvedProducts.containsKey(productDto.getFnmCode()))
+        .collect(Collectors.toList());
+    if (findProducts.size() != receiptPlanDto.getProducts().size()) {
+      List<ProductDto> notFindProducts = receiptPlanProducts.stream()
+          .filter(productDto -> !approvedProducts.containsKey(productDto.getFnmCode()))
+          .collect(Collectors.toList());
+      log.error("[FC] FcIntegrationError: Receipt Plan not found products - {} ",
+          notFindProducts.toString());
+    }
+    fcDataValidate.validateFcProduct(findProducts);
+    return findProducts;
+  }
+
+  private List<RequisitionLineItemV2Dto> updateRequisitionLineItems(
+      List<RequisitionLineItemV2Dto> requisitionLineItems, List<ProductDto> existProductDtos,
+      Map<String, OrderableDto> orderableDtoMap, UUID requisitionId) {
+    List<UUID> orderableIds = new ArrayList<>();
+    List<RequisitionLineItemV2Dto> approvedLineItems = new ArrayList<>();
+
+    for (ProductDto productDto : existProductDtos) {
+      RequisitionLineItemV2Dto requisitionLineItem = requisitionLineItems
+          .stream()
+          .filter(lineItem ->
+              lineItem.getOrderable().getId()
+                  .equals(orderableDtoMap.get(productDto.getFnmCode()).getId())
+          )
+          .findFirst()
+          .orElse(null);
+      if (null == requisitionLineItem) {
+        orderableIds.add(orderableDtoMap.get(productDto.getFnmCode()).getId());
+      } else {
+        requisitionLineItem.setApprovedQuantity(productDto.getApprovedQuantity());
+        approvedLineItems.add(requisitionLineItem);
+      }
+    }
+
+    for (RequisitionLineItemV2Dto requisitionLineItem : requisitionLineItems) {
+      RequisitionLineItemV2Dto approvedLineItem = approvedLineItems
+          .stream()
+          .filter(lineItemV2Dto ->
+              lineItemV2Dto.getId().equals(requisitionLineItem.getId()))
+          .findFirst()
+          .orElse(null);
+      if (null == approvedLineItem) {
+        requisitionLineItem.setSkipped(true);
+        approvedLineItems.add(requisitionLineItem);
+      }
+    }
+
+    if (!isEmpty(orderableIds)) {
+      List<SiglusRequisitionLineItemDto> addLineItems = siglusRequisitionService
+          .createRequisitionLineItem(requisitionId, orderableIds);
+      addLineItems.forEach(addLineItem -> {
+        RequisitionLineItemV2Dto lineItem = addLineItem.getLineItem();
+        ProductDto productDto = existProductDtos
+            .stream()
+            .filter(product ->
+                orderableDtoMap.get(product.getFnmCode()).getId()
+                .equals(lineItem.getOrderable().getId()))
+            .findFirst()
+            .orElse(null);
+        if (null != productDto) {
+          lineItem.setApprovedQuantity(productDto.getApprovedQuantity());
+          approvedLineItems.add(lineItem);
+        }
+      });
+    }
+    return approvedLineItems;
   }
 
   private List<ReceiptPlanDto> getNonexistentReceiptPlan(List<ReceiptPlanDto> receiptPlanDtos) {
@@ -55,5 +258,19 @@ public class FcReceiptPlanService {
     return receiptPlanDtos.stream().filter(receiptPlanDto ->
         !receiptNumbers.contains(receiptPlanDto.getReceiptPlanNumber()))
         .collect(Collectors.toList());
+  }
+
+  private FcHandlerStatus getFcExceptionHandler(
+      ReceiptPlanDto receiptPlanDto, Exception exception) {
+    log.error("[FC] FcIntegrationError: Receipt Plan - {} exception -",
+        receiptPlanDto.toString(), exception);
+    return FcHandlerStatus.CALL_API_ERROR;
+  }
+
+  private FcHandlerStatus getFcDataExceptionHandler(
+      ReceiptPlanDto receiptPlanDto, FcDataException dataException) {
+    log.error("[FC] FcIntegrationError: Receipt Plan - {} exception - {}", receiptPlanDto,
+        dataException.getMessage());
+    return FcHandlerStatus.DATA_ERROR;
   }
 }

@@ -72,14 +72,14 @@ public class FcScheduleService {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(RECEIPT_PLAN_API, date);
-    Boolean success = fcReceiptPlanService.saveReceiptPlan(callFcService.getReceiptPlans());
+    Boolean finalSuccess = fcReceiptPlanService.saveReceiptPlan(callFcService.getReceiptPlans());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(RECEIPT_PLAN_API)
         .date(date)
         .totalObjectsFromFc(callFcService.getReceiptPlans().size())
         .callFcSuccess(true)
         .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
-        .finalSuccess(success)
+        .finalSuccess(finalSuccess)
         .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
         .build();
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);

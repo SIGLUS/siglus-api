@@ -23,6 +23,7 @@ import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.Message;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.service.fc.FcDataException;
 import org.springframework.stereotype.Component;
 
@@ -66,6 +67,12 @@ public class FcValidate {
   public void validateFcSource(ValidSourceDestinationDto source) {
     if (source == null) {
       throw new FcDataException(new Message("source should be not null"));
+    }
+  }
+
+  public void validateFcProduct(List<ProductDto> products) {
+    if (CollectionUtils.isEmpty(products)) {
+      throw new FcDataException(new Message("all products not exist in master data"));
     }
   }
 

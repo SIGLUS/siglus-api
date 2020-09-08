@@ -68,4 +68,9 @@ public class SiglusFcIntegrationController {
   public void updateIssueVouchers(@RequestParam("date") String beginDate) {
     scheduleService.fetchIssueVouchersFromFc();
   }
+
+  @PostMapping("/receiptPlans")
+  public void updateReceiptPlans() {
+    scheduleService.fetchReceiptPlansFromFc();
+  }
 }
