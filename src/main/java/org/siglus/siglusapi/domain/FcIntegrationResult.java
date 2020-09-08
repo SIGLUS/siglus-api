@@ -52,4 +52,6 @@ public class FcIntegrationResult extends BaseEntity {
 
   private Integer totalCostTimeInSeconds;
 
+  private String errorMessage;
+
 }

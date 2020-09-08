@@ -47,6 +47,7 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ReleasableRequisitionDto;
@@ -65,6 +66,7 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.service.client.SiglusUserReferenceDataService;
 import org.siglus.common.util.SiglusDateHelper;
+import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.FcHandlerStatus;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -88,6 +90,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -155,19 +158,29 @@ public class FcIssueVoucherService {
   @Autowired
   private RequisitionService requisitionService;
 
+  @Autowired
+  private SimulateAuthenticationHelper simulateAuthenticationHelper;
+
+  public List<String> statusErrorRequsitionNumbers;
+
   public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
     boolean successHandler = true;
-    for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
+    statusErrorRequsitionNumbers = new ArrayList<>();
+//    for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
+    IssueVoucherDto issueVoucherDto = issueVoucherDtos.get(2);
       PodExtension podExtension = podExtensionRepository
           .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
               issueVoucherDto.getIssueVoucherNumber());
-      if (podExtension != null) {
+      if (podExtension == null) {
         FcHandlerStatus handlerError = createIssueVoucher(issueVoucherDto);
         if (handlerError.equals(FcHandlerStatus.CALL_API_ERROR)) {
           successHandler = false;
-          break;
+//          break;
         }
       }
+//    }
+    if (!CollectionUtils.isEmpty(statusErrorRequsitionNumbers)) {
+      successHandler = false;
     }
     return successHandler;
   }
@@ -181,6 +194,10 @@ public class FcIssueVoucherService {
       getClientFacility(issueVoucherDto);
       RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
           .searchRequisition(extension.getRequisitionId());
+      if (requisitionV2Dto.getStatus() != RequisitionStatus.APPROVED) {
+        statusErrorRequsitionNumbers.add(issueVoucherDto.getRequisitionNumber());
+        return FcHandlerStatus.DATA_ERROR;
+      }
       List<ApprovedProductDto> approvedProductDtos = getApprovedProducts(userDto, requisitionV2Dto);
       Map<String, ApprovedProductDto> approvedProductsMap =
           getApprovedProductsMap(approvedProductDtos);
@@ -193,8 +210,11 @@ public class FcIssueVoucherService {
         UUID orderId = createOrder(requisitionV2Dto, productMaps, supplyFacility,
             userDto, approvedProductsMap);
         if (orderId != null) {
+          final OAuth2Authentication originAuth = simulateAuthenticationHelper
+              .simulateCrossServiceAuth();
           createShipmentDraftAndShipment(orderId, productMaps, approvedProductDtos,
               approvedProductsMap, supplyFacility, requisitionV2Dto, issueVoucherDto);
+          simulateAuthenticationHelper.recoveryAuth(originAuth);
         }
         saveFcPodExtension(issueVoucherDto);
       }
@@ -249,10 +269,7 @@ public class FcIssueVoucherService {
   private List<ApprovedProductDto> getApprovedProducts(UserDto userDto, RequisitionV2Dto dto) {
     return approvedProductService
         .getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId(), null,
-            false)
-        .stream()
-        .collect(Collectors.toList());
-
+            false);
   }
 
   private List<ProductDto> getExistProducts(IssueVoucherDto issueVoucherDto,
@@ -305,7 +322,7 @@ public class FcIssueVoucherService {
       ProductDto productDto) {
     StockEventLineItemDto lineItemDto = new StockEventLineItemDto();
     ApprovedProductDto dto = orderableDtoMap.get(productDto.getFnmCode());
-    lineItemDto.setOrderableId(dto.getId());
+    lineItemDto.setOrderableId(dto.getOrderable().getId());
     lineItemDto.setQuantity(productDto.getShippedQuantity());
     LocalDate date = issueVoucherDto.getShippingDate().toInstant()
         .atZone(ZoneId.of(timeZoneId)).toLocalDate();
@@ -325,8 +342,7 @@ public class FcIssueVoucherService {
     List<OrderExternal> externals = orderExternalRepository.findByRequisitionId(v2Dto.getId());
     Order order = orderRepository.findByExternalId(v2Dto.getId());
     if (CollectionUtils.isEmpty(externals) && order == null) {
-      convertOrder(v2Dto, productMaps, supplyFacility, userDto, approveProductDtos);
-      return orderRepository.findByExternalId(v2Dto.getId()).getId();
+      return convertOrder(v2Dto, productMaps, supplyFacility, userDto, approveProductDtos);
     } else {
       return updateSubOrder(approveProductDtos, productMaps, externals, order);
     }
@@ -373,11 +389,12 @@ public class FcIssueVoucherService {
       }
     });
     order.setOrderLineItems(existLineItems);
+    log.info("save fc order: {}", order);
     orderRepository.save(order);
     return order.getId();
   }
 
-  private void convertOrder(RequisitionV2Dto v2Dto, Map<String, List<ProductDto>> existProductDtos,
+  private UUID convertOrder(RequisitionV2Dto v2Dto, Map<String, List<ProductDto>> existProductDtos,
       FacilityDto supplyFacility, UserDto userDto,
       Map<String, ApprovedProductDto> approveProductDtos) {
     ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
@@ -388,7 +405,9 @@ public class FcIssueVoucherService {
     Order order = orderRepository.findByExternalId(v2Dto.getId());
     List<OrderLineItem> items = getOrderLineItems(existProductDtos, approveProductDtos, order);
     order.setOrderLineItems(items);
+    log.info("save fc order: {}", order);
     orderRepository.save(order);
+    return order.getId();
   }
 
   private OrderLineItem getOrderLineItems(List<OrderLineItem> lineItems, UUID productId) {
@@ -445,6 +464,7 @@ public class FcIssueVoucherService {
     PodExtension podExtension = new PodExtension();
     podExtension.setClientCode(dto.getClientCode());
     podExtension.setIssueVoucherNumber(dto.getIssueVoucherNumber());
+    log.info("save fc pod extension: {}", podExtension);
     podExtensionRepository.save(podExtension);
   }
 

@@ -107,7 +107,7 @@ public class FcScheduleServiceTest {
     when(fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API)).thenReturn(DATE);
 
     // when
-    fcScheduleService.fetchIssueVouchersFromFc();
+    fcScheduleService.fetchIssueVouchersFromFc("");
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());

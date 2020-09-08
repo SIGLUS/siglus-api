@@ -95,8 +95,12 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = TIME_ZONE_ID)
   public void fetchIssueVouchersFromFc() {
-    final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
+    fetchIssueVouchersFromFc(date);
+  }
+
+  public void fetchIssueVouchersFromFc(String date) {
+    final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(ISSUE_VOUCHER_API, date);
     Boolean finalSuccess = fcIssueVoucherService
         .createIssueVouchers(callFcService.getIssueVouchers());
@@ -108,6 +112,7 @@ public class FcScheduleService {
         .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
         .finalSuccess(finalSuccess)
         .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
+        .errorMessage(String.join(";", fcIssueVoucherService.statusErrorRequsitionNumbers))
         .build();
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);
   }

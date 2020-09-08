@@ -140,6 +140,9 @@ public class SiglusOrderService {
   @Value("${time.zoneId}")
   private String timeZoneId;
 
+  @Value("${fc.facilityTypeId}")
+  private UUID fcFacilityTypeId;
+
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
     return orderController.searchOrders(params, pageable);
   }
@@ -155,7 +158,7 @@ public class SiglusOrderService {
   public OrderStatusDto searchOrderStatusById(UUID orderId) {
     OrderDto orderDto = orderController.getOrder(orderId, null);
     OrderStatusDto orderStatusDto = new OrderStatusDto();
-    orderStatusDto.setClosed(currentDateIsAfterNextPeriodEndDate(orderDto));
+    orderStatusDto.setClosed(needCloseOrder(orderDto));
     orderStatusDto.setSuborder(isSuborder(orderDto.getExternalId()));
     if (orderStatusDto.isClosed()
         && orderStatusDto.isSuborder()
@@ -171,18 +174,9 @@ public class SiglusOrderService {
     return external != null;
   }
 
-  public boolean currentDateIsAfterNextPeriodEndDate(OrderDto orderDto) {
-    LocalDate currentDate = LocalDate.now(ZoneId.of(timeZoneId));
-    ProcessingPeriodDto period = orderDto.getProcessingPeriod();
-    List<org.openlmis.requisition.dto.ProcessingPeriodDto> periodDtos =
-        getNextProcessingPeriodDto(period);
-    if (!CollectionUtils.isEmpty(periodDtos)) {
-      org.openlmis.requisition.dto.ProcessingPeriodDto nextPeriod = periodDtos.get(0);
-      ProcessingPeriodExtension extension =
-          processingPeriodExtensionRepository.findByProcessingPeriodId(nextPeriod.getId());
-      if (extension != null) {
-        return extension.getSubmitEndDate().isBefore(currentDate);
-      }
+  public boolean needCloseOrder(OrderDto orderDto) {
+    if (!orderDto.getFacility().getType().getId().equals(fcFacilityTypeId)){
+      return currentDateIsAfterNextPeriodEndDate(orderDto);
     }
     return false;
   }
@@ -284,6 +278,22 @@ public class SiglusOrderService {
   public OrderObjectReferenceDto getExtensionOrder(OrderObjectReferenceDto orderDto) {
     setOrderLineItemExtension(orderDto.getOrderLineItems());
     return orderDto;
+  }
+
+  private boolean currentDateIsAfterNextPeriodEndDate(OrderDto orderDto) {
+    LocalDate currentDate = LocalDate.now(ZoneId.of(timeZoneId));
+    ProcessingPeriodDto period = orderDto.getProcessingPeriod();
+    List<org.openlmis.requisition.dto.ProcessingPeriodDto> periodDtos =
+        getNextProcessingPeriodDto(period);
+    if (!CollectionUtils.isEmpty(periodDtos)) {
+      org.openlmis.requisition.dto.ProcessingPeriodDto nextPeriod = periodDtos.get(0);
+      ProcessingPeriodExtension extension =
+          processingPeriodExtensionRepository.findByProcessingPeriodId(nextPeriod.getId());
+      if (extension != null) {
+        return extension.getSubmitEndDate().isBefore(currentDate);
+      }
+    }
+    return false;
   }
 
   private void updateExistOrderForSubOrder(UUID orderId,
