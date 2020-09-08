@@ -46,8 +46,8 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
-import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
@@ -365,17 +365,23 @@ public class SiglusNotificationService {
     };
   }
 
-  private boolean canCurrentUserInternalApprove(UUID currentUserFacilityId,
+  private UUID findSupervisoryNodeIdForInternalApprove(UUID currentUserFacilityId,
       List<RequisitionGroupDto> requisitionGroups,
       Set<UUID> currentUserSupervisoryNodeIds, UUID programId) {
-    return requisitionGroups.stream()
+    RequisitionGroupDto requisitionGroupDto = requisitionGroups.stream()
         .filter(requisitionGroup -> currentUserSupervisoryNodeIds
             .contains(requisitionGroup.getSupervisoryNode().getId()))
         .filter(requisitionGroup -> requisitionGroup.supportsProgram(programId))
-        .map(RequisitionGroupDto::getMemberFacilities)
-        .flatMap(Collection::stream)
-        .map(BaseDto::getId)
-        .anyMatch(currentUserFacilityId::equals);
+        .filter(requisitionGroup ->
+            isInMemberFacilities(requisitionGroup.getMemberFacilities(), currentUserFacilityId))
+        .findAny()
+        .orElse(null);
+
+    return requisitionGroupDto == null ? null : requisitionGroupDto.getSupervisoryNode().getId();
+  }
+
+  private boolean isInMemberFacilities(Set<FacilityDto> memberFacilities, UUID userFacilityId) {
+    return memberFacilities.stream().map(FacilityDto::getId).anyMatch(userFacilityId::equals);
   }
 
   private Predicate mapRightToPredicate(PermissionString permissionString, Root<Notification> root,
@@ -401,8 +407,17 @@ public class SiglusNotificationService {
           return null;
         }
         Predicate internalPredicate = null;
-        if (canCurrentUserInternalApprove(currentUserFacilityId, requisitionGroups,
-            currentUserSupervisoryNodeIds, permissionString.getProgramId())) {
+        // if user has internal approve for specific program, should optimize
+        // sn-1 & multiple for internal, sn-2 & multiple for external
+        UUID nodeIdForInternalApprove = findSupervisoryNodeIdForInternalApprove(
+            currentUserFacilityId, requisitionGroups,
+            currentUserSupervisoryNodeIds, permissionString.getProgramId());
+        Set<UUID> nodeIdsForExternalApprove = currentUserSupervisoryNodeIds
+            .stream()
+            .filter(id -> id != nodeIdForInternalApprove)
+            .collect(toSet());
+
+        if (nodeIdForInternalApprove != null) {
           internalPredicate = cb.and(
               cb.equal(root.get(REF_FACILITY_ID), currentUserFacilityId),
               cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
@@ -415,7 +430,7 @@ public class SiglusNotificationService {
             cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
             root.get(REF_STATUS)
                 .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
-            root.get("supervisoryNodeId").in(currentUserSupervisoryNodeIds)
+            root.get("supervisoryNodeId").in(nodeIdsForExternalApprove)
         );
 
         return internalPredicate == null ? externalPredicate :
