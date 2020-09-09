@@ -338,8 +338,13 @@ public class SiglusFcIntegrationService {
           .findLineItems(lineItemIds).stream().collect(toMap(
               RequisitionLineItemExtension::getRequisitionLineItemId, lineItemExtension ->
                   Optional.ofNullable(lineItemExtension.getAuthorizedQuantity()).orElse(0)));
-      lineItems.forEach(lineItem -> products.add(buildLineItemDto(lineItem,
-          authorizedQuantityMap)));
+      boolean duringApproval = fcRequisitionDto.getStatus().duringApproval();
+      lineItems.forEach(lineItem -> {
+        if (duringApproval) {
+          lineItem.setApprovedQuantity(null);
+        }
+        products.add(buildLineItemDto(lineItem, authorizedQuantityMap));
+      });
       fcRequisitionDto.setProducts(products);
     }
   }

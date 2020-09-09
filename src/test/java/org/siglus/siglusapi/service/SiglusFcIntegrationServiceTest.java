@@ -43,6 +43,7 @@ import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -354,6 +355,7 @@ public class SiglusFcIntegrationServiceTest {
 
   private void mockRequisitionInfo(UUID supervisoryNodeId) {
     Requisition requisition = new Requisition();
+    requisition.setStatus(RequisitionStatus.APPROVED);
     requisition.setId(requisitionId);
     requisition.setFacilityId(facilityId);
     requisition.setProgramId(programId);

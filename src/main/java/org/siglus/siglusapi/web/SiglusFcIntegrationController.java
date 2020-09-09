@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.web;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
@@ -41,7 +44,11 @@ public class SiglusFcIntegrationController {
   private FcScheduleService scheduleService;
 
   @GetMapping("/requisitions")
-  public Page<FcRequisitionDto> searchRequisitions(@RequestParam String date, Pageable pageable) {
+  public Page<FcRequisitionDto> searchRequisitions(@RequestParam String date, Pageable pageable)
+      throws ParseException {
+    DateFormat format = new SimpleDateFormat("yyyyMMdd");
+    format.setLenient(false);
+    format.parse(date);
     if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
     }
