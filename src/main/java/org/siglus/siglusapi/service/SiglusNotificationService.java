@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
-import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 
 import com.google.common.collect.Lists;
 import java.time.LocalDateTime;
@@ -38,7 +37,6 @@ import javax.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.service.FulfillmentPermissionService;
 import org.openlmis.fulfillment.service.FulfillmentProofOfDeliveryService;
 import org.openlmis.fulfillment.service.OrderSearchParams;
@@ -49,6 +47,7 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.FacilityDto;
+import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
@@ -71,9 +70,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
-import org.slf4j.profiler.Profiler;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -237,7 +234,7 @@ public class SiglusNotificationService {
     OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
     RequisitionV2Dto requisition = requisitionService.searchRequisition(requisitionId);
-    List<ProofOfDelivery> pods = getProofOfDeliveryByOrderId(order.getId());
+    List<ProofOfDeliveryDto> pods = podService.getProofOfDeliveries(order.getId());
     pods.forEach(pod -> {
       Notification notification = newNotification();
       notification.setRefId(pod.getId());
@@ -251,11 +248,6 @@ public class SiglusNotificationService {
 
   public void postConfirmPod(org.openlmis.fulfillment.web.util.ProofOfDeliveryDto pod) {
     repo.updateLastNotificationProcessed(pod.getId(), NotificationStatus.SHIPPED);
-  }
-
-  private List<ProofOfDelivery> getProofOfDeliveryByOrderId(UUID orderId) {
-    return fulfillmentProofOfDeliveryService.search(null, orderId,
-        new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE)).getContent();
   }
 
   private Notification newNotification() {
@@ -310,11 +302,8 @@ public class SiglusNotificationService {
   }
 
   private UUID findSupervisorNodeId(BasicRequisitionDto requisitionDto) {
-    UUID requisitionId = requisitionDto.getId();
-    Profiler profiler = requisitionController
-        .getProfiler("GET_REQUISITION", requisitionId);
-    return requisitionController.findRequisition(requisitionId, profiler)
-        .getSupervisoryNodeId();
+    RequisitionV2Dto r = requisitionService.searchRequisition(requisitionDto.getId());
+    return r.getSupervisoryNode();
   }
 
   private List<BasicOrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {

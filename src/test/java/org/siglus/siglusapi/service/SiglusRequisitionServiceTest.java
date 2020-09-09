@@ -1104,11 +1104,9 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(siglusRequisitionDto);
 
     // when
-    BasicRequisitionDto requisitionDto = siglusRequisitionService
-        .approveRequisition(requisitionId, request, response);
+    siglusRequisitionService.approveRequisition(requisitionId, request, response);
 
     // then
-    verify(notificationService).postApprove(requisitionDto);
     verify(requisitionV2Controller).updateRequisition(any(UUID.class),
         siglusRequisitionDtoCaptor.capture(), any(HttpServletRequest.class),
         any(HttpServletResponse.class));
@@ -1166,14 +1164,12 @@ public class SiglusRequisitionServiceTest {
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
     when(regimenDataProcessor.getRegimenDispatchLineDtoMap()).thenReturn(mockDispatchLineMap());
     // when
-    BasicRequisitionDto requisitionDto = siglusRequisitionService
-        .approveRequisition(requisitionId, request, response);
+    siglusRequisitionService.approveRequisition(requisitionId, request, response);
 
     // then
     verify(draftRepository).delete(any(UUID.class));
     verify(requisitionController).approveRequisition(requisitionId, request, response);
     verify(archiveProductService).activateArchivedProducts(any(), any());
-    verify(notificationService).postApprove(requisitionDto);
     verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 
