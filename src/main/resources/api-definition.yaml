@@ -1978,7 +1978,7 @@ traits:
               application/json:
                 schema: localizedMessage
 
-    /integration/receiptPlans:
+    /receiptPlans:
       displayName: update issueVouchers
       post:
         is: [ secured ]

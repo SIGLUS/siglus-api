@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
+import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -62,15 +63,22 @@ public class FcScheduleService {
   private FcReceiptPlanService fcReceiptPlanService;
 
   @Autowired
+  private SiglusReceiptPlanService siglusReceiptPlanService;
+
+  @Autowired
   private SiglusDateHelper dateHelper;
 
   @Autowired
   private FcProgramService fcProgramService;
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
-  public void fetchReceiptPlansFromFc() {
-    final long startTime = currentTimeMillis();
+  public void fetchReceiptPlan() {
     String date = fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API);
+    siglusReceiptPlanService.processingReceiptPlans(date);
+  }
+
+  public void fetchReceiptPlansFromFc(String date) {
+    final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(RECEIPT_PLAN_API, date);
     Boolean finalSuccess = fcReceiptPlanService.saveReceiptPlan(callFcService.getReceiptPlans());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()

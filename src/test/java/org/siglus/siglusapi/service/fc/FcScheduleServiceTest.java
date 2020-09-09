@@ -38,6 +38,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
+import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcScheduleServiceTest {
@@ -65,6 +66,12 @@ public class FcScheduleServiceTest {
   private FcIntegrationCmmCpService fcIntegrationCmmCpService;
 
   @Mock
+  private FcReceiptPlanService fcReceiptPlanService;
+
+  @Mock
+  private SiglusReceiptPlanService siglusReceiptPlanService;
+
+  @Mock
   private SiglusDateHelper dateHelper;
 
   @Mock
@@ -81,9 +88,10 @@ public class FcScheduleServiceTest {
     when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API)).thenReturn(DATE);
+    when(fcReceiptPlanService.saveReceiptPlan(any())).thenReturn(true);
 
     // when
-    fcScheduleService.fetchReceiptPlansFromFc();
+    fcScheduleService.fetchReceiptPlansFromFc(DATE);
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
@@ -199,18 +207,18 @@ public class FcScheduleServiceTest {
   }
 
   @Test
-  public void shouldUseLatestSuccessDateWhenFetchReceiptPlansFromFc() {
+  public void shouldUseLatestSuccessDateWhenFetchReceiptPlan() {
     // given
-    when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
-    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API)).thenReturn(DATE);
 
     // when
-    fcScheduleService.fetchReceiptPlansFromFc();
+    fcScheduleService.fetchReceiptPlan();
 
     // then
-    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
-    assertEquals(DATE, resultCaptor.getValue().getDate());
+    ArgumentCaptor<String> captor =
+        ArgumentCaptor.forClass(String.class);
+    verify(siglusReceiptPlanService).processingReceiptPlans(captor.capture());
+    assertEquals(DATE, captor.getValue());
   }
 
   @Test(expected = Exception.class)
