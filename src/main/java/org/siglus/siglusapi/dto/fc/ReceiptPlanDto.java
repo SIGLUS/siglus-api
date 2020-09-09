@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.dto.fc;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ReceiptPlanDto {
 
-  private Date date;
+  private ZonedDateTime date;
 
   private String receiptPlanNumber;
 
@@ -38,7 +38,7 @@ public class ReceiptPlanDto {
 
   private String clientName;
 
-  private Date lastUpdatedAt;
+  private ZonedDateTime lastUpdatedAt;
 
   private String clientCode;
 

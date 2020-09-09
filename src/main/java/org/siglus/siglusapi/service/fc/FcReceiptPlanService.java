@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.util.ArrayList;
@@ -27,8 +28,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.dto.referencedata.UserDto;
@@ -43,9 +47,9 @@ import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.siglus.siglusapi.repository.ReceiptPlanRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.repository.SiglusStatusChangeRepository;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.validator.FcValidate;
@@ -67,7 +71,10 @@ public class FcReceiptPlanService {
   private SiglusSimulateUserAuthHelper siglusSimulateUserAuthHelper;
 
   @Autowired
-  private SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
+  private RequisitionRepository requisitionRepository;
+
+  @Autowired
+  private SiglusStatusChangeRepository siglusStatusChangeRepository;
 
   @Autowired
   private RequisitionExtensionRepository requisitionExtensionRepository;
@@ -144,8 +151,10 @@ public class FcReceiptPlanService {
         List<RequisitionLineItemV2Dto> lineItems = updateRequisitionLineItems(
             requisitionLineItems, productDtos, approveProductDtos, requisitionId);
         requisitionDto.setRequisitionLineItems(lineItems);
-        siglusRequisitionService.updateRequisition(requisitionId, requisitionDto, request, response);
+        siglusRequisitionService
+            .updateRequisition(requisitionId, requisitionDto, request, response);
         siglusRequisitionService.approveRequisition(requisitionId, request, response);
+        updateRequisitionChangeDate(requisitionId, receiptPlanDto);
       }
     } catch (FcDataException exception) {
       return getFcDataExceptionHandler(receiptPlanDto, exception);
@@ -258,6 +267,15 @@ public class FcReceiptPlanService {
     return receiptPlanDtos.stream().filter(receiptPlanDto ->
         !receiptNumbers.contains(receiptPlanDto.getReceiptPlanNumber()))
         .collect(Collectors.toList());
+  }
+
+  private void updateRequisitionChangeDate(UUID requisitionId, ReceiptPlanDto receiptPlanDto) {
+    Requisition requisition = requisitionRepository.findOne(requisitionId);
+    requisition.setModifiedDate(receiptPlanDto.getLastUpdatedAt());
+    requisitionRepository.save(requisition);
+    StatusChange statusChange = siglusStatusChangeRepository
+        .findByRequisitionIdAndStatus(requisitionId, APPROVED.toString());
+    statusChange.setCreatedDate(receiptPlanDto.getDate());
   }
 
   private FcHandlerStatus getFcExceptionHandler(
