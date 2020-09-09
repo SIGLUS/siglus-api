@@ -302,8 +302,7 @@ public class SiglusNotificationService {
   }
 
   private UUID findSupervisorNodeId(BasicRequisitionDto requisitionDto) {
-    RequisitionV2Dto r = requisitionService.searchRequisition(requisitionDto.getId());
-    return r.getSupervisoryNode();
+    return requisitionService.searchRequisition(requisitionDto.getId()).getSupervisoryNode();
   }
 
   private List<BasicOrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {
