@@ -18,14 +18,14 @@ package org.siglus.siglusapi.repository;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.Cp;
+import org.siglus.siglusapi.domain.CpDomain;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CpRepository extends JpaRepository<Cp, UUID> {
+public interface CpRepository extends JpaRepository<CpDomain, UUID> {
 
-  Cp findCpByFacilityCodeAndProductCodeAndPeriodAndYear(String facilityCode, String productCode,
-      String period, Integer year);
+  CpDomain findCpByFacilityCodeAndProductCodeAndPeriodAndYear(String facilityCode,
+      String productCode, String period, Integer year);
 
-  List<Cp> findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(String facilityCode,
+  List<CpDomain> findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(String facilityCode,
       Collection<String> productCode, String period, Integer year);
 }

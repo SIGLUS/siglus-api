@@ -40,9 +40,12 @@ import org.siglus.common.domain.referencedata.SupervisoryNode;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.siglusapi.domain.Cp;
+import org.siglus.siglusapi.domain.CmmDomain;
+import org.siglus.siglusapi.domain.CpDomain;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.dto.fc.CmmDto;
 import org.siglus.siglusapi.dto.fc.CpDto;
+import org.siglus.siglusapi.repository.CmmRepository;
 import org.siglus.siglusapi.repository.CpRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -54,9 +57,12 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class FcIntegrationCpService {
+public class FcIntegrationCmmCpService {
 
   public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+  @Autowired
+  private CmmRepository cmmRepository;
 
   @Autowired
   private CpRepository cpRepository;
@@ -79,11 +85,31 @@ public class FcIntegrationCpService {
   @Autowired
   private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
 
+  public boolean dealCmmData(List<CmmDto> dtos) {
+    try {
+      List<CmmDomain> cmms = CmmDomain.from(dtos);
+      cmms.forEach(cmm -> {
+        CmmDomain existCmm = cmmRepository
+            .findCmmByFacilityCodeAndProductCodeAndPeriodAndYear(cmm.getFacilityCode(),
+                cmm.getProductCode(), cmm.getPeriod(), cmm.getYear());
+        if (null != existCmm) {
+          cmm.setId(existCmm.getId());
+        }
+        cmmRepository.save(cmm);
+      });
+      log.info("save cmm successfully, size: {}", cmms.size());
+      return true;
+    } catch (Exception e) {
+      log.error("deal cmm data error", e);
+      return false;
+    }
+  }
+
   public boolean dealCpData(List<CpDto> dtos) {
     try {
-      List<Cp> cps = Cp.from(dtos);
+      List<CpDomain> cps = CpDomain.from(dtos);
       cps.forEach(cp -> {
-        Cp existCp = cpRepository
+        CpDomain existCp = cpRepository
             .findCpByFacilityCodeAndProductCodeAndPeriodAndYear(cp.getFacilityCode(),
                 cp.getProductCode(), cp.getPeriod(), cp.getYear());
         if (null != existCp) {
@@ -99,8 +125,41 @@ public class FcIntegrationCpService {
     }
   }
 
-  public void initiateSuggestedQuantity(List<BaseRequisitionLineItemDto> lineItems, UUID facilityId,
-      UUID processingPeriodId, UUID programId) {
+  public void initiateSuggestedQuantityByCmm(List<BaseRequisitionLineItemDto> lineItems,
+      UUID facilityId, UUID processingPeriodId) {
+    if (CollectionUtils.isEmpty(lineItems)) {
+      return;
+    }
+    Map<UUID, String> orderableIdCodeMap = getOrderableIdCodeMap(lineItems);
+    FacilityDto requestingFacility = facilityReferenceDataService
+        .findOne(facilityId);
+    ProcessingPeriodDto processingPeriodDto = processingPeriodReferenceDataService
+        .findOne(processingPeriodId);
+    LocalDate endDate = processingPeriodDto.getEndDate();
+    Map<String, CmmDomain> productCodeCmmMap = cmmRepository
+        .findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(requestingFacility.getCode(),
+            orderableIdCodeMap.values(), "M" + endDate.getMonthValue(), endDate.getYear())
+        .stream().collect(toMap(CmmDomain::getProductCode, Function.identity()));
+    List<RequisitionLineItemExtension> extensions = newArrayList();
+    lineItems.forEach(lineItem -> {
+      RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
+      String productCode = orderableIdCodeMap.get(lineItemV2Dto.getOrderable().getId());
+      CmmDomain cmm = productCodeCmmMap.get(productCode);
+      int suggestedQuantity = 0;
+      if (null != cmm) {
+        suggestedQuantity = cmm.getCmm() * cmm.getMax() - lineItem.getStockOnHand();
+        suggestedQuantity = Math.max(suggestedQuantity, 0);
+      }
+      setSuggestedQuantity(extensions, lineItem, suggestedQuantity);
+    });
+    if (CollectionUtils.isNotEmpty(extensions)) {
+      log.info("save line item extension, size: {}", extensions.size());
+      lineItemExtensionRepository.save(extensions);
+    }
+  }
+
+  public void initiateSuggestedQuantityByCp(List<BaseRequisitionLineItemDto> lineItems,
+      UUID facilityId, UUID processingPeriodId, UUID programId) {
     if (CollectionUtils.isEmpty(lineItems)) {
       return;
     }
@@ -111,16 +170,11 @@ public class FcIntegrationCpService {
     LocalDate firstDayOfPeriodMonth = endDate.withDayOfMonth(1);
     String firstDayOfThisMonth = firstDayOfPeriodMonth.format(FORMATTER);
     String firstDayOfNextMonth = firstDayOfPeriodMonth.plusMonths(1).format(FORMATTER);
-    Set<UUID> orderableIds = lineItems.stream().map(lineItem -> {
-      RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
-      return lineItemV2Dto.getOrderable().getId();
-    }).collect(Collectors.toSet());
-    Map<UUID, String> orderableIdCodeMap = orderableReferenceDataService.findByIds(orderableIds)
-        .stream().collect(toMap(OrderableDto::getId, OrderableDto::getProductCode));
-    Map<String, Cp> productCodeCpMap = cpRepository
+    Map<UUID, String> orderableIdCodeMap = getOrderableIdCodeMap(lineItems);
+    Map<String, CpDomain> productCodeCpMap = cpRepository
         .findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(requestingFacility.getCode(),
             orderableIdCodeMap.values(), "M" + endDate.getMonthValue(), endDate.getYear())
-        .stream().collect(toMap(Cp::getProductCode, Function.identity()));
+        .stream().collect(toMap(CpDomain::getProductCode, Function.identity()));
     Map<UUID, Integer> orderableIdSumStockMap = newHashMap();
     Set<UUID> supervisoryNodeIds = supervisoryNodeRepository.findAllByFacilityId(facilityId)
         .stream().map(SupervisoryNode::getId).collect(toSet());
@@ -142,24 +196,40 @@ public class FcIntegrationCpService {
       Integer sumStock = finalOrderableIdSumStockMap.get(orderableId);
       sumStock = sumStock == null ? 0 : sumStock;
       String productCode = orderableIdCodeMap.get(orderableId);
-      Cp cp = productCodeCpMap.get(productCode);
+      CpDomain cp = productCodeCpMap.get(productCode);
       int suggestedQuantity = 0;
       if (null != cp) {
         suggestedQuantity = cp.getCp() * cp.getMax() - sumStock - lineItem.getStockOnHand();
         suggestedQuantity = Math.max(suggestedQuantity, 0);
       }
-      lineItem.setSuggestedQuantity(suggestedQuantity);
-      if (null != lineItem.getId()) {
-        RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
-        extension.setRequisitionLineItemId(lineItem.getId());
-        extension.setAuthorizedQuantity(lineItem.getAuthorizedQuantity());
-        extension.setSuggestedQuantity(suggestedQuantity);
-        extensions.add(extension);
-      }
+      setSuggestedQuantity(extensions, lineItem, suggestedQuantity);
     });
     if (CollectionUtils.isNotEmpty(extensions)) {
       log.info("save line item extension, size: {}", extensions.size());
       lineItemExtensionRepository.save(extensions);
+    }
+  }
+
+  private Map<UUID, String> getOrderableIdCodeMap(List<BaseRequisitionLineItemDto> lineItems) {
+    Set<UUID> orderableIds = lineItems.stream()
+        .map(lineItem -> {
+          RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
+          return lineItemV2Dto.getOrderable().getId();
+        })
+        .collect(Collectors.toSet());
+    return orderableReferenceDataService.findByIds(orderableIds).stream()
+        .collect(toMap(OrderableDto::getId, OrderableDto::getProductCode));
+  }
+
+  private void setSuggestedQuantity(List<RequisitionLineItemExtension> extensions,
+      BaseRequisitionLineItemDto lineItem, int suggestedQuantity) {
+    lineItem.setSuggestedQuantity(suggestedQuantity);
+    if (null != lineItem.getId()) {
+      RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
+      extension.setRequisitionLineItemId(lineItem.getId());
+      extension.setAuthorizedQuantity(lineItem.getAuthorizedQuantity());
+      extension.setSuggestedQuantity(suggestedQuantity);
+      extensions.add(extension);
     }
   }
 }

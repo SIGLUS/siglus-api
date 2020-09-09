@@ -27,7 +27,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.fc.CmmDto;
+import org.siglus.siglusapi.dto.fc.CpDto;
 import org.springframework.beans.BeanUtils;
 
 @Entity
@@ -36,8 +36,8 @@ import org.springframework.beans.BeanUtils;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "cmms", schema = "siglusintegration")
-public class Cmm extends BaseEntity {
+@Table(name = "cps", schema = "siglusintegration")
+public class CpDomain extends BaseEntity {
 
   private String facilityCode;
 
@@ -51,7 +51,7 @@ public class Cmm extends BaseEntity {
 
   private String realProgramName;
 
-  private Integer cmm;
+  private Integer cp;
 
   private Integer max;
 
@@ -63,19 +63,19 @@ public class Cmm extends BaseEntity {
 
   private Date lastUpdatedAt;
 
-  public static List<Cmm> from(List<CmmDto> dtos) {
-    List<Cmm> cmms = newArrayList();
+  public static List<CpDomain> from(List<CpDto> dtos) {
+    List<CpDomain> cps = newArrayList();
     dtos.forEach(dto -> {
-      Cmm cmm = new Cmm();
-      BeanUtils.copyProperties(dto, cmm);
-      cmm.setFacilityCode(dto.getClientCode());
-      cmm.setFacilityName(dto.getClientDescription());
-      cmm.setProductCode(dto.getProductFnm());
-      cmm.setProductName(dto.getProductDescription());
-      cmm.setRealProgramCode(dto.getProgramCode());
-      cmm.setRealProgramName(dto.getProgramDescription());
-      cmms.add(cmm);
+      CpDomain cp = new CpDomain();
+      BeanUtils.copyProperties(dto, cp);
+      cp.setFacilityCode(dto.getClientCode());
+      cp.setFacilityName(dto.getClientDescription());
+      cp.setProductCode(dto.getProductFnm());
+      cp.setProductName(dto.getProductDescription());
+      cp.setRealProgramCode(dto.getProgramCode());
+      cp.setRealProgramName(dto.getProgramDescription());
+      cps.add(cp);
     });
-    return cmms;
+    return cps;
   }
 }

@@ -149,8 +149,7 @@ import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionReposit
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.siglus.siglusapi.service.fc.FcIntegrationCmmService;
-import org.siglus.siglusapi.service.fc.FcIntegrationCpService;
+import org.siglus.siglusapi.service.fc.FcIntegrationCmmCpService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -292,10 +291,7 @@ public class SiglusRequisitionService {
   private RequisitionExtensionRepository requisitionExtensionRepository;
 
   @Autowired
-  private FcIntegrationCmmService fcIntegrationCmmService;
-
-  @Autowired
-  private FcIntegrationCpService fcIntegrationCpService;
+  private FcIntegrationCmmCpService fcIntegrationCmmCpService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -1362,10 +1358,11 @@ public class SiglusRequisitionService {
       return;
     }
     if ("cp".equals(column.getOption().getOptionName())) {
-      fcIntegrationCpService.initiateSuggestedQuantity(lineItems, facilityId, processingPeriodId,
-          programId);
+      fcIntegrationCmmCpService.initiateSuggestedQuantityByCp(lineItems, facilityId,
+          processingPeriodId, programId);
     } else if ("cmm".equals(column.getOption().getOptionName())) {
-      fcIntegrationCmmService.initiateSuggestedQuantity(lineItems, facilityId, processingPeriodId);
+      fcIntegrationCmmCpService.initiateSuggestedQuantityByCmm(lineItems, facilityId,
+          processingPeriodId);
     }
   }
 

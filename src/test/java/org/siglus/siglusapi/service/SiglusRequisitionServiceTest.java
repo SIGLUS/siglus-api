@@ -157,7 +157,7 @@ import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionReposit
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.siglus.siglusapi.service.fc.FcIntegrationCmmService;
+import org.siglus.siglusapi.service.fc.FcIntegrationCmmCpService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
@@ -319,7 +319,7 @@ public class SiglusRequisitionServiceTest {
   private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
 
   @Mock
-  private FcIntegrationCmmService fcIntegrationCmmService;
+  private FcIntegrationCmmCpService fcIntegrationCmmCpService;
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;

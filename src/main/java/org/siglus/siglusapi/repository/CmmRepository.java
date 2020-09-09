@@ -18,14 +18,14 @@ package org.siglus.siglusapi.repository;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.Cmm;
+import org.siglus.siglusapi.domain.CmmDomain;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface CmmRepository extends JpaRepository<Cmm, UUID> {
+public interface CmmRepository extends JpaRepository<CmmDomain, UUID> {
 
-  Cmm findCmmByFacilityCodeAndProductCodeAndPeriodAndYear(String facilityCode, String productCode,
-      String period, Integer year);
+  CmmDomain findCmmByFacilityCodeAndProductCodeAndPeriodAndYear(String facilityCode,
+      String productCode, String period, Integer year);
 
-  List<Cmm> findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(String facilityCode,
+  List<CmmDomain> findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(String facilityCode,
       Collection<String> productCode, String period, Integer year);
 }

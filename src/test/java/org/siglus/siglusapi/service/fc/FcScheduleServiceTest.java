@@ -55,10 +55,7 @@ public class FcScheduleServiceTest {
   private FcIssueVoucherService fcIssueVoucherService;
 
   @Mock
-  private FcIntegrationCmmService fcIntegrationCmmService;
-
-  @Mock
-  private FcIntegrationCpService fcIntegrationCpService;
+  private FcIntegrationCmmCpService fcIntegrationCmmCpService;
 
   @Before
   public void setup() {
@@ -107,7 +104,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(CMM_API)).thenReturn(PERIOD);
-    when(fcIntegrationCmmService.dealCmmData(any())).thenReturn(true);
+    when(fcIntegrationCmmCpService.dealCmmData(any())).thenReturn(true);
 
     // when
     fcScheduleService.fetchCmmsFromFc();
@@ -126,7 +123,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(CP_API)).thenReturn(PERIOD);
-    when(fcIntegrationCpService.dealCpData(any())).thenReturn(true);
+    when(fcIntegrationCmmCpService.dealCpData(any())).thenReturn(true);
 
     // when
     fcScheduleService.fetchCpsFromFc();

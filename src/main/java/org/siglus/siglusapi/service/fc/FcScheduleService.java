@@ -49,10 +49,7 @@ public class FcScheduleService {
   private FcIntegrationResultService fcIntegrationResultService;
 
   @Autowired
-  private FcIntegrationCmmService fcIntegrationCmmService;
-
-  @Autowired
-  private FcIntegrationCpService fcIntegrationCpService;
+  private FcIntegrationCmmCpService fcIntegrationCmmCpService;
 
   @Autowired
   private FcIssueVoucherService fcIssueVoucherService;
@@ -99,7 +96,7 @@ public class FcScheduleService {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(CMM_API);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(CMM_API, date);
-    boolean finalSuccess = fcIntegrationCmmService.dealCmmData(callFcService.getCmms());
+    boolean finalSuccess = fcIntegrationCmmCpService.dealCmmData(callFcService.getCmms());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(CMM_API)
         .date(date)
@@ -117,7 +114,7 @@ public class FcScheduleService {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(CP_API);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(CP_API, date);
-    boolean finalSuccess = fcIntegrationCpService.dealCpData(callFcService.getCps());
+    boolean finalSuccess = fcIntegrationCmmCpService.dealCpData(callFcService.getCps());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(CP_API)
         .date(date)
