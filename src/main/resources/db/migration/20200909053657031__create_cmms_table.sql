@@ -2,7 +2,7 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-CREATE TABLE siglusintegration.cps
+CREATE TABLE siglusintegration.cmms
 (
     id uuid PRIMARY KEY,
     facilitycode text NOT NULL,
@@ -11,10 +11,12 @@ CREATE TABLE siglusintegration.cps
     productname text NOT NULL,
     realprogramcode text NOT NULL,
     realprogramname text NOT NULL,
-    cp INTEGER,
+    cmm INTEGER,
     max INTEGER,
     period text NOT NULL,
     year INTEGER,
     date TIMESTAMP WITH TIME ZONE,
     lastupdatedat TIMESTAMP WITH TIME ZONE
-)
+);
+
+CREATE INDEX ON siglusintegration.cmms (facilitycode, productcode, period, year);
