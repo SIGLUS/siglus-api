@@ -71,7 +71,7 @@ public class NotificationControllerTest {
     Pageable pageable = verifyPageable();
     assertEquals(PAGE_NO, pageable.getPageNumber());
     assertEquals(pageSize, pageable.getPageSize());
-    Order expected = new Order(Direction.DESC, "createDate");
+    Order expected = new Order(Direction.DESC, "createdDate");
     assertThat(pageable.getSort(), hasItems(expected));
   }
 
@@ -82,13 +82,13 @@ public class NotificationControllerTest {
     int pageSize = nextInt();
 
     // when
-    controller.list(pageSize, false, NotificationType.STATUS_UPDATE);
+    controller.list(pageSize, false, NotificationType.UPDATE);
 
     // then
     Pageable pageable = verifyPageable();
     assertEquals(PAGE_NO, pageable.getPageNumber());
     assertEquals(pageSize, pageable.getPageSize());
-    Order expected = new Order(Direction.ASC, "createDate");
+    Order expected = new Order(Direction.ASC, "createdDate");
     assertThat(pageable.getSort(), hasItems(expected));
   }
 

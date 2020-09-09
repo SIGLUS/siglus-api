@@ -16,13 +16,10 @@
 package org.siglus.siglusapi.service.mapper;
 
 import static java.util.UUID.randomUUID;
-import static org.apache.commons.lang.RandomStringUtils.random;
 import static org.apache.commons.lang3.RandomUtils.nextBoolean;
 import static org.junit.Assert.assertEquals;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -32,20 +29,12 @@ import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.domain.NotificationType;
 import org.siglus.siglusapi.dto.NotificationDto;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NotificationMapperTest {
 
-  private static final int NOT_TOO_LONG = 10;
-
   @InjectMocks
   private NotificationMapper mapper;
-
-  @Before
-  public void prepare() {
-    ReflectionTestUtils.setField(mapper, "timeZoneId", "UTC");
-  }
 
   @Test
   public void shouldCallRepoWhenSearchNotifications() {
@@ -54,11 +43,10 @@ public class NotificationMapperTest {
     notification.setId(randomUUID());
     notification.setRefId(randomUUID());
     notification.setEmergency(nextBoolean());
-    notification.setRefStatus(NotificationStatus.IN_APPROVAL);
+    notification.setStatus(NotificationStatus.IN_APPROVAL);
     notification.setOperatorId(randomUUID());
-    notification.setSourceFacilityName(random(NOT_TOO_LONG));
-    notification.setType(NotificationType.STATUS_UPDATE);
-    notification.setCreateDate(LocalDateTime.now());
+    notification.setType(NotificationType.UPDATE);
+    notification.setCreatedDate(ZonedDateTime.now());
     ProcessingPeriodDto period = new ProcessingPeriodDto();
 
     // when
@@ -67,13 +55,12 @@ public class NotificationMapperTest {
 
     // then
     assertEquals(notification.getId(), notificationDto.getId());
-    assertEquals(notification.getEmergency(), notificationDto.getEmergencyFlag());
-    assertEquals(notification.getSourceFacilityName(), notificationDto.getSourceFacilityName());
+    assertEquals(notification.getEmergency(), notificationDto.getEmergency());
     assertEquals(notification.getRefId(), notificationDto.getRefId());
-    assertEquals(notification.getRefStatus(), notificationDto.getStatus());
-    assertEquals(notification.getType(), NotificationType.STATUS_UPDATE);
+    assertEquals(notification.getStatus(), notificationDto.getStatus());
+    assertEquals(notification.getType(), NotificationType.UPDATE);
     assertEquals(period, notificationDto.getProcessingPeriod());
-    assertEquals(submitDate, notificationDto.getRequisitionSubmitDate());
+    assertEquals(submitDate, notificationDto.getRequisitionSubmittedDate());
   }
 
 }

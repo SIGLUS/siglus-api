@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.FacilityDto;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.domain.NotificationType;
 
@@ -36,9 +37,7 @@ public class NotificationDto {
   private UUID id;
 
   @JsonProperty("emergency")
-  private Boolean emergencyFlag;
-
-  private String sourceFacilityName;
+  private Boolean emergency;
 
   @JsonProperty("referenceId")
   private UUID refId;
@@ -49,7 +48,9 @@ public class NotificationDto {
 
   private ProcessingPeriodDto processingPeriod;
 
-  private ZonedDateTime createDate;
+  private ZonedDateTime createdDate;
 
-  private ZonedDateTime requisitionSubmitDate;
+  private ZonedDateTime requisitionSubmittedDate;
+
+  private FacilityDto requestingFacility;
 }

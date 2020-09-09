@@ -17,5 +17,5 @@ package org.siglus.siglusapi.domain;
 
 public enum NotificationType {
   TODO,
-  STATUS_UPDATE;
+  UPDATE;
 }

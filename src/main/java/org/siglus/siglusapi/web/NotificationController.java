@@ -53,7 +53,7 @@ public class NotificationController {
     if (latestOnTop) {
       direction = Direction.DESC;
     }
-    Sort sort = new Sort(direction, "createDate");
+    Sort sort = new Sort(direction, "createdDate");
     Pageable pageable = new PageRequest(ALWAYS_FETCH_FIRST_PAGE, size, sort);
     Page<NotificationDto> notificationDtos = service.searchNotifications(pageable, type);
     return notificationDtos.getContent();
