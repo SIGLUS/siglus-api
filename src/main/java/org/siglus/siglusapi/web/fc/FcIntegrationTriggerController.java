@@ -41,6 +41,11 @@ public class FcIntegrationTriggerController {
     fcScheduleService.fetchCpsFromFc();
   }
 
+  @PostMapping("/receiptPlans")
+  public void processingReceiptPlans(@RequestParam("date") String startDate) {
+    fcScheduleService.fetchReceiptPlansFromFc(startDate);
+  }
+
   @PostMapping("/fcPrograms")
   public void fetchProgramsFromFc(
       @DateTimeFormat(pattern = "yyyyMMdd") @RequestParam LocalDate date) {

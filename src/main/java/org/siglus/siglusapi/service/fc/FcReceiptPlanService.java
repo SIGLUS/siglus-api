@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.fc;
 
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SKIPPED;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.util.ArrayList;
@@ -104,12 +105,14 @@ public class FcReceiptPlanService {
   private UUID fcFacilityTypeId;
 
   public boolean saveReceiptPlan(List<ReceiptPlanDto> receiptPlanDtos) {
+    List<ReceiptPlanDto> receiptPlanDtoList = receiptPlanDtos
+        .stream().distinct().collect(Collectors.toList());
     boolean successHandler = true;
-    if (isEmpty(receiptPlanDtos)) {
+    if (isEmpty(receiptPlanDtoList)) {
       return successHandler;
     }
 
-    List<ReceiptPlanDto> nonexistentReceiptPlans = getNonexistentReceiptPlan(receiptPlanDtos);
+    List<ReceiptPlanDto> nonexistentReceiptPlans = getNonexistentReceiptPlan(receiptPlanDtoList);
     if (!isEmpty(nonexistentReceiptPlans)) {
       for (ReceiptPlanDto receiptPlanDto : nonexistentReceiptPlans) {
         ReceiptPlan receiptPlan = ReceiptPlan.from(receiptPlanDto);
@@ -120,7 +123,7 @@ public class FcReceiptPlanService {
     UserDto userDto = getFcUserInfo();
     siglusSimulateUserAuthHelper.simulateUserAuth(userDto.getId());
 
-    for (ReceiptPlanDto receiptPlanDto : receiptPlanDtos) {
+    for (ReceiptPlanDto receiptPlanDto : receiptPlanDtoList) {
       FcHandlerStatus handlerError = updateRequisition(receiptPlanDto, userDto);
       if (handlerError.equals(FcHandlerStatus.CALL_API_ERROR)) {
         successHandler = false;
@@ -145,11 +148,14 @@ public class FcReceiptPlanService {
                 .stream()
                 .map(lineItem -> (RequisitionLineItemV2Dto)lineItem)
                 .collect(Collectors.toList());
+
         Map<String, OrderableDto> approveProductDtos = getApprovedProductsMap(userDto,
             requisitionDto);
         List<ProductDto> productDtos = getExistProducts(receiptPlanDto, approveProductDtos);
+        boolean displaySkipped = requisitionDto.getTemplate().getColumnsMap()
+            .get(SKIPPED.toString().toLowerCase()).getIsDisplayed();
         List<RequisitionLineItemV2Dto> lineItems = updateRequisitionLineItems(
-            requisitionLineItems, productDtos, approveProductDtos, requisitionId);
+            requisitionLineItems, productDtos, approveProductDtos, requisitionId, displaySkipped);
         requisitionDto.setRequisitionLineItems(lineItems);
         siglusRequisitionService
             .updateRequisition(requisitionId, requisitionDto, request, response);
@@ -207,7 +213,7 @@ public class FcReceiptPlanService {
 
   private List<RequisitionLineItemV2Dto> updateRequisitionLineItems(
       List<RequisitionLineItemV2Dto> requisitionLineItems, List<ProductDto> existProductDtos,
-      Map<String, OrderableDto> orderableDtoMap, UUID requisitionId) {
+      Map<String, OrderableDto> orderableDtoMap, UUID requisitionId, boolean displaySkipped) {
     List<UUID> orderableIds = new ArrayList<>();
     List<RequisitionLineItemV2Dto> approvedLineItems = new ArrayList<>();
 
@@ -236,7 +242,11 @@ public class FcReceiptPlanService {
           .findFirst()
           .orElse(null);
       if (null == approvedLineItem) {
-        requisitionLineItem.setSkipped(true);
+        if (displaySkipped) {
+          requisitionLineItem.setSkipped(true);
+        } else {
+          requisitionLineItem.setApprovedQuantity(0);
+        }
         approvedLineItems.add(requisitionLineItem);
       }
     }
