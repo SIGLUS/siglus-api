@@ -63,9 +63,6 @@ public class SiglusShipmentService {
   private SiglusOrderService siglusOrderService;
 
   @Autowired
-  private SiglusNotificationService notificationService;
-
-  @Autowired
   private OrderController orderController;
 
   @Transactional
@@ -88,7 +85,6 @@ public class SiglusShipmentService {
       createSubOrder(shipmentDto);
     }
     ShipmentDto shipment = createShipment(shipmentDto);
-    notificationService.postConfirmShipment(shipment);
     return shipment;
   }
 

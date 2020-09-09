@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import static org.apache.commons.lang3.RandomUtils.nextBoolean;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +35,7 @@ import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProcessingPeriodService;
 import org.siglus.siglusapi.service.SiglusRequisitionService;
 import org.springframework.data.domain.Pageable;
@@ -55,6 +57,9 @@ public class SiglusRequisitionControllerTest {
 
   @Mock
   private SiglusProcessingPeriodService siglusProcessingPeriodService;
+
+  @Mock
+  private SiglusNotificationService notificationService;
 
   @Mock
   private HttpServletResponse response;
@@ -143,6 +148,7 @@ public class SiglusRequisitionControllerTest {
 
     // then
     verify(siglusRequisitionService).approveRequisition(requisitionId, request, response);
+    verify(notificationService).postApprove(any());
   }
 
   @Test

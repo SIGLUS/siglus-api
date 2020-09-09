@@ -454,7 +454,6 @@ public class SiglusRequisitionService {
         request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
-    notificationService.postApprove(basicRequisitionDto);
     UUID facilityId = basicRequisitionDto.getFacility().getId();
     UUID programId = basicRequisitionDto.getProgram().getId();
     RequisitionExtension requisitionExtension = requisitionExtensionRepository

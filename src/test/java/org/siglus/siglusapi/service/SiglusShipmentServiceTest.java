@@ -94,9 +94,6 @@ public class SiglusShipmentServiceTest {
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
   @Mock
-  private SiglusNotificationService notificationService;
-
-  @Mock
   private SiglusOrderService siglusOrderService;
 
   @Mock
@@ -252,7 +249,6 @@ public class SiglusShipmentServiceTest {
     assertTrue(CollectionUtils.isNotEmpty(orderToSave.getOrderLineItems()));
     assertTrue(CollectionUtils.isEmpty(lineItemExtensionsToDelete));
     assertTrue(CollectionUtils.isNotEmpty(shipmentDtoToSave.getLineItems()));
-    verify(notificationService).postConfirmShipment(any());
   }
 
   @Test
@@ -277,7 +273,6 @@ public class SiglusShipmentServiceTest {
     assertEquals(1, lineItemDtos.size());
     assertEquals(Long.valueOf(10), lineItemDtos.get(0).getPartialFulfilledQuantity());
     assertEquals(Long.valueOf(40), lineItemDtos.get(0).getOrderedQuantity());
-    verify(notificationService).postConfirmShipment(any());
   }
 
   @Test(expected = ValidationMessageException.class)
