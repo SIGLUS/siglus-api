@@ -15,8 +15,8 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
@@ -49,11 +49,11 @@ public class ReceiptPlan extends BaseEntity {
 
   private String facilityName;
 
-  private Date approveRequisitionDate;
+  private ZonedDateTime approveRequisitionDate;
 
   private String requisitionNumber;
 
-  private Date lastUpdatedDate;
+  private ZonedDateTime lastUpdatedDate;
 
   @OneToMany(
       mappedBy = "receiptPlan",
