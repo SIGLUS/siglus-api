@@ -193,11 +193,9 @@ public class SiglusFcIntegrationService {
 
           UUID requisitionId;
 
-          if (orderExternal == null) {
-            requisitionId = p.getShipment().getOrder().getExternalId();
-          } else {
-            requisitionId = orderExternal.getRequisitionId();
-          }
+          requisitionId = orderExternal == null
+              ? p.getShipment().getOrder().getExternalId() :
+              orderExternal.getRequisitionId();
           requisitionIds.add(requisitionId);
           return requisitionId;
         }

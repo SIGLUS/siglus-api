@@ -36,12 +36,12 @@ public class FcProgramService {
 
   public boolean processProgramData(List<ProgramDto> dtos) {
     try {
-      Map<String, ProgramRealProgram> map = programRealProgramRepository.findAll()
+      Map<String, ProgramRealProgram> programMap = programRealProgramRepository.findAll()
           .stream().collect(Collectors.toMap(ProgramRealProgram::getRealProgramCode, p -> p));
 
       Set<ProgramRealProgram> programsToUpdate = new HashSet<>();
       dtos.stream().forEach(dto -> {
-        ProgramRealProgram program = map.get(dto.getCode());
+        ProgramRealProgram program = programMap.get(dto.getCode());
         if (program != null) {
           ProgramRealProgram updateProgram = compareAndUpdateProgramData(program, dto);
           if (updateProgram != null) {
@@ -61,8 +61,7 @@ public class FcProgramService {
     }
   }
 
-  private ProgramRealProgram compareAndUpdateProgramData(
-      ProgramRealProgram program,
+  private ProgramRealProgram compareAndUpdateProgramData(ProgramRealProgram program,
       ProgramDto dto) {
     boolean isEqual = true;
     if (!program.getRealProgramName().equals(dto.getDescription())) {

@@ -99,7 +99,7 @@ public class FcProgramServiceTest {
   @Test
   public void shouldReturnFalseIfCatchExceptionWhenDealCpData() {
     // given
-    when(programRealProgramRepository.findAll()).thenReturn(newArrayList());
+    when(programRealProgramRepository.findAll()).thenThrow(new RuntimeException());
 
     // when
     boolean result = fcProgramService.processProgramData(newArrayList(

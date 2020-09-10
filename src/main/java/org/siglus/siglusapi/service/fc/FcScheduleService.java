@@ -139,7 +139,7 @@ public class FcScheduleService {
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);
   }
 
-  @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
+  @Scheduled(cron = "${fc.program.cron}", zone = TIME_ZONE_ID)
   public void fetchProgramsFromFc() {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API);

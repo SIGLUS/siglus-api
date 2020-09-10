@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.domain;
 
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_STATUS_ACTIVE;
-import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_STATUS_INACTIVE;
 
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -26,9 +25,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.common.util.Message;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
-import org.siglus.siglusapi.service.fc.FcDataException;
 
 @Entity
 @Data
@@ -62,10 +59,6 @@ public class ProgramRealProgram extends BaseEntity {
     if (PROGRAM_STATUS_ACTIVE.equals(dto.getStatus())) {
       return true;
     }
-    if (PROGRAM_STATUS_INACTIVE.equals(dto.getStatus())) {
-      return false;
-    }
-    throw new FcDataException(
-        new Message("ProgramDto has invalid status"));
+    return false;
   }
 }
