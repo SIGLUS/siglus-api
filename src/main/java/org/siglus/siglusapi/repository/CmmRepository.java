@@ -23,9 +23,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CmmRepository extends JpaRepository<CmmDomain, UUID> {
 
-  CmmDomain findCmmByFacilityCodeAndProductCodeAndPeriodAndYear(String facilityCode,
-      String productCode, String period, Integer year);
+  CmmDomain findCmmByFacilityCodeAndProductCodeAndQueryDate(String facilityCode,
+      String productCode, String queryDate);
 
-  List<CmmDomain> findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(String facilityCode,
-      Collection<String> productCode, String period, Integer year);
+  List<CmmDomain> findAllByFacilityCodeAndProductCodeInAndQueryDate(String facilityCode,
+      Collection<String> productCode, String queryDate);
 }

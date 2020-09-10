@@ -82,7 +82,7 @@ public class FcIntegrationResultService {
   public void recordFcIntegrationResult(FcIntegrationResultDto resultDto) {
     String api = resultDto.getApi();
     String endDate = getQueryByDateApiList().contains(api) ? dateHelper.getTodayDateStr()
-        : dateHelper.getCurrentMonthStr();
+        : resultDto.getDate();
     FcIntegrationResult result = FcIntegrationResult.builder()
         .job(getJobName(api))
         .startDate(resultDto.getDate())

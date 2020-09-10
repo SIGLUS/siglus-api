@@ -23,9 +23,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CpRepository extends JpaRepository<CpDomain, UUID> {
 
-  CpDomain findCpByFacilityCodeAndProductCodeAndPeriodAndYear(String facilityCode,
-      String productCode, String period, Integer year);
+  CpDomain findCpByFacilityCodeAndProductCodeAndQueryDate(String facilityCode,
+      String productCode, String queryDate);
 
-  List<CpDomain> findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(String facilityCode,
-      Collection<String> productCode, String period, Integer year);
+  List<CpDomain> findAllByFacilityCodeAndProductCodeInAndQueryDate(String facilityCode,
+      Collection<String> productCode, String queryDate);
 }

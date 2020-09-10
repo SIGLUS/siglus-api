@@ -5,18 +5,19 @@
 CREATE TABLE siglusintegration.cmms
 (
     id uuid PRIMARY KEY,
-    facilitycode text NOT NULL,
-    facilityname text NOT NULL,
-    productcode text NOT NULL,
-    productname text NOT NULL,
-    realprogramcode text NOT NULL,
-    realprogramname text NOT NULL,
+    facilitycode VARCHAR(255) NOT NULL,
+    facilityname VARCHAR(255) NOT NULL,
+    productcode VARCHAR(255) NOT NULL,
+    productname VARCHAR(255) NOT NULL,
+    realprogramcode VARCHAR(255) NOT NULL,
+    realprogramname VARCHAR(255) NOT NULL,
     cmm INTEGER,
     max INTEGER,
-    period text NOT NULL,
+    period VARCHAR(20) NOT NULL,
     year INTEGER,
+    querydate VARCHAR(20) NOT NULL,
     date TIMESTAMP WITH TIME ZONE,
     lastupdatedat TIMESTAMP WITH TIME ZONE
 );
 
-CREATE INDEX ON siglusintegration.cmms (facilitycode, productcode, period, year);
+CREATE INDEX ON siglusintegration.cmms (facilitycode, productcode, querydate);

@@ -20,6 +20,7 @@ import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -141,7 +142,7 @@ public class SiglusFcIntegrationService {
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
-  public Page<FcRequisitionDto> searchRequisitions(String date, Pageable pageable) {
+  public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {
     Set<UUID> dpmSupervisoryNodeIds = supervisoryNodeRepository
         .findAllByFacilityTypeId(dpmFacilityTypeId).stream().map(SupervisoryNode::getId)
         .collect(toSet());
@@ -163,7 +164,7 @@ public class SiglusFcIntegrationService {
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
   }
 
-  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(String date, Pageable pageable) {
+  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date, Pageable pageable) {
     Set<UUID> dpmRequestingFacilityIds = siglusFacilityReferenceDataService.findAll()
         .stream()
         .filter(facilityDto -> dpmFacilityTypeCode.equals(facilityDto.getType().getCode()))

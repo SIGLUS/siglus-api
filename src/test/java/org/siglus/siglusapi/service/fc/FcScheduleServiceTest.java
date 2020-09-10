@@ -30,9 +30,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
 
@@ -41,9 +43,13 @@ public class FcScheduleServiceTest {
 
   public static final String DATE = "20200825";
   public static final String PERIOD = "08-2020";
+  public static final String NEXT_PERIOD = "09-2020";
 
   @InjectMocks
   private FcScheduleService fcScheduleService;
+
+  @Captor
+  private ArgumentCaptor<FcIntegrationResultDto> resultCaptor;
 
   @Mock
   private CallFcService callFcService;
@@ -56,6 +62,9 @@ public class FcScheduleServiceTest {
 
   @Mock
   private FcIntegrationCmmCpService fcIntegrationCmmCpService;
+
+  @Mock
+  private SiglusDateHelper dateHelper;
 
   @Before
   public void setup() {
@@ -74,10 +83,8 @@ public class FcScheduleServiceTest {
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
-    ArgumentCaptor<FcIntegrationResultDto> captor =
-        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
-    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
-    assertEquals(RECEIPT_PLAN_API, captor.getValue().getApi());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(RECEIPT_PLAN_API, resultCaptor.getValue().getApi());
   }
 
   @Test
@@ -92,48 +99,80 @@ public class FcScheduleServiceTest {
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
-    ArgumentCaptor<FcIntegrationResultDto> captor =
-        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
-    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
-    assertEquals(ISSUE_VOUCHER_API, captor.getValue().getApi());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(ISSUE_VOUCHER_API, resultCaptor.getValue().getApi());
   }
 
   @Test
-  public void shouldFetchCmmsFromFc() {
+  public void shouldFetchCmmsFromFcWithCurrentPeriod() {
     // given
-    when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(CMM_API)).thenReturn(PERIOD);
-    when(fcIntegrationCmmCpService.dealCmmData(any())).thenReturn(true);
+    when(fcIntegrationCmmCpService.processCmmData(any(), any())).thenReturn(true);
+    when(dateHelper.getCurrentMonthStr()).thenReturn(PERIOD);
 
     // when
     fcScheduleService.fetchCmmsFromFc();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
-    ArgumentCaptor<FcIntegrationResultDto> captor =
-        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
-    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
-    assertEquals(CMM_API, captor.getValue().getApi());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(CMM_API, resultCaptor.getValue().getApi());
+    assertEquals(PERIOD, resultCaptor.getValue().getDate());
   }
 
   @Test
-  public void shouldFetchCpsFromFc() {
+  public void shouldFetchCmmsFromFcWithNextPeriod() {
     // given
-    when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(fcIntegrationResultService.getLatestSuccessDate(CMM_API)).thenReturn(PERIOD);
+    when(fcIntegrationCmmCpService.processCmmData(any(), any())).thenReturn(true);
+    when(dateHelper.getCurrentMonthStr()).thenReturn(NEXT_PERIOD);
+
+    // when
+    fcScheduleService.fetchCmmsFromFc();
+
+    // then
+    verify(callFcService).fetchData(anyString(), anyString());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(CMM_API, resultCaptor.getValue().getApi());
+    assertEquals(NEXT_PERIOD, resultCaptor.getValue().getDate());
+  }
+
+  @Test
+  public void shouldFetchCpsFromFcWithCurrentPeriod() {
+    // given
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(CP_API)).thenReturn(PERIOD);
-    when(fcIntegrationCmmCpService.dealCpData(any())).thenReturn(true);
+    when(fcIntegrationCmmCpService.processCpData(any(), any())).thenReturn(true);
+    when(dateHelper.getCurrentMonthStr()).thenReturn(PERIOD);
 
     // when
     fcScheduleService.fetchCpsFromFc();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
-    ArgumentCaptor<FcIntegrationResultDto> captor =
-        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
-    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
-    assertEquals(CP_API, captor.getValue().getApi());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(CP_API, resultCaptor.getValue().getApi());
+    assertEquals(PERIOD, resultCaptor.getValue().getDate());
+  }
+
+  @Test
+  public void shouldFetchCpsFromFcWithNextPeriod() {
+    // given
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(fcIntegrationResultService.getLatestSuccessDate(CP_API)).thenReturn(PERIOD);
+    when(fcIntegrationCmmCpService.processCpData(any(), any())).thenReturn(true);
+    when(dateHelper.getCurrentMonthStr()).thenReturn(NEXT_PERIOD);
+
+    // when
+    fcScheduleService.fetchCpsFromFc();
+
+    // then
+    verify(callFcService).fetchData(anyString(), anyString());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(CP_API, resultCaptor.getValue().getApi());
+    assertEquals(NEXT_PERIOD, resultCaptor.getValue().getDate());
   }
 
   @Test
@@ -147,10 +186,8 @@ public class FcScheduleServiceTest {
     fcScheduleService.fetchReceiptPlansFromFc();
 
     // then
-    ArgumentCaptor<FcIntegrationResultDto> captor =
-        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
-    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
-    assertEquals(DATE, captor.getValue().getDate());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(DATE, resultCaptor.getValue().getDate());
   }
 
   @Test(expected = Exception.class)

@@ -85,42 +85,44 @@ public class FcIntegrationCmmCpService {
   @Autowired
   private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
 
-  public boolean dealCmmData(List<CmmDto> dtos) {
+  public boolean processCmmData(List<CmmDto> dtos, String queryDate) {
     try {
       List<CmmDomain> cmms = CmmDomain.from(dtos);
       cmms.forEach(cmm -> {
         CmmDomain existCmm = cmmRepository
-            .findCmmByFacilityCodeAndProductCodeAndPeriodAndYear(cmm.getFacilityCode(),
-                cmm.getProductCode(), cmm.getPeriod(), cmm.getYear());
+            .findCmmByFacilityCodeAndProductCodeAndQueryDate(cmm.getFacilityCode(),
+                cmm.getProductCode(), queryDate);
         if (null != existCmm) {
           cmm.setId(existCmm.getId());
         }
+        cmm.setQueryDate(queryDate);
         cmmRepository.save(cmm);
       });
       log.info("save cmm successfully, size: {}", cmms.size());
       return true;
     } catch (Exception e) {
-      log.error("deal cmm data error", e);
+      log.error("process cmm data error", e);
       return false;
     }
   }
 
-  public boolean dealCpData(List<CpDto> dtos) {
+  public boolean processCpData(List<CpDto> dtos, String queryDate) {
     try {
       List<CpDomain> cps = CpDomain.from(dtos);
       cps.forEach(cp -> {
         CpDomain existCp = cpRepository
-            .findCpByFacilityCodeAndProductCodeAndPeriodAndYear(cp.getFacilityCode(),
-                cp.getProductCode(), cp.getPeriod(), cp.getYear());
+            .findCpByFacilityCodeAndProductCodeAndQueryDate(cp.getFacilityCode(),
+                cp.getProductCode(), queryDate);
         if (null != existCp) {
           cp.setId(existCp.getId());
         }
+        cp.setQueryDate(queryDate);
         cpRepository.save(cp);
       });
       log.info("save cp successfully, size: {}", cps.size());
       return true;
     } catch (Exception e) {
-      log.error("deal cp data error", e);
+      log.error("process cp data error", e);
       return false;
     }
   }
@@ -137,8 +139,8 @@ public class FcIntegrationCmmCpService {
         .findOne(processingPeriodId);
     LocalDate endDate = processingPeriodDto.getEndDate();
     Map<String, CmmDomain> productCodeCmmMap = cmmRepository
-        .findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(requestingFacility.getCode(),
-            orderableIdCodeMap.values(), "M" + endDate.getMonthValue(), endDate.getYear())
+        .findAllByFacilityCodeAndProductCodeInAndQueryDate(requestingFacility.getCode(),
+            orderableIdCodeMap.values(), endDate.format(DateTimeFormatter.ofPattern("MM-yyyy")))
         .stream().collect(toMap(CmmDomain::getProductCode, Function.identity()));
     List<RequisitionLineItemExtension> extensions = newArrayList();
     lineItems.forEach(lineItem -> {
@@ -172,8 +174,8 @@ public class FcIntegrationCmmCpService {
     String firstDayOfNextMonth = firstDayOfPeriodMonth.plusMonths(1).format(FORMATTER);
     Map<UUID, String> orderableIdCodeMap = getOrderableIdCodeMap(lineItems);
     Map<String, CpDomain> productCodeCpMap = cpRepository
-        .findAllByFacilityCodeAndProductCodeInAndPeriodAndYear(requestingFacility.getCode(),
-            orderableIdCodeMap.values(), "M" + endDate.getMonthValue(), endDate.getYear())
+        .findAllByFacilityCodeAndProductCodeInAndQueryDate(requestingFacility.getCode(),
+            orderableIdCodeMap.values(), endDate.format(DateTimeFormatter.ofPattern("MM-yyyy")))
         .stream().collect(toMap(CpDomain::getProductCode, Function.identity()));
     Map<UUID, Integer> orderableIdSumStockMap = newHashMap();
     Set<UUID> supervisoryNodeIds = supervisoryNodeRepository.findAllByFacilityId(facilityId)

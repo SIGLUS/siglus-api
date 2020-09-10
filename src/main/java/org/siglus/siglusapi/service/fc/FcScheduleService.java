@@ -21,8 +21,11 @@ import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +56,9 @@ public class FcScheduleService {
 
   @Autowired
   private FcIssueVoucherService fcIssueVoucherService;
+
+  @Autowired
+  private SiglusDateHelper dateHelper;
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   public void fetchReceiptPlansFromFc() {
@@ -95,8 +101,9 @@ public class FcScheduleService {
   public void fetchCmmsFromFc() {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(CMM_API);
+    date = getStartDateForPeriodCall(date);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(CMM_API, date);
-    boolean finalSuccess = fcIntegrationCmmCpService.dealCmmData(callFcService.getCmms());
+    boolean finalSuccess = fcIntegrationCmmCpService.processCmmData(callFcService.getCmms(), date);
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(CMM_API)
         .date(date)
@@ -113,8 +120,9 @@ public class FcScheduleService {
   public void fetchCpsFromFc() {
     final long startTime = currentTimeMillis();
     String date = fcIntegrationResultService.getLatestSuccessDate(CP_API);
+    date = getStartDateForPeriodCall(date);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(CP_API, date);
-    boolean finalSuccess = fcIntegrationCmmCpService.dealCpData(callFcService.getCps());
+    boolean finalSuccess = fcIntegrationCmmCpService.processCpData(callFcService.getCps(), date);
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(CP_API)
         .date(date)
@@ -182,4 +190,15 @@ public class FcScheduleService {
   private Integer getTotalCostTimeInSeconds(long startTime) {
     return Math.toIntExact((currentTimeMillis() - startTime) / 1000);
   }
+
+  private String getStartDateForPeriodCall(String date) {
+    if (date.equals(dateHelper.getCurrentMonthStr())) {
+      return date;
+    }
+    String[] splitDate = date.split("-");
+    LocalDate lastEndDate = LocalDate.of(Integer.valueOf(splitDate[1]),
+        Integer.valueOf(splitDate[0]), 1);
+    return lastEndDate.plusMonths(1).format(DateTimeFormatter.ofPattern("MM-yyyy"));
+  }
+
 }

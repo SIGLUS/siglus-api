@@ -229,8 +229,8 @@ public class FcIntegrationResultServiceTest {
     // given
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(CMM_API)
+        .date(DEFAULT_PERIOD)
         .build();
-    when(dateHelper.getCurrentMonthStr()).thenReturn(DEFAULT_PERIOD);
     when(callFcService.getCmms()).thenReturn(new ArrayList<>());
 
     // when

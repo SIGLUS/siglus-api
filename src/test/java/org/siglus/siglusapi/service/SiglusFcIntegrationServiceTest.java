@@ -184,7 +184,7 @@ public class SiglusFcIntegrationServiceTest {
 
   private String reasonName = "Debit";
 
-  private String date = "20200221";
+  private LocalDate date = LocalDate.of(2020, 2, 21);
 
   private String today = "20200831";
 
@@ -355,7 +355,7 @@ public class SiglusFcIntegrationServiceTest {
 
   private void mockRequisitionInfo(UUID supervisoryNodeId) {
     Requisition requisition = new Requisition();
-    requisition.setStatus(RequisitionStatus.APPROVED);
+    requisition.setStatus(RequisitionStatus.AUTHORIZED);
     requisition.setId(requisitionId);
     requisition.setFacilityId(facilityId);
     requisition.setProgramId(programId);

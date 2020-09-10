@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.dto.fc;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CmmDto {
 
-  private Date date;
+  private ZonedDateTime date;
 
   private String period;
 
@@ -43,7 +43,7 @@ public class CmmDto {
 
   private Integer max;
 
-  private Date lastUpdatedAt;
+  private ZonedDateTime lastUpdatedAt;
 
   private String clientCode;
 

@@ -17,7 +17,7 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
-import java.text.ParseException;
+import java.time.LocalDate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -40,10 +40,10 @@ public class SiglusFcIntegrationControllerTest {
   private Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
       Pagination.NO_PAGINATION);
 
-  private String date = "20200221";
+  private LocalDate date = LocalDate.of(2020, 2, 21);
 
   @Test
-  public void shouldSearchRequisitionsWithDefaultPageable() throws ParseException {
+  public void shouldSearchRequisitionsWithDefaultPageable() {
     // when
     siglusFcIntegrationController.searchRequisitions(date, pageable);
 
@@ -53,7 +53,7 @@ public class SiglusFcIntegrationControllerTest {
   }
 
   @Test
-  public void shouldSearchRequisitionsWithInputPageable() throws ParseException {
+  public void shouldSearchRequisitionsWithInputPageable() {
     // given
     pageable = new PageRequest(1, 10);
 

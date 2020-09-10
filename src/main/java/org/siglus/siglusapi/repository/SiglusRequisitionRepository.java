@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -36,7 +37,7 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       + "and r.modifieddate >= :date "
       + "and r.modifieddate < :today "
       + "and r.reportonly = false order by ?#{#pageable}", nativeQuery = true)
-  Page<Requisition> searchForFc(@Param("date") String date, @Param("today") String today,
+  Page<Requisition> searchForFc(@Param("date") LocalDate date, @Param("today") String today,
       @Param("dpmSupervisoryNodeIds") Set<UUID> dpmSupervisoryNodeIds,
       @Param("fcSupervisoryNodeIds") Set<UUID> fcSupervisoryNodeIds,
       Pageable pageable);
@@ -47,7 +48,7 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       + "and r.modifieddate >= :date "
       + "and r.modifieddate < :today "
       + "and r.reportonly = false order by ?#{#pageable}", nativeQuery = true)
-  Page<Requisition> searchForFc(@Param("date") String date, @Param("today") String today,
+  Page<Requisition> searchForFc(@Param("date") LocalDate date, @Param("today") String today,
       @Param("dpmSupervisoryNodeIds") Set<UUID> dpmSupervisoryNodeIds,
       Pageable pageable);
 

@@ -17,7 +17,7 @@ package org.siglus.siglusapi.domain;
 
 import static com.google.common.collect.Lists.newArrayList;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 import java.util.List;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -59,9 +59,11 @@ public class CpDomain extends BaseEntity {
 
   private Integer year;
 
-  private Date date;
+  private String queryDate;
 
-  private Date lastUpdatedAt;
+  private ZonedDateTime date;
+
+  private ZonedDateTime lastUpdatedAt;
 
   public static List<CpDomain> from(List<CpDto> dtos) {
     List<CpDomain> cps = newArrayList();
