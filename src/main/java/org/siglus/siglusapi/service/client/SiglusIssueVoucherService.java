@@ -12,28 +12,32 @@
  * the GNU Affero General Public License along with this program. If not, see
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
+package org.siglus.siglusapi.service.client;
 
-package org.siglus.siglusapi.domain;
+import org.siglus.common.service.client.BaseReferenceDataService;
+import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
+import org.springframework.stereotype.Service;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
+@Service
+public class SiglusIssueVoucherService extends BaseReferenceDataService<IssueVoucherDto> {
 
-@Entity
-@Data
-@Builder
-@EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "pod_extension", schema = "siglusintegration")
-public class PodExtension extends BaseEntity {
+  @Override
+  protected String getUrl() {
+    return "/api/siglusapi/integration/issueVouchers";
+  }
 
-  private String issueVoucherNumber;
+  @Override
+  protected Class<IssueVoucherDto> getResultClass() {
+    return IssueVoucherDto.class;
+  }
 
-  private String clientCode;
+  @Override
+  protected Class<IssueVoucherDto[]> getArrayResultClass() {
+    return IssueVoucherDto[].class;
+  }
+
+
+  public void updateIssueVourch(String date) {
+    postResult("?date="+date, null, Void.class, false);
+  }
 }

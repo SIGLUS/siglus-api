@@ -22,6 +22,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -324,7 +325,7 @@ public class FcIssueVoucherServiceTest {
     issueVoucherDto.setWarehouseCode("04030101");
     issueVoucherDto.setClientCode("04030101");
     issueVoucherDto.setRequisitionNumber("RNR-NO010906120000192");
-    issueVoucherDto.setShippingDate(new Date());
+    issueVoucherDto.setShippingDate(ZonedDateTime.now());
     ProductDto productDto = new ProductDto();
     productDto.setApprovedQuantity(100);
     productDto.setShippedQuantity(50);

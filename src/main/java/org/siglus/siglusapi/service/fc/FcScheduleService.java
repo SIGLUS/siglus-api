@@ -30,6 +30,7 @@ import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
+import org.siglus.siglusapi.service.client.SiglusIssueVoucherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -71,6 +72,9 @@ public class FcScheduleService {
   @Autowired
   private FcProgramService fcProgramService;
 
+  @Autowired
+  private SiglusIssueVoucherService issueVoucherService;
+
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   public void fetchReceiptPlan() {
     String date = fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API);
@@ -96,7 +100,7 @@ public class FcScheduleService {
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = TIME_ZONE_ID)
   public void fetchIssueVouchersFromFc() {
     String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
-    fetchIssueVouchersFromFc(date);
+    issueVoucherService.updateIssueVourch(date);
   }
 
   public void fetchIssueVouchersFromFc(String date) {

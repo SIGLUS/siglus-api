@@ -215,7 +215,7 @@ public class SiglusStockEventsService {
       LotDto existedLot = existedLots.get(0);
       if (updateExpirationDate && !existedLot.getExpirationDate().isEqual(expirationDate)) {
         existedLot.setExpirationDate(expirationDate);
-        lotReferenceDataService.saveLot(existedLot);
+        lotReferenceDataService.updateLot(existedLot);
       }
       return existedLot;
     }

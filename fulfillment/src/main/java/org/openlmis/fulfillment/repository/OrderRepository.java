@@ -39,7 +39,7 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, UUID>
 
   @Query(value = "select * "
       + "from fulfillment.orders "
-      + "where status in ('FULFILLING','PARTIALLY_FULFILLED', 'ORDERED')"
+      + "where status in ('FULFILLING','PARTIALLY_FULFILLED', 'ORDERED') "
       + "and externalId in :externalIds", nativeQuery = true)
   Order findCanFulfillOrderAndInExternalId(@Param("externalIds") List<UUID> externalIds);
   // [SIGLUS change end]
