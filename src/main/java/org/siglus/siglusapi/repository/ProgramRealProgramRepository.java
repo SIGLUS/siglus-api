@@ -13,33 +13,13 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.fc;
+package org.siglus.siglusapi.repository;
 
-import org.siglus.siglusapi.service.fc.FcScheduleService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.ProgramRealProgram;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@RestController
-@RequestMapping("/api/siglusapi")
-public class FcIntegrationTriggerController {
+public interface ProgramRealProgramRepository extends
+    JpaRepository<ProgramRealProgram, UUID> {
 
-  @Autowired
-  private FcScheduleService fcScheduleService;
-
-  @PostMapping("/cmms")
-  public void fetchCmmsFromFc() {
-    fcScheduleService.fetchCmmsFromFc();
-  }
-
-  @PostMapping("/cps")
-  public void fetchCpsFromFc() {
-    fcScheduleService.fetchCpsFromFc();
-  }
-
-  @PostMapping("/fcPrograms")
-  public void fetchProgramsFromFc() {
-    fcScheduleService.fetchProgramsFromFc();
-  }
 }

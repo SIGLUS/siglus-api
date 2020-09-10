@@ -1994,6 +1994,14 @@ traits:
         responses:
           200:
 
+    /fcPrograms:
+      displayName: Programs From Fc
+      post:
+        is: [ secured ]
+        description: Fetch cps from fc.
+        responses:
+          200:
+
     /programadditionalorderables:
       displayName: Program Additional Orderable Product
       get:

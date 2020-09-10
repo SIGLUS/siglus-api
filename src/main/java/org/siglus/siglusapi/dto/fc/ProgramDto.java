@@ -13,33 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.fc;
+package org.siglus.siglusapi.dto.fc;
 
-import org.siglus.siglusapi.service.fc.FcScheduleService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import java.time.ZonedDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@RestController
-@RequestMapping("/api/siglusapi")
-public class FcIntegrationTriggerController {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class ProgramDto {
 
-  @Autowired
-  private FcScheduleService fcScheduleService;
+  private String code;
 
-  @PostMapping("/cmms")
-  public void fetchCmmsFromFc() {
-    fcScheduleService.fetchCmmsFromFc();
-  }
+  private String description;
 
-  @PostMapping("/cps")
-  public void fetchCpsFromFc() {
-    fcScheduleService.fetchCpsFromFc();
-  }
+  private String status;
 
-  @PostMapping("/fcPrograms")
-  public void fetchProgramsFromFc() {
-    fcScheduleService.fetchProgramsFromFc();
-  }
+  private ZonedDateTime lastUpdatedAt;
 }

@@ -26,14 +26,19 @@ public class FcConstants {
   public static final String CP_JOB = "CP";
   public static final String RECEIPT_PLAN_JOB = "RECEIPT_PLAN";
   public static final String ISSUE_VOUCHER_JOB = "ISSUE_VOUCHER";
+  public static final String PROGRAM_JOB = "PROGRAM";
 
   public static final String CMM_API = "/cmm/cmms";
   public static final String CP_API = "/cp/cps";
   public static final String RECEIPT_PLAN_API = "/receiptPlan/receiptplans";
   public static final String ISSUE_VOUCHER_API = "/issueVoucher/issuevouchers";
+  public static final String PROGRAM_API = "/area/areas";
+
+  public static final String PROGRAM_STATUS_ACTIVE = "Activo";
+  public static final String PROGRAM_STATUS_INACTIVE = "Inactivo";
 
   public static List<String> getQueryByDateApiList() {
-    return Arrays.asList(RECEIPT_PLAN_API, ISSUE_VOUCHER_API);
+    return Arrays.asList(RECEIPT_PLAN_API, ISSUE_VOUCHER_API, PROGRAM_API);
   }
 
 }

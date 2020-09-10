@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.util.ArrayList;
@@ -65,6 +66,9 @@ public class FcScheduleServiceTest {
 
   @Mock
   private SiglusDateHelper dateHelper;
+
+  @Mock
+  private FcProgramService fcProgramService;
 
   @Before
   public void setup() {
@@ -173,6 +177,25 @@ public class FcScheduleServiceTest {
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CP_API, resultCaptor.getValue().getApi());
     assertEquals(NEXT_PERIOD, resultCaptor.getValue().getDate());
+  }
+
+  @Test
+  public void shouldFetchProgramsFromFc() {
+    // given
+    when(callFcService.getPrograms()).thenReturn(new ArrayList<>());
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API)).thenReturn(DATE);
+    when(fcProgramService.processProgramData(any())).thenReturn(true);
+
+    // when
+    fcScheduleService.fetchProgramsFromFc();
+
+    // then
+    verify(callFcService).fetchData(anyString(), anyString());
+    ArgumentCaptor<FcIntegrationResultDto> captor =
+        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
+    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
+    assertEquals(PROGRAM_API, captor.getValue().getApi());
   }
 
   @Test

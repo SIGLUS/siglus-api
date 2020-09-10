@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.fc;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import org.siglus.siglusapi.dto.fc.CmmDto;
 import org.siglus.siglusapi.dto.fc.CpDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
+import org.siglus.siglusapi.dto.fc.ProgramDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -50,6 +52,7 @@ public class CallFcService {
   private List<ReceiptPlanDto> receiptPlans = new ArrayList<>();
   private List<CmmDto> cmms = new ArrayList<>();
   private List<CpDto> cps = new ArrayList<>();
+  private List<ProgramDto> programs = new ArrayList<>();
   private PageInfoDto pageInfoDto = new PageInfoDto();
 
   @Autowired
@@ -87,6 +90,8 @@ public class CallFcService {
       return IssueVoucherDto[].class;
     } else if (RECEIPT_PLAN_API.equals(api)) {
       return ReceiptPlanDto[].class;
+    } else if (PROGRAM_API.equals(api)) {
+      return ProgramDto[].class;
     } else if (CMM_API.equals(api)) {
       return CmmDto[].class;
     } else {
@@ -103,6 +108,8 @@ public class CallFcService {
       this.cmms.addAll(Arrays.asList((CmmDto[]) body));
     } else if (CP_API.equals(api)) {
       this.cps.addAll(Arrays.asList((CpDto[]) body));
+    } else if (PROGRAM_API.equals(api)) {
+      this.programs.addAll(Arrays.asList((ProgramDto[]) body));
     }
   }
 

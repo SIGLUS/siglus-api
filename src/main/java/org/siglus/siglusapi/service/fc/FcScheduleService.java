@@ -19,6 +19,7 @@ import static java.lang.System.currentTimeMillis;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.time.LocalDate;
@@ -59,6 +60,9 @@ public class FcScheduleService {
 
   @Autowired
   private SiglusDateHelper dateHelper;
+
+  @Autowired
+  private FcProgramService fcProgramService;
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   public void fetchReceiptPlansFromFc() {
@@ -127,6 +131,25 @@ public class FcScheduleService {
         .api(CP_API)
         .date(date)
         .totalObjectsFromFc(callFcService.getCps().size())
+        .callFcSuccess(true)
+        .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
+        .finalSuccess(finalSuccess)
+        .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
+        .build();
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+  }
+
+  @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
+  public void fetchProgramsFromFc() {
+    final long startTime = currentTimeMillis();
+    String date = fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API);
+    log.info("date: {}", date);
+    Integer callFcCostTimeInSeconds = fetchDataFromFc(PROGRAM_API, date);
+    boolean finalSuccess = fcProgramService.processProgramData(callFcService.getPrograms());
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(PROGRAM_API)
+        .date(date)
+        .totalObjectsFromFc(callFcService.getPrograms().size())
         .callFcSuccess(true)
         .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
         .finalSuccess(finalSuccess)

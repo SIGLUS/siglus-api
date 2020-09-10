@@ -51,4 +51,13 @@ public class FcIntegrationTriggerControllerTest {
     verify(fcScheduleService).fetchCpsFromFc();
   }
 
+  @Test
+  public void fetchProgramsFromFc() {
+    // when
+    fcIntegrationTriggerController.fetchProgramsFromFc();
+
+    // then
+    verify(fcScheduleService).fetchProgramsFromFc();
+  }
+
 }
