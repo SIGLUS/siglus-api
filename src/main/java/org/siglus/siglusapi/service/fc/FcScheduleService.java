@@ -103,40 +103,50 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.cmm.cron}", zone = TIME_ZONE_ID)
   public void fetchCmmsFromFc() {
-    final long startTime = currentTimeMillis();
-    String date = fcIntegrationResultService.getLatestSuccessDate(CMM_API);
-    date = getStartDateForPeriodCall(date);
-    Integer callFcCostTimeInSeconds = fetchDataFromFc(CMM_API, date);
-    boolean finalSuccess = fcIntegrationCmmCpService.processCmmData(callFcService.getCmms(), date);
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(CMM_API)
-        .date(date)
-        .totalObjectsFromFc(callFcService.getCmms().size())
-        .callFcSuccess(true)
-        .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
-        .finalSuccess(finalSuccess)
-        .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+    String latestSuccessDate;
+    String queryDate;
+    do {
+      final long startTime = currentTimeMillis();
+      latestSuccessDate = fcIntegrationResultService.getLatestSuccessDate(CMM_API);
+      queryDate = getStartDateForPeriodCall(latestSuccessDate);
+      Integer callFcCostTimeInSeconds = fetchDataFromFc(CMM_API, queryDate);
+      boolean finalSuccess = fcIntegrationCmmCpService.processCmmData(callFcService.getCmms(),
+          queryDate);
+      FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+          .api(CMM_API)
+          .date(queryDate)
+          .totalObjectsFromFc(callFcService.getCmms().size())
+          .callFcSuccess(true)
+          .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
+          .finalSuccess(finalSuccess)
+          .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
+          .build();
+      fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+    } while (!dateHelper.getCurrentMonthStr().equals(queryDate));
   }
 
   @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
   public void fetchCpsFromFc() {
-    final long startTime = currentTimeMillis();
-    String date = fcIntegrationResultService.getLatestSuccessDate(CP_API);
-    date = getStartDateForPeriodCall(date);
-    Integer callFcCostTimeInSeconds = fetchDataFromFc(CP_API, date);
-    boolean finalSuccess = fcIntegrationCmmCpService.processCpData(callFcService.getCps(), date);
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(CP_API)
-        .date(date)
-        .totalObjectsFromFc(callFcService.getCps().size())
-        .callFcSuccess(true)
-        .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
-        .finalSuccess(finalSuccess)
-        .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+    String latestSuccessDate;
+    String queryDate;
+    do {
+      final long startTime = currentTimeMillis();
+      latestSuccessDate = fcIntegrationResultService.getLatestSuccessDate(CP_API);
+      queryDate = getStartDateForPeriodCall(latestSuccessDate);
+      Integer callFcCostTimeInSeconds = fetchDataFromFc(CP_API, queryDate);
+      boolean finalSuccess = fcIntegrationCmmCpService.processCpData(callFcService.getCps(),
+          queryDate);
+      FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+          .api(CP_API)
+          .date(queryDate)
+          .totalObjectsFromFc(callFcService.getCps().size())
+          .callFcSuccess(true)
+          .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
+          .finalSuccess(finalSuccess)
+          .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
+          .build();
+      fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+    } while (!dateHelper.getCurrentMonthStr().equals(queryDate));
   }
 
   @Scheduled(cron = "${fc.program.cron}", zone = TIME_ZONE_ID)
@@ -219,8 +229,8 @@ public class FcScheduleService {
       return date;
     }
     String[] splitDate = date.split("-");
-    LocalDate lastEndDate = LocalDate.of(Integer.valueOf(splitDate[1]),
-        Integer.valueOf(splitDate[0]), 1);
+    LocalDate lastEndDate = LocalDate.of(Integer.parseInt(splitDate[1]),
+        Integer.parseInt(splitDate[0]), 1);
     return lastEndDate.plusMonths(1).format(DateTimeFormatter.ofPattern("MM-yyyy"));
   }
 
