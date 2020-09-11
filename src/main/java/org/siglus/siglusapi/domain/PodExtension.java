@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -32,6 +33,8 @@ import org.siglus.common.domain.BaseEntity;
 @NoArgsConstructor
 @Table(name = "pod_extension", schema = "siglusintegration")
 public class PodExtension extends BaseEntity {
+
+  private UUID shipmentId;
 
   private String issueVoucherNumber;
 

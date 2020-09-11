@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.stockmanagement.domain.card.StockCard;
@@ -57,6 +58,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class SiglusStockEventsService {
 
   @Autowired
@@ -214,8 +216,7 @@ public class SiglusStockEventsService {
     if (CollectionUtils.isNotEmpty(existedLots)) {
       LotDto existedLot = existedLots.get(0);
       if (updateExpirationDate && !existedLot.getExpirationDate().isEqual(expirationDate)) {
-        existedLot.setExpirationDate(expirationDate);
-        lotReferenceDataService.updateLot(existedLot);
+        log.info("lot existed date is different: {}", lotCode);
       }
       return existedLot;
     }

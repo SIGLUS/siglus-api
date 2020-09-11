@@ -4,6 +4,7 @@
 
 CREATE TABLE siglusintegration.pod_extension (
     id uuid PRIMARY KEY,
+    shipmentid uuid  NOT NULL,
     issuevouchernumber CHARACTER VARYING(255),
     clientcode CHARACTER VARYING(255)
 

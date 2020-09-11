@@ -57,8 +57,5 @@ public class SiglusLotReferenceDataService extends BaseReferenceDataService<LotD
   public LotDto saveLot(LotDto lotDto) {
     return postResult("", lotDto, getResultClass());
   }
-
-  public LotDto updateLot(LotDto lotDto) {
-    return put(lotDto.getId().toString(), lotDto, getResultClass(), false);
-  }
+  
 }

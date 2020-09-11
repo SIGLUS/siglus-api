@@ -69,7 +69,7 @@ public class SiglusShipmentDraftControllerTest {
     siglusShipmentDraftController.createShipmentDraft(draftDto);
 
     // then
-    verify(draftController).createShipmentDraft(draftDto);
+    verify(siglusShipmentDraftService).createShipmentDraft(draftDto);
   }
 
 }

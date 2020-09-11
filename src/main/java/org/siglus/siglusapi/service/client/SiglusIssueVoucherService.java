@@ -12,6 +12,7 @@
  * the GNU Affero General Public License along with this program. If not, see
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
+
 package org.siglus.siglusapi.service.client;
 
 import org.siglus.common.service.client.BaseReferenceDataService;
@@ -38,6 +39,6 @@ public class SiglusIssueVoucherService extends BaseReferenceDataService<IssueVou
 
 
   public void updateIssueVourch(String date) {
-    postResult("?date="+date, null, Void.class, false);
+    postResult("?date=" + date, null, Void.class, false);
   }
 }

@@ -72,11 +72,6 @@ public class SiglusStockCardSummariesService {
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
       MultiValueMap<String, String> parameters, Pageable pageable) {
     UUID userId = authenticationHelper.getCurrentUser().getId();
-    return findSiglusStockCard(userId, parameters, pageable);
-  }
-
-  public Page<StockCardSummaryV2Dto> findSiglusStockCard(UUID userId,
-      MultiValueMap<String, String> parameters, Pageable pageable) {
     Set<String> archivedProducts = null;
     if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)) || Boolean
         .parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {

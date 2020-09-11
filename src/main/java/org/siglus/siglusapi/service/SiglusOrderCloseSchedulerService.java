@@ -175,9 +175,9 @@ public class SiglusOrderCloseSchedulerService {
   }
 
   private Map<UUID, FacilityDto> getFacilities(List<Order> orders) {
-   List<UUID> facilityIds = orders.stream().map(order -> order.getFacilityId())
-       .collect(Collectors.toList());
-   return facilityReferenceDataService.findByIds(facilityIds);
+    List<UUID> facilityIds = orders.stream().map(order -> order.getFacilityId())
+        .collect(Collectors.toList());
+    return facilityReferenceDataService.findByIds(facilityIds);
   }
 
   private List<Order> getNeedClosedOrder(List<Order> orders,

@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +40,7 @@ import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
+import org.siglus.siglusapi.service.client.SiglusIssueVoucherService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcScheduleServiceTest {
@@ -77,6 +79,9 @@ public class FcScheduleServiceTest {
   @Mock
   private FcProgramService fcProgramService;
 
+  @Mock
+  private SiglusIssueVoucherService issueVoucherService;
+
   @Before
   public void setup() {
     when(fcIssueVoucherService.createIssueVouchers(any())).thenReturn(true);
@@ -100,10 +105,11 @@ public class FcScheduleServiceTest {
   }
 
   @Test
-  public void shouldFetchIssueVohcerFromFc() {
+  public void shouldFetchIssueVoucherFromFc() {
     // given
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    fcIssueVoucherService.statusErrorRequisitionNumbers = Collections.emptyList();
     when(fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API)).thenReturn(DATE);
 
     // when

@@ -116,7 +116,7 @@ public class SiglusShipmentServiceTest {
     order.setStatus(OrderStatus.FULFILLING);
     order.setProcessingPeriod(buildProcessingPeriod());
     when(orderController.getOrder(any(UUID.class), any())).thenReturn(order);
-    when(siglusOrderService.currentDateIsAfterNextPeriodEndDate(any()))
+    when(siglusOrderService.needCloseOrder(any()))
         .thenReturn(false);
   }
 
@@ -152,7 +152,7 @@ public class SiglusShipmentServiceTest {
     org.openlmis.requisition.dto.ProcessingPeriodDto dto =
         new org.openlmis.requisition.dto.ProcessingPeriodDto();
     dto.setEndDate(LocalDate.now().minusDays(10));
-    when(siglusOrderService.currentDateIsAfterNextPeriodEndDate(any())).thenReturn(true);
+    when(siglusOrderService.needCloseOrder(any())).thenReturn(true);
     when(siglusOrderService.isSuborder(any())).thenReturn(true);
     Order order = new Order();
     when(orderRepository.findOne(orderId)).thenReturn(order);

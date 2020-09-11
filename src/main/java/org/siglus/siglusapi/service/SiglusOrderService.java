@@ -175,7 +175,7 @@ public class SiglusOrderService {
   }
 
   public boolean needCloseOrder(OrderDto orderDto) {
-    if (!orderDto.getFacility().getType().getId().equals(fcFacilityTypeId)){
+    if (!orderDto.getFacility().getType().getId().equals(fcFacilityTypeId)) {
       return currentDateIsAfterNextPeriodEndDate(orderDto);
     }
     return false;

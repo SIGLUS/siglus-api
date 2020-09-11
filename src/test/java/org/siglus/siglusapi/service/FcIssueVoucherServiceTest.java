@@ -69,6 +69,7 @@ import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.siglus.siglusapi.service.fc.FcIssueVoucherService;
+import org.siglus.siglusapi.util.SimulateUserAuthenticationHelper;
 import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -129,6 +130,9 @@ public class FcIssueVoucherServiceTest {
 
   @Mock
   private RequisitionService requisitionService;
+
+  @Mock
+  private SimulateUserAuthenticationHelper simulateUser;
 
   @Before
   public void prepare() {
@@ -205,7 +209,7 @@ public class FcIssueVoucherServiceTest {
 
     // then
     assertEquals(false, isSuccess);
-    assertEquals(1, service.statusErrorRequsitionNumbers.size());
+    assertEquals(1, service.statusErrorRequisitionNumbers.size());
   }
 
   @Test
@@ -287,7 +291,7 @@ public class FcIssueVoucherServiceTest {
     Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
-    when(stockCardSummariesService.searchStockCardSummaryV2Dtos(any(), any()))
+    when(stockCardSummariesService.findSiglusStockCard(any(), any()))
         .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto)));
     ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
@@ -303,7 +307,7 @@ public class FcIssueVoucherServiceTest {
     boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
 
     // then
-    assertEquals(true, isSuccess);
+    assertEquals(false, isSuccess);
   }
 
   @Test
