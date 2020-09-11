@@ -21,6 +21,8 @@ import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_JOB;
+import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
+import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.getQueryByDateApiList;
@@ -108,10 +110,12 @@ public class FcIntegrationResultService {
       return CMM_JOB;
     } else if (CP_API.equals(api)) {
       return CP_JOB;
+    } else if (PROGRAM_API.equals(api)) {
+      return PROGRAM_JOB;
     }
     return null;
   }
-  
+
   private void clearFcData(String api) {
     if (RECEIPT_PLAN_API.equals(api)) {
       callFcService.getReceiptPlans().clear();
