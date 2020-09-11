@@ -30,6 +30,7 @@ public class FcConstants {
   public static final String RECEIPT_PLAN_JOB = "RECEIPT_PLAN";
   public static final String ISSUE_VOUCHER_JOB = "ISSUE_VOUCHER";
   public static final String PROGRAM_JOB = "PROGRAM";
+  public static final String PRODUCT_JOB = "PRODUCT";
   public static final String REGIMEN_JOB = "REGIMEN";
   public static final String FACILITY_TYPE_JOB = "FACILITY_TYPE";
   public static final String GEOGRAPHIC_ZONE_JOB = "GEOGRAPHIC_ZONE";
@@ -39,6 +40,7 @@ public class FcConstants {
   public static final String RECEIPT_PLAN_API = "/receiptPlan/receiptplans";
   public static final String ISSUE_VOUCHER_API = "/issueVoucher/issuevouchers";
   public static final String PROGRAM_API = "/area/areas";
+  public static final String PRODUCT_API = "/product/products";
   public static final String REGIMEN_API = "/areaRegime/arearegimes";
   public static final String FACILITY_TYPE_API = "/clientType/clientstypes";
   public static final String GEOGRAPHIC_ZONE_API = "/region/regions";

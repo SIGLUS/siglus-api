@@ -26,6 +26,8 @@ import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_JOB;
+import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
+import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.util.ArrayList;
@@ -33,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -49,6 +52,9 @@ public class FcIntegrationResultServiceTest {
   public static final String YESTERDAY = "20200828";
   public static final String TODAY = "20200829";
   public static final String DEFAULT_PERIOD = "05-2020";
+
+  @Captor
+  private ArgumentCaptor<FcIntegrationResult> resultCaptor;
 
   @Mock
   private FcIntegrationResultRepository fcIntegrationResultRepository;
@@ -142,13 +148,12 @@ public class FcIntegrationResultServiceTest {
     fcIntegrationResultService.recordCallFcFailed(RECEIPT_PLAN_API, YESTERDAY);
 
     // then
-    ArgumentCaptor<FcIntegrationResult> captor = ArgumentCaptor.forClass(FcIntegrationResult.class);
-    verify(fcIntegrationResultRepository).save(captor.capture());
-    assertEquals("RECEIPT_PLAN", captor.getValue().getJob());
-    assertEquals(YESTERDAY, captor.getValue().getStartDate());
-    assertEquals(TODAY, captor.getValue().getEndDate());
-    assertEquals(false, captor.getValue().getCallFcSuccess());
-    assertNull(captor.getValue().getFinalSuccess());
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals("RECEIPT_PLAN", resultCaptor.getValue().getJob());
+    assertEquals(YESTERDAY, resultCaptor.getValue().getStartDate());
+    assertEquals(TODAY, resultCaptor.getValue().getEndDate());
+    assertEquals(false, resultCaptor.getValue().getCallFcSuccess());
+    assertNull(resultCaptor.getValue().getFinalSuccess());
   }
 
   @Test
@@ -160,9 +165,8 @@ public class FcIntegrationResultServiceTest {
     fcIntegrationResultService.recordCallFcFailed(ISSUE_VOUCHER_API, YESTERDAY);
 
     // then
-    ArgumentCaptor<FcIntegrationResult> captor = ArgumentCaptor.forClass(FcIntegrationResult.class);
-    verify(fcIntegrationResultRepository).save(captor.capture());
-    assertEquals("ISSUE_VOUCHER", captor.getValue().getJob());
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals("ISSUE_VOUCHER", resultCaptor.getValue().getJob());
   }
 
   @Test
@@ -174,9 +178,8 @@ public class FcIntegrationResultServiceTest {
     fcIntegrationResultService.recordCallFcFailed(CMM_API, YESTERDAY);
 
     // then
-    ArgumentCaptor<FcIntegrationResult> captor = ArgumentCaptor.forClass(FcIntegrationResult.class);
-    verify(fcIntegrationResultRepository).save(captor.capture());
-    assertEquals("CMM", captor.getValue().getJob());
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals("CMM", resultCaptor.getValue().getJob());
   }
 
   @Test
@@ -188,9 +191,18 @@ public class FcIntegrationResultServiceTest {
     fcIntegrationResultService.recordCallFcFailed(CP_API, YESTERDAY);
 
     // then
-    ArgumentCaptor<FcIntegrationResult> captor = ArgumentCaptor.forClass(FcIntegrationResult.class);
-    verify(fcIntegrationResultRepository).save(captor.capture());
-    assertEquals("CP", captor.getValue().getJob());
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals("CP", resultCaptor.getValue().getJob());
+  }
+
+  @Test
+  public void shouldGetJobNameWhenIsProduct() {
+    // when
+    fcIntegrationResultService.recordCallFcFailed(PRODUCT_API, YESTERDAY);
+
+    // then
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(PRODUCT_JOB, resultCaptor.getValue().getJob());
   }
 
   @Test
@@ -202,9 +214,8 @@ public class FcIntegrationResultServiceTest {
     fcIntegrationResultService.recordCallFcFailed("", YESTERDAY);
 
     // then
-    ArgumentCaptor<FcIntegrationResult> captor = ArgumentCaptor.forClass(FcIntegrationResult.class);
-    verify(fcIntegrationResultRepository).save(captor.capture());
-    assertNull(captor.getValue().getJob());
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertNull(resultCaptor.getValue().getJob());
   }
 
   @Test
@@ -219,9 +230,8 @@ public class FcIntegrationResultServiceTest {
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);
 
     // then
-    ArgumentCaptor<FcIntegrationResult> captor = ArgumentCaptor.forClass(FcIntegrationResult.class);
-    verify(fcIntegrationResultRepository).save(captor.capture());
-    assertEquals(TODAY, captor.getValue().getEndDate());
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(TODAY, resultCaptor.getValue().getEndDate());
   }
 
   @Test
@@ -237,8 +247,7 @@ public class FcIntegrationResultServiceTest {
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);
 
     // then
-    ArgumentCaptor<FcIntegrationResult> captor = ArgumentCaptor.forClass(FcIntegrationResult.class);
-    verify(fcIntegrationResultRepository).save(captor.capture());
-    assertEquals(DEFAULT_PERIOD, captor.getValue().getEndDate());
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(DEFAULT_PERIOD, resultCaptor.getValue().getEndDate());
   }
 }

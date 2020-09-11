@@ -47,6 +47,7 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
     return FacilityDto[].class;
   }
 
+  @Override
   public List<FacilityDto> findAll() {
     return getPage(RequestParameters.init()).getContent();
   }

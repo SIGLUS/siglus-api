@@ -19,6 +19,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -120,7 +121,7 @@ public class FcFacilityTypeService {
   }
 
   private void updateReason(List<FacilityTypeDto> facilityTypeDtos) {
-    List<StockCardLineItemReasonDto> reasonDtos = siglusStockCardLineItemReasons.findAll();
+    Collection<StockCardLineItemReasonDto> reasonDtos = siglusStockCardLineItemReasons.findAll();
     List<ProgramDto> programs = programRefDataService.findAll();
     List<ValidReasonAssignmentDto> assignmentDtos = new ArrayList<>();
     facilityTypeDtos.forEach(facilityTypeDto ->
@@ -131,7 +132,7 @@ public class FcFacilityTypeService {
   }
 
   private void configureProgram(FacilityTypeDto typeDto, ProgramDto programDto,
-      List<StockCardLineItemReasonDto> reasonDtos,
+      Collection<StockCardLineItemReasonDto> reasonDtos,
       List<ValidReasonAssignmentDto> assignmentDtos) {
     reasonDtos.forEach(reasonDto -> {
       ValidReasonAssignmentDto assignmentDto = new ValidReasonAssignmentDto();

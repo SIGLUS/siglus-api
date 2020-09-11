@@ -63,4 +63,8 @@ public class FieldConstants {
 
   public static final String CONSUMED = "consumed";
 
+  public static final String STATUS = "status";
+
+  public static final String ACTIVE = "active";
+
 }

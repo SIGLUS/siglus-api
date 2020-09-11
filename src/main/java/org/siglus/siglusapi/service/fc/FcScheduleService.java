@@ -15,19 +15,20 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.System.currentTimeMillis;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
@@ -74,6 +75,9 @@ public class FcScheduleService {
 
   @Autowired
   private FcProgramService fcProgramService;
+
+  @Autowired
+  private FcProductService fcProductService;
 
   @Autowired
   private FcFacilityTypeService facilityTypeService;
@@ -226,6 +230,28 @@ public class FcScheduleService {
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);
   }
 
+  @Scheduled(cron = "${fc.product.cron}", zone = TIME_ZONE_ID)
+  public void fetchProductsFromFc() {
+    String date = fcIntegrationResultService.getLatestSuccessDate(PRODUCT_API);
+    fetchProductsFromFc(date);
+  }
+
+  public void fetchProductsFromFc(String date) {
+    final long startTime = currentTimeMillis();
+    Integer callFcCostTimeInSeconds = fetchDataFromFc(PRODUCT_API, date);
+    boolean finalSuccess = fcProductService.processProductData(callFcService.getProducts());
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(PRODUCT_API)
+        .date(date)
+        .totalObjectsFromFc(callFcService.getProducts().size())
+        .callFcSuccess(true)
+        .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
+        .finalSuccess(finalSuccess)
+        .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
+        .build();
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+  }
+
   @Scheduled(cron = "${fc.regimen.cron}", zone = TIME_ZONE_ID)
   public void fetchRegimenFromFcForScheduled() {
     String date = fcIntegrationResultService.getLatestSuccessDate(REGIMEN_API);
@@ -304,6 +330,14 @@ public class FcScheduleService {
       return callFcService.getIssueVouchers().size();
     } else if (RECEIPT_PLAN_API.equals(api)) {
       return callFcService.getReceiptPlans().size();
+    } else if (PROGRAM_API.equals(api)) {
+      return callFcService.getPrograms().size();
+    } else if (PRODUCT_API.equals(api)) {
+      return callFcService.getProducts().size();
+    } else if (REGIMEN_API.equals(api)) {
+      return callFcService.getRegimens().size();
+    } else if (FACILITY_TYPE_API.equals(api)) {
+      return callFcService.getFacilityTypes().size();
     } else if (CMM_API.equals(api)) {
       return callFcService.getCmms().size();
     } else {
@@ -313,19 +347,23 @@ public class FcScheduleService {
 
   private void initData(String api) {
     if (RECEIPT_PLAN_API.equals(api)) {
-      callFcService.setReceiptPlans(new ArrayList<>());
+      callFcService.setReceiptPlans(newArrayList());
     } else if (ISSUE_VOUCHER_API.equals(api)) {
-      callFcService.setIssueVouchers(new ArrayList<>());
+      callFcService.setIssueVouchers(newArrayList());
     } else if (CMM_API.equals(api)) {
-      callFcService.setCmms(new ArrayList<>());
+      callFcService.setCmms(newArrayList());
     } else if (CP_API.equals(api)) {
-      callFcService.setCps(new ArrayList<>());
+      callFcService.setCps(newArrayList());
     } else if (FACILITY_TYPE_API.equals(api)) {
-      callFcService.setFacilityTypes(new ArrayList<>());
+      callFcService.setFacilityTypes(newArrayList());
     } else if (REGIMEN_API.equals(api)) {
-      callFcService.setRegimens(new ArrayList<>());
+      callFcService.setRegimens(newArrayList());
     } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
-      callFcService.setGeographicZones(new ArrayList<>());
+      callFcService.setGeographicZones(newArrayList());
+    } else if (PROGRAM_API.equals(api)) {
+      callFcService.setPrograms(newArrayList());
+    } else if (PRODUCT_API.equals(api)) {
+      callFcService.setProducts(newArrayList());
     }
     callFcService.setPageInfoDto(new PageInfoDto());
   }

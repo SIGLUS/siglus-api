@@ -20,6 +20,7 @@ import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
@@ -36,6 +37,7 @@ import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
+import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.siglus.siglusapi.dto.fc.RegimenDto;
@@ -59,6 +61,7 @@ public class CallFcService {
   private List<CmmDto> cmms = new ArrayList<>();
   private List<CpDto> cps = new ArrayList<>();
   private List<ProgramDto> programs = new ArrayList<>();
+  private List<ProductInfoDto> products = new ArrayList<>();
   private List<RegimenDto> regimens = new ArrayList<>();
   private List<FcFacilityTypeDto> facilityTypes = new ArrayList<>();
   private List<FcGeographicZoneNationalDto> geographicZones = new ArrayList<>();
@@ -101,6 +104,8 @@ public class CallFcService {
       return ReceiptPlanDto[].class;
     } else if (PROGRAM_API.equals(api)) {
       return ProgramDto[].class;
+    } else if (PRODUCT_API.equals(api)) {
+      return ProductInfoDto[].class;
     } else if (REGIMEN_API.equals(api)) {
       return RegimenDto[].class;
     } else if (CMM_API.equals(api)) {
@@ -128,6 +133,8 @@ public class CallFcService {
       this.cps.addAll(Arrays.asList((CpDto[]) body));
     } else if (PROGRAM_API.equals(api)) {
       this.programs.addAll(Arrays.asList((ProgramDto[]) body));
+    } else if (PRODUCT_API.equals(api)) {
+      this.products.addAll(Arrays.asList((ProductInfoDto[]) body));
     } else if (FACILITY_TYPE_API.equals(api)) {
       this.facilityTypes.addAll(Arrays.asList((FcFacilityTypeDto[]) body));
     } else if (GEOGRAPHIC_ZONE_API.equals(api)) {

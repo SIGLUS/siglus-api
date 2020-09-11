@@ -24,6 +24,7 @@ import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
@@ -86,6 +87,9 @@ public class FcScheduleServiceTest {
   @Mock
   private FcFacilityTypeService fcFacilityTypeService;
 
+  @Mock
+  private FcProductService fcProductService;
+
   @Before
   public void setup() {
     when(fcIssueVoucherService.processIssueVouchers(any())).thenReturn(true);
@@ -122,6 +126,23 @@ public class FcScheduleServiceTest {
     verify(callFcService).fetchData(anyString(), anyString());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(ISSUE_VOUCHER_API, resultCaptor.getValue().getApi());
+  }
+
+  @Test
+  public void shouldFetchProductsFromFc() {
+    // given
+    when(callFcService.getProducts()).thenReturn(new ArrayList<>());
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(fcIntegrationResultService.getLatestSuccessDate(PRODUCT_API)).thenReturn(DATE);
+    when(fcProductService.processProductData(any())).thenReturn(true);
+
+    // when
+    fcScheduleService.fetchProductsFromFc();
+
+    // then
+    verify(callFcService).fetchData(anyString(), anyString());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(PRODUCT_API, resultCaptor.getValue().getApi());
   }
 
   @Test

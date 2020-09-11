@@ -21,6 +21,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
@@ -33,6 +34,7 @@ import org.junit.runner.RunWith;
 import org.siglus.siglusapi.dto.fc.CmmDto;
 import org.siglus.siglusapi.dto.fc.CpDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
+import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.siglus.siglusapi.dto.fc.RegimenDto;
@@ -164,6 +166,23 @@ public class CallFcServiceTest {
     // then
     verify(remoteRestTemplate).getForEntity(eq(URL), eq(ProgramDto[].class));
     Assert.assertEquals(1, callFcService.getPrograms().size());
+  }
+
+  @Test
+  public void shouldGetProductWhenFetchDataSuccess() {
+    // given
+    MultiValueMap<String, String> headers = getHeaders("2");
+    Class<ProductInfoDto[]> clazz = ProductInfoDto[].class;
+    ProductInfoDto[] productInfoDtos = {new ProductInfoDto()};
+    when(remoteRestTemplate.getForEntity(URL, clazz))
+        .thenReturn(new ResponseEntity<>(productInfoDtos, headers, HttpStatus.OK));
+
+    // when
+    callFcService.fetchData(URL, PRODUCT_API);
+
+    // then
+    verify(remoteRestTemplate).getForEntity(eq(URL), eq(ProductInfoDto[].class));
+    Assert.assertEquals(1, callFcService.getProducts().size());
   }
 
   @Test

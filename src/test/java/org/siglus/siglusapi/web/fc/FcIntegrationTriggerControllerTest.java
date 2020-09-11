@@ -52,6 +52,18 @@ public class FcIntegrationTriggerControllerTest {
   }
 
   @Test
+  public void shouldFetchProductsFromFc() {
+    // given
+    String date = "20200910";
+
+    // when
+    fcIntegrationTriggerController.fetchProductsFromFc(date);
+
+    // then
+    verify(fcScheduleService).fetchProductsFromFc(date);
+  }
+
+  @Test
   public void processingReceiptPlans() {
     // given
     String date = "20200910";

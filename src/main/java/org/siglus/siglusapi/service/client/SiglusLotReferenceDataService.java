@@ -41,6 +41,7 @@ public class SiglusLotReferenceDataService extends BaseReferenceDataService<LotD
     return LotDto[].class;
   }
 
+  @Override
   public List<LotDto> findAll() {
     return getPage(RequestParameters.init()).getContent();
   }

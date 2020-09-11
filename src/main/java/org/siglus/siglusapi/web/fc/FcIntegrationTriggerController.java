@@ -51,6 +51,11 @@ public class FcIntegrationTriggerController {
     fcScheduleService.fetchProgramsFromFc(fromDate);
   }
 
+  @PostMapping("/products")
+  public void fetchProductsFromFc(@RequestParam String date) {
+    fcScheduleService.fetchProductsFromFc(date);
+  }
+
   @PostMapping("/fcFacilityType")
   public void fetchFacilityTypeFromFc(@RequestParam(DATE) String beginDate) {
     fcScheduleService.fetchFacilityTypeFromFc(beginDate);
