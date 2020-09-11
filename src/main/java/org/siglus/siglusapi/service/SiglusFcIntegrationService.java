@@ -165,11 +165,15 @@ public class SiglusFcIntegrationService {
   }
 
   public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date, Pageable pageable) {
-    Set<UUID> dpmRequestingFacilityIds = siglusFacilityReferenceDataService.findAll()
+    List<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.findAll();
+    Set<UUID> dpmRequestingFacilityIds = facilityDtos
         .stream()
         .filter(facilityDto -> dpmFacilityTypeCode.equals(facilityDto.getType().getCode()))
         .map(FacilityDto::getId)
         .collect(toSet());
+    Map<UUID, String> facilityCodeMap = facilityDtos
+        .stream()
+        .collect(toMap(FacilityDto::getId, FacilityDto::getCode));
 
     Page<ProofOfDelivery> page = siglusProofOfDeliveryRepository
         .search(date, dateHelper.getTodayDateStr(), dpmRequestingFacilityIds, pageable);
@@ -226,7 +230,7 @@ public class SiglusFcIntegrationService {
     List<FcProofOfDeliveryDto> pods = page.getContent()
         .stream()
         .map(pod -> buildProofOfDeliveryDto(pod, requisitionNumberMap, orderableMap, programMap,
-            lotMap, reasonMap, podRequisitionMap))
+            lotMap, reasonMap, podRequisitionMap, facilityCodeMap))
         .collect(Collectors.toList());
 
     return Pagination.getPage(pods, pageable, page.getTotalElements());
@@ -238,7 +242,8 @@ public class SiglusFcIntegrationService {
       Map<UUID, ProgramOrderablesExtension> programMap,
       Map<UUID, LotDto> lotMap,
       Map<UUID, String> reasonMap,
-      Map<UUID, UUID> podRequisitionMap) {
+      Map<UUID, UUID> podRequisitionMap,
+      Map<UUID, String> facilityCodeMap) {
 
     String requisitionNumber = requisitionNumberMap
         .get(podRequisitionMap.get(pod.getId()));
@@ -250,6 +255,8 @@ public class SiglusFcIntegrationService {
         .collect(Collectors.toList());
 
     return FcProofOfDeliveryDto.builder()
+        .orderNumber(pod.getShipment().getOrder().getOrderCode())
+        .facilityCode(facilityCodeMap.get(pod.getShipment().getOrder().getRequestingFacilityId()))
         .requisitionNumber(requisitionNumber)
         .deliveredBy(pod.getDeliveredBy())
         .receivedBy(pod.getReceivedBy())
