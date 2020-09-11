@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.web;
 
 import java.util.UUID;
-import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.siglus.siglusapi.service.SiglusShipmentDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +36,6 @@ public class SiglusShipmentDraftController {
 
   @Autowired
   private SiglusShipmentDraftService siglusShipmentDraftService;
-
-  @Autowired
-  private ShipmentDraftController draftController;
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)

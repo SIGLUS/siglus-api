@@ -94,6 +94,7 @@ import org.springframework.util.MultiValueMap;
 
 @Service
 @Slf4j
+@SuppressWarnings("PMD.TooManyMethods")
 public class FcIssueVoucherService {
 
   private static final String FC_INTEGRATION = "FC Integration";

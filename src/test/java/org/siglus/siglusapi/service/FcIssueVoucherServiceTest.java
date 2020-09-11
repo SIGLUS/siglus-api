@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
@@ -23,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -32,14 +32,18 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.OrderRepository;
+import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
+import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
@@ -51,6 +55,7 @@ import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.UserDto;
@@ -134,12 +139,46 @@ public class FcIssueVoucherServiceTest {
   @Mock
   private SimulateUserAuthenticationHelper simulateUser;
 
+  @Captor
+  private ArgumentCaptor<ShipmentDto> shipmentCaptor;
+
+  private UserDto userDto;
+  private FacilityDto facilityDto;
+  private UUID programId = UUID.randomUUID();
+  private IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
+
   @Before
   public void prepare() {
+    when(requisitionService.convertToOrder(any(), any())).thenReturn(Collections.emptyList());
     ReflectionTestUtils.setField(service, "timeZoneId", "UTC");
     ReflectionTestUtils.setField(service, "receiveReason",
         "44814bc4-df64-11e9-9e7e-4c32759554d9");
     when(stockEventsService.createStockEvent(any())).thenReturn(UUID.randomUUID());
+    facilityDto = new FacilityDto();
+    facilityDto.setId(UUID.randomUUID());
+    when(siglusFacilityReferenceDataService
+        .getFacilityByCode(getIssueVoucherDto().getWarehouseCode()))
+        .thenReturn(Pagination
+            .getPage(Arrays.asList(facilityDto), new PageRequest(0, 10), 0));
+    userDto = new UserDto();
+    userDto.setId(UUID.randomUUID());
+    userDto.setHomeFacilityId(facilityDto.getId());
+    when(userReferenceDataService
+        .getUserInfo(facilityDto.getId()))
+        .thenReturn(Pagination
+            .getPage(Arrays.asList(userDto), new PageRequest(0, 10), 0));
+    IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
+    when(podExtensionRepository
+        .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
+            issueVoucherDto.getIssueVoucherNumber())).thenReturn(null);
+    ValidSourceDestinationDto sourceDestinationDto = new ValidSourceDestinationDto();
+    sourceDestinationDto.setId(UUID.randomUUID());
+    sourceDestinationDto.setName("FC Integration");
+    Node node = new Node();
+    node.setId(UUID.randomUUID());
+    sourceDestinationDto.setNode(node);
+    when(sourceDestinationService.getValidSources(programId,
+        facilityDto.getId())).thenReturn(Arrays.asList(sourceDestinationDto));
   }
 
   @Test
@@ -163,46 +202,17 @@ public class FcIssueVoucherServiceTest {
   @Test
   public void shouldReturnFailIfRequisitionStatusNotApproved() {
     // given
-    IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
-    RequisitionExtension requisitionExtension = new RequisitionExtension();
-    requisitionExtension.setRequisitionNumber(
-        Integer.valueOf("192"));
+    RequisitionExtension requisitionExtension = getRequisitionExtension();
     fcDataValidate.validateEmptyFacilityCode(issueVoucherDto.getWarehouseCode());
     requisitionExtension.setRequisitionId(UUID.randomUUID());
-    when(podExtensionRepository
-        .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
-            issueVoucherDto.getIssueVoucherNumber())).thenReturn(null);
     when(requisitionExtensionRepository
         .findByRequisitionNumber(issueVoucherDto.getRequisitionNumber()))
         .thenReturn(requisitionExtension);
-    FacilityDto facilityDto = new FacilityDto();
-    facilityDto.setId(UUID.randomUUID());
-    when(siglusFacilityReferenceDataService
-        .getFacilityByCode(issueVoucherDto.getWarehouseCode()))
-        .thenReturn(Pagination
-            .getPage(Arrays.asList(facilityDto), new PageRequest(0, 10), 0));
-    UserDto userDto = new UserDto();
-    userDto.setId(UUID.randomUUID());
-    userDto.setHomeFacilityId(facilityDto.getId());
-    when(userReferenceDataService
-        .getUserInfo(facilityDto.getId()))
-        .thenReturn(Pagination
-            .getPage(Arrays.asList(userDto), new PageRequest(0, 10), 0));
-    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
-    ObjectReferenceDto program = new ObjectReferenceDto();
-    program.setId(randomUUID());
-    requisitionV2Dto.setProgram(program);
-    requisitionV2Dto.setId(requisitionExtension.getRequisitionId());
+    RequisitionV2Dto requisitionV2Dto = getRequisitionV2Dto(requisitionExtension);
     requisitionV2Dto.setStatus(RequisitionStatus.AUTHORIZED);
     when(siglusRequisitionRequisitionService
         .searchRequisition(requisitionExtension.getRequisitionId()))
         .thenReturn(requisitionV2Dto);
-    ValidSourceDestinationDto sourceDestinationDto = new ValidSourceDestinationDto();
-    sourceDestinationDto.setId(UUID.randomUUID());
-    sourceDestinationDto.setName("FC Integration");
-    Node node = new Node();
-    node.setId(UUID.randomUUID());
-    sourceDestinationDto.setNode(node);
 
     // when
     boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
@@ -213,60 +223,183 @@ public class FcIssueVoucherServiceTest {
   }
 
   @Test
-  public void shouldReturnSuccessIfDataAndCallApiNormalWhenConvertOrder() {
+  public void shouldReturnSuccessWhenUpdateSubOrderAndCanFulfillEqualNull() {
     // given
-    IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
-    RequisitionExtension requisitionExtension = new RequisitionExtension();
-    requisitionExtension.setRequisitionNumber(
-        Integer.valueOf("192"));
+    RequisitionExtension requisitionExtension = getRequisitionExtension();
     fcDataValidate.validateEmptyFacilityCode(issueVoucherDto.getWarehouseCode());
     requisitionExtension.setRequisitionId(UUID.randomUUID());
-    when(podExtensionRepository
-        .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
-            issueVoucherDto.getIssueVoucherNumber())).thenReturn(null);
     when(requisitionExtensionRepository
         .findByRequisitionNumber(issueVoucherDto.getRequisitionNumber()))
         .thenReturn(requisitionExtension);
-    FacilityDto facilityDto = new FacilityDto();
-    facilityDto.setId(UUID.randomUUID());
-    when(siglusFacilityReferenceDataService
-        .getFacilityByCode(issueVoucherDto.getWarehouseCode()))
-        .thenReturn(Pagination
-            .getPage(Arrays.asList(facilityDto), new PageRequest(0, 10), 0));
-    UserDto userDto = new UserDto();
-    userDto.setId(UUID.randomUUID());
-    userDto.setHomeFacilityId(facilityDto.getId());
-    when(userReferenceDataService
-        .getUserInfo(facilityDto.getId()))
-        .thenReturn(Pagination
-            .getPage(Arrays.asList(userDto), new PageRequest(0, 10), 0));
-    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
-    ObjectReferenceDto program = new ObjectReferenceDto();
-    program.setId(randomUUID());
-    requisitionV2Dto.setProgram(program);
-    requisitionV2Dto.setStatus(RequisitionStatus.APPROVED);
-    requisitionV2Dto.setId(requisitionExtension.getRequisitionId());
+    RequisitionV2Dto requisitionV2Dto = getRequisitionV2Dto(requisitionExtension);
     when(siglusRequisitionRequisitionService
         .searchRequisition(requisitionExtension.getRequisitionId()))
         .thenReturn(requisitionV2Dto);
-    OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setId(UUID.randomUUID());
-    orderableDto.setProductCode("02E01");
-    orderableDto.setNetContent((long) 26);
-    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
-    approvedProductDto.setOrderable(orderableDto);
-    approvedProductDto.setId(UUID.randomUUID());
+    OrderableDto orderableDto = getOrderableDto();
+    ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
     when(approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(),
         requisitionV2Dto.getProgramId(), null, false))
         .thenReturn(Arrays.asList(approvedProductDto));
-    ValidSourceDestinationDto sourceDestinationDto = new ValidSourceDestinationDto();
-    sourceDestinationDto.setId(UUID.randomUUID());
-    sourceDestinationDto.setName("FC Integration");
-    Node node = new Node();
-    node.setId(UUID.randomUUID());
-    sourceDestinationDto.setNode(node);
-    when(sourceDestinationService.getValidSources(requisitionV2Dto.getProgramId(),
-        facilityDto.getId())).thenReturn(Arrays.asList(sourceDestinationDto));
+    OrderExternal orderExternal = new OrderExternal();
+    orderExternal.setId(UUID.randomUUID());
+    when(orderExternalRepository.findByRequisitionId(requisitionV2Dto.getId())).thenReturn(
+        Collections.emptyList());
+    Order canFulfillOrder = new Order();
+    canFulfillOrder.setId(UUID.randomUUID());
+    canFulfillOrder.setOrderLineItems(new ArrayList<>());
+    when(orderRepository.findCanFulfillOrderAndInExternalId(Arrays.asList(
+        orderExternal.getId()))).thenReturn(null);
+    Order order = new Order();
+    order.setId(UUID.randomUUID());
+    when(orderRepository.findByExternalId(requisitionV2Dto.getId()))
+        .thenReturn(order, order);
+    org.openlmis.fulfillment.web.util.OrderDto orderDto = new
+        org.openlmis.fulfillment.web.util.OrderDto();
+    orderDto.setId(order.getId());
+    SiglusOrderDto dto = new SiglusOrderDto();
+    dto.setOrder(orderDto);
+    when(siglusOrderService.searchOrderById(order.getId())).thenReturn(dto);
+    BasicOrderDto basicOrderDto = new BasicOrderDto();
+    basicOrderDto.setId(order.getId());
+    when(siglusOrderService.createSubOrder(any(), any())).thenReturn(
+        Arrays.asList(basicOrderDto));
+    StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
+    summaryV2Dto.setOrderable(
+        new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "",
+            orderableDto.getId()));
+    CanFulfillForMeEntryDto fulfillForMeEntryDto = new CanFulfillForMeEntryDto();
+    UUID lotId = UUID.randomUUID();
+    fulfillForMeEntryDto.setStockOnHand(50);
+    fulfillForMeEntryDto.setLot(
+        new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "", lotId));
+    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
+    fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
+    summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
+    when(stockCardSummariesService.findSiglusStockCard(any(), any()))
+        .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto)));
+    ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
+        new org.openlmis.fulfillment.service.referencedata.OrderableDto();
+    orderableDto1.setId(orderableDto.getId());
+    shipmentLineItemDto.setOrderable(orderableDto1);
+    shipmentLineItemDto.setLotId(lotId);
+    ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
+    shipmentDraftDto.setLineItems(Arrays.asList(shipmentLineItemDto));
+    when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
+    ShipmentDto shipmentDto = new ShipmentDto();
+    shipmentDto.setId(UUID.randomUUID());
+    PodExtension podExtension = new PodExtension();
+    when(podExtensionRepository.save(any(PodExtension.class))).thenReturn(podExtension);
+    when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
+        .thenReturn(shipmentDto);
+    LotDto lotDto = getLotDto(lotId);
+    when(lotReferenceDataService.getLots(any())).thenReturn(Arrays.asList(lotDto));
+
+    // when
+    boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
+
+    // then
+    ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
+    assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
+    assertEquals(true, isSuccess);
+  }
+
+  @Test
+  public void shouldReturnSuccessIfDataAndCallApiNormalWhenUpdateSubOrder() {
+    // given
+    RequisitionExtension requisitionExtension = getRequisitionExtension();
+    fcDataValidate.validateEmptyFacilityCode(issueVoucherDto.getWarehouseCode());
+    requisitionExtension.setRequisitionId(UUID.randomUUID());
+    when(requisitionExtensionRepository
+        .findByRequisitionNumber(issueVoucherDto.getRequisitionNumber()))
+        .thenReturn(requisitionExtension);
+    RequisitionV2Dto requisitionV2Dto = getRequisitionV2Dto(requisitionExtension);
+    when(siglusRequisitionRequisitionService
+        .searchRequisition(requisitionExtension.getRequisitionId()))
+        .thenReturn(requisitionV2Dto);
+    OrderableDto orderableDto = getOrderableDto();
+    ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
+    when(approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(),
+        requisitionV2Dto.getProgramId(), null, false))
+        .thenReturn(Arrays.asList(approvedProductDto));
+    OrderExternal orderExternal = new OrderExternal();
+    orderExternal.setId(UUID.randomUUID());
+    when(orderExternalRepository.findByRequisitionId(requisitionV2Dto.getId())).thenReturn(
+        Arrays.asList(orderExternal));
+    Order canFulfillOrder = new Order();
+    canFulfillOrder.setId(UUID.randomUUID());
+    canFulfillOrder.setOrderLineItems(new ArrayList<>());
+    when(orderRepository.findCanFulfillOrderAndInExternalId(Arrays.asList(
+        orderExternal.getId()))).thenReturn(canFulfillOrder);
+    Order order = new Order();
+    order.setId(UUID.randomUUID());
+    when(orderRepository.findByExternalId(requisitionV2Dto.getId()))
+        .thenReturn(null, order);
+    org.openlmis.fulfillment.web.util.OrderDto orderDto = new
+        org.openlmis.fulfillment.web.util.OrderDto();
+    orderDto.setId(order.getId());
+    SiglusOrderDto dto = new SiglusOrderDto();
+    dto.setOrder(orderDto);
+    when(siglusOrderService.searchOrderById(canFulfillOrder.getId())).thenReturn(dto);
+    StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
+    summaryV2Dto.setOrderable(
+        new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "",
+            orderableDto.getId()));
+    CanFulfillForMeEntryDto fulfillForMeEntryDto = new CanFulfillForMeEntryDto();
+    UUID lotId = UUID.randomUUID();
+    fulfillForMeEntryDto.setStockOnHand(50);
+    fulfillForMeEntryDto.setLot(
+        new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "", lotId));
+    Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
+    fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
+    summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
+    when(stockCardSummariesService.findSiglusStockCard(any(), any()))
+        .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto)));
+    ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
+        new org.openlmis.fulfillment.service.referencedata.OrderableDto();
+    orderableDto1.setId(orderableDto.getId());
+    shipmentLineItemDto.setOrderable(orderableDto1);
+    shipmentLineItemDto.setLotId(lotId);
+    ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
+    shipmentDraftDto.setLineItems(Arrays.asList(shipmentLineItemDto));
+    when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
+    ShipmentDto shipmentDto = new ShipmentDto();
+    shipmentDto.setId(UUID.randomUUID());
+    PodExtension podExtension = new PodExtension();
+    when(podExtensionRepository.save(any(PodExtension.class))).thenReturn(podExtension);
+    when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
+        .thenReturn(shipmentDto);
+    LotDto lotDto = getLotDto(lotId);
+    when(lotReferenceDataService.getLots(any())).thenReturn(Arrays.asList(lotDto));
+
+    // when
+    boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
+
+    // then
+    ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
+    assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
+    assertEquals(true, isSuccess);
+  }
+
+  @Test
+  public void shouldReturnSuccessIfDataAndCallApiNormalWhenConvertOrder() {
+    // given
+    RequisitionExtension requisitionExtension = getRequisitionExtension();
+    fcDataValidate.validateEmptyFacilityCode(issueVoucherDto.getWarehouseCode());
+    requisitionExtension.setRequisitionId(UUID.randomUUID());
+    when(requisitionExtensionRepository
+        .findByRequisitionNumber(issueVoucherDto.getRequisitionNumber()))
+        .thenReturn(requisitionExtension);
+    RequisitionV2Dto requisitionV2Dto = getRequisitionV2Dto(requisitionExtension);
+    when(siglusRequisitionRequisitionService
+        .searchRequisition(requisitionExtension.getRequisitionId()))
+        .thenReturn(requisitionV2Dto);
+    OrderableDto orderableDto = getOrderableDto();
+    ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
+    when(approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(),
+        requisitionV2Dto.getProgramId(), null, false))
+        .thenReturn(Arrays.asList(approvedProductDto));
     when(orderExternalRepository.findByRequisitionId(requisitionV2Dto.getId())).thenReturn(
         Collections.emptyList());
     Order order = new Order();
@@ -285,7 +418,7 @@ public class FcIssueVoucherServiceTest {
             orderableDto.getId()));
     CanFulfillForMeEntryDto fulfillForMeEntryDto = new CanFulfillForMeEntryDto();
     UUID lotId = UUID.randomUUID();
-    fulfillForMeEntryDto.setStockOnHand(25);
+    fulfillForMeEntryDto.setStockOnHand(50);
     fulfillForMeEntryDto.setLot(
         new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "", lotId));
     Set<CanFulfillForMeEntryDto> fulfillForMeEntryDtos = new HashSet();
@@ -293,21 +426,32 @@ public class FcIssueVoucherServiceTest {
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
     when(stockCardSummariesService.findSiglusStockCard(any(), any()))
         .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto)));
-    ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
+    org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
+        new org.openlmis.fulfillment.service.referencedata.OrderableDto();
+    orderableDto1.setId(orderableDto.getId());
+    shipmentLineItemDto.setOrderable(orderableDto1);
     shipmentLineItemDto.setLotId(lotId);
+    ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
     shipmentDraftDto.setLineItems(Arrays.asList(shipmentLineItemDto));
     when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
-    LotDto lotDto = new LotDto();
-    lotDto.setId(lotId);
-    lotDto.setLotCode("M18361");
-    when(lotReferenceDataService.getLots(any())).thenReturn(Arrays.asList(lotDto));
+    ShipmentDto shipmentDto = new ShipmentDto();
+    shipmentDto.setId(UUID.randomUUID());
+    PodExtension podExtension = new PodExtension();
+    when(podExtensionRepository.save(any(PodExtension.class))).thenReturn(podExtension);
+    when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
+        .thenReturn(shipmentDto);
+    when(lotReferenceDataService.getLots(any())).thenReturn(Arrays.asList(getLotDto(lotId)));
 
     // when
     boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
 
     // then
-    assertEquals(false, isSuccess);
+    verify(simulateUser).simulateUserAuth(any());
+    ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
+    assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
+    assertEquals(true, isSuccess);
+
   }
 
   @Test
@@ -322,6 +466,44 @@ public class FcIssueVoucherServiceTest {
     // then
     assertEquals(true, isSuccess);
 
+  }
+
+  private ApprovedProductDto getApprovedProductDto(OrderableDto orderableDto) {
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
+    approvedProductDto.setOrderable(orderableDto);
+    approvedProductDto.setId(UUID.randomUUID());
+    return approvedProductDto;
+  }
+
+  private RequisitionV2Dto getRequisitionV2Dto(RequisitionExtension requisitionExtension) {
+    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
+    ObjectReferenceDto program = new ObjectReferenceDto();
+    program.setId(programId);
+    requisitionV2Dto.setProgram(program);
+    requisitionV2Dto.setStatus(RequisitionStatus.APPROVED);
+    requisitionV2Dto.setId(requisitionExtension.getRequisitionId());
+    return requisitionV2Dto;
+  }
+
+  private OrderableDto getOrderableDto() {
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(UUID.randomUUID());
+    orderableDto.setProductCode("02E01");
+    orderableDto.setNetContent((long) 25);
+    return orderableDto;
+  }
+
+  private LotDto getLotDto(UUID lotId) {
+    LotDto lotDto = new LotDto();
+    lotDto.setId(lotId);
+    lotDto.setLotCode("M18361");
+    return lotDto;
+  }
+
+  private RequisitionExtension getRequisitionExtension() {
+    RequisitionExtension requisitionExtension = new RequisitionExtension();
+    requisitionExtension.setRequisitionNumber(Integer.valueOf("192"));
+    return requisitionExtension;
   }
 
   private IssueVoucherDto getIssueVoucherDto() {
