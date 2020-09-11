@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web.fc;
 
 import static org.mockito.Mockito.verify;
 
+import java.time.LocalDate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -54,10 +55,10 @@ public class FcIntegrationTriggerControllerTest {
   @Test
   public void fetchProgramsFromFc() {
     // when
-    fcIntegrationTriggerController.fetchProgramsFromFc();
+    fcIntegrationTriggerController.fetchProgramsFromFc(LocalDate.of(2020, 1, 1));
 
     // then
-    verify(fcScheduleService).fetchProgramsFromFc();
+    verify(fcScheduleService).fetchProgramsFromFc(LocalDate.of(2020, 1, 1));
   }
 
 }

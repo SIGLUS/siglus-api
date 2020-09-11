@@ -47,6 +47,11 @@ public class SiglusDateHelper {
     return dateFormat.format(date);
   }
 
+  public String formatDateString(LocalDate date) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    return date.format(formatter);
+  }
+
   public String getYesterdayDateStr() {
     LocalDate now = LocalDate.now(clock);
     LocalDate yesterday = now.minusDays(1);

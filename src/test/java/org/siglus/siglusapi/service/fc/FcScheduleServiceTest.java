@@ -188,7 +188,7 @@ public class FcScheduleServiceTest {
     when(fcProgramService.processProgramData(any())).thenReturn(true);
 
     // when
-    fcScheduleService.fetchProgramsFromFc();
+    fcScheduleService.fetchProgramsFromFc(null);
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());

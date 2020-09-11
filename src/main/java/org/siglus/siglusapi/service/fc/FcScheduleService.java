@@ -150,9 +150,15 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.program.cron}", zone = TIME_ZONE_ID)
-  public void fetchProgramsFromFc() {
+  public void fetchProgramsFromFcForScheduled() {
+    fetchProgramsFromFc(null);
+  }
+
+  public void fetchProgramsFromFc(LocalDate fromDate) {
     final long startTime = currentTimeMillis();
-    String date = fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API);
+    String date = fromDate == null
+        ? fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API)
+        : dateHelper.formatDateString(fromDate);
     log.info("date: {}", date);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(PROGRAM_API, date);
     boolean finalSuccess = fcProgramService.processProgramData(callFcService.getPrograms());

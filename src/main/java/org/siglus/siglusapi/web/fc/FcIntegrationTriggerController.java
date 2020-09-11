@@ -15,10 +15,13 @@
 
 package org.siglus.siglusapi.web.fc;
 
+import java.time.LocalDate;
 import org.siglus.siglusapi.service.fc.FcScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -39,7 +42,8 @@ public class FcIntegrationTriggerController {
   }
 
   @PostMapping("/fcPrograms")
-  public void fetchProgramsFromFc() {
-    fcScheduleService.fetchProgramsFromFc();
+  public void fetchProgramsFromFc(
+      @DateTimeFormat(pattern = "yyyyMMdd") @RequestParam LocalDate date) {
+    fcScheduleService.fetchProgramsFromFc(date);
   }
 }
