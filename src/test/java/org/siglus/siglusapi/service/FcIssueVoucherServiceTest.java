@@ -219,7 +219,7 @@ public class FcIssueVoucherServiceTest {
 
     // then
     assertEquals(false, isSuccess);
-    assertEquals(1, service.statusErrorRequisitionNumbers.size());
+    assertEquals(1, service.statusErrorIssueVourcherNumber.size());
   }
 
   @Test

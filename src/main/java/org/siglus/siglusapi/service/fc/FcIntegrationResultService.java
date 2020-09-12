@@ -94,6 +94,7 @@ public class FcIntegrationResultService {
         .callFcSuccess(resultDto.getCallFcSuccess())
         .callFcCostTimeInSeconds(resultDto.getCallFcCostTimeInSeconds())
         .finalSuccess(resultDto.getFinalSuccess())
+        .errorMessage(resultDto.getErrorMessage())
         .totalCostTimeInSeconds(resultDto.getTotalCostTimeInSeconds())
         .build();
     log.info("save fc_integration_results: {}", result);

@@ -116,7 +116,7 @@ public class FcScheduleService {
         .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
         .finalSuccess(finalSuccess)
         .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
-        .errorMessage(String.join(";", fcIssueVoucherService.statusErrorRequisitionNumbers))
+        .errorMessage(String.join(";", fcIssueVoucherService.statusErrorIssueVourcherNumber))
         .build();
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);
   }

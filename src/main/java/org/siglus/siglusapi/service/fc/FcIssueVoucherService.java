@@ -24,7 +24,6 @@ import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUM
 
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,6 +41,7 @@ import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
+import org.openlmis.fulfillment.web.util.MetadataDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
@@ -159,11 +159,11 @@ public class FcIssueVoucherService {
   @Autowired
   private SimulateUserAuthenticationHelper simulateUser;
 
-  public List<String> statusErrorRequisitionNumbers;
+  public List<String> statusErrorIssueVourcherNumber;
 
   public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
     boolean successHandler = true;
-    statusErrorRequisitionNumbers = new ArrayList<>();
+    statusErrorIssueVourcherNumber = new ArrayList<>();
     for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
       PodExtension podExtension = podExtensionRepository
           .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
@@ -175,7 +175,7 @@ public class FcIssueVoucherService {
         }
       }
     }
-    if (!CollectionUtils.isEmpty(statusErrorRequisitionNumbers)) {
+    if (!CollectionUtils.isEmpty(statusErrorIssueVourcherNumber)) {
       successHandler = false;
     }
     return successHandler;
@@ -191,7 +191,8 @@ public class FcIssueVoucherService {
       RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
           .searchRequisition(extension.getRequisitionId());
       if (!requisitionV2Dto.getStatus().isApproved()) {
-        statusErrorRequisitionNumbers.add(issueVoucherDto.getRequisitionNumber());
+        statusErrorIssueVourcherNumber.add("requisition status is error :" +
+            issueVoucherDto.getIssueVoucherNumber());
         return FcHandlerStatus.DATA_ERROR;
       }
       List<ApprovedProductDto> approvedProductDtos = getApprovedProducts(userDto, requisitionV2Dto);
@@ -212,6 +213,9 @@ public class FcIssueVoucherService {
               issueVoucherDto);
           saveFcPodExtension(issueVoucherDto, shipmentDto);
         }
+      } else {
+        statusErrorIssueVourcherNumber.add("product not exist error :" +
+            issueVoucherDto.getIssueVoucherNumber());
       }
     } catch (FcDataException exception) {
       return getFcDataExceptionHandler(issueVoucherDto, exception);
@@ -319,8 +323,7 @@ public class FcIssueVoucherService {
     ApprovedProductDto dto = orderableDtoMap.get(productDto.getFnmCode());
     lineItemDto.setOrderableId(dto.getOrderable().getId());
     lineItemDto.setQuantity(productDto.getShippedQuantity());
-    LocalDate date = issueVoucherDto.getShippingDate().toInstant()
-        .atZone(ZoneId.of(timeZoneId)).toLocalDate();
+    LocalDate date = LocalDate.now().minusDays(1);
     lineItemDto.setOccurredDate(date);
     lineItemDto.setReasonId(UUID.fromString(receiveReason));
     lineItemDto.setDocumentationNo(FC_INTEGRATION);
@@ -387,6 +390,7 @@ public class FcIssueVoucherService {
             approvedProductDto.getOrderable().getId(),
             approvedProductDto.getOrderable().getVersionNumber());
         orderItem.setOrderable(orderableVersion);
+        orderItem.setOrder(canFulfillOrder);
         orderItem.setOrderedQuantity(lineItem.getOrderedQuantity());
         existLineItems.add(orderItem);
       }
@@ -453,6 +457,9 @@ public class FcIssueVoucherService {
       org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto = new
           org.openlmis.fulfillment.service.referencedata.OrderableDto();
       BeanUtils.copyProperties(existOrderableDto, orderableDto);
+      MetadataDto metadataDto = new MetadataDto();
+      BeanUtils.copyProperties(existOrderableDto.getMeta(), metadataDto);
+      orderableDto.setMeta(metadataDto);
       itemDto.setOrderable(orderableDto);
       itemDto.setPartialFulfilledQuantity((long) 0);
       itemDto.setOrderedQuantity(approvedProductDto.getOrderable()
@@ -590,7 +597,7 @@ public class FcIssueVoucherService {
     parameters.set(FACILITY_ID, supplyFacility.getId().toString());
     parameters.set(RIGHT_NAME, STOCK_CARDS_VIEW);
     productIds.stream().forEach(productId -> {
-      parameters.set(ORDERABLE_ID, productId.toString());
+      parameters.add(ORDERABLE_ID, productId.toString());
     });
     Pageable page = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
     return stockCardSummariesService.findSiglusStockCard(parameters, page)
