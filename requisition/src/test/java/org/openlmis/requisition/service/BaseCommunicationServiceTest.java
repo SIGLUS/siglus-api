@@ -49,6 +49,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ResultDto;
@@ -82,6 +83,9 @@ public abstract class BaseCommunicationServiceTest<T> {
 
   @Mock
   private RequisitionAuthService authService;
+
+  @InjectMocks
+  private AsyncService asyncService;
 
   @Captor
   protected ArgumentCaptor<URI> uriCaptor;
@@ -219,6 +223,7 @@ public abstract class BaseCommunicationServiceTest<T> {
     BaseCommunicationService<T> service = getService();
     service.setRestTemplate(restTemplate);
     service.setAuthService(authService);
+    service.setAsyncService(asyncService);
 
     ReflectionTestUtils.setField(service, "maxUrlLength", 2000);
 

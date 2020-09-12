@@ -56,7 +56,7 @@ public abstract class BaseCommunicationService<T> {
 
   protected RequisitionAuthService authService;
 
-  protected AysncService aysncService;
+  protected AsyncService asyncService;
 
   @Value("${request.maxUrlLength}")
   private int maxUrlLength;
@@ -279,7 +279,7 @@ public abstract class BaseCommunicationService<T> {
     List<PageDto<E>> pages = new ArrayList<>();
     List<CompletableFuture<ResponseEntity<PageDto<E>>>> completableFutures = new ArrayList<>();
     for (URI uri : RequestHelper.splitRequest(url, parameters, maxUrlLength)) {
-      CompletableFuture<ResponseEntity<PageDto<E>>> future = aysncService.futureExchange(
+      CompletableFuture<ResponseEntity<PageDto<E>>> future = asyncService.futureExchange(
           uri, method, entity, parameterizedType);
       completableFutures.add(future);
     }
@@ -363,8 +363,8 @@ public abstract class BaseCommunicationService<T> {
   }
 
   @Autowired
-  public void setAysncService(AysncService aysncService) {
-    this.aysncService = aysncService;
+  public void setAsyncService(AsyncService asyncService) {
+    this.asyncService = asyncService;
   }
 
   void setRestTemplate(RestOperations template) {

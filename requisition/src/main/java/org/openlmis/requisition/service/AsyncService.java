@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestOperations;
 
 @Service
-public class AysncService {
+public class AsyncService {
 
   @Autowired
   private RestOperations restTemplate;
