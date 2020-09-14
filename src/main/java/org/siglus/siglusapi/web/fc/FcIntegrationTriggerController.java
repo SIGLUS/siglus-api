@@ -51,4 +51,10 @@ public class FcIntegrationTriggerController {
       @DateTimeFormat(pattern = "yyyyMMdd") @RequestParam LocalDate date) {
     fcScheduleService.fetchProgramsFromFc(date);
   }
+
+  @PostMapping("/issueVouchers")
+  public void updateIssueVouchers(@RequestParam("date") String beginDate) {
+    fcScheduleService.fetchIssueVouchersFromFc(beginDate);
+  }
+
 }
