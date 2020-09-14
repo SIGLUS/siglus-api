@@ -191,8 +191,8 @@ public class FcIssueVoucherService {
       RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
           .searchRequisition(extension.getRequisitionId());
       if (!requisitionV2Dto.getStatus().isApproved()) {
-        statusErrorIssueVoucherNumber.add("requisition status is error :" +
-            issueVoucherDto.getIssueVoucherNumber());
+        statusErrorIssueVoucherNumber.add("requisition status is error :"
+            + issueVoucherDto.getIssueVoucherNumber());
         return FcHandlerStatus.DATA_ERROR;
       }
       List<ApprovedProductDto> approvedProductDtos = getApprovedProducts(userDto, requisitionV2Dto);
@@ -214,8 +214,8 @@ public class FcIssueVoucherService {
           saveFcPodExtension(issueVoucherDto, shipmentDto);
         }
       } else {
-        statusErrorIssueVoucherNumber.add("product not exist error :" +
-            issueVoucherDto.getIssueVoucherNumber());
+        statusErrorIssueVoucherNumber.add("product not exist error :"
+            + issueVoucherDto.getIssueVoucherNumber());
       }
     } catch (FcDataException exception) {
       return getFcDataExceptionHandler(issueVoucherDto, exception);
@@ -333,8 +333,8 @@ public class FcIssueVoucherService {
   }
 
   private Integer getReceiveQuantity(ApprovedProductDto dto, Integer shipQuantity) {
-    Long quantity = dto.getOrderable().packsToOrder(shipQuantity) *
-        dto.getOrderable().getNetContent();
+    Long quantity = dto.getOrderable().packsToOrder(shipQuantity)
+        * dto.getOrderable().getNetContent();
     return quantity.intValue();
   }
 
@@ -454,7 +454,6 @@ public class FcIssueVoucherService {
   private List<OrderLineItemDto> getOrderLineItemsDtoInIssue(Map<String, List<ProductDto>>
       existProductDtos, Map<String, ApprovedProductDto> approveProductDtos) {
     return existProductDtos.entrySet().stream().map(entry -> {
-      OrderLineItemDto itemDto = new OrderLineItemDto();
       ApprovedProductDto approvedProductDto = approveProductDtos.get(entry.getKey());
       org.openlmis.requisition.dto.OrderableDto existOrderableDto = approvedProductDto
           .getOrderable();
@@ -464,6 +463,7 @@ public class FcIssueVoucherService {
       MetadataDto metadataDto = new MetadataDto();
       BeanUtils.copyProperties(existOrderableDto.getMeta(), metadataDto);
       orderableDto.setMeta(metadataDto);
+      OrderLineItemDto itemDto = new OrderLineItemDto();
       itemDto.setOrderable(orderableDto);
       itemDto.setPartialFulfilledQuantity((long) 0);
       itemDto.setOrderedQuantity(approvedProductDto.getOrderable()

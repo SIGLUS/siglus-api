@@ -20,7 +20,6 @@ import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
 import org.siglus.siglusapi.service.SiglusFcIntegrationService;
-import org.siglus.siglusapi.service.fc.FcScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,9 +38,6 @@ public class SiglusFcIntegrationController {
 
   @Autowired
   private SiglusFcIntegrationService siglusFcIntegrationService;
-
-  @Autowired
-  private FcScheduleService scheduleService;
 
   @GetMapping("/requisitions")
   public Page<FcRequisitionDto> searchRequisitions(

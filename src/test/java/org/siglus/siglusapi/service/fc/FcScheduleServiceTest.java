@@ -40,7 +40,6 @@ import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
-import org.siglus.siglusapi.service.client.SiglusIssueVoucherService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcScheduleServiceTest {
@@ -78,9 +77,6 @@ public class FcScheduleServiceTest {
 
   @Mock
   private FcProgramService fcProgramService;
-
-  @Mock
-  private SiglusIssueVoucherService issueVoucherService;
 
   @Before
   public void setup() {
