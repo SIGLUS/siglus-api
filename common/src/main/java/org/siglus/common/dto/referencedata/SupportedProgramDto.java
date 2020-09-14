@@ -30,5 +30,6 @@ public class SupportedProgramDto {
   private boolean programActive;
   private boolean showNonFullSupplyTab;
   private boolean supportActive;
+  private boolean supportLocallyFulfilled;
   private LocalDate supportStartDate;
 }

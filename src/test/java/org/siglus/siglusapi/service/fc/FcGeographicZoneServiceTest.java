@@ -36,8 +36,8 @@ import org.siglus.common.dto.referencedata.OpenLmisGeographicZoneDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneDistrictDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneProvinceDto;
-import org.siglus.siglusapi.service.client.SiglusGeographicLevelService;
-import org.siglus.siglusapi.service.client.SiglusGeographicZoneService;
+import org.siglus.siglusapi.service.client.SiglusGeographicLevelReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcGeographicZoneServiceTest {
@@ -45,10 +45,10 @@ public class FcGeographicZoneServiceTest {
   public static final String ACTIVE = "Activo";
 
   @Mock
-  private SiglusGeographicZoneService geographicZoneService;
+  private SiglusGeographicZoneReferenceDataService geographicZoneService;
 
   @Mock
-  private SiglusGeographicLevelService geographicLevelService;
+  private SiglusGeographicLevelReferenceDataService geographicLevelService;
 
   @InjectMocks
   private FcGeographicZoneService fcGeographicZoneService;

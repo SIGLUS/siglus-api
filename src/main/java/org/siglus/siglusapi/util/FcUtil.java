@@ -17,10 +17,7 @@ package org.siglus.siglusapi.util;
 
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
-import org.springframework.stereotype.Service;
-
-@Service
-public class FcUtilService {
+public class FcUtil {
 
   public static boolean isActive(String status) {
     return status.equalsIgnoreCase(STATUS_ACTIVE);

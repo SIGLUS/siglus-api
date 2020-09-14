@@ -15,8 +15,13 @@
 
 package org.siglus.siglusapi.service.client;
 
+import java.util.List;
 import org.siglus.common.dto.referencedata.FacilityTypeDto;
 import org.siglus.common.service.client.BaseReferenceDataService;
+import org.siglus.common.util.RequestParameters;
+import org.siglus.common.util.referencedata.Pagination;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -36,6 +41,20 @@ public class SiglusFacilityTypeReferenceDataService extends
   @Override
   protected Class<FacilityTypeDto[]> getArrayResultClass() {
     return FacilityTypeDto[].class;
+  }
+
+  public List<FacilityTypeDto> searchAllFacilityTypes() {
+    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
+        Pagination.NO_PAGINATION);
+    return getPage(RequestParameters.init().setPage(noPagination)).getContent();
+  }
+
+  public void saveFacilityType(FacilityTypeDto dto) {
+    put(dto.getId().toString(), dto, Void.class, false);
+  }
+
+  public FacilityTypeDto createFacilityType(FacilityTypeDto dto) {
+    return postResult("", dto, FacilityTypeDto.class);
   }
 
 }

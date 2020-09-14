@@ -24,7 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SiglusGeographicZoneService extends
+public class SiglusGeographicZoneReferenceDataService extends
     BaseReferenceDataService<OpenLmisGeographicZoneDto> {
   @Override
   protected String getUrl() {

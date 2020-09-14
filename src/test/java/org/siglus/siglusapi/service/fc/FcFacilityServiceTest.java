@@ -45,8 +45,7 @@ import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.fc.FcAreaDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
-import org.siglus.siglusapi.service.client.SiglusFacilityTypeService;
-import org.siglus.siglusapi.service.client.SiglusGeographicZoneService;
+import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
 
 @RunWith(PowerMockRunner.class)
 public class FcFacilityServiceTest {
@@ -55,7 +54,7 @@ public class FcFacilityServiceTest {
   private SiglusFacilityReferenceDataService facilityService;
 
   @Mock
-  private SiglusGeographicZoneService geographicZoneService;
+  private SiglusGeographicZoneReferenceDataService geographicZoneService;
 
   @Mock
   private ProgramReferenceDataService programReferenceDataService;

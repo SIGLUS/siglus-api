@@ -19,7 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.util.FcUtilService;
+import org.siglus.siglusapi.util.FcUtil;
 
 @Data
 @AllArgsConstructor
@@ -42,6 +42,6 @@ public class RegimenDto {
   private String status;
 
   public static boolean isActive(RegimenDto dto) {
-    return FcUtilService.isActive(dto.getStatus());
+    return FcUtil.isActive(dto.getStatus());
   }
 }

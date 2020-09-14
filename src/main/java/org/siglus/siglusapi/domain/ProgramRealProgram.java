@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
-import org.siglus.siglusapi.util.FcUtilService;
+import org.siglus.siglusapi.util.FcUtil;
 
 @Entity
 @Data
@@ -50,7 +50,7 @@ public class ProgramRealProgram extends BaseEntity {
         .builder()
         .realProgramCode(dto.getCode())
         .realProgramName(dto.getDescription())
-        .active(FcUtilService.isActive(dto.getStatus()))
+        .active(FcUtil.isActive(dto.getStatus()))
         .build();
   }
 

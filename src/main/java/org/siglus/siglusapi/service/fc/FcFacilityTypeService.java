@@ -33,10 +33,10 @@ import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.dto.referencedata.FacilityTypeDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
-import org.siglus.siglusapi.service.client.SiglusFacilityTypeService;
+import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusStockCardLineItemReasons;
 import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
-import org.siglus.siglusapi.util.FcUtilService;
+import org.siglus.siglusapi.util.FcUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +45,7 @@ import org.springframework.stereotype.Service;
 public class FcFacilityTypeService {
 
   @Autowired
-  private SiglusFacilityTypeService facilityTypeService;
+  private SiglusFacilityTypeReferenceDataService facilityTypeService;
 
   @Autowired
   private SiglusStockCardLineItemReasons siglusStockCardLineItemReasons;
@@ -62,17 +62,17 @@ public class FcFacilityTypeService {
     }
     if (CollectionUtils.isNotEmpty(dtos)) {
       Map<String, FacilityTypeDto> facilityTypeMap = getStringFacilityTypeDtoMap();
-      List<FcFacilityTypeDto> needAddedFacilityTypes = new ArrayList<>();
-      List<FcFacilityTypeDto> needUpdatedFacilityTypes = new ArrayList<>();
+      List<FcFacilityTypeDto> createFacilityTypes = new ArrayList<>();
+      List<FcFacilityTypeDto> updateFacilityTypes = new ArrayList<>();
       dtos.forEach(typeDto -> {
-        if (!facilityTypeMap.containsKey(typeDto.getCode())) {
-          needAddedFacilityTypes.add(typeDto);
+        if (facilityTypeMap.containsKey(typeDto.getCode())) {
+          getUpdatedFacilityType(facilityTypeMap, updateFacilityTypes, typeDto);
         } else {
-          getUpdatedFacilityType(facilityTypeMap, needUpdatedFacilityTypes, typeDto);
+          createFacilityTypes.add(typeDto);
         }
       });
-      updateAddedFacilityType(facilityTypeMap, needAddedFacilityTypes);
-      updateModifiedFacilityType(facilityTypeMap, needUpdatedFacilityTypes);
+      createFacilityTypes(facilityTypeMap, createFacilityTypes);
+      updateFacilityTypes(facilityTypeMap, updateFacilityTypes);
     }
 
     return true;
@@ -89,22 +89,22 @@ public class FcFacilityTypeService {
       List<FcFacilityTypeDto> needUpdatedFacilityTypes, FcFacilityTypeDto typeDto) {
     FacilityTypeDto facilityTypeDto = facilityTypeMap.get(typeDto.getCode());
     if (!facilityTypeDto.getName().equals(typeDto.getDescription())
-        || !facilityTypeDto.getActive().equals(FcUtilService.isActive(typeDto.getStatus()))) {
+        || !facilityTypeDto.getActive().equals(FcUtil.isActive(typeDto.getStatus()))) {
       needUpdatedFacilityTypes.add(typeDto);
     }
   }
 
-  private void updateModifiedFacilityType(Map<String, FacilityTypeDto> facilityTypeMap,
+  private void updateFacilityTypes(Map<String, FacilityTypeDto> facilityTypeMap,
       List<FcFacilityTypeDto> needUpdatedFacilityTypes) {
     needUpdatedFacilityTypes.forEach(typeDto -> {
       FacilityTypeDto dto = facilityTypeMap.get(typeDto.getCode());
-      dto.setActive(FcUtilService.isActive(typeDto.getStatus()));
+      dto.setActive(FcUtil.isActive(typeDto.getStatus()));
       dto.setName(typeDto.getDescription());
       facilityTypeService.saveFacilityType(dto);
     });
   }
 
-  private void updateAddedFacilityType(Map<String, FacilityTypeDto> facilityTypeMap,
+  private void createFacilityTypes(Map<String, FacilityTypeDto> facilityTypeMap,
       List<FcFacilityTypeDto> needAddedFacilityTypes) {
     int originSize = facilityTypeMap.size();
     List<FacilityTypeDto> needUpdateReasonType = new ArrayList<>();
@@ -112,7 +112,7 @@ public class FcFacilityTypeService {
       int index = needAddedFacilityTypes.indexOf(typeDto);
       FacilityTypeDto dto = new FacilityTypeDto();
       dto.setCode(typeDto.getCode());
-      dto.setActive(FcUtilService.isActive(typeDto.getStatus()));
+      dto.setActive(FcUtil.isActive(typeDto.getStatus()));
       dto.setName(typeDto.getDescription());
       dto.setDisplayOrder(originSize + index + 1);
       needUpdateReasonType.add(facilityTypeService.createFacilityType(dto));

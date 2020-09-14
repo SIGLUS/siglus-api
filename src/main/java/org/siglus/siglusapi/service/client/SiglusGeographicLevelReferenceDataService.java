@@ -21,7 +21,8 @@ import org.siglus.common.dto.referencedata.GeographicLevelDto;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SiglusGeographicLevelService extends BaseReferenceDataService<GeographicLevelDto> {
+public class SiglusGeographicLevelReferenceDataService extends
+    BaseReferenceDataService<GeographicLevelDto> {
   @Override
   protected String getUrl() {
     return "/api/geographicLevels/";

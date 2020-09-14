@@ -28,9 +28,9 @@ import org.siglus.common.dto.referencedata.OpenLmisGeographicZoneDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneDistrictDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneProvinceDto;
-import org.siglus.siglusapi.service.client.SiglusGeographicLevelService;
-import org.siglus.siglusapi.service.client.SiglusGeographicZoneService;
-import org.siglus.siglusapi.util.FcUtilService;
+import org.siglus.siglusapi.service.client.SiglusGeographicLevelReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
+import org.siglus.siglusapi.util.FcUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,10 +44,10 @@ public class FcGeographicZoneService {
   private static final String LEVEL_DISTRICT = "district";
 
   @Autowired
-  private SiglusGeographicZoneService geographicZoneService;
+  private SiglusGeographicZoneReferenceDataService geographicZoneService;
 
   @Autowired
-  private SiglusGeographicLevelService geographicLevelService;
+  private SiglusGeographicLevelReferenceDataService geographicLevelService;
 
   @Transactional
   public boolean processGeographicZones(List<FcGeographicZoneNationalDto> fcDtos) {
@@ -81,15 +81,15 @@ public class FcGeographicZoneService {
   private List<FcGeographicZoneNationalDto> filterInactiveZones(
       List<FcGeographicZoneNationalDto> fcDtos) {
     List<FcGeographicZoneNationalDto> nationals = fcDtos.stream()
-        .filter(national -> FcUtilService.isActive(national.getStatus()))
+        .filter(national -> FcUtil.isActive(national.getStatus()))
         .collect(Collectors.toList());
     nationals.forEach(national -> {
       List<FcGeographicZoneProvinceDto> provinces = national.getProvinces().stream()
-          .filter(province -> FcUtilService.isActive(province.getStatus()))
+          .filter(province -> FcUtil.isActive(province.getStatus()))
           .collect(Collectors.toList());
       provinces.forEach(province -> {
         List<FcGeographicZoneDistrictDto> districts = province.getDistricts().stream()
-            .filter(district ->  FcUtilService.isActive(district.getStatus()))
+            .filter(district ->  FcUtil.isActive(district.getStatus()))
             .collect(Collectors.toList());
         province.setDistricts(districts);
       });

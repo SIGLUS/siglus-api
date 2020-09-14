@@ -39,7 +39,6 @@ import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.dto.referencedata.FacilityTypeDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
-import org.siglus.siglusapi.service.client.SiglusFacilityTypeService;
 import org.siglus.siglusapi.service.client.SiglusStockCardLineItemReasons;
 import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
 

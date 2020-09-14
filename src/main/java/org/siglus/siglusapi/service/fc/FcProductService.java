@@ -56,7 +56,7 @@ import org.siglus.siglusapi.service.client.SiglusFacilityTypeApprovedProductRefe
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.TradeItemReferenceDataService;
-import org.siglus.siglusapi.util.FcUtilService;
+import org.siglus.siglusapi.util.FcUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -167,11 +167,11 @@ public class FcProductService {
     orderableDto.setRoundToZero(false);
     orderableDto.setDispensable(Dispensable.createNew("each"));
     Map<String, Object> extraData = newHashMap();
-    extraData.put(STATUS, FcUtilService.isActive(product.getStatus()) ? ACTIVE : "inactive");
+    extraData.put(STATUS, FcUtil.isActive(product.getStatus()) ? ACTIVE : "inactive");
     extraData.put(IS_BASIC, basicProductCodes.contains(orderableDto.getProductCode()));
     orderableDto.setExtraData(extraData);
     orderableDto.setTradeItemIdentifier(createTradeItem());
-    if (FcUtilService.isActive(product.getStatus())) {
+    if (FcUtil.isActive(product.getStatus())) {
       Set<ProgramOrderableDto> programOrderableDtos = buildProgramOrderableDtos(product);
       orderableDto.setPrograms(programOrderableDtos);
     } else {
@@ -203,7 +203,7 @@ public class FcProductService {
       ProgramOrderableDto programDto = new ProgramOrderableDto();
       String programCode = realProgramCodeToEntityMap.get(areaDto.getAreaCode()).getProgramCode();
       programDto.setProgramId(programCodeToIdMap.get(programCode));
-      programDto.setActive(FcUtilService.isActive(areaDto.getStatus()));
+      programDto.setActive(FcUtil.isActive(areaDto.getStatus()));
       programDto.setFullSupply(true);
       OrderableDisplayCategoryDto categoryDto = categoryCodeToEntityMap
           .get(product.getCategoryCode());
@@ -221,9 +221,9 @@ public class FcProductService {
     existingOrderable.setDescription(product.getDescription());
     existingOrderable.setFullProductName(product.getFullDescription());
     Map<String, Object> extraData = existingOrderable.getExtraData();
-    extraData.put(STATUS, FcUtilService.isActive(product.getStatus()) ? ACTIVE : "inactive");
+    extraData.put(STATUS, FcUtil.isActive(product.getStatus()) ? ACTIVE : "inactive");
     existingOrderable.setExtraData(extraData);
-    if (FcUtilService.isActive(product.getStatus())) {
+    if (FcUtil.isActive(product.getStatus())) {
       Set<ProgramOrderableDto> programOrderableDtos = buildProgramOrderableDtos(product);
       existingOrderable.setPrograms(programOrderableDtos);
     } else {
