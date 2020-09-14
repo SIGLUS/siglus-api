@@ -109,7 +109,7 @@ public class FcScheduleServiceTest {
     // given
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    fcIssueVoucherService.statusErrorIssueVourcherNumber = Collections.emptyList();
+    fcIssueVoucherService.statusErrorIssueVoucherNumber = Collections.emptyList();
     when(fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API)).thenReturn(DATE);
 
     // when

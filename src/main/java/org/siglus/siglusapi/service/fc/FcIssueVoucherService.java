@@ -159,11 +159,11 @@ public class FcIssueVoucherService {
   @Autowired
   private SimulateUserAuthenticationHelper simulateUser;
 
-  public List<String> statusErrorIssueVourcherNumber;
+  public List<String> statusErrorIssueVoucherNumber;
 
   public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
     boolean successHandler = true;
-    statusErrorIssueVourcherNumber = new ArrayList<>();
+    statusErrorIssueVoucherNumber = new ArrayList<>();
     for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
       PodExtension podExtension = podExtensionRepository
           .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
@@ -175,7 +175,7 @@ public class FcIssueVoucherService {
         }
       }
     }
-    if (!CollectionUtils.isEmpty(statusErrorIssueVourcherNumber)) {
+    if (!CollectionUtils.isEmpty(statusErrorIssueVoucherNumber)) {
       successHandler = false;
     }
     return successHandler;
@@ -191,7 +191,7 @@ public class FcIssueVoucherService {
       RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
           .searchRequisition(extension.getRequisitionId());
       if (!requisitionV2Dto.getStatus().isApproved()) {
-        statusErrorIssueVourcherNumber.add("requisition status is error :" +
+        statusErrorIssueVoucherNumber.add("requisition status is error :" +
             issueVoucherDto.getIssueVoucherNumber());
         return FcHandlerStatus.DATA_ERROR;
       }
@@ -200,11 +200,11 @@ public class FcIssueVoucherService {
           getApprovedProductsMap(approvedProductDtos);
       List<ProductDto> existProducts = getExistProducts(issueVoucherDto, approvedProductsMap);
       if (!CollectionUtils.isEmpty(existProducts)) {
+        simulateUser.simulateUserAuth(userDto.getId());
         createStockEvent(userDto, requisitionV2Dto, issueVoucherDto, existProducts,
             approvedProductsMap);
         Map<String, List<ProductDto>> productMaps = existProducts.stream()
             .collect(Collectors.groupingBy(productDto -> productDto.getFnmCode()));
-        simulateUser.simulateUserAuth(userDto.getId());
         UUID orderId = createOrder(requisitionV2Dto, productMaps, supplyFacility,
             userDto, approvedProductsMap, issueVoucherDto);
         if (orderId != null) {
@@ -214,7 +214,7 @@ public class FcIssueVoucherService {
           saveFcPodExtension(issueVoucherDto, shipmentDto);
         }
       } else {
-        statusErrorIssueVourcherNumber.add("product not exist error :" +
+        statusErrorIssueVoucherNumber.add("product not exist error :" +
             issueVoucherDto.getIssueVoucherNumber());
       }
     } catch (FcDataException exception) {
@@ -300,7 +300,7 @@ public class FcIssueVoucherService {
 
     List<StockEventLineItemDto> eventLineItemDtos = existProductDtos.stream()
         .map(productDto -> getStockEventLineItemDto(requisitionV2Dto,
-            issueVoucherDto, orderableDtoMap, sourceId, productDto)).collect(Collectors.toList());
+            orderableDtoMap, sourceId, productDto)).collect(Collectors.toList());
     StockEventDto eventDto = StockEventDto.builder()
         .programId(requisitionV2Dto.getProgramId())
         .facilityId(useDto.getHomeFacilityId())
@@ -316,13 +316,11 @@ public class FcIssueVoucherService {
   }
 
   private StockEventLineItemDto getStockEventLineItemDto(RequisitionV2Dto requisitionV2Dto,
-      IssueVoucherDto issueVoucherDto, Map<String, ApprovedProductDto> orderableDtoMap,
-      UUID sourceId,
-      ProductDto productDto) {
+      Map<String, ApprovedProductDto> orderableDtoMap, UUID sourceId, ProductDto productDto) {
     StockEventLineItemDto lineItemDto = new StockEventLineItemDto();
     ApprovedProductDto dto = orderableDtoMap.get(productDto.getFnmCode());
     lineItemDto.setOrderableId(dto.getOrderable().getId());
-    lineItemDto.setQuantity(productDto.getShippedQuantity());
+    lineItemDto.setQuantity(getReceiveQuantity(dto, productDto.getShippedQuantity()));
     LocalDate date = LocalDate.now().minusDays(1);
     lineItemDto.setOccurredDate(date);
     lineItemDto.setReasonId(UUID.fromString(receiveReason));
@@ -332,6 +330,12 @@ public class FcIssueVoucherService {
     lineItemDto.setExtraData(ImmutableMap.of("lotCode", productDto.getBatch(),
         "expirationDate", SiglusDateHelper.formatDate(productDto.getExpiryDate())));
     return lineItemDto;
+  }
+
+  private Integer getReceiveQuantity(ApprovedProductDto dto, Integer shipQuantity) {
+    Long quantity = dto.getOrderable().packsToOrder(shipQuantity) *
+        dto.getOrderable().getNetContent();
+    return quantity.intValue();
   }
 
   private UUID createOrder(RequisitionV2Dto v2Dto, Map<String, List<ProductDto>> productMaps,

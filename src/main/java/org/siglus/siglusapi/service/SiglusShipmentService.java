@@ -80,6 +80,7 @@ public class SiglusShipmentService {
     return createSubOrderAndShipment(isSubOrder, shipmentDto);
   }
 
+  @Transactional
   public ShipmentDto createSubOrderAndShipment(ShipmentDto shipmentDto) {
     createSubOrder(shipmentDto, false);
     return confirmShipmentDto(shipmentDto);
