@@ -72,6 +72,7 @@ import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.util.Parameter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -227,36 +228,40 @@ public class SiglusFcIntegrationService {
         .findByReasonTypeIn(newArrayList(ReasonType.DEBIT))
         .stream().collect(toMap(StockCardLineItemReason::getId, StockCardLineItemReason::getName));
 
+    Parameter parameter = Parameter.builder()
+        .requisitionNumberMap(requisitionNumberMap)
+        .orderableMap(orderableMap)
+        .programMap(programMap)
+        .lotMap(lotMap)
+        .reasonMap(reasonMap)
+        .podRequisitionMap(podRequisitionMap)
+        .facilityCodeMap(facilityCodeMap)
+        .build();
+
     List<FcProofOfDeliveryDto> pods = page.getContent()
         .stream()
-        .map(pod -> buildProofOfDeliveryDto(pod, requisitionNumberMap, orderableMap, programMap,
-            lotMap, reasonMap, podRequisitionMap, facilityCodeMap))
+        .map(pod -> buildProofOfDeliveryDto(pod, parameter))
         .collect(Collectors.toList());
 
     return Pagination.getPage(pods, pageable, page.getTotalElements());
   }
 
   private FcProofOfDeliveryDto buildProofOfDeliveryDto(ProofOfDelivery pod,
-      Map<UUID, String> requisitionNumberMap,
-      Map<UUID, OrderableDto> orderableMap,
-      Map<UUID, ProgramOrderablesExtension> programMap,
-      Map<UUID, LotDto> lotMap,
-      Map<UUID, String> reasonMap,
-      Map<UUID, UUID> podRequisitionMap,
-      Map<UUID, String> facilityCodeMap) {
+      Parameter parameter) {
 
-    String requisitionNumber = requisitionNumberMap
-        .get(podRequisitionMap.get(pod.getId()));
+    String requisitionNumber = parameter.getRequisitionNumberMap()
+        .get(parameter.getPodRequisitionMap().get(pod.getId()));
 
     List<FcProofOfDeliveryProductDto> products = pod.getLineItems()
         .stream()
-        .map(lineItem -> buildProductDto(lineItem, orderableMap,
-            programMap, lotMap, reasonMap))
+        .map(lineItem -> buildProductDto(lineItem, parameter.getOrderableMap(),
+            parameter.getProgramMap(), parameter.getLotMap(), parameter.getReasonMap()))
         .collect(Collectors.toList());
 
     return FcProofOfDeliveryDto.builder()
         .orderNumber(pod.getShipment().getOrder().getOrderCode())
-        .facilityCode(facilityCodeMap.get(pod.getShipment().getOrder().getRequestingFacilityId()))
+        .facilityCode(parameter.getFacilityCodeMap()
+            .get(pod.getShipment().getOrder().getRequestingFacilityId()))
         .requisitionNumber(requisitionNumber)
         .deliveredBy(pod.getDeliveredBy())
         .receivedBy(pod.getReceivedBy())

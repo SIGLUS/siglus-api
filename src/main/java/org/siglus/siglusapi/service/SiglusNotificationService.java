@@ -272,21 +272,21 @@ public class SiglusNotificationService {
     UUID requisitionId = external == null ? order.getExternalId() : external.getRequisitionId();
     RequisitionV2Dto requisition = requisitionService.searchRequisition(requisitionId);
     List<ProofOfDeliveryDto> pods = podService.getProofOfDeliveries(order.getId());
-    pods.forEach(pod -> {
-      Stream.of(NotificationType.values()).forEach(notificationType -> {
-        Notification notification = new Notification();
-        notification.setRefId(pod.getId());
-        notification.setFacilityId(requisition.getFacilityId());
-        notification.setProgramId(requisition.getProgramId());
-        notification.setEmergency(requisition.getEmergency());
-        notification.setStatus(NotificationStatus.SHIPPED);
-        notification.setNotifyFacilityId(requisition.getFacilityId());
-        notification.setType(notificationType);
-        notification.setProcessingPeriodId(order.getProcessingPeriod().getId());
-        notification.setRequestingFacilityId(requisition.getFacilityId());
-        repo.save(notification);
-      });
-    });
+    pods.forEach(pod ->
+        Stream.of(NotificationType.values()).forEach(notificationType -> {
+          Notification notification = new Notification();
+          notification.setRefId(pod.getId());
+          notification.setFacilityId(requisition.getFacilityId());
+          notification.setProgramId(requisition.getProgramId());
+          notification.setEmergency(requisition.getEmergency());
+          notification.setStatus(NotificationStatus.SHIPPED);
+          notification.setNotifyFacilityId(requisition.getFacilityId());
+          notification.setType(notificationType);
+          notification.setProcessingPeriodId(order.getProcessingPeriod().getId());
+          notification.setRequestingFacilityId(requisition.getFacilityId());
+          repo.save(notification);
+        })
+    );
   }
 
   public void postConfirmPod(org.openlmis.fulfillment.web.util.ProofOfDeliveryDto pod) {

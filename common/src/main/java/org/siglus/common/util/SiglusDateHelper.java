@@ -30,6 +30,8 @@ public class SiglusDateHelper {
 
   public static final String DATE_TYPE_YEAR_MONTH_DATE = "yyyy-MM-dd";
 
+  public static final String YEAR_MONTH_DATE = "yyyyMMdd";
+
   @Autowired
   private Clock clock;
 
@@ -48,20 +50,20 @@ public class SiglusDateHelper {
   }
 
   public String formatDateString(LocalDate date) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(YEAR_MONTH_DATE);
     return date.format(formatter);
   }
 
   public String getYesterdayDateStr() {
     LocalDate now = LocalDate.now(clock);
     LocalDate yesterday = now.minusDays(1);
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(YEAR_MONTH_DATE);
     return yesterday.format(formatter);
   }
 
   public String getTodayDateStr() {
     LocalDate now = LocalDate.now(clock);
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern(YEAR_MONTH_DATE);
     return now.format(formatter);
   }
 

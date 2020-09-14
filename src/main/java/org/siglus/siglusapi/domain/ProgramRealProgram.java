@@ -56,9 +56,6 @@ public class ProgramRealProgram extends BaseEntity {
   }
 
   public static boolean isActive(ProgramDto dto) {
-    if (PROGRAM_STATUS_ACTIVE.equals(dto.getStatus())) {
-      return true;
-    }
-    return false;
+    return PROGRAM_STATUS_ACTIVE.equals(dto.getStatus());
   }
 }
