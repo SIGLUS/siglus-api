@@ -159,11 +159,11 @@ public class FcIssueVoucherService {
   @Autowired
   private SimulateUserAuthenticationHelper simulateUser;
 
-  private List<String> statusErrorIssueVoucherNumber;
+  private List<String> statusErrorIssueVoucherNumber = new ArrayList<>();
 
   public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
     boolean successHandler = true;
-    statusErrorIssueVoucherNumber = new ArrayList<>();
+    statusErrorIssueVoucherNumber.clear();
     for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {
       PodExtension podExtension = podExtensionRepository
           .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),

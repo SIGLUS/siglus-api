@@ -27,7 +27,6 @@ import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -105,7 +104,6 @@ public class FcScheduleServiceTest {
     // given
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    fcIssueVoucherService.statusErrorIssueVoucherNumber = Collections.emptyList();
     when(fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API)).thenReturn(DATE);
 
     // when
