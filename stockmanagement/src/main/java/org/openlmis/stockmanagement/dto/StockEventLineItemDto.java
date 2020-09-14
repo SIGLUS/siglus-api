@@ -112,7 +112,7 @@ public class StockEventLineItemDto implements IdentifiableByOrderableLot, VvmApp
   // [change reason]: add methods to get values from extraData
   @JsonIgnore
   public String getLotCode() {
-    return extraData.get("lotCode");
+    return extraData != null && extraData.containsKey("lotCode") ? extraData.get("lotCode") : "";
   }
 
   @JsonIgnore
