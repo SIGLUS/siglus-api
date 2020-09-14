@@ -175,7 +175,7 @@ public class SiglusOrderCloseSchedulerService {
   }
 
   private Map<UUID, FacilityDto> getFacilities(List<Order> orders) {
-    List<UUID> facilityIds = orders.stream().map(order -> order.getFacilityId())
+    List<UUID> facilityIds = orders.stream().map(Order::getFacilityId)
         .collect(Collectors.toList());
     return facilityReferenceDataService.findByIds(facilityIds);
   }
@@ -188,7 +188,7 @@ public class SiglusOrderCloseSchedulerService {
     return orders.stream()
         .filter(order -> {
           FacilityDto facilityDto = facilityIds.get(order.getFacilityId());
-          if (!facilityDto.getType().equals(fcFacilityTypeId)) {
+          if (!facilityDto.getType().getId().equals(fcFacilityTypeId)) {
             return getCurrentDateBeforeNextPeriodSubmitDate(processingPeriodMap,
                 currentDate, extensionHashMap, order);
           }

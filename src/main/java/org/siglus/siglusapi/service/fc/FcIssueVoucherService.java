@@ -159,7 +159,7 @@ public class FcIssueVoucherService {
   @Autowired
   private SimulateUserAuthenticationHelper simulateUser;
 
-  public List<String> statusErrorIssueVoucherNumber;
+  private List<String> statusErrorIssueVoucherNumber;
 
   public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
     boolean successHandler = true;
@@ -179,6 +179,10 @@ public class FcIssueVoucherService {
       successHandler = false;
     }
     return successHandler;
+  }
+
+  public List<String> getStatusErrorIssueVoucherNumber() {
+    return this.statusErrorIssueVoucherNumber;
   }
 
   private FcHandlerStatus createIssueVoucher(IssueVoucherDto issueVoucherDto) {
@@ -201,10 +205,9 @@ public class FcIssueVoucherService {
       List<ProductDto> existProducts = getExistProducts(issueVoucherDto, approvedProductsMap);
       if (!CollectionUtils.isEmpty(existProducts)) {
         simulateUser.simulateUserAuth(userDto.getId());
-        createStockEvent(userDto, requisitionV2Dto, issueVoucherDto, existProducts,
-            approvedProductsMap);
+        createStockEvent(userDto, requisitionV2Dto, existProducts, approvedProductsMap);
         Map<String, List<ProductDto>> productMaps = existProducts.stream()
-            .collect(Collectors.groupingBy(productDto -> productDto.getFnmCode()));
+            .collect(Collectors.groupingBy(ProductDto::getFnmCode));
         UUID orderId = createOrder(requisitionV2Dto, productMaps, supplyFacility,
             userDto, approvedProductsMap, issueVoucherDto);
         if (orderId != null) {
@@ -287,8 +290,7 @@ public class FcIssueVoucherService {
   }
 
   private void createStockEvent(UserDto useDto, RequisitionV2Dto requisitionV2Dto,
-      IssueVoucherDto issueVoucherDto, List<ProductDto> existProductDtos,
-      Map<String, ApprovedProductDto> orderableDtoMap) {
+      List<ProductDto> existProductDtos, Map<String, ApprovedProductDto> orderableDtoMap) {
     Collection<ValidSourceDestinationDto> validSourceDtos = sourceDestinationService
         .getValidSources(requisitionV2Dto.getProgramId(), useDto.getHomeFacilityId());
     ValidSourceDestinationDto fcSource = validSourceDtos.stream()
@@ -296,23 +298,23 @@ public class FcIssueVoucherService {
         .findFirst()
         .orElse(null);
     fcDataValidate.validateFcSource(fcSource);
-    UUID sourceId = fcSource.getNode().getId();
-
-    List<StockEventLineItemDto> eventLineItemDtos = existProductDtos.stream()
-        .map(productDto -> getStockEventLineItemDto(requisitionV2Dto,
-            orderableDtoMap, sourceId, productDto)).collect(Collectors.toList());
-    StockEventDto eventDto = StockEventDto.builder()
-        .programId(requisitionV2Dto.getProgramId())
-        .facilityId(useDto.getHomeFacilityId())
-        .signature(FC_INTEGRATION)
-        .userId(useDto.getId())
-        .lineItems(eventLineItemDtos)
-        .documentNumber(FC_INTEGRATION)
-        .facilityId(useDto.getHomeFacilityId())
-        .build();
-
-    stockEventsService.createAndFillLotId(eventDto, true);
-    stockEventsService.createStockEvent(eventDto);
+    if (fcSource != null) {
+      UUID sourceId = fcSource.getNode().getId();
+      List<StockEventLineItemDto> eventLineItemDtos = existProductDtos.stream()
+          .map(productDto -> getStockEventLineItemDto(requisitionV2Dto,
+              orderableDtoMap, sourceId, productDto)).collect(Collectors.toList());
+      StockEventDto eventDto = StockEventDto.builder()
+          .programId(requisitionV2Dto.getProgramId())
+          .facilityId(useDto.getHomeFacilityId())
+          .signature(FC_INTEGRATION)
+          .userId(useDto.getId())
+          .lineItems(eventLineItemDtos)
+          .documentNumber(FC_INTEGRATION)
+          .facilityId(useDto.getHomeFacilityId())
+          .build();
+      stockEventsService.createAndFillLotId(eventDto, true);
+      stockEventsService.createStockEvent(eventDto);
+    }
   }
 
   private StockEventLineItemDto getStockEventLineItemDto(RequisitionV2Dto requisitionV2Dto,
@@ -356,7 +358,7 @@ public class FcIssueVoucherService {
       Map<String, ApprovedProductDto> approveProductDtos,
       Map<String, List<ProductDto>> productMaps, List<OrderExternal> externals,
       IssueVoucherDto issueVoucherDto) {
-    List<UUID> externalIds = externals.stream().map(orderExternal -> orderExternal.getId())
+    List<UUID> externalIds = externals.stream().map(OrderExternal::getId)
         .collect(Collectors.toList());
     Order canFulfillOrder = CollectionUtils.isEmpty(externalIds) ? null :
         orderRepository.findCanFulfillOrderAndInExternalId(externalIds);
@@ -573,7 +575,7 @@ public class FcIssueVoucherService {
     LotSearchParams lotSearchParams = new LotSearchParams();
     lotSearchParams.setId(lotIds);
     Map<UUID, List<LotDto>> lotDtos = lotReferenceDataService.getLots(lotSearchParams).stream()
-        .collect(Collectors.groupingBy(lotDto -> lotDto.getId()));
+        .collect(Collectors.groupingBy(LotDto::getId));
     draftLineItems.stream().forEach(lineItem -> {
       UUID orderableId = lineItem.getOrderable().getId();
       ApprovedProductDto approvedProductDto = approvedProductIdMaps.get(orderableId);
@@ -600,9 +602,7 @@ public class FcIssueVoucherService {
     parameters.set(PROGRAM_ID, requisitionV2Dto.getProgram().getId().toString());
     parameters.set(FACILITY_ID, supplyFacility.getId().toString());
     parameters.set(RIGHT_NAME, STOCK_CARDS_VIEW);
-    productIds.stream().forEach(productId -> {
-      parameters.add(ORDERABLE_ID, productId.toString());
-    });
+    productIds.stream().forEach(productId -> parameters.add(ORDERABLE_ID, productId.toString()));
     Pageable page = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
     return stockCardSummariesService.findSiglusStockCard(parameters, page)
         .getContent();

@@ -83,19 +83,14 @@ public class SiglusShipmentService {
   @Transactional
   public ShipmentDto createSubOrderAndShipment(ShipmentDto shipmentDto) {
     createSubOrder(shipmentDto, false);
-    return confirmShipmentDto(shipmentDto);
+    return createShipment(shipmentDto);
   }
 
   ShipmentDto createSubOrderAndShipment(boolean isSubOrder, ShipmentDto shipmentDto) {
     if (isSubOrder) {
       createSubOrder(shipmentDto, true);
     }
-    return confirmShipmentDto(shipmentDto);
-  }
-
-  private ShipmentDto confirmShipmentDto(ShipmentDto shipmentDto) {
-    ShipmentDto shipment = createShipment(shipmentDto);
-    return shipment;
+    return createShipment(shipmentDto);
   }
 
   private void validateOrderStatus(OrderDto orderDto) {
