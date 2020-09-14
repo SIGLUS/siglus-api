@@ -1,5 +1,12 @@
 #!/bin/sh
 
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ "${BRANCH}" != "master" ]]; then
+  echo "Current branch: ${BRANCH}"
+  echo "Aborting script because you are not on the master branch."
+  exit 1
+fi
+
 echo "=> git status"
 git status
 echo "-----------------------------------------------------"
