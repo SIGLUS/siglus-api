@@ -24,6 +24,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,7 +40,11 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
+import org.siglus.common.domain.referencedata.Code;
+import org.siglus.common.domain.referencedata.Dispensable;
+import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
+import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
@@ -63,6 +69,9 @@ public class UsageInformationDataProcessorTest {
 
   @Mock
   private UsageInformationLineItemRepository usageInformationLineItemRepository;
+
+  @Mock
+  private OrderableKitRepository orderableKitRepository;
 
   private UUID requisitionId = UUID.randomUUID();
 
@@ -93,6 +102,66 @@ public class UsageInformationDataProcessorTest {
 
     // then
     verify(usageInformationLineItemRepository, times(0)).save(lineItemsArgumentCaptor.capture());
+  }
+
+  @Test
+  public void shouldCreateLineItemsWhenInitiateIfEnableUsageInformationButHaveKitProduct() {
+    // given
+    RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
+        .enableUsageInformation(true).build();
+    BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
+    template.setExtension(extension);
+    VersionObjectReferenceDto availableProduct = new VersionObjectReferenceDto();
+    availableProduct.setId(orderableId);
+    VersionObjectReferenceDto availableProduct2 = new VersionObjectReferenceDto();
+    availableProduct2.setId(UUID.randomUUID());
+    Set<VersionObjectReferenceDto> availableProducts = newHashSet(availableProduct,
+        availableProduct2);
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+    siglusRequisitionDto.setId(requisitionId);
+    siglusRequisitionDto.setTemplate(template);
+    siglusRequisitionDto.setAvailableProducts(availableProducts);
+    UsageTemplateColumn serviceColumn = UsageTemplateColumn.builder()
+        .isDisplayed(true)
+        .name(SERVICE)
+        .build();
+    UsageTemplateColumnSection serviceSection = UsageTemplateColumnSection.builder()
+        .category(UsageCategory.USAGEINFORMATION)
+        .name(SERVICE)
+        .columns(newArrayList(serviceColumn))
+        .build();
+    UsageTemplateColumn informationColumn = UsageTemplateColumn.builder()
+        .isDisplayed(true)
+        .name(INFORMATION)
+        .build();
+    UsageTemplateColumnSection informationSection = UsageTemplateColumnSection.builder()
+        .category(UsageCategory.USAGEINFORMATION)
+        .name(INFORMATION)
+        .columns(newArrayList(informationColumn))
+        .build();
+    List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
+    when(siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, SERVICE))
+        .thenReturn(serviceSection);
+    when(siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, INFORMATION))
+        .thenReturn(informationSection);
+    Orderable kitProduct = new Orderable(Code.code("kitProduct"), Dispensable.createNew("each"),
+        10, 7, true, orderableId, 1L);
+    when(orderableKitRepository.findAllKitProduct()).thenReturn(Arrays.asList(kitProduct));
+
+    // when
+    usageInformationDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);
+
+    // then
+    verify(usageInformationLineItemRepository).save(lineItemsArgumentCaptor.capture());
+    List<UsageInformationLineItem> lineItems = lineItemsArgumentCaptor.getValue();
+    assertEquals(1, lineItems.size());
+    assertEquals(requisitionId, lineItems.get(0).getRequisitionId());
+    assertEquals(INFORMATION, lineItems.get(0).getInformation());
+    assertEquals(SERVICE, lineItems.get(0).getService());
+    assertEquals(availableProduct2.getId(), lineItems.get(0).getOrderableId());
+    assertNull(lineItems.get(0).getValue());
   }
 
   @Test
@@ -134,6 +203,7 @@ public class UsageInformationDataProcessorTest {
     when(siglusUsageReportService
         .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, INFORMATION))
         .thenReturn(informationSection);
+    when(orderableKitRepository.findAllKitProduct()).thenReturn(Collections.emptyList());
 
     // when
     usageInformationDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 import java.util.Set;
@@ -23,6 +24,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.BaseDto;
+import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
@@ -46,6 +49,9 @@ public class UsageInformationDataProcessor implements UsageReportDataProcessor {
 
   @Autowired
   private UsageInformationLineItemRepository usageInformationLineItemRepository;
+
+  @Autowired
+  private OrderableKitRepository orderableKitRepository;
 
   @Override
   public void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
@@ -104,7 +110,10 @@ public class UsageInformationDataProcessor implements UsageReportDataProcessor {
         .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, SERVICE);
     UsageTemplateColumnSection information = siglusUsageReportService
         .getColumnSection(templateColumnSections, UsageCategory.USAGEINFORMATION, INFORMATION);
+    List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
+        .map(Orderable::getId).collect(toList());
     Set<UUID> orderableIds = siglusRequisitionDto.getAvailableProducts().stream()
+        .filter(product -> !kitIds.contains(product.getId()))
         .map(BaseDto::getId)
         .collect(Collectors.toSet());
     List<UsageInformationLineItem> usageInformationLineItems = newArrayList();
