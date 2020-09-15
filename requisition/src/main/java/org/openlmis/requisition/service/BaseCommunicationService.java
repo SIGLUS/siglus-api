@@ -25,7 +25,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.openlmis.requisition.dto.ResultDto;
@@ -55,8 +54,6 @@ public abstract class BaseCommunicationService<T> {
   protected RestOperations restTemplate = new RestTemplate();
 
   protected RequisitionAuthService authService;
-
-  protected AysncService aysncService;
 
   @Value("${request.maxUrlLength}")
   private int maxUrlLength;
@@ -271,29 +268,27 @@ public abstract class BaseCommunicationService<T> {
     return new ResponseEntity<>(body, HttpStatus.OK);
   }
 
-  private <E> ResponseEntity<PageDto<E>> doPageRequest(String url, RequestParameters parameters,
-      Object payload, HttpMethod method, Class<E> type) {
+  private <E> ResponseEntity<PageDto<E>> doPageRequest(String url,
+                                                       RequestParameters parameters,
+                                                       Object payload,
+                                                       HttpMethod method,
+                                                       Class<E> type) {
     HttpEntity<Object> entity = RequestHelper
         .createEntity(payload, authService.obtainAccessToken());
-    ParameterizedTypeReference<PageDto<E>> parameterizedType = new DynamicPageTypeReference<>(type);
+    ParameterizedTypeReference<PageDto<E>> parameterizedType =
+        new DynamicPageTypeReference<>(type);
     List<PageDto<E>> pages = new ArrayList<>();
-    List<CompletableFuture<ResponseEntity<PageDto<E>>>> completableFutures = new ArrayList<>();
-    for (URI uri : RequestHelper.splitRequest(url, parameters, maxUrlLength)) {
-      CompletableFuture<ResponseEntity<PageDto<E>>> future = aysncService.futureExchange(
-          uri, method, entity, parameterizedType);
-      completableFutures.add(future);
-    }
-    List<ResponseEntity<PageDto<E>>> responseEntities = allOf(completableFutures).join();
-    responseEntities.forEach(response -> pages.add(response.getBody()));
-    PageDto<E> body = Merger.ofPages(pages).withDefaultValue(PageDto::new).merge();
-    return new ResponseEntity<>(body, HttpStatus.OK);
-  }
 
-  private  <T> CompletableFuture<List<T>> allOf(List<CompletableFuture<T>> futureList) {
-    return CompletableFuture
-        .allOf(futureList.toArray(new CompletableFuture[0]))
-        .thenApply(v ->
-            futureList.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+    for (URI uri : RequestHelper.splitRequest(url, parameters, maxUrlLength)) {
+      pages.add(restTemplate.exchange(uri, method, entity, parameterizedType).getBody());
+    }
+
+    PageDto<E> body = Merger
+        .ofPages(pages)
+        .withDefaultValue(PageDto::new)
+        .merge();
+
+    return new ResponseEntity<>(body, HttpStatus.OK);
   }
 
   protected <P> ResponseEntity<P> runWithTokenRetry(HttpTask<P> task) {
@@ -360,11 +355,6 @@ public abstract class BaseCommunicationService<T> {
   @Autowired
   public void setAuthService(RequisitionAuthService authService) {
     this.authService = authService;
-  }
-
-  @Autowired
-  public void setAysncService(AysncService aysncService) {
-    this.aysncService = aysncService;
   }
 
   void setRestTemplate(RestOperations template) {
