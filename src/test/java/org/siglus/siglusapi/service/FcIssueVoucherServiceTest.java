@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
@@ -44,13 +45,19 @@ import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentLineItemDto;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
+import org.openlmis.requisition.service.RequisitionStatusProcessor;
+import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.utils.Pagination;
+import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
@@ -139,8 +146,26 @@ public class FcIssueVoucherServiceTest {
   @Mock
   private SimulateUserAuthenticationHelper simulateUser;
 
+  @Mock
+  private RequisitionRepository requisitionRepository;
+
+  @Mock
+  private RequisitionStatusProcessor requisitionStatusProcessor;
+
+  @Mock
+  private OrderDtoBuilder orderDtoBuilder;
+
+  @Mock
+  private OrderFulfillmentService orderFulfillmentService;
+
   @Captor
   private ArgumentCaptor<ShipmentDto> shipmentCaptor;
+
+  @Captor
+  private ArgumentCaptor<Requisition> requisitionCaptor;
+
+  @Captor
+  private ArgumentCaptor<List<OrderDto>> orderListCaptor;
 
   private UserDto userDto;
   private FacilityDto facilityDto;
@@ -442,16 +467,24 @@ public class FcIssueVoucherServiceTest {
     when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     when(lotReferenceDataService.getLots(any())).thenReturn(Arrays.asList(getLotDto(lotId)));
+    Requisition requisition = new Requisition();
+    when(requisitionRepository.findOne(requisitionV2Dto.getId())).thenReturn(requisition);
+    org.openlmis.requisition.dto.OrderDto orderRequisitionDto =
+        new org.openlmis.requisition.dto.OrderDto();
+    when(orderDtoBuilder.build(any(), any())).thenReturn(orderRequisitionDto);
 
     // when
     boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
 
     // then
+    assertEquals(true, isSuccess);
     verify(simulateUser).simulateUserAuth(any());
+    verify(orderFulfillmentService).create(orderListCaptor.capture());
+    verify(requisitionStatusProcessor).statusChange(requisitionCaptor.capture(), any());
+    OrderDto saveOrderDto = orderListCaptor.getValue().get(0);
+    assertEquals(Long.valueOf(4), saveOrderDto.getOrderLineItems().get(0).getOrderedQuantity());
     ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
     assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
-    assertEquals(true, isSuccess);
-
   }
 
   @Test

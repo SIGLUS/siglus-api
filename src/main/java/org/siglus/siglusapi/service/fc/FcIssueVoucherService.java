@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -46,11 +47,14 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.VersionObjectReferenceDto;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
-import org.openlmis.requisition.dto.ReleasableRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.openlmis.requisition.service.RequisitionService;
+import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.service.RequisitionStatusProcessor;
+import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
+import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
@@ -86,6 +90,7 @@ import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -154,10 +159,19 @@ public class FcIssueVoucherService {
   private SiglusShipmentService siglusShipmentService;
 
   @Autowired
-  private RequisitionService requisitionService;
+  private SimulateUserAuthenticationHelper simulateUser;
 
   @Autowired
-  private SimulateUserAuthenticationHelper simulateUser;
+  private RequisitionRepository requisitionRepository;
+
+  @Autowired
+  private RequisitionStatusProcessor requisitionStatusProcessor;
+
+  @Autowired
+  private OrderDtoBuilder orderDtoBuilder;
+
+  @Autowired
+  private OrderFulfillmentService orderFulfillmentService;
 
   private List<String> statusErrorIssueVoucherNumber = new ArrayList<>();
 
@@ -208,8 +222,8 @@ public class FcIssueVoucherService {
         createStockEvent(userDto, requisitionV2Dto, existProducts, approvedProductsMap);
         Map<String, List<ProductDto>> productMaps = existProducts.stream()
             .collect(Collectors.groupingBy(ProductDto::getFnmCode));
-        UUID orderId = createOrder(requisitionV2Dto, productMaps, supplyFacility,
-            userDto, approvedProductsMap, issueVoucherDto);
+        UUID orderId = createOrder(requisitionV2Dto, approvedProductDtos, productMaps,
+            supplyFacility, userDto, approvedProductsMap, issueVoucherDto);
         if (orderId != null) {
           ShipmentDto shipmentDto = createShipmentDraftAndShipment(orderId, productMaps,
               approvedProductDtos, approvedProductsMap, supplyFacility, requisitionV2Dto,
@@ -265,7 +279,7 @@ public class FcIssueVoucherService {
       approvedProductDtos) {
     return approvedProductDtos.stream()
         .collect(Collectors.toMap(product -> product.getOrderable().getProductCode(),
-            product -> product));
+            Function.identity()));
   }
 
   private List<ApprovedProductDto> getApprovedProducts(UserDto userDto, RequisitionV2Dto dto) {
@@ -340,16 +354,16 @@ public class FcIssueVoucherService {
     return quantity.intValue();
   }
 
-  private UUID createOrder(RequisitionV2Dto v2Dto, Map<String, List<ProductDto>> productMaps,
-      FacilityDto supplyFacility, UserDto userDto,
-      Map<String, ApprovedProductDto> approveProductDtos, IssueVoucherDto issueVoucherDto) {
+  private UUID createOrder(RequisitionV2Dto v2Dto, List<ApprovedProductDto> approvedProductDtos,
+      Map<String, List<ProductDto>> productMaps, FacilityDto supplyFacility, UserDto userDto,
+      Map<String, ApprovedProductDto> approvedProductMap, IssueVoucherDto issueVoucherDto) {
     List<OrderExternal> externals = orderExternalRepository.findByRequisitionId(v2Dto.getId());
     Order firstOrder = orderRepository.findByExternalId(v2Dto.getId());
     if (CollectionUtils.isEmpty(externals) && firstOrder == null) {
-      return convertOrder(v2Dto, productMaps, supplyFacility, userDto, approveProductDtos,
-          issueVoucherDto);
+      return convertOrder(v2Dto, productMaps, supplyFacility, userDto, approvedProductDtos,
+          approvedProductMap, issueVoucherDto);
     } else {
-      return updateSubOrder(firstOrder, approveProductDtos, productMaps, externals,
+      return updateSubOrder(firstOrder, approvedProductMap, productMaps, externals,
           issueVoucherDto);
     }
   }
@@ -409,24 +423,11 @@ public class FcIssueVoucherService {
   }
 
   private UUID convertOrder(RequisitionV2Dto v2Dto, Map<String, List<ProductDto>> existProductDtos,
-      FacilityDto supplyFacility, UserDto userDto,
-      Map<String, ApprovedProductDto> approveProductDtos, IssueVoucherDto issueVoucherDto) {
-    ReleasableRequisitionDto releasableRequisitionDto = new ReleasableRequisitionDto();
-    releasableRequisitionDto.setRequisitionId(v2Dto.getId());
-    releasableRequisitionDto.setSupplyingDepotId(supplyFacility.getId());
-    requisitionService.convertToOrder(Arrays.asList(releasableRequisitionDto),
-        convertToRequisitionUserDto(userDto));
+      FacilityDto supplyFacility, UserDto userDto, List<ApprovedProductDto> approvedProductDtos,
+      Map<String, ApprovedProductDto> approveProductMap, IssueVoucherDto issueVoucherDto) {
+    convertRequisitionToOrder(v2Dto, supplyFacility, convertToRequisitionUserDto(userDto),
+        existProductDtos, approvedProductDtos, approveProductMap, issueVoucherDto);
     Order order = orderRepository.findByExternalId(v2Dto.getId());
-    List<OrderLineItem> items = getOrderLineItems(existProductDtos, approveProductDtos, order);
-    if (order.getOrderLineItems() != null) {
-      order.getOrderLineItems().clear();
-      order.getOrderLineItems().addAll(items);
-    } else {
-      order.setOrderLineItems(items);
-    }
-    order.setCreatedDate(issueVoucherDto.getShippingDate());
-    log.info("save fc order: {}", order);
-    orderRepository.save(order);
     return order.getId();
   }
 
@@ -520,7 +521,7 @@ public class FcIssueVoucherService {
     List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos =
         searchStockCardSummaries(supplyFacility, requisitionV2Dto, productIds);
     Map<UUID, ApprovedProductDto> approvedProductIdMaps = approvedProductDtos.stream()
-        .collect(Collectors.toMap(product -> product.getOrderable().getId(), product -> product));
+        .collect(Collectors.toMap(product -> product.getOrderable().getId(), Function.identity()));
     ShipmentDraftDto draftDto =
         createShipmentDraft(orderDto, stockCardSummaryV2Dtos, approvedProductIdMaps);
     shipmentDto.setId(draftDto.getId());
@@ -613,6 +614,37 @@ public class FcIssueVoucherService {
     log.error("[FC] FcIntegrationError: Issue vourch - {} exception - {}", issueVoucherDto,
         dataException.getMessage());
     return FcHandlerStatus.DATA_ERROR;
+  }
+
+  private void convertRequisitionToOrder(RequisitionV2Dto v2Dto, FacilityDto supplyFacility,
+      org.openlmis.requisition.dto.UserDto user, Map<String, List<ProductDto>> existProductDtos,
+      List<ApprovedProductDto> approvedProductDtos,
+      Map<String, ApprovedProductDto> approveProductMap, IssueVoucherDto issueVoucherDto) {
+    Requisition loadedRequisition = requisitionRepository.findOne(v2Dto.getId());
+    loadedRequisition.release(supplyFacility.getId());
+    loadedRequisition.setSupplyingFacilityId(supplyFacility.getId());
+    requisitionRepository.save(loadedRequisition);
+    requisitionStatusProcessor.statusChange(loadedRequisition, LocaleContextHolder.getLocale());
+    org.openlmis.requisition.dto.OrderDto order = orderDtoBuilder.build(loadedRequisition, user);
+    List<OrderLineItem> items = getOrderLineItems(existProductDtos, approveProductMap,
+        new Order());
+    order.setOrderLineItems(convertToOrderLineItemDto(approvedProductDtos, items));
+    order.setCreatedDate(issueVoucherDto.getShippingDate());
+    orderFulfillmentService.create(Arrays.asList(order));
+  }
+
+  private List<org.openlmis.requisition.dto.OrderLineItemDto> convertToOrderLineItemDto(
+      List<ApprovedProductDto> approvedProductDtos, List<OrderLineItem> items) {
+    Map<UUID, ApprovedProductDto> approvedProductMap = approvedProductDtos.stream()
+        .collect(Collectors.toMap(approvedProductDto ->
+        approvedProductDto.getOrderable().getId(), Function.identity()));
+    return items.stream().map(item -> {
+      org.openlmis.requisition.dto.OrderLineItemDto itemDto = new
+          org.openlmis.requisition.dto.OrderLineItemDto();
+      itemDto.setOrderable(approvedProductMap.get(item.getOrderable().getId()).getOrderable());
+      itemDto.setOrderedQuantity(item.getOrderedQuantity());
+      return itemDto;
+    }).collect(Collectors.toList());
   }
 
 }
