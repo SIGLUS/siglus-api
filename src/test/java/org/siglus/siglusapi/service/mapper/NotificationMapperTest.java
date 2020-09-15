@@ -25,6 +25,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.domain.NotificationType;
@@ -48,17 +50,21 @@ public class NotificationMapperTest {
     notification.setType(NotificationType.UPDATE);
     notification.setCreatedDate(ZonedDateTime.now());
     ProcessingPeriodDto period = new ProcessingPeriodDto();
+    FacilityDto facility = new FacilityDto();
+    ProgramDto program = new ProgramDto();
+    String author = "xiu";
 
     // when
     ZonedDateTime submitDate = ZonedDateTime.now();
-    NotificationDto notificationDto = mapper.from(notification, period, submitDate);
+    NotificationDto notificationDto = mapper
+        .from(notification, facility, program, period, submitDate, author);
 
     // then
     assertEquals(notification.getId(), notificationDto.getId());
     assertEquals(notification.getEmergency(), notificationDto.getEmergency());
     assertEquals(notification.getRefId(), notificationDto.getRefId());
     assertEquals(notification.getStatus(), notificationDto.getStatus());
-    assertEquals(notification.getType(), NotificationType.UPDATE);
+    assertEquals(NotificationType.UPDATE, notification.getType());
     assertEquals(period, notificationDto.getProcessingPeriod());
     assertEquals(submitDate, notificationDto.getRequisitionSubmittedDate());
   }

@@ -62,16 +62,10 @@ public class NotificationController {
   @PatchMapping("/{id}")
   public ResponseEntity<Void> view(@PathVariable("id") UUID notificationId) {
     ViewableStatus viewableStatus = service.viewNotification(notificationId);
-    if (viewableStatus == ViewableStatus.NOT_VIEWED) {
-      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-    if (viewableStatus == ViewableStatus.VIEWED) {
-      return new ResponseEntity<>(HttpStatus.GONE);
-    }
     if (viewableStatus == ViewableStatus.PROCESSED) {
       return new ResponseEntity<>(HttpStatus.CONFLICT);
     }
-    throw new UnsupportedOperationException("won't happened");
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
 }

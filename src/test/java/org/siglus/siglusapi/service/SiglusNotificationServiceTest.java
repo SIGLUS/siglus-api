@@ -56,6 +56,7 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.fulfillment.web.util.ShipmentObjectReferenceDto;
 import org.openlmis.requisition.domain.StatusLogEntry;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BasicProcessingPeriodDto;
@@ -67,7 +68,10 @@ import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
+import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
+import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
+import org.openlmis.requisition.web.RequisitionController;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -82,6 +86,7 @@ import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.service.SiglusNotificationService.ViewableStatus;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
+import org.slf4j.profiler.Profiler;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -125,6 +130,15 @@ public class SiglusNotificationServiceTest {
   @Mock
   private FulfillmentPeriodReferenceDataService periodService;
 
+  @Mock
+  private RequisitionController requisitionController;
+
+  @Mock
+  private ProgramReferenceDataService programRefDataService;
+
+  @Mock
+  private UserReferenceDataService userReferenceDataService;
+
   private UUID notificationId;
 
   private UUID currentUserHomeFacilityId = randomUUID();
@@ -142,13 +156,17 @@ public class SiglusNotificationServiceTest {
     // given
     UserDto user = new UserDto();
     user.setRoleAssignments(emptySet());
-    ProcessingPeriodDto processingPeriod = new ProcessingPeriodDto();
     RequisitionV2Dto requisition = new RequisitionV2Dto();
     requisition.getStatusChanges().put(RequisitionStatus.SUBMITTED.name(), new StatusLogEntry());
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
     when(requisitionGroupService.findAll()).thenReturn(emptyList());
-    when(periodService.findOne(any())).thenReturn(processingPeriod);
+    when(periodService.findOne(any())).thenReturn(new ProcessingPeriodDto());
     when(requisitionService.searchRequisition(any())).thenReturn(requisition);
+    when(facilityReferenceDataService.findOne((UUID) any())).thenReturn(new FacilityDto());
+    when(programRefDataService.findOne(any()))
+        .thenReturn(new org.openlmis.requisition.dto.ProgramDto());
+    when(userReferenceDataService.findOne(any()))
+        .thenReturn(new org.openlmis.requisition.dto.UserDto());
     Notification notification1 = new Notification();
     notification1.setProcessingPeriodId(randomUUID());
     notification1.setStatus(NotificationStatus.APPROVED);
@@ -165,11 +183,16 @@ public class SiglusNotificationServiceTest {
 
     // then
     verify(repo).findViewable(eq(pageable), any(), any());
-    ArgumentCaptor<Notification> argument = ArgumentCaptor.forClass(Notification.class);
+    ArgumentCaptor<Notification> notification = ArgumentCaptor.forClass(Notification.class);
+    ArgumentCaptor<FacilityDto> facility = ArgumentCaptor.forClass(FacilityDto.class);
+    ArgumentCaptor<org.openlmis.requisition.dto.ProgramDto> program = ArgumentCaptor.forClass(
+        org.openlmis.requisition.dto.ProgramDto.class);
     ArgumentCaptor<ProcessingPeriodDto> period = ArgumentCaptor.forClass(ProcessingPeriodDto.class);
     ArgumentCaptor<ZonedDateTime> time = ArgumentCaptor.forClass(ZonedDateTime.class);
-    verify(mapper, times(3)).from(argument.capture(), period.capture(), time.capture());
-    assertThat(argument.getAllValues(), hasItems(notification1, notification2, notification3));
+    ArgumentCaptor<String> author = ArgumentCaptor.forClass(String.class);
+    verify(mapper, times(3)).from(notification.capture(), facility.capture(),
+        program.capture(), period.capture(), time.capture(), author.capture());
+    assertThat(notification.getAllValues(), hasItems(notification1, notification2, notification3));
   }
 
   @Test
@@ -430,6 +453,9 @@ public class SiglusNotificationServiceTest {
     ProcessingPeriodDto period = new ProcessingPeriodDto();
     period.setId(randomUUID());
     order.setProcessingPeriod(period);
+    org.openlmis.fulfillment.service.referencedata.FacilityDto facility =
+        new org.openlmis.fulfillment.service.referencedata.FacilityDto();
+    order.setRequestingFacility(facility);
     when(siglusOrderService.searchOrders(any(),any()))
         .thenReturn(Pagination.getPage(singletonList(order)));
 
@@ -499,10 +525,10 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getFacility().getId(), notification1.getNotifyFacilityId());
     assertEquals(order.getProcessingPeriod().getId(), notification1.getProcessingPeriodId());
     assertNull(notification1.getNotifySupervisoryNodeId());
-    assertEquals(notification1.getType(), NotificationType.TODO);
+    assertEquals(NotificationType.TODO, notification1.getType());
     assertEquals(requisition.getProgram().getId(), notification1.getProgramId());
     Notification notification2 = notification.get(1);
-    assertEquals(notification2.getType(), NotificationType.UPDATE);
+    assertEquals(NotificationType.UPDATE, notification2.getType());
   }
 
   @Test
@@ -564,10 +590,11 @@ public class SiglusNotificationServiceTest {
   }
 
   private void mockSupervisorNode() {
-    supervisoryNodeId = randomUUID();
-    RequisitionV2Dto requisitionV2Dto = new RequisitionV2Dto();
-    requisitionV2Dto.setSupervisoryNode(supervisoryNodeId);
-    when(requisitionService.searchRequisition(any())).thenReturn(requisitionV2Dto);
+    Requisition requisition = new Requisition();
+    requisition.setSupervisoryNodeId(supervisoryNodeId);
+    Profiler profiler = new Profiler("GET_REQUISITION");
+    when(requisitionController.getProfiler(any(), any())).thenReturn(profiler);
+    when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
   }
 
   private void mockAuthentication() {

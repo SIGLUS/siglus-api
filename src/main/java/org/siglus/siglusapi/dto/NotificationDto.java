@@ -24,7 +24,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
-import org.openlmis.requisition.dto.FacilityDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.domain.NotificationType;
 
@@ -52,5 +53,9 @@ public class NotificationDto {
 
   private ZonedDateTime requisitionSubmittedDate;
 
-  private FacilityDto requestingFacility;
+  private FacilityDto facility;
+
+  private ProgramDto program;
+
+  private String author;
 }

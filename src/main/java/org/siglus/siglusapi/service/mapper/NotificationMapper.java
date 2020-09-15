@@ -17,6 +17,8 @@ package org.siglus.siglusapi.service.mapper;
 
 import java.time.ZonedDateTime;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.springframework.stereotype.Component;
@@ -24,8 +26,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class NotificationMapper {
 
-  public NotificationDto from(Notification notification, ProcessingPeriodDto processingPeriod,
-      ZonedDateTime submitDate) {
+  public NotificationDto from(Notification notification, FacilityDto facility, ProgramDto program,
+      ProcessingPeriodDto processingPeriod, ZonedDateTime submitDate, String author) {
     if (notification == null) {
       return null;
     }
@@ -38,6 +40,9 @@ public class NotificationMapper {
     dto.setCreatedDate(notification.getCreatedDate());
     dto.setProcessingPeriod(processingPeriod);
     dto.setRequisitionSubmittedDate(submitDate);
+    dto.setFacility(facility);
+    dto.setProgram(program);
+    dto.setAuthor(author);
     return dto;
   }
 }

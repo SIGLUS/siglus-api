@@ -34,6 +34,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
         (root, query, cb) -> cb.and(
             cb.equal(root.get("type"), type),
             cb.equal(root.get("viewed"), false),
+            cb.equal(root.get("processed"), false),
             rightFilter.toPredicate(root, query, cb)
         ),
         pageable);

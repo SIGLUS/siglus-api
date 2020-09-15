@@ -53,14 +53,17 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ApproveRequisitionDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.FacilityDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProofOfDeliveryDto;
 import org.openlmis.requisition.dto.RequisitionGroupDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.fulfillment.ProofOfDeliveryFulfillmentService;
+import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
+import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.siglus.common.domain.OrderExternal;
@@ -77,6 +80,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.NotificationRepository;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.NotificationMapper;
+import org.slf4j.profiler.Profiler;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -93,11 +97,11 @@ public class SiglusNotificationService {
     NOT_VIEWED, VIEWED, PROCESSED
   }
 
-  private static final String REF_FACILITY_ID = "facilityId";
+  private static final String FACILITY_ID = "facilityId";
 
-  private static final String REF_PROGRAM_ID = "programId";
+  private static final String PROGRAM_ID = "programId";
 
-  private static final String REF_STATUS = "status";
+  private static final String STATUS = "status";
 
   private static final String NOTIFY_FACILITY_ID = "notifyFacilityId";
 
@@ -137,22 +141,29 @@ public class SiglusNotificationService {
 
   private final FulfillmentPeriodReferenceDataService periodService;
 
+  private final ProgramReferenceDataService programRefDataService;
+
+  private final UserReferenceDataService userReferenceDataService;
+
   public Page<NotificationDto> searchNotifications(Pageable pageable, NotificationType type) {
     return repo
         .findViewable(pageable, type, getFilterByRights())
         .map(notification -> {
-          ProcessingPeriodDto processingPeriod = null;
+          ProcessingPeriodDto processingPeriod = periodService
+              .findOne(notification.getProcessingPeriodId());
+          org.siglus.common.dto.referencedata.FacilityDto facility =
+              facilityReferenceDataService.findOne(notification.getRequestingFacilityId());
+          ProgramDto program = programRefDataService.findOne(notification.getProgramId());
           ZonedDateTime submitDate = null;
-          if (notification.getProcessingPeriodId() != null) {
-            processingPeriod = periodService.findOne(notification.getProcessingPeriodId());
-          }
+          String author = userReferenceDataService.findOne(notification.getOperatorId())
+              .getUsername();
           if (notification.getStatus().isRequisitionPeriod()) {
             RequisitionV2Dto requisition = requisitionService
                     .searchRequisition(notification.getRefId());
             Map<String, StatusLogEntry> statusChanges = requisition.getStatusChanges();
             submitDate = statusChanges.get(RequisitionStatus.SUBMITTED.name()).getChangeDate();
           }
-          return mapper.from(notification, processingPeriod, submitDate);
+          return mapper.from(notification, facility, program, processingPeriod, submitDate, author);
         });
   }
 
@@ -240,7 +251,7 @@ public class SiglusNotificationService {
     update.set(root.get("processed"), true);
     update.where(cb.and(
         cb.equal(root.get("refId"), requisitionId),
-        root.get(REF_STATUS).in(NotificationStatus.requisitionStatuses())
+        root.get(STATUS).in(NotificationStatus.requisitionStatuses())
     ));
     em.createQuery(update).executeUpdate();
   }
@@ -259,6 +270,7 @@ public class SiglusNotificationService {
           notification.setNotifyFacilityId(findCurrentUserFacilityId());
           notification.setType(NotificationType.TODO);
           notification.setProcessingPeriodId(order.getProcessingPeriod().getId());
+          notification.setRequestingFacilityId(order.getRequestingFacility().getId());
           repo.save(notification);
         }
     );
@@ -351,7 +363,11 @@ public class SiglusNotificationService {
   }
 
   private UUID findSupervisorNodeId(BasicRequisitionDto requisitionDto) {
-    return requisitionService.searchRequisition(requisitionDto.getId()).getSupervisoryNode();
+    UUID requisitionId = requisitionDto.getId();
+    Profiler profiler = requisitionController
+        .getProfiler("GET_REQUISITION", requisitionId);
+    return requisitionController.findRequisition(requisitionId, profiler)
+        .getSupervisoryNodeId();
   }
 
   private List<BasicOrderDto> searchOrders(ApproveRequisitionDto approveRequisitionDto) {
@@ -428,16 +444,16 @@ public class SiglusNotificationService {
     switch (permissionString.getRightName()) {
       case PermissionService.REQUISITION_CREATE:
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
-            root.get(REF_STATUS).in(NotificationStatus.REJECTED, NotificationStatus.APPROVED),
+            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+            root.get(STATUS).in(NotificationStatus.REJECTED, NotificationStatus.APPROVED),
             cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       case PermissionService.REQUISITION_AUTHORIZE:
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
-            cb.equal(root.get(REF_STATUS), NotificationStatus.SUBMITTED),
+            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+            cb.equal(root.get(STATUS), NotificationStatus.SUBMITTED),
             cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       case PermissionService.REQUISITION_APPROVE:
@@ -458,17 +474,17 @@ public class SiglusNotificationService {
 
         if (nodeIdForInternalApprove != null) {
           internalPredicate = cb.and(
-              cb.equal(root.get(REF_FACILITY_ID), currentUserFacilityId),
-              cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
-              cb.equal(root.get(REF_STATUS), NotificationStatus.AUTHORIZED)
+              cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
+              cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+              cb.equal(root.get(STATUS), NotificationStatus.AUTHORIZED)
           );
         }
 
         if (!CollectionUtils.isEmpty(nodeIdsForExternalApprove)) {
           externalPredicate = cb.and(
-              cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
-              cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
-              root.get(REF_STATUS)
+              cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+              cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+              root.get(STATUS)
                   .in(NotificationStatus.AUTHORIZED, NotificationStatus.IN_APPROVAL),
               root.get("notifySupervisoryNodeId").in(nodeIdsForExternalApprove)
           );
@@ -486,8 +502,8 @@ public class SiglusNotificationService {
 
       case PermissionService.ORDERS_EDIT:
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(REF_STATUS), NotificationStatus.APPROVED),
+            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(STATUS), NotificationStatus.APPROVED),
             cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       case StockmanagementPermissionService.STOCK_CARDS_VIEW:
@@ -495,31 +511,31 @@ public class SiglusNotificationService {
           return null;
         }
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
-            cb.equal(root.get(REF_STATUS), NotificationStatus.ORDERED),
+            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+            cb.equal(root.get(STATUS), NotificationStatus.ORDERED),
             cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       case FulfillmentPermissionService.PODS_MANAGE:
         return cb.and(
-            cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
-            cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
-            cb.equal(root.get(REF_STATUS), NotificationStatus.SHIPPED),
+            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+            cb.equal(root.get(STATUS), NotificationStatus.SHIPPED),
             cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId),
             cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.TODO)
         );
       case FulfillmentPermissionService.PODS_VIEW:
         return cb.and(
-                cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
-                cb.equal(root.get(REF_PROGRAM_ID), permissionString.getProgramId()),
-                cb.equal(root.get(REF_STATUS), NotificationStatus.SHIPPED),
+                cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+                cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+                cb.equal(root.get(STATUS), NotificationStatus.SHIPPED),
                 cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId),
                 cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.UPDATE)
         );
       case FulfillmentPermissionService.SHIPMENTS_EDIT:
         return cb.and(
-                cb.equal(root.get(REF_FACILITY_ID), permissionString.getFacilityId()),
-                cb.equal(root.get(REF_STATUS), NotificationStatus.RECEIVED),
+                cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+                cb.equal(root.get(STATUS), NotificationStatus.RECEIVED),
                 cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
         );
       default:

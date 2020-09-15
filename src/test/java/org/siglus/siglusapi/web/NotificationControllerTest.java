@@ -106,7 +106,7 @@ public class NotificationControllerTest {
   }
 
   @Test
-  public void shouldReturn410WhenViewNotificationGivenServiceReturnViewed() {
+  public void shouldReturn204WhenViewNotificationGivenServiceReturnViewed() {
     // given
     UUID id = UUID.randomUUID();
     when(service.viewNotification(id)).thenReturn(ViewableStatus.VIEWED);
@@ -115,7 +115,7 @@ public class NotificationControllerTest {
     ResponseEntity<Void> response = controller.view(id);
 
     // then
-    assertEquals(HttpStatus.GONE, response.getStatusCode());
+    assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
   }
 
   @Test
