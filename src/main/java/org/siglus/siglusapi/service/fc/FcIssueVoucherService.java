@@ -623,6 +623,7 @@ public class FcIssueVoucherService {
     Requisition loadedRequisition = requisitionRepository.findOne(v2Dto.getId());
     loadedRequisition.release(supplyFacility.getId());
     loadedRequisition.setSupplyingFacilityId(supplyFacility.getId());
+    log.info("[FC] FcIntegration: save requisition - {}", loadedRequisition);
     requisitionRepository.save(loadedRequisition);
     requisitionStatusProcessor.statusChange(loadedRequisition, LocaleContextHolder.getLocale());
     org.openlmis.requisition.dto.OrderDto order = orderDtoBuilder.build(loadedRequisition, user);
