@@ -103,8 +103,6 @@ public class SiglusNotificationService {
 
   private static final String STATUS = "status";
 
-  private static final String NOTIFY_FACILITY_ID = "notifyFacilityId";
-
   private static final String NOTIFICATION_TYPE = "type";
 
   // can't find any official document to describe this size, but if you try to reduce with cb.and or
@@ -175,6 +173,7 @@ public class SiglusNotificationService {
     notification.setViewed(true);
     notification.setViewedDate(ZonedDateTime.now());
     notification.setViewedUserId(authenticationHelper.getCurrentUserId().orElse(null));
+    log.info("view notification: {}", notification);
     repo.save(notification);
     if (notification.getProcessed()) {
       return ViewableStatus.PROCESSED;
@@ -189,7 +188,6 @@ public class SiglusNotificationService {
     repo.updateLastNotificationProcessed(requisition.getId(), NotificationStatus.REJECTED);
     saveNotificationFromRequisition(requisition, notification -> {
       notification.setStatus(NotificationStatus.SUBMITTED);
-      notification.setNotifyFacilityId(requisition.getFacility().getId());
       notification.setType(NotificationType.TODO);
     });
   }
@@ -221,14 +219,12 @@ public class SiglusNotificationService {
       } else {
         notification.setStatus(NotificationStatus.APPROVED);
         notification.setFacilityId(findCurrentUserFacilityId());
-        notification.setNotifyFacilityId(findCurrentUserFacilityId());
       }
     });
     if (requisition.getStatus().isApproved()) {
       saveNotificationFromRequisition(requisition, notification -> {
         notification.setType(NotificationType.UPDATE);
         notification.setStatus(NotificationStatus.APPROVED);
-        notification.setNotifyFacilityId(requisition.getFacility().getId());
       });
     }
   }
@@ -239,7 +235,6 @@ public class SiglusNotificationService {
 
     saveNotificationFromRequisition(requisition, notification -> {
       notification.setStatus(NotificationStatus.REJECTED);
-      notification.setNotifyFacilityId(requisition.getFacility().getId());
       notification.setType(NotificationType.TODO);
     });
   }
@@ -267,10 +262,10 @@ public class SiglusNotificationService {
           notification.setProgramId(order.getProgram().getId());
           notification.setEmergency(requisition.getEmergency());
           notification.setStatus(NotificationStatus.ORDERED);
-          notification.setNotifyFacilityId(findCurrentUserFacilityId());
           notification.setType(NotificationType.TODO);
           notification.setProcessingPeriodId(order.getProcessingPeriod().getId());
           notification.setRequestingFacilityId(order.getRequestingFacility().getId());
+          log.info("convert requisition to order notification: {}", notification);
           repo.save(notification);
         }
     );
@@ -292,10 +287,10 @@ public class SiglusNotificationService {
           notification.setProgramId(requisition.getProgramId());
           notification.setEmergency(requisition.getEmergency());
           notification.setStatus(NotificationStatus.SHIPPED);
-          notification.setNotifyFacilityId(requisition.getFacilityId());
           notification.setType(notificationType);
           notification.setProcessingPeriodId(order.getProcessingPeriod().getId());
           notification.setRequestingFacilityId(requisition.getFacilityId());
+          log.info("confirm shipment notification: {}", notification);
           repo.save(notification);
         })
     );
@@ -309,11 +304,11 @@ public class SiglusNotificationService {
     notification.setFacilityId(order.getSupplyingFacility().getId());
     notification.setProgramId(order.getProgram().getId());
     notification.setEmergency(order.getEmergency());
-    notification.setNotifyFacilityId(order.getSupplyingFacility().getId());
     notification.setProcessingPeriodId(order.getProcessingPeriod().getId());
     notification.setRequestingFacilityId(order.getRequestingFacility().getId());
     notification.setStatus(NotificationStatus.RECEIVED);
     notification.setType(NotificationType.UPDATE);
+    log.info("confirm pod notification: {}", notification);
     repo.save(notification);
   }
 
@@ -321,6 +316,7 @@ public class SiglusNotificationService {
       Consumer<Notification> setStatusAndNotifyFacility) {
     Notification notification = from(requisition);
     setStatusAndNotifyFacility.accept(notification);
+    log.info("save notification: {} from requisition", notification);
     repo.save(notification);
   }
 
@@ -442,19 +438,26 @@ public class SiglusNotificationService {
       CriteriaBuilder cb, UUID currentUserFacilityId, Set<UUID> currentUserSupervisoryNodeIds,
       boolean canEditShipments, List<RequisitionGroupDto> requisitionGroups) {
     switch (permissionString.getRightName()) {
+      case PermissionService.REQUISITION_VIEW:
+        return cb.and(
+            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+            cb.equal(root.get(STATUS), NotificationStatus.APPROVED),
+            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
+        );
       case PermissionService.REQUISITION_CREATE:
         return cb.and(
             cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-            root.get(STATUS).in(NotificationStatus.REJECTED, NotificationStatus.APPROVED),
-            cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
+            cb.equal(root.get(STATUS), NotificationStatus.REJECTED),
+            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
         );
       case PermissionService.REQUISITION_AUTHORIZE:
         return cb.and(
             cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
             cb.equal(root.get(STATUS), NotificationStatus.SUBMITTED),
-            cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
+            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
         );
       case PermissionService.REQUISITION_APPROVE:
         if (currentUserSupervisoryNodeIds.isEmpty()) {
@@ -504,7 +507,7 @@ public class SiglusNotificationService {
         return cb.and(
             cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(STATUS), NotificationStatus.APPROVED),
-            cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
+            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
         );
       case StockmanagementPermissionService.STOCK_CARDS_VIEW:
         if (!canEditShipments) {
@@ -514,14 +517,14 @@ public class SiglusNotificationService {
             cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
             cb.equal(root.get(STATUS), NotificationStatus.ORDERED),
-            cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
+            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
         );
       case FulfillmentPermissionService.PODS_MANAGE:
         return cb.and(
             cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
             cb.equal(root.get(STATUS), NotificationStatus.SHIPPED),
-            cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId),
+            cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
             cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.TODO)
         );
       case FulfillmentPermissionService.PODS_VIEW:
@@ -529,14 +532,14 @@ public class SiglusNotificationService {
                 cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
                 cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
                 cb.equal(root.get(STATUS), NotificationStatus.SHIPPED),
-                cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId),
+                cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
                 cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.UPDATE)
         );
       case FulfillmentPermissionService.SHIPMENTS_EDIT:
         return cb.and(
                 cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
                 cb.equal(root.get(STATUS), NotificationStatus.RECEIVED),
-                cb.equal(root.get(NOTIFY_FACILITY_ID), currentUserFacilityId)
+                cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
         );
       default:
         return null;

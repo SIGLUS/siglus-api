@@ -57,11 +57,6 @@ public class Notification extends BaseEntity {
 
   private Boolean emergency;
 
-  /**
-   * id of next-step node facility
-   */
-  private UUID notifyFacilityId;
-
   private UUID notifySupervisoryNodeId;
 
   private Boolean viewed = false;

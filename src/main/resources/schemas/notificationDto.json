@@ -8,13 +8,9 @@
       "type": "string",
       "title": "id"
     },
-    "emergencyFlag": {
+    "emergency": {
       "type": "boolean",
-      "title": "emergencyFlag"
-    },
-    "sourceFacilityName": {
-      "type": "string",
-      "title": "sourceFacilityName"
+      "title": "emergency"
     },
     "refId": {
       "type": "string",
@@ -38,6 +34,33 @@
         "STATUS_UPDATE"
       ],
       "title": "type"
+    },
+    "facility": {
+      "type": "object",
+      "$ref": "facilityDto.json",
+      "title": "facility"
+    },
+    "program": {
+      "type": "object",
+      "$ref": "programDto.json",
+      "title": "program"
+    },
+    "processingPeriod": {
+      "type": "object",
+      "$ref": "processingPeriod.json",
+      "title": "processingPeriod"
+    },
+    "author": {
+      "type": "string",
+      "title": "author"
+    },
+    "requisitionSubmittedDate": {
+      "type": "string",
+      "title": "requisitionSubmittedDate"
+    },
+    "createdDate": {
+      "type": "string",
+      "title": "createdDate"
     }
   }
 }

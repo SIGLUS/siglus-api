@@ -304,7 +304,6 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getEmergency(), notification.getEmergency());
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(NotificationStatus.SUBMITTED, notification.getStatus());
-    assertEquals(requisition.getFacility().getId(), notification.getNotifyFacilityId());
     assertNull(notification.getNotifySupervisoryNodeId());
   }
 
@@ -330,7 +329,6 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getId(), notification.getRefId());
     assertEquals(NotificationStatus.AUTHORIZED, notification.getStatus());
     assertEquals(supervisoryNodeId, notification.getNotifySupervisoryNodeId());
-    assertNull(notification.getNotifyFacilityId());
   }
 
   @Test
@@ -353,7 +351,6 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getProgram().getId(), todoNotification.getProgramId());
     assertEquals(requisition.getEmergency(), todoNotification.getEmergency());
     assertEquals(NotificationStatus.APPROVED, todoNotification.getStatus());
-    assertEquals(currentUserHomeFacilityId, todoNotification.getNotifyFacilityId());
     assertNull(todoNotification.getNotifySupervisoryNodeId());
     assertEquals(NotificationType.TODO, todoNotification.getType());
 
@@ -363,7 +360,6 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getProgram().getId(), updateNotification.getProgramId());
     assertEquals(requisition.getEmergency(), updateNotification.getEmergency());
     assertEquals(NotificationStatus.APPROVED, updateNotification.getStatus());
-    assertEquals(requisition.getFacility().getId(), updateNotification.getNotifyFacilityId());
     assertNull(updateNotification.getNotifySupervisoryNodeId());
     assertEquals(NotificationType.UPDATE, updateNotification.getType());
   }
@@ -390,7 +386,6 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getEmergency(), notification.getEmergency());
     assertEquals(NotificationStatus.IN_APPROVAL, notification.getStatus());
     assertEquals(supervisoryNodeId, notification.getNotifySupervisoryNodeId());
-    assertNull(notification.getNotifyFacilityId());
   }
 
   @Test
@@ -430,7 +425,6 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getProgram().getId(), notification.getProgramId());
     assertEquals(requisition.getEmergency(), notification.getEmergency());
     assertEquals(NotificationStatus.REJECTED, notification.getStatus());
-    assertEquals(requisition.getFacility().getId(), notification.getNotifyFacilityId());
     assertNull(notification.getNotifySupervisoryNodeId());
   }
 
@@ -471,7 +465,6 @@ public class SiglusNotificationServiceTest {
     assertEquals(order.getProgram().getId(), notification.getProgramId());
     assertEquals(requisition.getEmergency(), notification.getEmergency());
     assertEquals(NotificationStatus.ORDERED, notification.getStatus());
-    assertEquals(currentUserHomeFacilityId, notification.getNotifyFacilityId());
     assertNull(notification.getNotifySupervisoryNodeId());
   }
 
@@ -522,7 +515,6 @@ public class SiglusNotificationServiceTest {
     assertEquals(requisition.getFacility().getId(), notification1.getFacilityId());
     assertEquals(requisition.getEmergency(), notification1.getEmergency());
     assertEquals(NotificationStatus.SHIPPED, notification1.getStatus());
-    assertEquals(requisition.getFacility().getId(), notification1.getNotifyFacilityId());
     assertEquals(order.getProcessingPeriod().getId(), notification1.getProcessingPeriodId());
     assertNull(notification1.getNotifySupervisoryNodeId());
     assertEquals(NotificationType.TODO, notification1.getType());
