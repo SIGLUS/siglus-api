@@ -316,8 +316,7 @@ public class Application {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
     executor.setCorePoolSize(2);
     executor.setMaxPoolSize(100);
-    executor.setQueueCapacity(4);
-    executor.setThreadNamePrefix("siglusapi-thread-");
+    executor.setQueueCapacity(1);
     return executor;
   }
 
