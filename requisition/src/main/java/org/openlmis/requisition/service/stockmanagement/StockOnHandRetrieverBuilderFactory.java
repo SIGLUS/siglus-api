@@ -16,6 +16,7 @@
 package org.openlmis.requisition.service.stockmanagement;
 
 import org.openlmis.requisition.domain.RequisitionTemplate;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2Controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,9 @@ public class StockOnHandRetrieverBuilderFactory {
 
   @Autowired
   private StockCardSummariesStockManagementService stockCardSummariesStockManagementService;
+
+  @Autowired
+  private StockCardSummariesV2Controller stockCardSummariesV2Controller;
 
   /**
    * Creates new instance of {@link StockOnHandRetrieverBuilder} based on settings from the
@@ -45,6 +49,7 @@ public class StockOnHandRetrieverBuilderFactory {
     }
 
     builder.setStockCardSummariesService(stockCardSummariesStockManagementService);
+    builder.setStockCardSummariesV2Controller(stockCardSummariesV2Controller);
 
     return builder;
   }
