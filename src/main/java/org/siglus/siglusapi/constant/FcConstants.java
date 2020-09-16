@@ -15,8 +15,12 @@
 
 package org.siglus.siglusapi.constant;
 
+import static com.google.common.collect.Sets.newHashSet;
+
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import org.siglus.common.domain.referencedata.Code;
 
 public class FcConstants {
 
@@ -42,6 +46,10 @@ public class FcConstants {
   public static final String FACILITY_TYPE_API = "/clientType/clientstypes";
 
   public static final String STATUS_ACTIVE = "Activo";
+
+  public static final String DEFAULT_REGIMEN_CATEGORY_CODE = "ADULTS";
+
+  public static final Set<Code> IGNORE_CODES = newHashSet(Code.code("RG"), Code.code("A2Bped"));
 
   public static List<String> getQueryByDateApiList() {
     return Arrays.asList(RECEIPT_PLAN_API, ISSUE_VOUCHER_API, PROGRAM_API, REGIMEN_API);

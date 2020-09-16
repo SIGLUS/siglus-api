@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.siglus.siglusapi.constant.FcConstants.DEFAULT_REGIMEN_CATEGORY_CODE;
 import static org.siglus.siglusapi.constant.FcConstants.DUMMY;
+import static org.siglus.siglusapi.constant.FcConstants.IGNORE_CODES;
 
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +36,7 @@ import org.siglus.siglusapi.dto.fc.RegimenDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RegimenCategoryRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
+import org.siglus.siglusapi.util.DisplayOrderHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -53,6 +56,9 @@ public class FcRegimenService {
   @Autowired
   private RegimenCategoryRepository regimenCategoryRepository;
 
+  @Autowired
+  private DisplayOrderHelper displayOrderHelper;
+
   public boolean processRegimenData(List<RegimenDto> dtos) {
     try {
       Map<String, ProgramRealProgram> realProgramMap = programRealProgramRepository.findAll()
@@ -60,23 +66,31 @@ public class FcRegimenService {
       Map<String, UUID> programIdMap = programRefDataService.findAll()
           .stream()
           .collect(Collectors.toMap(ProgramDto::getCode, ProgramDto::getId));
-      Map<String, Regimen> regimenMap = regimenRepository.findAll()
+      List<Regimen> allRegimens = regimenRepository.findAll();
+      Map<String, Regimen> regimenMap = allRegimens
           .stream().collect(Collectors.toMap(r -> r.getCode().toString(), r -> r));
-
-      Map<String, RegimenCategory> categoryMap = regimenCategoryRepository.findAll().stream()
+      int maxRegimenDisplayOrder = allRegimens.stream()
+          .mapToInt(Regimen::getDisplayOrder).max().orElse(0);
+      List<RegimenCategory> allCategories = regimenCategoryRepository.findAll();
+      Map<String, RegimenCategory> categoryMap = allCategories.stream()
           .collect(Collectors.toMap(c -> c.getCode().toString(), c -> c));
+      int maxRegimenCategoryDisplayOrder = allCategories.stream()
+          .mapToInt(RegimenCategory::getDisplayOrder).max().orElse(0);
+      displayOrderHelper.setMaxRegimenDisplayOrder(maxRegimenDisplayOrder);
+      displayOrderHelper.setMaxRegimenCategoryDisplayOrder(maxRegimenCategoryDisplayOrder);
 
       Set<Regimen> regimensToUpdate = new HashSet<>();
       dtos.stream()
           .filter(RegimenDto::isActive)
           .filter(dto -> !DUMMY.equals(dto.getCode()))
+          .filter(dto -> !IGNORE_CODES.contains(Code.code(dto.getCode())))
           .forEach(dto -> {
             UUID dtoProgramId = programIdMap.get(realProgramMap.get(dto.getAreaCode())
                 .getProgramCode());
             if (dtoProgramId == null) {
               log.error("unknown program code: {}", dto.getAreaCode());
             }
-            Regimen regimen = regimenMap.get(dto.getCode());
+            Regimen regimen = regimenMap.get(Code.code(dto.getCode()).toString());
             if (regimen != null) {
               Regimen updateRegimen =
                   compareAndUpdateRegimenData(regimen, dto, dtoProgramId, categoryMap);
@@ -85,15 +99,17 @@ public class FcRegimenService {
               }
               return;
             }
+
             regimensToUpdate.add(Regimen.from(dto, dtoProgramId,
-                getRegimenCategoryFromDto(dto, categoryMap)));
+                getRegimenCategoryFromDto(dto, categoryMap),
+                displayOrderHelper.getNextRegimenDisplayOrder()));
           });
 
       regimenRepository.save(regimensToUpdate);
       log.info("save fc regimen successfully, size: {}", dtos.size());
       return true;
     } catch (Exception e) {
-      log.error("process fc program data error", e);
+      log.error("process fc regimen data error", e);
       return false;
     }
   }
@@ -129,7 +145,8 @@ public class FcRegimenService {
   private RegimenCategory getRegimenCategoryFromDto(RegimenDto dto,
       Map<String, RegimenCategory> categoryMap) {
     if (dto.getCategoryCode() == null) {
-      return null;
+      // return default category
+      return categoryMap.get(DEFAULT_REGIMEN_CATEGORY_CODE);
     }
     RegimenCategory dbCategory = categoryMap.get(dto.getCategoryCode());
     if (dbCategory == null) {
@@ -137,6 +154,7 @@ public class FcRegimenService {
           .builder()
           .code(Code.code(dto.getCategoryCode()))
           .name(dto.getCategoryDescription())
+          .displayOrder(displayOrderHelper.getNextRegimenCategoryDisplayOrder())
           .build();
     }
     dbCategory.setName(dto.getCategoryDescription());
@@ -145,13 +163,15 @@ public class FcRegimenService {
 
   private boolean isEqual(RegimenCategory category, String categoryCode,
       String categoryDescription) {
-    if (category == null && categoryCode == null && categoryDescription == null) {
+    if ((category == null || DEFAULT_REGIMEN_CATEGORY_CODE.equals(category.getCode().toString()))
+        && categoryCode == null && categoryDescription == null) {
       return true;
     } else if (category != null
-        && category.getCode().equals(categoryCode)
+        && category.getCode().toString().equals(categoryCode)
         && category.getName().equals(categoryDescription)) {
       return true;
     }
     return false;
   }
+
 }

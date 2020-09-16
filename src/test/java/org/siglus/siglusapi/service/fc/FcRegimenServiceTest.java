@@ -41,6 +41,7 @@ import org.siglus.siglusapi.dto.fc.RegimenDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RegimenCategoryRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
+import org.siglus.siglusapi.util.DisplayOrderHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcRegimenServiceTest {
@@ -59,6 +60,9 @@ public class FcRegimenServiceTest {
 
   @Mock
   private RegimenCategoryRepository regimenCategoryRepository;
+
+  @Mock
+  private DisplayOrderHelper displayOrderHelper;
 
   @Captor
   private ArgumentCaptor<Set<Regimen>> regimensArgumentCaptor;
@@ -96,6 +100,8 @@ public class FcRegimenServiceTest {
     when(regimenRepository.findAll()).thenReturn(newArrayList(mockRegimen1(), mockRegimen3()));
     when(regimenCategoryRepository.findAll())
         .thenReturn(newArrayList(mockCategory(categoryId2, categoryCode2, categoryDescription2)));
+    when(displayOrderHelper.getNextRegimenDisplayOrder()).thenReturn(0);
+    when(displayOrderHelper.getNextRegimenCategoryDisplayOrder()).thenReturn(0);
 
     // when
     fcRegimenService.processRegimenData(newArrayList(mockRegimenDto1(), mockRegimenDto2(),
@@ -191,6 +197,7 @@ public class FcRegimenServiceTest {
         .programId(programId1)
         .regimenCategory(null)
         .active(true)
+        .displayOrder(0)
         .build();
   }
 
@@ -201,6 +208,7 @@ public class FcRegimenServiceTest {
         .regimenCategory(mockCategory(categoryId2, categoryCode2, categoryDescription2))
         .programId(programId3)
         .active(true)
+        .displayOrder(1)
         .build();
   }
 
@@ -209,6 +217,7 @@ public class FcRegimenServiceTest {
     category.setId(id);
     category.setCode(Code.code(code));
     category.setName(name);
+    category.setDisplayOrder(0);
     return category;
   }
 }

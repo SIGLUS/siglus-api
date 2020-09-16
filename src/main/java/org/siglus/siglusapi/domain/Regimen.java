@@ -53,7 +53,6 @@ public class Regimen extends BaseEntity {
 
   private Integer displayOrder;
 
-  @Column(nullable = false)
   private UUID programId;
 
   @ManyToOne(cascade = CascadeType.PERSIST)
@@ -83,13 +82,16 @@ public class Regimen extends BaseEntity {
     return Objects.hashCode(code);
   }
 
-  public static Regimen from(RegimenDto regimenDto, UUID programId, RegimenCategory category) {
+  public static Regimen from(RegimenDto regimenDto, UUID programId, RegimenCategory category,
+      int maxRegimenDisplayOrder) {
     return Regimen
         .builder()
         .code(Code.code(regimenDto.getCode()))
         .name(regimenDto.getDescription())
         .programId(programId)
         .regimenCategory(category)
+        .active(RegimenDto.isActive(regimenDto))
+        .displayOrder(maxRegimenDisplayOrder)
         .build();
   }
 }

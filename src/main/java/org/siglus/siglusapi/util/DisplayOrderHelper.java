@@ -13,14 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.util;
 
-import java.util.UUID;
-import org.siglus.common.domain.referencedata.Code;
-import org.siglus.siglusapi.domain.RegimenCategory;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.Setter;
+import org.springframework.stereotype.Component;
 
-public interface RegimenCategoryRepository
-    extends JpaRepository<RegimenCategory, UUID> {
-  RegimenCategory findByCode(Code code);
+@Component
+@Setter
+public class DisplayOrderHelper {
+
+  private int maxRegimenDisplayOrder;
+
+  private int maxRegimenCategoryDisplayOrder;
+
+  public int getNextRegimenDisplayOrder() {
+    return  ++maxRegimenDisplayOrder;
+  }
+
+  public int getNextRegimenCategoryDisplayOrder() {
+    return  ++maxRegimenCategoryDisplayOrder;
+  }
 }
