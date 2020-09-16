@@ -31,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
-import org.siglus.siglusapi.service.client.SiglusIssueVoucherService;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -79,9 +78,6 @@ public class FcScheduleService {
   private FcFacilityTypeService facilityTypeService;
 
   @Autowired
-  private SiglusIssueVoucherService issueVoucherService;
-
-  @Autowired
   private FcRegimenService fcRegimenService;
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
@@ -109,7 +105,7 @@ public class FcScheduleService {
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = TIME_ZONE_ID)
   public void fetchIssueVouchersFromFc() {
     String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
-    issueVoucherService.updateIssueVourch(date);
+    fetchIssueVouchersFromFc(date);
   }
 
   public void fetchIssueVouchersFromFc(String date) {
@@ -206,7 +202,7 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.regimen.cron}", zone = TIME_ZONE_ID)
   public void fetchRegimenFromFcForScheduled() {
-    fetchProgramsFromFc(null);
+    fetchRegimenFromFc(null);
   }
 
   public void fetchRegimenFromFc(LocalDate fromDate) {

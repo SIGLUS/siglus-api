@@ -71,6 +71,24 @@ public class FcFacilityTypeServiceTest {
 
   }
 
+  @Test
+  public void shouldUpdateFacilityType() {
+    // given
+    FacilityTypeDto typeDto2 = mockFacilityTypeDto("test6", "test8", true);
+    FcFacilityTypeDto typeDto4 = mockFcFacilityTypeDto("test6", "test8", false);
+    when(facilityTypeService.searchAllFacilityTypes())
+        .thenReturn(newArrayList(typeDto2));
+
+    // when
+    fcFacilityTypeService.processFacilityType(
+        newArrayList(typeDto4));
+
+    // then
+    verify(facilityTypeService).saveFacilityType(updateFacilityType.capture());
+    assertEquals(false, updateFacilityType.getValue().getActive());
+
+  }
+
   private FacilityTypeDto mockFacilityTypeDto(String code, String name, boolean active) {
     FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
     facilityTypeDto.setId(UUID.randomUUID());

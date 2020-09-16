@@ -43,6 +43,7 @@ import org.siglus.siglusapi.dto.fc.PageInfoDto;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("PMD.TooManyMethods")
 public class FcScheduleServiceTest {
 
   public static final String DATE = "20200825";
@@ -115,7 +116,7 @@ public class FcScheduleServiceTest {
     when(fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API)).thenReturn(DATE);
 
     // when
-    fcScheduleService.fetchIssueVouchersFromFc("");
+    fcScheduleService.fetchIssueVouchersFromFc();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
@@ -204,7 +205,7 @@ public class FcScheduleServiceTest {
     when(fcProgramService.processProgramData(any())).thenReturn(true);
 
     // when
-    fcScheduleService.fetchProgramsFromFc(null);
+    fcScheduleService.fetchProgramsFromFcForScheduled();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
@@ -223,7 +224,7 @@ public class FcScheduleServiceTest {
     when(fcRegimenService.processRegimenData(any())).thenReturn(true);
 
     // when
-    fcScheduleService.fetchRegimenFromFc(null);
+    fcScheduleService.fetchRegimenFromFcForScheduled();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
@@ -242,7 +243,7 @@ public class FcScheduleServiceTest {
     when(fcFacilityTypeService.processFacilityType(any())).thenReturn(true);
 
     // when
-    fcScheduleService.fetchFacilityTypeFromFc("20000101");
+    fcScheduleService.fetchFacilityTypeFromFcForScheduled();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
