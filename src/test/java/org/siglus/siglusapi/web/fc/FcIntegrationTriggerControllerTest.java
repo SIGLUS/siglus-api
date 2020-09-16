@@ -73,4 +73,13 @@ public class FcIntegrationTriggerControllerTest {
     verify(fcScheduleService).fetchProgramsFromFc(LocalDate.of(2020, 1, 1));
   }
 
+  @Test
+  public void fetchRegimensFromFc() {
+    // when
+    fcIntegrationTriggerController.fetchRegimensFromFc(LocalDate.of(2020, 1, 1));
+
+    // then
+    verify(fcScheduleService).fetchRegimenFromFc(LocalDate.of(2020, 1, 1));
+  }
+
 }

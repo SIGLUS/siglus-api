@@ -2029,6 +2029,14 @@ traits:
         responses:
           200:
 
+    /regimens:
+      displayName: Regimens From Fc
+      post:
+        is: [ secured ]
+        description: Fetch regimens from fc.
+        responses:
+          200:
+
     /programadditionalorderables:
       displayName: Program Additional Orderable Product
       get:

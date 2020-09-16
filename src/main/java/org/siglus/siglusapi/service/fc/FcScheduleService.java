@@ -21,6 +21,7 @@ import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
+import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +39,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@SuppressWarnings("PMD.TooManyMethods")
 public class FcScheduleService {
 
   private static final String TIME_ZONE_ID = "${time.zoneId}";
@@ -74,6 +76,9 @@ public class FcScheduleService {
 
   @Autowired
   private SiglusIssueVoucherService issueVoucherService;
+
+  @Autowired
+  private FcRegimenService fcRegimenService;
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   public void fetchReceiptPlan() {
@@ -187,6 +192,31 @@ public class FcScheduleService {
         .api(PROGRAM_API)
         .date(date)
         .totalObjectsFromFc(callFcService.getPrograms().size())
+        .callFcSuccess(true)
+        .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
+        .finalSuccess(finalSuccess)
+        .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
+        .build();
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+  }
+
+  @Scheduled(cron = "${fc.regimen.cron}", zone = TIME_ZONE_ID)
+  public void fetchRegimenFromFcForScheduled() {
+    fetchProgramsFromFc(null);
+  }
+
+  public void fetchRegimenFromFc(LocalDate fromDate) {
+    final long startTime = currentTimeMillis();
+    String date = fromDate == null
+        ? fcIntegrationResultService.getLatestSuccessDate(REGIMEN_API)
+        : dateHelper.formatDateString(fromDate);
+    log.info("date: {}", date);
+    Integer callFcCostTimeInSeconds = fetchDataFromFc(REGIMEN_API, date);
+    boolean finalSuccess = fcRegimenService.processRegimenData(callFcService.getRegimens());
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(REGIMEN_API)
+        .date(date)
+        .totalObjectsFromFc(callFcService.getRegimens().size())
         .callFcSuccess(true)
         .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
         .finalSuccess(finalSuccess)

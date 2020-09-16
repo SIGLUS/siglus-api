@@ -21,15 +21,19 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.referencedata.Code;
 
+@Builder
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "regimen_categories", schema = "siglusintegration")
 public class RegimenCategory extends BaseEntity {
 
@@ -42,10 +46,6 @@ public class RegimenCategory extends BaseEntity {
 
   @Column(nullable = false)
   private Integer displayOrder;
-
-  private RegimenCategory() {
-    code = null;
-  }
 
   @Override
   public boolean equals(Object other) {

@@ -25,6 +25,8 @@ import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_JOB;
+import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
+import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.getQueryByDateApiList;
 
 import java.util.Date;
@@ -49,7 +51,7 @@ public class FcIntegrationResultService {
 
   @Autowired
   private FcIntegrationResultRepository fcIntegrationResultRepository;
-  
+
   @Autowired
   private CallFcService callFcService;
 
@@ -107,6 +109,8 @@ public class FcIntegrationResultService {
       return RECEIPT_PLAN_JOB;
     } else if (ISSUE_VOUCHER_API.equals(api)) {
       return ISSUE_VOUCHER_JOB;
+    } else if (REGIMEN_API.equals(api)) {
+      return REGIMEN_JOB;
     } else if (CMM_API.equals(api)) {
       return CMM_JOB;
     } else if (CP_API.equals(api)) {
@@ -124,6 +128,10 @@ public class FcIntegrationResultService {
       callFcService.getIssueVouchers().clear();
     } else if (CMM_API.equals(api)) {
       callFcService.getCmms().clear();
+    } else if (PROGRAM_API.equals(api)) {
+      callFcService.getPrograms().clear();
+    } else if (REGIMEN_API.equals(api)) {
+      callFcService.getRegimens().clear();
     } else {
       callFcService.getCps().clear();
     }
