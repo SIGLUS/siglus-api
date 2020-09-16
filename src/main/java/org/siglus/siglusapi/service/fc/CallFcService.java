@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.fc;
 
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
@@ -30,6 +31,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.fc.CmmDto;
 import org.siglus.siglusapi.dto.fc.CpDto;
+import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
@@ -56,6 +58,7 @@ public class CallFcService {
   private List<CpDto> cps = new ArrayList<>();
   private List<ProgramDto> programs = new ArrayList<>();
   private List<RegimenDto> regimens = new ArrayList<>();
+  private List<FcFacilityTypeDto> facilityTypes = new ArrayList<>();
   private PageInfoDto pageInfoDto = new PageInfoDto();
 
   @Autowired
@@ -99,6 +102,8 @@ public class CallFcService {
       return RegimenDto[].class;
     } else if (CMM_API.equals(api)) {
       return CmmDto[].class;
+    } else if (FACILITY_TYPE_API.equals(api)) {
+      return FcFacilityTypeDto[].class;
     } else {
       return CpDto[].class;
     }
@@ -117,6 +122,8 @@ public class CallFcService {
       this.cps.addAll(Arrays.asList((CpDto[]) body));
     } else if (PROGRAM_API.equals(api)) {
       this.programs.addAll(Arrays.asList((ProgramDto[]) body));
+    } else if (FACILITY_TYPE_API.equals(api)) {
+      this.facilityTypes.addAll(Arrays.asList((FcFacilityTypeDto[]) body));
     }
   }
 

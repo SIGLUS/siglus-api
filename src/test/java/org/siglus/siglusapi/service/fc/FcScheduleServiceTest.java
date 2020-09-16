@@ -22,6 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
@@ -80,6 +81,9 @@ public class FcScheduleServiceTest {
 
   @Mock
   private FcRegimenService fcRegimenService;
+
+  @Mock
+  private FcFacilityTypeService fcFacilityTypeService;
 
   @Before
   public void setup() {
@@ -227,6 +231,25 @@ public class FcScheduleServiceTest {
         ArgumentCaptor.forClass(FcIntegrationResultDto.class);
     verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
     assertEquals(REGIMEN_API, captor.getValue().getApi());
+  }
+
+  @Test
+  public void shouldFetchFacilityTypeFromFc() {
+    // given
+    when(callFcService.getFacilityTypes()).thenReturn(new ArrayList<>());
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(fcIntegrationResultService.getLatestSuccessDate(FACILITY_TYPE_API)).thenReturn(DATE);
+    when(fcFacilityTypeService.processFacilityType(any())).thenReturn(true);
+
+    // when
+    fcScheduleService.fetchFacilityTypeFromFc("20000101");
+
+    // then
+    verify(callFcService).fetchData(anyString(), anyString());
+    ArgumentCaptor<FcIntegrationResultDto> captor =
+        ArgumentCaptor.forClass(FcIntegrationResultDto.class);
+    verify(fcIntegrationResultService).recordFcIntegrationResult(captor.capture());
+    assertEquals(FACILITY_TYPE_API, captor.getValue().getApi());
   }
 
   @Test

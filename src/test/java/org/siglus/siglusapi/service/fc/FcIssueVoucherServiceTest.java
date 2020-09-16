@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service;
+package org.siglus.siglusapi.service.fc;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -76,11 +76,15 @@ import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
+import org.siglus.siglusapi.service.SiglusOrderService;
+import org.siglus.siglusapi.service.SiglusShipmentDraftService;
+import org.siglus.siglusapi.service.SiglusShipmentService;
+import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
+import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
-import org.siglus.siglusapi.service.fc.FcIssueVoucherService;
 import org.siglus.siglusapi.util.SimulateUserAuthenticationHelper;
 import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.data.domain.PageRequest;

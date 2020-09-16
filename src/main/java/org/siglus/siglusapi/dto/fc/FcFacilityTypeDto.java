@@ -13,49 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.dto.fc;
 
-import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
-
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import java.time.ZonedDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.fc.ProgramDto;
 
-@Entity
 @Data
-@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "program_real_program", schema = "siglusintegration")
-public class ProgramRealProgram extends BaseEntity {
+public class FcFacilityTypeDto {
 
-  private String realProgramCode;
+  private String code;
 
-  private String realProgramName;
+  private String description;
 
-  private String programCode;
+  private String status;
 
-  private String programName;
-
-  private Boolean active;
-
-  public static ProgramRealProgram from(ProgramDto dto) {
-    return ProgramRealProgram
-        .builder()
-        .realProgramCode(dto.getCode())
-        .realProgramName(dto.getDescription())
-        .active(isActive(dto))
-        .build();
-  }
-
-  public static boolean isActive(ProgramDto dto) {
-    return STATUS_ACTIVE.equals(dto.getStatus());
-  }
+  private ZonedDateTime lastUpdatedAt;
 }

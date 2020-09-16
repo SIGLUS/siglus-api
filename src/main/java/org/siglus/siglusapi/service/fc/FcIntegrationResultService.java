@@ -19,6 +19,8 @@ import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_JOB;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
@@ -117,6 +119,8 @@ public class FcIntegrationResultService {
       return CP_JOB;
     } else if (PROGRAM_API.equals(api)) {
       return PROGRAM_JOB;
+    } else if (FACILITY_TYPE_API.equals(api)) {
+      return FACILITY_TYPE_JOB;
     }
     return null;
   }
@@ -132,8 +136,12 @@ public class FcIntegrationResultService {
       callFcService.getPrograms().clear();
     } else if (REGIMEN_API.equals(api)) {
       callFcService.getRegimens().clear();
-    } else {
+    } else if (CP_API.equals(api))  {
       callFcService.getCps().clear();
+    } else if (PROGRAM_API.equals(api)) {
+      callFcService.getPrograms().clear();
+    } else if (FACILITY_TYPE_API.equals(api)) {
+      callFcService.getFacilityTypes().clear();
     }
   }
 

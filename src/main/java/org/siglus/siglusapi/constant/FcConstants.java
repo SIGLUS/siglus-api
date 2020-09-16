@@ -28,6 +28,7 @@ public class FcConstants {
   public static final String ISSUE_VOUCHER_JOB = "ISSUE_VOUCHER";
   public static final String PROGRAM_JOB = "PROGRAM";
   public static final String REGIMEN_JOB = "REGIMEN";
+  public static final String FACILITY_TYPE_JOB = "FACILITY_TYPE";
 
   public static final String CMM_API = "/cmm/cmms";
   public static final String CP_API = "/cp/cps";
@@ -37,8 +38,10 @@ public class FcConstants {
   public static final String REGIMEN_API = "/areaRegime/arearegimes";
 
   public static final String PROGRAM_STATUS_ACTIVE = "Activo";
-  public static final String PROGRAM_STATUS_INACTIVE = "Inactivo";
   public static final String DUMMY = "DUMMY";
+  public static final String FACILITY_TYPE_API = "/clientType/clientstypes";
+
+  public static final String STATUS_ACTIVE = "Activo";
 
   public static List<String> getQueryByDateApiList() {
     return Arrays.asList(RECEIPT_PLAN_API, ISSUE_VOUCHER_API, PROGRAM_API, REGIMEN_API);

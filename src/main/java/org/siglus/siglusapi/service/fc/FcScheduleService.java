@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.fc;
 import static java.lang.System.currentTimeMillis;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
@@ -73,6 +74,9 @@ public class FcScheduleService {
 
   @Autowired
   private FcProgramService fcProgramService;
+
+  @Autowired
+  private FcFacilityTypeService facilityTypeService;
 
   @Autowired
   private SiglusIssueVoucherService issueVoucherService;
@@ -217,6 +221,29 @@ public class FcScheduleService {
         .api(REGIMEN_API)
         .date(date)
         .totalObjectsFromFc(callFcService.getRegimens().size())
+        .callFcSuccess(true)
+        .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
+        .finalSuccess(finalSuccess)
+        .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
+        .build();
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+  }
+
+  @Scheduled(cron = "${fc.facilitytype.cron}", zone = TIME_ZONE_ID)
+  public void fetchFacilityTypeFromFcForScheduled() {
+    String date = fcIntegrationResultService.getLatestSuccessDate(FACILITY_TYPE_API);
+    fetchFacilityTypeFromFc(date);
+  }
+
+  public void fetchFacilityTypeFromFc(String date) {
+    final long startTime = currentTimeMillis();
+    Integer callFcCostTimeInSeconds = fetchDataFromFc(FACILITY_TYPE_API, date);
+    boolean finalSuccess = facilityTypeService.processFacilityType(
+        callFcService.getFacilityTypes());
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(FACILITY_TYPE_API)
+        .date(date)
+        .totalObjectsFromFc(callFcService.getFacilityTypes().size())
         .callFcSuccess(true)
         .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
         .finalSuccess(finalSuccess)
