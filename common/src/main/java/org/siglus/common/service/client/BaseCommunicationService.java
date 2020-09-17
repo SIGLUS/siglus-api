@@ -159,6 +159,12 @@ public abstract class BaseCommunicationService<T> {
    * @param parameters  Map of query parameters.
    * @return all reference data T objects.
    */
+
+
+  public List<T> findAll() {
+    return new ArrayList(findAll("", getArrayResultClass()));
+  }
+
   protected Collection<T> findAll(String resourceUrl, Map<String, Object> parameters) {
     return findAll(resourceUrl, parameters, Boolean.FALSE, getArrayResultClass());
   }

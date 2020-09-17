@@ -17,11 +17,14 @@ package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
+import java.util.Arrays;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -30,8 +33,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.FacilityTypeDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
+import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeService;
+import org.siglus.siglusapi.service.client.SiglusStockCardLineItemReasons;
+import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcFacilityTypeServiceTest {
@@ -42,11 +51,36 @@ public class FcFacilityTypeServiceTest {
   @Mock
   private SiglusFacilityTypeService facilityTypeService;
 
+  @Mock
+  private SiglusStockCardLineItemReasons siglusStockCardLineItemReasons;
+
+  @Mock
+  private ProgramReferenceDataService programRefDataService;
+
+  @Mock
+  private ValidReasonAssignmentStockManagementService assignmentService;
+
   @Captor
   private ArgumentCaptor<FacilityTypeDto> updateFacilityType;
 
   @Captor
   private ArgumentCaptor<FacilityTypeDto> addFacilityType;
+
+  @Captor
+  private ArgumentCaptor<ValidReasonAssignmentDto> reasonArgumentCaptor;
+
+  private UUID programId = UUID.randomUUID();
+  private UUID reasonId = UUID.randomUUID();
+
+  @Before
+  public void setup() {
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    StockCardLineItemReasonDto lineItemReasonDto = new StockCardLineItemReasonDto();
+    lineItemReasonDto.setId(reasonId);
+    when(programRefDataService.findAll()).thenReturn(Arrays.asList(programDto));
+    when(siglusStockCardLineItemReasons.findAll()).thenReturn(Arrays.asList(lineItemReasonDto));
+  }
 
   @Test
   public void shouldSaveAndUpdateFacilityType() {
@@ -54,21 +88,25 @@ public class FcFacilityTypeServiceTest {
     FacilityTypeDto typeDto1 = mockFacilityTypeDto("test1", "test1", true);
     FacilityTypeDto typeDto2 = mockFacilityTypeDto("test2", "test2", true);
     FacilityTypeDto typeDto3 = mockFacilityTypeDto("test3", "test3", true);
-    FcFacilityTypeDto typeDto4 = mockFcFacilityTypeDto("test2", "test23", true);
-    FcFacilityTypeDto typeDto5 = mockFcFacilityTypeDto("test4", "test4", true);
     when(facilityTypeService.searchAllFacilityTypes())
         .thenReturn(newArrayList(typeDto1, typeDto2, typeDto3));
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setId(UUID.randomUUID());
+    when(facilityTypeService.createFacilityType(any())).thenReturn(typeDto);
+    FcFacilityTypeDto typeDto4 = mockFcFacilityTypeDto("test2", "test23", true);
+    FcFacilityTypeDto typeDto5 = mockFcFacilityTypeDto("test4", "test4", true);
 
     // when
-    fcFacilityTypeService.processFacilityType(
-        newArrayList(typeDto4, typeDto5));
+    fcFacilityTypeService.processFacilityType(newArrayList(typeDto4, typeDto5));
 
     // then
     verify(facilityTypeService).createFacilityType(addFacilityType.capture());
     verify(facilityTypeService).saveFacilityType(updateFacilityType.capture());
+    verify(assignmentService).assignReason(reasonArgumentCaptor.capture());
     assertEquals("test4", addFacilityType.getValue().getName());
     assertEquals("test23", updateFacilityType.getValue().getName());
-
+    assertEquals(programId, reasonArgumentCaptor.getValue().getProgramId());
+    assertEquals(reasonId, reasonArgumentCaptor.getValue().getReason().getId());
   }
 
   @Test

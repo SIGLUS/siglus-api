@@ -25,10 +25,17 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.dto.FacilityTypeDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
+import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
+import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
+import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeService;
+import org.siglus.siglusapi.service.client.SiglusStockCardLineItemReasons;
+import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -37,6 +44,15 @@ public class FcFacilityTypeService {
 
   @Autowired
   private SiglusFacilityTypeService facilityTypeService;
+
+  @Autowired
+  private SiglusStockCardLineItemReasons siglusStockCardLineItemReasons;
+
+  @Autowired
+  private ProgramReferenceDataService programRefDataService;
+
+  @Autowired
+  private ValidReasonAssignmentStockManagementService assignmentService;
 
   public boolean processFacilityType(List<FcFacilityTypeDto> dtos) {
     if (CollectionUtils.isNotEmpty(dtos)) {
@@ -47,26 +63,15 @@ public class FcFacilityTypeService {
         if (!facilityTypeMap.containsKey(typeDto.getCode())) {
           needAddedFacilityTypes.add(typeDto);
         } else {
-          getUpdatedFacility(facilityTypeMap, needUpdatedFacilityTypes, typeDto);
+          getUpdatedFacilityType(facilityTypeMap, needUpdatedFacilityTypes, typeDto);
         }
       });
-      updateAddedFacility(facilityTypeMap, needAddedFacilityTypes);
-      updateModifiedFacility(facilityTypeMap, needUpdatedFacilityTypes);
+      updateAddedFacilityType(facilityTypeMap, needAddedFacilityTypes);
+      updateModifiedFacilityType(facilityTypeMap, needUpdatedFacilityTypes);
     }
 
     return true;
   }
-
-  @Async
-  public void createFacility(FacilityTypeDto dto) {
-    facilityTypeService.createFacilityType(dto);
-  }
-
-  @Async
-  public void saveFacilityType(FacilityTypeDto dto) {
-    facilityTypeService.saveFacilityType(dto);
-  }
-
 
   private Map<String, FacilityTypeDto> getStringFacilityTypeDtoMap() {
     List<FacilityTypeDto> facilityTypeDtos = facilityTypeService.searchAllFacilityTypes();
@@ -75,7 +80,7 @@ public class FcFacilityTypeService {
         Function.identity()));
   }
 
-  private void getUpdatedFacility(Map<String, FacilityTypeDto> facilityTypeMap,
+  private void getUpdatedFacilityType(Map<String, FacilityTypeDto> facilityTypeMap,
       List<FcFacilityTypeDto> needUpdatedFacilityTypes, FcFacilityTypeDto typeDto) {
     FacilityTypeDto facilityTypeDto = facilityTypeMap.get(typeDto.getCode());
     if (!facilityTypeDto.getName().equals(typeDto.getDescription())
@@ -84,19 +89,20 @@ public class FcFacilityTypeService {
     }
   }
 
-  private void updateModifiedFacility(Map<String, FacilityTypeDto> facilityTypeMap,
+  private void updateModifiedFacilityType(Map<String, FacilityTypeDto> facilityTypeMap,
       List<FcFacilityTypeDto> needUpdatedFacilityTypes) {
     needUpdatedFacilityTypes.stream().forEach(typeDto -> {
       FacilityTypeDto dto = facilityTypeMap.get(typeDto.getCode());
       dto.setActive(isActive(typeDto.getStatus()));
       dto.setName(typeDto.getDescription());
-      saveFacilityType(dto);
+      facilityTypeService.saveFacilityType(dto);
     });
   }
 
-  private void updateAddedFacility(Map<String, FacilityTypeDto> facilityTypeMap,
+  private void updateAddedFacilityType(Map<String, FacilityTypeDto> facilityTypeMap,
       List<FcFacilityTypeDto> needAddedFacilityTypes) {
     int originSize = facilityTypeMap.size();
+    List<FacilityTypeDto> needUpdateReasonType = new ArrayList<>();
     needAddedFacilityTypes.stream().forEach(typeDto -> {
       int index = needAddedFacilityTypes.indexOf(typeDto);
       FacilityTypeDto dto = new FacilityTypeDto();
@@ -104,8 +110,39 @@ public class FcFacilityTypeService {
       dto.setActive(isActive(typeDto.getStatus()));
       dto.setName(typeDto.getDescription());
       dto.setDisplayOrder(originSize + index + 1);
-      createFacility(dto);
+      needUpdateReasonType.add(facilityTypeService.createFacilityType(dto));
     });
+    updateReason(needUpdateReasonType);
+  }
+
+  private void updateReason(List<FacilityTypeDto> facilityTypeDtos) {
+    List<StockCardLineItemReasonDto> reasonDtos = siglusStockCardLineItemReasons.findAll();
+    List<ProgramDto> programs = programRefDataService.findAll();
+    List<ValidReasonAssignmentDto> assignmentDtos = new ArrayList<>();
+    facilityTypeDtos.forEach(facilityTypeDto ->
+        programs.forEach(programDto ->
+            configureProgram(facilityTypeDto, programDto, reasonDtos, assignmentDtos)));
+    assignmentDtos.forEach(validReasonAssignmentDto ->
+        assignmentService.assignReason(validReasonAssignmentDto));
+  }
+
+  private void configureProgram(FacilityTypeDto typeDto, ProgramDto programDto,
+      List<StockCardLineItemReasonDto> reasonDtos,
+      List<ValidReasonAssignmentDto> assignmentDtos) {
+    reasonDtos.forEach(reasonDto -> {
+      ValidReasonAssignmentDto assignmentDto = new ValidReasonAssignmentDto();
+      assignmentDto.setFacilityType(new ObjectReferenceDto("", "", typeDto.getId()));
+      assignmentDto.setProgram(new ObjectReferenceDto("", "", programDto.getId()));
+      assignmentDto.setReason(getLineItemReason(reasonDto));
+      assignmentDto.setHidden(false);
+      assignmentDtos.add(assignmentDto);
+    });
+  }
+
+  private StockCardLineItemReason getLineItemReason(StockCardLineItemReasonDto dto) {
+    StockCardLineItemReason lineItemReason = new StockCardLineItemReason();
+    lineItemReason.setId(dto.getId());
+    return lineItemReason;
   }
 
   private static boolean isActive(String status) {

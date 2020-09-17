@@ -51,8 +51,8 @@ public class SiglusFacilityTypeService extends BaseReferenceDataService<Facility
     put(dto.getId().toString(), dto, Void.class, false);
   }
 
-  public void createFacilityType(FacilityTypeDto dto) {
-    postResult("", dto, Void.class);
+  public FacilityTypeDto createFacilityType(FacilityTypeDto dto) {
+    return postResult("", dto, FacilityTypeDto.class);
   }
 
 }
