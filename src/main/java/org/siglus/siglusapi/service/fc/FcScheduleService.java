@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
+import org.siglus.siglusapi.service.client.SiglusIssueVoucherService;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,6 +82,9 @@ public class FcScheduleService {
 
   @Autowired
   private FcFacilityTypeService facilityTypeService;
+
+  @Autowired
+  private SiglusIssueVoucherService issueVoucherService;
 
   @Autowired
   private FcRegimenService fcRegimenService;
@@ -137,7 +141,7 @@ public class FcScheduleService {
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = TIME_ZONE_ID)
   public void fetchIssueVouchersFromFc() {
     String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
-    fetchIssueVouchersFromFc(date);
+    issueVoucherService.updateIssueVourch(date);
   }
 
   public void fetchIssueVouchersFromFc(String date) {

@@ -41,6 +41,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
+import org.siglus.siglusapi.service.client.SiglusIssueVoucherService;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -90,6 +91,9 @@ public class FcScheduleServiceTest {
   @Mock
   private FcProductService fcProductService;
 
+  @Mock
+  private SiglusIssueVoucherService issueVoucherService;
+
   @Before
   public void setup() {
     when(fcIssueVoucherService.processIssueVouchers(any())).thenReturn(true);
@@ -113,14 +117,27 @@ public class FcScheduleServiceTest {
   }
 
   @Test
+  public void shouldFetchIssueVoucherScheduleFromFc() {
+    // given
+    when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+
+    // when
+    fcScheduleService.fetchIssueVouchersFromFc();
+
+    // then
+    verify(issueVoucherService).updateIssueVourch(anyString());
+  }
+
+
+  @Test
   public void shouldFetchIssueVoucherFromFc() {
     // given
     when(callFcService.getIssueVouchers()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
-    when(fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API)).thenReturn(DATE);
 
     // when
-    fcScheduleService.fetchIssueVouchersFromFc();
+    fcScheduleService.fetchIssueVouchersFromFc("20000101");
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
