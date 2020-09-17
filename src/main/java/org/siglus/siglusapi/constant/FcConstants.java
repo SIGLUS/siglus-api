@@ -33,6 +33,7 @@ public class FcConstants {
   public static final String PROGRAM_JOB = "PROGRAM";
   public static final String REGIMEN_JOB = "REGIMEN";
   public static final String FACILITY_TYPE_JOB = "FACILITY_TYPE";
+  public static final String GEOGRAPHIC_ZONE_JOB = "GEOGRAPHIC_ZONE";
 
   public static final String CMM_API = "/cmm/cmms";
   public static final String CP_API = "/cp/cps";
@@ -41,6 +42,7 @@ public class FcConstants {
   public static final String PROGRAM_API = "/area/areas";
   public static final String REGIMEN_API = "/areaRegime/arearegimes";
   public static final String FACILITY_TYPE_API = "/clientType/clientstypes";
+  public static final String GEOGRAPHIC_ZONE_API = "/region/regions";
 
   public static final String DUMMY = "DUMMY";
   public static final String STATUS_ACTIVE = "Activo";

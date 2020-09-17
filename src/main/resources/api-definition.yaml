@@ -2045,6 +2045,14 @@ traits:
         responses:
           200:
 
+    /fcGeographicZones:
+      displayName: Sync GeographicZones From Fc
+      post:
+        is: [ secured ]
+        description: Sync GeographicZones From Fc
+        responses:
+          200:
+
     /programadditionalorderables:
       displayName: Program Additional Orderable Product
       get:

@@ -21,6 +21,8 @@ import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_JOB;
+import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
+import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
@@ -107,22 +109,25 @@ public class FcIntegrationResultService {
   }
 
   private String getJobName(String api) {
+    String jobName = null;
     if (RECEIPT_PLAN_API.equals(api)) {
-      return RECEIPT_PLAN_JOB;
+      jobName = RECEIPT_PLAN_JOB;
     } else if (ISSUE_VOUCHER_API.equals(api)) {
-      return ISSUE_VOUCHER_JOB;
-    } else if (REGIMEN_API.equals(api)) {
-      return REGIMEN_JOB;
-    } else if (CMM_API.equals(api)) {
-      return CMM_JOB;
+      jobName = ISSUE_VOUCHER_JOB;
+    }else if (CMM_API.equals(api)) {
+      jobName = CMM_JOB;
     } else if (CP_API.equals(api)) {
-      return CP_JOB;
+      jobName = CP_JOB;
     } else if (PROGRAM_API.equals(api)) {
-      return PROGRAM_JOB;
+      jobName = PROGRAM_JOB;
     } else if (FACILITY_TYPE_API.equals(api)) {
-      return FACILITY_TYPE_JOB;
+      jobName = FACILITY_TYPE_JOB;
+    } else if (REGIMEN_API.equals(api)) {
+      jobName = REGIMEN_JOB;
+    }  else if (GEOGRAPHIC_ZONE_API.equals(api)) {
+      jobName = GEOGRAPHIC_ZONE_JOB;
     }
-    return null;
+    return jobName;
   }
 
   private void clearFcData(String api) {
@@ -132,16 +137,16 @@ public class FcIntegrationResultService {
       callFcService.getIssueVouchers().clear();
     } else if (CMM_API.equals(api)) {
       callFcService.getCmms().clear();
-    } else if (PROGRAM_API.equals(api)) {
-      callFcService.getPrograms().clear();
-    } else if (REGIMEN_API.equals(api)) {
-      callFcService.getRegimens().clear();
     } else if (CP_API.equals(api))  {
       callFcService.getCps().clear();
-    } else if (PROGRAM_API.equals(api)) {
+    }  else if (PROGRAM_API.equals(api)) {
       callFcService.getPrograms().clear();
     } else if (FACILITY_TYPE_API.equals(api)) {
       callFcService.getFacilityTypes().clear();
+    } else if (REGIMEN_API.equals(api)) {
+      callFcService.getRegimens().clear();
+    } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
+      callFcService.getGeographicZones().clear();
     }
   }
 

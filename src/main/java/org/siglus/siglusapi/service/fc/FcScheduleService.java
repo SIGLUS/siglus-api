@@ -19,6 +19,7 @@ import static java.lang.System.currentTimeMillis;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
+import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
@@ -79,6 +80,32 @@ public class FcScheduleService {
 
   @Autowired
   private FcRegimenService fcRegimenService;
+
+  @Autowired
+  private FcGeographicZoneService fcGeographicZoneService;
+
+  @Scheduled(cron = "${fc.geographiczone.cron}", zone = TIME_ZONE_ID)
+  public void fetchGeographicZones() {
+    String date = fcIntegrationResultService.getLatestSuccessDate(GEOGRAPHIC_ZONE_API);
+    fetchGeographicZonesFromFc(date);
+  }
+
+  public void fetchGeographicZonesFromFc(String date) {
+    final long startTime = currentTimeMillis();
+    Integer callFcCostTimeInSeconds = fetchDataFromFc(GEOGRAPHIC_ZONE_API, date);
+    Boolean finalSuccess = fcGeographicZoneService.processGeographicZones(
+        callFcService.getGeographicZones());
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(GEOGRAPHIC_ZONE_API)
+        .date(date)
+        .totalObjectsFromFc(callFcService.getGeographicZones().size())
+        .callFcSuccess(true)
+        .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
+        .finalSuccess(finalSuccess)
+        .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
+        .build();
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+  }
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   public void fetchReceiptPlan() {
@@ -296,6 +323,12 @@ public class FcScheduleService {
       callFcService.setCmms(new ArrayList<>());
     } else if (CP_API.equals(api)) {
       callFcService.setCps(new ArrayList<>());
+    } else if (FACILITY_TYPE_API.equals(api)) {
+      callFcService.setFacilityTypes(new ArrayList<>());
+    } else if (REGIMEN_API.equals(api)) {
+      callFcService.setRegimens(new ArrayList<>());
+    } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
+      callFcService.setGeographicZones(new ArrayList<>());
     }
     callFcService.setPageInfoDto(new PageInfoDto());
   }

@@ -68,4 +68,9 @@ public class FcIntegrationTriggerController {
     fcScheduleService.fetchRegimenFromFc(date);
   }
 
+  @PostMapping("/fcGeographicZones")
+  public void fetchGeographicZonesFromFc(@RequestParam("date") String beginDate) {
+    fcScheduleService.fetchGeographicZonesFromFc(beginDate);
+  }
+
 }

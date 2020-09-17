@@ -27,12 +27,12 @@ import org.openlmis.requisition.dto.BaseDto;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class GeographicZoneSimpleDto extends BaseDto {
+public class OpenLmisGeographicZoneDto extends BaseDto {
   private String code;
   private String name;
   private GeographicLevelDto level;
   private Integer catchmentPopulation;
   private Double latitude;
   private Double longitude;
-  private GeographicZoneSimpleDto parent;
+  private OpenLmisGeographicZoneDto parent;
 }
