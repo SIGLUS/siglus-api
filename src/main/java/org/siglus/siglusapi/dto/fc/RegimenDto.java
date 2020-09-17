@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.dto.fc;
 
-import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_STATUS_ACTIVE;
+import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -43,6 +43,6 @@ public class RegimenDto {
   private String status;
 
   public static boolean isActive(RegimenDto dto) {
-    return PROGRAM_STATUS_ACTIVE.equals(dto.getStatus());
+    return STATUS_ACTIVE.equals(dto.getStatus());
   }
 }

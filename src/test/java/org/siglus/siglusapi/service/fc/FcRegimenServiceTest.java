@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_STATUS_ACTIVE;
+import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
 import java.util.Set;
 import java.util.UUID;
@@ -138,7 +138,7 @@ public class FcRegimenServiceTest {
         .areaCode(areaCode1)
         .categoryCode(categoryCode1)
         .categoryDescription(categoryDescription1)
-        .status(PROGRAM_STATUS_ACTIVE)
+        .status(STATUS_ACTIVE)
         .build();
   }
 
@@ -150,7 +150,7 @@ public class FcRegimenServiceTest {
         .areaCode(areaCode2)
         .categoryCode(categoryCode2)
         .categoryDescription(categoryDescription2)
-        .status(PROGRAM_STATUS_ACTIVE)
+        .status(STATUS_ACTIVE)
         .build();
   }
 
@@ -161,7 +161,7 @@ public class FcRegimenServiceTest {
         .description(description3)
         .areaCode(areaCode1)
         .categoryCode(categoryCode3)
-        .status(PROGRAM_STATUS_ACTIVE)
+        .status(STATUS_ACTIVE)
         .build();
   }
 
