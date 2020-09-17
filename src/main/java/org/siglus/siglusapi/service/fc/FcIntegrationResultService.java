@@ -114,7 +114,7 @@ public class FcIntegrationResultService {
       jobName = RECEIPT_PLAN_JOB;
     } else if (ISSUE_VOUCHER_API.equals(api)) {
       jobName = ISSUE_VOUCHER_JOB;
-    }else if (CMM_API.equals(api)) {
+    } else if (CMM_API.equals(api)) {
       jobName = CMM_JOB;
     } else if (CP_API.equals(api)) {
       jobName = CP_JOB;

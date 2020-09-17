@@ -28,6 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi")
 public class FcIntegrationTriggerController {
 
+  public static final String DATE = "date";
+
   @Autowired
   private FcScheduleService fcScheduleService;
 
@@ -42,7 +44,7 @@ public class FcIntegrationTriggerController {
   }
 
   @PostMapping("/receiptPlans")
-  public void processingReceiptPlans(@RequestParam("date") String startDate) {
+  public void processingReceiptPlans(@RequestParam(DATE) String startDate) {
     fcScheduleService.fetchReceiptPlansFromFc(startDate);
   }
 
@@ -53,12 +55,12 @@ public class FcIntegrationTriggerController {
   }
 
   @PostMapping("/fcFacilityType")
-  public void fetchFacilityTypeFromFc(@RequestParam("date") String beginDate) {
+  public void fetchFacilityTypeFromFc(@RequestParam(DATE) String beginDate) {
     fcScheduleService.fetchFacilityTypeFromFc(beginDate);
   }
 
   @PostMapping("/issueVouchers")
-  public void updateIssueVouchers(@RequestParam("date") String beginDate) {
+  public void updateIssueVouchers(@RequestParam(DATE) String beginDate) {
     fcScheduleService.fetchIssueVouchersFromFc(beginDate);
   }
 
@@ -69,7 +71,7 @@ public class FcIntegrationTriggerController {
   }
 
   @PostMapping("/fcGeographicZones")
-  public void fetchGeographicZonesFromFc(@RequestParam("date") String beginDate) {
+  public void fetchGeographicZonesFromFc(@RequestParam(DATE) String beginDate) {
     fcScheduleService.fetchGeographicZonesFromFc(beginDate);
   }
 
