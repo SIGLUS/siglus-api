@@ -27,7 +27,6 @@ import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
 import org.siglus.siglusapi.service.client.SiglusGeographicLevelService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -116,7 +115,9 @@ public class FcGeographicZoneService {
   }
 
   private void syncAddedZone(List<GeographicZoneSimpleDto> zoneSimpleDtos) {
-    zoneSimpleDtos.forEach(zoneSimpleDto -> createGeographicZone(zoneSimpleDto));
+    zoneSimpleDtos.forEach(zoneSimpleDto -> {
+      geographicZoneService.createGeographicZone(zoneSimpleDto);
+    });
   }
 
   private void syncUpdateZone(List<GeographicZoneSimpleDto> zoneSimpleDtos,
@@ -124,18 +125,8 @@ public class FcGeographicZoneService {
     zoneSimpleDtos.forEach(zoneSimpleDto -> {
       GeographicZoneSimpleDto originZone = geographicZoneMaps.get(zoneSimpleDto.getCode());
       zoneSimpleDto.setId(originZone.getId());
-      saveGeographicZone(zoneSimpleDto);
+      geographicZoneService.saveGeographicZone(zoneSimpleDto);
     });
-  }
-
-  @Async
-  public void createGeographicZone(GeographicZoneSimpleDto dto) {
-    geographicZoneService.createGeographicZone(dto);
-  }
-
-  @Async
-  public void saveGeographicZone(GeographicZoneSimpleDto dto) {
-    geographicZoneService.saveGeographicZone(dto);
   }
 
   private Map<String, GeographicZoneSimpleDto> getGeographicZoneDtoMap() {
