@@ -146,7 +146,6 @@ import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.TestConsumptionLineItemDraft;
 import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
-import org.siglus.siglusapi.dto.RegimenDispatchLineDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
@@ -358,7 +357,7 @@ public class SiglusRequisitionServiceTest {
 
   private UUID regimenId = UUID.randomUUID();
 
-  private UUID lineId = UUID.randomUUID();
+  private String rowName = "1stLinhas";
 
   private UUID productId1 = UUID.randomUUID();
   private Long productVersion1 = 1L;
@@ -920,7 +919,6 @@ public class SiglusRequisitionServiceTest {
     when(draftRepository.findRequisitionDraftByRequisitionIdAndFacilityId(requisitionId,
         userDto.getHomeFacilityId())).thenReturn(draft);
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
-    when(regimenDataProcessor.getRegimenDispatchLineDtoMap()).thenReturn(mockDispatchLineMap());
 
     // when
     SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisition(requisitionId);
@@ -1168,9 +1166,8 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
         .thenReturn(siglusRequisitionDto);
-
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
-    when(regimenDataProcessor.getRegimenDispatchLineDtoMap()).thenReturn(mockDispatchLineMap());
+
     // when
     siglusRequisitionService.approveRequisition(requisitionId, request, response);
 
@@ -1207,7 +1204,6 @@ public class SiglusRequisitionServiceTest {
     RequisitionDraft draft = getRequisitionDraft(siglusRequisitionDto.getId());
     when(draftRepository.save(any(RequisitionDraft.class))).thenReturn(draft);
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
-    when(regimenDataProcessor.getRegimenDispatchLineDtoMap()).thenReturn(mockDispatchLineMap());
 
     // when
     SiglusRequisitionDto requisitionDto = siglusRequisitionService.updateRequisition(
@@ -2037,24 +2033,11 @@ public class SiglusRequisitionServiceTest {
     return map;
   }
 
-  private Map<UUID, RegimenDispatchLineDto> mockDispatchLineMap() {
-    Map<UUID, RegimenDispatchLineDto> map = new HashMap<>();
-    map.put(lineId, mockDispatchLine());
-    return map;
-  }
-
   private RegimenDto mockRegimen() {
     RegimenDto regimen = new RegimenDto();
     regimen.setId(regimenId);
     regimen.setCode("ABC+3TC+RAL+DRV+RTV");
     regimen.setIsCustom(false);
     return regimen;
-  }
-
-  private RegimenDispatchLineDto mockDispatchLine() {
-    RegimenDispatchLineDto line = new RegimenDispatchLineDto();
-    line.setId(lineId);
-    line.setCode("Outros");
-    return line;
   }
 }

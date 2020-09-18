@@ -55,10 +55,6 @@ public class Regimen extends BaseEntity {
   @JoinColumn(name = "categoryId")
   protected RegimenCategory regimenCategory;
 
-  @ManyToOne
-  @JoinColumn(name = "dispatchLineId")
-  protected RegimenDispatchLine regimenDispatchLine;
-
   public Regimen() {
     code = null;
   }
@@ -80,8 +76,7 @@ public class Regimen extends BaseEntity {
 
   public static Regimen from(RegimenDto regimenDto, UUID programId, RegimenCategory category,
       int displayOrder) {
-    return Regimen
-        .builder()
+    return Regimen.builder()
         .code(regimenDto.getCode())
         .name(regimenDto.getDescription())
         .programId(programId)

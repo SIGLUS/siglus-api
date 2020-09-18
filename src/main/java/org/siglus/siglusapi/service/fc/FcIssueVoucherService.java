@@ -86,7 +86,7 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
-import org.siglus.siglusapi.util.SimulateUserAuthenticationHelper;
+import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -160,7 +160,7 @@ public class FcIssueVoucherService {
   private SiglusShipmentService siglusShipmentService;
 
   @Autowired
-  private SimulateUserAuthenticationHelper simulateUser;
+  private SiglusSimulateUserAuthHelper simulateUser;
 
   @Autowired
   private RequisitionRepository requisitionRepository;

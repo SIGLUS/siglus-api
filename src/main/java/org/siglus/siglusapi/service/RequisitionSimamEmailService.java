@@ -346,14 +346,16 @@ public class RequisitionSimamEmailService {
     if (isEmpty(regimenLineItems)) {
       return arvDataColumns;
     }
-    regimenLineItems.forEach(regimenLineItem -> {
-      Map<String, String> dataColumns = getCommonDataColumnsForRegimen(requisition, program);
-      RegimenDto regimen = regimenLineItem.getRegimen();
-      Integer value = regimenLineItem.getColumns().get("patients").getValue();
-      dataColumns.put(EXCEL_REGIMEN, regimen.getFullProductName());
-      dataColumns.put(EXCEL_TOTAL, getString(value));
-      arvDataColumns.add(dataColumns);
-    });
+    regimenLineItems.stream()
+        .filter(lineItem -> lineItem.getRegimen() != null)
+        .forEach(regimenLineItem -> {
+          Map<String, String> dataColumns = getCommonDataColumnsForRegimen(requisition, program);
+          RegimenDto regimen = regimenLineItem.getRegimen();
+          Integer value = regimenLineItem.getColumns().get("patients").getValue();
+          dataColumns.put(EXCEL_REGIMEN, regimen.getFullProductName());
+          dataColumns.put(EXCEL_TOTAL, getString(value));
+          arvDataColumns.add(dataColumns);
+        });
     return arvDataColumns;
   }
 

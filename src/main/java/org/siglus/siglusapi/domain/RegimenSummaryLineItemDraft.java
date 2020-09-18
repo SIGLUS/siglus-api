@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.domain;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
@@ -32,7 +31,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.RegimenDispatchLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.springframework.beans.BeanUtils;
@@ -55,7 +53,7 @@ public class RegimenSummaryLineItemDraft extends BaseEntity {
 
   private UUID requisitionId;
 
-  private UUID regimenDispatchLineId;
+  private String name;
 
   @Column(name = "columnname")
   private String column;
@@ -64,7 +62,7 @@ public class RegimenSummaryLineItemDraft extends BaseEntity {
 
   public static List<RegimenSummaryLineItemDraft> from(RequisitionDraft draft,
       SiglusRequisitionDto requisitionDto) {
-    List<RegimenSummaryLineDto> lineDtos = requisitionDto.getRegimenDispatchLineItems();
+    List<RegimenSummaryLineDto> lineDtos = requisitionDto.getRegimenSummaryLineItems();
     List<RegimenSummaryLineItem> lineItems =
         RegimenSummaryLineItem.from(lineDtos, requisitionDto.getId());
 
@@ -79,14 +77,13 @@ public class RegimenSummaryLineItemDraft extends BaseEntity {
   }
 
   public static List<RegimenSummaryLineDto> getRegimenSummaryLineDtos(
-      List<RegimenSummaryLineItemDraft> drafts,
-      Map<UUID, RegimenDispatchLineDto> regimenDispatchLineDtoMap) {
+      List<RegimenSummaryLineItemDraft> drafts) {
     List<RegimenSummaryLineItem> lineItems = drafts.stream().map(draft -> {
       RegimenSummaryLineItem summaryLineItem = new RegimenSummaryLineItem();
       BeanUtils.copyProperties(draft, summaryLineItem);
       summaryLineItem.setId(draft.getRegimenSummaryLineItemId());
       return summaryLineItem;
     }).collect(Collectors.toList());
-    return RegimenSummaryLineDto.from(lineItems, regimenDispatchLineDtoMap);
+    return RegimenSummaryLineDto.from(lineItems);
   }
 }

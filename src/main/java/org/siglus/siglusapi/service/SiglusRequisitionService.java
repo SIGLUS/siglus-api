@@ -1327,9 +1327,8 @@ public class SiglusRequisitionService {
       regimenDataProcessor.setCustomRegimen(dto);
       dto.setRegimenLineItems(RegimenLineItemDraft.getRegimenLineDtos(
           draft.getRegimenLineItemDrafts(), regimenDataProcessor.getRegimenDtoMap()));
-      dto.setRegimenDispatchLineItems(RegimenSummaryLineItemDraft.getRegimenSummaryLineDtos(
-          draft.getRegimenSummaryLineItemDrafts(),
-          regimenDataProcessor.getRegimenDispatchLineDtoMap()));
+      dto.setRegimenSummaryLineItems(RegimenSummaryLineItemDraft.getRegimenSummaryLineDtos(
+          draft.getRegimenSummaryLineItemDrafts()));
     }
 
   }

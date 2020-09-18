@@ -133,6 +133,9 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
   }
 
   public String getTradeItemIdentifier() {
+    if (null == identifiers) {
+      identifiers = newHashMap();
+    }
     return identifiers.get(TRADE_ITEM);
   }
 

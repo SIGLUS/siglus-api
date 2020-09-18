@@ -19,7 +19,6 @@ import static com.google.common.collect.Lists.newArrayList;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,19 +30,18 @@ import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 @NoArgsConstructor
 public class RegimenSummaryLineDto {
 
-  private RegimenDispatchLineDto regimenDispatchLine;
+  private String name;
 
   // column: value
   private Map<String, RegimenColumnDto> columns;
 
-  public static List<RegimenSummaryLineDto> from(List<RegimenSummaryLineItem> lineItems,
-      Map<UUID, RegimenDispatchLineDto> regimenDispatchLineDtoMap) {
+  public static List<RegimenSummaryLineDto> from(List<RegimenSummaryLineItem> lineItems) {
     List<RegimenSummaryLineDto> regimenSummaryLineDtos = newArrayList();
 
-    Map<UUID, List<RegimenSummaryLineItem>> groupByRegimenDispatchLine = lineItems.stream()
-        .collect(Collectors.groupingBy(RegimenSummaryLineItem::getRegimenDispatchLineId));
+    Map<String, List<RegimenSummaryLineItem>> groupBySummaryRow = lineItems.stream()
+        .collect(Collectors.groupingBy(RegimenSummaryLineItem::getName));
 
-    groupByRegimenDispatchLine.forEach((regimenDispatchLineId, regimenSummaryLineItems) -> {
+    groupBySummaryRow.forEach((rowName, regimenSummaryLineItems) -> {
 
       Map<String, RegimenColumnDto> columnMap = regimenSummaryLineItems.stream()
           .collect(Collectors.toMap(RegimenSummaryLineItem::getColumn,
@@ -54,8 +52,7 @@ public class RegimenSummaryLineDto {
 
       RegimenSummaryLineDto lineDto = new RegimenSummaryLineDto();
       lineDto.setColumns(columnMap);
-      lineDto.setRegimenDispatchLine(
-          regimenDispatchLineDtoMap.get(regimenDispatchLineId));
+      lineDto.setName(rowName);
 
       regimenSummaryLineDtos.add(lineDto);
     });

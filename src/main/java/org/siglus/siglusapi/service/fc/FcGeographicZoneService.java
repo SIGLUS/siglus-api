@@ -80,10 +80,10 @@ public class FcGeographicZoneService {
 
   private List<FcGeographicZoneNationalDto> filterInactiveZones(
       List<FcGeographicZoneNationalDto> fcDtos) {
-    List<FcGeographicZoneNationalDto> nationls = fcDtos.stream()
+    List<FcGeographicZoneNationalDto> nationals = fcDtos.stream()
         .filter(national -> STATUS_ACTIVE.equalsIgnoreCase(national.getStatus()))
         .collect(Collectors.toList());
-    nationls.forEach(national -> {
+    nationals.forEach(national -> {
       List<FcGeographicZoneProvinceDto> provinces = national.getProvinces().stream()
           .filter(province -> STATUS_ACTIVE.equalsIgnoreCase(province.getStatus()))
           .collect(Collectors.toList());
@@ -95,7 +95,7 @@ public class FcGeographicZoneService {
       });
       national.setProvinces(provinces);
     });
-    return nationls;
+    return nationals;
   }
 
   private Map<String, GeographicLevelDto> getLevelDtoMap() {

@@ -87,7 +87,7 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
-import org.siglus.siglusapi.util.SimulateUserAuthenticationHelper;
+import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
 import org.siglus.siglusapi.validator.FcValidate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -150,7 +150,7 @@ public class FcIssueVoucherServiceTest {
   private RequisitionService requisitionService;
 
   @Mock
-  private SimulateUserAuthenticationHelper simulateUser;
+  private SiglusSimulateUserAuthHelper simulateUser;
 
   @Mock
   private RequisitionRepository requisitionRepository;

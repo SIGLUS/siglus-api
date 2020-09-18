@@ -142,6 +142,7 @@ public class FcProductService {
           .build();
       extensions.add(extension);
     });
+    log.info("save program orderables extension: {}", extensions);
     programOrderablesExtensionRepository.save(extensions);
   }
 
@@ -180,6 +181,7 @@ public class FcProductService {
       Set<OrderableChildDto> children = buildOrderableChildDtos(product);
       orderableDto.setChildren(children);
     }
+    log.info("create orderable: {}", orderableDto);
     return orderableReferenceDataService.create(orderableDto);
   }
 
@@ -188,7 +190,7 @@ public class FcProductService {
     product.getProductsKits().forEach(productKitDto -> {
       OrderableChildDto childDto = new OrderableChildDto();
       OrderableDto childOrderable = orderableService.getOrderableByCode(productKitDto.getFnm());
-      childDto.setOrderable(childOrderable);
+      childDto.setOrderableFromDto(childOrderable);
       childDto.setQuantity(productKitDto.getQuantity());
       children.add(childDto);
     });
@@ -233,6 +235,7 @@ public class FcProductService {
     } else {
       existingOrderable.setChildren(newHashSet());
     }
+    log.info("update orderable: {}", existingOrderable);
     return orderableReferenceDataService.update(existingOrderable);
   }
 
@@ -255,6 +258,7 @@ public class FcProductService {
         ProgramDto programDto = new ProgramDto();
         programDto.setId(programOrderableDto.getProgramId());
         approvedProductDto.setProgram(programDto);
+        log.info("create ftap: {}", approvedProductDto);
         ftapReferenceDataService.create(approvedProductDto);
       });
     });

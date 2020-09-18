@@ -20,23 +20,22 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
-import org.siglus.siglusapi.dto.RegimenDispatchLineDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
-import org.siglus.siglusapi.repository.RegimenDispatchLineRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
+import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -60,10 +59,10 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   private RegimenLineItemRepository regimenLineItemRepository;
 
   @Autowired
-  private RegimenDispatchLineRepository regimenDispatchLineRepository;
+  private RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
 
   @Autowired
-  private RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
+  UsageTemplateColumnSectionRepository columnSectionRepository;
 
   @Override
   public void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
@@ -75,13 +74,13 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
         .stream()
         .map(RegimenDto::from)
         .collect(Collectors.toList());
-    Set<RegimenDispatchLineDto> regimenDispatchLineDtos =
-        getValidRegimenDispatchLines(siglusRequisitionDto);
+    Set<String> regimenSummaryRowNames =
+        getValidRegimenSummaryRowNames(templateColumnSections);
 
     List<RegimenLineItem> regimenLineItems = createRegimenLineItems(siglusRequisitionDto,
         templateColumnSections, defaultRegimenDtos);
     List<RegimenSummaryLineItem> regimenSummaryLineItems = createRegimenSummaryLineItems(
-        siglusRequisitionDto, templateColumnSections, regimenDispatchLineDtos);
+        siglusRequisitionDto, templateColumnSections, regimenSummaryRowNames);
 
     log.info("save regimen line items by requisition id: {}",
         siglusRequisitionDto.getId());
@@ -91,12 +90,11 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
 
     List<RegimenSummaryLineItem> savedSummaryLineItems =
         regimenSummaryLineItemRepository.save(regimenSummaryLineItems);
-    List<RegimenSummaryLineDto> summaryLineDtos =
-        RegimenSummaryLineDto.from(savedSummaryLineItems, getRegimenDispatchLineDtoMap());
-
+    List<RegimenSummaryLineDto> summaryLineItems =
+        RegimenSummaryLineDto.from(savedSummaryLineItems);
 
     siglusRequisitionDto.setRegimenLineItems(lineDtos);
-    siglusRequisitionDto.setRegimenDispatchLineItems(summaryLineDtos);
+    siglusRequisitionDto.setRegimenSummaryLineItems(summaryLineItems);
     setCustomRegimen(siglusRequisitionDto);
   }
 
@@ -108,11 +106,10 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
 
     List<RegimenSummaryLineItem> summaryLineItems =
         regimenSummaryLineItemRepository.findByRequisitionId(siglusRequisitionDto.getId());
-    List<RegimenSummaryLineDto> summaryLineDtos =
-        RegimenSummaryLineDto.from(summaryLineItems, getRegimenDispatchLineDtoMap());
+    List<RegimenSummaryLineDto> summaryLineDtos = RegimenSummaryLineDto.from(summaryLineItems);
 
     siglusRequisitionDto.setRegimenLineItems(lineDtos);
-    siglusRequisitionDto.setRegimenDispatchLineItems(summaryLineDtos);
+    siglusRequisitionDto.setRegimenSummaryLineItems(summaryLineDtos);
     setCustomRegimen(siglusRequisitionDto);
   }
 
@@ -123,8 +120,8 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     siglusRequisitionUpdatedDto.setRegimenLineItems(lineDtos);
 
     List<RegimenSummaryLineDto> summaryLineDtos =
-        siglusRequisitionDto.getRegimenDispatchLineItems();
-    siglusRequisitionUpdatedDto.setRegimenDispatchLineItems(summaryLineDtos);
+        siglusRequisitionDto.getRegimenSummaryLineItems();
+    siglusRequisitionUpdatedDto.setRegimenSummaryLineItems(summaryLineDtos);
 
     List<RegimenLineItem> regimenLineItemsFromRequest =
         RegimenLineItem.from(lineDtos, siglusRequisitionDto.getId());
@@ -159,6 +156,23 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     return !siglusRequisitionDto.getTemplate().getExtension().isEnableRegimen();
   }
 
+  public Map<UUID, RegimenDto> getRegimenDtoMap() {
+    return regimenRepository.findAll()
+        .stream()
+        .map(RegimenDto::from)
+        .collect(Collectors.toMap(RegimenDto::getId, Function.identity()));
+  }
+
+  public void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto) {
+    List<RegimenDto> customRegimenDtos = regimenRepository
+        .findAllByProgramIdAndActiveTrueAndIsCustomIsTrue(
+            siglusRequisitionDto.getProgramId())
+        .stream()
+        .map(RegimenDto::from)
+        .collect(Collectors.toList());
+    siglusRequisitionDto.setCustomRegimens(customRegimenDtos);
+  }
+
   private List<RegimenLineItem> getLineItemToRemove(
       List<RegimenLineItem> regimenLineItemsFromRequest,
       List<RegimenLineItem> regimenLineItemsFromDb
@@ -175,13 +189,13 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
         .collect(Collectors.toList());
   }
 
-  private Set<RegimenDispatchLineDto> getValidRegimenDispatchLines(
-      SiglusRequisitionDto requisitionDto) {
-    return regimenRepository
-        .findAllByProgramIdAndActiveTrue(requisitionDto.getProgramId())
+  private Set<String> getValidRegimenSummaryRowNames(
+      List<UsageTemplateColumnSection> templateColumnSections) {
+    UsageTemplateColumnSection summarySection = siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, SUMMARY);
+    return summarySection.getColumns()
         .stream()
-        .map(Regimen::getRegimenDispatchLine)
-        .map(RegimenDispatchLineDto::from)
+        .map(UsageTemplateColumn::getName)
         .collect(Collectors.toSet());
   }
 
@@ -194,10 +208,9 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     UsageTemplateColumnSection regimen = siglusUsageReportService
         .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, REGIMEN);
 
-
     List<UsageTemplateColumn> templateColumns = getValidColumn(regimen);
 
-    return defaultRegimenDtos.stream().flatMap(
+    List<RegimenLineItem> lineItems = defaultRegimenDtos.stream().flatMap(
         regimenDto -> templateColumns.stream().map(
             templateColumn -> RegimenLineItem.builder()
               .requisitionId(siglusRequisitionDto.getId())
@@ -205,6 +218,18 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
               .column(templateColumn.getName())
               .build()))
         .collect(Collectors.toList());
+
+    // create total line items
+    List<RegimenLineItem> totalLineItems = templateColumns.stream().map(column ->
+        RegimenLineItem.builder()
+            .requisitionId(siglusRequisitionDto.getId())
+            .regimenId(null)
+            .column(column.getName())
+            .build()).collect(Collectors.toList());
+
+    lineItems.addAll(totalLineItems);
+
+    return lineItems;
   }
 
   private List<UsageTemplateColumn> getValidColumn(UsageTemplateColumnSection section) {
@@ -218,47 +243,23 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
   private List<RegimenSummaryLineItem> createRegimenSummaryLineItems(
       SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections,
-      Set<RegimenDispatchLineDto> regimenDispatchLineDtos
+      Set<String> regimenSummaryRowNames
   ) {
-    UsageTemplateColumnSection regimenDispatchLine = siglusUsageReportService
-        .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, SUMMARY);
+    UsageTemplateColumnSection regimenSection = siglusUsageReportService
+        .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, REGIMEN);
 
-    List<UsageTemplateColumn> templateColumns = getValidColumn(regimenDispatchLine);
+    List<UsageTemplateColumn> templateColumns = getValidColumn(regimenSection);
 
-    return regimenDispatchLineDtos.stream().flatMap(
-        regimenDispatchLineDto -> templateColumns.stream().map(
+    return regimenSummaryRowNames.stream().flatMap(
+        rowName -> templateColumns.stream().map(
             templateColumn -> RegimenSummaryLineItem.builder()
                 .requisitionId(siglusRequisitionDto.getId())
-                .regimenDispatchLineId(regimenDispatchLineDto.getId())
+                .name(rowName)
                 .column(templateColumn.getName())
                 .build()
         )
     ).collect(Collectors.toList());
 
-  }
-
-  public Map<UUID, RegimenDto> getRegimenDtoMap() {
-    return regimenRepository.findAll()
-        .stream()
-        .map(RegimenDto::from)
-        .collect(Collectors.toMap(RegimenDto::getId, regimenDto -> regimenDto));
-  }
-
-  public Map<UUID, RegimenDispatchLineDto> getRegimenDispatchLineDtoMap() {
-    return regimenDispatchLineRepository.findAll()
-        .stream()
-        .map(RegimenDispatchLineDto::from)
-        .collect(Collectors.toMap(RegimenDispatchLineDto::getId, dto -> dto));
-  }
-
-  public void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto) {
-    List<RegimenDto> customRegimenDtos = regimenRepository
-        .findAllByProgramIdAndActiveTrueAndIsCustomIsTrue(
-            siglusRequisitionDto.getProgramId())
-        .stream()
-        .map(RegimenDto::from)
-        .collect(Collectors.toList());
-    siglusRequisitionDto.setCustomRegimens(customRegimenDtos);
   }
 
 }
