@@ -329,14 +329,16 @@ public class SiglusFcIntegrationService {
     Map<String, String> regimenLabelMap = usageTemplateMap.get("regimen").stream().collect(
         Collectors.toMap(UsageTemplateColumnDto::getName, UsageTemplateColumnDto::getLabel));
     List<Map<String, Object>> regimens = newArrayList();
-    regimenLineItems.forEach(regimenLineItem -> {
-      Map<String, Object> regimenMap = newHashMap();
-      regimens.add(regimenMap);
-      regimenMap.put("code", regimenLineItem.getRegimen().getCode());
-      regimenMap.put("name", regimenLineItem.getRegimen().getFullProductName());
-      regimenLineItem.getColumns().forEach((key, value) -> regimenMap.put(regimenLabelMap.get(key),
-          value.getValue()));
-    });
+    regimenLineItems.stream()
+        .filter(lineItem -> lineItem.getRegimen() != null)
+        .forEach(regimenLineItem -> {
+          Map<String, Object> regimenMap = newHashMap();
+          regimens.add(regimenMap);
+          regimenMap.put("code", regimenLineItem.getRegimen().getCode());
+          regimenMap.put("name", regimenLineItem.getRegimen().getFullProductName());
+          regimenLineItem.getColumns().forEach((key, value) ->
+              regimenMap.put(regimenLabelMap.get(key), value.getValue()));
+        });
     fcRequisitionDto.setRegimens(regimens);
   }
 

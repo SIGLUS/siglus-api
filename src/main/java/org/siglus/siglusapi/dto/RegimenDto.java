@@ -32,7 +32,6 @@ public class RegimenDto extends BaseDto {
   private UUID programId;
 
   private RegimenCategoryDto regimenCategory;
-  private RegimenDispatchLineDto regimenDispatchLine;
 
   public static RegimenDto from(Regimen regimen) {
     RegimenDto regimenDto = new RegimenDto();
@@ -40,8 +39,6 @@ public class RegimenDto extends BaseDto {
     regimenDto.setCode(regimen.getCode().toString());
     regimenDto.setFullProductName(regimen.getName());
     regimenDto.regimenCategory = RegimenCategoryDto.from(regimen.getRegimenCategory());
-    regimenDto.regimenDispatchLine =
-        RegimenDispatchLineDto.from(regimen.getRegimenDispatchLine());
     return regimenDto;
   }
 }

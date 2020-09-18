@@ -28,7 +28,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.RegimenDispatchLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
 
 @Entity
@@ -42,7 +41,7 @@ public class RegimenSummaryLineItem extends BaseEntity {
 
   private UUID requisitionId;
 
-  private UUID regimenDispatchLineId;
+  private String name;
 
   @Column(name = "columnname")
   private String column;
@@ -54,17 +53,16 @@ public class RegimenSummaryLineItem extends BaseEntity {
     List<RegimenSummaryLineItem> lineItems = newArrayList();
 
     lineDtos.forEach(regimenSummaryLineDto -> {
-      RegimenDispatchLineDto regimenDispatchLine =
-          regimenSummaryLineDto.getRegimenDispatchLine();
+      String rowName = regimenSummaryLineDto.getName();
 
-      if (regimenDispatchLine == null) {
+      if (rowName == null) {
         return;
       }
 
       regimenSummaryLineDto.getColumns().forEach((columnName, regimenColumnDto) -> {
         RegimenSummaryLineItem regimenSummaryLineItem = RegimenSummaryLineItem.builder()
             .requisitionId(requisitionId)
-            .regimenDispatchLineId(regimenDispatchLine.getId())
+            .name(rowName)
             .column(columnName)
             .value(regimenColumnDto.getValue())
             .build();

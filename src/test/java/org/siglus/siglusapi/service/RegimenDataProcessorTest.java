@@ -39,25 +39,22 @@ import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.siglusapi.domain.Regimen;
-import org.siglus.siglusapi.domain.RegimenDispatchLine;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
 import org.siglus.siglusapi.dto.RegimenColumnDto;
-import org.siglus.siglusapi.dto.RegimenDispatchLineDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
-import org.siglus.siglusapi.repository.RegimenDispatchLineRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
+import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RegimenDataProcessorTest {
@@ -69,9 +66,6 @@ public class RegimenDataProcessorTest {
   private RegimenRepository regimenRepository;
 
   @Mock
-  private RegimenDispatchLineRepository regimenDispatchLineRepository;
-
-  @Mock
   private RegimenLineItemRepository regimenLineItemRepository;
 
   @Mock
@@ -79,6 +73,9 @@ public class RegimenDataProcessorTest {
 
   @Mock
   private RequisitionRepository requisitionRepository;
+
+  @Mock
+  private UsageTemplateColumnSectionRepository columnSectionRepository;
 
   @Captor
   private ArgumentCaptor<List<RegimenLineItem>> lineItemsArgumentCaptor;
@@ -101,7 +98,7 @@ public class RegimenDataProcessorTest {
 
   private UUID regimenId2 = UUID.randomUUID();
 
-  private UUID lineId = UUID.randomUUID();
+  private String rowName = "row";
 
   private UUID templateId = UUID.randomUUID();
 
@@ -152,29 +149,27 @@ public class RegimenDataProcessorTest {
         .columns(newArrayList(regimenColumn))
         .build();
 
-    UsageTemplateColumnSection regimenSummarySection = UsageTemplateColumnSection.builder()
-        .category(UsageCategory.REGIMEN)
-        .name(SUMMARY)
-        .columns(newArrayList(regimenColumn))
-        .build();
-
     List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
     when(siglusUsageReportService
         .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, REGIMEN))
         .thenReturn(regimenSection);
     when(siglusUsageReportService
         .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, SUMMARY))
-        .thenReturn(regimenSummarySection);
+        .thenReturn(mockUsageTemplateColumnSection());
     when(regimenRepository.findAll())
         .thenReturn(newArrayList(mockCustomRegimen(),mockNoCustomRegimen()));
-    when(regimenDispatchLineRepository.findAll())
-        .thenReturn(newArrayList(mockDispatchLine()));
     when(regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsFalse(any()))
         .thenReturn(newArrayList(mockNoCustomRegimen()));
     when(regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen()));
     when(regimenRepository.findAllByProgramIdAndActiveTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen(), mockNoCustomRegimen()));
+    when(siglusUsageReportService
+        .getColumnSection(newArrayList(mockUsageTemplateColumnSection()),
+            UsageCategory.REGIMEN, SUMMARY))
+        .thenReturn(mockUsageTemplateColumnSection());
+    when(columnSectionRepository.findByRequisitionTemplateId(templateId))
+        .thenReturn(newArrayList(mockUsageTemplateColumnSection()));
     when(requisitionRepository.findOne(requisitionId)).thenReturn(mockRequisition());
 
     // when
@@ -183,17 +178,21 @@ public class RegimenDataProcessorTest {
     // then
     verify(regimenLineItemRepository).save(lineItemsArgumentCaptor.capture());
     List<RegimenLineItem> regimenLineItems = lineItemsArgumentCaptor.getValue();
-    assertEquals(1, regimenLineItems.size());
+    assertEquals(2, regimenLineItems.size());
     RegimenLineItem lineItem = regimenLineItems.get(0);
     assertEquals(regimenId1, lineItem.getRegimenId());
     assertEquals(PATIENTS, lineItem.getColumn());
+    assertNull(lineItem.getValue());
+    RegimenLineItem totalLineItem = regimenLineItems.get(1);
+    assertNull(totalLineItem.getRegimenId());
+    assertEquals(PATIENTS, totalLineItem.getColumn());
     assertNull(lineItem.getValue());
 
     verify(regimenSummaryLineItemRepository).save(summaryArgumentCaptor.capture());
     List<RegimenSummaryLineItem> summaryLineItems = summaryArgumentCaptor.getValue();
     assertEquals(1, summaryLineItems.size());
     RegimenSummaryLineItem summaryLineItem = summaryLineItems.get(0);
-    assertEquals(lineId, summaryLineItem.getRegimenDispatchLineId());
+    assertEquals(rowName, summaryLineItem.getName());
     assertEquals(PATIENTS, summaryLineItem.getColumn());
     assertNull(summaryLineItem.getValue());
 
@@ -220,17 +219,21 @@ public class RegimenDataProcessorTest {
         .thenReturn(lineItems);
     RegimenSummaryLineItem summaryLineItem = RegimenSummaryLineItem.builder()
         .requisitionId(requisitionId)
-        .regimenDispatchLineId(lineId)
+        .name(rowName)
         .column(PATIENTS)
         .value(value)
         .build();
     List<RegimenSummaryLineItem> summaryLineItems = newArrayList(summaryLineItem);
     when(regimenSummaryLineItemRepository.findByRequisitionId(requisitionId))
         .thenReturn(summaryLineItems);
+    when(columnSectionRepository.findByRequisitionTemplateId(templateId))
+        .thenReturn(newArrayList(mockUsageTemplateColumnSection()));
+    when(siglusUsageReportService
+        .getColumnSection(newArrayList(mockUsageTemplateColumnSection()),
+            UsageCategory.REGIMEN, SUMMARY))
+        .thenReturn(mockUsageTemplateColumnSection());
     when(regimenRepository.findAll())
         .thenReturn(newArrayList(mockCustomRegimen(),mockNoCustomRegimen()));
-    when(regimenDispatchLineRepository.findAll())
-        .thenReturn(newArrayList(mockDispatchLine()));
     when(requisitionRepository.findOne(requisitionId)).thenReturn(mockRequisition());
 
     // when
@@ -245,11 +248,11 @@ public class RegimenDataProcessorTest {
     assertEquals(regimenId1, lineDtos.get(0).getRegimen().getId());
 
     List<RegimenSummaryLineDto> dispatchLineDtos = siglusRequisitionDto
-        .getRegimenDispatchLineItems();
+        .getRegimenSummaryLineItems();
     assertEquals(1, dispatchLineDtos.size());
     RegimenColumnDto columnDto1 = dispatchLineDtos.get(0).getColumns().get(PATIENTS);
     assertEquals(value, columnDto1.getValue());
-    assertEquals(lineId, dispatchLineDtos.get(0).getRegimenDispatchLine().getId());
+    assertEquals(rowName, dispatchLineDtos.get(0).getName());
   }
 
   @Test
@@ -267,10 +270,8 @@ public class RegimenDataProcessorTest {
     RegimenLineDto lineDto = new RegimenLineDto();
     lineDto.setRegimen(regimenDto);
     lineDto.setColumns(columnDtoMap);
-    RegimenDispatchLineDto dispatchLineDto = new RegimenDispatchLineDto();
-    dispatchLineDto.setId(lineId);
     RegimenSummaryLineDto summaryLineDto = new RegimenSummaryLineDto();
-    summaryLineDto.setRegimenDispatchLine(dispatchLineDto);
+    summaryLineDto.setName(rowName);
     summaryLineDto.setColumns(columnDtoMap);
 
     List<RegimenLineDto> lineDtos = newArrayList(lineDto);
@@ -278,7 +279,7 @@ public class RegimenDataProcessorTest {
     SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
     siglusRequisitionDto.setId(requisitionId);
     siglusRequisitionDto.setRegimenLineItems(lineDtos);
-    siglusRequisitionDto.setRegimenDispatchLineItems(summaryLineDtos);
+    siglusRequisitionDto.setRegimenSummaryLineItems(summaryLineDtos);
     SiglusRequisitionDto siglusRequisitionUpdatedDto = new SiglusRequisitionDto();
 
     // when
@@ -299,7 +300,7 @@ public class RegimenDataProcessorTest {
     assertEquals(1, summaryLineItems.size());
     assertEquals(id, summaryLineItems.get(0).getId());
     assertEquals(requisitionId, summaryLineItems.get(0).getRequisitionId());
-    assertEquals(lineId, summaryLineItems.get(0).getRegimenDispatchLineId());
+    assertEquals(rowName, summaryLineItems.get(0).getName());
     assertEquals(PATIENTS, summaryLineItems.get(0).getColumn());
     assertEquals(value, summaryLineItems.get(0).getValue());
   }
@@ -330,7 +331,6 @@ public class RegimenDataProcessorTest {
     regimen.setId(regimenId1);
     regimen.setCode("ABC+3TC+RAL+DRV+RTV");
     regimen.setIsCustom(false);
-    regimen.setRegimenDispatchLine(mockDispatchLine());
     return regimen;
   }
 
@@ -339,15 +339,7 @@ public class RegimenDataProcessorTest {
     regimen.setId(regimenId2);
     regimen.setCode("ABC+3TC+DTG");
     regimen.setIsCustom(true);
-    regimen.setRegimenDispatchLine(mockDispatchLine());
     return regimen;
-  }
-
-  private RegimenDispatchLine mockDispatchLine() {
-    RegimenDispatchLine line = new RegimenDispatchLine();
-    line.setId(lineId);
-    line.setCode(Code.code("Outros"));
-    return line;
   }
 
   private Requisition mockRequisition() {
@@ -356,5 +348,21 @@ public class RegimenDataProcessorTest {
     template.setId(templateId);
     requisition.setTemplate(template);
     return requisition;
+  }
+
+  private UsageTemplateColumnSection mockUsageTemplateColumnSection() {
+    return UsageTemplateColumnSection.builder()
+        .name(SUMMARY)
+        .label(SUMMARY)
+        .requisitionTemplateId(templateId)
+        .columns(newArrayList(mockUsageTemplateColumn()))
+        .build();
+  }
+
+  private UsageTemplateColumn mockUsageTemplateColumn() {
+    return UsageTemplateColumn.builder()
+        .requisitionTemplateId(templateId)
+        .name(rowName)
+        .build();
   }
 }

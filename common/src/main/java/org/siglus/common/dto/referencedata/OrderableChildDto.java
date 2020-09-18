@@ -65,7 +65,7 @@ public class OrderableChildDto implements OrderableChild.Exporter {
     this.orderable.setId(orderable.getId());
   }
 
-  public void setOrderable(OrderableDto orderable) {
+  public void setOrderableFromDto(OrderableDto orderable) {
     this.orderable = new ObjectReferenceDto();
     this.orderable.setId(orderable.getId());
   }

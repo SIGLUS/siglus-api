@@ -67,4 +67,6 @@ public class FieldConstants {
 
   public static final String ACTIVE = "active";
 
+  public static final String TOTAL = "total";
+
 }
