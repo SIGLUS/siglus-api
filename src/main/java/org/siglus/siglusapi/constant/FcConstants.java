@@ -48,7 +48,7 @@ public class FcConstants {
   public static final Set<String> IGNORE_CODES = newHashSet("DUMMY", "RG", "A2Bped");
 
   public static List<String> getQueryByPeriodApiList() {
-    return Arrays.asList(CMM_API, CP_API, PROGRAM_API, REGIMEN_API);
+    return Arrays.asList(CMM_API, CP_API);
   }
 
 }
