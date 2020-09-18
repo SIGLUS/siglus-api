@@ -47,7 +47,7 @@ public class SiglusGeographicZoneService extends
     return getPage(RequestParameters.init().setPage(noPagination)).getContent();
   }
 
-  public void saveGeographicZone(OpenLmisGeographicZoneDto dto) {
+  public void updateGeographicZone(OpenLmisGeographicZoneDto dto) {
     put(dto.getId().toString(), dto, Void.class, false);
   }
 

@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +25,9 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
 import org.siglus.siglusapi.dto.OpenLmisGeographicZoneDto;
+import org.siglus.siglusapi.dto.fc.FcGeographicZoneDistrictDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
+import org.siglus.siglusapi.dto.fc.FcGeographicZoneProvinceDto;
 import org.siglus.siglusapi.service.client.SiglusGeographicLevelService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +41,7 @@ public class FcGeographicZoneService {
   private static final String LEVEL_NATIONAL = "national";
   private static final String LEVEL_PROVINCE = "province";
   private static final String LEVEL_DISTRICT = "district";
+
   @Autowired
   private SiglusGeographicZoneService geographicZoneService;
 
@@ -44,10 +49,14 @@ public class FcGeographicZoneService {
   private SiglusGeographicLevelService geographicLevelService;
 
   @Transactional
-  public boolean processGeographicZones(List<FcGeographicZoneNationalDto> dtos) {
+  public boolean processGeographicZones(List<FcGeographicZoneNationalDto> fcDtos) {
+    List<FcGeographicZoneNationalDto> dtos = filterInactiveZones(fcDtos);
+    if (dtos.size() == 0) {
+      return false;
+    }
     Map<String, GeographicLevelDto> levelDtoMap = getLevelDtoMap();
     Map<String, OpenLmisGeographicZoneDto> geographicZoneMaps = getGeographicZoneDtoMap();
-    List<OpenLmisGeographicZoneDto> fcGeographicZones = getGeographicZoneSimpleDtos(dtos,
+    List<OpenLmisGeographicZoneDto> fcGeographicZones = getOpenLmisGeographicZones(dtos,
         levelDtoMap);
     List<OpenLmisGeographicZoneDto> needCreateZones = new ArrayList<>();
     List<OpenLmisGeographicZoneDto> needUpdateZones = new ArrayList<>();
@@ -68,6 +77,26 @@ public class FcGeographicZoneService {
     return true;
   }
 
+  private List<FcGeographicZoneNationalDto> filterInactiveZones(
+      List<FcGeographicZoneNationalDto> fcDtos) {
+    List<FcGeographicZoneNationalDto> nationls = fcDtos.stream()
+        .filter(national -> STATUS_ACTIVE.equalsIgnoreCase(national.getStatus()))
+        .collect(Collectors.toList());
+    nationls.forEach(national -> {
+      List<FcGeographicZoneProvinceDto> provinces = national.getProvinces().stream()
+          .filter(province -> STATUS_ACTIVE.equalsIgnoreCase(province.getStatus()))
+          .collect(Collectors.toList());
+      provinces.forEach(province -> {
+        List<FcGeographicZoneDistrictDto> districts = province.getDistricts().stream()
+            .filter(district -> STATUS_ACTIVE.equalsIgnoreCase(district.getStatus()))
+            .collect(Collectors.toList());
+        province.setDistricts(districts);
+      });
+      national.setProvinces(provinces);
+    });
+    return nationls;
+  }
+
   private Map<String, GeographicLevelDto> getLevelDtoMap() {
     return geographicLevelService.searchAllGeographicLevel().stream()
         .collect(Collectors.toMap(GeographicLevelDto::getCode, Function.identity()));
@@ -82,7 +111,7 @@ public class FcGeographicZoneService {
         || !fcZone.getParent().getCode().equals(originZone.getParent().getCode());
   }
 
-  private List<OpenLmisGeographicZoneDto> getGeographicZoneSimpleDtos(
+  private List<OpenLmisGeographicZoneDto> getOpenLmisGeographicZones(
       List<FcGeographicZoneNationalDto> dtos, Map<String, GeographicLevelDto> levelDtoMap) {
     List<OpenLmisGeographicZoneDto> fcGeographicZones = new ArrayList<>();
     dtos.forEach(nationalDto -> {
@@ -127,16 +156,16 @@ public class FcGeographicZoneService {
       OpenLmisGeographicZoneDto originZone = geographicZoneMaps.get(zone.getCode());
       originZone.setName(zone.getName());
       originZone.setLevel(zone.getLevel());
-      originZone.setParent(geographicZoneMaps.get(zone.getParent().getCode()));
+      originZone.setParent(zone.getParent() == null ? null :
+          geographicZoneMaps.get(zone.getParent().getCode()));
       log.info("update geographic zone: {}", originZone);
-      geographicZoneService.saveGeographicZone(originZone);
+      geographicZoneService.updateGeographicZone(originZone);
     });
   }
 
   private Map<String, OpenLmisGeographicZoneDto> getGeographicZoneDtoMap() {
-    List<OpenLmisGeographicZoneDto> zoneSimpleDtos =
-        geographicZoneService.searchAllGeographicZones();
-    return zoneSimpleDtos.stream().collect(Collectors.toMap(OpenLmisGeographicZoneDto::getCode,
+    List<OpenLmisGeographicZoneDto> zoneDtos = geographicZoneService.searchAllGeographicZones();
+    return zoneDtos.stream().collect(Collectors.toMap(OpenLmisGeographicZoneDto::getCode,
         Function.identity()));
   }
 

@@ -15,24 +15,32 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.openlmis.requisition.dto.BaseDto;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OpenLmisGeographicZoneDto extends BaseDto {
+public class OpenLmisGeographicZoneDto {
+
+  private UUID id;
+
   private String code;
+
   private String name;
+
   private GeographicLevelDto level;
+
   private Integer catchmentPopulation;
+
   private Double latitude;
+
   private Double longitude;
+
   private OpenLmisGeographicZoneDto parent;
+
 }

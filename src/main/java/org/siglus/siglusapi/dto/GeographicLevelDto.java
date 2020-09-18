@@ -15,16 +15,24 @@
 
 package org.siglus.siglusapi.dto;
 
+import java.util.UUID;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.openlmis.fulfillment.web.util.BaseDto;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GeographicLevelDto extends BaseDto {
+@Builder
+public class GeographicLevelDto {
+
+  private UUID id;
+
   private String code;
+
   private String name;
+
   private Integer levelNumber;
+
 }
