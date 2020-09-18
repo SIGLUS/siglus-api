@@ -19,6 +19,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
+import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.Message;
@@ -73,6 +74,12 @@ public class FcValidate {
   public void validateFcProduct(List<ProductDto> products) {
     if (CollectionUtils.isEmpty(products)) {
       throw new FcDataException(new Message("all products not exist in master data"));
+    }
+  }
+
+  public void validateFacility(Facility facility) {
+    if (facility == null) {
+      throw new FcDataException(new Message("facility not exist in master data"));
     }
   }
 

@@ -15,11 +15,13 @@
 
 package org.siglus.siglusapi.web;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import org.junit.Before;
@@ -30,12 +32,18 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
+import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.exception.ContentNotFoundMessageException;
 import org.openlmis.requisition.exception.JasperReportViewException;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.JasperReportsViewService;
 import org.openlmis.requisition.service.PermissionService;
+import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
+import org.siglus.siglusapi.domain.RequisitionDraft;
+import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
+import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -56,6 +64,12 @@ public class SiglusReportsControllerTest {
 
   @InjectMocks
   private SiglusReportsController siglusReportsController;
+
+  @Mock
+  private RequisitionAuthenticationHelper authenticationHelper;
+
+  @Mock
+  private RequisitionDraftRepository draftRepository;
 
   @Before
   public void setUp() {
@@ -86,6 +100,39 @@ public class SiglusReportsControllerTest {
         .thenReturn(ValidationResult.success());
     when(operatePermissionService.isEditableRequisition(any()))
         .thenReturn(false);
+
+    // when
+    ModelAndView result = siglusReportsController.print(request, UUID.randomUUID());
+
+    // then
+    assertEquals(result, view);
+  }
+
+  @Test
+  public void shouldPrintRequisitionWithDraft()
+      throws JasperReportViewException {
+    // given
+    Requisition requisition = new Requisition();
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisition.setRequisitionLineItems(newArrayList(requisitionLineItem));
+    RequisitionDraft draft = new RequisitionDraft();
+    RequisitionLineItemDraft lineItemDraft = new RequisitionLineItemDraft();
+    draft.setLineItems(Arrays.asList(lineItemDraft));
+    HttpServletRequest request = mock(HttpServletRequest.class);
+
+    when(requisitionRepository.findOne(any(UUID.class))).thenReturn(requisition);
+    ModelAndView view = new ModelAndView();
+    when(jasperReportsViewService.getRequisitionJasperReportView(
+        any(Requisition.class), any(HttpServletRequest.class))).thenReturn(view);
+    when(permissionService.canViewRequisition(any(UUID.class)))
+        .thenReturn(ValidationResult.success());
+    when(operatePermissionService.isEditableRequisition(any()))
+        .thenReturn(true);
+    UserDto userDto = new UserDto();
+    when(authenticationHelper.getCurrentUser())
+        .thenReturn(userDto);
+    when(draftRepository.findRequisitionDraftByRequisitionIdAndFacilityId(any(), any()))
+        .thenReturn(draft);
 
     // when
     ModelAndView result = siglusReportsController.print(request, UUID.randomUUID());

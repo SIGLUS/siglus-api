@@ -16,14 +16,17 @@
 package org.siglus.siglusapi.validator;
 
 import java.util.Arrays;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
+import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.service.fc.FcDataException;
 
 @SuppressWarnings("PMD.TooManyMethods")
@@ -134,5 +137,32 @@ public class FcValidateTest {
   public void shouldThrowValidationMessageExceptionWhenSourceExist() {
     // then
     validate.validateFcSource(new ValidSourceDestinationDto());
+  }
+
+  @Test(expected = FcDataException.class)
+  public void shouldThrowValidationMessageExceptionWhenProductNull() {
+    // then
+    validate.validateFcProduct(null);
+  }
+
+  @Test
+  public void shouldThrowValidationMessageExceptionWhenProductExist() {
+    // given
+    ProductDto productDto = new ProductDto();
+
+    // then
+    validate.validateFcProduct(Arrays.asList(productDto));
+  }
+
+  @Test(expected = FcDataException.class)
+  public void shouldThrowValidationMessageExceptionWhenFacilityNull() {
+    // then
+    validate.validateFacility(null);
+  }
+
+  @Test
+  public void shouldThrowValidationMessageExceptionWhenFacilityNotNull() {
+    // then
+    validate.validateFacility(new Facility());
   }
 }

@@ -180,6 +180,7 @@ public class FcReceiptPlanService {
 
   private UserDto getFcUserInfo() {
     Facility facility = siglusFacilityRepository.findFirstByTypeId(fcFacilityTypeId);
+    fcDataValidate.validateFacility(facility);
     List<UserDto> userList = userReferenceDataService.getUserInfo(facility.getId()).getContent();
     fcDataValidate.validateExistUser(userList);
     return userList.get(0);
