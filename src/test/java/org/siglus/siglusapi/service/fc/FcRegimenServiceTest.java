@@ -65,6 +65,7 @@ public class FcRegimenServiceTest {
   @Captor
   private ArgumentCaptor<Set<Regimen>> regimensArgumentCaptor;
 
+  private static final String PAEDIATRICS = "PAEDIATRICS";
   private final String code1 = "A2F";
   private final String description1 = "AZT+3TC+LPV/r";
   private final String areaCode1 = "T";
@@ -137,15 +138,13 @@ public class FcRegimenServiceTest {
   private RegimenDto mockRegimenDto2() {
     String code2 = "TBMDRKm-Lfx-Eto-PAS-E-Z";
     String description2 = "TB MDR Km-Lfx-Eto-PAS-E-Z";
-    String categoryCode2 = "PAEDIATRICS";
-    String categoryDescription2 = "PAEDIATRICS";
     return RegimenDto
         .builder()
         .code(code2)
         .description(description2)
         .areaCode(areaCode2)
-        .categoryCode(categoryCode2)
-        .categoryDescription(categoryDescription2)
+        .categoryCode(PAEDIATRICS)
+        .categoryDescription(PAEDIATRICS)
         .status(STATUS_ACTIVE)
         .build();
   }
@@ -215,8 +214,8 @@ public class FcRegimenServiceTest {
   private RegimenCategory mockCategory(UUID id) {
     RegimenCategory category = new RegimenCategory();
     category.setId(id);
-    category.setCode("PAEDIATRICS");
-    category.setName("PAEDIATRICS");
+    category.setCode(PAEDIATRICS);
+    category.setName(PAEDIATRICS);
     category.setDisplayOrder(0);
     return category;
   }
