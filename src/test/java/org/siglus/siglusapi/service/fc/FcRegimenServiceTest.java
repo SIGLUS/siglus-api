@@ -70,17 +70,12 @@ public class FcRegimenServiceTest {
   private final String areaCode1 = "T";
   private final String categoryCode1 = "ADULTS";
   private final String categoryDescription1 = "ADULTS";
-  private final String code2 = "TBMDRKm-Lfx-Eto-PAS-E-Z";
-  private final String description2 = "TB MDR Km-Lfx-Eto-PAS-E-Z";
   private final String areaCode2 = "TB";
-  private final String categoryCode2 = "PAEDIATRICS";
-  private final String categoryDescription2 = "PAEDIATRICS";
   private final String code3 = "A3A";
-  private final String categoryCode3 = null;
-  private final String programCode1 = "ARVP";
   private final UUID programId1 = UUID.randomUUID();
   private final UUID categoryId2 = UUID.randomUUID();
   private final UUID programId3 = UUID.randomUUID();
+  private final String description3 = "ddI250+3TC+NVP";
 
   @Test
   public void shouldReturnFalseGivenEmptyFcResult() {
@@ -98,10 +93,10 @@ public class FcRegimenServiceTest {
     when(programRealProgramRepository.findAll())
         .thenReturn(newArrayList(mockProgramRealProgram1(), mockProgramRealProgram2()));
     when(programRefDataService.findAll()).thenReturn(newArrayList(
-        mockProgramDto(programId1, programCode1)));
+        mockProgramDto(programId1)));
     when(regimenRepository.findAll()).thenReturn(newArrayList(mockRegimen1(), mockRegimen3()));
     when(regimenCategoryRepository.findAll())
-        .thenReturn(newArrayList(mockCategory(categoryId2, categoryCode2, categoryDescription2)));
+        .thenReturn(newArrayList(mockCategory(categoryId2)));
 
     // when
     fcRegimenService.processRegimens(newArrayList(mockRegimenDto1(), mockRegimenDto2(),
@@ -140,6 +135,10 @@ public class FcRegimenServiceTest {
   }
 
   private RegimenDto mockRegimenDto2() {
+    String code2 = "TBMDRKm-Lfx-Eto-PAS-E-Z";
+    String description2 = "TB MDR Km-Lfx-Eto-PAS-E-Z";
+    String categoryCode2 = "PAEDIATRICS";
+    String categoryDescription2 = "PAEDIATRICS";
     return RegimenDto
         .builder()
         .code(code2)
@@ -152,18 +151,18 @@ public class FcRegimenServiceTest {
   }
 
   private RegimenDto mockRegimenDto3() {
-    String description3 = "ddI250+3TC+NVP";
     return RegimenDto
         .builder()
         .code(code3)
         .description(description3)
         .areaCode(areaCode1)
-        .categoryCode(categoryCode3)
+        .categoryCode(null)
         .status(STATUS_ACTIVE)
         .build();
   }
 
   private ProgramRealProgram mockProgramRealProgram1() {
+    String programCode1 = "ARVP";
     return ProgramRealProgram
         .builder()
         .programCode(programCode1)
@@ -182,10 +181,10 @@ public class FcRegimenServiceTest {
         .build();
   }
 
-  private ProgramDto mockProgramDto(UUID id, String code) {
+  private ProgramDto mockProgramDto(UUID id) {
     ProgramDto programDto = new ProgramDto();
     programDto.setId(id);
-    programDto.setCode(code);
+    programDto.setCode("ARVP");
     return programDto;
   }
 
@@ -206,18 +205,18 @@ public class FcRegimenServiceTest {
     return Regimen.builder()
         .code(code3)
         .name(dbDescription3)
-        .regimenCategory(mockCategory(categoryId2, categoryCode2, categoryDescription2))
+        .regimenCategory(mockCategory(categoryId2))
         .programId(programId3)
         .active(true)
         .displayOrder(1)
         .build();
   }
 
-  private RegimenCategory mockCategory(UUID id, String code, String name) {
+  private RegimenCategory mockCategory(UUID id) {
     RegimenCategory category = new RegimenCategory();
     category.setId(id);
-    category.setCode(code);
-    category.setName(name);
+    category.setCode("PAEDIATRICS");
+    category.setName("PAEDIATRICS");
     category.setDisplayOrder(0);
     return category;
   }
