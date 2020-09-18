@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.constant.FcConstants.DEFAULT_REGIMEN_CATEGORY_CODE;
 import static org.siglus.siglusapi.constant.FcConstants.IGNORE_CODES;
 
@@ -58,7 +59,10 @@ public class FcRegimenService {
 
   private int maxRegimenCategoryDisplayOrder;
 
-  public boolean processRegimenData(List<RegimenDto> dtos) {
+  public boolean processRegimens(List<RegimenDto> dtos) {
+    if (isEmpty(dtos)) {
+      return false;
+    }
     try {
       Map<String, ProgramRealProgram> codeToProgramMap = programRealProgramRepository.findAll()
           .stream()

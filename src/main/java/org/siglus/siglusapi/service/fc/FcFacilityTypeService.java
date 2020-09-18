@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
 import java.util.ArrayList;
@@ -54,12 +55,15 @@ public class FcFacilityTypeService {
   @Autowired
   private ValidReasonAssignmentStockManagementService assignmentService;
 
-  public boolean processFacilityType(List<FcFacilityTypeDto> dtos) {
+  public boolean processFacilityTypes(List<FcFacilityTypeDto> dtos) {
+    if (isEmpty(dtos)) {
+      return false;
+    }
     if (CollectionUtils.isNotEmpty(dtos)) {
       Map<String, FacilityTypeDto> facilityTypeMap = getStringFacilityTypeDtoMap();
       List<FcFacilityTypeDto> needAddedFacilityTypes = new ArrayList<>();
       List<FcFacilityTypeDto> needUpdatedFacilityTypes = new ArrayList<>();
-      dtos.stream().forEach(typeDto -> {
+      dtos.forEach(typeDto -> {
         if (!facilityTypeMap.containsKey(typeDto.getCode())) {
           needAddedFacilityTypes.add(typeDto);
         } else {

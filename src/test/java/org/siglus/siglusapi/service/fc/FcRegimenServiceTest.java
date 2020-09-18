@@ -17,11 +17,13 @@ package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
@@ -42,6 +44,7 @@ import org.siglus.siglusapi.repository.RegimenCategoryRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("PMD.TooManyMethods")
 public class FcRegimenServiceTest {
 
   @InjectMocks
@@ -62,28 +65,32 @@ public class FcRegimenServiceTest {
   @Captor
   private ArgumentCaptor<Set<Regimen>> regimensArgumentCaptor;
 
-  private String code1 = "A2F";
-  private String description1 = "AZT+3TC+LPV/r";
-  private String areaCode1 = "T";
-  private String categoryCode1 = "ADULTS";
-  private String categoryDescription1 = "ADULTS";
-  private String code2 = "TBMDRKm-Lfx-Eto-PAS-E-Z";
-  private String description2 = "TB MDR Km-Lfx-Eto-PAS-E-Z";
-  private String areaCode2 = "TB";
-  private String categoryCode2 = "PAEDIATRICS";
-  private String categoryDescription2 = "PAEDIATRICS";
-  private String code3 = "A3A";
-  private String description3 = "ddI250+3TC+NVP";
-  private String categoryCode3 = null;
+  private final String code1 = "A2F";
+  private final String description1 = "AZT+3TC+LPV/r";
+  private final String areaCode1 = "T";
+  private final String categoryCode1 = "ADULTS";
+  private final String categoryDescription1 = "ADULTS";
+  private final String code2 = "TBMDRKm-Lfx-Eto-PAS-E-Z";
+  private final String description2 = "TB MDR Km-Lfx-Eto-PAS-E-Z";
+  private final String areaCode2 = "TB";
+  private final String categoryCode2 = "PAEDIATRICS";
+  private final String categoryDescription2 = "PAEDIATRICS";
+  private final String code3 = "A3A";
+  private final String categoryCode3 = null;
+  private final String programCode1 = "ARVP";
+  private final UUID programId1 = UUID.randomUUID();
+  private final UUID categoryId2 = UUID.randomUUID();
+  private final UUID programId3 = UUID.randomUUID();
 
-  private String programCode1 = "ARVP";
-  private UUID programId1 = UUID.randomUUID();
-  private String programCode2 = "MP";
-  private UUID categoryId2 = UUID.randomUUID();
-  private UUID programId3 = UUID.randomUUID();
+  @Test
+  public void shouldReturnFalseGivenEmptyFcResult() {
 
-  private String dbDescription1 = "AZT+3TC";
-  private String dbDescription3 = "ABC";
+    // when
+    boolean result = fcRegimenService.processRegimens(Collections.emptyList());
+
+    // then
+    assertFalse(result);
+  }
 
   @Test
   public void shouldSaveRegimenData() {
@@ -97,7 +104,7 @@ public class FcRegimenServiceTest {
         .thenReturn(newArrayList(mockCategory(categoryId2, categoryCode2, categoryDescription2)));
 
     // when
-    fcRegimenService.processRegimenData(newArrayList(mockRegimenDto1(), mockRegimenDto2(),
+    fcRegimenService.processRegimens(newArrayList(mockRegimenDto1(), mockRegimenDto2(),
         mockRegimenDto3()));
 
     // then
@@ -145,6 +152,7 @@ public class FcRegimenServiceTest {
   }
 
   private RegimenDto mockRegimenDto3() {
+    String description3 = "ddI250+3TC+NVP";
     return RegimenDto
         .builder()
         .code(code3)
@@ -165,6 +173,7 @@ public class FcRegimenServiceTest {
   }
 
   private ProgramRealProgram mockProgramRealProgram2() {
+    String programCode2 = "MP";
     return ProgramRealProgram
         .builder()
         .programCode(programCode2)
@@ -181,6 +190,7 @@ public class FcRegimenServiceTest {
   }
 
   private Regimen mockRegimen1() {
+    String dbDescription1 = "AZT+3TC";
     return Regimen.builder()
         .code(code1)
         .name(dbDescription1)
@@ -192,6 +202,7 @@ public class FcRegimenServiceTest {
   }
 
   private Regimen mockRegimen3() {
+    String dbDescription3 = "ABC";
     return Regimen.builder()
         .code(code3)
         .name(dbDescription3)

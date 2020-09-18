@@ -104,12 +104,11 @@ public class FcReceiptPlanService {
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
-  public boolean saveReceiptPlan(List<ReceiptPlanDto> receiptPlanDtos) {
+  public boolean processReceiptPlans(List<ReceiptPlanDto> receiptPlanDtos) {
     List<ReceiptPlanDto> receiptPlanDtoList = receiptPlanDtos
         .stream().distinct().collect(Collectors.toList());
-    boolean successHandler = true;
     if (isEmpty(receiptPlanDtoList)) {
-      return successHandler;
+      return false;
     }
 
     List<ReceiptPlanDto> nonexistentReceiptPlans = getNonexistentReceiptPlan(receiptPlanDtoList);
@@ -123,6 +122,7 @@ public class FcReceiptPlanService {
     UserDto userDto = getFcUserInfo();
     siglusSimulateUserAuthHelper.simulateUserAuth(userDto.getId());
 
+    boolean successHandler = true;
     for (ReceiptPlanDto receiptPlanDto : receiptPlanDtoList) {
       FcHandlerStatus handlerError = updateRequisition(receiptPlanDto, userDto);
       if (handlerError.equals(FcHandlerStatus.CALL_API_ERROR)) {

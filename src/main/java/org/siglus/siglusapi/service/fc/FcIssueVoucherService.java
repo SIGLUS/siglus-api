@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
@@ -173,9 +174,12 @@ public class FcIssueVoucherService {
   @Autowired
   private OrderFulfillmentService orderFulfillmentService;
 
-  private List<String> statusErrorIssueVoucherNumber = new ArrayList<>();
+  private final List<String> statusErrorIssueVoucherNumber = new ArrayList<>();
 
-  public boolean createIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
+  public boolean processIssueVouchers(List<IssueVoucherDto> issueVoucherDtos) {
+    if (isEmpty(issueVoucherDtos)) {
+      return false;
+    }
     boolean successHandler = true;
     statusErrorIssueVoucherNumber.clear();
     for (IssueVoucherDto issueVoucherDto : issueVoucherDtos) {

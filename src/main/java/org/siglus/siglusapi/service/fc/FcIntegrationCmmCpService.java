@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -85,7 +86,10 @@ public class FcIntegrationCmmCpService {
   @Autowired
   private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
 
-  public boolean processCmmData(List<CmmDto> dtos, String queryDate) {
+  public boolean processCmms(List<CmmDto> dtos, String queryDate) {
+    if (isEmpty(dtos)) {
+      return false;
+    }
     try {
       List<CmmDomain> cmms = CmmDomain.from(dtos);
       cmms.forEach(cmm -> {
@@ -106,7 +110,10 @@ public class FcIntegrationCmmCpService {
     }
   }
 
-  public boolean processCpData(List<CpDto> dtos, String queryDate) {
+  public boolean processCps(List<CpDto> dtos, String queryDate) {
+    if (isEmpty(dtos)) {
+      return false;
+    }
     try {
       List<CpDomain> cps = CpDomain.from(dtos);
       cps.forEach(cp -> {

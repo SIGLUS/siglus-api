@@ -42,6 +42,8 @@ import org.siglus.siglusapi.service.client.SiglusGeographicZoneService;
 @RunWith(MockitoJUnitRunner.class)
 public class FcGeographicZoneServiceTest {
 
+  public static final String ACTIVE = "Activo";
+
   @Mock
   private SiglusGeographicZoneService geographicZoneService;
 
@@ -59,39 +61,39 @@ public class FcGeographicZoneServiceTest {
         FcGeographicZoneNationalDto.builder()
             .code("1")
             .description("description 1")
-            .status("Activo")
+            .status(ACTIVE)
             .provinces(Arrays.asList(
                 FcGeographicZoneProvinceDto.builder()
                     .code("11")
                     .description("description 11")
-                    .status("Activo")
+                    .status(ACTIVE)
                     .districts(Arrays.asList(
                         FcGeographicZoneDistrictDto.builder()
                             .code("111")
                             .description("description 111")
-                            .status("Activo")
+                            .status(ACTIVE)
                             .build(),
                         FcGeographicZoneDistrictDto.builder()
                             .code("112")
                             .description("description 112")
-                            .status("Activo")
+                            .status(ACTIVE)
                             .build()
                     ))
                     .build(),
                 FcGeographicZoneProvinceDto.builder()
                     .code("12")
                     .description("description 12")
-                    .status("Activo")
+                    .status(ACTIVE)
                     .districts(Arrays.asList(
                         FcGeographicZoneDistrictDto.builder()
                             .code("121")
                             .description("description 121")
-                            .status("Activo")
+                            .status(ACTIVE)
                             .build(),
                         FcGeographicZoneDistrictDto.builder()
                             .code("122")
                             .description("description 122")
-                            .status("Activo")
+                            .status(ACTIVE)
                             .build()
                     ))
                     .build()
@@ -100,39 +102,39 @@ public class FcGeographicZoneServiceTest {
         FcGeographicZoneNationalDto.builder()
             .code("2")
             .description("description 2")
-            .status("Activo")
+            .status(ACTIVE)
             .provinces(Arrays.asList(
                 FcGeographicZoneProvinceDto.builder()
                     .code("21")
                     .description("description 21")
-                    .status("Activo")
+                    .status(ACTIVE)
                     .districts(Arrays.asList(
                         FcGeographicZoneDistrictDto.builder()
                             .code("211")
                             .description("description 211")
-                            .status("Activo")
+                            .status(ACTIVE)
                             .build(),
                         FcGeographicZoneDistrictDto.builder()
                             .code("212")
                             .description("description 212")
-                            .status("Activo")
+                            .status(ACTIVE)
                             .build()
                     ))
                     .build(),
                 FcGeographicZoneProvinceDto.builder()
                     .code("22")
                     .description("description 22")
-                    .status("Activo")
+                    .status(ACTIVE)
                     .districts(Arrays.asList(
                         FcGeographicZoneDistrictDto.builder()
                             .code("221")
                             .description("description 221")
-                            .status("Activo")
+                            .status(ACTIVE)
                             .build(),
                         FcGeographicZoneDistrictDto.builder()
                             .code("222")
                             .description("description 222")
-                            .status("Activo")
+                            .status(ACTIVE)
                             .build()
                     ))
                     .build()

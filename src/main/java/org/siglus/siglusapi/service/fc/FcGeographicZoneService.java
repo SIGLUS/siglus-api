@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public class FcGeographicZoneService {
   @Transactional
   public boolean processGeographicZones(List<FcGeographicZoneNationalDto> fcDtos) {
     List<FcGeographicZoneNationalDto> dtos = filterInactiveZones(fcDtos);
-    if (dtos.size() == 0) {
+    if (isEmpty(dtos)) {
       return false;
     }
     Map<String, GeographicLevelDto> levelDtoMap = getLevelDtoMap();

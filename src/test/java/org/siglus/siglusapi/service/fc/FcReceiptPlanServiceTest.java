@@ -154,13 +154,13 @@ public class FcReceiptPlanServiceTest {
   }
 
   @Test
-  public void shouldReturnTrueGivenEmptyReceiptPlan() {
+  public void shouldReturnFalseGivenEmptyReceiptPlan() {
 
     // when
-    boolean result = fcReceiptPlanService.saveReceiptPlan(Collections.emptyList());
+    boolean result = fcReceiptPlanService.processReceiptPlans(Collections.emptyList());
 
     // then
-    assertTrue(result);
+    assertFalse(result);
   }
 
   @Test
@@ -180,7 +180,7 @@ public class FcReceiptPlanServiceTest {
         .thenThrow(new RuntimeException());
 
     // when
-    boolean result = fcReceiptPlanService.saveReceiptPlan(receiptPlanDtos);
+    boolean result = fcReceiptPlanService.processReceiptPlans(receiptPlanDtos);
 
     // then
     assertFalse(result);
@@ -204,7 +204,7 @@ public class FcReceiptPlanServiceTest {
     doCallRealMethod().when(fcDataValidate).validateEmptyRequisitionNumber(any());
 
     // when
-    boolean result = fcReceiptPlanService.saveReceiptPlan(inValidReceiptPlan);
+    boolean result = fcReceiptPlanService.processReceiptPlans(inValidReceiptPlan);
 
     // then
     assertTrue(result);
@@ -280,7 +280,7 @@ public class FcReceiptPlanServiceTest {
         .thenReturn(statusChange);
 
     // when
-    boolean result = fcReceiptPlanService.saveReceiptPlan(receiptPlanDtos);
+    boolean result = fcReceiptPlanService.processReceiptPlans(receiptPlanDtos);
 
     // then
     assertTrue(result);
@@ -364,7 +364,7 @@ public class FcReceiptPlanServiceTest {
         .thenReturn(statusChange);
 
     // when
-    boolean result = fcReceiptPlanService.saveReceiptPlan(receiptPlanDtos);
+    boolean result = fcReceiptPlanService.processReceiptPlans(receiptPlanDtos);
 
     // then
     assertTrue(result);

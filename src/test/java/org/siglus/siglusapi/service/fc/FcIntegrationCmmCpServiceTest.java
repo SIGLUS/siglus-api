@@ -24,6 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
@@ -93,31 +94,29 @@ public class FcIntegrationCmmCpServiceTest {
   @Mock
   private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
 
-  private String facilityCode = "facilityCode";
+  private final String facilityCode = "facilityCode";
+  private final String productCode = "productCode";
+  private final String period = "M5";
+  private final int year = 2020;
+  private final String queryDate = "05-2020";
+  private final UUID orderableId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
+  private final UUID processingPeriodId = UUID.randomUUID();
+  private final UUID supervisoryNodeId = UUID.randomUUID();
+  private final UUID lineItemId = UUID.randomUUID();
+  private final UUID cmmId = UUID.randomUUID();
+  private final UUID cpId = UUID.randomUUID();
+  private final LocalDate periodEndDate = LocalDate.parse("2020-05-31");
 
-  private String productCode = "productCode";
+  @Test
+  public void shouldReturnFalseGivenEmptyFcResult() {
 
-  private String period = "M5";
+    // when
+    boolean result = fcIntegrationCmmCpService.processCps(Collections.emptyList(), queryDate);
 
-  private int year = 2020;
-
-  private String queryDate = "05-2020";
-
-  private UUID orderableId = UUID.randomUUID();
-
-  private UUID facilityId = UUID.randomUUID();
-
-  private UUID processingPeriodId = UUID.randomUUID();
-
-  private UUID supervisoryNodeId = UUID.randomUUID();
-
-  private UUID lineItemId = UUID.randomUUID();
-
-  private UUID cmmId = UUID.randomUUID();
-
-  private UUID cpId = UUID.randomUUID();
-
-  private LocalDate periodEndDate = LocalDate.parse("2020-05-31");
+    // then
+    assertFalse(result);
+  }
 
   @Test
   public void shouldAddCpData() {
@@ -130,7 +129,7 @@ public class FcIntegrationCmmCpServiceTest {
         .build();
 
     // when
-    fcIntegrationCmmCpService.processCpData(newArrayList(dto), queryDate);
+    fcIntegrationCmmCpService.processCps(newArrayList(dto), queryDate);
 
     // then
     verify(cpRepository).findCpByFacilityCodeAndProductCodeAndQueryDate(facilityCode, productCode,
@@ -153,7 +152,7 @@ public class FcIntegrationCmmCpServiceTest {
         queryDate)).thenReturn(existCp);
 
     // when
-    fcIntegrationCmmCpService.processCpData(newArrayList(dto), queryDate);
+    fcIntegrationCmmCpService.processCps(newArrayList(dto), queryDate);
 
     // then
     verify(cpRepository).save(cpArgumentCaptor.capture());
@@ -172,7 +171,7 @@ public class FcIntegrationCmmCpServiceTest {
     when(cpRepository.save(any(CpDomain.class))).thenThrow(new RuntimeException());
 
     // when
-    boolean result = fcIntegrationCmmCpService.processCpData(newArrayList(dto), queryDate);
+    boolean result = fcIntegrationCmmCpService.processCps(newArrayList(dto), queryDate);
 
     // then
     assertFalse(result);
@@ -189,7 +188,7 @@ public class FcIntegrationCmmCpServiceTest {
         .build();
 
     // when
-    fcIntegrationCmmCpService.processCmmData(newArrayList(dto), queryDate);
+    fcIntegrationCmmCpService.processCmms(newArrayList(dto), queryDate);
 
     // then
     verify(cmmRepository)
@@ -212,7 +211,7 @@ public class FcIntegrationCmmCpServiceTest {
         productCode, queryDate)).thenReturn(existCmm);
 
     // when
-    fcIntegrationCmmCpService.processCmmData(newArrayList(dto), queryDate);
+    fcIntegrationCmmCpService.processCmms(newArrayList(dto), queryDate);
 
     // then
     verify(cmmRepository).save(cmmArgumentCaptor.capture());
@@ -231,7 +230,7 @@ public class FcIntegrationCmmCpServiceTest {
     when(cmmRepository.save(any(CmmDomain.class))).thenThrow(new RuntimeException());
 
     // when
-    boolean result = fcIntegrationCmmCpService.processCmmData(newArrayList(dto), queryDate);
+    boolean result = fcIntegrationCmmCpService.processCmms(newArrayList(dto), queryDate);
 
     // then
     assertFalse(result);

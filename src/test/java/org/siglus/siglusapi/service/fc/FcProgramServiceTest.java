@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
@@ -48,18 +49,23 @@ public class FcProgramServiceTest {
   @Mock
   private ProgramRealProgramRepository programRealProgramRepository;
 
-  private String programCode1 = "programCode1";
-  private String programName1 = "programName1";
-  private String programStatus1 = "Activo";
-  private String programCode2 = "programCode2";
-  private String programName2 = "programName2";
-  private String programStatus2 = "Inactivo";
-  private String programCode3 = "programCode3";
-  private String programName3 = "programName3";
-  private String programStatus3 = "Activo";
+  private final String programCode1 = "programCode1";
+  private final String programName1 = "programName1";
+  private final String programCode2 = "programCode2";
+  private final String programCode3 = "programCode3";
 
-  private UUID programId1 = UUID.randomUUID();
-  private UUID programId2 = UUID.randomUUID();
+  private final UUID programId1 = UUID.randomUUID();
+  private final UUID programId2 = UUID.randomUUID();
+
+  @Test
+  public void shouldReturnFalseGivenEmptyFcResult() {
+
+    // when
+    boolean result = fcProgramService.processPrograms(Collections.emptyList());
+
+    // then
+    assertFalse(result);
+  }
 
   @Test
   public void shouldSaveProgramData() {
@@ -70,7 +76,12 @@ public class FcProgramServiceTest {
             mockProgram(programId2, programCode2, "toUpdate", false)));
 
     // when
-    fcProgramService.processProgramData(newArrayList(
+    String programStatus3 = "Activo";
+    String programName3 = "programName3";
+    String programStatus2 = "Inactivo";
+    String programStatus1 = "Activo";
+    String programName2 = "programName2";
+    fcProgramService.processPrograms(newArrayList(
         mockProgramDto(programCode1, programName1, programStatus1),
         mockProgramDto(programCode2, programName2, programStatus2),
         mockProgramDto(programCode3, programName3, programStatus3)
@@ -84,15 +95,15 @@ public class FcProgramServiceTest {
         .filter(p -> programCode2.equals(p.getRealProgramCode()))
         .findFirst()
         .get();
-    assertTrue(programId2.equals(p2.getId()));
-    assertTrue(programName2.equals(p2.getRealProgramName()));
+    assertEquals(programId2, p2.getId());
+    assertEquals(programName2, p2.getRealProgramName());
     assertFalse(p2.getActive());
     ProgramRealProgram p3 = saved.stream()
         .filter(p -> programCode3.equals(p.getRealProgramCode()))
         .findFirst()
         .get();
     assertNull(p3.getId());
-    assertTrue(programName3.equals(p3.getRealProgramName()));
+    assertEquals(programName3, p3.getRealProgramName());
     assertTrue(p3.getActive());
   }
 
@@ -102,7 +113,7 @@ public class FcProgramServiceTest {
     when(programRealProgramRepository.findAll()).thenThrow(new RuntimeException());
 
     // when
-    boolean result = fcProgramService.processProgramData(newArrayList(
+    boolean result = fcProgramService.processPrograms(newArrayList(
         mockProgramDto(programCode1, programName1, "Active")
     ));
 

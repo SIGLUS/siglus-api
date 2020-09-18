@@ -116,7 +116,8 @@ public class FcScheduleService {
   public void fetchReceiptPlansFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(RECEIPT_PLAN_API, date);
-    Boolean finalSuccess = fcReceiptPlanService.saveReceiptPlan(callFcService.getReceiptPlans());
+    Boolean finalSuccess = fcReceiptPlanService.processReceiptPlans(
+        callFcService.getReceiptPlans());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(RECEIPT_PLAN_API)
         .date(date)
@@ -138,8 +139,8 @@ public class FcScheduleService {
   public void fetchIssueVouchersFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(ISSUE_VOUCHER_API, date);
-    Boolean finalSuccess = fcIssueVoucherService
-        .createIssueVouchers(callFcService.getIssueVouchers());
+    Boolean finalSuccess = fcIssueVoucherService.processIssueVouchers(
+        callFcService.getIssueVouchers());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(ISSUE_VOUCHER_API)
         .date(date)
@@ -163,7 +164,7 @@ public class FcScheduleService {
       latestSuccessDate = fcIntegrationResultService.getLatestSuccessDate(CMM_API);
       queryDate = getStartDateForPeriodCall(latestSuccessDate);
       Integer callFcCostTimeInSeconds = fetchDataFromFc(CMM_API, queryDate);
-      boolean finalSuccess = fcIntegrationCmmCpService.processCmmData(callFcService.getCmms(),
+      boolean finalSuccess = fcIntegrationCmmCpService.processCmms(callFcService.getCmms(),
           queryDate);
       FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
           .api(CMM_API)
@@ -187,7 +188,7 @@ public class FcScheduleService {
       latestSuccessDate = fcIntegrationResultService.getLatestSuccessDate(CP_API);
       queryDate = getStartDateForPeriodCall(latestSuccessDate);
       Integer callFcCostTimeInSeconds = fetchDataFromFc(CP_API, queryDate);
-      boolean finalSuccess = fcIntegrationCmmCpService.processCpData(callFcService.getCps(),
+      boolean finalSuccess = fcIntegrationCmmCpService.processCps(callFcService.getCps(),
           queryDate);
       FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
           .api(CP_API)
@@ -212,7 +213,7 @@ public class FcScheduleService {
     final long startTime = currentTimeMillis();
     log.info("date: {}", date);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(PROGRAM_API, date);
-    boolean finalSuccess = fcProgramService.processProgramData(callFcService.getPrograms());
+    boolean finalSuccess = fcProgramService.processPrograms(callFcService.getPrograms());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(PROGRAM_API)
         .date(date)
@@ -235,7 +236,7 @@ public class FcScheduleService {
     final long startTime = currentTimeMillis();
     log.info("date: {}", date);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(REGIMEN_API, date);
-    boolean finalSuccess = fcRegimenService.processRegimenData(callFcService.getRegimens());
+    boolean finalSuccess = fcRegimenService.processRegimens(callFcService.getRegimens());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(REGIMEN_API)
         .date(date)
@@ -257,7 +258,7 @@ public class FcScheduleService {
   public void fetchFacilityTypeFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(FACILITY_TYPE_API, date);
-    boolean finalSuccess = facilityTypeService.processFacilityType(
+    boolean finalSuccess = facilityTypeService.processFacilityTypes(
         callFcService.getFacilityTypes());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(FACILITY_TYPE_API)

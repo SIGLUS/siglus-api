@@ -88,7 +88,7 @@ public class FcScheduleServiceTest {
 
   @Before
   public void setup() {
-    when(fcIssueVoucherService.createIssueVouchers(any())).thenReturn(true);
+    when(fcIssueVoucherService.processIssueVouchers(any())).thenReturn(true);
   }
 
   @Test
@@ -97,7 +97,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API)).thenReturn(DATE);
-    when(fcReceiptPlanService.saveReceiptPlan(any())).thenReturn(true);
+    when(fcReceiptPlanService.processReceiptPlans(any())).thenReturn(true);
 
     // when
     fcScheduleService.fetchReceiptPlansFromFc(DATE);
@@ -129,7 +129,7 @@ public class FcScheduleServiceTest {
     // given
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(CMM_API)).thenReturn(PERIOD);
-    when(fcIntegrationCmmCpService.processCmmData(any(), any())).thenReturn(true);
+    when(fcIntegrationCmmCpService.processCmms(any(), any())).thenReturn(true);
     when(dateHelper.getCurrentMonthStr()).thenReturn(PERIOD);
 
     // when
@@ -147,7 +147,7 @@ public class FcScheduleServiceTest {
     // given
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(CMM_API)).thenReturn(PERIOD);
-    when(fcIntegrationCmmCpService.processCmmData(any(), any())).thenReturn(true);
+    when(fcIntegrationCmmCpService.processCmms(any(), any())).thenReturn(true);
     when(dateHelper.getCurrentMonthStr()).thenReturn(NEXT_PERIOD);
 
     // when
@@ -165,7 +165,7 @@ public class FcScheduleServiceTest {
     // given
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(CP_API)).thenReturn(PERIOD);
-    when(fcIntegrationCmmCpService.processCpData(any(), any())).thenReturn(true);
+    when(fcIntegrationCmmCpService.processCps(any(), any())).thenReturn(true);
     when(dateHelper.getCurrentMonthStr()).thenReturn(PERIOD);
 
     // when
@@ -183,7 +183,7 @@ public class FcScheduleServiceTest {
     // given
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(CP_API)).thenReturn(PERIOD);
-    when(fcIntegrationCmmCpService.processCpData(any(), any())).thenReturn(true);
+    when(fcIntegrationCmmCpService.processCps(any(), any())).thenReturn(true);
     when(dateHelper.getCurrentMonthStr()).thenReturn(NEXT_PERIOD);
 
     // when
@@ -202,7 +202,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getPrograms()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API)).thenReturn(DATE);
-    when(fcProgramService.processProgramData(any())).thenReturn(true);
+    when(fcProgramService.processPrograms(any())).thenReturn(true);
 
     // when
     fcScheduleService.fetchProgramsFromFcForScheduled();
@@ -221,7 +221,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getRegimens()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(REGIMEN_API)).thenReturn(DATE);
-    when(fcRegimenService.processRegimenData(any())).thenReturn(true);
+    when(fcRegimenService.processRegimens(any())).thenReturn(true);
 
     // when
     fcScheduleService.fetchRegimenFromFcForScheduled();
@@ -240,7 +240,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getFacilityTypes()).thenReturn(new ArrayList<>());
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLatestSuccessDate(FACILITY_TYPE_API)).thenReturn(DATE);
-    when(fcFacilityTypeService.processFacilityType(any())).thenReturn(true);
+    when(fcFacilityTypeService.processFacilityTypes(any())).thenReturn(true);
 
     // when
     fcScheduleService.fetchFacilityTypeFromFcForScheduled();

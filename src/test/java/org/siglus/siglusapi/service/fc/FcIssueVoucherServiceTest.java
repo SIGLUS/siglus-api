@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.service.fc;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -211,6 +213,16 @@ public class FcIssueVoucherServiceTest {
   }
 
   @Test
+  public void shouldReturnFalseGivenEmptyFcResult() {
+
+    // when
+    boolean result = service.processIssueVouchers(Collections.emptyList());
+
+    // then
+    assertFalse(result);
+  }
+
+  @Test
   public void shouldNotCreateIssueVoucherWhenPodHaveExist() {
     // given
     IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
@@ -220,10 +232,10 @@ public class FcIssueVoucherServiceTest {
             issueVoucherDto.getIssueVoucherNumber())).thenReturn(extension);
 
     // when
-    boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
+    boolean isSuccess = service.processIssueVouchers(Collections.singletonList(issueVoucherDto));
 
     // then
-    assertEquals(true, isSuccess);
+    assertTrue(isSuccess);
     verify(requisitionExtensionRepository, times(0))
         .findByRequisitionNumber(issueVoucherDto.getRequisitionNumber());
   }
@@ -244,10 +256,10 @@ public class FcIssueVoucherServiceTest {
         .thenReturn(requisitionV2Dto);
 
     // when
-    boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
+    boolean isSuccess = service.processIssueVouchers(Arrays.asList(issueVoucherDto));
 
     // then
-    assertEquals(false, isSuccess);
+    assertFalse(isSuccess);
     assertEquals(1, service.getStatusErrorIssueVoucherNumber().size());
   }
 
@@ -268,7 +280,7 @@ public class FcIssueVoucherServiceTest {
     ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
     when(approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(),
         requisitionV2Dto.getProgramId(), null, false))
-        .thenReturn(Arrays.asList(approvedProductDto));
+        .thenReturn(Collections.singletonList(approvedProductDto));
     OrderExternal orderExternal = new OrderExternal();
     orderExternal.setId(UUID.randomUUID());
     when(orderExternalRepository.findByRequisitionId(requisitionV2Dto.getId())).thenReturn(
@@ -305,7 +317,7 @@ public class FcIssueVoucherServiceTest {
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
     when(stockCardSummariesService.findSiglusStockCard(any(), any()))
-        .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto)));
+        .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
         new org.openlmis.fulfillment.service.referencedata.OrderableDto();
@@ -313,7 +325,7 @@ public class FcIssueVoucherServiceTest {
     shipmentLineItemDto.setOrderable(orderableDto1);
     shipmentLineItemDto.setLotId(lotId);
     ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
-    shipmentDraftDto.setLineItems(Arrays.asList(shipmentLineItemDto));
+    shipmentDraftDto.setLineItems(Collections.singletonList(shipmentLineItemDto));
     when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setId(UUID.randomUUID());
@@ -325,12 +337,12 @@ public class FcIssueVoucherServiceTest {
     when(lotReferenceDataService.getLots(any())).thenReturn(Arrays.asList(lotDto));
 
     // when
-    boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
+    boolean isSuccess = service.processIssueVouchers(Arrays.asList(issueVoucherDto));
 
     // then
     ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
     assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
-    assertEquals(true, isSuccess);
+    assertTrue(isSuccess);
   }
 
   @Test
@@ -350,11 +362,11 @@ public class FcIssueVoucherServiceTest {
     ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
     when(approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(),
         requisitionV2Dto.getProgramId(), null, false))
-        .thenReturn(Arrays.asList(approvedProductDto));
+        .thenReturn(Collections.singletonList(approvedProductDto));
     OrderExternal orderExternal = new OrderExternal();
     orderExternal.setId(UUID.randomUUID());
     when(orderExternalRepository.findByRequisitionId(requisitionV2Dto.getId())).thenReturn(
-        Arrays.asList(orderExternal));
+        Collections.singletonList(orderExternal));
     Order canFulfillOrder = new Order();
     canFulfillOrder.setId(UUID.randomUUID());
     canFulfillOrder.setOrderLineItems(new ArrayList<>());
@@ -383,7 +395,7 @@ public class FcIssueVoucherServiceTest {
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
     when(stockCardSummariesService.findSiglusStockCard(any(), any()))
-        .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto)));
+        .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
         new org.openlmis.fulfillment.service.referencedata.OrderableDto();
@@ -391,7 +403,7 @@ public class FcIssueVoucherServiceTest {
     shipmentLineItemDto.setOrderable(orderableDto1);
     shipmentLineItemDto.setLotId(lotId);
     ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
-    shipmentDraftDto.setLineItems(Arrays.asList(shipmentLineItemDto));
+    shipmentDraftDto.setLineItems(Collections.singletonList(shipmentLineItemDto));
     when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setId(UUID.randomUUID());
@@ -400,15 +412,15 @@ public class FcIssueVoucherServiceTest {
     when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     LotDto lotDto = getLotDto(lotId);
-    when(lotReferenceDataService.getLots(any())).thenReturn(Arrays.asList(lotDto));
+    when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(lotDto));
 
     // when
-    boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
+    boolean isSuccess = service.processIssueVouchers(Collections.singletonList(issueVoucherDto));
 
     // then
     ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
     assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
-    assertEquals(true, isSuccess);
+    assertTrue(isSuccess);
   }
 
   @Test
@@ -428,7 +440,7 @@ public class FcIssueVoucherServiceTest {
     ApprovedProductDto approvedProductDto = getApprovedProductDto(orderableDto);
     when(approvedProductService.getApprovedProducts(userDto.getHomeFacilityId(),
         requisitionV2Dto.getProgramId(), null, false))
-        .thenReturn(Arrays.asList(approvedProductDto));
+        .thenReturn(Collections.singletonList(approvedProductDto));
     when(orderExternalRepository.findByRequisitionId(requisitionV2Dto.getId())).thenReturn(
         Collections.emptyList());
     Order order = new Order();
@@ -454,7 +466,7 @@ public class FcIssueVoucherServiceTest {
     fulfillForMeEntryDtos.add(fulfillForMeEntryDto);
     summaryV2Dto.setCanFulfillForMe(fulfillForMeEntryDtos);
     when(stockCardSummariesService.findSiglusStockCard(any(), any()))
-        .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto)));
+        .thenReturn(Pagination.getPage(Collections.singletonList(summaryV2Dto)));
     ShipmentLineItemDto shipmentLineItemDto = new ShipmentLineItemDto();
     org.openlmis.fulfillment.service.referencedata.OrderableDto orderableDto1 =
         new org.openlmis.fulfillment.service.referencedata.OrderableDto();
@@ -462,7 +474,7 @@ public class FcIssueVoucherServiceTest {
     shipmentLineItemDto.setOrderable(orderableDto1);
     shipmentLineItemDto.setLotId(lotId);
     ShipmentDraftDto shipmentDraftDto = new ShipmentDraftDto();
-    shipmentDraftDto.setLineItems(Arrays.asList(shipmentLineItemDto));
+    shipmentDraftDto.setLineItems(Collections.singletonList(shipmentLineItemDto));
     when(shipmentDraftService.createShipmentDraft(any())).thenReturn(shipmentDraftDto);
     ShipmentDto shipmentDto = new ShipmentDto();
     shipmentDto.setId(UUID.randomUUID());
@@ -470,7 +482,8 @@ public class FcIssueVoucherServiceTest {
     when(podExtensionRepository.save(any(PodExtension.class))).thenReturn(podExtension);
     when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
-    when(lotReferenceDataService.getLots(any())).thenReturn(Arrays.asList(getLotDto(lotId)));
+    when(lotReferenceDataService.getLots(any())).thenReturn(
+        Collections.singletonList(getLotDto(lotId)));
     Requisition requisition = new Requisition();
     when(requisitionRepository.findOne(requisitionV2Dto.getId())).thenReturn(requisition);
     org.openlmis.requisition.dto.OrderDto orderRequisitionDto =
@@ -478,7 +491,7 @@ public class FcIssueVoucherServiceTest {
     when(orderDtoBuilder.build(any(), any())).thenReturn(orderRequisitionDto);
 
     // when
-    boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
+    boolean isSuccess = service.processIssueVouchers(Arrays.asList(issueVoucherDto));
 
     // then
     assertEquals(true, isSuccess);
@@ -498,7 +511,7 @@ public class FcIssueVoucherServiceTest {
     issueVoucherDto.setRequisitionNumber("");
 
     // when
-    boolean isSuccess = service.createIssueVouchers(Arrays.asList(issueVoucherDto));
+    boolean isSuccess = service.processIssueVouchers(Collections.singletonList(issueVoucherDto));
 
     // then
     assertEquals(true, isSuccess);
@@ -526,7 +539,7 @@ public class FcIssueVoucherServiceTest {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(UUID.randomUUID());
     orderableDto.setProductCode("02E01");
-    orderableDto.setNetContent((long) 25);
+    orderableDto.setNetContent(25);
     return orderableDto;
   }
 
@@ -555,7 +568,7 @@ public class FcIssueVoucherServiceTest {
     productDto.setBatch("M18361");
     productDto.setFnmCode("02E01");
     productDto.setExpiryDate(new Date());
-    issueVoucherDto.setProducts(Arrays.asList(productDto));
+    issueVoucherDto.setProducts(Collections.singletonList(productDto));
     return issueVoucherDto;
   }
 }

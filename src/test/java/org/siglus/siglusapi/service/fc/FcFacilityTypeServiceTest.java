@@ -17,12 +17,13 @@ package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,8 +70,8 @@ public class FcFacilityTypeServiceTest {
   @Captor
   private ArgumentCaptor<ValidReasonAssignmentDto> reasonArgumentCaptor;
 
-  private UUID programId = UUID.randomUUID();
-  private UUID reasonId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
+  private final UUID reasonId = UUID.randomUUID();
 
   @Before
   public void setup() {
@@ -78,8 +79,19 @@ public class FcFacilityTypeServiceTest {
     programDto.setId(programId);
     StockCardLineItemReasonDto lineItemReasonDto = new StockCardLineItemReasonDto();
     lineItemReasonDto.setId(reasonId);
-    when(programRefDataService.findAll()).thenReturn(Arrays.asList(programDto));
-    when(siglusStockCardLineItemReasons.findAll()).thenReturn(Arrays.asList(lineItemReasonDto));
+    when(programRefDataService.findAll()).thenReturn(Collections.singletonList(programDto));
+    when(siglusStockCardLineItemReasons.findAll()).thenReturn(
+        Collections.singletonList(lineItemReasonDto));
+  }
+
+  @Test
+  public void shouldReturnFalseGivenEmptyFcResult() {
+
+    // when
+    boolean result = fcFacilityTypeService.processFacilityTypes(Collections.emptyList());
+
+    // then
+    assertFalse(result);
   }
 
   @Test
@@ -97,7 +109,7 @@ public class FcFacilityTypeServiceTest {
     FcFacilityTypeDto typeDto5 = mockFcFacilityTypeDto("test4", "test4", true);
 
     // when
-    fcFacilityTypeService.processFacilityType(newArrayList(typeDto4, typeDto5));
+    fcFacilityTypeService.processFacilityTypes(newArrayList(typeDto4, typeDto5));
 
     // then
     verify(facilityTypeService).createFacilityType(addFacilityType.capture());
@@ -118,7 +130,7 @@ public class FcFacilityTypeServiceTest {
         .thenReturn(newArrayList(typeDto2));
 
     // when
-    fcFacilityTypeService.processFacilityType(
+    fcFacilityTypeService.processFacilityTypes(
         newArrayList(typeDto4));
 
     // then

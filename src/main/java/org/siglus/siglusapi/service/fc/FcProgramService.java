@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,13 +36,16 @@ public class FcProgramService {
   @Autowired
   private ProgramRealProgramRepository programRealProgramRepository;
 
-  public boolean processProgramData(List<ProgramDto> dtos) {
+  public boolean processPrograms(List<ProgramDto> dtos) {
+    if (isEmpty(dtos)) {
+      return false;
+    }
     try {
       Map<String, ProgramRealProgram> programMap = programRealProgramRepository.findAll()
           .stream().collect(Collectors.toMap(ProgramRealProgram::getRealProgramCode, p -> p));
 
       Set<ProgramRealProgram> programsToUpdate = new HashSet<>();
-      dtos.stream().forEach(dto -> {
+      dtos.forEach(dto -> {
         ProgramRealProgram program = programMap.get(dto.getCode());
         if (program != null) {
           ProgramRealProgram updateProgram = compareAndUpdateProgramData(program, dto);
