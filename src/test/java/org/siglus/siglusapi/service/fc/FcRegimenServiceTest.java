@@ -33,7 +33,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.common.domain.referencedata.Code;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenCategory;
@@ -41,7 +40,6 @@ import org.siglus.siglusapi.dto.fc.RegimenDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RegimenCategoryRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
-import org.siglus.siglusapi.util.DisplayOrderHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcRegimenServiceTest {
@@ -60,9 +58,6 @@ public class FcRegimenServiceTest {
 
   @Mock
   private RegimenCategoryRepository regimenCategoryRepository;
-
-  @Mock
-  private DisplayOrderHelper displayOrderHelper;
 
   @Captor
   private ArgumentCaptor<Set<Regimen>> regimensArgumentCaptor;
@@ -100,8 +95,6 @@ public class FcRegimenServiceTest {
     when(regimenRepository.findAll()).thenReturn(newArrayList(mockRegimen1(), mockRegimen3()));
     when(regimenCategoryRepository.findAll())
         .thenReturn(newArrayList(mockCategory(categoryId2, categoryCode2, categoryDescription2)));
-    when(displayOrderHelper.getNextRegimenDisplayOrder()).thenReturn(0);
-    when(displayOrderHelper.getNextRegimenCategoryDisplayOrder()).thenReturn(0);
 
     // when
     fcRegimenService.processRegimenData(newArrayList(mockRegimenDto1(), mockRegimenDto2(),
@@ -110,24 +103,21 @@ public class FcRegimenServiceTest {
     // then
     verify(regimenRepository).save(regimensArgumentCaptor.capture());
     Set<Regimen> saved = regimensArgumentCaptor.getValue();
-    assertEquals(3, saved.size());
+    assertEquals(2, saved.size());
     Regimen r1 = saved.stream()
-        .filter(r -> code1.equals(r.getCode().toString()))
+        .filter(r -> code1.equals(r.getCode()))
         .findFirst()
         .get();
     assertEquals(description1, r1.getName());
-    assertEquals(categoryCode1, r1.getRegimenCategory().getCode().toString());
+    assertEquals(categoryCode1, r1.getRegimenCategory().getCode());
     assertEquals(categoryDescription1, r1.getRegimenCategory().getName());
     assertNull(r1.getRegimenCategory().getId());
-    Regimen r2 = saved.stream()
-        .filter(r -> code2.equals(r.getCode().toString()))
+    Regimen r3 = saved.stream()
+        .filter(r -> code3.equals(r.getCode()))
         .findFirst()
         .get();
-    assertEquals(description2, r2.getName());
-    assertNull(r2.getProgramId());
-    assertEquals(categoryId2, r2.getRegimenCategory().getId());
-    assertEquals(categoryCode2, r2.getRegimenCategory().getCode().toString());
-    assertEquals(categoryDescription2, r2.getRegimenCategory().getName());
+    assertEquals(description3, r3.getName());
+    assertNull(r3.getRegimenCategory());
   }
 
   private RegimenDto mockRegimenDto1() {
@@ -192,7 +182,7 @@ public class FcRegimenServiceTest {
 
   private Regimen mockRegimen1() {
     return Regimen.builder()
-        .code(Code.code(code1))
+        .code(code1)
         .name(dbDescription1)
         .programId(programId1)
         .regimenCategory(null)
@@ -203,7 +193,7 @@ public class FcRegimenServiceTest {
 
   private Regimen mockRegimen3() {
     return Regimen.builder()
-        .code(Code.code(code3))
+        .code(code3)
         .name(dbDescription3)
         .regimenCategory(mockCategory(categoryId2, categoryCode2, categoryDescription2))
         .programId(programId3)
@@ -215,7 +205,7 @@ public class FcRegimenServiceTest {
   private RegimenCategory mockCategory(UUID id, String code, String name) {
     RegimenCategory category = new RegimenCategory();
     category.setId(id);
-    category.setCode(Code.code(code));
+    category.setCode(code);
     category.setName(name);
     category.setDisplayOrder(0);
     return category;

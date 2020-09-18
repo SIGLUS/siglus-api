@@ -19,7 +19,6 @@ import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -29,7 +28,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.common.domain.referencedata.Code;
 import org.siglus.siglusapi.dto.fc.RegimenDto;
 
 @Builder
@@ -40,9 +38,7 @@ import org.siglus.siglusapi.dto.fc.RegimenDto;
 @Table(name = "regimens", schema = "siglusintegration")
 public class Regimen extends BaseEntity {
 
-  @Column(nullable = false, unique = true, columnDefinition = "text")
-  @Embedded
-  private Code code;
+  private String code;
 
   @Column(columnDefinition = "text")
   private String name;
@@ -83,15 +79,16 @@ public class Regimen extends BaseEntity {
   }
 
   public static Regimen from(RegimenDto regimenDto, UUID programId, RegimenCategory category,
-      int maxRegimenDisplayOrder) {
+      int displayOrder) {
     return Regimen
         .builder()
-        .code(Code.code(regimenDto.getCode()))
+        .code(regimenDto.getCode())
         .name(regimenDto.getDescription())
         .programId(programId)
         .regimenCategory(category)
         .active(RegimenDto.isActive(regimenDto))
-        .displayOrder(maxRegimenDisplayOrder)
+        .displayOrder(displayOrder)
+        .isCustom(false)
         .build();
   }
 }

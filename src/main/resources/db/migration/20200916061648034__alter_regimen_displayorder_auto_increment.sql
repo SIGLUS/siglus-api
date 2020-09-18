@@ -3,6 +3,3 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 ALTER TABLE siglusintegration.regimens ALTER COLUMN dispatchlineid DROP NOT NULL;
-ALTER TABLE siglusintegration.regimens ALTER COLUMN active DROP NOT NULL;
-ALTER TABLE siglusintegration.regimens ALTER COLUMN iscustom DROP NOT NULL;
-ALTER TABLE siglusintegration.regimens ALTER COLUMN programid DROP NOT NULL;

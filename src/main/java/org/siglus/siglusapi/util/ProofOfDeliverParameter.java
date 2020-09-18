@@ -15,22 +15,22 @@
 
 package org.siglus.siglusapi.util;
 
-import lombok.Setter;
-import org.springframework.stereotype.Component;
+import java.util.Map;
+import java.util.UUID;
+import lombok.Builder;
+import lombok.Data;
+import org.siglus.common.dto.referencedata.LotDto;
+import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 
-@Component
-@Setter
-public class DisplayOrderHelper {
-
-  private int maxRegimenDisplayOrder;
-
-  private int maxRegimenCategoryDisplayOrder;
-
-  public int getNextRegimenDisplayOrder() {
-    return  ++maxRegimenDisplayOrder;
-  }
-
-  public int getNextRegimenCategoryDisplayOrder() {
-    return  ++maxRegimenCategoryDisplayOrder;
-  }
+@Data
+@Builder
+public class ProofOfDeliverParameter {
+  Map<UUID, String> requisitionNumberMap;
+  Map<UUID, OrderableDto> orderableMap;
+  Map<UUID, ProgramOrderablesExtension> programMap;
+  Map<UUID, LotDto> lotMap;
+  Map<UUID, String> reasonMap;
+  Map<UUID, UUID> podRequisitionMap;
+  Map<UUID, String> facilityCodeMap;
 }

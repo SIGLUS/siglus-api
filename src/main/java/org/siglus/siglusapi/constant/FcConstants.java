@@ -20,7 +20,6 @@ import static com.google.common.collect.Sets.newHashSet;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import org.siglus.common.domain.referencedata.Code;
 
 public class FcConstants {
 
@@ -44,13 +43,12 @@ public class FcConstants {
   public static final String FACILITY_TYPE_API = "/clientType/clientstypes";
   public static final String GEOGRAPHIC_ZONE_API = "/region/regions";
 
-  public static final String DUMMY = "DUMMY";
   public static final String STATUS_ACTIVE = "Activo";
   public static final String DEFAULT_REGIMEN_CATEGORY_CODE = "ADULTS";
-  public static final Set<Code> IGNORE_CODES = newHashSet(Code.code("RG"), Code.code("A2Bped"));
+  public static final Set<String> IGNORE_CODES = newHashSet("DUMMY", "RG", "A2Bped");
 
   public static List<String> getQueryByPeriodApiList() {
-    return Arrays.asList(CMM_API, CP_API);
+    return Arrays.asList(CMM_API, CP_API, PROGRAM_API, REGIMEN_API);
   }
 
 }

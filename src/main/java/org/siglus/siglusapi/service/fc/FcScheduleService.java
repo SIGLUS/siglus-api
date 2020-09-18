@@ -204,14 +204,12 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.program.cron}", zone = TIME_ZONE_ID)
   public void fetchProgramsFromFcForScheduled() {
-    fetchProgramsFromFc(null);
+    String date = fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API);
+    fetchProgramsFromFc(date);
   }
 
-  public void fetchProgramsFromFc(LocalDate fromDate) {
+  public void fetchProgramsFromFc(String date) {
     final long startTime = currentTimeMillis();
-    String date = fromDate == null
-        ? fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API)
-        : dateHelper.formatDateString(fromDate);
     log.info("date: {}", date);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(PROGRAM_API, date);
     boolean finalSuccess = fcProgramService.processProgramData(callFcService.getPrograms());
@@ -229,14 +227,12 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.regimen.cron}", zone = TIME_ZONE_ID)
   public void fetchRegimenFromFcForScheduled() {
-    fetchRegimenFromFc(null);
+    String date = fcIntegrationResultService.getLatestSuccessDate(REGIMEN_API);
+    fetchRegimenFromFc(date);
   }
 
-  public void fetchRegimenFromFc(LocalDate fromDate) {
+  public void fetchRegimenFromFc(String date) {
     final long startTime = currentTimeMillis();
-    String date = fromDate == null
-        ? fcIntegrationResultService.getLatestSuccessDate(REGIMEN_API)
-        : dateHelper.formatDateString(fromDate);
     log.info("date: {}", date);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(REGIMEN_API, date);
     boolean finalSuccess = fcRegimenService.processRegimenData(callFcService.getRegimens());

@@ -17,7 +17,6 @@ package org.siglus.siglusapi.domain;
 
 import java.util.Objects;
 import javax.persistence.Column;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -26,7 +25,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.common.domain.referencedata.Code;
 
 @Builder
 @Entity
@@ -37,9 +35,7 @@ import org.siglus.common.domain.referencedata.Code;
 @Table(name = "regimen_categories", schema = "siglusintegration")
 public class RegimenCategory extends BaseEntity {
 
-  @Column(nullable = false, unique = true, columnDefinition = "text")
-  @Embedded
-  private Code code;
+  private String code;
 
   @Column(columnDefinition = "text")
   private String name;

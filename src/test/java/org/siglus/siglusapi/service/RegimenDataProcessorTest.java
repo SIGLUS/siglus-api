@@ -328,7 +328,7 @@ public class RegimenDataProcessorTest {
   private Regimen mockNoCustomRegimen() {
     Regimen regimen = new Regimen();
     regimen.setId(regimenId1);
-    regimen.setCode(Code.code("ABC+3TC+RAL+DRV+RTV"));
+    regimen.setCode("ABC+3TC+RAL+DRV+RTV");
     regimen.setIsCustom(false);
     regimen.setRegimenDispatchLine(mockDispatchLine());
     return regimen;
@@ -337,7 +337,7 @@ public class RegimenDataProcessorTest {
   private Regimen mockCustomRegimen() {
     Regimen regimen = new Regimen();
     regimen.setId(regimenId2);
-    regimen.setCode(Code.code("ABC+3TC+DTG"));
+    regimen.setCode("ABC+3TC+DTG");
     regimen.setIsCustom(true);
     regimen.setRegimenDispatchLine(mockDispatchLine());
     return regimen;
