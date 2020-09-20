@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.util;
+package org.siglus.siglusapi.dto;
 
 import java.util.Map;
 import java.util.UUID;
@@ -21,16 +21,18 @@ import lombok.Builder;
 import lombok.Data;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 
 @Data
 @Builder
 public class ProofOfDeliverParameter {
-  Map<UUID, String> requisitionNumberMap;
-  Map<UUID, OrderableDto> orderableMap;
-  Map<UUID, ProgramOrderablesExtension> programMap;
-  Map<UUID, LotDto> lotMap;
-  Map<UUID, String> reasonMap;
-  Map<UUID, UUID> podRequisitionMap;
-  Map<UUID, String> facilityCodeMap;
+  Map<UUID, String> requisitionIdToRequisitionNumberMap;
+  Map<UUID, OrderableDto> orderableIdToOrderableMap;
+  Map<UUID, ProgramOrderablesExtension> orderableIdToProgramMap;
+  Map<UUID, LotDto> lotIdToLotMap;
+  Map<UUID, String> reasonIdToReasonMap;
+  Map<UUID, UUID> podIdToRequisitionIdMap;
+  Map<UUID, String> facilityIdTofacilityCodeMap;
+  Map<UUID, PodExtension> shipmenIdToPodExtensionMap;
 }
