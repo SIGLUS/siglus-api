@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.openlmis.stockmanagement.domain.sourcedestination.SourceDestinationAssignment;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.springframework.stereotype.Service;
 
@@ -49,11 +50,19 @@ public class ValidSourceDestinationStockManagementService extends
     return findAll("validDestinations", params);
   }
 
+  public ValidSourceDestinationDto assignDestination(SourceDestinationAssignment assignment) {
+    return postResult("validDestinations", assignment, getResultClass());
+  }
+
   public Collection<ValidSourceDestinationDto> getValidSources(UUID programId, UUID facilityId) {
     Map<String, Object> params = new HashMap<>();
     params.put("programId", programId);
     params.put("facilityId", facilityId);
     return findAll("validSources", params);
+  }
+
+  public ValidSourceDestinationDto assignSource(SourceDestinationAssignment assignment) {
+    return postResult("validSources", assignment, getResultClass());
   }
 }
 

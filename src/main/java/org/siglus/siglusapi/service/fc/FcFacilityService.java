@@ -15,17 +15,20 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.dto.referencedata.FacilityDto;
@@ -60,6 +63,9 @@ public class FcFacilityService {
 
   @Autowired
   private SiglusFacilityTypeService facilityTypeService;
+
+  @Autowired
+  private FcSourceDestinationService fcSourceDestinationService;
 
   public boolean processFacility(List<FcFacilityDto> dtos) {
     if (isEmpty(dtos)) {
@@ -96,7 +102,7 @@ public class FcFacilityService {
 
   private Map<String, FacilityDto> getCodeToFacilityDtoMap() {
     return facilityService.findAll().stream()
-        .collect(Collectors.toMap(facilityDto -> facilityDto.getCode(), Function.identity()));
+        .collect(Collectors.toMap(FacilityDto::getCode, Function.identity()));
   }
 
   private Map<String, ProgramRealProgram> getCodeToRealProgramMap() {
@@ -106,17 +112,17 @@ public class FcFacilityService {
 
   private Map<String, ProgramDto> getCodeToProgramMap() {
     return programReferenceDataService.findAll().stream()
-        .collect(Collectors.toMap(programDto -> programDto.getCode(), Function.identity()));
+        .collect(Collectors.toMap(BasicProgramDto::getCode, Function.identity()));
   }
 
   private Map<String, OpenLmisGeographicZoneDto> getCodeToGeographicZoneDtoMap() {
     return geographicZoneService.searchAllGeographicZones().stream()
-        .collect(Collectors.toMap(dto -> dto.getCode(), Function.identity()));
+        .collect(Collectors.toMap(OpenLmisGeographicZoneDto::getCode, Function.identity()));
   }
 
   private Map<String, FacilityTypeDto> getCodeToFacilityTypeDtoMap() {
     return facilityTypeService.searchAllFacilityTypes().stream()
-        .collect(Collectors.toMap(facilityType -> facilityType.getCode(),
+        .collect(Collectors.toMap(FacilityTypeDto::getCode,
             Function.identity()));
   }
 
@@ -143,7 +149,7 @@ public class FcFacilityService {
           String code = fcAreaDto.getAreaCode();
           return codeToRealProgramMap.containsKey(code) ? codeToRealProgramMap.get(code)
               .getProgramCode() : null;
-        }).filter(code -> code != null)
+        }).filter(Objects::nonNull)
         .collect(Collectors.toSet());
   }
 
@@ -171,7 +177,7 @@ public class FcFacilityService {
   private boolean isDifferenceFacilityDto(FcFacilityDto fcFacilityDto, Set<String> codes,
       FacilityDto originDto) {
     Set<String> originCodes = originDto.getSupportedPrograms().stream()
-        .map(supportedProgramDto -> supportedProgramDto.getCode())
+        .map(SupportedProgramDto::getCode)
         .collect(Collectors.toSet());
     return fcFacilityDto.getName().equals(originDto.getName())
         || fcFacilityDto.getDescription().equals(originDto.getDescription())
@@ -186,13 +192,16 @@ public class FcFacilityService {
       Map<String, ProgramDto> codeToProgramMap,
       Map<String, ProgramRealProgram> codeToRealProgramMap,
       Map<String, OpenLmisGeographicZoneDto> codeToGeographicZoneDtoMap) {
+    List<FacilityDto> createdFacilities = newArrayList();
     needCreateFacilities.forEach(facilityDto -> {
       log.info("create facility: {}", facilityDto);
       List<SupportedProgramDto> supportedProgramDtos = getSupportedProgramDtos(facilityDto,
           codeToProgramMap, codeToRealProgramMap);
-      facilityService.createFacility(getFacilityDto(facilityDto, codeToGeographicZoneDtoMap,
-          codeToFacilityType, supportedProgramDtos));
+      FacilityDto createdFacility = facilityService.createFacility(getFacilityDto(facilityDto,
+          codeToGeographicZoneDtoMap, codeToFacilityType, supportedProgramDtos));
+      createdFacilities.add(createdFacility);
     });
+    fcSourceDestinationService.createSourceAndDestination(createdFacilities);
   }
 
   private FacilityDto getFacilityDto(FcFacilityDto fcFacilityDto,
@@ -241,7 +250,7 @@ public class FcFacilityService {
     Map<String, SupportedProgramDto> codeToSupportProgram = needSaveFacility.getSupportedPrograms()
         .stream()
         .collect(Collectors
-            .toMap(supportedProgramDto -> supportedProgramDto.getCode(), Function.identity()));
+            .toMap(SupportedProgramDto::getCode, Function.identity()));
     getFacilitySupportedProgramCode(fcFacilityDto, codeToRealProgramMap)
         .forEach(programDto -> {
           if (codeToSupportProgram.containsKey(programDto)) {

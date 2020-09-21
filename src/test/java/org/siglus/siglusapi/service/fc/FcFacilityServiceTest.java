@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.fc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
@@ -65,6 +66,9 @@ public class FcFacilityServiceTest {
   @Mock
   private SiglusFacilityTypeService facilityTypeService;
 
+  @Mock
+  private FcSourceDestinationService fcSourceDestinationService;
+
   @InjectMocks
   private FcFacilityService fcFacilityService;
 
@@ -104,6 +108,7 @@ public class FcFacilityServiceTest {
     // then
     assertTrue(isProcess);
     verify(facilityService).createFacility(facilityCaptor.capture());
+    verify(fcSourceDestinationService).createSourceAndDestination(any());
     assertEquals("description 1",
         facilityCaptor.getValue().getGeographicZone().getName());
     assertEquals("facility", facilityCaptor.getValue().getCode());
