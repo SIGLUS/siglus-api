@@ -15,6 +15,10 @@
 
 package org.openlmis.stockmanagement.service;
 
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.maxBy;
+import static java.util.stream.Collectors.toSet;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_DEBIT_QUANTITY_EXCEED_SOH;
 
 import java.time.LocalDate;
@@ -24,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
@@ -43,6 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@SuppressWarnings("PMD.TooManyMethods")
 public class CalculatedStockOnHandService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CalculatedStockOnHandService.class);
@@ -73,9 +79,12 @@ public class CalculatedStockOnHandService {
       return Collections.emptyList();
     }
 
-    stockCards.forEach(stockCard ->
-        fetchStockOnHand(stockCard, asOfDate != null ? asOfDate : LocalDate.now()));
-
+    // [SIGLUS change start]
+    // [change reason]: performance improvment
+    // stockCards.forEach(stockCard ->
+    //     fetchStockOnHand(stockCard, asOfDate != null ? asOfDate : LocalDate.now()));
+    fetchAllStockOnHand(stockCards, asOfDate != null ? asOfDate : LocalDate.now());
+    // [SIGLUS change end]
     return stockCards;
   }
 
@@ -108,8 +117,12 @@ public class CalculatedStockOnHandService {
       return Collections.emptyList();
     }
 
-    stockCards.forEach(stockCard ->
-        fetchStockOnHand(stockCard, LocalDate.now()));
+    // [SIGLUS change start]
+    // [change reason]: performance improvment
+    // stockCards.forEach(stockCard ->
+    //     fetchStockOnHand(stockCard, LocalDate.now()));
+    fetchAllStockOnHand(stockCards, LocalDate.now());
+    // [SIGLUS change end]
 
     return stockCards;
   }
@@ -237,6 +250,31 @@ public class CalculatedStockOnHandService {
       stockCard.setProcessedDate(calculatedStockOnHand.getProcessedDate());
     }
   }
+
+  // [SIGLUS change start]
+  // [change reason]: performance improvment
+  private void fetchAllStockOnHand(List<StockCard> stockCards, LocalDate asOfDate) {
+    Set<UUID> uuids = stockCards.stream().map(StockCard::getId).collect(toSet());
+    List<CalculatedStockOnHand> calculatedStockOnHands = calculatedStockOnHandRepository
+        .findByStockCardIdInAndOccurredDateLessThanEqual(uuids, asOfDate);
+    Map<UUID, Optional<CalculatedStockOnHand>> calculatedStockOnHandMap = calculatedStockOnHands
+        .stream()
+        .collect(groupingBy(item -> item.getStockCard().getId(),
+            maxBy(comparing(CalculatedStockOnHand::getOccurredDate))));
+    stockCards.forEach(stockCard -> {
+      UUID stockCardId = stockCard.getId();
+      boolean existedInCalculatedStockOnHand = calculatedStockOnHandMap.containsKey(stockCardId)
+          && calculatedStockOnHandMap.get(stockCardId).isPresent();
+      if (existedInCalculatedStockOnHand) {
+        CalculatedStockOnHand calculatedStockOnHand =
+            calculatedStockOnHandMap.get(stockCardId).get();
+        stockCard.setStockOnHand(calculatedStockOnHand.getStockOnHand());
+        stockCard.setOccurredDate(calculatedStockOnHand.getOccurredDate());
+        stockCard.setProcessedDate(calculatedStockOnHand.getProcessedDate());
+      }
+    });
+  }
+  // [SIGLUS change end]
 
   private void saveCalculatedStockOnHand(StockCardLineItem lineItem, Integer stockOnHand,
       StockCard stockCard) {

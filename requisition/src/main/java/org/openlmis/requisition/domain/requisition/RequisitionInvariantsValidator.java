@@ -98,7 +98,7 @@ class RequisitionInvariantsValidator
   @Override
   public void validateCanChangeStatus(Map<String, Message> errors) {
     // [SIGLUS change start]
-    // [change reason] support for usage report which doesn't exist product section.
+    // [change reason]: support for usage report which doesn't exist product section.
     // if (isEmpty(requisitionToUpdate.getNonSkippedRequisitionLineItems())) {
     if (requisitionToUpdate.getTemplate().getTemplateExtension().getEnableProduct()
         && isEmpty(requisitionToUpdate.getNonSkippedRequisitionLineItems())) {
