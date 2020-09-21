@@ -23,6 +23,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
@@ -74,6 +75,11 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
         .stream()
         .map(RegimenDto::from)
         .collect(Collectors.toList());
+
+    if (CollectionUtils.isEmpty(defaultRegimenDtos)) {
+      return;
+    }
+
     Set<String> regimenSummaryRowNames =
         getValidRegimenSummaryRowNames(templateColumnSections);
 
@@ -204,7 +210,6 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
       List<UsageTemplateColumnSection> templateColumnSections,
       List<RegimenDto> defaultRegimenDtos
   ) {
-
     UsageTemplateColumnSection regimen = siglusUsageReportService
         .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, REGIMEN);
 

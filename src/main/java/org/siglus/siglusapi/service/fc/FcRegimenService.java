@@ -94,7 +94,7 @@ public class FcRegimenService {
             }
             Regimen regimen = codeToRegimenMap.get(dto.getCode());
             if (regimen != null) {
-              if (isDifferent(regimen, dto,dtoProgramId)) {
+              if (isDifferent(regimen, dto, dtoProgramId)) {
                 regimensToUpdate.add(merge(regimen, dto, dtoProgramId, codeToCategoryMap));
               }
               return;
