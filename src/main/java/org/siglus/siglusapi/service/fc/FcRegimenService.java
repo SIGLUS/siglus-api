@@ -116,7 +116,7 @@ public class FcRegimenService {
 
   private boolean isDifferent(Regimen regimen, RegimenDto dto, UUID dtoProgramId) {
     return !regimen.getName().equals(dto.getDescription())
-        || !regimen.getProgramId().equals(dtoProgramId) || !isEqual(regimen, dto);
+        || !regimen.getProgramId().equals(dtoProgramId) || !isCategoryEquivalent(regimen, dto);
   }
 
   private Regimen merge(Regimen regimen, RegimenDto dto, UUID dtoProgramId,
@@ -147,7 +147,7 @@ public class FcRegimenService {
   }
 
 
-  private boolean isEqual(Regimen regimen, RegimenDto dto) {
+  private boolean isCategoryEquivalent(Regimen regimen, RegimenDto dto) {
     RegimenCategory category = regimen.getRegimenCategory();
     if ((category == null || DEFAULT_REGIMEN_CATEGORY_CODE.equals(category.getCode()))
         && dto.getCategoryCode() == null && dto.getCategoryDescription() == null) {
