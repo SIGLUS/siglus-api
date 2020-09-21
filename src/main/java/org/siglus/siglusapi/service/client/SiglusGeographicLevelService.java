@@ -17,7 +17,7 @@ package org.siglus.siglusapi.service.client;
 
 import java.util.Collection;
 import java.util.HashMap;
-import org.siglus.siglusapi.dto.GeographicLevelDto;
+import org.siglus.common.dto.referencedata.GeographicLevelDto;
 import org.springframework.stereotype.Service;
 
 @Service

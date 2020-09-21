@@ -15,8 +15,6 @@
 
 package org.siglus.common.dto.referencedata;
 
-import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,22 +22,25 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FacilityDto {
+@Builder
+public class OpenLmisGeographicZoneDto {
 
   private UUID id;
+
   private String code;
+
   private String name;
-  private String description;
-  private Boolean active;
-  private LocalDate goLiveDate;
-  private LocalDate goDownDate;
-  private String comment;
-  private Boolean enabled;
-  private List<SupportedProgramDto> supportedPrograms;
-  private OpenLmisGeographicZoneDto geographicZone;
-  private FacilityTypeDto type;
+
+  private GeographicLevelDto level;
+
+  private Integer catchmentPopulation;
+
+  private Double latitude;
+
+  private Double longitude;
+
+  private OpenLmisGeographicZoneDto parent;
 
 }

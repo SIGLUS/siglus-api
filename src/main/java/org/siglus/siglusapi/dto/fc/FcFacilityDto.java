@@ -13,34 +13,35 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.dto.fc;
 
-import java.util.UUID;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class OpenLmisGeographicZoneDto {
-
-  private UUID id;
+public class FcFacilityDto {
 
   private String code;
 
   private String name;
 
-  private GeographicLevelDto level;
+  private String description;
 
-  private Integer catchmentPopulation;
+  private String districtCode;
 
-  private Double latitude;
+  private String districtDescription;
 
-  private Double longitude;
+  private String clientTypeCode;
 
-  private OpenLmisGeographicZoneDto parent;
+  private String clientTypeDescription;
 
+  private String status;
+
+  private List<FcAreaDto> areas;
 }

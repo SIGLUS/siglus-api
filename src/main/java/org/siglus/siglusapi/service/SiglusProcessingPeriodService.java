@@ -100,10 +100,9 @@ public class SiglusProcessingPeriodService {
     List<ProcessingPeriodExtension> extensions = processingPeriodExtensionRepository.findAll();
 
     Map<UUID, ProcessingPeriodExtension> map = new HashMap<>();
-    extensions.stream()
-        .forEach(extension -> map.put(extension.getProcessingPeriodId(), extension));
+    extensions.forEach(extension -> map.put(extension.getProcessingPeriodId(), extension));
 
-    page.getContent().stream().forEach(dto -> {
+    page.getContent().forEach(dto -> {
       ProcessingPeriodExtension processingPeriodExtension = map.get(dto.getId());
       combine(dto, processingPeriodExtension);
     });
@@ -205,10 +204,9 @@ public class SiglusProcessingPeriodService {
     List<ProcessingPeriodExtension> extensions = processingPeriodExtensionRepository.findAll();
 
     Map<UUID, ProcessingPeriodExtension> map = new HashMap<>();
-    extensions.stream()
-        .forEach(extension -> map.put(extension.getProcessingPeriodId(), extension));
+    extensions.forEach(extension -> map.put(extension.getProcessingPeriodId(), extension));
 
-    periods.stream().forEach(dto -> {
+    periods.forEach(dto -> {
       ProcessingPeriodExtension processingPeriodExtension = map.get(dto.getId());
       combine(dto, processingPeriodExtension);
     });

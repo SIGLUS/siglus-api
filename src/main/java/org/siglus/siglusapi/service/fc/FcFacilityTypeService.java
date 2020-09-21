@@ -26,13 +26,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.requisition.dto.FacilityTypeDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
+import org.siglus.common.dto.referencedata.FacilityTypeDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeService;
 import org.siglus.siglusapi.service.client.SiglusStockCardLineItemReasons;
@@ -96,7 +96,7 @@ public class FcFacilityTypeService {
 
   private void updateModifiedFacilityType(Map<String, FacilityTypeDto> facilityTypeMap,
       List<FcFacilityTypeDto> needUpdatedFacilityTypes) {
-    needUpdatedFacilityTypes.stream().forEach(typeDto -> {
+    needUpdatedFacilityTypes.forEach(typeDto -> {
       FacilityTypeDto dto = facilityTypeMap.get(typeDto.getCode());
       dto.setActive(isActive(typeDto.getStatus()));
       dto.setName(typeDto.getDescription());
@@ -108,7 +108,7 @@ public class FcFacilityTypeService {
       List<FcFacilityTypeDto> needAddedFacilityTypes) {
     int originSize = facilityTypeMap.size();
     List<FacilityTypeDto> needUpdateReasonType = new ArrayList<>();
-    needAddedFacilityTypes.stream().forEach(typeDto -> {
+    needAddedFacilityTypes.forEach(typeDto -> {
       int index = needAddedFacilityTypes.indexOf(typeDto);
       FacilityTypeDto dto = new FacilityTypeDto();
       dto.setCode(typeDto.getCode());
@@ -150,7 +150,7 @@ public class FcFacilityTypeService {
     return lineItemReason;
   }
 
-  private static boolean isActive(String status) {
+  private boolean isActive(String status) {
     return STATUS_ACTIVE.equals(status);
   }
 

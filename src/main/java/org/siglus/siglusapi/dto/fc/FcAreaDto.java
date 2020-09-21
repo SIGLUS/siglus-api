@@ -13,33 +13,20 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.dto.referencedata;
+package org.siglus.siglusapi.dto.fc;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class FacilityDto {
+@NoArgsConstructor
+@Builder
+public class FcAreaDto {
 
-  private UUID id;
-  private String code;
-  private String name;
-  private String description;
-  private Boolean active;
-  private LocalDate goLiveDate;
-  private LocalDate goDownDate;
-  private String comment;
-  private Boolean enabled;
-  private List<SupportedProgramDto> supportedPrograms;
-  private OpenLmisGeographicZoneDto geographicZone;
-  private FacilityTypeDto type;
+  private String areaCode;
 
+  private String areaDescription;
 }

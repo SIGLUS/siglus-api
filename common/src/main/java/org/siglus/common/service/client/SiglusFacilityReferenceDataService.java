@@ -60,4 +60,12 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
     return getPage("search", RequestParameters.init().setPage(noPagination),
         requestBody, HttpMethod.POST, getResultClass(), false);
   }
+
+  public void saveFacility(FacilityDto dto) {
+    put(dto.getId().toString(), dto, Void.class, false);
+  }
+
+  public FacilityDto createFacility(FacilityDto dto) {
+    return postResult("", dto, getResultClass());
+  }
 }

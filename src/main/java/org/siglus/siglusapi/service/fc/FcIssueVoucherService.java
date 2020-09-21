@@ -553,7 +553,7 @@ public class FcIssueVoucherService {
       List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
       Map<UUID, ApprovedProductDto> approvedProductIdMaps) {
     List<ShipmentLineItemDto> shipmentLineItemDtos = new ArrayList<>();
-    stockCardSummaryV2Dtos.stream().forEach(stockCardSummaryV2Dto -> {
+    stockCardSummaryV2Dtos.forEach(stockCardSummaryV2Dto -> {
       OrderableDto orderableDto = approvedProductIdMaps
           .get(stockCardSummaryV2Dto.getOrderable().getId()).getOrderable();
       long netContent = orderableDto.getNetContent();
@@ -581,7 +581,7 @@ public class FcIssueVoucherService {
     lotSearchParams.setId(lotIds);
     Map<UUID, List<LotDto>> lotDtos = lotReferenceDataService.getLots(lotSearchParams).stream()
         .collect(Collectors.groupingBy(LotDto::getId));
-    draftLineItems.stream().forEach(lineItem -> {
+    draftLineItems.forEach(lineItem -> {
       UUID orderableId = lineItem.getOrderable().getId();
       ApprovedProductDto approvedProductDto = approvedProductIdMaps.get(orderableId);
       LotDto lotDto = lotDtos.get(lineItem.getLot().getId()).get(0);
@@ -607,7 +607,7 @@ public class FcIssueVoucherService {
     parameters.set(PROGRAM_ID, requisitionV2Dto.getProgram().getId().toString());
     parameters.set(FACILITY_ID, supplyFacility.getId().toString());
     parameters.set(RIGHT_NAME, STOCK_CARDS_VIEW);
-    productIds.stream().forEach(productId -> parameters.add(ORDERABLE_ID, productId.toString()));
+    productIds.forEach(productId -> parameters.add(ORDERABLE_ID, productId.toString()));
     Pageable page = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
     return stockCardSummariesService.findSiglusStockCard(parameters, page)
         .getContent();

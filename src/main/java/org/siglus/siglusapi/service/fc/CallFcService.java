@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.fc;
 
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
@@ -33,6 +34,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.fc.CmmDto;
 import org.siglus.siglusapi.dto.fc.CpDto;
+import org.siglus.siglusapi.dto.fc.FcFacilityDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
@@ -63,6 +65,7 @@ public class CallFcService {
   private List<ProgramDto> programs = new ArrayList<>();
   private List<ProductInfoDto> products = new ArrayList<>();
   private List<RegimenDto> regimens = new ArrayList<>();
+  private List<FcFacilityDto> facilities = new ArrayList<>();
   private List<FcFacilityTypeDto> facilityTypes = new ArrayList<>();
   private List<FcGeographicZoneNationalDto> geographicZones = new ArrayList<>();
   private PageInfoDto pageInfoDto = new PageInfoDto();
@@ -114,6 +117,8 @@ public class CallFcService {
       return CpDto[].class;
     }  else if (FACILITY_TYPE_API.equals(api)) {
       return FcFacilityTypeDto[].class;
+    } else if (FACILITY_API.equals(api)) {
+      return FcFacilityDto[].class;
     } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
       return FcGeographicZoneNationalDto[].class;
     }
@@ -137,6 +142,8 @@ public class CallFcService {
       this.products.addAll(Arrays.asList((ProductInfoDto[]) body));
     } else if (FACILITY_TYPE_API.equals(api)) {
       this.facilityTypes.addAll(Arrays.asList((FcFacilityTypeDto[]) body));
+    } else if (FACILITY_API.equals(api)) {
+      this.facilities.addAll(Arrays.asList((FcFacilityDto []) body));
     } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
       this.geographicZones.addAll(Arrays.asList((FcGeographicZoneNationalDto[]) body));
     }

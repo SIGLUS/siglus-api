@@ -2013,6 +2013,14 @@ traits:
         responses:
           200:
 
+    /fcFacility:
+      displayName: fcFacility From Fc
+      post:
+        is: [ secured ]
+        description: Fetch fcFacility from fc.
+        responses:
+          200:
+
     /fcFacilityType:
       displayName: fcFacilityType From Fc
       post:

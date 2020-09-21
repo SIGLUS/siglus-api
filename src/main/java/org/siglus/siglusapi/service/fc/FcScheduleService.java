@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static java.lang.System.currentTimeMillis;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
@@ -91,6 +92,33 @@ public class FcScheduleService {
 
   @Autowired
   private FcGeographicZoneService fcGeographicZoneService;
+
+  @Autowired
+  private FcFacilityService facilityService;
+
+
+  @Scheduled(cron = "${fc.facility.cron}", zone = TIME_ZONE_ID)
+  public void fetchFacility() {
+    String date = fcIntegrationResultService.getLatestSuccessDate(FACILITY_API);
+    fetchFacilityFromFc(date);
+  }
+
+  public void fetchFacilityFromFc(String date) {
+    final long startTime = currentTimeMillis();
+    Integer callFcCostTimeInSeconds = fetchDataFromFc(FACILITY_API, date);
+    Boolean finalSuccess = facilityService.processFacility(
+        callFcService.getFacilities());
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(FACILITY_API)
+        .date(date)
+        .totalObjectsFromFc(callFcService.getFacilities().size())
+        .callFcSuccess(true)
+        .callFcCostTimeInSeconds(callFcCostTimeInSeconds)
+        .finalSuccess(finalSuccess)
+        .totalCostTimeInSeconds(getTotalCostTimeInSeconds(startTime))
+        .build();
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+  }
 
   @Scheduled(cron = "${fc.geographiczone.cron}", zone = TIME_ZONE_ID)
   public void fetchGeographicZones() {
@@ -340,6 +368,8 @@ public class FcScheduleService {
       return callFcService.getProducts().size();
     } else if (REGIMEN_API.equals(api)) {
       return callFcService.getRegimens().size();
+    } else if (FACILITY_API.equals(api)) {
+      return callFcService.getFacilities().size();
     } else if (FACILITY_TYPE_API.equals(api)) {
       return callFcService.getFacilityTypes().size();
     } else if (CMM_API.equals(api)) {
@@ -358,6 +388,8 @@ public class FcScheduleService {
       callFcService.setCmms(newArrayList());
     } else if (CP_API.equals(api)) {
       callFcService.setCps(newArrayList());
+    } else if (FACILITY_API.equals(api)) {
+      callFcService.setFacilities(newArrayList());
     } else if (FACILITY_TYPE_API.equals(api)) {
       callFcService.setFacilityTypes(newArrayList());
     } else if (REGIMEN_API.equals(api)) {

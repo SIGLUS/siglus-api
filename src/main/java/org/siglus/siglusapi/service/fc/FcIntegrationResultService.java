@@ -19,6 +19,8 @@ import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_JOB;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_API;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
@@ -124,6 +126,8 @@ public class FcIntegrationResultService {
       jobName = PROGRAM_JOB;
     } else if (PRODUCT_API.equals(api)) {
       jobName = PRODUCT_JOB;
+    } else if (FACILITY_API.equals(api)) {
+      jobName = FACILITY_JOB;
     } else if (FACILITY_TYPE_API.equals(api)) {
       jobName = FACILITY_TYPE_JOB;
     } else if (REGIMEN_API.equals(api)) {
@@ -149,6 +153,8 @@ public class FcIntegrationResultService {
       callFcService.getProducts().clear();
     } else if (FACILITY_TYPE_API.equals(api)) {
       callFcService.getFacilityTypes().clear();
+    } else if (FACILITY_API.equals(api)) {
+      callFcService.getFacilities().clear();
     } else if (REGIMEN_API.equals(api)) {
       callFcService.getRegimens().clear();
     } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
