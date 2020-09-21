@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service.fc;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +30,7 @@ import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneProvinceDto;
 import org.siglus.siglusapi.service.client.SiglusGeographicLevelService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneService;
+import org.siglus.siglusapi.util.FcUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -81,15 +81,15 @@ public class FcGeographicZoneService {
   private List<FcGeographicZoneNationalDto> filterInactiveZones(
       List<FcGeographicZoneNationalDto> fcDtos) {
     List<FcGeographicZoneNationalDto> nationals = fcDtos.stream()
-        .filter(national -> STATUS_ACTIVE.equalsIgnoreCase(national.getStatus()))
+        .filter(national -> FcUtilService.isActive(national.getStatus()))
         .collect(Collectors.toList());
     nationals.forEach(national -> {
       List<FcGeographicZoneProvinceDto> provinces = national.getProvinces().stream()
-          .filter(province -> STATUS_ACTIVE.equalsIgnoreCase(province.getStatus()))
+          .filter(province -> FcUtilService.isActive(province.getStatus()))
           .collect(Collectors.toList());
       provinces.forEach(province -> {
         List<FcGeographicZoneDistrictDto> districts = province.getDistricts().stream()
-            .filter(district -> STATUS_ACTIVE.equalsIgnoreCase(district.getStatus()))
+            .filter(district ->  FcUtilService.isActive(district.getStatus()))
             .collect(Collectors.toList());
         province.setDistricts(districts);
       });

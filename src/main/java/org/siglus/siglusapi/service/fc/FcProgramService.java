@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
+import org.siglus.siglusapi.util.FcUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -74,8 +75,8 @@ public class FcProgramService {
       isEqual = false;
     }
 
-    if (!program.getActive().equals(ProgramRealProgram.isActive(dto))) {
-      program.setActive(ProgramRealProgram.isActive(dto));
+    if (!program.getActive().equals(FcUtilService.isActive(dto.getStatus()))) {
+      program.setActive(FcUtilService.isActive(dto.getStatus()));
       isEqual = false;
     }
 

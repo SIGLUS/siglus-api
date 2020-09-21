@@ -13,35 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.fc;
+package org.siglus.siglusapi.util;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.util.FcUtilService;
+import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class RegimenDto {
+import org.springframework.stereotype.Service;
 
-  private String code;
+@Service
+public class FcUtilService {
 
-  private String description;
-
-  private String areaCode;
-
-  private String areaDescription;
-
-  private String categoryCode;
-
-  private String categoryDescription;
-
-  private String status;
-
-  public static boolean isActive(RegimenDto dto) {
-    return FcUtilService.isActive(dto.getStatus());
+  public static boolean isActive(String status) {
+    return status.equalsIgnoreCase(STATUS_ACTIVE);
   }
+
 }

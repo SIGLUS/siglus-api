@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
@@ -38,6 +38,7 @@ import org.siglus.siglusapi.dto.fc.FcFacilityDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneService;
+import org.siglus.siglusapi.util.FcUtilService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -62,6 +63,9 @@ public class FcFacilityService {
   private SiglusFacilityTypeService facilityTypeService;
 
   public boolean processFacility(List<FcFacilityDto> dtos) {
+    if (isEmpty(dtos)) {
+      return false;
+    }
     Map<String, ProgramDto> codeToProgramMap = getCodeToProgramMap();
     Map<String, ProgramRealProgram> codeToRealProgramMap = getCodeToRealProgramMap();
     Map<String, FacilityDto> codeToFacilityMap = getCodeToFacilityDtoMap();
@@ -117,10 +121,6 @@ public class FcFacilityService {
             Function.identity()));
   }
 
-  private boolean isActive(String status) {
-    return STATUS_ACTIVE.equals(status);
-  }
-
   public boolean isValidateFcFacilityData(FcFacilityDto fcFacilityDto,
       Map<String, OpenLmisGeographicZoneDto> codeToGeographicZoneDtoMap, Set<String> codes,
       Map<String, FacilityTypeDto> codeToFacilityType) {
@@ -174,7 +174,7 @@ public class FcFacilityService {
         .collect(Collectors.toSet());
     return fcFacilityDto.getDistrictCode().equals(originDto.getGeographicZone().getCode())
         || fcFacilityDto.getClientTypeCode().equals(originDto.getType().getCode())
-        || isActive(fcFacilityDto.getStatus()) == originDto.getActive()
+        || FcUtilService.isActive(fcFacilityDto.getStatus()) == originDto.getActive()
         || Sets.difference(codes, originCodes).isEmpty();
   }
 
@@ -200,8 +200,8 @@ public class FcFacilityService {
         .code(fcFacilityDto.getCode())
         .name(fcFacilityDto.getName())
         .description(fcFacilityDto.getDescription())
-        .active(isActive(fcFacilityDto.getStatus()))
-        .enabled(isActive(fcFacilityDto.getStatus()))
+        .active(FcUtilService.isActive(fcFacilityDto.getStatus()))
+        .enabled(FcUtilService.isActive(fcFacilityDto.getStatus()))
         .type(codeToFacilityType.get(fcFacilityDto.getClientTypeCode()))
         .geographicZone(codeToGeographicZoneDtoMap.get(fcFacilityDto.getDistrictCode()))
         .supportedPrograms(supportedProgramDtos)
@@ -220,8 +220,8 @@ public class FcFacilityService {
           needSaveFacility, codeToRealProgramMap, codeToProgramMap);
       needSaveFacility.setName(fcFacilityDto.getName());
       needSaveFacility.setDescription(fcFacilityDto.getDescription());
-      needSaveFacility.setActive(isActive(fcFacilityDto.getStatus()));
-      needSaveFacility.setEnabled(isActive(fcFacilityDto.getStatus()));
+      needSaveFacility.setActive(FcUtilService.isActive(fcFacilityDto.getStatus()));
+      needSaveFacility.setEnabled(FcUtilService.isActive(fcFacilityDto.getStatus()));
       needSaveFacility.setType(codeToFacilityType.get(fcFacilityDto.getClientTypeCode()));
       needSaveFacility.setGeographicZone(
           codeToGeographicZoneDtoMap.get(fcFacilityDto.getDistrictCode()));

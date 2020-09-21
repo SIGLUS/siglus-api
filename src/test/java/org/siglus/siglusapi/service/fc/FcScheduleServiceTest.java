@@ -22,7 +22,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
+import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
@@ -94,6 +96,12 @@ public class FcScheduleServiceTest {
   @Mock
   private SiglusIssueVoucherService issueVoucherService;
 
+  @Mock
+  private FcGeographicZoneService fcGeographicZoneService;
+
+  @Mock
+  private FcFacilityService facilityService;
+
   @Before
   public void setup() {
     when(fcIssueVoucherService.processIssueVouchers(any())).thenReturn(true);
@@ -115,6 +123,39 @@ public class FcScheduleServiceTest {
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(RECEIPT_PLAN_API, resultCaptor.getValue().getApi());
   }
+
+  @Test
+  public void shouldGeographicZoneScheduleFromFc() {
+    // given
+    when(callFcService.getFacilities()).thenReturn(new ArrayList<>());
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(fcIntegrationResultService.getLatestSuccessDate(GEOGRAPHIC_ZONE_API)).thenReturn(DATE);
+
+    // when
+    fcScheduleService.fetchGeographicZones();
+
+    // then
+    verify(fcGeographicZoneService).processGeographicZones(any());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(GEOGRAPHIC_ZONE_API, resultCaptor.getValue().getApi());
+  }
+
+  @Test
+  public void shouldFetchFacilityScheduleFromFc() {
+    // given
+    when(callFcService.getFacilities()).thenReturn(new ArrayList<>());
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(fcIntegrationResultService.getLatestSuccessDate(FACILITY_API)).thenReturn(DATE);
+
+    // when
+    fcScheduleService.fetchFacility();
+
+    // then
+    verify(facilityService).processFacility(any());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(FACILITY_API, resultCaptor.getValue().getApi());
+  }
+
 
   @Test
   public void shouldFetchIssueVoucherScheduleFromFc() {

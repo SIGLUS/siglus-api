@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service.fc;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,6 +36,7 @@ import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeService;
 import org.siglus.siglusapi.service.client.SiglusStockCardLineItemReasons;
 import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
+import org.siglus.siglusapi.util.FcUtilService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -89,7 +89,7 @@ public class FcFacilityTypeService {
       List<FcFacilityTypeDto> needUpdatedFacilityTypes, FcFacilityTypeDto typeDto) {
     FacilityTypeDto facilityTypeDto = facilityTypeMap.get(typeDto.getCode());
     if (!facilityTypeDto.getName().equals(typeDto.getDescription())
-        || !facilityTypeDto.getActive().equals(isActive(typeDto.getStatus()))) {
+        || !facilityTypeDto.getActive().equals(FcUtilService.isActive(typeDto.getStatus()))) {
       needUpdatedFacilityTypes.add(typeDto);
     }
   }
@@ -98,7 +98,7 @@ public class FcFacilityTypeService {
       List<FcFacilityTypeDto> needUpdatedFacilityTypes) {
     needUpdatedFacilityTypes.forEach(typeDto -> {
       FacilityTypeDto dto = facilityTypeMap.get(typeDto.getCode());
-      dto.setActive(isActive(typeDto.getStatus()));
+      dto.setActive(FcUtilService.isActive(typeDto.getStatus()));
       dto.setName(typeDto.getDescription());
       facilityTypeService.saveFacilityType(dto);
     });
@@ -112,7 +112,7 @@ public class FcFacilityTypeService {
       int index = needAddedFacilityTypes.indexOf(typeDto);
       FacilityTypeDto dto = new FacilityTypeDto();
       dto.setCode(typeDto.getCode());
-      dto.setActive(isActive(typeDto.getStatus()));
+      dto.setActive(FcUtilService.isActive(typeDto.getStatus()));
       dto.setName(typeDto.getDescription());
       dto.setDisplayOrder(originSize + index + 1);
       needUpdateReasonType.add(facilityTypeService.createFacilityType(dto));
@@ -148,10 +148,6 @@ public class FcFacilityTypeService {
     StockCardLineItemReason lineItemReason = new StockCardLineItemReason();
     lineItemReason.setId(dto.getId());
     return lineItemReason;
-  }
-
-  private boolean isActive(String status) {
-    return STATUS_ACTIVE.equals(status);
   }
 
 }

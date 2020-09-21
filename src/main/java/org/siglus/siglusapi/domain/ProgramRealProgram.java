@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.domain;
 
-import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
-
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -26,6 +24,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
+import org.siglus.siglusapi.util.FcUtilService;
 
 @Entity
 @Data
@@ -51,11 +50,8 @@ public class ProgramRealProgram extends BaseEntity {
         .builder()
         .realProgramCode(dto.getCode())
         .realProgramName(dto.getDescription())
-        .active(isActive(dto))
+        .active(FcUtilService.isActive(dto.getStatus()))
         .build();
   }
 
-  public static boolean isActive(ProgramDto dto) {
-    return STATUS_ACTIVE.equals(dto.getStatus());
-  }
 }
