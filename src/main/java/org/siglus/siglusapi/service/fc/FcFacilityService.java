@@ -39,7 +39,6 @@ import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneService;
 import org.siglus.siglusapi.util.FcUtilService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -161,7 +160,9 @@ public class FcFacilityService {
       String code) {
     ProgramDto originProgramDto = codeToProgramMap.get(code);
     SupportedProgramDto programDto = new SupportedProgramDto();
-    BeanUtils.copyProperties(originProgramDto, programDto);
+    programDto.setCode(originProgramDto.getCode());
+    programDto.setName(originProgramDto.getName());
+    programDto.setDescription(originProgramDto.getDescription());
     programDto.setProgramActive(originProgramDto.getActive());
     programDto.setSupportActive(true);
     return programDto;
@@ -172,7 +173,9 @@ public class FcFacilityService {
     Set<String> originCodes = originDto.getSupportedPrograms().stream()
         .map(supportedProgramDto -> supportedProgramDto.getCode())
         .collect(Collectors.toSet());
-    return fcFacilityDto.getDistrictCode().equals(originDto.getGeographicZone().getCode())
+    return fcFacilityDto.getName().equals(originDto.getName())
+        || fcFacilityDto.getDescription().equals(originDto.getDescription())
+        || fcFacilityDto.getDistrictCode().equals(originDto.getGeographicZone().getCode())
         || fcFacilityDto.getClientTypeCode().equals(originDto.getType().getCode())
         || FcUtilService.isActive(fcFacilityDto.getStatus()) == originDto.getActive()
         || Sets.difference(codes, originCodes).isEmpty();

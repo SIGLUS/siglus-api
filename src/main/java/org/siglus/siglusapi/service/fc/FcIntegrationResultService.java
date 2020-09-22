@@ -49,6 +49,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@SuppressWarnings("PMD.CyclomaticComplexity")
 public class FcIntegrationResultService {
 
   @Value("${fc.startDate}")

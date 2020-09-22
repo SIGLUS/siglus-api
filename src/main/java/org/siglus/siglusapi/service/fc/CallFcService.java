@@ -28,7 +28,9 @@ import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +58,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @Getter
 @Setter
+@SuppressWarnings("PMD.CyclomaticComplexity")
 public class CallFcService {
 
   private List<IssueVoucherDto> issueVouchers = new ArrayList<>();
@@ -69,9 +72,23 @@ public class CallFcService {
   private List<FcFacilityTypeDto> facilityTypes = new ArrayList<>();
   private List<FcGeographicZoneNationalDto> geographicZones = new ArrayList<>();
   private PageInfoDto pageInfoDto = new PageInfoDto();
+  private static final Map<String, Class> apiToClassMap = new HashMap<>();
 
   @Autowired
   RestTemplate remoteRestTemplate;
+
+  static {
+    apiToClassMap.put(ISSUE_VOUCHER_API,  IssueVoucherDto[].class);
+    apiToClassMap.put(RECEIPT_PLAN_API,  ReceiptPlanDto[].class);
+    apiToClassMap.put(PROGRAM_API,  ProgramDto[].class);
+    apiToClassMap.put(PRODUCT_API,  ProductInfoDto[].class);
+    apiToClassMap.put(REGIMEN_API,  RegimenDto[].class);
+    apiToClassMap.put(CMM_API,  CmmDto[].class);
+    apiToClassMap.put(CP_API,  CpDto[].class);
+    apiToClassMap.put(FACILITY_TYPE_API,  FcFacilityTypeDto[].class);
+    apiToClassMap.put(FACILITY_API,  FcFacilityDto[].class);
+    apiToClassMap.put(GEOGRAPHIC_ZONE_API,  FcGeographicZoneNationalDto[].class);
+  }
 
   @Retryable(value = Exception.class, maxAttempts = 5, backoff = @Backoff(delay = 5000,
       multiplier = 2))
@@ -101,26 +118,8 @@ public class CallFcService {
   }
 
   public Class getClassByApi(String api) {
-    if (ISSUE_VOUCHER_API.equals(api)) {
-      return IssueVoucherDto[].class;
-    } else if (RECEIPT_PLAN_API.equals(api)) {
-      return ReceiptPlanDto[].class;
-    } else if (PROGRAM_API.equals(api)) {
-      return ProgramDto[].class;
-    } else if (PRODUCT_API.equals(api)) {
-      return ProductInfoDto[].class;
-    } else if (REGIMEN_API.equals(api)) {
-      return RegimenDto[].class;
-    } else if (CMM_API.equals(api)) {
-      return CmmDto[].class;
-    } else if (CP_API.equals(api)) {
-      return CpDto[].class;
-    }  else if (FACILITY_TYPE_API.equals(api)) {
-      return FcFacilityTypeDto[].class;
-    } else if (FACILITY_API.equals(api)) {
-      return FcFacilityDto[].class;
-    } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
-      return FcGeographicZoneNationalDto[].class;
+    if (apiToClassMap.containsKey(api)) {
+      return apiToClassMap.get(api);
     }
     return null;
   }

@@ -43,7 +43,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-@SuppressWarnings("PMD.TooManyMethods")
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.CyclomaticComplexity"})
 public class FcScheduleService {
 
   private static final String TIME_ZONE_ID = "${time.zoneId}";
