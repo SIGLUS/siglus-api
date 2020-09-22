@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_CODE_IS_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
@@ -210,8 +211,12 @@ public class SiglusStockEventsService {
 
   private LotDto createNewLotOrReturnExisted(String lotCode, LocalDate expirationDate,
       String tradeItemId, Boolean updateExpirationDate) {
+    if (null == tradeItemId) {
+      throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
+    }
     LotSearchParams lotSearchParams = new LotSearchParams();
     lotSearchParams.setLotCode(lotCode);
+    lotSearchParams.setTradeItemId(newArrayList(UUID.fromString(tradeItemId)));
     List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
     if (CollectionUtils.isNotEmpty(existedLots)) {
       LotDto existedLot = existedLots.get(0);
@@ -221,11 +226,7 @@ public class SiglusStockEventsService {
       return existedLot;
     }
     LotDto lotDto = new LotDto();
-    if (tradeItemId != null) {
-      lotDto.setTradeItemId(UUID.fromString(tradeItemId));
-    } else {
-      throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
-    }
+    lotDto.setTradeItemId(UUID.fromString(tradeItemId));
     lotDto.setManufactureDate(dateHelper.getCurrentDate());
     lotDto.setExpirationDate(expirationDate);
     lotDto.setActive(true);
