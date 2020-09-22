@@ -17,11 +17,13 @@ package org.siglus.siglusapi.dto;
 
 import java.util.UUID;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.openlmis.requisition.dto.BaseDto;
 import org.siglus.siglusapi.domain.Regimen;
 import org.springframework.beans.BeanUtils;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class RegimenDto extends BaseDto {
 
   private String code;

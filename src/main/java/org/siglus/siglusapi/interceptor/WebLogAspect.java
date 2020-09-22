@@ -22,7 +22,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -43,18 +42,20 @@ public class WebLogAspect {
     ServletRequestAttributes attributes = (ServletRequestAttributes)
         RequestContextHolder.getRequestAttributes();
     HttpServletRequest request = attributes.getRequest();
-    MethodSignature signature = (MethodSignature) joinPoint.getSignature();
     String method = request.getMethod();
     String url = request.getRequestURL().toString();
     String body = Arrays.toString(joinPoint.getArgs());
-    String className = joinPoint.getTarget().getClass().getName();
-    String methodName = signature.getName();
 
-    log.info("[API] {} {}, body: {}, method: {}.{}", method, url, body, className, methodName);
+    log.info("[API_START] {} {}, body: {}", method, url, body);
 
     Object result = joinPoint.proceed();
 
-    log.info("[API] {} {}, cost: {}ms", method, url, System.currentTimeMillis() - startTime);
+    long costTime = System.currentTimeMillis() - startTime;
+    if (costTime >= 5000) {
+      log.info("[API_FINISH] {} {}, cost: {}ms, slow!", method, url, costTime);
+    } else {
+      log.info("[API_FINISH] {} {}, cost: {}ms", method, url, costTime);
+    }
     return result;
   }
 

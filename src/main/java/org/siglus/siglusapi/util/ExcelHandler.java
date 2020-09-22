@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -78,7 +79,7 @@ public abstract class ExcelHandler {
   public abstract void createDataRows(Sheet tempSheet, List<Map<String, String>> dataList);
 
   public String createXssFile(Workbook wb, String fileName) {
-    String filePath = cachePath + fileName;
+    String filePath = cachePath + FilenameUtils.getName(fileName);
     try (FileOutputStream fileOut = new FileOutputStream(filePath)) {
       wb.write(fileOut);
     } catch (IOException e) {
