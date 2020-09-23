@@ -15,15 +15,13 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.ReceiptPlan;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
 public interface ReceiptPlanRepository extends JpaRepository<ReceiptPlan, UUID> {
 
-  @Query(value = "select receiptPlanNumber "
-      + "from siglusintegration.receipt_plan", nativeQuery = true)
-  Set<String> findAllReceiptPlanNumbers();
+  List<ReceiptPlan> findByReceiptPlanNumberIn(Collection<String> receiptPlanNumbers);
 }

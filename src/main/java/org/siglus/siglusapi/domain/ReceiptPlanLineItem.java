@@ -37,7 +37,7 @@ import org.siglus.siglusapi.dto.fc.ProductDto;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "receipt_plan_line_item", schema = "siglusintegration")
+@Table(name = "receipt_plan_line_items", schema = "siglusintegration")
 public class ReceiptPlanLineItem extends BaseEntity {
 
   @ManyToOne(cascade = CascadeType.REFRESH)
@@ -54,7 +54,6 @@ public class ReceiptPlanLineItem extends BaseEntity {
 
   public static ReceiptPlanLineItem from(ReceiptPlan receiptPlan, ProductDto productDto) {
     ReceiptPlanLineItem receiptPlanLineItem = new ReceiptPlanLineItem();
-    receiptPlanLineItem.setId(null);
     receiptPlanLineItem.setReceiptPlan(receiptPlan);
     receiptPlanLineItem.setProductCode(productDto.getFnmCode());
     receiptPlanLineItem.setProductName(productDto.getProductDescription());

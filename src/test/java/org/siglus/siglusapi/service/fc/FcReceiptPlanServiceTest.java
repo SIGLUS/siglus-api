@@ -122,6 +122,8 @@ public class FcReceiptPlanServiceTest {
 
   private ReceiptPlanDto receiptPlanDto;
 
+  private ReceiptPlan receiptPlan;
+
   @SuppressWarnings("unchecked")
   private Page<UserDto> page = (Page<UserDto>) mock(Page.class);
 
@@ -150,6 +152,10 @@ public class FcReceiptPlanServiceTest {
         .products(productDtos)
         .build();
 
+    receiptPlan = ReceiptPlan.builder()
+        .receiptPlanNumber(receiptPlanNumber)
+        .build();
+
     receiptPlanDtos.add(receiptPlanDto);
   }
 
@@ -171,7 +177,8 @@ public class FcReceiptPlanServiceTest {
     UUID userId = UUID.randomUUID();
     userDto.setId(userId);
     List<UserDto> userDtoList = newArrayList(userDto);
-    when(receiptPlanRepository.findAllReceiptPlanNumbers()).thenReturn(Collections.emptySet());
+    when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
+        .thenReturn(newArrayList(receiptPlan));
     when(siglusFacilityRepository.findFirstByTypeId(any())).thenReturn(facility);
     when(userReferenceDataService.getUserInfo(any()))
         .thenReturn(page);
@@ -194,7 +201,8 @@ public class FcReceiptPlanServiceTest {
     UUID userId = UUID.randomUUID();
     userDto.setId(userId);
     List<UserDto> userDtoList = newArrayList(userDto);
-    when(receiptPlanRepository.findAllReceiptPlanNumbers()).thenReturn(Collections.emptySet());
+    when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
+        .thenReturn(newArrayList(receiptPlan));
     when(siglusFacilityRepository.findFirstByTypeId(any())).thenReturn(facility);
     when(userReferenceDataService.getUserInfo(any()))
         .thenReturn(page);
@@ -244,7 +252,8 @@ public class FcReceiptPlanServiceTest {
     List<SiglusRequisitionLineItemDto> lineItems = newArrayList(lineItem);
     Requisition requisition = new Requisition();
     StatusChange statusChange = new StatusChange();
-    when(receiptPlanRepository.findAllReceiptPlanNumbers()).thenReturn(Collections.emptySet());
+    when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
+        .thenReturn(Collections.emptyList());
     Facility facility = new Facility();
     when(siglusFacilityRepository.findFirstByTypeId(any())).thenReturn(facility);
     when(userReferenceDataService.getUserInfo(any()))
@@ -331,7 +340,8 @@ public class FcReceiptPlanServiceTest {
     List<SiglusRequisitionLineItemDto> lineItems = newArrayList(lineItem);
     Requisition requisition = new Requisition();
     StatusChange statusChange = new StatusChange();
-    when(receiptPlanRepository.findAllReceiptPlanNumbers()).thenReturn(Collections.emptySet());
+    when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
+        .thenReturn(newArrayList(receiptPlan));
     Facility facility = new Facility();
     when(siglusFacilityRepository.findFirstByTypeId(any())).thenReturn(facility);
     when(userReferenceDataService.getUserInfo(any()))

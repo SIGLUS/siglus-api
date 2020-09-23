@@ -40,7 +40,7 @@ import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "receipt_plan", schema = "siglusintegration")
+@Table(name = "receipt_plans", schema = "siglusintegration")
 public class ReceiptPlan extends BaseEntity {
 
   private String receiptPlanNumber;
@@ -65,7 +65,6 @@ public class ReceiptPlan extends BaseEntity {
 
   public static ReceiptPlan from(ReceiptPlanDto receiptPlanDto) {
     ReceiptPlan receiptPlan = new ReceiptPlan();
-    receiptPlan.setId(null);
     receiptPlan.setReceiptPlanNumber(receiptPlanDto.getReceiptPlanNumber());
     receiptPlan.setFacilityCode(receiptPlanDto.getClientCode());
     receiptPlan.setFacilityName(receiptPlanDto.getClientName());

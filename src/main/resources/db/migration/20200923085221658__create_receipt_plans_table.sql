@@ -2,11 +2,12 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-CREATE TABLE siglusintegration.receipt_plan_line_item (
+CREATE TABLE siglusintegration.receipt_plans (
     id uuid PRIMARY KEY,
-    receiptplanid uuid NOT NULL,
-    productcode CHARACTER VARYING(255),
-    productname CHARACTER VARYING(255),
-    approvedquantity INTEGER,
-    FOREIGN KEY(receiptplanid) REFERENCES siglusintegration.receipt_plan(id)
+    receiptplannumber CHARACTER VARYING(255) UNIQUE,
+    facilitycode CHARACTER VARYING(255),
+    facilityname CHARACTER VARYING(255),
+    approverequisitiondate TIMESTAMP WITH TIME ZONE,
+    requisitionnumber CHARACTER VARYING(255),
+    lastupdateddate TIMESTAMP WITH TIME ZONE
 )

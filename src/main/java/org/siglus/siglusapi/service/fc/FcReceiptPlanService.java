@@ -22,7 +22,6 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
@@ -111,10 +110,11 @@ public class FcReceiptPlanService {
       return false;
     }
 
-    List<ReceiptPlanDto> nonexistentReceiptPlans = getNonexistentReceiptPlan(receiptPlanDtoList);
-    if (!isEmpty(nonexistentReceiptPlans)) {
-      for (ReceiptPlanDto receiptPlanDto : nonexistentReceiptPlans) {
+    List<ReceiptPlanDto> needCreateReceiptPlans = getNeedCreateReceiptPlans(receiptPlanDtoList);
+    if (!isEmpty(needCreateReceiptPlans)) {
+      for (ReceiptPlanDto receiptPlanDto : needCreateReceiptPlans) {
         ReceiptPlan receiptPlan = ReceiptPlan.from(receiptPlanDto);
+        log.info("[FC] FcIntegration: save receipt plan {}", receiptPlanDto.toString());
         receiptPlanRepository.save(receiptPlan);
       }
     }
@@ -215,26 +215,42 @@ public class FcReceiptPlanService {
   private List<RequisitionLineItemV2Dto> updateRequisitionLineItems(
       List<RequisitionLineItemV2Dto> requisitionLineItems, List<ProductDto> existProductDtos,
       Map<String, OrderableDto> orderableDtoMap, UUID requisitionId, boolean displaySkipped) {
-    List<UUID> orderableIds = new ArrayList<>();
+    List<UUID> addedOrderableIds = new ArrayList<>();
     List<RequisitionLineItemV2Dto> approvedLineItems = new ArrayList<>();
+    updateExistLineItems(requisitionLineItems, existProductDtos, orderableDtoMap,
+        addedOrderableIds, approvedLineItems);
+    updateSkippedLineItems(requisitionLineItems, displaySkipped, approvedLineItems);
+    addNewLineItems(existProductDtos, orderableDtoMap, requisitionId, addedOrderableIds,
+        approvedLineItems);
+    return approvedLineItems;
+  }
 
-    for (ProductDto productDto : existProductDtos) {
-      RequisitionLineItemV2Dto requisitionLineItem = requisitionLineItems
-          .stream()
-          .filter(lineItem ->
-              lineItem.getOrderable().getId()
-                  .equals(orderableDtoMap.get(productDto.getFnmCode()).getId())
-          )
-          .findFirst()
-          .orElse(null);
-      if (null == requisitionLineItem) {
-        orderableIds.add(orderableDtoMap.get(productDto.getFnmCode()).getId());
-      } else {
-        requisitionLineItem.setApprovedQuantity(productDto.getApprovedQuantity());
-        approvedLineItems.add(requisitionLineItem);
-      }
+  private void addNewLineItems(List<ProductDto> existProductDtos, Map<String,
+      OrderableDto> orderableDtoMap, UUID requisitionId, List<UUID> addedOrderableIds,
+      List<RequisitionLineItemV2Dto> approvedLineItems) {
+    if (!isEmpty(addedOrderableIds)) {
+      List<SiglusRequisitionLineItemDto> addLineItems = siglusRequisitionService
+          .createRequisitionLineItem(requisitionId, addedOrderableIds);
+      addLineItems.forEach(addLineItem -> {
+        RequisitionLineItemV2Dto lineItem = addLineItem.getLineItem();
+        ProductDto productDto = existProductDtos
+            .stream()
+            .filter(product ->
+                orderableDtoMap.get(product.getFnmCode()).getId()
+                .equals(lineItem.getOrderable().getId()))
+            .findFirst()
+            .orElse(null);
+        if (null != productDto) {
+          lineItem.setApprovedQuantity(productDto.getApprovedQuantity());
+          approvedLineItems.add(lineItem);
+        }
+      });
     }
+  }
 
+  private void updateSkippedLineItems(List<RequisitionLineItemV2Dto> requisitionLineItems,
+                                      boolean displaySkipped,
+                                      List<RequisitionLineItemV2Dto> approvedLineItems) {
     for (RequisitionLineItemV2Dto requisitionLineItem : requisitionLineItems) {
       RequisitionLineItemV2Dto approvedLineItem = approvedLineItems
           .stream()
@@ -251,38 +267,48 @@ public class FcReceiptPlanService {
         approvedLineItems.add(requisitionLineItem);
       }
     }
-
-    if (!isEmpty(orderableIds)) {
-      List<SiglusRequisitionLineItemDto> addLineItems = siglusRequisitionService
-          .createRequisitionLineItem(requisitionId, orderableIds);
-      addLineItems.forEach(addLineItem -> {
-        RequisitionLineItemV2Dto lineItem = addLineItem.getLineItem();
-        ProductDto productDto = existProductDtos
-            .stream()
-            .filter(product ->
-                orderableDtoMap.get(product.getFnmCode()).getId()
-                .equals(lineItem.getOrderable().getId()))
-            .findFirst()
-            .orElse(null);
-        if (null != productDto) {
-          lineItem.setApprovedQuantity(productDto.getApprovedQuantity());
-          approvedLineItems.add(lineItem);
-        }
-      });
-    }
-    return approvedLineItems;
   }
 
-  private List<ReceiptPlanDto> getNonexistentReceiptPlan(List<ReceiptPlanDto> receiptPlanDtos) {
-    Set<String> receiptNumbers = receiptPlanRepository.findAllReceiptPlanNumbers();
+  private void updateExistLineItems(List<RequisitionLineItemV2Dto> requisitionLineItems,
+                                    List<ProductDto> existProductDtos,
+                                    Map<String, OrderableDto> orderableDtoMap,
+                                    List<UUID> addedOrderableIds,
+                                    List<RequisitionLineItemV2Dto> approvedLineItems) {
+    for (ProductDto productDto : existProductDtos) {
+      RequisitionLineItemV2Dto requisitionLineItem = requisitionLineItems
+          .stream()
+          .filter(lineItem ->
+              lineItem.getOrderable().getId()
+                  .equals(orderableDtoMap.get(productDto.getFnmCode()).getId())
+          )
+          .findFirst()
+          .orElse(null);
+      if (null == requisitionLineItem) {
+        addedOrderableIds.add(orderableDtoMap.get(productDto.getFnmCode()).getId());
+      } else {
+        requisitionLineItem.setApprovedQuantity(productDto.getApprovedQuantity());
+        approvedLineItems.add(requisitionLineItem);
+      }
+    }
+    requisitionLineItems.removeAll(approvedLineItems);
+  }
+
+  private List<ReceiptPlanDto> getNeedCreateReceiptPlans(List<ReceiptPlanDto> receiptPlanDtos) {
+    List<String> receiptNumbers = receiptPlanDtos.stream()
+        .map(ReceiptPlanDto::getReceiptPlanNumber).collect(Collectors.toList());
+    List<String> existReceiptNumbers = receiptPlanRepository
+        .findByReceiptPlanNumberIn(receiptNumbers)
+        .stream().map(ReceiptPlan::getReceiptPlanNumber)
+        .collect(Collectors.toList());
     return receiptPlanDtos.stream().filter(receiptPlanDto ->
-        !receiptNumbers.contains(receiptPlanDto.getReceiptPlanNumber()))
+        !existReceiptNumbers.contains(receiptPlanDto.getReceiptPlanNumber()))
         .collect(Collectors.toList());
   }
 
   private void updateRequisitionChangeDate(UUID requisitionId, ReceiptPlanDto receiptPlanDto) {
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     requisition.setModifiedDate(receiptPlanDto.getLastUpdatedAt());
+    log.info("[FC] FcIntegration: save requisition - {}", requisition);
     requisitionRepository.save(requisition);
     StatusChange statusChange = siglusStatusChangeRepository
         .findByRequisitionIdAndStatus(requisitionId, APPROVED.toString());
