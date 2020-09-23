@@ -18,6 +18,7 @@ package org.openlmis.stockmanagement.service;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.maxBy;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_DEBIT_QUANTITY_EXCEED_SOH;
 
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
+import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
@@ -157,11 +159,26 @@ public class CalculatedStockOnHandService {
   @Transactional
   public void recalculateStockOnHand(List<StockCardLineItem> lineItems) {
     Map<StockCard, List<StockCardLineItem>> map = mapStockCardsWithLineItems(lineItems);
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    Set<UUID> stockCardIds = map.keySet().stream().map(BaseEntity::getId).collect(toSet());
+    LocalDate occurredDate = lineItems.get(0).getOccurredDate();
+    Map<UUID, Integer> stockCardIdToPreviousStockOnHandMap = getPreviousStockOnHandMap(
+        stockCardIds, occurredDate);
+    calculatedStockOnHandRepository.deleteFollowingStockOnHands(stockCardIds, occurredDate);
+    // [SIGLUS change end]
+    LOGGER.info("start recalculateStockOnHand");
     map.forEach((key, value) -> {
       value.sort(StockCard.getLineItemsComparator());
       value.stream().findFirst()
-          .ifPresent(item -> recalculateStockOnHand(item.getStockCard(), item));
+          .ifPresent(item -> recalculateStockOnHand(item.getStockCard(), item,
+              // [SIGLUS change start]
+              // [change reason]: performance optimization
+              stockCardIdToPreviousStockOnHandMap
+              // [SIGLUS change end]
+          ));
     });
+    LOGGER.info("end recalculateStockOnHand");
   }
 
   /**
@@ -171,20 +188,31 @@ public class CalculatedStockOnHandService {
    * @param stockCard stock card for which the value will be calculated.
    * @param lineItem  first line item to consider in recalculation.
    */
-  private void recalculateStockOnHand(StockCard stockCard, StockCardLineItem lineItem) {
+  private void recalculateStockOnHand(StockCard stockCard, StockCardLineItem lineItem,
+      // [SIGLUS change start]
+      // [change reason]: performance optimization
+      Map<UUID, Integer> stockCardIdToPreviousStockOnHandMap
+      // [SIGLUS change end]
+  ) {
     Profiler profiler = new Profiler("RECALCULATE_STOCK_ON_HAND");
     profiler.setLogger(LOGGER);
 
     profiler.start("GET_LINE_ITEMS_PREVIOUS_STOCK_ON_HAND");
-    int lineItemsPreviousStockOnHand = getPreviousStockOnHand(stockCard, lineItem);
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    // int lineItemsPreviousStockOnHand = getPreviousStockOnHand(stockCard, lineItem);
+    int lineItemsPreviousStockOnHand =
+        null == stockCardIdToPreviousStockOnHandMap.get(stockCard.getId()) ? 0
+            : stockCardIdToPreviousStockOnHandMap.get(stockCard.getId());
 
-    profiler.start("GET_FOLLOWING_CALCULATED_STOCK_ON_HANDS");
-    List<CalculatedStockOnHand> followingStockOnHands = calculatedStockOnHandRepository
-        .findByStockCardIdAndOccurredDateGreaterThanEqualOrderByOccurredDateAsc(
-            stockCard.getId(), lineItem.getOccurredDate());
-
-    profiler.start("DELETE_FOLLOWING_CALCULATED_STOCK_ON_HANDS");
-    calculatedStockOnHandRepository.delete(followingStockOnHands);
+    // profiler.start("GET_FOLLOWING_CALCULATED_STOCK_ON_HANDS");
+    // List<CalculatedStockOnHand> followingStockOnHands = calculatedStockOnHandRepository
+    //     .findByStockCardIdAndOccurredDateGreaterThanEqualOrderByOccurredDateAsc(
+    //         stockCard.getId(), lineItem.getOccurredDate());
+    //
+    // profiler.start("DELETE_FOLLOWING_CALCULATED_STOCK_ON_HANDS");
+    // calculatedStockOnHandRepository.delete(followingStockOnHands);
+    // [SIGLUS change end]
 
     profiler.start("GET_FOLLOWING_STOCK_CARD_LINE_ITEMS");
     List<StockCardLineItem> followingLineItems = getFollowingLineItems(stockCard, lineItem);
@@ -192,13 +220,42 @@ public class CalculatedStockOnHandService {
     int lineItemsAtTheSameDay = countLineItemsBefore(followingLineItems, lineItem);
     followingLineItems.add(lineItemsAtTheSameDay, lineItem);
     profiler.start("SAVE_RECALCULATED_STOCK_ON_HANDS");
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    LocalDate previousOccurredDate = lineItem.getOccurredDate();
+    StockCardLineItem previousItem = null;
+    // [SIGLUS change end]
     for (StockCardLineItem item : followingLineItems) {
       Integer calculatedStockOnHand = calculateStockOnHand(item, lineItemsPreviousStockOnHand);
-      saveCalculatedStockOnHand(item, calculatedStockOnHand, stockCard);
+      // [SIGLUS change start]
+      // [change reason]: performance optimization
+      LocalDate itemOccurredDate = item.getOccurredDate();
+      if (!itemOccurredDate.equals(previousOccurredDate)) {
+        // saveCalculatedStockOnHand(item, calculatedStockOnHand, stockCard);
+        saveCalculatedStockOnHand(previousItem, lineItemsPreviousStockOnHand, stockCard);
+      }
+      previousItem = item;
+      previousOccurredDate = itemOccurredDate;
+      // [SIGLUS change end]
       lineItemsPreviousStockOnHand = calculatedStockOnHand;
     }
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    saveCalculatedStockOnHand(previousItem, lineItemsPreviousStockOnHand, stockCard);
+    // [SIGLUS change end]
     profiler.stop().log();
   }
+
+  // [SIGLUS change start]
+  // [change reason]: performance optimization
+  private Map<UUID, Integer> getPreviousStockOnHandMap(Set<UUID> stockCardIds,
+      LocalDate occurredDate) {
+    return calculatedStockOnHandRepository
+        .findPreviousStockOnHands(stockCardIds, occurredDate).stream()
+        .collect(toMap(calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId(),
+            CalculatedStockOnHand::getStockOnHand));
+  }
+  // [SIGLUS change end]
 
   private int getPreviousStockOnHand(StockCard stockCard, StockCardLineItem lineItem) {
     return calculatedStockOnHandRepository
