@@ -1328,7 +1328,10 @@ public class Requisition extends BaseTimestampedEntity {
   }
 
   private void prepareRequisitionForApproval(UUID user) {
-    populateApprovedQuantity();
+    // [SIGLUS change start]
+    // [change reason]:dont populate Approved Quantity, all logic by frontend
+    // populateApprovedQuantity();
+    // [SIGLUS change end]
     getSkippedRequisitionLineItems().forEach(RequisitionLineItem::resetData);
     status = RequisitionStatus.AUTHORIZED;
     statusChanges.add(StatusChange.newStatusChange(this, user));
