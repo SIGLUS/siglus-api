@@ -15,7 +15,6 @@
 
 package org.openlmis.requisition.web;
 
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.BooleanUtils.isNotTrue;
 import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -100,9 +99,7 @@ import org.openlmis.requisition.validate.ReasonsValidator;
 import org.openlmis.requisition.validate.RequisitionVersionValidator;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.domain.RequisitionTemplateExtension;
-import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
-import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.slf4j.Logger;
@@ -210,12 +207,6 @@ public abstract class BaseRequisitionController extends BaseController {
   private ReasonsValidator reasonsValidator;
 
   // [SIGLUS change start]
-  // [change reason]: filter kit product for approved product.
-  @Autowired
-  private OrderableKitRepository orderableKitRepository;
-  // [SIGLUS change end]
-
-  // [SIGLUS change start]
   // [change reason]: template extension.
   @Autowired
   private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
@@ -279,22 +270,14 @@ public abstract class BaseRequisitionController extends BaseController {
     profiler.start("FIND_APPROVED_PRODUCTS");
     // [SIGLUS change start]
     // [change reason]: 1.only product & usage information sections, we can have approve products
-    //                  2.associated program + filter kit product .
-    //                  3.support usage report which is no product section.
+    //                  2.support usage report which is no product section.
     // ApproveProductsAggregator approvedProducts = approvedProductReferenceDataService
     //     .getApprovedProducts(facility.getId(), program.getId());
     List<ApprovedProductDto> approvedProductDtos = new ArrayList<>();
     if (templateExtension.getEnableProduct() || templateExtension.getEnableUsageInformation()) {
       ApproveProductsAggregator approvedProductsContainKit = requisitionService.getApproveProduct(
           facility.getId(), program.getId(), reportOnly && !emergency);
-      List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
-          .map(Orderable::getId).collect(toList());
-      approvedProductDtos =
-          approvedProductsContainKit.getFullSupplyProducts()
-              .stream()
-              .filter(approvedProductDto ->
-                  !kitIds.contains(approvedProductDto.getOrderable().getId()))
-              .collect(Collectors.toList());
+      approvedProductDtos = approvedProductsContainKit.getFullSupplyProducts();
     }
     ApproveProductsAggregator approvedProducts =
         new ApproveProductsAggregator(approvedProductDtos, programId);

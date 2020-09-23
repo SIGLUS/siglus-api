@@ -121,8 +121,10 @@ import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.exception.NotFoundException;
+import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItemDraft;
@@ -293,6 +295,9 @@ public class SiglusRequisitionService {
   @Autowired
   private FcIntegrationCmmCpService fcIntegrationCmmCpService;
 
+  @Autowired
+  private OrderableKitRepository orderableKitRepository;
+
   @Value("${service.url}")
   private String serviceUrl;
 
@@ -392,6 +397,7 @@ public class SiglusRequisitionService {
     setLineItemExtension(requisitionDto);
     RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
 
+    filterKitProductsIfInternal(requisitionDto);
     filterProductsIfEmergency(requisitionDto);
     SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId,
         extension, requisitionDto);
@@ -1082,6 +1088,18 @@ public class SiglusRequisitionService {
       lineDto.setExpirationDate(expirationDate.getExpirationDate());
     } else {
       lineDto.setExpirationDate(null);
+    }
+  }
+
+  private void filterKitProductsIfInternal(RequisitionV2Dto requisition) {
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    boolean isInternalFacility = userDto.getHomeFacilityId()
+        .equals(requisition.getFacilityId());
+    if (isInternalFacility) {
+      List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
+          .map(Orderable::getId).collect(toList());
+      requisition.getAvailableProducts()
+          .removeIf(product -> kitIds.contains(product.getId()));
     }
   }
 

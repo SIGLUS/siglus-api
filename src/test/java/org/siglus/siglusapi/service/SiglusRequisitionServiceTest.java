@@ -135,6 +135,7 @@ import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.SimulateAuthenticationHelper;
@@ -320,6 +321,9 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private FcIntegrationCmmCpService fcIntegrationCmmCpService;
 
+  @Mock
+  private OrderableKitRepository orderableKitRepository;
+
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
@@ -441,6 +445,7 @@ public class SiglusRequisitionServiceTest {
     when(operatePermissionService.canSubmit(any())).thenReturn(true);
     when(operatePermissionService.isEditable(any())).thenReturn(false);
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
+    when(orderableKitRepository.findAllKitProduct()).thenReturn(Collections.emptyList());
   }
 
   @Test
@@ -477,7 +482,6 @@ public class SiglusRequisitionServiceTest {
     verify(requisitionController).getProfiler(profilerName, requisitionId);
     verify(requisitionController).findRequisition(requisitionId, profiler);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
-    verify(authenticationHelper).getCurrentUser();
     verify(supervisoryNodeService).findOne(null);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
 
