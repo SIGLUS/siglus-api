@@ -403,7 +403,7 @@ public class SiglusNotificationServiceTest {
     verify(repo)
         .updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
             NotificationStatus.IN_APPROVAL);
-    verify(repo, never()).save(any(Notification.class));
+    verify(repo).save(any(Notification.class));
   }
 
   @Test

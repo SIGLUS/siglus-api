@@ -86,4 +86,11 @@ public enum RequisitionStatus {
     return value > 0 && value < 5;
   }
   // [SIGLUS change end]
+
+  // [SIGLUS change start]
+  // [change reason]: #584 status for post approve
+  public static Set<RequisitionStatus> getPostApproveStatus() {
+    return EnumSet.of(IN_APPROVAL, APPROVED, RELEASED_WITHOUT_ORDER);
+  }
+  // [SIGLUS change end]
 }

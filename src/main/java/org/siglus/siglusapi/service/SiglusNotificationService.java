@@ -208,23 +208,27 @@ public class SiglusNotificationService {
         NotificationStatus.IN_APPROVAL);
 
     RequisitionStatus status = requisition.getStatus();
-    if (status != RequisitionStatus.IN_APPROVAL && status != RequisitionStatus.APPROVED) {
+    if (!RequisitionStatus.getPostApproveStatus().contains(status)) {
       return;
     }
-    saveNotificationFromRequisition(requisition, notification -> {
-      notification.setType(NotificationType.TODO);
-      if (status == RequisitionStatus.IN_APPROVAL) {
-        notification.setStatus(NotificationStatus.IN_APPROVAL);
-        notification.setNotifySupervisoryNodeId(findSupervisorNodeId(requisition));
-      } else {
-        notification.setStatus(NotificationStatus.APPROVED);
-        notification.setFacilityId(findCurrentUserFacilityId());
-      }
-    });
-    if (requisition.getStatus().isApproved()) {
+    if (status != RequisitionStatus.RELEASED_WITHOUT_ORDER) {
+      saveNotificationFromRequisition(requisition, notification -> {
+        notification.setType(NotificationType.TODO);
+        if (status == RequisitionStatus.IN_APPROVAL) {
+          notification.setStatus(NotificationStatus.IN_APPROVAL);
+          notification.setNotifySupervisoryNodeId(findSupervisorNodeId(requisition));
+        } else {
+          notification.setStatus(NotificationStatus.APPROVED);
+          notification.setFacilityId(findCurrentUserFacilityId());
+        }
+      });
+    }
+
+    if (status != RequisitionStatus.IN_APPROVAL) {
       saveNotificationFromRequisition(requisition, notification -> {
         notification.setType(NotificationType.UPDATE);
-        notification.setStatus(NotificationStatus.APPROVED);
+        notification.setStatus(status == RequisitionStatus.APPROVED ? NotificationStatus.APPROVED :
+            NotificationStatus.RELEASED_WITHOUT_ORDER);
       });
     }
   }

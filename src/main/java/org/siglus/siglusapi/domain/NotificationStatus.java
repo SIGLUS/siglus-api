@@ -25,6 +25,7 @@ public enum NotificationStatus {
   AUTHORIZED,
   IN_APPROVAL,
   APPROVED,
+  RELEASED_WITHOUT_ORDER,
   ORDERED,
   SHIPPED,
   RECEIVED;
