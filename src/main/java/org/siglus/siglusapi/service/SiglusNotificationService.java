@@ -446,7 +446,8 @@ public class SiglusNotificationService {
         return cb.and(
             cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-            cb.equal(root.get(STATUS), NotificationStatus.APPROVED),
+            root.get(STATUS).in(NotificationStatus.APPROVED,
+                NotificationStatus.RELEASED_WITHOUT_ORDER),
             cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
         );
       case PermissionService.REQUISITION_CREATE:

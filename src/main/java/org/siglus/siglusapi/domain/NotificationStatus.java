@@ -38,7 +38,7 @@ public enum NotificationStatus {
 
   public boolean isRequisitionPeriod() {
     return this == REJECTED || this == SUBMITTED || this == AUTHORIZED || this == IN_APPROVAL
-        || this == APPROVED;
+        || this == APPROVED || this == RELEASED_WITHOUT_ORDER;
   }
 
 }
