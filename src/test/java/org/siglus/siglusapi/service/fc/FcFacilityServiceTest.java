@@ -45,6 +45,7 @@ import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.fc.FcAreaDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
+import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
 
 @RunWith(PowerMockRunner.class)
@@ -63,7 +64,7 @@ public class FcFacilityServiceTest {
   private ProgramRealProgramRepository programRealProgramRepository;
 
   @Mock
-  private SiglusFacilityTypeService facilityTypeService;
+  private SiglusFacilityTypeReferenceDataService facilityTypeService;
 
   @Mock
   private FcSourceDestinationService fcSourceDestinationService;
@@ -126,6 +127,7 @@ public class FcFacilityServiceTest {
             mockRealProgram(UUID.randomUUID(), "PT", programDto.getCode(),
                 "PTV", true)));
     FacilityDto originFacility = new FacilityDto();
+    originFacility.setId(UUID.randomUUID());
     originFacility.setName("facility");
     originFacility.setCode("facility2");
     originFacility.setActive(true);
@@ -137,6 +139,7 @@ public class FcFacilityServiceTest {
     OpenLmisGeographicZoneDto zoneDto = new OpenLmisGeographicZoneDto();
     zoneDto.setCode("nationalGeographicZone");
     originFacility.setGeographicZone(zoneDto);
+    when(facilityService.findOne(originFacility.getId())).thenReturn(originFacility);
     when(facilityService.findAll()).thenReturn(Collections.singletonList(originFacility));
     when(geographicZoneService.searchAllGeographicZones()).thenReturn(getGeographicZones());
     FacilityTypeDto typeDto1 = mockFacilityTypeDto(typeDto.getCode(), "typeName", true);

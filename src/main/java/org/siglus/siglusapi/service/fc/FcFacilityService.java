@@ -136,6 +136,7 @@ public class FcFacilityService {
     }
     if (CollectionUtils.isEmpty(codes)) {
       log.info("[fc facility error] program code not exsit: {}", fcFacilityDto);
+      return false;
     }
     return true;
   }
@@ -177,15 +178,16 @@ public class FcFacilityService {
       FacilityDto originDto) {
     FacilityDto origin = facilityService.findOne(originDto.getId());
     originDto.setSupportedPrograms(origin.getSupportedPrograms());
+    originDto.setDescription(origin.getDescription());
     Set<String> originCodes = originDto.getSupportedPrograms().stream()
         .map(SupportedProgramDto::getCode)
         .collect(Collectors.toSet());
-    return fcFacilityDto.getName().equals(originDto.getName())
-        || fcFacilityDto.getDescription().equals(originDto.getDescription())
-        || fcFacilityDto.getDistrictCode().equals(originDto.getGeographicZone().getCode())
-        || fcFacilityDto.getClientTypeCode().equals(originDto.getType().getCode())
-        || FcUtil.isActive(fcFacilityDto.getStatus()) == originDto.getActive()
-        || Sets.difference(codes, originCodes).isEmpty();
+    return !(fcFacilityDto.getName().equals(originDto.getName())
+        && fcFacilityDto.getDescription().equals(originDto.getDescription())
+        && fcFacilityDto.getDistrictCode().equals(originDto.getGeographicZone().getCode())
+        && fcFacilityDto.getClientTypeCode().equals(originDto.getType().getCode())
+        && FcUtil.isActive(fcFacilityDto.getStatus()) == originDto.getActive()
+        && Sets.difference(codes, originCodes).isEmpty());
   }
 
   private void createFacilityDto(List<FcFacilityDto> needCreateFacilities,
