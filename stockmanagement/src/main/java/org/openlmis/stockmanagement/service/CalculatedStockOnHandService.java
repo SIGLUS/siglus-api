@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
@@ -311,6 +312,9 @@ public class CalculatedStockOnHandService {
   // [change reason]: performance improvment
   private void fetchAllStockOnHand(List<StockCard> stockCards, LocalDate asOfDate) {
     Set<UUID> uuids = stockCards.stream().map(StockCard::getId).collect(toSet());
+    if (CollectionUtils.isEmpty(uuids)) {
+      return;
+    }
     List<CalculatedStockOnHand> calculatedStockOnHands = calculatedStockOnHandRepository
         .findPreviousStockOnHands(uuids, asOfDate.plusDays(1));
     Map<UUID, CalculatedStockOnHand> calculatedStockOnHandMap = Maps
