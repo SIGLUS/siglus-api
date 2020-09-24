@@ -127,8 +127,19 @@ public class StockCardService extends StockCardBaseService {
     cardRepository.save(cardsToUpdate);
     cardRepository.flush();
 
-    calculatedStockOnHandService.recalculateStockOnHand(
-        getSavedButNewLineItems(cardsToUpdate, existingLineItems));
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    if (stockEventDto.isPhysicalInventory()) {
+      calculatedStockOnHandService.recalculateStockOnHandOptimization(
+          getSavedButNewLineItems(cardsToUpdate, existingLineItems));
+    } else {
+      // [SIGLUS change end]
+      calculatedStockOnHandService.recalculateStockOnHand(
+          getSavedButNewLineItems(cardsToUpdate, existingLineItems));
+      // [SIGLUS change start]
+      // [change reason]: performance optimization
+    }
+    // [SIGLUS change end]
 
     stockEventDto.getContext().refreshCards();
 
