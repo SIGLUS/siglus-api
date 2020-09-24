@@ -20,6 +20,7 @@ import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_CODE_IS_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 
+import com.google.common.collect.Maps;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
@@ -236,9 +238,12 @@ public class SiglusStockEventsService {
 
   private void addStockCardCreateTime(StockEventDto eventDto) {
     List<StockCard> stockCards = stockCardRepository.findByFacilityId(eventDto.getFacilityId());
+    Set<UUID> stockCardIds = stockCards.stream().map(BaseEntity::getId).collect(Collectors.toSet());
+    Map<UUID, StockCardExtension> stockCardIdToExtensionMap = Maps
+        .uniqueIndex(stockCardExtensionRepository.findByStockCardIdIn(stockCardIds),
+            StockCardExtension::getStockCardId);
     stockCards.forEach(stockCard -> {
-      StockCardExtension extension =
-          stockCardExtensionRepository.findByStockCardId(stockCard.getId());
+      StockCardExtension extension = stockCardIdToExtensionMap.get(stockCard.getId());
       if (extension == null) {
         StockCardExtension stockCardExtension = StockCardExtension.builder()
             .stockCardId(stockCard.getId())

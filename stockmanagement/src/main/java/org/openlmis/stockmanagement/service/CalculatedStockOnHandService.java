@@ -15,13 +15,11 @@
 
 package org.openlmis.stockmanagement.service;
 
-import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.maxBy;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_DEBIT_QUANTITY_EXCEED_SOH;
 
+import com.google.common.collect.Maps;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -314,18 +312,15 @@ public class CalculatedStockOnHandService {
   private void fetchAllStockOnHand(List<StockCard> stockCards, LocalDate asOfDate) {
     Set<UUID> uuids = stockCards.stream().map(StockCard::getId).collect(toSet());
     List<CalculatedStockOnHand> calculatedStockOnHands = calculatedStockOnHandRepository
-        .findByStockCardIdInAndOccurredDateLessThanEqual(uuids, asOfDate);
-    Map<UUID, Optional<CalculatedStockOnHand>> calculatedStockOnHandMap = calculatedStockOnHands
-        .stream()
-        .collect(groupingBy(item -> item.getStockCard().getId(),
-            maxBy(comparing(CalculatedStockOnHand::getOccurredDate))));
+        .findPreviousStockOnHands(uuids, asOfDate.plusDays(1));
+    Map<UUID, CalculatedStockOnHand> calculatedStockOnHandMap = Maps
+        .uniqueIndex(calculatedStockOnHands,
+            calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId());
     stockCards.forEach(stockCard -> {
       UUID stockCardId = stockCard.getId();
-      boolean existedInCalculatedStockOnHand = calculatedStockOnHandMap.containsKey(stockCardId)
-          && calculatedStockOnHandMap.get(stockCardId).isPresent();
+      boolean existedInCalculatedStockOnHand = null != calculatedStockOnHandMap.get(stockCardId);
       if (existedInCalculatedStockOnHand) {
-        CalculatedStockOnHand calculatedStockOnHand =
-            calculatedStockOnHandMap.get(stockCardId).get();
+        CalculatedStockOnHand calculatedStockOnHand = calculatedStockOnHandMap.get(stockCardId);
         stockCard.setStockOnHand(calculatedStockOnHand.getStockOnHand());
         stockCard.setOccurredDate(calculatedStockOnHand.getOccurredDate());
         stockCard.setProcessedDate(calculatedStockOnHand.getProcessedDate());
