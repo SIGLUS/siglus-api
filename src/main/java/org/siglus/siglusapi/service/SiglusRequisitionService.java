@@ -29,6 +29,11 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_A
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
+import static org.openlmis.requisition.dto.OrderStatus.CLOSED;
+import static org.openlmis.requisition.dto.OrderStatus.FULFILLING;
+import static org.openlmis.requisition.dto.OrderStatus.ORDERED;
+import static org.openlmis.requisition.dto.OrderStatus.PARTIALLY_FULFILLED;
+import static org.openlmis.requisition.dto.OrderStatus.RECEIVED;
 import static org.openlmis.requisition.dto.OrderStatus.SHIPPED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.openlmis.requisition.service.notification.NotificationChannelDto.EMAIL;
@@ -74,7 +79,9 @@ import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.MetadataDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderDto;
+import org.openlmis.requisition.dto.OrderStatus;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -120,10 +127,12 @@ import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
+import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.exception.NotFoundException;
+import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
@@ -297,6 +306,9 @@ public class SiglusRequisitionService {
 
   @Autowired
   private OrderableKitRepository orderableKitRepository;
+
+  @Autowired
+  private OrderExternalRepository orderExternalRepository;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -1165,9 +1177,11 @@ public class SiglusRequisitionService {
     Map<UUID, Long> reqProductQuantityMap = requisition.getLineItems().stream()
         .filter(lineItem -> !lineItem.getSkipped() && lineItem.getApprovedQuantity() > 0)
         .collect(groupingBy(lineItem -> lineItem.getOrderableIdentity().getId(),
-            reducing(0L, req -> req.getApprovedQuantity().longValue(), Long::sum)));
-    Map<UUID, Long> shipmentProductQuantityMap = searchOrders(requisition).stream()
-        .filter(order -> order.getStatus() == SHIPPED)
+            reducing(0L, req -> req.getPacksToShip().longValue(), Long::sum)));
+
+    List<OrderDto> orders = searchOrders(requisition);
+    Map<UUID, Long> shipmentProductQuantityMap = orders.stream()
+        .filter(order -> hasShipped(order))
         .map(BaseDto::getId)
         .map(shipmentFulfillmentService::getShipments)
         .flatMap(Collection::stream)
@@ -1175,20 +1189,55 @@ public class SiglusRequisitionService {
         .flatMap(Collection::stream)
         .collect(groupingBy(lineItem -> lineItem.getOrderable().getId(),
             reducing(0L, ShipmentLineItemDto::getQuantityShipped, Long::sum)));
-    return reqProductQuantityMap.entrySet().stream()
+    Set<UUID> notFullyShippedProductIds = reqProductQuantityMap.entrySet().stream()
         .filter(entry -> !shipmentProductQuantityMap.containsKey(entry.getKey())
             || entry.getValue() > shipmentProductQuantityMap.get(entry.getKey()))
         .map(Entry::getKey)
         .collect(Collectors.toSet());
+
+    Set<UUID> inProgressProductIds = orders.stream()
+        .filter(order -> hasNotShipped(order))
+        .map(BaseDto::getId)
+        .map(shipmentFulfillmentService::getShipments)
+        .flatMap(Collection::stream)
+        .map(ShipmentDto::getLineItems)
+        .flatMap(Collection::stream)
+        .map(ShipmentLineItemDto::getOrderable)
+        .map(ObjectReferenceDto::getId)
+        .collect(toSet());
+    notFullyShippedProductIds.retainAll(inProgressProductIds);
+
+    return notFullyShippedProductIds;
+  }
+
+  private boolean hasNotShipped(OrderDto order) {
+    OrderStatus status = order.getStatus();
+    return status == ORDERED || status == PARTIALLY_FULFILLED || status == CLOSED
+        || status == FULFILLING;
+  }
+
+  private boolean hasShipped(OrderDto order) {
+    OrderStatus status = order.getStatus();
+    return status == SHIPPED || status == RECEIVED;
   }
 
   private List<OrderDto> searchOrders(BaseRequisitionDto requisition) {
+    List<OrderExternal> orderExternals = orderExternalRepository
+        .findByRequisitionId(requisition.getId());
+
     return orderFulfillmentService
         .search(requisition.getSupplyingFacility(), requisition.getFacilityId(),
             requisition.getProgramId(), requisition.getProcessingPeriodId(), null/*ignore status*/)
         .stream()
-        .filter(order -> requisition.getId().equals(order.getExternalId()))
+        .filter(order -> isOrderFromRequisition(order, requisition.getId(), orderExternals))
         .collect(Collectors.toList());
+  }
+
+  private boolean isOrderFromRequisition(OrderDto order, UUID requisitionId,
+      List<OrderExternal> orderExternals) {
+    boolean isSubOrder = orderExternals.stream().anyMatch(orderExternal ->
+        orderExternal.getId().equals(order.getExternalId()));
+    return requisitionId.equals(order.getExternalId()) || isSubOrder;
   }
 
   private void setAvailableProductsForApprovePage(SiglusRequisitionDto siglusRequisitionDto) {
