@@ -45,7 +45,7 @@ import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
             + " ON oi.value = CAST(lots.tradeitemid AS varchar)"
             + " INNER JOIN stockmanagement.stock_cards s"
             + " ON lots.id = s.lotid "
-            + " WHERE lots.expirationDate >= now()"
+            + " WHERE lots.expirationDate >= CURRENT_DATE"
             + " AND o.id IN :ids"
             + " AND s.facilityid = :facilityId"
             + " GROUP BY o.id ",

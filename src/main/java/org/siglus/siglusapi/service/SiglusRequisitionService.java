@@ -341,8 +341,9 @@ public class SiglusRequisitionService {
             physicalInventoryDateStr, request, response);
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
     initiateRequisitionNumber(siglusRequisitionDto);
-    initiateSuggestedQuantity(siglusRequisitionDto.getLineItems(),
-        siglusRequisitionDto.getFacilityId(), siglusRequisitionDto.getProcessingPeriodId(),
+    List<BaseRequisitionLineItemDto> lineItems = siglusRequisitionDto.getLineItems();
+    initiateExpirationDate(lineItems, facilityId);
+    initiateSuggestedQuantity(lineItems, facilityId, siglusRequisitionDto.getProcessingPeriodId(),
         siglusRequisitionDto.getProgramId(), siglusRequisitionDto.getTemplate());
     return siglusRequisitionDto;
   }
@@ -390,10 +391,11 @@ public class SiglusRequisitionService {
     boolean isExternalApprove = isApprove && !isInternalFacility;
 
     List<SiglusRequisitionLineItemDto> siglusLineItems = buildSiglusLineItem(lineItemList,
-        isExternalApprove, facilityId);
+        isExternalApprove);
     List<BaseRequisitionLineItemDto> lineItems = siglusLineItems.stream()
         .map(item -> (BaseRequisitionLineItemDto) item.getLineItem()).collect(toList());
     RequisitionTemplate template = existedRequisition.getTemplate();
+    initiateExpirationDate(lineItems, facilityId);
     initiateSuggestedQuantity(lineItems, facilityId, existedRequisition.getProcessingPeriodId(),
         programId, BasicRequisitionTemplateDto.newInstance(template));
     return siglusLineItems;
@@ -405,7 +407,6 @@ public class SiglusRequisitionService {
     //         1. 2. set line item authorized quality extension
     RequisitionV2Dto requisitionDto =
         siglusRequisitionRequisitionService.searchRequisition(requisitionId);
-    setExpirationDate(requisitionDto);
     setLineItemExtension(requisitionDto);
     RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
 
@@ -829,6 +830,7 @@ public class SiglusRequisitionService {
         if (requisitionLineItemExtension != null) {
           requisitionLineItemExtension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
           requisitionLineItemExtension.setSuggestedQuantity(dto.getSuggestedQuantity());
+          requisitionLineItemExtension.setExpirationDate(dto.getExpirationDate());
           updateExtension.add(requisitionLineItemExtension);
         } else if (dto != null && (dto.getAuthorizedQuantity() != null
             || dto.getSuggestedQuantity() != null)) {
@@ -836,6 +838,7 @@ public class SiglusRequisitionService {
           extension.setRequisitionLineItemId(lineItem.getId());
           extension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
           extension.setSuggestedQuantity(dto.getSuggestedQuantity());
+          extension.setExpirationDate(dto.getExpirationDate());
           updateExtension.add(extension);
         }
       });
@@ -1014,14 +1017,16 @@ public class SiglusRequisitionService {
     return numberOfPreviousPeriodsToAverage;
   }
 
-  private void setExpirationDate(RequisitionV2Dto requisitionDto) {
-    Set<UUID> orderableIds = requisitionDto.getRequisitionLineItems()
-        .stream()
-        .map(item -> item.getOrderableIdentity().getId())
-        .collect(toSet());
+  private void initiateExpirationDate(List<BaseRequisitionLineItemDto> lineItems, UUID facilityId) {
+    Set<UUID> orderableIds = lineItems.stream()
+        .map(lineItem -> {
+          RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
+          return lineItemV2Dto.getOrderable().getId();
+        })
+        .collect(Collectors.toSet());
     List<OrderableExpirationDateDto> expirationDateDtos = findExpirationDates(orderableIds,
-        requisitionDto.getFacilityId());
-    requisitionDto.getLineItems().forEach(lineItem -> {
+        facilityId);
+    lineItems.forEach(lineItem -> {
       RequisitionLineItemV2Dto lineDto = (RequisitionLineItemV2Dto) lineItem;
       setOrderableExpirationDate(expirationDateDtos, lineDto);
     });
@@ -1034,14 +1039,7 @@ public class SiglusRequisitionService {
   }
 
   private List<SiglusRequisitionLineItemDto> buildSiglusLineItem(
-      List<RequisitionLineItem> lineItemList, boolean isExternalApprove, UUID facilityId) {
-    Set<UUID> orderableIds = lineItemList
-        .stream()
-        .map(item -> item.getOrderable().getId())
-        .collect(toSet());
-    List<OrderableExpirationDateDto> expirationDateDtos = findExpirationDates(orderableIds,
-        facilityId);
-
+      List<RequisitionLineItem> lineItemList, boolean isExternalApprove) {
     Set<VersionEntityReference> references = lineItemList.stream()
         .map(line -> {
           VersionEntityReference reference = line.getFacilityTypeApprovedProduct();
@@ -1072,7 +1070,6 @@ public class SiglusRequisitionService {
           RequisitionLineItemV2Dto lineDto = new RequisitionLineItemV2Dto();
           lineDto.setServiceUrl(serviceUrl);
           line.export(lineDto, orderable, approvedProduct);
-          setOrderableExpirationDate(expirationDateDtos, lineDto);
           if (isExternalApprove) {
             lineDto.setRequestedQuantity(0);
             lineDto.setAuthorizedQuantity(0);
@@ -1303,6 +1300,7 @@ public class SiglusRequisitionService {
           RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
           lineItemV2Dto.setAuthorizedQuantity(itemExtension.getAuthorizedQuantity());
           lineItemV2Dto.setSuggestedQuantity(itemExtension.getSuggestedQuantity());
+          lineItemV2Dto.setExpirationDate(itemExtension.getExpirationDate());
         }
       });
     }

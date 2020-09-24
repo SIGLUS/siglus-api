@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -155,6 +156,8 @@ public class RequisitionLineItemDraft extends BaseEntity {
   private Integer authorizedQuantity;
 
   private Integer suggestedQuantity;
+
+  private LocalDate expirationDate;
 
   public static RequisitionLineItemDraft from(RequisitionDraft draft,
       RequisitionLineItem.Importer lineItemV2Dto) {

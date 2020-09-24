@@ -238,6 +238,7 @@ public class FcIntegrationCmmCpService {
       extension.setRequisitionLineItemId(lineItem.getId());
       extension.setAuthorizedQuantity(lineItem.getAuthorizedQuantity());
       extension.setSuggestedQuantity(suggestedQuantity);
+      extension.setExpirationDate(lineItem.getExpirationDate());
       extensions.add(extension);
     }
   }
