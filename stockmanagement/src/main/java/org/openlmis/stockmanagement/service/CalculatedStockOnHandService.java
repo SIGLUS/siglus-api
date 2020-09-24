@@ -167,18 +167,16 @@ public class CalculatedStockOnHandService {
         stockCardIds, occurredDate);
     calculatedStockOnHandRepository.deleteFollowingStockOnHands(stockCardIds, occurredDate);
     // [SIGLUS change end]
-    LOGGER.info("start recalculateStockOnHand");
     map.forEach((key, value) -> {
       value.sort(StockCard.getLineItemsComparator());
       value.stream().findFirst()
           .ifPresent(item -> recalculateStockOnHand(item.getStockCard(), item,
-              // [SIGLUS change start]
-              // [change reason]: performance optimization
-              stockCardIdToPreviousStockOnHandMap
-              // [SIGLUS change end]
+          // [SIGLUS change start]
+          // [change reason]: performance optimization
+          stockCardIdToPreviousStockOnHandMap
+          // [SIGLUS change end]
           ));
     });
-    LOGGER.info("end recalculateStockOnHand");
   }
 
   /**
@@ -192,7 +190,7 @@ public class CalculatedStockOnHandService {
       // [SIGLUS change start]
       // [change reason]: performance optimization
       Map<UUID, Integer> stockCardIdToPreviousStockOnHandMap
-      // [SIGLUS change end]
+  // [SIGLUS change end]
   ) {
     Profiler profiler = new Profiler("RECALCULATE_STOCK_ON_HAND");
     profiler.setLogger(LOGGER);
@@ -234,10 +232,13 @@ public class CalculatedStockOnHandService {
         // saveCalculatedStockOnHand(item, calculatedStockOnHand, stockCard);
         saveCalculatedStockOnHand(previousItem, lineItemsPreviousStockOnHand, stockCard);
       }
+      // [SIGLUS change end]
+      lineItemsPreviousStockOnHand = calculatedStockOnHand;
+      // [SIGLUS change start]
+      // [change reason]: performance optimization
       previousItem = item;
       previousOccurredDate = itemOccurredDate;
       // [SIGLUS change end]
-      lineItemsPreviousStockOnHand = calculatedStockOnHand;
     }
     // [SIGLUS change start]
     // [change reason]: performance optimization
@@ -335,14 +336,17 @@ public class CalculatedStockOnHandService {
 
   private void saveCalculatedStockOnHand(StockCardLineItem lineItem, Integer stockOnHand,
       StockCard stockCard) {
-    Optional<CalculatedStockOnHand> stockOnHandOfExistingOccurredDate =
-        calculatedStockOnHandRepository.findFirstByStockCardIdAndOccurredDate(
-            stockCard.getId(), lineItem.getOccurredDate());
-
-    stockOnHandOfExistingOccurredDate.ifPresent((soh -> {
-      CalculatedStockOnHand existingStockOnHand = stockOnHandOfExistingOccurredDate.get();
-      calculatedStockOnHandRepository.delete(existingStockOnHand);
-    }));
+    // [SIGLUS change start]
+    // [change reason]: performance improvment
+    // Optional<CalculatedStockOnHand> stockOnHandOfExistingOccurredDate =
+    //     calculatedStockOnHandRepository.findFirstByStockCardIdAndOccurredDate(
+    //         stockCard.getId(), lineItem.getOccurredDate());
+    //
+    // stockOnHandOfExistingOccurredDate.ifPresent((soh -> {
+    //   CalculatedStockOnHand existingStockOnHand = stockOnHandOfExistingOccurredDate.get();
+    //   calculatedStockOnHandRepository.delete(existingStockOnHand);
+    // }));
+    // [SIGLUS change end]
 
     calculatedStockOnHandRepository.save(new CalculatedStockOnHand(stockOnHand, stockCard,
         lineItem.getOccurredDate(), lineItem.getProcessedDate()));
