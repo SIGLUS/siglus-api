@@ -28,6 +28,7 @@ public interface SiglusOrderableRepository extends
     JpaRepository<Orderable, VersionIdentity> {
 
   @Query(name = "OrderableExpirationDate.findExpirationDate", nativeQuery = true)
-  List<OrderableExpirationDateDto> findExpirationDate(@Param("ids") Iterable<UUID> ids);
+  List<OrderableExpirationDateDto> findExpirationDate(@Param("ids") Iterable<UUID> ids,
+      @Param("facilityId") UUID facilityId);
 
 }

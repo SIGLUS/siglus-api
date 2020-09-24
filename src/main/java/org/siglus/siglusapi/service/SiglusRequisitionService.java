@@ -378,7 +378,7 @@ public class SiglusRequisitionService {
     boolean isExternalApprove = isApprove && !isInternalFacility;
 
     List<SiglusRequisitionLineItemDto> siglusLineItems = buildSiglusLineItem(lineItemList,
-        isExternalApprove);
+        isExternalApprove, facilityId);
     List<BaseRequisitionLineItemDto> lineItems = siglusLineItems.stream()
         .map(item -> (BaseRequisitionLineItemDto) item.getLineItem()).collect(toList());
     RequisitionTemplate template = existedRequisition.getTemplate();
@@ -1007,25 +1007,28 @@ public class SiglusRequisitionService {
         .stream()
         .map(item -> item.getOrderableIdentity().getId())
         .collect(toSet());
-    List<OrderableExpirationDateDto> expirationDateDtos = findExpirationDates(orderableIds);
+    List<OrderableExpirationDateDto> expirationDateDtos = findExpirationDates(orderableIds,
+        requisitionDto.getFacilityId());
     requisitionDto.getLineItems().forEach(lineItem -> {
       RequisitionLineItemV2Dto lineDto = (RequisitionLineItemV2Dto) lineItem;
       setOrderableExpirationDate(expirationDateDtos, lineDto);
     });
   }
 
-  private List<OrderableExpirationDateDto> findExpirationDates(Set<UUID> orderableIds) {
+  private List<OrderableExpirationDateDto> findExpirationDates(Set<UUID> orderableIds,
+      UUID facilityId) {
     return orderableIds.isEmpty() ? new ArrayList<>() :
-        siglusOrderableService.getOrderableExpirationDate(orderableIds);
+        siglusOrderableService.getOrderableExpirationDate(orderableIds, facilityId);
   }
 
   private List<SiglusRequisitionLineItemDto> buildSiglusLineItem(
-      List<RequisitionLineItem> lineItemList, boolean isExternalApprove) {
+      List<RequisitionLineItem> lineItemList, boolean isExternalApprove, UUID facilityId) {
     Set<UUID> orderableIds = lineItemList
         .stream()
         .map(item -> item.getOrderable().getId())
         .collect(toSet());
-    List<OrderableExpirationDateDto> expirationDateDtos = findExpirationDates(orderableIds);
+    List<OrderableExpirationDateDto> expirationDateDtos = findExpirationDates(orderableIds,
+        facilityId);
 
     Set<VersionEntityReference> references = lineItemList.stream()
         .map(line -> {

@@ -601,7 +601,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(getApprovedPrdouctList());
     when(requisitionService.validateCanApproveRequisition(any(), any()))
         .thenReturn(new ValidationResult());
-    when(siglusOrderableService.getOrderableExpirationDate(any()))
+    when(siglusOrderableService.getOrderableExpirationDate(any(), any()))
         .thenReturn(Lists.newArrayList(new OrderableExpirationDateDto(orderableId2,
             LocalDate.of(2022, 1, 1))));
     MetadataDto meta = createMetadataDto();

@@ -69,8 +69,9 @@ public class SiglusOrderableService {
     return orderableDtoPage;
   }
 
-  public List<OrderableExpirationDateDto> getOrderableExpirationDate(Set<UUID> orderableIds) {
-    return siglusOrderableRepository.findExpirationDate(orderableIds);
+  public List<OrderableExpirationDateDto> getOrderableExpirationDate(Set<UUID> orderableIds,
+      UUID facilityId) {
+    return siglusOrderableRepository.findExpirationDate(orderableIds, facilityId);
   }
 
   public Page<OrderableDto> additionalToAdd(UUID programId, QueryOrderableSearchParams searchParams,

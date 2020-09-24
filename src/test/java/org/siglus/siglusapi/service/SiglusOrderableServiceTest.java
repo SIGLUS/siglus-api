@@ -117,9 +117,9 @@ public class SiglusOrderableServiceTest {
   public void shouldCallFindExpirationDateWhenGetOrderableExpirationDate() {
     Set<UUID> orderableIds = newHashSet(orderableId);
 
-    siglusOrderableService.getOrderableExpirationDate(orderableIds);
+    siglusOrderableService.getOrderableExpirationDate(orderableIds, facilityId);
 
-    verify(siglusOrderableRepository).findExpirationDate(orderableIds);
+    verify(siglusOrderableRepository).findExpirationDate(orderableIds, facilityId);
   }
 
   @Test
