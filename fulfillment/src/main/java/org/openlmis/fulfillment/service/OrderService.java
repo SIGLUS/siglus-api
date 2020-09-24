@@ -250,11 +250,7 @@ public class OrderService {
           .filter(p -> program.getCode().equals(p.getCode()))
           .findFirst();
 
-      // [SIGLUS change start]
-      // [change reason]: #245 remove influence with locallyFulfill
-      // if (supportedProgram.isPresent() && supportedProgram.get().isSupportLocallyFulfilled()) {
-      if (supportedProgram.isPresent()) {
-        // [SIGLUS change end]
+      if (supportedProgram.isPresent() && supportedProgram.get().isSupportLocallyFulfilled()) {
         order.prepareToLocalFulfill();
       } else {
         TransferProperties properties = transferPropertiesRepository

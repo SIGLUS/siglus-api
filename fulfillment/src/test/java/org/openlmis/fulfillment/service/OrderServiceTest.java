@@ -190,12 +190,7 @@ public class OrderServiceTest {
     verify(orderSender).send(any(Order.class));
     verify(orderStorage).delete(any(Order.class));
 
-
-    // [SIGLUS change start]
-    // [change reason]: #245 remove influence with locallyFulfill
-    // assertEquals(OrderStatus.IN_ROUTE, orderCaptor.getValue().getStatus());
-    assertEquals(OrderStatus.ORDERED, orderCaptor.getValue().getStatus());
-    // [SIGLUS change end]
+    assertEquals(OrderStatus.IN_ROUTE, orderCaptor.getValue().getStatus());
 
     verify(notificationService).sendOrderCreatedNotification(eq(created));
   }
@@ -254,12 +249,7 @@ public class OrderServiceTest {
 
     // then
     validateCreatedOrder(created, order);
-
-    // [SIGLUS change start]
-    // [change reason]: #245 remove influence with locallyFulfill
-    // assertEquals(OrderStatus.IN_ROUTE, created.getStatus());
-    assertEquals(OrderStatus.ORDERED, created.getStatus());
-    // [SIGLUS change end]
+    assertEquals(OrderStatus.IN_ROUTE, created.getStatus());
 
     InOrder inOrder = inOrder(orderRepository, orderStorage, orderSender);
     inOrder.verify(orderRepository).save(order);
