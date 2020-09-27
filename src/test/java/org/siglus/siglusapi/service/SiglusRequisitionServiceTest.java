@@ -70,6 +70,9 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.requisition.domain.AvailableRequisitionColumnOption;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.RequisitionTemplateDataBuilder;
@@ -141,6 +144,7 @@ import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.SimulateAuthenticationHelper;
+import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -164,6 +168,7 @@ import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.MessageSource;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -324,6 +329,9 @@ public class SiglusRequisitionServiceTest {
   private FcIntegrationCmmCpService fcIntegrationCmmCpService;
 
   @Mock
+  private OrderService orderService;
+
+  @Mock
   private OrderableKitRepository orderableKitRepository;
 
   @Captor
@@ -418,6 +426,8 @@ public class SiglusRequisitionServiceTest {
 
   private UUID roleId = UUID.randomUUID();
 
+  private UUID orderId = UUID.randomUUID();
+
   @Mock
   private OrderFulfillmentService orderFulfillmentService;
 
@@ -452,6 +462,7 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
     when(orderableKitRepository.findAllKitProduct()).thenReturn(Collections.emptyList());
     when(orderExternalRepository.findByRequisitionId(any())).thenReturn(newArrayList());
+    mockSearchOrder();
   }
 
   @Test
@@ -778,16 +789,18 @@ public class SiglusRequisitionServiceTest {
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
         .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
     mockFullyShippedProduct1();
-
+    mockSearchFullyShippedOrder();
     // when
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
     verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
-    assertEquals(1, availableProducts.size());
+    assertEquals(2, availableProducts.size());
     assertThat(availableProducts,
         hasItems(productVersionObjectReference2));
+    assertThat(availableProducts,
+        hasItems(productVersionObjectReference1));
   }
 
   @Test
@@ -819,7 +832,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
     preReqOrderShipments1 = newArrayList();
     mockNotFulfilledProduct1();
-
+    mockSearchSkippedOrder();
     // when
     siglusRequisitionService.searchRequisition(requisitionId);
 
@@ -1722,6 +1735,61 @@ public class SiglusRequisitionServiceTest {
   private void mockOrderService() {
     when(orderFulfillmentService.search(any(), any(), any(), any(), any()))
         .thenReturn(preReqOrders);
+  }
+
+  private void mockSearchOrder() {
+    Order order2 = new Order();
+    order2.setStatus(org.openlmis.fulfillment.domain.OrderStatus.SHIPPED);
+    order2.setExternalId(preReqId2);
+    Order order = new Order();
+    order.setId(orderId);
+    order.setStatus(org.openlmis.fulfillment.domain.OrderStatus.PARTIALLY_FULFILLED);
+    OrderLineItem lineItem = new OrderLineItem();
+    org.openlmis.fulfillment.domain.VersionEntityReference versionEntityReference =
+        new org.openlmis.fulfillment.domain.VersionEntityReference();
+    versionEntityReference.setId(productId1);
+    lineItem.setOrderable(versionEntityReference);
+    order.setOrderLineItems(newArrayList(lineItem));
+    order.setExternalId(preReqId1);
+    List<Order> orders = newArrayList(order, order2);
+    Page<Order> orderPage = Pagination.getPage(orders, null);
+    when(orderService.searchOrders(any(), any())).thenReturn(orderPage);
+  }
+
+  private void mockSearchSkippedOrder() {
+    Order order = new Order();
+    order.setId(orderId);
+    order.setStatus(org.openlmis.fulfillment.domain.OrderStatus.SHIPPED);
+    order.setOrderLineItems(newArrayList());
+    order.setExternalId(preReqId1);
+    List<Order> orders = newArrayList(order);
+    Page<Order> orderPage = Pagination.getPage(orders, null);
+    when(orderService.searchOrders(any(), any())).thenReturn(orderPage);
+  }
+
+  private void mockSearchFullyShippedOrder() {
+    Order order = new Order();
+    order.setId(orderId);
+    order.setStatus(org.openlmis.fulfillment.domain.OrderStatus.SHIPPED);
+    OrderLineItem lineItem = new OrderLineItem();
+    org.openlmis.fulfillment.domain.VersionEntityReference versionEntityReference =
+        new org.openlmis.fulfillment.domain.VersionEntityReference();
+    versionEntityReference.setId(productId1);
+    lineItem.setOrderable(versionEntityReference);
+    order.setOrderLineItems(newArrayList(lineItem));
+    order.setExternalId(preReqId1);
+    List<Order> orders = newArrayList(order);
+    Page<Order> orderPage = Pagination.getPage(orders, null);
+
+    when(orderService.searchOrders(any(), any())).thenReturn(orderPage);
+    ShipmentDto shipmentDto = new ShipmentDto();
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    lineItemDto.setOrderable(productVersionObjectReference1);
+    lineItemDto.setQuantityShipped(preReqProduct1ApprovedQuantity);
+    shipmentDto.setLineItems(newArrayList(lineItemDto));
+    List<ShipmentDto> shipments = newArrayList(shipmentDto);
+    when(shipmentFulfillmentService.getShipments(orderId))
+        .thenReturn(shipments);
   }
 
   private List<ShipmentDto> mockInProgressOrder(UUID reqId) {

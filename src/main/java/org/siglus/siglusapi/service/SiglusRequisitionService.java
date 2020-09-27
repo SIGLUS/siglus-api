@@ -23,18 +23,18 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.emptyCollection;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.openlmis.fulfillment.domain.OrderStatus.CLOSED;
+import static org.openlmis.fulfillment.domain.OrderStatus.FULFILLING;
+import static org.openlmis.fulfillment.domain.OrderStatus.ORDERED;
+import static org.openlmis.fulfillment.domain.OrderStatus.PARTIALLY_FULFILLED;
+import static org.openlmis.fulfillment.domain.OrderStatus.RECEIVED;
+import static org.openlmis.fulfillment.domain.OrderStatus.SHIPPED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
-import static org.openlmis.requisition.dto.OrderStatus.CLOSED;
-import static org.openlmis.requisition.dto.OrderStatus.FULFILLING;
-import static org.openlmis.requisition.dto.OrderStatus.ORDERED;
-import static org.openlmis.requisition.dto.OrderStatus.PARTIALLY_FULFILLED;
-import static org.openlmis.requisition.dto.OrderStatus.RECEIVED;
-import static org.openlmis.requisition.dto.OrderStatus.SHIPPED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.openlmis.requisition.service.notification.NotificationChannelDto.EMAIL;
 import static org.siglus.siglusapi.constant.PaginationConstants.UNPAGED;
@@ -61,6 +61,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.service.OrderSearchParams;
+import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.requisition.domain.BaseEntity;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -79,9 +83,6 @@ import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.MetadataDto;
-import org.openlmis.requisition.dto.ObjectReferenceDto;
-import org.openlmis.requisition.dto.OrderDto;
-import org.openlmis.requisition.dto.OrderStatus;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -107,7 +108,6 @@ import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
@@ -166,6 +166,7 @@ import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
@@ -245,9 +246,6 @@ public class SiglusRequisitionService {
   private SiglusUsageReportService siglusUsageReportService;
 
   @Autowired
-  private OrderFulfillmentService orderFulfillmentService;
-
-  @Autowired
   private ShipmentFulfillmentService shipmentFulfillmentService;
 
   @Autowired
@@ -309,6 +307,9 @@ public class SiglusRequisitionService {
 
   @Autowired
   private OrderExternalRepository orderExternalRepository;
+
+  @Autowired
+  private OrderService orderService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -1176,10 +1177,10 @@ public class SiglusRequisitionService {
         .collect(groupingBy(lineItem -> lineItem.getOrderableIdentity().getId(),
             reducing(0L, req -> req.getPacksToShip().longValue(), Long::sum)));
 
-    List<OrderDto> orders = searchOrders(requisition);
+    List<Order> orders = searchOrders(requisition);
     Map<UUID, Long> shipmentProductQuantityMap = orders.stream()
         .filter(order -> hasShipped(order))
-        .map(BaseDto::getId)
+        .map(Order::getId)
         .map(shipmentFulfillmentService::getShipments)
         .flatMap(Collection::stream)
         .map(ShipmentDto::getLineItems)
@@ -1192,45 +1193,48 @@ public class SiglusRequisitionService {
         .map(Entry::getKey)
         .collect(Collectors.toSet());
 
+    // order may not have shipment
     Set<UUID> inProgressProductIds = orders.stream()
         .filter(order -> hasNotShipped(order))
-        .map(BaseDto::getId)
-        .map(shipmentFulfillmentService::getShipments)
+        .map(Order::getOrderLineItems)
         .flatMap(Collection::stream)
-        .map(ShipmentDto::getLineItems)
-        .flatMap(Collection::stream)
-        .map(ShipmentLineItemDto::getOrderable)
-        .map(ObjectReferenceDto::getId)
+        .map(OrderLineItem::getOrderable)
+        .map(org.openlmis.fulfillment.domain.VersionEntityReference::getId)
         .collect(toSet());
     notFullyShippedProductIds.retainAll(inProgressProductIds);
 
     return notFullyShippedProductIds;
   }
 
-  private boolean hasNotShipped(OrderDto order) {
-    OrderStatus status = order.getStatus();
+  private boolean hasNotShipped(Order order) {
+    org.openlmis.fulfillment.domain.OrderStatus status = order.getStatus();
     return status == ORDERED || status == PARTIALLY_FULFILLED || status == CLOSED
         || status == FULFILLING;
   }
 
-  private boolean hasShipped(OrderDto order) {
-    OrderStatus status = order.getStatus();
+  private boolean hasShipped(Order order) {
+    org.openlmis.fulfillment.domain.OrderStatus status = order.getStatus();
     return status == SHIPPED || status == RECEIVED;
   }
 
-  private List<OrderDto> searchOrders(BaseRequisitionDto requisition) {
+  private List<Order> searchOrders(BaseRequisitionDto requisition) {
+    OrderSearchParams params = new OrderSearchParams();
+    params.setSupplyingFacilityId(requisition.getSupplyingFacility());
+    params.setRequestingFacilityId(requisition.getFacilityId());
+    params.setProgramId(requisition.getProgramId());
+    params.setProcessingPeriodId(requisition.getProcessingPeriodId());
+    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+
     List<OrderExternal> orderExternals = orderExternalRepository
         .findByRequisitionId(requisition.getId());
-
-    return orderFulfillmentService
-        .search(requisition.getSupplyingFacility(), requisition.getFacilityId(),
-            requisition.getProgramId(), requisition.getProcessingPeriodId(), null/*ignore status*/)
+    // basicOrderDto don't have orderLineItems
+    return orderService.searchOrders(params, pageable).getContent()
         .stream()
         .filter(order -> isOrderFromRequisition(order, requisition.getId(), orderExternals))
         .collect(Collectors.toList());
   }
 
-  private boolean isOrderFromRequisition(OrderDto order, UUID requisitionId,
+  private boolean isOrderFromRequisition(Order order, UUID requisitionId,
       List<OrderExternal> orderExternals) {
     boolean isSubOrder = orderExternals.stream().anyMatch(orderExternal ->
         orderExternal.getId().equals(order.getExternalId()));
