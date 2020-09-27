@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -51,6 +52,7 @@ import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.testutils.ProcessingPeriodDtoDataBuilder;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
@@ -90,6 +92,9 @@ public class SiglusProcessingPeriodServiceTest {
 
   @Mock
   private PermissionStrings permissionStrings;
+
+  @Mock
+  private SiglusRequisitionRepository siglusRequisitionRepository;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -249,8 +254,9 @@ public class SiglusProcessingPeriodServiceTest {
     List<Requisition> authorizedRequisitions = new ArrayList<>();
     authorizedRequisitions.add(createRequisition(requisitionId2, RequisitionStatus.AUTHORIZED,
         false));
-    when(requisitionService
-        .searchAfterAuthorizedRequisitions(facilityId, programId, dto.getId(), false))
+    when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
+        dto.getId(), false, newHashSet("AUTHORIZED", "IN_APPROVAL", "APPROVED",
+            "RELEASED", "RELEASED_WITHOUT_ORDER")))
         .thenReturn(authorizedRequisitions);
 
     RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(fullDto);

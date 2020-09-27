@@ -63,4 +63,14 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       @Param("supervisoryNodeIds") Set<UUID> supervisoryNodeIds,
       @Param("firstDayOfThisMonth") String firstDayOfThisMonth,
       @Param("firstDayOfNextMonth") String firstDayOfNextMonth);
+
+  @Query(value = "select r.* from requisition.requisitions r "
+      + "where r.facilityid = :facilityId "
+      + "and r.programId = :programId "
+      + "and r.processingperiodid = :periodId "
+      + "and r.emergency = :emergency "
+      + "and r.status in :statusSet ", nativeQuery = true)
+  List<Requisition> searchAfterAuthorizedRequisitions(@Param("facilityId") UUID facilityId,
+      @Param("programId") UUID programId, @Param("periodId") UUID periodId,
+      @Param("emergency")Boolean emergency, @Param("statusSet") Set<String> statusSet);
 }
