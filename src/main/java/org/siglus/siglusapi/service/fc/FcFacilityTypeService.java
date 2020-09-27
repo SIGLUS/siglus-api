@@ -81,7 +81,7 @@ public class FcFacilityTypeService {
   private Map<String, FacilityTypeDto> getStringFacilityTypeDtoMap() {
     List<FacilityTypeDto> facilityTypeDtos = facilityTypeService.searchAllFacilityTypes();
     return facilityTypeDtos.stream().collect(Collectors.toMap(
-        facilityType -> facilityType.getCode(),
+        FacilityTypeDto::getCode,
         Function.identity()));
   }
 

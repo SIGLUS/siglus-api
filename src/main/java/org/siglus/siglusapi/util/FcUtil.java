@@ -19,6 +19,10 @@ import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 
 public class FcUtil {
 
+  private FcUtil() {
+    throw new IllegalStateException("Utility class");
+  }
+
   public static boolean isActive(String status) {
     return status.equalsIgnoreCase(STATUS_ACTIVE);
   }
