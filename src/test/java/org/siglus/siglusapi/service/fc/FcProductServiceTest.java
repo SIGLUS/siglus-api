@@ -29,8 +29,8 @@ import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.FieldConstants.STATUS;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,9 +40,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.requisition.dto.CodeDto;
-import org.openlmis.requisition.dto.OrderableDisplayCategoryDto;
-import org.openlmis.requisition.dto.OrderedDisplayValueDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.dto.referencedata.FacilityTypeDto;
@@ -54,6 +51,7 @@ import org.siglus.siglusapi.domain.BasicProductCode;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.ApprovedProductDto;
+import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.siglus.siglusapi.dto.fc.AreaDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
@@ -78,7 +76,7 @@ public class FcProductServiceTest {
   private ArgumentCaptor<ApprovedProductDto> approvedProductCaptor;
 
   @Captor
-  private ArgumentCaptor<List<ProgramOrderablesExtension>> extensionCaptor;
+  private ArgumentCaptor<Set<ProgramOrderablesExtension>> extensionCaptor;
 
   @InjectMocks
   private FcProductService fcProductService;
@@ -162,14 +160,10 @@ public class FcProductServiceTest {
     when(programReferenceDataService.findAll()).thenReturn(newArrayList(programDto));
 
     OrderableDisplayCategoryDto categoryDto = new OrderableDisplayCategoryDto();
-    CodeDto codeDto = new CodeDto();
-    codeDto.setCode(categoryCode);
-    categoryDto.setCode(codeDto);
+    categoryDto.setCode(categoryCode);
     categoryDto.setId(categoryId);
-    OrderedDisplayValueDto displayValueDto = new OrderedDisplayValueDto();
-    displayValueDto.setDisplayName(displayName);
-    displayValueDto.setDisplayOrder(displayOrder);
-    categoryDto.setOrderedDisplayValue(displayValueDto);
+    categoryDto.setDisplayName(displayName);
+    categoryDto.setDisplayOrder(displayOrder);
     when(categoryRefDataService.findAll()).thenReturn(newArrayList(categoryDto));
 
     BasicProductCode basicProductCode = new BasicProductCode();
@@ -246,7 +240,8 @@ public class FcProductServiceTest {
     assertEquals(programId, approvedProductDto.getProgram().getId());
 
     verify(programOrderablesExtensionRepository).save(extensionCaptor.capture());
-    ProgramOrderablesExtension extension = extensionCaptor.getValue().get(0);
+    ProgramOrderablesExtension extension = extensionCaptor.getValue().stream().findFirst()
+        .orElse(new ProgramOrderablesExtension());
     assertEquals(orderableId, extension.getOrderableId());
     assertEquals(programCode, extension.getProgramCode());
     assertEquals(programName, extension.getProgramName());
@@ -297,7 +292,8 @@ public class FcProductServiceTest {
     });
 
     verify(programOrderablesExtensionRepository).save(extensionCaptor.capture());
-    ProgramOrderablesExtension extension = extensionCaptor.getValue().get(0);
+    ProgramOrderablesExtension extension = extensionCaptor.getValue().stream().findFirst()
+        .orElse(new ProgramOrderablesExtension());
     assertEquals(orderableId, extension.getOrderableId());
     assertEquals(programCode, extension.getProgramCode());
     assertEquals(programName, extension.getProgramName());

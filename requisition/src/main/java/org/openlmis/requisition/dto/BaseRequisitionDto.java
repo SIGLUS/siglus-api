@@ -84,9 +84,17 @@ public abstract class BaseRequisitionDto
   private BasicRequisitionTemplateDto template;
 
   @Getter
+  // [SIGLUS change start]
+  // [change reason]: add @Setter
+  @Setter
+  // [SIGLUS change end]
   private Map<String, StatusLogEntry> statusChanges = new HashMap<>();
   
   @Getter
+  // [SIGLUS change start]
+  // [change reason]: add @Setter
+  @Setter
+  // [SIGLUS change end]
   private List<StatusChangeDto> statusHistory = new ArrayList<>();
 
   @Getter

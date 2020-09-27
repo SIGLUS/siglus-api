@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.service.client;
 
-import org.openlmis.requisition.dto.OrderableDisplayCategoryDto;
+import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.springframework.stereotype.Service;
 
 @Service

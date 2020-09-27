@@ -2105,6 +2105,20 @@ traits:
         responses:
           200:
 
+    /products:
+      displayName: Products From Fc
+      post:
+        is: [ secured ]
+        description: Fetch products from fc.
+        queryParameters:
+          date:
+            displayName: date
+            type: string
+            required: true
+            repeat: false
+        responses:
+          200:
+
     /fcPrograms:
       displayName: Programs From Fc
       post:

@@ -13,34 +13,20 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.dto;
 
 import java.util.UUID;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.siglus.common.domain.BaseEntity;
 
-@Entity
 @Data
-@Builder
-@EqualsAndHashCode(of = {"orderableId", "programCode", "realProgramCode"})
-@AllArgsConstructor
-@NoArgsConstructor
-@Table(name = "program_orderables_extension", schema = "siglusintegration")
-public class ProgramOrderablesExtension extends BaseEntity {
+public class OrderableDisplayCategoryDto {
 
-  private UUID orderableId;
+  private UUID id;
 
-  private String programCode;
+  private String code;
 
-  private String programName;
+  private String displayName;
 
-  private String realProgramCode;
+  private int displayOrder;
 
-  private String realProgramName;
 }
