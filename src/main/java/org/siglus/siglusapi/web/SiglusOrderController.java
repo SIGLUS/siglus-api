@@ -15,8 +15,11 @@
 
 package org.siglus.siglusapi.web;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
@@ -34,8 +37,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
 
 @RestController
 @RequestMapping("/api/siglusapi/orders")
@@ -62,6 +67,20 @@ public class SiglusOrderController {
   @GetMapping()
   public Page<BasicOrderDto> searchOrders(OrderSearchParams params, Pageable pageable) {
     return siglusOrderService.searchOrders(params, pageable);
+  }
+
+  @GetMapping("/{id}/print")
+  public ModelAndView printOrder(HttpServletRequest request,
+      @PathVariable("id") UUID orderId,
+      @RequestParam("format") String format) throws IOException {
+    return orderController.printOrder(request, orderId, format);
+  }
+
+  @GetMapping("/{id}/export")
+  public void export(@PathVariable("id") UUID orderId,
+      @RequestParam(value = "type", required = false, defaultValue = "csv") String type,
+      HttpServletResponse response) throws IOException {
+    orderController.export(orderId, type, response);
   }
 
   @GetMapping("/fulfill")
