@@ -31,6 +31,8 @@ import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProofOfDeliveryService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -50,6 +52,9 @@ public class SiglusProofOfDeliveryControllerTest {
 
   @Mock
   private SiglusProofOfDeliveryService proofOfDeliveryService;
+
+  @Mock
+  private ProofOfDeliveryController proofOfDeliveryController;
 
   @Test
   public void shouldCallOpenlmisControllerWhenUpdateProofOfDelivery() {
@@ -88,6 +93,20 @@ public class SiglusProofOfDeliveryControllerTest {
 
     // then
     verify(proofOfDeliveryService).getProofOfDelivery(podId, null);
+  }
+
+  @Test
+  public void shouldAetAllProofsOfDelivery() {
+    // given
+    UUID orderId = UUID.randomUUID();
+    UUID shipmentId = UUID.randomUUID();
+    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+
+    // when
+    controller.getAllProofsOfDelivery(orderId, shipmentId, pageable);
+
+    // then
+    verify(proofOfDeliveryController).getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
 }

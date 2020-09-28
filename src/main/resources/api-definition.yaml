@@ -93,6 +93,19 @@ schemas:
       }
   - fcRequisitionPage: !include schemas/fcRequisitionPage.json
   - fcPodPage: !include schemas/fcPodPage.json
+  - localizedMessage: !include schemas/localizedMessage.json
+  - badRequestResponse: |
+      {
+          "oneOf": [{
+            "type": "object",
+            "$ref": "schemas/localizedMessage.json"
+          }, {
+            "type": "array",
+            "items": { "type": "object", "$ref": "schemas/localizedMessage.json" }
+          }]
+      }
+  - proofOfDeliveryPage: !include schemas/proofOfDeliveryPage.json
+
 resourceTypes:
   - collection:
       get:
@@ -1933,6 +1946,42 @@ traits:
             description: already viewd
           409:
             description: already processed
+
+    /proofsOfDelivery:
+      displayName: Proof Of Delivery
+      get:
+        is: [ secured, paginated ]
+        description: >
+          Get proofs of delivery page. This endpoint requires one of the following rights:
+          PODS_MANAGE, PODS_VIEW (for requesting facility), SHIPMENTS_EDIT (for supplying
+          facility)
+        queryParameters:
+          orderId:
+            displayName: orderId
+            description: order ID
+            type: string
+            required: false
+            repeat: false
+          shipmentId:
+            displayName: shipmentId
+            description: shipment ID
+            type: string
+            required: false
+            repeat: false
+        responses:
+          200:
+            body:
+              application/json:
+                schema: proofOfDeliveryPage
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
 
     /proofsOfDelivery/{id}:
       get:

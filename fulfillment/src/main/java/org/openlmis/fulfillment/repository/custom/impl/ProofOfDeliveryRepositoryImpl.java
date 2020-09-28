@@ -115,15 +115,16 @@ public class ProofOfDeliveryRepositoryImpl implements ProofOfDeliveryRepositoryC
       params.put("orderId", orderId);
     }
 
+    // [SIGLUS change start]
+    // [change reason]: fix bug #595
     if (isNotEmpty(receivingFacilityIds)) {
       where.add(WITH_RECEIVING_FACILITIES);
       params.put("receivingFacilityIds", receivingFacilityIds);
-    }
-
-    if (isNotEmpty(supplyingFacilityIds)) {
+    } else if (isNotEmpty(supplyingFacilityIds)) {
       where.add(WITH_SUPPLYING_FACILITIES);
       params.put("supplyingFacilityIds", supplyingFacilityIds);
     }
+    // [SIGLUS change end
 
     if (isNotEmpty(programIds)) {
       where.add(WITH_PROGRAM_IDS);
