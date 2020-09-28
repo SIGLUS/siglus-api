@@ -229,7 +229,7 @@ public class SiglusNotificationServiceTest {
   }
 
   @Test
-  public void shouldReturnViewedWhenViewNotificationGivenViewedAndProcessedNotification() {
+  public void shouldReturnProcessedWhenViewNotificationGivenViewedAndProcessedNotification() {
     // given
     mockNotification(true, true);
 
@@ -237,7 +237,7 @@ public class SiglusNotificationServiceTest {
     ViewableStatus status = service.viewNotification(notificationId);
 
     // then
-    assertEquals(ViewableStatus.VIEWED, status);
+    assertEquals(ViewableStatus.PROCESSED, status);
   }
 
   @Test

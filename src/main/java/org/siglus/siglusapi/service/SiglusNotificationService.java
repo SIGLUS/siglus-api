@@ -167,6 +167,9 @@ public class SiglusNotificationService {
 
   public ViewableStatus viewNotification(UUID notificationId) {
     Notification notification = repo.findOne(notificationId);
+    if (notification.getProcessed()) {
+      return ViewableStatus.PROCESSED;
+    }
     if (notification.getViewed()) {
       return ViewableStatus.VIEWED;
     }
@@ -175,9 +178,6 @@ public class SiglusNotificationService {
     notification.setViewedUserId(authenticationHelper.getCurrentUserId().orElse(null));
     log.info("view notification: {}", notification);
     repo.save(notification);
-    if (notification.getProcessed()) {
-      return ViewableStatus.PROCESSED;
-    }
     return ViewableStatus.NOT_VIEWED;
   }
 
