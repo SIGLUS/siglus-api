@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -55,8 +56,6 @@ public class FcRegimenService {
   @Autowired
   private RegimenCategoryRepository regimenCategoryRepository;
 
-  private int maxRegimenDisplayOrder;
-
   private int maxRegimenCategoryDisplayOrder;
 
   public boolean processRegimens(List<RegimenDto> dtos) {
@@ -73,11 +72,11 @@ public class FcRegimenService {
       List<Regimen> allRegimens = regimenRepository.findAll();
       Map<String, Regimen> codeToRegimenMap = allRegimens
           .stream().collect(Collectors.toMap(Regimen::getCode, Function.identity()));
-      maxRegimenDisplayOrder = allRegimens.stream()
-          .mapToInt(Regimen::getDisplayOrder).max().orElse(0);
+      AtomicInteger maxRegimenDisplayOrder = new AtomicInteger(allRegimens.stream()
+          .mapToInt(Regimen::getDisplayOrder).max().orElse(0));
       List<RegimenCategory> allCategories = regimenCategoryRepository.findAll();
       Map<String, RegimenCategory> codeToCategoryMap = allCategories.stream()
-          .collect(Collectors.toMap(c -> c.getCode(), Function.identity()));
+          .collect(Collectors.toMap(RegimenCategory::getCode, Function.identity()));
       maxRegimenCategoryDisplayOrder = allCategories.stream()
           .mapToInt(RegimenCategory::getDisplayOrder).max().orElse(0);
 
@@ -89,7 +88,7 @@ public class FcRegimenService {
             UUID dtoProgramId = codeToProgramIdMap
                 .get(codeToProgramMap.get(dto.getAreaCode()).getProgramCode());
             if (dtoProgramId == null) {
-              log.error("unknown program code: {}", dto.getAreaCode());
+              log.error("[FC] unknown program code: {}", dto.getAreaCode());
               return;
             }
             Regimen regimen = codeToRegimenMap.get(dto.getCode());
@@ -102,14 +101,14 @@ public class FcRegimenService {
 
             regimensToUpdate.add(Regimen.from(dto, dtoProgramId,
                 getRegimenCategory(dto, codeToCategoryMap),
-                ++maxRegimenDisplayOrder));
+                maxRegimenDisplayOrder.incrementAndGet()));
           });
 
       regimenRepository.save(regimensToUpdate);
-      log.info("save fc regimen successfully, size: {}", dtos.size());
+      log.info("[FC] save fc regimen successfully, size: {}", dtos.size());
       return true;
     } catch (Exception e) {
-      log.error("process fc regimen data error", e);
+      log.error("[FC] process fc regimen data error", e);
       return false;
     }
   }

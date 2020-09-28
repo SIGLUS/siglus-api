@@ -1179,7 +1179,7 @@ public class SiglusRequisitionService {
 
     List<Order> orders = searchOrders(requisition);
     Map<UUID, Long> shipmentProductQuantityMap = orders.stream()
-        .filter(order -> hasShipped(order))
+        .filter(this::hasShipped)
         .map(Order::getId)
         .map(shipmentFulfillmentService::getShipments)
         .flatMap(Collection::stream)
@@ -1195,7 +1195,7 @@ public class SiglusRequisitionService {
 
     // order may not have shipment
     Set<UUID> inProgressProductIds = orders.stream()
-        .filter(order -> hasNotShipped(order))
+        .filter(this::hasNotShipped)
         .map(Order::getOrderLineItems)
         .flatMap(Collection::stream)
         .map(OrderLineItem::getOrderable)

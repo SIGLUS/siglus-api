@@ -38,7 +38,7 @@ public class RegimenDto extends BaseDto {
   public static RegimenDto from(Regimen regimen) {
     RegimenDto regimenDto = new RegimenDto();
     BeanUtils.copyProperties(regimen, regimenDto);
-    regimenDto.setCode(regimen.getCode().toString());
+    regimenDto.setCode(regimen.getCode());
     regimenDto.setFullProductName(regimen.getName());
     regimenDto.regimenCategory = RegimenCategoryDto.from(regimen.getRegimenCategory());
     return regimenDto;

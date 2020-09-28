@@ -59,10 +59,10 @@ public class FcProgramService {
       });
 
       programRealProgramRepository.save(programsToUpdate);
-      log.info("save fc program successfully, size: {}", dtos.size());
+      log.info("[FC] save fc program successfully, size: {}", dtos.size());
       return true;
     } catch (Exception e) {
-      log.error("process fc program data error", e);
+      log.error("[FC] process fc program data error", e);
       return false;
     }
   }
