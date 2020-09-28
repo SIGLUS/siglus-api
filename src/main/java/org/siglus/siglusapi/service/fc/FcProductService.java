@@ -173,7 +173,7 @@ public class FcProductService {
     programCodeToIdMap = programReferenceDataService.findAll().stream()
         .collect(Collectors.toMap(BasicProgramDto::getCode, BaseDto::getId));
     categoryCodeToEntityMap = categoryRefDataService.findAll().stream()
-        .collect(Collectors.toMap(category -> category.getCode(), Function.identity()));
+        .collect(Collectors.toMap(OrderableDisplayCategoryDto::getCode, Function.identity()));
     basicProductCodes = basicProductCodeRepository.findAll().stream()
         .map(BasicProductCode::getProductCode).collect(toSet());
   }
@@ -244,7 +244,7 @@ public class FcProductService {
         programIdToEntityMap.put(programOrderable.getProgramId(), programOrderable);
       }
     });
-    return programIdToEntityMap.values().stream().collect(toSet());
+    return newHashSet(programIdToEntityMap.values());
   }
 
   private boolean isDifferentOrderable(OrderableDto existingOrderable, ProductInfoDto product) {
@@ -270,10 +270,7 @@ public class FcProductService {
     if (null == existingOrderableStatus && IN_ACTIVE.equals(productStatus)) {
       return true;
     }
-    if (null != existingOrderableStatus && !existingOrderableStatus.equals(productStatus)) {
-      return true;
-    }
-    return false;
+    return null != existingOrderableStatus && !existingOrderableStatus.equals(productStatus);
   }
 
   private boolean isDifferentProgramOrderable(OrderableDto existingOrderable,
@@ -291,10 +288,7 @@ public class FcProductService {
     if (productProgramIds.size() != existingOrderableProgramIds.size()) {
       return true;
     }
-    if (!productProgramIds.containsAll(existingOrderableProgramIds)) {
-      return true;
-    }
-    return false;
+    return !productProgramIds.containsAll(existingOrderableProgramIds);
   }
 
   private OrderableDto updateOrderable(OrderableDto existingOrderable, ProductInfoDto product) {
