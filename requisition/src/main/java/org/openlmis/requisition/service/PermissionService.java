@@ -201,6 +201,13 @@ public class PermissionService {
     return checkRightOrRole(REQUISITION_VIEW, requisition);
   }
 
+  // [SIGLUS change start]
+  // [change reason]: #569 check view permission
+  public ValidationResult canViewRequisition(UUID program, UUID facility) {
+    return checkRight(REQUISITION_VIEW, facility, program);
+  }
+  // [SIGLUS change end]
+
   /**
    * Checks if current user has permission to convert requisition to order.
    *

@@ -235,6 +235,10 @@ public abstract class BaseRequisitionController extends BaseController {
           new Message(MessageKeys.ERROR_INITIALIZE_MISSING_PARAMETERS));
     }
 
+    // [SIGLUS change start]
+    // [change reason]: #569 check view permission before initiate
+    checkPermission(profiler, () -> permissionService.canViewRequisition(programId, facilityId));
+    // [SIGLUS change end]
     checkPermission(profiler, () -> permissionService.canInitRequisition(programId, facilityId));
 
     validateIdempotencyKey(request, profiler);
