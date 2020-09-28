@@ -25,7 +25,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,7 +51,6 @@ import org.siglus.siglusapi.dto.fc.CmmDto;
 import org.siglus.siglusapi.dto.fc.CpDto;
 import org.siglus.siglusapi.repository.CmmRepository;
 import org.siglus.siglusapi.repository.CpRepository;
-import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -90,9 +88,6 @@ public class FcIntegrationCmmCpServiceTest {
 
   @Mock
   private SiglusRequisitionRepository siglusRequisitionRepository;
-
-  @Mock
-  private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
 
   private final String facilityCode = "facilityCode";
   private final String productCode = "productCode";
@@ -276,7 +271,6 @@ public class FcIntegrationCmmCpServiceTest {
 
     // then
     assertEquals(16, lineItem.getSuggestedQuantity().intValue());
-    verify(lineItemExtensionRepository).save(any(List.class));
   }
 
   @Test
@@ -337,6 +331,5 @@ public class FcIntegrationCmmCpServiceTest {
 
     // then
     assertEquals(3, lineItem.getSuggestedQuantity().intValue());
-    verify(lineItemExtensionRepository).save(any(List.class));
   }
 }

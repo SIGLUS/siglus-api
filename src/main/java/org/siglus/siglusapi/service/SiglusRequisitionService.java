@@ -41,6 +41,7 @@ import static org.siglus.siglusapi.constant.PaginationConstants.UNPAGED;
 import static org.siglus.siglusapi.i18n.SimamMessageKeys.REQUISITION_EMAIL_CONTENT_PRE;
 import static org.siglus.siglusapi.i18n.SimamMessageKeys.REQUISITION_EMAIL_SUBJECT;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -346,6 +347,7 @@ public class SiglusRequisitionService {
     initiateExpirationDate(lineItems, facilityId);
     initiateSuggestedQuantity(lineItems, facilityId, siglusRequisitionDto.getProcessingPeriodId(),
         siglusRequisitionDto.getProgramId(), siglusRequisitionDto.getTemplate());
+    saveLineItemExtensions(lineItems);
     return siglusRequisitionDto;
   }
 
@@ -1031,6 +1033,36 @@ public class SiglusRequisitionService {
       RequisitionLineItemV2Dto lineDto = (RequisitionLineItemV2Dto) lineItem;
       setOrderableExpirationDate(expirationDateDtos, lineDto);
     });
+  }
+
+  private void saveLineItemExtensions(List<BaseRequisitionLineItemDto> lineItems) {
+    if (CollectionUtils.isEmpty(lineItems)) {
+      return;
+    }
+    List<UUID> lineItemIds = lineItems.stream().map(BaseDto::getId).collect(toList());
+    List<RequisitionLineItemExtension> extensions = lineItemExtensionRepository
+        .findLineItems(lineItemIds);
+    Map<UUID, RequisitionLineItemExtension> lineItemIdToEntityMap = Maps
+        .uniqueIndex(extensions, RequisitionLineItemExtension::getRequisitionLineItemId);
+    List<RequisitionLineItemExtension> extensionsToUpdate = newArrayList();
+    lineItems.forEach(lineItem -> {
+      RequisitionLineItemExtension existingExtension = lineItemIdToEntityMap.get(lineItem.getId());
+      if (null == existingExtension) {
+        RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
+        extension.setAuthorizedQuantity(lineItem.getAuthorizedQuantity());
+        extension.setExpirationDate(lineItem.getExpirationDate());
+        extension.setSuggestedQuantity(lineItem.getSuggestedQuantity());
+        extension.setRequisitionLineItemId(lineItem.getId());
+        extensionsToUpdate.add(extension);
+      } else {
+        existingExtension.setAuthorizedQuantity(lineItem.getAuthorizedQuantity());
+        existingExtension.setExpirationDate(lineItem.getExpirationDate());
+        existingExtension.setSuggestedQuantity(lineItem.getSuggestedQuantity());
+        extensionsToUpdate.add(existingExtension);
+      }
+    });
+    log.info("save line item extensions: {}", extensionsToUpdate);
+    lineItemExtensionRepository.save(extensionsToUpdate);
   }
 
   private List<OrderableExpirationDateDto> findExpirationDates(Set<UUID> orderableIds,

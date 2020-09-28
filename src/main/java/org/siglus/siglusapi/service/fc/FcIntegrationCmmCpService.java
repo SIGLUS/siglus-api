@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -43,12 +42,10 @@ import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.domain.CmmDomain;
 import org.siglus.siglusapi.domain.CpDomain;
-import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.fc.CmmDto;
 import org.siglus.siglusapi.dto.fc.CpDto;
 import org.siglus.siglusapi.repository.CmmRepository;
 import org.siglus.siglusapi.repository.CpRepository;
-import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -82,9 +79,6 @@ public class FcIntegrationCmmCpService {
 
   @Autowired
   private SiglusRequisitionRepository siglusRequisitionRepository;
-
-  @Autowired
-  private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
 
   public boolean processCmms(List<CmmDto> dtos, String queryDate) {
     if (isEmpty(dtos)) {
@@ -149,7 +143,6 @@ public class FcIntegrationCmmCpService {
         .findAllByFacilityCodeAndProductCodeInAndQueryDate(requestingFacility.getCode(),
             orderableIdCodeMap.values(), endDate.format(DateTimeFormatter.ofPattern("MM-yyyy")))
         .stream().collect(toMap(CmmDomain::getProductCode, Function.identity()));
-    List<RequisitionLineItemExtension> extensions = newArrayList();
     lineItems.forEach(lineItem -> {
       RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
       String productCode = orderableIdCodeMap.get(lineItemV2Dto.getOrderable().getId());
@@ -159,12 +152,8 @@ public class FcIntegrationCmmCpService {
         suggestedQuantity = cmm.getCmm() * cmm.getMax() - lineItem.getStockOnHand();
         suggestedQuantity = Math.max(suggestedQuantity, 0);
       }
-      setSuggestedQuantity(extensions, lineItem, suggestedQuantity);
+      lineItem.setSuggestedQuantity(suggestedQuantity);
     });
-    if (CollectionUtils.isNotEmpty(extensions)) {
-      log.info("save line item extension, size: {}", extensions.size());
-      lineItemExtensionRepository.save(extensions);
-    }
   }
 
   public void initiateSuggestedQuantityByCp(List<BaseRequisitionLineItemDto> lineItems,
@@ -198,7 +187,6 @@ public class FcIntegrationCmmCpService {
               Collectors.summingInt(RequisitionLineItem::getStockOnHand)));
     }
     Map<UUID, Integer> finalOrderableIdSumStockMap = orderableIdSumStockMap;
-    List<RequisitionLineItemExtension> extensions = newArrayList();
     lineItems.forEach(lineItem -> {
       RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
       UUID orderableId = lineItemV2Dto.getOrderable().getId();
@@ -211,12 +199,8 @@ public class FcIntegrationCmmCpService {
         suggestedQuantity = cp.getCp() * cp.getMax() - sumStock - lineItem.getStockOnHand();
         suggestedQuantity = Math.max(suggestedQuantity, 0);
       }
-      setSuggestedQuantity(extensions, lineItem, suggestedQuantity);
+      lineItem.setSuggestedQuantity(suggestedQuantity);
     });
-    if (CollectionUtils.isNotEmpty(extensions)) {
-      log.info("save line item extension, size: {}", extensions.size());
-      lineItemExtensionRepository.save(extensions);
-    }
   }
 
   private Map<UUID, String> getOrderableIdCodeMap(List<BaseRequisitionLineItemDto> lineItems) {
@@ -230,16 +214,4 @@ public class FcIntegrationCmmCpService {
         .collect(toMap(OrderableDto::getId, OrderableDto::getProductCode));
   }
 
-  private void setSuggestedQuantity(List<RequisitionLineItemExtension> extensions,
-      BaseRequisitionLineItemDto lineItem, int suggestedQuantity) {
-    lineItem.setSuggestedQuantity(suggestedQuantity);
-    if (null != lineItem.getId()) {
-      RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
-      extension.setRequisitionLineItemId(lineItem.getId());
-      extension.setAuthorizedQuantity(lineItem.getAuthorizedQuantity());
-      extension.setSuggestedQuantity(suggestedQuantity);
-      extension.setExpirationDate(lineItem.getExpirationDate());
-      extensions.add(extension);
-    }
-  }
 }
