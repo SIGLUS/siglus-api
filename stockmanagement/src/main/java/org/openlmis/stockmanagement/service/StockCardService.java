@@ -118,8 +118,12 @@ public class StockCardService extends StockCardBaseService {
 
     for (StockEventLineItemDto eventLineItem : stockEventDto.getLineItems()) {
       StockCard stockCard = findOrCreateCard(
-          stockEventDto, eventLineItem, savedEventId, cardsToUpdate);
-      existingLineItems.addAll(stockCard.getLineItems());
+          stockEventDto, eventLineItem, savedEventId, cardsToUpdate,
+          // [SIGLUS change start]
+          // [change reason]: fix bug
+          existingLineItems);
+      // existingLineItems.addAll(stockCard.getLineItems());
+      // [SIGLUS change end]
 
       createLineItemFrom(stockEventDto, eventLineItem, stockCard, savedEventId, processedDate);
     }
@@ -234,7 +238,12 @@ public class StockCardService extends StockCardBaseService {
   }
 
   private StockCard findOrCreateCard(StockEventDto eventDto, StockEventLineItemDto eventLineItem,
-      UUID savedEventId, List<StockCard> cardsToUpdate) {
+      UUID savedEventId, List<StockCard> cardsToUpdate,
+      // [SIGLUS change start]
+      // [change reason]: fix bug
+      List<StockCardLineItem> existingLineItems
+  // [SIGLUS change end]
+  ) {
     OrderableLotIdentity identity = identityOf(eventLineItem);
     StockCard card = eventDto.getContext().findCard(identity);
 
@@ -244,6 +253,11 @@ public class StockCardService extends StockCardBaseService {
           .filter(elem -> identityOf(elem).equals(identity))
           .findFirst()
           .orElse(null);
+      // [SIGLUS change start]
+      // [change reason]: fix bug
+    } else {
+      existingLineItems.addAll(card.getLineItems());
+      // [SIGLUS change end]
     }
 
     if (null == card) {
