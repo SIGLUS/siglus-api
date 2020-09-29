@@ -161,6 +161,7 @@ public class SiglusRequisitionTemplateServiceTest {
     updatedDto.setId(tempalteId);
     SiglusRequisitionTemplateDto requestDto = new SiglusRequisitionTemplateDto();
     RequisitionTemplateExtension extension = prepareExtension();
+    extension.setEnableProduct(true);
     RequisitionTemplateExtensionDto extensionDto = prepareExtensionDto();
     requestDto.setId(tempalteId);
     requestDto.setExtension(extensionDto);
