@@ -229,7 +229,7 @@ public class FcProductService {
       OrderableDisplayCategoryDto categoryDto = categoryCodeToEntityMap
           .get(product.getCategoryCode());
       if (null == categoryDto) {
-        categoryDto = categoryCodeToEntityMap.get("11");
+        categoryDto = categoryCodeToEntityMap.get("DEFAULT");
       }
       programDto.setOrderableDisplayCategoryId(categoryDto.getId());
       programDto.setOrderableCategoryDisplayName(categoryDto.getDisplayName());
