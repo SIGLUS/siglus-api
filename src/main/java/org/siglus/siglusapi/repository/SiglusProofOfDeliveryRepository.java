@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
@@ -39,7 +40,7 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       + "     where o.requestingfacilityid in :requestingFacilityIds) "
       + "order by ?#{#pageable}",
       nativeQuery = true)
-  Page<ProofOfDelivery> search(@Param("date") String date, @Param("today") String today,
+  Page<ProofOfDelivery> search(@Param("date") LocalDate date, @Param("today") String today,
       @Param("requestingFacilityIds") Set<UUID> requestingFacilityIds,
       Pageable pageable);
 }

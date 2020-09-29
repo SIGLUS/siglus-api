@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.time.LocalDate;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -35,9 +34,9 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "pod_extension", schema = "siglusintegration")
 public class PodExtension extends BaseEntity {
 
-  private UUID podId;
+  private UUID shipmentId;
 
   private String issueVoucherNumber;
 
-  private LocalDate fcLastUpdatedDate;
+  private String clientCode;
 }

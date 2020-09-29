@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
+import java.time.LocalDate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -39,7 +40,7 @@ public class SiglusFcIntegrationControllerTest {
   private Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
       Pagination.NO_PAGINATION);
 
-  private String date = "20200221";
+  private LocalDate date = LocalDate.of(2020, 2, 21);
 
   @Test
   public void shouldSearchRequisitionsWithDefaultPageable() {

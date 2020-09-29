@@ -71,6 +71,7 @@ public class SiglusStockCardSummariesService {
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
       MultiValueMap<String, String> parameters, Pageable pageable) {
+    UUID userId = authenticationHelper.getCurrentUser().getId();
     Set<String> archivedProducts = null;
     if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)) || Boolean
         .parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
@@ -81,7 +82,6 @@ public class SiglusStockCardSummariesService {
         parameters);
     List<UUID> orderableIds = v2SearchParams.getOrderableIds();
     UUID inputProgramId = getId(PROGRAM_ID, parameters);
-    UUID userId = authenticationHelper.getCurrentUser().getId();
     Set<UUID> programIds = getProgramIds(inputProgramId, userId, parameters.getFirst(RIGHT_NAME),
         parameters.getFirst(FACILITY_ID));
     List<StockCardSummaryV2Dto> summaryV2Dtos = new ArrayList<>();

@@ -16,11 +16,12 @@
 package org.siglus.siglusapi.service.client;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
-import org.openlmis.requisition.service.RequestParameters;
-import org.openlmis.requisition.service.stockmanagement.BaseStockManagementService;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.siglusapi.constant.FieldConstants;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -44,11 +45,16 @@ public class ValidReasonAssignmentStockManagementService extends
 
   public Collection<ValidReasonAssignmentDto> getValidReasons(UUID programId, UUID facilityType,
       String reasonType, UUID reason) {
-    RequestParameters queryParams = RequestParameters.init()
-        .set(FieldConstants.PROGRAM, programId)
-        .set(FieldConstants.FACILITY_TYPE, facilityType)
-        .set(FieldConstants.REASON_TYPE, reasonType)
-        .set(FieldConstants.REASON, reason);
-    return findAll("", queryParams);
+    Map<String, Object> params = new HashMap<>();
+    params.put(FieldConstants.PROGRAM, programId);
+    params.put(FieldConstants.FACILITY_TYPE, facilityType);
+    params.put(FieldConstants.REASON_TYPE, reasonType);
+    params.put(FieldConstants.REASON, reason);
+    return findAll("", params);
+  }
+
+  @Async
+  public ValidReasonAssignmentDto assignReason(ValidReasonAssignmentDto dto) {
+    return postResult("", dto, getResultClass());
   }
 }

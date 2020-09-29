@@ -15,8 +15,11 @@
 
 package org.siglus.siglusapi.constant;
 
+import static com.google.common.collect.Sets.newHashSet;
+
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class FcConstants {
 
@@ -26,14 +29,30 @@ public class FcConstants {
   public static final String CP_JOB = "CP";
   public static final String RECEIPT_PLAN_JOB = "RECEIPT_PLAN";
   public static final String ISSUE_VOUCHER_JOB = "ISSUE_VOUCHER";
+  public static final String PROGRAM_JOB = "PROGRAM";
+  public static final String PRODUCT_JOB = "PRODUCT";
+  public static final String REGIMEN_JOB = "REGIMEN";
+  public static final String FACILITY_JOB = "FACILITY";
+  public static final String FACILITY_TYPE_JOB = "FACILITY_TYPE";
+  public static final String GEOGRAPHIC_ZONE_JOB = "GEOGRAPHIC_ZONE";
 
   public static final String CMM_API = "/cmm/cmms";
   public static final String CP_API = "/cp/cps";
   public static final String RECEIPT_PLAN_API = "/receiptPlan/receiptplans";
   public static final String ISSUE_VOUCHER_API = "/issueVoucher/issuevouchers";
+  public static final String PROGRAM_API = "/area/areas";
+  public static final String PRODUCT_API = "/product/products";
+  public static final String REGIMEN_API = "/areaRegime/arearegimes";
+  public static final String FACILITY_API = "/client/clients";
+  public static final String FACILITY_TYPE_API = "/clientType/clientstypes";
+  public static final String GEOGRAPHIC_ZONE_API = "/region/regions";
 
-  public static List<String> getQueryByDateApiList() {
-    return Arrays.asList(RECEIPT_PLAN_API, ISSUE_VOUCHER_API);
+  public static final String STATUS_ACTIVE = "Activo";
+  public static final String DEFAULT_REGIMEN_CATEGORY_CODE = "DEFAULT";
+  public static final Set<String> IGNORE_CODES = newHashSet("DUMMY", "RG", "A2Bped");
+
+  public static List<String> getQueryByPeriodApiList() {
+    return Arrays.asList(CMM_API, CP_API);
   }
 
 }

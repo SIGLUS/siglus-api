@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web;
 
+import java.time.LocalDate;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
@@ -23,12 +24,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Validated
 @RequestMapping("/api/siglusapi/integration")
 public class SiglusFcIntegrationController {
 
@@ -36,7 +40,9 @@ public class SiglusFcIntegrationController {
   private SiglusFcIntegrationService siglusFcIntegrationService;
 
   @GetMapping("/requisitions")
-  public Page<FcRequisitionDto> searchRequisitions(@RequestParam String date, Pageable pageable) {
+  public Page<FcRequisitionDto> searchRequisitions(
+      @DateTimeFormat(pattern = "yyyyMMdd") @RequestParam LocalDate date,
+      Pageable pageable) {
     if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
     }
@@ -44,11 +50,13 @@ public class SiglusFcIntegrationController {
   }
 
   @GetMapping("/pods")
-  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(@RequestParam String date,
+  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(
+      @DateTimeFormat(pattern = "yyyyMMdd") @RequestParam LocalDate date,
       Pageable pageable) {
     if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
     }
     return siglusFcIntegrationService.searchProofOfDelivery(date, pageable);
   }
+
 }

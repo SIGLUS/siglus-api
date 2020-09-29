@@ -18,6 +18,7 @@ package org.siglus.siglusapi.repository;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
+import org.siglus.siglusapi.domain.NotificationType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -27,11 +28,13 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 public interface NotificationRepository extends JpaRepository<Notification, UUID>,
     JpaSpecificationExecutor<Notification> {
 
-  default Page<Notification> findViewable(Pageable pageable, UUID facilityId,
+  default Page<Notification> findViewable(Pageable pageable, NotificationType type,
       Specification<Notification> rightFilter) {
     return findAll(
         (root, query, cb) -> cb.and(
+            cb.equal(root.get("type"), type),
             cb.equal(root.get("viewed"), false),
+            cb.equal(root.get("processed"), false),
             rightFilter.toPredicate(root, query, cb)
         ),
         pageable);
@@ -41,8 +44,9 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     Notification notification = findOne(
         (root, query, cb) -> cb.and(
             cb.equal(root.get("refId"), refId),
-            root.<NotificationStatus>get("refStatus").in(statuses),
-            cb.equal(root.get("processed"), false)
+            root.<NotificationStatus>get("status").in(statuses),
+            cb.equal(root.get("processed"), false),
+            cb.equal(root.get("type"), NotificationType.TODO)
         )
     );
     if (notification == null) {

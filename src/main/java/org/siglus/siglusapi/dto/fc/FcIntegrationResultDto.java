@@ -40,4 +40,6 @@ public class FcIntegrationResultDto {
 
   private Integer totalCostTimeInSeconds;
 
+  private String errorMessage;
+
 }

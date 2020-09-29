@@ -152,6 +152,14 @@ public abstract class BaseCommunicationService<T> {
     }
   }
 
+  public Collection<T> findAll() {
+    return findAll("");
+  }
+
+  public Collection<T> findAll(String resourceUrl) {
+    return findAll(resourceUrl, getArrayResultClass());
+  }
+
   /**
    * Return all reference data T objects.
    *

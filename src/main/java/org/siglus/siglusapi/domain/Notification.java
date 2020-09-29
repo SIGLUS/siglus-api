@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -49,22 +49,15 @@ public class Notification extends BaseEntity {
   private UUID refId;
 
   @Enumerated(EnumType.STRING)
-  private NotificationStatus refStatus;
+  private NotificationStatus status;
 
-  private UUID refFacilityId;
+  private UUID facilityId;
 
-  private UUID refProgramId;
+  private UUID programId;
 
   private Boolean emergency;
 
-  private String sourceFacilityName;
-
-  /**
-   * id of next-step node facility
-   */
-  private UUID notifyFacilityId;
-
-  private UUID supervisoryNodeId;
+  private UUID notifySupervisoryNodeId;
 
   private Boolean viewed = false;
 
@@ -72,7 +65,7 @@ public class Notification extends BaseEntity {
 
   private UUID viewedUserId;
 
-  private LocalDateTime viewedDate;
+  private ZonedDateTime viewedDate;
 
   /**
    * current-step operator id(user id)
@@ -82,6 +75,12 @@ public class Notification extends BaseEntity {
 
   @Column(updatable = false)
   @CreatedDate
-  private LocalDateTime createDate;
+  private ZonedDateTime createdDate;
 
+  @Enumerated(EnumType.STRING)
+  private NotificationType type;
+
+  private UUID processingPeriodId;
+
+  private UUID requestingFacilityId;
 }

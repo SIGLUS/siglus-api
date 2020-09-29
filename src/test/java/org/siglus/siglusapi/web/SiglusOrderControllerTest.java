@@ -18,7 +18,12 @@ package org.siglus.siglusapi.web;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -29,6 +34,9 @@ import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockServletContext;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -82,6 +90,33 @@ public class SiglusOrderControllerTest {
 
     // then
     verify(siglusOrderService).searchOrders(params, pageable);
+  }
+
+  @Test
+  public void shouldCallOrderControllerWhenPrintOrders() throws IOException {
+    // given
+    ServletContext servletContext = new MockServletContext("");
+    HttpServletRequest httpServletRequest = new MockHttpServletRequest(servletContext);
+    UUID id = UUID.randomUUID();
+    String format = "";
+
+    // when
+    controller.printOrder(httpServletRequest, id, format);
+
+    verify(actualController).printOrder(httpServletRequest, id, format);
+  }
+
+  @Test
+  public void shouldCallOrderControllerWhenExportOrders() throws IOException {
+    // given
+    HttpServletResponse httpServletResponse = new MockHttpServletResponse();
+    UUID orderId = UUID.randomUUID();
+    String type = "";
+
+    // when
+    controller.export(orderId, type, httpServletResponse);
+
+    verify(actualController).export(orderId, type, httpServletResponse);
   }
 
 }

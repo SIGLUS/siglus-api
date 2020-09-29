@@ -27,4 +27,6 @@ public interface SupervisoryNodeRepository extends JpaRepository<SupervisoryNode
   @Query(value = "select s.* from referencedata.supervisory_nodes s, referencedata.facilities f"
       + " where s.facilityid = f.id and f.typeid = :facilityTypeId", nativeQuery = true)
   Set<SupervisoryNode> findAllByFacilityTypeId(@Param("facilityTypeId") UUID facilityTypeId);
+
+  Set<SupervisoryNode> findAllByFacilityId(UUID facilityId);
 }

@@ -28,6 +28,12 @@ import lombok.NoArgsConstructor;
 @Builder
 public class FcProofOfDeliveryDto {
 
+  private String issueVoucherNumber;
+
+  private String orderNumber;
+
+  private String facilityCode;
+
   private String requisitionNumber;
 
   private String deliveredBy;

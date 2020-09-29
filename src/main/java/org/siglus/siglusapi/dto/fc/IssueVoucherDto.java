@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.dto.fc;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,13 +32,13 @@ public class IssueVoucherDto {
 
   private String supplyOrderNumber;
 
-  private Date shippingDate;
+  private ZonedDateTime shippingDate;
 
   private String clientName;
 
   private String sourceOfSupplyOrder;
 
-  private Date lastUpdatedAt;
+  private ZonedDateTime lastUpdatedAt;
 
   private String clientCode;
 

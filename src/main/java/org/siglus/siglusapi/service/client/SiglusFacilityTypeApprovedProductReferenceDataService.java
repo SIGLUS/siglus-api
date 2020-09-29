@@ -13,13 +13,32 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.service.client;
 
-import java.util.UUID;
-import org.siglus.siglusapi.domain.RegimenDispatchLine;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.siglus.common.service.client.BaseReferenceDataService;
+import org.siglus.siglusapi.dto.ApprovedProductDto;
+import org.springframework.stereotype.Service;
 
+@Service
+public class SiglusFacilityTypeApprovedProductReferenceDataService extends
+    BaseReferenceDataService<ApprovedProductDto> {
 
-public interface RegimenDispatchLineRepository
-    extends JpaRepository<RegimenDispatchLine, UUID> {
+  @Override
+  protected String getUrl() {
+    return "/api/facilityTypeApprovedProducts/";
+  }
+
+  @Override
+  protected Class<ApprovedProductDto> getResultClass() {
+    return ApprovedProductDto.class;
+  }
+
+  @Override
+  protected Class<ApprovedProductDto[]> getArrayResultClass() {
+    return ApprovedProductDto[].class;
+  }
+
+  public ApprovedProductDto create(ApprovedProductDto approvedProductDto) {
+    return postResult("", approvedProductDto, getResultClass());
+  }
 }

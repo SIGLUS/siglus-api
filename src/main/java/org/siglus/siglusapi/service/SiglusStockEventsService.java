@@ -15,10 +15,12 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_CODE_IS_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 
+import com.google.common.collect.Maps;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -27,8 +29,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
@@ -57,6 +61,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class SiglusStockEventsService {
 
   @Autowired
@@ -165,7 +170,7 @@ public class SiglusStockEventsService {
     return null;
   }
 
-  public void createAndFillLotId(StockEventDto eventDto) {
+  public void createAndFillLotId(StockEventDto eventDto, boolean updateExpirationDate) {
     final List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     Map<UUID, OrderableDto> orderableDtos = orderableReferenceDataService.findByIds(
         lineItems.stream().map(StockEventLineItemDto::getOrderableId).collect(Collectors.toSet()))
@@ -177,7 +182,7 @@ public class SiglusStockEventsService {
       if (orderableIsNotKit) {
         fillLotIdForNormalOrderable(stockEventLineItem,
             orderableDtos.get(stockEventLineItem.getOrderableId()).getIdentifiers().get(
-                FieldConstants.TRADE_ITEM));
+                FieldConstants.TRADE_ITEM), updateExpirationDate);
       } else {
         kitOrderableShouldNotContainLotInfo(stockEventLineItem);
       }
@@ -185,14 +190,15 @@ public class SiglusStockEventsService {
   }
 
   private void fillLotIdForNormalOrderable(StockEventLineItemDto stockEventLineItem,
-      String tradeItemId) {
+      String tradeItemId, boolean updateExpirationDate) {
     if (stockEventLineItem.getLotId() == null) {
       if (StringUtils.isBlank(stockEventLineItem.getLotCode())) {
         throw new ValidationMessageException(
             new Message(ERROR_LOT_CODE_IS_EMPTY));
       }
       UUID newLotId = createNewLotOrReturnExisted(stockEventLineItem.getLotCode(),
-          stockEventLineItem.getExpirationDate(), tradeItemId).getId();
+          stockEventLineItem.getExpirationDate(), tradeItemId, updateExpirationDate).getId();
+
       stockEventLineItem.setLotId(newLotId);
     }
   }
@@ -205,32 +211,39 @@ public class SiglusStockEventsService {
     }
   }
 
-  public LotDto createNewLotOrReturnExisted(String lotCode, LocalDate expirationDate,
-      String tradeItemId) {
-    LotSearchParams lotSearchParams = new LotSearchParams();
-    lotSearchParams.setLotCode(lotCode);
-    List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
-    if (CollectionUtils.isNotEmpty(existedLots)) {
-      return existedLots.get(0);
-    }
-    LotDto lotDto = new LotDto();
-    if (tradeItemId != null) {
-      lotDto.setTradeItemId(UUID.fromString(tradeItemId));
-    } else {
+  private LotDto createNewLotOrReturnExisted(String lotCode, LocalDate expirationDate,
+      String tradeItemId, Boolean updateExpirationDate) {
+    if (null == tradeItemId) {
       throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
     }
+    LotSearchParams lotSearchParams = new LotSearchParams();
+    lotSearchParams.setLotCode(lotCode);
+    lotSearchParams.setTradeItemId(newArrayList(UUID.fromString(tradeItemId)));
+    List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
+    if (CollectionUtils.isNotEmpty(existedLots)) {
+      LotDto existedLot = existedLots.get(0);
+      if (updateExpirationDate && !existedLot.getExpirationDate().isEqual(expirationDate)) {
+        log.info("lot existed date is different: {}", lotCode);
+      }
+      return existedLot;
+    }
+    LotDto lotDto = new LotDto();
+    lotDto.setTradeItemId(UUID.fromString(tradeItemId));
     lotDto.setManufactureDate(dateHelper.getCurrentDate());
     lotDto.setExpirationDate(expirationDate);
     lotDto.setActive(true);
     lotDto.setLotCode(lotCode);
-    return lotReferenceDataService.createLot(lotDto);
+    return lotReferenceDataService.saveLot(lotDto);
   }
 
   private void addStockCardCreateTime(StockEventDto eventDto) {
     List<StockCard> stockCards = stockCardRepository.findByFacilityId(eventDto.getFacilityId());
+    Set<UUID> stockCardIds = stockCards.stream().map(BaseEntity::getId).collect(Collectors.toSet());
+    Map<UUID, StockCardExtension> stockCardIdToExtensionMap = Maps
+        .uniqueIndex(stockCardExtensionRepository.findByStockCardIdIn(stockCardIds),
+            StockCardExtension::getStockCardId);
     stockCards.forEach(stockCard -> {
-      StockCardExtension extension =
-          stockCardExtensionRepository.findByStockCardId(stockCard.getId());
+      StockCardExtension extension = stockCardIdToExtensionMap.get(stockCard.getId());
       if (extension == null) {
         StockCardExtension stockCardExtension = StockCardExtension.builder()
             .stockCardId(stockCard.getId())

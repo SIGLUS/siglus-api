@@ -13,27 +13,27 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.service.client;
 
-import lombok.Data;
-import org.openlmis.requisition.dto.BaseDto;
-import org.siglus.siglusapi.domain.RegimenDispatchLine;
-import org.springframework.beans.BeanUtils;
+import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
+import org.springframework.stereotype.Service;
 
-@Data
-public class RegimenDispatchLineDto extends BaseDto {
+@Service
+public class SiglusStockCardLineItemReasons  extends
+    BaseStockManagementService<StockCardLineItemReasonDto>  {
 
-  private String code;
-  private String name;
-  private Integer displayOrder;
+  @Override
+  protected String getUrl() {
+    return "/api/stockCardLineItemReasons/";
+  }
 
-  public static RegimenDispatchLineDto from(RegimenDispatchLine regimenDispatchLine) {
-    if (regimenDispatchLine == null) {
-      return null;
-    }
-    RegimenDispatchLineDto regimenDispatchLineDto = new RegimenDispatchLineDto();
-    BeanUtils.copyProperties(regimenDispatchLine, regimenDispatchLineDto);
-    regimenDispatchLineDto.setCode(regimenDispatchLine.getCode().toString());
-    return regimenDispatchLineDto;
+  @Override
+  protected Class<StockCardLineItemReasonDto> getResultClass() {
+    return StockCardLineItemReasonDto.class;
+  }
+
+  @Override
+  protected Class<StockCardLineItemReasonDto[]> getArrayResultClass() {
+    return StockCardLineItemReasonDto[].class;
   }
 }

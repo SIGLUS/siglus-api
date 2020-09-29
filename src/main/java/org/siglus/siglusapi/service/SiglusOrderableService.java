@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.siglus.siglusapi.constant.FieldConstants.CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
 
@@ -36,6 +37,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 @Service
 public class SiglusOrderableService {
@@ -66,8 +69,9 @@ public class SiglusOrderableService {
     return orderableDtoPage;
   }
 
-  public List<OrderableExpirationDateDto> getOrderableExpirationDate(Set<UUID> orderableIds) {
-    return siglusOrderableRepository.findExpirationDate(orderableIds);
+  public List<OrderableExpirationDateDto> getOrderableExpirationDate(Set<UUID> orderableIds,
+      UUID facilityId) {
+    return siglusOrderableRepository.findExpirationDate(orderableIds, facilityId);
   }
 
   public Page<OrderableDto> additionalToAdd(UUID programId, QueryOrderableSearchParams searchParams,
@@ -101,4 +105,19 @@ public class SiglusOrderableService {
     }
     return Pagination.getPage(orderableDtos, pageable);
   }
+
+  public OrderableDto getOrderableByCode(String productCode) {
+    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
+        Pagination.NO_PAGINATION);
+    MultiValueMap<String, Object> queryParams = new LinkedMultiValueMap<>();
+    queryParams.set(CODE, productCode);
+    QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
+    List<OrderableDto> orderableDtos = orderableReferenceDataService
+        .searchOrderables(searchParams, noPagination).getContent();
+    return orderableDtos.stream()
+        .filter(orderableDto -> productCode.equals(orderableDto.getProductCode()))
+        .findFirst()
+        .orElse(null);
+  }
+
 }

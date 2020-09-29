@@ -15,10 +15,17 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PodExtensionRepository extends JpaRepository<PodExtension, UUID> {
+
+  public PodExtension findByClientCodeAndIssueVoucherNumber(String clientCode,
+      String issueVoucherNumber);
+
+  List<PodExtension> findByShipmentIdIn(Set<UUID> ids);
 
 }

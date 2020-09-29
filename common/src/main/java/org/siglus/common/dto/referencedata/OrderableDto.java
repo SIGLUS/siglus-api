@@ -15,18 +15,22 @@
 
 package org.siglus.common.dto.referencedata;
 
+import static com.google.common.collect.Maps.newHashMap;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.commons.collections.CollectionUtils;
 import org.siglus.common.domain.referencedata.Dispensable;
 import org.siglus.common.domain.referencedata.Orderable;
 
@@ -38,6 +42,8 @@ import org.siglus.common.domain.referencedata.Orderable;
 @ToString(callSuper = true)
 public final class OrderableDto extends BaseDto implements Orderable.Importer,
     Orderable.Exporter {
+
+  public static final String TRADE_ITEM = "tradeItem";
 
   private String productCode;
 
@@ -116,7 +122,21 @@ public final class OrderableDto extends BaseDto implements Orderable.Importer,
   }
 
   public boolean getIsKit() {
-    return !children.isEmpty();
+    return CollectionUtils.isNotEmpty(children);
+  }
+
+  public void setTradeItemIdentifier(UUID tradeItemId) {
+    if (null == identifiers) {
+      identifiers = newHashMap();
+    }
+    identifiers.put(TRADE_ITEM, tradeItemId.toString());
+  }
+
+  public String getTradeItemIdentifier() {
+    if (null == identifiers) {
+      identifiers = newHashMap();
+    }
+    return identifiers.get(TRADE_ITEM);
   }
 
 }

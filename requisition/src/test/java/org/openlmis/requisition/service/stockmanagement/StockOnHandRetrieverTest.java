@@ -17,11 +17,13 @@ package org.openlmis.requisition.service.stockmanagement;
 
 import java.util.Map;
 import java.util.UUID;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public abstract class StockOnHandRetrieverTest {
 
   @Test
+  @Ignore
   public void shouldGetStockOnHand() {
     Map<UUID, Integer> stockOnHands = getRetriever().get();
     assertStockOnHands(stockOnHands);

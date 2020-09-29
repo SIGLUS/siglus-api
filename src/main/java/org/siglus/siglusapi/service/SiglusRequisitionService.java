@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.reducing;
 import static java.util.stream.Collectors.toList;
@@ -22,20 +23,25 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.emptyCollection;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.openlmis.fulfillment.domain.OrderStatus.CLOSED;
+import static org.openlmis.fulfillment.domain.OrderStatus.FULFILLING;
+import static org.openlmis.fulfillment.domain.OrderStatus.ORDERED;
+import static org.openlmis.fulfillment.domain.OrderStatus.PARTIALLY_FULFILLED;
+import static org.openlmis.fulfillment.domain.OrderStatus.RECEIVED;
+import static org.openlmis.fulfillment.domain.OrderStatus.SHIPPED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED_WITHOUT_ORDER;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
-import static org.openlmis.requisition.dto.OrderStatus.SHIPPED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.openlmis.requisition.service.notification.NotificationChannelDto.EMAIL;
 import static org.siglus.siglusapi.constant.PaginationConstants.UNPAGED;
 import static org.siglus.siglusapi.i18n.SimamMessageKeys.REQUISITION_EMAIL_CONTENT_PRE;
 import static org.siglus.siglusapi.i18n.SimamMessageKeys.REQUISITION_EMAIL_SUBJECT;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -55,6 +61,11 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.service.OrderSearchParams;
+import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.requisition.domain.BaseEntity;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -66,12 +77,13 @@ import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BaseRequisitionDto;
+import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
+import org.openlmis.requisition.dto.BasicRequisitionTemplateColumnDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.IdealStockAmountDto;
 import org.openlmis.requisition.dto.MetadataDto;
-import org.openlmis.requisition.dto.OrderDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -97,7 +109,6 @@ import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.requisition.service.fulfillment.OrderFulfillmentService;
 import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
@@ -117,9 +128,13 @@ import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
+import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.exception.NotFoundException;
+import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItemDraft;
@@ -146,16 +161,17 @@ import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionReposit
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.service.fc.FcIntegrationCmmCpService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -231,9 +247,6 @@ public class SiglusRequisitionService {
   private SiglusUsageReportService siglusUsageReportService;
 
   @Autowired
-  private OrderFulfillmentService orderFulfillmentService;
-
-  @Autowired
   private ShipmentFulfillmentService shipmentFulfillmentService;
 
   @Autowired
@@ -287,8 +300,22 @@ public class SiglusRequisitionService {
   @Autowired
   private RequisitionExtensionRepository requisitionExtensionRepository;
 
+  @Autowired
+  private FcIntegrationCmmCpService fcIntegrationCmmCpService;
+
+  @Autowired
+  private OrderableKitRepository orderableKitRepository;
+
+  @Autowired
+  private OrderExternalRepository orderExternalRepository;
+
+  @Autowired
+  private OrderService orderService;
+
   @Value("${service.url}")
   private String serviceUrl;
+
+  public static final String SUGGESTED_QUANTITY_COLUMN = "suggestedQuantity";
 
   @Transactional
   public SiglusRequisitionDto updateRequisition(UUID requisitionId,
@@ -316,6 +343,11 @@ public class SiglusRequisitionService {
             physicalInventoryDateStr, request, response);
     SiglusRequisitionDto siglusRequisitionDto = siglusUsageReportService.initiateUsageReport(v2Dto);
     initiateRequisitionNumber(siglusRequisitionDto);
+    List<BaseRequisitionLineItemDto> lineItems = siglusRequisitionDto.getLineItems();
+    initiateExpirationDate(lineItems, facilityId);
+    initiateSuggestedQuantity(lineItems, facilityId, siglusRequisitionDto.getProcessingPeriodId(),
+        siglusRequisitionDto.getProgramId(), siglusRequisitionDto.getTemplate());
+    saveLineItemExtensions(lineItems);
     return siglusRequisitionDto;
   }
 
@@ -361,7 +393,15 @@ public class SiglusRequisitionService {
         .equals(existedRequisition.getFacilityId());
     boolean isExternalApprove = isApprove && !isInternalFacility;
 
-    return buildSiglusLineItem(lineItemList, isExternalApprove);
+    List<SiglusRequisitionLineItemDto> siglusLineItems = buildSiglusLineItem(lineItemList,
+        isExternalApprove);
+    List<BaseRequisitionLineItemDto> lineItems = siglusLineItems.stream()
+        .map(item -> (BaseRequisitionLineItemDto) item.getLineItem()).collect(toList());
+    RequisitionTemplate template = existedRequisition.getTemplate();
+    initiateExpirationDate(lineItems, facilityId);
+    initiateSuggestedQuantity(lineItems, facilityId, existedRequisition.getProcessingPeriodId(),
+        programId, BasicRequisitionTemplateDto.newInstance(template));
+    return siglusLineItems;
   }
 
   public SiglusRequisitionDto searchRequisition(UUID requisitionId) {
@@ -373,6 +413,7 @@ public class SiglusRequisitionService {
     setLineItemExtension(requisitionDto);
     RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
 
+    filterKitProductsIfInternal(requisitionDto);
     filterProductsIfEmergency(requisitionDto);
     SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId,
         extension, requisitionDto);
@@ -436,7 +477,6 @@ public class SiglusRequisitionService {
         request, response);
     BasicRequisitionDto basicRequisitionDto = requisitionController
         .approveRequisition(requisitionId, request, response);
-    notificationService.postApprove(basicRequisitionDto);
     UUID facilityId = basicRequisitionDto.getFacility().getId();
     UUID programId = basicRequisitionDto.getProgram().getId();
     RequisitionExtension requisitionExtension = requisitionExtensionRepository
@@ -466,18 +506,30 @@ public class SiglusRequisitionService {
 
   private void revertRequisition(UUID requisitionId) {
     revertRequisitionLineItem(requisitionId);
-    deleteExtensionForRequisition(requisitionId);
+    revertRequisitionLineItemExtension(requisitionId);
     deleteSiglusDraft(requisitionId);
   }
 
   private void revertRequisitionLineItem(UUID requisitionId) {
-    Requisition requisition =  requisitionRepository.findOne(requisitionId);
+    Requisition requisition = requisitionRepository.findOne(requisitionId);
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       requisitionLineItem.setApprovedQuantity(null);
       requisitionLineItem.setRemarks(null);
       requisitionLineItem.setSkipped(false);
     });
     requisitionRepository.save(requisition);
+  }
+
+  private void revertRequisitionLineItemExtension(UUID requisitionId) {
+    Requisition requisition = requisitionRepository.findOne(requisitionId);
+    List<UUID> ids = findLineItemIds(requisition);
+    List<RequisitionLineItemExtension> extensions = ids.isEmpty() ? newArrayList() :
+        lineItemExtensionRepository.findLineItems(ids);
+    extensions.forEach(extension -> extension.setAuthorizedQuantity(null));
+    if (CollectionUtils.isNotEmpty(extensions)) {
+      log.info("clear line item extension authorizedQuantity: {}", extensions);
+      lineItemExtensionRepository.save(extensions);
+    }
   }
 
   private void notifySimamWhenApprove(SiglusRequisitionDto siglusRequisitionDto, UUID facilityId,
@@ -780,11 +832,16 @@ public class SiglusRequisitionService {
             findLineItemExtension(extensions, dto);
         if (requisitionLineItemExtension != null) {
           requisitionLineItemExtension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
+          requisitionLineItemExtension.setSuggestedQuantity(dto.getSuggestedQuantity());
+          requisitionLineItemExtension.setExpirationDate(dto.getExpirationDate());
           updateExtension.add(requisitionLineItemExtension);
-        } else if (dto != null && dto.getAuthorizedQuantity() != null) {
+        } else if (dto != null && (dto.getAuthorizedQuantity() != null
+            || dto.getSuggestedQuantity() != null)) {
           RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
           extension.setRequisitionLineItemId(lineItem.getId());
           extension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
+          extension.setSuggestedQuantity(dto.getSuggestedQuantity());
+          extension.setExpirationDate(dto.getExpirationDate());
           updateExtension.add(extension);
         }
       });
@@ -824,7 +881,7 @@ public class SiglusRequisitionService {
       LocalDate startDateForCalculateAvg;
       LocalDate endDateForCalculateAvg = requisition.getActualEndDate();
       ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
-      if (!CollectionUtils.isEmpty(previousRequisitions)) {
+      if (CollectionUtils.isNotEmpty(previousRequisitions)) {
         Set<UUID> periodIds = previousRequisitions.stream()
             .map(Requisition::getProcessingPeriodId)
             .collect(toSet());
@@ -844,7 +901,7 @@ public class SiglusRequisitionService {
         }
       } else {
         startDateForCalculateAvg = period.getStartDate();
-        periods = Lists.newArrayList(period);
+        periods = newArrayList(period);
       }
 
       stockCardRangeSummariesToAverage = getStockCardRangeSummaryDtos(facility, program.getId(),
@@ -963,20 +1020,59 @@ public class SiglusRequisitionService {
     return numberOfPreviousPeriodsToAverage;
   }
 
-  private List<OrderableExpirationDateDto> findOrderableIds(
-      List<RequisitionLineItem> requisitionLineItems) {
-    Set<UUID> orderableIds = requisitionLineItems
-        .stream()
-        .map(item -> item.getOrderable().getId())
-        .collect(toSet());
+  private void initiateExpirationDate(List<BaseRequisitionLineItemDto> lineItems, UUID facilityId) {
+    Set<UUID> orderableIds = lineItems.stream()
+        .map(lineItem -> {
+          RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
+          return lineItemV2Dto.getOrderable().getId();
+        })
+        .collect(Collectors.toSet());
+    List<OrderableExpirationDateDto> expirationDateDtos = findExpirationDates(orderableIds,
+        facilityId);
+    lineItems.forEach(lineItem -> {
+      RequisitionLineItemV2Dto lineDto = (RequisitionLineItemV2Dto) lineItem;
+      setOrderableExpirationDate(expirationDateDtos, lineDto);
+    });
+  }
+
+  private void saveLineItemExtensions(List<BaseRequisitionLineItemDto> lineItems) {
+    if (CollectionUtils.isEmpty(lineItems)) {
+      return;
+    }
+    List<UUID> lineItemIds = lineItems.stream().map(BaseDto::getId).collect(toList());
+    List<RequisitionLineItemExtension> extensions = lineItemExtensionRepository
+        .findLineItems(lineItemIds);
+    Map<UUID, RequisitionLineItemExtension> lineItemIdToEntityMap = Maps
+        .uniqueIndex(extensions, RequisitionLineItemExtension::getRequisitionLineItemId);
+    List<RequisitionLineItemExtension> extensionsToUpdate = newArrayList();
+    lineItems.forEach(lineItem -> {
+      RequisitionLineItemExtension existingExtension = lineItemIdToEntityMap.get(lineItem.getId());
+      if (null == existingExtension) {
+        RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
+        extension.setAuthorizedQuantity(lineItem.getAuthorizedQuantity());
+        extension.setExpirationDate(lineItem.getExpirationDate());
+        extension.setSuggestedQuantity(lineItem.getSuggestedQuantity());
+        extension.setRequisitionLineItemId(lineItem.getId());
+        extensionsToUpdate.add(extension);
+      } else {
+        existingExtension.setAuthorizedQuantity(lineItem.getAuthorizedQuantity());
+        existingExtension.setExpirationDate(lineItem.getExpirationDate());
+        existingExtension.setSuggestedQuantity(lineItem.getSuggestedQuantity());
+        extensionsToUpdate.add(existingExtension);
+      }
+    });
+    log.info("save line item extensions: {}", extensionsToUpdate);
+    lineItemExtensionRepository.save(extensionsToUpdate);
+  }
+
+  private List<OrderableExpirationDateDto> findExpirationDates(Set<UUID> orderableIds,
+      UUID facilityId) {
     return orderableIds.isEmpty() ? new ArrayList<>() :
-        siglusOrderableService.getOrderableExpirationDate(orderableIds);
+        siglusOrderableService.getOrderableExpirationDate(orderableIds, facilityId);
   }
 
   private List<SiglusRequisitionLineItemDto> buildSiglusLineItem(
       List<RequisitionLineItem> lineItemList, boolean isExternalApprove) {
-    List<OrderableExpirationDateDto> expirationDateDtos = findOrderableIds(lineItemList);
-
     Set<VersionEntityReference> references = lineItemList.stream()
         .map(line -> {
           VersionEntityReference reference = line.getFacilityTypeApprovedProduct();
@@ -1007,7 +1103,6 @@ public class SiglusRequisitionService {
           RequisitionLineItemV2Dto lineDto = new RequisitionLineItemV2Dto();
           lineDto.setServiceUrl(serviceUrl);
           line.export(lineDto, orderable, approvedProduct);
-          setOrderableExpirationDate(expirationDateDtos, orderable, lineDto);
           if (isExternalApprove) {
             lineDto.setRequestedQuantity(0);
             lineDto.setAuthorizedQuantity(0);
@@ -1027,17 +1122,29 @@ public class SiglusRequisitionService {
   }
 
   private void setOrderableExpirationDate(List<OrderableExpirationDateDto> expirationDateDtos,
-      OrderableDto orderable, RequisitionLineItemV2Dto lineDto) {
+      RequisitionLineItemV2Dto lineDto) {
     OrderableExpirationDateDto expirationDate = expirationDateDtos
         .stream()
         .filter(expirationDateDto ->
-            expirationDateDto.getOrderableId().equals(orderable.getId()))
+            expirationDateDto.getOrderableId().equals(lineDto.getOrderable().getId()))
         .findFirst()
         .orElse(null);
     if (null != expirationDate) {
       lineDto.setExpirationDate(expirationDate.getExpirationDate());
     } else {
       lineDto.setExpirationDate(null);
+    }
+  }
+
+  private void filterKitProductsIfInternal(RequisitionV2Dto requisition) {
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    boolean isInternalFacility = userDto.getHomeFacilityId()
+        .equals(requisition.getFacilityId());
+    if (isInternalFacility) {
+      List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
+          .map(Orderable::getId).collect(toList());
+      requisition.getAvailableProducts()
+          .removeIf(product -> kitIds.contains(product.getId()));
     }
   }
 
@@ -1100,30 +1207,70 @@ public class SiglusRequisitionService {
     Map<UUID, Long> reqProductQuantityMap = requisition.getLineItems().stream()
         .filter(lineItem -> !lineItem.getSkipped() && lineItem.getApprovedQuantity() > 0)
         .collect(groupingBy(lineItem -> lineItem.getOrderableIdentity().getId(),
-            reducing(0L, req -> req.getApprovedQuantity().longValue(), Long::sum)));
-    Map<UUID, Long> shipmentProductQuantityMap = searchOrders(requisition).stream()
-        .filter(order -> order.getStatus() == SHIPPED)
-        .map(BaseDto::getId)
+            reducing(0L, req -> req.getPacksToShip().longValue(), Long::sum)));
+
+    List<Order> orders = searchOrders(requisition);
+    Map<UUID, Long> shipmentProductQuantityMap = orders.stream()
+        .filter(this::hasShipped)
+        .map(Order::getId)
         .map(shipmentFulfillmentService::getShipments)
         .flatMap(Collection::stream)
         .map(ShipmentDto::getLineItems)
         .flatMap(Collection::stream)
         .collect(groupingBy(lineItem -> lineItem.getOrderable().getId(),
             reducing(0L, ShipmentLineItemDto::getQuantityShipped, Long::sum)));
-    return reqProductQuantityMap.entrySet().stream()
+    Set<UUID> notFullyShippedProductIds = reqProductQuantityMap.entrySet().stream()
         .filter(entry -> !shipmentProductQuantityMap.containsKey(entry.getKey())
             || entry.getValue() > shipmentProductQuantityMap.get(entry.getKey()))
         .map(Entry::getKey)
         .collect(Collectors.toSet());
+
+    // order may not have shipment
+    Set<UUID> inProgressProductIds = orders.stream()
+        .filter(this::hasNotShipped)
+        .map(Order::getOrderLineItems)
+        .flatMap(Collection::stream)
+        .map(OrderLineItem::getOrderable)
+        .map(org.openlmis.fulfillment.domain.VersionEntityReference::getId)
+        .collect(toSet());
+    notFullyShippedProductIds.retainAll(inProgressProductIds);
+
+    return notFullyShippedProductIds;
   }
 
-  private List<OrderDto> searchOrders(BaseRequisitionDto requisition) {
-    return orderFulfillmentService
-        .search(requisition.getSupplyingFacility(), requisition.getFacilityId(),
-            requisition.getProgramId(), requisition.getProcessingPeriodId(), null/*ignore status*/)
+  private boolean hasNotShipped(Order order) {
+    org.openlmis.fulfillment.domain.OrderStatus status = order.getStatus();
+    return status == ORDERED || status == PARTIALLY_FULFILLED || status == CLOSED
+        || status == FULFILLING;
+  }
+
+  private boolean hasShipped(Order order) {
+    org.openlmis.fulfillment.domain.OrderStatus status = order.getStatus();
+    return status == SHIPPED || status == RECEIVED;
+  }
+
+  private List<Order> searchOrders(BaseRequisitionDto requisition) {
+    OrderSearchParams params = new OrderSearchParams();
+    params.setSupplyingFacilityId(requisition.getSupplyingFacility());
+    params.setRequestingFacilityId(requisition.getFacilityId());
+    params.setProgramId(requisition.getProgramId());
+    params.setProcessingPeriodId(requisition.getProcessingPeriodId());
+    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+
+    List<OrderExternal> orderExternals = orderExternalRepository
+        .findByRequisitionId(requisition.getId());
+    // basicOrderDto don't have orderLineItems
+    return orderService.searchOrders(params, pageable).getContent()
         .stream()
-        .filter(order -> requisition.getId().equals(order.getExternalId()))
+        .filter(order -> isOrderFromRequisition(order, requisition.getId(), orderExternals))
         .collect(Collectors.toList());
+  }
+
+  private boolean isOrderFromRequisition(Order order, UUID requisitionId,
+      List<OrderExternal> orderExternals) {
+    boolean isSubOrder = orderExternals.stream().anyMatch(orderExternal ->
+        orderExternal.getId().equals(order.getExternalId()));
+    return requisitionId.equals(order.getExternalId()) || isSubOrder;
   }
 
   private void setAvailableProductsForApprovePage(SiglusRequisitionDto siglusRequisitionDto) {
@@ -1188,6 +1335,8 @@ public class SiglusRequisitionService {
         if (itemExtension != null) {
           RequisitionLineItemV2Dto lineItemV2Dto = (RequisitionLineItemV2Dto) lineItem;
           lineItemV2Dto.setAuthorizedQuantity(itemExtension.getAuthorizedQuantity());
+          lineItemV2Dto.setSuggestedQuantity(itemExtension.getSuggestedQuantity());
+          lineItemV2Dto.setExpirationDate(itemExtension.getExpirationDate());
         }
       });
     }
@@ -1294,9 +1443,8 @@ public class SiglusRequisitionService {
       regimenDataProcessor.setCustomRegimen(dto);
       dto.setRegimenLineItems(RegimenLineItemDraft.getRegimenLineDtos(
           draft.getRegimenLineItemDrafts(), regimenDataProcessor.getRegimenDtoMap()));
-      dto.setRegimenDispatchLineItems(RegimenSummaryLineItemDraft.getRegimenSummaryLineDtos(
-          draft.getRegimenSummaryLineItemDrafts(),
-          regimenDataProcessor.getRegimenDispatchLineDtoMap()));
+      dto.setRegimenSummaryLineItems(RegimenSummaryLineItemDraft.getRegimenSummaryLineDtos(
+          draft.getRegimenSummaryLineItemDrafts()));
     }
 
   }
@@ -1307,6 +1455,29 @@ public class SiglusRequisitionService {
             siglusRequisitionDto.getEmergency(), siglusRequisitionDto.getFacilityId());
     siglusRequisitionDto.setRequisitionNumber(
         siglusRequisitionExtensionService.formatRequisitionNumber(requisitionExtension));
+  }
+
+  private void initiateSuggestedQuantity(List<BaseRequisitionLineItemDto> lineItems,
+      UUID facilityId, UUID processingPeriodId, UUID programId,
+      BasicRequisitionTemplateDto template) {
+    Map<String, BasicRequisitionTemplateColumnDto> columnsMap = template.getColumnsMap();
+    if (null == columnsMap) {
+      return;
+    }
+    BasicRequisitionTemplateColumnDto column = columnsMap.get(SUGGESTED_QUANTITY_COLUMN);
+    if (null == column) {
+      return;
+    }
+    if (Boolean.FALSE.equals(column.getIsDisplayed()) || null == column.getOption()) {
+      return;
+    }
+    if ("cp".equals(column.getOption().getOptionName())) {
+      fcIntegrationCmmCpService.initiateSuggestedQuantityByCp(lineItems, facilityId,
+          processingPeriodId, programId);
+    } else if ("cmm".equals(column.getOption().getOptionName())) {
+      fcIntegrationCmmCpService.initiateSuggestedQuantityByCmm(lineItems, facilityId,
+          processingPeriodId);
+    }
   }
 
 }

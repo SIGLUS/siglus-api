@@ -20,6 +20,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
@@ -116,9 +117,9 @@ public class SiglusOrderableServiceTest {
   public void shouldCallFindExpirationDateWhenGetOrderableExpirationDate() {
     Set<UUID> orderableIds = newHashSet(orderableId);
 
-    siglusOrderableService.getOrderableExpirationDate(orderableIds);
+    siglusOrderableService.getOrderableExpirationDate(orderableIds, facilityId);
 
-    verify(siglusOrderableRepository).findExpirationDate(orderableIds);
+    verify(siglusOrderableRepository).findExpirationDate(orderableIds, facilityId);
   }
 
   @Test
@@ -201,5 +202,22 @@ public class SiglusOrderableServiceTest {
     assertEquals(2, orderableDtos.size());
     assertEquals("01CODE", orderableDtos.get(0).getProductCode());
     assertEquals("02CODE", orderableDtos.get(1).getProductCode());
+  }
+
+  @Test
+  public void shouldGetOrderableByCode() {
+    // given
+    OrderableDto orderableDto1 = new OrderableDto();
+    orderableDto1.setProductCode("0CODE");
+    OrderableDto orderableDto2 = new OrderableDto();
+    orderableDto2.setProductCode("10CODE");
+    when(orderableReferenceDataService.searchOrderables(any(), any())).thenReturn(
+        Pagination.getPage(newArrayList(orderableDto1, orderableDto2), pageable, 2));
+
+    // when
+    OrderableDto orderableDto = siglusOrderableService.getOrderableByCode("0CODE");
+
+    // then
+    assertEquals("0CODE", orderableDto.getProductCode());
   }
 }

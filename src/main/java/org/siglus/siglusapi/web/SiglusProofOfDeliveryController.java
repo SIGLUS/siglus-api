@@ -23,6 +23,8 @@ import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
 import org.siglus.siglusapi.service.SiglusNotificationService;
 import org.siglus.siglusapi.service.SiglusProofOfDeliveryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,6 +50,9 @@ public class SiglusProofOfDeliveryController {
   @Autowired
   private SiglusProofOfDeliveryService proofOfDeliveryService;
 
+  @Autowired
+  private ProofOfDeliveryController proofOfDeliveryController;
+
   /**
    * why we redo this api? to support #330?<br> update status of notification of pod after confirm
    * pod
@@ -61,7 +66,7 @@ public class SiglusProofOfDeliveryController {
     ProofOfDeliveryDto proofOfDeliveryDto = actualController
         .updateProofOfDelivery(proofOfDeliveryId, dto, authentication);
     if (proofOfDeliveryDto.getStatus() == ProofOfDeliveryStatus.CONFIRMED) {
-      notificationService.postConfirmPod(proofOfDeliveryDto);
+      notificationService.postConfirmPod(dto);
     }
     return proofOfDeliveryDto;
   }
@@ -72,6 +77,14 @@ public class SiglusProofOfDeliveryController {
   public ProofOfDeliveryDto getProofOfDelivery(@PathVariable("id") UUID id,
       @RequestParam(required = false) Set<String> expand) {
     return proofOfDeliveryService.getProofOfDelivery(id, expand);
+  }
+
+  @GetMapping
+  public Page<ProofOfDeliveryDto> getAllProofsOfDelivery(
+      @RequestParam(required = false) UUID orderId,
+      @RequestParam(required = false) UUID shipmentId,
+      Pageable pageable) {
+    return proofOfDeliveryController.getAllProofsOfDelivery(orderId, shipmentId, pageable);
   }
 
 }

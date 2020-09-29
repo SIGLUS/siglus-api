@@ -22,6 +22,8 @@ import java.util.Optional;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface CalculatedStockOnHandRepository
@@ -45,4 +47,25 @@ public interface CalculatedStockOnHandRepository
   List<CalculatedStockOnHand>
       findByStockCardIdInAndOccurredDateLessThanEqual(
         Collection<UUID> stockCardId, LocalDate endDate);
+
+  // [SIGLUS change start]
+  // [change reason]: performance optimization
+  @Query(value = "select * from stockmanagement.calculated_stocks_on_hand "
+      + "where (stockcardid, occurreddate) in ("
+      + "select stockcardid, max(occurreddate) "
+      + "from stockmanagement.calculated_stocks_on_hand c "
+      + "where c.stockcardid in :stockCardIds "
+      + "and c.occurreddate < :occurredDate "
+      + "group by c.stockcardid)", nativeQuery = true)
+  List<CalculatedStockOnHand> findPreviousStockOnHands(
+      @Param("stockCardIds") Collection<UUID> stockCardIds,
+      @Param("occurredDate") LocalDate occurredDate);
+
+  @Modifying
+  @Query(value = "delete from stockmanagement.calculated_stocks_on_hand "
+      + "where stockcardid in :stockCardIds "
+      + "and occurreddate >= :occurredDate", nativeQuery = true)
+  void deleteFollowingStockOnHands(@Param("stockCardIds") Collection<UUID> stockCardIds,
+      @Param("occurredDate") LocalDate occurredDate);
+  // [SIGLUS change end]
 }

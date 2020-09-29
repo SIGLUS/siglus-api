@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -69,8 +70,13 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderLineItem;
+import org.openlmis.fulfillment.service.OrderService;
+import org.openlmis.requisition.domain.AvailableRequisitionColumnOption;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.RequisitionTemplateDataBuilder;
+import org.openlmis.requisition.domain.SourceType;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItemDataBuilder;
@@ -133,9 +139,12 @@ import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
 import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.repository.OrderExternalRepository;
+import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.SimulateAuthenticationHelper;
+import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -144,7 +153,6 @@ import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.domain.TestConsumptionLineItemDraft;
 import org.siglus.siglusapi.domain.UsageInformationLineItemDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
-import org.siglus.siglusapi.dto.RegimenDispatchLineDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
@@ -155,10 +163,12 @@ import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionReposit
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.service.fc.FcIntegrationCmmCpService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.MessageSource;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -178,6 +188,8 @@ public class SiglusRequisitionServiceTest {
   private static final String REQUISITION_NUMBER = "requisitionNumber";
   private static final String CODE = "code";
   private static final String MESSAGE = "message";
+
+  public static final String SUGGESTED_QUANTITY_COLUMN = "suggestedQuantity";
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -313,6 +325,15 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
 
+  @Mock
+  private FcIntegrationCmmCpService fcIntegrationCmmCpService;
+
+  @Mock
+  private OrderService orderService;
+
+  @Mock
+  private OrderableKitRepository orderableKitRepository;
+
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
@@ -350,7 +371,7 @@ public class SiglusRequisitionServiceTest {
 
   private UUID regimenId = UUID.randomUUID();
 
-  private UUID lineId = UUID.randomUUID();
+  private String rowName = "1stLinhas";
 
   private UUID productId1 = UUID.randomUUID();
   private Long productVersion1 = 1L;
@@ -405,12 +426,17 @@ public class SiglusRequisitionServiceTest {
 
   private UUID roleId = UUID.randomUUID();
 
+  private UUID orderId = UUID.randomUUID();
+
   @Mock
   private OrderFulfillmentService orderFulfillmentService;
 
   @Mock
   private ShipmentFulfillmentService shipmentFulfillmentService;
   //fields for emergency req test end
+
+  @Mock
+  private OrderExternalRepository orderExternalRepository;
 
   @Before
   public void prepare() {
@@ -434,6 +460,9 @@ public class SiglusRequisitionServiceTest {
     when(operatePermissionService.canSubmit(any())).thenReturn(true);
     when(operatePermissionService.isEditable(any())).thenReturn(false);
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
+    when(orderableKitRepository.findAllKitProduct()).thenReturn(Collections.emptyList());
+    when(orderExternalRepository.findByRequisitionId(any())).thenReturn(newArrayList());
+    mockSearchOrder();
   }
 
   @Test
@@ -470,7 +499,6 @@ public class SiglusRequisitionServiceTest {
     verify(requisitionController).getProfiler(profilerName, requisitionId);
     verify(requisitionController).findRequisition(requisitionId, profiler);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
-    verify(authenticationHelper).getCurrentUser();
     verify(supervisoryNodeService).findOne(null);
     verify(requisitionService).validateCanApproveRequisition(requisition, userDto.getId());
 
@@ -577,7 +605,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(createUserFacility());
     when(siglusProgramService.getProgram(programId)).thenReturn(createProgramDto());
     when(periodService.getPeriod(processingPeriodId)).thenReturn(createProcessingPeriod());
-    when(stockCardRangeSummaryStockManagementService.search(any(), any(),  any(),any(), any(),
+    when(stockCardRangeSummaryStockManagementService.search(any(), any(), any(), any(), any(),
         any())).thenReturn(createStockCardRangeSummaryList());
     List<ProcessingPeriodDto> processingPeriodDtos = new ArrayList<>();
     when(periodService.getPeriods(any())).thenReturn(processingPeriodDtos);
@@ -590,7 +618,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(getApprovedPrdouctList());
     when(requisitionService.validateCanApproveRequisition(any(), any()))
         .thenReturn(new ValidationResult());
-    when(siglusOrderableService.getOrderableExpirationDate(any()))
+    when(siglusOrderableService.getOrderableExpirationDate(any(), any()))
         .thenReturn(Lists.newArrayList(new OrderableExpirationDateDto(orderableId2,
             LocalDate.of(2022, 1, 1))));
     MetadataDto meta = createMetadataDto();
@@ -761,7 +789,7 @@ public class SiglusRequisitionServiceTest {
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
         .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
     mockFullyShippedProduct1();
-
+    mockSearchFullyShippedOrder();
     // when
     siglusRequisitionService.searchRequisition(requisitionId);
 
@@ -770,7 +798,9 @@ public class SiglusRequisitionServiceTest {
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(2, availableProducts.size());
     assertThat(availableProducts,
-        hasItems(productVersionObjectReference1, productVersionObjectReference2));
+        hasItems(productVersionObjectReference2));
+    assertThat(availableProducts,
+        hasItems(productVersionObjectReference1));
   }
 
   @Test
@@ -794,21 +824,22 @@ public class SiglusRequisitionServiceTest {
   }
 
   @Test
-  public void shouldFilterProduct1WhenGetEmergencyRequisitionGivenFulfillSkippedProduct1() {
+  public void shouldNotFilterProduct1WhenGetEmergencyRequisitionGivenFulfillSkippedProduct1() {
     // given
     mockEmergencyRequisition();
     mockPreviousEmergencyRequisition1(RELEASED);
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
         .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
+    preReqOrderShipments1 = newArrayList();
     mockNotFulfilledProduct1();
-
+    mockSearchSkippedOrder();
     // when
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
     verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
-    assertEquals(1, availableProducts.size());
+    assertEquals(2, availableProducts.size());
     assertThat(availableProducts,
         hasItems(productVersionObjectReference2));
   }
@@ -912,7 +943,6 @@ public class SiglusRequisitionServiceTest {
     when(draftRepository.findRequisitionDraftByRequisitionIdAndFacilityId(requisitionId,
         userDto.getHomeFacilityId())).thenReturn(draft);
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
-    when(regimenDataProcessor.getRegimenDispatchLineDtoMap()).thenReturn(mockDispatchLineMap());
 
     // when
     SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisition(requisitionId);
@@ -1104,11 +1134,9 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(siglusRequisitionDto);
 
     // when
-    BasicRequisitionDto requisitionDto = siglusRequisitionService
-        .approveRequisition(requisitionId, request, response);
+    siglusRequisitionService.approveRequisition(requisitionId, request, response);
 
     // then
-    verify(notificationService).postApprove(requisitionDto);
     verify(requisitionV2Controller).updateRequisition(any(UUID.class),
         siglusRequisitionDtoCaptor.capture(), any(HttpServletRequest.class),
         any(HttpServletResponse.class));
@@ -1162,18 +1190,15 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
         .thenReturn(siglusRequisitionDto);
-
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
-    when(regimenDataProcessor.getRegimenDispatchLineDtoMap()).thenReturn(mockDispatchLineMap());
+
     // when
-    BasicRequisitionDto requisitionDto = siglusRequisitionService
-        .approveRequisition(requisitionId, request, response);
+    siglusRequisitionService.approveRequisition(requisitionId, request, response);
 
     // then
     verify(draftRepository).delete(any(UUID.class));
     verify(requisitionController).approveRequisition(requisitionId, request, response);
     verify(archiveProductService).activateArchivedProducts(any(), any());
-    verify(notificationService).postApprove(requisitionDto);
     verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 
@@ -1203,7 +1228,6 @@ public class SiglusRequisitionServiceTest {
     RequisitionDraft draft = getRequisitionDraft(siglusRequisitionDto.getId());
     when(draftRepository.save(any(RequisitionDraft.class))).thenReturn(draft);
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
-    when(regimenDataProcessor.getRegimenDispatchLineDtoMap()).thenReturn(mockDispatchLineMap());
 
     // when
     SiglusRequisitionDto requisitionDto = siglusRequisitionService.updateRequisition(
@@ -1713,9 +1737,74 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(preReqOrders);
   }
 
-  private void mockInProgressOrder(UUID reqId) {
+  private void mockSearchOrder() {
+    Order order2 = new Order();
+    order2.setStatus(org.openlmis.fulfillment.domain.OrderStatus.SHIPPED);
+    order2.setExternalId(preReqId2);
+    Order order = new Order();
+    order.setId(orderId);
+    order.setStatus(org.openlmis.fulfillment.domain.OrderStatus.PARTIALLY_FULFILLED);
+    OrderLineItem lineItem = new OrderLineItem();
+    org.openlmis.fulfillment.domain.VersionEntityReference versionEntityReference =
+        new org.openlmis.fulfillment.domain.VersionEntityReference();
+    versionEntityReference.setId(productId1);
+    lineItem.setOrderable(versionEntityReference);
+    order.setOrderLineItems(newArrayList(lineItem));
+    order.setExternalId(preReqId1);
+    List<Order> orders = newArrayList(order, order2);
+    Page<Order> orderPage = Pagination.getPage(orders, null);
+    when(orderService.searchOrders(any(), any())).thenReturn(orderPage);
+  }
+
+  private void mockSearchSkippedOrder() {
+    Order order = new Order();
+    order.setId(orderId);
+    order.setStatus(org.openlmis.fulfillment.domain.OrderStatus.SHIPPED);
+    order.setOrderLineItems(newArrayList());
+    order.setExternalId(preReqId1);
+    List<Order> orders = newArrayList(order);
+    Page<Order> orderPage = Pagination.getPage(orders, null);
+    when(orderService.searchOrders(any(), any())).thenReturn(orderPage);
+  }
+
+  private void mockSearchFullyShippedOrder() {
+    Order order = new Order();
+    order.setId(orderId);
+    order.setStatus(org.openlmis.fulfillment.domain.OrderStatus.SHIPPED);
+    OrderLineItem lineItem = new OrderLineItem();
+    org.openlmis.fulfillment.domain.VersionEntityReference versionEntityReference =
+        new org.openlmis.fulfillment.domain.VersionEntityReference();
+    versionEntityReference.setId(productId1);
+    lineItem.setOrderable(versionEntityReference);
+    order.setOrderLineItems(newArrayList(lineItem));
+    order.setExternalId(preReqId1);
+    List<Order> orders = newArrayList(order);
+    Page<Order> orderPage = Pagination.getPage(orders, null);
+
+    when(orderService.searchOrders(any(), any())).thenReturn(orderPage);
+    ShipmentDto shipmentDto = new ShipmentDto();
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    lineItemDto.setOrderable(productVersionObjectReference1);
+    lineItemDto.setQuantityShipped(preReqProduct1ApprovedQuantity);
+    shipmentDto.setLineItems(newArrayList(lineItemDto));
+    List<ShipmentDto> shipments = newArrayList(shipmentDto);
+    when(shipmentFulfillmentService.getShipments(orderId))
+        .thenReturn(shipments);
+  }
+
+  private List<ShipmentDto> mockInProgressOrder(UUID reqId) {
     mockOrderService();
-    preReqOrders.add(mockOrder(reqId, OrderStatus.FULFILLING));
+    OrderDto order = mockOrder(reqId, OrderStatus.FULFILLING);
+    preReqOrders.add(order);
+    ShipmentDto shipmentDto = new ShipmentDto();
+    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
+    lineItemDto.setOrderable(productVersionObjectReference1);
+    lineItemDto.setQuantityShipped(0L);
+    shipmentDto.setLineItems(newArrayList(lineItemDto));
+    List<ShipmentDto> shipments = newArrayList(shipmentDto);
+    when(shipmentFulfillmentService.getShipments(order.getId()))
+        .thenReturn(shipments);
+    return shipments;
   }
 
   private List<ShipmentDto> mockShippedOrder(UUID reqId) {
@@ -1738,7 +1827,7 @@ public class SiglusRequisitionServiceTest {
   }
 
   private void mockShippedOrderAndShipmentForPreviousEmergencyRequisition1() {
-    preReqOrderShipments1 = mockShippedOrder(preReqId1);
+    preReqOrderShipments1 = mockInProgressOrder(preReqId1);
     preReqOrderShipments1.add(new ShipmentDto());
   }
 
@@ -1764,8 +1853,7 @@ public class SiglusRequisitionServiceTest {
   }
 
   private void mockNotFulfilledProduct1() {
-    mockShippedOrderAndShipmentForPreviousEmergencyRequisition1();
-    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(emptyList()));
+    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(newArrayList()));
   }
 
   private void mockProduct1ReqInProgress() {
@@ -1990,9 +2078,13 @@ public class SiglusRequisitionServiceTest {
   }
 
   private RequisitionTemplate createTemplate() {
+    AvailableRequisitionColumnOption option = new AvailableRequisitionColumnOption();
+    option.setOptionName("cmm");
     return baseTemplateBuilder()
         .withNumberOfPeriodsToAverage(3)
         .withPopulateStockOnHandFromStockCards(true)
+        .withColumn(SUGGESTED_QUANTITY_COLUMN, "SQ", SourceType.CALCULATED, option,
+            newHashSet(SourceType.CALCULATED))
         .build();
 
   }
@@ -2029,24 +2121,11 @@ public class SiglusRequisitionServiceTest {
     return map;
   }
 
-  private Map<UUID, RegimenDispatchLineDto> mockDispatchLineMap() {
-    Map<UUID, RegimenDispatchLineDto> map = new HashMap<>();
-    map.put(lineId, mockDispatchLine());
-    return map;
-  }
-
   private RegimenDto mockRegimen() {
     RegimenDto regimen = new RegimenDto();
     regimen.setId(regimenId);
     regimen.setCode("ABC+3TC+RAL+DRV+RTV");
     regimen.setIsCustom(false);
     return regimen;
-  }
-
-  private RegimenDispatchLineDto mockDispatchLine() {
-    RegimenDispatchLineDto line = new RegimenDispatchLineDto();
-    line.setId(lineId);
-    line.setCode("Outros");
-    return line;
   }
 }

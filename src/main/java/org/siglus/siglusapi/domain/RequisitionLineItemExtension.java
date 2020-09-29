@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -42,4 +43,10 @@ public class RequisitionLineItemExtension extends BaseEntity {
 
   @Column
   private Integer authorizedQuantity;
+
+  @Column
+  private Integer suggestedQuantity;
+
+  @Column
+  private LocalDate expirationDate;
 }

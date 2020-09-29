@@ -17,11 +17,13 @@ package org.siglus.siglusapi.dto;
 
 import java.util.UUID;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.openlmis.requisition.dto.BaseDto;
 import org.siglus.siglusapi.domain.Regimen;
 import org.springframework.beans.BeanUtils;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class RegimenDto extends BaseDto {
 
   private String code;
@@ -32,16 +34,13 @@ public class RegimenDto extends BaseDto {
   private UUID programId;
 
   private RegimenCategoryDto regimenCategory;
-  private RegimenDispatchLineDto regimenDispatchLine;
 
   public static RegimenDto from(Regimen regimen) {
     RegimenDto regimenDto = new RegimenDto();
     BeanUtils.copyProperties(regimen, regimenDto);
-    regimenDto.setCode(regimen.getCode().toString());
+    regimenDto.setCode(regimen.getCode());
     regimenDto.setFullProductName(regimen.getName());
     regimenDto.regimenCategory = RegimenCategoryDto.from(regimen.getRegimenCategory());
-    regimenDto.regimenDispatchLine =
-        RegimenDispatchLineDto.from(regimen.getRegimenDispatchLine());
     return regimenDto;
   }
 }

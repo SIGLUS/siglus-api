@@ -72,6 +72,7 @@ import org.hamcrest.Matcher;
 import org.joda.money.CurrencyUnit;
 import org.joda.money.Money;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -361,6 +362,10 @@ public class RequisitionTest {
     verifyStatic(times(1));
   }
 
+  // [SIGLUS change start]
+  // [change reason]:dont populate Approved Quantity, all logic by frontend
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldDefaultApprovedQuantityOnAuthorizeWhenCalcOrderQuantityColumnDisplayed() {
     requisition.setTemplate(template);
@@ -377,6 +382,10 @@ public class RequisitionTest {
         requisitionLineItem.getApprovedQuantity());
   }
 
+  // [SIGLUS change start]
+  // [change reason]:dont populate Approved Quantity, all logic by frontend
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldDefaultApprovedQuantityOnAuthorizeWhenCalcOrderQuantityIsaColumnDisplayed() {
     requisition.setTemplate(template);
@@ -397,6 +406,10 @@ public class RequisitionTest {
     assertEquals(Integer.valueOf(100), requisitionLineItem.getApprovedQuantity());
   }
 
+  // [SIGLUS change start]
+  // [change reason]:dont populate Approved Quantity, all logic by frontend
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldDefaultApprovedQuantityOnSubmitWhenAuthorizationStepSkipped() {
     requisition.setTemplate(template);
@@ -413,6 +426,10 @@ public class RequisitionTest {
         requisitionLineItem.getApprovedQuantity());
   }
 
+  // [SIGLUS change start]
+  // [change reason]:dont populate Approved Quantity, all logic by frontend
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldPopulateWithReqQuantityWhenIsNotNullAndCalcOrderQuantityColumnDisplayed() {
     requisition.setTemplate(template);
@@ -426,6 +443,10 @@ public class RequisitionTest {
     assertEquals(Integer.valueOf(REQUESTED_QUANTITY), requisitionLineItem.getApprovedQuantity());
   }
 
+  // [SIGLUS change start]
+  // [change reason]:dont populate Approved Quantity, all logic by frontend
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldPopulateWithRequestedQuantityWhenCalculatedOrderQuantityIsNotDisplayed() {
     requisition.setTemplate(template);
@@ -441,6 +462,10 @@ public class RequisitionTest {
     assertEquals(Integer.valueOf(REQUESTED_QUANTITY), requisitionLineItem.getApprovedQuantity());
   }
 
+  // [SIGLUS change start]
+  // [change reason]:dont populate Approved Quantity, all logic by frontend
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldPopulateWithRequestedQuantityWhenCalculatedOrderQuantityIsaIsNotDisplayed() {
     requisition.setTemplate(template);
@@ -460,6 +485,10 @@ public class RequisitionTest {
     assertEquals(Integer.valueOf(REQUESTED_QUANTITY), requisitionLineItem.getApprovedQuantity());
   }
 
+  // [SIGLUS change start]
+  // [change reason]:dont populate Approved Quantity, all logic by frontend
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldPopulateWithRequestedQuantityWhenCalculatedOrderQuantityIsaNotExists() {
     requisition.setTemplate(template);
@@ -477,6 +506,11 @@ public class RequisitionTest {
     assertEquals(Integer.valueOf(REQUESTED_QUANTITY), requisitionLineItem.getApprovedQuantity());
   }
 
+
+  // [SIGLUS change start]
+  // [change reason]:dont populate Approved Quantity, all logic by frontend
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldPopulateNonFullSupplyLineItems() {
     requisition.setTemplate(template);
@@ -1647,6 +1681,10 @@ public class RequisitionTest {
     requisition.skip(true, UUID.randomUUID());
   }
 
+  // [SIGLUS change start]
+  // [change reason]:dont populate Approved Quantity, all logic by frontend
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldSetApprovedQuantityAccordingToIsaWhenSubmittingStockBasedRequisition() {
     RequisitionTemplate template = mockStockBasedRequisitionTemplate();
@@ -1668,6 +1706,10 @@ public class RequisitionTest {
     );
   }
 
+  // [SIGLUS change start]
+  // [change reason]:dont populate Approved Quantity, all logic by frontend
+  @Ignore
+  // [SIGLUS change end]
   @Test
   public void shouldSetApprovedQuantityAccordingToIsaWhenAuthorizingStockBasedRequisition() {
     RequisitionTemplate template = mockStockBasedRequisitionTemplate();

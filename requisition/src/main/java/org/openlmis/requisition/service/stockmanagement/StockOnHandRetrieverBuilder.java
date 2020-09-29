@@ -21,12 +21,17 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2Controller;
 
 public abstract class StockOnHandRetrieverBuilder {
 
   @Setter(AccessLevel.PACKAGE)
   @Getter(AccessLevel.PACKAGE)
   private StockCardSummariesStockManagementService stockCardSummariesService;
+
+  @Getter
+  @Setter
+  private StockCardSummariesV2Controller stockCardSummariesV2Controller;
 
   public abstract StockOnHandRetrieverBuilder forProducts(ApproveProductsAggregator products);
 

@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -35,7 +37,7 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       + "and r.modifieddate >= :date "
       + "and r.modifieddate < :today "
       + "and r.reportonly = false order by ?#{#pageable}", nativeQuery = true)
-  Page<Requisition> searchForFc(@Param("date") String date, @Param("today") String today,
+  Page<Requisition> searchForFc(@Param("date") LocalDate date, @Param("today") String today,
       @Param("dpmSupervisoryNodeIds") Set<UUID> dpmSupervisoryNodeIds,
       @Param("fcSupervisoryNodeIds") Set<UUID> fcSupervisoryNodeIds,
       Pageable pageable);
@@ -46,7 +48,29 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       + "and r.modifieddate >= :date "
       + "and r.modifieddate < :today "
       + "and r.reportonly = false order by ?#{#pageable}", nativeQuery = true)
-  Page<Requisition> searchForFc(@Param("date") String date, @Param("today") String today,
+  Page<Requisition> searchForFc(@Param("date") LocalDate date, @Param("today") String today,
       @Param("dpmSupervisoryNodeIds") Set<UUID> dpmSupervisoryNodeIds,
       Pageable pageable);
+
+  @Query(value = "select r.* from requisition.requisitions r, referencedata.processing_periods p "
+      + "where r.processingPeriodId = p.id "
+      + "and r.status in ('APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') "
+      + "and r.supervisorynodeid in :supervisoryNodeIds "
+      + "and r.programId = :programId "
+      + "and p.enddate >= :firstDayOfThisMonth "
+      + "and p.enddate < :firstDayOfNextMonth", nativeQuery = true)
+  List<Requisition> searchForSuggestedQuantity(@Param("programId") UUID programId,
+      @Param("supervisoryNodeIds") Set<UUID> supervisoryNodeIds,
+      @Param("firstDayOfThisMonth") String firstDayOfThisMonth,
+      @Param("firstDayOfNextMonth") String firstDayOfNextMonth);
+
+  @Query(value = "select r.* from requisition.requisitions r "
+      + "where r.facilityid = :facilityId "
+      + "and r.programId = :programId "
+      + "and r.processingperiodid = :periodId "
+      + "and r.emergency = :emergency "
+      + "and r.status in :statusSet ", nativeQuery = true)
+  List<Requisition> searchAfterAuthorizedRequisitions(@Param("facilityId") UUID facilityId,
+      @Param("programId") UUID programId, @Param("periodId") UUID periodId,
+      @Param("emergency")Boolean emergency, @Param("statusSet") Set<String> statusSet);
 }

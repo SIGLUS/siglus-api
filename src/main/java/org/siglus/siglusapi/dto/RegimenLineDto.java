@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.dto;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.siglus.siglusapi.constant.FieldConstants.TOTAL;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 
 @Data
@@ -33,6 +35,7 @@ public class RegimenLineDto {
 
   private RegimenDto regimen;
 
+  private String name;
   // column: value
   private Map<String, RegimenColumnDto> columns;
 
@@ -41,25 +44,45 @@ public class RegimenLineDto {
     List<RegimenLineDto> regimenLineDtos = newArrayList();
 
     Map<UUID, List<RegimenLineItem>> groupByRegimen =
-        lineItems.stream().collect(Collectors.groupingBy(RegimenLineItem::getRegimenId));
+        lineItems.stream().filter(lineItem -> lineItem.getRegimenId() != null)
+            .collect(Collectors.groupingBy(RegimenLineItem::getRegimenId));
 
     groupByRegimen.forEach((regimenId, regimenLineItems) -> {
 
-      Map<String, RegimenColumnDto> columnMap = regimenLineItems.stream()
-          .collect(Collectors.toMap(RegimenLineItem::getColumn,
-              regimenLineItem -> RegimenColumnDto.builder()
-                  .id(regimenLineItem.getId())
-                  .value(regimenLineItem.getValue())
-                  .build()));
+      Map<String, RegimenColumnDto> columnToRegimenColumnMap =
+          getColumnToRegimenColumnMap(regimenLineItems);
 
       RegimenLineDto lineDto = new RegimenLineDto();
-      lineDto.setColumns(columnMap);
+      lineDto.setColumns(columnToRegimenColumnMap);
       lineDto.setRegimen(regimenDtoMap.get(regimenId));
 
       regimenLineDtos.add(lineDto);
     });
 
-    return regimenLineDtos;
+    // get total line items
+    List<RegimenLineItem> totalLineItems = lineItems.stream()
+        .filter(lineItem -> lineItem.getRegimenId() == null)
+        .collect(Collectors.toList());
+    if (CollectionUtils.isNotEmpty(totalLineItems)) {
+      Map<String, RegimenColumnDto> columnToRegimenColumnMap =
+          getColumnToRegimenColumnMap(totalLineItems);
+      RegimenLineDto lineDto = new RegimenLineDto();
+      lineDto.setColumns(columnToRegimenColumnMap);
+      lineDto.setRegimen(null);
+      lineDto.setName(TOTAL);
+      regimenLineDtos.add(lineDto);
+    }
 
+    return regimenLineDtos;
+  }
+
+  private static Map<String, RegimenColumnDto> getColumnToRegimenColumnMap(
+      List<RegimenLineItem> regimenLineItems) {
+    return regimenLineItems.stream()
+        .collect(Collectors.toMap(RegimenLineItem::getColumn,
+            regimenLineItem -> RegimenColumnDto.builder()
+                .id(regimenLineItem.getId())
+                .value(regimenLineItem.getValue())
+                .build()));
   }
 }

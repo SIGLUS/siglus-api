@@ -55,14 +55,10 @@ public class RegimenLineItem extends BaseEntity {
     lineDtos.forEach(regimenLineDto -> {
       RegimenDto regimen = regimenLineDto.getRegimen();
 
-      if (regimen == null) {
-        return;
-      }
-
       regimenLineDto.getColumns().forEach((columnName, regimenColumnDto) -> {
         RegimenLineItem regimenLineItem = RegimenLineItem.builder()
             .requisitionId(requisitionId)
-            .regimenId(regimen.getId())
+            .regimenId(regimen == null ? null : regimen.getId())
             .column(columnName)
             .value(regimenColumnDto.getValue())
             .build();

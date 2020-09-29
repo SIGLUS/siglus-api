@@ -26,7 +26,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import org.junit.Before;
@@ -46,6 +48,7 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProcessingScheduleDto;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -83,9 +86,16 @@ public class SiglusOrderCloseSchedulerServiceTest {
   @InjectMocks
   private SiglusOrderCloseSchedulerService siglusOrderCloseSchedulerService;
 
+  @Mock
+  private StockmanagementFacilityReferenceDataService facilityReferenceDataService;
+
+  private UUID facilityTypeId = UUID.randomUUID();
+
   @Before
   public void setUp() {
     ReflectionTestUtils.setField(siglusOrderCloseSchedulerService, "timeZoneId", "UTC");
+    ReflectionTestUtils.setField(siglusOrderCloseSchedulerService, "fcFacilityTypeId",
+        facilityTypeId);
   }
 
   @Test
@@ -138,6 +148,11 @@ public class SiglusOrderCloseSchedulerServiceTest {
     OrderExternal orderExternal = new OrderExternal();
     when(orderExternalRepository.findOne(order.getExternalId()))
         .thenReturn(orderExternal);
+    UUID facilityId = order.getFacilityId();
+    Map<UUID, org.openlmis.stockmanagement.dto.referencedata.FacilityDto> map = new HashMap<>();
+    map.put(facilityId, getFacilityDto(facilityId));
+    when(facilityReferenceDataService.findByIds(Arrays.asList(order.getFacilityId()))).thenReturn(
+        map);
 
     // when
     siglusOrderCloseSchedulerService.closeFulfillmentIfCurrentDateIsAfterNextPeriodEndDate();
@@ -166,6 +181,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
     order.setId(UUID.randomUUID());
     order.setStatus(OrderStatus.FULFILLING);
     order.setExternalId(UUID.randomUUID());
+    order.setFacilityId(UUID.randomUUID());
     UUID processingPeriodId = UUID.randomUUID();
     order.setProcessingPeriodId(processingPeriodId);
     when(orderRepository.findCanFulfillOrder()).thenReturn(Arrays.asList(order));
@@ -195,12 +211,31 @@ public class SiglusOrderCloseSchedulerServiceTest {
     when(periodService.searchProcessingPeriods(processingScheduleDto.getId(), null, null,
         processingPeriod.getEndDate().plusDays(1), null, null, pageable))
         .thenReturn(new PageImpl<>(asList(nextPeriod)));
+    UUID facilityId = order.getFacilityId();
+    Map<UUID, org.openlmis.stockmanagement.dto.referencedata.FacilityDto> map = new HashMap<>();
+    map.put(facilityId, getFacilityDto(facilityId));
+    when(facilityReferenceDataService.findByIds(Arrays.asList(order.getFacilityId()))).thenReturn(
+        map);
 
     // when
     siglusOrderCloseSchedulerService.closeFulfillmentIfCurrentDateIsAfterNextPeriodEndDate();
 
     // then
-    verify(orderService, times(0)).revertOrderToCloseStatus(orderArgumentCaptor.capture());
+    verify(orderService, times(0))
+        .revertOrderToCloseStatus(orderArgumentCaptor.capture());
+  }
+
+
+  private org.openlmis.stockmanagement.dto.referencedata.FacilityDto getFacilityDto(UUID
+      facilityId) {
+    org.openlmis.stockmanagement.dto.referencedata.FacilityDto facilityDto =
+        new org.openlmis.stockmanagement.dto.referencedata.FacilityDto();
+    facilityDto.setId(facilityId);
+    org.openlmis.stockmanagement.dto.referencedata.FacilityTypeDto typeDto = new
+        org.openlmis.stockmanagement.dto.referencedata.FacilityTypeDto();
+    typeDto.setId(UUID.randomUUID());
+    facilityDto.setType(typeDto);
+    return facilityDto;
   }
 
   @Test

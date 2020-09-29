@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -30,6 +31,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
+import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -64,8 +67,14 @@ public class SiglusOrderCloseSchedulerService {
   @Autowired
   private ProcessingPeriodExtensionRepository periodExtensionRepository;
 
+  @Autowired
+  private StockmanagementFacilityReferenceDataService facilityReferenceDataService;
+
   @Value("${time.zoneId}")
   private String timeZoneId;
+
+  @Value("${fc.facilityTypeId}")
+  private UUID fcFacilityTypeId;
 
   @Scheduled(cron = "${fulfillment.close.cron}", zone = "${time.zoneId}")
   public void closeFulfillmentIfCurrentDateIsAfterNextPeriodEndDate() {
@@ -165,22 +174,42 @@ public class SiglusOrderCloseSchedulerService {
         .getContent();
   }
 
+  private Map<UUID, FacilityDto> getFacilities(List<Order> orders) {
+    List<UUID> facilityIds = orders.stream().map(Order::getFacilityId)
+        .collect(Collectors.toList());
+    return facilityReferenceDataService.findByIds(facilityIds);
+  }
+
   private List<Order> getNeedClosedOrder(List<Order> orders,
       HashMap<UUID, ProcessingPeriodDto> processingPeriodMap) {
     LocalDate currentDate = LocalDate.now(ZoneId.of(timeZoneId));
     HashMap<UUID, ProcessingPeriodExtension> extensionHashMap = getExtensions(processingPeriodMap);
+    Map<UUID, FacilityDto> facilityIds = getFacilities(orders);
     return orders.stream()
         .filter(order -> {
-          OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
-          if (external != null && processingPeriodMap.containsKey(order.getProcessingPeriodId())) {
-            ProcessingPeriodDto nextPeriod = processingPeriodMap.get(order.getProcessingPeriodId());
-            if (extensionHashMap.containsKey(nextPeriod.getId())) {
-              ProcessingPeriodExtension extension = extensionHashMap.get(nextPeriod.getId());
-              return extension.getSubmitEndDate().isBefore(currentDate);
-            }
+          FacilityDto facilityDto = facilityIds.get(order.getFacilityId());
+          if (!facilityDto.getType().getId().equals(fcFacilityTypeId)) {
+            return getCurrentDateBeforeNextPeriodSubmitDate(processingPeriodMap,
+                currentDate, extensionHashMap, order);
           }
           return false;
         }).collect(Collectors.toList());
+  }
+
+  private boolean getCurrentDateBeforeNextPeriodSubmitDate(
+      HashMap<UUID, ProcessingPeriodDto> processingPeriodMap, LocalDate currentDate,
+      HashMap<UUID, ProcessingPeriodExtension> extensionHashMap, Order order) {
+    OrderExternal external = orderExternalRepository.findOne(order.getExternalId());
+    if (external != null && processingPeriodMap
+        .containsKey(order.getProcessingPeriodId())) {
+      ProcessingPeriodDto nextPeriod = processingPeriodMap
+          .get(order.getProcessingPeriodId());
+      if (extensionHashMap.containsKey(nextPeriod.getId())) {
+        ProcessingPeriodExtension extension = extensionHashMap.get(nextPeriod.getId());
+        return extension.getSubmitEndDate().isBefore(currentDate);
+      }
+    }
+    return false;
   }
 
 }

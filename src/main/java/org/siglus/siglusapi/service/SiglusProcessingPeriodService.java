@@ -21,19 +21,22 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.service.RequisitionService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.dto.referencedata.ProcessingPeriodSearchParams;
 import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,7 +67,7 @@ public class SiglusProcessingPeriodService {
   private RequisitionRepository requisitionRepository;
 
   @Autowired
-  private RequisitionService requisitionService;
+  private SiglusRequisitionRepository siglusRequisitionRepository;
 
   public ProcessingPeriodDto createProcessingPeriod(ProcessingPeriodDto periodDto) {
 
@@ -100,10 +103,9 @@ public class SiglusProcessingPeriodService {
     List<ProcessingPeriodExtension> extensions = processingPeriodExtensionRepository.findAll();
 
     Map<UUID, ProcessingPeriodExtension> map = new HashMap<>();
-    extensions.stream()
-        .forEach(extension -> map.put(extension.getProcessingPeriodId(), extension));
+    extensions.forEach(extension -> map.put(extension.getProcessingPeriodId(), extension));
 
-    page.getContent().stream().forEach(dto -> {
+    page.getContent().forEach(dto -> {
       ProcessingPeriodExtension processingPeriodExtension = map.get(dto.getId());
       combine(dto, processingPeriodExtension);
     });
@@ -192,8 +194,10 @@ public class SiglusProcessingPeriodService {
       requisitionPeriod.setRequisitionStatus(earliestRequisition.getStatus());
     }
 
-    if (!requisitionService.searchAfterAuthorizedRequisitions(facility, program,
-        period.getId(), false).isEmpty()) {
+    Set<String> statusSet = RequisitionStatus.getAfterAuthorizedStatus().stream().map(Enum::name)
+        .collect(Collectors.toSet());
+    if (CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
+        facility, program, period.getId(), Boolean.FALSE, statusSet))) {
       // for emergency, requisitionPeriods only have one element
       requisitionPeriods.forEach(requisitionPeriodDto ->
           requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
@@ -205,10 +209,9 @@ public class SiglusProcessingPeriodService {
     List<ProcessingPeriodExtension> extensions = processingPeriodExtensionRepository.findAll();
 
     Map<UUID, ProcessingPeriodExtension> map = new HashMap<>();
-    extensions.stream()
-        .forEach(extension -> map.put(extension.getProcessingPeriodId(), extension));
+    extensions.forEach(extension -> map.put(extension.getProcessingPeriodId(), extension));
 
-    periods.stream().forEach(dto -> {
+    periods.forEach(dto -> {
       ProcessingPeriodExtension processingPeriodExtension = map.get(dto.getId());
       combine(dto, processingPeriodExtension);
     });

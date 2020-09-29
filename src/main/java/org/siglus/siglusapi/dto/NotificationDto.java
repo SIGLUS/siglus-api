@@ -16,12 +16,18 @@
 package org.siglus.siglusapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.siglusapi.domain.NotificationStatus;
+import org.siglus.siglusapi.domain.NotificationType;
 
 @Getter
 @Setter
@@ -32,13 +38,24 @@ public class NotificationDto {
   private UUID id;
 
   @JsonProperty("emergency")
-  private Boolean emergencyFlag;
-
-  private String sourceFacilityName;
+  private Boolean emergency;
 
   @JsonProperty("referenceId")
   private UUID refId;
 
   private NotificationStatus status;
 
+  private NotificationType type;
+
+  private ProcessingPeriodDto processingPeriod;
+
+  private ZonedDateTime createdDate;
+
+  private ZonedDateTime requisitionSubmittedDate;
+
+  private FacilityDto facility;
+
+  private ProgramDto program;
+
+  private String author;
 }

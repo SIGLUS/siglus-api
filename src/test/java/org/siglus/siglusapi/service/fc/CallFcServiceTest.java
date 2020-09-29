@@ -21,7 +21,10 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
+import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
+import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 
 import java.util.ArrayList;
 import org.junit.Assert;
@@ -31,7 +34,10 @@ import org.junit.runner.RunWith;
 import org.siglus.siglusapi.dto.fc.CmmDto;
 import org.siglus.siglusapi.dto.fc.CpDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
+import org.siglus.siglusapi.dto.fc.ProductInfoDto;
+import org.siglus.siglusapi.dto.fc.ProgramDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
+import org.siglus.siglusapi.dto.fc.RegimenDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -53,7 +59,7 @@ public class CallFcServiceTest {
 
   @Autowired
   private CallFcService callFcService;
-  
+
   public static final String URL = "http://localhost/test/tests?psize=20&page=1";
 
   @Before
@@ -62,6 +68,8 @@ public class CallFcServiceTest {
     callFcService.setReceiptPlans(new ArrayList<>());
     callFcService.setCmms(new ArrayList<>());
     callFcService.setCps(new ArrayList<>());
+    callFcService.setPrograms(new ArrayList<>());
+    callFcService.setRegimens(new ArrayList<>());
   }
 
   @Test(expected = Exception.class)
@@ -141,6 +149,57 @@ public class CallFcServiceTest {
     // then
     verify(remoteRestTemplate).getForEntity(eq(URL), eq(CpDto[].class));
     Assert.assertEquals(1, callFcService.getCps().size());
+  }
+
+  @Test
+  public void shouldGetProgramsWhenFetchDataSuccess() {
+    // given
+    MultiValueMap<String, String> headers = getHeaders("2");
+    Class<ProgramDto[]> clazz = ProgramDto[].class;
+    ProgramDto[] programDtos = {new ProgramDto()};
+    when(remoteRestTemplate.getForEntity(URL, clazz))
+        .thenReturn(new ResponseEntity<>(programDtos, headers, HttpStatus.OK));
+
+    // when
+    callFcService.fetchData(URL, PROGRAM_API);
+
+    // then
+    verify(remoteRestTemplate).getForEntity(eq(URL), eq(ProgramDto[].class));
+    Assert.assertEquals(1, callFcService.getPrograms().size());
+  }
+
+  @Test
+  public void shouldGetProductWhenFetchDataSuccess() {
+    // given
+    MultiValueMap<String, String> headers = getHeaders("2");
+    Class<ProductInfoDto[]> clazz = ProductInfoDto[].class;
+    ProductInfoDto[] productInfoDtos = {new ProductInfoDto()};
+    when(remoteRestTemplate.getForEntity(URL, clazz))
+        .thenReturn(new ResponseEntity<>(productInfoDtos, headers, HttpStatus.OK));
+
+    // when
+    callFcService.fetchData(URL, PRODUCT_API);
+
+    // then
+    verify(remoteRestTemplate).getForEntity(eq(URL), eq(ProductInfoDto[].class));
+    Assert.assertEquals(1, callFcService.getProducts().size());
+  }
+
+  @Test
+  public void shouldGetRegimensWhenFetchDataSuccess() {
+    // given
+    MultiValueMap<String, String> headers = getHeaders("2");
+    Class<RegimenDto[]> clazz = RegimenDto[].class;
+    RegimenDto[] regimenDtos = {new RegimenDto()};
+    when(remoteRestTemplate.getForEntity(URL, clazz))
+        .thenReturn(new ResponseEntity<>(regimenDtos, headers, HttpStatus.OK));
+
+    // when
+    callFcService.fetchData(URL, REGIMEN_API);
+
+    // then
+    verify(remoteRestTemplate).getForEntity(eq(URL), eq(RegimenDto[].class));
+    Assert.assertEquals(1, callFcService.getRegimens().size());
   }
 
   @Test

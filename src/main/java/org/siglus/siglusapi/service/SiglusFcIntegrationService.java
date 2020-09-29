@@ -20,16 +20,19 @@ import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
+import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
@@ -51,17 +54,20 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryProductDto;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
 import org.siglus.siglusapi.dto.FcRequisitionLineItemDto;
+import org.siglus.siglusapi.dto.ProofOfDeliverParameter;
 import org.siglus.siglusapi.dto.RealProgramDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
@@ -132,6 +138,9 @@ public class SiglusFcIntegrationService {
   @Autowired
   private SiglusDateHelper dateHelper;
 
+  @Autowired
+  private PodExtensionRepository podExtensionRepository;
+
   @Value("${dpm.facilityTypeId}")
   private UUID dpmFacilityTypeId;
 
@@ -141,7 +150,7 @@ public class SiglusFcIntegrationService {
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
-  public Page<FcRequisitionDto> searchRequisitions(String date, Pageable pageable) {
+  public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {
     Set<UUID> dpmSupervisoryNodeIds = supervisoryNodeRepository
         .findAllByFacilityTypeId(dpmFacilityTypeId).stream().map(SupervisoryNode::getId)
         .collect(toSet());
@@ -163,15 +172,25 @@ public class SiglusFcIntegrationService {
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
   }
 
-  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(String date, Pageable pageable) {
-    Set<UUID> dpmRequestingFacilityIds = siglusFacilityReferenceDataService.findAll()
+  public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date, Pageable pageable) {
+    List<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.findAll();
+    Set<UUID> dpmRequestingFacilityIds = facilityDtos
         .stream()
         .filter(facilityDto -> dpmFacilityTypeCode.equals(facilityDto.getType().getCode()))
         .map(FacilityDto::getId)
         .collect(toSet());
+    Map<UUID, String> facilityIdTofacilityCodeMap = facilityDtos
+        .stream()
+        .collect(toMap(FacilityDto::getId, FacilityDto::getCode));
 
     Page<ProofOfDelivery> page = siglusProofOfDeliveryRepository
         .search(date, dateHelper.getTodayDateStr(), dpmRequestingFacilityIds, pageable);
+
+    Set<UUID> shipmentIds = page.getContent().stream()
+        .map(ProofOfDelivery::getShipment).map(Shipment::getId).collect(toSet());
+    Map<UUID, PodExtension> shipmenIdToPodExtensionMap =
+        podExtensionRepository.findByShipmentIdIn(shipmentIds).stream()
+            .collect(toMap(PodExtension::getShipmentId, Function.identity()));
 
     Set<UUID> externalIds = page.getContent()
         .stream()
@@ -182,7 +201,7 @@ public class SiglusFcIntegrationService {
     Set<UUID> requisitionIds = new HashSet<>();
 
     // podId: requisitionId
-    Map<UUID, UUID> podRequisitionMap = page.getContent().stream().collect(toMap(
+    Map<UUID, UUID> podIdToRequisitionIdMap = page.getContent().stream().collect(toMap(
         ProofOfDelivery::getId,
         p -> {
           OrderExternal orderExternal = externals.stream()
@@ -192,18 +211,16 @@ public class SiglusFcIntegrationService {
 
           UUID requisitionId;
 
-          if (orderExternal == null) {
-            requisitionId = p.getShipment().getOrder().getExternalId();
-          } else {
-            requisitionId = orderExternal.getRequisitionId();
-          }
+          requisitionId = orderExternal == null
+              ? p.getShipment().getOrder().getExternalId() :
+              orderExternal.getRequisitionId();
           requisitionIds.add(requisitionId);
           return requisitionId;
         }
     ));
 
     // requisitionId: requisitionNumber
-    Map<UUID, String> requisitionNumberMap =
+    Map<UUID, String> requisitionIdToRequisitionNumberMap =
         siglusRequisitionExtensionService.getRequisitionNumbers(requisitionIds);
 
     Set<UUID> orderableIds = page.getContent()
@@ -211,46 +228,62 @@ public class SiglusFcIntegrationService {
         .flatMap(pod -> pod.getLineItems()
             .stream().map(lineItem -> lineItem.getOrderable().getId()))
         .collect(toSet());
-    Map<UUID, OrderableDto> orderableMap = orderableReferenceDataService.findByIds(orderableIds)
+    Map<UUID, OrderableDto> orderableIdToOrderableMap = orderableReferenceDataService
+        .findByIds(orderableIds)
         .stream()
-        .collect(toMap(OrderableDto::getId, o -> o));
-    Map<UUID, ProgramOrderablesExtension> programMap = programOrderablesExtensionRepository
-        .findAllByOrderableIdIn(orderableIds)
+        .collect(toMap(OrderableDto::getId, Function.identity()));
+    Map<UUID, ProgramOrderablesExtension> orderableIdToProgramMap =
+        programOrderablesExtensionRepository.findAllByOrderableIdIn(orderableIds)
         .stream()
-        .collect(toMap(ProgramOrderablesExtension::getOrderableId, p -> p));
-    Map<UUID, LotDto> lotMap = siglusLotReferenceDataService.findAll()
-        .stream().collect(toMap(LotDto::getId, lot -> lot));
-    Map<UUID, String> reasonMap = stockCardLineItemReasonRepository
+        .collect(toMap(ProgramOrderablesExtension::getOrderableId, Function.identity()));
+    Map<UUID, LotDto> lotIdToLotMap = siglusLotReferenceDataService.findAll()
+        .stream().collect(toMap(LotDto::getId, Function.identity()));
+    Map<UUID, String> reasonIdToReasonMap = stockCardLineItemReasonRepository
         .findByReasonTypeIn(newArrayList(ReasonType.DEBIT))
         .stream().collect(toMap(StockCardLineItemReason::getId, StockCardLineItemReason::getName));
 
+    ProofOfDeliverParameter proofOfDeliverParameter = ProofOfDeliverParameter.builder()
+        .requisitionIdToRequisitionNumberMap(requisitionIdToRequisitionNumberMap)
+        .orderableIdToOrderableMap(orderableIdToOrderableMap)
+        .orderableIdToProgramMap(orderableIdToProgramMap)
+        .lotIdToLotMap(lotIdToLotMap)
+        .reasonIdToReasonMap(reasonIdToReasonMap)
+        .podIdToRequisitionIdMap(podIdToRequisitionIdMap)
+        .facilityIdTofacilityCodeMap(facilityIdTofacilityCodeMap)
+        .shipmenIdToPodExtensionMap(shipmenIdToPodExtensionMap)
+        .build();
+
     List<FcProofOfDeliveryDto> pods = page.getContent()
         .stream()
-        .map(pod -> buildProofOfDeliveryDto(pod, requisitionNumberMap, orderableMap, programMap,
-            lotMap, reasonMap, podRequisitionMap))
+        .map(pod -> buildProofOfDeliveryDto(pod, proofOfDeliverParameter))
         .collect(Collectors.toList());
 
     return Pagination.getPage(pods, pageable, page.getTotalElements());
   }
 
   private FcProofOfDeliveryDto buildProofOfDeliveryDto(ProofOfDelivery pod,
-      Map<UUID, String> requisitionNumberMap,
-      Map<UUID, OrderableDto> orderableMap,
-      Map<UUID, ProgramOrderablesExtension> programMap,
-      Map<UUID, LotDto> lotMap,
-      Map<UUID, String> reasonMap,
-      Map<UUID, UUID> podRequisitionMap) {
+      ProofOfDeliverParameter proofOfDeliverParameter) {
 
-    String requisitionNumber = requisitionNumberMap
-        .get(podRequisitionMap.get(pod.getId()));
+    String requisitionNumber = proofOfDeliverParameter.getRequisitionIdToRequisitionNumberMap()
+        .get(proofOfDeliverParameter.getPodIdToRequisitionIdMap().get(pod.getId()));
+
+    PodExtension podExtension = proofOfDeliverParameter.getShipmenIdToPodExtensionMap()
+        .get(pod.getShipment().getId());
 
     List<FcProofOfDeliveryProductDto> products = pod.getLineItems()
         .stream()
-        .map(lineItem -> buildProductDto(lineItem, orderableMap,
-            programMap, lotMap, reasonMap))
+        .map(lineItem -> buildProductDto(lineItem,
+            proofOfDeliverParameter.getOrderableIdToOrderableMap(),
+            proofOfDeliverParameter.getOrderableIdToProgramMap(),
+            proofOfDeliverParameter.getLotIdToLotMap(),
+            proofOfDeliverParameter.getReasonIdToReasonMap()))
         .collect(Collectors.toList());
 
     return FcProofOfDeliveryDto.builder()
+        .orderNumber(pod.getShipment().getOrder().getOrderCode())
+        .facilityCode(proofOfDeliverParameter.getFacilityIdTofacilityCodeMap()
+            .get(pod.getShipment().getOrder().getRequestingFacilityId()))
+        .issueVoucherNumber(podExtension == null ? null : podExtension.getIssueVoucherNumber())
         .requisitionNumber(requisitionNumber)
         .deliveredBy(pod.getDeliveredBy())
         .receivedBy(pod.getReceivedBy())
@@ -317,14 +350,16 @@ public class SiglusFcIntegrationService {
     Map<String, String> regimenLabelMap = usageTemplateMap.get("regimen").stream().collect(
         Collectors.toMap(UsageTemplateColumnDto::getName, UsageTemplateColumnDto::getLabel));
     List<Map<String, Object>> regimens = newArrayList();
-    regimenLineItems.forEach(regimenLineItem -> {
-      Map<String, Object> regimenMap = newHashMap();
-      regimens.add(regimenMap);
-      regimenMap.put("code", regimenLineItem.getRegimen().getCode());
-      regimenMap.put("name", regimenLineItem.getRegimen().getFullProductName());
-      regimenLineItem.getColumns().forEach((key, value) -> regimenMap.put(regimenLabelMap.get(key),
-          value.getValue()));
-    });
+    regimenLineItems.stream()
+        .filter(lineItem -> lineItem.getRegimen() != null)
+        .forEach(regimenLineItem -> {
+          Map<String, Object> regimenMap = newHashMap();
+          regimens.add(regimenMap);
+          regimenMap.put("code", regimenLineItem.getRegimen().getCode());
+          regimenMap.put("name", regimenLineItem.getRegimen().getFullProductName());
+          regimenLineItem.getColumns().forEach((key, value) ->
+              regimenMap.put(regimenLabelMap.get(key), value.getValue()));
+        });
     fcRequisitionDto.setRegimens(regimens);
   }
 
@@ -338,8 +373,13 @@ public class SiglusFcIntegrationService {
           .findLineItems(lineItemIds).stream().collect(toMap(
               RequisitionLineItemExtension::getRequisitionLineItemId, lineItemExtension ->
                   Optional.ofNullable(lineItemExtension.getAuthorizedQuantity()).orElse(0)));
-      lineItems.forEach(lineItem -> products.add(buildLineItemDto(lineItem,
-          authorizedQuantityMap)));
+      boolean duringApproval = fcRequisitionDto.getStatus().duringApproval();
+      lineItems.forEach(lineItem -> {
+        if (duringApproval) {
+          lineItem.setApprovedQuantity(null);
+        }
+        products.add(buildLineItemDto(lineItem, authorizedQuantityMap));
+      });
       fcRequisitionDto.setProducts(products);
     }
   }

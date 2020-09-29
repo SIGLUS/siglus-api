@@ -57,7 +57,7 @@ public class SiglusStockEventsControllerTest {
     dto.setProgramId(ALL_PRODUCTS_PROGRAM_ID);
     controller.createStockEvent(dto);
 
-    verify(service).createAndFillLotId(dto);
+    verify(service).createAndFillLotId(dto, false);
     assertEquals(dto.getUserId(), authenticationHelper.getCurrentUser().getId());
     verify(service).createStockEventForAllProducts(dto);
   }
@@ -68,7 +68,7 @@ public class SiglusStockEventsControllerTest {
     dto.setProgramId(UUID.randomUUID());
     controller.createStockEvent(dto);
 
-    verify(service).createAndFillLotId(dto);
+    verify(service).createAndFillLotId(dto, false);
     assertEquals(dto.getUserId(), authenticationHelper.getCurrentUser().getId());
     verify(service).createStockEvent(dto);
   }

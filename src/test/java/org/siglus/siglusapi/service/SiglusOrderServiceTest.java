@@ -49,6 +49,7 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.OrderService;
+import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
@@ -67,6 +68,7 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.ProcessingScheduleDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
@@ -172,10 +174,14 @@ public class SiglusOrderServiceTest {
   private UUID orderableId3 = UUID.randomUUID();
   private UUID lotId = UUID.randomUUID();
   private UUID lineItemId = UUID.randomUUID();
+  private UUID facilityTypeId = UUID.randomUUID();
+
 
   @Before
   public void prepare() {
     ReflectionTestUtils.setField(siglusOrderService, "timeZoneId", "UTC");
+    ReflectionTestUtils.setField(siglusOrderService, "fcFacilityTypeId",
+        facilityTypeId);
   }
 
   @Test
@@ -336,12 +342,17 @@ public class SiglusOrderServiceTest {
     assertEquals(false, isSuborder);
   }
 
+  @Test
   public void shouldTrueWhenCurrentDateIsAfterNextPeriodSubmitEndDate() {
     // given
     LocalDate current = LocalDate.now();
     ProcessingPeriodDto dto = new ProcessingPeriodDto();
+    dto.setId(UUID.randomUUID());
+    ProcessingScheduleDto scheduleDto = new ProcessingScheduleDto();
+    scheduleDto.setId(UUID.randomUUID());
     dto.setStartDate(current.minusMonths(1));
     dto.setEndDate(current.minusDays(1));
+    dto.setProcessingSchedule(scheduleDto);
     Page<ProcessingPeriodDto> periodDtos = Pagination
         .getPage(Collections.singletonList(dto));
     when(periodService
@@ -351,18 +362,72 @@ public class SiglusOrderServiceTest {
         new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
     currentDto.setStartDate(current.minusMonths(2));
     currentDto.setEndDate(current.minusMonths(1));
+    org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto scheduleDto2 =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto();
+    scheduleDto2.setId(UUID.randomUUID());
+    currentDto.setProcessingSchedule(scheduleDto2);
     OrderDto orderDto = new OrderDto();
     orderDto.setProcessingPeriod(currentDto);
+    orderDto.setFacility(getFacilityDto());
+    ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
+    extension.setSubmitStartDate(current.minusDays(10));
+    extension.setSubmitEndDate(current.minusDays(2));
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(dto.getId()))
+        .thenReturn(extension);
 
     // when
     boolean isAfterNextPeriodEndDate =
-        siglusOrderService.currentDateIsAfterNextPeriodEndDate(orderDto);
+        siglusOrderService.needCloseOrder(orderDto);
 
     //then
     assertEquals(true, isAfterNextPeriodEndDate);
   }
 
+  @Test
   public void shouldFalseWhenCurrentDateIsAfterNextPeriodEndDate() {
+    // given
+    LocalDate current = LocalDate.now();
+    ProcessingPeriodDto dto = new ProcessingPeriodDto();
+    dto.setId(UUID.randomUUID());
+    ProcessingScheduleDto scheduleDto = new ProcessingScheduleDto();
+    scheduleDto.setId(UUID.randomUUID());
+    dto.setStartDate(current.minusMonths(1));
+    dto.setEndDate(current.minusDays(1));
+    dto.setProcessingSchedule(scheduleDto);
+
+    Page<ProcessingPeriodDto> periodDtos = Pagination
+        .getPage(Arrays.asList(dto));
+    when(periodService
+        .searchProcessingPeriods(any(UUID.class), any(), any(), any(), any(), any(), any()))
+        .thenReturn(periodDtos);
+    org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto currentDto =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
+    currentDto.setStartDate(current.minusMonths(2));
+    currentDto.setEndDate(current.minusMonths(1));
+    org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto scheduleDto2 =
+        new org.openlmis.fulfillment.service.referencedata.ProcessingScheduleDto();
+    scheduleDto2.setId(UUID.randomUUID());
+    currentDto.setProcessingSchedule(scheduleDto2);
+    ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
+    extension.setSubmitStartDate(current.minusDays(10));
+    extension.setSubmitEndDate(current.plusDays(2));
+    when(processingPeriodExtensionRepository.findByProcessingPeriodId(dto.getId()))
+        .thenReturn(extension);
+
+    OrderDto orderDto = new OrderDto();
+    orderDto.setProcessingPeriod(currentDto);
+    orderDto.setFacility(getFacilityDto());
+
+    // when
+    boolean isAfterNextPeriodEndDate =
+        siglusOrderService.needCloseOrder(orderDto);
+
+    //then
+    assertEquals(false, isAfterNextPeriodEndDate);
+  }
+
+  @Test
+  public void shouldTrueWhenCurrentDateIsAfterNextPeriodEndDateButTypeIsFc() {
     // given
     LocalDate current = LocalDate.now();
     ProcessingPeriodDto dto = new ProcessingPeriodDto();
@@ -379,10 +444,11 @@ public class SiglusOrderServiceTest {
     currentDto.setEndDate(current.minusMonths(1));
     OrderDto orderDto = new OrderDto();
     orderDto.setProcessingPeriod(currentDto);
+    orderDto.setFacility(getBelongFcFacilityDto());
 
     // when
     boolean isAfterNextPeriodEndDate =
-        siglusOrderService.currentDateIsAfterNextPeriodEndDate(orderDto);
+        siglusOrderService.needCloseOrder(orderDto);
 
     //then
     assertEquals(false, isAfterNextPeriodEndDate);
@@ -394,6 +460,7 @@ public class SiglusOrderServiceTest {
     OrderDto orderDto = new OrderDto();
     UUID externalId = UUID.randomUUID();
     orderDto.setExternalId(externalId);
+    orderDto.setFacility(getFacilityDto());
     orderDto.setStatus(OrderStatus.FULFILLING);
     LocalDate current = LocalDate.now();
     org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto currentDto =
@@ -439,6 +506,7 @@ public class SiglusOrderServiceTest {
     OrderDto orderDto = new OrderDto();
     UUID externalId = UUID.randomUUID();
     orderDto.setExternalId(externalId);
+    orderDto.setFacility(getFacilityDto());
     orderDto.setStatus(OrderStatus.CLOSED);
     LocalDate current = LocalDate.now();
     org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto currentDto =
@@ -486,6 +554,7 @@ public class SiglusOrderServiceTest {
     UUID externalId = UUID.randomUUID();
     orderDto.setExternalId(externalId);
     orderDto.setStatus(OrderStatus.CLOSED);
+    orderDto.setFacility(getFacilityDto());
     LocalDate current = LocalDate.now();
     org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto currentDto =
         new org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto();
@@ -530,6 +599,7 @@ public class SiglusOrderServiceTest {
     // given
     OrderDto orderDto = new OrderDto();
     UUID externalId = UUID.randomUUID();
+    orderDto.setFacility(getFacilityDto());
     orderDto.setExternalId(externalId);
     orderDto.setStatus(OrderStatus.CLOSED);
     LocalDate current = LocalDate.now();
@@ -671,6 +741,7 @@ public class SiglusOrderServiceTest {
 
   private OrderDto createOrderDto() {
     OrderDto order = new OrderDto();
+    order.setFacility(getFacilityDto());
     order.setId(orderId);
     order.setExternalId(requisitionId);
     order.setCreatedBy(createUser(approverId, approverFacilityId));
@@ -681,6 +752,25 @@ public class SiglusOrderServiceTest {
     order.setOrderLineItems(newArrayList(orderLineItemDto));
     return order;
   }
+
+  private FacilityDto getFacilityDto() {
+    FacilityDto facilityDto = new FacilityDto();
+    org.openlmis.fulfillment.service.referencedata.FacilityTypeDto typeDto =
+        new org.openlmis.fulfillment.service.referencedata.FacilityTypeDto();
+    typeDto.setId(UUID.randomUUID());
+    facilityDto.setType(typeDto);
+    return facilityDto;
+  }
+
+  private FacilityDto getBelongFcFacilityDto() {
+    FacilityDto facilityDto = new FacilityDto();
+    org.openlmis.fulfillment.service.referencedata.FacilityTypeDto typeDto =
+        new org.openlmis.fulfillment.service.referencedata.FacilityTypeDto();
+    typeDto.setId(facilityTypeId);
+    facilityDto.setType(typeDto);
+    return facilityDto;
+  }
+
 
   private UserDto createUser(UUID userId, UUID facilityId) {
     UserDto user = new UserDto();

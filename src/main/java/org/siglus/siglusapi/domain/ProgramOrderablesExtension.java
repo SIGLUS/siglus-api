@@ -28,7 +28,7 @@ import org.siglus.common.domain.BaseEntity;
 @Entity
 @Data
 @Builder
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(of = {"orderableId", "programCode", "realProgramCode"})
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "program_orderables_extension", schema = "siglusintegration")

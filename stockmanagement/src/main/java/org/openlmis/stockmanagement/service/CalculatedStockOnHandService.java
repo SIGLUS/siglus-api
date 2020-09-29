@@ -15,8 +15,11 @@
 
 package org.openlmis.stockmanagement.service;
 
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_DEBIT_QUANTITY_EXCEED_SOH;
 
+import com.google.common.collect.Maps;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,9 +27,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
+import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
@@ -43,6 +49,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@SuppressWarnings("PMD.TooManyMethods")
 public class CalculatedStockOnHandService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CalculatedStockOnHandService.class);
@@ -73,9 +80,12 @@ public class CalculatedStockOnHandService {
       return Collections.emptyList();
     }
 
-    stockCards.forEach(stockCard ->
-        fetchStockOnHand(stockCard, asOfDate != null ? asOfDate : LocalDate.now()));
-
+    // [SIGLUS change start]
+    // [change reason]: performance improvment
+    // stockCards.forEach(stockCard ->
+    //     fetchStockOnHand(stockCard, asOfDate != null ? asOfDate : LocalDate.now()));
+    fetchAllStockOnHand(stockCards, asOfDate != null ? asOfDate : LocalDate.now());
+    // [SIGLUS change end]
     return stockCards;
   }
 
@@ -108,8 +118,12 @@ public class CalculatedStockOnHandService {
       return Collections.emptyList();
     }
 
-    stockCards.forEach(stockCard ->
-        fetchStockOnHand(stockCard, LocalDate.now()));
+    // [SIGLUS change start]
+    // [change reason]: performance improvment
+    // stockCards.forEach(stockCard ->
+    //     fetchStockOnHand(stockCard, LocalDate.now()));
+    fetchAllStockOnHand(stockCards, LocalDate.now());
+    // [SIGLUS change end]
 
     return stockCards;
   }
@@ -134,6 +148,32 @@ public class CalculatedStockOnHandService {
     LocalDate queryDate = null == asOfDate ? LocalDate.now() : asOfDate;
     fetchStockOnHand(stockCard, queryDate);
   }
+
+  // [SIGLUS change start]
+  // [change reason]: performance optimization
+  /**
+   * Recalculate values of stock on hand for the first line item from all different stock on hand,
+   * which in result will update soh for all following line items from the list as well.
+   *
+   * @param lineItems line items to recalculate the value for.
+   */
+  @Transactional
+  public void recalculateStockOnHandOptimization(List<StockCardLineItem> lineItems) {
+    Map<StockCard, List<StockCardLineItem>> map = mapStockCardsWithLineItems(lineItems);
+    Set<UUID> stockCardIds = map.keySet().stream().map(BaseEntity::getId).collect(toSet());
+    LocalDate occurredDate = lineItems.get(0).getOccurredDate();
+    Map<UUID, Integer> stockCardIdToPreviousStockOnHandMap = getPreviousStockOnHandMap(
+        stockCardIds, occurredDate);
+    calculatedStockOnHandRepository.deleteFollowingStockOnHands(stockCardIds, occurredDate);
+    map.forEach((key, value) -> {
+      value.sort(StockCard.getLineItemsComparator());
+      value.stream().findFirst()
+          .ifPresent(item -> recalculateStockOnHand(item.getStockCard(), item,
+              stockCardIdToPreviousStockOnHandMap
+          ));
+    });
+  }
+  // [SIGLUS change end]
 
   /**
    * Recalculate values of stock on hand for the first line item from all different stock on hand,
@@ -187,6 +227,49 @@ public class CalculatedStockOnHandService {
     profiler.stop().log();
   }
 
+  // [SIGLUS change start]
+  // [change reason]: performance optimization
+  private void recalculateStockOnHand(StockCard stockCard, StockCardLineItem lineItem,
+      Map<UUID, Integer> stockCardIdToPreviousStockOnHandMap) {
+    Profiler profiler = new Profiler("RECALCULATE_STOCK_ON_HAND");
+    profiler.setLogger(LOGGER);
+
+    profiler.start("GET_LINE_ITEMS_PREVIOUS_STOCK_ON_HAND");
+    int lineItemsPreviousStockOnHand =
+        null == stockCardIdToPreviousStockOnHandMap.get(stockCard.getId()) ? 0
+            : stockCardIdToPreviousStockOnHandMap.get(stockCard.getId());
+
+    profiler.start("GET_FOLLOWING_STOCK_CARD_LINE_ITEMS");
+    List<StockCardLineItem> followingLineItems = getFollowingLineItems(stockCard, lineItem);
+
+    int lineItemsAtTheSameDay = countLineItemsBefore(followingLineItems, lineItem);
+    followingLineItems.add(lineItemsAtTheSameDay, lineItem);
+    profiler.start("SAVE_RECALCULATED_STOCK_ON_HANDS");
+    LocalDate previousOccurredDate = lineItem.getOccurredDate();
+    StockCardLineItem previousItem = null;
+    for (StockCardLineItem item : followingLineItems) {
+      Integer calculatedStockOnHand = calculateStockOnHand(item, lineItemsPreviousStockOnHand);
+      LocalDate itemOccurredDate = item.getOccurredDate();
+      if (!itemOccurredDate.equals(previousOccurredDate)) {
+        saveCalculatedStockOnHandDirectly(previousItem, lineItemsPreviousStockOnHand, stockCard);
+      }
+      lineItemsPreviousStockOnHand = calculatedStockOnHand;
+      previousItem = item;
+      previousOccurredDate = itemOccurredDate;
+    }
+    saveCalculatedStockOnHandDirectly(previousItem, lineItemsPreviousStockOnHand, stockCard);
+    profiler.stop().log();
+  }
+
+  private Map<UUID, Integer> getPreviousStockOnHandMap(Set<UUID> stockCardIds,
+      LocalDate occurredDate) {
+    return calculatedStockOnHandRepository
+        .findPreviousStockOnHands(stockCardIds, occurredDate).stream()
+        .collect(toMap(calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId(),
+            CalculatedStockOnHand::getStockOnHand));
+  }
+  // [SIGLUS change end]
+
   private int getPreviousStockOnHand(StockCard stockCard, StockCardLineItem lineItem) {
     return calculatedStockOnHandRepository
         .findFirstByStockCardIdAndOccurredDateLessThanEqualOrderByOccurredDateDesc(
@@ -238,6 +321,31 @@ public class CalculatedStockOnHandService {
     }
   }
 
+  // [SIGLUS change start]
+  // [change reason]: performance improvment
+  private void fetchAllStockOnHand(List<StockCard> stockCards, LocalDate asOfDate) {
+    Set<UUID> uuids = stockCards.stream().map(StockCard::getId).collect(toSet());
+    if (CollectionUtils.isEmpty(uuids)) {
+      return;
+    }
+    List<CalculatedStockOnHand> calculatedStockOnHands = calculatedStockOnHandRepository
+        .findPreviousStockOnHands(uuids, asOfDate.plusDays(1));
+    Map<UUID, CalculatedStockOnHand> calculatedStockOnHandMap = Maps
+        .uniqueIndex(calculatedStockOnHands,
+            calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId());
+    stockCards.forEach(stockCard -> {
+      UUID stockCardId = stockCard.getId();
+      boolean existedInCalculatedStockOnHand = null != calculatedStockOnHandMap.get(stockCardId);
+      if (existedInCalculatedStockOnHand) {
+        CalculatedStockOnHand calculatedStockOnHand = calculatedStockOnHandMap.get(stockCardId);
+        stockCard.setStockOnHand(calculatedStockOnHand.getStockOnHand());
+        stockCard.setOccurredDate(calculatedStockOnHand.getOccurredDate());
+        stockCard.setProcessedDate(calculatedStockOnHand.getProcessedDate());
+      }
+    });
+  }
+  // [SIGLUS change end]
+
   private void saveCalculatedStockOnHand(StockCardLineItem lineItem, Integer stockOnHand,
       StockCard stockCard) {
     Optional<CalculatedStockOnHand> stockOnHandOfExistingOccurredDate =
@@ -252,6 +360,15 @@ public class CalculatedStockOnHandService {
     calculatedStockOnHandRepository.save(new CalculatedStockOnHand(stockOnHand, stockCard,
         lineItem.getOccurredDate(), lineItem.getProcessedDate()));
   }
+
+  // [SIGLUS change start]
+  // [change reason]: performance improvment
+  private void saveCalculatedStockOnHandDirectly(StockCardLineItem lineItem, Integer stockOnHand,
+      StockCard stockCard) {
+    calculatedStockOnHandRepository.save(new CalculatedStockOnHand(stockOnHand, stockCard,
+        lineItem.getOccurredDate(), lineItem.getProcessedDate()));
+  }
+  // [SIGLUS change end]
 
   /**
    * Recalculate values of stock on hand for single line item and returns aggregated stock on hand.

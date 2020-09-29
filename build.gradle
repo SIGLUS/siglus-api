@@ -70,6 +70,7 @@ dependencies {
     compile 'org.apache.poi:poi:3.13'
     compile 'org.apache.poi:poi-ooxml:3.13'
     compile 'com.amazonaws:aws-java-sdk-s3:1.11.627'
+    compile 'org.owasp:security-logging-logback:1.1.6'
 
     compileTestJava.dependsOn tasks.getByPath(':stockmanagement:testClasses')
     compileTestJava.dependsOn tasks.getByPath(':requisition:testClasses')
@@ -210,7 +211,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.91
+                minimum = 0.90
             }
         }
     }

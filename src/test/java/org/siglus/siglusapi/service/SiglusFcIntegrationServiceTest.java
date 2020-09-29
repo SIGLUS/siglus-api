@@ -43,6 +43,7 @@ import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -75,6 +76,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusUsageTemplateDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
+import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
@@ -147,6 +149,9 @@ public class SiglusFcIntegrationServiceTest {
   @Mock
   private OrderExternalRepository orderExternalRepository;
 
+  @Mock
+  private PodExtensionRepository podExtensionRepository;
+
   private UUID dpmFacilityTypeId = UUID.randomUUID();
 
   private String dpmFacilityTypeCode = "DPM";
@@ -183,7 +188,7 @@ public class SiglusFcIntegrationServiceTest {
 
   private String reasonName = "Debit";
 
-  private String date = "20200221";
+  private LocalDate date = LocalDate.of(2020, 2, 21);
 
   private String today = "20200831";
 
@@ -317,6 +322,7 @@ public class SiglusFcIntegrationServiceTest {
   @Test
   public void shouldSearchProofOfDelivery() {
     // given
+    when(podExtensionRepository.findByShipmentIdIn(any())).thenReturn(newArrayList());
 
     // when
     Page<FcProofOfDeliveryDto> fcProofOfDeliveryDtos = siglusFcIntegrationService
@@ -354,6 +360,7 @@ public class SiglusFcIntegrationServiceTest {
 
   private void mockRequisitionInfo(UUID supervisoryNodeId) {
     Requisition requisition = new Requisition();
+    requisition.setStatus(RequisitionStatus.AUTHORIZED);
     requisition.setId(requisitionId);
     requisition.setFacilityId(facilityId);
     requisition.setProgramId(programId);

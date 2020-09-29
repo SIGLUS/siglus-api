@@ -19,10 +19,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import org.openlmis.requisition.service.RequestParameters;
-import org.openlmis.requisition.service.referencedata.BaseReferenceDataService;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
+import org.siglus.common.service.client.BaseReferenceDataService;
+import org.siglus.common.util.RequestParameters;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -65,4 +65,11 @@ public class SiglusOrderableReferenceDataService
     return getPage(parameters);
   }
 
+  public OrderableDto create(OrderableDto orderableDto) {
+    return put("", orderableDto, getResultClass(), false);
+  }
+
+  public OrderableDto update(OrderableDto orderableDto) {
+    return put(orderableDto.getId().toString(), orderableDto, getResultClass(), false);
+  }
 }

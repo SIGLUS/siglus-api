@@ -61,6 +61,10 @@ public class SiglusShipmentDraftService {
   @Autowired
   private SiglusOrderService siglusOrderService;
 
+  public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
+    return draftController.createShipmentDraft(draftDto);
+  }
+
   @Transactional
   public ShipmentDraftDto updateShipmentDraft(UUID id, ShipmentDraftDto draftDto) {
     updateOrderLineItemExtension(draftDto);

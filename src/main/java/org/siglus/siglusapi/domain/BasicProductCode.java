@@ -15,50 +15,22 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.util.Objects;
-import javax.persistence.Column;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.common.domain.referencedata.Code;
 
 @Entity
-@Getter
-@Setter
+@Data
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
-@Table(name = "regimen_dispatch_lines", schema = "siglusintegration")
-public class RegimenDispatchLine extends BaseEntity {
+@NoArgsConstructor
+@Table(name = "basic_product_codes", schema = "siglusintegration")
+public class BasicProductCode extends BaseEntity {
 
-  @Column(nullable = false, unique = true, columnDefinition = "text")
-  @Embedded
-  private Code code;
+  private String productCode;
 
-  @Column(columnDefinition = "text")
-  private String name;
-
-  @Column(nullable = false)
-  private Integer displayOrder;
-
-  public RegimenDispatchLine() {
-    code = null;
-  }
-
-  @Override
-  public boolean equals(Object other) {
-    if (!(other instanceof RegimenDispatchLine)) {
-      return false;
-    }
-
-    RegimenDispatchLine dispatchLine = (RegimenDispatchLine) other;
-    return code.equals(dispatchLine.code);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(code);
-  }
 }

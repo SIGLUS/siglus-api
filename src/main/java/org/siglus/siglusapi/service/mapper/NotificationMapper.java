@@ -15,6 +15,10 @@
 
 package org.siglus.siglusapi.service.mapper;
 
+import java.time.ZonedDateTime;
+import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.springframework.stereotype.Component;
@@ -22,17 +26,23 @@ import org.springframework.stereotype.Component;
 @Component
 public class NotificationMapper {
 
-  public NotificationDto from(Notification notification) {
+  public NotificationDto from(Notification notification, FacilityDto facility, ProgramDto program,
+      ProcessingPeriodDto processingPeriod, ZonedDateTime submitDate, String author) {
     if (notification == null) {
       return null;
     }
     NotificationDto dto = new NotificationDto();
     dto.setId(notification.getId());
-    dto.setEmergencyFlag(notification.getEmergency());
-    dto.setSourceFacilityName(notification.getSourceFacilityName());
+    dto.setEmergency(notification.getEmergency());
     dto.setRefId(notification.getRefId());
-    dto.setStatus(notification.getRefStatus());
+    dto.setStatus(notification.getStatus());
+    dto.setType(notification.getType());
+    dto.setCreatedDate(notification.getCreatedDate());
+    dto.setProcessingPeriod(processingPeriod);
+    dto.setRequisitionSubmittedDate(submitDate);
+    dto.setFacility(facility);
+    dto.setProgram(program);
+    dto.setAuthor(author);
     return dto;
   }
-
 }

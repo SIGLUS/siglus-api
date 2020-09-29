@@ -16,12 +16,22 @@
 package org.siglus.common.service.client;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.util.RequestParameters;
+import org.siglus.common.util.referencedata.Pagination;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SiglusUserReferenceDataService extends BaseReferenceDataService<UserDto>  {
+
+  public static final String HOME_FACILITY_ID = "homeFacilityId";
 
   @Override
   protected String getUrl() {
@@ -46,6 +56,15 @@ public class SiglusUserReferenceDataService extends BaseReferenceDataService<Use
    */
   public Collection<String> getPermissionStrings(UUID userId) {
     return findAll(userId + "/permissionStrings", String[].class);
+  }
+
+  public Page<UserDto> getUserInfo(UUID homeFacilityId) {
+    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
+        Pagination.NO_PAGINATION);
+    Map<String, String> requestBody = new HashMap<>();
+    requestBody.put(HOME_FACILITY_ID, homeFacilityId.toString());
+    return getPage("search", RequestParameters.init().setPage(noPagination),
+        requestBody, HttpMethod.POST, getResultClass(), false);
   }
 
 }

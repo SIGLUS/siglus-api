@@ -25,8 +25,10 @@ public enum NotificationStatus {
   AUTHORIZED,
   IN_APPROVAL,
   APPROVED,
+  RELEASED_WITHOUT_ORDER,
   ORDERED,
-  SHIPPED;
+  SHIPPED,
+  RECEIVED;
 
   public static Collection<NotificationStatus> requisitionStatuses() {
     return Stream.of(NotificationStatus.values())
@@ -36,7 +38,7 @@ public enum NotificationStatus {
 
   public boolean isRequisitionPeriod() {
     return this == REJECTED || this == SUBMITTED || this == AUTHORIZED || this == IN_APPROVAL
-        || this == APPROVED;
+        || this == APPROVED || this == RELEASED_WITHOUT_ORDER;
   }
 
 }

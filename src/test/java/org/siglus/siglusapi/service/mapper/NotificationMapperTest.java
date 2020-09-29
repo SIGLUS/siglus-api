@@ -16,22 +16,24 @@
 package org.siglus.siglusapi.service.mapper;
 
 import static java.util.UUID.randomUUID;
-import static org.apache.commons.lang.RandomStringUtils.random;
 import static org.apache.commons.lang3.RandomUtils.nextBoolean;
 import static org.junit.Assert.assertEquals;
 
+import java.time.ZonedDateTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
+import org.siglus.siglusapi.domain.NotificationType;
 import org.siglus.siglusapi.dto.NotificationDto;
 
 @RunWith(MockitoJUnitRunner.class)
 public class NotificationMapperTest {
-
-  private static final int NOT_TOO_LONG = 10;
 
   @InjectMocks
   private NotificationMapper mapper;
@@ -43,19 +45,28 @@ public class NotificationMapperTest {
     notification.setId(randomUUID());
     notification.setRefId(randomUUID());
     notification.setEmergency(nextBoolean());
-    notification.setRefStatus(NotificationStatus.IN_APPROVAL);
+    notification.setStatus(NotificationStatus.IN_APPROVAL);
     notification.setOperatorId(randomUUID());
-    notification.setSourceFacilityName(random(NOT_TOO_LONG));
+    notification.setType(NotificationType.UPDATE);
+    notification.setCreatedDate(ZonedDateTime.now());
+    ProcessingPeriodDto period = new ProcessingPeriodDto();
+    FacilityDto facility = new FacilityDto();
+    ProgramDto program = new ProgramDto();
+    String author = "xiu";
 
     // when
-    NotificationDto notificationDto = mapper.from(notification);
+    ZonedDateTime submitDate = ZonedDateTime.now();
+    NotificationDto notificationDto = mapper
+        .from(notification, facility, program, period, submitDate, author);
 
     // then
     assertEquals(notification.getId(), notificationDto.getId());
-    assertEquals(notification.getEmergency(), notificationDto.getEmergencyFlag());
-    assertEquals(notification.getSourceFacilityName(), notificationDto.getSourceFacilityName());
+    assertEquals(notification.getEmergency(), notificationDto.getEmergency());
     assertEquals(notification.getRefId(), notificationDto.getRefId());
-    assertEquals(notification.getRefStatus(), notificationDto.getStatus());
+    assertEquals(notification.getStatus(), notificationDto.getStatus());
+    assertEquals(NotificationType.UPDATE, notification.getType());
+    assertEquals(period, notificationDto.getProcessingPeriod());
+    assertEquals(submitDate, notificationDto.getRequisitionSubmittedDate());
   }
 
 }

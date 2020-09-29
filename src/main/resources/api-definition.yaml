@@ -93,6 +93,19 @@ schemas:
       }
   - fcRequisitionPage: !include schemas/fcRequisitionPage.json
   - fcPodPage: !include schemas/fcPodPage.json
+  - localizedMessage: !include schemas/localizedMessage.json
+  - badRequestResponse: |
+      {
+          "oneOf": [{
+            "type": "object",
+            "$ref": "schemas/localizedMessage.json"
+          }, {
+            "type": "array",
+            "items": { "type": "object", "$ref": "schemas/localizedMessage.json" }
+          }]
+      }
+  - proofOfDeliveryPage: !include schemas/proofOfDeliveryPage.json
+
 resourceTypes:
   - collection:
       get:
@@ -1690,7 +1703,75 @@ traits:
             body:
               application/json:
                 schema: localizedMessage
-
+      /print:
+        get:
+          is: [ secured ]
+          description: >
+            Print all order line items from an order to a csv or pdf file. This endpoint
+            requires one of the following rights: ORDERS_EDIT, ORDERS_VIEW, SHIPMENT_EDIT,
+            SHIPMENT_VIEW (for supplying facility) POD_MANAGE, POD_VIEW (for requesting
+            facility)
+          queryParameters:
+            format:
+              displayName: format
+              type: string
+              required: true
+              repeat: false
+          responses:
+            200:
+              headers:
+                Content-Disposition:
+                Keep-Alive:
+              body:
+                application/pdf:
+                text/csv:
+            404:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+            403:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+      /export:
+        get:
+          is: [ secured ]
+          description: >
+            Export Order to csv. This endpoint requires one of the following rights:
+            ORDERS_EDIT, ORDERS_VIEW, SHIPMENT_EDIT, SHIPMENT_VIEW (for supplying
+            facility) POD_MANAGE, POD_VIEW (for requesting facility)
+          queryParameters:
+            type:
+              displayName: type
+              type: string
+              required: false
+              default: csv
+              repeat: false
+          responses:
+            200:
+              headers:
+                Content-Disposition:
+                Keep-Alive:
+              body:
+                text/csv:
+            400:
+              body:
+                application/json:
+            403:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
+            404:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
     /orders/createLineItem:
       post:
         is: [ secured, idempotent ]
@@ -1838,6 +1919,10 @@ traits:
             type: boolean
             required: false
             repeat: false
+          type:
+            type: string
+            required: false
+            repeat: false
         responses:
           200:
             description: list of notifications.
@@ -1861,6 +1946,42 @@ traits:
             description: already viewd
           409:
             description: already processed
+
+    /proofsOfDelivery:
+      displayName: Proof Of Delivery
+      get:
+        is: [ secured, paginated ]
+        description: >
+          Get proofs of delivery page. This endpoint requires one of the following rights:
+          PODS_MANAGE, PODS_VIEW (for requesting facility), SHIPMENTS_EDIT (for supplying
+          facility)
+        queryParameters:
+          orderId:
+            displayName: orderId
+            description: order ID
+            type: string
+            required: false
+            repeat: false
+          shipmentId:
+            displayName: shipmentId
+            description: shipment ID
+            type: string
+            required: false
+            repeat: false
+        responses:
+          200:
+            body:
+              application/json:
+                schema: proofOfDeliveryPage
+          400:
+            body:
+              application/json:
+                schema: badRequestResponse
+          404:
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
 
     /proofsOfDelivery/{id}:
       get:
@@ -1946,6 +2067,130 @@ traits:
             body:
               application/json:
                 schema: fcPodPage
+
+    /issueVouchers:
+      displayName: update issueVouchers
+      post:
+        is: [ secured ]
+        description: update issueVouchers from fc.
+        responses:
+          201:
+            description: issueVouchers update.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: issueVoucher
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+          401:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /receiptPlans:
+      displayName: update issueVouchers
+      post:
+        is: [ secured ]
+        description: update issueVouchers from fc.
+        responses:
+          201:
+            description: issueVouchers update.
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: issueVoucher
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+          401:
+            body:
+              application/json:
+          403:
+            headers:
+              Keep-Alive:
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /cmms:
+      displayName: Cmms From Fc
+      post:
+        is: [ secured ]
+        description: Fetch cmms from fc.
+        responses:
+          200:
+
+    /fcFacility:
+      displayName: fcFacility From Fc
+      post:
+        is: [ secured ]
+        description: Fetch fcFacility from fc.
+        responses:
+          200:
+
+    /fcFacilityType:
+      displayName: fcFacilityType From Fc
+      post:
+        is: [ secured ]
+        description: Fetch fcFacilityType from fc.
+        responses:
+          200:
+
+    /cps:
+      displayName: Cps From Fc
+      post:
+        is: [ secured ]
+        description: Fetch cps from fc.
+        responses:
+          200:
+
+    /products:
+      displayName: Products From Fc
+      post:
+        is: [ secured ]
+        description: Fetch products from fc.
+        queryParameters:
+          date:
+            displayName: date
+            type: string
+            required: true
+            repeat: false
+        responses:
+          200:
+
+    /fcPrograms:
+      displayName: Programs From Fc
+      post:
+        is: [ secured ]
+        description: Fetch cps from fc.
+        responses:
+          200:
+
+    /regimens:
+      displayName: Regimens From Fc
+      post:
+        is: [ secured ]
+        description: Fetch regimens from fc.
+        responses:
+          200:
+
+    /fcGeographicZones:
+      displayName: Sync GeographicZones From Fc
+      post:
+        is: [ secured ]
+        description: Sync GeographicZones From Fc
+        responses:
+          200:
 
     /programadditionalorderables:
       displayName: Program Additional Orderable Product

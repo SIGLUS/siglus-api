@@ -94,9 +94,6 @@ public class SiglusShipmentServiceTest {
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
 
   @Mock
-  private SiglusNotificationService notificationService;
-
-  @Mock
   private SiglusOrderService siglusOrderService;
 
   @Mock
@@ -119,7 +116,7 @@ public class SiglusShipmentServiceTest {
     order.setStatus(OrderStatus.FULFILLING);
     order.setProcessingPeriod(buildProcessingPeriod());
     when(orderController.getOrder(any(UUID.class), any())).thenReturn(order);
-    when(siglusOrderService.currentDateIsAfterNextPeriodEndDate(any()))
+    when(siglusOrderService.needCloseOrder(any()))
         .thenReturn(false);
   }
 
@@ -155,7 +152,7 @@ public class SiglusShipmentServiceTest {
     org.openlmis.requisition.dto.ProcessingPeriodDto dto =
         new org.openlmis.requisition.dto.ProcessingPeriodDto();
     dto.setEndDate(LocalDate.now().minusDays(10));
-    when(siglusOrderService.currentDateIsAfterNextPeriodEndDate(any())).thenReturn(true);
+    when(siglusOrderService.needCloseOrder(any())).thenReturn(true);
     when(siglusOrderService.isSuborder(any())).thenReturn(true);
     Order order = new Order();
     when(orderRepository.findOne(orderId)).thenReturn(order);
@@ -252,7 +249,6 @@ public class SiglusShipmentServiceTest {
     assertTrue(CollectionUtils.isNotEmpty(orderToSave.getOrderLineItems()));
     assertTrue(CollectionUtils.isEmpty(lineItemExtensionsToDelete));
     assertTrue(CollectionUtils.isNotEmpty(shipmentDtoToSave.getLineItems()));
-    verify(notificationService).postConfirmShipment(any());
   }
 
   @Test
@@ -277,7 +273,6 @@ public class SiglusShipmentServiceTest {
     assertEquals(1, lineItemDtos.size());
     assertEquals(Long.valueOf(10), lineItemDtos.get(0).getPartialFulfilledQuantity());
     assertEquals(Long.valueOf(40), lineItemDtos.get(0).getOrderedQuantity());
-    verify(notificationService).postConfirmShipment(any());
   }
 
   @Test(expected = ValidationMessageException.class)
