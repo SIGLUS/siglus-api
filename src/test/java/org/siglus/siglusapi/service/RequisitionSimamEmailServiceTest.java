@@ -113,13 +113,13 @@ public class RequisitionSimamEmailServiceTest {
     List<OrderableDto> orderableDtos = newArrayList(orderable);
     when(orderableReferenceDataService.findByIdentities(any())).thenReturn(orderableDtos);
 
-    program.setCode(RequisitionSimamEmailService.MULIPLE_PROGRAM_CODE);
+    program.setName("Via Clássica");
     requisitionFileName = RequisitionSimamEmailService.REQUI_FILE_NAME_PREFIX
         + requisition.getId() + "_" + facility.getName() + "_" + period.getName() + "_"
-        + RequisitionSimamEmailService.SIMAM_PROGRAMS_MAP.get(program.getCode()) + ".xlsx";
+        + "Via Clássica" + ".xlsx";
     regimenFileName = RequisitionSimamEmailService.REGIMEN_FILE_NAME_PREFIX
         + requisition.getId() + "_" + facility.getName() + "_" + period.getName() + "_"
-        + RequisitionSimamEmailService.SIMAM_PROGRAMS_MAP.get(program.getCode()) + ".xlsx";
+        + "Via Clássica" + ".xlsx";
     fileType = RequisitionSimamEmailService.FILE_APPLICATION_VND_MS_EXCEL;
     requisition.setCreatedDate(ZonedDateTime.now());
     BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
@@ -197,7 +197,7 @@ public class RequisitionSimamEmailServiceTest {
     when(singleListSheetExcelHandler.createXssFile(any(Workbook.class),
         anyString())).thenReturn(anyString());
 
-    program.setCode(RequisitionSimamEmailService.ARV_PROGRAM_CODE);
+    program.setName("TARV");
     requisitionSimamEmailService.prepareEmailAttachmentsForSimam(requisition, program);
     verify(singleListSheetExcelHandler, times(1)).readXssTemplateFile(
         RequisitionSimamEmailService.TEMPLATE_IMPORT_RNR_XLSX_EMPTY, ExcelHandler.PathType.FILE);
@@ -235,7 +235,7 @@ public class RequisitionSimamEmailServiceTest {
     when(singleListSheetExcelHandler.createXssFile(any(Workbook.class),
         anyString())).thenReturn(anyString());
 
-    program.setCode(RequisitionSimamEmailService.AL_PROGRAM_CODE);
+    program.setName("Malaria");
     orderable.setProductCode("08O05");
     requisitionSimamEmailService.prepareEmailAttachmentsForSimam(requisition, program);
 
@@ -292,7 +292,7 @@ public class RequisitionSimamEmailServiceTest {
     when(singleListSheetExcelHandler.createXssFile(any(Workbook.class),
         anyString())).thenReturn(anyString());
 
-    program.setCode(RequisitionSimamEmailService.RAPID_TEST_PROGRAM_CODE);
+    program.setName("Testes Rápidos Diag.");
     requisitionSimamEmailService.prepareEmailAttachmentsForSimam(requisition, program);
 
     verify(singleListSheetExcelHandler, times(1)).readXssTemplateFile(
