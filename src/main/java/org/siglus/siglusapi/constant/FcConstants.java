@@ -48,7 +48,7 @@ public class FcConstants {
   public static final String GEOGRAPHIC_ZONE_API = "/region/regions";
 
   public static final String STATUS_ACTIVE = "Activo";
-  public static final String DEFAULT_REGIMEN_CATEGORY_CODE = "ADULTS";
+  public static final String DEFAULT_REGIMEN_CATEGORY_CODE = "DEFAULT";
   public static final Set<String> IGNORE_CODES = newHashSet("DUMMY", "RG", "A2Bped");
 
   public static List<String> getQueryByPeriodApiList() {
