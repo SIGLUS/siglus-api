@@ -109,7 +109,7 @@ public class SiglusStockEventsService {
     return stockEventId;
   }
 
-  private UUID createStockEventForUnpackKitAndPhysicalInventory(StockEventDto eventDto) {
+  private UUID siglusCreateStockEvent(StockEventDto eventDto) {
     UUID stockEventId = stockEventProcessor.process(eventDto);
     enhanceStockCard(eventDto, stockEventId);
     return stockEventId;
@@ -152,10 +152,7 @@ public class SiglusStockEventsService {
           .filter(lineItem -> lineItem.getProgramId() != null)
           .filter(lineItem -> lineItem.getProgramId().equals(stockEventDto.getProgramId()))
           .collect(Collectors.toList()));
-      if (eventDto.hasReason(unpackReasonId) || eventDto.isPhysicalInventory()) {
-        return createStockEventForUnpackKitAndPhysicalInventory(stockEventDto);
-      }
-      return createStockEvent(stockEventDto);
+      return siglusCreateStockEvent(stockEventDto);
     }).collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(uuids)) {
       if (eventDto.isPhysicalInventory()) {

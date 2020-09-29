@@ -151,7 +151,7 @@ public class SiglusStockEventsServiceTest {
 
     siglusStockEventsService.createStockEventForAllProducts(eventDto);
 
-    verify(stockEventsStockManagementService, times(2)).createStockEvent(any());
+    verify(stockEventProcessor, times(2)).process(any());
   }
 
   @Test
