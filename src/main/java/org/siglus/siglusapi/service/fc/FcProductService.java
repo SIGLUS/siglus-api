@@ -19,9 +19,7 @@ import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.stream.Collectors.toSet;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
-import static org.siglus.siglusapi.constant.FieldConstants.IN_ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
-import static org.siglus.siglusapi.constant.FieldConstants.STATUS;
 
 import java.util.List;
 import java.util.Map;
@@ -188,8 +186,12 @@ public class FcProductService {
     orderableDto.setRoundToZero(false);
     orderableDto.setDispensable(Dispensable.createNew("each"));
     Map<String, Object> extraData = newHashMap();
-    extraData.put(STATUS, FcUtil.isActive(product.getStatus()) ? ACTIVE : IN_ACTIVE);
-    extraData.put(IS_BASIC, basicProductCodes.contains(orderableDto.getProductCode()));
+    if (!FcUtil.isActive(product.getStatus())) {
+      extraData.put(ACTIVE, false);
+    }
+    if (basicProductCodes.contains(orderableDto.getProductCode())) {
+      extraData.put(IS_BASIC, true);
+    }
     orderableDto.setExtraData(extraData);
     orderableDto.setTradeItemIdentifier(createTradeItem());
     if (FcUtil.isActive(product.getStatus())) {
@@ -264,13 +266,14 @@ public class FcProductService {
   }
 
   private boolean isDifferentProductStatus(OrderableDto existingOrderable, ProductInfoDto product) {
-    String productStatus = FcUtil.isActive(product.getStatus()) ? ACTIVE : IN_ACTIVE;
+    boolean productActiveStatus = FcUtil.isActive(product.getStatus());
     Map<String, Object> extraData = existingOrderable.getExtraData();
-    Object existingOrderableStatus = extraData.get(STATUS);
-    if (null == existingOrderableStatus && IN_ACTIVE.equals(productStatus)) {
+    Object existingOrderableStatus = extraData.get(ACTIVE);
+    if (null == existingOrderableStatus && !productActiveStatus) {
       return true;
     }
-    return null != existingOrderableStatus && !existingOrderableStatus.equals(productStatus);
+    return null != existingOrderableStatus
+        && (boolean) existingOrderableStatus != productActiveStatus;
   }
 
   private boolean isDifferentProgramOrderable(OrderableDto existingOrderable,
@@ -295,7 +298,11 @@ public class FcProductService {
     existingOrderable.setDescription(product.getDescription());
     existingOrderable.setFullProductName(product.getFullDescription());
     Map<String, Object> extraData = existingOrderable.getExtraData();
-    extraData.put(STATUS, FcUtil.isActive(product.getStatus()) ? ACTIVE : IN_ACTIVE);
+    if (FcUtil.isActive(product.getStatus())) {
+      extraData.remove(ACTIVE);
+    } else {
+      extraData.put(ACTIVE, false);
+    }
     existingOrderable.setExtraData(extraData);
     if (FcUtil.isActive(product.getStatus())) {
       Set<ProgramOrderableDto> programOrderableDtos = buildProgramOrderableDtos(product);
