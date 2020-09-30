@@ -53,11 +53,208 @@ public class FcGeographicZoneServiceTest {
   @InjectMocks
   private FcGeographicZoneService fcGeographicZoneService;
 
-  List<FcGeographicZoneNationalDto> dtos;
+  private List<FcGeographicZoneNationalDto> fcDtos;
 
   @Before
+  @SuppressWarnings("checkstyle:VariableDeclarationUsageDistance")
   public void prepare() {
-    dtos = Arrays.asList(
+    prepareFcGeographicZoneNationalDtos();
+    GeographicLevelDto level1 = GeographicLevelDto.builder()
+        .code("national")
+        .name("National")
+        .levelNumber(1)
+        .build();
+    GeographicLevelDto level2 = GeographicLevelDto.builder()
+        .code("province")
+        .name("Province")
+        .levelNumber(2)
+        .build();
+    GeographicLevelDto level3 = GeographicLevelDto.builder()
+        .code("district")
+        .name("District")
+        .levelNumber(3)
+        .build();
+    List<GeographicLevelDto> levelDtos = Arrays.asList(level1, level2, level3);
+    when(geographicLevelService.searchAllGeographicLevel()).thenReturn(levelDtos);
+
+    OpenLmisGeographicZoneDto national1 = OpenLmisGeographicZoneDto.builder()
+        .code("1")
+        .name("description 1")
+        .level(level1)
+        .parent(null)
+        .build();
+    OpenLmisGeographicZoneDto province11 = OpenLmisGeographicZoneDto.builder()
+        .code("11")
+        .name("description 11")
+        .level(level2)
+        .parent(national1)
+        .build();
+    OpenLmisGeographicZoneDto district111 = OpenLmisGeographicZoneDto.builder()
+        .code("111")
+        .name("description 111")
+        .level(level3)
+        .parent(province11)
+        .build();
+    OpenLmisGeographicZoneDto district112 = OpenLmisGeographicZoneDto.builder()
+        .code("112")
+        .name("district 112")
+        .level(level3)
+        .parent(province11)
+        .build();
+    OpenLmisGeographicZoneDto province12 = OpenLmisGeographicZoneDto.builder()
+        .code("12")
+        .name("province 12")
+        .level(level2)
+        .parent(national1)
+        .build();
+    OpenLmisGeographicZoneDto district121 = OpenLmisGeographicZoneDto.builder()
+        .code("121")
+        .name("description 121")
+        .level(level3)
+        .parent(province12)
+        .build();
+    OpenLmisGeographicZoneDto district122 = OpenLmisGeographicZoneDto.builder()
+        .code("122")
+        .name("description 122")
+        .level(level3)
+        .parent(province12)
+        .build();
+    OpenLmisGeographicZoneDto national2 = OpenLmisGeographicZoneDto.builder()
+        .code("2")
+        .name("national 2")
+        .level(level1)
+        .parent(null)
+        .build();
+    OpenLmisGeographicZoneDto province21 = OpenLmisGeographicZoneDto.builder()
+        .code("21")
+        .name("description 21")
+        .level(level2)
+        .parent(national1)
+        .build();
+    OpenLmisGeographicZoneDto district211 = OpenLmisGeographicZoneDto.builder()
+        .code("211")
+        .name("description 211")
+        .level(level3)
+        .parent(province11)
+        .build();
+    OpenLmisGeographicZoneDto district212 = OpenLmisGeographicZoneDto.builder()
+        .code("212")
+        .name("description 212")
+        .level(level3)
+        .parent(province11)
+        .build();
+    OpenLmisGeographicZoneDto province22 = OpenLmisGeographicZoneDto.builder()
+        .code("22")
+        .name("description 22")
+        .level(level2)
+        .parent(national1)
+        .build();
+    OpenLmisGeographicZoneDto district221 = OpenLmisGeographicZoneDto.builder()
+        .code("221")
+        .name("description 221")
+        .level(level3)
+        .parent(province12)
+        .build();
+    OpenLmisGeographicZoneDto district222 = OpenLmisGeographicZoneDto.builder()
+        .code("222")
+        .name("description 222")
+        .level(level3)
+        .parent(province12)
+        .build();
+    List<OpenLmisGeographicZoneDto> zoneDtos = Arrays.asList(
+        national1, province11, district111, district112, province12, district121, national2
+    );
+    district112.setName("description 112");
+    province12.setName("description 12");
+    national2.setName("description 2");
+    List<OpenLmisGeographicZoneDto> allZoneDtos = Arrays.asList(
+        national1, province11, district111, district112, province12, district121, district122,
+        national2, province21, district211, district212, province22, district221, district222
+    );
+    when(geographicZoneService.searchAllGeographicZones()).thenReturn(zoneDtos, allZoneDtos);
+  }
+
+  @Test
+  public void shouldReturnFalseWhenNotGetAnyGeographicZonesFromFc() {
+    // given
+
+    // when
+    boolean result = fcGeographicZoneService.processGeographicZones(new ArrayList<>());
+
+    // then
+    assertFalse(result);
+  }
+
+  @Test
+  public void shouldCreate7GeographicZonesWhenGet7NewGeographicZonesFromFc() {
+    // given
+
+    // when
+    boolean result = fcGeographicZoneService.processGeographicZones(fcDtos);
+
+    // then
+    verify(geographicZoneService, times(7)).createGeographicZone(
+        any(OpenLmisGeographicZoneDto.class));
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldCreate1GeographicZonesWhenGet7NewGeographicZonesBut1NationalIsInactivoFromFc() {
+    // given
+    fcDtos.get(1).setStatus("Inactivo");
+
+    // when
+    boolean result = fcGeographicZoneService.processGeographicZones(fcDtos);
+
+    // then
+    verify(geographicZoneService, times(1)).createGeographicZone(
+        any(OpenLmisGeographicZoneDto.class));
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldCreate4GeographicZonesWhenGet7NewGeographicZonesBut1ProvinceIsInactivoFromFc() {
+    // given
+    fcDtos.get(1).getProvinces().get(1).setStatus("Inactivo");
+
+    // when
+    boolean result = fcGeographicZoneService.processGeographicZones(fcDtos);
+
+    // then
+    verify(geographicZoneService, times(4)).createGeographicZone(
+        any(OpenLmisGeographicZoneDto.class));
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldCreate6GeographicZonesWhenGet7NewGeographicZonesBut1DistrictIsInactivoFromFc() {
+    // given
+    fcDtos.get(1).getProvinces().get(1).getDistricts().get(1).setStatus("Inactivo");
+
+    // when
+    boolean result = fcGeographicZoneService.processGeographicZones(fcDtos);
+
+    // then
+    verify(geographicZoneService, times(6)).createGeographicZone(
+        any(OpenLmisGeographicZoneDto.class));
+    assertTrue(result);
+  }
+
+  @Test
+  public void shouldUpdate6GeographicZonesWhenGet3OldGeographicZonesFromFc() {
+    // given
+
+    // when
+    boolean result = fcGeographicZoneService.processGeographicZones(fcDtos);
+
+    // then
+    verify(geographicZoneService, times(3 * 2)).updateGeographicZone(
+        any(OpenLmisGeographicZoneDto.class));
+    assertTrue(result);
+  }
+
+  private void prepareFcGeographicZoneNationalDtos() {
+    fcDtos = Arrays.asList(
         FcGeographicZoneNationalDto.builder()
             .code("1")
             .description("description 1")
@@ -141,151 +338,6 @@ public class FcGeographicZoneServiceTest {
             ))
             .build()
     );
-
-    GeographicLevelDto level1 = GeographicLevelDto.builder()
-        .code("national")
-        .name("National")
-        .levelNumber(1)
-        .build();
-    GeographicLevelDto level2 = GeographicLevelDto.builder()
-        .code("province")
-        .name("Province")
-        .levelNumber(2)
-        .build();
-    GeographicLevelDto level3 = GeographicLevelDto.builder()
-        .code("district")
-        .name("District")
-        .levelNumber(3)
-        .build();
-    List<GeographicLevelDto> levelDtos = Arrays.asList(level1, level2, level3);
-    when(geographicLevelService.searchAllGeographicLevel()).thenReturn(levelDtos);
-
-    OpenLmisGeographicZoneDto national1 = OpenLmisGeographicZoneDto.builder()
-        .code("1")
-        .name("description 1")
-        .level(level1)
-        .parent(null)
-        .build();
-    OpenLmisGeographicZoneDto province11 = OpenLmisGeographicZoneDto.builder()
-        .code("11")
-        .name("description 11")
-        .level(level2)
-        .parent(national1)
-        .build();
-    OpenLmisGeographicZoneDto district111 = OpenLmisGeographicZoneDto.builder()
-        .code("111")
-        .name("description 111")
-        .level(level3)
-        .parent(province11)
-        .build();
-    OpenLmisGeographicZoneDto district112 = OpenLmisGeographicZoneDto.builder()
-        .code("112")
-        .name("district 112")
-        .level(level3)
-        .parent(province11)
-        .build();
-    OpenLmisGeographicZoneDto province12 = OpenLmisGeographicZoneDto.builder()
-        .code("12")
-        .name("province 12")
-        .level(level2)
-        .parent(national1)
-        .build();
-    OpenLmisGeographicZoneDto district121 = OpenLmisGeographicZoneDto.builder()
-        .code("121")
-        .name("description 121")
-        .level(level3)
-        .parent(province12)
-        .build();
-    OpenLmisGeographicZoneDto national2 = OpenLmisGeographicZoneDto.builder()
-        .code("2")
-        .name("national 2")
-        .level(level1)
-        .parent(null)
-        .build();
-    List<OpenLmisGeographicZoneDto> zoneDtos = Arrays.asList(
-        national1, province11, district111, district112, province12, district121, national2
-    );
-    when(geographicZoneService.searchAllGeographicZones()).thenReturn(zoneDtos);
-  }
-
-  @Test
-  public void shouldReturnFalseWhenNotGetAnyGeographicZonesFromFc() {
-    // given
-    dtos = new ArrayList<>();
-
-    // when
-    boolean result = fcGeographicZoneService.processGeographicZones(dtos);
-
-    // then
-    assertFalse(result);
-  }
-
-  @Test
-  public void shouldCreate7GeographicZonesWhenGet7NewGeographicZonesFromFc() {
-    // given
-
-    // when
-    boolean result = fcGeographicZoneService.processGeographicZones(dtos);
-
-    // then
-    verify(geographicZoneService, times(7)).createGeographicZone(
-        any(OpenLmisGeographicZoneDto.class));
-    assertTrue(result);
-  }
-
-  @Test
-  public void shouldCreate1GeographicZonesWhenGet7NewGeographicZonesBut1NationalIsInactivoFromFc() {
-    // given
-    dtos.get(1).setStatus("Inactivo");
-
-    // when
-    boolean result = fcGeographicZoneService.processGeographicZones(dtos);
-
-    // then
-    verify(geographicZoneService, times(1)).createGeographicZone(
-        any(OpenLmisGeographicZoneDto.class));
-    assertTrue(result);
-  }
-
-  @Test
-  public void shouldCreate4GeographicZonesWhenGet7NewGeographicZonesBut1ProvinceIsInactivoFromFc() {
-    // given
-    dtos.get(1).getProvinces().get(1).setStatus("Inactivo");
-
-    // when
-    boolean result = fcGeographicZoneService.processGeographicZones(dtos);
-
-    // then
-    verify(geographicZoneService, times(4)).createGeographicZone(
-        any(OpenLmisGeographicZoneDto.class));
-    assertTrue(result);
-  }
-
-  @Test
-  public void shouldCreate6GeographicZonesWhenGet7NewGeographicZonesBut1DistrictIsInactivoFromFc() {
-    // given
-    dtos.get(1).getProvinces().get(1).getDistricts().get(1).setStatus("Inactivo");
-
-    // when
-    boolean result = fcGeographicZoneService.processGeographicZones(dtos);
-
-    // then
-    verify(geographicZoneService, times(6)).createGeographicZone(
-        any(OpenLmisGeographicZoneDto.class));
-    assertTrue(result);
-  }
-
-  @Test
-  public void shouldUpdate3GeographicZonesWhenGet3OldGeographicZonesFromFc() {
-    // given
-
-    // when
-    boolean result = fcGeographicZoneService.processGeographicZones(dtos);
-
-    // then
-    verify(geographicZoneService, times(3)).updateGeographicZone(
-        any(OpenLmisGeographicZoneDto.class));
-    assertTrue(result);
   }
 
 }

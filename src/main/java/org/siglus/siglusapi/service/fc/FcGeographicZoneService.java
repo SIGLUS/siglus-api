@@ -73,7 +73,7 @@ public class FcGeographicZoneService {
         }
       }
     });
-    createGeographicZones(needCreateZones);
+    createGeographicZones(needCreateZones, fcDtos);
     updateGeographicZones(needUpdateZones, geographicZoneMaps);
     return true;
   }
@@ -144,11 +144,19 @@ public class FcGeographicZoneService {
         .build();
   }
 
-  private void createGeographicZones(List<OpenLmisGeographicZoneDto> needCreateZones) {
+  private void createGeographicZones(List<OpenLmisGeographicZoneDto> needCreateZones,
+      List<FcGeographicZoneNationalDto> fcDtos) {
+    if (needCreateZones.isEmpty()) {
+      return;
+    }
     needCreateZones.forEach(zone -> {
+      if (zone.getParent() != null) {
+        zone.setParent(null);
+      }
       log.info("create geographic zone: {}", zone);
       geographicZoneService.createGeographicZone(zone);
     });
+    processGeographicZones(fcDtos);
   }
 
   private void updateGeographicZones(List<OpenLmisGeographicZoneDto> needUpdateZones,
