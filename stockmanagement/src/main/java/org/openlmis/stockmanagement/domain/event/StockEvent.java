@@ -27,12 +27,14 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString(exclude = "lineItems")
 @Table(name = "stock_events", schema = "stockmanagement")
 public class StockEvent extends BaseEntity {
 
