@@ -20,6 +20,7 @@ import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
@@ -27,7 +28,6 @@ import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
-import static org.siglus.siglusapi.constant.FieldConstants.STATUS;
 
 import java.util.Map;
 import java.util.Set;
@@ -218,7 +218,6 @@ public class FcProductServiceTest {
     assertFalse(orderableToCreate.getRoundToZero());
     assertEquals("each", orderableToCreate.getDispensable().getDispensingUnit());
     Map<String, Object> extraData = newHashMap();
-    extraData.put(STATUS, ACTIVE);
     extraData.put(IS_BASIC, true);
     assertEquals(extraData, orderableToCreate.getExtraData());
     assertEquals(tradeItemId.toString(), orderableToCreate.getTradeItemIdentifier());
@@ -280,7 +279,7 @@ public class FcProductServiceTest {
     OrderableDto orderableToUpdate = orderableCaptor.getValue();
     assertEquals(description, orderableToUpdate.getDescription());
     assertEquals(fullDescription, orderableToUpdate.getFullProductName());
-    assertEquals(ACTIVE, orderableToUpdate.getExtraData().get(STATUS));
+    assertNull(orderableToUpdate.getExtraData().get(ACTIVE));
     assertEquals(1, orderableToUpdate.getPrograms().size());
     orderableToUpdate.getPrograms().forEach(programOrderableDto -> {
       assertEquals(programId, programOrderableDto.getProgramId());

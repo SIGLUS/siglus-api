@@ -77,6 +77,10 @@ public class SiglusRequisitionTemplateService {
   @Transactional
   public SiglusRequisitionTemplateDto createTemplateExtension(RequisitionTemplateDto updatedDto,
       SiglusRequisitionTemplateDto requestDto) {
+    RequisitionTemplateExtensionDto extension = requestDto.getExtension();
+    if (null != extension) {
+      extension.setEnableProduct(true);
+    }
     SiglusRequisitionTemplateDto templateExtension = updateTemplateExtension(updatedDto,
         requestDto);
     List<UsageTemplateColumnSection> usageTemplateColumns = createUsageTemplateColumn(updatedDto);

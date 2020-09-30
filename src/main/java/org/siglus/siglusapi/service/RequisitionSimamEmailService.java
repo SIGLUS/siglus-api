@@ -70,10 +70,6 @@ public class RequisitionSimamEmailService {
   public static final String REGIMEN_FILE_NAME_PREFIX = "Regimen_Requi";
   public static final String REQUI_FILE_NAME_PREFIX = "Requi";
   public static final String FILE_APPLICATION_VND_MS_EXCEL = "application/excel";
-  public static final String MULIPLE_PROGRAM_CODE = "MP";
-  public static final String AL_PROGRAM_CODE = "ALP";
-  public static final String ARV_PROGRAM_CODE = "ARVP";
-  public static final String RAPID_TEST_PROGRAM_CODE = "RTP";
   public static final String EXCEL_FACILITY = "facility_name";
   public static final String EXCEL_DATE = "date";
   public static final String EXCEL_PRODUCT = "product_code";
@@ -116,14 +112,6 @@ public class RequisitionSimamEmailService {
   @Autowired
   private PeriodReferenceDataService periodReferenceDataService;
 
-  protected static final Map<String, String> SIMAM_PROGRAMS_MAP = MapUtils.putAll(newHashMap(),
-      new String[][]{
-          {ARV_PROGRAM_CODE, "TARV"},
-          {MULIPLE_PROGRAM_CODE, "Via Clássica"},
-          {AL_PROGRAM_CODE, "Malaria"},
-          {RAPID_TEST_PROGRAM_CODE, "Testes Rápidos Diag."}});
-
-
   private static final Map<String, String> AL_REGIMEN_MAP = MapUtils.putAll(newHashMap(),
       new String[][]{
           {"08O05", "Consultas AL US/APE Malaria 1x6"},
@@ -145,7 +133,6 @@ public class RequisitionSimamEmailService {
           {"CONSUMO_MALARIA", "Malaria Teste Rápido Consumo"},
           {"POSITIVE_MALARIA", "Malaria Teste Positivos +"},
           {"UNJUSTIFIED_MALARIA", "Malaria Teste Rápido Injustificado"}});
-
 
   public List<EmailAttachmentDto> prepareEmailAttachmentsForSimam(
       SiglusRequisitionDto requisition, ProgramDto program) {
@@ -238,7 +225,7 @@ public class RequisitionSimamEmailService {
       dataColumn.put(EXCEL_INVENTORY, getString(item.getStockOnHand()));
       dataColumn.put(EXCEL_SERVICE_QUANTITY, "");
       dataColumn.put(EXCEL_QUANTITY_APPROVED, getString(item.getAuthorizedQuantity()));
-      dataColumn.put(EXCEL_PROGRAM, SIMAM_PROGRAMS_MAP.get(program.getCode()));
+      dataColumn.put(EXCEL_PROGRAM, program.getName());
 
       dataColumns.add(dataColumn);
     });
@@ -405,14 +392,14 @@ public class RequisitionSimamEmailService {
     commonDataColumns.put(EXCEL_MOVDESCID, "0");
     commonDataColumns
         .put(EXCEL_DATE, SiglusDateHelper.formatDateTime(requisition.getCreatedDate()));
-    commonDataColumns.put(EXCEL_PROGRAM, SIMAM_PROGRAMS_MAP.get(program.getCode()));
+    commonDataColumns.put(EXCEL_PROGRAM, program.getName());
 
     return commonDataColumns;
   }
 
   private String formatFileName(UUID requisitionId, ProgramDto program,
       ProcessingPeriodDto period, FacilityDto facility, String fileNamePrefix) {
-    String programName = SIMAM_PROGRAMS_MAP.get(program.getCode());
+    String programName = program.getName();
     return String.format("%s%s_%s_%s_%s.xlsx", fileNamePrefix, requisitionId, facility.getName(),
         period.getName(), programName);
   }

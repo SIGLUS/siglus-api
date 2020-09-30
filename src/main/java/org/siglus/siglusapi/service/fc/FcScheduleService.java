@@ -362,6 +362,8 @@ public class FcScheduleService {
       return callFcService.getIssueVouchers().size();
     } else if (RECEIPT_PLAN_API.equals(api)) {
       return callFcService.getReceiptPlans().size();
+    } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
+      return callFcService.getGeographicZones().size();
     } else if (PROGRAM_API.equals(api)) {
       return callFcService.getPrograms().size();
     } else if (PRODUCT_API.equals(api)) {

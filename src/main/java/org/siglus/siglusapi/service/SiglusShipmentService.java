@@ -22,6 +22,7 @@ import static org.siglus.common.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -137,6 +138,7 @@ public class SiglusShipmentService {
     return shipmentDto.getOrder().getOrderLineItems().stream()
         .filter(OrderLineItemDto::isSkipped)
         .map(OrderLineItemDto::getId)
+        .filter(Objects::nonNull)
         .collect(toSet());
   }
 
@@ -155,7 +157,8 @@ public class SiglusShipmentService {
       Map<UUID, List<Importer>> groupShipment, List<OrderLineItemDto> orderLineItems) {
     List<OrderLineItemDto> subOrderLineItems = new ArrayList<>();
     for (OrderLineItemDto dto : orderLineItems) {
-      if (!skippedOrderLineItemIds.contains(dto.getId()) && dto.getOrderedQuantity() > 0) {
+      if (!skippedOrderLineItemIds.contains(dto.getId())
+          && dto.getOrderedQuantity() != null && dto.getOrderedQuantity() > 0) {
         calculateSubOrderPartialFulfilledValue(groupShipment, subOrderLineItems, dto);
       }
     }

@@ -2154,7 +2154,7 @@ traits:
         responses:
           200:
 
-    /products:
+    /fcProducts:
       displayName: Products From Fc
       post:
         is: [ secured ]
