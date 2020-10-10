@@ -18,8 +18,10 @@ package org.openlmis.stockmanagement.service.referencedata;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.referencedata.LotDto;
+import org.openlmis.stockmanagement.util.RequestParameters;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -38,6 +40,14 @@ public class StockmanagementLotReferenceDataService extends BaseReferenceDataSer
   protected Class<LotDto[]> getArrayResultClass() {
     return LotDto[].class;
   }
+
+  // [SIGLUS change start]
+  // [change reason]: performance optimization
+  public List<LotDto> getLotsByIds(Set<UUID> lotIds) {
+    RequestParameters requestParameters = RequestParameters.init().set("id", lotIds);
+    return getPage(requestParameters).getContent();
+  }
+  // [SIGLUS change end]
 
   /**
    * Search for lots under a specific trade item.

@@ -15,6 +15,8 @@
 
 package org.openlmis.stockmanagement.validators;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
@@ -87,7 +89,11 @@ public class LotValidatorTest  extends BaseValidatorTest {
         .build();
 
     //when
-    when(lotReferenceDataService.findOne(lotId)).thenReturn(lotDto);
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    // when(lotReferenceDataService.findOne(lotId)).thenReturn(lotDto);
+    when(lotReferenceDataService.getLotsByIds(newHashSet(lotId))).thenReturn(newArrayList(lotDto));
+    // [SIGLUS change end]
     when(orderableReferenceDataService
         .findByIds(singletonList(product.getId())))
         .thenReturn(singletonList(product));
