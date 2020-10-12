@@ -164,7 +164,8 @@ public class SiglusStockEventsServiceTest {
     StockCardLineItem stockCardLineItem = new StockCardLineItemDataBuilder().build();
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withLineItem(stockCardLineItem)
         .build();
-    when(stockCardRepository.findByFacilityId(any())).thenReturn(newArrayList(stockCard));
+    when(stockCardRepository.findByProgramIdAndFacilityId(any(), any()))
+        .thenReturn(newArrayList(stockCard));
 
     siglusStockEventsService.createStockEventForAllProducts(eventDto);
 

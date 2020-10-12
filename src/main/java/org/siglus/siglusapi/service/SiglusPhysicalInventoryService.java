@@ -33,7 +33,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
@@ -333,9 +332,8 @@ public class SiglusPhysicalInventoryService {
   }
 
   public InitialInventoryFieldDto canInitialInventory(UUID facility) {
-    List<StockCard> stockCards = stockCardRepository.findByFacilityId(facility);
-    boolean canInitialInventory = CollectionUtils.isEmpty(stockCards);
-    return new InitialInventoryFieldDto(canInitialInventory);
+    int stockCardCount = stockCardRepository.countByFacilityId(facility);
+    return new InitialInventoryFieldDto(0 == stockCardCount);
   }
 
   public Set<String> findPhysicalInventoryDates(UUID facility,

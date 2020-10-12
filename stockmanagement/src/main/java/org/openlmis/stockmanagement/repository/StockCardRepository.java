@@ -80,7 +80,7 @@ public interface StockCardRepository extends JpaRepository<StockCard, UUID> {
 
   // [SIGLUS change start]
   // [change reason]: add methods.
-  List<StockCard> findByFacilityId(UUID facilityId);
+  int countByFacilityId(UUID facilityId);
 
   List<StockCard> findByOrderableIdInAndFacilityId(
       Collection<UUID> orderableIds, UUID facilityId);
