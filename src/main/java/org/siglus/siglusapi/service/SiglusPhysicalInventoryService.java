@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -133,13 +134,14 @@ public class SiglusPhysicalInventoryService {
   public void deletePhysicalInventoryForAllProducts(UUID facilityId) {
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
         .findUserSupportedPrograms();
-    List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
-        supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram,
-            facilityId,
-            Boolean.TRUE)).flatMap(Collection::stream).collect(Collectors.toList());
-    inventories.forEach(inventory -> deletePhysicalInventory(inventory.getId()));
-    List<UUID> ids =
-        inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+    List<UUID> ids = supportedVirtualPrograms.stream().map(
+        supportedVirtualProgram -> physicalInventoriesRepository
+            .findIdByProgramIdAndFacilityIdAndIsDraft(supportedVirtualProgram, facilityId,
+                Boolean.TRUE))
+        .filter(Objects::nonNull)
+        .map(UUID::fromString)
+        .collect(Collectors.toList());
+    ids.forEach(this::deletePhysicalInventory);
     lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(ids);
   }
 
@@ -227,7 +229,7 @@ public class SiglusPhysicalInventoryService {
       });
     });
 
-    log.info("save physical inventory extension: {}", updateExtensions);
+    log.info("save physical inventory extension, size: {}", updateExtensions.size());
     return lineItemsExtensionRepository.save(updateExtensions);
   }
 
@@ -235,7 +237,7 @@ public class SiglusPhysicalInventoryService {
       List<PhysicalInventoryLineItemsExtension> extensions, PhysicalInventoryLineItemDto lineItem) {
     return extensions.stream()
         .filter(extension -> compareTwoId(extension.getLotId(), lineItem.getLotId())
-            && compareTwoId(extension.getOrderableId(),lineItem.getOrderableId()))
+            && compareTwoId(extension.getOrderableId(), lineItem.getOrderableId()))
         .findFirst()
         .orElse(null);
   }

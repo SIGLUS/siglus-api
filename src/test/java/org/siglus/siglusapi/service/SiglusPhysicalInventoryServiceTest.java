@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
@@ -61,7 +62,7 @@ import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementServi
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings({"PMD.TooManyMethods","PMD.UnusedPrivateField"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusPhysicalInventoryServiceTest {
 
   @Captor
@@ -175,29 +176,19 @@ public class SiglusPhysicalInventoryServiceTest {
     // given
     when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
-    when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
-        true))
-        .thenReturn(newArrayList(PhysicalInventoryDto.builder()
-            .id(inventoryOne)
-            .programId(programIdOne)
-            .facilityId(facilityId)
-            .build()
-        ));
-    when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdTwo, facilityId,
-        true))
-        .thenReturn(newArrayList(PhysicalInventoryDto.builder()
-            .id(inventoryTwo)
-            .programId(programIdTwo)
-            .facilityId(facilityId)
-            .build()
-        ));
+    when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programIdOne,
+        facilityId, true))
+        .thenReturn(inventoryOne.toString());
+    when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programIdTwo,
+        facilityId,true))
+        .thenReturn(inventoryTwo.toString());
 
     // when
     siglusPhysicalInventoryService.deletePhysicalInventoryForAllProducts(facilityId);
 
     // then
     verify(physicalInventoryStockManagementService, times(2)).deletePhysicalInventory(any());
-    verify(lineItemsExtensionRepository,times(1)).deleteByPhysicalInventoryIdIn(any());
+    verify(lineItemsExtensionRepository, times(1)).deleteByPhysicalInventoryIdIn(any());
   }
 
   @Test
@@ -277,7 +268,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .saveDraftForAllProducts(physicalInventoryDto);
 
     // then
-    assertEquals(null, dto.getLineItems().get(0).getReasonFreeText());
+    assertNull(dto.getLineItems().get(0).getReasonFreeText());
     assertEquals("saveText", dto.getLineItems().get(1).getReasonFreeText());
   }
 
@@ -320,7 +311,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // then
     assertEquals("extension", dto.getLineItems().get(0).getReasonFreeText());
-    assertEquals(null, dto.getLineItems().get(1).getReasonFreeText());
+    assertNull(dto.getLineItems().get(1).getReasonFreeText());
   }
 
   @Test
