@@ -16,19 +16,11 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.reducing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.emptyCollection;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.openlmis.fulfillment.domain.OrderStatus.CLOSED;
-import static org.openlmis.fulfillment.domain.OrderStatus.FULFILLING;
-import static org.openlmis.fulfillment.domain.OrderStatus.ORDERED;
-import static org.openlmis.fulfillment.domain.OrderStatus.PARTIALLY_FULFILLED;
-import static org.openlmis.fulfillment.domain.OrderStatus.RECEIVED;
-import static org.openlmis.fulfillment.domain.OrderStatus.SHIPPED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.IN_APPROVAL;
@@ -52,7 +44,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -62,10 +53,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.fulfillment.domain.Order;
-import org.openlmis.fulfillment.domain.OrderLineItem;
-import org.openlmis.fulfillment.service.OrderSearchParams;
-import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.requisition.domain.BaseEntity;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -94,8 +81,6 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.openlmis.requisition.dto.RoleDto;
-import org.openlmis.requisition.dto.ShipmentDto;
-import org.openlmis.requisition.dto.ShipmentLineItemDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
@@ -109,7 +94,6 @@ import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.ProofOfDeliveryService;
 import org.openlmis.requisition.service.RequisitionService;
-import org.openlmis.requisition.service.fulfillment.ShipmentFulfillmentService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.ApprovedProductReferenceDataService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
@@ -128,12 +112,10 @@ import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
-import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.exception.NotFoundException;
-import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
@@ -167,7 +149,6 @@ import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
@@ -247,9 +228,6 @@ public class SiglusRequisitionService {
   private SiglusUsageReportService siglusUsageReportService;
 
   @Autowired
-  private ShipmentFulfillmentService shipmentFulfillmentService;
-
-  @Autowired
   private RequisitionDraftRepository draftRepository;
 
   @Autowired
@@ -307,10 +285,7 @@ public class SiglusRequisitionService {
   private OrderableKitRepository orderableKitRepository;
 
   @Autowired
-  private OrderExternalRepository orderExternalRepository;
-
-  @Autowired
-  private OrderService orderService;
+  private SiglusFilterProductService filterProductService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -954,6 +929,27 @@ public class SiglusRequisitionService {
     notificationService.postDelete(requisitionId);
   }
 
+  public List<RequisitionV2Dto> getPreviousEmergencyRequisition(UUID requisitionId, UUID periodId,
+  UUID facilityId) {
+    MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+    queryParams.set(QueryRequisitionSearchParams.EMERGENCY, Boolean.TRUE.toString());
+    queryParams.set(QueryRequisitionSearchParams.PROCESSING_PERIOD, periodId.toString());
+    queryParams.set(QueryRequisitionSearchParams.FACILITY, facilityId.toString());
+    return siglusRequisitionRequisitionService
+        .searchRequisitions(new QueryRequisitionSearchParams(queryParams), UNPAGED)
+        .getContent().stream()
+        .filter(req -> !req.getId().equals(requisitionId))
+        .map(BaseDto::getId)
+        .map(siglusRequisitionRequisitionService::searchRequisition)
+        .collect(toList());
+  }
+
+  private List<RequisitionV2Dto> getPreviousEmergencyRequisition(BaseRequisitionDto requisition) {
+    UUID periodId = requisition.getProcessingPeriod().getId();
+    UUID facilityId = requisition.getFacility().getId();
+    return getPreviousEmergencyRequisition(requisition.getId(), periodId, facilityId);
+  }
+
   private void deleteExtensionForRequisition(UUID requisitionId) {
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     List<UUID> ids = findLineItemIds(requisition);
@@ -1160,117 +1156,20 @@ public class SiglusRequisitionService {
     filterNotFullyShippedProducts(previousEmergencyReqs, requisition);
   }
 
-  private List<RequisitionV2Dto> getPreviousEmergencyRequisition(BaseRequisitionDto requisition) {
-    MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
-    queryParams.set(QueryRequisitionSearchParams.EMERGENCY, Boolean.TRUE.toString());
-    String periodId = requisition.getProcessingPeriod().getId().toString();
-    queryParams.set(QueryRequisitionSearchParams.PROCESSING_PERIOD, periodId);
-    String facilityId = requisition.getFacility().getId().toString();
-    queryParams.set(QueryRequisitionSearchParams.FACILITY, facilityId);
-    return siglusRequisitionRequisitionService
-        .searchRequisitions(new QueryRequisitionSearchParams(queryParams), UNPAGED)
-        .getContent().stream()
-        .filter(req -> !req.getId().equals(requisition.getId()))
-        .map(BaseDto::getId)
-        .map(siglusRequisitionRequisitionService::searchRequisition)
-        .collect(toList());
-  }
-
   private void filterInProgressProducts(List<RequisitionV2Dto> previousEmergencyReqs,
       RequisitionV2Dto requisition) {
-    Set<UUID> productIdsInProgress = previousEmergencyReqs.stream()
-        .filter(req -> req.getStatus().isInProgress())
-        .map(RequisitionV2Dto::getLineItems)
-        .flatMap(Collection::stream)
-        .map(lineItem -> lineItem.getOrderableIdentity().getId())
-        .collect(toSet());
-    filterProductsInRequisition(requisition, productIdsInProgress);
+    Set<UUID> productIdsInProgress = filterProductService
+        .getInProgressProducts(previousEmergencyReqs);
+    requisition.getAvailableProducts()
+        .removeIf(product -> productIdsInProgress.contains(product.getId()));
   }
 
   private void filterNotFullyShippedProducts(List<RequisitionV2Dto> previousEmergencyReqs,
       RequisitionV2Dto requisition) {
-    Set<UUID> productIdsNotFullyShipped = previousEmergencyReqs.stream()
-        .filter(req -> req.getStatus() == RELEASED)
-        .map(this::mapToNotFullyShippedProductIds)
-        .flatMap(Collection::stream)
-        .collect(toSet());
-    filterProductsInRequisition(requisition, productIdsNotFullyShipped);
-  }
-
-  private void filterProductsInRequisition(RequisitionV2Dto requisition,
-      Set<UUID> productIdsToBeFiltered) {
+    Set<UUID> productIdsNotFullyShipped =
+        filterProductService.getNotFullyShippedProducts(previousEmergencyReqs);
     requisition.getAvailableProducts()
-        .removeIf(product -> productIdsToBeFiltered.contains(product.getId()));
-  }
-
-  private Set<UUID> mapToNotFullyShippedProductIds(RequisitionV2Dto requisition) {
-    Map<UUID, Long> reqProductQuantityMap = requisition.getLineItems().stream()
-        .filter(lineItem -> !lineItem.getSkipped() && lineItem.getApprovedQuantity() > 0)
-        .collect(groupingBy(lineItem -> lineItem.getOrderableIdentity().getId(),
-            reducing(0L, req -> req.getPacksToShip().longValue(), Long::sum)));
-
-    List<Order> orders = searchOrders(requisition);
-    Map<UUID, Long> shipmentProductQuantityMap = orders.stream()
-        .filter(this::hasShipped)
-        .map(Order::getId)
-        .map(shipmentFulfillmentService::getShipments)
-        .flatMap(Collection::stream)
-        .map(ShipmentDto::getLineItems)
-        .flatMap(Collection::stream)
-        .collect(groupingBy(lineItem -> lineItem.getOrderable().getId(),
-            reducing(0L, ShipmentLineItemDto::getQuantityShipped, Long::sum)));
-    Set<UUID> notFullyShippedProductIds = reqProductQuantityMap.entrySet().stream()
-        .filter(entry -> !shipmentProductQuantityMap.containsKey(entry.getKey())
-            || entry.getValue() > shipmentProductQuantityMap.get(entry.getKey()))
-        .map(Entry::getKey)
-        .collect(Collectors.toSet());
-
-    // order may not have shipment
-    Set<UUID> inProgressProductIds = orders.stream()
-        .filter(this::hasNotShipped)
-        .map(Order::getOrderLineItems)
-        .flatMap(Collection::stream)
-        .map(OrderLineItem::getOrderable)
-        .map(org.openlmis.fulfillment.domain.VersionEntityReference::getId)
-        .collect(toSet());
-    notFullyShippedProductIds.retainAll(inProgressProductIds);
-
-    return notFullyShippedProductIds;
-  }
-
-  private boolean hasNotShipped(Order order) {
-    org.openlmis.fulfillment.domain.OrderStatus status = order.getStatus();
-    return status == ORDERED || status == PARTIALLY_FULFILLED || status == CLOSED
-        || status == FULFILLING;
-  }
-
-  private boolean hasShipped(Order order) {
-    org.openlmis.fulfillment.domain.OrderStatus status = order.getStatus();
-    return status == SHIPPED || status == RECEIVED;
-  }
-
-  private List<Order> searchOrders(BaseRequisitionDto requisition) {
-    OrderSearchParams params = new OrderSearchParams();
-    params.setSupplyingFacilityId(requisition.getSupplyingFacility());
-    params.setRequestingFacilityId(requisition.getFacilityId());
-    params.setProgramId(requisition.getProgramId());
-    params.setProcessingPeriodId(requisition.getProcessingPeriodId());
-    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
-
-    List<OrderExternal> orderExternals = orderExternalRepository
-        .findByRequisitionId(requisition.getId());
-    // basicOrderDto don't have orderLineItems
-    return orderService.searchOrders(params, pageable).getContent()
-        .stream()
-        .filter(order -> isOrderFromRequisition(order, requisition.getId(), orderExternals))
-        .collect(Collectors.toList());
-  }
-
-  private boolean isOrderFromRequisition(Order order, UUID requisitionId,
-      List<OrderExternal> orderExternals) {
-    boolean isSubOrder = orderExternals.stream().anyMatch(orderExternal ->
-        orderExternal.getId().equals(order.getExternalId()));
-    return requisitionId.equals(order.getExternalId()) || isSubOrder;
+        .removeIf(product -> productIdsNotFullyShipped.contains(product.getId()));
   }
 
   private void setAvailableProductsForApprovePage(SiglusRequisitionDto siglusRequisitionDto) {

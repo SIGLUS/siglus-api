@@ -334,6 +334,9 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private OrderableKitRepository orderableKitRepository;
 
+  @Mock
+  private SiglusFilterProductService filterProductService;
+
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
@@ -1857,9 +1860,8 @@ public class SiglusRequisitionServiceTest {
   }
 
   private void mockProduct1ReqInProgress() {
-    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
-    lineItem.setOrderable(productVersionObjectReference1);
-    previousV2Req1.setRequisitionLineItems(singletonList(lineItem));
+    when(filterProductService.getNotFullyShippedProducts(any()))
+        .thenReturn(Sets.newHashSet(productVersionObjectReference1.getId()));
   }
 
   private void mockProduct1OrderInProgress() {

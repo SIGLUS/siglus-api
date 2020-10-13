@@ -56,6 +56,7 @@ import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
+import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
@@ -136,6 +137,12 @@ public class SiglusOrderService {
 
   @Autowired
   private BasicOrderDtoBuilder basicOrderDtoBuilder;
+
+  @Autowired
+  private SiglusRequisitionService siglusRequisitionService;
+
+  @Autowired
+  private SiglusFilterProductService filterProductService;
 
   @Value("${time.zoneId}")
   private String timeZoneId;
@@ -394,6 +401,8 @@ public class SiglusOrderService {
 
     Map<UUID, StockCardSummaryV2Dto> orderableSohMap = getOrderableIdSohMap(userHomeFacilityId);
 
+    Set<UUID> emergencyFilteredProducts = getEmergencyFilteredProducts(requisition);;
+
     return Optional
         .ofNullable(requisition.getAvailableProducts())
         .orElse(Collections.emptySet())
@@ -410,9 +419,21 @@ public class SiglusOrderService {
           }
           return false;
         })
+        .filter(orderable -> !emergencyFilteredProducts.contains(orderable.getId()))
         .map(orderable -> new VersionObjectReferenceDto(
             orderable.getId(), serviceUrl, ORDERABLES, orderable.getVersionNumber())
         ).collect(Collectors.toSet());
+  }
+
+  private Set<UUID> getEmergencyFilteredProducts(Requisition requisition) {
+    Set<UUID> emergencyOrderableIds = Collections.EMPTY_SET;
+    if (requisition.getEmergency()) {
+      List<RequisitionV2Dto> previousRequisitions = siglusRequisitionService
+          .getPreviousEmergencyRequisition(
+              requisition.getId(), requisition.getProcessingPeriodId(), requisition.getFacilityId());
+      emergencyOrderableIds = filterProductService.getNotFullyShippedProducts(previousRequisitions);
+    }
+    return emergencyOrderableIds;
   }
 
   private Set<UUID> getOrderableIds(ApproveProductsAggregator aggregator) {
