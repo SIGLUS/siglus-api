@@ -13,30 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.stockmanagement.dto;
+package org.openlmis.stockmanagement.dto.referencedata;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import nl.jqno.equalsverifier.Warning;
-import org.junit.Test;
-import org.openlmis.stockmanagement.testutils.ObjectReferenceDtoDataBuilder;
-import org.openlmis.stockmanagement.testutils.ToStringTestUtils;
+import java.util.UUID;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
+import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 
-public class ObjectReferenceDtoTest {
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public final class VersionObjectReferenceDto extends ObjectReferenceDto {
 
-  @Test
-  public void equalsContract() {
-    EqualsVerifier
-        .forClass(ObjectReferenceDto.class)
-        .suppress(Warning.STRICT_INHERITANCE)
-        .withRedefinedSuperclass()
-        .suppress(Warning.NONFINAL_FIELDS)
-        .verify();
+  @Getter
+  private Long versionNumber;
+
+  public VersionObjectReferenceDto(UUID id, String serviceUrl,
+                                   String resourceName, Long versionNumber) {
+    super(serviceUrl, resourceName, id);
+    this.versionNumber = versionNumber;
   }
-
-  @Test
-  public void shouldImplementToString() {
-    ObjectReferenceDto objectReference = new ObjectReferenceDtoDataBuilder().build();
-    ToStringTestUtils.verify(ObjectReferenceDto.class, objectReference, "SEPARATOR");
-  }
-
 }

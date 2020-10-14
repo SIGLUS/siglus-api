@@ -306,8 +306,8 @@ public class FcIssueVoucherServiceTest {
         Arrays.asList(basicOrderDto));
     StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
     summaryV2Dto.setOrderable(
-        new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "",
-            orderableDto.getId()));
+        new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(
+            orderableDto.getId(), "", "", 1L));
     CanFulfillForMeEntryDto fulfillForMeEntryDto = new CanFulfillForMeEntryDto();
     UUID lotId = UUID.randomUUID();
     fulfillForMeEntryDto.setStockOnHand(50);
@@ -384,8 +384,9 @@ public class FcIssueVoucherServiceTest {
     when(siglusOrderService.searchOrderById(canFulfillOrder.getId())).thenReturn(dto);
     StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
     summaryV2Dto.setOrderable(
-        new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "",
-            orderableDto.getId()));
+        new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(
+            orderableDto.getId(), "", "", 1L
+        ));
     CanFulfillForMeEntryDto fulfillForMeEntryDto = new CanFulfillForMeEntryDto();
     UUID lotId = UUID.randomUUID();
     fulfillForMeEntryDto.setStockOnHand(50);
@@ -455,8 +456,8 @@ public class FcIssueVoucherServiceTest {
     when(siglusOrderService.searchOrderById(order.getId())).thenReturn(dto);
     StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
     summaryV2Dto.setOrderable(
-        new org.openlmis.stockmanagement.dto.ObjectReferenceDto("", "",
-            orderableDto.getId()));
+        new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(
+            orderableDto.getId(), "", "", 1L));
     CanFulfillForMeEntryDto fulfillForMeEntryDto = new CanFulfillForMeEntryDto();
     UUID lotId = UUID.randomUUID();
     fulfillForMeEntryDto.setStockOnHand(50);

@@ -13,30 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.openlmis.stockmanagement.dto;
+package org.openlmis.stockmanagement.dto.referencedata;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import nl.jqno.equalsverifier.Warning;
-import org.junit.Test;
-import org.openlmis.stockmanagement.testutils.ObjectReferenceDtoDataBuilder;
-import org.openlmis.stockmanagement.testutils.ToStringTestUtils;
+import java.time.ZonedDateTime;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-public class ObjectReferenceDtoTest {
-
-  @Test
-  public void equalsContract() {
-    EqualsVerifier
-        .forClass(ObjectReferenceDto.class)
-        .suppress(Warning.STRICT_INHERITANCE)
-        .withRedefinedSuperclass()
-        .suppress(Warning.NONFINAL_FIELDS)
-        .verify();
-  }
-
-  @Test
-  public void shouldImplementToString() {
-    ObjectReferenceDto objectReference = new ObjectReferenceDtoDataBuilder().build();
-    ToStringTestUtils.verify(ObjectReferenceDto.class, objectReference, "SEPARATOR");
-  }
-
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+@ToString
+public final class MetaDataDto {
+  private Long versionNumber;
+  private ZonedDateTime lastUpdated;
 }

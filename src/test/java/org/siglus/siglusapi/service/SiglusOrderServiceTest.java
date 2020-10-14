@@ -811,7 +811,9 @@ public class SiglusOrderServiceTest {
 
   private StockCardSummaryV2Dto createMockStockCardSummary() {
     StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
-    summaryV2Dto.setOrderable(new ObjectReferenceDto("", "", orderableId1));
+    summaryV2Dto.setOrderable(
+        new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(orderableId1,
+            "", "", 1L));
     CanFulfillForMeEntryDto canFulfillForMeEntryDto = new CanFulfillForMeEntryDto();
     canFulfillForMeEntryDto.setStockOnHand(2);
     canFulfillForMeEntryDto.setLot(createLot());

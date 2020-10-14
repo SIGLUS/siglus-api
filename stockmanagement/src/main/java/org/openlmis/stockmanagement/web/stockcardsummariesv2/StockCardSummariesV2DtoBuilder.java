@@ -31,7 +31,9 @@ import java.util.stream.Stream;
 import org.apache.commons.collections4.MapUtils;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
+import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableFulfillDto;
+import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -48,72 +50,49 @@ public class StockCardSummariesV2DtoBuilder {
   /**
    * Builds Stock Card Summary dtos from stock cards and orderables.
    *
-   * @param stockCards            list of {@link StockCard} found for orderables
-   * @param orderableFulfills     map of orderable ids as keys and {@link OrderableFulfillDto}
-   * @param nonEmptySummariesOnly flag which allows filtering summaries with an empty
-   *                              getCanFulfillForMe collection
+   * @param approvedProducts list of {@link OrderableDto} that summaries will be based on
+   * @param stockCards       list of {@link StockCard} found for orderables
+   * @param orderables       map of orderable ids as keys and {@link OrderableFulfillDto}
    * @return list of {@link StockCardSummaryV2Dto}
    */
-  public List<StockCardSummaryV2Dto> build(List<StockCard> stockCards,
-      Map<UUID, OrderableFulfillDto> orderableFulfills, boolean nonEmptySummariesOnly) {
-    Stream<StockCardSummaryV2Dto> summariesStream = orderableFulfills.keySet().stream()
-        .map(id -> build(stockCards, id,
-            MapUtils.isEmpty(orderableFulfills) ? null : orderableFulfills.get(id)))
+  public List<StockCardSummaryV2Dto> build(List<OrderableDto> approvedProducts,
+      List<StockCard> stockCards, Map<UUID, OrderableFulfillDto> orderables,
+      boolean nonEmptySummariesOnly) {
+    Stream<StockCardSummaryV2Dto> summariesStream = approvedProducts.stream()
+        .map(p -> build(stockCards, p.getId(), p.getMeta().getVersionNumber(),
+            MapUtils.isEmpty(orderables) ? null : orderables.get(p.getId())))
         .sorted();
 
-    Stream<StockCardSummaryV2Dto> stockCardSummariesWithNoIdentifiers =
-        getStockCardSummariesForOrderablesWithoutIdentifiers(stockCards, orderableFulfills);
-
-    Stream<StockCardSummaryV2Dto> stockCardSummaries = Stream.concat(
-        summariesStream, stockCardSummariesWithNoIdentifiers);
-
     if (nonEmptySummariesOnly) {
-      stockCardSummaries = stockCardSummaries.filter(
+      summariesStream = summariesStream.filter(
           summary -> !summary.getCanFulfillForMe().isEmpty());
     }
 
-    return stockCardSummaries.sorted().collect(toList());
+    return summariesStream.sorted().collect(toList());
   }
 
   private StockCardSummaryV2Dto build(List<StockCard> stockCards, UUID orderableId,
-                                      OrderableFulfillDto fulfills) {
+      Long orderableVersionNumber, OrderableFulfillDto fulfills) {
 
     Set<CanFulfillForMeEntryDto> canFulfillSet = null == fulfills ? new HashSet<>()
         : fulfills.getCanFulfillForMe()
-        .stream()
-        .map(id -> buildFulfillsEntries(id,
-            findStockCardByOrderableId(id, stockCards)))
-        .flatMap(List::stream)
-        .collect(toSet());
+            .stream()
+            .map(id -> buildFulfillsEntries(id,
+                findStockCardByOrderableId(id, stockCards)))
+            .flatMap(List::stream)
+            .collect(toSet());
 
     canFulfillSet.addAll(
         buildFulfillsEntries(
             orderableId,
             findStockCardByOrderableId(orderableId, stockCards)));
 
-    return new StockCardSummaryV2Dto(createOrderableReference(orderableId), canFulfillSet);
-  }
-
-  private Stream<StockCardSummaryV2Dto> getStockCardSummariesForOrderablesWithoutIdentifiers(
-      List<StockCard> stockCards, Map<UUID, OrderableFulfillDto> orderableFulfills) {
-    Set<UUID> orderableIds = stockCards
-        .stream()
-        .map(StockCard::getOrderableId)
-        .collect(Collectors.toSet());
-
-    return orderableIds
-        .stream()
-        .filter(id -> !orderableFulfills.containsKey(id))
-        .filter(id -> orderableFulfills.values()
-            .stream()
-            .noneMatch(dto -> dto.getCanFulfillForMe().contains(id)))
-        .map(id -> build(stockCards, id,
-            MapUtils.isEmpty(orderableFulfills) ? null : orderableFulfills.get(id)))
-        .sorted();
+    return new StockCardSummaryV2Dto(createVersionReference(
+        orderableId, ORDERABLES, orderableVersionNumber),canFulfillSet);
   }
 
   private List<CanFulfillForMeEntryDto> buildFulfillsEntries(UUID orderableId,
-                                                     List<StockCard> stockCards) {
+      List<StockCard> stockCards) {
     if (isEmpty(stockCards)) {
       return Collections.emptyList();
     } else {
@@ -124,27 +103,23 @@ public class StockCardSummariesV2DtoBuilder {
   }
 
   private CanFulfillForMeEntryDto createCanFulfillForMeEntry(StockCard stockCard,
-                                                              UUID orderableId) {
+      UUID orderableId) {
     return new CanFulfillForMeEntryDto(
         createStockCardReference(stockCard.getId()),
-        createOrderableReference(orderableId),
+        createReference(orderableId, ORDERABLES),
         stockCard.getLotId() == null ? null : createLotReference(stockCard.getLotId()),
         stockCard.getStockOnHand(),
         stockCard.getOccurredDate(),
         stockCard.getProcessedDate()
-      );
+    );
   }
 
   private List<StockCard> findStockCardByOrderableId(UUID orderableId,
-                                                        List<StockCard> stockCards) {
+      List<StockCard> stockCards) {
     return stockCards
         .stream()
         .filter(card -> card.getOrderableId().equals(orderableId))
         .collect(toList());
-  }
-
-  private ObjectReferenceDto createOrderableReference(UUID id) {
-    return createReference(id, ORDERABLES);
   }
 
   private ObjectReferenceDto createStockCardReference(UUID id) {
@@ -157,5 +132,10 @@ public class StockCardSummariesV2DtoBuilder {
 
   private ObjectReferenceDto createReference(UUID id, String resourceName) {
     return new ObjectReferenceDto(serviceUrl, resourceName, id);
+  }
+
+  private VersionObjectReferenceDto createVersionReference(
+      UUID id, String resourceName,Long versionNumber) {
+    return new VersionObjectReferenceDto(id, serviceUrl, resourceName, versionNumber);
   }
 }
