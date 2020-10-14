@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_DEBIT_QUANTITY_EXCEED_SOH;
 
-import com.google.common.collect.Maps;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 import org.apache.commons.collections.CollectionUtils;
@@ -266,7 +266,7 @@ public class CalculatedStockOnHandService {
     return calculatedStockOnHandRepository
         .findPreviousStockOnHands(stockCardIds, occurredDate).stream()
         .collect(toMap(calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId(),
-            CalculatedStockOnHand::getStockOnHand));
+            CalculatedStockOnHand::getStockOnHand, (stockOnHand1, stockOnHand2) -> stockOnHand1));
   }
   // [SIGLUS change end]
 
@@ -330,9 +330,10 @@ public class CalculatedStockOnHandService {
     }
     List<CalculatedStockOnHand> calculatedStockOnHands = calculatedStockOnHandRepository
         .findPreviousStockOnHands(uuids, asOfDate.plusDays(1));
-    Map<UUID, CalculatedStockOnHand> calculatedStockOnHandMap = Maps
-        .uniqueIndex(calculatedStockOnHands,
-            calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId());
+    Map<UUID, CalculatedStockOnHand> calculatedStockOnHandMap = calculatedStockOnHands.stream()
+        .collect(toMap(calculatedStockOnHand -> calculatedStockOnHand.getStockCard().getId(),
+            Function.identity(),
+            (calculatedStockOnHand1, calculatedStockOnHand2) -> calculatedStockOnHand1));
     stockCards.forEach(stockCard -> {
       UUID stockCardId = stockCard.getId();
       boolean existedInCalculatedStockOnHand = null != calculatedStockOnHandMap.get(stockCardId);

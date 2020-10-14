@@ -15,13 +15,10 @@
 
 package org.openlmis.stockmanagement.validators;
 
-import static java.util.stream.Collectors.groupingBy;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_ADJUSTMENT_QUANITITY_INVALID;
 
 import java.util.List;
-import java.util.Map;
-import org.openlmis.stockmanagement.domain.identity.OrderableLotIdentity;
 import org.openlmis.stockmanagement.dto.StockEventAdjustmentDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
@@ -50,16 +47,22 @@ public class QuantityValidator implements StockEventValidator {
       return;
     }
 
-    profiler.start("GET_ORDERABLE_GROUPS");
-    Map<OrderableLotIdentity, List<StockEventLineItemDto>> sameOrderableGroups = stockEventDto
-        .getLineItems()
-        .stream()
-        .collect(groupingBy(OrderableLotIdentity::identityOf));
-
-    for (List<StockEventLineItemDto> group : sameOrderableGroups.values()) {
-      // increase may cause int overflow, decrease may cause below zero
-      validateEventItems(stockEventDto, group, profiler.startNested("VALIDATE_EVENT_LINE_ITEMS"));
-    }
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    // profiler.start("GET_ORDERABLE_GROUPS");
+    // Map<OrderableLotIdentity, List<StockEventLineItemDto>> sameOrderableGroups = stockEventDto
+    //     .getLineItems()
+    //     .stream()
+    //     .collect(groupingBy(OrderableLotIdentity::identityOf));
+    //
+    // for (List<StockEventLineItemDto> group : sameOrderableGroups.values()) {
+    //   // increase may cause int overflow, decrease may cause below zero
+    //   validateEventItems(stockEventDto, group,
+    //       profiler.startNested("VALIDATE_EVENT_LINE_ITEMS"));
+    // }
+    validateEventItems(stockEventDto, stockEventDto.getLineItems(),
+        profiler.startNested("VALIDATE_EVENT_LINE_ITEMS"));
+    // [SIGLUS change end]
 
     profiler.stop().log();
     XLOGGER.exit(stockEventDto);

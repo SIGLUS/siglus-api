@@ -35,6 +35,18 @@ public interface PhysicalInventoriesRepository
       @Param("facilityId") UUID facilityId);
 
   // [SIGLUS change start]
+  // [change reason]: performance optimization
+  @Query(value = "select cast(id as varchar) id from stockmanagement.physical_inventories "
+      + "where programid = :programId "
+      + "and facilityid = :facilityId "
+      + "and isdraft = :isDraft", nativeQuery = true)
+  String findIdByProgramIdAndFacilityIdAndIsDraft(
+      @Param("programId") UUID programId,
+      @Param("facilityId") UUID facilityId,
+      @Param("isDraft") boolean isDraft);
+  // [SIGLUS change end]
+
+  // [SIGLUS change start]
   // [change reason]: add new methods.
   List<PhysicalInventory> findByFacilityId(UUID facilityId);
 

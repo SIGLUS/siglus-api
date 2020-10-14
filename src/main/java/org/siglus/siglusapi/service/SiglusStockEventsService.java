@@ -234,7 +234,8 @@ public class SiglusStockEventsService {
   }
 
   private void addStockCardCreateTime(StockEventDto eventDto) {
-    List<StockCard> stockCards = stockCardRepository.findByFacilityId(eventDto.getFacilityId());
+    List<StockCard> stockCards = stockCardRepository
+        .findByProgramIdAndFacilityId(eventDto.getProgramId(), eventDto.getFacilityId());
     Set<UUID> stockCardIds = stockCards.stream().map(BaseEntity::getId).collect(Collectors.toSet());
     Map<UUID, StockCardExtension> stockCardIdToExtensionMap = Maps
         .uniqueIndex(stockCardExtensionRepository.findByStockCardIdIn(stockCardIds),
@@ -252,6 +253,9 @@ public class SiglusStockEventsService {
   }
 
   private void addStockCardLineItemDocumentNumber(StockEventDto eventDto, UUID stockEventId) {
+    if (eventDto.isPhysicalInventory()) {
+      return;
+    }
     Map<String, String> documentationNoMap = eventDto.getLineItems()
         .stream()
         .collect(Collectors.toMap(

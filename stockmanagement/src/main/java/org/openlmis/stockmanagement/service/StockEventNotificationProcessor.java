@@ -29,6 +29,7 @@ import org.slf4j.ext.XLogger;
 import org.slf4j.ext.XLoggerFactory;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
@@ -52,6 +53,10 @@ public class StockEventNotificationProcessor {
    * 
    * @param eventDto the stock event to process
    */
+  // [SIGLUS change start]
+  // [change reason]: performance optimization
+  @Async
+  // [SIGLUS change end]
   public void callAllNotifications(StockEventDto eventDto) {
     RightDto right = rightReferenceDataService.findRight(STOCK_INVENTORIES_EDIT);
     eventDto

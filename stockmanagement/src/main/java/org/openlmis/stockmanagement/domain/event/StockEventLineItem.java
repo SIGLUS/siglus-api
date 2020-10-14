@@ -34,6 +34,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.ExtraDataConverter;
 import org.openlmis.stockmanagement.domain.common.VvmApplicable;
@@ -45,6 +46,7 @@ import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLi
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@ToString(exclude = "stockEvent")
 @Table(name = "stock_event_line_items", schema = "stockmanagement")
 public class StockEventLineItem extends BaseEntity
     implements IdentifiableByOrderableLot, VvmApplicable {

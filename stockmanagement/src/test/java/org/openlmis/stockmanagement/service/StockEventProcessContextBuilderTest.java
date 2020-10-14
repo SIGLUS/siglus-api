@@ -15,6 +15,8 @@
 
 package org.openlmis.stockmanagement.service;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
@@ -122,7 +124,11 @@ public class StockEventProcessContextBuilderTest {
     when(orderableReferenceDataService
         .findAll())
         .thenReturn(approvedProductDtos);
-    when(lotReferenceDataService.findOne(lotId)).thenReturn(lot);
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    // when(lotReferenceDataService.findOne(lotId)).thenReturn(lot);
+    when(lotReferenceDataService.getLotsByIds(newHashSet(lotId))).thenReturn(newArrayList(lot));
+    // [SIGLUS change end]
 
     //when
     StockEventProcessContext context = contextBuilder.buildContext(stockEventDto);

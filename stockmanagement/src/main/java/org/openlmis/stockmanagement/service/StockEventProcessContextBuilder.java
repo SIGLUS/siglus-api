@@ -242,14 +242,24 @@ public class StockEventProcessContextBuilder {
   }
 
   private List<LotDto> getLots(StockEventDto eventDto) {
-    return eventDto
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    // return eventDto
+    //     .getLineItems()
+    //     .stream()
+    //     .filter(item -> item.getLotId() != null)
+    //     .map(StockEventLineItemDto::getLotId)
+    //     .distinct()
+    //     .map(lotReferenceDataService::findOne)
+    //     .collect(Collectors.toList());
+    Set<UUID> lotIds = eventDto
         .getLineItems()
         .stream()
         .filter(item -> item.getLotId() != null)
         .map(StockEventLineItemDto::getLotId)
-        .distinct()
-        .map(lotReferenceDataService::findOne)
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
+    return lotReferenceDataService.getLotsByIds(lotIds);
+    // [SIGLUS change end]
   }
 
   private List<StockCardLineItemReason> getCardReasons(StockEventDto eventDto) {
