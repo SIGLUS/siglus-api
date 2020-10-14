@@ -70,6 +70,7 @@ import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProcessingScheduleDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
+import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
@@ -158,6 +159,12 @@ public class SiglusOrderServiceTest {
   @Mock
   private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
 
+  @Mock
+  private SiglusFilterAddProductForEmergencyService filterAddProductForEmergencyService;
+
+  @Mock
+  private SiglusRequisitionService siglusRequisitionService;
+
   @InjectMocks
   private SiglusOrderService siglusOrderService;
 
@@ -185,12 +192,14 @@ public class SiglusOrderServiceTest {
   }
 
   @Test
-  public void shouldGetValidAvailableProductsAndRequisitionNumberWithOrder() {
+  public void shouldGetValidAvailableProductsAndRequisitionNumberWithOrderWhenReqIsNormal() {
     // given
     OrderDto orderDto = createOrderDto();
     when(orderController.getOrder(orderId, null)).thenReturn(orderDto);
     when(orderExternalRepository.findOne(orderDto.getExternalId())).thenReturn(null);
-    when(requisitionController.findRequisition(any(), any())).thenReturn(createRequisition());
+    Requisition requisition = createRequisition();
+    requisition.setEmergency(false);
+    when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
     when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
     when(requisitionService.getApproveProduct(approverFacilityId, programId, false))
         .thenReturn(createApproverAggregator());
@@ -207,7 +216,7 @@ public class SiglusOrderServiceTest {
     when(lineItemExtensionRepository.findByOrderLineItemIdIn((newHashSet(lineItemId))))
         .thenReturn(newArrayList(extension));
     when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId))
-        .thenReturn("requisitionNumber");
+        .thenReturn("requisitionNumber-1");
 
     // when
     SiglusOrderDto response = siglusOrderService.searchOrderById(orderId);
@@ -219,7 +228,101 @@ public class SiglusOrderServiceTest {
     assertTrue(filteredProduct.getId().equals(orderableId1));
     assertTrue(filteredProduct.getVersionNumber().equals(1L));
     response.getOrder().getOrderLineItems().forEach(lineItem -> assertTrue(lineItem.isSkipped()));
-    assertEquals("requisitionNumber", response.getOrder().getRequisitionNumber());
+    assertEquals("requisitionNumber-1", response.getOrder().getRequisitionNumber());
+  }
+
+  @Test
+  public void shouldFilterInProgressProductWhenReqIsEmergency() {
+    // given
+    OrderDto orderDto = createOrderDto();
+    when(orderController.getOrder(orderId, null)).thenReturn(orderDto);
+    when(orderExternalRepository.findOne(orderDto.getExternalId())).thenReturn(null);
+    Requisition requisition = createRequisition();
+    requisition.setEmergency(true);
+    when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
+    when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
+    ApprovedProductDto productDto1 = createApprovedProductDto(orderableId1);
+    ApprovedProductDto productDto2 = createApprovedProductDto(orderableId2);
+    List<ApprovedProductDto> list = Arrays.asList(productDto1, productDto2);
+    when(requisitionService.getApproveProduct(approverFacilityId, programId, false))
+        .thenReturn(new ApproveProductsAggregator(list, programId));
+    when(requisitionService.getApproveProduct(userHomeFacilityId, programId, false))
+        .thenReturn(createUserAggregator());
+    when(siglusArchiveProductService.searchArchivedProducts(any()))
+        .thenReturn(Collections.emptySet());
+    when(siglusStockCardSummariesService
+        .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
+    OrderLineItemExtension extension = OrderLineItemExtension.builder()
+        .orderLineItemId(lineItemId)
+        .skipped(true)
+        .build();
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn((newHashSet(lineItemId))))
+        .thenReturn(newArrayList(extension));
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId))
+        .thenReturn("requisitionNumber-2");
+    when(siglusRequisitionService.getPreviousEmergencyRequisition(any(), any(), any()))
+        .thenReturn(Arrays.asList(new RequisitionV2Dto()));
+    when(filterAddProductForEmergencyService.getInProgressProducts(anyList()))
+        .thenReturn(Sets.newHashSet(orderableId2));
+
+    // when
+    SiglusOrderDto response = siglusOrderService.searchOrderById(orderId);
+    Set<VersionObjectReferenceDto> availableProducts = response.getAvailableProducts();
+    VersionObjectReferenceDto filteredProduct = availableProducts.stream().findFirst().orElse(null);
+
+    // then
+    assertEquals(1, availableProducts.size());
+    assertTrue(filteredProduct.getId().equals(orderableId1));
+    assertTrue(filteredProduct.getVersionNumber().equals(1L));
+    response.getOrder().getOrderLineItems().forEach(lineItem -> assertTrue(lineItem.isSkipped()));
+    assertEquals("requisitionNumber-2", response.getOrder().getRequisitionNumber());
+  }
+
+
+  @Test
+  public void shouldFilterNotFullyShippedWhenReqIsEmergency() {
+    // given
+    OrderDto orderDto = createOrderDto();
+    when(orderController.getOrder(orderId, null)).thenReturn(orderDto);
+    when(orderExternalRepository.findOne(orderDto.getExternalId())).thenReturn(null);
+    Requisition requisition = createRequisition();
+    requisition.setEmergency(true);
+    when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
+    when(authenticationHelper.getCurrentUser()).thenReturn(createUser(userId, userHomeFacilityId));
+    ApprovedProductDto productDto1 = createApprovedProductDto(orderableId1);
+    ApprovedProductDto productDto2 = createApprovedProductDto(orderableId2);
+    List<ApprovedProductDto> list = Arrays.asList(productDto1, productDto2);
+    when(requisitionService.getApproveProduct(approverFacilityId, programId, false))
+        .thenReturn(new ApproveProductsAggregator(list, programId));
+    when(requisitionService.getApproveProduct(userHomeFacilityId, programId, false))
+        .thenReturn(createUserAggregator());
+    when(siglusArchiveProductService.searchArchivedProducts(any()))
+        .thenReturn(Collections.emptySet());
+    when(siglusStockCardSummariesService
+        .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
+    OrderLineItemExtension extension = OrderLineItemExtension.builder()
+        .orderLineItemId(lineItemId)
+        .skipped(true)
+        .build();
+    when(lineItemExtensionRepository.findByOrderLineItemIdIn((newHashSet(lineItemId))))
+        .thenReturn(newArrayList(extension));
+    when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId))
+        .thenReturn("requisitionNumber-3");
+    when(siglusRequisitionService.getPreviousEmergencyRequisition(any(), any(), any()))
+        .thenReturn(Arrays.asList(new RequisitionV2Dto()));
+    when(filterAddProductForEmergencyService.getInProgressProducts(anyList()))
+        .thenReturn(Sets.newHashSet(orderableId2));
+    when(filterAddProductForEmergencyService.getNotFullyShippedProducts(anyList()))
+        .thenReturn(Sets.newHashSet(orderableId1));
+
+    // when
+    SiglusOrderDto response = siglusOrderService.searchOrderById(orderId);
+    Set<VersionObjectReferenceDto> availableProducts = response.getAvailableProducts();
+
+    // then
+    assertEquals(0, availableProducts.size());
+    response.getOrder().getOrderLineItems().forEach(lineItem -> assertTrue(lineItem.isSkipped()));
+    assertEquals("requisitionNumber-3", response.getOrder().getRequisitionNumber());
   }
 
   @Test

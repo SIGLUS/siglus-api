@@ -92,7 +92,6 @@ import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.OrderDto;
-import org.openlmis.requisition.dto.OrderStatus;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -104,8 +103,6 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.openlmis.requisition.dto.RoleDto;
-import org.openlmis.requisition.dto.ShipmentDto;
-import org.openlmis.requisition.dto.ShipmentLineItemDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
@@ -180,10 +177,6 @@ import org.springframework.util.MultiValueMap;
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusRequisitionServiceTest {
-
-  private static final long OVERFLOW_QUANTITY = 1000L;
-
-  private static final long NOT_FULLY_SHIPPED_QUANTITY = 0L;
 
   private static final String REQUISITION_NUMBER = "requisitionNumber";
   private static final String CODE = "code";
@@ -335,7 +328,7 @@ public class SiglusRequisitionServiceTest {
   private OrderableKitRepository orderableKitRepository;
 
   @Mock
-  private SiglusFilterProductService filterProductService;
+  private SiglusFilterAddProductForEmergencyService filterProductService;
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
@@ -420,10 +413,6 @@ public class SiglusRequisitionServiceTest {
   private long preReqProduct1ApprovedQuantity = randomQuantity();
 
   private List<OrderDto> preReqOrders = new ArrayList<>();
-
-  private List<ShipmentDto> preReqOrderShipments1;
-
-  private List<ShipmentDto> preReqOrderShipments2;
 
   private UUID rightId = UUID.randomUUID();
 
@@ -789,10 +778,11 @@ public class SiglusRequisitionServiceTest {
     // given
     mockEmergencyRequisition();
     mockPreviousEmergencyRequisition1(RELEASED);
+    List<BasicRequisitionDto> emergencyRequisitions = asList(newBasicReq, previousBasicReq1);
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
-        .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
-    mockFullyShippedProduct1();
-    mockSearchFullyShippedOrder();
+        .thenReturn(new PageImpl<>(emergencyRequisitions));
+    when(filterProductService.getNotFullyShippedProducts(any())).thenReturn(Collections.emptySet());
+
     // when
     siglusRequisitionService.searchRequisition(requisitionId);
 
@@ -813,7 +803,9 @@ public class SiglusRequisitionServiceTest {
     mockPreviousEmergencyRequisition1(RELEASED);
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
         .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
-    mockNotFullyFulfilledProduct1();
+    when(filterProductService.getInProgressProducts(any())).thenReturn(Collections.emptySet());
+    when(filterProductService.getNotFullyShippedProducts(any()))
+        .thenReturn(Sets.newHashSet(productId1));
 
     // when
     siglusRequisitionService.searchRequisition(requisitionId);
@@ -822,27 +814,6 @@ public class SiglusRequisitionServiceTest {
     verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(1, availableProducts.size());
-    assertThat(availableProducts,
-        hasItems(productVersionObjectReference2));
-  }
-
-  @Test
-  public void shouldNotFilterProduct1WhenGetEmergencyRequisitionGivenFulfillSkippedProduct1() {
-    // given
-    mockEmergencyRequisition();
-    mockPreviousEmergencyRequisition1(RELEASED);
-    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
-        .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
-    preReqOrderShipments1 = newArrayList();
-    mockNotFulfilledProduct1();
-    mockSearchSkippedOrder();
-    // when
-    siglusRequisitionService.searchRequisition(requisitionId);
-
-    // then
-    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
-    Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
-    assertEquals(2, availableProducts.size());
     assertThat(availableProducts,
         hasItems(productVersionObjectReference2));
   }
@@ -885,49 +856,6 @@ public class SiglusRequisitionServiceTest {
     assertEquals(1, availableProducts.size());
     assertThat(availableProducts,
         hasItems(productVersionObjectReference2));
-  }
-
-  @Test
-  public void shouldFilterProduct1WhenGetEmergencyRequisitionGivenOverflowReq1AndNotFullyReq2() {
-    // given
-    mockEmergencyRequisition();
-    mockPreviousEmergencyRequisition1(RELEASED);
-    mockPreviousEmergencyRequisition2();
-    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
-        .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1, previousBasicReq2)));
-    mockOverflowShippedProduct1InPrevReq1();
-    mockNotFullyShippedProduct1InPrevReq2();
-
-    // when
-    siglusRequisitionService.searchRequisition(requisitionId);
-
-    // then
-    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
-    Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
-    assertEquals(1, availableProducts.size());
-    assertThat(availableProducts,
-        hasItems(productVersionObjectReference2));
-  }
-
-  @Test
-  public void shouldFilterNoProductWhenGetEmergencyRequisitionGivenZeroAppQtyReq1AndNoPod() {
-    // given
-    mockEmergencyRequisition();
-    mockPreviousEmergencyRequisition1(RELEASED);
-    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
-        .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
-    mockZeroAppQtyProduct1InPrevReq1();
-    mockEmptyPodForPrevReq1();
-
-    // when
-    siglusRequisitionService.searchRequisition(requisitionId);
-
-    // then
-    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
-    Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
-    assertEquals(2, availableProducts.size());
-    assertThat(availableProducts,
-        hasItems(productVersionObjectReference1, productVersionObjectReference2));
   }
 
   @Test
@@ -1759,145 +1687,15 @@ public class SiglusRequisitionServiceTest {
     when(orderService.searchOrders(any(), any())).thenReturn(orderPage);
   }
 
-  private void mockSearchSkippedOrder() {
-    Order order = new Order();
-    order.setId(orderId);
-    order.setStatus(org.openlmis.fulfillment.domain.OrderStatus.SHIPPED);
-    order.setOrderLineItems(newArrayList());
-    order.setExternalId(preReqId1);
-    List<Order> orders = newArrayList(order);
-    Page<Order> orderPage = Pagination.getPage(orders, null);
-    when(orderService.searchOrders(any(), any())).thenReturn(orderPage);
-  }
-
-  private void mockSearchFullyShippedOrder() {
-    Order order = new Order();
-    order.setId(orderId);
-    order.setStatus(org.openlmis.fulfillment.domain.OrderStatus.SHIPPED);
-    OrderLineItem lineItem = new OrderLineItem();
-    org.openlmis.fulfillment.domain.VersionEntityReference versionEntityReference =
-        new org.openlmis.fulfillment.domain.VersionEntityReference();
-    versionEntityReference.setId(productId1);
-    lineItem.setOrderable(versionEntityReference);
-    order.setOrderLineItems(newArrayList(lineItem));
-    order.setExternalId(preReqId1);
-    List<Order> orders = newArrayList(order);
-    Page<Order> orderPage = Pagination.getPage(orders, null);
-
-    when(orderService.searchOrders(any(), any())).thenReturn(orderPage);
-    ShipmentDto shipmentDto = new ShipmentDto();
-    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
-    lineItemDto.setOrderable(productVersionObjectReference1);
-    lineItemDto.setQuantityShipped(preReqProduct1ApprovedQuantity);
-    shipmentDto.setLineItems(newArrayList(lineItemDto));
-    List<ShipmentDto> shipments = newArrayList(shipmentDto);
-    when(shipmentFulfillmentService.getShipments(orderId))
-        .thenReturn(shipments);
-  }
-
-  private List<ShipmentDto> mockInProgressOrder(UUID reqId) {
-    mockOrderService();
-    OrderDto order = mockOrder(reqId, OrderStatus.FULFILLING);
-    preReqOrders.add(order);
-    ShipmentDto shipmentDto = new ShipmentDto();
-    ShipmentLineItemDto lineItemDto = new ShipmentLineItemDto();
-    lineItemDto.setOrderable(productVersionObjectReference1);
-    lineItemDto.setQuantityShipped(0L);
-    shipmentDto.setLineItems(newArrayList(lineItemDto));
-    List<ShipmentDto> shipments = newArrayList(shipmentDto);
-    when(shipmentFulfillmentService.getShipments(order.getId()))
-        .thenReturn(shipments);
-    return shipments;
-  }
-
-  private List<ShipmentDto> mockShippedOrder(UUID reqId) {
-    mockOrderService();
-    OrderDto order = mockOrder(reqId, OrderStatus.SHIPPED);
-    preReqOrders.add(order);
-    List<ShipmentDto> shipments = new ArrayList<>();
-    when(shipmentFulfillmentService.getShipments(order.getId()))
-        .thenReturn(shipments);
-    return shipments;
-  }
-
-  private OrderDto mockOrder(UUID reqId, OrderStatus status) {
-    mockOrderService();
-    OrderDto order = new OrderDto();
-    order.setId(UUID.randomUUID());
-    order.setStatus(status);
-    order.setExternalId(reqId);
-    return order;
-  }
-
-  private void mockShippedOrderAndShipmentForPreviousEmergencyRequisition1() {
-    preReqOrderShipments1 = mockInProgressOrder(preReqId1);
-    preReqOrderShipments1.add(new ShipmentDto());
-  }
-
-  private void mockShippedOrderAndShipmentForPreviousEmergencyRequisition2() {
-    preReqOrderShipments2 = preReqOrderShipments1 = mockShippedOrder(preReqId2);
-    preReqOrderShipments2.add(new ShipmentDto());
-  }
-
-  private void mockFullyShippedProduct1() {
-    mockShippedOrderAndShipmentForPreviousEmergencyRequisition1();
-    ShipmentLineItemDto lineItem = new ShipmentLineItemDto();
-    lineItem.setOrderable(new ObjectReferenceDto(productVersionObjectReference1.getId()));
-    lineItem.setQuantityShipped((long) preReqProduct1ApprovedQuantity);
-    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(singletonList(lineItem)));
-  }
-
-  private void mockNotFullyFulfilledProduct1() {
-    mockShippedOrderAndShipmentForPreviousEmergencyRequisition1();
-    ShipmentLineItemDto lineItem = new ShipmentLineItemDto();
-    lineItem.setOrderable(new ObjectReferenceDto(productVersionObjectReference1.getId()));
-    lineItem.setQuantityShipped(NOT_FULLY_SHIPPED_QUANTITY);
-    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(singletonList(lineItem)));
-  }
-
-  private void mockNotFulfilledProduct1() {
-    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(newArrayList()));
-  }
 
   private void mockProduct1ReqInProgress() {
-    when(filterProductService.getNotFullyShippedProducts(any()))
+    when(filterProductService.getInProgressProducts(any()))
         .thenReturn(Sets.newHashSet(productVersionObjectReference1.getId()));
   }
 
   private void mockProduct1OrderInProgress() {
-    mockInProgressOrder(preReqId1);
-  }
-
-  private void mockOverflowShippedProduct1InPrevReq1() {
-    mockShippedOrderAndShipmentForPreviousEmergencyRequisition1();
-    ShipmentLineItemDto lineItem = new ShipmentLineItemDto();
-    lineItem.setOrderable(new ObjectReferenceDto(productVersionObjectReference1.getId()));
-    lineItem.setQuantityShipped(OVERFLOW_QUANTITY);
-    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(singletonList(lineItem)));
-  }
-
-  private void mockNotFullyShippedProduct1InPrevReq2() {
-    mockShippedOrderAndShipmentForPreviousEmergencyRequisition2();
-    ShipmentLineItemDto lineItem = new ShipmentLineItemDto();
-    lineItem.setOrderable(new ObjectReferenceDto(productVersionObjectReference1.getId()));
-    lineItem.setQuantityShipped(0L);
-    preReqOrderShipments2.forEach(shipment -> shipment.setLineItems(singletonList(lineItem)));
-  }
-
-  private void mockZeroAppQtyProduct1InPrevReq1() {
-    RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
-    lineItem.setOrderable(productVersionObjectReference1);
-    lineItem.setSkipped(false);
-    lineItem.setRequestedQuantity(0);
-    lineItem.setAuthorizedQuantity(0);
-    lineItem.setApprovedQuantity(0);
-    previousV2Req1.setRequisitionLineItems(singletonList(lineItem));
-  }
-
-  private void mockEmptyPodForPrevReq1() {
-    preReqOrderShipments1 = mockShippedOrder(preReqId1);
-    preReqOrderShipments1.add(new ShipmentDto());
-    preReqOrderShipments1.forEach(shipment -> shipment.setLineItems(emptyList()));
+    when(filterProductService.getNotFullyShippedProducts(any()))
+        .thenReturn(Sets.newHashSet(productVersionObjectReference1.getId()));
   }
 
   private Set<VersionObjectReferenceDto> verifyEmergencyReqResult() {

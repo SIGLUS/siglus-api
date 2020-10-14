@@ -142,7 +142,7 @@ public class SiglusOrderService {
   private SiglusRequisitionService siglusRequisitionService;
 
   @Autowired
-  private SiglusFilterProductService filterProductService;
+  private SiglusFilterAddProductForEmergencyService filterProductService;
 
   @Value("${time.zoneId}")
   private String timeZoneId;
@@ -401,7 +401,7 @@ public class SiglusOrderService {
 
     Map<UUID, StockCardSummaryV2Dto> orderableSohMap = getOrderableIdSohMap(userHomeFacilityId);
 
-    Set<UUID> emergencyFilteredProducts = getEmergencyFilteredProducts(requisition);;
+    Set<UUID> emergencyFilteredProducts = getEmergencyFilteredProducts(requisition);
 
     return Optional
         .ofNullable(requisition.getAvailableProducts())
@@ -426,12 +426,17 @@ public class SiglusOrderService {
   }
 
   private Set<UUID> getEmergencyFilteredProducts(Requisition requisition) {
-    Set<UUID> emergencyOrderableIds = Collections.EMPTY_SET;
+    Set<UUID> emergencyOrderableIds = new HashSet<>();
     if (requisition.getEmergency()) {
       List<RequisitionV2Dto> previousRequisitions = siglusRequisitionService
-          .getPreviousEmergencyRequisition(
-              requisition.getId(), requisition.getProcessingPeriodId(), requisition.getFacilityId());
-      emergencyOrderableIds = filterProductService.getNotFullyShippedProducts(previousRequisitions);
+          .getPreviousEmergencyRequisition(requisition.getId(),
+              requisition.getProcessingPeriodId(), requisition.getFacilityId());
+      if (!CollectionUtils.isEmpty(previousRequisitions)) {
+        emergencyOrderableIds
+            .addAll(filterProductService.getInProgressProducts(previousRequisitions));
+        emergencyOrderableIds
+            .addAll(filterProductService.getNotFullyShippedProducts(previousRequisitions));
+      }
     }
     return emergencyOrderableIds;
   }

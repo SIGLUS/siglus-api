@@ -35,11 +35,10 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusFilterProductServiceTest {
+public class SiglusFilterAddProductForEmergencyServiceTest {
 
   @Mock
   private OrderExternalRepository externalRepository;
@@ -48,16 +47,16 @@ public class SiglusFilterProductServiceTest {
   private OrderRepository orderRepository;
 
   @InjectMocks
-  private SiglusFilterProductService filterProductService;
+  private SiglusFilterAddProductForEmergencyService filterAddProductForEmergencyService;
 
   @Test
-  public void shouldGetZeroProgressProductIfPreRequisitionNotInProgress() {
+  public void shouldEmptyIfPreRequisitionNotInProgress() {
     // given
     RequisitionV2Dto preV2 =  new RequisitionV2Dto();
     preV2.setStatus(RequisitionStatus.RELEASED);
 
     // when
-    Set<UUID> progressProducts = filterProductService
+    Set<UUID> progressProducts = filterAddProductForEmergencyService
         .getInProgressProducts(Arrays.asList(preV2));
 
     // then
@@ -65,7 +64,7 @@ public class SiglusFilterProductServiceTest {
   }
 
   @Test
-  public void shouldGetOneProgressProductIfPreRequisitionNotInProgress() {
+  public void shouldGetOneProgressProductIfPreRequisitionInProgress() {
     // given
     RequisitionV2Dto preV2 =  new RequisitionV2Dto();
     preV2.setStatus(RequisitionStatus.IN_APPROVAL);
@@ -76,7 +75,7 @@ public class SiglusFilterProductServiceTest {
     preV2.setRequisitionLineItems(Arrays.asList(lineItemV2Dto));
 
     // when
-    Set<UUID> progressProducts = filterProductService
+    Set<UUID> progressProducts = filterAddProductForEmergencyService
         .getInProgressProducts(Arrays.asList(preV2));
 
     // then
@@ -85,13 +84,13 @@ public class SiglusFilterProductServiceTest {
   }
 
   @Test
-  public void shouldNotGetOneNotFullyShippedProductWhenPreRequisitionStatusInApproval() {
+  public void shouldEmptyForGetNotFullyShippedWhenPreRequisitionStatusInApproval() {
     // given
     RequisitionV2Dto preV2 =  new RequisitionV2Dto();
     preV2.setStatus(RequisitionStatus.IN_APPROVAL);
 
     // when
-    Set<UUID> notFullyShippedProducts = filterProductService
+    Set<UUID> notFullyShippedProducts = filterAddProductForEmergencyService
         .getNotFullyShippedProducts(Arrays.asList(preV2));
 
     // then
@@ -99,7 +98,7 @@ public class SiglusFilterProductServiceTest {
   }
 
   @Test
-  public void shouldGetOneNotFullyShippedProductWhenPreRequisitionStatusRelease() {
+  public void shouldGetOneWhenPreRequisitionStatusReleaseAndHaveNoFullyShippedProducts() {
     // given
     RequisitionV2Dto preV2 =  new RequisitionV2Dto();
     preV2.setId(UUID.randomUUID());
@@ -114,9 +113,9 @@ public class SiglusFilterProductServiceTest {
     lineItem.setOrderedQuantity((long)10);
     order.setOrderLineItems(Arrays.asList(lineItem));
     lineItem.setOrderable(new VersionEntityReference(UUID.randomUUID(), (long) 1));
-    when(orderRepository.findCanFulfillOrderAndInExternalId(Arrays.asList(preV2.getId())))
+    when(orderRepository.findCanFulfillOrderByExternalIdIn(Arrays.asList(preV2.getId())))
         .thenReturn(order);
-    Set<UUID> notFullyShippedProducts = filterProductService
+    Set<UUID> notFullyShippedProducts = filterAddProductForEmergencyService
         .getNotFullyShippedProducts(Arrays.asList(preV2));
 
     // then
@@ -127,27 +126,26 @@ public class SiglusFilterProductServiceTest {
 
 
   @Test
-  public void shouldGetOneNotFullyShippedProductWhenNotExistSuborder() {
+  public void shouldGetOneProductsWhenNotExistSuborderAndHaveNoFullyShippedProducts() {
     // given
     RequisitionV2Dto preV2 =  new RequisitionV2Dto();
     preV2.setId(UUID.randomUUID());
     preV2.setStatus(RequisitionStatus.RELEASED);
 
     // when
-    OrderExternal orderExternal = new OrderExternal();
-    orderExternal.setId(UUID.randomUUID());
-    when(externalRepository.findByRequisitionId(preV2.getId()))
-        .thenReturn(Arrays.asList(orderExternal));
+    String externalId = UUID.randomUUID().toString();
+    when(externalRepository.findOrderExternalIdByRequisitionId(preV2.getId()))
+        .thenReturn(Arrays.asList(externalId));
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(UUID.randomUUID());
     lineItem.setOrderedQuantity((long)10);
     order.setOrderLineItems(Arrays.asList(lineItem));
     lineItem.setOrderable(new VersionEntityReference(UUID.randomUUID(), (long) 1));
-    when(orderRepository.findCanFulfillOrderAndInExternalId(
-        Arrays.asList(orderExternal.getId())))
+    when(orderRepository.findCanFulfillOrderByExternalIdIn(
+        Arrays.asList(UUID.fromString(externalId))))
         .thenReturn(order);
-    Set<UUID> notFullyShippedProducts = filterProductService
+    Set<UUID> notFullyShippedProducts = filterAddProductForEmergencyService
         .getNotFullyShippedProducts(Arrays.asList(preV2));
 
     // then

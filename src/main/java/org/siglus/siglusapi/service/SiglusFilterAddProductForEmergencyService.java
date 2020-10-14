@@ -30,13 +30,12 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SiglusFilterProductService {
+public class SiglusFilterAddProductForEmergencyService {
 
   @Autowired
   private OrderExternalRepository orderExternalRepository;
@@ -62,18 +61,12 @@ public class SiglusFilterProductService {
   }
 
   private Set<UUID> mapToNotFullyShippedProductIds(RequisitionV2Dto requisition) {
-    if (requisition.getStatus() != RELEASED) {
-      return Collections.emptySet();
-    }
-    List<OrderExternal> orderExternals = orderExternalRepository
-        .findByRequisitionId(requisition.getId());
-    List<UUID> externalIds = CollectionUtils.isEmpty(orderExternals) ?
-        Arrays.asList(requisition.getId()) :
-        orderExternalRepository.findByRequisitionId(requisition.getId())
-            .stream()
-            .map(OrderExternal::getId)
-            .collect(toList());
-    Order order = orderRepository.findCanFulfillOrderAndInExternalId(externalIds);
+    List<String> orderExternals = orderExternalRepository
+        .findOrderExternalIdByRequisitionId(requisition.getId());
+    List<UUID> externalIds = CollectionUtils.isEmpty(orderExternals)
+        ? Arrays.asList(requisition.getId())
+        : orderExternals.stream().map(UUID::fromString).collect(toList());
+    Order order = orderRepository.findCanFulfillOrderByExternalIdIn(externalIds);
     if (order != null) {
       return order.getOrderLineItems().stream()
           .filter(orderLineItem -> orderLineItem.getOrderedQuantity() > 0)

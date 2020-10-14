@@ -288,7 +288,7 @@ public class FcIssueVoucherServiceTest {
     Order canFulfillOrder = new Order();
     canFulfillOrder.setId(UUID.randomUUID());
     canFulfillOrder.setOrderLineItems(new ArrayList<>());
-    when(orderRepository.findCanFulfillOrderAndInExternalId(Arrays.asList(
+    when(orderRepository.findCanFulfillOrderByExternalIdIn(Arrays.asList(
         orderExternal.getId()))).thenReturn(null);
     Order order = new Order();
     order.setId(UUID.randomUUID());
@@ -370,7 +370,7 @@ public class FcIssueVoucherServiceTest {
     Order canFulfillOrder = new Order();
     canFulfillOrder.setId(UUID.randomUUID());
     canFulfillOrder.setOrderLineItems(new ArrayList<>());
-    when(orderRepository.findCanFulfillOrderAndInExternalId(Arrays.asList(
+    when(orderRepository.findCanFulfillOrderByExternalIdIn(Arrays.asList(
         orderExternal.getId()))).thenReturn(canFulfillOrder);
     Order order = new Order();
     order.setId(UUID.randomUUID());

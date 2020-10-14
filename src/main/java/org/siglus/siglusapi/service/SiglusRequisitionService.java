@@ -285,7 +285,7 @@ public class SiglusRequisitionService {
   private OrderableKitRepository orderableKitRepository;
 
   @Autowired
-  private SiglusFilterProductService filterProductService;
+  private SiglusFilterAddProductForEmergencyService filterProductService;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -930,7 +930,7 @@ public class SiglusRequisitionService {
   }
 
   public List<RequisitionV2Dto> getPreviousEmergencyRequisition(UUID requisitionId, UUID periodId,
-  UUID facilityId) {
+      UUID facilityId) {
     MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
     queryParams.set(QueryRequisitionSearchParams.EMERGENCY, Boolean.TRUE.toString());
     queryParams.set(QueryRequisitionSearchParams.PROCESSING_PERIOD, periodId.toString());
