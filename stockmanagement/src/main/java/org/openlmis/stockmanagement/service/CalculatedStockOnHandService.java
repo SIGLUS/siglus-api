@@ -73,6 +73,12 @@ public class CalculatedStockOnHandService {
    */
   public List<StockCard> getStockCardsWithStockOnHand(
       UUID programId, UUID facilityId, LocalDate asOfDate) {
+    // [SIGLUS change start]
+    // [change reason]: performance improvment
+    Profiler profiler = new Profiler("GET_STOCK_CARDS_WITH_STOCK_ON_HAND");
+    profiler.setLogger(LOGGER);
+    profiler.start("FIND_BY_PROGRAM_ID_AND_FACILITY_ID");
+    // [SIGLUS change end]
     List<StockCard> stockCards =
         stockCardRepository.findByProgramIdAndFacilityId(programId, facilityId);
 
@@ -84,7 +90,9 @@ public class CalculatedStockOnHandService {
     // [change reason]: performance improvment
     // stockCards.forEach(stockCard ->
     //     fetchStockOnHand(stockCard, asOfDate != null ? asOfDate : LocalDate.now()));
+    profiler.start("FETCH_ALL_STOCK_ON_HAND");
     fetchAllStockOnHand(stockCards, asOfDate != null ? asOfDate : LocalDate.now());
+    profiler.stop().log();
     // [SIGLUS change end]
     return stockCards;
   }
