@@ -801,6 +801,9 @@ public class SiglusRequisitionService {
           lineItemExtensionRepository.findLineItems(lineItemsId);
       lineItems.forEach(lineItem -> {
         RequisitionLineItemV2Dto dto = findDto(lineItem, toUpdatedDto);
+        if (null == dto) {
+          return;
+        }
         RequisitionLineItemExtension requisitionLineItemExtension =
             findLineItemExtension(extensions, dto);
         if (requisitionLineItemExtension != null) {
@@ -808,8 +811,7 @@ public class SiglusRequisitionService {
           requisitionLineItemExtension.setSuggestedQuantity(dto.getSuggestedQuantity());
           requisitionLineItemExtension.setExpirationDate(dto.getExpirationDate());
           updateExtension.add(requisitionLineItemExtension);
-        } else if (dto != null && (dto.getAuthorizedQuantity() != null
-            || dto.getSuggestedQuantity() != null)) {
+        } else {
           RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
           extension.setRequisitionLineItemId(lineItem.getId());
           extension.setAuthorizedQuantity(dto.getAuthorizedQuantity());
