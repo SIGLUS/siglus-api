@@ -15,7 +15,12 @@
 
 package org.siglus.siglusapi.service.client;
 
+import static java.util.stream.Collectors.toList;
+import static org.siglus.siglusapi.constant.PaginationConstants.UNPAGED;
+
+import java.util.List;
 import java.util.UUID;
+import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
@@ -25,6 +30,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 @Service
 public class SiglusRequisitionRequisitionService extends BaseRequisitionService<RequisitionV2Dto> {
@@ -60,6 +67,20 @@ public class SiglusRequisitionRequisitionService extends BaseRequisitionService<
         .setPage(pageable);
     return getPage("requisitions/search", queryParams, null, HttpMethod.GET,
         BasicRequisitionDto.class, true);
+  }
+
+  public List<RequisitionV2Dto> getPreviousEmergencyRequisition(UUID requisitionId, UUID periodId,
+      UUID facilityId) {
+    MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+    queryParams.set(QueryRequisitionSearchParams.EMERGENCY, Boolean.TRUE.toString());
+    queryParams.set(QueryRequisitionSearchParams.PROCESSING_PERIOD, periodId.toString());
+    queryParams.set(QueryRequisitionSearchParams.FACILITY, facilityId.toString());
+    return searchRequisitions(new QueryRequisitionSearchParams(queryParams), UNPAGED)
+        .getContent().stream()
+        .filter(req -> !req.getId().equals(requisitionId))
+        .map(BaseDto::getId)
+        .map(this::searchRequisition)
+        .collect(toList());
   }
 
   public RequisitionV2Dto searchRequisition(UUID id) {

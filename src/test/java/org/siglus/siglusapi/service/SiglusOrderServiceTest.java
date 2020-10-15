@@ -88,6 +88,7 @@ import org.siglus.siglusapi.domain.OrderLineItemExtension;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -163,7 +164,7 @@ public class SiglusOrderServiceTest {
   private SiglusFilterAddProductForEmergencyService filterAddProductForEmergencyService;
 
   @Mock
-  private SiglusRequisitionService siglusRequisitionService;
+  private SiglusRequisitionRequisitionService siglusRequisitionService;
 
   @InjectMocks
   private SiglusOrderService siglusOrderService;

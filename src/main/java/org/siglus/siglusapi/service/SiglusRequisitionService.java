@@ -29,7 +29,6 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELE
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_ID_MISMATCH;
 import static org.openlmis.requisition.service.notification.NotificationChannelDto.EMAIL;
-import static org.siglus.siglusapi.constant.PaginationConstants.UNPAGED;
 import static org.siglus.siglusapi.i18n.SimamMessageKeys.REQUISITION_EMAIL_CONTENT_PRE;
 import static org.siglus.siglusapi.i18n.SimamMessageKeys.REQUISITION_EMAIL_SUBJECT;
 
@@ -153,7 +152,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @Service
@@ -929,25 +927,11 @@ public class SiglusRequisitionService {
     notificationService.postDelete(requisitionId);
   }
 
-  public List<RequisitionV2Dto> getPreviousEmergencyRequisition(UUID requisitionId, UUID periodId,
-      UUID facilityId) {
-    MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
-    queryParams.set(QueryRequisitionSearchParams.EMERGENCY, Boolean.TRUE.toString());
-    queryParams.set(QueryRequisitionSearchParams.PROCESSING_PERIOD, periodId.toString());
-    queryParams.set(QueryRequisitionSearchParams.FACILITY, facilityId.toString());
-    return siglusRequisitionRequisitionService
-        .searchRequisitions(new QueryRequisitionSearchParams(queryParams), UNPAGED)
-        .getContent().stream()
-        .filter(req -> !req.getId().equals(requisitionId))
-        .map(BaseDto::getId)
-        .map(siglusRequisitionRequisitionService::searchRequisition)
-        .collect(toList());
-  }
-
   private List<RequisitionV2Dto> getPreviousEmergencyRequisition(BaseRequisitionDto requisition) {
     UUID periodId = requisition.getProcessingPeriod().getId();
     UUID facilityId = requisition.getFacility().getId();
-    return getPreviousEmergencyRequisition(requisition.getId(), periodId, facilityId);
+    return siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(requisition.getId(),
+        periodId, facilityId);
   }
 
   private void deleteExtensionForRequisition(UUID requisitionId) {

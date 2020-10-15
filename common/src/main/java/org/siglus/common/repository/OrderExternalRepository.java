@@ -21,13 +21,14 @@ import java.util.UUID;
 import org.siglus.common.domain.OrderExternal;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface OrderExternalRepository extends JpaRepository<OrderExternal, UUID> {
 
 
   @Query(value = "select cast(id as varchar) id from siglusintegration.order_external_ids "
       + "where requisitionId = :requisitionId ",nativeQuery = true)
-  List<String> findOrderExternalIdByRequisitionId(UUID requisitionId);
+  List<String> findOrderExternalIdByRequisitionId(@Param("requisitionId") UUID requisitionId);
 
   List<OrderExternal> findByRequisitionId(UUID requisitionId);
 

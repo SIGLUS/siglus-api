@@ -454,6 +454,8 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
     when(orderableKitRepository.findAllKitProduct()).thenReturn(Collections.emptyList());
     when(orderExternalRepository.findByRequisitionId(any())).thenReturn(newArrayList());
+    when(siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(any(), any(), any()))
+        .thenReturn(Arrays.asList(new RequisitionV2Dto()));
     mockSearchOrder();
   }
 
@@ -759,15 +761,16 @@ public class SiglusRequisitionServiceTest {
     when(operatePermissionService.isEditable(any())).thenReturn(true);
     when(siglusUsageReportService.searchUsageReport(any(RequisitionV2Dto.class)))
         .thenAnswer(i -> convert((RequisitionV2Dto) i.getArguments()[0]));
-    when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
-        .thenReturn(new PageImpl<>(singletonList(newBasicReq)));
+    when(siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(any(), any(), any()))
+        .thenReturn(Arrays.asList(new RequisitionV2Dto()));
 
     // when
     SiglusRequisitionDto requisition = siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
     Set<VersionObjectReferenceDto> availableProducts = requisition.getAvailableProducts();
-    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    verify(siglusRequisitionRequisitionService)
+        .getPreviousEmergencyRequisition(any(), any(), any());
     assertEquals(1, availableProducts.size());
     assertThat(availableProducts,
         hasItems(productVersionObjectReference2));
@@ -787,7 +790,8 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
-    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    verify(siglusRequisitionRequisitionService)
+        .getPreviousEmergencyRequisition(any(), any(), any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(2, availableProducts.size());
     assertThat(availableProducts,
@@ -811,7 +815,8 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
-    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    verify(siglusRequisitionRequisitionService)
+        .getPreviousEmergencyRequisition(any(), any(), any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(1, availableProducts.size());
     assertThat(availableProducts,
@@ -831,7 +836,8 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
-    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    verify(siglusRequisitionRequisitionService)
+        .getPreviousEmergencyRequisition(any(), any(), any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(1, availableProducts.size());
     assertThat(availableProducts,
@@ -851,7 +857,8 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
-    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    verify(siglusRequisitionRequisitionService)
+        .getPreviousEmergencyRequisition(any(), any(), any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(1, availableProducts.size());
     assertThat(availableProducts,
@@ -1314,7 +1321,8 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
-    verify(siglusRequisitionRequisitionService).searchRequisitions(any(), any());
+    verify(siglusRequisitionRequisitionService)
+        .getPreviousEmergencyRequisition(any(), any(), any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(2, availableProducts.size());
     assertThat(availableProducts,

@@ -71,6 +71,7 @@ import org.siglus.siglusapi.dto.OrderStatusDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -139,7 +140,7 @@ public class SiglusOrderService {
   private BasicOrderDtoBuilder basicOrderDtoBuilder;
 
   @Autowired
-  private SiglusRequisitionService siglusRequisitionService;
+  private SiglusRequisitionRequisitionService siglusRequisitionService;
 
   @Autowired
   private SiglusFilterAddProductForEmergencyService filterProductService;
