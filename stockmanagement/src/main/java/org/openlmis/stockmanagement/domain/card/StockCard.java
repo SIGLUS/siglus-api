@@ -17,7 +17,6 @@ package org.openlmis.stockmanagement.domain.card;
 
 import static javax.persistence.CascadeType.ALL;
 import static org.apache.commons.beanutils.BeanUtils.cloneBean;
-import static org.hibernate.annotations.LazyCollectionOption.FALSE;
 import static org.openlmis.stockmanagement.domain.card.StockCardLineItemComparators.byOccurredDate;
 import static org.openlmis.stockmanagement.domain.card.StockCardLineItemComparators.byProcessedDate;
 import static org.openlmis.stockmanagement.domain.card.StockCardLineItemComparators.byReasonPriority;
@@ -37,14 +36,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
-import javax.persistence.PostLoad;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.LazyCollection;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.event.StockEvent;
 import org.openlmis.stockmanagement.domain.identity.IdentifiableByOrderableLot;
@@ -93,7 +90,6 @@ public class StockCard extends BaseEntity implements IdentifiableByOrderableLot 
   @Column
   private UUID lotId;
 
-  @LazyCollection(FALSE)
   @OneToMany(cascade = ALL, mappedBy = "stockCard")
   private List<StockCardLineItem> lineItems;
 
@@ -170,7 +166,10 @@ public class StockCard extends BaseEntity implements IdentifiableByOrderableLot 
   /**
    * Reorders stock card's line items basing on line items comparator.
    */
-  @PostLoad
+  // [SIGLUS change start]
+  // [change reason]: performance optimization
+  // @PostLoad
+  // [SIGLUS change end]
   public void reorderLineItems() {
     lineItems.sort(getLineItemsComparator());
   }
