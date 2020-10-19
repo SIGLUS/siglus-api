@@ -75,7 +75,10 @@ public class StockEventNotificationProcessor {
     profiler.start("COPY_STOCK_CARD");
     OrderableLotIdentity identity = OrderableLotIdentity.identityOf(eventLine);
     StockCard stockCard = event.getContext().findCard(identity);
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
     stockCard.reorderLineItems();
+    // [SIGLUS change end]
 
     if (stockCard.getStockOnHand() == 0) {
       stockoutNotifier.notifyStockEditors(stockCard, rightId);
