@@ -130,7 +130,6 @@ public class SiglusPhysicalInventoryService {
     physicalInventoryStockManagementService.deletePhysicalInventory(id);
   }
 
-  @Transactional
   public void deletePhysicalInventoryForAllProducts(UUID facilityId) {
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
         .findUserSupportedPrograms();
