@@ -31,6 +31,7 @@ import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * A service that helps the StockEventProcessor to determine notification.
@@ -56,6 +57,7 @@ public class StockEventNotificationProcessor {
   // [SIGLUS change start]
   // [change reason]: performance optimization
   @Async
+  @Transactional
   // [SIGLUS change end]
   public void callAllNotifications(StockEventDto eventDto) {
     RightDto right = rightReferenceDataService.findRight(STOCK_INVENTORIES_EDIT);
@@ -73,6 +75,7 @@ public class StockEventNotificationProcessor {
     profiler.start("COPY_STOCK_CARD");
     OrderableLotIdentity identity = OrderableLotIdentity.identityOf(eventLine);
     StockCard stockCard = event.getContext().findCard(identity);
+    stockCard.reorderLineItems();
 
     if (stockCard.getStockOnHand() == 0) {
       stockoutNotifier.notifyStockEditors(stockCard, rightId);
