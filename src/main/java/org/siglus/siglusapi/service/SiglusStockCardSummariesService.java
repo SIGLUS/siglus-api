@@ -15,12 +15,12 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.common.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
-import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 
@@ -36,15 +36,18 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
+import org.openlmis.stockmanagement.service.StockCardSummaries;
+import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
 import org.openlmis.stockmanagement.util.Message;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.common.util.FormatHelper;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.client.SiglusStockCardStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
@@ -69,6 +72,15 @@ public class SiglusStockCardSummariesService {
   @Autowired
   private SiglusArchiveProductService archiveProductService;
 
+  @Autowired
+  private StockCardSummariesService stockCardSummariesService;
+
+  @Autowired
+  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
+
+  @Autowired
+  private ProgramOrderableRepository programOrderableRepository;
+
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
       MultiValueMap<String, String> parameters, Pageable pageable) {
     UUID userId = authenticationHelper.getCurrentUser().getId();
@@ -87,17 +99,29 @@ public class SiglusStockCardSummariesService {
     List<StockCardSummaryV2Dto> summaryV2Dtos = new ArrayList<>();
     for (UUID programId : programIds) {
       v2SearchParams.setProgramId(programId);
-      Pageable searchPageable = pageable;
       if (archiveEmptyForArchiveOnly(parameters, archivedProducts)) {
-        return Pagination.getPage(Collections.emptyList(), searchPageable);
+        return Pagination.getPage(Collections.emptyList(), pageable);
       } else if (needFilterOrSearchAllProgram(orderableIds, parameters, archivedProducts,
           programIds)) {
-        searchPageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
+        // TODO start: Revert required after V3 upgraded
+        // searchPageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
+        // TODO end: Revert required after V3 upgraded
+        getSummaries(parameters, archivedProducts, v2SearchParams, orderableIds, summaryV2Dtos);
       } else {
-        return siglusStockManagementService.search(v2SearchParams, searchPageable);
+        // TODO start: Revert required after V3 upgraded
+        // return siglusStockManagementService.search(v2SearchParams, searchPageable);
+        if (!programOrderableRepository.findByProgramId(v2SearchParams.getProgramId()).isEmpty()) {
+          StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
+          List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
+              summaries.getPageOfApprovedProducts(),
+              summaries.getStockCardsForFulfillOrderables(),
+              summaries.getOrderableFulfillMap(),
+              v2SearchParams.isNonEmptyOnly());
+          return Pagination.getPage(dtos, pageable);
+        }
+        return Pagination.getPage(Collections.emptyList(), pageable);
+        // TODO end: Revert required after V3 upgraded
       }
-      getSummaries(parameters, archivedProducts, v2SearchParams, orderableIds, summaryV2Dtos,
-          searchPageable);
     }
     return Pagination.getPage(summaryV2Dtos, pageable);
   }
@@ -129,9 +153,21 @@ public class SiglusStockCardSummariesService {
 
   private void getSummaries(MultiValueMap<String, String> parameters, Set<String> archivedProducts,
       StockCardSummariesV2SearchParams v2SearchParams, List<UUID> orderableIds,
-      List<StockCardSummaryV2Dto> summaryV2Dtos, Pageable searchPageable) {
-    List<StockCardSummaryV2Dto> summaries =
-        siglusStockManagementService.search(v2SearchParams, searchPageable).getContent();
+      List<StockCardSummaryV2Dto> summaryV2Dtos) {
+    // TODO start: Revert required after V3 upgraded
+    // List<StockCardSummaryV2Dto> summaries =
+    //     siglusStockManagementService.search(v2SearchParams, searchPageable).getContent();
+    List<StockCardSummaryV2Dto> summaries = newArrayList();
+    if (!programOrderableRepository.findByProgramId(v2SearchParams.getProgramId()).isEmpty()) {
+      StockCardSummaries stockCardSummaries = stockCardSummariesService
+          .findStockCards(v2SearchParams);
+      summaries = stockCardSummariesV2DtoBuilder.build(
+          stockCardSummaries.getPageOfApprovedProducts(),
+          stockCardSummaries.getStockCardsForFulfillOrderables(),
+          stockCardSummaries.getOrderableFulfillMap(),
+          v2SearchParams.isNonEmptyOnly());
+    }
+    // TODO end: Revert required after V3 upgraded
     summaries = filterByOrderableIds(orderableIds, summaries);
     if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED))) {
       summaryV2Dtos.addAll(summaries.stream()
@@ -173,7 +209,7 @@ public class SiglusStockCardSummariesService {
       return summaries;
     }
     return summaries.stream().filter(summaryV2Dto ->
-            orderableIds.contains(summaryV2Dto.getOrderable().getId()))
+        orderableIds.contains(summaryV2Dto.getOrderable().getId()))
         .collect(Collectors.toList());
   }
 

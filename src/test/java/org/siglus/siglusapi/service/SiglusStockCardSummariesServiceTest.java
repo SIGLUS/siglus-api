@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service;
 
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Maps.newHashMap;
 import static org.hibernate.validator.internal.util.CollectionHelper.asSet;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -24,12 +26,12 @@ import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
@@ -42,15 +44,19 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
 import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
+import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
+import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
 import org.openlmis.stockmanagement.testutils.CanFulfillForMeEntryDtoDataBuilder;
 import org.openlmis.stockmanagement.testutils.OrderableDtoDataBuilder;
 import org.openlmis.stockmanagement.web.Pagination;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.common.domain.referencedata.ProgramOrderable;
 import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.client.SiglusStockCardStockManagementService;
 import org.springframework.data.domain.Page;
@@ -77,6 +83,15 @@ public class SiglusStockCardSummariesServiceTest {
 
   @Mock
   private SiglusStockCardStockManagementService siglusStockManagementService;
+
+  @Mock
+  private StockCardSummariesService stockCardSummariesService;
+
+  @Mock
+  private StockCardSummariesV2DtoBuilder stockCardSummariesV2DtoBuilder;
+
+  @Mock
+  private ProgramOrderableRepository programOrderableRepository;
 
   @InjectMocks
   private SiglusStockCardSummariesService service;
@@ -125,12 +140,15 @@ public class SiglusStockCardSummariesServiceTest {
   @Test
   public void shouldHaveTwoValueIfStockCardHaveTwoValue() {
     // given
-    StockCardSummaries summaries = new StockCardSummaries();
-    summaries.setAsOfDate(LocalDate.now());
-    when(siglusStockManagementService.search(any(StockCardSummariesV2SearchParams.class),
-        any(Pageable.class)))
-        .thenReturn(Pagination.getPage(Arrays.asList(createSummaryV2Dto(UUID.randomUUID(), 10),
-            createSummaryV2Dto(UUID.randomUUID(), 15))));
+    StockCardSummaries summaries = new StockCardSummaries(newArrayList(), newArrayList(),
+        newHashMap(), null, null);
+    when(programOrderableRepository.findByProgramId(any()))
+        .thenReturn(newArrayList(new ProgramOrderable()));
+    when(stockCardSummariesService.findStockCards(any())).thenReturn(summaries);
+    when(stockCardSummariesV2DtoBuilder
+        .build(any(List.class), any(List.class), any(Map.class), any(boolean.class)))
+        .thenReturn(newArrayList(createSummaryV2Dto(UUID.randomUUID(), 10),
+            createSummaryV2Dto(UUID.randomUUID(), 15)));
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries =
@@ -146,17 +164,21 @@ public class SiglusStockCardSummariesServiceTest {
     MultiValueMap<String, String> params = getProgramsParms();
     params.add("excludeArchived", Boolean.toString(true));
     UUID firstOrderableId = UUID.randomUUID();
-    StockCardSummaryV2Dto summaryV2Dto =  createSummaryV2Dto(firstOrderableId, 15);
-    StockCardSummaryV2Dto summaryV2Dto2 =  createSummaryV2Dto(UUID.randomUUID(), 20);
-    StockCardSummaryV2Dto summaryV2Dto3 =  createSummaryV2Dto(UUID.randomUUID(), 20);
     Set<String> archivedProduct = new HashSet<>();
     archivedProduct.add(firstOrderableId.toString());
     when(archiveProductService.searchArchivedProducts(facilityId))
         .thenReturn(archivedProduct);
-    StockCardSummariesV2SearchParams v2SearchParams = new
-        StockCardSummariesV2SearchParams(getProgramsParms());
-    when(siglusStockManagementService.search(v2SearchParams, pageable))
-        .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto, summaryV2Dto2, summaryV2Dto3)));
+    StockCardSummaries summaries = new StockCardSummaries(newArrayList(), newArrayList(),
+        newHashMap(), null, null);
+    when(programOrderableRepository.findByProgramId(any()))
+        .thenReturn(newArrayList(new ProgramOrderable()));
+    when(stockCardSummariesService.findStockCards(any())).thenReturn(summaries);
+    StockCardSummaryV2Dto summaryV2Dto = createSummaryV2Dto(firstOrderableId, 15);
+    StockCardSummaryV2Dto summaryV2Dto2 = createSummaryV2Dto(UUID.randomUUID(), 20);
+    StockCardSummaryV2Dto summaryV2Dto3 = createSummaryV2Dto(UUID.randomUUID(), 20);
+    when(stockCardSummariesV2DtoBuilder
+        .build(any(List.class), any(List.class), any(Map.class), any(boolean.class)))
+        .thenReturn(Arrays.asList(summaryV2Dto, summaryV2Dto2, summaryV2Dto3));
 
     // when
     Page<StockCardSummaryV2Dto> resultSummaries = service.findSiglusStockCard(params, pageable);
@@ -172,18 +194,22 @@ public class SiglusStockCardSummariesServiceTest {
     MultiValueMap<String, String> params = getProgramsParms();
     params.add("archivedOnly", Boolean.toString(true));
     UUID firstOrderableId = UUID.randomUUID();
-    StockCardSummaryV2Dto summaryV2Dto =  createSummaryV2Dto(firstOrderableId, 15);
-    StockCardSummaryV2Dto summaryV2Dto2 =  createSummaryV2Dto(UUID.randomUUID(), 20);
     Set<String> archivedProduct = new HashSet<>();
     archivedProduct.add(firstOrderableId.toString());
     when(archiveProductService.searchArchivedProducts(facilityId))
         .thenReturn(archivedProduct);
-    StockCardSummariesV2SearchParams v2SearchParams = new
-        StockCardSummariesV2SearchParams(getProgramsParms());
 
     // when
-    when(siglusStockManagementService.search(v2SearchParams, pageable))
-        .thenReturn(Pagination.getPage(Arrays.asList(summaryV2Dto, summaryV2Dto2)));
+    StockCardSummaries summaries = new StockCardSummaries(newArrayList(), newArrayList(),
+        newHashMap(), null, null);
+    when(programOrderableRepository.findByProgramId(any()))
+        .thenReturn(newArrayList(new ProgramOrderable()));
+    when(stockCardSummariesService.findStockCards(any())).thenReturn(summaries);
+    StockCardSummaryV2Dto summaryV2Dto = createSummaryV2Dto(firstOrderableId, 15);
+    StockCardSummaryV2Dto summaryV2Dto2 = createSummaryV2Dto(UUID.randomUUID(), 20);
+    when(stockCardSummariesV2DtoBuilder
+        .build(any(List.class), any(List.class), any(Map.class), any(boolean.class)))
+        .thenReturn(Arrays.asList(summaryV2Dto, summaryV2Dto2));
 
     // then
     Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
@@ -194,12 +220,18 @@ public class SiglusStockCardSummariesServiceTest {
   @Test
   public void shouldReturnSpecifiedOrderablesIfOrderableIdsNotEmpty() {
     // given
-    StockCardSummaryV2Dto summaryV2Dto =  createSummaryV2Dto(orderableId, 15);
-    StockCardSummaryV2Dto summaryV2Dto2 =  createSummaryV2Dto(UUID.randomUUID(), 20);
+    StockCardSummaryV2Dto summaryV2Dto = createSummaryV2Dto(orderableId, 15);
+    StockCardSummaryV2Dto summaryV2Dto2 = createSummaryV2Dto(UUID.randomUUID(), 20);
     List<StockCardSummaryV2Dto> dtos = new ArrayList<>();
     dtos.addAll(Arrays.asList(summaryV2Dto, summaryV2Dto2));
-    when(siglusStockManagementService.search(any(), any(Pageable.class)))
-        .thenReturn(Pagination.getPage(dtos));
+    StockCardSummaries summaries = new StockCardSummaries(newArrayList(), newArrayList(),
+        newHashMap(), null, null);
+    when(programOrderableRepository.findByProgramId(any()))
+        .thenReturn(newArrayList(new ProgramOrderable()));
+    when(stockCardSummariesService.findStockCards(any())).thenReturn(summaries);
+    when(stockCardSummariesV2DtoBuilder
+        .build(any(List.class), any(List.class), any(Map.class), any(boolean.class)))
+        .thenReturn(dtos);
     MultiValueMap<String, String> params = getProgramsParms();
     params.add(ORDERABLE_ID, orderableId.toString());
 
@@ -218,8 +250,7 @@ public class SiglusStockCardSummariesServiceTest {
     OrderableDto orderable = new OrderableDtoDataBuilder()
         .withId(orderableId)
         .build();
-    ObjectReferenceDto referenceDto = new ObjectReferenceDto("", "",
-        orderableId);
+    VersionObjectReferenceDto referenceDto = new VersionObjectReferenceDto(orderableId, "", "", 1L);
     return new StockCardSummaryV2Dto(referenceDto, asSet(
         new CanFulfillForMeEntryDtoDataBuilder()
             .buildWithStockCardAndOrderable(stockCard, orderable)));

@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 @EqualsAndHashCode(callSuper = true)
 @ToString
 @NoArgsConstructor
-public final class ObjectReferenceDto extends BaseDto {
+public class ObjectReferenceDto extends BaseDto {
 
   @Getter
   @Setter

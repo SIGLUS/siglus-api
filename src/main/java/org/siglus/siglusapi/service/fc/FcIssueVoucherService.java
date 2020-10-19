@@ -379,7 +379,7 @@ public class FcIssueVoucherService {
     List<UUID> externalIds = externals.stream().map(OrderExternal::getId)
         .collect(Collectors.toList());
     Order canFulfillOrder = CollectionUtils.isEmpty(externalIds) ? null :
-        orderRepository.findCanFulfillOrderAndInExternalId(externalIds);
+        orderRepository.findCanFulfillOrderByExternalIdIn(externalIds);
     if (canFulfillOrder == null) {
       Order existOrder = firstOrder != null ? firstOrder :
           orderRepository.findByExternalId(externalIds.get(0));

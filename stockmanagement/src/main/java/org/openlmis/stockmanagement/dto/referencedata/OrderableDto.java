@@ -45,6 +45,7 @@ public class OrderableDto {
   private Set<OrderableChildDto> children;
   private Map<String, String> identifiers;
   private Map<String, String> extraData;
+  private MetaDataDto meta = new MetaDataDto();
   // [SIGLUS change start]
   // [change reason]: support for archive
   @JsonInclude(NON_NULL)
