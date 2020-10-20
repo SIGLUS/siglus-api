@@ -59,20 +59,7 @@ pipeline {
                 branch 'master'
             }
             steps {
-                script {
-                    try {
-                        timeout (time: 30, unit: "MINUTES") {
-                            input message: "Do you want to proceed for QA deployment?"
-                        }
-                        deploy "qa"
-                    }
-                    catch (err) {
-                        def user = err.getCauses()[0].getUser()
-                        if ('SYSTEM' == user.toString()) { // timeout
-                            currentBuild.result = "SUCCESS"
-                        }
-                    }
-                }
+                deploy "qa"
             }
         }
         stage('Deploy To Integ') {
