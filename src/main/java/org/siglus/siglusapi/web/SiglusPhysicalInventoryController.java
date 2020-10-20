@@ -27,6 +27,7 @@ import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -91,6 +92,7 @@ public class SiglusPhysicalInventoryController {
 
   @DeleteMapping("/{id}")
   @ResponseStatus(NO_CONTENT)
+  @Transactional
   public void deletePhysicalInventory(@PathVariable UUID id) {
     if (ALL_PRODUCTS_UUID.equals(id)) {
       UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
