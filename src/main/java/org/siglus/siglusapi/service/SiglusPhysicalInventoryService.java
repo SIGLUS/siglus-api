@@ -25,7 +25,6 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -348,18 +347,11 @@ public class SiglusPhysicalInventoryService {
   }
 
   public PhysicalInventoryDto findLatestPhysicalInventory(UUID facilityId) {
-    log.info("find physicalInventories Repository: {}", facilityId);
-    List<PhysicalInventory> found = physicalInventoriesRepository.findByFacilityId(facilityId);
-
-    if (found == null) {
-      return null;
-    }
-    PhysicalInventory latest = found.stream().filter(item -> item.getOccurredDate() != null)
-        .max(Comparator.comparing(PhysicalInventory::getOccurredDate)).orElse(null);
+    PhysicalInventory latest = physicalInventoriesRepository
+        .findTopByFacilityIdAndIsDraftOrderByOccurredDateDesc(facilityId, false);
     if (latest == null) {
       return null;
     }
-
     return PhysicalInventoryDto.builder()
         .programId(latest.getProgramId())
         .facilityId(latest.getFacilityId())
