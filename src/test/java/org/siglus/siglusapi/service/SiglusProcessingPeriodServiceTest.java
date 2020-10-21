@@ -25,10 +25,13 @@ import static org.mockito.Mockito.when;
 import com.google.common.collect.Lists;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -104,7 +107,7 @@ public class SiglusProcessingPeriodServiceTest {
 
   private ProcessingPeriodDtoDataBuilder builder = new ProcessingPeriodDtoDataBuilder();
   private ProcessingPeriodDto fullDto = builder.buildFullDto();
-  private ProcessingPeriodDto dto = builder.buildDto();
+  private ProcessingPeriodDto periodDto = builder.buildDto();
   private ProcessingPeriodExtension extension = builder.buildExtenstion();
 
   private UUID processingScheduleId = UUID.randomUUID();
@@ -143,7 +146,7 @@ public class SiglusProcessingPeriodServiceTest {
     map.put("processingScheduleId", list);
 
     List<ProcessingPeriodDto> processingPeriodDtos = new ArrayList<>();
-    processingPeriodDtos.add(dto);
+    processingPeriodDtos.add(periodDto);
 
     PageImplRepresentation<ProcessingPeriodDto> pageImpl = new PageImplRepresentation();
     pageImpl.setContent(processingPeriodDtos);
@@ -169,9 +172,9 @@ public class SiglusProcessingPeriodServiceTest {
 
   @Test
   public void shouldGetProcessingPeriodById() {
-    UUID periodId = dto.getId();
+    UUID periodId = periodDto.getId();
 
-    when(siglusProcessingPeriodReferenceDataService.findOne(periodId)).thenReturn(dto);
+    when(siglusProcessingPeriodReferenceDataService.findOne(periodId)).thenReturn(periodDto);
     when(processingPeriodExtensionRepository
         .findByProcessingPeriodId(periodId)).thenReturn(extension);
 
@@ -184,9 +187,9 @@ public class SiglusProcessingPeriodServiceTest {
 
   @Test
   public void shouldKeepUntouchedIfNoExtensionWhenGetProcessingPeriodById() {
-    UUID periodId = dto.getId();
+    UUID periodId = periodDto.getId();
 
-    when(siglusProcessingPeriodReferenceDataService.findOne(periodId)).thenReturn(dto);
+    when(siglusProcessingPeriodReferenceDataService.findOne(periodId)).thenReturn(periodDto);
     when(processingPeriodExtensionRepository
         .findByProcessingPeriodId(periodId)).thenReturn(null);
 
@@ -194,7 +197,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     verify(siglusProcessingPeriodReferenceDataService).findOne(periodId);
     verify(processingPeriodExtensionRepository).findByProcessingPeriodId(periodId);
-    assertEquals(response, dto);
+    assertEquals(response, periodDto);
 
   }
 
@@ -202,7 +205,7 @@ public class SiglusProcessingPeriodServiceTest {
   public void shouldGetProcessingPeriodsForInitiateOfRegualrRequisition() {
 
     Collection<ProcessingPeriodDto> periods = new ArrayList<>();
-    periods.add(dto);
+    periods.add(periodDto);
     when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(periods);
 
     List<ProcessingPeriodExtension> extensions = new ArrayList<>();
@@ -211,7 +214,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     List<Requisition> requisitions = new ArrayList<>();
     requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED, false));
-    when(requisitionRepository.searchRequisitions(dto.getId(), facilityId, programId, false))
+    when(requisitionRepository.searchRequisitions(periodDto.getId(), facilityId, programId, false))
         .thenReturn(requisitions);
 
     when(permissionService.canInitRequisition(programId, facilityId))
@@ -231,11 +234,100 @@ public class SiglusProcessingPeriodServiceTest {
   }
 
   @Test
-  public void shouldGetProcessingPeriodsForInitiateOfEmergencyRequisition() {
+  public void shouldGetProcessingPeriodsForEmergencyRequisitionWhenHaveProcessForPrePeriod() {
+    //given
+    ProcessingPeriodDto prePeriodDto = builder.buildPerDto();
+    when(periodService.getCurrentPeriods(programId, facilityId))
+        .thenReturn(Arrays.asList(periodDto));
+    when(periodService.searchByProgramAndFacility(programId, facilityId))
+        .thenReturn(Arrays.asList(prePeriodDto, periodDto));
+    when(processingPeriodExtensionRepository.findAll())
+        .thenReturn(Arrays.asList(builder.buildPreExtenstion(), extension));
 
+    List<Requisition> requisitions = new ArrayList<>();
+    requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED, true));
+    Requisition preRequisition = createRequisition(UUID.randomUUID(), RequisitionStatus.INITIATED,
+        true);
+    when(requisitionRepository.searchRequisitions(prePeriodDto.getId(), facilityId, programId,
+        true)).thenReturn(Arrays.asList(preRequisition));
+    when(requisitionRepository.searchRequisitions(periodDto.getId(), facilityId, programId, true))
+        .thenReturn(requisitions);
+
+    when(permissionService.canInitRequisition(programId, facilityId))
+        .thenReturn(ValidationResult.success());
+    when(permissionService.canAuthorizeRequisition(any()))
+        .thenReturn(ValidationResult.success());
+
+    List<Requisition> authorizedRequisitions = new ArrayList<>();
+    authorizedRequisitions.add(createRequisition(requisitionId2, RequisitionStatus.AUTHORIZED,
+        false));
+    Set<String> status = newHashSet("AUTHORIZED", "IN_APPROVAL", "APPROVED",
+        "RELEASED", "RELEASED_WITHOUT_ORDER");
+    when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
+        periodDto.getId(), false, status)).thenReturn(authorizedRequisitions);
+    when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
+        prePeriodDto.getId(), false, status)).thenReturn(authorizedRequisitions);
+
+    //when
+    List<RequisitionPeriodDto> response =
+        siglusProcessingPeriodService.getPeriods(programId, facilityId, true)
+            .stream().collect(Collectors.toList());
+
+    //then
+    assertEquals(1, response.size());
+    assertEquals("perPeriod", response.get(0).getName());
+  }
+
+  @Test
+  public void shouldGetProcessingPeriodsForEmergencyRequisitionWhenEmptyForPrePeriod() {
+    //given
+    ProcessingPeriodDto prePeriodDto = builder.buildPerDto();
+    prePeriodDto.setId(UUID.randomUUID());
+    when(periodService.getCurrentPeriods(programId, facilityId))
+        .thenReturn(Arrays.asList(periodDto));
+    when(periodService.searchByProgramAndFacility(programId, facilityId))
+        .thenReturn(Arrays.asList(prePeriodDto, periodDto));
+    when(processingPeriodExtensionRepository.findAll())
+        .thenReturn(Arrays.asList(builder.buildPreExtenstion(), extension));
+
+    List<Requisition> requisitions = new ArrayList<>();
+    requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED,
+        true));
+    when(requisitionRepository.searchRequisitions(prePeriodDto.getId(), facilityId, programId,
+        true)).thenReturn(Collections.emptyList());
+    when(requisitionRepository.searchRequisitions(periodDto.getId(), facilityId, programId,
+        true)).thenReturn(requisitions);
+
+    when(permissionService.canInitRequisition(programId, facilityId))
+        .thenReturn(ValidationResult.success());
+    when(permissionService.canAuthorizeRequisition(any()))
+        .thenReturn(ValidationResult.success());
+
+    List<Requisition> authorizedRequisitions = new ArrayList<>();
+    authorizedRequisitions.add(createRequisition(requisitionId2, RequisitionStatus.AUTHORIZED,
+        false));
+    Set<String> status = newHashSet("AUTHORIZED", "IN_APPROVAL", "APPROVED",
+        "RELEASED", "RELEASED_WITHOUT_ORDER");
+    when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
+        periodDto.getId(), false, status)).thenReturn(authorizedRequisitions);
+
+    //when
+    List<RequisitionPeriodDto> response =
+        siglusProcessingPeriodService.getPeriods(programId, facilityId, true)
+            .stream().collect(Collectors.toList());
+
+    //then
+    assertEquals(1, response.size());
+    assertEquals(periodDto.getName(), response.get(0).getName());
+  }
+
+  @Test
+  public void shouldGetProcessingPeriodsForEmergencyRequisitionWhenOnlyHaveOnePeriods() {
+    //given
     List<ProcessingPeriodDto> periods = new ArrayList<>();
-    periods.add(dto);
+    periods.add(periodDto);
     when(periodService.getCurrentPeriods(programId, facilityId)).thenReturn(periods);
+    when(periodService.searchByProgramAndFacility(programId, facilityId)).thenReturn(periods);
 
     List<ProcessingPeriodExtension> extensions = new ArrayList<>();
     extensions.add(extension);
@@ -243,7 +335,7 @@ public class SiglusProcessingPeriodServiceTest {
 
     List<Requisition> requisitions = new ArrayList<>();
     requisitions.add(createRequisition(requisitionId, RequisitionStatus.INITIATED, true));
-    when(requisitionRepository.searchRequisitions(dto.getId(), facilityId, programId, true))
+    when(requisitionRepository.searchRequisitions(periodDto.getId(), facilityId, programId, true))
         .thenReturn(requisitions);
 
     when(permissionService.canInitRequisition(programId, facilityId))
@@ -255,7 +347,7 @@ public class SiglusProcessingPeriodServiceTest {
     authorizedRequisitions.add(createRequisition(requisitionId2, RequisitionStatus.AUTHORIZED,
         false));
     when(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(facilityId, programId,
-        dto.getId(), false, newHashSet("AUTHORIZED", "IN_APPROVAL", "APPROVED",
+        periodDto.getId(), false, newHashSet("AUTHORIZED", "IN_APPROVAL", "APPROVED",
             "RELEASED", "RELEASED_WITHOUT_ORDER")))
         .thenReturn(authorizedRequisitions);
 
@@ -264,9 +356,11 @@ public class SiglusProcessingPeriodServiceTest {
     requisitionPeriod.setRequisitionStatus(RequisitionStatus.INITIATED);
     requisitionPeriod.setCurrentPeriodRegularRequisitionAuthorized(true);
 
+    //when
     Collection<RequisitionPeriodDto> response =
         siglusProcessingPeriodService.getPeriods(programId, facilityId, true);
 
+    //then
     assertEquals(1, response.size());
     assertTrue(response.contains(requisitionPeriod));
 

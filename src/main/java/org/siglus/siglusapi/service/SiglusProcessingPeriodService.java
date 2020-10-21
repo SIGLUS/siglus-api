@@ -139,20 +139,13 @@ public class SiglusProcessingPeriodService {
   public Collection<RequisitionPeriodDto> getPeriods(UUID program,
       UUID facility, boolean emergency) {
 
-    Collection<ProcessingPeriodDto> periods;
-    if (emergency) {
-      periods = fillProcessingPeriodWithExtension(
-          periodService.getCurrentPeriods(program, facility));
-    } else {
-      periods = fillProcessingPeriodWithExtension(
-          periodService.searchByProgramAndFacility(program, facility));
-    }
-
+    Collection<ProcessingPeriodDto> periods = fillProcessingPeriodWithExtension(
+        periodService.searchByProgramAndFacility(program, facility));
+    List<UUID> currentPeriodIds = periodService.getCurrentPeriods(program, facility)
+        .stream().map(ProcessingPeriodDto::getId).collect(Collectors.toList());
     List<RequisitionPeriodDto> requisitionPeriods = new ArrayList<>();
 
     for (ProcessingPeriodDto period : periods) {
-      RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(period);
-      requisitionPeriods.add(requisitionPeriod);
 
       List<Requisition> requisitions = requisitionRepository.searchRequisitions(
           period.getId(), facility, program, emergency);
@@ -161,9 +154,14 @@ public class SiglusProcessingPeriodService {
           requisitions);
 
       if (emergency) {
-        processingEmergencyRequisitionPeriod(requisitionPeriods,
-            preAuthorizeRequisitions, requisitionPeriod, period, program, facility);
+        processingEmergencyRequisitionPeriod(requisitionPeriods, currentPeriodIds,
+            preAuthorizeRequisitions, period, program, facility);
+        if (requisitionPeriods.size() > 0) {
+          break;
+        }
       } else {
+        RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(period);
+        requisitionPeriods.add(requisitionPeriod);
         if (!requisitions.isEmpty()) {
           if (preAuthorizeRequisitions.isEmpty()) {
             requisitionPeriods.remove(requisitionPeriod);
@@ -180,28 +178,36 @@ public class SiglusProcessingPeriodService {
 
   private void processingEmergencyRequisitionPeriod(
       List<RequisitionPeriodDto> requisitionPeriods,
+      List<UUID> currentPeriodIds,
       List<Requisition> preAuthorizeRequisitions,
-      RequisitionPeriodDto requisitionPeriod,
-      ProcessingPeriodDto period,
-      UUID program,
-      UUID facility
+      ProcessingPeriodDto period, UUID program, UUID facility
   ) {
     if (!preAuthorizeRequisitions.isEmpty()) {
-      Requisition earliestRequisition = preAuthorizeRequisitions.stream().min(
-          Comparator.comparing(Requisition::getCreatedDate)).orElseThrow(
-            () -> new NotFoundException("Earlier Rquisition Not Found"));
-      requisitionPeriod.setRequisitionId(earliestRequisition.getId());
-      requisitionPeriod.setRequisitionStatus(earliestRequisition.getStatus());
+      RequisitionPeriodDto requisitionPeriod = RequisitionPeriodDto.newInstance(period);
+      requisitionPeriods.add(requisitionPeriod);
+      getFirstPreAuthorizeRequisition(preAuthorizeRequisitions, requisitionPeriod);
     }
-
+    if (CollectionUtils.isEmpty(requisitionPeriods) && currentPeriodIds.contains(period.getId())) {
+      requisitionPeriods.add(RequisitionPeriodDto.newInstance(period));
+    }
     Set<String> statusSet = RequisitionStatus.getAfterAuthorizedStatus().stream().map(Enum::name)
         .collect(Collectors.toSet());
-    if (CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
+    if (CollectionUtils.isNotEmpty(requisitionPeriods)
+        && CollectionUtils.isNotEmpty(siglusRequisitionRepository.searchAfterAuthorizedRequisitions(
         facility, program, period.getId(), Boolean.FALSE, statusSet))) {
       // for emergency, requisitionPeriods only have one element
       requisitionPeriods.forEach(requisitionPeriodDto ->
           requisitionPeriodDto.setCurrentPeriodRegularRequisitionAuthorized(true));
     }
+  }
+
+  private void getFirstPreAuthorizeRequisition(List<Requisition> preAuthorizeRequisitions,
+      RequisitionPeriodDto requisitionPeriod) {
+    Requisition firstPreAuthorizeRequisition = preAuthorizeRequisitions.stream().min(
+        Comparator.comparing(Requisition::getCreatedDate)).orElseThrow(
+          () -> new NotFoundException("first Requisition Not Found"));
+    requisitionPeriod.setRequisitionId(firstPreAuthorizeRequisition.getId());
+    requisitionPeriod.setRequisitionStatus(firstPreAuthorizeRequisition.getStatus());
   }
 
   private Collection<ProcessingPeriodDto> fillProcessingPeriodWithExtension(

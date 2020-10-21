@@ -33,6 +33,10 @@ public class ProcessingPeriodDtoDataBuilder {
   private LocalDate endDate;
   private LocalDate submitStartDate;
   private LocalDate submitEndDate;
+  private LocalDate preStartDate;
+  private LocalDate preEndDate;
+  private LocalDate preSubmitStartDate;
+  private LocalDate preSubmitEndDate;
   private ProcessingScheduleDto processingSchedule;
   private String description;
   private Integer durationInMonths;
@@ -50,6 +54,12 @@ public class ProcessingPeriodDtoDataBuilder {
     startDate = LocalDate.of(2020, 6, 30);
     submitStartDate = LocalDate.of(2020, 6, 1);
     submitEndDate = LocalDate.of(2020, 6, 30);
+
+    preEndDate = LocalDate.of(2020, 6, 1);
+    preStartDate = LocalDate.of(2020, 6, 30);
+    preSubmitStartDate = LocalDate.of(2020, 6, 1);
+    preSubmitEndDate = LocalDate.of(2020, 6, 30);
+
     processingSchedule = new ProcessingScheduleDto();
     description = "Processing Period " + instanceNumber;
     durationInMonths = 1;
@@ -67,6 +77,19 @@ public class ProcessingPeriodDtoDataBuilder {
   public ProcessingPeriodDto buildDto() {
     return new ProcessingPeriodDto(id, name, startDate, endDate,
         processingSchedule, description, durationInMonths, extraData);
+  }
+
+  public ProcessingPeriodDto buildPerDto() {
+    return new ProcessingPeriodDto(UUID.randomUUID(), "perPeriod", preStartDate, preEndDate,
+        processingSchedule, description, durationInMonths, extraData);
+  }
+
+  public ProcessingPeriodExtension buildPreExtenstion() {
+    ProcessingPeriodExtension extension = new ProcessingPeriodExtension();
+    extension.setProcessingPeriodId(id);
+    extension.setSubmitStartDate(preSubmitStartDate);
+    extension.setSubmitEndDate(preSubmitEndDate);
+    return extension;
   }
 
   public ProcessingPeriodExtension buildExtenstion() {
