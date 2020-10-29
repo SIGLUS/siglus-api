@@ -48,15 +48,14 @@ public interface PhysicalInventoriesRepository
 
   // [SIGLUS change start]
   // [change reason]: add new methods.
-  List<PhysicalInventory> findByFacilityId(UUID facilityId);
+  PhysicalInventory findTopByFacilityIdAndIsDraftOrderByOccurredDateDesc(UUID facilityId,
+      boolean isDraft);
 
   @Query(value = "SELECT * FROM stockmanagement.physical_inventories pi "
-      + "WHERE pi.facilityid = :facility \n"
-      + "      AND pi.isdraft = false\n"
-      + "      AND pi.occurreddate >= :startDate \n"
-      + "      AND pi.occurreddate <= :endDate ",
-      nativeQuery = true
-  )
+      + "WHERE pi.facilityid = :facility "
+      + "      AND pi.isdraft = false "
+      + "      AND pi.occurreddate >= :startDate "
+      + "      AND pi.occurreddate <= :endDate ", nativeQuery = true)
   List<PhysicalInventory> findByFacilityIdAndStartDateAndEndDate(
       @Param("facility") UUID facility,
       @Param("startDate") String startDate,

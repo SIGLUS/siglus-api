@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.OrderStatus;
@@ -82,7 +83,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -432,7 +432,7 @@ public class SiglusOrderService {
       List<RequisitionV2Dto> previousRequisitions = siglusRequisitionService
           .getPreviousEmergencyRequisition(requisition.getId(),
               requisition.getProcessingPeriodId(), requisition.getFacilityId());
-      if (!CollectionUtils.isEmpty(previousRequisitions)) {
+      if (CollectionUtils.isNotEmpty(previousRequisitions)) {
         emergencyOrderableIds
             .addAll(filterProductService.getInProgressProducts(previousRequisitions));
         emergencyOrderableIds

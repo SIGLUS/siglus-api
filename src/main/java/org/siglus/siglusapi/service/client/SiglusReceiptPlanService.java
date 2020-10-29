@@ -17,14 +17,10 @@ package org.siglus.siglusapi.service.client;
 
 import org.siglus.common.service.client.BaseReferenceDataService;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SiglusReceiptPlanService extends BaseReferenceDataService<ReceiptPlanDto> {
-
-  @Value("${fc.accessToken}")
-  private String accessToken;
 
   @Override
   protected String getUrl() {
@@ -42,7 +38,7 @@ public class SiglusReceiptPlanService extends BaseReferenceDataService<ReceiptPl
   }
 
   public void processingReceiptPlans(String date) {
-    postResult("?date=" + date + "&access_token=" + accessToken, null, Void.class, false);
+    postResult("?date=" + date, null, Void.class, false);
   }
 
 }

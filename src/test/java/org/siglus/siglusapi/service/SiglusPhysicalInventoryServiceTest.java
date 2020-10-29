@@ -382,8 +382,9 @@ public class SiglusPhysicalInventoryServiceTest {
     physicalInventory1.setOccurredDate(LocalDate.of(2020, 6, 10));
     PhysicalInventory physicalInventory2 = new PhysicalInventory();
     physicalInventory2.setOccurredDate(LocalDate.of(2020, 6, 13));
-    when(physicalInventoriesRepository.findByFacilityId(facilityId))
-        .thenReturn(newArrayList(physicalInventory1, physicalInventory2));
+    when(physicalInventoriesRepository
+        .findTopByFacilityIdAndIsDraftOrderByOccurredDateDesc(facilityId, false))
+        .thenReturn(physicalInventory2);
 
     // when
     PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService

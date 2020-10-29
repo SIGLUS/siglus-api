@@ -609,7 +609,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(createIdealStockAmountDtoList());
     when(siglusApprovedReferenceDataService.getApprovedProducts(any(), any(),
         anyCollection(), anyBoolean()))
-        .thenReturn(getApprovedPrdouctList());
+        .thenReturn(getApprovedProductList());
     when(requisitionService.validateCanApproveRequisition(any(), any()))
         .thenReturn(new ValidationResult());
     when(siglusOrderableService.getOrderableExpirationDate(any(), any()))
@@ -1818,13 +1818,16 @@ public class SiglusRequisitionServiceTest {
     return orderable;
   }
 
-  private List<ApprovedProductDto> getApprovedPrdouctList() {
+  private List<ApprovedProductDto> getApprovedProductList() {
     MetadataDto meta = createMetadataDto();
     OrderableDto orderable = createOrderableDto(meta);
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
     programOrderableDto.setFullSupply(true);
     orderable.setPrograms(Sets.newHashSet(programOrderableDto));
     ApprovedProductDto productDto = createApprovedProductDto(orderable, meta);
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(programId);
+    productDto.setProgram(programDto);
     List<ApprovedProductDto> list = new ArrayList<>();
     list.add(productDto);
     return list;

@@ -15,6 +15,7 @@
 
 package org.openlmis.stockmanagement.service;
 
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -38,6 +39,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.domain.card.StockCard;
+import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.identity.OrderableLotIdentity;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
@@ -98,6 +100,10 @@ public class StockEventNotificationProcessorTest {
   @Test
   public void shouldCallStockoutNotifierWhenStockOnHandIsZero() throws Exception {
     //given
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    stockCard.setLineItems(singletonList(StockCardLineItem.builder().stockCard(stockCard).build()));
+    // [SIGLUS change end]
     when(context.findCard(any(OrderableLotIdentity.class))).thenReturn(stockCard);
 
     //when
@@ -131,6 +137,12 @@ public class StockEventNotificationProcessorTest {
     secondLineItem.setQuantity(0);
     stockEventDto.setLineItems(Arrays.asList(firstLineItem, secondLineItem));
 
+    // [SIGLUS change start]
+    // [change reason]: performance optimization
+    stockCard.setLineItems(singletonList(StockCardLineItem.builder().stockCard(stockCard).build()));
+    anotherStockCard.setLineItems(singletonList(StockCardLineItem.builder()
+        .stockCard(anotherStockCard).build()));
+    // [SIGLUS change end]
     when(context.findCard(new OrderableLotIdentity(orderableId, lotId))).thenReturn(stockCard);
     when(context.findCard(new OrderableLotIdentity(anotherOrderableId, anotherLotId)))
         .thenReturn(anotherStockCard);

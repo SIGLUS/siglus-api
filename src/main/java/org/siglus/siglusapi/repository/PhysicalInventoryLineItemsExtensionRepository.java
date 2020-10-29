@@ -20,12 +20,14 @@ import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface PhysicalInventoryLineItemsExtensionRepository  extends
     JpaRepository<PhysicalInventoryLineItemsExtension, UUID> {
 
   List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryIdIn(Collection<UUID> ids);
 
+  @Transactional
   void deleteByPhysicalInventoryIdIn(Collection<UUID> ids);
 
 }
