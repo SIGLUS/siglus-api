@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service.fc;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.constant.FcConstants.DEFAULT_REGIMEN_CATEGORY_CODE;
-import static org.siglus.siglusapi.constant.FcConstants.IGNORE_CODES;
 
 import java.util.HashSet;
 import java.util.List;
@@ -83,7 +82,6 @@ public class FcRegimenService {
       Set<Regimen> regimensToUpdate = new HashSet<>();
       dtos.stream()
           .filter(RegimenDto::isActive)
-          .filter(dto -> !IGNORE_CODES.contains(dto.getCode()))
           .forEach(dto -> {
             UUID dtoProgramId = codeToProgramIdMap
                 .get(codeToProgramMap.get(dto.getAreaCode()).getProgramCode());
