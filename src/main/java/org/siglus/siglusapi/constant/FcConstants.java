@@ -15,11 +15,8 @@
 
 package org.siglus.siglusapi.constant;
 
-import static com.google.common.collect.Sets.newHashSet;
-
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 public class FcConstants {
 

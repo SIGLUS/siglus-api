@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.collections4.CollectionUtils;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
@@ -86,8 +87,13 @@ public class SiglusOrderableService {
         .map(ProgramAdditionalOrderable::getAdditionalOrderableId)
         .collect(Collectors.toSet());
     orderableDtos = orderableDtos.stream()
-        .filter(orderableDto -> !programId.equals(orderableDto.getPrograms().stream().findFirst()
-            .get().getProgramId()))
+        .filter(orderableDto -> {
+          if (!CollectionUtils.isEmpty(orderableDto.getPrograms())) {
+            return !programId.equals(orderableDto.getPrograms().stream().findFirst().get()
+                .getProgramId());
+          }
+          return false;
+        })
         .filter(orderableDto -> !additionalOrderableIds.contains(orderableDto.getId()))
         .collect(Collectors.toList());
     if (null == pageable.getSort()) {
