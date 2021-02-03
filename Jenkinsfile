@@ -67,8 +67,7 @@ pipeline {
                 branch 'release-1.2'
             }
             steps {
-                echo "skip deploy integ"
-                // deploy "integ"
+                deploy "integ"
             }
         }
         stage('Deploy To UAT') {
