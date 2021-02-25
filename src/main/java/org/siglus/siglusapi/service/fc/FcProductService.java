@@ -181,8 +181,8 @@ public class FcProductService {
     orderableDto.setProductCode(product.getFnm());
     orderableDto.setDescription(product.getDescription());
     orderableDto.setFullProductName(product.getFullDescription());
-    orderableDto.setPackRoundingThreshold(16L);
-    orderableDto.setNetContent(16L);
+    orderableDto.setPackRoundingThreshold(1L);
+    orderableDto.setNetContent(1L);
     orderableDto.setRoundToZero(false);
     orderableDto.setDispensable(Dispensable.createNew("each"));
     Map<String, Object> extraData = newHashMap();
