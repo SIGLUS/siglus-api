@@ -367,13 +367,14 @@ public class FcIssueVoucherService {
       return convertOrder(v2Dto, productMaps, supplyFacility, userDto, approvedProductDtos,
           approvedProductMap, issueVoucherDto);
     } else {
-      return updateSubOrder(firstOrder, approvedProductMap, productMaps, externals,
+      return updateSubOrder(firstOrder, approvedProductMap, supplyFacility, productMaps, externals,
           issueVoucherDto);
     }
   }
 
   private UUID updateSubOrder(Order firstOrder,
       Map<String, ApprovedProductDto> approveProductDtos,
+      FacilityDto supplyFacility,
       Map<String, List<ProductDto>> productMaps, List<OrderExternal> externals,
       IssueVoucherDto issueVoucherDto) {
     List<UUID> externalIds = externals.stream().map(OrderExternal::getId)
@@ -384,6 +385,10 @@ public class FcIssueVoucherService {
       Order existOrder = firstOrder != null ? firstOrder :
           orderRepository.findByExternalId(externalIds.get(0));
       OrderDto orderDto = siglusOrderService.searchOrderById(existOrder.getId()).getOrder();
+      org.openlmis.fulfillment.service.referencedata.FacilityDto fulfillFacilityDto =
+          new org.openlmis.fulfillment.service.referencedata.FacilityDto();
+      BeanUtils.copyProperties(supplyFacility, fulfillFacilityDto);
+      orderDto.setSupplyingFacility(fulfillFacilityDto);
       OrderObjectReferenceDto dto = new OrderObjectReferenceDto(orderDto.getId());
       BeanUtils.copyProperties(orderDto, dto);
       orderDto.setCreatedDate(issueVoucherDto.getShippingDate());
@@ -395,13 +400,13 @@ public class FcIssueVoucherService {
       return null;
     } else {
       return updateCanFulfillOrder(approveProductDtos, productMaps, canFulfillOrder,
-          issueVoucherDto);
+          issueVoucherDto, supplyFacility);
     }
   }
 
   private UUID updateCanFulfillOrder(Map<String, ApprovedProductDto> approveProductDtos,
       Map<String, List<ProductDto>> productMaps, Order canFulfillOrder,
-      IssueVoucherDto issueVoucherDto) {
+      IssueVoucherDto issueVoucherDto, FacilityDto supplyFacility) {
     List<OrderLineItem> existLineItems = canFulfillOrder.getOrderLineItems();
     List<OrderLineItemDto> orderLineItemDto =
         getOrderLineItemsDtoInIssue(productMaps, approveProductDtos);
@@ -419,6 +424,7 @@ public class FcIssueVoucherService {
         existLineItems.add(orderItem);
       }
     });
+    canFulfillOrder.setSupplyingFacilityId(supplyFacility.getId());
     canFulfillOrder.setOrderLineItems(existLineItems);
     canFulfillOrder.setCreatedDate(issueVoucherDto.getShippingDate());
     log.info("save fc order: {}", canFulfillOrder);
