@@ -42,6 +42,12 @@ pipeline {
                         docker build -t ${IMAGE_NAME} .
                         docker push ${IMAGE_NAME}
                         docker rmi ${IMAGE_NAME}
+                        if [[ "${BRANCH_NAME}" == *"release-"* ]]; then
+                          echo "push latest tag for release branch"
+                          docker build -t ${IMAGE_REPO}:latest .
+                          docker push ${IMAGE_REPO}:latest
+                          docker rmi ${IMAGE_REPO}:latest
+                        fi
                     '''
                 }
             }
