@@ -213,8 +213,8 @@ public class FcProductServiceTest {
     assertEquals(fnm, orderableToCreate.getProductCode());
     assertEquals(description, orderableToCreate.getDescription());
     assertEquals(fullDescription, orderableToCreate.getFullProductName());
-    assertEquals(16L, orderableToCreate.getPackRoundingThreshold().longValue());
-    assertEquals(16L, orderableToCreate.getNetContent().longValue());
+    assertEquals(1L, orderableToCreate.getPackRoundingThreshold().longValue());
+    assertEquals(1L, orderableToCreate.getNetContent().longValue());
     assertFalse(orderableToCreate.getRoundToZero());
     assertEquals("each", orderableToCreate.getDispensable().getDispensingUnit());
     Map<String, Object> extraData = newHashMap();
