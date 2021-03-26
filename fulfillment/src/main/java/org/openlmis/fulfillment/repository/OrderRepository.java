@@ -30,6 +30,12 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, UUID>
 
   Order findByExternalId(@Param("externalId") UUID externalId);
 
+  @Query(value = "select * "
+      + "from fulfillment.orders "
+      + "where externalId in :externalIds "
+      + "order by orderCode DESC LIMIT 1", nativeQuery = true)
+  Order findLastOrderByExternalIds(@Param("externalIds") List<UUID> externalIds);
+
   // [SIGLUS change start]
   // [change reason]: siglus find can Fulfill Order.
   @Query(value = "select * "

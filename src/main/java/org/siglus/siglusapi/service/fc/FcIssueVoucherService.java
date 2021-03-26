@@ -383,7 +383,7 @@ public class FcIssueVoucherService {
         orderRepository.findCanFulfillOrderByExternalIdIn(externalIds);
     if (canFulfillOrder == null) {
       Order existOrder = firstOrder != null ? firstOrder :
-          orderRepository.findByExternalId(externalIds.get(0));
+          orderRepository.findLastOrderByExternalIds(externalIds);
       OrderDto orderDto = siglusOrderService
           .searchOrderByIdForMultiWareHouseSupply(existOrder.getId()).getOrder();
       org.openlmis.fulfillment.service.referencedata.FacilityDto fulfillFacilityDto =
@@ -404,7 +404,6 @@ public class FcIssueVoucherService {
           issueVoucherDto, supplyFacility);
     }
   }
-
 
   private UUID updateCanFulfillOrder(Map<String, ApprovedProductDto> approveProductDtos,
       Map<String, List<ProductDto>> productMaps, Order canFulfillOrder,

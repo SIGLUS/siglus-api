@@ -299,7 +299,7 @@ public class FcIssueVoucherServiceTest {
     orderDto.setId(order.getId());
     SiglusOrderDto dto = new SiglusOrderDto();
     dto.setOrder(orderDto);
-    when(siglusOrderService.searchOrderById(order.getId())).thenReturn(dto);
+    when(siglusOrderService.searchOrderByIdForMultiWareHouseSupply(order.getId())).thenReturn(dto);
     BasicOrderDto basicOrderDto = new BasicOrderDto();
     basicOrderDto.setId(order.getId());
     when(siglusOrderService.createSubOrder(any(), any())).thenReturn(
@@ -381,7 +381,7 @@ public class FcIssueVoucherServiceTest {
     orderDto.setId(order.getId());
     SiglusOrderDto dto = new SiglusOrderDto();
     dto.setOrder(orderDto);
-    when(siglusOrderService.searchOrderById(canFulfillOrder.getId())).thenReturn(dto);
+    when(siglusOrderService.searchOrderByIdForMultiWareHouseSupply(canFulfillOrder.getId())).thenReturn(dto);
     StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
     summaryV2Dto.setOrderable(
         new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(
@@ -453,7 +453,7 @@ public class FcIssueVoucherServiceTest {
     orderDto.setId(order.getId());
     SiglusOrderDto dto = new SiglusOrderDto();
     dto.setOrder(orderDto);
-    when(siglusOrderService.searchOrderById(order.getId())).thenReturn(dto);
+    when(siglusOrderService.searchOrderByIdForMultiWareHouseSupply(order.getId())).thenReturn(dto);
     StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
     summaryV2Dto.setOrderable(
         new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(
