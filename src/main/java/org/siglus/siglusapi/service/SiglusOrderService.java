@@ -49,9 +49,11 @@ import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.web.OrderController;
+import org.openlmis.fulfillment.web.OrderNotFoundException;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
+import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -145,6 +147,9 @@ public class SiglusOrderService {
   @Autowired
   private SiglusFilterAddProductForEmergencyService filterProductService;
 
+  @Autowired
+  private FulfillmentOrderDtoBuilder orderDtoBuilder;
+
   @Value("${time.zoneId}")
   private String timeZoneId;
 
@@ -198,16 +203,14 @@ public class SiglusOrderService {
   }
 
   public SiglusOrderDto searchOrderById(UUID orderId) {
-    //totalDispensingUnits not present in lineitem of previous OrderFulfillmentService
     OrderDto orderDto = orderController.getOrder(orderId, null);
-    setOrderLineItemExtension(orderDto);
-    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
-    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
-    orderDto.setRequisitionNumber(
-        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
-    return SiglusOrderDto.builder()
-        .order(orderDto)
-        .availableProducts(getAllUserAvailableProductAggregator(orderDto)).build();
+    return extendOrderDto(orderDto);
+  }
+
+  public SiglusOrderDto searchOrderByIdForMultiWareHouseSupply(UUID orderId) {
+    Order order = orderRepository.findOne(orderId);
+    OrderDto orderDto = orderDtoBuilder.build(order);
+    return extendOrderDto(orderDto);
   }
 
   // manually fill no-id lineitem
@@ -286,6 +289,18 @@ public class SiglusOrderService {
   public OrderObjectReferenceDto getExtensionOrder(OrderObjectReferenceDto orderDto) {
     setOrderLineItemExtension(orderDto.getOrderLineItems());
     return orderDto;
+  }
+
+  private SiglusOrderDto extendOrderDto(OrderDto orderDto) {
+    //totalDispensingUnits not present in lineitem of previous OrderFulfillmentService
+    setOrderLineItemExtension(orderDto);
+    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
+    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
+    orderDto.setRequisitionNumber(
+        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
+    return SiglusOrderDto.builder()
+        .order(orderDto)
+        .availableProducts(getAllUserAvailableProductAggregator(orderDto)).build();
   }
 
   private boolean currentDateIsAfterNextPeriodEndDate(OrderDto orderDto) {

@@ -384,7 +384,8 @@ public class FcIssueVoucherService {
     if (canFulfillOrder == null) {
       Order existOrder = firstOrder != null ? firstOrder :
           orderRepository.findByExternalId(externalIds.get(0));
-      OrderDto orderDto = siglusOrderService.searchOrderById(existOrder.getId()).getOrder();
+      OrderDto orderDto = siglusOrderService
+          .searchOrderByIdForMultiWareHouseSupply(existOrder.getId()).getOrder();
       org.openlmis.fulfillment.service.referencedata.FacilityDto fulfillFacilityDto =
           new org.openlmis.fulfillment.service.referencedata.FacilityDto();
       BeanUtils.copyProperties(supplyFacility, fulfillFacilityDto);
@@ -403,6 +404,7 @@ public class FcIssueVoucherService {
           issueVoucherDto, supplyFacility);
     }
   }
+
 
   private UUID updateCanFulfillOrder(Map<String, ApprovedProductDto> approveProductDtos,
       Map<String, List<ProductDto>> productMaps, Order canFulfillOrder,
@@ -519,7 +521,8 @@ public class FcIssueVoucherService {
       Map<String, ApprovedProductDto> approvedProductDtoMaps,
       FacilityDto supplyFacility, RequisitionV2Dto requisitionV2Dto,
       IssueVoucherDto issueVoucherDto) {
-    SiglusOrderDto orderDto = siglusOrderService.searchOrderById(orderId);
+    SiglusOrderDto orderDto = siglusOrderService
+        .searchOrderByIdForMultiWareHouseSupply(orderId);
     ShipmentDto shipmentDto = new ShipmentDto();
     OrderObjectReferenceDto orderReferenceDto = new OrderObjectReferenceDto(orderId);
     BeanUtils.copyProperties(orderDto.getOrder(), orderReferenceDto);
@@ -648,7 +651,7 @@ public class FcIssueVoucherService {
       List<ApprovedProductDto> approvedProductDtos, List<OrderLineItem> items) {
     Map<UUID, ApprovedProductDto> approvedProductMap = approvedProductDtos.stream()
         .collect(Collectors.toMap(approvedProductDto ->
-        approvedProductDto.getOrderable().getId(), Function.identity()));
+            approvedProductDto.getOrderable().getId(), Function.identity()));
     return items.stream().map(item -> {
       org.openlmis.requisition.dto.OrderLineItemDto itemDto = new
           org.openlmis.requisition.dto.OrderLineItemDto();
