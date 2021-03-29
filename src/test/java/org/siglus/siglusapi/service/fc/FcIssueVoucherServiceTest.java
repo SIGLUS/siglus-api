@@ -381,7 +381,8 @@ public class FcIssueVoucherServiceTest {
     orderDto.setId(order.getId());
     SiglusOrderDto dto = new SiglusOrderDto();
     dto.setOrder(orderDto);
-    when(siglusOrderService.searchOrderByIdForMultiWareHouseSupply(canFulfillOrder.getId())).thenReturn(dto);
+    when(siglusOrderService.searchOrderByIdForMultiWareHouseSupply(canFulfillOrder.getId()))
+        .thenReturn(dto);
     StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
     summaryV2Dto.setOrderable(
         new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(
