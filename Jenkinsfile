@@ -2,6 +2,11 @@ pipeline {
     agent any
     options {
         buildDiscarder(logRotator(numToKeepStr: '50'))
+        timestamps ()
+    }
+    parameters {
+        string(name: 'DEPLOY_UAT', defaultValue: 'NO')
+        string(name: 'DEPLOY_PROD', defaultValue: 'NO')
     }
     environment {
         IMAGE_REPO = "siglusdevops/siglusapi"
@@ -70,19 +75,23 @@ pipeline {
                         timeout (time: 5, unit: "MINUTES") {
                             input message: "Do you want to proceed for UAT deployment?"
                         }
+                        env.DEPLOY_UAT = 'YES'
                     }
                     catch (error) {
                         if ("${error}".startsWith('org.jenkinsci.plugins.workflow.steps.FlowInterruptedException')) {
-                            // Build was aborted
-                            currentBuild.result = "SUCCESS"
+                            currentBuild.result = "SUCCESS" // Build was aborted
                         }
+                        env.DEPLOY_UAT = 'NO'
                     }
                 }
             }
         }
         stage('Deploy To UAT') {
             when {
-                branch 'release'
+                allOf{
+                    expression{env.BRANCH_NAME = 'release'}
+                    expression{env.DEPLOY_UAT = 'YES'}
+                }
             }
             steps {
                 deploy "uat"
@@ -98,19 +107,23 @@ pipeline {
                         timeout (time: 5, unit: "MINUTES") {
                             input message: "Do you want to proceed for Production deployment?"
                         }
+                        env.DEPLOY_PROD = 'YES'
                     }
                     catch (error) {
                         if ("${error}".startsWith('org.jenkinsci.plugins.workflow.steps.FlowInterruptedException')) {
-                            // Build was aborted
-                            currentBuild.result = "SUCCESS"
+                            currentBuild.result = "SUCCESS" // Build was aborted
                         }
+                        env.DEPLOY_PROD = 'NO'
                     }
                 }
             }
         }
         stage('Deploy To Production') {
             when {
-                branch 'release'
+                allOf{
+                    expression{env.BRANCH_NAME = 'release'}
+                    expression{env.DEPLOY_PROD = 'YES'}
+                }
             }
             steps {
                 deploy "prod"
