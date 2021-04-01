@@ -22,6 +22,8 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.provider.redis.spring.RedisLockProvider;
 import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
@@ -57,6 +59,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -311,5 +314,9 @@ public class Application {
     return new RestTemplate(requestFactory);
   }
 
+  @Bean
+  public LockProvider lockProvider(StringRedisTemplate redisTemplate) {
+    return new RedisLockProvider(redisTemplate.getConnectionFactory());
+  }
 
 }

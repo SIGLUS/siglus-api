@@ -31,7 +31,7 @@ import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import lombok.extern.slf4j.Slf4j;
-import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
@@ -102,7 +102,7 @@ public class FcScheduleService {
 
 
   @Scheduled(cron = "${fc.facility.cron}", zone = TIME_ZONE_ID)
-  @SchedulerLock(name = "facilityLock", lockAtMostFor = PT10M, lockAtLeastFor = PT5M)
+  @SchedulerLock(name = "facilityLock", lockAtMostForString = PT10M, lockAtLeastForString = PT5M)
   public void fetchFacility() {
     String date = fcIntegrationResultService.getLatestSuccessDate(FACILITY_API);
     fetchFacilityFromFc(date);
@@ -126,7 +126,8 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.geographiczone.cron}", zone = TIME_ZONE_ID)
-  @SchedulerLock(name = "geographicZoneLock", lockAtMostFor = PT10M, lockAtLeastFor = PT5M)
+  @SchedulerLock(name = "geographicZoneLock", lockAtMostForString = PT10M,
+      lockAtLeastForString = PT5M)
   public void fetchGeographicZones() {
     String date = fcIntegrationResultService.getLatestSuccessDate(GEOGRAPHIC_ZONE_API);
     fetchGeographicZonesFromFc(date);
@@ -150,7 +151,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
-  @SchedulerLock(name = "receiptPlanLock", lockAtMostFor = PT10M, lockAtLeastFor = PT5M)
+  @SchedulerLock(name = "receiptPlanLock", lockAtMostForString = PT10M, lockAtLeastForString = PT5M)
   public void fetchReceiptPlan() {
     String date = fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API);
     siglusReceiptPlanService.processingReceiptPlans(date);
@@ -174,7 +175,8 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = TIME_ZONE_ID)
-  @SchedulerLock(name = "issueVoucherLock", lockAtMostFor = PT10M, lockAtLeastFor = PT5M)
+  @SchedulerLock(name = "issueVoucherLock", lockAtMostForString = PT10M,
+      lockAtLeastForString = PT5M)
   public void fetchIssueVouchersFromFc() {
     String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
     issueVoucherService.updateIssueVourch(date);
@@ -200,7 +202,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.cmm.cron}", zone = TIME_ZONE_ID)
-  @SchedulerLock(name = "cmmLock", lockAtMostFor = PT10M, lockAtLeastFor = PT5M)
+  @SchedulerLock(name = "cmmLock", lockAtMostForString = PT10M, lockAtLeastForString = PT5M)
   public void fetchCmmsFromFc() {
     String latestSuccessDate;
     String queryDate;
@@ -228,7 +230,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
-  @SchedulerLock(name = "cpLock", lockAtMostFor = PT10M, lockAtLeastFor = PT5M)
+  @SchedulerLock(name = "cpLock", lockAtMostForString = PT10M, lockAtLeastForString = PT5M)
   public void fetchCpsFromFc() {
     String latestSuccessDate;
     String queryDate;
@@ -256,7 +258,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.program.cron}", zone = TIME_ZONE_ID)
-  @SchedulerLock(name = "programLock", lockAtMostFor = PT10M, lockAtLeastFor = PT5M)
+  @SchedulerLock(name = "programLock", lockAtMostForString = PT10M, lockAtLeastForString = PT5M)
   public void fetchProgramsFromFcForScheduled() {
     String date = fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API);
     fetchProgramsFromFc(date);
@@ -280,7 +282,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.product.cron}", zone = TIME_ZONE_ID)
-  @SchedulerLock(name = "productLock", lockAtMostFor = PT10M, lockAtLeastFor = PT5M)
+  @SchedulerLock(name = "productLock", lockAtMostForString = PT10M, lockAtLeastForString = PT5M)
   public void fetchProductsFromFc() {
     String date = fcIntegrationResultService.getLatestSuccessDate(PRODUCT_API);
     fetchProductsFromFc(date);
@@ -303,7 +305,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.regimen.cron}", zone = TIME_ZONE_ID)
-  @SchedulerLock(name = "regimenLock", lockAtMostFor = PT10M, lockAtLeastFor = PT5M)
+  @SchedulerLock(name = "regimenLock", lockAtMostForString = PT10M, lockAtLeastForString = PT5M)
   public void fetchRegimenFromFcForScheduled() {
     String date = fcIntegrationResultService.getLatestSuccessDate(REGIMEN_API);
     fetchRegimenFromFc(date);
@@ -327,7 +329,8 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.facilitytype.cron}", zone = TIME_ZONE_ID)
-  @SchedulerLock(name = "facilityTypeLock", lockAtMostFor = PT10M, lockAtLeastFor = PT5M)
+  @SchedulerLock(name = "facilityTypeLock", lockAtMostForString = PT10M,
+      lockAtLeastForString = PT5M)
   public void fetchFacilityTypeFromFcForScheduled() {
     String date = fcIntegrationResultService.getLatestSuccessDate(FACILITY_TYPE_API);
     fetchFacilityTypeFromFc(date);

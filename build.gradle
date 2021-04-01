@@ -71,7 +71,8 @@ dependencies {
     compile 'org.apache.poi:poi-ooxml:3.13'
     compile 'com.amazonaws:aws-java-sdk-s3:1.11.627'
     compile 'org.owasp:security-logging-logback:1.1.6'
-    compile 'net.javacrumbs.shedlock:shedlock-spring:4.22.1'
+    compile 'net.javacrumbs.shedlock:shedlock-spring:4.2.0'
+    compile 'net.javacrumbs.shedlock:shedlock-provider-redis-spring:4.2.0'
 
     compileTestJava.dependsOn tasks.getByPath(':stockmanagement:testClasses')
     compileTestJava.dependsOn tasks.getByPath(':requisition:testClasses')
