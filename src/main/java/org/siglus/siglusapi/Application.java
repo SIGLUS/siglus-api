@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
@@ -78,6 +79,7 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @PropertySource("classpath:fulfillment-application.properties")
 @EnableAspectJAutoProxy
 @EnableScheduling
+@EnableSchedulerLock(defaultLockAtMostFor = "PT30S")
 @EnableRetry
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class Application {
