@@ -5,8 +5,8 @@ pipeline {
         timestamps ()
     }
     parameters {
-        string(name: 'DEPLOY_UAT', defaultValue: 'NO')
-        string(name: 'DEPLOY_PROD', defaultValue: 'NO')
+        string(name: 'DEPLOY_UAT', defaultValue: 'YES')
+        string(name: 'DEPLOY_PROD', defaultValue: 'YES')
     }
     environment {
         IMAGE_REPO = "siglusdevops/siglusapi"
@@ -75,7 +75,6 @@ pipeline {
                         timeout (time: 5, unit: "MINUTES") {
                             input message: "Do you want to proceed for UAT deployment?"
                         }
-                        env.DEPLOY_UAT = 'YES'
                     }
                     catch (error) {
                         if ("${error}".startsWith('org.jenkinsci.plugins.workflow.steps.FlowInterruptedException')) {
@@ -89,8 +88,8 @@ pipeline {
         stage('Deploy To UAT') {
             when {
                 allOf{
-                    expression{env.BRANCH_NAME = 'release'}
-                    expression{env.DEPLOY_UAT = 'YES'}
+                    branch 'release'
+                    environment name: 'DEPLOY_UAT', value: 'YES'
                 }
             }
             steps {
@@ -107,7 +106,6 @@ pipeline {
                         timeout (time: 5, unit: "MINUTES") {
                             input message: "Do you want to proceed for Production deployment?"
                         }
-                        env.DEPLOY_PROD = 'YES'
                     }
                     catch (error) {
                         if ("${error}".startsWith('org.jenkinsci.plugins.workflow.steps.FlowInterruptedException')) {
@@ -121,8 +119,8 @@ pipeline {
         stage('Deploy To Production') {
             when {
                 allOf{
-                    expression{env.BRANCH_NAME = 'release'}
-                    expression{env.DEPLOY_PROD = 'YES'}
+                    branch 'release'
+                    environment name: 'DEPLOY_PROD', value: 'YES'
                 }
             }
             steps {
