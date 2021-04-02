@@ -35,20 +35,26 @@ public class FcIntegrationTriggerControllerTest {
 
   @Test
   public void shouldFetchCmmsFromFc() {
+    // given
+    String date = "20200907";
+
     // when
-    fcIntegrationTriggerController.fetchCmmsFromFc();
+    fcIntegrationTriggerController.fetchCmmsFromFc(date);
 
     // then
-    verify(fcScheduleService).fetchCmmsFromFc();
+    verify(fcScheduleService).fetchCmmsFromFc(date);
   }
 
   @Test
   public void fetchCpsFromFc() {
+    // given
+    String date = "20200908";
+
     // when
-    fcIntegrationTriggerController.fetchCpsFromFc();
+    fcIntegrationTriggerController.fetchCpsFromFc(date);
 
     // then
-    verify(fcScheduleService).fetchCpsFromFc();
+    verify(fcScheduleService).fetchCpsFromFc(date);
   }
 
   @Test

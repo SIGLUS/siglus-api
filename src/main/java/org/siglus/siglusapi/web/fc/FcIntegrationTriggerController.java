@@ -32,23 +32,23 @@ public class FcIntegrationTriggerController {
   private FcScheduleService fcScheduleService;
 
   @PostMapping("/cmms")
-  public void fetchCmmsFromFc() {
-    fcScheduleService.fetchCmmsFromFc();
+  public void fetchCmmsFromFc(@RequestParam(DATE) String date) {
+    fcScheduleService.fetchCmmsFromFc(date);
   }
 
   @PostMapping("/cps")
-  public void fetchCpsFromFc() {
-    fcScheduleService.fetchCpsFromFc();
+  public void fetchCpsFromFc(@RequestParam(DATE) String date) {
+    fcScheduleService.fetchCpsFromFc(date);
   }
 
   @PostMapping("/receiptPlans")
-  public void processingReceiptPlans(@RequestParam(DATE) String startDate) {
-    fcScheduleService.fetchReceiptPlansFromFc(startDate);
+  public void processingReceiptPlans(@RequestParam(DATE) String date) {
+    fcScheduleService.fetchReceiptPlansFromFc(date);
   }
 
   @PostMapping("/fcPrograms")
-  public void fetchProgramsFromFc(@RequestParam(DATE) String fromDate) {
-    fcScheduleService.fetchProgramsFromFc(fromDate);
+  public void fetchProgramsFromFc(@RequestParam(DATE) String date) {
+    fcScheduleService.fetchProgramsFromFc(date);
   }
 
   @PostMapping("/fcProducts")
@@ -57,28 +57,28 @@ public class FcIntegrationTriggerController {
   }
 
   @PostMapping("/fcFacility")
-  public void fetchFacilityFromFc(@RequestParam(DATE) String beginDate) {
-    fcScheduleService.fetchFacilityFromFc(beginDate);
+  public void fetchFacilityFromFc(@RequestParam(DATE) String date) {
+    fcScheduleService.fetchFacilityFromFc(date);
   }
 
   @PostMapping("/fcFacilityType")
-  public void fetchFacilityTypeFromFc(@RequestParam(DATE) String beginDate) {
-    fcScheduleService.fetchFacilityTypeFromFc(beginDate);
+  public void fetchFacilityTypeFromFc(@RequestParam(DATE) String date) {
+    fcScheduleService.fetchFacilityTypeFromFc(date);
   }
 
   @PostMapping("/issueVouchers")
-  public void updateIssueVouchers(@RequestParam(DATE) String beginDate) {
-    fcScheduleService.fetchIssueVouchersFromFc(beginDate);
+  public void updateIssueVouchers(@RequestParam(DATE) String date) {
+    fcScheduleService.fetchIssueVouchersFromFc(date);
   }
 
   @PostMapping("/regimens")
-  public void fetchRegimensFromFc(@RequestParam(DATE) String fromDate) {
-    fcScheduleService.fetchRegimenFromFc(fromDate);
+  public void fetchRegimensFromFc(@RequestParam(DATE) String date) {
+    fcScheduleService.fetchRegimenFromFc(date);
   }
 
   @PostMapping("/fcGeographicZones")
-  public void fetchGeographicZonesFromFc(@RequestParam(DATE) String beginDate) {
-    fcScheduleService.fetchGeographicZonesFromFc(beginDate);
+  public void fetchGeographicZonesFromFc(@RequestParam(DATE) String date) {
+    fcScheduleService.fetchGeographicZonesFromFc(date);
   }
 
 }

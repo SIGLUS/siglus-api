@@ -22,9 +22,6 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import net.javacrumbs.shedlock.core.LockProvider;
-import net.javacrumbs.shedlock.provider.redis.spring.RedisLockProvider;
-import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
@@ -59,7 +56,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.retry.annotation.EnableRetry;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -82,7 +78,6 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @PropertySource("classpath:fulfillment-application.properties")
 @EnableAspectJAutoProxy
 @EnableScheduling
-@EnableSchedulerLock(defaultLockAtMostFor = "PT30S")
 @EnableRetry
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class Application {
@@ -312,11 +307,6 @@ public class Application {
     requestFactory.setConnectTimeout(60000);
     requestFactory.setReadTimeout(60000);
     return new RestTemplate(requestFactory);
-  }
-
-  @Bean
-  public LockProvider lockProvider(StringRedisTemplate redisTemplate) {
-    return new RedisLockProvider(redisTemplate.getConnectionFactory());
   }
 
 }

@@ -149,7 +149,7 @@ def deploy(app_env) {
                 if [ "${APP_ENV}" = "prod" ]; then
                     docker-machine ls
                     eval $(docker-machine env manager)
-                    docker service update --image ${IMAGE_REPO}:${IMAGE_TAG} siglus_${SERVICE_NAME}
+                    docker service update --force --image ${IMAGE_REPO}:${IMAGE_TAG} siglus_${SERVICE_NAME}
                 else
                     docker-compose -H ${DOCKER_HOST} -f docker-compose.${APP_ENV}.yml -p siglus-ref-distro up --no-deps --force-recreate -d ${SERVICE_NAME}
                 fi
