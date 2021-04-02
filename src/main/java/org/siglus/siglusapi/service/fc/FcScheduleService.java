@@ -38,6 +38,7 @@ import org.siglus.siglusapi.service.client.SiglusIssueVoucherService;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,8 @@ import org.springframework.stereotype.Service;
 public class FcScheduleService {
 
   private static final String TIME_ZONE_ID = "${time.zoneId}";
+  private static final String SYNCHRONIZING = "SYNCHRONIZING";
+  private static final int DELAY = 1000;
 
   @Value("${fc.domain}")
   private String domain;
@@ -96,14 +99,29 @@ public class FcScheduleService {
   @Autowired
   private FcFacilityService facilityService;
 
+  @Autowired
+  private StringRedisTemplate redisTemplate;
+
 
   @Scheduled(cron = "${fc.facility.cron}", zone = TIME_ZONE_ID)
-  public void fetchFacility() {
-    String date = fcIntegrationResultService.getLatestSuccessDate(FACILITY_API);
-    fetchFacilityFromFc(date);
+  public void syncFacilityFromFc() {
+    try {
+      String key = "syncFacilityFromFc";
+      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
+        String date = fcIntegrationResultService.getLatestSuccessDate(FACILITY_API);
+        syncFacilityFromFc(date);
+        Thread.sleep(DELAY);
+        redisTemplate.delete(key);
+      } else {
+        log.info("syncFacilityFromFc is synchronizing by another thread...");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(key);
+    }
   }
 
-  public void fetchFacilityFromFc(String date) {
+  public void syncFacilityFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(FACILITY_API, date);
     Boolean finalSuccess = facilityService.processFacility(
@@ -121,12 +139,24 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.geographiczone.cron}", zone = TIME_ZONE_ID)
-  public void fetchGeographicZones() {
-    String date = fcIntegrationResultService.getLatestSuccessDate(GEOGRAPHIC_ZONE_API);
-    fetchGeographicZonesFromFc(date);
+  public void syncGeographicZoneFromFc() {
+    try {
+      String key = "syncGeographicZoneFromFc";
+      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
+        String date = fcIntegrationResultService.getLatestSuccessDate(GEOGRAPHIC_ZONE_API);
+        syncGeographicZoneFromFc(date);
+        Thread.sleep(DELAY);
+        redisTemplate.delete(key);
+      } else {
+        log.info("syncGeographicZoneFromFc is synchronizing by another thread...");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(key);
+    }
   }
 
-  public void fetchGeographicZonesFromFc(String date) {
+  public void syncGeographicZoneFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(GEOGRAPHIC_ZONE_API, date);
     Boolean finalSuccess = fcGeographicZoneService.processGeographicZones(
@@ -144,12 +174,24 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
-  public void fetchReceiptPlan() {
-    String date = fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API);
-    siglusReceiptPlanService.processingReceiptPlans(date);
+  public void syncReceiptPlanFromFc() {
+    try {
+      String key = "syncReceiptPlanFromFc";
+      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
+        String date = fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API);
+        siglusReceiptPlanService.processingReceiptPlans(date);
+        Thread.sleep(DELAY);
+        redisTemplate.delete(key);
+      } else {
+        log.info("syncReceiptPlanFromFc is synchronizing by another thread...");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(key);
+    }
   }
 
-  public void fetchReceiptPlansFromFc(String date) {
+  public void syncReceiptPlanFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(RECEIPT_PLAN_API, date);
     Boolean finalSuccess = fcReceiptPlanService.processReceiptPlans(
@@ -167,12 +209,24 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = TIME_ZONE_ID)
-  public void fetchIssueVouchersFromFc() {
-    String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
-    issueVoucherService.updateIssueVourch(date);
+  public void syncIssueVoucherFromFc() {
+    try {
+      String key = "syncIssueVoucherFromFc";
+      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
+        String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
+        issueVoucherService.updateIssueVourch(date);
+        Thread.sleep(DELAY);
+        redisTemplate.delete(key);
+      } else {
+        log.info("syncIssueVoucherFromFc is synchronizing by another thread...");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(key);
+    }
   }
 
-  public void fetchIssueVouchersFromFc(String date) {
+  public void syncIssueVoucherFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(ISSUE_VOUCHER_API, date);
     Boolean finalSuccess = fcIssueVoucherService.processIssueVouchers(
@@ -192,13 +246,25 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.cmm.cron}", zone = TIME_ZONE_ID)
-  public void fetchCmmsFromFc() {
-    String date = getStartDateForPeriodCall(
-        fcIntegrationResultService.getLatestSuccessDate(CMM_API));
-    fetchCmmsFromFc(date);
+  public void syncCmmFromFc() {
+    try {
+      String key = "syncCmmFromFc";
+      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
+        String date = getStartDateForPeriodCall(
+            fcIntegrationResultService.getLatestSuccessDate(CMM_API));
+        syncCmmFromFc(date);
+        Thread.sleep(DELAY);
+        redisTemplate.delete(key);
+      } else {
+        log.info("syncCmmFromFc is synchronizing by another thread...");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(key);
+    }
   }
 
-  public void fetchCmmsFromFc(String date) {
+  public void syncCmmFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(CMM_API, date);
     boolean finalSuccess = fcIntegrationCmmCpService.processCmms(callFcService.getCmms(), date);
@@ -215,13 +281,25 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
-  public void fetchCpsFromFc() {
-    String date = getStartDateForPeriodCall(
-        fcIntegrationResultService.getLatestSuccessDate(CP_API));
-    fetchCpsFromFc(date);
+  public void syncCpFromFc() {
+    try {
+      String key = "syncCpFromFc";
+      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
+        String date = getStartDateForPeriodCall(
+            fcIntegrationResultService.getLatestSuccessDate(CP_API));
+        syncCpFromFc(date);
+        Thread.sleep(DELAY);
+        redisTemplate.delete(key);
+      } else {
+        log.info("syncCpFromFc is synchronizing by another thread...");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(key);
+    }
   }
 
-  public void fetchCpsFromFc(String date) {
+  public void syncCpFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(CP_API, date);
     boolean finalSuccess = fcIntegrationCmmCpService.processCps(callFcService.getCps(), date);
@@ -238,12 +316,24 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.program.cron}", zone = TIME_ZONE_ID)
-  public void fetchProgramsFromFcForScheduled() {
-    String date = fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API);
-    fetchProgramsFromFc(date);
+  public void syncProgramFromFc() {
+    try {
+      String key = "syncProgramFromFc";
+      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
+        String date = fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API);
+        syncProgramFromFc(date);
+        Thread.sleep(DELAY);
+        redisTemplate.delete(key);
+      } else {
+        log.info("syncProgramFromFc is synchronizing by another thread...");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(key);
+    }
   }
 
-  public void fetchProgramsFromFc(String date) {
+  public void syncProgramFromFc(String date) {
     final long startTime = currentTimeMillis();
     log.info("date: {}", date);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(PROGRAM_API, date);
@@ -261,12 +351,24 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.product.cron}", zone = TIME_ZONE_ID)
-  public void fetchProductsFromFc() {
-    String date = fcIntegrationResultService.getLatestSuccessDate(PRODUCT_API);
-    fetchProductsFromFc(date);
+  public void syncProductFromFc() {
+    try {
+      String key = "syncProductFromFc";
+      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
+        String date = fcIntegrationResultService.getLatestSuccessDate(PRODUCT_API);
+        syncProductFromFc(date);
+        Thread.sleep(DELAY);
+        redisTemplate.delete(key);
+      } else {
+        log.info("syncProductFromFc is synchronizing by another thread...");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(key);
+    }
   }
 
-  public void fetchProductsFromFc(String date) {
+  public void syncProductFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(PRODUCT_API, date);
     boolean finalSuccess = fcProductService.processProductData(callFcService.getProducts());
@@ -283,12 +385,24 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.regimen.cron}", zone = TIME_ZONE_ID)
-  public void fetchRegimenFromFcForScheduled() {
-    String date = fcIntegrationResultService.getLatestSuccessDate(REGIMEN_API);
-    fetchRegimenFromFc(date);
+  public void syncRegimenFromFc() {
+    try {
+      String key = "syncRegimenFromFc";
+      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
+        String date = fcIntegrationResultService.getLatestSuccessDate(REGIMEN_API);
+        syncRegimenFromFc(date);
+        Thread.sleep(DELAY);
+        redisTemplate.delete(key);
+      } else {
+        log.info("syncRegimenFromFc is synchronizing by another thread...");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(key);
+    }
   }
 
-  public void fetchRegimenFromFc(String date) {
+  public void syncRegimenFromFc(String date) {
     final long startTime = currentTimeMillis();
     log.info("date: {}", date);
     Integer callFcCostTimeInSeconds = fetchDataFromFc(REGIMEN_API, date);
@@ -306,12 +420,24 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.facilitytype.cron}", zone = TIME_ZONE_ID)
-  public void fetchFacilityTypeFromFcForScheduled() {
-    String date = fcIntegrationResultService.getLatestSuccessDate(FACILITY_TYPE_API);
-    fetchFacilityTypeFromFc(date);
+  public void syncFacilityTypeFromFc() {
+    try {
+      String key = "syncFacilityTypeFromFc";
+      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
+        String date = fcIntegrationResultService.getLatestSuccessDate(FACILITY_TYPE_API);
+        syncFacilityTypeFromFc(date);
+        Thread.sleep(DELAY);
+        redisTemplate.delete(key);
+      } else {
+        log.info("syncFacilityTypeFromFc is synchronizing by another thread...");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(key);
+    }
   }
 
-  public void fetchFacilityTypeFromFc(String date) {
+  public void syncFacilityTypeFromFc(String date) {
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(FACILITY_TYPE_API, date);
     boolean finalSuccess = facilityTypeService.processFacilityTypes(

@@ -39,10 +39,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200907";
 
     // when
-    fcIntegrationTriggerController.fetchCmmsFromFc(date);
+    fcIntegrationTriggerController.syncCmmFromFc(date);
 
     // then
-    verify(fcScheduleService).fetchCmmsFromFc(date);
+    verify(fcScheduleService).syncCmmFromFc(date);
   }
 
   @Test
@@ -51,10 +51,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200908";
 
     // when
-    fcIntegrationTriggerController.fetchCpsFromFc(date);
+    fcIntegrationTriggerController.syncCpFromFc(date);
 
     // then
-    verify(fcScheduleService).fetchCpsFromFc(date);
+    verify(fcScheduleService).syncCpFromFc(date);
   }
 
   @Test
@@ -63,10 +63,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200910";
 
     // when
-    fcIntegrationTriggerController.fetchProductsFromFc(date);
+    fcIntegrationTriggerController.syncProductFromFc(date);
 
     // then
-    verify(fcScheduleService).fetchProductsFromFc(date);
+    verify(fcScheduleService).syncProductFromFc(date);
   }
 
   @Test
@@ -75,10 +75,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200910";
 
     // when
-    fcIntegrationTriggerController.processingReceiptPlans(date);
+    fcIntegrationTriggerController.syncReceiptPlanFromFc(date);
 
     // then
-    verify(fcScheduleService).fetchReceiptPlansFromFc(date);
+    verify(fcScheduleService).syncReceiptPlanFromFc(date);
   }
 
   @Test
@@ -87,10 +87,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200101";
 
     // when
-    fcIntegrationTriggerController.fetchProgramsFromFc(date);
+    fcIntegrationTriggerController.syncProgramFromFc(date);
 
     // then
-    verify(fcScheduleService).fetchProgramsFromFc(date);
+    verify(fcScheduleService).syncProgramFromFc(date);
   }
 
   @Test
@@ -99,10 +99,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200101";
 
     // when
-    fcIntegrationTriggerController.fetchRegimensFromFc(date);
+    fcIntegrationTriggerController.syncRegimenFromFc(date);
 
     // then
-    verify(fcScheduleService).fetchRegimenFromFc(date);
+    verify(fcScheduleService).syncRegimenFromFc(date);
   }
 
 }
