@@ -75,6 +75,7 @@ public class S3FileHandler {
       throw new ServerException(e, SimamMessageKeys.ERROR_FILE_NOT_FOUND, fileName);
     }
     String keyName = bucketFolder + FOLDER_SUFFIX + fileName;
+    log.debug("bucketName: {}, keyName: {}", bucketName, keyName);
     s3Client.putObject(bucketName, keyName, file);
     try {
       Files.delete(Paths.get(filePath));
