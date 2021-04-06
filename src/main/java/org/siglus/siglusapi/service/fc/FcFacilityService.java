@@ -20,6 +20,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -143,13 +144,20 @@ public class FcFacilityService {
 
   private Set<String> getFacilitySupportedProgramCode(FcFacilityDto fcFacilityDto,
       Map<String, ProgramRealProgram> codeToRealProgramMap) {
-    return fcFacilityDto.getAreas()
+    Set<String> codes = fcFacilityDto.getAreas()
         .stream().map(fcAreaDto -> {
           String code = fcAreaDto.getAreaCode();
+          if (code.equalsIgnoreCase("ML")) {
+            return code;
+          }
           return codeToRealProgramMap.containsKey(code) ? codeToRealProgramMap.get(code)
               .getProgramCode() : null;
         }).filter(Objects::nonNull)
         .collect(Collectors.toSet());
+    if (codes.contains("ML") && !codes.contains("VC")) {
+      codes.add("VC");
+    }
+    return codes;
   }
 
   private List<SupportedProgramDto> getSupportedProgramDtos(FcFacilityDto fcFacilityDto,
@@ -171,6 +179,7 @@ public class FcFacilityService {
     programDto.setProgramActive(originProgramDto.getActive());
     programDto.setSupportActive(true);
     programDto.setSupportLocallyFulfilled(true);
+    programDto.setSupportStartDate(LocalDate.of(2019, 9, 24));
     return programDto;
   }
 
