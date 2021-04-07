@@ -56,7 +56,7 @@ public class FcScheduleService {
   @Value("${fc.domain}")
   private String fcDomain;
 
-  @Value("${fc.redisKey}")
+  @Value("${fc.key}")
   private String fcKey;
 
   @Autowired

@@ -133,7 +133,7 @@ pipeline {
 
 def deploy(app_env) {
     withCredentials([file(credentialsId: "settings.${app_env}.env", variable: 'SETTING_ENV')]) {
-        withEnv(["APP_ENV=${app_env}", "CONSUL_HOST=${app_env}.siglus.us.internal:8500", "DOCKER_HOST=tcp://${app_env}.siglus.us.internal:2376"]) {
+        withEnv(["APP_ENV=${app_env}", "CONSUL_HOST=${app_env}.siglus.us.internal:8500"]) {
             sh '''
                 IMAGE_TAG=${BRANCH_NAME}-$(git rev-parse HEAD)
                 rm -f docker-compose.${APP_ENV}.yml .env settings.${APP_ENV}.env
@@ -147,11 +147,13 @@ def deploy(app_env) {
 
                 echo "deploy ${SERVICE_NAME} on ${APP_ENV}"
                 if [ "${APP_ENV}" = "prod" ]; then
-                    docker-machine ls
                     eval $(docker-machine env manager)
+                    docker-machine ls
                     docker service update --force --image ${IMAGE_REPO}:${IMAGE_TAG} siglus_${SERVICE_NAME}
                 else
-                    docker-compose -H ${DOCKER_HOST} -f docker-compose.${APP_ENV}.yml -p siglus-ref-distro up --no-deps --force-recreate -d ${SERVICE_NAME}
+                    eval $(docker-machine env ${APP_ENV})
+                    docker-machine ls
+                    docker-compose -f docker-compose.${APP_ENV}.yml -p siglus-ref-distro up --no-deps --force-recreate -d ${SERVICE_NAME}
                 fi
             '''
         }
