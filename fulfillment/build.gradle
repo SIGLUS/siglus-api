@@ -115,6 +115,10 @@ jacocoTestReport {
     additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
 }
 
+sonarqube {
+    skipProject = true
+}
+
 assemble {
     dependsOn jacocoTestReport
 }

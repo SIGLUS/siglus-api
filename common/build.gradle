@@ -90,6 +90,10 @@ jacocoTestReport {
     additionalSourceDirs = files(sourceSets.main.allJava.srcDirs)
 }
 
+sonarqube {
+    skipProject = true
+}
+
 checkstyle {
     toolVersion = "8.12"
 }

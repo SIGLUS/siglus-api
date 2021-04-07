@@ -25,7 +25,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONARQUBE_TOKEN')]) {
                     sh '''
                         if [ "$GIT_BRANCH" = "master" ]; then
-                            ./gradlew sonarqube -Dsonar.projectKey=siglus-api -Dsonar.host.url=http://10.0.0.91:9000 -Dsonar.login=$SONARQUBE_TOKEN
+                            ./gradlew sonarqube -x test -Dsonar.projectKey=siglus-api -Dsonar.host.url=http://10.0.0.91:9000 -Dsonar.login=$SONARQUBE_TOKEN
                         fi
                     '''
                 }
