@@ -219,7 +219,8 @@ public class SiglusStockEventsService {
     List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
     if (CollectionUtils.isNotEmpty(existedLots)) {
       LotDto existedLot = existedLots.get(0);
-      if (updateExpirationDate && !existedLot.getExpirationDate().isEqual(expirationDate)) {
+      if (Boolean.TRUE.equals(updateExpirationDate)
+          && !existedLot.getExpirationDate().isEqual(expirationDate)) {
         log.info("lot existed date is different: {}", lotCode);
       }
       return existedLot;

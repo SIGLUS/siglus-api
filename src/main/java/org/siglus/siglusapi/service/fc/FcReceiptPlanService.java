@@ -146,7 +146,7 @@ public class FcReceiptPlanService {
             requisitionDto
                 .getLineItems()
                 .stream()
-                .map(lineItem -> (RequisitionLineItemV2Dto)lineItem)
+                .map(RequisitionLineItemV2Dto.class::cast)
                 .collect(Collectors.toList());
 
         Map<String, OrderableDto> approveProductDtos = getApprovedProductsMap(userDto,

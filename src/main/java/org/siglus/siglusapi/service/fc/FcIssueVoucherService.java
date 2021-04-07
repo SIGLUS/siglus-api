@@ -96,7 +96,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
 @Service
 @Slf4j
@@ -611,7 +610,7 @@ public class FcIssueVoucherService {
 
   private List<StockCardSummaryV2Dto> searchStockCardSummaries(FacilityDto supplyFacility,
       RequisitionV2Dto requisitionV2Dto, List<UUID> productIds) {
-    MultiValueMap<String, String> parameters = new LinkedMultiValueMap();
+    LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
     parameters.set(PROGRAM_ID, requisitionV2Dto.getProgram().getId().toString());
     parameters.set(FACILITY_ID, supplyFacility.getId().toString());
     parameters.set(RIGHT_NAME, STOCK_CARDS_VIEW);

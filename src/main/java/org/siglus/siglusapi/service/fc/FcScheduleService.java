@@ -54,10 +54,10 @@ public class FcScheduleService {
   private static final int TIMEOUT = 2;
 
   @Value("${fc.domain}")
-  private String domain;
+  private String fcDomain;
 
-  @Value("${fc.key}")
-  private String key;
+  @Value("${fc.redisKey}")
+  private String fcKey;
 
   @Autowired
   private CallFcService callFcService;
@@ -107,20 +107,20 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.facility.cron}", zone = TIME_ZONE_ID)
   public void syncFacilityFromFc() {
+    String redisKey = "syncFacilityFromFc";
     try {
-      String key = "syncFacilityFromFc";
-      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
-        redisTemplate.opsForValue().set(key, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         String date = fcIntegrationResultService.getLatestSuccessDate(FACILITY_API);
         syncFacilityFromFc(date);
         Thread.sleep(DELAY);
-        redisTemplate.delete(key);
+        redisTemplate.delete(redisKey);
       } else {
         log.info("syncFacilityFromFc is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
-      redisTemplate.delete(key);
+      redisTemplate.delete(redisKey);
     }
   }
 
@@ -144,20 +144,20 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.geographiczone.cron}", zone = TIME_ZONE_ID)
   public void syncGeographicZoneFromFc() {
+    String redisKey = "syncGeographicZoneFromFc";
     try {
-      String key = "syncGeographicZoneFromFc";
-      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
-        redisTemplate.opsForValue().set(key, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         String date = fcIntegrationResultService.getLatestSuccessDate(GEOGRAPHIC_ZONE_API);
         syncGeographicZoneFromFc(date);
         Thread.sleep(DELAY);
-        redisTemplate.delete(key);
+        redisTemplate.delete(redisKey);
       } else {
         log.info("syncGeographicZoneFromFc is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
-      redisTemplate.delete(key);
+      redisTemplate.delete(redisKey);
     }
   }
 
@@ -181,20 +181,20 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   public void syncReceiptPlanFromFc() {
+    String redisKey = "syncReceiptPlanFromFc";
     try {
-      String key = "syncReceiptPlanFromFc";
-      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
-        redisTemplate.opsForValue().set(key, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         String date = fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API);
         siglusReceiptPlanService.processingReceiptPlans(date);
         Thread.sleep(DELAY);
-        redisTemplate.delete(key);
+        redisTemplate.delete(redisKey);
       } else {
         log.info("syncReceiptPlanFromFc is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
-      redisTemplate.delete(key);
+      redisTemplate.delete(redisKey);
     }
   }
 
@@ -218,20 +218,20 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = TIME_ZONE_ID)
   public void syncIssueVoucherFromFc() {
+    String redisKey = "syncIssueVoucherFromFc";
     try {
-      String key = "syncIssueVoucherFromFc";
-      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
-        redisTemplate.opsForValue().set(key, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
         issueVoucherService.updateIssueVourch(date);
         Thread.sleep(DELAY);
-        redisTemplate.delete(key);
+        redisTemplate.delete(redisKey);
       } else {
         log.info("syncIssueVoucherFromFc is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
-      redisTemplate.delete(key);
+      redisTemplate.delete(redisKey);
     }
   }
 
@@ -257,20 +257,20 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.cmm.cron}", zone = TIME_ZONE_ID)
   public void syncCmmFromFc() {
+    String redisKey = "syncCmmFromFc";
     try {
-      String key = "syncCmmFromFc";
-      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
-        redisTemplate.opsForValue().set(key, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         syncCmmFromFc(
             getStartDateForPeriodCall(fcIntegrationResultService.getLatestSuccessDate(CMM_API)));
         Thread.sleep(DELAY);
-        redisTemplate.delete(key);
+        redisTemplate.delete(redisKey);
       } else {
         log.info("syncCmmFromFc is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
-      redisTemplate.delete(key);
+      redisTemplate.delete(redisKey);
     }
   }
 
@@ -293,20 +293,20 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
   public void syncCpFromFc() {
+    String redisKey = "syncCpFromFc";
     try {
-      String key = "syncCpFromFc";
-      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
-        redisTemplate.opsForValue().set(key, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         syncCpFromFc(
             getStartDateForPeriodCall(fcIntegrationResultService.getLatestSuccessDate(CP_API)));
         Thread.sleep(DELAY);
-        redisTemplate.delete(key);
+        redisTemplate.delete(redisKey);
       } else {
         log.info("syncCpFromFc is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
-      redisTemplate.delete(key);
+      redisTemplate.delete(redisKey);
     }
   }
 
@@ -329,19 +329,19 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.program.cron}", zone = TIME_ZONE_ID)
   public void syncProgramFromFc() {
+    String redisKey = "syncProgramFromFc";
     try {
-      String key = "syncProgramFromFc";
-      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
-        redisTemplate.opsForValue().set(key, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         syncProgramFromFc(fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API));
         Thread.sleep(DELAY);
-        redisTemplate.delete(key);
+        redisTemplate.delete(redisKey);
       } else {
         log.info("syncProgramFromFc is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
-      redisTemplate.delete(key);
+      redisTemplate.delete(redisKey);
     }
   }
 
@@ -364,19 +364,19 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.product.cron}", zone = TIME_ZONE_ID)
   public void syncProductFromFc() {
+    String redisKey = "syncProductFromFc";
     try {
-      String key = "syncProductFromFc";
-      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
-        redisTemplate.opsForValue().set(key, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         syncProductFromFc(fcIntegrationResultService.getLatestSuccessDate(PRODUCT_API));
         Thread.sleep(DELAY);
-        redisTemplate.delete(key);
+        redisTemplate.delete(redisKey);
       } else {
         log.info("syncProductFromFc is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
-      redisTemplate.delete(key);
+      redisTemplate.delete(redisKey);
     }
   }
 
@@ -399,19 +399,19 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.regimen.cron}", zone = TIME_ZONE_ID)
   public void syncRegimenFromFc() {
+    String redisKey = "syncRegimenFromFc";
     try {
-      String key = "syncRegimenFromFc";
-      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
-        redisTemplate.opsForValue().set(key, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         syncRegimenFromFc(fcIntegrationResultService.getLatestSuccessDate(REGIMEN_API));
         Thread.sleep(DELAY);
-        redisTemplate.delete(key);
+        redisTemplate.delete(redisKey);
       } else {
         log.info("syncRegimenFromFc is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
-      redisTemplate.delete(key);
+      redisTemplate.delete(redisKey);
     }
   }
 
@@ -434,19 +434,19 @@ public class FcScheduleService {
 
   @Scheduled(cron = "${fc.facilitytype.cron}", zone = TIME_ZONE_ID)
   public void syncFacilityTypeFromFc() {
+    String redisKey = "syncFacilityTypeFromFc";
     try {
-      String key = "syncFacilityTypeFromFc";
-      if (redisTemplate.opsForValue().setIfAbsent(key, SYNCHRONIZING)) {
-        redisTemplate.opsForValue().set(key, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         syncFacilityTypeFromFc(fcIntegrationResultService.getLatestSuccessDate(FACILITY_TYPE_API));
         Thread.sleep(DELAY);
-        redisTemplate.delete(key);
+        redisTemplate.delete(redisKey);
       } else {
         log.info("syncFacilityTypeFromFc is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
-      redisTemplate.delete(key);
+      redisTemplate.delete(redisKey);
     }
   }
 
@@ -486,7 +486,7 @@ public class FcScheduleService {
   }
 
   private String getUrl(String path, int page, String date) {
-    String url = domain + path + "?key=" + key + "&psize=20&page=" + page + "&";
+    String url = fcDomain + path + "?key=" + fcKey + "&psize=20&page=" + page + "&";
     if (date.contains("-")) {
       url += "period=" + date;
     } else {

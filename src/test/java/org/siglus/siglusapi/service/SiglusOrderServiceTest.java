@@ -226,8 +226,8 @@ public class SiglusOrderServiceTest {
 
     // then
     assertEquals(1, availableProducts.size());
-    assertTrue(filteredProduct.getId().equals(orderableId1));
-    assertTrue(filteredProduct.getVersionNumber().equals(1L));
+    assertEquals(filteredProduct.getId(), orderableId1);
+    assertEquals(1L, (long) filteredProduct.getVersionNumber());
     response.getOrder().getOrderLineItems().forEach(lineItem -> assertTrue(lineItem.isSkipped()));
     assertEquals("requisitionNumber-1", response.getOrder().getRequisitionNumber());
   }
@@ -273,8 +273,8 @@ public class SiglusOrderServiceTest {
 
     // then
     assertEquals(1, availableProducts.size());
-    assertTrue(filteredProduct.getId().equals(orderableId1));
-    assertTrue(filteredProduct.getVersionNumber().equals(1L));
+    assertEquals(filteredProduct.getId(), orderableId1);
+    assertEquals(1L, (long) filteredProduct.getVersionNumber());
     response.getOrder().getOrderLineItems().forEach(lineItem -> assertTrue(lineItem.isSkipped()));
     assertEquals("requisitionNumber-2", response.getOrder().getRequisitionNumber());
   }
@@ -339,7 +339,7 @@ public class SiglusOrderServiceTest {
     // then
     assertEquals(1, response.size());
     assertTrue(response.contains(lineItemId));
-    assertTrue(draftDto.getOrder().getOrderLineItems().get(0).getId().equals(lineItemId));
+    assertEquals(draftDto.getOrder().getOrderLineItems().get(0).getId(), lineItemId);
   }
 
   @Test

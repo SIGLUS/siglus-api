@@ -20,7 +20,6 @@ import static com.google.common.collect.Maps.newHashMap;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -151,9 +150,8 @@ public class RequisitionSimamEmailServiceTest {
         RequisitionSimamEmailService.TEMPLATE_IMPORT_REGIMEN_XLSX_EMPTY,
         ExcelHandler.PathType.FILE);
     verify(singleListSheetExcelHandler, times(0)).createDataRows(any(), any());
-    verify(singleListSheetExcelHandler, times(1))
-        .createXssFile(eq(workBook), eq(requisitionFileName));
-    verify(singleListSheetExcelHandler, times(1)).createXssFile(eq(workBook), eq(regimenFileName));
+    verify(singleListSheetExcelHandler, times(1)).createXssFile(workBook, requisitionFileName);
+    verify(singleListSheetExcelHandler, times(1)).createXssFile(workBook, regimenFileName);
   }
 
   @Test
@@ -213,7 +211,7 @@ public class RequisitionSimamEmailServiceTest {
             {RequisitionSimamEmailService.EXCEL_TOTAL, "20"}
         });
     verify(singleListSheetExcelHandler, times(1))
-        .createDataRows(eq(workBook.getSheetAt(0)), eq(newArrayList(expectedDataColumns)));
+        .createDataRows(workBook.getSheetAt(0), newArrayList(expectedDataColumns));
   }
 
   @Test
@@ -254,7 +252,7 @@ public class RequisitionSimamEmailServiceTest {
             {RequisitionSimamEmailService.EXCEL_TOTAL, "30"}
         });
     verify(singleListSheetExcelHandler, times(1))
-        .createDataRows(eq(workBook.getSheetAt(0)), eq(newArrayList(expectedDataColumns)));
+        .createDataRows(workBook.getSheetAt(0), newArrayList(expectedDataColumns));
   }
 
   @Test
@@ -310,6 +308,6 @@ public class RequisitionSimamEmailServiceTest {
             {RequisitionSimamEmailService.EXCEL_TOTAL, "10"}
         });
     verify(singleListSheetExcelHandler, times(1))
-        .createDataRows(eq(workBook.getSheetAt(0)), eq(newArrayList(expectedDataColumns)));
+        .createDataRows(workBook.getSheetAt(0), newArrayList(expectedDataColumns));
   }
 }

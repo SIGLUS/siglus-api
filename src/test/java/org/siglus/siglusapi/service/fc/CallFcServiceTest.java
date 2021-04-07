@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
@@ -96,7 +95,7 @@ public class CallFcServiceTest {
     callFcService.fetchData(URL, ISSUE_VOUCHER_API);
 
     // then
-    verify(remoteRestTemplate).getForEntity(eq(URL), eq(IssueVoucherDto[].class));
+    verify(remoteRestTemplate).getForEntity(URL, IssueVoucherDto[].class);
     Assert.assertEquals(1, callFcService.getIssueVouchers().size());
   }
 
@@ -113,7 +112,7 @@ public class CallFcServiceTest {
     callFcService.fetchData(URL, RECEIPT_PLAN_API);
 
     // then
-    verify(remoteRestTemplate).getForEntity(eq(URL), eq(ReceiptPlanDto[].class));
+    verify(remoteRestTemplate).getForEntity(URL, ReceiptPlanDto[].class);
     Assert.assertEquals(1, callFcService.getReceiptPlans().size());
   }
 
@@ -130,7 +129,7 @@ public class CallFcServiceTest {
     callFcService.fetchData(URL, CMM_API);
 
     // then
-    verify(remoteRestTemplate).getForEntity(eq(URL), eq(CmmDto[].class));
+    verify(remoteRestTemplate).getForEntity(URL, CmmDto[].class);
     Assert.assertEquals(1, callFcService.getCmms().size());
   }
 
@@ -147,7 +146,7 @@ public class CallFcServiceTest {
     callFcService.fetchData(URL, CP_API);
 
     // then
-    verify(remoteRestTemplate).getForEntity(eq(URL), eq(CpDto[].class));
+    verify(remoteRestTemplate).getForEntity(URL, CpDto[].class);
     Assert.assertEquals(1, callFcService.getCps().size());
   }
 
@@ -164,7 +163,7 @@ public class CallFcServiceTest {
     callFcService.fetchData(URL, PROGRAM_API);
 
     // then
-    verify(remoteRestTemplate).getForEntity(eq(URL), eq(ProgramDto[].class));
+    verify(remoteRestTemplate).getForEntity(URL, ProgramDto[].class);
     Assert.assertEquals(1, callFcService.getPrograms().size());
   }
 
@@ -181,7 +180,7 @@ public class CallFcServiceTest {
     callFcService.fetchData(URL, PRODUCT_API);
 
     // then
-    verify(remoteRestTemplate).getForEntity(eq(URL), eq(ProductInfoDto[].class));
+    verify(remoteRestTemplate).getForEntity(URL, ProductInfoDto[].class);
     Assert.assertEquals(1, callFcService.getProducts().size());
   }
 
@@ -198,7 +197,7 @@ public class CallFcServiceTest {
     callFcService.fetchData(URL, REGIMEN_API);
 
     // then
-    verify(remoteRestTemplate).getForEntity(eq(URL), eq(RegimenDto[].class));
+    verify(remoteRestTemplate).getForEntity(URL, RegimenDto[].class);
     Assert.assertEquals(1, callFcService.getRegimens().size());
   }
 
@@ -215,7 +214,7 @@ public class CallFcServiceTest {
     callFcService.fetchData(URL, ISSUE_VOUCHER_API);
 
     // then
-    verify(remoteRestTemplate).getForEntity(eq(URL), eq(IssueVoucherDto[].class));
+    verify(remoteRestTemplate).getForEntity(URL, IssueVoucherDto[].class);
     Assert.assertEquals(0, callFcService.getIssueVouchers().size());
   }
 
@@ -231,7 +230,7 @@ public class CallFcServiceTest {
     callFcService.fetchData(URL, ISSUE_VOUCHER_API);
 
     // then
-    verify(remoteRestTemplate).getForEntity(eq(URL), eq(IssueVoucherDto[].class));
+    verify(remoteRestTemplate).getForEntity(URL, IssueVoucherDto[].class);
     Assert.assertEquals(0, callFcService.getIssueVouchers().size());
     Assert.assertEquals(0, callFcService.getReceiptPlans().size());
     Assert.assertEquals(0, callFcService.getCmms().size());

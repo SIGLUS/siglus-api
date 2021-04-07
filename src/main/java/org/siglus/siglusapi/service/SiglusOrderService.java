@@ -442,7 +442,7 @@ public class SiglusOrderService {
 
   private Set<UUID> getEmergencyFilteredProducts(Requisition requisition) {
     Set<UUID> emergencyOrderableIds = new HashSet<>();
-    if (requisition.getEmergency()) {
+    if (Boolean.TRUE.equals(requisition.getEmergency())) {
       List<RequisitionV2Dto> previousRequisitions = siglusRequisitionService
           .getPreviousEmergencyRequisition(requisition.getId(),
               requisition.getProcessingPeriodId(), requisition.getFacilityId());

@@ -852,7 +852,8 @@ public class SiglusRequisitionService {
     Map<UUID, List<ApprovedProductDto>> groupApprovedProduct =
         approvedProducts.stream()
             .collect(groupingBy(approvedProduct -> approvedProduct.getProgram().getId()));
-    if (requisitionTemplate.isPopulateStockOnHandFromStockCards() && requisition.getEmergency()) {
+    if (requisitionTemplate.isPopulateStockOnHandFromStockCards()
+        && Boolean.TRUE.equals(requisition.getEmergency())) {
       stockCardRangeSummaryDtos = getStockCardRangeSummaryDtos(facility,
           groupApprovedProduct, requisition.getActualStartDate(), requisition.getActualEndDate());
 

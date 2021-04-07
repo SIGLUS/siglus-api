@@ -89,7 +89,7 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
           usageCategory.getName());
       return true;
     }
-    if (storedRequisition.getEmergency()) {
+    if (Boolean.TRUE.equals(storedRequisition.getEmergency())) {
       log.info("requisition {} is emergency, skip validation {}", requisitionId,
           usageCategory.getName());
       return true;
@@ -164,7 +164,7 @@ public abstract class UsageLineItemValidator<A extends Annotation, G extends Usa
     List<C> columnsToSum = new ArrayList<>();
     for (UsageTemplateColumn storedColumn : storedColumns) {
       C uploadedColumn = uploadedColumns.remove(storedColumn.getName());
-      if (!storedColumn.getIsDisplayed()) {
+      if (Boolean.FALSE.equals(storedColumn.getIsDisplayed())) {
         continue;
       }
       if (!validateColumn(uploadedColumn, storedColumn, context, groupName, groupIndex)) {

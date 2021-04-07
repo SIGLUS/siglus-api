@@ -167,10 +167,10 @@ public class SiglusNotificationService {
 
   public ViewableStatus viewNotification(UUID notificationId) {
     Notification notification = repo.findOne(notificationId);
-    if (notification.getProcessed()) {
+    if (Boolean.TRUE.equals(notification.getProcessed())) {
       return ViewableStatus.PROCESSED;
     }
-    if (notification.getViewed()) {
+    if (Boolean.TRUE.equals(notification.getViewed())) {
       return ViewableStatus.VIEWED;
     }
     notification.setViewed(true);

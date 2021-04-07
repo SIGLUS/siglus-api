@@ -23,6 +23,6 @@ public class CustomPhysicalNamingStrategy extends PhysicalNamingStrategyStandard
 
   @Override
   public Identifier toPhysicalColumnName(Identifier name, JdbcEnvironment jdbcEnvironment) {
-    return jdbcEnvironment.getIdentifierHelper().toIdentifier(name.getText().replaceAll("_", ""));
+    return jdbcEnvironment.getIdentifierHelper().toIdentifier(name.getText().replace("_", ""));
   }
 }
