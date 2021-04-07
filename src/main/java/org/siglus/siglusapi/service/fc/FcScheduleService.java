@@ -121,6 +121,7 @@ public class FcScheduleService {
     } catch (Exception e) {
       log.error(e.getMessage());
       redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -158,6 +159,7 @@ public class FcScheduleService {
     } catch (Exception e) {
       log.error(e.getMessage());
       redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -195,6 +197,7 @@ public class FcScheduleService {
     } catch (Exception e) {
       log.error(e.getMessage());
       redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -232,6 +235,7 @@ public class FcScheduleService {
     } catch (Exception e) {
       log.error(e.getMessage());
       redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -271,6 +275,7 @@ public class FcScheduleService {
     } catch (Exception e) {
       log.error(e.getMessage());
       redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -307,6 +312,7 @@ public class FcScheduleService {
     } catch (Exception e) {
       log.error(e.getMessage());
       redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -342,6 +348,7 @@ public class FcScheduleService {
     } catch (Exception e) {
       log.error(e.getMessage());
       redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -377,6 +384,7 @@ public class FcScheduleService {
     } catch (Exception e) {
       log.error(e.getMessage());
       redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -412,6 +420,7 @@ public class FcScheduleService {
     } catch (Exception e) {
       log.error(e.getMessage());
       redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -447,6 +456,7 @@ public class FcScheduleService {
     } catch (Exception e) {
       log.error(e.getMessage());
       redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
     }
   }
 

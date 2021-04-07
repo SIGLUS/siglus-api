@@ -411,7 +411,8 @@ public class SiglusNotificationService {
         try {
           predicate = cb.or(predicate, future.get());
         } catch (Exception e) {
-          throw new IllegalStateException("Unable to get result from sub thread", e);
+          log.error(e.getMessage());
+          Thread.currentThread().interrupt();
         }
       }
 

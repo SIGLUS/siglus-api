@@ -71,8 +71,6 @@ dependencies {
     compile 'org.apache.poi:poi-ooxml:3.13'
     compile 'com.amazonaws:aws-java-sdk-s3:1.11.627'
     compile 'org.owasp:security-logging-logback:1.1.6'
-    compile 'net.javacrumbs.shedlock:shedlock-spring:4.2.0'
-    compile 'net.javacrumbs.shedlock:shedlock-provider-redis-spring:4.2.0'
 
     compileTestJava.dependsOn tasks.getByPath(':stockmanagement:testClasses')
     compileTestJava.dependsOn tasks.getByPath(':requisition:testClasses')
@@ -170,11 +168,15 @@ configure(checkApiIsRaml) {
     description = 'Verify that the api-specification is valid RAML'
 }
 
+jacoco {
+    toolVersion = "0.8.6"
+}
+
 jacocoTestReport {
     group = "reporting"
     description = "Generate Jacoco coverage reports after running tests."
     reports {
-        xml.enabled false
+        xml.enabled true
         html.enabled true
         csv.enabled false
     }
@@ -216,6 +218,18 @@ jacocoTestCoverageVerification {
                 minimum = 0.89
             }
         }
+    }
+}
+
+sonarqube {
+    properties {
+        property 'sonar.coverage.exclusions', '**/org/siglus/siglusapi/*.java, ' +
+                '**/org/siglus/siglusapi/constant/**, ' +
+                '**/org/siglus/siglusapi/i18n/**, ' +
+                '**/org/siglus/siglusapi/service/client/**, ' +
+                '**/org/siglus/siglusapi/domain/**, ' +
+                '**/org/siglus/siglusapi/dto/**, ' +
+                '**/org/siglus/siglusapi/repository/**'
     }
 }
 
