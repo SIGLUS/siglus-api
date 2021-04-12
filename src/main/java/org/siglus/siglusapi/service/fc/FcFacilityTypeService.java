@@ -98,6 +98,7 @@ public class FcFacilityTypeService {
       List<FcFacilityTypeDto> needUpdatedFacilityTypes) {
     needUpdatedFacilityTypes.forEach(typeDto -> {
       FacilityTypeDto dto = facilityTypeMap.get(typeDto.getCode());
+      log.info("[FC] update existed facility type: {} to new facility type: {}", dto, typeDto);
       dto.setActive(FcUtil.isActive(typeDto.getStatus()));
       dto.setName(typeDto.getDescription());
       facilityTypeService.saveFacilityType(dto);
@@ -109,6 +110,7 @@ public class FcFacilityTypeService {
     int originSize = facilityTypeMap.size();
     List<FacilityTypeDto> needUpdateReasonType = new ArrayList<>();
     needAddedFacilityTypes.forEach(typeDto -> {
+      log.info("[FC] create facility type: {}", typeDto);
       int index = needAddedFacilityTypes.indexOf(typeDto);
       FacilityTypeDto dto = new FacilityTypeDto();
       dto.setCode(typeDto.getCode());

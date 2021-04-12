@@ -57,7 +57,7 @@ public class FcProgramService {
         }
         programsToUpdate.add(ProgramRealProgram.from(dto));
       });
-
+      log.info("[FC] update programs: {}", programsToUpdate);
       programRealProgramRepository.save(programsToUpdate);
       log.info("[FC] save fc program successfully, size: {}", dtos.size());
       return true;

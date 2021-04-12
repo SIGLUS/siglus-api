@@ -114,7 +114,7 @@ public class FcReceiptPlanService {
     if (!isEmpty(needCreateReceiptPlans)) {
       for (ReceiptPlanDto receiptPlanDto : needCreateReceiptPlans) {
         ReceiptPlan receiptPlan = ReceiptPlan.from(receiptPlanDto);
-        log.info("[FC] FcIntegration: save receipt plan {}", receiptPlanDto.toString());
+        log.info("[FC] create new receipt plan {}", receiptPlanDto);
         receiptPlanRepository.save(receiptPlan);
       }
     }
@@ -161,6 +161,7 @@ public class FcReceiptPlanService {
             .updateRequisition(requisitionId, requisitionDto, request, response);
         siglusRequisitionService.approveRequisition(requisitionId, request, response);
         updateRequisitionChangeDate(requisitionId, receiptPlanDto);
+        log.info("[FC] update receipt plan {}", receiptPlanDto);
       }
     } catch (FcDataException exception) {
       return getFcDataExceptionHandler(receiptPlanDto, exception);
@@ -205,8 +206,7 @@ public class FcReceiptPlanService {
       List<ProductDto> notFindProducts = receiptPlanProducts.stream()
           .filter(productDto -> !approvedProducts.containsKey(productDto.getFnmCode()))
           .collect(Collectors.toList());
-      log.error("[FC] FcIntegrationError: Receipt Plan not found products - {} ",
-          notFindProducts.toString());
+      log.error("[FC] receipt plan not found products: {} ", notFindProducts);
     }
     fcDataValidate.validateFcProduct(findProducts);
     return findProducts;
@@ -308,7 +308,7 @@ public class FcReceiptPlanService {
   private void updateRequisitionChangeDate(UUID requisitionId, ReceiptPlanDto receiptPlanDto) {
     Requisition requisition = requisitionRepository.findOne(requisitionId);
     requisition.setModifiedDate(receiptPlanDto.getLastUpdatedAt());
-    log.info("[FC] FcIntegration: save requisition - {}", requisition);
+    log.info("[FC] update requisition: {}", requisition);
     requisitionRepository.save(requisition);
     StatusChange statusChange = siglusStatusChangeRepository
         .findByRequisitionIdAndStatus(requisitionId, APPROVED.toString());
@@ -317,15 +317,13 @@ public class FcReceiptPlanService {
 
   private FcHandlerStatus getFcExceptionHandler(
       ReceiptPlanDto receiptPlanDto, Exception exception) {
-    log.error("[FC] FcIntegrationError: Receipt Plan - {} exception -",
-        receiptPlanDto.toString(), exception);
+    log.error("[FC] receipt plan: {}, exception: {}", receiptPlanDto, exception);
     return FcHandlerStatus.CALL_API_ERROR;
   }
 
   private FcHandlerStatus getFcDataExceptionHandler(
       ReceiptPlanDto receiptPlanDto, FcDataException dataException) {
-    log.error("[FC] FcIntegrationError: Receipt Plan - {} exception - {}", receiptPlanDto,
-        dataException.getMessage());
+    log.error("[FC] receipt Plan: {}, exception: {}", receiptPlanDto, dataException.getMessage());
     return FcHandlerStatus.DATA_ERROR;
   }
 }

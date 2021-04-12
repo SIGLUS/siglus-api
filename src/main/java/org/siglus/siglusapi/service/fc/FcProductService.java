@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.fc;
 import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.stream.Collectors.toSet;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 
@@ -105,6 +106,9 @@ public class FcProductService {
   private Set<String> basicProductCodes;
 
   public boolean processProductData(List<ProductInfoDto> products) {
+    if (isEmpty(products)) {
+      return false;
+    }
     AtomicInteger createNum = new AtomicInteger();
     AtomicInteger updateNum = new AtomicInteger();
     AtomicInteger sameNum = new AtomicInteger();
@@ -117,7 +121,7 @@ public class FcProductService {
           productCodeToEntityMap.put(product.getFnm().trim(), product);
         }
       });
-      log.info("process product data size: {}", productCodeToEntityMap.values().size());
+      log.info("[FC] process product data size: {}", productCodeToEntityMap.values().size());
       productCodeToEntityMap.values().forEach(product -> {
         OrderableDto existingOrderable = orderableService.getOrderableByCode(product.getFnm());
         if (null == existingOrderable) {
@@ -125,21 +129,25 @@ public class FcProductService {
           createFtap(orderableDto);
           createProgramOrderablesExtension(product, orderableDto.getId());
           createNum.getAndIncrement();
+          log.info("[FC] create new product: {}", product);
         } else if (isDifferentOrderable(existingOrderable, product)) {
           OrderableDto orderableDto = updateOrderable(existingOrderable, product);
           createProgramOrderablesExtension(product, orderableDto.getId());
           updateNum.getAndIncrement();
+          log.info("[FC] update existed product: {} to new product: {}", existingOrderable,
+              product);
         } else {
           sameNum.getAndIncrement();
         }
       });
-      log.info("process product data createNum: {}, updateNum: {}, sameNum: {}", createNum.get(),
+      log.info("[FC] process product data createNum: {}, updateNum: {}, sameNum: {}",
+          createNum.get(),
           updateNum.get(), sameNum.get());
       return true;
     } catch (Exception e) {
-      log.info("process product data createNum: {}, updateNum: {}, sameNum: {}", createNum.get(),
-          updateNum.get(), sameNum.get());
-      log.error("process product data error", e);
+      log.info("[FC] process product data createNum: {}, updateNum: {}, sameNum: {}",
+          createNum.get(), updateNum.get(), sameNum.get());
+      log.error("[FC] process product data error", e);
       return false;
     }
   }
@@ -161,7 +169,7 @@ public class FcProductService {
           .build();
       extensions.add(extension);
     });
-    log.info("save program orderables extension: {}", extensions);
+    log.info("[FC] save program orderables extension: {}", extensions);
     programOrderablesExtensionRepository.save(extensions);
   }
 
@@ -204,7 +212,7 @@ public class FcProductService {
       Set<OrderableChildDto> children = buildOrderableChildDtos(product);
       orderableDto.setChildren(children);
     }
-    log.info("create orderable: {}", orderableDto);
+    log.info("[FC] create orderable: {}", orderableDto);
     return orderableReferenceDataService.create(orderableDto);
   }
 
@@ -316,7 +324,7 @@ public class FcProductService {
     } else {
       existingOrderable.setChildren(newHashSet());
     }
-    log.info("update orderable: {}", existingOrderable);
+    log.info("[FC] update orderable: {}", existingOrderable);
     return orderableReferenceDataService.update(existingOrderable);
   }
 
@@ -340,7 +348,7 @@ public class FcProductService {
         ProgramDto programDto = new ProgramDto();
         programDto.setId(programOrderableDto.getProgramId());
         approvedProductDto.setProgram(programDto);
-        log.info("create ftap: {}", approvedProductDto);
+        log.info("[FC] create ftap: {}", approvedProductDto);
         ftapReferenceDataService.create(approvedProductDto);
       });
     });

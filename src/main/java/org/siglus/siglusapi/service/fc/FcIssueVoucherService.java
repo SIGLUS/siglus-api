@@ -301,7 +301,7 @@ public class FcIssueVoucherService {
       List<ProductDto> notFindProducts = issueProducts.stream()
           .filter(productDto -> !approvedProducts.containsKey(productDto.getFnmCode()))
           .collect(Collectors.toList());
-      log.error("[FC] FcIntegrationError: not found products - {} ", notFindProducts.toString());
+      log.error("[FC] not found products: {} ", notFindProducts);
     }
     return findProducts;
   }
@@ -427,7 +427,7 @@ public class FcIssueVoucherService {
     canFulfillOrder.setSupplyingFacilityId(supplyFacility.getId());
     canFulfillOrder.setOrderLineItems(existLineItems);
     canFulfillOrder.setCreatedDate(issueVoucherDto.getShippingDate());
-    log.info("save fc order: {}", canFulfillOrder);
+    log.info("[FC] save fc order: {}", canFulfillOrder);
     orderRepository.save(canFulfillOrder);
     return canFulfillOrder.getId();
   }
@@ -487,8 +487,8 @@ public class FcIssueVoucherService {
 
 
   private Long getApprovedQuality(List<ProductDto> productDtos) {
-    return Long.valueOf(productDtos.stream().mapToInt(productDto ->
-        productDto.getApprovedQuantity() == null ? 0 : productDto.getApprovedQuantity()).sum());
+    return (long) productDtos.stream().mapToInt(productDto ->
+        productDto.getApprovedQuantity() == null ? 0 : productDto.getApprovedQuantity()).sum();
   }
 
   private org.openlmis.requisition.dto.UserDto convertToRequisitionUserDto(UserDto dto) {
@@ -508,8 +508,7 @@ public class FcIssueVoucherService {
 
   private FcHandlerStatus getFcExceptionHandler(
       IssueVoucherDto issueVoucherDto, Exception exception) {
-    log.error("[FC] FcIntegrationError: Issue vourch - {} exception -",
-        issueVoucherDto.toString(), exception);
+    log.error("[FC] issue voucher: {}, exception: {}", issueVoucherDto, exception);
     return FcHandlerStatus.CALL_API_ERROR;
   }
 
@@ -622,8 +621,7 @@ public class FcIssueVoucherService {
 
   private FcHandlerStatus getFcDataExceptionHandler(
       IssueVoucherDto issueVoucherDto, FcDataException dataException) {
-    log.error("[FC] FcIntegrationError: Issue vourch - {} exception - {}", issueVoucherDto,
-        dataException.getMessage());
+    log.error("[FC] issue voucher: {}, exception: {}", issueVoucherDto, dataException.getMessage());
     return FcHandlerStatus.DATA_ERROR;
   }
 
@@ -634,7 +632,7 @@ public class FcIssueVoucherService {
     Requisition loadedRequisition = requisitionRepository.findOne(v2Dto.getId());
     loadedRequisition.release(supplyFacility.getId());
     loadedRequisition.setSupplyingFacilityId(supplyFacility.getId());
-    log.info("[FC] FcIntegration: save requisition - {}", loadedRequisition);
+    log.info("[FC] save requisition: {}", loadedRequisition);
     requisitionRepository.save(loadedRequisition);
     requisitionStatusProcessor.statusChange(loadedRequisition, LocaleContextHolder.getLocale());
     org.openlmis.requisition.dto.OrderDto order = orderDtoBuilder.build(loadedRequisition, user);

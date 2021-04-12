@@ -75,6 +75,8 @@ public class FcGeographicZoneService {
     });
     createGeographicZones(needCreateZones, fcDtos);
     updateGeographicZones(needUpdateZones, geographicZoneMaps);
+    log.info("[FC] created new {} geographic zones, updated {} geographic zones",
+        needCreateZones.size(), needUpdateZones.size());
     return true;
   }
 
@@ -153,7 +155,7 @@ public class FcGeographicZoneService {
       if (zone.getParent() != null) {
         zone.setParent(null);
       }
-      log.info("create geographic zone: {}", zone);
+      log.info("[FC] create new geographic zone: {}", zone);
       geographicZoneService.createGeographicZone(zone);
     });
     processGeographicZones(fcDtos);
@@ -163,11 +165,12 @@ public class FcGeographicZoneService {
       Map<String, OpenLmisGeographicZoneDto> geographicZoneMaps) {
     needUpdateZones.forEach(zone -> {
       OpenLmisGeographicZoneDto originZone = geographicZoneMaps.get(zone.getCode());
+      log.info("[FC] update existed geographic zone: {} to new geographic zone: {}", originZone,
+          zone);
       originZone.setName(zone.getName());
       originZone.setLevel(zone.getLevel());
       originZone.setParent(zone.getParent() == null ? null :
           geographicZoneMaps.get(zone.getParent().getCode()));
-      log.info("update geographic zone: {}", originZone);
       geographicZoneService.updateGeographicZone(originZone);
     });
   }

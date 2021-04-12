@@ -99,6 +99,8 @@ public class FcFacilityService {
         codeToRealProgramMap, codeToGeographicZoneDtoMap);
     updateFacilityDto(updateFacilities, codeToFacilityMap, codeToFacilityType,
         codeToProgramMap, codeToRealProgramMap, codeToGeographicZoneDtoMap);
+    log.info("[FC] created new {} facilities, updated {} facilities", createFacilities.size(),
+        updateFacilities.size());
     return true;
   }
 
@@ -131,12 +133,12 @@ public class FcFacilityService {
       Map<String, FacilityTypeDto> codeToFacilityType) {
     if (!codeToGeographicZoneDtoMap.containsKey(fcFacilityDto.getDistrictCode())
         || !codeToFacilityType.containsKey(fcFacilityDto.getClientTypeCode())) {
-      log.info("[fc facility error] GeographicZone or facilityType not exist in our system: {}",
+      log.info("[FC] geographic zone or facility type not exist in our system: {}",
           fcFacilityDto);
       return false;
     }
     if (CollectionUtils.isEmpty(codes)) {
-      log.info("[fc facility error] program code not exsit: {}", fcFacilityDto);
+      log.info("[FC] program code not existed: {}", fcFacilityDto);
       return false;
     }
     return true;
@@ -206,7 +208,7 @@ public class FcFacilityService {
       Map<String, OpenLmisGeographicZoneDto> codeToGeographicZoneDtoMap) {
     List<FacilityDto> createdFacilities = newArrayList();
     needCreateFacilities.forEach(facilityDto -> {
-      log.info("create facility: {}", facilityDto);
+      log.info("[FC] create new facility: {}", facilityDto);
       List<SupportedProgramDto> supportedProgramDtos = getSupportedProgramDtos(facilityDto,
           codeToProgramMap, codeToRealProgramMap);
       FacilityDto createdFacility = facilityService.createFacility(getFacilityDto(facilityDto,
@@ -240,6 +242,8 @@ public class FcFacilityService {
       Map<String, OpenLmisGeographicZoneDto> codeToGeographicZoneDtoMap) {
     needUpdateFacilities.forEach(fcFacilityDto -> {
       FacilityDto needSaveFacility = codeToFacilityMap.get(fcFacilityDto.getCode());
+      log.info("[FC] update existed facility: {} to new facility: {}", needSaveFacility,
+          fcFacilityDto);
       List<SupportedProgramDto> supportedProgramDtos = getUpdateProgramDto(fcFacilityDto,
           needSaveFacility, codeToRealProgramMap, codeToProgramMap);
       needSaveFacility.setName(fcFacilityDto.getName());
@@ -250,7 +254,6 @@ public class FcFacilityService {
       needSaveFacility.setGeographicZone(
           codeToGeographicZoneDtoMap.get(fcFacilityDto.getDistrictCode()));
       needSaveFacility.setSupportedPrograms(supportedProgramDtos);
-      log.info("save facility: {}", fcFacilityDto);
       facilityService.saveFacility(needSaveFacility);
     });
   }

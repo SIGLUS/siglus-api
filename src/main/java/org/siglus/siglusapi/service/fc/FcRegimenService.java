@@ -101,7 +101,7 @@ public class FcRegimenService {
                 getRegimenCategory(dto, codeToCategoryMap),
                 maxRegimenDisplayOrder.incrementAndGet()));
           });
-
+      log.info("[FC] update regimens: {}", regimensToUpdate);
       regimenRepository.save(regimensToUpdate);
       log.info("[FC] save fc regimen successfully, size: {}", dtos.size());
       return true;
