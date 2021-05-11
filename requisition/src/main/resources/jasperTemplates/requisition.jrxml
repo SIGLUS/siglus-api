@@ -70,7 +70,7 @@
 				<textElement verticalAlignment="Middle">
 					<font size="14" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA[MessageFormat.format("Report and Requisition for: {0} ({1})", $F{requisition}.getProgram().getName(), $F{requisition}.getFacility().getType().getName())]]></textFieldExpression>
+				<textFieldExpression><![CDATA[MessageFormat.format("Relatório e requisição para: {0} ({1})", $F{requisition}.getProgram().getName(), $F{requisition}.getFacility().getType().getName())]]></textFieldExpression>
 			</textField>
 			<rectangle>
 				<reportElement mode="Opaque" x="10" y="35" width="919" height="50" backcolor="#C0C0C0" uuid="65fe1d4d-8334-48d2-b383-ee533c8d5742"/>
@@ -122,43 +122,43 @@
 				<textFieldExpression><![CDATA[$F{requisition}.getProgram().getName()]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" pattern="">
-				<reportElement x="55" y="45" width="130" height="10" uuid="97807c17-6feb-44db-b0ec-eb1fdb21aa21"/>
+				<reportElement x="90" y="45" width="130" height="10" uuid="97807c17-6feb-44db-b0ec-eb1fdb21aa21"/>
 				<textElement>
 					<font size="8" isBold="false"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{requisition}.getFacility().getName()]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" pattern="">
-				<reportElement x="75" y="65" width="110" height="10" uuid="eb29697d-1d2f-42b6-9b25-2e2bcdadc080"/>
+				<reportElement x="130" y="65" width="110" height="10" uuid="eb29697d-1d2f-42b6-9b25-2e2bcdadc080"/>
 				<textElement textAlignment="Left">
 					<font size="8" isBold="false"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{requisition}.getFacility().getCode()]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="20" y="45" width="35" height="10" uuid="9ff435e1-2db7-4309-8a64-0111b0a6decb">
+				<reportElement x="20" y="45" width="80" height="10" uuid="9ff435e1-2db7-4309-8a64-0111b0a6decb">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<textElement>
 					<font size="8" isBold="false"/>
 				</textElement>
-				<text><![CDATA[Facility:]]></text>
+				<text><![CDATA[Unidade Sanitária:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="20" y="65" width="55" height="10" uuid="7e9768e7-2cc9-4f1b-814f-865b39566a13"/>
+				<reportElement x="20" y="65" width="130" height="10" uuid="7e9768e7-2cc9-4f1b-814f-865b39566a13"/>
 				<textElement>
 					<font size="8" isBold="false"/>
 				</textElement>
-				<text><![CDATA[Facility code:]]></text>
+				<text><![CDATA[Código da Unidade Sanitária:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="210" y="45" width="40" height="10" uuid="bfb9d50e-e0e4-46cc-aa4a-ea1a0f52b906">
+				<reportElement x="210" y="45" width="48" height="10" uuid="bfb9d50e-e0e4-46cc-aa4a-ea1a0f52b906">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<textElement>
 					<font size="8" isBold="false"/>
 				</textElement>
-				<text><![CDATA[Program:]]></text>
+				<text><![CDATA[programa:]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="210" y="65" width="25" height="10" uuid="4b3a6dad-2836-4ee3-bc07-2a1da8e16314">
@@ -167,23 +167,23 @@
 				<textElement>
 					<font size="8" isBold="false"/>
 				</textElement>
-				<text><![CDATA[Zone:]]></text>
+				<text><![CDATA[Zona:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="420" y="45" width="60" height="10" uuid="f01ca8e1-24ca-4e6e-8ae5-148769220580"/>
+				<reportElement x="420" y="45" width="100" height="10" uuid="f01ca8e1-24ca-4e6e-8ae5-148769220580"/>
 				<textElement>
 					<font size="8" isBold="false"/>
 				</textElement>
-				<text><![CDATA[Creation date:]]></text>
+				<text><![CDATA[Data de criação:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="420" y="65" width="75" height="10" uuid="8195bd81-f503-402c-99fd-79861348d2ec">
+				<reportElement x="420" y="65" width="100" height="10" uuid="8195bd81-f503-402c-99fd-79861348d2ec">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<textElement>
 					<font size="8" isBold="false"/>
 				</textElement>
-				<text><![CDATA[Reporting period:]]></text>
+				<text><![CDATA[Período de relatório:]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="640" y="45" width="25" height="10" uuid="150c310a-e719-4dfa-a6d3-000dd5f634ac">
@@ -192,14 +192,14 @@
 				<textElement>
 					<font size="8" isBold="false"/>
 				</textElement>
-				<text><![CDATA[Type:]]></text>
+				<text><![CDATA[Tipo:]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="640" y="65" width="30" height="10" uuid="5a51fb8c-f965-48ea-9f59-7a04b8ea4688"/>
 				<textElement>
 					<font size="8" isBold="false"/>
 				</textElement>
-				<text><![CDATA[Status:]]></text>
+				<text><![CDATA[Estado:]]></text>
 			</staticText>
 		</band>
 	</title>
@@ -213,7 +213,7 @@
 					<subreportParameterExpression><![CDATA[$P{template}]]></subreportParameterExpression>
 				</subreportParameter>
 				<subreportParameter name="title">
-					<subreportParameterExpression><![CDATA["Full supply items"]]></subreportParameterExpression>
+					<subreportParameterExpression><![CDATA["Suprimentos completos"]]></subreportParameterExpression>
 				</subreportParameter>
 				<subreportParameter name="requisitionStatus">
 					<subreportParameterExpression><![CDATA[$F{requisition}.getStatus()]]></subreportParameterExpression>
@@ -304,28 +304,28 @@
 				<textElement verticalAlignment="Middle">
 					<font size="14" isBold="true"/>
 				</textElement>
-				<text><![CDATA[Summary]]></text>
+				<text><![CDATA[Sumário]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="20" y="40" width="130" height="10" uuid="a035b2b6-8c32-4db2-89fd-6444a109b1d7"/>
 				<textElement>
 					<font size="8"/>
 				</textElement>
-				<text><![CDATA[Total Cost for Full Supply Items]]></text>
+				<text><![CDATA[Custo total para itens de suprimento completos]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="20" y="60" width="150" height="10" uuid="ec47a93b-983c-447f-85cf-4775e800330a"/>
 				<textElement>
 					<font size="8"/>
 				</textElement>
-				<text><![CDATA[Total Cost for Non Full Supply Items]]></text>
+				<text><![CDATA[Custo total para itens de suprimento não completos]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="20" y="80" width="50" height="10" uuid="08e7b43c-4f44-4e33-88f6-92324585772e"/>
 				<textElement>
 					<font size="8"/>
 				</textElement>
-				<text><![CDATA[Total Cost]]></text>
+				<text><![CDATA[Custo total]]></text>
 			</staticText>
 			<textField isStretchWithOverflow="true" pattern="">
 				<reportElement x="250" y="40" width="240" height="10" uuid="35a72954-5841-4f9b-abf2-711eea0bd17f"/>
@@ -353,7 +353,7 @@
 				<textElement>
 					<font size="8"/>
 				</textElement>
-				<text><![CDATA[Created by:]]></text>
+				<text><![CDATA[Criado por:]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="20" y="130" width="60" height="10" uuid="09833b2c-ae0d-4a34-a608-bfeaf297a414">
@@ -362,7 +362,7 @@
 				<textElement>
 					<font size="8"/>
 				</textElement>
-				<text><![CDATA[Submitted by:]]></text>
+				<text><![CDATA[submetido por:]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="20" y="150" width="60" height="10" uuid="9544c075-f57c-4a86-8d1b-6a21f3a93963">
@@ -371,7 +371,7 @@
 				<textElement>
 					<font size="8"/>
 				</textElement>
-				<text><![CDATA[Authorized by:]]></text>
+				<text><![CDATA[Autorizado por:]]></text>
 			</staticText>
 			<textField isStretchWithOverflow="true" pattern="">
 				<reportElement x="140" y="110" width="350" height="10" uuid="d95d5f81-476d-4445-a53c-5ebee7846625"/>
