@@ -115,7 +115,7 @@
                 <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font fontName="SansSerif" size="26" isBold="true"/>
                 </textElement>
-                <text><![CDATA[Stock Card Summary Report]]></text>
+                <text><![CDATA[Relatório de resumo da Ficha de stock]]></text>
             </staticText>
         </band>
     </title>
@@ -125,14 +125,14 @@
             <property name="com.jaspersoft.studio.unit.height" value="pixel"/>
             <printWhenExpression><![CDATA[new Boolean($V{PAGE_NUMBER}.intValue() == 1)]]></printWhenExpression>
             <staticText>
-                <reportElement x="0" y="0" width="77" height="30" uuid="d88076e4-ce9f-4886-a172-855275a4a5e7">
+                <reportElement x="10" y="0" width="77" height="30" uuid="d88076e4-ce9f-4886-a172-855275a4a5e7">
                     <property name="com.jaspersoft.studio.unit.width" value="pixel"/>
                     <property name="com.jaspersoft.studio.unit.height" value="pixel"/>
                 </reportElement>
                 <textElement textAlignment="Right">
                     <font size="8" isBold="false"/>
                 </textElement>
-                <text><![CDATA[Facility:]]></text>
+                <text><![CDATA[Unidade Sanitária:]]></text>
             </staticText>
             <textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
                 <reportElement x="90" y="0" width="74" height="30" uuid="68d8d341-d519-4cd5-adaf-845085a2b343"/>
@@ -142,16 +142,16 @@
                 <textFieldExpression><![CDATA[$P{facility}.getName()]]></textFieldExpression>
             </textField>
             <staticText>
-                <reportElement x="151" y="0" width="74" height="30" uuid="e70d1a9b-4bcc-460c-8ffe-c238d8d4e9af">
+                <reportElement x="170" y="0" width="80" height="30" uuid="e70d1a9b-4bcc-460c-8ffe-c238d8d4e9af">
                     <property name="com.jaspersoft.studio.unit.y" value="pixel"/>
                 </reportElement>
                 <textElement textAlignment="Right">
                     <font size="8" isBold="false"/>
                 </textElement>
-                <text><![CDATA[Facility code:]]></text>
+                <text><![CDATA[Código da Unidade Sanitária:]]></text>
             </staticText>
             <textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
-                <reportElement x="230" y="0" width="74" height="30" uuid="e28722c1-aff1-4167-af88-1d9b88dc2c81"/>
+                <reportElement x="255" y="0" width="74" height="30" uuid="e28722c1-aff1-4167-af88-1d9b88dc2c81"/>
                 <textElement>
                     <font size="8" isBold="false"/>
                 </textElement>
@@ -166,7 +166,7 @@
                 <textElement textAlignment="Right">
                     <font size="8" isBold="false"/>
                 </textElement>
-                <text><![CDATA[Program:]]></text>
+                <text><![CDATA[programa:]]></text>
             </staticText>
             <textField isStretchWithOverflow="true" isBlankWhenNull="true">
                 <reportElement x="350" y="0" width="74" height="30" uuid="090f268a-9013-48d7-bf4c-2d082ce82426">
@@ -187,7 +187,7 @@
                 <textElement textAlignment="Right">
                     <font size="8" isBold="false"/>
                 </textElement>
-                <text><![CDATA[Program Code:]]></text>
+                <text><![CDATA[Código do programa:]]></text>
             </staticText>
             <textField isStretchWithOverflow="true" isBlankWhenNull="true">
                 <reportElement x="493" y="0" width="74" height="30" uuid="1155efb4-d80b-4867-bc2c-4708e21299cb">
@@ -261,11 +261,11 @@
                         <jr:columnHeader style="Table 1_CH" height="30" rowSpan="1">
                             <staticText>
                                 <reportElement x="0" y="0" width="93" height="30" uuid="11a54a5c-e198-4880-93c0-d2788f0e5ccd"/>
-                                <box padding="2"/>
+                                <box padding="1"/>
                                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                                    <font size="12"/>
+                                    <font size="9"/>
                                 </textElement>
-                                <text><![CDATA[Product Code]]></text>
+                                <text><![CDATA[Código do Produtos]]></text>
                             </staticText>
                         </jr:columnHeader>
                         <jr:detailCell style="Table 1_TD" height="30">
@@ -284,9 +284,9 @@
                                 <reportElement x="0" y="0" width="77" height="30" uuid="1a695eef-6fde-43a4-9db7-9e660d907a5e"/>
                                 <box padding="2"/>
                                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                                    <font size="12"/>
+                                    <font size="10"/>
                                 </textElement>
-                                <text><![CDATA[Product]]></text>
+                                <text><![CDATA[Produtos]]></text>
                             </staticText>
                         </jr:columnHeader>
                         <jr:detailCell style="Table 1_TD" height="30">
@@ -306,18 +306,18 @@
                         <jr:columnHeader style="Table 1_CH" height="30" rowSpan="1">
                             <staticText>
                                 <reportElement x="0" y="0" width="67" height="30" uuid="5fbf1451-a327-4c6c-a502-e8275a01fb5b"/>
-                                <box padding="2"/>
+                                <box padding="1"/>
                                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                                    <font size="12"/>
+                                    <font size="10"/>
                                 </textElement>
-                                <text><![CDATA[Program]]></text>
+                                <text><![CDATA[programa]]></text>
                             </staticText>
                         </jr:columnHeader>
                         <jr:detailCell style="Table 1_TD" height="30">
                             <property name="com.jaspersoft.studio.unit.width" value="px"/>
                             <textField isStretchWithOverflow="true" isBlankWhenNull="true">
                                 <reportElement x="0" y="0" width="67" height="30" uuid="624e834f-d046-4881-a936-88b40ef263bd"/>
-                                <box padding="2"/>
+                                <box padding="1"/>
                                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
                                 <textFieldExpression><![CDATA[$F{program}.getName()]]></textFieldExpression>
                             </textField>
@@ -329,18 +329,18 @@
                         <jr:columnHeader style="Table 1_CH" height="30" rowSpan="1">
                             <staticText>
                                 <reportElement x="0" y="0" width="50" height="30" uuid="d38235ca-700b-46cc-904a-b3e6a45faf60"/>
-                                <box padding="2"/>
+                                <box padding="1"/>
                                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                                    <font size="12"/>
+                                    <font size="10"/>
                                 </textElement>
-                                <text><![CDATA[Facility]]></text>
+                                <text><![CDATA[Unidade Sanitária]]></text>
                             </staticText>
                         </jr:columnHeader>
                         <jr:detailCell style="Table 1_TD" height="30">
                             <property name="com.jaspersoft.studio.unit.width" value="px"/>
                             <textField isStretchWithOverflow="true" isBlankWhenNull="true">
                                 <reportElement x="0" y="0" width="50" height="30" uuid="9abf6368-8b9c-4cc1-9e71-69cb90044263"/>
-                                <box padding="2"/>
+                                <box padding="1"/>
                                 <textElement textAlignment="Center" verticalAlignment="Middle"/>
                                 <textFieldExpression><![CDATA[$F{facility}.getName()]]></textFieldExpression>
                             </textField>
@@ -354,11 +354,11 @@
                                 <reportElement x="0" y="0" width="80" height="30" uuid="f3af19dd-e960-4808-8702-7afdbc4b9503">
                                     <property name="com.jaspersoft.studio.unit.width" value="pixel"/>
                                 </reportElement>
-                                <box padding="2"/>
+                                <box padding="1"/>
                                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                                    <font size="12"/>
+                                    <font size="10"/>
                                 </textElement>
-                                <text><![CDATA[Lot Code]]></text>
+                                <text><![CDATA[Número de Lote]]></text>
                             </staticText>
                         </jr:columnHeader>
                         <jr:detailCell style="Table 1_TD" height="30">
@@ -378,11 +378,11 @@
                                 <reportElement x="0" y="0" width="73" height="30" uuid="803a20bf-c364-417a-8139-12a4609bf70a">
                                     <property name="com.jaspersoft.studio.unit.width" value="pixel"/>
                                 </reportElement>
-                                <box padding="2"/>
+                                <box padding="1"/>
                                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                                    <font size="12"/>
+                                    <font size="10"/>
                                 </textElement>
-                                <text><![CDATA[Expiry Date]]></text>
+                                <text><![CDATA[Data de validade]]></text>
                             </staticText>
                         </jr:columnHeader>
                         <jr:detailCell style="Table 1_TD" height="30">
@@ -399,11 +399,11 @@
                         <jr:columnHeader style="Table 1_CH" height="30" rowSpan="1">
                             <staticText>
                                 <reportElement x="0" y="0" width="102" height="30" uuid="2ef9a1d3-3722-44c7-b38a-08b1d7e06bc6"/>
-                                <box padding="2"/>
+                                <box padding="1"/>
                                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                                    <font size="12"/>
+                                    <font size="10"/>
                                 </textElement>
-                                <text><![CDATA[Last update]]></text>
+                                <text><![CDATA[Última actualização]]></text>
                             </staticText>
                         </jr:columnHeader>
                         <jr:detailCell style="Table 1_TD" height="30">
@@ -420,11 +420,11 @@
                         <jr:columnHeader style="Table 1_CH" height="30" rowSpan="1">
                             <staticText>
                                 <reportElement x="0" y="0" width="65" height="30" uuid="7deb2b72-9395-4e87-8da7-a2e576e35820"/>
-                                <box padding="2"/>
+                                <box padding="1"/>
                                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                                    <font size="12"/>
+                                    <font size="10"/>
                                 </textElement>
-                                <text><![CDATA[SOH]]></text>
+                                <text><![CDATA[stock existente]]></text>
                             </staticText>
                         </jr:columnHeader>
                         <jr:detailCell style="Table 1_TD" height="30">
