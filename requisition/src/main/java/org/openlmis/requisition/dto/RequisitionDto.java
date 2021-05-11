@@ -86,4 +86,32 @@ public class RequisitionDto extends BaseRequisitionDto {
         .ofNullable(requisitionLineItems)
         .orElse(Collections.emptyList()));
   }
+
+  // [SIGLUS change start]
+  // [change reason]: change for translation
+  public String getPortugueseStatus() {
+    switch (getStatus()) {
+      case INITIATED:
+        return "Iniciado";
+      case REJECTED:
+        return "Rejeitado";
+      case SUBMITTED:
+        return "Submetido";
+      case AUTHORIZED:
+        return "Autorizado";
+      case IN_APPROVAL:
+        return "Em aprovação";
+      case APPROVED:
+        return "Aprovado";
+      case RELEASED:
+        return "Terminado";
+      case RELEASED_WITHOUT_ORDER:
+        return "RELEASED_WITHOUT_ORDER";
+      case SKIPPED:
+        return "Ignorado";
+      default:
+        return "";
+    }
+  }
+  // [SIGLUS change end]
 }
