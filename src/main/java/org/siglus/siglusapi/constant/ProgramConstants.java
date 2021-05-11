@@ -29,6 +29,6 @@ public class ProgramConstants {
 
   public static final String ALL_PRODUCTS_PROGRAM_CODE = "ALL";
 
-  public static final String ALL_PRODUCTS_PROGRAM_NAME = "All Products";
+  public static final String ALL_PRODUCTS_PROGRAM_NAME = "Todos os produtos";
 
 }
