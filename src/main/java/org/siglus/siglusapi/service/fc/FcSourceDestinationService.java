@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.fc;
 
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 
+import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -36,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+@SuppressWarnings({"PMD.TooManyMethods"})
 @Service
 public class FcSourceDestinationService {
 
@@ -51,25 +53,47 @@ public class FcSourceDestinationService {
   @Autowired
   private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
 
-  @Value("${hf.facilityTypeCode}")
-  private String hfFacilityTypeCode;
+  @Value("${cs.facilityTypeCode}")
+  private String csFacilityTypeCode;
 
-  private UUID hfFacilityTypeId;
+  @Value("${ps.facilityTypeCode}")
+  private String psFacilityTypeCode;
+
+  @Value("${hg.facilityTypeCode}")
+  private String hgFacilityTypeCode;
+
+  @Value("${hp.facilityTypeCode}")
+  private String hpFacilityTypeCode;
+
+  @Value("${hr.facilityTypeCode}")
+  private String hrFacilityTypeCode;
+
+  @Value("${hd.facilityTypeCode}")
+  private String hdFacilityTypeCode;
+
+  @Value("${outros.facilityTypeCode}")
+  private String outrosFacilityTypeCode;
+
+  @Value("${hpsiq.facilityTypeCode}")
+  private String hpsiqFacilityTypeCode;
+
+  @Value("${hm.facilityTypeCode}")
+  private String hmFacilityTypeCode;
 
   @Value("${ddm.facilityTypeCode}")
   private String ddmFacilityTypeCode;
 
-  private UUID ddmFacilityTypeId;
-
   @Value("${dpm.facilityTypeCode}")
   private String dpmFacilityTypeCode;
 
-  private UUID dpmFacilityTypeId;
+  @Value("${hc.facilityTypeCode}")
+  private String hcFacilityTypeCode;
+
+  @Value("${ai.facilityTypeCode}")
+  private String aiFacilityTypeCode;
 
   @Value("${warehouse.facilityTypeCode}")
   private String warehouseFacilityTypeCode;
-
-  private UUID warehouseFacilityTypeId;
 
   @Value("${arv.programCode}")
   private String arvProgramCode;
@@ -86,6 +110,8 @@ public class FcSourceDestinationService {
 
   private UUID rapidTestProgramId;
 
+  private Map<String, UUID> facilityTypeCodeToIdMap;
+
   public void createSourceAndDestination(List<FacilityDto> facilities) {
     fetchAndCacheMasterData();
     facilities.forEach(facility -> {
@@ -93,43 +119,120 @@ public class FcSourceDestinationService {
       node.setRefDataFacility(true);
       node.setReferenceId(facility.getId());
       node = nodeRepository.save(node);
-      UUID facilityTypeId = facility.getType().getId();
-      if (facilityTypeId.equals(hfFacilityTypeId)) {
-        createForHf(node);
-      } else if (facilityTypeId.equals(ddmFacilityTypeId)) {
-        createForDdm(node);
-      } else if (facilityTypeId.equals(dpmFacilityTypeId)) {
-        createForDpm(node);
-      } else if (facilityTypeId.equals(warehouseFacilityTypeId)) {
+      String code = facility.getType().getCode();
+      List<String> csAndPsInCountryLevel = Lists.newArrayList(csFacilityTypeCode,
+          psFacilityTypeCode);
+      List<String> hgAndHpAndHrAndHdAndOutRosAndHpSiqAndHmInCountryLevel =
+          Lists.newArrayList(hgFacilityTypeCode, hpFacilityTypeCode, hrFacilityTypeCode,
+              hdFacilityTypeCode, outrosFacilityTypeCode, hpsiqFacilityTypeCode,
+              hmFacilityTypeCode);
+      List<String> dpmAndAiInProvinceLevel = Lists.newArrayList(dpmFacilityTypeCode,
+          aiFacilityTypeCode);
+      if (csAndPsInCountryLevel.contains(code)) {
+        createForHfOrPsInCountryLevel(node);
+      } else if (hgAndHpAndHrAndHdAndOutRosAndHpSiqAndHmInCountryLevel.contains(code)) {
+        createForHgAndHpAndHrAndHdAndOutrosAndHpsiqAndHmInCountryLevel(node);
+      } else if (code.equalsIgnoreCase(ddmFacilityTypeCode)) {
+        createForDdmInDistrictLevel(node);
+      } else if (dpmAndAiInProvinceLevel.contains(code)) {
+        createForDpmOrAiInProvinceLevel(node, code);
+      } else if (code.equals(hcFacilityTypeCode)) {
+        createForHcInSpecificProvinceLevel(node);
+      } else if (code.equalsIgnoreCase(warehouseFacilityTypeCode)) {
         createForWarehouse(node);
       }
     });
   }
 
-  private void createForHf(Node node) {
+  private void createForHfOrPsInCountryLevel(Node node) {
+    UUID ddmFacilityTypeId = facilityTypeCodeToIdMap.get(ddmFacilityTypeCode);
+    UUID dpmFacilityTypeId = facilityTypeCodeToIdMap.get(dpmFacilityTypeCode);
     assignDestination(node, ddmFacilityTypeId, mpProgramId);
     assignDestination(node, dpmFacilityTypeId, rapidTestProgramId);
     assignDestination(node, dpmFacilityTypeId, arvProgramId);
+    assignAiTypeDestinationForAllProgram(node);
   }
 
-  private void createForDdm(Node node) {
-    assignDestination(node, dpmFacilityTypeId, mpProgramId);
-    assignSource(node, hfFacilityTypeId, mpProgramId);
+  private void createForHgAndHpAndHrAndHdAndOutrosAndHpsiqAndHmInCountryLevel(Node node) {
+    UUID dpmFacilityTypeId = facilityTypeCodeToIdMap.get(dpmFacilityTypeCode);
+    assignDestinationForAllProgram(node, dpmFacilityTypeId);
+    assignAiTypeDestinationForAllProgram(node);
   }
 
-  private void createForDpm(Node node) {
-    assignDestination(node, warehouseFacilityTypeId, mpProgramId);
-    assignDestination(node, warehouseFacilityTypeId, rapidTestProgramId);
-    assignDestination(node, warehouseFacilityTypeId, arvProgramId);
-    assignSource(node, hfFacilityTypeId, rapidTestProgramId);
-    assignSource(node, hfFacilityTypeId, arvProgramId);
-    assignSource(node, ddmFacilityTypeId, mpProgramId);
+  private void createForDdmInDistrictLevel(Node node) {
+    assignDestination(node, facilityTypeCodeToIdMap.get(dpmFacilityTypeCode), mpProgramId);
+    assignSource(node, facilityTypeCodeToIdMap.get(csFacilityTypeCode), mpProgramId);
+    assignSource(node, facilityTypeCodeToIdMap.get(psFacilityTypeCode), mpProgramId);
+  }
+
+  private void createForDpmOrAiInProvinceLevel(Node node, String code) {
+    assignWarehouseTypeDestinationForAllProgram(node);
+    UUID csFacilityTypeId = facilityTypeCodeToIdMap.get(csFacilityTypeCode);
+    UUID psFacilityTypeId = facilityTypeCodeToIdMap.get(psFacilityTypeCode);
+    UUID ddmFacilityTypeId = facilityTypeCodeToIdMap.get(ddmFacilityTypeCode);
+    assignSource(node, csFacilityTypeId, rapidTestProgramId);
+    assignSource(node, csFacilityTypeId, arvProgramId);
+    assignSource(node, psFacilityTypeId, rapidTestProgramId);
+    assignSource(node, psFacilityTypeId, arvProgramId);
+    if (dpmFacilityTypeCode.equalsIgnoreCase(code)) {
+      assignSource(node, ddmFacilityTypeId, mpProgramId);
+    } else if (aiFacilityTypeCode.equalsIgnoreCase(code)) {
+      assignSource(node, csFacilityTypeId, mpProgramId);
+      assignSource(node, psFacilityTypeId, mpProgramId);
+    }
+    assignHgAndHpAndHrAndHdAndOutrosAndHpsiqAndHmInCountryLevelType(node);
+  }
+
+  private void createForHcInSpecificProvinceLevel(Node node) {
+    assignWarehouseTypeDestinationForAllProgram(node);
   }
 
   private void createForWarehouse(Node node) {
-    assignSource(node, dpmFacilityTypeId, mpProgramId);
-    assignSource(node, dpmFacilityTypeId, rapidTestProgramId);
-    assignSource(node, dpmFacilityTypeId, arvProgramId);
+    UUID dpmFacilityTypeId = facilityTypeCodeToIdMap.get(dpmFacilityTypeCode);
+    UUID aiFacilityTypeId = facilityTypeCodeToIdMap.get(aiFacilityTypeCode);
+    UUID hcFacilityTypeId = facilityTypeCodeToIdMap.get(hcFacilityTypeCode);
+    assignSourceForAllProgram(node, dpmFacilityTypeId);
+    assignSourceForAllProgram(node, aiFacilityTypeId);
+    assignSourceForAllProgram(node, hcFacilityTypeId);
+  }
+
+  private void assignAiTypeDestinationForAllProgram(Node node) {
+    UUID aiFacilityTypeId = facilityTypeCodeToIdMap.get(aiFacilityTypeCode);
+    assignDestinationForAllProgram(node, aiFacilityTypeId);
+  }
+
+  private void assignWarehouseTypeDestinationForAllProgram(Node node) {
+    UUID warehouseFacilityTypeId = facilityTypeCodeToIdMap.get(warehouseFacilityTypeCode);
+    assignDestinationForAllProgram(node, warehouseFacilityTypeId);
+  }
+
+  private void assignDestinationForAllProgram(Node node, UUID facilityTypeId) {
+    assignDestination(node, facilityTypeId, mpProgramId);
+    assignDestination(node, facilityTypeId, rapidTestProgramId);
+    assignDestination(node, facilityTypeId, arvProgramId);
+  }
+
+  private void assignHgAndHpAndHrAndHdAndOutrosAndHpsiqAndHmInCountryLevelType(Node node) {
+    UUID hgFacilityTypeId = facilityTypeCodeToIdMap.get(hgFacilityTypeCode);
+    assignSourceForAllProgram(node, hgFacilityTypeId);
+    UUID hpFacilityTypeId = facilityTypeCodeToIdMap.get(hpFacilityTypeCode);
+    assignSourceForAllProgram(node, hpFacilityTypeId);
+    UUID hrFacilityTypeId = facilityTypeCodeToIdMap.get(hrFacilityTypeCode);
+    assignSourceForAllProgram(node, hrFacilityTypeId);
+    UUID hdFacilityTypeId = facilityTypeCodeToIdMap.get(hdFacilityTypeCode);
+    assignSourceForAllProgram(node, hdFacilityTypeId);
+    UUID outRosFacilityTypeId = facilityTypeCodeToIdMap.get(outrosFacilityTypeCode);
+    assignSourceForAllProgram(node, outRosFacilityTypeId);
+    UUID hpSiqFacilityTypeId = facilityTypeCodeToIdMap.get(hpsiqFacilityTypeCode);
+    assignSourceForAllProgram(node, hpSiqFacilityTypeId);
+    UUID hmFacilityTypeId = facilityTypeCodeToIdMap.get(hmFacilityTypeCode);
+    assignSourceForAllProgram(node, hmFacilityTypeId);
+  }
+
+  private void assignSourceForAllProgram(Node node, UUID facilityTypeId) {
+    assignSource(node, facilityTypeId, mpProgramId);
+    assignSource(node, facilityTypeId, rapidTestProgramId);
+    assignSource(node, facilityTypeId, arvProgramId);
   }
 
   private void assignDestination(Node node, UUID facilityTypeId, UUID programId) {
@@ -152,12 +255,8 @@ public class FcSourceDestinationService {
     RequestParameters parameters = RequestParameters.init().set(ACTIVE, true);
     List<FacilityTypeDto> facilityTypes = facilityTypeReferenceDataService.getPage(parameters)
         .getContent();
-    Map<String, UUID> facilityTypeCodeToIdMap = facilityTypes.stream()
+    facilityTypeCodeToIdMap = facilityTypes.stream()
         .collect(Collectors.toMap(FacilityTypeDto::getCode, FacilityTypeDto::getId));
-    hfFacilityTypeId = facilityTypeCodeToIdMap.get(hfFacilityTypeCode);
-    ddmFacilityTypeId = facilityTypeCodeToIdMap.get(ddmFacilityTypeCode);
-    dpmFacilityTypeId = facilityTypeCodeToIdMap.get(dpmFacilityTypeCode);
-    warehouseFacilityTypeId = facilityTypeCodeToIdMap.get(warehouseFacilityTypeCode);
     Map<String, UUID> programCodeToIdMap = programReferenceDataService.findAll().stream()
         .collect(Collectors.toMap(BasicProgramDto::getCode, BaseDto::getId));
     mpProgramId = programCodeToIdMap.get(mpProgramCode);

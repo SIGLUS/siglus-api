@@ -62,7 +62,27 @@ public class FcSourceDestinationServiceTest {
 
   private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
-  private final String hfFacilityTypeCode = "HF";
+  private final String hfFacilityTypeCode = "CS";
+
+  private final String psFacilityTypeCode = "PS";
+
+  private final String hgFacilityTypeCode = "HG";
+
+  private final String hpFacilityTypeCode = "HP";
+
+  private final String hrFacilityTypeCode = "HR";
+
+  private final String hdFacilityTypeCode = "HD";
+
+  private final String outrosFacilityTypeCode = "OUTROS";
+
+  private final String hpsiqFacilityTypeCode = "HP";
+
+  private final String hmFacilityTypeCode = "HM";
+
+  private final String hcFacilityTypeCode = "HC";
+
+  private final String aiFacilityTypeCode = "AI";
 
   private final UUID hfFacilityTypeId = UUID.randomUUID();
 
@@ -74,7 +94,7 @@ public class FcSourceDestinationServiceTest {
 
   private final UUID dpmFacilityTypeId = UUID.randomUUID();
 
-  private final String warehouseFacilityTypeCode = "WAREHOUSE";
+  private final String warehouseFacilityTypeCode = "AC";
 
   private final UUID warehouseFacilityTypeId = UUID.randomUUID();
 
@@ -92,8 +112,28 @@ public class FcSourceDestinationServiceTest {
 
   @Before
   public void prepare() {
-    ReflectionTestUtils.setField(fcSourceDestinationService, "hfFacilityTypeCode",
+    ReflectionTestUtils.setField(fcSourceDestinationService, "csFacilityTypeCode",
         hfFacilityTypeCode);
+    ReflectionTestUtils.setField(fcSourceDestinationService, "psFacilityTypeCode",
+        psFacilityTypeCode);
+    ReflectionTestUtils.setField(fcSourceDestinationService, "hgFacilityTypeCode",
+        hgFacilityTypeCode);
+    ReflectionTestUtils.setField(fcSourceDestinationService, "hpFacilityTypeCode",
+        hpFacilityTypeCode);
+    ReflectionTestUtils.setField(fcSourceDestinationService, "hrFacilityTypeCode",
+        hrFacilityTypeCode);
+    ReflectionTestUtils.setField(fcSourceDestinationService, "hdFacilityTypeCode",
+        hdFacilityTypeCode);
+    ReflectionTestUtils.setField(fcSourceDestinationService, "outrosFacilityTypeCode",
+        outrosFacilityTypeCode);
+    ReflectionTestUtils.setField(fcSourceDestinationService, "hpsiqFacilityTypeCode",
+        hpsiqFacilityTypeCode);
+    ReflectionTestUtils.setField(fcSourceDestinationService, "hmFacilityTypeCode",
+        hmFacilityTypeCode);
+    ReflectionTestUtils.setField(fcSourceDestinationService, "hcFacilityTypeCode",
+        hcFacilityTypeCode);
+    ReflectionTestUtils.setField(fcSourceDestinationService, "aiFacilityTypeCode",
+        aiFacilityTypeCode);
     ReflectionTestUtils.setField(fcSourceDestinationService, "ddmFacilityTypeCode",
         ddmFacilityTypeCode);
     ReflectionTestUtils.setField(fcSourceDestinationService, "dpmFacilityTypeCode",
@@ -113,20 +153,20 @@ public class FcSourceDestinationServiceTest {
   @Test
   public void shouldCreateSourceAndDestinationForHfFacility() {
     // given
-    List<FacilityDto> facilities = buildFacility(hfFacilityTypeId);
+    List<FacilityDto> facilities = buildFacility(hfFacilityTypeId, "CS");
 
     // when
     fcSourceDestinationService.createSourceAndDestination(facilities);
 
     // then
     verify(nodeRepository).save(any(Node.class));
-    verify(validSourceDestinationStockManagementService, times(3)).assignDestination(any());
+    verify(validSourceDestinationStockManagementService, times(6)).assignDestination(any());
   }
 
   @Test
   public void shouldCreateSourceAndDestinationForDdmFacility() {
     // given
-    List<FacilityDto> facilities = buildFacility(ddmFacilityTypeId);
+    List<FacilityDto> facilities = buildFacility(ddmFacilityTypeId, "DDM");
 
     // when
     fcSourceDestinationService.createSourceAndDestination(facilities);
@@ -134,13 +174,13 @@ public class FcSourceDestinationServiceTest {
     // then
     verify(nodeRepository).save(any(Node.class));
     verify(validSourceDestinationStockManagementService).assignDestination(any());
-    verify(validSourceDestinationStockManagementService).assignSource(any());
+    verify(validSourceDestinationStockManagementService,  times(2)).assignSource(any());
   }
 
   @Test
   public void shouldCreateSourceAndDestinationForDpmFacility() {
     // given
-    List<FacilityDto> facilities = buildFacility(dpmFacilityTypeId);
+    List<FacilityDto> facilities = buildFacility(dpmFacilityTypeId, "DPM");
 
     // when
     fcSourceDestinationService.createSourceAndDestination(facilities);
@@ -148,20 +188,20 @@ public class FcSourceDestinationServiceTest {
     // then
     verify(nodeRepository).save(any(Node.class));
     verify(validSourceDestinationStockManagementService, times(3)).assignDestination(any());
-    verify(validSourceDestinationStockManagementService, times(3)).assignSource(any());
+    verify(validSourceDestinationStockManagementService, times(26)).assignSource(any());
   }
 
   @Test
   public void shouldCreateSourceAndDestinationForWhFacility() {
     // given
-    List<FacilityDto> facilities = buildFacility(warehouseFacilityTypeId);
+    List<FacilityDto> facilities = buildFacility(warehouseFacilityTypeId, "AC");
 
     // when
     fcSourceDestinationService.createSourceAndDestination(facilities);
 
     // then
     verify(nodeRepository).save(any(Node.class));
-    verify(validSourceDestinationStockManagementService, times(3)).assignSource(any());
+    verify(validSourceDestinationStockManagementService, times(9)).assignSource(any());
   }
 
   private void mockFacilityType() {
@@ -196,9 +236,10 @@ public class FcSourceDestinationServiceTest {
         .thenReturn(newArrayList(arvProgram, mpProgram, rapidTestProgram));
   }
 
-  private List<FacilityDto> buildFacility(UUID facilityTypeId) {
+  private List<FacilityDto> buildFacility(UUID facilityTypeId, String typeCode) {
     FacilityTypeDto facilityType = new FacilityTypeDto();
     facilityType.setId(facilityTypeId);
+    facilityType.setCode(typeCode);
     FacilityDto facility = new FacilityDto();
     facility.setType(facilityType);
     return newArrayList(facility);
