@@ -45,12 +45,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 @RunWith(MockitoJUnitRunner.class)
-public class NotificationControllerTest {
+public class SiglusNotificationControllerTest {
 
   private static final int PAGE_NO = 0;
 
   @InjectMocks
-  private NotificationController controller;
+  private SiglusNotificationController controller;
 
   @Mock
   private SiglusNotificationService service;

@@ -89,7 +89,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.OrderLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.siglus.siglusapi.web.SiglusStockCardSummariesSiglusController;
+import org.siglus.siglusapi.web.SiglusStockCardSummariesController;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -125,7 +125,7 @@ public class SiglusOrderServiceTest {
   private SiglusArchiveProductService siglusArchiveProductService;
 
   @Mock
-  private SiglusStockCardSummariesSiglusController siglusStockCardSummariesSiglusController;
+  private SiglusStockCardSummariesController siglusStockCardSummariesController;
 
   @Mock
   private SiglusStockCardSummariesService siglusStockCardSummariesService;

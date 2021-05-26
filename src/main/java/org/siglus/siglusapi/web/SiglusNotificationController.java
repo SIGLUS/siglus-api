@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/siglusapi/notifications")
 @AllArgsConstructor
-public class NotificationController {
+public class SiglusNotificationController {
 
   private static final int ALWAYS_FETCH_FIRST_PAGE = 0;
 

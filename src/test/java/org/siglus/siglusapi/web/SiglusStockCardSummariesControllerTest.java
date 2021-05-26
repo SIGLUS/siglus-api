@@ -15,32 +15,35 @@
 
 package org.siglus.siglusapi.web;
 
-import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import static org.mockito.Mockito.verify;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
-@RestController
-@RequestMapping("/api/siglusapi/stockCardSummaries")
-public class SiglusStockCardSummariesSiglusController {
+@RunWith(MockitoJUnitRunner.class)
+public class SiglusStockCardSummariesControllerTest {
 
-  @Autowired
-  private SiglusStockCardSummariesService stockCardSummariesSiglusService;
+  @InjectMocks
+  private SiglusStockCardSummariesController controller;
 
-  @GetMapping
-  public Page<StockCardSummaryV2Dto> searchStockCardSummaries(
-      @RequestParam MultiValueMap<String, String> parameters,
-      @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
+  @Mock
+  private SiglusStockCardSummariesService service;
 
-    return stockCardSummariesSiglusService
-        .searchStockCardSummaryV2Dtos(parameters, pageable);
+  @Test
+  public void shouldCallServiceAndBuilderWhenSearchStockCardSummaries() {
+    MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+    controller.searchStockCardSummaries(parameters, pageable);
+
+    verify(service).searchStockCardSummaryV2Dtos(parameters, pageable);
   }
 
 }
