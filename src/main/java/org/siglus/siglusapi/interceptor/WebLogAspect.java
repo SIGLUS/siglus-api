@@ -18,10 +18,12 @@ package org.siglus.siglusapi.interceptor;
 import java.util.Arrays;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.siglus.common.dto.android.AndroidHeaderDto;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -30,6 +32,14 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Component
 @Slf4j
 public class WebLogAspect {
+
+  private static final String USER_NAME = "UserName";
+  private static final String FACILITY_CODE = "FacilityCode";
+  private static final String FACILITY_NAME = "FacilityName";
+  private static final String UNIQUE_ID = "UniqueId";
+  private static final String DEVICE_INFO = "DeviceInfo";
+  private static final String VERSION_CODE = "VersionCode";
+  private static final String ANDROID_SDK_VERSION = "AndroidSDKVersion";
 
   @Pointcut("within(org.siglus.siglusapi.web.*)")
   public void webLog() {
@@ -45,18 +55,36 @@ public class WebLogAspect {
     String method = request.getMethod();
     String url = request.getRequestURL().toString();
     String body = Arrays.toString(joinPoint.getArgs());
-
-    log.info("[API_START] {} {}, body: {}", method, url, body);
-
-    Object result = joinPoint.proceed();
-
-    long costTime = System.currentTimeMillis() - startTime;
-    if (costTime >= 5000) {
-      log.info("[API_FINISH] {} {}, cost: {}ms, slow!", method, url, costTime);
+    if (isAndroid(request)) {
+      AndroidHeaderDto androidHeader = getAndroidHeader(request);
+      log.info("[Android_API_START] {} {}, header: {}, body: {}", method, url, androidHeader, body);
     } else {
-      log.info("[API_FINISH] {} {}, cost: {}ms", method, url, costTime);
+      log.info("[API_START] {} {}, body: {}", method, url, body);
+    }
+    Object result = joinPoint.proceed();
+    long costTime = System.currentTimeMillis() - startTime;
+    if (isAndroid(request)) {
+      log.info("[Android_API_FINISH] {} {}, cost-time: {}ms", method, url, costTime);
+    } else {
+      log.info("[API_FINISH] {} {}, cost-time: {}ms", method, url, costTime);
     }
     return result;
+  }
+
+  private AndroidHeaderDto getAndroidHeader(HttpServletRequest request) {
+    return AndroidHeaderDto.builder()
+        .username(request.getHeader(USER_NAME))
+        .facilityCode(request.getHeader(FACILITY_CODE))
+        .facilityName(request.getHeader(FACILITY_NAME))
+        .uniqueId(request.getHeader(UNIQUE_ID))
+        .deviceInfo(request.getHeader(DEVICE_INFO))
+        .versionCode(request.getHeader(VERSION_CODE))
+        .androidSdkVersion(request.getHeader(ANDROID_SDK_VERSION))
+        .build();
+  }
+
+  private boolean isAndroid(HttpServletRequest request) {
+    return StringUtils.isNotEmpty(request.getHeader(FACILITY_CODE));
   }
 
 }
