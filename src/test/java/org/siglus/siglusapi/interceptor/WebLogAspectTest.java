@@ -16,11 +16,9 @@
 package org.siglus.siglusapi.interceptor;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import javax.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.Before;
@@ -48,19 +46,48 @@ public class WebLogAspectTest {
   }
 
   @Test
-  public void around() throws Throwable {
-    HttpServletRequest request = new MockHttpServletRequest("GET",
+  public void should_record_web_log_when_request_from_website() throws Throwable {
+    // given
+    MockHttpServletRequest request = new MockHttpServletRequest("GET",
         "/api/siglusapi/requisitions/initiate");
     ServletRequestAttributes attributes = new ServletWebRequest(request);
     RequestContextHolder.setRequestAttributes(attributes);
     ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
     MethodSignature signature = mock(MethodSignature.class);
 
+    // when
+    when(joinPoint.getTarget()).thenReturn(controller);
+    when(joinPoint.getSignature()).thenReturn(signature);
+    webLogAspect.around(joinPoint);
+
+    // then
+    verify(joinPoint).proceed();
+  }
+
+  @Test
+  public void should_record_android_log_when_request_from_android() throws Throwable {
+    // given
+    MockHttpServletRequest request = new MockHttpServletRequest("GET",
+        "/api/siglusapi/android/requisitions");
+    request.addHeader("UserName", "CS_Moine_Role1");
+    request.addHeader("FacilityCode", "01080904");
+    request.addHeader("FacilityName", "Centro de Saude de Chiunze");
+    request.addHeader("UniqueId", "ac36c07a09f2fdca");
+    request.addHeader("DeviceInfo",
+        "OS: 9 Model: google Android SDK built for x86versionCode:87.1");
+    request.addHeader("VersionCode", "87");
+    request.addHeader("AndroidSDKVersion", "28");
+    ServletRequestAttributes attributes = new ServletWebRequest(request);
+    RequestContextHolder.setRequestAttributes(attributes);
+    ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
+    MethodSignature signature = mock(MethodSignature.class);
     when(joinPoint.getTarget()).thenReturn(controller);
     when(joinPoint.getSignature()).thenReturn(signature);
 
+    // when
     webLogAspect.around(joinPoint);
 
-    verify(joinPoint, times(1)).proceed();
+    // then
+    verify(joinPoint).proceed();
   }
 }
