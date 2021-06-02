@@ -5,6 +5,7 @@ pipeline {
         timestamps ()
     }
     parameters {
+        string(name: 'DEPLOY_INTEG', defaultValue: 'YES')
         string(name: 'DEPLOY_UAT', defaultValue: 'YES')
         string(name: 'DEPLOY_PROD', defaultValue: 'YES')
     }
@@ -25,7 +26,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONARQUBE_TOKEN')]) {
                     sh '''
                         if [ "$GIT_BRANCH" = "master" ]; then
-                            ./gradlew sonarqube -x test -Dsonar.projectKey=siglus-api -Dsonar.host.url=http://10.0.0.91:9000 -Dsonar.login=$SONARQUBE_TOKEN
+                            ./gradlew sonarqube -x test -Dsonar.projectKey=siglus-api -Dsonar.host.url=http://localhost:9000 -Dsonar.login=$SONARQUBE_TOKEN
                         fi
                     '''
                 }
@@ -57,9 +58,32 @@ pipeline {
                 deploy "qa"
             }
         }
+        stage('Approval of deploy to Integ') {
+            when {
+                branch 'master'
+            }
+            steps {
+                script {
+                    try {
+                        timeout (time: 5, unit: "MINUTES") {
+                            input message: "Do you want to proceed for Integ deployment?"
+                        }
+                    }
+                    catch (error) {
+                        if ("${error}".startsWith('org.jenkinsci.plugins.workflow.steps.FlowInterruptedException')) {
+                            currentBuild.result = "SUCCESS" // Build was aborted
+                        }
+                        env.DEPLOY_INTEG = 'NO'
+                    }
+                }
+            }
+        }
         stage('Deploy To Integ') {
             when {
-                branch 'release'
+                allOf{
+                    branch 'master'
+                    environment name: 'DEPLOY_INTEG', value: 'YES'
+                }
             }
             steps {
                 deploy "integ"
