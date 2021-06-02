@@ -32,6 +32,7 @@ public class RegimenDto extends BaseDto {
   private Boolean isCustom;
   private Integer displayOrder;
   private UUID programId;
+  private UUID realProgramId;
 
   private RegimenCategoryDto regimenCategory;
 

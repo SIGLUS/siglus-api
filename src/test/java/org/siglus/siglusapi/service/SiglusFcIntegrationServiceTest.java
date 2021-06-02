@@ -24,6 +24,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +66,7 @@ import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
+import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
@@ -78,6 +80,7 @@ import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
+import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -150,6 +153,9 @@ public class SiglusFcIntegrationServiceTest {
   private OrderExternalRepository orderExternalRepository;
 
   @Mock
+  private ProgramRealProgramRepository programRealProgramRepository;
+
+  @Mock
   private PodExtensionRepository podExtensionRepository;
 
   private UUID dpmFacilityTypeId = UUID.randomUUID();
@@ -185,6 +191,8 @@ public class SiglusFcIntegrationServiceTest {
   private UUID lotId = UUID.randomUUID();
 
   private UUID rejectionReasonId = UUID.randomUUID();
+
+  private UUID realProgramId = UUID.randomUUID();
 
   private String reasonName = "Debit";
 
@@ -271,6 +279,7 @@ public class SiglusFcIntegrationServiceTest {
     mockRequisitionMap();
     mockLotMap();
     mockReasonMap();
+    mockRealProgram();
   }
 
   @Test
@@ -278,7 +287,6 @@ public class SiglusFcIntegrationServiceTest {
     // when
     Page<FcRequisitionDto> fcRequisitionDtos = siglusFcIntegrationService
         .searchRequisitions(date, pageable);
-
     // then
     assertEquals(1, fcRequisitionDtos.getContent().size());
     FcRequisitionDto fcRequisitionDto = fcRequisitionDtos.getContent().get(0);
@@ -458,6 +466,7 @@ public class SiglusFcIntegrationServiceTest {
 
   private void mockRegimenInfo() {
     RegimenDto regimenDto = new RegimenDto();
+    regimenDto.setRealProgramId(realProgramId);
     regimenDto.setCode("regimenCode");
     regimenDto.setFullProductName("regimenName");
     Map<UUID, RegimenDto> regimenDtoMap = newHashMap();
@@ -543,4 +552,23 @@ public class SiglusFcIntegrationServiceTest {
     when(stockCardLineItemReasonRepository
         .findByReasonTypeIn(any())).thenReturn(newArrayList(reason));
   }
+
+  private void mockRealProgram() {
+    when(programRealProgramRepository.findAll()).thenReturn(
+        Collections.singletonList(
+            mockRealProgram(realProgramId, "PT", "ptv",
+                "PTV", true)));
+  }
+
+  private ProgramRealProgram mockRealProgram(UUID id, String code, String programCode,
+      String name, boolean active) {
+    ProgramRealProgram program = new ProgramRealProgram();
+    program.setId(id);
+    program.setRealProgramCode(code);
+    program.setRealProgramName(name);
+    program.setProgramCode(programCode);
+    program.setActive(active);
+    return program;
+  }
+
 }

@@ -20,6 +20,7 @@ import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
+import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +34,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.requisition.domain.RequisitionTemplateColumn;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
@@ -56,6 +58,8 @@ import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
+import org.siglus.siglusapi.domain.ProgramRealProgram;
+import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryProductDto;
@@ -63,12 +67,14 @@ import org.siglus.siglusapi.dto.FcRequisitionDto;
 import org.siglus.siglusapi.dto.FcRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.ProofOfDeliverParameter;
 import org.siglus.siglusapi.dto.RealProgramDto;
+import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
+import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -92,6 +98,9 @@ public class SiglusFcIntegrationService {
 
   @Autowired
   private SiglusRequisitionRepository siglusRequisitionRepository;
+
+  @Autowired
+  private ProgramRealProgramRepository programRealProgramRepository;
 
   @Autowired
   private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
@@ -150,6 +159,11 @@ public class SiglusFcIntegrationService {
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
+  private Map<UUID, ProgramRealProgram> realProgramIdToEntityMap;
+
+  private Map<String, String> fcMaps = ImmutableMap.of("Farmácia Comunitária",
+      "comunitaryPharmacy", "Total Pacientes", "patientsOnTreatment");
+
   public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {
     Set<UUID> dpmSupervisoryNodeIds = supervisoryNodeRepository
         .findAllByFacilityTypeId(dpmFacilityTypeId).stream().map(SupervisoryNode::getId)
@@ -167,8 +181,10 @@ public class SiglusFcIntegrationService {
           fcSupervisoryNodeIds, pageable);
     }
     List<FcRequisitionDto> fcRequisitionDtos = newArrayList();
+    realProgramIdToEntityMap = programRealProgramRepository.findAll().stream().collect(
+        Collectors.toMap(ProgramRealProgram::getId, Function.identity()));
     requisitions.getContent().forEach(requisition -> fcRequisitionDtos.add(buildDto(requisition,
-        fcSupervisoryNodeIds)));
+        fcSupervisoryNodeIds, realProgramIdToEntityMap)));
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
   }
 
@@ -234,8 +250,8 @@ public class SiglusFcIntegrationService {
         .collect(toMap(OrderableDto::getId, Function.identity()));
     Map<UUID, ProgramOrderablesExtension> orderableIdToProgramMap =
         programOrderablesExtensionRepository.findAllByOrderableIdIn(orderableIds)
-        .stream()
-        .collect(toMap(ProgramOrderablesExtension::getOrderableId, Function.identity()));
+            .stream()
+            .collect(toMap(ProgramOrderablesExtension::getOrderableId, Function.identity()));
     Map<UUID, LotDto> lotIdToLotMap = siglusLotReferenceDataService.findAll()
         .stream().collect(toMap(LotDto::getId, Function.identity()));
     Map<UUID, String> reasonIdToReasonMap = stockCardLineItemReasonRepository
@@ -317,7 +333,8 @@ public class SiglusFcIntegrationService {
   }
 
 
-  private FcRequisitionDto buildDto(Requisition requisition, Set<UUID> fcSupervisoryNodeIds) {
+  private FcRequisitionDto buildDto(Requisition requisition, Set<UUID> fcSupervisoryNodeIds,
+      Map<UUID, ProgramRealProgram> realProgramMap) {
     FcRequisitionDto fcRequisitionDto = new FcRequisitionDto();
     BeanUtils.copyProperties(requisition, fcRequisitionDto);
     fcRequisitionDto.setRequisitionNumber(
@@ -326,11 +343,12 @@ public class SiglusFcIntegrationService {
     setProgramInfo(requisition.getProgramId(), fcRequisitionDto);
     setPeriodInfo(requisition.getProcessingPeriodId(), fcRequisitionDto);
     setProductInfo(requisition.getNonSkippedRequisitionLineItems(), fcRequisitionDto);
-    setRegimenInfo(requisition, fcRequisitionDto);
+    setRegimenInfo(requisition, fcRequisitionDto, realProgramMap);
     return fcRequisitionDto;
   }
 
-  private void setRegimenInfo(Requisition requisition, FcRequisitionDto fcRequisitionDto) {
+  private void setRegimenInfo(Requisition requisition, FcRequisitionDto fcRequisitionDto,
+      Map<UUID, ProgramRealProgram> realProgramMap) {
     RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
         .findByRequisitionTemplateId(requisition.getTemplate().getId());
     if (Boolean.FALSE.equals(templateExtension.getEnableRegimen())) {
@@ -355,10 +373,18 @@ public class SiglusFcIntegrationService {
         .forEach(regimenLineItem -> {
           Map<String, Object> regimenMap = newHashMap();
           regimens.add(regimenMap);
-          regimenMap.put("code", regimenLineItem.getRegimen().getCode());
-          regimenMap.put("name", regimenLineItem.getRegimen().getFullProductName());
-          regimenLineItem.getColumns().forEach((key, value) ->
-              regimenMap.put(regimenLabelMap.get(key), value.getValue()));
+          RegimenDto regimenDto = regimenLineItem.getRegimen();
+          ProgramRealProgram realProgram = realProgramMap.get(regimenDto.getRealProgramId());
+          regimenMap.put("code", regimenDto.getCode());
+          regimenMap.put("name", regimenDto.getFullProductName());
+          regimenMap.put("programCode", realProgram.getRealProgramCode());
+          regimenMap.put("programName", realProgram.getRealProgramName());
+          regimenLineItem.getColumns().forEach((key, value) -> {
+            String regimenLabel = regimenLabelMap.get(key);
+            String regimenFcLabel = fcMaps.containsKey(regimenLabel) ? fcMaps.get(regimenLabel)
+                : regimenLabel;
+            regimenMap.put(regimenFcLabel, value.getValue());
+          });
         });
     fcRequisitionDto.setRegimens(regimens);
   }
