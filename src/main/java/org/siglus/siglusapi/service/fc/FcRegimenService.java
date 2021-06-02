@@ -83,21 +83,27 @@ public class FcRegimenService {
       dtos.stream()
           .filter(RegimenDto::isActive)
           .forEach(dto -> {
-            UUID dtoProgramId = codeToProgramIdMap
-                .get(codeToProgramMap.get(dto.getAreaCode()).getProgramCode());
+            ProgramRealProgram realProgram = codeToProgramMap.get(dto.getAreaCode());
+            if (realProgram == null) {
+              log.error("[FC] unknown real program code: {}", dto.getAreaCode());
+              return;
+            }
+            UUID realProgramId = realProgram.getId();
+            UUID dtoProgramId = codeToProgramIdMap.get(realProgram.getProgramCode());
             if (dtoProgramId == null) {
               log.error("[FC] unknown program code: {}", dto.getAreaCode());
               return;
             }
             Regimen regimen = codeToRegimenMap.get(dto.getCode());
             if (regimen != null) {
-              if (isDifferent(regimen, dto, dtoProgramId)) {
-                regimensToUpdate.add(merge(regimen, dto, dtoProgramId, codeToCategoryMap));
+              if (isDifferent(regimen, dto, realProgram.getId())) {
+                regimensToUpdate.add(merge(regimen, dto, realProgramId, dtoProgramId,
+                    codeToCategoryMap));
               }
               return;
             }
 
-            regimensToUpdate.add(Regimen.from(dto, dtoProgramId,
+            regimensToUpdate.add(Regimen.from(dto, realProgramId, dtoProgramId,
                 getRegimenCategory(dto, codeToCategoryMap),
                 maxRegimenDisplayOrder.incrementAndGet()));
           });
@@ -111,14 +117,15 @@ public class FcRegimenService {
     }
   }
 
-  private boolean isDifferent(Regimen regimen, RegimenDto dto, UUID dtoProgramId) {
+  private boolean isDifferent(Regimen regimen, RegimenDto dto, UUID realProgramId) {
     return !regimen.getName().equals(dto.getDescription())
-        || !regimen.getProgramId().equals(dtoProgramId) || !isCategoryEquivalent(regimen, dto);
+        || !regimen.getRealProgramId().equals(realProgramId) || !isCategoryEquivalent(regimen, dto);
   }
 
-  private Regimen merge(Regimen regimen, RegimenDto dto, UUID dtoProgramId,
+  private Regimen merge(Regimen regimen, RegimenDto dto, UUID realProgramId, UUID dtoProgramId,
       Map<String, RegimenCategory> codeToCategoryMap) {
     regimen.setName(dto.getDescription());
+    regimen.setRealProgramId(realProgramId);
     regimen.setProgramId(dtoProgramId);
     regimen.setRegimenCategory(getRegimenCategory(dto, codeToCategoryMap));
     return regimen;
