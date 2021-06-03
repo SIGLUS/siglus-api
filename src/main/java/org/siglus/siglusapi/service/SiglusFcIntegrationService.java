@@ -379,8 +379,7 @@ public class SiglusFcIntegrationService {
           regimenMap.put("programName", realProgram.getRealProgramName());
           regimenLineItem.getColumns().forEach((key, value) -> {
             String regimenLabel = regimenLabelMap.get(key);
-            String regimenFcLabel = fcMaps.containsKey(regimenLabel) ? fcMaps.get(regimenLabel)
-                : regimenLabel;
+            String regimenFcLabel = fcMaps.getOrDefault(regimenLabel, regimenLabel);
             regimenMap.put(regimenFcLabel, value.getValue());
           });
         });
