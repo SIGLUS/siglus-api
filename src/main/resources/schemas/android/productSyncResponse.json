@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "The response for a single product for android device",
+  "properties": {
+    "lastSyncTime": {
+      "type": "integer"
+    },
+    "products": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "product.json"
+      }
+    }
+  }
+}
