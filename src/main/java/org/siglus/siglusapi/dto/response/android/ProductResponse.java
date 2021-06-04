@@ -17,7 +17,11 @@ package org.siglus.siglusapi.dto.response.android;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.Data;
+import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 
 @Data
 public class ProductResponse {
@@ -30,10 +34,31 @@ public class ProductResponse {
   private Long packRoundingThreshold;
   private Boolean roundToZero;
   private String programCode;
+  private Boolean isKit;
   private List<ProductChildResponse> children = Collections.emptyList();
   private Boolean isBasic;
-  private Boolean isKit;
   private Boolean isNos;
   private Boolean isHiv;
   private String lastUpdated;
+
+  public static ProductResponse fromOrderable(OrderableDto orderable,
+      Map<UUID, OrderableDto> productMap) {
+    ProductResponse resp = new ProductResponse();
+    resp.setProductCode(orderable.getProductCode());
+    resp.setFullProductName(orderable.getFullProductName());
+    resp.setDescription(orderable.getDescription());
+    resp.setNetContent(orderable.getNetContent());
+    resp.setPackRoundingThreshold(orderable.getPackRoundingThreshold());
+    resp.setRoundToZero(orderable.getRoundToZero());
+    resp.setProgramCode(orderable.getExtraData().get("programCode"));
+    resp.setChildren(orderable.getChildren().stream()
+        .map(child -> ProductChildResponse.fromOrderableChild(child, productMap))
+        .collect(Collectors.toList()));
+    resp.setIsKit(!orderable.getChildren().isEmpty());
+    resp.setIsBasic(Boolean.parseBoolean(orderable.getExtraData().get("isBasic")));
+    resp.setIsHiv(Boolean.parseBoolean(orderable.getExtraData().get("isHiv")));
+    resp.setIsNos(Boolean.parseBoolean(orderable.getExtraData().get("isNos")));
+    resp.setLastUpdated(orderable.getMeta().getLastUpdated().toInstant().toString());
+    return resp;
+  }
 }
