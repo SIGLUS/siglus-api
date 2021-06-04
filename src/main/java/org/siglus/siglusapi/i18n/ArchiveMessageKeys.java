@@ -29,12 +29,6 @@ public class ArchiveMessageKeys extends MessageKeys {
   public static final String ERROR_ARCHIVE_SOH_SHOULD_BE_ZERO = ERROR_ARCHIVE_PREFIX
       + ".stockOnHand.should.be.zero";
 
-  public static final String ERROR_ARCHIVE_PRODUCT_NOT_FOUND = ERROR_ARCHIVE_PREFIX
-      + ".archivedProduct.notFound";
-
   public static final String ERROR_ARCHIVE_ALREADY_ARCHIVED = ERROR_ARCHIVE_PREFIX
       + ".already.archived";
-
-  public static final String ERROR_ARCHIVE_ALREADY_ACTIVATED = ERROR_ARCHIVE_PREFIX
-      + ".already.activated";
 }

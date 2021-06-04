@@ -16,10 +16,12 @@
 package org.siglus.siglusapi.service.android;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +37,7 @@ import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.response.android.FacilityResponse;
+import org.siglus.siglusapi.service.SiglusArchiveProductService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusMeServiceTest {
@@ -46,15 +49,18 @@ public class SiglusMeServiceTest {
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   @Mock
+  private SiglusArchiveProductService siglusArchiveProductService;
+
+  @Mock
   private SiglusAuthenticationHelper authenticationHelper;
 
-  private String facilityCode = "facilityCode";
+  private final String facilityCode = "facilityCode";
 
-  private String facilityName = "facilityName";
+  private final String facilityName = "facilityName";
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
-  private List<SupportedProgramDto> programDtos = new ArrayList<>();
+  private final List<SupportedProgramDto> programDtos = new ArrayList<>();
 
   @Before
   public void setUp() {
@@ -78,6 +84,18 @@ public class SiglusMeServiceTest {
 
     // then
     assertEquals(programDtos.get(0).getCode(),response.getSupportedPrograms().get(0).getCode());
+  }
+
+  @Test
+  public void shouldCallaArchiveProductServiceWhenDoArchive() {
+    // given
+    List<String> productCodes = Arrays.asList("product1", "product2", "product3");
+
+    // when
+    service.archiveAllProducts(productCodes);
+
+    // then
+    verify(siglusArchiveProductService).archiveAllProducts(facilityId, productCodes);
   }
 
   private SupportedProgramDto getSupportedProgramDto() {

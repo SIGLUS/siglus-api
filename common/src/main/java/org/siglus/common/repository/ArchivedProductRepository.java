@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.siglus.common.domain.ArchivedProduct;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -35,5 +36,10 @@ public interface ArchivedProductRepository extends JpaRepository<ArchivedProduct
       + "from siglusintegration.archived_products "
       + "where facilityid in (:facilityIds)", nativeQuery = true)
   Set<String> findArchivedProductsByFacilityIds(@Param("facilityIds") Set<UUID> facilityIds);
+
+  @Modifying
+  @Query(value = "delete from siglusintegration.archived_products where facilityid = :facilityId",
+      nativeQuery = true)
+  void deleteAllArchivedProductsByFacilityId(@Param("facilityId") UUID facilityId);
 
 }

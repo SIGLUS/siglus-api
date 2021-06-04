@@ -16,11 +16,14 @@
 package org.siglus.siglusapi.web.android;
 
 import java.time.Instant;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.response.android.FacilityResponse;
 import org.siglus.siglusapi.dto.response.android.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,4 +45,10 @@ public class SiglusMeController {
   public FacilityResponse getFacility() {
     return service.getFacility();
   }
+
+  @PostMapping("/facility/archivedProducts")
+  public void archiveAllProducts(@RequestBody List<String> productCodes) {
+    service.archiveAllProducts(productCodes);
+  }
+
 }

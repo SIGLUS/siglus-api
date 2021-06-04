@@ -28,6 +28,7 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.response.android.FacilityResponse;
 import org.siglus.siglusapi.dto.response.android.ProductSyncResponse;
 import org.siglus.siglusapi.dto.response.android.ProgramResponse;
+import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +41,9 @@ public class SiglusMeService {
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
 
+  @Autowired
+  private SiglusArchiveProductService siglusArchiveProductService;
+
   public ProductSyncResponse getFacilityProducts(Instant lastSyncTime) {
     return new ProductSyncResponse();
   }
@@ -50,19 +54,22 @@ public class SiglusMeService {
     FacilityDto facilityDto = facilityReferenceDataService.getFacilityById(homeFacilityId);
     List<SupportedProgramDto> programs = facilityDto.getSupportedPrograms();
     List<ProgramResponse> programResponses = programs.stream().map(program ->
-        ProgramResponse
-                .builder()
-                .code(program.getCode())
-                .name(program.getName())
-                .supportActive(program.isSupportActive())
-                .supportStartDate(program.getSupportStartDate())
-                .build()
-        ).collect(Collectors.toList());
-    FacilityResponse facilityResponse = FacilityResponse.builder()
-            .code(facilityDto.getCode())
-            .name(facilityDto.getName())
-            .supportedPrograms(programResponses)
-            .build();
-    return facilityResponse;
+        ProgramResponse.builder()
+            .code(program.getCode())
+            .name(program.getName())
+            .supportActive(program.isSupportActive())
+            .supportStartDate(program.getSupportStartDate())
+            .build()
+    ).collect(Collectors.toList());
+    return FacilityResponse.builder()
+        .code(facilityDto.getCode())
+        .name(facilityDto.getName())
+        .supportedPrograms(programResponses)
+        .build();
+  }
+
+  public void archiveAllProducts(List<String> productCodes) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    siglusArchiveProductService.archiveAllProducts(facilityId, productCodes);
   }
 }

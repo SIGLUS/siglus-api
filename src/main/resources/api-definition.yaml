@@ -107,6 +107,7 @@ schemas:
   - proofOfDeliveryPage: !include schemas/proofOfDeliveryPage.json
   - productSyncResponse: !include schemas/android/productSyncResponse.json
   - facilityResponse:  !include schemas/android/facilityResponse.json
+  - archivedProductCode: !include schemas/android/archivedProductCode.json
 
 resourceTypes:
   - collection:
@@ -2274,3 +2275,15 @@ traits:
                 body:
                   application/json:
                     schema: productSyncResponse
+
+        /archivedProducts:
+          displayName: Archived products of the current facility
+          post:
+            is: [ secured ]
+            description: Archive products of the current facility by product codes
+            body:
+              application/json:
+                schema: archivedProductCode
+            responses:
+              204:
+                description: Full update archived products of current facility

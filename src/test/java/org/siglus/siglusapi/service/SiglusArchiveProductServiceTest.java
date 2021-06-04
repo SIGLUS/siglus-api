@@ -30,6 +30,7 @@ import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_CANNOT_
 import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_SOH_SHOULD_BE_ZERO;
 
 import com.google.common.collect.Sets;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
@@ -56,6 +57,7 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
 import org.openlmis.stockmanagement.testutils.StockCardDataBuilder;
 import org.siglus.common.domain.ArchivedProduct;
+import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
@@ -85,6 +87,9 @@ public class SiglusArchiveProductServiceTest {
 
   @Mock
   private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+
+  @Mock
+  private SiglusOrderableService siglusOrderableService;
 
   @Mock
   private StockManagementDraftRepository stockManagementDraftRepository;
@@ -196,6 +201,46 @@ public class SiglusArchiveProductServiceTest {
     // then
     verify(archivedProductRepository).save(archivedProductArgumentCaptor.capture());
     assertNotNull(archivedProductArgumentCaptor.getValue());
+  }
+
+  @Test
+  public void shouldArchive2TimesWhenArchived2Products() {
+    // given
+    OrderableDto orderableDto1 = new OrderableDto();
+    OrderableDto orderableDto2 = new OrderableDto();
+    UUID orderableId1 = UUID.randomUUID();
+    UUID orderableId2 = UUID.randomUUID();
+    orderableDto1.setId(orderableId1);
+    orderableDto2.setId(orderableId2);
+    when(siglusOrderableService.getOrderableByCode("product1")).thenReturn(orderableDto1);
+    when(siglusOrderableService.getOrderableByCode("product2")).thenReturn(orderableDto2);
+    StockCard stockCard1 = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId1)
+        .build();
+    StockCard stockCard2 = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId2)
+        .build();
+    calculatedStockOnHandService.fetchCurrentStockOnHand(stockCard1);
+    calculatedStockOnHandService.fetchCurrentStockOnHand(stockCard2);
+    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId1)).thenReturn(
+        singletonList(stockCard1));
+    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId2)).thenReturn(
+        singletonList(stockCard2));
+    when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId1))
+        .thenReturn(null);
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId2))
+        .thenReturn(null);
+    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
+        .thenReturn(null);
+    when(stockManagementDraftRepository.findByFacilityId(facilityId)).thenReturn(null);
+    when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
+        .thenReturn(null);
+
+    // when
+    archiveProductService.archiveAllProducts(facilityId, Arrays.asList("product1", "product2"));
+
+    // then
+    verify(archivedProductRepository).deleteAllArchivedProductsByFacilityId(facilityId);
+    verify(archivedProductRepository, times(2)).save(archivedProductArgumentCaptor.capture());
   }
 
   @Test

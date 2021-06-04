@@ -59,6 +59,9 @@ public class SiglusArchiveProductService {
   private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
 
   @Autowired
+  private SiglusOrderableService siglusOrderableService;
+
+  @Autowired
   private StockCardRepository stockCardRepository;
 
   @Autowired
@@ -73,30 +76,37 @@ public class SiglusArchiveProductService {
   @Transactional
   public void archiveProduct(UUID facilityId, UUID orderableId) {
     Set<UUID> orderablesInKit = unpackService.orderablesInKit();
+    String errorInfo = ", facilityId: " + facilityId + ", orderableId: " + orderableId;
     if (orderablesInKit.contains(orderableId)) {
       throw new ValidationMessageException(
-          new Message(ERROR_ARCHIVE_CANNOT_ARCHIVE_ORDERABLE_IN_KIT));
+          new Message(ERROR_ARCHIVE_CANNOT_ARCHIVE_ORDERABLE_IN_KIT) + errorInfo);
+
     }
     List<StockCard> stockCards = stockCardRepository
         .findByFacilityIdAndOrderableId(facilityId, orderableId);
     stockCards.forEach(stockCard -> {
       calculatedStockOnHandService.fetchCurrentStockOnHand(stockCard);
       if (0 != stockCard.getStockOnHand()) {
-        throw new ValidationMessageException(new Message(ERROR_ARCHIVE_SOH_SHOULD_BE_ZERO));
+        throw new ValidationMessageException(
+            new Message(ERROR_ARCHIVE_SOH_SHOULD_BE_ZERO) + errorInfo);
       }
     });
     ArchivedProduct archivedProduct = archivedProductRepository
         .findByFacilityIdAndOrderableId(facilityId, orderableId);
     if (archivedProduct != null) {
-      throw new ValidationMessageException(new Message(ERROR_ARCHIVE_ALREADY_ARCHIVED));
+      throw new ValidationMessageException(new Message(ERROR_ARCHIVE_ALREADY_ARCHIVED) + errorInfo);
     }
-    ArchivedProduct newArchivedProduct = ArchivedProduct.builder().facilityId(facilityId)
-        .orderableId(orderableId).build();
-    log.info("archive product, facilityId: {}, orderableId: {}", facilityId, orderableId);
-    archivedProductRepository.save(newArchivedProduct);
+    doArchiveProduct(facilityId, orderableId);
     deleteArchivedItemInPhysicalInventoryDraft(facilityId, orderableId);
     deleteArchivedItemInStockManagementDraft(facilityId, orderableId);
     deleteArchivedItemInRequisitionDraft(facilityId, orderableId);
+  }
+
+  @Transactional
+  public void archiveAllProducts(UUID facilityId, List<String> productCodes) {
+    log.info("delete all archived products in facility: {}", facilityId);
+    archivedProductRepository.deleteAllArchivedProductsByFacilityId(facilityId);
+    getProductIds(productCodes).forEach(orderableId -> archiveProduct(facilityId, orderableId));
   }
 
   @Transactional
@@ -120,6 +130,21 @@ public class SiglusArchiveProductService {
     ArchivedProduct archivedProduct = archivedProductRepository
         .findByFacilityIdAndOrderableId(stockCard.getFacilityId(), stockCard.getOrderableId());
     return archivedProduct != null;
+  }
+
+  public Set<String> searchArchivedProductsByFacilityId(UUID facilityId) {
+    return archivedProductRepository.findArchivedProductsByFacilityId(facilityId);
+  }
+
+  public Set<String> searchArchivedProductsByFacilityIds(Set<UUID> facilityIds) {
+    return archivedProductRepository.findArchivedProductsByFacilityIds(facilityIds);
+  }
+
+  private void doArchiveProduct(UUID facilityId, UUID orderableId) {
+    ArchivedProduct newArchivedProduct = ArchivedProduct.builder().facilityId(facilityId)
+        .orderableId(orderableId).build();
+    log.info("archive product, facilityId: {}, orderableId: {}", facilityId, orderableId);
+    archivedProductRepository.save(newArchivedProduct);
   }
 
   private void deleteArchivedItemInPhysicalInventoryDraft(UUID facilityId, UUID orderableId) {
@@ -181,11 +206,9 @@ public class SiglusArchiveProductService {
     });
   }
 
-  public Set<String> searchArchivedProductsByFacilityId(UUID facilityId) {
-    return archivedProductRepository.findArchivedProductsByFacilityId(facilityId);
-  }
-
-  public Set<String> searchArchivedProductsByFacilityIds(Set<UUID> facilityIds) {
-    return archivedProductRepository.findArchivedProductsByFacilityIds(facilityIds);
+  private List<UUID> getProductIds(List<String> productCodes) {
+    return productCodes.stream()
+        .map(productCode -> siglusOrderableService.getOrderableByCode(productCode).getId())
+        .collect(Collectors.toList());
   }
 }

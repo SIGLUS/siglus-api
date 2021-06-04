@@ -17,10 +17,13 @@ package org.siglus.siglusapi.web.android;
 
 import static org.junit.Assert.assertSame;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -83,7 +86,21 @@ public class SiglusMeControllerTest {
     FacilityResponse facilityResponse = controller.getFacility();
 
     // then
-    assertSame(facilityResponse,this.facilityResponse);
+    assertSame(facilityResponse, this.facilityResponse);
     verify(service).getFacility();
   }
+
+  @Test
+  public void shouldArchiveAllProducts() {
+    // given
+    List<String> productCodes = Arrays.asList("product1", "product2", "product3");
+    doNothing().when(service).archiveAllProducts(productCodes);
+
+    // when
+    controller.archiveAllProducts(productCodes);
+
+    // then
+    verify(service).archiveAllProducts(productCodes);
+  }
+
 }
