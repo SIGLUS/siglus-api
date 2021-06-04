@@ -6,4 +6,6 @@ out/
 .env
 package-lock.json
 .DS_Store 
-*/.DS_Store 
+*/.DS_Store
+clear.sh
+.consul_service_id~

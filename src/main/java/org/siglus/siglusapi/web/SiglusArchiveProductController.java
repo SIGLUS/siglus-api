@@ -51,7 +51,7 @@ public class SiglusArchiveProductController {
 
   @GetMapping
   public Set<String> searchArchivedProducts(@RequestParam UUID facilityId) {
-    return archiveProductService.searchArchivedProducts(facilityId);
+    return archiveProductService.searchArchivedProductsByFacilityId(facilityId);
   }
 
 }

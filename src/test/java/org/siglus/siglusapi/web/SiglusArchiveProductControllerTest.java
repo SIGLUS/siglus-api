@@ -70,6 +70,6 @@ public class SiglusArchiveProductControllerTest {
   public void shouldCallSiglusArchiveProductServiceWhenSearchArchivedProducts() {
     siglusArchiveProductController.searchArchivedProducts(facilityId);
 
-    verify(archiveProductService).searchArchivedProducts(facilityId);
+    verify(archiveProductService).searchArchivedProductsByFacilityId(facilityId);
   }
 }

@@ -15,17 +15,15 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_ALREADY_ACTIVATED;
 import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_ALREADY_ARCHIVED;
 import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_CANNOT_ARCHIVE_ORDERABLE_IN_KIT;
 import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_SOH_SHOULD_BE_ZERO;
-import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_STOCK_CARD_NOT_FOUND;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
@@ -34,13 +32,12 @@ import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
-import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
 import org.openlmis.stockmanagement.util.Message;
-import org.siglus.common.domain.StockCardExtension;
-import org.siglus.common.repository.StockCardExtensionRepository;
+import org.siglus.common.domain.ArchivedProduct;
+import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -49,6 +46,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class SiglusArchiveProductService {
 
   @Autowired
@@ -64,7 +62,7 @@ public class SiglusArchiveProductService {
   private StockCardRepository stockCardRepository;
 
   @Autowired
-  private StockCardExtensionRepository stockCardExtensionRepository;
+  private ArchivedProductRepository archivedProductRepository;
 
   @Autowired
   private StockManagementDraftRepository stockManagementDraftRepository;
@@ -72,29 +70,30 @@ public class SiglusArchiveProductService {
   @Autowired
   private RequisitionRepository requisitionRepository;
 
-  private static final String ARCHIVE = "archive";
-
-  private static final String ACTIVATE = "activate";
-
   @Transactional
   public void archiveProduct(UUID facilityId, UUID orderableId) {
+    Set<UUID> orderablesInKit = unpackService.orderablesInKit();
+    if (orderablesInKit.contains(orderableId)) {
+      throw new ValidationMessageException(
+          new Message(ERROR_ARCHIVE_CANNOT_ARCHIVE_ORDERABLE_IN_KIT));
+    }
     List<StockCard> stockCards = stockCardRepository
         .findByFacilityIdAndOrderableId(facilityId, orderableId);
-    if (CollectionUtils.isEmpty(stockCards)) {
-      throw new ResourceNotFoundException(new Message(ERROR_ARCHIVE_STOCK_CARD_NOT_FOUND));
-    }
-    Set<UUID> orderablesInKit = unpackService.orderablesInKit();
     stockCards.forEach(stockCard -> {
       calculatedStockOnHandService.fetchCurrentStockOnHand(stockCard);
-      if (orderablesInKit.contains(stockCard.getOrderableId())) {
-        throw new ValidationMessageException(
-            new Message(ERROR_ARCHIVE_CANNOT_ARCHIVE_ORDERABLE_IN_KIT));
-      }
       if (0 != stockCard.getStockOnHand()) {
         throw new ValidationMessageException(new Message(ERROR_ARCHIVE_SOH_SHOULD_BE_ZERO));
       }
     });
-    toggleStockCardArchiveState(stockCards, ARCHIVE);
+    ArchivedProduct archivedProduct = archivedProductRepository
+        .findByFacilityIdAndOrderableId(facilityId, orderableId);
+    if (archivedProduct != null) {
+      throw new ValidationMessageException(new Message(ERROR_ARCHIVE_ALREADY_ARCHIVED));
+    }
+    ArchivedProduct newArchivedProduct = ArchivedProduct.builder().facilityId(facilityId)
+        .orderableId(orderableId).build();
+    log.info("archive product, facilityId: {}, orderableId: {}", facilityId, orderableId);
+    archivedProductRepository.save(newArchivedProduct);
     deleteArchivedItemInPhysicalInventoryDraft(facilityId, orderableId);
     deleteArchivedItemInStockManagementDraft(facilityId, orderableId);
     deleteArchivedItemInRequisitionDraft(facilityId, orderableId);
@@ -102,45 +101,25 @@ public class SiglusArchiveProductService {
 
   @Transactional
   public void activateProduct(UUID facilityId, UUID orderableId) {
-    List<StockCard> stockCards = stockCardRepository
+    ArchivedProduct archivedProduct = archivedProductRepository
         .findByFacilityIdAndOrderableId(facilityId, orderableId);
-    if (CollectionUtils.isEmpty(stockCards)) {
-      throw new ResourceNotFoundException(new Message(ERROR_ARCHIVE_STOCK_CARD_NOT_FOUND));
+    if (archivedProduct == null) {
+      return;
     }
-    toggleStockCardArchiveState(stockCards, ACTIVATE);
+    log.info("activate product, facilityId: {}, orderableId: {}", facilityId, orderableId);
+    archivedProductRepository.delete(archivedProduct);
   }
 
-  public void activateArchivedProducts(Collection<UUID> orderableIds, UUID facilityId) {
-    Set<UUID> stockCardIds = stockCardRepository
-        .findByOrderableIdInAndFacilityId(orderableIds, facilityId)
-        .stream()
-        .map(StockCard::getId)
-        .collect(Collectors.toSet());
-    List<StockCardExtension> stockCardExtensions = stockCardExtensionRepository
-        .findByStockCardIdIn(stockCardIds);
-    stockCardExtensions.forEach(stockCardExtension -> stockCardExtension.setArchived(false));
-    stockCardExtensionRepository.save(stockCardExtensions);
-  }
-
-  private void toggleStockCardArchiveState(List<StockCard> stockCards, String toState) {
-    stockCards.forEach(stockCard -> {
-      StockCardExtension extension =
-          stockCardExtensionRepository.findByStockCardId(stockCard.getId());
-      if (extension.isArchived() && ARCHIVE.equals(toState)) {
-        throw new ValidationMessageException(new Message(ERROR_ARCHIVE_ALREADY_ARCHIVED));
-      }
-      if (!extension.isArchived() && ACTIVATE.equals(toState)) {
-        throw new ValidationMessageException(new Message(ERROR_ARCHIVE_ALREADY_ACTIVATED));
-      }
-      extension.setArchived(!extension.isArchived());
-      stockCardExtensionRepository.save(extension);
-    });
+  @Transactional
+  public void activateProducts(UUID facilityId, Set<UUID> orderableIds) {
+    orderableIds.forEach(orderableId -> activateProduct(facilityId, orderableId));
   }
 
   public boolean isArchived(UUID stockCardId) {
-    StockCardExtension stockCardExtension =
-        stockCardExtensionRepository.findByStockCardId(stockCardId);
-    return stockCardExtension != null && stockCardExtension.isArchived();
+    StockCard stockCard = stockCardRepository.findOne(stockCardId);
+    ArchivedProduct archivedProduct = archivedProductRepository
+        .findByFacilityIdAndOrderableId(stockCard.getFacilityId(), stockCard.getOrderableId());
+    return archivedProduct != null;
   }
 
   private void deleteArchivedItemInPhysicalInventoryDraft(UUID facilityId, UUID orderableId) {
@@ -202,11 +181,11 @@ public class SiglusArchiveProductService {
     });
   }
 
-  public Set<String> searchArchivedProducts(UUID facilityId) {
-    return stockCardExtensionRepository.findArchivedProducts(facilityId);
+  public Set<String> searchArchivedProductsByFacilityId(UUID facilityId) {
+    return archivedProductRepository.findArchivedProductsByFacilityId(facilityId);
   }
 
   public Set<String> searchArchivedProductsByFacilityIds(Set<UUID> facilityIds) {
-    return stockCardExtensionRepository.findArchivedProductsByFacilityIds(facilityIds);
+    return archivedProductRepository.findArchivedProductsByFacilityIds(facilityIds);
   }
 }

@@ -13,18 +13,33 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.repository;
+package org.siglus.common.domain;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
-import org.siglus.common.domain.StockCardExtension;
-import org.springframework.data.jpa.repository.JpaRepository;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public interface StockCardExtensionRepository extends JpaRepository<StockCardExtension, UUID> {
+@Entity
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Table(name = "archived_products", schema = "siglusintegration")
+public class ArchivedProduct extends BaseEntity {
 
-  StockCardExtension findByStockCardId(UUID stockCardId);
+  @Column
+  private UUID facilityId;
 
-  List<StockCardExtension> findByStockCardIdIn(Collection<UUID> stockCardIds);
+  @Column
+  private UUID orderableId;
 
 }

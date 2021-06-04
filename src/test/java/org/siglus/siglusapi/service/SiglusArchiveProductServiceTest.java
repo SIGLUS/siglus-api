@@ -19,15 +19,15 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_ALREADY_ACTIVATED;
 import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_ALREADY_ARCHIVED;
 import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_CANNOT_ARCHIVE_ORDERABLE_IN_KIT;
 import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_SOH_SHOULD_BE_ZERO;
-import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_STOCK_CARD_NOT_FOUND;
 
 import com.google.common.collect.Sets;
 import java.util.Set;
@@ -51,24 +51,22 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.event.StockEvent;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
-import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
 import org.openlmis.stockmanagement.testutils.StockCardDataBuilder;
-import org.siglus.common.domain.StockCardExtension;
-import org.siglus.common.repository.StockCardExtensionRepository;
+import org.siglus.common.domain.ArchivedProduct;
+import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
-import org.siglus.siglusapi.testutils.StockCardExtensionDataBuilder;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusArchiveProductServiceTest {
 
   @Captor
-  private ArgumentCaptor<StockCardExtension> stockCardExtensionArgumentCaptor;
+  private ArgumentCaptor<ArchivedProduct> archivedProductArgumentCaptor;
 
   @Rule
   public ExpectedException exception = ExpectedException.none();
@@ -77,7 +75,7 @@ public class SiglusArchiveProductServiceTest {
   private StockCardRepository stockCardRepository;
 
   @Mock
-  private StockCardExtensionRepository stockCardExtensionRepository;
+  private ArchivedProductRepository archivedProductRepository;
 
   @Mock
   private SiglusUnpackService unpackService;
@@ -97,104 +95,94 @@ public class SiglusArchiveProductServiceTest {
   @InjectMocks
   private SiglusArchiveProductService archiveProductService;
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
-  private UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
-  private UUID stockCardId = UUID.randomUUID();
+  private final UUID stockCardId = UUID.randomUUID();
 
-  @Test
-  public void shouldThrowExceptionIfArchiveProductStockCardNotFound() {
-    exception.expect(ResourceNotFoundException.class);
-    exception.expectMessage(containsString(ERROR_ARCHIVE_STOCK_CARD_NOT_FOUND));
+  private final UUID archivedProductId = UUID.randomUUID();
 
-    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
-        Lists.newArrayList());
-
-    archiveProductService.archiveProduct(facilityId, orderableId);
-  }
+  private final ArchivedProduct archivedProduct = ArchivedProduct.builder()
+      .facilityId(facilityId)
+      .orderableId(orderableId).build();
 
   @Test
-  public void shouldThrowExceptionIfActivateProductStockCardNotFound() {
-    exception.expect(ResourceNotFoundException.class);
-    exception.expectMessage(containsString(ERROR_ARCHIVE_STOCK_CARD_NOT_FOUND));
+  public void shouldNotDeleteArchivedProductWhenActivateProductIfAlreadyActivate() {
+    // given
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(null);
 
-    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
-        Lists.newArrayList());
-
+    // when
     archiveProductService.activateProduct(facilityId, orderableId);
+
+    // then
+    verify(archivedProductRepository, times(0)).delete(archivedProductArgumentCaptor.capture());
   }
 
   @Test
   public void shouldThrowExceptionIfArchiveProductOrderableInKit() {
+    // then
     exception.expect(ValidationMessageException.class);
     exception.expectMessage(containsString(ERROR_ARCHIVE_CANNOT_ARCHIVE_ORDERABLE_IN_KIT));
 
+    // given
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId)
         .build();
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
         Lists.newArrayList(stockCard));
     when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(orderableId));
 
+    // when
     archiveProductService.archiveProduct(facilityId, orderableId);
   }
 
   @Test
   public void shouldThrowExceptionIfArchiveProductStockOnHandIsNotZero() {
+    // then
     exception.expect(ValidationMessageException.class);
     exception.expectMessage(containsString(ERROR_ARCHIVE_SOH_SHOULD_BE_ZERO));
 
+    // given
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId)
-        .withStockOnHand(1)
-        .build();
+        .withStockOnHand(1).build();
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
         singletonList(stockCard));
     when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
 
+    // when
     archiveProductService.archiveProduct(facilityId, orderableId);
   }
 
   @Test
   public void shouldThrowExceptionIfArchiveProductAlreadyArchived() {
+    // then
     exception.expect(ValidationMessageException.class);
     exception.expectMessage(containsString(ERROR_ARCHIVE_ALREADY_ARCHIVED));
 
+    // given
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId)
         .build();
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
         singletonList(stockCard));
     when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
-    when(stockCardExtensionRepository.findByStockCardId(stockCard.getId()))
-        .thenReturn(new StockCardExtensionDataBuilder().withStockCardId(stockCard.getId())
-            .withArchived(true).build());
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(archivedProduct);
 
+    // when
     archiveProductService.archiveProduct(facilityId, orderableId);
   }
 
   @Test
-  public void shouldThrowExceptionIfActivateProductAlreadyActivated() {
-    exception.expect(ValidationMessageException.class);
-    exception.expectMessage(containsString(ERROR_ARCHIVE_ALREADY_ACTIVATED));
-
-    StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId)
-        .build();
-    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
-        singletonList(stockCard));
-    when(stockCardExtensionRepository.findByStockCardId(stockCard.getId()))
-        .thenReturn(new StockCardExtensionDataBuilder().withStockCardId(stockCard.getId()).build());
-
-    archiveProductService.activateProduct(facilityId, orderableId);
-  }
-
-  @Test
-  public void shouldArchiveProduct() {
+  public void shouldArchiveProductIfNotArchived() {
+    // given
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId)
         .build();
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
         singletonList(stockCard));
     when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
-    when(stockCardExtensionRepository.findByStockCardId(stockCard.getId()))
-        .thenReturn(new StockCardExtensionDataBuilder().withStockCardId(stockCard.getId()).build());
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(null);
     when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
         .thenReturn(null);
     when(stockManagementDraftRepository.findByFacilityId(facilityId)).thenReturn(null);
@@ -202,22 +190,24 @@ public class SiglusArchiveProductServiceTest {
         .thenReturn(null);
     calculatedStockOnHandService.fetchCurrentStockOnHand(stockCard);
 
+    // when
     archiveProductService.archiveProduct(facilityId, orderableId);
 
-    verify(stockCardExtensionRepository).save(stockCardExtensionArgumentCaptor.capture());
-    StockCardExtension stockCardExtension = stockCardExtensionArgumentCaptor.getValue();
-    assertTrue(stockCardExtension.isArchived());
+    // then
+    verify(archivedProductRepository).save(archivedProductArgumentCaptor.capture());
+    assertNotNull(archivedProductArgumentCaptor.getValue());
   }
 
   @Test
   public void shouldDeleteArchivedItemInPhysicalInventoryDraftWhenArchiveProductIfExistsTheDraft() {
+    // given
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId)
         .build();
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
         singletonList(stockCard));
     when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
-    when(stockCardExtensionRepository.findByStockCardId(stockCard.getId()))
-        .thenReturn(new StockCardExtensionDataBuilder().withStockCardId(stockCard.getId()).build());
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(null);
     PhysicalInventoryDto physicalInventoryDraft = createInventoryDto();
     when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
         .thenReturn(physicalInventoryDraft);
@@ -225,20 +215,23 @@ public class SiglusArchiveProductServiceTest {
     when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
         .thenReturn(null);
 
+    // when
     archiveProductService.archiveProduct(facilityId, orderableId);
 
+    // then
     verify(siglusPhysicalInventoryService).deletePhysicalInventoryForAllProducts(facilityId);
   }
 
   @Test
   public void shouldDeleteArchivedItemInStockManagementDraftWhenArchiveProductIfExistsTheDraft() {
+    // given
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId)
         .build();
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
         singletonList(stockCard));
     when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
-    when(stockCardExtensionRepository.findByStockCardId(stockCard.getId()))
-        .thenReturn(new StockCardExtensionDataBuilder().withStockCardId(stockCard.getId()).build());
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(null);
     when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
         .thenReturn(null);
     StockManagementDraft stockManagementDraft = createStockManagementDraft();
@@ -247,20 +240,23 @@ public class SiglusArchiveProductServiceTest {
     when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
         .thenReturn(null);
 
+    // when
     archiveProductService.archiveProduct(facilityId, orderableId);
 
+    // then
     verify(stockManagementDraftRepository).save(stockManagementDraft);
   }
 
   @Test
   public void shouldDeleteArchivedItemInRequisitionDraftWhenArchiveProductIfExistsTheDraft() {
+    // given
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId)
         .build();
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
         singletonList(stockCard));
     when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
-    when(stockCardExtensionRepository.findByStockCardId(stockCard.getId()))
-        .thenReturn(new StockCardExtensionDataBuilder().withStockCardId(stockCard.getId()).build());
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(null);
     when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
         .thenReturn(null);
     when(stockManagementDraftRepository.findByFacilityId(facilityId))
@@ -269,73 +265,112 @@ public class SiglusArchiveProductServiceTest {
     when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
         .thenReturn(singletonList(requisition));
 
+    // when
     archiveProductService.archiveProduct(facilityId, orderableId);
 
+    // then
     verify(requisitionRepository).save(requisition);
   }
 
   @Test
   public void shouldActivateProduct() {
+    // given
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId)
         .build();
     when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
         singletonList(stockCard));
-    when(stockCardExtensionRepository.findByStockCardId(stockCard.getId()))
-        .thenReturn(new StockCardExtensionDataBuilder().withStockCardId(stockCard.getId())
-            .withArchived(true).build());
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(archivedProduct);
 
+    // when
     archiveProductService.activateProduct(facilityId, orderableId);
 
-    verify(stockCardExtensionRepository).save(stockCardExtensionArgumentCaptor.capture());
-    StockCardExtension stockCardExtension = stockCardExtensionArgumentCaptor.getValue();
-    assertFalse(stockCardExtension.isArchived());
+    // then
+    verify(archivedProductRepository).delete(archivedProductArgumentCaptor.capture());
+    assertNotNull(archivedProductArgumentCaptor.getValue());
   }
 
   @Test
-  public void shouldActivateArchivedProducts() {
+  public void shouldActivateProducts() {
+    // given
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).build();
     stockCard.setId(stockCardId);
     when(stockCardRepository.findByOrderableIdInAndFacilityId(any(), any()))
         .thenReturn(singletonList(stockCard));
-    StockCardExtension stockCardExtension = new StockCardExtensionDataBuilder()
-        .withStockCardId(stockCardId).withArchived(true).build();
-    when(stockCardExtensionRepository.findByStockCardIdIn(Sets.newHashSet(stockCardId)))
-        .thenReturn(singletonList(stockCardExtension));
+    archivedProduct.setId(archivedProductId);
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(archivedProduct);
 
-    archiveProductService.activateArchivedProducts(Sets.newHashSet(orderableId), facilityId);
+    // when
+    archiveProductService.activateProducts(facilityId, Sets.newHashSet(orderableId));
 
-    verify(stockCardExtensionRepository).save(singletonList(stockCardExtension));
-    assertFalse(stockCardExtension.isArchived());
+    // then
+    verify(archivedProductRepository).delete(archivedProduct);
   }
 
   @Test
-  public void shouldReturnFalseIfStockCardIsNotArchived() {
-    StockCardExtension stockCardExtension = new StockCardExtensionDataBuilder()
-        .withStockCardId(stockCardId).withArchived(false).build();
-    when(stockCardExtensionRepository.findByStockCardId(stockCardId))
-        .thenReturn(stockCardExtension);
+  public void shouldReturnFalseIfProductNotArchived() {
+    // given
+    StockCard stockCard = new StockCardDataBuilder(new StockEvent())
+        .withOrderable(orderableId)
+        .build();
+    stockCard.setFacilityId(facilityId);
+    when(stockCardRepository.findOne(stockCardId)).thenReturn(stockCard);
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(null);
 
-    assertFalse(archiveProductService.isArchived(stockCardId));
+    // when
+    boolean archived = archiveProductService.isArchived(stockCardId);
+
+    // then
+    assertFalse(archived);
   }
 
   @Test
-  public void shouldReturnTrueIfStockCardIsArchived() {
-    StockCardExtension stockCardExtension = new StockCardExtensionDataBuilder()
-        .withStockCardId(stockCardId).withArchived(true).build();
-    when(stockCardExtensionRepository.findByStockCardId(stockCardId))
-        .thenReturn(stockCardExtension);
+  public void shouldReturnTrueIfProductIsArchived() {
+    // given
+    StockCard stockCard = new StockCardDataBuilder(new StockEvent())
+        .withOrderable(orderableId)
+        .build();
+    stockCard.setFacilityId(facilityId);
+    when(stockCardRepository.findOne(stockCardId)).thenReturn(stockCard);
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId))
+        .thenReturn(archivedProduct);
 
-    assertTrue(archiveProductService.isArchived(stockCardId));
+    // when
+    boolean archived = archiveProductService.isArchived(stockCardId);
+
+    // then
+    assertTrue(archived);
   }
 
   @Test
-  public void shouldReturnArchivedProductsWhenSearch() {
+  public void shouldReturnArchivedProductsByFacilityId() {
+    // given
     Set<String> archivedProducts = Sets.newHashSet(orderableId.toString());
-    when(stockCardExtensionRepository.findArchivedProducts(facilityId))
+    when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
         .thenReturn(archivedProducts);
 
-    Set<String> archivedProductsReturn = archiveProductService.searchArchivedProducts(facilityId);
+    // when
+    Set<String> archivedProductsReturn = archiveProductService
+        .searchArchivedProductsByFacilityId(facilityId);
 
+    // then
+    assertEquals(archivedProducts, archivedProductsReturn);
+  }
+
+  @Test
+  public void shouldReturnArchivedProductsByFacilityIds() {
+    // given
+    Set<String> archivedProducts = Sets.newHashSet(orderableId.toString());
+    when(archivedProductRepository.findArchivedProductsByFacilityIds(Sets.newHashSet(facilityId)))
+        .thenReturn(archivedProducts);
+
+    // when
+    Set<String> archivedProductsReturn = archiveProductService
+        .searchArchivedProductsByFacilityIds(Sets.newHashSet(facilityId));
+
+    // then
     assertEquals(archivedProducts, archivedProductsReturn);
   }
 

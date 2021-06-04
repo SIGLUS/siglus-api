@@ -88,7 +88,7 @@ public class SiglusStockCardSummariesService {
     if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)) || Boolean
         .parseBoolean(parameters.getFirst(ARCHIVED_ONLY))) {
       archivedProducts = archiveProductService
-          .searchArchivedProducts(UUID.fromString(parameters.getFirst(FACILITY_ID)));
+          .searchArchivedProductsByFacilityId(UUID.fromString(parameters.getFirst(FACILITY_ID)));
     }
     StockCardSummariesV2SearchParams v2SearchParams = new StockCardSummariesV2SearchParams(
         parameters);

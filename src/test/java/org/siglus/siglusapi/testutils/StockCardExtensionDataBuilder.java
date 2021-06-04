@@ -25,7 +25,6 @@ public class StockCardExtensionDataBuilder {
   private UUID id = UUID.randomUUID();
   private UUID stockCardId = UUID.randomUUID();
   private LocalDate createDate = DatesUtil.getBaseDate();
-  private boolean archived = false;
 
   public StockCardExtensionDataBuilder() {
   }
@@ -36,13 +35,11 @@ public class StockCardExtensionDataBuilder {
   }
 
   public StockCardExtensionDataBuilder withArchived(boolean archived) {
-    this.archived = archived;
     return this;
   }
 
   public StockCardExtension build() {
-    StockCardExtension stockCardExtension = new StockCardExtension(stockCardId, createDate,
-        archived);
+    StockCardExtension stockCardExtension = new StockCardExtension(stockCardId, createDate);
     stockCardExtension.setId(id);
     return stockCardExtension;
   }

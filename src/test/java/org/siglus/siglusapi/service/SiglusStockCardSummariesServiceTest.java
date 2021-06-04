@@ -120,7 +120,8 @@ public class SiglusStockCardSummariesServiceTest {
         .thenReturn(dtos);
     when(permissionService.getPermissionStrings(userId))
         .thenReturn(permissionStringsHandler);
-    when(archiveProductService.searchArchivedProducts(facilityId)).thenReturn(new HashSet<>());
+    when(archiveProductService.searchArchivedProductsByFacilityId(facilityId))
+        .thenReturn(new HashSet<>());
   }
 
   @Test
@@ -166,7 +167,7 @@ public class SiglusStockCardSummariesServiceTest {
     UUID firstOrderableId = UUID.randomUUID();
     Set<String> archivedProduct = new HashSet<>();
     archivedProduct.add(firstOrderableId.toString());
-    when(archiveProductService.searchArchivedProducts(facilityId))
+    when(archiveProductService.searchArchivedProductsByFacilityId(facilityId))
         .thenReturn(archivedProduct);
     StockCardSummaries summaries = new StockCardSummaries(newArrayList(), newArrayList(),
         newHashMap(), null, null);
@@ -196,7 +197,7 @@ public class SiglusStockCardSummariesServiceTest {
     UUID firstOrderableId = UUID.randomUUID();
     Set<String> archivedProduct = new HashSet<>();
     archivedProduct.add(firstOrderableId.toString());
-    when(archiveProductService.searchArchivedProducts(facilityId))
+    when(archiveProductService.searchArchivedProductsByFacilityId(facilityId))
         .thenReturn(archivedProduct);
 
     // when

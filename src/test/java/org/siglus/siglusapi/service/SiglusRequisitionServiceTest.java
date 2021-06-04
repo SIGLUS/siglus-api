@@ -466,8 +466,7 @@ public class SiglusRequisitionServiceTest {
 
     siglusRequisitionService.activateArchivedProducts(requisitionId, facilityId);
 
-    verify(archiveProductService)
-        .activateArchivedProducts(Sets.newHashSet(orderableId), facilityId);
+    verify(archiveProductService).activateProducts(facilityId, Sets.newHashSet(orderableId));
   }
 
   @Test
@@ -925,7 +924,7 @@ public class SiglusRequisitionServiceTest {
     // then
     verify(requisitionController).submitRequisition(requisitionId, request, response);
     verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
-    verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(archiveProductService).activateProducts(any(), any());
     verify(notificationService).postSubmit(requisitionDto);
   }
 
@@ -986,7 +985,7 @@ public class SiglusRequisitionServiceTest {
     // then
     verify(requisitionController).authorizeRequisition(requisitionId, request, response);
     verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
-    verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(archiveProductService).activateProducts(any(), any());
     verify(notificationService).postAuthorize(requisitionDto);
     verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
@@ -1082,7 +1081,7 @@ public class SiglusRequisitionServiceTest {
     assertEquals(Integer.valueOf(10), dto.getRequisitionLineItems().get(0).getApprovedQuantity());
     verify(requisitionController).approveRequisition(requisitionId, request, response);
     verify(siglusUsageReportService).saveUsageReportWithValidation(any(), any());
-    verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(archiveProductService).activateProducts(any(), any());
     verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 
@@ -1136,7 +1135,7 @@ public class SiglusRequisitionServiceTest {
     // then
     verify(draftRepository).delete(any(UUID.class));
     verify(requisitionController).approveRequisition(requisitionId, request, response);
-    verify(archiveProductService).activateArchivedProducts(any(), any());
+    verify(archiveProductService).activateProducts(any(), any());
     verify(requisitionSimamEmailService).prepareEmailAttachmentsForSimam(any(), any());
   }
 

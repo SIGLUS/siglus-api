@@ -15,16 +15,25 @@
 
 package org.siglus.common.repository;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import org.siglus.common.domain.StockCardExtension;
+import org.siglus.common.domain.ArchivedProduct;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public interface StockCardExtensionRepository extends JpaRepository<StockCardExtension, UUID> {
+public interface ArchivedProductRepository extends JpaRepository<ArchivedProduct, UUID> {
 
-  StockCardExtension findByStockCardId(UUID stockCardId);
+  ArchivedProduct findByFacilityIdAndOrderableId(UUID facilityId, UUID orderableId);
 
-  List<StockCardExtension> findByStockCardIdIn(Collection<UUID> stockCardIds);
+  @Query(value = "select cast(orderableid as varchar) orderableid "
+      + "from siglusintegration.archived_products "
+      + "where facilityid = :facilityId", nativeQuery = true)
+  Set<String> findArchivedProductsByFacilityId(@Param("facilityId") UUID facilityId);
+
+  @Query(value = "select cast(orderableid as varchar) orderableid "
+      + "from siglusintegration.archived_products "
+      + "where facilityid in (:facilityIds)", nativeQuery = true)
+  Set<String> findArchivedProductsByFacilityIds(@Param("facilityIds") Set<UUID> facilityIds);
 
 }

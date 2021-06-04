@@ -1269,7 +1269,7 @@ public class SiglusRequisitionService {
 
   public void activateArchivedProducts(UUID requisitionId, UUID facilityId) {
     Set<UUID> orderableIds = findLineItemOrderableIds(requisitionId);
-    archiveProductService.activateArchivedProducts(orderableIds, facilityId);
+    archiveProductService.activateProducts(facilityId, orderableIds);
   }
 
   private Set<UUID> findLineItemOrderableIds(UUID requisitionId) {

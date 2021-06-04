@@ -92,7 +92,8 @@ public class SiglusOrderableServiceTest {
 
   @Test
   public void shouldReturnDataWithArchivedFalseWhenSearchOrderables() {
-    when(archiveProductService.searchArchivedProducts(facilityId)).thenReturn(newHashSet());
+    when(archiveProductService.searchArchivedProductsByFacilityId(facilityId))
+        .thenReturn(newHashSet());
 
     Page<OrderableDto> orderableDtoPage = siglusOrderableService
         .searchOrderables(searchParams, pageable, facilityId);
@@ -103,7 +104,7 @@ public class SiglusOrderableServiceTest {
 
   @Test
   public void shouldReturnDataWithArchivedTrueWhenSearchOrderables() {
-    when(archiveProductService.searchArchivedProducts(facilityId))
+    when(archiveProductService.searchArchivedProductsByFacilityId(facilityId))
         .thenReturn(newHashSet(orderableId.toString()));
 
     Page<OrderableDto> orderableDtoPage = siglusOrderableService

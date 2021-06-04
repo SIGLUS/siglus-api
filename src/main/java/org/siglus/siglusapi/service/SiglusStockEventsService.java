@@ -121,7 +121,7 @@ public class SiglusStockEventsService {
     Set<UUID> orderableIds = eventDto.getLineItems().stream()
         .map(StockEventLineItemDto::getOrderableId)
         .collect(Collectors.toSet());
-    archiveProductService.activateArchivedProducts(orderableIds, eventDto.getFacilityId());
+    archiveProductService.activateProducts(eventDto.getFacilityId(), orderableIds);
   }
 
   public UUID createStockEventForAllProducts(StockEventDto eventDto) {

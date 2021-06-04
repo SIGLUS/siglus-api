@@ -104,8 +104,8 @@ import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.OrderDtoBuilder;
 import org.openlmis.requisition.web.RequisitionForConvertBuilder;
 import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.OrderableKitRepository;
-import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -192,7 +192,7 @@ public class RequisitionService {
   // [SIGLUS change start]
   // [change reason]: archived product && kit Product
   @Autowired
-  private StockCardExtensionRepository stockCardExtensionRepository;
+  private ArchivedProductRepository archivedProductRepository;
 
   @Autowired
   private OrderableKitRepository orderableKitRepository;
@@ -426,8 +426,8 @@ public class RequisitionService {
     //     authenticationHelper.getCurrentUser().getId(), stockData, stockCardRangeSummaryDtos,
     //     stockCardRangeSummariesToAverage, previousPeriods);
     profiler.start("GET_FULL_SUPPLY_PRODUCTS");
-    Set<String> archivedProducts = stockCardExtensionRepository
-        .findArchivedProducts(facility.getId());
+    Set<String> archivedProducts = archivedProductRepository
+        .findArchivedProductsByFacilityId(facility.getId());
     List<UUID> kitIds = orderableKitRepository.findAllKitProduct().stream()
         .map(Orderable::getId).collect(toList());
     List<ApprovedProductDto> fullSupplyProductsUsedToInitiateLineItems =

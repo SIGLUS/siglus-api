@@ -206,7 +206,7 @@ public class SiglusOrderServiceTest {
         .thenReturn(createApproverAggregator());
     when(requisitionService.getApproveProduct(userHomeFacilityId, programId, false))
         .thenReturn(createUserAggregator());
-    when(siglusArchiveProductService.searchArchivedProducts(any()))
+    when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(createArchivedProducts());
     when(siglusStockCardSummariesService
         .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
@@ -249,7 +249,7 @@ public class SiglusOrderServiceTest {
         .thenReturn(new ApproveProductsAggregator(list, programId));
     when(requisitionService.getApproveProduct(userHomeFacilityId, programId, false))
         .thenReturn(createUserAggregator());
-    when(siglusArchiveProductService.searchArchivedProducts(any()))
+    when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(Collections.emptySet());
     when(siglusStockCardSummariesService
         .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
@@ -297,7 +297,7 @@ public class SiglusOrderServiceTest {
         .thenReturn(new ApproveProductsAggregator(list, programId));
     when(requisitionService.getApproveProduct(userHomeFacilityId, programId, false))
         .thenReturn(createUserAggregator());
-    when(siglusArchiveProductService.searchArchivedProducts(any()))
+    when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(Collections.emptySet());
     when(siglusStockCardSummariesService
         .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
