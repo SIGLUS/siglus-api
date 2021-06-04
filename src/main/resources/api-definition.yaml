@@ -2250,6 +2250,14 @@ traits:
     /android/me:
 
       /facility:
+        displayName: get facility info
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              body:
+                application/json:
+                  schema: facilityResponse
 
         /products:
           displayName: Products of the current facility
