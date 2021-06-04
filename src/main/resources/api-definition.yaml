@@ -106,6 +106,7 @@ schemas:
       }
   - proofOfDeliveryPage: !include schemas/proofOfDeliveryPage.json
   - productSyncResponse: !include schemas/android/productSyncResponse.json
+  - facilityResponse:  !include schemas/android/facilityResponse.json
 
 resourceTypes:
   - collection:

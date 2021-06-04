@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web.android;
 
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.dto.response.android.FacilityResponse;
 import org.siglus.siglusapi.dto.response.android.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,4 +38,8 @@ public class SiglusMeController {
     return service.getFacilityProducts(lastSyncTime);
   }
 
+  @GetMapping("/facility")
+  public FacilityResponse getFacility() {
+    return service.getFacility();
+  }
 }

@@ -27,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.dto.response.android.FacilityResponse;
 import org.siglus.siglusapi.dto.response.android.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 
@@ -41,6 +42,9 @@ public class SiglusMeControllerTest {
 
   @Mock
   private ProductSyncResponse syncResponse;
+
+  @Mock
+  private FacilityResponse facilityResponse;
 
   @Before
   public void setup() {
@@ -70,4 +74,16 @@ public class SiglusMeControllerTest {
     verify(service).getFacilityProducts(lastSyncTime);
   }
 
+  @Test
+  public void shouldCallServiceWhenGetFacility() {
+    // given
+    when(service.getFacility()).thenReturn(facilityResponse);
+
+    // when
+    FacilityResponse facilityResponse = controller.getFacility();
+
+    // then
+    assertSame(facilityResponse,this.facilityResponse);
+    verify(service).getFacility();
+  }
 }

@@ -18,6 +18,8 @@ package org.siglus.common.service.client;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.referencedata.Pagination;
@@ -67,5 +69,9 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
 
   public FacilityDto createFacility(FacilityDto dto) {
     return postResult("", dto, getResultClass());
+  }
+
+  public FacilityDto getFacilityById(UUID facilityId) {
+    return findOne(facilityId);
   }
 }

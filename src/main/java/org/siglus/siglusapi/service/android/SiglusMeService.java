@@ -16,14 +16,53 @@
 package org.siglus.siglusapi.service.android;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.SupportedProgramDto;
+import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.dto.response.android.FacilityResponse;
 import org.siglus.siglusapi.dto.response.android.ProductSyncResponse;
+import org.siglus.siglusapi.dto.response.android.ProgramResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SiglusMeService {
 
+  @Autowired
+  private SiglusFacilityReferenceDataService facilityReferenceDataService;
+
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+
   public ProductSyncResponse getFacilityProducts(Instant lastSyncTime) {
     return new ProductSyncResponse();
   }
 
+  public FacilityResponse getFacility() {
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    UUID homeFacilityId = userDto.getHomeFacilityId();
+    FacilityDto facilityDto = facilityReferenceDataService.getFacilityById(homeFacilityId);
+    List<SupportedProgramDto> programs = facilityDto.getSupportedPrograms();
+    List<ProgramResponse> programResponses = programs.stream().map(program ->
+        ProgramResponse
+                .builder()
+                .code(program.getCode())
+                .name(program.getName())
+                .supportActive(program.isSupportActive())
+                .supportStartDate(program.getSupportStartDate())
+                .build()
+        ).collect(Collectors.toList());
+    FacilityResponse facilityResponse = FacilityResponse.builder()
+            .code(facilityDto.getCode())
+            .name(facilityDto.getName())
+            .supportedPrograms(programResponses)
+            .build();
+    return facilityResponse;
+  }
 }
