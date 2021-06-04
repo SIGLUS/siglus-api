@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.response.android;
+package org.siglus.siglusapi.dto.android.response;
 
 import java.util.Collections;
 import java.util.List;

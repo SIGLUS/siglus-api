@@ -13,19 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.response.android;
+package org.siglus.siglusapi.dto.android.response;
 
-import java.util.Collections;
-import java.util.List;
-
-import lombok.Builder;
+import java.util.Map;
+import java.util.UUID;
 import lombok.Data;
+import org.openlmis.stockmanagement.dto.referencedata.OrderableChildDto;
+import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 
 @Data
-@Builder
-public class FacilityResponse {
+public class ProductChildResponse {
 
-  private String code;
-  private String name;
-  private List<ProgramResponse> supportedPrograms = Collections.emptyList();
+  private String productCode;
+  private Long quantity;
+
+  static ProductChildResponse fromOrderableChild(OrderableChildDto child,
+      Map<UUID, OrderableDto> productMap) {
+    ProductChildResponse resp = new ProductChildResponse();
+    resp.setProductCode(productMap.get(child.getOrderable().getId()).getProductCode());
+    resp.setQuantity(child.getQuantity().longValue());
+    return resp;
+  }
 }

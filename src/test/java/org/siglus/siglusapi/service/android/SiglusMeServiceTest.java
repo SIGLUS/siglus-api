@@ -58,10 +58,10 @@ import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
-import org.siglus.siglusapi.dto.response.android.FacilityResponse;
-import org.siglus.siglusapi.dto.response.android.ProductChildResponse;
-import org.siglus.siglusapi.dto.response.android.ProductResponse;
-import org.siglus.siglusapi.dto.response.android.ProductSyncResponse;
+import org.siglus.siglusapi.dto.android.response.FacilityResponse;
+import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
+import org.siglus.siglusapi.dto.android.response.ProductResponse;
+import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 
