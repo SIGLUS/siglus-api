@@ -2,15 +2,19 @@
   "type": "object",
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "The response for a single facilityinfo for android device",
+  "title": "entity",
   "properties": {
     "code": {
-      "type": "integer"
+      "type": "integer",
+      "title": "code"
     },
     "name": {
-      "type": "string"
+      "type": "string",
+      "title": "name"
     },
     "supportedPrograms": {
       "type": "array",
+      "title": "supportedPrograms",
       "items": {
         "type": "object",
         "$ref": "program.json"
