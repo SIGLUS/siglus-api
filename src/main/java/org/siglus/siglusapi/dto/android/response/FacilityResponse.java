@@ -26,5 +26,5 @@ public class FacilityResponse {
 
   private String code;
   private String name;
-  private List<ProgramResponse> supportedPrograms = Collections.emptyList();
+  private List<ProgramResponse> supportedPrograms;
 }

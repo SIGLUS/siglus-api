@@ -43,7 +43,7 @@ public class SiglusMeController {
 
   @GetMapping("/facility")
   public FacilityResponse getFacility() {
-    return service.getFacility();
+    return service.getCurrentFacility();
   }
 
   @PostMapping("/facility/archivedProducts")

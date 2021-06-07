@@ -101,7 +101,7 @@ public class SiglusMeService {
         .orElse(true);
   }
 
-  public FacilityResponse getFacility() {
+  public FacilityResponse getCurrentFacility() {
     UserDto userDto = authHelper.getCurrentUser();
     UUID homeFacilityId = userDto.getHomeFacilityId();
     FacilityDto facilityDto = facilityReferenceDataService.getFacilityById(homeFacilityId);
