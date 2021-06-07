@@ -104,6 +104,12 @@ public class SiglusArchiveProductService {
 
   @Transactional
   public void archiveAllProducts(UUID facilityId, List<String> productCodes) {
+    Set<String> archivedProducts = archivedProductRepository
+        .findArchivedProductsByFacilityId(facilityId);
+    if (archivedProducts.containsAll(productCodes) && productCodes.containsAll(archivedProducts)) {
+      log.info("no change, all archive products are existed");
+      return;
+    }
     log.info("delete all archived products in facility: {}", facilityId);
     archivedProductRepository.deleteAllArchivedProductsByFacilityId(facilityId);
     getProductIds(productCodes).forEach(orderableId -> archiveProduct(facilityId, orderableId));

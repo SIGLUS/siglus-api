@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.containsString;
+import static org.javers.common.collections.Sets.asSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -31,6 +32,7 @@ import static org.siglus.siglusapi.i18n.ArchiveMessageKeys.ERROR_ARCHIVE_SOH_SHO
 
 import com.google.common.collect.Sets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
@@ -67,6 +69,8 @@ import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusArchiveProductServiceTest {
 
+  public static final String CODE_1 = "CODE_1";
+  public static final String CODE_2 = "CODE_2";
   @Captor
   private ArgumentCaptor<ArchivedProduct> archivedProductArgumentCaptor;
 
@@ -204,7 +208,23 @@ public class SiglusArchiveProductServiceTest {
   }
 
   @Test
-  public void shouldArchive2TimesWhenArchived2Products() {
+  public void shouldDoNothingIfAllArchiveProductsAlreadyExisted() {
+    // given
+    List<String> productCodes = Arrays.asList(CODE_1, CODE_2);
+    Set<String> archivedProductCodes = asSet(CODE_1, CODE_2);
+    when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
+        .thenReturn(archivedProductCodes);
+
+    // when
+    archiveProductService.archiveAllProducts(facilityId, productCodes);
+
+    // then
+    verify(archivedProductRepository, times(0)).deleteAllArchivedProductsByFacilityId(facilityId);
+    verify(archivedProductRepository, times(0)).save(archivedProductArgumentCaptor.capture());
+  }
+
+  @Test
+  public void shouldArchivedProductsIfAllArchiveProductsMoreThanTargetProducts() {
     // given
     OrderableDto orderableDto1 = new OrderableDto();
     OrderableDto orderableDto2 = new OrderableDto();
@@ -212,8 +232,8 @@ public class SiglusArchiveProductServiceTest {
     UUID orderableId2 = UUID.randomUUID();
     orderableDto1.setId(orderableId1);
     orderableDto2.setId(orderableId2);
-    when(siglusOrderableService.getOrderableByCode("product1")).thenReturn(orderableDto1);
-    when(siglusOrderableService.getOrderableByCode("product2")).thenReturn(orderableDto2);
+    when(siglusOrderableService.getOrderableByCode(CODE_1)).thenReturn(orderableDto1);
+    when(siglusOrderableService.getOrderableByCode(CODE_2)).thenReturn(orderableDto2);
     StockCard stockCard1 = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId1)
         .build();
     StockCard stockCard2 = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId2)
@@ -234,9 +254,57 @@ public class SiglusArchiveProductServiceTest {
     when(stockManagementDraftRepository.findByFacilityId(facilityId)).thenReturn(null);
     when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
         .thenReturn(null);
+    List<String> productCodes = Arrays.asList(CODE_1, CODE_2);
+    Set<String> archivedProductCodes = asSet(CODE_1, CODE_2, "CODE_3");
+    when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
+        .thenReturn(archivedProductCodes);
 
     // when
-    archiveProductService.archiveAllProducts(facilityId, Arrays.asList("product1", "product2"));
+    archiveProductService.archiveAllProducts(facilityId, productCodes);
+
+    // then
+    verify(archivedProductRepository).deleteAllArchivedProductsByFacilityId(facilityId);
+    verify(archivedProductRepository, times(2)).save(archivedProductArgumentCaptor.capture());
+  }
+
+  @Test
+  public void shouldArchive2TimesWhenArchived2ProductsIfOnly1ProductArchived() {
+    // given
+    OrderableDto orderableDto1 = new OrderableDto();
+    OrderableDto orderableDto2 = new OrderableDto();
+    UUID orderableId1 = UUID.randomUUID();
+    UUID orderableId2 = UUID.randomUUID();
+    orderableDto1.setId(orderableId1);
+    orderableDto2.setId(orderableId2);
+    when(siglusOrderableService.getOrderableByCode(CODE_1)).thenReturn(orderableDto1);
+    when(siglusOrderableService.getOrderableByCode(CODE_2)).thenReturn(orderableDto2);
+    StockCard stockCard1 = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId1)
+        .build();
+    StockCard stockCard2 = new StockCardDataBuilder(new StockEvent()).withOrderable(orderableId2)
+        .build();
+    calculatedStockOnHandService.fetchCurrentStockOnHand(stockCard1);
+    calculatedStockOnHandService.fetchCurrentStockOnHand(stockCard2);
+    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId1)).thenReturn(
+        singletonList(stockCard1));
+    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId2)).thenReturn(
+        singletonList(stockCard2));
+    when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId1))
+        .thenReturn(null);
+    when(archivedProductRepository.findByFacilityIdAndOrderableId(facilityId, orderableId2))
+        .thenReturn(null);
+    when(siglusPhysicalInventoryService.getPhysicalInventoryForAllProducts(facilityId))
+        .thenReturn(null);
+    when(stockManagementDraftRepository.findByFacilityId(facilityId)).thenReturn(null);
+    when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
+        .thenReturn(null);
+    List<String> productCodes = Arrays.asList(CODE_1, CODE_2);
+    Set<String> archivedProductCodes = asSet(CODE_1);
+    when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
+        .thenReturn(archivedProductCodes);
+
+    // when
+    archiveProductService.archiveAllProducts(facilityId, productCodes);
 
     // then
     verify(archivedProductRepository).deleteAllArchivedProductsByFacilityId(facilityId);
