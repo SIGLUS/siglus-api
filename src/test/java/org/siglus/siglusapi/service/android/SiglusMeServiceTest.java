@@ -18,11 +18,13 @@ package org.siglus.siglusapi.service.android;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -52,8 +54,8 @@ import org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableChildDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
-import org.siglus.common.domain.ArchivedProduct;
 import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ArchivedProductRepository;
@@ -65,7 +67,9 @@ import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
+import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.springframework.data.domain.PageImpl;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
@@ -81,6 +85,9 @@ public class SiglusMeServiceTest {
   private SiglusArchiveProductService siglusArchiveProductService;
 
   private final List<SupportedProgramDto> programDtos = new ArrayList<>();
+
+  @Mock
+  private SiglusOrderableService orderableDataService;
 
   @Mock
   private SiglusApprovedProductReferenceDataService approvedProductService;
@@ -101,14 +108,17 @@ public class SiglusMeServiceTest {
   private final String facilityCode = "facilityCode";
   private final String facilityName = "facilityName";
 
-  private final String oldTimeStr = "2020-12-31T09:18:34.001Z";
   private ZonedDateTime oldTime;
-  private final String syncTimeStr = "2021-04-12T12:32:26.003Z";
   private Instant syncTime;
-  private final String latestTimeStr = "2021-05-31T09:08:35.004Z";
   private ZonedDateTime latestTime;
 
   private final UUID productId1 = UUID.randomUUID();
+  private final UUID productId2 = UUID.randomUUID();
+  private final UUID productId3 = UUID.randomUUID();
+
+  private final String productCode1 = "product 1";
+  private final String productCode2 = "product 2";
+  private final String productCode3 = "product 3";
 
   @Before
   public void prepare() {
@@ -116,8 +126,11 @@ public class SiglusMeServiceTest {
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
 
+    String oldTimeStr = "2020-12-31T09:18:34.001Z";
     oldTime = Instant.parse(oldTimeStr).atZone(ZoneId.systemDefault());
+    String syncTimeStr = "2021-04-12T12:32:26.003Z";
     syncTime = Instant.parse(syncTimeStr);
+    String latestTimeStr = "2021-05-31T09:08:35.004Z";
     latestTime = Instant.parse(latestTimeStr).atZone(ZoneId.systemDefault());
 
     UUID programId1 = UUID.randomUUID();
@@ -132,15 +145,14 @@ public class SiglusMeServiceTest {
     when(programDataService.findOne(programId2)).thenReturn(program2);
     when(programsHelper.findUserSupportedPrograms())
         .thenReturn(ImmutableSet.of(programId1, programId2));
+    when(orderableDataService.searchOrderables(any(), any(), any()))
+        .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
     when(approvedProductService.getApprovedProducts(facilityId, programId1, emptyList()))
-        .thenReturn(mockGetProductResponse(asList(mockOrderable1(), mockOrderable2())));
+        .thenReturn(mockGetProductResponse(asList(mockApprovedProduct1(), mockApprovedProduct2())));
     when(approvedProductService.getApprovedProducts(facilityId, programId2, emptyList()))
-        .thenReturn(mockGetProductResponse(singletonList(mockOrderable3())));
-    ArchivedProduct archivedProduct = mock(ArchivedProduct.class);
-    when(archivedProduct.getFacilityId()).thenReturn(facilityId);
-    when(archivedProduct.getOrderableId()).thenReturn(productId1);
-    when(archivedProductRepo.findByFacilityId(facilityId))
-        .thenReturn(singletonList(archivedProduct));
+        .thenReturn(mockGetProductResponse(singletonList(mockApprovedProduct3())));
+    when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId))
+        .thenReturn(singleton(productId1.toString()));
   }
 
 
@@ -158,7 +170,7 @@ public class SiglusMeServiceTest {
     FacilityResponse response = service.getCurrentFacility();
 
     // then
-    assertEquals(programDtos.get(0).getCode(),response.getSupportedPrograms().get(0).getCode());
+    assertEquals(programDtos.get(0).getCode(), response.getSupportedPrograms().get(0).getCode());
   }
 
   @Test
@@ -188,8 +200,6 @@ public class SiglusMeServiceTest {
 
   @Test
   public void shouldReturnAllProductsWhenGetFacilityProducts() {
-    // given
-
     // when
     ProductSyncResponse syncResponse = service.getFacilityProducts(null);
 
@@ -210,8 +220,6 @@ public class SiglusMeServiceTest {
 
   @Test
   public void shouldReturnAllProductsWhenGetFacilityProductsGivenSyncTime() {
-    // given
-
     // when
     ProductSyncResponse syncResponse = service.getFacilityProducts(syncTime);
 
@@ -233,7 +241,7 @@ public class SiglusMeServiceTest {
   }
 
   private void assertProduct1(ProductResponse product) {
-    assertEquals("product 1", product.getProductCode());
+    assertEquals(productCode1, product.getProductCode());
     assertEquals("full name of product 1", product.getFullProductName());
     assertEquals("description of product 1", product.getDescription());
     assertTrue(product.getArchived());
@@ -246,11 +254,11 @@ public class SiglusMeServiceTest {
     assertFalse(product.getIsBasic());
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
-    assertEquals(oldTimeStr, product.getLastUpdated());
+    assertEquals(oldTime.toInstant(), product.getLastUpdated());
   }
 
   private void assertProduct2(ProductResponse product) {
-    assertEquals("product 2", product.getProductCode());
+    assertEquals(productCode2, product.getProductCode());
     assertEquals("full name of product 2", product.getFullProductName());
     assertEquals("description of product 2", product.getDescription());
     assertFalse(product.getArchived());
@@ -261,16 +269,16 @@ public class SiglusMeServiceTest {
     assertTrue(product.getIsKit());
     assertEquals(1, product.getChildren().size());
     ProductChildResponse child = product.getChildren().get(0);
-    assertEquals("product 1", child.getProductCode());
+    assertEquals(productCode1, child.getProductCode());
     assertEquals(100L, (long) child.getQuantity());
     assertFalse(product.getIsBasic());
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
-    assertEquals(latestTimeStr, product.getLastUpdated());
+    assertEquals(latestTime.toInstant(), product.getLastUpdated());
   }
 
   private void assertProduct3(ProductResponse product) {
-    assertEquals("product 3", product.getProductCode());
+    assertEquals(productCode3, product.getProductCode());
     assertEquals("full name of product 3", product.getFullProductName());
     assertEquals("description of product 3", product.getDescription());
     assertFalse(product.getArchived());
@@ -283,22 +291,43 @@ public class SiglusMeServiceTest {
     assertTrue(product.getIsBasic());
     assertFalse(product.getIsHiv());
     assertFalse(product.getIsNos());
-    assertEquals(latestTimeStr, product.getLastUpdated());
+    assertEquals(latestTime.toInstant(), product.getLastUpdated());
   }
 
   private OrderablesAggregator mockGetProductResponse(List<ApprovedProductDto> products) {
     return new OrderablesAggregator(products);
   }
 
-  private ApprovedProductDto mockOrderable1() {
-    String productCode = "product 1";
+  private org.siglus.common.dto.referencedata.OrderableDto mockOrderable1() {
+    String productCode = productCode1;
+    org.siglus.common.dto.referencedata.OrderableDto orderable =
+        new org.siglus.common.dto.referencedata.OrderableDto();
+    orderable.setId(productId1);
+    orderable.setArchived(true);
+    orderable.setProductCode(productCode);
+    orderable.setFullProductName(genFullName(productCode));
+    orderable.setDescription(genDescription(productCode));
+    orderable.setNetContent(1L);
+    orderable.setPackRoundingThreshold(3L);
+    orderable.setRoundToZero(true);
+    orderable.setChildren(emptySet());
+    orderable.setExtraData(new HashMap<>());
+    orderable.getMeta().setLastUpdated(oldTime);
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setOrderableCategoryDisplayName("Default");
+    orderable.setPrograms(singleton(programOrderableDto));
+    return orderable;
+  }
+
+  private ApprovedProductDto mockApprovedProduct1() {
+    String productCode = productCode1;
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
     approvedProduct.setOrderable(orderable);
     orderable.setId(productId1);
     orderable.setProductCode(productCode);
-    orderable.setFullProductName("full name of " + productCode);
-    orderable.setDescription("description of " + productCode);
+    orderable.setFullProductName(genFullName(productCode));
+    orderable.setDescription(genDescription(productCode));
     orderable.setNetContent(1L);
     orderable.setPackRoundingThreshold(3L);
     orderable.setRoundToZero(true);
@@ -308,15 +337,42 @@ public class SiglusMeServiceTest {
     return approvedProduct;
   }
 
-  private ApprovedProductDto mockOrderable2() {
-    String productCode = "product 2";
+  private org.siglus.common.dto.referencedata.OrderableDto mockOrderable2() {
+    String productCode = productCode2;
+    org.siglus.common.dto.referencedata.OrderableDto orderable =
+        new org.siglus.common.dto.referencedata.OrderableDto();
+    orderable.setId(productId2);
+    orderable.setArchived(false);
+    orderable.setProductCode(productCode);
+    orderable.setFullProductName(genFullName(productCode));
+    orderable.setDescription(genDescription(productCode));
+    orderable.setNetContent(2L);
+    orderable.setPackRoundingThreshold(5L);
+    orderable.setRoundToZero(true);
+    org.siglus.common.dto.referencedata.ObjectReferenceDto childRef =
+        new org.siglus.common.dto.referencedata.ObjectReferenceDto();
+    childRef.setId(productId1);
+    org.siglus.common.dto.referencedata.OrderableChildDto child =
+        new org.siglus.common.dto.referencedata.OrderableChildDto(childRef, 100L);
+    orderable.setChildren(new HashSet<>());
+    orderable.getChildren().add(child);
+    orderable.setExtraData(new HashMap<>());
+    orderable.getMeta().setLastUpdated(latestTime);
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setOrderableCategoryDisplayName("Default");
+    orderable.setPrograms(singleton(programOrderableDto));
+    return orderable;
+  }
+
+  private ApprovedProductDto mockApprovedProduct2() {
+    String productCode = productCode2;
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
     approvedProduct.setOrderable(orderable);
-    orderable.setId(UUID.randomUUID());
+    orderable.setId(productId2);
     orderable.setProductCode(productCode);
-    orderable.setFullProductName("full name of " + productCode);
-    orderable.setDescription("description of " + productCode);
+    orderable.setFullProductName(genFullName(productCode));
+    orderable.setDescription(genDescription(productCode));
     orderable.setNetContent(2L);
     orderable.setPackRoundingThreshold(5L);
     orderable.setRoundToZero(true);
@@ -332,15 +388,37 @@ public class SiglusMeServiceTest {
     return approvedProduct;
   }
 
-  private ApprovedProductDto mockOrderable3() {
-    String productCode = "product 3";
+  private org.siglus.common.dto.referencedata.OrderableDto mockOrderable3() {
+    String productCode = productCode3;
+    org.siglus.common.dto.referencedata.OrderableDto orderable =
+        new org.siglus.common.dto.referencedata.OrderableDto();
+    orderable.setId(productId3);
+    orderable.setArchived(false);
+    orderable.setProductCode(productCode);
+    orderable.setFullProductName(genFullName(productCode));
+    orderable.setDescription(genDescription(productCode));
+    orderable.setNetContent(2L);
+    orderable.setPackRoundingThreshold(5L);
+    orderable.setRoundToZero(false);
+    orderable.setChildren(emptySet());
+    orderable.setExtraData(new HashMap<>());
+    orderable.getExtraData().put("isBasic", "true");
+    orderable.getMeta().setLastUpdated(latestTime);
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setOrderableCategoryDisplayName("13");
+    orderable.setPrograms(singleton(programOrderableDto));
+    return orderable;
+  }
+
+  private ApprovedProductDto mockApprovedProduct3() {
+    String productCode = productCode3;
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
     approvedProduct.setOrderable(orderable);
-    orderable.setId(UUID.randomUUID());
+    orderable.setId(productId3);
     orderable.setProductCode(productCode);
-    orderable.setFullProductName("full name of " + productCode);
-    orderable.setDescription("description of " + productCode);
+    orderable.setFullProductName(genFullName(productCode));
+    orderable.setDescription(genDescription(productCode));
     orderable.setNetContent(2L);
     orderable.setPackRoundingThreshold(5L);
     orderable.setRoundToZero(false);
@@ -349,6 +427,14 @@ public class SiglusMeServiceTest {
     orderable.getExtraData().put("isBasic", "true");
     orderable.getMeta().setLastUpdated(latestTime);
     return approvedProduct;
+  }
+
+  private String genFullName(String productCode) {
+    return "full name of " + productCode;
+  }
+
+  private String genDescription(String productCode) {
+    return "description of " + productCode;
   }
 
 }

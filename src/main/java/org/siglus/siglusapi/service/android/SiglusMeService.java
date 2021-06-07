@@ -29,84 +29,43 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.stockmanagement.dto.referencedata.MetaDataDto;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
-import org.siglus.common.domain.ArchivedProduct;
 import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.MetadataDto;
+import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
+import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 
 @Service
 @RequiredArgsConstructor
 public class SiglusMeService {
 
+  static final String KEY_PROGRAM_CODE = "programCode";
+
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final SiglusArchiveProductService siglusArchiveProductService;
+  private final SiglusOrderableService orderableDataService;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final SiglusAuthenticationHelper authHelper;
   private final SupportedProgramsHelper programsHelper;
   private final ProgramReferenceDataService programDataService;
-  private final ArchivedProductRepository archivedProductRepo;
-
-  public ProductSyncResponse getFacilityProducts(Instant lastSyncTime) {
-    ProductSyncResponse syncResponse = new ProductSyncResponse();
-    syncResponse.setLastSyncTime(System.currentTimeMillis());
-    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    List<OrderableDto> approvedProducts = programsHelper.findUserSupportedPrograms().stream()
-        .map(programDataService::findOne)
-        .map(program -> getProgramProducts(homeFacilityId, program))
-        .map(OrderablesAggregator::getOrderablesPage)
-        .map(Slice::getContent)
-        .flatMap(Collection::stream)
-        .collect(Collectors.toList());
-    Map<UUID, OrderableDto> productMap = approvedProducts.stream()
-        .collect(Collectors.toMap(OrderableDto::getId, Function.identity()));
-    Map<UUID, ArchivedProduct> archivedProductMap = archivedProductRepo
-        .findByFacilityId(homeFacilityId).stream()
-        .collect(Collectors.toMap(ArchivedProduct::getOrderableId, Function.identity()));
-    List<OrderableDto> filteredProducts = approvedProducts.stream()
-        .filter(p -> filterByLastUpdated(p, lastSyncTime))
-        .collect(Collectors.toList());
-    syncResponse.setProducts(
-        filteredProducts.stream()
-            .map(orderable -> ProductResponse
-                .fromOrderable(orderable, productMap, archivedProductMap))
-            .collect(Collectors.toList()));
-    return syncResponse;
-  }
-
-  private OrderablesAggregator getProgramProducts(UUID homeFacilityId, ProgramDto program) {
-    OrderablesAggregator approvedProducts = approvedProductDataService
-        .getApprovedProducts(homeFacilityId, program.getId(), emptyList());
-    approvedProducts.getOrderablesPage()
-        .forEach(orderable -> orderable.getExtraData().put("programCode", program.getCode()));
-    return approvedProducts;
-  }
-
-  private boolean filterByLastUpdated(OrderableDto approvedProduct, Instant lastSyncTime) {
-    if (lastSyncTime == null) {
-      return true;
-    }
-    return Optional.of(approvedProduct)
-        .map(OrderableDto::getMeta)
-        .map(MetaDataDto::getLastUpdated)
-        .map(ChronoZonedDateTime::toInstant)
-        .map(lastUpdated -> !lastUpdated.isBefore(lastSyncTime))
-        .orElse(true);
-  }
 
   public FacilityResponse getCurrentFacility() {
     UserDto userDto = authHelper.getCurrentUser();
@@ -132,4 +91,59 @@ public class SiglusMeService {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     siglusArchiveProductService.archiveAllProducts(facilityId, productCodes);
   }
+
+  public ProductSyncResponse getFacilityProducts(Instant lastSyncTime) {
+    ProductSyncResponse syncResponse = new ProductSyncResponse();
+    syncResponse.setLastSyncTime(System.currentTimeMillis());
+    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
+        .collect(Collectors.toMap(OrderableDto::getId, Function.identity()));
+
+    List<OrderableDto> approvedProducts = programsHelper
+        .findUserSupportedPrograms().stream()
+        .map(programDataService::findOne)
+        .map(program -> getProgramProducts(homeFacilityId, program))
+        .map(OrderablesAggregator::getOrderablesPage)
+        .map(Slice::getContent)
+        .flatMap(Collection::stream)
+        .map(orderable -> {
+          OrderableDto dto = allProducts.get(orderable.getId());
+          dto.getExtraData().put(KEY_PROGRAM_CODE, orderable.getExtraData().get(KEY_PROGRAM_CODE));
+          return dto;
+        })
+        .collect(Collectors.toList());
+    List<ProductResponse> filteredProducts = approvedProducts.stream()
+        .filter(p -> filterByLastUpdated(p, lastSyncTime))
+        .map(orderable -> ProductResponse.fromOrderable(orderable, allProducts))
+        .collect(Collectors.toList());
+    syncResponse.setProducts(filteredProducts);
+    return syncResponse;
+  }
+
+  private OrderablesAggregator getProgramProducts(UUID homeFacilityId, ProgramDto program) {
+    OrderablesAggregator approvedProducts = approvedProductDataService
+        .getApprovedProducts(homeFacilityId, program.getId(), emptyList());
+    approvedProducts.getOrderablesPage()
+        .forEach(orderable -> orderable.getExtraData().put(KEY_PROGRAM_CODE, program.getCode()));
+    return approvedProducts;
+  }
+
+  private boolean filterByLastUpdated(OrderableDto approvedProduct, Instant lastSyncTime) {
+    if (lastSyncTime == null) {
+      return true;
+    }
+    return Optional.of(approvedProduct)
+        .map(OrderableDto::getMeta)
+        .map(MetadataDto::getLastUpdated)
+        .map(ChronoZonedDateTime::toInstant)
+        .map(lastUpdated -> !lastUpdated.isBefore(lastSyncTime))
+        .orElse(true);
+  }
+
+  private List<OrderableDto> getAllProducts(UUID homeFacilityId) {
+    QueryOrderableSearchParams params = new QueryOrderableSearchParams(new LinkedMultiValueMap<>());
+    Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, Pagination.NO_PAGINATION);
+    return orderableDataService.searchOrderables(params, pageable, homeFacilityId).getContent();
+  }
+
 }

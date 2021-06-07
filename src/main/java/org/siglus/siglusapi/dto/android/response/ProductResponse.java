@@ -15,14 +15,16 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Data;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
-import org.siglus.common.domain.ArchivedProduct;
+import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 
 @Data
 public class ProductResponse {
@@ -34,33 +36,47 @@ public class ProductResponse {
   private Long netContent;
   private Long packRoundingThreshold;
   private Boolean roundToZero;
+  private String category;
   private String programCode;
   private Boolean isKit;
   private List<ProductChildResponse> children = Collections.emptyList();
   private Boolean isBasic;
   private Boolean isNos;
   private Boolean isHiv;
-  private String lastUpdated;
+  private Instant lastUpdated;
 
   public static ProductResponse fromOrderable(OrderableDto orderable,
-      Map<UUID, OrderableDto> productMap, Map<UUID, ArchivedProduct> archivedProductMap) {
+      Map<UUID, OrderableDto> productMap) {
     ProductResponse resp = new ProductResponse();
     resp.setProductCode(orderable.getProductCode());
     resp.setFullProductName(orderable.getFullProductName());
     resp.setDescription(orderable.getDescription());
-    resp.setArchived(archivedProductMap.containsKey(orderable.getId()));
+    resp.setArchived(orderable.getArchived());
     resp.setNetContent(orderable.getNetContent());
     resp.setPackRoundingThreshold(orderable.getPackRoundingThreshold());
     resp.setRoundToZero(orderable.getRoundToZero());
-    resp.setProgramCode(orderable.getExtraData().get("programCode"));
+    // what if null or multiple?
+    ProgramOrderableDto program = orderable.getPrograms().stream().findFirst()
+        .orElseThrow(IllegalStateException::new);
+    resp.setProgramCode((String) orderable.getExtraData().get("programCode"));
+    resp.setCategory(program.getOrderableCategoryDisplayName());
     resp.setChildren(orderable.getChildren().stream()
         .map(child -> ProductChildResponse.fromOrderableChild(child, productMap))
         .collect(Collectors.toList()));
     resp.setIsKit(!orderable.getChildren().isEmpty());
-    resp.setIsBasic(Boolean.parseBoolean(orderable.getExtraData().get("isBasic")));
-    resp.setIsHiv(Boolean.parseBoolean(orderable.getExtraData().get("isHiv")));
-    resp.setIsNos(Boolean.parseBoolean(orderable.getExtraData().get("isNos")));
-    resp.setLastUpdated(orderable.getMeta().getLastUpdated().toInstant().toString());
+    resp.setIsBasic(parseKey(orderable, "isBasic"));
+    resp.setIsHiv(parseKey(orderable, "isHiv"));
+    resp.setIsNos(parseKey(orderable, "isNos"));
+    resp.setLastUpdated(orderable.getMeta().getLastUpdated().toInstant());
     return resp;
   }
+
+  public static Boolean parseKey(OrderableDto orderable, String key) {
+    Object value = orderable.getExtraData().get(key);
+    return Optional.ofNullable(value)
+        .map(Object::toString)
+        .map(Boolean::parseBoolean)
+        .orElse(false);
+  }
+
 }
