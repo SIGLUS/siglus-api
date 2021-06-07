@@ -8,8 +8,11 @@ def ramlToCopy = copySpec {
         filter(ReplaceTokens, tokens: [
                 baseUrl: "http://localhost",
                 version: version])
-        filter{
-            line -> line.replaceAll("\"schemas(.*).json\"","\"#/schemas\$1\"")
+        filter {
+            line -> line.replaceAll("\"schemas(.*).json\"", "\"#/schemas\$1\"")
+        }
+        filter {
+            line -> line.replaceAll("\"schemas/android/(.*).json\"", "\"#/schemas/android/\$1\"")
         }
     }
     from('src/main/resources') {
