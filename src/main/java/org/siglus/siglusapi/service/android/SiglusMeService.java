@@ -32,9 +32,11 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.stockmanagement.dto.referencedata.MetaDataDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
+import org.siglus.common.domain.ArchivedProduct;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
@@ -57,6 +59,7 @@ public class SiglusMeService {
   private final SiglusAuthenticationHelper authHelper;
   private final SupportedProgramsHelper programsHelper;
   private final ProgramReferenceDataService programDataService;
+  private final ArchivedProductRepository archivedProductRepo;
 
   public ProductSyncResponse getFacilityProducts(Instant lastSyncTime) {
     ProductSyncResponse syncResponse = new ProductSyncResponse();
@@ -71,12 +74,16 @@ public class SiglusMeService {
         .collect(Collectors.toList());
     Map<UUID, OrderableDto> productMap = approvedProducts.stream()
         .collect(Collectors.toMap(OrderableDto::getId, Function.identity()));
+    Map<UUID, ArchivedProduct> archivedProductMap = archivedProductRepo
+        .findByFacilityId(homeFacilityId).stream()
+        .collect(Collectors.toMap(ArchivedProduct::getOrderableId, Function.identity()));
     List<OrderableDto> filteredProducts = approvedProducts.stream()
         .filter(p -> filterByLastUpdated(p, lastSyncTime))
         .collect(Collectors.toList());
     syncResponse.setProducts(
         filteredProducts.stream()
-            .map(orderable -> ProductResponse.fromOrderable(orderable, productMap))
+            .map(orderable -> ProductResponse
+                .fromOrderable(orderable, productMap, archivedProductMap))
             .collect(Collectors.toList()));
     return syncResponse;
   }

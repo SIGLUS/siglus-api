@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.Data;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
+import org.siglus.common.domain.ArchivedProduct;
 
 @Data
 public class ProductResponse {
@@ -42,11 +43,12 @@ public class ProductResponse {
   private String lastUpdated;
 
   public static ProductResponse fromOrderable(OrderableDto orderable,
-      Map<UUID, OrderableDto> productMap) {
+      Map<UUID, OrderableDto> productMap, Map<UUID, ArchivedProduct> archivedProductMap) {
     ProductResponse resp = new ProductResponse();
     resp.setProductCode(orderable.getProductCode());
     resp.setFullProductName(orderable.getFullProductName());
     resp.setDescription(orderable.getDescription());
+    resp.setArchived(archivedProductMap.containsKey(orderable.getId()));
     resp.setNetContent(orderable.getNetContent());
     resp.setPackRoundingThreshold(orderable.getPackRoundingThreshold());
     resp.setRoundToZero(orderable.getRoundToZero());

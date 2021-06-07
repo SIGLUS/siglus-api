@@ -15,6 +15,7 @@
 
 package org.siglus.common.repository;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.siglus.common.domain.ArchivedProduct;
@@ -41,5 +42,7 @@ public interface ArchivedProductRepository extends JpaRepository<ArchivedProduct
   @Query(value = "delete from siglusintegration.archived_products where facilityid = :facilityId",
       nativeQuery = true)
   void deleteAllArchivedProductsByFacilityId(@Param("facilityId") UUID facilityId);
+
+  List<ArchivedProduct> findByFacilityId(UUID facilityId);
 
 }

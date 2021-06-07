@@ -52,9 +52,11 @@ import org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableChildDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
+import org.siglus.common.domain.ArchivedProduct;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
@@ -92,14 +94,17 @@ public class SiglusMeServiceTest {
   @Mock
   private ProgramReferenceDataService programDataService;
 
+  @Mock
+  private ArchivedProductRepository archivedProductRepo;
+
   private final UUID facilityId = UUID.randomUUID();
   private final String facilityCode = "facilityCode";
   private final String facilityName = "facilityName";
 
   private final String oldTimeStr = "2020-12-31T09:18:34.001Z";
   private ZonedDateTime oldTime;
-  // private final String syncTimeStr = "2021-04-12T12:32:26.003Z";
-  // private ZonedDateTime syncTime;
+  private final String syncTimeStr = "2021-04-12T12:32:26.003Z";
+  private Instant syncTime;
   private final String latestTimeStr = "2021-05-31T09:08:35.004Z";
   private ZonedDateTime latestTime;
 
@@ -112,7 +117,7 @@ public class SiglusMeServiceTest {
     when(authHelper.getCurrentUser()).thenReturn(user);
 
     oldTime = Instant.parse(oldTimeStr).atZone(ZoneId.systemDefault());
-    // syncTime = Instant.parse(syncTimeStr).atZone(ZoneId.systemDefault());
+    syncTime = Instant.parse(syncTimeStr);
     latestTime = Instant.parse(latestTimeStr).atZone(ZoneId.systemDefault());
 
     UUID programId1 = UUID.randomUUID();
@@ -131,6 +136,11 @@ public class SiglusMeServiceTest {
         .thenReturn(mockGetProductResponse(asList(mockOrderable1(), mockOrderable2())));
     when(approvedProductService.getApprovedProducts(facilityId, programId2, emptyList()))
         .thenReturn(mockGetProductResponse(singletonList(mockOrderable3())));
+    ArchivedProduct archivedProduct = mock(ArchivedProduct.class);
+    when(archivedProduct.getFacilityId()).thenReturn(facilityId);
+    when(archivedProduct.getOrderableId()).thenReturn(productId1);
+    when(archivedProductRepo.findByFacilityId(facilityId))
+        .thenReturn(singletonList(archivedProduct));
   }
 
 
@@ -198,6 +208,25 @@ public class SiglusMeServiceTest {
     assertProduct3(product3);
   }
 
+  @Test
+  public void shouldReturnAllProductsWhenGetFacilityProductsGivenSyncTime() {
+    // given
+
+    // when
+    ProductSyncResponse syncResponse = service.getFacilityProducts(syncTime);
+
+    // then
+    assertNotNull(syncResponse);
+    assertJustNow(syncResponse.getLastSyncTime());
+    assertNotNull(syncResponse.getProducts());
+    assertEquals(2, syncResponse.getProducts().size());
+    ProductResponse product1 = syncResponse.getProducts().get(0);
+    assertProduct2(product1);
+
+    ProductResponse product2 = syncResponse.getProducts().get(1);
+    assertProduct3(product2);
+  }
+
   private void assertJustNow(Long time) {
     Duration duration = Duration.between(Instant.ofEpochMilli(time), Instant.now());
     assertTrue(duration.compareTo(Duration.ofSeconds(5)) < 0);
@@ -207,6 +236,7 @@ public class SiglusMeServiceTest {
     assertEquals("product 1", product.getProductCode());
     assertEquals("full name of product 1", product.getFullProductName());
     assertEquals("description of product 1", product.getDescription());
+    assertTrue(product.getArchived());
     assertEquals(1L, (long) product.getNetContent());
     assertEquals(3L, (long) product.getPackRoundingThreshold());
     assertTrue(product.getRoundToZero());
@@ -223,6 +253,7 @@ public class SiglusMeServiceTest {
     assertEquals("product 2", product.getProductCode());
     assertEquals("full name of product 2", product.getFullProductName());
     assertEquals("description of product 2", product.getDescription());
+    assertFalse(product.getArchived());
     assertEquals(2L, (long) product.getNetContent());
     assertEquals(5L, (long) product.getPackRoundingThreshold());
     assertTrue(product.getRoundToZero());
@@ -242,6 +273,7 @@ public class SiglusMeServiceTest {
     assertEquals("product 3", product.getProductCode());
     assertEquals("full name of product 3", product.getFullProductName());
     assertEquals("description of product 3", product.getDescription());
+    assertFalse(product.getArchived());
     assertEquals(2L, (long) product.getNetContent());
     assertEquals(5L, (long) product.getPackRoundingThreshold());
     assertFalse(product.getRoundToZero());
