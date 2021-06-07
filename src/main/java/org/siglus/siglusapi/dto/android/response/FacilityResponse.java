@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
-import java.util.Collections;
 import java.util.List;
 import lombok.Builder;
 import lombok.Data;

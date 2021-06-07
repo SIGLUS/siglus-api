@@ -145,7 +145,7 @@ public class SiglusMeServiceTest {
     when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(facilityDto);
 
     // when
-    FacilityResponse response = service.getFacility();
+    FacilityResponse response = service.getCurrentFacility();
 
     // then
     assertEquals(programDtos.get(0).getCode(),response.getSupportedPrograms().get(0).getCode());

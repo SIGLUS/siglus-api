@@ -80,14 +80,14 @@ public class SiglusMeControllerTest {
   @Test
   public void shouldCallServiceWhenGetFacility() {
     // given
-    when(service.getFacility()).thenReturn(facilityResponse);
+    when(service.getCurrentFacility()).thenReturn(facilityResponse);
 
     // when
     FacilityResponse facilityResponse = controller.getFacility();
 
     // then
     assertSame(facilityResponse, this.facilityResponse);
-    verify(service).getFacility();
+    verify(service).getCurrentFacility();
   }
 
   @Test
