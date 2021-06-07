@@ -15,7 +15,7 @@
     "numberOfElements": { "type": "integer", "title": "numberOfElements" },
     "last": { "type": "boolean", "title": "last" },
     "first": { "type": "boolean", "title": "first" },
-    "sort?": {
+    "sort": {
       "title": "sort",
       "type": "array",
       "items": { "type": "object" }

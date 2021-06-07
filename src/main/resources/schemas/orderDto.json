@@ -1,7 +1,7 @@
 {
   "type": "object",
   "$schema": "http://json-schema.org/draft-04/schema",
-  "title": "OrderDto",
+  "title": "Order",
   "description": "A single order created from requisition",
   "properties": {
     "id": {
@@ -19,7 +19,7 @@
     "facility": {
       "type": "object",
       "title": "facility",
-      "$ref": "facilityDto.json"
+      "$ref": "facility.json"
     },
     "processingPeriod": {
       "type": "object",
@@ -33,40 +33,34 @@
     "createdBy": {
       "type": "object",
       "title": "createdBy",
-      "$ref": "userDto.json"
+      "$ref": "user.json"
     },
     "program": {
       "type": "object",
       "title": "program",
-      "$ref": "programDto.json"
+      "$ref": "program.json"
     },
     "requestingFacility": {
       "type": "object",
       "title": "requestingFacility",
-      "$ref": "facilityDto.json"
+      "$ref": "facility.json"
     },
     "receivingFacility": {
       "type": "object",
       "title": "receivingFacility",
-      "$ref": "facilityDto.json"
+      "$ref": "facility.json"
     },
     "supplyingFacility": {
       "type": "object",
       "title": "supplyingFacility",
-      "$ref": "facilityDto.json"
+      "$ref": "facility.json"
     },
     "orderCode": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": "string",
       "title": "orderCode"
     },
     "status": {
-      "type": [
-        "string",
-        "null"
-      ],
+      "type": "string",
       "title": "status"
     },
     "quotedCost": {
@@ -74,40 +68,34 @@
       "title": "quotedCost"
     },
     "orderLineItems": {
-      "type": [
-        "array",
-        "null"
-      ],
+      "type": "array",
       "title": "orderLineItems",
       "items": {
         "type": "object",
-        "$ref": "orderLineItemDto.json"
+        "$ref": "orderLineItem.json"
       },
       "uniqueItems": false
     },
     "statusMessages": {
-      "type": [
-        "array",
-        "null"
-      ],
+      "type": "array",
       "title": "statusMessages",
       "items": {
         "type": "object",
-        "$ref": "statusMessageDto.json"
+        "$ref": "statusMessage.json"
       },
       "uniqueItems": false
     },
     "lastUpdaterId": {
-      "type": ["string", "null"],
+      "type": "string",
       "title": "lastUpdaterId"
     },
     "lastUpdater": {
-      "type": ["object", "null"],
+      "type": "object",
       "$ref": "referenceObjectDto.json",
       "title": "last updater"
     },
     "lastUpdatedDate": {
-      "type": ["string", "null"],
+      "type": "string",
       "title": "lastUpdatedDate"
     }
   },

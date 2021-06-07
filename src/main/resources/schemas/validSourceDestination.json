@@ -23,7 +23,7 @@
           "type": "string"
         },
         "isRefDataFacility": {
-          "type":"boolean"
+          "type": "boolean"
         }
       }
     },

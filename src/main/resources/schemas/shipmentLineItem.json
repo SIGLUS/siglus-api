@@ -5,12 +5,17 @@
   "description": "A shipment line item",
   "properties": {
     "orderable": {
-      "type": ["object"],
+      "type": [
+        "object"
+      ],
       "$ref": "versionObjectReference.json",
       "title": "orderable"
     },
     "lot": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "$ref": "referenceObjectDto.json",
       "title": "lot"
     },

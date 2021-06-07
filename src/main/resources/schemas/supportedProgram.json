@@ -1,0 +1,11 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "supported program",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    }
+  }
+}

@@ -4,7 +4,10 @@
   "description": "Physical inventory",
   "properties": {
     "id": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "title": "id",
       "description": "Indicates physical inventory id."
     },
@@ -17,24 +20,39 @@
       "description": "Indicates which facility the physical inventory is done for. Will be used for all events created from this physical inventory."
     },
     "occurredDate": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "format": "date",
       "description": "Will be used as occurred date for all events created from this physical inventory."
     },
     "signature": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "The signature of the operator."
     },
     "documentNumber": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": ""
     },
     "isStarter": {
-      "type": ["boolean", "null"],
+      "type": [
+        "boolean",
+        "null"
+      ],
       "description": "The boolean value of the draft is a starter template."
     },
     "lineItems": {
-      "type": ["array", "null"],
+      "type": [
+        "array",
+        "null"
+      ],
       "title": "Physical inventory line items, each will become an event when submitted.",
       "items": {
         "type": "object",

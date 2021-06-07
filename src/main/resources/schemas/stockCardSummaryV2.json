@@ -16,8 +16,7 @@
       "title": "Can fulfill for me",
       "items": {
         "type": "object",
-        "title": "Can fulfill for me",
-        "$ref": "canFulfillForMe.json"
+        "title": "Can fulfill for me"
       }
     }
   }

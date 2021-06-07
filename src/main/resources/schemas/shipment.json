@@ -5,33 +5,52 @@
   "description": "A shipment",
   "properties": {
     "id": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "title": "id"
     },
     "order": {
-      "type": ["object"],
+      "type": [
+        "object"
+      ],
       "$ref": "referenceObjectDto.json",
       "title": "order"
     },
     "shippedBy": {
-      "type": ["object", "null"],
+      "type": [
+        "object",
+        "null"
+      ],
       "$ref": "referenceObjectDto.json",
       "title": "shipped by"
     },
     "shippedDate": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "title": "shipped date"
     },
     "notes": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "title": "notes"
     },
     "rowsWithUnresolvedOrderable": {
-      "type": ["array", "null"],
+      "type": [
+        "array",
+        "null"
+      ],
       "title": "rows with unresolved orderable"
     },
     "lineItems": {
-      "type": ["array"],
+      "type": [
+        "array"
+      ],
       "title": "line items",
       "items": {
         "type": "object",

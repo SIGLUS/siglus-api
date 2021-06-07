@@ -22,7 +22,7 @@
     },
     "geographicZone": {
       "type": "object",
-      "$ref": "geographicZone.json"
+      "$ref": "geographicZoneDto.json"
     },
     "type": {
       "type": "object",

@@ -9,7 +9,10 @@
       "title": "id"
     },
     "href": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "title": "href"
     }
   },

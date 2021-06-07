@@ -71,3 +71,9 @@ It is meant to be integrated into your pre-commit hooks and your pipelines.
 # The docker image is hands-down the easiest way to the scanner. Please note that your project root (e.g. $PWD) needs to be mounted to /target.
 docker run --rm -v $PWD:/target hawkeyesec/scanner-cli:latest
 ```
+
+### Check raml
+```
+npm install -g raml-cop 
+./gradlew checkApiIsRaml
+```

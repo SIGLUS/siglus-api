@@ -5,20 +5,30 @@
   "description": "A shipment draft",
   "properties": {
     "id": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "title": "id"
     },
     "order": {
-      "type": ["object"],
+      "type": [
+        "object"
+      ],
       "$ref": "referenceObjectDto.json",
       "title": "order"
     },
     "notes": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "title": "notes"
     },
     "lineItems": {
-      "type": ["array"],
+      "type": [
+        "array"
+      ],
       "title": "line items",
       "items": {
         "type": "object",

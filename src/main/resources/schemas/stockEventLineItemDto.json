@@ -69,5 +69,9 @@
       "description": "Indicate the program which this orderable belong to."
     }
   },
-  "required": ["orderableId", "quantity", "programId"]
+  "required": [
+    "orderableId",
+    "quantity",
+    "programId"
+  ]
 }

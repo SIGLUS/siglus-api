@@ -10,34 +10,65 @@ documentation:
     content: Welcome to the SIGLUS API documentation. This minimal API is intended for illustrative purposes.
 
 schemas:
+  - localizedErrorResponse: |
+      {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-04/schema",
+        "title": "LocalizedErrorResponse",
+        "description": "Localized Error response",
+        "properties": {
+          "message": { "type": "string", "title": "error message" },
+          "messageKey": { "type": "string", "title": "key for translations" },
+          "fieldErrors": {
+            "type": "object",
+            "title": "FieldErrors",
+            "description": "Field errors"
+          }
+        },
+        "required": ["messageKey", "message"]
+      }
+  - orderablePage: |
+      {
+        "type": "array",
+        "items": { "type": "object", "$ref": "schemas/orderable.json" }
+      }
   - program: !include schemas/program.json
+  - stockEventDto: !include schemas/stockEventDto.json
   - validSourceDestinations: |
       {
         "type": "array",
-        "items": {"type": "object", "$ref": "schemas/validSourceDestination.json"}
+        "items": { "type": "object", "$ref": "schemas/validSourceDestination.json" }
       }
   - validReasonAssignments: |
       {
          "type": "array",
-         "items": {"type": "object", "$ref": "schemas/validReasonAssignment.json"}
+         "items": { "type": "object", "$ref": "schemas/validReasonAssignment.json" }
       }
-  - siglusOrdeableKitDto: !include schemas/siglusOrdeableKitDto.json
+  - siglusOrdeableKitDto: |
+      {
+         "type": "array",
+         "items": { "type": "object", "$ref": "schemas/siglusOrdeableKitDto.json" }
+      }
   - orderableInKitDto: !include schemas/orderableInKitDto.json
+  - physicalInventory: !include schemas/physicalInventory.json
   - physicalInventories: |
       {
         "type": "array",
-        "items": {"type": "object", "$ref": "schemas/physicalInventory.json"}
+        "items": { "type": "object", "$ref": "schemas/physicalInventory.json" }
       }
   - programArray: |
       {
-          "type": "array",
-          "items": { "type": "object", "$ref": "schemas/program.json" }
+        "type": "array",
+        "items": { "type": "object", "$ref": "schemas/program.json" }
       }
   - uuid: |
       {
         "type": "string",
         "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
       }
+  - stockCard: !include schemas/stockCard.json
+  - stockManagementDraft: !include schemas/stockManagementDraft.json
+  - stockCardSummariesPage: !include schemas/stockCardSummaryV2Page.json
   - arrayOfStrings: |
       {
         "type": "array",
@@ -45,10 +76,6 @@ schemas:
           "type": "string"
         }
       }
-  - stockCard: !include schemas/stockCard.json
-  - stockManagementDraft: !include schemas/stockManagementDraft.json
-  - stockCardSummariesPage: !include schemas/stockCardSummaryV2Page.json
-  - physicalInventoryDate: !include schemas/physicalInventoryDate.json
   - requisitionTemplate: !include schemas/requisitionTemplate.json
   - requisitionTemplateArray: |
       {
@@ -61,35 +88,30 @@ schemas:
   - basicRequisitionDto: !include schemas/basicRequisitionDto.json
   - basicRequisitionDtoPage: !include schemas/basicRequisitionDtoPage.json
   - orderDto: !include schemas/orderDto.json
+  - orderList: |
+      {
+        "type": "array",
+        "items": { "type": "object", "$ref": "schemas/orderDto.json" }
+      }
   - basicOrderDtoPage: !include schemas/basicOrderDtoPage.json
   - shipmentDraft: !include schemas/shipmentDraft.json
   - shipment: !include schemas/shipment.json
-  - shipmentExample: |
-      {
-          "order": {"id": "316c9b76-c90f-4040-8d53-61277112b947"},
-          "notes": "some notes",
-          "lineItems": [{
-              "orderable": {"id": "2a3484ce-4e45-46b1-901e-19a4fd770f73"},
-              "lot": {"id": "1d16ed3d-d4e5-474d-99fc-0ece0f5ddd67"},
-              "quantityShipped": 20
-          }]
-      }
   - notifications: |
       {
         "type": "array",
-        "items": {"type": "object", "$ref": "schemas/notificationDto.json"}
+        "items": { "type": "object", "$ref": "schemas/notificationDto.json" }
       }
   - proofOfDeliveryDto: !include schemas/proofOfDeliveryDto.json
   - facilityList: |
       {
         "type": "array",
-        "items": { "type": "object", "$ref": "facility.json" }
+        "items": { "type": "object", "$ref": "schemas/facility.json" }
       }
   - programAdditionalOrderablePage: !include schemas/programAdditionalOrderablePage.json
   - programAdditionalOrderables: |
       {
         "type": "array",
-        "items": {"type": "object", "$ref": "schemas/programAdditionalOrderable.json"}
+        "items": { "type": "object", "$ref": "schemas/programAdditionalOrderable.json" }
       }
   - fcRequisitionPage: !include schemas/fcRequisitionPage.json
   - fcPodPage: !include schemas/fcPodPage.json
@@ -104,10 +126,10 @@ schemas:
             "items": { "type": "object", "$ref": "schemas/localizedMessage.json" }
           }]
       }
+  - issueVoucher: !include schemas/issueVoucher.json
   - proofOfDeliveryPage: !include schemas/proofOfDeliveryPage.json
   - productSyncResponse: !include schemas/android/productSyncResponse.json
-  - facilityResponse:  !include schemas/android/facilityResponse.json
-  - archivedProductCode: !include schemas/android/archivedProductCode.json
+  - facilityResponse: !include schemas/android/facilityResponse.json
 
 resourceTypes:
   - collection:
@@ -815,7 +837,7 @@ traits:
           200:
             body:
               application/json:
-                schema: InitialInventoryField
+                schema: physicalInventory
 
     /stockCardSummaries:
       get:
@@ -919,7 +941,7 @@ traits:
             description: the latest physical inventory ocuur date.
             body:
               application/json:
-                schema: physicalInventoryDate
+                schema: arrayOfStrings
 
     /processingPeriods:
       displayName: Processing Period
@@ -1189,7 +1211,7 @@ traits:
             description: The request is valid and the given requisition has been created.
             body:
               application/json:
-                schema: requisitionV2
+                schema: basicRequisitionDto
           400:
             description: The request's body is invalid
             body:
@@ -1243,7 +1265,7 @@ traits:
             description: The request is valid and the given requisition will be returned.
             body:
               application/json:
-                schema: requisitionV2
+                schema: basicRequisitionDto
           401:
             description: The request does not contain a token or the token might be invalid.
             body:
@@ -1263,18 +1285,18 @@ traits:
         description: Update existing requisition. Do not change invariants – id, createdDate, facility, program, supplyingFacility, status, emergency, supervisoryNode, orderableId of line item, such attempts will be ignored.
         body:
           application/json:
-            schema: requisitionV2
+            schema: basicRequisitionDto
         responses:
           200:
             description: The request is valid and the given requisition will be updated and returned.
             body:
               application/json:
-                schema: requisitionV2
+                schema: basicRequisitionDto
           400:
             description: The request's body is invalid
             body:
               application/json:
-                schema: localizedMessageMap
+                schema: localizedErrorResponse
           401:
             description: The request does not contain a token or the token might be invalid.
             body:
@@ -1507,7 +1529,7 @@ traits:
         description: convert to orders
         body:
           application/json:
-            schema: releasableRequisitionBatchDto
+            schema: basicRequisitionDtoPage
         responses:
           "201":
             body:
@@ -1809,7 +1831,6 @@ traits:
             body:
               application/json:
                 schema: shipmentDraft
-                example: shipmentExample
           400:
             body:
               application/json:
@@ -1834,7 +1855,6 @@ traits:
           body:
             application/json:
               schema: shipmentDraft
-              example: shipmentExample
           responses:
             200:
               description: Draft saved.
@@ -1843,7 +1863,6 @@ traits:
               body:
                 application/json:
                   schema: shipmentDraft
-                  example: shipmentExample
             400:
               body:
                 application/json:
@@ -1887,7 +1906,6 @@ traits:
         body:
           application/json:
             schema: shipment
-            example: shipmentExample
         responses:
           201:
             description: Shipment created.
@@ -2283,7 +2301,7 @@ traits:
             description: Archive products of the current facility by product codes
             body:
               application/json:
-                schema: archivedProductCode
+                schema: arrayOfStrings
             responses:
               204:
                 description: Full update archived products of current facility

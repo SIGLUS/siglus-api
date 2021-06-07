@@ -14,7 +14,10 @@
       "description": "Indicates which lot this physical inventory line item is for."
     },
     "stockOnHand": {
-      "type": ["integer", "null"],
+      "type": [
+        "integer",
+        "null"
+      ],
       "description": "Indicates previous stock on hand for an orderable."
     },
     "quantity": {

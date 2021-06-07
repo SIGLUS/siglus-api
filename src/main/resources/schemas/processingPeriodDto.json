@@ -10,8 +10,8 @@
     },
     "processingSchedule": {
       "type": "object",
-      "$ref": "processingScheduleDto.json",
-      "title": "processingSchedule"
+      "title": "processingSchedule",
+      "$ref": "processingSchedule.json"
     },
     "name": {
       "type": "string",

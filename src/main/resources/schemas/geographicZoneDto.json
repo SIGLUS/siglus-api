@@ -23,8 +23,13 @@
     },
     "parent": {
       "oneOf": [
-        {"type": "null"},
-        {"type": "object", "$ref": "geographicZoneDto.json"}
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "$ref": "geographicZoneDto.json"
+        }
       ],
       "title": "parent"
     }

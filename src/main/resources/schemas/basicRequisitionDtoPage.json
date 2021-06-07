@@ -6,20 +6,55 @@
   "properties": {
     "content": {
       "type": "array",
-      "items": { "type": "object", "$ref": "basicRequisitionDto.json" }
+      "items": {
+        "type": "object",
+        "$ref": "basicRequisitionDto.json"
+      }
     },
-    "totalPages": { "type": "integer", "title": "totalPages" },
-    "totalElements": { "type": "integer", "title": "totalElements" },
-    "size": { "type": "integer", "title": "size" },
-    "number": { "type": "integer", "title": "number" },
-    "numberOfElements": { "type": "integer", "title": "numberOfElements" },
-    "last": { "type": "boolean", "title": "last" },
-    "first": { "type": "boolean", "title": "first" },
+    "totalPages": {
+      "type": "integer",
+      "title": "totalPages"
+    },
+    "totalElements": {
+      "type": "integer",
+      "title": "totalElements"
+    },
+    "size": {
+      "type": "integer",
+      "title": "size"
+    },
+    "number": {
+      "type": "integer",
+      "title": "number"
+    },
+    "numberOfElements": {
+      "type": "integer",
+      "title": "numberOfElements"
+    },
+    "last": {
+      "type": "boolean",
+      "title": "last"
+    },
+    "first": {
+      "type": "boolean",
+      "title": "first"
+    },
     "sort?": {
       "title": "sort",
       "type": "array",
-      "items": { "type": "object" }
+      "items": {
+        "type": "object"
+      }
     }
   },
-  "required": ["content" , "totalPages", "totalElements" , "size", "number" , "numberOfElements" , "first" , "last"]
+  "required": [
+    "content",
+    "totalPages",
+    "totalElements",
+    "size",
+    "number",
+    "numberOfElements",
+    "first",
+    "last"
+  ]
 }
