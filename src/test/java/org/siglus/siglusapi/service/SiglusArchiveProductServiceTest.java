@@ -210,10 +210,18 @@ public class SiglusArchiveProductServiceTest {
   @Test
   public void shouldDoNothingIfAllArchiveProductsAlreadyExisted() {
     // given
+    OrderableDto orderableDto1 = new OrderableDto();
+    OrderableDto orderableDto2 = new OrderableDto();
+    UUID orderableId1 = UUID.randomUUID();
+    UUID orderableId2 = UUID.randomUUID();
+    orderableDto1.setId(orderableId1);
+    orderableDto2.setId(orderableId2);
+    when(siglusOrderableService.getOrderableByCode(CODE_1)).thenReturn(orderableDto1);
+    when(siglusOrderableService.getOrderableByCode(CODE_2)).thenReturn(orderableDto2);
     List<String> productCodes = Arrays.asList(CODE_1, CODE_2);
-    Set<String> archivedProductCodes = asSet(CODE_1, CODE_2);
+    Set<String> archivedProductIds = asSet(orderableId1.toString(), orderableId2.toString());
     when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
-        .thenReturn(archivedProductCodes);
+        .thenReturn(archivedProductIds);
 
     // when
     archiveProductService.archiveAllProducts(facilityId, productCodes);
@@ -255,9 +263,10 @@ public class SiglusArchiveProductServiceTest {
     when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
         .thenReturn(null);
     List<String> productCodes = Arrays.asList(CODE_1, CODE_2);
-    Set<String> archivedProductCodes = asSet(CODE_1, CODE_2, "CODE_3");
+    Set<String> archivedProductIds = asSet(orderableId1.toString(), orderableId2.toString(),
+        UUID.randomUUID().toString());
     when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
-        .thenReturn(archivedProductCodes);
+        .thenReturn(archivedProductIds);
 
     // when
     archiveProductService.archiveAllProducts(facilityId, productCodes);
@@ -299,9 +308,9 @@ public class SiglusArchiveProductServiceTest {
     when(requisitionRepository.findByFacilityIdAndStatus(facilityId, RequisitionStatus.INITIATED))
         .thenReturn(null);
     List<String> productCodes = Arrays.asList(CODE_1, CODE_2);
-    Set<String> archivedProductCodes = asSet(CODE_1);
+    Set<String> archivedProductIds = asSet(orderableId1.toString());
     when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
-        .thenReturn(archivedProductCodes);
+        .thenReturn(archivedProductIds);
 
     // when
     archiveProductService.archiveAllProducts(facilityId, productCodes);

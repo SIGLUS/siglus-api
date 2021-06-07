@@ -47,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
+@SuppressWarnings({"PMD.TooManyMethods"})
 public class SiglusArchiveProductService {
 
   @Autowired
@@ -104,9 +105,7 @@ public class SiglusArchiveProductService {
 
   @Transactional
   public void archiveAllProducts(UUID facilityId, List<String> productCodes) {
-    Set<String> archivedProducts = archivedProductRepository
-        .findArchivedProductsByFacilityId(facilityId);
-    if (archivedProducts.containsAll(productCodes) && productCodes.containsAll(archivedProducts)) {
+    if (shouldNotArchiveAllProducts(facilityId, productCodes)) {
       log.info("no change, all archive products are existed");
       return;
     }
@@ -216,5 +215,13 @@ public class SiglusArchiveProductService {
     return productCodes.stream()
         .map(productCode -> siglusOrderableService.getOrderableByCode(productCode).getId())
         .collect(Collectors.toList());
+  }
+
+  private boolean shouldNotArchiveAllProducts(UUID facilityId, List<String> productCodes) {
+    Set<String> archivedProductIds = archivedProductRepository
+        .findArchivedProductsByFacilityId(facilityId);
+    List<String> productIds = getProductIds(productCodes).stream().map(UUID::toString)
+        .collect(Collectors.toList());
+    return archivedProductIds.containsAll(productIds) && productIds.containsAll(archivedProductIds);
   }
 }
