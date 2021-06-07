@@ -128,8 +128,8 @@ schemas:
       }
   - issueVoucher: !include schemas/issueVoucher.json
   - proofOfDeliveryPage: !include schemas/proofOfDeliveryPage.json
-  - productSyncResponse: !include schemas/android/productSyncResponse.json
-  - facilityResponse: !include schemas/android/facilityResponse.json
+  - productSyncResponse: !include schemas/productSyncResponse.json
+  - facilityResponse: !include schemas/facilityResponse.json
 
 resourceTypes:
   - collection:
