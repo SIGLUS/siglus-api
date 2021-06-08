@@ -77,7 +77,7 @@ public class SiglusArchiveProductService {
   @Transactional
   public void archiveProduct(UUID facilityId, UUID orderableId) {
     Set<UUID> orderablesInKit = unpackService.orderablesInKit();
-    String errorInfo = ", facilityId: " + facilityId + ", orderableId: " + orderableId;
+    String errorInfo = "facilityId: " + facilityId + ", orderableId: " + orderableId;
     if (orderablesInKit.contains(orderableId)) {
       throw new ValidationMessageException(
           new Message(ERROR_ARCHIVE_CANNOT_ARCHIVE_ORDERABLE_IN_KIT) + errorInfo);
@@ -86,7 +86,7 @@ public class SiglusArchiveProductService {
     List<StockCard> stockCards = stockCardRepository
         .findByFacilityIdAndOrderableId(facilityId, orderableId);
     if (stockCards.isEmpty()) {
-      log.warn("skip archive, stock cards not existed" + errorInfo);
+      log.warn("skip archive, stock cards not existed, {}", errorInfo);
       return;
     }
     stockCards.forEach(stockCard -> {
