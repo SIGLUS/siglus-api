@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.Matchers.containsString;
 import static org.javers.common.collections.Sets.asSet;
@@ -205,6 +206,21 @@ public class SiglusArchiveProductServiceTest {
     // then
     verify(archivedProductRepository).save(archivedProductArgumentCaptor.capture());
     assertNotNull(archivedProductArgumentCaptor.getValue());
+  }
+
+  @Test
+  public void shouldSkipArchiveProductIfStockCardNotExisted() {
+    // given
+    when(stockCardRepository.findByFacilityIdAndOrderableId(facilityId, orderableId)).thenReturn(
+        emptyList());
+    when(unpackService.orderablesInKit()).thenReturn(Sets.newHashSet(UUID.randomUUID()));
+
+    // when
+    archiveProductService.archiveProduct(facilityId, orderableId);
+
+    // then
+    verify(archivedProductRepository, times(0))
+        .findByFacilityIdAndOrderableId(facilityId, orderableId);
   }
 
   @Test

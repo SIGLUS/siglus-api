@@ -85,6 +85,10 @@ public class SiglusArchiveProductService {
     }
     List<StockCard> stockCards = stockCardRepository
         .findByFacilityIdAndOrderableId(facilityId, orderableId);
+    if (stockCards.isEmpty()) {
+      log.warn("skip archive, stock cards not existed" + errorInfo);
+      return;
+    }
     stockCards.forEach(stockCard -> {
       calculatedStockOnHandService.fetchCurrentStockOnHand(stockCard);
       if (0 != stockCard.getStockOnHand()) {
