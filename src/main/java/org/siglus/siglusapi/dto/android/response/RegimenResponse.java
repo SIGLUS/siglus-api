@@ -15,7 +15,11 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
+import java.util.Map;
+import java.util.UUID;
 import lombok.Data;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.siglus.siglusapi.domain.Regimen;
 
 @Data
 public class RegimenResponse {
@@ -28,5 +32,21 @@ public class RegimenResponse {
   private Integer displayOrder;
   private Boolean isCustom;
   private RegimenCategoryResponse category;
+
+  public static RegimenResponse of(Regimen regimen, Map<UUID, ProgramDto> programMap) {
+    RegimenResponse resp = new RegimenResponse();
+    resp.setCode(regimen.getCode());
+    resp.setName(regimen.getName());
+    resp.setActive(regimen.getActive());
+    resp.setDisplayOrder(regimen.getDisplayOrder());
+    resp.setIsCustom(regimen.getIsCustom());
+    if (programMap.containsKey(regimen.getProgramId())) {
+      ProgramDto program = programMap.get(regimen.getProgramId());
+      resp.setProgramCode(program.getCode());
+      resp.setProgramName(program.getName());
+    }
+    resp.setCategory(RegimenCategoryResponse.of(regimen.getRegimenCategory()));
+    return resp;
+  }
 
 }

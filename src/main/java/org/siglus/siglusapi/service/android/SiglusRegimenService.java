@@ -15,34 +15,35 @@
 
 package org.siglus.siglusapi.service.android;
 
-import java.util.Collections;
+import static java.util.stream.Collectors.toMap;
+
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.openlmis.requisition.dto.BaseDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.dto.android.response.RegimenResponse;
-import org.siglus.siglusapi.service.SiglusArchiveProductService;
-import org.siglus.siglusapi.service.SiglusOrderableService;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.repository.RegimenRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+
 public class SiglusRegimenService {
 
-  static final String KEY_PROGRAM_CODE = "programCode";
-
-  private final SiglusFacilityReferenceDataService facilityReferenceDataService;
-  private final SiglusArchiveProductService siglusArchiveProductService;
-  private final SiglusOrderableService orderableDataService;
-  private final SiglusApprovedProductReferenceDataService approvedProductDataService;
-  private final SiglusAuthenticationHelper authHelper;
-  private final SupportedProgramsHelper programsHelper;
+  private final RegimenRepository repo;
   private final ProgramReferenceDataService programDataService;
 
   public List<RegimenResponse> getRegimens() {
-    return Collections.emptyList();
+    Map<UUID, ProgramDto> allPrograms = programDataService.findAll().stream()
+        .collect(toMap(BaseDto::getId, Function.identity()));
+    return repo.findAll().stream()
+        .map(regimen -> RegimenResponse.of(regimen, allPrograms))
+        .collect(Collectors.toList());
   }
+
 }

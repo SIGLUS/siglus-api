@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.dto.android.response;
 
 import lombok.Data;
+import org.siglus.siglusapi.domain.RegimenCategory;
 
 @Data
 public class RegimenCategoryResponse {
@@ -23,5 +24,13 @@ public class RegimenCategoryResponse {
   private String code;
   private String name;
   private Integer displayOrder;
+
+  static RegimenCategoryResponse of(RegimenCategory category) {
+    RegimenCategoryResponse resp = new RegimenCategoryResponse();
+    resp.setCode(category.getCode());
+    resp.setName(category.getName());
+    resp.setDisplayOrder(category.getDisplayOrder());
+    return resp;
+  }
 
 }

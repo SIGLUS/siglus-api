@@ -130,6 +130,7 @@ schemas:
   - proofOfDeliveryPage: !include schemas/proofOfDeliveryPage.json
   - productSyncResponse: !include schemas/productSyncResponse.json
   - facilityResponse: !include schemas/facilityResponse.json
+  - regimenResponse: !include schemas/regimenResponse.json
 
 resourceTypes:
   - collection:
@@ -2266,9 +2267,19 @@ traits:
             204:
               description: Program additional orderable deleted.
 
-    /android/me:
+    /android:
 
-      /facility:
+      /regimens:
+        get:
+          is: [ secured ]
+          responses:
+            200:
+              body:
+                application/json:
+                  schema: regimenResponse
+
+
+      /me/facility:
         displayName: get facility info
         get:
           is: [ secured ]
