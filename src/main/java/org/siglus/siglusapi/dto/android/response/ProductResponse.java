@@ -30,6 +30,7 @@ import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 public class ProductResponse {
 
   private String productCode;
+  private Boolean active;
   private Boolean archived;
   private String fullProductName;
   private String description;
@@ -51,6 +52,8 @@ public class ProductResponse {
     resp.setProductCode(orderable.getProductCode());
     resp.setFullProductName(orderable.getFullProductName());
     resp.setDescription(orderable.getDescription());
+    // TODO should ask Momand how set this
+    resp.setActive(true);
     resp.setArchived(orderable.getArchived());
     resp.setNetContent(orderable.getNetContent());
     resp.setPackRoundingThreshold(orderable.getPackRoundingThreshold());

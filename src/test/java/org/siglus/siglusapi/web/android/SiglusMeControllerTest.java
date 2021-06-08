@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web.android;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -27,6 +28,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -67,14 +69,16 @@ public class SiglusMeControllerTest {
   @Test
   public void shouldCallServiceWhenGetFacilityProductsGivenLastSyncTime() {
     // given
-    Instant lastSyncTime = Instant.now();
+    long timestamp = System.currentTimeMillis();
 
     // when
-    ProductSyncResponse productSyncResponse = controller.getFacilityProducts(lastSyncTime);
+    ProductSyncResponse productSyncResponse = controller.getFacilityProducts(timestamp);
 
     // then
     assertSame(syncResponse, productSyncResponse);
-    verify(service).getFacilityProducts(lastSyncTime);
+    ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);
+    verify(service).getFacilityProducts(instantCaptor.capture());
+    assertEquals(Instant.ofEpochMilli(timestamp), instantCaptor.getValue());
   }
 
   @Test
