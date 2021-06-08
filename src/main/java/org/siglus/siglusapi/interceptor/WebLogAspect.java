@@ -23,7 +23,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.siglus.common.dto.android.AndroidHeaderDto;
+import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -41,7 +41,7 @@ public class WebLogAspect {
   private static final String VERSION_CODE = "VersionCode";
   private static final String ANDROID_SDK_VERSION = "AndroidSDKVersion";
 
-  @Pointcut("within(org.siglus.siglusapi.web.*)")
+  @Pointcut("within(org.siglus.siglusapi.web..*)")
   public void webLog() {
     // do nothing
   }
@@ -56,7 +56,7 @@ public class WebLogAspect {
     String url = request.getRequestURL().toString();
     String body = Arrays.toString(joinPoint.getArgs());
     if (isAndroid(request)) {
-      AndroidHeaderDto androidHeader = getAndroidHeader(request);
+      AndroidHeader androidHeader = getAndroidHeader(request);
       log.info("[Android_API_START] {} {}, header: {}, body: {}", method, url, androidHeader, body);
     } else {
       log.info("[API_START] {} {}, body: {}", method, url, body);
@@ -71,8 +71,8 @@ public class WebLogAspect {
     return result;
   }
 
-  private AndroidHeaderDto getAndroidHeader(HttpServletRequest request) {
-    return AndroidHeaderDto.builder()
+  private AndroidHeader getAndroidHeader(HttpServletRequest request) {
+    return AndroidHeader.builder()
         .username(request.getHeader(USER_NAME))
         .facilityCode(request.getHeader(FACILITY_CODE))
         .facilityName(request.getHeader(FACILITY_NAME))

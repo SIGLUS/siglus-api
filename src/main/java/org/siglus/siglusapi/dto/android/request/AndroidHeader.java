@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.dto.android;
+package org.siglus.siglusapi.dto.android.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AndroidHeaderDto {
+public class AndroidHeader {
   private String username;
   private String facilityCode;
   private String facilityName;
