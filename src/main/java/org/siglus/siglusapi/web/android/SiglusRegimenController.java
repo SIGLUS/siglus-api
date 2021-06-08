@@ -15,41 +15,25 @@
 
 package org.siglus.siglusapi.web.android;
 
-import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.dto.android.response.FacilityResponse;
-import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
-import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.siglus.siglusapi.dto.android.response.RegimenResponse;
+import org.siglus.siglusapi.service.android.SiglusRegimenService;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusapi/android/me")
+@RequestMapping("/api/siglusapi/android/regimens")
 @RequiredArgsConstructor
-public class SiglusMeController {
+public class SiglusRegimenController {
 
-  private final SiglusMeService service;
+  private final SiglusRegimenService service;
 
-  @GetMapping("/facility")
-  public FacilityResponse getFacility() {
-    return service.getCurrentFacility();
+  @GetMapping
+  public List<RegimenResponse> getRegimens() {
+    return service.getRegimens();
   }
 
-  @PostMapping("/facility/archivedProducts")
-  public void archiveAllProducts(@RequestBody List<String> productCodes) {
-    service.archiveAllProducts(productCodes);
-  }
-
-  @GetMapping("/facility/products")
-  public ProductSyncResponse getFacilityProducts(
-      @RequestParam(name = "lastSyncTime", required = false) Long lastSyncTime) {
-    return service
-        .getFacilityProducts(lastSyncTime != null ? Instant.ofEpochMilli(lastSyncTime) : null);
-  }
 
 }
