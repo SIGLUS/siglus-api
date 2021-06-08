@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.android;
 import static java.util.Collections.emptyList;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
@@ -40,10 +42,12 @@ import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.domain.android.AppInfoDomain;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
+import org.siglus.siglusapi.repository.android.AppInfoRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
@@ -55,6 +59,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SiglusMeService {
 
   static final String KEY_PROGRAM_CODE = "programCode";
@@ -66,6 +71,7 @@ public class SiglusMeService {
   private final SiglusAuthenticationHelper authHelper;
   private final SupportedProgramsHelper programsHelper;
   private final ProgramReferenceDataService programDataService;
+  private final AppInfoRepository appInfoRepository;
 
   public FacilityResponse getCurrentFacility() {
     UserDto userDto = authHelper.getCurrentUser();
@@ -85,6 +91,17 @@ public class SiglusMeService {
         .name(facilityDto.getName())
         .supportedPrograms(programResponses)
         .build();
+  }
+
+  public void processAppInfo(AppInfoDomain appInfoDomain) {
+    AppInfoDomain existAppInfo = appInfoRepository
+            .findAppInfoByFacilityCodeAndUniqueId(appInfoDomain.getFacilityCode(),
+                    appInfoDomain.getUniqueId());
+    UUID appInfoId = existAppInfo != null ? existAppInfo.getId() : UUID.randomUUID();
+    appInfoDomain.setId(appInfoId);
+    appInfoDomain.setLastUpdated(ZonedDateTime.now());
+    appInfoRepository.save(appInfoDomain);
+    log.info("process app-info successfully, id = " + appInfoId);
   }
 
   public void archiveAllProducts(List<String> productCodes) {

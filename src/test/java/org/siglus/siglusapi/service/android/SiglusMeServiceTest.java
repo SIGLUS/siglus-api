@@ -62,10 +62,12 @@ import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.siglusapi.domain.android.AppInfoDomain;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
+import org.siglus.siglusapi.repository.android.AppInfoRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
@@ -104,9 +106,12 @@ public class SiglusMeServiceTest {
   @Mock
   private ArchivedProductRepository archivedProductRepo;
 
+  @Mock
+  private AppInfoRepository appInfoRepository;
+
+  private final UUID appInfoId = UUID.randomUUID();
+
   private final UUID facilityId = UUID.randomUUID();
-  private final String facilityCode = "facilityCode";
-  private final String facilityName = "facilityName";
 
   private ZonedDateTime oldTime;
   private Instant syncTime;
@@ -161,8 +166,8 @@ public class SiglusMeServiceTest {
     // given
     programDtos.add(getSupportedProgramDto());
     FacilityDto facilityDto = new FacilityDto();
-    facilityDto.setCode(facilityCode);
-    facilityDto.setName(facilityName);
+    facilityDto.setCode("facilityCode");
+    facilityDto.setName("facilityName");
     facilityDto.setSupportedPrograms(programDtos);
     when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(facilityDto);
 
@@ -171,6 +176,24 @@ public class SiglusMeServiceTest {
 
     // then
     assertEquals(programDtos.get(0).getCode(), response.getSupportedPrograms().get(0).getCode());
+  }
+
+  @Test
+  public void shouldUpdateAppInfoWhenAppInfoIsExist() {
+    // given
+    AppInfoDomain appInfoCurrent = mockCurrentAppInfo();
+    AppInfoDomain appInfoUpdate = mockUpdateAppInfo();
+    when(appInfoRepository.findAppInfoByFacilityCodeAndUniqueId(appInfoUpdate.getFacilityCode(),
+            appInfoUpdate.getUniqueId())).thenReturn(appInfoCurrent);
+    when(appInfoRepository.save(appInfoUpdate)).thenReturn(appInfoCurrent);
+
+    // when
+    service.processAppInfo(appInfoUpdate);
+
+    // then
+    assertEquals(appInfoUpdate.getId(), appInfoCurrent.getId());
+    assertEquals(appInfoUpdate.getFacilityCode(), appInfoCurrent.getFacilityCode());
+    assertEquals(appInfoUpdate.getUniqueId(), appInfoCurrent.getUniqueId());
   }
 
   @Test
@@ -437,4 +460,31 @@ public class SiglusMeServiceTest {
     return "description of " + productCode;
   }
 
+  private AppInfoDomain mockCurrentAppInfo() {
+    AppInfoDomain appInfoDomain = AppInfoDomain.builder()
+            .deviceInfo("deviceinfo1")
+            .facilityName("Centro de Saude de Chiunze")
+            .androidsdkVersion(28)
+            .versionCode(88)
+            .facilityCode("01080904")
+            .userName("CS_Moine_Role1")
+            .uniqueId("ac36c07a09f2fdcd")
+            .build();
+    appInfoDomain.setId(appInfoId);
+    return appInfoDomain;
+  }
+
+  private AppInfoDomain mockUpdateAppInfo() {
+    AppInfoDomain appInfoDomain = AppInfoDomain.builder()
+            .deviceInfo("deviceinfo2")
+            .facilityName("Centro de Saude de Chiunze")
+            .androidsdkVersion(28)
+            .versionCode(88)
+            .facilityCode("01080904")
+            .userName("CS_Moine_Role1")
+            .uniqueId("ac36c07a09f2fdcd")
+            .build();
+    appInfoDomain.setId(appInfoId);
+    return appInfoDomain;
+  }
 }

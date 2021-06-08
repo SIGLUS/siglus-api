@@ -2305,3 +2305,11 @@ traits:
             responses:
               204:
                 description: Full update archived products of current facility
+
+      /app-info:
+        displayName: Process AppInfo
+        post:
+          is: [ secured ]
+          responses:
+            204:
+              description: Full update current AppInfo

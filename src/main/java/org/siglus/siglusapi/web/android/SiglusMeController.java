@@ -18,12 +18,14 @@ package org.siglus.siglusapi.web.android;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.domain.android.AppInfoDomain;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,4 +54,22 @@ public class SiglusMeController {
         .getFacilityProducts(lastSyncTime != null ? Instant.ofEpochMilli(lastSyncTime) : null);
   }
 
+  @PostMapping("/app-info")
+  public void processAppInfo(@RequestHeader("UserName") String userName,
+                             @RequestHeader("FacilityCode") String facilityCode,
+                             @RequestHeader("FacilityName") String facilityName,
+                             @RequestHeader("UniqueId") String uniqueId,
+                             @RequestHeader("DeviceInfo") String deviceInfo,
+                             @RequestHeader("VersionCode") Integer versionCode,
+                             @RequestHeader("AndroidSDKVersion") Integer androidSdkVersion) {
+    service.processAppInfo(AppInfoDomain.builder()
+            .userName(userName)
+            .facilityCode(facilityCode)
+            .facilityName(facilityName)
+            .uniqueId(uniqueId)
+            .deviceInfo(deviceInfo)
+            .versionCode(versionCode)
+            .androidsdkVersion(androidSdkVersion)
+            .build());
+  }
 }

@@ -32,6 +32,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.domain.android.AppInfoDomain;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
@@ -107,4 +108,34 @@ public class SiglusMeControllerTest {
     verify(service).archiveAllProducts(productCodes);
   }
 
+  @Test
+  public void shouldCallServiceWhenProcessAppInfo() {
+    // given
+    AppInfoDomain appInfo = mockAppInfo();
+    doNothing().when(service).processAppInfo(appInfo);
+
+    // when
+    controller.processAppInfo(appInfo.getUserName(),
+            appInfo.getFacilityCode(),
+            appInfo.getFacilityName(),
+            appInfo.getUniqueId(),
+            appInfo.getDeviceInfo(),
+            appInfo.getVersionCode(),
+            appInfo.getAndroidsdkVersion());
+
+    // then
+    verify(service).processAppInfo(appInfo);
+  }
+
+  private AppInfoDomain mockAppInfo() {
+    return AppInfoDomain.builder()
+            .deviceInfo("deviceinfo1")
+            .facilityName("Centro de Saude de Chiunze")
+            .androidsdkVersion(28)
+            .versionCode(88)
+            .facilityCode("01080904")
+            .userName("CS_Moine_Role1")
+            .uniqueId("ac36c07a09f2fdcd")
+            .build();
+  }
 }
