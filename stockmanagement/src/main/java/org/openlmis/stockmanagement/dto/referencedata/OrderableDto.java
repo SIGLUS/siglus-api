@@ -52,8 +52,5 @@ public class OrderableDto {
   private Boolean inKit;
   @JsonInclude(NON_NULL)
   private Boolean archived;
-  private String description;
-  private Long packRoundingThreshold;
-  private Boolean roundToZero;
   // [SIGLUS change end]
 }

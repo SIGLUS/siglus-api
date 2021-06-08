@@ -75,7 +75,7 @@ public class OrderableDtoDataBuilder {
     //    )
     return new OrderableDto(
         id, productCode, fullProductName, netContent, dispensable, children, identifiers, extraData,
-        metaDataDto, false, false, null, null, null
+        metaDataDto, false, false
     );
     // [SIGLUS change end]
   }

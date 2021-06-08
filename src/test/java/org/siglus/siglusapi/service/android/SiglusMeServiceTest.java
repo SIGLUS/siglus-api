@@ -350,10 +350,7 @@ public class SiglusMeServiceTest {
     orderable.setId(productId1);
     orderable.setProductCode(productCode);
     orderable.setFullProductName(genFullName(productCode));
-    orderable.setDescription(genDescription(productCode));
     orderable.setNetContent(1L);
-    orderable.setPackRoundingThreshold(3L);
-    orderable.setRoundToZero(true);
     orderable.setChildren(emptySet());
     orderable.setExtraData(new HashMap<>());
     orderable.getMeta().setLastUpdated(oldTime);
@@ -395,10 +392,7 @@ public class SiglusMeServiceTest {
     orderable.setId(productId2);
     orderable.setProductCode(productCode);
     orderable.setFullProductName(genFullName(productCode));
-    orderable.setDescription(genDescription(productCode));
     orderable.setNetContent(2L);
-    orderable.setPackRoundingThreshold(5L);
-    orderable.setRoundToZero(true);
     orderable.setChildren(new HashSet<>());
     OrderableChildDto child = new OrderableChildDto();
     ObjectReferenceDto childRef = new ObjectReferenceDto();
@@ -441,10 +435,7 @@ public class SiglusMeServiceTest {
     orderable.setId(productId3);
     orderable.setProductCode(productCode);
     orderable.setFullProductName(genFullName(productCode));
-    orderable.setDescription(genDescription(productCode));
     orderable.setNetContent(2L);
-    orderable.setPackRoundingThreshold(5L);
-    orderable.setRoundToZero(false);
     orderable.setChildren(emptySet());
     orderable.setExtraData(new HashMap<>());
     orderable.getExtraData().put("isBasic", "true");

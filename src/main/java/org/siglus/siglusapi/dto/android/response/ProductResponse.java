@@ -58,7 +58,6 @@ public class ProductResponse {
     resp.setNetContent(orderable.getNetContent());
     resp.setPackRoundingThreshold(orderable.getPackRoundingThreshold());
     resp.setRoundToZero(orderable.getRoundToZero());
-    // what if null or multiple?
     ProgramOrderableDto program = orderable.getPrograms().stream().findFirst()
         .orElseThrow(IllegalStateException::new);
     resp.setProgramCode((String) orderable.getExtraData().get("programCode"));
