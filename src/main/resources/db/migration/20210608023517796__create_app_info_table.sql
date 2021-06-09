@@ -2,7 +2,7 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 CREATE TABLE siglusintegration.app_info (
-    id uuid NOT NULL,
+    id uuid PRIMARY KEY,
     facilitycode VARCHAR(20) NOT NULL,
     facilityname VARCHAR(100) NOT NULL,
     uniqueid  VARCHAR(40) NOT NULL,
@@ -10,8 +10,7 @@ CREATE TABLE siglusintegration.app_info (
     versioncode INTEGER,
     androidsdkversion INTEGER,
     username VARCHAR(100) NOT NULL,
-    lastupdated TIMESTAMPTZ NOT NULL,
-    CONSTRAINT app_info_pkey PRIMARY KEY (facilitycode,uniqueid)
+    lastupdated TIMESTAMPTZ NOT NULL
 );
 
-CREATE INDEX ON siglusintegration.app_info (facilitycode, uniqueid);
+CREATE UNIQUE INDEX facilitycode_uniqueid_idx ON siglusintegration.app_info (facilitycode, uniqueid);
