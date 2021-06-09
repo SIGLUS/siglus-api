@@ -157,8 +157,6 @@ public class SiglusFcIntegrationService {
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
-  private Map<UUID, ProgramRealProgram> realProgramIdToEntityMap;
-
   private Map<String, String> fcMaps = ImmutableMap.of("Farmácia Comunitária",
       "comunitaryPharmacy", "Total Pacientes", "patientsOnTreatment");
 
@@ -179,8 +177,8 @@ public class SiglusFcIntegrationService {
           fcSupervisoryNodeIds, pageable);
     }
     List<FcRequisitionDto> fcRequisitionDtos = newArrayList();
-    realProgramIdToEntityMap = programRealProgramRepository.findAll().stream().collect(
-        Collectors.toMap(ProgramRealProgram::getId, Function.identity()));
+    Map<UUID, ProgramRealProgram> realProgramIdToEntityMap = programRealProgramRepository.findAll()
+        .stream().collect(Collectors.toMap(ProgramRealProgram::getId, Function.identity()));
     requisitions.getContent().forEach(requisition -> fcRequisitionDtos.add(buildDto(requisition,
         fcSupervisoryNodeIds, realProgramIdToEntityMap)));
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
