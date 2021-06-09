@@ -20,6 +20,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -93,6 +94,18 @@ public class SiglusProofOfDeliveryControllerTest {
 
     // then
     verify(proofOfDeliveryService).getProofOfDelivery(podId, null);
+  }
+
+  @Test
+  public void shouldCallActualControllerWhenPrintProofOfDelivery() throws IOException {
+    // given
+    UUID podId = UUID.randomUUID();
+
+    // when
+    controller.printProofOfDelivery(null, podId, null);
+
+    // then
+    verify(actualController).printProofOfDelivery(null, podId, null);
   }
 
   @Test

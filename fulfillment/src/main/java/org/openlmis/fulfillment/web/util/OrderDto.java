@@ -233,4 +233,32 @@ public class OrderDto implements Order.Importer, Order.Exporter, UpdateDetails.E
         .findFirst()
         .orElse(null);
   }
+
+  // [SIGLUS change start]
+  public static String getPortugueseStatus(String orderStatus) {
+    OrderStatus inputOrderStatus = OrderStatus.fromString(orderStatus);
+    switch (inputOrderStatus) {
+      case PARTIALLY_FULFILLED:
+        return "Aviado parcialmente";
+      case CLOSED:
+        return "Fechado";
+      case ORDERED:
+        return "ordenado";
+      case FULFILLING:
+        return "Aviando";
+      case SHIPPED:
+        return "Enviado";
+      case RECEIVED:
+        return "Recebido";
+      case TRANSFER_FAILED:
+        return "A transferência falhou";
+      case IN_ROUTE:
+        return "A Caminho";
+      case READY_TO_PACK:
+        return "Pronto para embalar";
+      default:
+        return "";
+    }
+  }
+  // [SIGLUS change end]
 }

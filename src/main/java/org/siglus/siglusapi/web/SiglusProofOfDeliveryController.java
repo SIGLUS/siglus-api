@@ -15,8 +15,10 @@
 
 package org.siglus.siglusapi.web;
 
+import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.web.ProofOfDeliveryController;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
@@ -36,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
 
 @RestController
 @RequestMapping("/api/siglusapi/proofsOfDelivery")
@@ -69,6 +72,12 @@ public class SiglusProofOfDeliveryController {
       notificationService.postConfirmPod(dto);
     }
     return proofOfDeliveryDto;
+  }
+
+  @GetMapping("/{id}/print")
+  public ModelAndView printProofOfDelivery(HttpServletRequest request,
+      @PathVariable("id") UUID id, OAuth2Authentication authentication) throws IOException {
+    return actualController.printProofOfDelivery(request, id, authentication);
   }
 
   @ResponseStatus(HttpStatus.OK)

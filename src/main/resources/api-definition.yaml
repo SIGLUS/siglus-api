@@ -2038,6 +2038,32 @@ traits:
               application/json:
                 schema: proofOfDeliveryDto
 
+    /proofsOfDelivery/{id}/print:
+      uriParameters:
+        id:
+          displayName: proofOfDeliveryId
+          type: string
+          required: true
+          repeat: false
+      get:
+        is: [ secured ]
+        description: >
+          Print proof of delivery to a pdf file. This endpoint requires one of the
+          following rights: PODS_MANAGE, PODS_VIEW (for requesting facility),
+          SHIPMENTS_EDIT (for supplying facility)
+        responses:
+          200:
+            body:
+              application/pdf:
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+          403:
+            body:
+              application/json:
+                schema: localizedMessage
+
     /integration/requisitions:
       displayName: Get Requisitions
       get:
