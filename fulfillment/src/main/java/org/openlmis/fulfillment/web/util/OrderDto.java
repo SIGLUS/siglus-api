@@ -235,6 +235,11 @@ public class OrderDto implements Order.Importer, Order.Exporter, UpdateDetails.E
   }
 
   // [SIGLUS change start]
+  /**
+   * Create new list of Portuguese order status.
+   * @param orderStatus input order status
+   * @return string of Portuguese
+   */
   public static String getPortugueseStatus(String orderStatus) {
     OrderStatus inputOrderStatus = OrderStatus.fromString(orderStatus);
     switch (inputOrderStatus) {
