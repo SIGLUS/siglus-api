@@ -50,6 +50,7 @@ import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.repository.android.AppInfoRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -72,6 +73,7 @@ public class SiglusMeService {
   private final SupportedProgramsHelper programsHelper;
   private final ProgramReferenceDataService programDataService;
   private final AppInfoRepository appInfoRepository;
+  private final ProductMapper mapper;
 
   public FacilityResponse getCurrentFacility() {
     UserDto userDto = authHelper.getCurrentUser();
@@ -131,7 +133,7 @@ public class SiglusMeService {
         .collect(Collectors.toList());
     List<ProductResponse> filteredProducts = approvedProducts.stream()
         .filter(p -> filterByLastUpdated(p, lastSyncTime))
-        .map(orderable -> ProductResponse.fromOrderable(orderable, allProducts))
+        .map(orderable -> mapper.toResponse(orderable, allProducts))
         .collect(Collectors.toList());
     syncResponse.setProducts(filteredProducts);
     return syncResponse;

@@ -18,13 +18,7 @@ package org.siglus.siglusapi.dto.android.response;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.Data;
-import org.siglus.common.dto.referencedata.OrderableDto;
-import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 
 @Data
 public class ProductResponse {
@@ -45,40 +39,5 @@ public class ProductResponse {
   private Boolean isNos;
   private Boolean isHiv;
   private Instant lastUpdated;
-
-  public static ProductResponse fromOrderable(OrderableDto orderable,
-      Map<UUID, OrderableDto> productMap) {
-    ProductResponse resp = new ProductResponse();
-    resp.setProductCode(orderable.getProductCode());
-    resp.setFullProductName(orderable.getFullProductName());
-    resp.setDescription(orderable.getDescription());
-    // TODO should ask Momand how set this
-    resp.setActive(true);
-    resp.setArchived(orderable.getArchived());
-    resp.setNetContent(orderable.getNetContent());
-    resp.setPackRoundingThreshold(orderable.getPackRoundingThreshold());
-    resp.setRoundToZero(orderable.getRoundToZero());
-    ProgramOrderableDto program = orderable.getPrograms().stream().findFirst()
-        .orElseThrow(IllegalStateException::new);
-    resp.setProgramCode((String) orderable.getExtraData().get("programCode"));
-    resp.setCategory(program.getOrderableCategoryDisplayName());
-    resp.setChildren(orderable.getChildren().stream()
-        .map(child -> ProductChildResponse.fromOrderableChild(child, productMap))
-        .collect(Collectors.toList()));
-    resp.setIsKit(!orderable.getChildren().isEmpty());
-    resp.setIsBasic(parseKey(orderable, "isBasic"));
-    resp.setIsHiv(parseKey(orderable, "isHiv"));
-    resp.setIsNos(parseKey(orderable, "isNos"));
-    resp.setLastUpdated(orderable.getMeta().getLastUpdated().toInstant());
-    return resp;
-  }
-
-  public static Boolean parseKey(OrderableDto orderable, String key) {
-    Object value = orderable.getExtraData().get(key);
-    return Optional.ofNullable(value)
-        .map(Object::toString)
-        .map(Boolean::parseBoolean)
-        .orElse(false);
-  }
 
 }

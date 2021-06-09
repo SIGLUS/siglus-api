@@ -46,7 +46,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
@@ -70,10 +69,18 @@ import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.repository.android.AppInfoRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.android.mapper.ProductChildMapperImpl;
+import org.siglus.siglusapi.service.android.mapper.ProductMapper;
+import org.siglus.siglusapi.service.android.mapper.ProductMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = {ProductMapperImpl.class, ProductChildMapperImpl.class})
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusMeServiceTest {
 
@@ -109,6 +116,9 @@ public class SiglusMeServiceTest {
   @Mock
   private AppInfoRepository appInfoRepository;
 
+  @Autowired
+  private ProductMapper mapper;
+
   private final UUID appInfoId = UUID.randomUUID();
 
   private final UUID facilityId = UUID.randomUUID();
@@ -127,6 +137,7 @@ public class SiglusMeServiceTest {
 
   @Before
   public void prepare() {
+    ReflectionTestUtils.setField(service, "mapper", mapper);
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
@@ -267,11 +278,13 @@ public class SiglusMeServiceTest {
     assertEquals(productCode1, product.getProductCode());
     assertEquals("full name of product 1", product.getFullProductName());
     assertEquals("description of product 1", product.getDescription());
+    assertTrue(product.getActive());
     assertTrue(product.getArchived());
     assertEquals(1L, (long) product.getNetContent());
     assertEquals(3L, (long) product.getPackRoundingThreshold());
     assertTrue(product.getRoundToZero());
     assertEquals("code 1", product.getProgramCode());
+    assertEquals("Default", product.getCategory());
     assertFalse(product.getIsKit());
     assertEquals(0, product.getChildren().size());
     assertFalse(product.getIsBasic());
@@ -284,11 +297,13 @@ public class SiglusMeServiceTest {
     assertEquals(productCode2, product.getProductCode());
     assertEquals("full name of product 2", product.getFullProductName());
     assertEquals("description of product 2", product.getDescription());
+    assertTrue(product.getActive());
     assertFalse(product.getArchived());
     assertEquals(2L, (long) product.getNetContent());
     assertEquals(5L, (long) product.getPackRoundingThreshold());
     assertTrue(product.getRoundToZero());
     assertEquals("code 1", product.getProgramCode());
+    assertEquals("12", product.getCategory());
     assertTrue(product.getIsKit());
     assertEquals(1, product.getChildren().size());
     ProductChildResponse child = product.getChildren().get(0);
@@ -304,11 +319,13 @@ public class SiglusMeServiceTest {
     assertEquals(productCode3, product.getProductCode());
     assertEquals("full name of product 3", product.getFullProductName());
     assertEquals("description of product 3", product.getDescription());
+    assertTrue(product.getActive());
     assertFalse(product.getArchived());
     assertEquals(2L, (long) product.getNetContent());
     assertEquals(5L, (long) product.getPackRoundingThreshold());
     assertFalse(product.getRoundToZero());
     assertEquals("code 2", product.getProgramCode());
+    assertEquals("13", product.getCategory());
     assertFalse(product.getIsKit());
     assertEquals(0, product.getChildren().size());
     assertTrue(product.getIsBasic());
@@ -379,7 +396,7 @@ public class SiglusMeServiceTest {
     orderable.setExtraData(new HashMap<>());
     orderable.getMeta().setLastUpdated(latestTime);
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
-    programOrderableDto.setOrderableCategoryDisplayName("Default");
+    programOrderableDto.setOrderableCategoryDisplayName("12");
     orderable.setPrograms(singleton(programOrderableDto));
     return orderable;
   }

@@ -15,11 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
-import java.util.Map;
-import java.util.UUID;
 import lombok.Data;
-import org.siglus.common.dto.referencedata.OrderableChildDto;
-import org.siglus.common.dto.referencedata.OrderableDto;
 
 @Data
 public class ProductChildResponse {
@@ -27,11 +23,4 @@ public class ProductChildResponse {
   private String productCode;
   private Long quantity;
 
-  static ProductChildResponse fromOrderableChild(OrderableChildDto child,
-      Map<UUID, OrderableDto> productMap) {
-    ProductChildResponse resp = new ProductChildResponse();
-    resp.setProductCode(productMap.get(child.getOrderable().getId()).getProductCode());
-    resp.setQuantity(child.getQuantity());
-    return resp;
-  }
 }
