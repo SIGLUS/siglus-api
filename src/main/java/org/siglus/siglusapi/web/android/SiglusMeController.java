@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.web.android;
 
+import static org.springframework.http.HttpStatus.NO_CONTENT;
+
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -43,6 +46,7 @@ public class SiglusMeController {
   }
 
   @PostMapping("/facility/archivedProducts")
+  @ResponseStatus(NO_CONTENT)
   public void archiveAllProducts(@RequestBody List<String> productCodes) {
     service.archiveAllProducts(productCodes);
   }
@@ -55,21 +59,23 @@ public class SiglusMeController {
   }
 
   @PostMapping("/app-info")
-  public void processAppInfo(@RequestHeader("UserName") String userName,
-                             @RequestHeader("FacilityCode") String facilityCode,
-                             @RequestHeader("FacilityName") String facilityName,
-                             @RequestHeader("UniqueId") String uniqueId,
-                             @RequestHeader("DeviceInfo") String deviceInfo,
-                             @RequestHeader("VersionCode") Integer versionCode,
-                             @RequestHeader("AndroidSDKVersion") Integer androidSdkVersion) {
+  @ResponseStatus(NO_CONTENT)
+  public void processAppInfo(
+      @RequestHeader("UserName") String userName,
+      @RequestHeader("FacilityCode") String facilityCode,
+      @RequestHeader("FacilityName") String facilityName,
+      @RequestHeader("UniqueId") String uniqueId,
+      @RequestHeader("DeviceInfo") String deviceInfo,
+      @RequestHeader("VersionCode") Integer versionCode,
+      @RequestHeader("AndroidSDKVersion") Integer androidSdkVersion) {
     service.processAppInfo(AppInfoDomain.builder()
-            .userName(userName)
-            .facilityCode(facilityCode)
-            .facilityName(facilityName)
-            .uniqueId(uniqueId)
-            .deviceInfo(deviceInfo)
-            .versionCode(versionCode)
-            .androidsdkVersion(androidSdkVersion)
-            .build());
+        .userName(userName)
+        .facilityCode(facilityCode)
+        .facilityName(facilityName)
+        .uniqueId(uniqueId)
+        .deviceInfo(deviceInfo)
+        .versionCode(versionCode)
+        .androidsdkVersion(androidSdkVersion)
+        .build());
   }
 }
