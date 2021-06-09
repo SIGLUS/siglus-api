@@ -28,6 +28,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.siglusapi.dto.android.response.RegimenResponse;
 import org.siglus.siglusapi.repository.RegimenRepository;
+import org.siglus.siglusapi.service.android.mapper.RegimentMapper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -36,13 +37,14 @@ import org.springframework.stereotype.Service;
 public class SiglusRegimenService {
 
   private final RegimenRepository repo;
+  private final RegimentMapper mapper;
   private final ProgramReferenceDataService programDataService;
 
   public List<RegimenResponse> getRegimens() {
     Map<UUID, ProgramDto> allPrograms = programDataService.findAll().stream()
         .collect(toMap(BaseDto::getId, Function.identity()));
     return repo.findAll().stream()
-        .map(regimen -> RegimenResponse.of(regimen, allPrograms))
+        .map(regimen -> mapper.toResponse(regimen, allPrograms))
         .collect(Collectors.toList());
   }
 

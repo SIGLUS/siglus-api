@@ -30,7 +30,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.siglusapi.domain.Regimen;
@@ -38,8 +37,16 @@ import org.siglus.siglusapi.domain.RegimenCategory;
 import org.siglus.siglusapi.dto.android.response.RegimenCategoryResponse;
 import org.siglus.siglusapi.dto.android.response.RegimenResponse;
 import org.siglus.siglusapi.repository.RegimenRepository;
+import org.siglus.siglusapi.service.android.mapper.RegimentCategoryMapperImpl;
+import org.siglus.siglusapi.service.android.mapper.RegimentMapper;
+import org.siglus.siglusapi.service.android.mapper.RegimentMapperImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = {RegimentMapperImpl.class, RegimentCategoryMapperImpl.class})
 public class SiglusRegimenServiceTest {
 
   @InjectMocks
@@ -48,9 +55,12 @@ public class SiglusRegimenServiceTest {
   private RegimenRepository repo;
   @Mock
   private ProgramReferenceDataService programDataService;
+  @Autowired
+  private RegimentMapper mapper;
 
   @Before
   public void prepare() {
+    ReflectionTestUtils.setField(service, "mapper", mapper);
     UUID programId1 = UUID.randomUUID();
     Regimen regimen1 = mock(Regimen.class);
     when(regimen1.getCode()).thenReturn("regimen code 1");

@@ -13,15 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.response;
+package org.siglus.siglusapi.service.android.mapper;
 
-import lombok.Data;
+import org.mapstruct.Mapper;
+import org.siglus.siglusapi.domain.RegimenCategory;
+import org.siglus.siglusapi.dto.android.response.RegimenCategoryResponse;
 
-@Data
-public class RegimenCategoryResponse {
+@Mapper(componentModel = "spring")
+public interface RegimentCategoryMapper {
 
-  private String code;
-  private String name;
-  private Integer displayOrder;
+  RegimenCategoryResponse toResponse(RegimenCategory domain);
 
 }

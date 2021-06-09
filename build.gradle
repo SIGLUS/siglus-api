@@ -53,7 +53,6 @@ dependencies {
     compile 'org.springframework.boot:spring-boot-starter-data-redis:1.5.21.RELEASE'
     compile 'org.openlmis:openlmis-service-util:3.0.0'
     compile 'org.jadira.usertype:usertype.core:5.0.0.GA'
-    compile "org.projectlombok:lombok:1.16.8"
     compile "org.postgresql:postgresql:42.0.0"
     compile "com.google.guava:guava:18.0"
     compile 'org.webjars.npm:api-console:3.0.17'
@@ -71,12 +70,18 @@ dependencies {
     compile 'org.apache.poi:poi-ooxml:3.13'
     compile 'com.amazonaws:aws-java-sdk-s3:1.11.627'
     compile 'org.owasp:security-logging-logback:1.1.6'
+    compileOnly 'org.projectlombok:lombok:1.18.20'
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
+    implementation 'org.mapstruct:mapstruct:1.4.2.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.4.2.Final'
 
     compileTestJava.dependsOn tasks.getByPath(':stockmanagement:testClasses')
     compileTestJava.dependsOn tasks.getByPath(':requisition:testClasses')
     testCompile project(':stockmanagement').sourceSets.test.output
     testCompile project(':requisition').sourceSets.test.output
 
+    testCompileOnly 'org.projectlombok:lombok:1.18.20'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
     testCompile "junit:junit"
     testCompile "org.mockito:mockito-core:1.10.19"
     testCompile "org.powermock:powermock-api-mockito:1.6.5"
