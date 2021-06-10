@@ -205,7 +205,7 @@ public class SiglusProcessingPeriodService {
       RequisitionPeriodDto requisitionPeriod) {
     Requisition firstPreAuthorizeRequisition = preAuthorizeRequisitions.stream().min(
         Comparator.comparing(Requisition::getCreatedDate)).orElseThrow(
-        () -> new NotFoundException("first Requisition Not Found"));
+            () -> new NotFoundException("first Requisition Not Found"));
     requisitionPeriod.setRequisitionId(firstPreAuthorizeRequisition.getId());
     requisitionPeriod.setRequisitionStatus(firstPreAuthorizeRequisition.getStatus());
   }
