@@ -43,11 +43,14 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.domain.android.AppInfoDomain;
+import org.siglus.siglusapi.domain.android.FacilityCmmsDomain;
+import org.siglus.siglusapi.dto.android.request.FacilityCmmsDto;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.repository.android.AppInfoRepository;
+import org.siglus.siglusapi.repository.android.FacilityCmmsRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
@@ -74,6 +77,7 @@ public class SiglusMeService {
   private final ProgramReferenceDataService programDataService;
   private final AppInfoRepository appInfoRepository;
   private final ProductMapper mapper;
+  private final FacilityCmmsRepository facilityCmmsRepository;
 
   public FacilityResponse getCurrentFacility() {
     UserDto userDto = authHelper.getCurrentUser();
@@ -104,6 +108,12 @@ public class SiglusMeService {
     appInfoDomain.setLastUpdated(LocalDateTime.now());
     log.info("process app-info , id: {}" + appInfoId);
     appInfoRepository.save(appInfoDomain);
+  }
+
+  public void updateFacilityCmms(List<FacilityCmmsDto> facilityCmmss) {
+    facilityCmmss.stream()
+            .map(facilityCmmsDto -> buildCmmsDomain(facilityCmmsDto))
+            .forEach(this::saveAndUpdateCmms);
   }
 
   public void archiveAllProducts(List<String> productCodes) {
@@ -163,6 +173,33 @@ public class SiglusMeService {
     QueryOrderableSearchParams params = new QueryOrderableSearchParams(new LinkedMultiValueMap<>());
     Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, Pagination.NO_PAGINATION);
     return orderableDataService.searchOrderables(params, pageable, homeFacilityId).getContent();
+  }
+
+  private FacilityCmmsDomain buildCmmsDomain(FacilityCmmsDto facilityCmmsDto) {
+    UserDto userDto = authHelper.getCurrentUser();
+    UUID homeFacilityId = userDto.getHomeFacilityId();
+    FacilityDto facilityDto = facilityReferenceDataService.getFacilityById(homeFacilityId);
+    return FacilityCmmsDomain.builder()
+            .facilityCode(facilityDto.getCode())
+            .cmm(facilityCmmsDto.getCmm())
+            .periodEnd(facilityCmmsDto.getPeriodEnd())
+            .periodBegin(facilityCmmsDto.getPeriodBegin())
+            .productCode(facilityCmmsDto.getProductCode())
+            .lastUpdated(LocalDateTime.now())
+            .build();
+  }
+
+  private void saveAndUpdateCmms(FacilityCmmsDomain cmmsDomain) {
+    FacilityCmmsDomain facilityCmmsDomain = facilityCmmsRepository
+            .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(
+                    cmmsDomain.getFacilityCode(),
+                    cmmsDomain.getProductCode(),
+                    cmmsDomain.getPeriodBegin(),
+                    cmmsDomain.getPeriodEnd());
+    UUID cmmsDomainId = facilityCmmsDomain == null ? UUID.randomUUID() : facilityCmmsDomain.getId();
+    cmmsDomain.setId(cmmsDomainId);
+    log.info("process app-info , id: {}" + cmmsDomainId);
+    facilityCmmsRepository.save(cmmsDomain);
   }
 
 }

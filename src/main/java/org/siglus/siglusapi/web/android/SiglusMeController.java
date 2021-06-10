@@ -21,11 +21,13 @@ import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.domain.android.AppInfoDomain;
+import org.siglus.siglusapi.dto.android.request.FacilityCmmsDto;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -77,5 +79,11 @@ public class SiglusMeController {
         .versionCode(versionCode)
         .androidsdkVersion(androidSdkVersion)
         .build());
+  }
+
+  @PutMapping(value = "/facility/cmms")
+  @ResponseStatus(NO_CONTENT)
+  public void updateCmmsForFacility(@RequestBody List<FacilityCmmsDto> facilityCmmss) {
+    service.updateFacilityCmms(facilityCmmss);
   }
 }

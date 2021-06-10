@@ -131,6 +131,7 @@ schemas:
   - productSyncResponse: !include schemas/productSyncResponse.json
   - facilityResponse: !include schemas/facilityResponse.json
   - regimenResponse: !include schemas/regimenResponse.json
+  - hfCmmsDtos: !include schemas/hfCmmsDto.json
 
 resourceTypes:
   - collection:
@@ -2314,6 +2315,18 @@ traits:
               body:
                 application/json:
                   schema: facilityResponse
+
+        /cmms:
+          displayName: update facility cmms info
+          put:
+            is: [ secured ]
+            description: update facility cmms info
+            body:
+              application/json:
+                schema: hfCmmsDtos
+            responses:
+              204:
+                description: Full update facility cmms of current facility
 
         /products:
           displayName: Products of the current facility
