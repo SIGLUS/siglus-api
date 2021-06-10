@@ -74,8 +74,7 @@ public final class OrderableDto extends BasicOrderableDto {
     // .stream()
     // .filter(po -> Objects.equals(programId, po.getProgramId()))
     // .findFirst();
-    return CollectionUtils.isEmpty(programs) ? null :
-        Optional.of((ProgramOrderableDto) programs.toArray()[0]);
+    return programs.stream().findFirst();
     // [SIGLUS change end]
   }
 

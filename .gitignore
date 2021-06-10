@@ -9,3 +9,4 @@ package-lock.json
 */.DS_Store
 clear.sh
 .consul_service_id~
+src/main/generated
