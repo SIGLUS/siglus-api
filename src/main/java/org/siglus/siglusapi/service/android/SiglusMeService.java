@@ -18,7 +18,7 @@ package org.siglus.siglusapi.service.android;
 import static java.util.Collections.emptyList;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -97,13 +97,13 @@ public class SiglusMeService {
 
   public void processAppInfo(AppInfoDomain appInfoDomain) {
     AppInfoDomain existAppInfo = appInfoRepository
-            .findAppInfoByFacilityCodeAndUniqueId(appInfoDomain.getFacilityCode(),
+            .findByFacilityCodeAndUniqueId(appInfoDomain.getFacilityCode(),
                     appInfoDomain.getUniqueId());
     UUID appInfoId = existAppInfo != null ? existAppInfo.getId() : UUID.randomUUID();
     appInfoDomain.setId(appInfoId);
-    appInfoDomain.setLastUpdated(ZonedDateTime.now());
+    appInfoDomain.setLastUpdated(LocalDateTime.now());
+    log.info("process app-info , id: {}" + appInfoId);
     appInfoRepository.save(appInfoDomain);
-    log.info("process app-info successfully, id = " + appInfoId);
   }
 
   public void archiveAllProducts(List<String> productCodes) {

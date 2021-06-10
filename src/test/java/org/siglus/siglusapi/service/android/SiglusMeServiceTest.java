@@ -192,19 +192,35 @@ public class SiglusMeServiceTest {
   @Test
   public void shouldUpdateAppInfoWhenAppInfoIsExist() {
     // given
-    AppInfoDomain appInfoCurrent = mockCurrentAppInfo();
-    AppInfoDomain appInfoUpdate = mockUpdateAppInfo();
-    when(appInfoRepository.findAppInfoByFacilityCodeAndUniqueId(appInfoUpdate.getFacilityCode(),
-            appInfoUpdate.getUniqueId())).thenReturn(appInfoCurrent);
-    when(appInfoRepository.save(appInfoUpdate)).thenReturn(appInfoCurrent);
+    AppInfoDomain existedInfo = mockCurrentAppInfo();
+    AppInfoDomain toBeUpdatedInfo = mockUpdateAppInfo();
+    when(appInfoRepository.findByFacilityCodeAndUniqueId(toBeUpdatedInfo.getFacilityCode(),
+            toBeUpdatedInfo.getUniqueId())).thenReturn(existedInfo);
+    when(appInfoRepository.save(toBeUpdatedInfo)).thenReturn(existedInfo);
 
     // when
-    service.processAppInfo(appInfoUpdate);
+    service.processAppInfo(toBeUpdatedInfo);
 
     // then
-    assertEquals(appInfoUpdate.getId(), appInfoCurrent.getId());
-    assertEquals(appInfoUpdate.getFacilityCode(), appInfoCurrent.getFacilityCode());
-    assertEquals(appInfoUpdate.getUniqueId(), appInfoCurrent.getUniqueId());
+    assertEquals(toBeUpdatedInfo.getId(), existedInfo.getId());
+    assertEquals(toBeUpdatedInfo.getFacilityCode(), existedInfo.getFacilityCode());
+    assertEquals(toBeUpdatedInfo.getUniqueId(), existedInfo.getUniqueId());
+  }
+
+  @Test
+  public void shouldInsertAppInfoWhenAppInfoIsNotExist() {
+    // given
+    AppInfoDomain toBeUpdatedInfo = mockUpdateAppInfo();
+    when(appInfoRepository.findByFacilityCodeAndUniqueId(toBeUpdatedInfo.getFacilityCode(),
+            toBeUpdatedInfo.getUniqueId())).thenReturn(null);
+    when(appInfoRepository.save(toBeUpdatedInfo)).thenReturn(toBeUpdatedInfo);
+
+    // when
+    service.processAppInfo(toBeUpdatedInfo);
+    AppInfoDomain returnAppInfo = appInfoRepository.save(toBeUpdatedInfo);
+
+    // then
+    assertEquals(toBeUpdatedInfo, returnAppInfo);
   }
 
   @Test
@@ -483,6 +499,20 @@ public class SiglusMeServiceTest {
   }
 
   private AppInfoDomain mockUpdateAppInfo() {
+    AppInfoDomain appInfoDomain = AppInfoDomain.builder()
+            .deviceInfo("deviceinfo2")
+            .facilityName("Centro de Saude de Chiunze")
+            .androidsdkVersion(28)
+            .versionCode(88)
+            .facilityCode("01080904")
+            .userName("CS_Moine_Role1")
+            .uniqueId("ac36c07a09f2fdcd")
+            .build();
+    appInfoDomain.setId(appInfoId);
+    return appInfoDomain;
+  }
+
+  private AppInfoDomain mockInsertSuccessReturnAppInfo() {
     AppInfoDomain appInfoDomain = AppInfoDomain.builder()
             .deviceInfo("deviceinfo2")
             .facilityName("Centro de Saude de Chiunze")

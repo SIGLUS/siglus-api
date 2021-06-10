@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.domain.android;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
@@ -49,5 +49,5 @@ public class AppInfoDomain extends BaseEntity {
 
   private String userName;
 
-  private ZonedDateTime lastUpdated;
+  private LocalDateTime lastUpdated;
 }
