@@ -101,8 +101,8 @@ public class SiglusMeService {
 
   public void processAppInfo(AppInfoDomain appInfoDomain) {
     AppInfoDomain existAppInfo = appInfoRepository
-            .findByFacilityCodeAndUniqueId(appInfoDomain.getFacilityCode(),
-                    appInfoDomain.getUniqueId());
+        .findByFacilityCodeAndUniqueId(appInfoDomain.getFacilityCode(),
+            appInfoDomain.getUniqueId());
     UUID appInfoId = existAppInfo != null ? existAppInfo.getId() : UUID.randomUUID();
     appInfoDomain.setId(appInfoId);
     appInfoDomain.setLastUpdated(LocalDateTime.now());
@@ -112,8 +112,8 @@ public class SiglusMeService {
 
   public void updateFacilityCmms(List<FacilityCmmsDto> facilityCmmss) {
     facilityCmmss.stream()
-            .map(facilityCmmsDto -> buildCmmsDomain(facilityCmmsDto))
-            .forEach(this::saveAndUpdateCmms);
+        .map(facilityCmmsDto -> buildCmmsDomain(facilityCmmsDto))
+        .forEach(this::saveAndUpdateCmms);
   }
 
   public void archiveAllProducts(List<String> productCodes) {
@@ -180,22 +180,22 @@ public class SiglusMeService {
     UUID homeFacilityId = userDto.getHomeFacilityId();
     FacilityDto facilityDto = facilityReferenceDataService.getFacilityById(homeFacilityId);
     return FacilityCmmsDomain.builder()
-            .facilityCode(facilityDto.getCode())
-            .cmm(facilityCmmsDto.getCmm())
-            .periodEnd(facilityCmmsDto.getPeriodEnd())
-            .periodBegin(facilityCmmsDto.getPeriodBegin())
-            .productCode(facilityCmmsDto.getProductCode())
-            .lastUpdated(LocalDateTime.now())
-            .build();
+        .facilityCode(facilityDto.getCode())
+        .cmm(facilityCmmsDto.getCmm())
+        .periodEnd(facilityCmmsDto.getPeriodEnd())
+        .periodBegin(facilityCmmsDto.getPeriodBegin())
+        .productCode(facilityCmmsDto.getProductCode())
+        .lastUpdated(LocalDateTime.now())
+        .build();
   }
 
   private void saveAndUpdateCmms(FacilityCmmsDomain cmmsDomain) {
     FacilityCmmsDomain facilityCmmsDomain = facilityCmmsRepository
-            .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(
-                    cmmsDomain.getFacilityCode(),
-                    cmmsDomain.getProductCode(),
-                    cmmsDomain.getPeriodBegin(),
-                    cmmsDomain.getPeriodEnd());
+        .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(
+            cmmsDomain.getFacilityCode(),
+            cmmsDomain.getProductCode(),
+            cmmsDomain.getPeriodBegin(),
+            cmmsDomain.getPeriodEnd());
     UUID cmmsDomainId = facilityCmmsDomain == null ? UUID.randomUUID() : facilityCmmsDomain.getId();
     cmmsDomain.setId(cmmsDomainId);
     log.info("process app-info , id: {}" + cmmsDomainId);

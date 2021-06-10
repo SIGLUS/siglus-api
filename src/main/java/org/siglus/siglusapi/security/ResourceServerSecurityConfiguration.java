@@ -45,11 +45,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Configuration
 @EnableWebSecurity
-@Import({ MethodSecurityConfiguration.class })
+@Import({MethodSecurityConfiguration.class})
 @EnableResourceServer
 public class ResourceServerSecurityConfiguration implements ResourceServerConfigurer {
 
-  private TokenExtractor tokenExtractor = new BearerTokenExtractor();
+  private final TokenExtractor tokenExtractor = new BearerTokenExtractor();
 
   @Value("${auth.resourceId}")
   private String resourceId;
@@ -70,8 +70,7 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
   public void configure(HttpSecurity http) throws Exception {
     http.addFilterAfter(new OncePerRequestFilter() {
       @Override
-      protected void doFilterInternal(HttpServletRequest request,
-                                      HttpServletResponse response, FilterChain filterChain)
+      protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
           throws ServletException, IOException {
         // We don't want to allow access to a resource with no token so clear
         // the security context in case it is actually an OAuth2Authentication
@@ -92,7 +91,7 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
             "/siglusapi/webjars/**",
             "/siglusapi/docs/**",
             "/health"
-            ).permitAll()
+        ).permitAll()
         .antMatchers("/**").fullyAuthenticated();
   }
 
@@ -131,6 +130,7 @@ public class ResourceServerSecurityConfiguration implements ResourceServerConfig
 
   /**
    * CorsConfigurationSource bean initializer.
+   *
    * @return cors configuration
    */
   @Bean

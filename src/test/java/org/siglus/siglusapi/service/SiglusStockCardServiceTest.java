@@ -106,7 +106,7 @@ public class SiglusStockCardServiceTest {
     calculatedStockOnHand.setStockOnHand(10);
     when(calculatedStockOnHandRepository
         .findFirstByStockCardIdAndOccurredDateLessThanEqualOrderByOccurredDateDesc(any(UUID.class),
-        any(LocalDate.class))).thenReturn(Optional.ofNullable(calculatedStockOnHand));
+            any(LocalDate.class))).thenReturn(Optional.ofNullable(calculatedStockOnHand));
     Mockito.when(dateHelper.getCurrentDate()).thenReturn(CURRENT_DATE);
   }
 

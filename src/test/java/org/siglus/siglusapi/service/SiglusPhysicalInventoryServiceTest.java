@@ -98,23 +98,23 @@ public class SiglusPhysicalInventoryServiceTest {
   @Mock
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
-  private UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
-  private UUID programIdOne = UUID.randomUUID();
+  private final UUID programIdOne = UUID.randomUUID();
 
-  private UUID programIdTwo = UUID.randomUUID();
+  private final UUID programIdTwo = UUID.randomUUID();
 
-  private UUID inventoryOne = UUID.randomUUID();
+  private final UUID inventoryOne = UUID.randomUUID();
 
-  private UUID inventoryTwo = UUID.randomUUID();
+  private final UUID inventoryTwo = UUID.randomUUID();
 
-  private UUID id = UUID.randomUUID();
+  private final UUID id = UUID.randomUUID();
 
-  private String startDate = "startDate";
+  private final String startDate = "startDate";
 
-  private String endDate = "endDate";
+  private final String endDate = "endDate";
 
   @Test
   public void shouldCallV3MultipleTimesWhenCreateNewDraftForAllProducts() {
@@ -180,7 +180,7 @@ public class SiglusPhysicalInventoryServiceTest {
         facilityId, true))
         .thenReturn(inventoryOne.toString());
     when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programIdTwo,
-        facilityId,true))
+        facilityId, true))
         .thenReturn(inventoryTwo.toString());
 
     // when

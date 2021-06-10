@@ -89,7 +89,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
   @Mock
   private StockmanagementFacilityReferenceDataService facilityReferenceDataService;
 
-  private UUID facilityTypeId = UUID.randomUUID();
+  private final UUID facilityTypeId = UUID.randomUUID();
 
   @Before
   public void setUp() {

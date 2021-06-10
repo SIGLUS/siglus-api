@@ -20,7 +20,7 @@ import java.util.UUID;
 import org.siglus.siglusapi.domain.android.AppInfoDomain;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AppInfoRepository extends
-        JpaRepository<AppInfoDomain, UUID> {
+public interface AppInfoRepository extends JpaRepository<AppInfoDomain, UUID> {
+
   AppInfoDomain findByFacilityCodeAndUniqueId(String facilityCode, String uniqueId);
 }

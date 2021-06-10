@@ -19,7 +19,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

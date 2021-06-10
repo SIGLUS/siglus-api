@@ -42,9 +42,9 @@ public class SiglusValidSourceDestinationServiceTest {
   @Mock
   private SupportedProgramsHelper supportedVirtualProgramsHelper;
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
   @Test
   public void shouldCallGetValidDestinationsWhenFindDestinations() {

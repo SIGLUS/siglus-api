@@ -123,11 +123,11 @@ public class FcProgramServiceTest {
 
   private ProgramDto mockProgramDto(String code, String name, String status) {
     return ProgramDto
-          .builder()
-          .code(code)
-          .description(name)
-          .status(status)
-          .build();
+        .builder()
+        .code(code)
+        .description(name)
+        .status(status)
+        .build();
   }
 
   private ProgramRealProgram mockProgram(UUID id, String code, String name, boolean active) {

@@ -19,8 +19,7 @@ import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.springframework.stereotype.Service;
 
 @Service
-public class SiglusStockCardLineItemReasons  extends
-    BaseStockManagementService<StockCardLineItemReasonDto>  {
+public class SiglusStockCardLineItemReasons extends BaseStockManagementService<StockCardLineItemReasonDto> {
 
   @Override
   protected String getUrl() {

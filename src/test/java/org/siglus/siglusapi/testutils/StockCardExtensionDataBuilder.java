@@ -22,9 +22,9 @@ import org.siglus.common.domain.StockCardExtension;
 
 public class StockCardExtensionDataBuilder {
 
-  private UUID id = UUID.randomUUID();
+  private final UUID id = UUID.randomUUID();
   private UUID stockCardId = UUID.randomUUID();
-  private LocalDate createDate = DatesUtil.getBaseDate();
+  private final LocalDate createDate = DatesUtil.getBaseDate();
 
   public StockCardExtensionDataBuilder() {
   }

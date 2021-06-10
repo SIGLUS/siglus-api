@@ -74,11 +74,11 @@ public class SiglusShipmentDraftServiceTest {
   @Mock
   private OrderRepository orderRepository;
 
-  private UUID draftId = UUID.randomUUID();
+  private final UUID draftId = UUID.randomUUID();
 
-  private UUID orderId = UUID.randomUUID();
+  private final UUID orderId = UUID.randomUUID();
 
-  private UUID lineItemId = UUID.randomUUID();
+  private final UUID lineItemId = UUID.randomUUID();
 
   @Test
   public void shouldUpdateLineItemExtensionWhenUpdateShipmentDraftIfExtensionExist() {

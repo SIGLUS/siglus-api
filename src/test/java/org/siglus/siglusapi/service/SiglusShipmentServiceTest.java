@@ -103,11 +103,11 @@ public class SiglusShipmentServiceTest {
   private SiglusShipmentDraftService draftService;
 
 
-  private UUID orderId = UUID.randomUUID();
+  private final UUID orderId = UUID.randomUUID();
 
-  private UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
-  private UUID lineItemId = UUID.randomUUID();
+  private final UUID lineItemId = UUID.randomUUID();
 
   @Before
   public void prepare() {
@@ -156,7 +156,6 @@ public class SiglusShipmentServiceTest {
     when(siglusOrderService.isSuborder(any())).thenReturn(true);
     Order order = new Order();
     when(orderRepository.findOne(orderId)).thenReturn(order);
-
 
     // when
     siglusShipmentService.createOrderAndShipment(false, shipmentDto);

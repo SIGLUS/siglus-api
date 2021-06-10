@@ -41,9 +41,9 @@ public class SiglusArchiveProductControllerTest {
   @InjectMocks
   private SiglusArchiveProductController siglusArchiveProductController;
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
-  private UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
   @Before
   public void prepare() {

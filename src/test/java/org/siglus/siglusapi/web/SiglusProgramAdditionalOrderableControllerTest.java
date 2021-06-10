@@ -38,17 +38,17 @@ public class SiglusProgramAdditionalOrderableControllerTest {
   @Mock
   private SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
-  private UUID id = UUID.randomUUID();
+  private final UUID id = UUID.randomUUID();
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private UUID additionalOrderableId = UUID.randomUUID();
+  private final UUID additionalOrderableId = UUID.randomUUID();
 
-  private String code = "code";
+  private final String code = "code";
 
-  private String name = "name";
+  private final String name = "name";
 
-  private UUID orderableOriginProgramId = UUID.randomUUID();
+  private final UUID orderableOriginProgramId = UUID.randomUUID();
 
   @Mock
   private Pageable pageable;

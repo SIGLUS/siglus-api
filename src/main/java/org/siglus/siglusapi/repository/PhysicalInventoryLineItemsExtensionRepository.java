@@ -22,7 +22,7 @@ import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-public interface PhysicalInventoryLineItemsExtensionRepository  extends
+public interface PhysicalInventoryLineItemsExtensionRepository extends
     JpaRepository<PhysicalInventoryLineItemsExtension, UUID> {
 
   List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryIdIn(Collection<UUID> ids);

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class SiglusGeographicLevelReferenceDataService extends
     BaseReferenceDataService<GeographicLevelDto> {
+
   @Override
   protected String getUrl() {
     return "/api/geographicLevels/";
@@ -39,7 +40,7 @@ public class SiglusGeographicLevelReferenceDataService extends
   }
 
   public Collection<GeographicLevelDto> searchAllGeographicLevel() {
-    return findAll("",  new HashMap<>());
+    return findAll("", new HashMap<>());
   }
 
 

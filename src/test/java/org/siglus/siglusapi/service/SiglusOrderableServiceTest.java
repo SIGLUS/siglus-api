@@ -71,13 +71,13 @@ public class SiglusOrderableServiceTest {
 
   private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private UUID inputProgramId = UUID.randomUUID();
+  private final UUID inputProgramId = UUID.randomUUID();
 
-  private UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
   @Before
   public void prepare() {

@@ -72,5 +72,5 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       + "and r.status in :statusSet ", nativeQuery = true)
   List<Requisition> searchAfterAuthorizedRequisitions(@Param("facilityId") UUID facilityId,
       @Param("programId") UUID programId, @Param("periodId") UUID periodId,
-      @Param("emergency")Boolean emergency, @Param("statusSet") Set<String> statusSet);
+      @Param("emergency") Boolean emergency, @Param("statusSet") Set<String> statusSet);
 }

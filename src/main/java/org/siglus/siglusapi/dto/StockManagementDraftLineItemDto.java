@@ -34,6 +34,7 @@ import org.springframework.beans.BeanUtils;
 @AllArgsConstructor
 @Builder
 public class StockManagementDraftLineItemDto implements VvmApplicable {
+
   private UUID orderableId;
   private UUID lotId;
   private String lotCode;

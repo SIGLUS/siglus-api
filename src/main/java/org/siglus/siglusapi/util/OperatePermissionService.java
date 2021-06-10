@@ -24,7 +24,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class OperatePermissionService {
 
-  @Autowired PermissionService permissionService;
+  @Autowired
+  PermissionService permissionService;
 
   public boolean isEditable(RequisitionV2Dto dto) {
     Requisition requisition = from(dto);

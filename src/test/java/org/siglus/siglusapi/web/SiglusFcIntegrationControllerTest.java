@@ -40,7 +40,7 @@ public class SiglusFcIntegrationControllerTest {
   private Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
       Pagination.NO_PAGINATION);
 
-  private LocalDate date = LocalDate.of(2020, 2, 21);
+  private final LocalDate date = LocalDate.of(2020, 2, 21);
 
   @Test
   public void shouldSearchRequisitionsWithDefaultPageable() {

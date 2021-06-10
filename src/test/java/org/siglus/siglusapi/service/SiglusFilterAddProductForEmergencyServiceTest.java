@@ -52,7 +52,7 @@ public class SiglusFilterAddProductForEmergencyServiceTest {
   @Test
   public void shouldEmptyIfPreRequisitionNotInProgress() {
     // given
-    RequisitionV2Dto preV2 =  new RequisitionV2Dto();
+    RequisitionV2Dto preV2 = new RequisitionV2Dto();
     preV2.setStatus(RequisitionStatus.RELEASED);
 
     // when
@@ -66,7 +66,7 @@ public class SiglusFilterAddProductForEmergencyServiceTest {
   @Test
   public void shouldGetOneProgressProductIfPreRequisitionInProgress() {
     // given
-    RequisitionV2Dto preV2 =  new RequisitionV2Dto();
+    RequisitionV2Dto preV2 = new RequisitionV2Dto();
     preV2.setStatus(RequisitionStatus.IN_APPROVAL);
     RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
     OrderableDto orderableDto = new OrderableDto();
@@ -86,7 +86,7 @@ public class SiglusFilterAddProductForEmergencyServiceTest {
   @Test
   public void shouldEmptyForGetNotFullyShippedWhenPreRequisitionStatusInApproval() {
     // given
-    RequisitionV2Dto preV2 =  new RequisitionV2Dto();
+    RequisitionV2Dto preV2 = new RequisitionV2Dto();
     preV2.setStatus(RequisitionStatus.IN_APPROVAL);
 
     // when
@@ -100,7 +100,7 @@ public class SiglusFilterAddProductForEmergencyServiceTest {
   @Test
   public void shouldGetOneWhenPreRequisitionStatusReleaseAndHaveNoFullyShippedProducts() {
     // given
-    RequisitionV2Dto preV2 =  new RequisitionV2Dto();
+    RequisitionV2Dto preV2 = new RequisitionV2Dto();
     preV2.setId(UUID.randomUUID());
     preV2.setStatus(RequisitionStatus.RELEASED);
 
@@ -110,7 +110,7 @@ public class SiglusFilterAddProductForEmergencyServiceTest {
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(UUID.randomUUID());
-    lineItem.setOrderedQuantity((long)10);
+    lineItem.setOrderedQuantity((long) 10);
     order.setOrderLineItems(Arrays.asList(lineItem));
     lineItem.setOrderable(new VersionEntityReference(UUID.randomUUID(), (long) 1));
     when(orderRepository.findCanFulfillOrderByExternalIdIn(Arrays.asList(preV2.getId())))
@@ -128,7 +128,7 @@ public class SiglusFilterAddProductForEmergencyServiceTest {
   @Test
   public void shouldGetOneProductsWhenNotExistSuborderAndHaveNoFullyShippedProducts() {
     // given
-    RequisitionV2Dto preV2 =  new RequisitionV2Dto();
+    RequisitionV2Dto preV2 = new RequisitionV2Dto();
     preV2.setId(UUID.randomUUID());
     preV2.setStatus(RequisitionStatus.RELEASED);
 
@@ -139,7 +139,7 @@ public class SiglusFilterAddProductForEmergencyServiceTest {
     Order order = new Order();
     OrderLineItem lineItem = new OrderLineItem();
     lineItem.setId(UUID.randomUUID());
-    lineItem.setOrderedQuantity((long)10);
+    lineItem.setOrderedQuantity((long) 10);
     order.setOrderLineItems(Arrays.asList(lineItem));
     lineItem.setOrderable(new VersionEntityReference(UUID.randomUUID(), (long) 1));
     when(orderRepository.findCanFulfillOrderByExternalIdIn(

@@ -77,9 +77,8 @@ public class UsageTemplateColumnSection extends BaseEntity {
     columnSection.section = availableColumnSection;
     columnSection.columns = availableColumnSection.getColumns()
         .stream()
-        .map(column ->
-        UsageTemplateColumn.from(templateId, column, columnSection)
-    ).collect(Collectors.toList());
+        .map(column -> UsageTemplateColumn.from(templateId, column, columnSection))
+        .collect(Collectors.toList());
     return columnSection;
   }
 

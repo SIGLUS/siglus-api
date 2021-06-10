@@ -73,13 +73,13 @@ public class UsageInformationDataProcessorTest {
   @Mock
   private OrderableKitRepository orderableKitRepository;
 
-  private UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
 
-  private UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
-  private UUID id = UUID.randomUUID();
+  private final UUID id = UUID.randomUUID();
 
-  private Integer value = RandomUtils.nextInt();
+  private final Integer value = RandomUtils.nextInt();
 
   private static final String INFORMATION = "information";
 

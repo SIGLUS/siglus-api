@@ -62,7 +62,7 @@ public class PatientDataProcessorTest {
   @Captor
   private ArgumentCaptor<List<PatientLineItem>> captor;
 
-  private UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
 
   @Test
   public void shouldReturnFalseWhenIsDisabledGivenNotEnablePatientLineItems() {

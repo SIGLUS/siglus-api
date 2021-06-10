@@ -46,7 +46,7 @@ public class TestConsumptionServiceDto {
 
       Map<String, TestConsumptionProjectDto> projectMap = new HashMap<>();
       Map<String, List<TestConsumptionLineItem>> groupByProject = serviceLineItems.stream()
-              .collect(Collectors.groupingBy(TestConsumptionLineItem::getProject));
+          .collect(Collectors.groupingBy(TestConsumptionLineItem::getProject));
 
       groupByProject.forEach((projectKey, projectLineItems) -> {
         TestConsumptionProjectDto projectDto = new TestConsumptionProjectDto();
@@ -54,11 +54,11 @@ public class TestConsumptionServiceDto {
         Map<String, TestConsumptionOutcomeDto> outcomeMap = projectLineItems.stream()
             .collect(Collectors.toMap(TestConsumptionLineItem::getOutcome,
                 lineItem -> TestConsumptionOutcomeDto
-                .builder()
-                .testConsumptionLineItemId(lineItem.getId())
-                .outcome(lineItem.getOutcome())
-                .value(lineItem.getValue())
-                .build()));
+                    .builder()
+                    .testConsumptionLineItemId(lineItem.getId())
+                    .outcome(lineItem.getOutcome())
+                    .value(lineItem.getValue())
+                    .build()));
         projectDto.setOutcomes(outcomeMap);
 
         projectMap.put(projectKey, projectDto);

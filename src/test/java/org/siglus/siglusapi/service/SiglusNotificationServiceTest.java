@@ -141,9 +141,9 @@ public class SiglusNotificationServiceTest {
 
   private UUID notificationId;
 
-  private UUID currentUserHomeFacilityId = randomUUID();
+  private final UUID currentUserHomeFacilityId = randomUUID();
 
-  private String currentUserHomeFacilityName = random(NOT_LONG);
+  private final String currentUserHomeFacilityName = random(NOT_LONG);
 
   private BasicRequisitionDto requisition;
 
@@ -343,7 +343,7 @@ public class SiglusNotificationServiceTest {
 
     // then
     verify(repo).updateLastNotificationProcessed(requisition.getId(), NotificationStatus.AUTHORIZED,
-            NotificationStatus.IN_APPROVAL);
+        NotificationStatus.IN_APPROVAL);
     List<Notification> notification = verifySavedNotification(2);
     Notification todoNotification = notification.get(0);
     assertEquals(requisition.getId(), todoNotification.getRefId());
@@ -450,8 +450,7 @@ public class SiglusNotificationServiceTest {
     org.openlmis.fulfillment.service.referencedata.FacilityDto facility =
         new org.openlmis.fulfillment.service.referencedata.FacilityDto();
     order.setRequestingFacility(facility);
-    when(siglusOrderService.searchOrders(any(),any()))
-        .thenReturn(Pagination.getPage(singletonList(order)));
+    when(siglusOrderService.searchOrders(any(), any())).thenReturn(Pagination.getPage(singletonList(order)));
 
     // when
     service.postConvertToOrder(requisition);

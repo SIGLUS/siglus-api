@@ -21,6 +21,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public class PageableRequestContext {
-  private Integer size;
-  private Integer page;
+
+  private final Integer size;
+  private final Integer page;
 }

@@ -45,6 +45,7 @@ import org.springframework.beans.BeanUtils;
 @EqualsAndHashCode(callSuper = true)
 @Table(name = "stock_management_draft_line_items", schema = "siglusintegration")
 public class StockManagementDraftLineItem extends BaseEntity {
+
   @ManyToOne
   @JoinColumn(nullable = false)
   private StockManagementDraft stockManagementDraft;
@@ -73,7 +74,7 @@ public class StockManagementDraftLineItem extends BaseEntity {
   private Map<String, String> extraData;
 
   public static StockManagementDraftLineItem from(StockManagementDraftLineItemDto draftLineItemDto,
-                                                  StockManagementDraft draft) {
+      StockManagementDraft draft) {
     StockManagementDraftLineItem lineItem = new StockManagementDraftLineItem();
     BeanUtils.copyProperties(draftLineItemDto, lineItem);
     lineItem.setStockManagementDraft(draft);

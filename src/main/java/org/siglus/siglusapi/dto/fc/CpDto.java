@@ -46,7 +46,7 @@ public class CpDto {
   private ZonedDateTime lastUpdatedAt;
 
   private String clientCode;
-  
+
   private String productFnm;
 
   private String productDescription;

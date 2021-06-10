@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -110,22 +109,22 @@ public class FcReceiptPlanServiceTest {
   @Mock
   private SiglusStatusChangeRepository siglusStatusChangeRepository;
 
-  private ZonedDateTime date = ZonedDateTime.now();
+  private final ZonedDateTime date = ZonedDateTime.now();
 
-  private String requisitionNumber = "requisitionNumber";
+  private final String requisitionNumber = "requisitionNumber";
 
-  private ZonedDateTime lastUpdatedAt = ZonedDateTime.now();
+  private final ZonedDateTime lastUpdatedAt = ZonedDateTime.now();
 
-  private String fnmCode = "productCode";
+  private final String fnmCode = "productCode";
 
-  private List<ReceiptPlanDto> receiptPlanDtos = new ArrayList<>();
+  private final List<ReceiptPlanDto> receiptPlanDtos = new ArrayList<>();
 
   private ReceiptPlanDto receiptPlanDto;
 
   private ReceiptPlan receiptPlan;
 
   @SuppressWarnings("unchecked")
-  private Page<UserDto> page = (Page<UserDto>) mock(Page.class);
+  private final Page<UserDto> page = (Page<UserDto>) mock(Page.class);
 
   @Before
   public void prepare() {
@@ -281,7 +280,7 @@ public class FcReceiptPlanServiceTest {
         .build();
     List<OrderableDto> orderableDtos = newArrayList(orderableDto);
     when(orderableDtoPage.getContent()).thenReturn(orderableDtos);
-    when(siglusRequisitionService.createRequisitionLineItem(any(),any()))
+    when(siglusRequisitionService.createRequisitionLineItem(any(), any()))
         .thenReturn(lineItems);
     when(requisitionRepository.findOne(requisitionId))
         .thenReturn(requisition);
@@ -366,7 +365,7 @@ public class FcReceiptPlanServiceTest {
     OrderableDto orderableDto = OrderableDto.builder().build();
     List<OrderableDto> orderableDtos = newArrayList(orderableDto);
     when(orderableDtoPage.getContent()).thenReturn(orderableDtos);
-    when(siglusRequisitionService.createRequisitionLineItem(any(),any()))
+    when(siglusRequisitionService.createRequisitionLineItem(any(), any()))
         .thenReturn(lineItems);
     when(requisitionRepository.findOne(requisitionId))
         .thenReturn(requisition);

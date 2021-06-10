@@ -92,14 +92,14 @@ public class SiglusProcessingPeriodService {
     ProcessingPeriodSearchParams params = new ProcessingPeriodSearchParams(requestParams);
     Page<ProcessingPeriodDto> page = siglusProcessingPeriodReferenceDataService
         .searchProcessingPeriods(
-        params.getProcessingScheduleId(),
-        params.getProgramId(),
-        params.getFacilityId(),
-        params.getStartDate(),
-        params.getEndDate(),
-        params.getIds(),
-        pageable
-    );
+            params.getProcessingScheduleId(),
+            params.getProgramId(),
+            params.getFacilityId(),
+            params.getStartDate(),
+            params.getEndDate(),
+            params.getIds(),
+            pageable
+        );
     List<ProcessingPeriodExtension> extensions = processingPeriodExtensionRepository.findAll();
 
     Map<UUID, ProcessingPeriodExtension> map = new HashMap<>();
@@ -205,7 +205,7 @@ public class SiglusProcessingPeriodService {
       RequisitionPeriodDto requisitionPeriod) {
     Requisition firstPreAuthorizeRequisition = preAuthorizeRequisitions.stream().min(
         Comparator.comparing(Requisition::getCreatedDate)).orElseThrow(
-          () -> new NotFoundException("first Requisition Not Found"));
+        () -> new NotFoundException("first Requisition Not Found"));
     requisitionPeriod.setRequisitionId(firstPreAuthorizeRequisition.getId());
     requisitionPeriod.setRequisitionStatus(firstPreAuthorizeRequisition.getStatus());
   }

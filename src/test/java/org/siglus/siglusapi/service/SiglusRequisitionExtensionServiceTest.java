@@ -55,9 +55,9 @@ public class SiglusRequisitionExtensionServiceTest {
   @Mock
   private RequisitionExtensionRepository requisitionExtensionRepository;
 
-  private UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
   @Test
   public void shouldSaveRequisitionExtensionWhenCreateRequisitionExtensionIfNotEmergency() {

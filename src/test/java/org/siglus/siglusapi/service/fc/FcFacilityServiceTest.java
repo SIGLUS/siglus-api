@@ -75,7 +75,7 @@ public class FcFacilityServiceTest {
   @Captor
   private ArgumentCaptor<FacilityDto> facilityCaptor;
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
   @Test
   public void shouldReturnFalseGivenEmptyFcResult() {

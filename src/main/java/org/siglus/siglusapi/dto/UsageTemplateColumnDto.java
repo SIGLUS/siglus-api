@@ -29,7 +29,7 @@ import org.springframework.beans.BeanUtils;
 @NoArgsConstructor
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class UsageTemplateColumnDto  extends BaseEntity {
+public class UsageTemplateColumnDto extends BaseEntity {
 
   private String name;
 

@@ -92,19 +92,19 @@ public class RegimenDataProcessorTest {
 
   private static final String PATIENTS = "patients";
 
-  private UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
 
-  private UUID regimenId1 = UUID.randomUUID();
+  private final UUID regimenId1 = UUID.randomUUID();
 
-  private UUID regimenId2 = UUID.randomUUID();
+  private final UUID regimenId2 = UUID.randomUUID();
 
-  private String rowName = "row";
+  private final String rowName = "row";
 
-  private UUID templateId = UUID.randomUUID();
+  private final UUID templateId = UUID.randomUUID();
 
-  private UUID id = UUID.randomUUID();
+  private final UUID id = UUID.randomUUID();
 
-  private Integer value = RandomUtils.nextInt();
+  private final Integer value = RandomUtils.nextInt();
 
   @Test
   public void shouldNotCreateLineItemsWhenInitiateIfDisableRegimen() {
@@ -157,7 +157,7 @@ public class RegimenDataProcessorTest {
         .getColumnSection(templateColumnSections, UsageCategory.REGIMEN, SUMMARY))
         .thenReturn(mockUsageTemplateColumnSection());
     when(regimenRepository.findAll())
-        .thenReturn(newArrayList(mockCustomRegimen(),mockNoCustomRegimen()));
+        .thenReturn(newArrayList(mockCustomRegimen(), mockNoCustomRegimen()));
     when(regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsFalse(any()))
         .thenReturn(newArrayList(mockNoCustomRegimen()));
     when(regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsTrue(any()))
@@ -233,7 +233,7 @@ public class RegimenDataProcessorTest {
             UsageCategory.REGIMEN, SUMMARY))
         .thenReturn(mockUsageTemplateColumnSection());
     when(regimenRepository.findAll())
-        .thenReturn(newArrayList(mockCustomRegimen(),mockNoCustomRegimen()));
+        .thenReturn(newArrayList(mockCustomRegimen(), mockNoCustomRegimen()));
     when(requisitionRepository.findOne(requisitionId)).thenReturn(mockRequisition());
 
     // when

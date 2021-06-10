@@ -156,8 +156,7 @@ public class SiglusNotificationService {
           String author = userReferenceDataService.findOne(notification.getOperatorId())
               .getUsername();
           if (notification.getStatus().isRequisitionPeriod()) {
-            RequisitionV2Dto requisition = requisitionService
-                    .searchRequisition(notification.getRefId());
+            RequisitionV2Dto requisition = requisitionService.searchRequisition(notification.getRefId());
             Map<String, StatusLogEntry> statusChanges = requisition.getStatusChanges();
             submitDate = statusChanges.get(RequisitionStatus.SUBMITTED.name()).getChangeDate();
           }
@@ -535,17 +534,17 @@ public class SiglusNotificationService {
         );
       case FulfillmentPermissionService.PODS_VIEW:
         return cb.and(
-                cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-                cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
-                cb.equal(root.get(STATUS), NotificationStatus.SHIPPED),
-                cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
-                cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.UPDATE)
+            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
+            cb.equal(root.get(STATUS), NotificationStatus.SHIPPED),
+            cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
+            cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.UPDATE)
         );
       case FulfillmentPermissionService.SHIPMENTS_EDIT:
         return cb.and(
-                cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
-                cb.equal(root.get(STATUS), NotificationStatus.RECEIVED),
-                cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
+            cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
+            cb.equal(root.get(STATUS), NotificationStatus.RECEIVED),
+            cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
         );
       default:
         return null;

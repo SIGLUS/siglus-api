@@ -35,5 +35,5 @@ public interface RequisitionExtensionRepository extends JpaRepository<Requisitio
       + " (CHAR_LENGTH(CAST(r.requisitionnumber as varchar)) < 7 and"
       + " concat(r.requisitionnumberprefix, "
       + "to_char(r.requisitionnumber, 'fm0000000')) = :requisitionNumber);", nativeQuery = true)
-  RequisitionExtension findByRequisitionNumber(@Param("requisitionNumber")String requisitionNumber);
+  RequisitionExtension findByRequisitionNumber(@Param("requisitionNumber") String requisitionNumber);
 }

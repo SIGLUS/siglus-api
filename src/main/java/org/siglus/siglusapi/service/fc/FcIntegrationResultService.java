@@ -133,7 +133,7 @@ public class FcIntegrationResultService {
       jobName = FACILITY_TYPE_JOB;
     } else if (REGIMEN_API.equals(api)) {
       jobName = REGIMEN_JOB;
-    }  else if (GEOGRAPHIC_ZONE_API.equals(api)) {
+    } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
       jobName = GEOGRAPHIC_ZONE_JOB;
     }
     return jobName;
@@ -146,9 +146,9 @@ public class FcIntegrationResultService {
       callFcService.getIssueVouchers().clear();
     } else if (CMM_API.equals(api)) {
       callFcService.getCmms().clear();
-    } else if (CP_API.equals(api))  {
+    } else if (CP_API.equals(api)) {
       callFcService.getCps().clear();
-    }  else if (PROGRAM_API.equals(api)) {
+    } else if (PROGRAM_API.equals(api)) {
       callFcService.getPrograms().clear();
     } else if (PRODUCT_API.equals(api)) {
       callFcService.getProducts().clear();

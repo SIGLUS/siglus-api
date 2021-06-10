@@ -158,99 +158,99 @@ public class SiglusFcIntegrationServiceTest {
   @Mock
   private PodExtensionRepository podExtensionRepository;
 
-  private UUID dpmFacilityTypeId = UUID.randomUUID();
+  private final UUID dpmFacilityTypeId = UUID.randomUUID();
 
-  private String dpmFacilityTypeCode = "DPM";
+  private final String dpmFacilityTypeCode = "DPM";
 
-  private UUID dpmSupervisoryNodeId = UUID.randomUUID();
+  private final UUID dpmSupervisoryNodeId = UUID.randomUUID();
 
-  private UUID fcFacilityTypeId = UUID.randomUUID();
+  private final UUID fcFacilityTypeId = UUID.randomUUID();
 
-  private UUID fcSupervisoryNodeId = UUID.randomUUID();
+  private final UUID fcSupervisoryNodeId = UUID.randomUUID();
 
-  private UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private UUID processingPeriodId = UUID.randomUUID();
+  private final UUID processingPeriodId = UUID.randomUUID();
 
-  private UUID lineItemId = UUID.randomUUID();
+  private final UUID lineItemId = UUID.randomUUID();
 
-  private UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
-  private UUID templateId = UUID.randomUUID();
+  private final UUID templateId = UUID.randomUUID();
 
-  private UUID regimenId = UUID.randomUUID();
+  private final UUID regimenId = UUID.randomUUID();
 
-  private UUID orderId = UUID.randomUUID();
+  private final UUID orderId = UUID.randomUUID();
 
-  private UUID externalId = UUID.randomUUID();
+  private final UUID externalId = UUID.randomUUID();
 
-  private UUID lotId = UUID.randomUUID();
+  private final UUID lotId = UUID.randomUUID();
 
-  private UUID rejectionReasonId = UUID.randomUUID();
+  private final UUID rejectionReasonId = UUID.randomUUID();
 
-  private UUID realProgramId = UUID.randomUUID();
+  private final UUID realProgramId = UUID.randomUUID();
 
-  private String reasonName = "Debit";
+  private final String reasonName = "Debit";
 
-  private LocalDate date = LocalDate.of(2020, 2, 21);
+  private final LocalDate date = LocalDate.of(2020, 2, 21);
 
-  private String today = "20200831";
+  private final String today = "20200831";
 
-  private String requisitionNumber = "NO010510020000004";
+  private final String requisitionNumber = "NO010510020000004";
 
-  private String facilityCode = "03040101";
+  private final String facilityCode = "03040101";
 
-  private String facilityType = "DPM";
+  private final String facilityType = "DPM";
 
-  private String facilityName = "DPM ZAMBEZIA";
+  private final String facilityName = "DPM ZAMBEZIA";
 
-  private String facilityDescription = "DPM ZAMBEZIA";
+  private final String facilityDescription = "DPM ZAMBEZIA";
 
-  private String requestingFacilityCode = "01041205";
+  private final String requestingFacilityCode = "01041205";
 
-  private String requestingFacilityName = "CS Nhacatundo";
+  private final String requestingFacilityName = "CS Nhacatundo";
 
-  private String requestingFacilityDescription = "Centro de Saude de Nhacatundo";
+  private final String requestingFacilityDescription = "Centro de Saude de Nhacatundo";
 
-  private String programCode = "MP";
+  private final String programCode = "MP";
 
-  private String programName = "Multiple Programs";
+  private final String programName = "Multiple Programs";
 
-  private String productCode = "21A01";
+  private final String productCode = "21A01";
 
-  private String productName = "Acetilcisteina; 200mg/mL; Inj";
+  private final String productName = "Acetilcisteina; 200mg/mL; Inj";
 
-  private String productDescription = "Acetilcisteína";
+  private final String productDescription = "Acetilcisteína";
 
-  private LocalDate periodStartDate = LocalDate.parse("2020-03-01");
+  private final LocalDate periodStartDate = LocalDate.parse("2020-03-01");
 
-  private LocalDate periodEndDate = LocalDate.parse("2020-03-31");
+  private final LocalDate periodEndDate = LocalDate.parse("2020-03-31");
 
-  private String realProgramCode = "M";
+  private final String realProgramCode = "M";
 
-  private String realProgramName = "Medicamentos Essenciais";
+  private final String realProgramName = "Medicamentos Essenciais";
 
-  private Integer authorizedQuantity = 100;
+  private final Integer authorizedQuantity = 100;
 
-  private Integer quantityAccepted = 1;
+  private final Integer quantityAccepted = 1;
 
-  private Integer quantityRejected = 2;
+  private final Integer quantityRejected = 2;
 
-  private String notes = "notes";
+  private final String notes = "notes";
 
-  private String receivedBy = "xia1";
+  private final String receivedBy = "xia1";
 
-  private String deliveredBy = "xia2";
+  private final String deliveredBy = "xia2";
 
-  private String lotCode = "Lot-123";
+  private final String lotCode = "Lot-123";
 
-  private LocalDate receivedDate = LocalDate.of(2020, 9, 1);
+  private final LocalDate receivedDate = LocalDate.of(2020, 9, 1);
 
-  private Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
+  private final Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
       Pagination.NO_PAGINATION);
 
   @Before

@@ -122,11 +122,11 @@ public class SiglusUsageReportServiceTest {
 
   private UUID programId;
 
-  private UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
 
-  private UUID kitId = UUID.randomUUID();
+  private final UUID kitId = UUID.randomUUID();
 
-  private UUID kitId2 = UUID.randomUUID();
+  private final UUID kitId2 = UUID.randomUUID();
 
   private RequisitionTemplateExtensionDto extensionDto;
 

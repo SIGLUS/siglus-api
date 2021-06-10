@@ -72,9 +72,9 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     List<RegimenDto> defaultRegimenDtos =
         regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsFalse(
             siglusRequisitionDto.getProgramId())
-        .stream()
-        .map(RegimenDto::from)
-        .collect(Collectors.toList());
+            .stream()
+            .map(RegimenDto::from)
+            .collect(Collectors.toList());
 
     if (CollectionUtils.isEmpty(defaultRegimenDtos)) {
       return;
@@ -218,10 +218,10 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
     List<RegimenLineItem> lineItems = defaultRegimenDtos.stream().flatMap(
         regimenDto -> templateColumns.stream().map(
             templateColumn -> RegimenLineItem.builder()
-              .requisitionId(siglusRequisitionDto.getId())
-              .regimenId(regimenDto.getId())
-              .column(templateColumn.getName())
-              .build()))
+                .requisitionId(siglusRequisitionDto.getId())
+                .regimenId(regimenDto.getId())
+                .column(templateColumn.getName())
+                .build()))
         .collect(Collectors.toList());
 
     // create total line items

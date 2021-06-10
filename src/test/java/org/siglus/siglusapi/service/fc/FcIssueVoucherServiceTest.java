@@ -175,8 +175,8 @@ public class FcIssueVoucherServiceTest {
 
   private UserDto userDto;
   private FacilityDto facilityDto;
-  private UUID programId = UUID.randomUUID();
-  private IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
+  private final UUID programId = UUID.randomUUID();
+  private final IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
 
   @Before
   public void prepare() {

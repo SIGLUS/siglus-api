@@ -333,64 +333,64 @@ public class SiglusRequisitionServiceTest {
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
-  private UUID facilityId2 = UUID.randomUUID();
+  private final UUID facilityId2 = UUID.randomUUID();
 
-  private UUID userFacilityId = UUID.randomUUID();
+  private final UUID userFacilityId = UUID.randomUUID();
 
-  private UUID userId = UUID.randomUUID();
+  private final UUID userId = UUID.randomUUID();
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
-  private UUID orderableId2 = UUID.randomUUID();
+  private final UUID orderableId2 = UUID.randomUUID();
 
-  private UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
 
-  private UUID templateId = UUID.randomUUID();
+  private final UUID templateId = UUID.randomUUID();
 
-  private UUID supervisoryNodeId = UUID.randomUUID();
+  private final UUID supervisoryNodeId = UUID.randomUUID();
 
-  private UUID supervisoryNodeId2 = UUID.randomUUID();
+  private final UUID supervisoryNodeId2 = UUID.randomUUID();
 
-  private UUID childSupervisoryNodeId = UUID.randomUUID();
+  private final UUID childSupervisoryNodeId = UUID.randomUUID();
 
-  private UUID requisitionGroupId = UUID.randomUUID();
+  private final UUID requisitionGroupId = UUID.randomUUID();
 
-  private UUID requisitionGroupId2 = UUID.randomUUID();
+  private final UUID requisitionGroupId2 = UUID.randomUUID();
 
-  private UUID childRequisitionGroupId = UUID.randomUUID();
+  private final UUID childRequisitionGroupId = UUID.randomUUID();
 
-  private UUID processingPeriodId = UUID.randomUUID();
+  private final UUID processingPeriodId = UUID.randomUUID();
 
-  private UUID regimenId = UUID.randomUUID();
+  private final UUID regimenId = UUID.randomUUID();
 
-  private String rowName = "1stLinhas";
+  private final String rowName = "1stLinhas";
 
-  private UUID productId1 = UUID.randomUUID();
-  private Long productVersion1 = 1L;
-  private UUID productId2 = UUID.randomUUID();
-  private Long productVersion2 = 1L;
-  private VersionObjectReferenceDto productVersionObjectReference1
+  private final UUID productId1 = UUID.randomUUID();
+  private final Long productVersion1 = 1L;
+  private final UUID productId2 = UUID.randomUUID();
+  private final Long productVersion2 = 1L;
+  private final VersionObjectReferenceDto productVersionObjectReference1
       = createVersionObjectReferenceDto(productId1, productVersion1);
-  private VersionObjectReferenceDto productVersionObjectReference2
+  private final VersionObjectReferenceDto productVersionObjectReference2
       = createVersionObjectReferenceDto(productId2, productVersion2);
 
-  private String profilerName = "GET_REQUISITION_TO_APPROVE";
+  private final String profilerName = "GET_REQUISITION_TO_APPROVE";
 
-  private Profiler profiler = new Profiler(profilerName);
+  private final Profiler profiler = new Profiler(profilerName);
 
-  private UserDto userDto = new UserDto();
+  private final UserDto userDto = new UserDto();
 
-  private ProgramDto programDto = new ProgramDto();
+  private final ProgramDto programDto = new ProgramDto();
 
-  private FacilityDto facilityDto = new FacilityDto();
+  private final FacilityDto facilityDto = new FacilityDto();
 
-  private RequisitionV2Dto requisitionV2Dto = createRequisitionV2Dto();
+  private final RequisitionV2Dto requisitionV2Dto = createRequisitionV2Dto();
 
-  private Requisition requisition = createRequisition();
+  private final Requisition requisition = createRequisition();
 
   private SiglusRequisitionDto siglusRequisitionDto;
 
@@ -400,9 +400,9 @@ public class SiglusRequisitionServiceTest {
   //fields for emergency req test start
   private BasicRequisitionDto newBasicReq;
 
-  private UUID preReqId1 = UUID.randomUUID();
+  private final UUID preReqId1 = UUID.randomUUID();
 
-  private UUID preReqId2 = UUID.randomUUID();
+  private final UUID preReqId2 = UUID.randomUUID();
 
   private BasicRequisitionDto previousBasicReq1;
 
@@ -410,15 +410,15 @@ public class SiglusRequisitionServiceTest {
 
   private RequisitionV2Dto previousV2Req1;
 
-  private long preReqProduct1ApprovedQuantity = randomQuantity();
+  private final long preReqProduct1ApprovedQuantity = randomQuantity();
 
-  private List<OrderDto> preReqOrders = new ArrayList<>();
+  private final List<OrderDto> preReqOrders = new ArrayList<>();
 
-  private UUID rightId = UUID.randomUUID();
+  private final UUID rightId = UUID.randomUUID();
 
-  private UUID roleId = UUID.randomUUID();
+  private final UUID roleId = UUID.randomUUID();
 
-  private UUID orderId = UUID.randomUUID();
+  private final UUID orderId = UUID.randomUUID();
 
   @Mock
   private OrderFulfillmentService orderFulfillmentService;

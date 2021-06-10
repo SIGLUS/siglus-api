@@ -60,7 +60,7 @@ public class MessageTest {
     Locale locale = Locale.getDefault();
     Message message = new Message("hi");
 
-    when(messageSource.getMessage("hi",  new Object[]{"arg1"}, locale)).thenReturn("");
+    when(messageSource.getMessage("hi", new Object[]{"arg1"}, locale)).thenReturn("");
 
     message.localMessage(messageSource, locale);
   }
@@ -71,7 +71,7 @@ public class MessageTest {
     Locale locale = Locale.getDefault();
     Message message = new Message("hi");
 
-    when(messageSource.getMessage("hi",  new Object[]{ }, locale)).thenReturn(null);
+    when(messageSource.getMessage("hi", new Object[]{}, locale)).thenReturn(null);
 
     message.localMessage(messageSource, locale);
   }
@@ -82,7 +82,7 @@ public class MessageTest {
     Locale locale = Locale.getDefault();
     Message message = new Message("hi", "arg1");
 
-    when(messageSource.getMessage("hi",  new Object[]{"arg1"}, locale)).thenReturn("hello");
+    when(messageSource.getMessage("hi", new Object[]{"arg1"}, locale)).thenReturn("hello");
 
     LocalizedMessage localizedMessage = message.localMessage(messageSource, locale);
     assertEquals("hello", localizedMessage.getMessage());
@@ -112,7 +112,7 @@ public class MessageTest {
     Message message = new Message(key, "a", today);
 
     // expected is:  "key.something: a, <date>"
-    assertEquals(key + ": " + "a" + ", " + today.toString(), message.toString());
+    assertEquals(key + ": " + "a" + ", " + today, message.toString());
   }
 
   @Test
@@ -168,5 +168,5 @@ public class MessageTest {
     assert message != null;
     assertEquals("{\"messageKey\": \"hello\"}", message.getKey());
   }
-  
+
 }

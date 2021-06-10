@@ -24,7 +24,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface FacilityCmmsRepository extends JpaRepository<FacilityCmmsDomain, UUID> {
 
   FacilityCmmsDomain findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(String facilityCode,
-                                                                   String productCode,
-                                                                   LocalDate periodBegin,
-                                                                   LocalDate periodEnd);
+      String productCode, LocalDate periodBegin, LocalDate periodEnd);
 }

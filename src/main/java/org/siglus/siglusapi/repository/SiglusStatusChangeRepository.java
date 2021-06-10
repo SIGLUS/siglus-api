@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -28,7 +27,6 @@ public interface SiglusStatusChangeRepository
   @Query(value = "select * from requisition.status_changes "
       + "where requisitionid = :requisitionId "
       + "and status = :status", nativeQuery = true)
-  StatusChange findByRequisitionIdAndStatus(@Param("requisitionId") UUID requisitionId,
-                                            @Param("status") String status);
+  StatusChange findByRequisitionIdAndStatus(@Param("requisitionId") UUID requisitionId, @Param("status") String status);
 
 }

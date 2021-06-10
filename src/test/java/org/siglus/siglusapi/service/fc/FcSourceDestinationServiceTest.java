@@ -60,7 +60,7 @@ public class FcSourceDestinationServiceTest {
   @Mock
   private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
 
-  private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+  private final Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
   private final String hfFacilityTypeCode = "CS";
 
@@ -174,7 +174,7 @@ public class FcSourceDestinationServiceTest {
     // then
     verify(nodeRepository).save(any(Node.class));
     verify(validSourceDestinationStockManagementService).assignDestination(any());
-    verify(validSourceDestinationStockManagementService,  times(2)).assignSource(any());
+    verify(validSourceDestinationStockManagementService, times(2)).assignSource(any());
   }
 
   @Test

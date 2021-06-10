@@ -234,7 +234,7 @@ public class Application {
 
   @Bean
   ExecutorService executorService() {
-    return  Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
+    return Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() + 1);
   }
 
   @Bean

@@ -62,7 +62,7 @@ public class ConsultationNumberDataProcessorTest {
   @Captor
   private ArgumentCaptor<List<ConsultationNumberLineItem>> captor;
 
-  private UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
 
   @Test
   public void shouldReturnFalseWhenIsDisabledGivenNotEnableConsultationNumber() {

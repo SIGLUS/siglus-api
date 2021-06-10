@@ -195,7 +195,7 @@ public class SiglusMeServiceTest {
     AppInfoDomain existedInfo = mockCurrentAppInfo();
     AppInfoDomain toBeUpdatedInfo = mockUpdateAppInfo();
     when(appInfoRepository.findByFacilityCodeAndUniqueId(toBeUpdatedInfo.getFacilityCode(),
-            toBeUpdatedInfo.getUniqueId())).thenReturn(existedInfo);
+        toBeUpdatedInfo.getUniqueId())).thenReturn(existedInfo);
     when(appInfoRepository.save(toBeUpdatedInfo)).thenReturn(existedInfo);
 
     // when
@@ -212,7 +212,7 @@ public class SiglusMeServiceTest {
     // given
     AppInfoDomain toBeUpdatedInfo = mockUpdateAppInfo();
     when(appInfoRepository.findByFacilityCodeAndUniqueId(toBeUpdatedInfo.getFacilityCode(),
-            toBeUpdatedInfo.getUniqueId())).thenReturn(null);
+        toBeUpdatedInfo.getUniqueId())).thenReturn(null);
     when(appInfoRepository.save(toBeUpdatedInfo)).thenReturn(toBeUpdatedInfo);
 
     // when
@@ -486,42 +486,42 @@ public class SiglusMeServiceTest {
 
   private AppInfoDomain mockCurrentAppInfo() {
     AppInfoDomain appInfoDomain = AppInfoDomain.builder()
-            .deviceInfo("deviceinfo1")
-            .facilityName("Centro de Saude de Chiunze")
-            .androidsdkVersion(28)
-            .versionCode(88)
-            .facilityCode("01080904")
-            .userName("CS_Moine_Role1")
-            .uniqueId("ac36c07a09f2fdcd")
-            .build();
+        .deviceInfo("deviceinfo1")
+        .facilityName("Centro de Saude de Chiunze")
+        .androidsdkVersion(28)
+        .versionCode(88)
+        .facilityCode("01080904")
+        .userName("CS_Moine_Role1")
+        .uniqueId("ac36c07a09f2fdcd")
+        .build();
     appInfoDomain.setId(appInfoId);
     return appInfoDomain;
   }
 
   private AppInfoDomain mockUpdateAppInfo() {
     AppInfoDomain appInfoDomain = AppInfoDomain.builder()
-            .deviceInfo("deviceinfo2")
-            .facilityName("Centro de Saude de Chiunze")
-            .androidsdkVersion(28)
-            .versionCode(88)
-            .facilityCode("01080904")
-            .userName("CS_Moine_Role1")
-            .uniqueId("ac36c07a09f2fdcd")
-            .build();
+        .deviceInfo("deviceinfo2")
+        .facilityName("Centro de Saude de Chiunze")
+        .androidsdkVersion(28)
+        .versionCode(88)
+        .facilityCode("01080904")
+        .userName("CS_Moine_Role1")
+        .uniqueId("ac36c07a09f2fdcd")
+        .build();
     appInfoDomain.setId(appInfoId);
     return appInfoDomain;
   }
 
   private AppInfoDomain mockInsertSuccessReturnAppInfo() {
     AppInfoDomain appInfoDomain = AppInfoDomain.builder()
-            .deviceInfo("deviceinfo2")
-            .facilityName("Centro de Saude de Chiunze")
-            .androidsdkVersion(28)
-            .versionCode(88)
-            .facilityCode("01080904")
-            .userName("CS_Moine_Role1")
-            .uniqueId("ac36c07a09f2fdcd")
-            .build();
+        .deviceInfo("deviceinfo2")
+        .facilityName("Centro de Saude de Chiunze")
+        .androidsdkVersion(28)
+        .versionCode(88)
+        .facilityCode("01080904")
+        .userName("CS_Moine_Role1")
+        .uniqueId("ac36c07a09f2fdcd")
+        .build();
     appInfoDomain.setId(appInfoId);
     return appInfoDomain;
   }

@@ -157,7 +157,7 @@ public class SiglusFcIntegrationService {
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
-  private Map<String, String> fcMaps = ImmutableMap.of("Farmácia Comunitária",
+  private final Map<String, String> fcMaps = ImmutableMap.of("Farmácia Comunitária",
       "comunitaryPharmacy", "Total Pacientes", "patientsOnTreatment");
 
   public Page<FcRequisitionDto> searchRequisitions(LocalDate date, Pageable pageable) {

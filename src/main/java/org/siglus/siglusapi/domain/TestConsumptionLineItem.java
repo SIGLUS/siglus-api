@@ -56,18 +56,18 @@ public class TestConsumptionLineItem extends BaseEntity {
       String service = serviceDto.getService();
       serviceDto.getProjects()
           .forEach((projectKey, projectDto) ->
-            projectDto.getOutcomes()
-                .forEach((outcomeKey, outcomeDto) -> {
-                  TestConsumptionLineItem lineItem = TestConsumptionLineItem.builder()
-                          .value(outcomeDto.getValue())
-                          .outcome(outcomeKey)
-                          .project(projectKey)
-                          .service(service)
-                          .requisitionId(requisitionId)
-                          .build();
-                  lineItem.setId(outcomeDto.getTestConsumptionLineItemId());
-                  lineItems.add(lineItem);
-                }));
+              projectDto.getOutcomes()
+                  .forEach((outcomeKey, outcomeDto) -> {
+                    TestConsumptionLineItem lineItem = TestConsumptionLineItem.builder()
+                        .value(outcomeDto.getValue())
+                        .outcome(outcomeKey)
+                        .project(projectKey)
+                        .service(service)
+                        .requisitionId(requisitionId)
+                        .build();
+                    lineItem.setId(outcomeDto.getTestConsumptionLineItemId());
+                    lineItems.add(lineItem);
+                  }));
     });
 
     return lineItems;

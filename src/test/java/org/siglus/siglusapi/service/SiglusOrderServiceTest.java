@@ -169,20 +169,20 @@ public class SiglusOrderServiceTest {
   @InjectMocks
   private SiglusOrderService siglusOrderService;
 
-  private UUID requisitionFacilityId = UUID.randomUUID();
-  private UUID approverFacilityId = UUID.randomUUID();
-  private UUID orderId = UUID.randomUUID();
-  private UUID requisitionId = UUID.randomUUID();
-  private UUID approverId = UUID.randomUUID();
-  private UUID userId = UUID.randomUUID();
-  private UUID userHomeFacilityId = UUID.randomUUID();
-  private UUID programId = UUID.randomUUID();
-  private UUID orderableId1 = UUID.randomUUID();
-  private UUID orderableId2 = UUID.randomUUID();
-  private UUID orderableId3 = UUID.randomUUID();
-  private UUID lotId = UUID.randomUUID();
-  private UUID lineItemId = UUID.randomUUID();
-  private UUID facilityTypeId = UUID.randomUUID();
+  private final UUID requisitionFacilityId = UUID.randomUUID();
+  private final UUID approverFacilityId = UUID.randomUUID();
+  private final UUID orderId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
+  private final UUID approverId = UUID.randomUUID();
+  private final UUID userId = UUID.randomUUID();
+  private final UUID userHomeFacilityId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
+  private final UUID orderableId1 = UUID.randomUUID();
+  private final UUID orderableId2 = UUID.randomUUID();
+  private final UUID orderableId3 = UUID.randomUUID();
+  private final UUID lotId = UUID.randomUUID();
+  private final UUID lineItemId = UUID.randomUUID();
+  private final UUID facilityTypeId = UUID.randomUUID();
 
 
   @Before

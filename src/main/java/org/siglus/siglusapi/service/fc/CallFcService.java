@@ -78,16 +78,16 @@ public class CallFcService {
   RestTemplate remoteRestTemplate;
 
   static {
-    apiToClassMap.put(ISSUE_VOUCHER_API,  IssueVoucherDto[].class);
-    apiToClassMap.put(RECEIPT_PLAN_API,  ReceiptPlanDto[].class);
-    apiToClassMap.put(PROGRAM_API,  ProgramDto[].class);
-    apiToClassMap.put(PRODUCT_API,  ProductInfoDto[].class);
-    apiToClassMap.put(REGIMEN_API,  RegimenDto[].class);
-    apiToClassMap.put(CMM_API,  CmmDto[].class);
-    apiToClassMap.put(CP_API,  CpDto[].class);
-    apiToClassMap.put(FACILITY_TYPE_API,  FcFacilityTypeDto[].class);
-    apiToClassMap.put(FACILITY_API,  FcFacilityDto[].class);
-    apiToClassMap.put(GEOGRAPHIC_ZONE_API,  FcGeographicZoneNationalDto[].class);
+    apiToClassMap.put(ISSUE_VOUCHER_API, IssueVoucherDto[].class);
+    apiToClassMap.put(RECEIPT_PLAN_API, ReceiptPlanDto[].class);
+    apiToClassMap.put(PROGRAM_API, ProgramDto[].class);
+    apiToClassMap.put(PRODUCT_API, ProductInfoDto[].class);
+    apiToClassMap.put(REGIMEN_API, RegimenDto[].class);
+    apiToClassMap.put(CMM_API, CmmDto[].class);
+    apiToClassMap.put(CP_API, CpDto[].class);
+    apiToClassMap.put(FACILITY_TYPE_API, FcFacilityTypeDto[].class);
+    apiToClassMap.put(FACILITY_API, FcFacilityDto[].class);
+    apiToClassMap.put(GEOGRAPHIC_ZONE_API, FcGeographicZoneNationalDto[].class);
   }
 
   @Retryable(value = Exception.class, maxAttempts = 5, backoff = @Backoff(delay = 5000,
@@ -142,7 +142,7 @@ public class CallFcService {
     } else if (FACILITY_TYPE_API.equals(api)) {
       this.facilityTypes.addAll(Arrays.asList((FcFacilityTypeDto[]) body));
     } else if (FACILITY_API.equals(api)) {
-      this.facilities.addAll(Arrays.asList((FcFacilityDto []) body));
+      this.facilities.addAll(Arrays.asList((FcFacilityDto[]) body));
     } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
       this.geographicZones.addAll(Arrays.asList((FcGeographicZoneNationalDto[]) body));
     }

@@ -213,8 +213,8 @@ public class SiglusUsageReportService {
     if (period.isReportOnly()) {
       Set<UUID> additionalOrderableIds =
           programAdditionalOrderableRepository.findAllByProgramId(requisitionV2Dto.getProgramId())
-          .stream().map(ProgramAdditionalOrderable::getAdditionalOrderableId)
-          .collect(toSet());
+              .stream().map(ProgramAdditionalOrderable::getAdditionalOrderableId)
+              .collect(toSet());
       return allKitProducts
           .stream()
           .filter(kit -> additionalOrderableIds.contains(kit.getId()))
@@ -254,7 +254,7 @@ public class SiglusUsageReportService {
                 .getProgramId();
           }));
       for (Map.Entry<UUID, List<Orderable>> groupKit : groupKitProducts.entrySet()) {
-        updateSupportProgramStockCardRange(requisitionV2Dto,  summaryDtos,
+        updateSupportProgramStockCardRange(requisitionV2Dto, summaryDtos,
             groupKit);
       }
     }

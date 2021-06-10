@@ -35,7 +35,7 @@ public class SiglusShipmentDraftControllerTest {
   @Mock
   private SiglusShipmentDraftService siglusShipmentDraftService;
 
-  private UUID draftId = UUID.randomUUID();
+  private final UUID draftId = UUID.randomUUID();
 
   @Test
   public void shouldCallServiceWhenUpdateShipmentDraft() {

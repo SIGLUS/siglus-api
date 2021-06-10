@@ -43,7 +43,7 @@ public class SiglusGeneratedNumberServiceTest {
   @Mock
   private GeneratedNumberRepository generatedNumberRepository;
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
   @Test
   public void shouldSave0WhenGeneratedNumberIsNull() {

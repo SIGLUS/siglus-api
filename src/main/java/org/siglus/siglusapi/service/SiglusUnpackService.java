@@ -125,7 +125,7 @@ public class SiglusUnpackService {
   private Boolean isUnpackPermission(Set<PermissionStringDto> permissionDtos,
       OrderableDto orderableDto, UUID facilityId) {
     UUID programId = orderableDto.getPrograms().stream().findFirst().orElseThrow(() ->
-            new NotFoundException("Orderable's program Not Found")).getProgramId();
+        new NotFoundException("Orderable's program Not Found")).getProgramId();
     List<String> rights = getPermissionRightBy(permissionDtos, programId, facilityId);
     return rights.containsAll(Arrays.asList(STOCK_INVENTORIES_EDIT,
         STOCK_ADJUST, STOCK_CARDS_VIEW));
@@ -143,7 +143,7 @@ public class SiglusUnpackService {
 
   private SiglusOrdeableKitDto getKitDto(OrderableDto kitOrderable, UUID facilityId) {
     UUID programId = kitOrderable.getPrograms().stream().findFirst().orElseThrow(() ->
-            new NotFoundException("Kit's program Not Found")).getProgramId();
+        new NotFoundException("Kit's program Not Found")).getProgramId();
     List<StockCard> stockCards = calculatedStockOnHandService
         .getStockCardsWithStockOnHandByOrderableIds(programId, facilityId,
             Collections.singletonList(kitOrderable.getId()));

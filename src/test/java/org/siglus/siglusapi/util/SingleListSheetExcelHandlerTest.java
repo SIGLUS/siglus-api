@@ -55,7 +55,7 @@ public class SingleListSheetExcelHandlerTest {
   public void shouldReturnCellRowGivenData() {
     CellMeta cellMeta = new CellMeta(EXCEL_FACILITY, "test", 0, true);
     Map<String, String> data = new HashMap<>();
-    data.put(EXCEL_FACILITY,  "facility1");
+    data.put(EXCEL_FACILITY, "facility1");
 
     Row dataRow = tempSheet.createRow(1);
     Cell rowCell = util.createRowCell(cellMeta, data, dataRow);
@@ -67,7 +67,7 @@ public class SingleListSheetExcelHandlerTest {
   public void shouldReturnCellDisplayGivenData() {
     CellMeta cellMeta = new CellMeta(EXCEL_FACILITY, "facility2", 0, false);
     Map<String, String> data = new HashMap<>();
-    data.put(EXCEL_FACILITY,  "facility1");
+    data.put(EXCEL_FACILITY, "facility1");
 
     Row dataRow = tempSheet.createRow(1);
     Cell rowCell = util.createRowCell(cellMeta, data, dataRow);

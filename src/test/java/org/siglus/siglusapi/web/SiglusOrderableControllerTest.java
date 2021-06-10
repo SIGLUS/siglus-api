@@ -49,7 +49,7 @@ public class SiglusOrderableControllerTest {
   @Mock
   private Pageable pageable;
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
   @Test
   public void shouldCallSiglusOrderableServiceWhenSearchOrderables() {

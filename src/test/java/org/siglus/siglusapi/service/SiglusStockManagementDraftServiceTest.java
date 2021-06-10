@@ -60,15 +60,15 @@ public class SiglusStockManagementDraftServiceTest {
   @Mock
   StockManagementDraftValidator stockManagementDraftValidator;
 
-  private UUID id = UUID.randomUUID();
+  private final UUID id = UUID.randomUUID();
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private UUID userId = UUID.randomUUID();
+  private final UUID userId = UUID.randomUUID();
 
-  private Boolean isDraft = nextBoolean();
+  private final Boolean isDraft = nextBoolean();
 
-  private String draftType = "draftType";
+  private final String draftType = "draftType";
 
   @Test
   public void shouldThrowExceptionWhenCreateNewDraftIfDraftExists() {

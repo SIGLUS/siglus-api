@@ -34,20 +34,18 @@ public class MvcInterceptor extends HandlerInterceptorAdapter {
   private static final String PAGEABLE_CONTEXT = "pageableContext";
 
   @Override
-  public boolean preHandle(HttpServletRequest request, HttpServletResponse response,
-                           Object handler) {
+  public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
     Map<String, String[]> params = request.getParameterMap();
 
     PageableRequestContext context = new PageableRequestContext(
-                extractIntegerParam(params, SIZE_PARAM),
-                extractIntegerParam(params, PAGE_PARAM));
+        extractIntegerParam(params, SIZE_PARAM), extractIntegerParam(params, PAGE_PARAM));
 
     Errors errors = new BeanPropertyBindingResult(context, PAGEABLE_CONTEXT);
     validatePageable(context, errors);
 
     if (errors.getErrorCount() > 0) {
       throw new ValidationMessageException(new Message(errors.getFieldError().getCode(),
-                errors.getFieldError().getArguments()));
+          errors.getFieldError().getArguments()));
     }
 
     return true;
@@ -66,7 +64,7 @@ public class MvcInterceptor extends HandlerInterceptorAdapter {
         errors.rejectValue(SIZE_PARAM, MessageKeys.ERROR_SIZE_NULL, MessageKeys.ERROR_SIZE_NULL);
       } else if (ctx.getSize() < 1) {
         errors.rejectValue(SIZE_PARAM, MessageKeys.ERROR_SIZE_NOT_POSITIVE,
-                MessageKeys.ERROR_SIZE_NOT_POSITIVE);
+            MessageKeys.ERROR_SIZE_NOT_POSITIVE);
       }
     }
   }

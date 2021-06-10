@@ -20,7 +20,8 @@ import java.util.List;
 
 public class FcConstants {
 
-  private FcConstants() { }
+  private FcConstants() {
+  }
 
   public static final String CMM_JOB = "CMM";
   public static final String CP_JOB = "CP";

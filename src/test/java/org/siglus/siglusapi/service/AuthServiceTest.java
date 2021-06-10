@@ -50,7 +50,7 @@ import org.springframework.web.client.RestTemplate;
 @RunWith(MockitoJUnitRunner.class)
 public class AuthServiceTest {
 
-  private AuthService service = new AuthService();
+  private final AuthService service = new AuthService();
 
   @Mock
   private OAuth2Authentication authentication;

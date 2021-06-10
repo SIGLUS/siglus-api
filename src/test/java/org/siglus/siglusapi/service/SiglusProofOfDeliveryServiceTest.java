@@ -52,7 +52,7 @@ public class SiglusProofOfDeliveryServiceTest {
   @Mock
   private OrderExternalRepository orderExternalRepository;
 
-  private UUID externalId = UUID.randomUUID();
+  private final UUID externalId = UUID.randomUUID();
 
   @Test
   public void shouldGetPartialQualityWhenGetProofOfDelivery() {

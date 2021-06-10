@@ -105,21 +105,21 @@ public class SiglusProcessingPeriodServiceTest {
   @InjectMocks
   private SiglusProcessingPeriodService siglusProcessingPeriodService;
 
-  private ProcessingPeriodDtoDataBuilder builder = new ProcessingPeriodDtoDataBuilder();
-  private ProcessingPeriodDto fullDto = builder.buildFullDto();
-  private ProcessingPeriodDto periodDto = builder.buildDto();
-  private ProcessingPeriodExtension extension = builder.buildExtenstion();
+  private final ProcessingPeriodDtoDataBuilder builder = new ProcessingPeriodDtoDataBuilder();
+  private final ProcessingPeriodDto fullDto = builder.buildFullDto();
+  private final ProcessingPeriodDto periodDto = builder.buildDto();
+  private final ProcessingPeriodExtension extension = builder.buildExtenstion();
 
-  private UUID processingScheduleId = UUID.randomUUID();
-  private int page = 0;
-  private int size = 10;
-  private Sort sort = new Sort("startDate");
+  private final UUID processingScheduleId = UUID.randomUUID();
+  private final int page = 0;
+  private final int size = 10;
+  private final Sort sort = new Sort("startDate");
 
-  private UUID facilityId = UUID.randomUUID();
-  private UUID programId = UUID.randomUUID();
-  private UUID orderableId = UUID.randomUUID();
-  private UUID requisitionId = UUID.randomUUID();
-  private UUID requisitionId2 = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionId2 = UUID.randomUUID();
 
   @Test
   public void shouldCreateProcessingPeriodIfPassValidation() {

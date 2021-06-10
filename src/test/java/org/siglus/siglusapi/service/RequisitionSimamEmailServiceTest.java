@@ -91,16 +91,16 @@ public class RequisitionSimamEmailServiceTest {
   @InjectMocks
   private RequisitionSimamEmailService requisitionSimamEmailService;
 
-  private FacilityDto facility = new FacilityDtoDataBuilder().buildAsDto();
-  private ProgramDto program = new ProgramDtoDataBuilder().buildAsDto();
-  private ProcessingPeriodDto period = new ProcessingPeriodDtoDataBuilder().buildAsDto();
-  private OrderableDto orderable = new OrderableDtoDataBuilder()
+  private final FacilityDto facility = new FacilityDtoDataBuilder().buildAsDto();
+  private final ProgramDto program = new ProgramDtoDataBuilder().buildAsDto();
+  private final ProcessingPeriodDto period = new ProcessingPeriodDtoDataBuilder().buildAsDto();
+  private final OrderableDto orderable = new OrderableDtoDataBuilder()
       .withProgramOrderable(program.getId(), true).buildAsDto();
-  private SiglusRequisitionDto requisition = new SiglusRequisitionDto();
+  private final SiglusRequisitionDto requisition = new SiglusRequisitionDto();
   private String requisitionFileName;
   private String regimenFileName;
   private String fileType;
-  private UUID regimemId = UUID.randomUUID();
+  private final UUID regimemId = UUID.randomUUID();
 
   @Before
   public void setUp() {

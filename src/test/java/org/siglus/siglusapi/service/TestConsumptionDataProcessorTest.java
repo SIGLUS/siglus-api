@@ -62,11 +62,11 @@ public class TestConsumptionDataProcessorTest {
   @Mock
   private TestConsumptionLineItemRepository testConsumptionLineItemRepository;
 
-  private UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionId = UUID.randomUUID();
 
-  private UUID id = UUID.randomUUID();
+  private final UUID id = UUID.randomUUID();
 
-  private Integer value = RandomUtils.nextInt();
+  private final Integer value = RandomUtils.nextInt();
 
   private static final String SERVICE = "service";
 
@@ -131,7 +131,6 @@ public class TestConsumptionDataProcessorTest {
         .name(OUTCOME)
         .columns(newArrayList(outcomeColumn))
         .build();
-
 
     List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
     when(siglusUsageReportService

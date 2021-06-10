@@ -111,37 +111,37 @@ public class FcProductServiceTest {
   @Mock
   private BasicProductCodeRepository basicProductCodeRepository;
 
-  private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+  private final Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
-  private UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private UUID categoryId = UUID.randomUUID();
+  private final UUID categoryId = UUID.randomUUID();
 
-  private UUID tradeItemId = UUID.randomUUID();
+  private final UUID tradeItemId = UUID.randomUUID();
 
-  private UUID facilityTypeId = UUID.randomUUID();
+  private final UUID facilityTypeId = UUID.randomUUID();
 
-  private String fnm = "fnm";
+  private final String fnm = "fnm";
 
-  private String description = "description";
+  private final String description = "description";
 
-  private String fullDescription = "fullDescription";
+  private final String fullDescription = "fullDescription";
 
-  private String realProgramCode = "PT";
+  private final String realProgramCode = "PT";
 
-  private String realProgramName = "PTV";
+  private final String realProgramName = "PTV";
 
-  private String programCode = "T";
+  private final String programCode = "T";
 
-  private String programName = "TARV";
+  private final String programName = "TARV";
 
-  private String categoryCode = "11";
+  private final String categoryCode = "11";
 
-  private String displayName = "Other";
+  private final String displayName = "Other";
 
-  private int displayOrder = 1;
+  private final int displayOrder = 1;
 
   @Before
   public void prepare() {

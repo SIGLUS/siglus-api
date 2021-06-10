@@ -26,7 +26,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.StatusChange;
@@ -196,8 +195,7 @@ public class FcReceiptPlanService {
         .collect(Collectors.toMap(OrderableDto::getProductCode, orderableDto -> orderableDto));
   }
 
-  private List<ProductDto> getExistProducts(ReceiptPlanDto receiptPlanDto,
-                                            Map<String, OrderableDto> approvedProducts) {
+  private List<ProductDto> getExistProducts(ReceiptPlanDto receiptPlanDto, Map<String, OrderableDto> approvedProducts) {
     List<ProductDto> receiptPlanProducts = receiptPlanDto.getProducts();
     List<ProductDto> findProducts = receiptPlanProducts.stream()
         .filter(productDto -> approvedProducts.containsKey(productDto.getFnmCode()))
@@ -237,7 +235,7 @@ public class FcReceiptPlanService {
             .stream()
             .filter(product ->
                 orderableDtoMap.get(product.getFnmCode()).getId()
-                .equals(lineItem.getOrderable().getId()))
+                    .equals(lineItem.getOrderable().getId()))
             .findFirst()
             .orElse(null);
         if (null != productDto) {
@@ -249,8 +247,7 @@ public class FcReceiptPlanService {
   }
 
   private void updateSkippedLineItems(List<RequisitionLineItemV2Dto> requisitionLineItems,
-                                      boolean displaySkipped,
-                                      List<RequisitionLineItemV2Dto> approvedLineItems) {
+      boolean displaySkipped, List<RequisitionLineItemV2Dto> approvedLineItems) {
     for (RequisitionLineItemV2Dto requisitionLineItem : requisitionLineItems) {
       RequisitionLineItemV2Dto approvedLineItem = approvedLineItems
           .stream()
@@ -270,10 +267,8 @@ public class FcReceiptPlanService {
   }
 
   private void updateExistLineItems(List<RequisitionLineItemV2Dto> requisitionLineItems,
-                                    List<ProductDto> existProductDtos,
-                                    Map<String, OrderableDto> orderableDtoMap,
-                                    List<UUID> addedOrderableIds,
-                                    List<RequisitionLineItemV2Dto> approvedLineItems) {
+      List<ProductDto> existProductDtos, Map<String, OrderableDto> orderableDtoMap,
+      List<UUID> addedOrderableIds, List<RequisitionLineItemV2Dto> approvedLineItems) {
     for (ProductDto productDto : existProductDtos) {
       RequisitionLineItemV2Dto requisitionLineItem = requisitionLineItems
           .stream()

@@ -70,8 +70,7 @@ public class StockManagementDraft extends BaseEntity {
     return draft;
   }
 
-  public static StockManagementDraft createStockManagementDraft(StockManagementDraftDto draftDto,
-                                                                boolean isDraft) {
+  public static StockManagementDraft createStockManagementDraft(StockManagementDraftDto draftDto, boolean isDraft) {
     StockManagementDraft draft = new StockManagementDraft();
     BeanUtils.copyProperties(draftDto, draft);
     draft.setIsDraft(isDraft);

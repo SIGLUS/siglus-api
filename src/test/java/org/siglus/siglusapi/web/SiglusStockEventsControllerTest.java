@@ -53,7 +53,7 @@ public class SiglusStockEventsControllerTest {
 
   @Test
   public void shouldCallServiceWhenCreateStockEventGivenAllProductsProgramId() {
-    StockEventDto dto  = new StockEventDto();
+    StockEventDto dto = new StockEventDto();
     dto.setProgramId(ALL_PRODUCTS_PROGRAM_ID);
     controller.createStockEvent(dto);
 
@@ -64,7 +64,7 @@ public class SiglusStockEventsControllerTest {
 
   @Test
   public void shouldCallServiceWhenCreateStockEventGivenRandomProgramId() {
-    StockEventDto dto  = new StockEventDto();
+    StockEventDto dto = new StockEventDto();
     dto.setProgramId(UUID.randomUUID());
     controller.createStockEvent(dto);
 

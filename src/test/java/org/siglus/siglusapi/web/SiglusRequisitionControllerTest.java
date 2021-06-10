@@ -74,9 +74,9 @@ public class SiglusRequisitionControllerTest {
   @Mock
   private Pageable pageable;
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
   @Before
   public void prepare() {

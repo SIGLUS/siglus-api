@@ -116,12 +116,12 @@ public class SiglusMeControllerTest {
 
     // when
     controller.processAppInfo(appInfo.getUserName(),
-            appInfo.getFacilityCode(),
-            appInfo.getFacilityName(),
-            appInfo.getUniqueId(),
-            appInfo.getDeviceInfo(),
-            appInfo.getVersionCode(),
-            appInfo.getAndroidsdkVersion());
+        appInfo.getFacilityCode(),
+        appInfo.getFacilityName(),
+        appInfo.getUniqueId(),
+        appInfo.getDeviceInfo(),
+        appInfo.getVersionCode(),
+        appInfo.getAndroidsdkVersion());
 
     // then
     verify(service).processAppInfo(appInfo);
@@ -129,13 +129,13 @@ public class SiglusMeControllerTest {
 
   private AppInfoDomain mockAppInfo() {
     return AppInfoDomain.builder()
-            .deviceInfo("deviceinfo1")
-            .facilityName("Centro de Saude de Chiunze")
-            .androidsdkVersion(28)
-            .versionCode(88)
-            .facilityCode("01080904")
-            .userName("CS_Moine_Role1")
-            .uniqueId("ac36c07a09f2fdcd")
-            .build();
+        .deviceInfo("deviceinfo1")
+        .facilityName("Centro de Saude de Chiunze")
+        .androidsdkVersion(28)
+        .versionCode(88)
+        .facilityCode("01080904")
+        .userName("CS_Moine_Role1")
+        .uniqueId("ac36c07a09f2fdcd")
+        .build();
   }
 }

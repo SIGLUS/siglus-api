@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperCompileManager;
 import net.sf.jasperreports.engine.JasperReport;
@@ -199,7 +198,7 @@ public class SiglusJasperReportService {
     }
 
     try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-         ObjectOutputStream out = new ObjectOutputStream(bos)) {
+        ObjectOutputStream out = new ObjectOutputStream(bos)) {
 
       out.writeObject(report);
       writeByteArrayToFile(reportTempFile, bos.toByteArray());

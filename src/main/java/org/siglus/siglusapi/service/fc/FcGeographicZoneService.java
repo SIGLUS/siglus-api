@@ -91,7 +91,7 @@ public class FcGeographicZoneService {
           .collect(Collectors.toList());
       provinces.forEach(province -> {
         List<FcGeographicZoneDistrictDto> districts = province.getDistricts().stream()
-            .filter(district ->  FcUtil.isActive(district.getStatus()))
+            .filter(district -> FcUtil.isActive(district.getStatus()))
             .collect(Collectors.toList());
         province.setDistricts(districts);
       });

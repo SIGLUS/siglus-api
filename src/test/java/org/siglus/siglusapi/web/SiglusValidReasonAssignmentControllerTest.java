@@ -35,13 +35,13 @@ public class SiglusValidReasonAssignmentControllerTest {
   @Mock
   private SiglusValidReasonAssignmentService siglusValidReasonAssignmentService;
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private UUID facilityType = UUID.randomUUID();
+  private final UUID facilityType = UUID.randomUUID();
 
-  private String reasonType = "reasonType";
+  private final String reasonType = "reasonType";
 
-  private UUID reason = UUID.randomUUID();
+  private final UUID reason = UUID.randomUUID();
 
   @Test
   public void shouldCallGetValidReasonsForAllProductsWhenProgramIsAllProducts() {

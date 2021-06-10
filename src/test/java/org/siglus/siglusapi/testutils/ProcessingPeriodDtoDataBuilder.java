@@ -27,20 +27,20 @@ public class ProcessingPeriodDtoDataBuilder {
 
   private static int instanceNumber = 0;
 
-  private UUID id;
-  private String name;
-  private LocalDate startDate;
-  private LocalDate endDate;
-  private LocalDate submitStartDate;
-  private LocalDate submitEndDate;
-  private LocalDate preStartDate;
-  private LocalDate preEndDate;
-  private LocalDate preSubmitStartDate;
-  private LocalDate preSubmitEndDate;
-  private ProcessingScheduleDto processingSchedule;
-  private String description;
-  private Integer durationInMonths;
-  private Map<String, String> extraData;
+  private final UUID id;
+  private final String name;
+  private final LocalDate startDate;
+  private final LocalDate endDate;
+  private final LocalDate submitStartDate;
+  private final LocalDate submitEndDate;
+  private final LocalDate preStartDate;
+  private final LocalDate preEndDate;
+  private final LocalDate preSubmitStartDate;
+  private final LocalDate preSubmitEndDate;
+  private final ProcessingScheduleDto processingSchedule;
+  private final String description;
+  private final Integer durationInMonths;
+  private final Map<String, String> extraData;
 
   /**
    * Creates builder for creating new instance of {@link ProcessingPeriodDto}.

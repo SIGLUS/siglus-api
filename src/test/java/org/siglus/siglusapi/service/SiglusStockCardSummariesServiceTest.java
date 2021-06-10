@@ -96,17 +96,17 @@ public class SiglusStockCardSummariesServiceTest {
   @InjectMocks
   private SiglusStockCardSummariesService service;
 
-  private UUID userId = UUID.randomUUID();
+  private final UUID userId = UUID.randomUUID();
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private String rightName = "STOCK_CARDS_VIEW";
+  private final String rightName = "STOCK_CARDS_VIEW";
 
-  private UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId = UUID.randomUUID();
 
-  private Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
+  private final Pageable pageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
 
   @Before
   public void prepare() {

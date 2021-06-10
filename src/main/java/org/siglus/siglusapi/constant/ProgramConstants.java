@@ -19,7 +19,8 @@ import java.util.UUID;
 
 public class ProgramConstants {
 
-  private ProgramConstants() { }
+  private ProgramConstants() {
+  }
 
   public static final UUID ALL_PRODUCTS_UUID = UUID
       .fromString("00000000-0000-0000-0000-000000000000");

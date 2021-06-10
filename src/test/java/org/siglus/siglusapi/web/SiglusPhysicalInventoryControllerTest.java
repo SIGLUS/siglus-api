@@ -44,19 +44,19 @@ public class SiglusPhysicalInventoryControllerTest {
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
 
-  private UUID programId = UUID.randomUUID();
+  private final UUID programId = UUID.randomUUID();
 
-  private UUID facilityId = UUID.randomUUID();
+  private final UUID facilityId = UUID.randomUUID();
 
-  private UUID id = UUID.randomUUID();
+  private final UUID id = UUID.randomUUID();
 
-  private Boolean isDraft = true;
+  private final Boolean isDraft = true;
 
-  private Boolean canInitialInventory = true;
+  private final Boolean canInitialInventory = true;
 
-  private String startDate = "startDate";
+  private final String startDate = "startDate";
 
-  private String endDate = "endDate";
+  private final String endDate = "endDate";
 
   @Test
   public void shouldCallGetForAllProductsWhenSearchIfProgramIsAllProducts() {
