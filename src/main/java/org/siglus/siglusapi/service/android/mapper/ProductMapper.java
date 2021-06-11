@@ -31,10 +31,10 @@ public interface ProductMapper {
 
   @Mapping(target = "programCode", source = ".", qualifiedByName = "getProgramCode")
   // TODO should ask Momand how set this
-  @Mapping(target = "active", constant = "true")
-  @Mapping(target = "isBasic", expression = "java(parseKey(domain, \"isBasic\"))")
-  @Mapping(target = "isNos", expression = "java(parseKey(domain, \"isNos\"))")
-  @Mapping(target = "isHiv", expression = "java(parseKey(domain, \"isHiv\"))")
+  @Mapping(target = "active", expression = "java(parseKey(domain, \"active\", true))")
+  @Mapping(target = "isBasic", expression = "java(parseKey(domain, \"isBasic\", false))")
+  @Mapping(target = "isNos", expression = "java(parseKey(domain, \"isNos\", false))")
+  @Mapping(target = "isHiv", expression = "java(parseKey(domain, \"isHiv\", false))")
   @Mapping(target = "category", source = ".", qualifiedByName = "getCategory")
   @Mapping(target = "lastUpdated", source = ".", qualifiedByName = "getLastUpdated")
   ProductResponse toResponse(OrderableDto domain, @Context Map<UUID, OrderableDto> allProducts);
@@ -44,12 +44,12 @@ public interface ProductMapper {
     return (String) domain.getExtraData().get("programCode");
   }
 
-  default Boolean parseKey(OrderableDto orderable, String key) {
+  default Boolean parseKey(OrderableDto orderable, String key, boolean defaultValue) {
     Object value = orderable.getExtraData().get(key);
     return Optional.ofNullable(value)
         .map(Object::toString)
         .map(Boolean::parseBoolean)
-        .orElse(false);
+        .orElse(defaultValue);
   }
 
   @Named("getCategory")

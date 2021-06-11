@@ -335,7 +335,7 @@ public class SiglusMeServiceTest {
     assertEquals(productCode3, product.getProductCode());
     assertEquals("full name of product 3", product.getFullProductName());
     assertEquals("description of product 3", product.getDescription());
-    assertTrue(product.getActive());
+    assertFalse(product.getActive());
     assertFalse(product.getArchived());
     assertEquals(2L, (long) product.getNetContent());
     assertEquals(5L, (long) product.getPackRoundingThreshold());
@@ -452,6 +452,7 @@ public class SiglusMeServiceTest {
     orderable.setRoundToZero(false);
     orderable.setChildren(emptySet());
     orderable.setExtraData(new HashMap<>());
+    orderable.getExtraData().put("active", "false");
     orderable.getExtraData().put("isBasic", "true");
     orderable.getMeta().setLastUpdated(latestTime);
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
