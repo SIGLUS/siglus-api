@@ -44,6 +44,8 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -61,12 +63,15 @@ import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
-import org.siglus.siglusapi.domain.android.AppInfoDomain;
+import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.repository.android.AppInfoRepository;
+import org.siglus.siglusapi.repository.android.FacilityCmmsRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.android.mapper.ProductChildMapperImpl;
@@ -116,10 +121,28 @@ public class SiglusMeServiceTest {
   @Mock
   private AppInfoRepository appInfoRepository;
 
+  @Mock
+  private FacilityCmmsRepository facilityCmmsRepository;
+
+  @Captor
+  private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
+
   @Autowired
   private ProductMapper mapper;
 
   private final UUID appInfoId = UUID.randomUUID();
+
+  private final UUID hfCmmId = UUID.randomUUID();
+
+  private final String facilityCode = "01050119";
+
+  private final String productCode = "05A20";
+
+  private LocalDate periodBegin = LocalDate.of(2021,4,21);
+
+  private LocalDate periodEnd = LocalDate.of(2021,5,20);
+
+  private Instant now = Instant.now();
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -192,8 +215,8 @@ public class SiglusMeServiceTest {
   @Test
   public void shouldUpdateAppInfoWhenAppInfoIsExist() {
     // given
-    AppInfoDomain existedInfo = mockCurrentAppInfo();
-    AppInfoDomain toBeUpdatedInfo = mockUpdateAppInfo();
+    AppInfo existedInfo = mockCurrentAppInfo();
+    AppInfo toBeUpdatedInfo = mockUpdateAppInfo();
     when(appInfoRepository.findByFacilityCodeAndUniqueId(toBeUpdatedInfo.getFacilityCode(),
         toBeUpdatedInfo.getUniqueId())).thenReturn(existedInfo);
     when(appInfoRepository.save(toBeUpdatedInfo)).thenReturn(existedInfo);
@@ -210,17 +233,74 @@ public class SiglusMeServiceTest {
   @Test
   public void shouldInsertAppInfoWhenAppInfoIsNotExist() {
     // given
-    AppInfoDomain toBeUpdatedInfo = mockUpdateAppInfo();
+    AppInfo toBeUpdatedInfo = mockUpdateAppInfo();
     when(appInfoRepository.findByFacilityCodeAndUniqueId(toBeUpdatedInfo.getFacilityCode(),
         toBeUpdatedInfo.getUniqueId())).thenReturn(null);
     when(appInfoRepository.save(toBeUpdatedInfo)).thenReturn(toBeUpdatedInfo);
 
     // when
     service.processAppInfo(toBeUpdatedInfo);
-    AppInfoDomain returnAppInfo = appInfoRepository.save(toBeUpdatedInfo);
+    AppInfo returnAppInfo = appInfoRepository.save(toBeUpdatedInfo);
 
     // then
     assertEquals(toBeUpdatedInfo, returnAppInfo);
+  }
+
+  @Test
+  public void shouldUpdateHfCmmsWhenHfCmmsIsExist() {
+    // given
+    List<HfCmmDto> requestCmms = mockRequestHfCmms();
+    FacilityDto facilityDto = mock(FacilityDto.class);
+    facilityDto.setCode(facilityCode);
+    when(facilityReferenceDataService.getFacilityById(any(UUID.class))).thenReturn(facilityDto);
+    when(facilityCmmsRepository
+            .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(facilityDto.getCode(),
+                    requestCmms.get(0).getProductCode(),requestCmms.get(0).getPeriodBegin(),
+                    requestCmms.get(0).getPeriodEnd()))
+            .thenReturn(mockExistFacilityCmms());
+    when(facilityCmmsRepository.save(any(HfCmm.class))).thenReturn(mockUpdateSuccessHfCmm());
+
+    // when
+    service.processHfCmms(requestCmms);
+
+    // then
+    verify(facilityCmmsRepository).findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(any(),
+            any(), any(), any());
+    verify(facilityCmmsRepository).save(any(HfCmm.class));
+    verify(facilityCmmsRepository).save(hfCmmArgumentCaptor.capture());
+    HfCmm hfCmms = hfCmmArgumentCaptor.getValue();
+    assertEquals(hfCmms.getId(), mockUpdateSuccessHfCmm().getId());
+    assertEquals(hfCmms.getCmm(), mockUpdateSuccessHfCmm().getCmm());
+  }
+
+  @Test
+  public void shouldSaveHfCmmWhenHfCmmIsNotExist() {
+    // given
+    List<HfCmmDto> requestCmms = mockRequestHfCmms();
+    FacilityDto facilityDto = mock(FacilityDto.class);
+    facilityDto.setCode(facilityCode);
+    when(facilityReferenceDataService.getFacilityById(any(UUID.class))).thenReturn(facilityDto);
+    when(facilityCmmsRepository
+            .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(facilityDto.getCode(),
+                    requestCmms.get(0).getProductCode(),requestCmms.get(0).getPeriodBegin(),
+                    requestCmms.get(0).getPeriodEnd()))
+            .thenReturn(null);
+    when(facilityCmmsRepository.save(any(HfCmm.class))).thenReturn(mockInsertSuccessHfCmm());
+
+    // when
+    service.processHfCmms(requestCmms);
+
+    // then
+    verify(facilityCmmsRepository).findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(any(),
+            any(), any(), any());
+    verify(facilityCmmsRepository).save(any(HfCmm.class));
+    verify(facilityCmmsRepository).save(hfCmmArgumentCaptor.capture());
+    HfCmm hfCmms = hfCmmArgumentCaptor.getValue();
+    assertNotNull(hfCmms.getId());
+    assertEquals(requestCmms.get(0).getCmm(), mockInsertSuccessHfCmm().getCmm());
+    assertEquals(requestCmms.get(0).getProductCode(), mockInsertSuccessHfCmm().getProductCode());
+    assertEquals(requestCmms.get(0).getPeriodBegin(), mockInsertSuccessHfCmm().getPeriodBegin());
+    assertEquals(requestCmms.get(0).getPeriodEnd(), mockInsertSuccessHfCmm().getPeriodEnd());
   }
 
   @Test
@@ -485,45 +565,81 @@ public class SiglusMeServiceTest {
     return "description of " + productCode;
   }
 
-  private AppInfoDomain mockCurrentAppInfo() {
-    AppInfoDomain appInfoDomain = AppInfoDomain.builder()
+  private AppInfo mockCurrentAppInfo() {
+    AppInfo appInfo = AppInfo.builder()
         .deviceInfo("deviceinfo1")
         .facilityName("Centro de Saude de Chiunze")
-        .androidsdkVersion(28)
+        .androidSdkVersion(28)
         .versionCode(88)
         .facilityCode("01080904")
-        .userName("CS_Moine_Role1")
+        .username("CS_Moine_Role1")
         .uniqueId("ac36c07a09f2fdcd")
         .build();
-    appInfoDomain.setId(appInfoId);
-    return appInfoDomain;
+    appInfo.setId(appInfoId);
+    return appInfo;
   }
 
-  private AppInfoDomain mockUpdateAppInfo() {
-    AppInfoDomain appInfoDomain = AppInfoDomain.builder()
+  private AppInfo mockUpdateAppInfo() {
+    AppInfo appInfo = AppInfo.builder()
         .deviceInfo("deviceinfo2")
         .facilityName("Centro de Saude de Chiunze")
-        .androidsdkVersion(28)
+        .androidSdkVersion(28)
         .versionCode(88)
         .facilityCode("01080904")
-        .userName("CS_Moine_Role1")
+        .username("CS_Moine_Role1")
         .uniqueId("ac36c07a09f2fdcd")
         .build();
-    appInfoDomain.setId(appInfoId);
-    return appInfoDomain;
+    appInfo.setId(appInfoId);
+    return appInfo;
   }
 
-  private AppInfoDomain mockInsertSuccessReturnAppInfo() {
-    AppInfoDomain appInfoDomain = AppInfoDomain.builder()
-        .deviceInfo("deviceinfo2")
-        .facilityName("Centro de Saude de Chiunze")
-        .androidsdkVersion(28)
-        .versionCode(88)
-        .facilityCode("01080904")
-        .userName("CS_Moine_Role1")
-        .uniqueId("ac36c07a09f2fdcd")
-        .build();
-    appInfoDomain.setId(appInfoId);
-    return appInfoDomain;
+  private List<HfCmmDto> mockRequestHfCmms() {
+    List<HfCmmDto> list = new ArrayList<>();
+    list.add(HfCmmDto.builder()
+            .cmm(11.0)
+            .productCode(productCode)
+            .periodBegin(periodBegin)
+            .periodEnd(periodEnd)
+            .build());
+    return list;
+  }
+
+  private HfCmm mockExistFacilityCmms() {
+    HfCmm existFacilityCmm = HfCmm.builder()
+            .facilityCode(facilityCode)
+            .cmm(12.0)
+            .productCode(productCode)
+            .periodBegin(periodBegin)
+            .periodEnd(periodEnd)
+            .lastUpdated(Instant.now())
+            .build();
+    existFacilityCmm.setId(hfCmmId);
+    return existFacilityCmm;
+  }
+
+  private HfCmm mockUpdateSuccessHfCmm() {
+    HfCmm hfCmm = HfCmm.builder()
+            .facilityCode(facilityCode)
+            .cmm(11.0)
+            .productCode(productCode)
+            .periodBegin(periodBegin)
+            .periodEnd(periodEnd)
+            .lastUpdated(Instant.now())
+            .build();
+    hfCmm.setId(hfCmmId);
+    return hfCmm;
+  }
+
+  private HfCmm mockInsertSuccessHfCmm() {
+    HfCmm hfCmm = HfCmm.builder()
+            .facilityCode(facilityCode)
+            .cmm(11.0)
+            .productCode(productCode)
+            .periodBegin(periodBegin)
+            .periodEnd(periodEnd)
+            .lastUpdated(now)
+            .build();
+    hfCmm.setId(hfCmmId);
+    return hfCmm;
   }
 }

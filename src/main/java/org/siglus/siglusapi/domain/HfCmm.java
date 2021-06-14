@@ -13,9 +13,11 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain.android;
+package org.siglus.siglusapi.domain;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.LocalDate;
+
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
@@ -24,6 +26,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
 import org.siglus.common.domain.BaseEntity;
 
 @Entity
@@ -32,22 +35,18 @@ import org.siglus.common.domain.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-@Table(name = "app_info", schema = "siglusintegration")
-public class AppInfoDomain extends BaseEntity {
+@Table(name = "hf_cmms", schema = "siglusintegration")
+public class HfCmm extends BaseEntity {
 
   private String facilityCode;
 
-  private String facilityName;
+  private String productCode;
 
-  private String uniqueId;
+  private LocalDate periodBegin;
 
-  private String deviceInfo;
+  private LocalDate periodEnd;
 
-  private Integer versionCode;
+  private Double cmm;
 
-  private Integer androidsdkVersion;
-
-  private String userName;
-
-  private LocalDateTime lastUpdated;
+  private Instant lastUpdated;
 }

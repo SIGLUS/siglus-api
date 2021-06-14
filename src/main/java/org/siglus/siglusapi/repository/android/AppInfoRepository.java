@@ -17,10 +17,10 @@ package org.siglus.siglusapi.repository.android;
 
 import java.util.UUID;
 
-import org.siglus.siglusapi.domain.android.AppInfoDomain;
+import org.siglus.siglusapi.domain.AppInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface AppInfoRepository extends JpaRepository<AppInfoDomain, UUID> {
+public interface AppInfoRepository extends JpaRepository<AppInfo, UUID> {
 
-  AppInfoDomain findByFacilityCodeAndUniqueId(String facilityCode, String uniqueId);
+  AppInfo findByFacilityCodeAndUniqueId(String facilityCode, String uniqueId);
 }

@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FacilityCmmsDto {
+public class HfCmmDto {
   private String productCode;
   private LocalDate periodBegin;
   private LocalDate periodEnd;

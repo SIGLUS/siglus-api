@@ -18,11 +18,11 @@ package org.siglus.siglusapi.repository.android;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import org.siglus.siglusapi.domain.android.FacilityCmmsDomain;
+import org.siglus.siglusapi.domain.HfCmm;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface FacilityCmmsRepository extends JpaRepository<FacilityCmmsDomain, UUID> {
+public interface FacilityCmmsRepository extends JpaRepository<HfCmm, UUID> {
 
-  FacilityCmmsDomain findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(String facilityCode,
-      String productCode, LocalDate periodBegin, LocalDate periodEnd);
+  HfCmm findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(String facilityCode,
+        String productCode, LocalDate periodBegin, LocalDate periodEnd);
 }

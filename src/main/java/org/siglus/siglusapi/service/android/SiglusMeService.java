@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service.android;
 import static java.util.Collections.emptyList;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -42,9 +41,9 @@ import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
-import org.siglus.siglusapi.domain.android.AppInfoDomain;
-import org.siglus.siglusapi.domain.android.FacilityCmmsDomain;
-import org.siglus.siglusapi.dto.android.request.FacilityCmmsDto;
+import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
@@ -80,9 +79,7 @@ public class SiglusMeService {
   private final FacilityCmmsRepository facilityCmmsRepository;
 
   public FacilityResponse getCurrentFacility() {
-    UserDto userDto = authHelper.getCurrentUser();
-    UUID homeFacilityId = userDto.getHomeFacilityId();
-    FacilityDto facilityDto = facilityReferenceDataService.getFacilityById(homeFacilityId);
+    FacilityDto facilityDto = getCurrentFacilityInfo();
     List<SupportedProgramDto> programs = facilityDto.getSupportedPrograms();
     List<ProgramResponse> programResponses = programs.stream().map(program ->
         ProgramResponse.builder()
@@ -99,21 +96,21 @@ public class SiglusMeService {
         .build();
   }
 
-  public void processAppInfo(AppInfoDomain appInfoDomain) {
-    AppInfoDomain existAppInfo = appInfoRepository
-        .findByFacilityCodeAndUniqueId(appInfoDomain.getFacilityCode(),
-            appInfoDomain.getUniqueId());
+  public void processAppInfo(AppInfo appInfo) {
+    AppInfo existAppInfo = appInfoRepository
+        .findByFacilityCodeAndUniqueId(appInfo.getFacilityCode(),
+            appInfo.getUniqueId());
     UUID appInfoId = existAppInfo != null ? existAppInfo.getId() : UUID.randomUUID();
-    appInfoDomain.setId(appInfoId);
-    appInfoDomain.setLastUpdated(LocalDateTime.now());
-    log.info("process app-info , id: {}" + appInfoId);
-    appInfoRepository.save(appInfoDomain);
+    appInfo.setId(appInfoId);
+    appInfo.setLastUpdated(Instant.now());
+    log.info("process app-info , id: {}", appInfoId);
+    appInfoRepository.save(appInfo);
   }
 
-  public void updateFacilityCmms(List<FacilityCmmsDto> facilityCmmss) {
-    facilityCmmss.stream()
-        .map(facilityCmmsDto -> buildCmmsDomain(facilityCmmsDto))
-        .forEach(this::saveAndUpdateCmms);
+  public void processHfCmms(List<HfCmmDto> hfCmmDtos) {
+    hfCmmDtos.stream()
+            .map(this::buildCmm)
+            .forEach(this::saveAndUpdateCmm);
   }
 
   public void archiveAllProducts(List<String> productCodes) {
@@ -175,31 +172,33 @@ public class SiglusMeService {
     return orderableDataService.searchOrderables(params, pageable, homeFacilityId).getContent();
   }
 
-  private FacilityCmmsDomain buildCmmsDomain(FacilityCmmsDto facilityCmmsDto) {
+  private HfCmm buildCmm(HfCmmDto hfCmmDto) {
+    return HfCmm.builder()
+            .facilityCode(getCurrentFacilityInfo().getCode())
+            .cmm(hfCmmDto.getCmm())
+            .periodEnd(hfCmmDto.getPeriodEnd())
+            .periodBegin(hfCmmDto.getPeriodBegin())
+            .productCode(hfCmmDto.getProductCode())
+            .lastUpdated(Instant.now())
+            .build();
+  }
+
+  private void saveAndUpdateCmm(HfCmm toBeUpdatedHfCmm) {
+    HfCmm hfCmm = facilityCmmsRepository
+        .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(
+            toBeUpdatedHfCmm.getFacilityCode(),
+            toBeUpdatedHfCmm.getProductCode(),
+            toBeUpdatedHfCmm.getPeriodBegin(),
+            toBeUpdatedHfCmm.getPeriodEnd());
+    UUID cmmId = hfCmm == null ? UUID.randomUUID() : hfCmm.getId();
+    toBeUpdatedHfCmm.setId(cmmId);
+    log.info("save hf_cmm info , id: {}", cmmId);
+    facilityCmmsRepository.save(toBeUpdatedHfCmm);
+  }
+
+  private FacilityDto getCurrentFacilityInfo() {
     UserDto userDto = authHelper.getCurrentUser();
     UUID homeFacilityId = userDto.getHomeFacilityId();
-    FacilityDto facilityDto = facilityReferenceDataService.getFacilityById(homeFacilityId);
-    return FacilityCmmsDomain.builder()
-        .facilityCode(facilityDto.getCode())
-        .cmm(facilityCmmsDto.getCmm())
-        .periodEnd(facilityCmmsDto.getPeriodEnd())
-        .periodBegin(facilityCmmsDto.getPeriodBegin())
-        .productCode(facilityCmmsDto.getProductCode())
-        .lastUpdated(LocalDateTime.now())
-        .build();
+    return facilityReferenceDataService.getFacilityById(homeFacilityId);
   }
-
-  private void saveAndUpdateCmms(FacilityCmmsDomain cmmsDomain) {
-    FacilityCmmsDomain facilityCmmsDomain = facilityCmmsRepository
-        .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(
-            cmmsDomain.getFacilityCode(),
-            cmmsDomain.getProductCode(),
-            cmmsDomain.getPeriodBegin(),
-            cmmsDomain.getPeriodEnd());
-    UUID cmmsDomainId = facilityCmmsDomain == null ? UUID.randomUUID() : facilityCmmsDomain.getId();
-    cmmsDomain.setId(cmmsDomainId);
-    log.info("process app-info , id: {}" + cmmsDomainId);
-    facilityCmmsRepository.save(cmmsDomain);
-  }
-
 }

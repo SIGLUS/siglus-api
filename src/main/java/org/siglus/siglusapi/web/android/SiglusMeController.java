@@ -19,9 +19,14 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.time.Instant;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.domain.android.AppInfoDomain;
-import org.siglus.siglusapi.dto.android.request.FacilityCmmsDto;
+import org.apache.commons.beanutils.BeanUtils;
+import org.siglus.siglusapi.constant.AndroidConstants;
+import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
@@ -29,7 +34,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -62,28 +66,15 @@ public class SiglusMeController {
 
   @PostMapping("/app-info")
   @ResponseStatus(NO_CONTENT)
-  public void processAppInfo(
-      @RequestHeader("UserName") String userName,
-      @RequestHeader("FacilityCode") String facilityCode,
-      @RequestHeader("FacilityName") String facilityName,
-      @RequestHeader("UniqueId") String uniqueId,
-      @RequestHeader("DeviceInfo") String deviceInfo,
-      @RequestHeader("VersionCode") Integer versionCode,
-      @RequestHeader("AndroidSDKVersion") Integer androidSdkVersion) {
-    service.processAppInfo(AppInfoDomain.builder()
-        .userName(userName)
-        .facilityCode(facilityCode)
-        .facilityName(facilityName)
-        .uniqueId(uniqueId)
-        .deviceInfo(deviceInfo)
-        .versionCode(versionCode)
-        .androidsdkVersion(androidSdkVersion)
-        .build());
+  public void processAppInfo(HttpServletRequest httpServletRequest) throws Exception {
+    AppInfo appInfo = new AppInfo();
+    BeanUtils.copyProperties(appInfo, AndroidConstants.getAndroidHeader(httpServletRequest));
+    service.processAppInfo(appInfo);
   }
 
   @PutMapping(value = "/facility/cmms")
   @ResponseStatus(NO_CONTENT)
-  public void updateCmmsForFacility(@RequestBody List<FacilityCmmsDto> facilityCmmss) {
-    service.updateFacilityCmms(facilityCmmss);
+  public void updateCmmsForFacility(@RequestBody List<HfCmmDto> hfCmmDtos) {
+    service.processHfCmms(hfCmmDtos);
   }
 }

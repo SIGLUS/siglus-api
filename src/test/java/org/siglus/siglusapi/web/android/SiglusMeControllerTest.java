@@ -23,6 +23,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
@@ -32,10 +34,12 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.domain.android.AppInfoDomain;
+import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.springframework.mock.web.MockHttpServletRequest;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusMeControllerTest {
@@ -109,33 +113,40 @@ public class SiglusMeControllerTest {
   }
 
   @Test
-  public void shouldCallServiceWhenProcessAppInfo() {
+  public void shouldCallServiceWhenProcessAppInfo() throws Exception {
     // given
-    AppInfoDomain appInfo = mockAppInfo();
-    doNothing().when(service).processAppInfo(appInfo);
+    MockHttpServletRequest request = new MockHttpServletRequest("POST",
+            "/api/siglusapi/android/me/app-info");
+    doNothing().when(service).processAppInfo(any(AppInfo.class));
 
     // when
-    controller.processAppInfo(appInfo.getUserName(),
-        appInfo.getFacilityCode(),
-        appInfo.getFacilityName(),
-        appInfo.getUniqueId(),
-        appInfo.getDeviceInfo(),
-        appInfo.getVersionCode(),
-        appInfo.getAndroidsdkVersion());
+    controller.processAppInfo(request);
 
     // then
-    verify(service).processAppInfo(appInfo);
+    verify(service).processAppInfo(any(AppInfo.class));
   }
 
-  private AppInfoDomain mockAppInfo() {
-    return AppInfoDomain.builder()
-        .deviceInfo("deviceinfo1")
-        .facilityName("Centro de Saude de Chiunze")
-        .androidsdkVersion(28)
-        .versionCode(88)
-        .facilityCode("01080904")
-        .userName("CS_Moine_Role1")
-        .uniqueId("ac36c07a09f2fdcd")
-        .build();
+  @Test
+  public void shouldUpdateCurrentFacilityCmms() {
+    // given
+    List<HfCmmDto> cmmsInfos = mockFacilityCmms();
+    doNothing().when(service).processHfCmms(cmmsInfos);
+
+    // when
+    controller.updateCmmsForFacility(cmmsInfos);
+
+    // then
+    verify(service).processHfCmms(cmmsInfos);
+  }
+
+  private List<HfCmmDto> mockFacilityCmms() {
+    List<HfCmmDto> list = new ArrayList<>();
+    list.add(HfCmmDto.builder()
+            .cmm(122.0)
+            .productCode("05A13")
+            .periodBegin(LocalDate.of(2021,4,21))
+            .periodEnd(LocalDate.of(2021,5,20))
+            .build());
+    return list;
   }
 }
