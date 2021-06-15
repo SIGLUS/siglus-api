@@ -30,7 +30,6 @@ import org.siglus.siglusapi.dto.android.response.ProductResponse;
 public interface ProductMapper {
 
   @Mapping(target = "programCode", source = ".", qualifiedByName = "getProgramCode")
-  // TODO should ask Momand how set this
   @Mapping(target = "active", expression = "java(parseKey(domain, \"active\", true))")
   @Mapping(target = "isBasic", expression = "java(parseKey(domain, \"isBasic\", false))")
   @Mapping(target = "isNos", expression = "java(parseKey(domain, \"isNos\", false))")
