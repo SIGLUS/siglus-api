@@ -9,15 +9,15 @@
       "title": "productcode"
     },
     "periodBegin": {
-      "type": "date",
+      "type": "object",
       "title": "periodBegin"
     },
     "periodEnd": {
-      "type": "date",
+      "type": "object",
       "title": "periodEnd"
     },
     "cmm": {
-      "type": "double",
+      "type": "number",
       "title": "cmm"
     }
   }
