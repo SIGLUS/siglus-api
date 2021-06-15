@@ -18,7 +18,6 @@ package org.siglus.siglusapi.domain;
 import java.time.Instant;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

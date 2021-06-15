@@ -17,7 +17,6 @@ package org.siglus.siglusapi.repository.android;
 
 import java.time.LocalDate;
 import java.util.UUID;
-
 import org.siglus.siglusapi.domain.HfCmm;
 import org.springframework.data.jpa.repository.JpaRepository;
 

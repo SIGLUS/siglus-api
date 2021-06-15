@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.dto.android.request;
 
 import java.time.LocalDate;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

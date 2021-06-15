@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.validator;
 
 import java.util.Arrays;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;

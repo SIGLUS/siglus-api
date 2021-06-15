@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.constant;
 
 import javax.servlet.http.HttpServletRequest;
-
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 
 public class AndroidConstants {

@@ -18,7 +18,6 @@ package org.siglus.siglusapi.web;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
-
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.exception.ContentNotFoundMessageException;

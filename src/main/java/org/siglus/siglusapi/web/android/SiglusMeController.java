@@ -19,9 +19,7 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.time.Instant;
 import java.util.List;
-
 import javax.servlet.http.HttpServletRequest;
-
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.beanutils.BeanUtils;
 import org.siglus.siglusapi.constant.AndroidConstants;

@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import lombok.AllArgsConstructor;

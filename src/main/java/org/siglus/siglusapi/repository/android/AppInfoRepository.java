@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.repository.android;
 
 import java.util.UUID;
-
 import org.siglus.siglusapi.domain.AppInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
