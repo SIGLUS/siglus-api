@@ -570,7 +570,7 @@ Números de fax: 01-241193,01-246288]]></text>
 				<reportElement x="0" y="5" width="280" height="20" uuid="88faf2a1-accc-4685-908c-3a65a2ed8fe6">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 				</reportElement>
-				<text><![CDATA[Explain any discrepancies or Damages]]></text>
+				<text><![CDATA[Explique quaisquer discrepâncias ou danos]]></text>
 			</staticText>
 		</band>
 	</summary>

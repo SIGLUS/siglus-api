@@ -321,7 +321,7 @@
                 <textElement>
                     <font size="14" isBold="true"/>
                 </textElement>
-                <text><![CDATA[Card Line Items]]></text>
+                <text><![CDATA[Item de linha de cartão]]></text>
             </staticText>
             <componentElement>
                 <reportElement x="10" y="35" width="575" height="60" uuid="49aff7ec-0984-4b44-aaf6-ba51725190dd">
