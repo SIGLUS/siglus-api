@@ -58,6 +58,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 
 @Service
@@ -96,10 +97,10 @@ public class SiglusMeService {
         .build();
   }
 
+  @Transactional
   public void processAppInfo(AppInfo appInfo) {
     AppInfo existAppInfo = appInfoRepository
-        .findByFacilityCodeAndUniqueId(appInfo.getFacilityCode(),
-            appInfo.getUniqueId());
+        .findByFacilityCodeAndUniqueId(appInfo.getFacilityCode(), appInfo.getUniqueId());
     UUID appInfoId = existAppInfo != null ? existAppInfo.getId() : UUID.randomUUID();
     appInfo.setId(appInfoId);
     appInfo.setLastUpdated(Instant.now());
@@ -107,12 +108,12 @@ public class SiglusMeService {
     appInfoRepository.save(appInfo);
   }
 
+  @Transactional
   public void processHfCmms(List<HfCmmDto> hfCmmDtos) {
-    hfCmmDtos.stream()
-            .map(this::buildCmm)
-            .forEach(this::saveAndUpdateCmm);
+    hfCmmDtos.stream().map(this::buildCmm).forEach(this::saveAndUpdateCmm);
   }
 
+  @Transactional
   public void archiveAllProducts(List<String> productCodes) {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     siglusArchiveProductService.archiveAllProducts(facilityId, productCodes);
@@ -174,13 +175,13 @@ public class SiglusMeService {
 
   private HfCmm buildCmm(HfCmmDto hfCmmDto) {
     return HfCmm.builder()
-            .facilityCode(getCurrentFacilityInfo().getCode())
-            .cmm(hfCmmDto.getCmm())
-            .periodEnd(hfCmmDto.getPeriodEnd())
-            .periodBegin(hfCmmDto.getPeriodBegin())
-            .productCode(hfCmmDto.getProductCode())
-            .lastUpdated(Instant.now())
-            .build();
+        .facilityCode(getCurrentFacilityInfo().getCode())
+        .cmm(hfCmmDto.getCmm())
+        .periodEnd(hfCmmDto.getPeriodEnd())
+        .periodBegin(hfCmmDto.getPeriodBegin())
+        .productCode(hfCmmDto.getProductCode())
+        .lastUpdated(Instant.now())
+        .build();
   }
 
   private void saveAndUpdateCmm(HfCmm toBeUpdatedHfCmm) {

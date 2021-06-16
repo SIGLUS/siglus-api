@@ -42,6 +42,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -106,6 +107,7 @@ public class FcScheduleService {
 
 
   @Scheduled(cron = "${fc.facility.cron}", zone = TIME_ZONE_ID)
+  @Transactional
   public void syncFacilityFromFc() {
     String redisKey = "syncFacilityFromFc";
     try {
@@ -144,6 +146,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.geographiczone.cron}", zone = TIME_ZONE_ID)
+  @Transactional
   public void syncGeographicZoneFromFc() {
     String redisKey = "syncGeographicZoneFromFc";
     try {
@@ -163,6 +166,7 @@ public class FcScheduleService {
     }
   }
 
+  @Transactional
   public void syncGeographicZoneFromFc(String date) {
     log.info("schedule start syncGeographicZoneFromFc");
     final long startTime = currentTimeMillis();
@@ -201,6 +205,7 @@ public class FcScheduleService {
     }
   }
 
+  @Transactional
   public void syncReceiptPlanFromFc(String date) {
     log.info("schedule start syncReceiptPlanFromFc");
     final long startTime = currentTimeMillis();
@@ -220,6 +225,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = TIME_ZONE_ID)
+  @Transactional
   public void syncIssueVoucherFromFc() {
     String redisKey = "syncIssueVoucherFromFc";
     try {
@@ -239,6 +245,7 @@ public class FcScheduleService {
     }
   }
 
+  @Transactional
   public void syncIssueVoucherFromFc(String date) {
     log.info("schedule start syncIssueVoucherFromFc");
     final long startTime = currentTimeMillis();
@@ -260,6 +267,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.cmm.cron}", zone = TIME_ZONE_ID)
+  @Transactional
   public void syncCmmFromFc() {
     String redisKey = "syncCmmFromFc";
     try {
@@ -279,6 +287,7 @@ public class FcScheduleService {
     }
   }
 
+  @Transactional
   public void syncCmmFromFc(String date) {
     log.info("schedule start syncCmmFromFc");
     final long startTime = currentTimeMillis();
@@ -297,6 +306,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
+  @Transactional
   public void syncCpFromFc() {
     String redisKey = "syncCpFromFc";
     try {
@@ -316,6 +326,7 @@ public class FcScheduleService {
     }
   }
 
+  @Transactional
   public void syncCpFromFc(String date) {
     log.info("schedule start syncCpFromFc");
     final long startTime = currentTimeMillis();
@@ -334,6 +345,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.program.cron}", zone = TIME_ZONE_ID)
+  @Transactional
   public void syncProgramFromFc() {
     String redisKey = "syncProgramFromFc";
     try {
@@ -352,6 +364,7 @@ public class FcScheduleService {
     }
   }
 
+  @Transactional
   public void syncProgramFromFc(String date) {
     log.info("schedule start syncProgramFromFc");
     final long startTime = currentTimeMillis();
@@ -370,6 +383,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.product.cron}", zone = TIME_ZONE_ID)
+  @Transactional
   public void syncProductFromFc() {
     String redisKey = "syncProductFromFc";
     try {
@@ -388,6 +402,7 @@ public class FcScheduleService {
     }
   }
 
+  @Transactional
   public void syncProductFromFc(String date) {
     log.info("schedule start syncProductFromFc");
     final long startTime = currentTimeMillis();
@@ -406,6 +421,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.regimen.cron}", zone = TIME_ZONE_ID)
+  @Transactional
   public void syncRegimenFromFc() {
     String redisKey = "syncRegimenFromFc";
     try {
@@ -424,6 +440,7 @@ public class FcScheduleService {
     }
   }
 
+  @Transactional
   public void syncRegimenFromFc(String date) {
     log.info("schedule start syncRegimenFromFc");
     final long startTime = currentTimeMillis();
@@ -442,6 +459,7 @@ public class FcScheduleService {
   }
 
   @Scheduled(cron = "${fc.facilitytype.cron}", zone = TIME_ZONE_ID)
+  @Transactional
   public void syncFacilityTypeFromFc() {
     String redisKey = "syncFacilityTypeFromFc";
     try {
@@ -460,6 +478,7 @@ public class FcScheduleService {
     }
   }
 
+  @Transactional
   public void syncFacilityTypeFromFc(String date) {
     log.info("schedule start syncFacilityTypeFromFc");
     final long startTime = currentTimeMillis();

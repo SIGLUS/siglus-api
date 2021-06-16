@@ -43,14 +43,12 @@ public class SiglusProcessingPeriodController {
   @ResponseStatus(HttpStatus.CREATED)
   public ProcessingPeriodDto createProcessingPeriod(
       @RequestBody ProcessingPeriodDto periodDto) {
-
     return siglusProcessingPeriodService.createProcessingPeriod(periodDto);
   }
 
   @GetMapping
   public Page<ProcessingPeriodDto> searchAllProcessingPeriods(
       @RequestParam MultiValueMap<String, Object> requestParams, Pageable pageable) {
-
     return siglusProcessingPeriodService.getAllProcessingPeriods(requestParams, pageable);
   }
 

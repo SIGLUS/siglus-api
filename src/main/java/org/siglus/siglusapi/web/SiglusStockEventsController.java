@@ -22,6 +22,7 @@ import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,6 +39,7 @@ public class SiglusStockEventsController {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @PostMapping
+  @Transactional
   public UUID createStockEvent(@RequestBody StockEventDto eventDto) {
     stockEventsService.createAndFillLotId(eventDto, false);
     // api sent by fulfilment with context is "trust-client", already has user-id.

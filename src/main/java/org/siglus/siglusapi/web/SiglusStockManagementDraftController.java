@@ -46,14 +46,12 @@ public class SiglusStockManagementDraftController {
   public List<StockManagementDraftDto> searchDrafts(@RequestParam UUID program,
       @RequestParam UUID userId, @RequestParam String draftType,
       @RequestParam(required = false) Boolean isDraft) {
-    return stockManagementDraftService.findStockManagementDraft(program, userId, draftType,
-        isDraft);
+    return stockManagementDraftService.findStockManagementDraft(program, userId, draftType, isDraft);
   }
 
   @PostMapping
   @ResponseStatus(CREATED)
-  public StockManagementDraftDto createEmptyStockManagementDraft(
-      @RequestBody StockManagementDraftDto dto) {
+  public StockManagementDraftDto createEmptyStockManagementDraft(@RequestBody StockManagementDraftDto dto) {
     return stockManagementDraftService.createNewDraft(dto);
   }
 

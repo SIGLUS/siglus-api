@@ -425,6 +425,7 @@ public class SiglusRequisitionService {
     return basicRequisitionDto;
   }
 
+  @Transactional
   public BasicRequisitionDto rejectRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
     BasicRequisitionDto dto =

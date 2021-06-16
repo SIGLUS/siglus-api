@@ -33,6 +33,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -84,8 +85,7 @@ public class SiglusRequisitionController {
   public SiglusRequisitionDto updateRequisition(@PathVariable("id") UUID requisitionId,
       @RequestBody SiglusRequisitionDto requisitionDto,
       HttpServletRequest request, HttpServletResponse response) {
-    return siglusRequisitionService
-        .updateRequisition(requisitionId, requisitionDto, request, response);
+    return siglusRequisitionService.updateRequisition(requisitionId, requisitionDto, request, response);
   }
 
   @DeleteMapping("/{id}")
@@ -117,6 +117,7 @@ public class SiglusRequisitionController {
   }
 
   @PostMapping("/{id}/approve")
+  @Transactional
   public BasicRequisitionDto approveRequisition(
       @PathVariable("id") UUID requisitionId,
       HttpServletRequest request,

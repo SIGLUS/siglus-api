@@ -85,6 +85,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -164,6 +165,7 @@ public class SiglusNotificationService {
         });
   }
 
+  @Transactional
   public ViewableStatus viewNotification(UUID notificationId) {
     Notification notification = repo.findOne(notificationId);
     if (Boolean.TRUE.equals(notification.getProcessed())) {

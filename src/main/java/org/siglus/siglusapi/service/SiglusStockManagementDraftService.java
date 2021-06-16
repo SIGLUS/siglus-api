@@ -32,6 +32,7 @@ import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -46,6 +47,7 @@ public class SiglusStockManagementDraftService {
   @Autowired
   StockManagementDraftValidator stockManagementDraftValidator;
 
+  @Transactional
   public StockManagementDraftDto createNewDraft(StockManagementDraftDto dto) {
     log.info("create physical inventory draft");
     stockManagementDraftValidator.validateEmptyDraft(dto);
@@ -62,6 +64,7 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(savedDraft);
   }
 
+  @Transactional
   public StockManagementDraftDto saveDraft(StockManagementDraftDto dto, UUID id) {
     log.info("save physical inventory draft");
     stockManagementDraftValidator.validateDraft(dto, id);
@@ -83,6 +86,7 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(drafts);
   }
 
+  @Transactional
   public void deleteStockManagementDraft(UUID id) {
     StockManagementDraft drafts = stockManagementDraftRepository.findOne(id);
     if (drafts != null) {

@@ -61,6 +61,7 @@ public class SiglusShipmentDraftService {
   @Autowired
   private SiglusOrderService siglusOrderService;
 
+  @Transactional
   public ShipmentDraftDto createShipmentDraft(ShipmentDraftDto draftDto) {
     return draftController.createShipmentDraft(draftDto);
   }

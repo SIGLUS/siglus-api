@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -47,6 +48,7 @@ public class SiglusProgramAdditionalOrderableService {
         orderableOriginProgramId, pageable);
   }
 
+  @Transactional
   public void deleteAdditionalOrderable(UUID id) {
     ProgramAdditionalOrderable additionalOrderable = programAdditionalOrderableRepository
         .findOne(id);
@@ -57,6 +59,7 @@ public class SiglusProgramAdditionalOrderableService {
     programAdditionalOrderableRepository.delete(additionalOrderable);
   }
 
+  @Transactional
   public void createAdditionalOrderables(List<ProgramAdditionalOrderableDto> dtos) {
     log.info("save additional orderables, size: {}", dtos.size());
     programAdditionalOrderableRepository.save(ProgramAdditionalOrderable.from(dtos));

@@ -58,8 +58,7 @@ public class SiglusMeController {
   @GetMapping("/facility/products")
   public ProductSyncResponse getFacilityProducts(
       @RequestParam(name = "lastSyncTime", required = false) Long lastSyncTime) {
-    return service
-        .getFacilityProducts(lastSyncTime != null ? Instant.ofEpochMilli(lastSyncTime) : null);
+    return service.getFacilityProducts(lastSyncTime != null ? Instant.ofEpochMilli(lastSyncTime) : null);
   }
 
   @PostMapping("/app-info")

@@ -79,6 +79,7 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
 
+  @Transactional
   public PhysicalInventoryDto createNewDraft(PhysicalInventoryDto dto) {
     return physicalInventoryStockManagementService.createEmptyPhysicalInventory(dto);
   }
@@ -98,6 +99,7 @@ public class SiglusPhysicalInventoryService {
     return null;
   }
 
+  @Transactional
   public PhysicalInventoryDto saveDraft(PhysicalInventoryDto dto, UUID id) {
     physicalInventoryStockManagementService.savePhysicalInventory(id, dto);
     return dto;
@@ -125,10 +127,12 @@ public class SiglusPhysicalInventoryService {
     return null;
   }
 
+  @Transactional
   public void deletePhysicalInventory(UUID id) {
     physicalInventoryStockManagementService.deletePhysicalInventory(id);
   }
 
+  @Transactional
   public void deletePhysicalInventoryForAllProducts(UUID facilityId) {
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
         .findUserSupportedPrograms();

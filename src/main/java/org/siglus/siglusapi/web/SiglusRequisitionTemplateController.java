@@ -21,6 +21,7 @@ import org.openlmis.requisition.web.RequisitionTemplateController;
 import org.siglus.siglusapi.dto.SiglusRequisitionTemplateDto;
 import org.siglus.siglusapi.service.SiglusRequisitionTemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,6 +47,7 @@ public class SiglusRequisitionTemplateController {
   }
 
   @PutMapping("/{id}")
+  @Transactional
   public SiglusRequisitionTemplateDto updateRequisitionTemplate(
       @PathVariable("id") UUID requisitionTemplateId,
       @RequestBody SiglusRequisitionTemplateDto requisitionTemplateDto,
@@ -57,6 +59,7 @@ public class SiglusRequisitionTemplateController {
   }
 
   @PostMapping
+  @Transactional
   public SiglusRequisitionTemplateDto createRequisitionTemplate(
       @RequestBody SiglusRequisitionTemplateDto requisitionTemplateDto,
       BindingResult bindingResult) {
