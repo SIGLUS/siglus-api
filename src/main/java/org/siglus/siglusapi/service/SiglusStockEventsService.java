@@ -59,6 +59,7 @@ import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -103,27 +104,14 @@ public class SiglusStockEventsService {
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;
 
+  @Transactional
   public UUID createStockEvent(StockEventDto eventDto) {
     UUID stockEventId = stockEventsStockManagementService.createStockEvent(eventDto);
     enhanceStockCard(eventDto, stockEventId);
     return stockEventId;
   }
 
-  private UUID siglusCreateStockEvent(StockEventDto eventDto) {
-    UUID stockEventId = stockEventProcessor.process(eventDto);
-    enhanceStockCard(eventDto, stockEventId);
-    return stockEventId;
-  }
-
-  private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId) {
-    addStockCardCreateTime(eventDto);
-    addStockCardLineItemDocumentNumber(eventDto, stockEventId);
-    Set<UUID> orderableIds = eventDto.getLineItems().stream()
-        .map(StockEventLineItemDto::getOrderableId)
-        .collect(Collectors.toSet());
-    archiveProductService.activateProducts(eventDto.getFacilityId(), orderableIds);
-  }
-
+  @Transactional
   public UUID createStockEventForAllProducts(StockEventDto eventDto) {
     Set<UUID> programIds = eventDto.getLineItems().stream()
         .map(StockEventLineItemDto::getProgramId).collect(Collectors.toSet());
@@ -167,6 +155,7 @@ public class SiglusStockEventsService {
     return null;
   }
 
+  @Transactional
   public void createAndFillLotId(StockEventDto eventDto, boolean updateExpirationDate) {
     final List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     Map<UUID, OrderableDto> orderableDtos = orderableReferenceDataService.findByIds(
@@ -184,6 +173,21 @@ public class SiglusStockEventsService {
         kitOrderableShouldNotContainLotInfo(stockEventLineItem);
       }
     }
+  }
+
+  private UUID siglusCreateStockEvent(StockEventDto eventDto) {
+    UUID stockEventId = stockEventProcessor.process(eventDto);
+    enhanceStockCard(eventDto, stockEventId);
+    return stockEventId;
+  }
+
+  private void enhanceStockCard(StockEventDto eventDto, UUID stockEventId) {
+    addStockCardCreateTime(eventDto);
+    addStockCardLineItemDocumentNumber(eventDto, stockEventId);
+    Set<UUID> orderableIds = eventDto.getLineItems().stream()
+        .map(StockEventLineItemDto::getOrderableId)
+        .collect(Collectors.toSet());
+    archiveProductService.activateProducts(eventDto.getFacilityId(), orderableIds);
   }
 
   private void fillLotIdForNormalOrderable(StockEventLineItemDto stockEventLineItem,
