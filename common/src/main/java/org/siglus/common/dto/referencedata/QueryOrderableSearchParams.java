@@ -18,6 +18,7 @@ package org.siglus.common.dto.referencedata;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
@@ -27,7 +28,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
 
 @ToString
-public class QueryOrderableSearchParams {
+public class QueryOrderableSearchParams implements Serializable {
 
   private static final String CODE = "code";
   private static final String NAME = "name";

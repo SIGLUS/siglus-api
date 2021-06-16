@@ -15,6 +15,7 @@
 
 package org.siglus.common.dto.referencedata;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ import org.siglus.common.domain.referencedata.OrderableChild;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-public class OrderableChildDto implements OrderableChild.Exporter {
+public class OrderableChildDto implements OrderableChild.Exporter, Serializable {
 
   @Getter
   private ObjectReferenceDto orderable;

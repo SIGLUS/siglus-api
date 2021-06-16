@@ -18,6 +18,7 @@ package org.openlmis.stockmanagement.dto;
 import static org.openlmis.stockmanagement.service.ResourceNames.BASE_PATH;
 import static org.openlmis.stockmanagement.service.ResourceNames.SEPARATOR;
 
+import java.io.Serializable;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -29,7 +30,11 @@ import org.apache.commons.lang3.StringUtils;
 @EqualsAndHashCode(callSuper = true)
 @ToString
 @NoArgsConstructor
-public class ObjectReferenceDto extends BaseDto {
+// [SIGLUS change start]
+// [change reason]: add interface Serializable
+// public class ObjectReferenceDto extends BaseDto {
+public class ObjectReferenceDto extends BaseDto implements Serializable {
+  // [SIGLUS change end]
 
   @Getter
   @Setter

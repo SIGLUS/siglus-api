@@ -18,6 +18,7 @@ package org.siglus.common.dto.referencedata;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -37,7 +38,8 @@ import org.siglus.common.serializer.MoneySerializer;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class ProgramOrderableDto implements ProgramOrderable.Importer, ProgramOrderable.Exporter {
+public class ProgramOrderableDto implements ProgramOrderable.Importer, ProgramOrderable.Exporter,
+    Serializable {
 
   private UUID programId;
 

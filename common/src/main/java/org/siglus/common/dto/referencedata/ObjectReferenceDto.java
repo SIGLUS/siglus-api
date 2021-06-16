@@ -17,6 +17,7 @@ package org.siglus.common.dto.referencedata;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import java.io.Serializable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,7 +28,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(Include.NON_NULL)
-public class ObjectReferenceDto extends BaseDto {
+public class ObjectReferenceDto extends BaseDto implements Serializable {
 
   @Getter
   @Setter

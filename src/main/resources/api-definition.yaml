@@ -2294,6 +2294,13 @@ traits:
             204:
               description: Program additional orderable deleted.
 
+    /mx:
+      /caches:
+        delete:
+          is: [ secured ]
+          responses:
+            204:
+              description: cache invalidated.
     /android:
 
       /regimens:

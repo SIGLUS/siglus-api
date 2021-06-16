@@ -15,6 +15,7 @@
 
 package org.openlmis.stockmanagement.dto.referencedata;
 
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +24,11 @@ import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderableChildDto {
+// [SIGLUS change start]
+// [change reason]: add interface Serializable
+//  public class OrderableChildDto {
+public class OrderableChildDto implements Serializable {
+  // [SIGLUS change end]
 
   @Getter
   @Setter

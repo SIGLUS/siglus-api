@@ -18,6 +18,7 @@ package org.siglus.common.dto.referencedata;
 import static com.google.common.collect.Maps.newHashMap;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,7 +42,7 @@ import org.siglus.common.domain.referencedata.Orderable;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public final class OrderableDto extends BaseDto implements Orderable.Importer,
-    Orderable.Exporter {
+    Orderable.Exporter, Serializable {
 
   public static final String TRADE_ITEM = "tradeItem";
 

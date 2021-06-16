@@ -13,26 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.dto.referencedata;
+package org.siglus.siglusapi.config;
 
-import java.io.Serializable;
-import java.time.ZonedDateTime;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.core.RedisTemplate;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
-@ToString
-public final class MetadataDto implements Serializable {
+@Configuration
+@EnableCaching
+public class RedisCacheConfig {
 
-  private Long versionNumber;
-  private ZonedDateTime lastUpdated;
+  @Bean
+  public CacheManager cacheManager(RedisTemplate<Object, Object> redisTemplate) {
+    return new RedisCacheManager(redisTemplate);
+  }
 
 }

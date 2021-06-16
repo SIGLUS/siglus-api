@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.siglus.common.util.referencedata.messagekeys.SystemMessageKeys.ERROR_INVALID_FORMAT_DATE;
 import static org.siglus.common.util.referencedata.messagekeys.SystemMessageKeys.ERROR_INVALID_FORMAT_UUID;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.Collection;
@@ -39,7 +40,7 @@ import org.springframework.util.MultiValueMap;
 @NoArgsConstructor
 @EqualsAndHashCode
 @ToString
-public final class SearchParams {
+public final class SearchParams implements Serializable {
 
   private static final String PAGE = "page";
   private static final String SIZE = "size";

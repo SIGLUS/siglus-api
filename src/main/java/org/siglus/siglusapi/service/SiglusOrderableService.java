@@ -34,6 +34,7 @@ import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -56,6 +57,7 @@ public class SiglusOrderableService {
   @Autowired
   private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
 
+  @Cacheable("siglus~api~orderables")
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
     Page<OrderableDto> orderableDtoPage = orderableReferenceDataService

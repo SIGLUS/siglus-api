@@ -18,6 +18,7 @@ package org.openlmis.stockmanagement.dto.referencedata;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -36,7 +37,12 @@ import lombok.ToString;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class OrderableDto {
+// [SIGLUS change start]
+// [change reason]: add interface Serializable
+// public class OrderableDto {
+public class OrderableDto implements Serializable {
+  // [SIGLUS change end]
+
   private UUID id;
   private String productCode;
   private String fullProductName;

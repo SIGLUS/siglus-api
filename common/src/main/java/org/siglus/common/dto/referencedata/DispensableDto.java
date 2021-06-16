@@ -17,6 +17,7 @@ package org.siglus.common.dto.referencedata;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -30,7 +31,7 @@ import org.siglus.common.domain.referencedata.Dispensable;
 @AllArgsConstructor
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DispensableDto implements Dispensable.Exporter, Dispensable.Importer {
+public class DispensableDto implements Dispensable.Exporter, Dispensable.Importer, Serializable {
 
   private String dispensingUnit;
   private String sizeCode;
