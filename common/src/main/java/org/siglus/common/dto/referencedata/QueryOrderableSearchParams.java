@@ -22,11 +22,13 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.siglus.common.domain.referencedata.Code;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
 
+@EqualsAndHashCode
 @ToString
 public class QueryOrderableSearchParams implements Serializable {
 
@@ -35,7 +37,7 @@ public class QueryOrderableSearchParams implements Serializable {
   private static final String PROGRAM_CODE = "program";
   private static final String ID = "id";
 
-  private SearchParams queryParams;
+  private final SearchParams queryParams;
 
   /**
    * Wraps map of query params into an object. Remove parameters that should be managed by

@@ -16,6 +16,7 @@
 package org.siglus.common.dto.referencedata;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.io.Serializable;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -34,6 +35,7 @@ import org.siglus.common.domain.referencedata.Identifiable;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class BaseDto implements BaseImporter, BaseExporter, Identifiable {
+public abstract class BaseDto implements BaseImporter, BaseExporter, Identifiable, Serializable {
+
   private UUID id;
 }

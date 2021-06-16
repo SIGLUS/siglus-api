@@ -15,7 +15,6 @@
 
 package org.openlmis.stockmanagement.dto.referencedata;
 
-import java.io.Serializable;
 import java.time.ZonedDateTime;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -30,11 +29,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-// [SIGLUS change start]
-// [change reason]: add interface Serializable
-// public final class MetaDataDto {
-public final class MetaDataDto implements Serializable {
-  // [SIGLUS change end]
+public final class MetaDataDto {
 
   private Long versionNumber;
   private ZonedDateTime lastUpdated;

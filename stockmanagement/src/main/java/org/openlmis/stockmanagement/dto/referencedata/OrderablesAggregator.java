@@ -15,18 +15,13 @@
 
 package org.openlmis.stockmanagement.dto.referencedata;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.springframework.data.domain.Page;
 
-// [SIGLUS change start]
-// [change reason]: add interface Serializable
-// public class OrderablesAggregator {
-public class OrderablesAggregator implements Serializable {
-  // [SIGLUS change end]
+public class OrderablesAggregator {
 
   private List<OrderableDto> orderables = new ArrayList<>();
   private List<UUID> identifiers = new ArrayList<>();

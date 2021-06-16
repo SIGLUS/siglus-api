@@ -36,7 +36,7 @@ public class SiglusManagementController {
   @ResponseStatus(NO_CONTENT)
   public void invalidateCache() {
     cacheManager.getCacheNames().stream()
-        .filter(name -> name.startsWith("siglus~api"))
+        .filter(name -> name.startsWith("siglus"))
         .map(cacheManager::getCache)
         .forEach(Cache::clear);
   }

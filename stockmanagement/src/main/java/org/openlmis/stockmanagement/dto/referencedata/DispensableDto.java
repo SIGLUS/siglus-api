@@ -15,7 +15,6 @@
 
 package org.openlmis.stockmanagement.dto.referencedata;
 
-import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -27,11 +26,7 @@ import lombok.Setter;
 @EqualsAndHashCode
 @AllArgsConstructor
 @NoArgsConstructor
-// [SIGLUS change start]
-// [change reason]: add interface Serializable
-// public class DispensableDto {
-public class DispensableDto implements Serializable {
-  // [SIGLUS change end]
+public class DispensableDto {
 
   private String dispensingUnit;
   private String displayUnit;

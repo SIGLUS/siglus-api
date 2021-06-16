@@ -24,6 +24,7 @@ import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.service.client.BaseReferenceDataService;
 import org.siglus.common.util.RequestParameters;
 import org.siglus.siglusapi.constant.FieldConstants;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,7 @@ public class SiglusOrderableReferenceDataService
         : getPage(RequestParameters.init().set(FieldConstants.ID, ids)).getContent();
   }
 
+  @Cacheable("siglus-orderables")
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable) {
     RequestParameters parameters = RequestParameters.init()
