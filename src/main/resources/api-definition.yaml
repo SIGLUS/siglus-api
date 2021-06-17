@@ -2294,7 +2294,7 @@ traits:
             204:
               description: Program additional orderable deleted.
 
-    /mx:
+    /management:
       /caches:
         delete:
           is: [ secured ]

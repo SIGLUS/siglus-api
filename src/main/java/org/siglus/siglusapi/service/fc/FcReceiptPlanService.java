@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static java.util.Collections.emptyList;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SKIPPED;
 import static org.springframework.util.CollectionUtils.isEmpty;
@@ -189,7 +190,7 @@ public class FcReceiptPlanService {
 
   private Map<String, OrderableDto> getApprovedProductsMap(UserDto userDto, RequisitionV2Dto dto) {
     return approvedProductService
-        .getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId(), null)
+        .getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId(), emptyList())
         .stream()
         .map(ApprovedProductDto::getOrderable)
         .collect(Collectors.toMap(OrderableDto::getProductCode, orderableDto -> orderableDto));
