@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.management;
+package org.siglus.siglusapi.web;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 

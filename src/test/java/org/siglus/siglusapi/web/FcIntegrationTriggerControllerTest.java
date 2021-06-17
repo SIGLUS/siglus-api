@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.fc;
+package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
