@@ -51,6 +51,7 @@ import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionReposi
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -152,6 +153,7 @@ public class SiglusPhysicalInventoryService {
     return physicalInventoryStockManagementService.getPhysicalInventory(id);
   }
 
+  @Cacheable("siglus-physical-inventory")
   public PhysicalInventoryDto getPhysicalInventoryForAllProducts(UUID facilityId) {
     List<PhysicalInventoryDto> inventories = getPhysicalInventoryDtosForAllProducts(facilityId,
         Boolean.TRUE, Boolean.FALSE);

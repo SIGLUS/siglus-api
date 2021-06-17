@@ -19,6 +19,7 @@ import static com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING;
 import static java.util.stream.Collectors.toList;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,7 +35,8 @@ import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PhysicalInventoryDto {
+public class PhysicalInventoryDto implements Serializable {
+
   private UUID id;
 
   private UUID programId;

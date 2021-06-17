@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.config;
 
+import java.util.Collections;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +29,7 @@ public class RedisCacheConfig {
 
   @Bean
   public CacheManager cacheManager(RedisTemplate<Object, Object> redisTemplate) {
-    return new RedisCacheManager(redisTemplate);
+    return new RedisCacheManager(redisTemplate, Collections.emptyList(), true);
   }
 
 }
