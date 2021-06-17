@@ -29,10 +29,11 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusUserReferenceDataService;
@@ -189,9 +190,8 @@ public class FcReceiptPlanService {
   private Map<String, OrderableDto> getApprovedProductsMap(UserDto userDto, RequisitionV2Dto dto) {
     return approvedProductService
         .getApprovedProducts(userDto.getHomeFacilityId(), dto.getProgramId(), null)
-        .getOrderablesPage()
-        .getContent()
         .stream()
+        .map(ApprovedProductDto::getOrderable)
         .collect(Collectors.toMap(OrderableDto::getProductCode, orderableDto -> orderableDto));
   }
 

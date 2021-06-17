@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -28,7 +30,6 @@ import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SKIP
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,13 +43,14 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.StatusChange;
+import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateColumnDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
+import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
 import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.dto.referencedata.UserDto;
@@ -162,7 +164,7 @@ public class FcReceiptPlanServiceTest {
   public void shouldReturnFalseGivenEmptyReceiptPlan() {
 
     // when
-    boolean result = fcReceiptPlanService.processReceiptPlans(Collections.emptyList());
+    boolean result = fcReceiptPlanService.processReceiptPlans(emptyList());
 
     // then
     assertFalse(result);
@@ -252,7 +254,7 @@ public class FcReceiptPlanServiceTest {
     Requisition requisition = new Requisition();
     StatusChange statusChange = new StatusChange();
     when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
-        .thenReturn(Collections.emptyList());
+        .thenReturn(emptyList());
     Facility facility = new Facility();
     when(siglusFacilityRepository.findFirstByTypeId(any())).thenReturn(facility);
     when(userReferenceDataService.getUserInfo(any()))
@@ -268,18 +270,13 @@ public class FcReceiptPlanServiceTest {
         .thenReturn(requisitionDto);
     when(operatePermissionService.isEditable(any()))
         .thenReturn(true);
+    OrderableDto orderableDto = mock(OrderableDto.class);
+    when(orderableDto.getProductCode()).thenReturn(fnmCode);
+    when(orderableDto.getId()).thenReturn(orderableId);
+    ApprovedProductDto approvedProduct = mock(ApprovedProductDto.class);
+    when(approvedProduct.getOrderable()).thenReturn(orderableDto);
     when(approvedProductService.getApprovedProducts(any(), any(), any()))
-        .thenReturn(orderablesAggregator);
-    @SuppressWarnings("unchecked")
-    Page<OrderableDto> orderableDtoPage = (Page<OrderableDto>) mock(Page.class);
-    when(orderablesAggregator.getOrderablesPage())
-        .thenReturn(orderableDtoPage);
-    OrderableDto orderableDto = OrderableDto.builder()
-        .productCode(fnmCode)
-        .id(orderableId)
-        .build();
-    List<OrderableDto> orderableDtos = newArrayList(orderableDto);
-    when(orderableDtoPage.getContent()).thenReturn(orderableDtos);
+        .thenReturn(singletonList(approvedProduct));
     when(siglusRequisitionService.createRequisitionLineItem(any(), any()))
         .thenReturn(lineItems);
     when(requisitionRepository.findOne(requisitionId))
@@ -356,15 +353,11 @@ public class FcReceiptPlanServiceTest {
         .thenReturn(requisitionDto);
     when(operatePermissionService.isEditable(any()))
         .thenReturn(true);
+    OrderableDto orderableDto = mock(OrderableDto.class);
+    ApprovedProductDto approvedProduct = mock(ApprovedProductDto.class);
+    when(approvedProduct.getOrderable()).thenReturn(orderableDto);
     when(approvedProductService.getApprovedProducts(any(), any(), any()))
-        .thenReturn(orderablesAggregator);
-    @SuppressWarnings("unchecked")
-    Page<OrderableDto> orderableDtoPage = (Page<OrderableDto>) mock(Page.class);
-    when(orderablesAggregator.getOrderablesPage())
-        .thenReturn(orderableDtoPage);
-    OrderableDto orderableDto = OrderableDto.builder().build();
-    List<OrderableDto> orderableDtos = newArrayList(orderableDto);
-    when(orderableDtoPage.getContent()).thenReturn(orderableDtos);
+        .thenReturn(singletonList(approvedProduct));
     when(siglusRequisitionService.createRequisitionLineItem(any(), any()))
         .thenReturn(lineItems);
     when(requisitionRepository.findOne(requisitionId))

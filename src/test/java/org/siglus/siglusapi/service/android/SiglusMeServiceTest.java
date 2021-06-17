@@ -48,13 +48,10 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
-import org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableChildDto;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
-import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
@@ -187,9 +184,9 @@ public class SiglusMeServiceTest {
     when(orderableDataService.searchOrderables(any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
     when(approvedProductService.getApprovedProducts(facilityId, programId1, emptyList()))
-        .thenReturn(mockGetProductResponse(asList(mockApprovedProduct1(), mockApprovedProduct2())));
+        .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
     when(approvedProductService.getApprovedProducts(facilityId, programId2, emptyList()))
-        .thenReturn(mockGetProductResponse(singletonList(mockApprovedProduct3())));
+        .thenReturn(singletonList(mockApprovedProduct3()));
     when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId))
         .thenReturn(singleton(productId1.toString()));
   }
@@ -430,10 +427,6 @@ public class SiglusMeServiceTest {
     assertEquals(latestTime.toInstant(), product.getLastUpdated());
   }
 
-  private OrderablesAggregator mockGetProductResponse(List<ApprovedProductDto> products) {
-    return new OrderablesAggregator(products);
-  }
-
   private org.siglus.common.dto.referencedata.OrderableDto mockOrderable1() {
     String productCode = productCode1;
     org.siglus.common.dto.referencedata.OrderableDto orderable =
@@ -464,7 +457,6 @@ public class SiglusMeServiceTest {
     orderable.setProductCode(productCode);
     orderable.setFullProductName(genFullName(productCode));
     orderable.setNetContent(1L);
-    orderable.setChildren(emptySet());
     orderable.setExtraData(new HashMap<>());
     orderable.getMeta().setLastUpdated(oldTime);
     return approvedProduct;
@@ -506,13 +498,6 @@ public class SiglusMeServiceTest {
     orderable.setProductCode(productCode);
     orderable.setFullProductName(genFullName(productCode));
     orderable.setNetContent(2L);
-    orderable.setChildren(new HashSet<>());
-    OrderableChildDto child = new OrderableChildDto();
-    ObjectReferenceDto childRef = new ObjectReferenceDto();
-    childRef.setId(productId1);
-    child.setOrderable(childRef);
-    child.setQuantity(100);
-    orderable.getChildren().add(child);
     orderable.setExtraData(new HashMap<>());
     orderable.getMeta().setLastUpdated(latestTime);
     return approvedProduct;
@@ -550,7 +535,6 @@ public class SiglusMeServiceTest {
     orderable.setProductCode(productCode);
     orderable.setFullProductName(genFullName(productCode));
     orderable.setNetContent(2L);
-    orderable.setChildren(emptySet());
     orderable.setExtraData(new HashMap<>());
     orderable.getExtraData().put("isBasic", "true");
     orderable.getMeta().setLastUpdated(latestTime);

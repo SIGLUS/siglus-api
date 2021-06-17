@@ -28,9 +28,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
@@ -56,7 +56,6 @@ import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -130,8 +129,6 @@ public class SiglusMeService {
         .findUserSupportedPrograms().stream()
         .map(programDataService::findOne)
         .map(program -> getProgramProducts(homeFacilityId, program))
-        .map(OrderablesAggregator::getOrderablesPage)
-        .map(Slice::getContent)
         .flatMap(Collection::stream)
         .map(orderable -> {
           OrderableDto dto = allProducts.get(orderable.getId());
@@ -147,12 +144,16 @@ public class SiglusMeService {
     return syncResponse;
   }
 
-  private OrderablesAggregator getProgramProducts(UUID homeFacilityId, ProgramDto program) {
-    OrderablesAggregator approvedProducts = approvedProductDataService
-        .getApprovedProducts(homeFacilityId, program.getId(), emptyList());
-    approvedProducts.getOrderablesPage()
-        .forEach(orderable -> orderable.getExtraData().put(KEY_PROGRAM_CODE, program.getCode()));
-    return approvedProducts;
+  private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId,
+      ProgramDto program) {
+    return approvedProductDataService
+        .getApprovedProducts(homeFacilityId, program.getId(), emptyList()).stream()
+        .map(ApprovedProductDto::getOrderable)
+        .map(orderable -> {
+          orderable.getExtraData().put(KEY_PROGRAM_CODE, program.getCode());
+          return orderable;
+        })
+        .collect(Collectors.toList());
   }
 
   private boolean filterByLastUpdated(OrderableDto approvedProduct, Instant lastSyncTime) {

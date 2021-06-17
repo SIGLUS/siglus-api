@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.Collections.emptyList;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.common.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.common.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
@@ -33,10 +34,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
@@ -94,7 +95,7 @@ public class SiglusPhysicalInventoryService {
           return createNewDraft(dto);
         }).collect(Collectors.toList());
     if (CollectionUtils.isNotEmpty(inventories)) {
-      return getResultInventory(inventories, Collections.emptyList());
+      return getResultInventory(inventories, emptyList());
     }
     return null;
   }
@@ -287,23 +288,26 @@ public class SiglusPhysicalInventoryService {
   }
 
   private List<PhysicalInventoryLineItemDto> buildInitialInventoryLineItemDtos(
-      Set<UUID> supportedVirtualPrograms, UUID facilityId) {
-    List<PhysicalInventoryLineItemDto> physicalInventoryLineItemDtos = new ArrayList<>();
-    supportedVirtualPrograms.forEach(supportedVirtualProgram -> {
-      List<OrderableDto> approvedProductDtos = approvedProductReferenceDataService
-          .getApprovedProducts(facilityId, supportedVirtualProgram, null).getOrderablesPage()
-          .getContent();
-      approvedProductDtos.forEach(orderable -> {
-        if (Boolean.parseBoolean(orderable.getExtraData().get(IS_BASIC))) {
-          PhysicalInventoryLineItemDto lineItem = PhysicalInventoryLineItemDto.builder()
-              .orderableId(orderable.getId())
-              .programId(supportedVirtualProgram)
-              .build();
-          physicalInventoryLineItemDtos.add(lineItem);
-        }
-      });
-    });
-    return physicalInventoryLineItemDtos;
+      Set<UUID> supportedVirtualProgramIds, UUID facilityId) {
+    return supportedVirtualProgramIds.stream()
+        .map(programId ->
+            approvedProductReferenceDataService
+                .getApprovedProducts(facilityId, programId, emptyList()).stream()
+                .map(ApprovedProductDto::getOrderable)
+                .filter(o -> o.getExtraData().containsKey(IS_BASIC))
+                .filter(o -> Boolean.parseBoolean(o.getExtraData().get(IS_BASIC)))
+                .map(o -> newLineItem(o.getId(), programId))
+                .collect(Collectors.toList())
+        )
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+  }
+
+  private PhysicalInventoryLineItemDto newLineItem(UUID orderableId, UUID programId) {
+    return PhysicalInventoryLineItemDto.builder()
+        .orderableId(orderableId)
+        .programId(programId)
+        .build();
   }
 
   private PhysicalInventoryDto getResultInventory(List<PhysicalInventoryDto> inventories,

@@ -42,6 +42,10 @@ public final class OrderableDto extends BasicOrderableDto {
   private Set<ProgramOrderableDto> programs;
   private DispensableDto dispensable;
   private Map<String, String> identifiers;
+  // [SIGLUS change start]
+  // [change reason]: add extra data
+  private Map<String, String> extraData;
+  // [SIGLUS change end]
 
   /**
    * Gets ProgramOrderableDto in programs using programId. If it can't be found an exception will be

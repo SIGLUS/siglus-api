@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +33,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -44,12 +46,11 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
-import org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
-import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
@@ -331,13 +332,13 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(Sets.newHashSet(programIdOne));
     Map<String, String> extraData = newHashMap();
     extraData.put(IS_BASIC, "true");
-    ApprovedProductDto approvedProductDto = new ApprovedProductDto(
-        OrderableDto.builder()
-            .id(orderableId)
-            .extraData(extraData)
-            .build());
+    OrderableDto orderableDto = mock(OrderableDto.class);
+    when(orderableDto.getId()).thenReturn(orderableId);
+    when(orderableDto.getExtraData()).thenReturn(extraData);
+    ApprovedProductDto approvedProductDto = mock(ApprovedProductDto.class);
+    when(approvedProductDto.getOrderable()).thenReturn(orderableDto);
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programIdOne, null))
-        .thenReturn(new OrderablesAggregator(newArrayList(approvedProductDto)));
+        .thenReturn(Collections.singletonList(approvedProductDto));
     when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(any()))
         .thenReturn(PhysicalInventoryDto.builder().build());
 
