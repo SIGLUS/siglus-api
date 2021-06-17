@@ -16,6 +16,7 @@
 package org.openlmis.requisition.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.io.Serializable;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -25,7 +26,11 @@ import lombok.ToString;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @EqualsAndHashCode
 @ToString
-public class BaseDto {
+// [SIGLUS change start]
+// [change reason]: add Serializable
+//  public class BaseDto {
+public class BaseDto implements Serializable {
+  // [SIGLUS change end]
 
   @Getter
   @Setter

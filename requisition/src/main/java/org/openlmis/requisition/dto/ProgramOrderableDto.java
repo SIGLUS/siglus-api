@@ -17,6 +17,7 @@ package org.openlmis.requisition.dto;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import java.io.Serializable;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -32,7 +33,12 @@ import org.openlmis.requisition.utils.MoneySerializer;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public final class ProgramOrderableDto {
+// [SIGLUS change start]
+// [change reason]: add Serializable
+// public final class ProgramOrderableDto {
+public final class ProgramOrderableDto implements Serializable {
+  // [SIGLUS change end]
+
   private UUID programId;
   private UUID orderableDisplayCategoryId;
   private String orderableCategoryDisplayName;

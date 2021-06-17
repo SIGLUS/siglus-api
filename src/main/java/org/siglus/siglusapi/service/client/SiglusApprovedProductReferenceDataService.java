@@ -30,6 +30,7 @@ import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.common.service.client.BaseReferenceDataService;
 import org.siglus.common.util.RequestParameters;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -82,6 +83,7 @@ public class SiglusApprovedProductReferenceDataService extends
    * @param programId  id of the program
    * @return wrapped collection of approved products matching the search criteria
    */
+  @Cacheable("siglus-approved-products")
   public List<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId,
       Collection<UUID> orderableIds) {
     RequestParameters params = RequestParameters.init();

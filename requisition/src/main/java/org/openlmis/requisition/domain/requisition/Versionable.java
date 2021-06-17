@@ -15,9 +15,14 @@
 
 package org.openlmis.requisition.domain.requisition;
 
+import java.io.Serializable;
 import java.util.UUID;
 
-public interface Versionable {
+// [SIGLUS change start]
+// [change reason]: add Serializable
+// public interface Versionable {
+public interface Versionable extends Serializable {
+  // [SIGLUS change end]
 
   UUID getId();
 

@@ -15,6 +15,7 @@
 
 package org.openlmis.requisition.dto;
 
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -26,7 +27,12 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode
-public final class DispensableDto {
+// [SIGLUS change start]
+// [change reason]: add Serializable
+// public final class DispensableDto {
+public final class DispensableDto implements Serializable {
+  // [SIGLUS change end]
+
   private String dispensingUnit;
   private String displayUnit;
 }
