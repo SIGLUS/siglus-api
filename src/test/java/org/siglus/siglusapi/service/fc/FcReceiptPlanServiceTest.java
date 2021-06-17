@@ -51,7 +51,6 @@ import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
-import org.openlmis.stockmanagement.dto.referencedata.OrderablesAggregator;
 import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusUserReferenceDataService;
@@ -247,12 +246,11 @@ public class FcReceiptPlanServiceTest {
     SiglusRequisitionDto requisitionDto = mock(SiglusRequisitionDto.class);
     when(requisitionDto.getTemplate()).thenReturn(template);
 
-    OrderablesAggregator orderablesAggregator = mock(OrderablesAggregator.class);
     SiglusRequisitionLineItemDto lineItem = new SiglusRequisitionLineItemDto(requisitionLineItem,
         null);
     List<SiglusRequisitionLineItemDto> lineItems = newArrayList(lineItem);
-    Requisition requisition = new Requisition();
-    StatusChange statusChange = new StatusChange();
+    when(siglusRequisitionService.createRequisitionLineItem(any(), any()))
+        .thenReturn(lineItems);
     when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
         .thenReturn(emptyList());
     Facility facility = new Facility();
@@ -270,17 +268,17 @@ public class FcReceiptPlanServiceTest {
         .thenReturn(requisitionDto);
     when(operatePermissionService.isEditable(any()))
         .thenReturn(true);
-    OrderableDto orderableDto = mock(OrderableDto.class);
-    when(orderableDto.getProductCode()).thenReturn(fnmCode);
-    when(orderableDto.getId()).thenReturn(orderableId);
-    ApprovedProductDto approvedProduct = mock(ApprovedProductDto.class);
-    when(approvedProduct.getOrderable()).thenReturn(orderableDto);
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setProductCode(fnmCode);
+    orderableDto.setId(orderableId);
+    ApprovedProductDto approvedProduct = new ApprovedProductDto();
+    approvedProduct.setOrderable(orderableDto);
     when(approvedProductService.getApprovedProducts(any(), any(), any()))
         .thenReturn(singletonList(approvedProduct));
-    when(siglusRequisitionService.createRequisitionLineItem(any(), any()))
-        .thenReturn(lineItems);
+    Requisition requisition = new Requisition();
     when(requisitionRepository.findOne(requisitionId))
         .thenReturn(requisition);
+    StatusChange statusChange = new StatusChange();
     when(siglusStatusChangeRepository.findByRequisitionIdAndStatus(any(), any()))
         .thenReturn(statusChange);
 
@@ -330,12 +328,6 @@ public class FcReceiptPlanServiceTest {
 
     SiglusRequisitionDto requisitionDto = mock(SiglusRequisitionDto.class);
     when(requisitionDto.getTemplate()).thenReturn(template);
-    OrderablesAggregator orderablesAggregator = mock(OrderablesAggregator.class);
-    SiglusRequisitionLineItemDto lineItem = new SiglusRequisitionLineItemDto(requisitionLineItem,
-        null);
-    List<SiglusRequisitionLineItemDto> lineItems = newArrayList(lineItem);
-    Requisition requisition = new Requisition();
-    StatusChange statusChange = new StatusChange();
     when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
         .thenReturn(newArrayList(receiptPlan));
     Facility facility = new Facility();
@@ -353,15 +345,20 @@ public class FcReceiptPlanServiceTest {
         .thenReturn(requisitionDto);
     when(operatePermissionService.isEditable(any()))
         .thenReturn(true);
-    OrderableDto orderableDto = mock(OrderableDto.class);
-    ApprovedProductDto approvedProduct = mock(ApprovedProductDto.class);
-    when(approvedProduct.getOrderable()).thenReturn(orderableDto);
+    OrderableDto orderableDto = new OrderableDto();
+    ApprovedProductDto approvedProduct = new ApprovedProductDto();
+    approvedProduct.setOrderable(orderableDto);
     when(approvedProductService.getApprovedProducts(any(), any(), any()))
         .thenReturn(singletonList(approvedProduct));
+    SiglusRequisitionLineItemDto lineItem = new SiglusRequisitionLineItemDto(requisitionLineItem,
+        null);
+    List<SiglusRequisitionLineItemDto> lineItems = newArrayList(lineItem);
     when(siglusRequisitionService.createRequisitionLineItem(any(), any()))
         .thenReturn(lineItems);
+    Requisition requisition = new Requisition();
     when(requisitionRepository.findOne(requisitionId))
         .thenReturn(requisition);
+    StatusChange statusChange = new StatusChange();
     when(siglusStatusChangeRepository.findByRequisitionIdAndStatus(any(), any()))
         .thenReturn(statusChange);
 

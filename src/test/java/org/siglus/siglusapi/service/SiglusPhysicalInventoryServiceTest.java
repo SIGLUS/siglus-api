@@ -17,12 +17,12 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
+import static java.util.Collections.emptyList;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -332,12 +332,13 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(Sets.newHashSet(programIdOne));
     Map<String, String> extraData = newHashMap();
     extraData.put(IS_BASIC, "true");
-    OrderableDto orderableDto = mock(OrderableDto.class);
-    when(orderableDto.getId()).thenReturn(orderableId);
-    when(orderableDto.getExtraData()).thenReturn(extraData);
-    ApprovedProductDto approvedProductDto = mock(ApprovedProductDto.class);
-    when(approvedProductDto.getOrderable()).thenReturn(orderableDto);
-    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programIdOne, null))
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    orderableDto.setExtraData(extraData);
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
+    approvedProductDto.setOrderable(orderableDto);
+    when(approvedProductReferenceDataService
+        .getApprovedProducts(facilityId, programIdOne, emptyList()))
         .thenReturn(Collections.singletonList(approvedProductDto));
     when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(any()))
         .thenReturn(PhysicalInventoryDto.builder().build());

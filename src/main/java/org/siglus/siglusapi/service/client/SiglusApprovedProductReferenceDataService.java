@@ -82,24 +82,6 @@ public class SiglusApprovedProductReferenceDataService extends
    * @param programId  id of the program
    * @return wrapped collection of approved products matching the search criteria
    */
-//  public OrderablesAggregator getApprovedProducts(UUID facilityId, UUID programId,
-//      Collection<UUID> orderableIds) {
-//    RequestParameters params = RequestParameters.init();
-//
-//    params.set("programId", programId);
-//
-//    if (!isEmpty(orderableIds)) {
-//      params.set("orderableId", orderableIds);
-//    }
-//    if (!programOrderableRepository.findByProgramId(programId).isEmpty()) {
-//      Page<org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto> approvedProductPage =
-//          getPage(facilityId + "/approvedProducts", params, null, HttpMethod.GET,
-//              org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto.class);
-//      System.out.println(approvedProductPage.getTotalElements());
-//      return new OrderablesAggregator(new ArrayList<>(approvedProductPage.getContent()));
-//    }
-//    return new OrderablesAggregator(new ArrayList<>());
-//  }
   public List<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId,
       Collection<UUID> orderableIds) {
     RequestParameters params = RequestParameters.init();
