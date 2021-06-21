@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web.android;
 
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
+import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -63,7 +64,8 @@ public class SiglusMeController {
 
   @PostMapping("/app-info")
   @ResponseStatus(NO_CONTENT)
-  public void processAppInfo(HttpServletRequest httpServletRequest) throws Exception {
+  public void processAppInfo(HttpServletRequest httpServletRequest)
+      throws InvocationTargetException, IllegalAccessException {
     AppInfo appInfo = new AppInfo();
     BeanUtils.copyProperties(appInfo, AndroidConstants.getAndroidHeader(httpServletRequest));
     service.processAppInfo(appInfo);

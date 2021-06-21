@@ -22,6 +22,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -113,10 +114,19 @@ public class SiglusMeControllerTest {
   }
 
   @Test
-  public void shouldCallServiceWhenProcessAppInfo() throws Exception {
+  public void shouldCallServiceWhenProcessAppInfo()
+      throws InvocationTargetException, IllegalAccessException {
     // given
     MockHttpServletRequest request = new MockHttpServletRequest("POST",
             "/api/siglusapi/android/me/app-info");
+    request.addHeader("UserName", "CS_Moine_Role1");
+    request.addHeader("FacilityCode", "01080904");
+    request.addHeader("FacilityName", "Centro de Saude de Chiunze");
+    request.addHeader("UniqueId", "ac36c07a09f2fdca");
+    request.addHeader("DeviceInfo",
+        "OS: 9 Model: google Android SDK built for x86versionCode:87.1");
+    request.addHeader("VersionCode", 87);
+    request.addHeader("AndroidSDKVersion", 28);
     doNothing().when(service).processAppInfo(any(AppInfo.class));
 
     // when
@@ -124,6 +134,13 @@ public class SiglusMeControllerTest {
 
     // then
     verify(service).processAppInfo(any(AppInfo.class));
+    ArgumentCaptor<AppInfo> argument = ArgumentCaptor.forClass(AppInfo.class);
+    verify(service).processAppInfo(argument.capture());
+    assertEquals("CS_Moine_Role1", argument.getValue().getUsername());
+    assertEquals("01080904", argument.getValue().getFacilityCode());
+    assertEquals("ac36c07a09f2fdca", argument.getValue().getUniqueId());
+    assertEquals(Integer.valueOf(87), argument.getValue().getVersionCode());
+    assertEquals(Integer.valueOf(28),argument.getValue().getAndroidSdkVersion());
   }
 
   @Test

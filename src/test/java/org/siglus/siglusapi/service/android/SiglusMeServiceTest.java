@@ -37,6 +37,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -578,14 +579,12 @@ public class SiglusMeServiceTest {
   }
 
   private List<HfCmmDto> mockRequestHfCmms() {
-    List<HfCmmDto> list = new ArrayList<>();
-    list.add(HfCmmDto.builder()
-            .cmm(11.0)
-            .productCode(productCode)
-            .periodBegin(periodBegin)
-            .periodEnd(periodEnd)
-            .build());
-    return list;
+    return Collections.singletonList(HfCmmDto.builder()
+        .cmm(11.0)
+        .productCode(productCode)
+        .periodBegin(periodBegin)
+        .periodEnd(periodEnd)
+        .build());
   }
 
   private HfCmm mockExistFacilityCmms() {
