@@ -79,9 +79,7 @@ public class SiglusArchiveProductService {
     Set<UUID> orderablesInKit = unpackService.orderablesInKit();
     String errorInfo = "facilityId: " + facilityId + ", orderableId: " + orderableId;
     if (orderablesInKit.contains(orderableId)) {
-      throw new ValidationMessageException(
-          new Message(ERROR_ARCHIVE_CANNOT_ARCHIVE_ORDERABLE_IN_KIT) + errorInfo);
-
+      throw new ValidationMessageException(new Message(ERROR_ARCHIVE_CANNOT_ARCHIVE_ORDERABLE_IN_KIT) + errorInfo);
     }
     List<StockCard> stockCards = stockCardRepository
         .findByFacilityIdAndOrderableId(facilityId, orderableId);
@@ -92,8 +90,7 @@ public class SiglusArchiveProductService {
     stockCards.forEach(stockCard -> {
       calculatedStockOnHandService.fetchCurrentStockOnHand(stockCard);
       if (0 != stockCard.getStockOnHand()) {
-        throw new ValidationMessageException(
-            new Message(ERROR_ARCHIVE_SOH_SHOULD_BE_ZERO) + errorInfo);
+        throw new ValidationMessageException(new Message(ERROR_ARCHIVE_SOH_SHOULD_BE_ZERO) + errorInfo);
       }
     });
     ArchivedProduct archivedProduct = archivedProductRepository

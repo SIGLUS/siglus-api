@@ -103,13 +103,10 @@ public class SiglusStockCardSummariesService {
         return Pagination.getPage(Collections.emptyList(), pageable);
       } else if (needFilterOrSearchAllProgram(orderableIds, parameters, archivedProducts,
           programIds)) {
-        // TODO start: Revert required after V3 upgraded
-        // searchPageable = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
-        // TODO end: Revert required after V3 upgraded
+        // revert below code after V3 upgraded
         getSummaries(parameters, archivedProducts, v2SearchParams, orderableIds, summaryV2Dtos);
       } else {
-        // TODO start: Revert required after V3 upgraded
-        // return siglusStockManagementService.search(v2SearchParams, searchPageable);
+        // revert below code after V3 upgraded
         if (!programOrderableRepository.findByProgramId(v2SearchParams.getProgramId()).isEmpty()) {
           StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
           List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
@@ -120,7 +117,6 @@ public class SiglusStockCardSummariesService {
           return Pagination.getPage(dtos, pageable);
         }
         return Pagination.getPage(Collections.emptyList(), pageable);
-        // TODO end: Revert required after V3 upgraded
       }
     }
     return Pagination.getPage(summaryV2Dtos, pageable);
@@ -154,9 +150,7 @@ public class SiglusStockCardSummariesService {
   private void getSummaries(MultiValueMap<String, String> parameters, Set<String> archivedProducts,
       StockCardSummariesV2SearchParams v2SearchParams, List<UUID> orderableIds,
       List<StockCardSummaryV2Dto> summaryV2Dtos) {
-    // TODO start: Revert required after V3 upgraded
-    // List<StockCardSummaryV2Dto> summaries =
-    //     siglusStockManagementService.search(v2SearchParams, searchPageable).getContent();
+    // revert below code after V3 upgraded
     List<StockCardSummaryV2Dto> summaries = newArrayList();
     if (!programOrderableRepository.findByProgramId(v2SearchParams.getProgramId()).isEmpty()) {
       StockCardSummaries stockCardSummaries = stockCardSummariesService
@@ -167,7 +161,6 @@ public class SiglusStockCardSummariesService {
           stockCardSummaries.getOrderableFulfillMap(),
           v2SearchParams.isNonEmptyOnly());
     }
-    // TODO end: Revert required after V3 upgraded
     summaries = filterByOrderableIds(orderableIds, summaries);
     if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED))) {
       summaryV2Dtos.addAll(summaries.stream()

@@ -337,12 +337,9 @@ public class SiglusRequisitionService {
 
     for (UUID orderableId : orderableIds) {
       boolean alreadyHaveCurrentOrderable = existedRequisition.getRequisitionLineItems().stream()
-          .anyMatch(
-              requisitionLineItem -> requisitionLineItem.getOrderable().getId().equals(orderableId)
-          );
+          .anyMatch(requisitionLineItem -> requisitionLineItem.getOrderable().getId().equals(orderableId));
       if (alreadyHaveCurrentOrderable) {
-        throw new ValidationMessageException(
-            new Message(MessageKeys.ERROR_ORDERABLE_ALREADY_IN_GIVEN_REQUISITION));
+        throw new ValidationMessageException(new Message(MessageKeys.ERROR_ORDERABLE_ALREADY_IN_GIVEN_REQUISITION));
       }
     }
 

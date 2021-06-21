@@ -54,6 +54,7 @@ import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -493,8 +494,7 @@ public class SiglusOrderService {
     setOrderLineItemExtension(orderDto.orderLineItems());
   }
 
-  private List<org.openlmis.fulfillment.web.util.OrderLineItemDto> setOrderLineItemExtension(
-      List<org.openlmis.fulfillment.web.util.OrderLineItemDto> lineItems) {
+  private void setOrderLineItemExtension(List<OrderLineItemDto> lineItems) {
     Set<UUID> lineItemIds = lineItems.stream().map(OrderLineItem.Importer::getId)
         .collect(Collectors.toSet());
     Map<UUID, OrderLineItemExtension> lineItemExtensionMap = lineItemExtensionRepository
@@ -509,7 +509,6 @@ public class SiglusOrderService {
         lineItem.setAdded(extension.isAdded());
       }
     });
-    return lineItems;
   }
 
   private String replaceLast(String text, String regex, String replacement) {
