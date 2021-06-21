@@ -13,21 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.config;
+package org.siglus.siglusapi.interceptor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 
 @Aspect
-@Configuration
+@Component
 @Profile("local")
 @Slf4j
-public class PerformanceConfig {
+public class ServiceLogAspect {
 
   @Pointcut("execution(* org.siglus.siglusapi.service..*(..)))")
   public void allServiceMethods() {
