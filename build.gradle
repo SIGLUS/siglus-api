@@ -194,7 +194,6 @@ jacocoTestReport {
                     'org/siglus/siglusapi/i18n',
                     'org/siglus/siglusapi/service/client',
                     'org/siglus/siglusapi/domain',
-                    'org/siglus/siglusapi/dto',
                     'org/siglus/siglusapi/repository'
             ])
         })
@@ -210,7 +209,6 @@ jacocoTestCoverageVerification {
                     'org/siglus/siglusapi/i18n',
                     'org/siglus/siglusapi/service/client',
                     'org/siglus/siglusapi/domain',
-                    'org/siglus/siglusapi/dto',
                     'org/siglus/siglusapi/repository'
             ])
         })
@@ -220,7 +218,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.89
+                minimum = 0.8773
             }
         }
     }
