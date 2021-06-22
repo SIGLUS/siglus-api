@@ -35,9 +35,9 @@ public class StockCardCreateRequest {
   @Min(0)
   @NotNull
   @JsonProperty("SOH")
+  // after the adjustment
   private Integer stockOnHand;
 
-  @Min(0)
   @NotNull
   private Integer quantity;
 
@@ -55,6 +55,8 @@ public class StockCardCreateRequest {
 
   private String signature;
 
+  // TODO check order by time ascending
+  // TODO check consistent by lot
   @Valid
   @NotEmpty
   @JsonProperty("lotEventList")

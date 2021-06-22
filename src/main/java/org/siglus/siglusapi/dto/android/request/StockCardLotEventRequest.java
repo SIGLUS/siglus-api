@@ -37,7 +37,6 @@ public class StockCardLotEventRequest {
   @JsonProperty("SOH")
   private Integer stockOnHand;
 
-  @Min(0)
   @NotNull
   private Integer quantity;
 

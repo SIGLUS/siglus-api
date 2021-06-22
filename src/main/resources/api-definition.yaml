@@ -2363,6 +2363,17 @@ traits:
               204:
                 description: Full update archived products of current facility
 
+        /stockCards:
+          displayName: Submit stock cards
+          post:
+            is: [ secured ]
+            body:
+              application/json:
+                schema: arrayOfStrings
+            responses:
+              201:
+                description: submit success
+
       /app-info:
         displayName: Process AppInfo
         post:

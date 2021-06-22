@@ -51,6 +51,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -84,8 +85,6 @@ public class Application {
 
   private static final String CLASSPATH_MESSAGES = "classpath:messages";
   private static final String UTF_8 = "UTF-8";
-  private static final String HIBERNATE_VALIDATION_MESSAGES =
-      "classpath:org/hibernate/validator/ValidationMessages";
 
   @Value("${defaultLocale}")
   private Locale locale;
@@ -283,14 +282,13 @@ public class Application {
     return () -> authenticationHelper.getCurrentUserId().orElse(null);
   }
 
+  // diff from messageSource() is in this method, the useCodeAsDefaultMessage is disabled
+  // so the expression will be explained in the EL container instead of direct return code
+  // https://stackoverflow.com/questions/38714521/hibernate-expression-language-does-not-work
   private MessageSource validationMessageSource() {
-    ExposedMessageSourceImpl messageSource = new ExposedMessageSourceImpl();
-    messageSource
-        .setBasenames(HIBERNATE_VALIDATION_MESSAGES, CLASSPATH_MESSAGES);
+    ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
+    messageSource.setBasenames(CLASSPATH_MESSAGES);
     messageSource.setDefaultEncoding(UTF_8);
-    // https://stackoverflow.com/questions/38714521/hibernate-expression-language-does-not-work
-    // it works but i don't know why
-    messageSource.setUseCodeAsDefaultMessage(false);
     return messageSource;
   }
 

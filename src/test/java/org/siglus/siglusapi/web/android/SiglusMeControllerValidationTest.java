@@ -30,6 +30,8 @@ import java.util.Map;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.executable.ExecutableValidator;
+import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
+import org.hibernate.validator.resourceloading.PlatformResourceBundleLocator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +40,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public class SiglusMeControllerValidationTest {
 
   private static final String MAY_NOT_BE_EMPTY = "may not be empty";
@@ -59,10 +62,14 @@ public class SiglusMeControllerValidationTest {
   public void setup() throws NoSuchMethodException {
     Locale.setDefault(Locale.ENGLISH);
     mapper.registerModule(new JavaTimeModule());
+    ResourceBundleMessageInterpolator messageInterpolator =
+        new ResourceBundleMessageInterpolator(new PlatformResourceBundleLocator("messages"));
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     stockCardCreateRequestList = mapper.getTypeFactory()
         .constructCollectionType(List.class, StockCardCreateRequest.class);
-    forExecutables = Validation.buildDefaultValidatorFactory().getValidator().forExecutables();
+    forExecutables = Validation.byDefaultProvider().configure()
+        .messageInterpolator(messageInterpolator)
+        .buildValidatorFactory().getValidator().forExecutables();
     createStockCards = SiglusMeController.class.getDeclaredMethod("createStockCards", List.class);
   }
 
@@ -110,7 +117,7 @@ public class SiglusMeControllerValidationTest {
       throws IOException {
     // given
     String json = "[{\n"
-        + "\t\"SOH\": \"3\",\n"
+        + "\t\"SOH\": \"13\",\n"
         + "\t\"quantity\": 10,\n"
         + "\t\"occurred\": \"2021-06-17\",\n"
         + "\t\"documentationNo\": \"doc-001\",\n"
@@ -128,7 +135,6 @@ public class SiglusMeControllerValidationTest {
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
 
     // then
-    System.out.println(violations);
     assertEquals(4, violations.size());
     assertEquals(MAY_NOT_BE_NULL,
         violations.get("createStockCards.arg0[0].lotEvents[0].stockOnHand"));
@@ -170,15 +176,201 @@ public class SiglusMeControllerValidationTest {
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
 
     // then
-    assertEquals(4, violations.size());
-    assertEquals(MUST_BE_POSITIVE,
-        violations.get("createStockCards.arg0[0].quantity"));
+    assertEquals(2, violations.size());
     assertEquals(MUST_BE_POSITIVE,
         violations.get("createStockCards.arg0[0].stockOnHand"));
     assertEquals(MUST_BE_POSITIVE,
-        violations.get("createStockCards.arg0[0].lotEvents[0].quantity"));
-    assertEquals(MUST_BE_POSITIVE,
         violations.get("createStockCards.arg0[0].lotEvents[0].stockOnHand"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentInitSoh()
+      throws IOException {
+    // given
+    String json = "[{\n"
+        + "\t\"SOH\": \"10\",\n" // should be greater than or equal to 20
+        + "\t\"quantity\": 20,\n"
+        + "\t\"occurred\": \"2021-06-17\",\n"
+        + "\t\"documentationNo\": \"doc-002\",\n"
+        + "\t\"productCode\": \"08S01Z\",\n"
+        + "\t\"type\": \"ADJUSTMENT\",\n"
+        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
+        + "\t\"signature\": \"zhangsan\",\n"
+        + "\t\"lotEventList\": [{\n"
+        + "\t\t\"SOH\": \"15\",\n"
+        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
+        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
+        + "\t\t\"quantity\": 20,\n"
+        + "\t\t\"reasonName\": \"CUSTOMER_RETURN\",\n"
+        + "\t\t\"documentationNo\": \"doc-001\"\n"
+        + "\t}]\n"
+        + "}]";
+    Object param = mapper.readValue(json, stockCardCreateRequestList);
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The records of the product 08S01Z are not consistent.",
+        violations.get("createStockCards.arg0"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentGap()
+      throws IOException {
+    // given
+    String json = "[{\n"
+        + "\t\"SOH\": \"40\",\n" // should be 35
+        + "\t\"quantity\": -5,\n"
+        + "\t\"occurred\": \"2021-06-17\",\n"
+        + "\t\"documentationNo\": \"doc-002\",\n"
+        + "\t\"productCode\": \"08S01Z\",\n"
+        + "\t\"type\": \"ADJUSTMENT\",\n"
+        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
+        + "\t\"signature\": \"zhangsan\",\n"
+        + "\t\"lotEventList\": [{\n"
+        + "\t\t\"SOH\": \"15\",\n"
+        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
+        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
+        + "\t\t\"quantity\": -5,\n"
+        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
+        + "\t\t\"documentationNo\": \"doc-001\"\n"
+        + "\t}]\n"
+        + "}, {\n"
+        + "\t\"SOH\": \"40\",\n"
+        + "\t\"quantity\": -20,\n"
+        + "\t\"occurred\": \"2021-06-16\",\n"
+        + "\t\"documentationNo\": \"doc-001\",\n"
+        + "\t\"productCode\": \"08S01Z\",\n"
+        + "\t\"type\": \"ADJUSTMENT\",\n"
+        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
+        + "\t\"signature\": \"zhangsan\",\n"
+        + "\t\"lotEventList\": [{\n"
+        + "\t\t\"SOH\": \"40\",\n"
+        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
+        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
+        + "\t\t\"quantity\": -20,\n"
+        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
+        + "\t\t\"documentationNo\": \"doc-001\"\n"
+        + "\t}]\n"
+        + "}, {\n" // interference item
+        + "\t\"SOH\": \"40\",\n"
+        + "\t\"quantity\": -20,\n"
+        + "\t\"occurred\": \"2021-06-15\",\n"
+        + "\t\"documentationNo\": \"doc-001\",\n"
+        + "\t\"productCode\": \"08S01S\",\n"
+        + "\t\"type\": \"ADJUSTMENT\",\n"
+        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
+        + "\t\"signature\": \"zhangsan\",\n"
+        + "\t\"lotEventList\": [{\n"
+        + "\t\t\"SOH\": \"40\",\n"
+        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
+        + "\t\t\"lotNumber\": \"SEM-LOTE-02A02-062021\",\n"
+        + "\t\t\"quantity\": -20,\n"
+        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
+        + "\t\t\"documentationNo\": \"doc-001\"\n"
+        + "\t}]\n"
+        + "}]";
+    Object param = mapper.readValue(json, stockCardCreateRequestList);
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The records of the product 08S01Z are not consistent.",
+        violations.get("createStockCards.arg0"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentStockCard()
+      throws IOException {
+    // given
+    String json = "[{\n"
+        + "\t\"SOH\": \"40\",\n"
+        + "\t\"quantity\": 15,\n"
+        + "\t\"occurred\": \"2021-06-17\",\n"
+        + "\t\"documentationNo\": \"doc-002\",\n"
+        + "\t\"productCode\": \"08S01Z\",\n"
+        + "\t\"type\": \"ADJUSTMENT\",\n"
+        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
+        + "\t\"signature\": \"zhangsan\",\n"
+        + "\t\"lotEventList\": [{\n"
+        + "\t\t\"SOH\": \"15\",\n"
+        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
+        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
+        + "\t\t\"quantity\": -5,\n"
+        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
+        + "\t\t\"documentationNo\": \"doc-001\"\n"
+        + "\t}]\n"
+        + "}, {\n"
+        + "\t\"SOH\": \"20\",\n" // should be 25
+        + "\t\"quantity\": -15,\n"
+        + "\t\"occurred\": \"2021-06-16\",\n"
+        + "\t\"documentationNo\": \"doc-001\",\n"
+        + "\t\"productCode\": \"08S01Z\",\n"
+        + "\t\"type\": \"ADJUSTMENT\",\n"
+        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
+        + "\t\"signature\": \"zhangsan\",\n"
+        + "\t\"lotEventList\": [{\n"
+        + "\t\t\"SOH\": \"40\",\n"
+        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
+        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
+        + "\t\t\"quantity\": -20,\n"
+        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
+        + "\t\t\"documentationNo\": \"doc-001\"\n"
+        + "\t}]\n"
+        + "}, {\n"
+        + "\t\"SOH\": \"40\",\n"
+        + "\t\"quantity\": -20,\n"
+        + "\t\"occurred\": \"2021-06-15\",\n"
+        + "\t\"documentationNo\": \"doc-001\",\n"
+        + "\t\"productCode\": \"08S01Z\",\n"
+        + "\t\"type\": \"ADJUSTMENT\",\n"
+        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
+        + "\t\"signature\": \"zhangsan\",\n"
+        + "\t\"lotEventList\": [{\n"
+        + "\t\t\"SOH\": \"40\",\n"
+        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
+        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
+        + "\t\t\"quantity\": -20,\n"
+        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
+        + "\t\t\"documentationNo\": \"doc-001\"\n"
+        + "\t}]\n"
+        + "}, {\n" // interference item
+        + "\t\"SOH\": \"40\",\n"
+        + "\t\"quantity\": -20,\n"
+        + "\t\"occurred\": \"2021-06-15\",\n"
+        + "\t\"documentationNo\": \"doc-001\",\n"
+        + "\t\"productCode\": \"08S01S\",\n"
+        + "\t\"type\": \"ADJUSTMENT\",\n"
+        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
+        + "\t\"signature\": \"zhangsan\",\n"
+        + "\t\"lotEventList\": [{\n"
+        + "\t\t\"SOH\": \"40\",\n"
+        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
+        + "\t\t\"lotNumber\": \"SEM-LOTE-02A02-062021\",\n"
+        + "\t\t\"quantity\": -20,\n"
+        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
+        + "\t\t\"documentationNo\": \"doc-001\"\n"
+        + "\t}]\n"
+        + "}]";
+    Object param = mapper.readValue(json, stockCardCreateRequestList);
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The records of the product 08S01Z are not consistent.",
+        violations.get("createStockCards.arg0"));
   }
 
 }
