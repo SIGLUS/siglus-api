@@ -44,6 +44,7 @@ import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
@@ -144,6 +145,10 @@ public class SiglusMeService {
     return syncResponse;
   }
 
+  public void createStockCards(List<StockCardCreateRequest> requests) {
+    throw new UnsupportedOperationException();
+  }
+
   private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId,
       ProgramDto program) {
     return approvedProductDataService
@@ -203,4 +208,5 @@ public class SiglusMeService {
     UUID homeFacilityId = userDto.getHomeFacilityId();
     return facilityReferenceDataService.getFacilityById(homeFacilityId);
   }
+
 }

@@ -159,11 +159,11 @@ public class SiglusMeControllerTest {
   private List<HfCmmDto> mockFacilityCmms() {
     List<HfCmmDto> list = new ArrayList<>();
     list.add(HfCmmDto.builder()
-            .cmm(122.0)
-            .productCode("05A13")
-            .periodBegin(LocalDate.of(2021,4,21))
-            .periodEnd(LocalDate.of(2021,5,20))
-            .build());
+        .cmm(122.0)
+        .productCode("05A13")
+        .periodBegin(LocalDate.of(2021, 4, 21))
+        .periodEnd(LocalDate.of(2021, 5, 20))
+        .build());
     return list;
   }
 }

@@ -15,20 +15,25 @@
 
 package org.siglus.siglusapi.web.android;
 
+import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.beanutils.BeanUtils;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,6 +43,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Validated
 @RestController
 @RequestMapping("/api/siglusapi/android/me")
 @RequiredArgsConstructor
@@ -59,7 +65,16 @@ public class SiglusMeController {
   @GetMapping("/facility/products")
   public ProductSyncResponse getFacilityProducts(
       @RequestParam(name = "lastSyncTime", required = false) Long lastSyncTime) {
-    return service.getFacilityProducts(lastSyncTime != null ? Instant.ofEpochMilli(lastSyncTime) : null);
+    Instant lastSync = lastSyncTime != null ? Instant.ofEpochMilli(lastSyncTime) : null;
+    return service.getFacilityProducts(lastSync);
+  }
+
+  @PostMapping("/facility/stockCards")
+  @ResponseStatus(CREATED)
+  public List<StockCardCreateRequest> createStockCards(
+      @Valid @RequestBody @NotEmpty List<StockCardCreateRequest> requests) {
+    service.createStockCards(requests);
+    return requests;
   }
 
   @PostMapping("/app-info")
