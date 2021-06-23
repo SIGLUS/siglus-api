@@ -27,7 +27,6 @@ import org.siglus.siglusapi.dto.android.constraints.ConsistentStockOnHand;
 @ConsistentStockOnHand
 public class StockCardLotEventRequest implements StockCardAdjustment {
 
-  // TODO lots may conflict on expirationDate
   @NotBlank
   private String lotNumber;
 

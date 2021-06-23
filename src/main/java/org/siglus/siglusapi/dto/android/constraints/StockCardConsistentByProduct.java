@@ -26,15 +26,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
-import org.siglus.siglusapi.dto.android.validators.StockCardConsistentByProductCodeValidator;
+import org.siglus.siglusapi.dto.android.validators.StockCardConsistentByProductValidator;
 
 @Target({METHOD, FIELD, TYPE, PARAMETER})
 @Retention(RUNTIME)
 @Documented
-@Constraint(validatedBy = StockCardConsistentByProductCodeValidator.class)
-public @interface StockCardConsistentByProductCode {
+@Constraint(validatedBy = StockCardConsistentByProductValidator.class)
+public @interface StockCardConsistentByProduct {
 
-  String message() default "{org.siglus.siglusapi.dto.android.constraints.StockCardConsistentByProductCode.message}";
+  String message() default "{org.siglus.siglusapi.dto.android.constraints.StockCardConsistentByProduct.message}";
 
   Class<?>[] groups() default {};
 

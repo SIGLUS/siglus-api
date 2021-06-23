@@ -60,7 +60,6 @@ public class StockCardCreateRequest implements StockCardAdjustment {
 
   private String signature;
 
-  // TODO check order by time ascending
   // TODO check consistent by lot
   @Valid
   @NotEmpty

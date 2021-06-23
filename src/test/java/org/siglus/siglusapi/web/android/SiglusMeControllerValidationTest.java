@@ -41,6 +41,7 @@ import lombok.SneakyThrows;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.hibernate.validator.resourceloading.PlatformResourceBundleLocator;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -243,7 +244,7 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The records of the product 08S01Z are not consistent.",
+    assertEquals("The records of the product 08S01Z are not consistent by gap.",
         violations.get("createStockCards.arg0"));
   }
 
@@ -251,7 +252,25 @@ public class SiglusMeControllerValidationTest {
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentStockCard()
       throws IOException {
     // given
-    Object param = parseParam("inconsistentInitStockCard.json");
+    Object param = parseParam("inconsistentStockCard.json");
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The records of the product 08S01Z are not consistent on 2021-06-16.",
+        violations.get("createStockCards.arg0"));
+  }
+
+  @Test
+  @Ignore
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLots()
+      throws IOException {
+    // given
+    Object param = parseParam("inconsistentLots.json");
 
     // when
     Map<String, String> violations = forExecutables
