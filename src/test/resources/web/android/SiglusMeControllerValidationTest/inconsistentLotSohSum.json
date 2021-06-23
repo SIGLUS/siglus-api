@@ -1,7 +1,7 @@
 [
   {
-    "SOH": "-23",
-    "quantity": 10,
+    "SOH": "11",
+    "quantity": -10,
     "occurred": "2021-06-17",
     "documentationNo": "doc-001",
     "productCode": "08S01Z",
@@ -10,10 +10,18 @@
     "signature": "zhangsan",
     "lotEventList": [
       {
-        "SOH": "-5",
+        "SOH": "5",
         "expirationDate": "2021-06-29",
         "lotNumber": "SEM-LOTE-02A01-062021",
         "quantity": -2,
+        "reasonName": "DISTRICT_DDM",
+        "documentationNo": "doc-001"
+      },
+      {
+        "SOH": "10",
+        "expirationDate": "2021-08-29",
+        "lotNumber": "SEM-LOTE-02A01-062022",
+        "quantity": -8,
         "reasonName": "DISTRICT_DDM",
         "documentationNo": "doc-001"
       }

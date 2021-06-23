@@ -55,19 +55,15 @@ public class StockCardConsistentByProductCodeValidator implements
         .unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable("productCode", productCode);
     int initStockOnHand = requests.stream()
-        .min(Comparator.comparing(StockCardCreateRequest::getOccurred))
+        .min(Comparator.comparing(StockCardCreateRequest::getOccurredDate))
         .map(r -> r.getStockOnHand() - r.getQuantity())
         .orElse(0);
-    if (initStockOnHand < 0) {
-      log.warn("Inconsistent init soh on {}", productCode);
-      return false;
-    }
     int lastStockOnHand = requests.stream()
-        .max(Comparator.comparing(StockCardCreateRequest::getOccurred))
+        .max(Comparator.comparing(StockCardCreateRequest::getOccurredDate))
         .map(StockCardCreateRequest::getStockOnHand)
         .orElse(0);
     int calculatedGap = requests.stream()
-        .sorted(Comparator.comparing(StockCardCreateRequest::getOccurred))
+        .sorted(Comparator.comparing(StockCardCreateRequest::getOccurredDate))
         .reduce(0, (gap, req) -> gap + req.getQuantity(), Integer::sum);
     if (lastStockOnHand != initStockOnHand + calculatedGap) {
       log.warn("Inconsistent gap on {}", productCode);
@@ -77,7 +73,7 @@ public class StockCardConsistentByProductCodeValidator implements
     for (StockCardCreateRequest request : requests) {
       if (request.getStockOnHand() != stock + request.getQuantity()) {
         log.warn("Inconsistent stock card for product {} on {}", productCode,
-            request.getOccurred());
+            request.getOccurredDate());
         return false;
       }
       stock = request.getStockOnHand();

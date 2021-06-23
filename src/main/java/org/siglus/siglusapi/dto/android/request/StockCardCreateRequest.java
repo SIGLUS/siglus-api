@@ -25,9 +25,13 @@ import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.siglus.siglusapi.dto.android.constraints.ConsistentStockCard;
+import org.siglus.siglusapi.dto.android.constraints.ConsistentStockOnHand;
 
 @Data
-public class StockCardCreateRequest {
+@ConsistentStockCard
+@ConsistentStockOnHand
+public class StockCardCreateRequest implements StockCardAdjustment {
 
   @NotBlank
   private String productCode;
@@ -45,7 +49,8 @@ public class StockCardCreateRequest {
   private String type;
 
   @NotNull
-  private LocalDate occurred;
+  @JsonProperty("occurred")
+  private LocalDate occurredDate;
 
   @NotNull
   @JsonProperty("processeddate")

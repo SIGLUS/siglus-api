@@ -15,33 +15,10 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.LocalDate;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import lombok.Data;
-import org.hibernate.validator.constraints.NotBlank;
-import org.siglus.siglusapi.dto.android.constraints.ConsistentStockOnHand;
+public interface StockCardAdjustment {
 
-@Data
-@ConsistentStockOnHand
-public class StockCardLotEventRequest implements StockCardAdjustment {
+  Integer getStockOnHand();
 
-  // TODO lots may conflict on expirationDate
-  @NotBlank
-  private String lotNumber;
-
-  @NotNull
-  private LocalDate expirationDate;
-
-  @Min(0)
-  @NotNull
-  @JsonProperty("SOH")
-  private Integer stockOnHand;
-
-  @NotNull
-  private Integer quantity;
-
-  private String reasonName;
+  Integer getQuantity();
 
 }

@@ -1,7 +1,7 @@
 [
   {
     "SOH": "10",
-    "quantity": 20,
+    "quantity": 10,
     "occurred": "2021-06-17",
     "documentationNo": "doc-002",
     "productCode": "08S01Z",
@@ -10,10 +10,10 @@
     "signature": "zhangsan",
     "lotEventList": [
       {
-        "SOH": "15",
+        "SOH": "5",
         "expirationDate": "2021-06-29",
         "lotNumber": "SEM-LOTE-02A01-062021",
-        "quantity": 20,
+        "quantity": 10,
         "reasonName": "CUSTOMER_RETURN",
         "documentationNo": "doc-001"
       }

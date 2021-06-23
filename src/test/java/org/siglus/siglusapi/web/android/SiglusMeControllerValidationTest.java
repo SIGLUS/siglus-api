@@ -48,7 +48,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
 public class SiglusMeControllerValidationTest {
 
   private static final String MAY_NOT_BE_EMPTY = "may not be empty";
@@ -60,7 +60,7 @@ public class SiglusMeControllerValidationTest {
 
   private final ObjectMapper mapper = new ObjectMapper();
 
-  private JavaType stockCardCreateRequestList;
+  private JavaType stockCardCreateRequestListType;
 
   private ExecutableValidator forExecutables;
 
@@ -73,7 +73,7 @@ public class SiglusMeControllerValidationTest {
     ResourceBundleMessageInterpolator messageInterpolator =
         new ResourceBundleMessageInterpolator(new PlatformResourceBundleLocator("messages"));
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    stockCardCreateRequestList = mapper.getTypeFactory()
+    stockCardCreateRequestListType = mapper.getTypeFactory()
         .constructCollectionType(List.class, StockCardCreateRequest.class);
     forExecutables = Validation.byDefaultProvider().configure()
         .messageInterpolator(messageInterpolator)
@@ -85,7 +85,7 @@ public class SiglusMeControllerValidationTest {
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenEmptyList() throws IOException {
     // given
     String json = "[]";
-    Object param = mapper.readValue(json, stockCardCreateRequestList);
+    Object param = mapper.readValue(json, stockCardCreateRequestListType);
 
     // when
     Map<String, String> violations = forExecutables
@@ -102,7 +102,7 @@ public class SiglusMeControllerValidationTest {
       throws IOException {
     // given
     String json = "[{}]";
-    Object param = mapper.readValue(json, stockCardCreateRequestList);
+    Object param = mapper.readValue(json, stockCardCreateRequestListType);
 
     // when
     Map<String, String> violations = forExecutables
@@ -112,7 +112,7 @@ public class SiglusMeControllerValidationTest {
     // then
     assertEquals(7, violations.size());
     assertEquals(MAY_NOT_BE_EMPTY, violations.get("createStockCards.arg0[0].lotEvents"));
-    assertEquals(MAY_NOT_BE_NULL, violations.get("createStockCards.arg0[0].occurred"));
+    assertEquals(MAY_NOT_BE_NULL, violations.get("createStockCards.arg0[0].occurredDate"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createStockCards.arg0[0].processedDate"));
     assertEquals(MAY_NOT_BE_EMPTY, violations.get("createStockCards.arg0[0].productCode"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createStockCards.arg0[0].quantity"));
@@ -124,8 +124,7 @@ public class SiglusMeControllerValidationTest {
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenEmptyLotList()
       throws IOException {
     // given
-    String json = readFromFile("emptyLotList.json");
-    Object param = mapper.readValue(json, stockCardCreateRequestList);
+    Object param = parseParam("emptyLotList.json");
 
     // when
     Map<String, String> violations = forExecutables
@@ -148,8 +147,7 @@ public class SiglusMeControllerValidationTest {
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenNegativeNumber()
       throws IOException {
     // given
-    String json = readFromFile("negativeNumber.json");
-    Object param = mapper.readValue(json, stockCardCreateRequestList);
+    Object param = parseParam("negativeNumber.json");
 
     // when
     Map<String, String> violations = forExecutables
@@ -165,11 +163,27 @@ public class SiglusMeControllerValidationTest {
   }
 
   @Test
-  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentInitSoh()
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentProductSoh()
       throws IOException {
     // given
-    String json = readFromFile("inconsistentInitSoh.json");
-    Object param = mapper.readValue(json, stockCardCreateRequestList);
+    Object param = parseParam("inconsistentProductSoh.json");
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(2, violations.size());
+    assertEquals("The record with soh[10] is inconsistent with quantity[20].",
+        violations.get("createStockCards.arg0[0]"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotSoh()
+      throws IOException {
+    // given
+    Object param = parseParam("inconsistentLotSoh.json");
 
     // when
     Map<String, String> violations = forExecutables
@@ -178,16 +192,49 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The records of the product 08S01Z are not consistent.",
-        violations.get("createStockCards.arg0"));
+    assertEquals("The record with soh[5] is inconsistent with quantity[10].",
+        violations.get("createStockCards.arg0[0].lotEvents[0]"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotQuantitySum()
+      throws IOException {
+    // given
+    Object param = parseParam("inconsistentLotQuantitySum.json");
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The stock card for 08S01Z on 2021-06-17 is inconsistent with its lot events.",
+        violations.get("createStockCards.arg0[0]"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotSohSum()
+      throws IOException {
+    // given
+    Object param = parseParam("inconsistentLotSohSum.json");
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The stock card for 08S01Z on 2021-06-17 is inconsistent with its lot events.",
+        violations.get("createStockCards.arg0[0]"));
   }
 
   @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentGap()
       throws IOException {
     // given
-    String json = readFromFile("inconsistentGap.json");
-    Object param = mapper.readValue(json, stockCardCreateRequestList);
+    Object param = parseParam("inconsistentGap.json");
 
     // when
     Map<String, String> violations = forExecutables
@@ -204,8 +251,7 @@ public class SiglusMeControllerValidationTest {
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentStockCard()
       throws IOException {
     // given
-    String json = readFromFile("inconsistentInitStockCard.json");
-    Object param = mapper.readValue(json, stockCardCreateRequestList);
+    Object param = parseParam("inconsistentInitStockCard.json");
 
     // when
     Map<String, String> violations = forExecutables
@@ -216,6 +262,11 @@ public class SiglusMeControllerValidationTest {
     assertEquals(1, violations.size());
     assertEquals("The records of the product 08S01Z are not consistent.",
         violations.get("createStockCards.arg0"));
+  }
+
+  private Object parseParam(String fileName) throws IOException {
+    String json = readFromFile(fileName);
+    return mapper.readValue(json, stockCardCreateRequestListType);
   }
 
   @SneakyThrows
