@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web.android;
 
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toMap;
 import static org.junit.Assert.assertEquals;
 
@@ -24,12 +25,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.executable.ExecutableValidator;
+import lombok.SneakyThrows;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.hibernate.validator.resourceloading.PlatformResourceBundleLocator;
 import org.junit.Before;
@@ -116,17 +124,7 @@ public class SiglusMeControllerValidationTest {
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenEmptyLotList()
       throws IOException {
     // given
-    String json = "[{\n"
-        + "\t\"SOH\": \"13\",\n"
-        + "\t\"quantity\": 10,\n"
-        + "\t\"occurred\": \"2021-06-17\",\n"
-        + "\t\"documentationNo\": \"doc-001\",\n"
-        + "\t\"productCode\": \"08S01Z\",\n"
-        + "\t\"type\": \"ADJUSTMENT\",\n"
-        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
-        + "\t\"signature\": \"zhangsan\",\n"
-        + "\t\"lotEventList\": [{}]\n"
-        + "}]";
+    String json = readFromFile("emptyLotList.json");
     Object param = mapper.readValue(json, stockCardCreateRequestList);
 
     // when
@@ -150,24 +148,7 @@ public class SiglusMeControllerValidationTest {
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenNegativeNumber()
       throws IOException {
     // given
-    String json = "[{\n"
-        + "\t\"SOH\": \"-23\",\n"
-        + "\t\"quantity\": -10,\n"
-        + "\t\"occurred\": \"2021-06-17\",\n"
-        + "\t\"documentationNo\": \"doc-001\",\n"
-        + "\t\"productCode\": \"08S01Z\",\n"
-        + "\t\"type\": \"ADJUSTMENT\",\n"
-        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
-        + "\t\"signature\": \"zhangsan\",\n"
-        + "\t\"lotEventList\": [{\n"
-        + "\t\t\"SOH\": \"-5\",\n"
-        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
-        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
-        + "\t\t\"quantity\": -2,\n"
-        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
-        + "\t\t\"documentationNo\": \"doc-001\"\n"
-        + "\t}]\n"
-        + "}]";
+    String json = readFromFile("negativeNumber.json");
     Object param = mapper.readValue(json, stockCardCreateRequestList);
 
     // when
@@ -187,24 +168,7 @@ public class SiglusMeControllerValidationTest {
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentInitSoh()
       throws IOException {
     // given
-    String json = "[{\n"
-        + "\t\"SOH\": \"10\",\n" // should be greater than or equal to 20
-        + "\t\"quantity\": 20,\n"
-        + "\t\"occurred\": \"2021-06-17\",\n"
-        + "\t\"documentationNo\": \"doc-002\",\n"
-        + "\t\"productCode\": \"08S01Z\",\n"
-        + "\t\"type\": \"ADJUSTMENT\",\n"
-        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
-        + "\t\"signature\": \"zhangsan\",\n"
-        + "\t\"lotEventList\": [{\n"
-        + "\t\t\"SOH\": \"15\",\n"
-        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
-        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
-        + "\t\t\"quantity\": 20,\n"
-        + "\t\t\"reasonName\": \"CUSTOMER_RETURN\",\n"
-        + "\t\t\"documentationNo\": \"doc-001\"\n"
-        + "\t}]\n"
-        + "}]";
+    String json = readFromFile("inconsistentInitSoh.json");
     Object param = mapper.readValue(json, stockCardCreateRequestList);
 
     // when
@@ -222,58 +186,7 @@ public class SiglusMeControllerValidationTest {
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentGap()
       throws IOException {
     // given
-    String json = "[{\n"
-        + "\t\"SOH\": \"40\",\n" // should be 35
-        + "\t\"quantity\": -5,\n"
-        + "\t\"occurred\": \"2021-06-17\",\n"
-        + "\t\"documentationNo\": \"doc-002\",\n"
-        + "\t\"productCode\": \"08S01Z\",\n"
-        + "\t\"type\": \"ADJUSTMENT\",\n"
-        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
-        + "\t\"signature\": \"zhangsan\",\n"
-        + "\t\"lotEventList\": [{\n"
-        + "\t\t\"SOH\": \"15\",\n"
-        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
-        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
-        + "\t\t\"quantity\": -5,\n"
-        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
-        + "\t\t\"documentationNo\": \"doc-001\"\n"
-        + "\t}]\n"
-        + "}, {\n"
-        + "\t\"SOH\": \"40\",\n"
-        + "\t\"quantity\": -20,\n"
-        + "\t\"occurred\": \"2021-06-16\",\n"
-        + "\t\"documentationNo\": \"doc-001\",\n"
-        + "\t\"productCode\": \"08S01Z\",\n"
-        + "\t\"type\": \"ADJUSTMENT\",\n"
-        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
-        + "\t\"signature\": \"zhangsan\",\n"
-        + "\t\"lotEventList\": [{\n"
-        + "\t\t\"SOH\": \"40\",\n"
-        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
-        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
-        + "\t\t\"quantity\": -20,\n"
-        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
-        + "\t\t\"documentationNo\": \"doc-001\"\n"
-        + "\t}]\n"
-        + "}, {\n" // interference item
-        + "\t\"SOH\": \"40\",\n"
-        + "\t\"quantity\": -20,\n"
-        + "\t\"occurred\": \"2021-06-15\",\n"
-        + "\t\"documentationNo\": \"doc-001\",\n"
-        + "\t\"productCode\": \"08S01S\",\n"
-        + "\t\"type\": \"ADJUSTMENT\",\n"
-        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
-        + "\t\"signature\": \"zhangsan\",\n"
-        + "\t\"lotEventList\": [{\n"
-        + "\t\t\"SOH\": \"40\",\n"
-        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
-        + "\t\t\"lotNumber\": \"SEM-LOTE-02A02-062021\",\n"
-        + "\t\t\"quantity\": -20,\n"
-        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
-        + "\t\t\"documentationNo\": \"doc-001\"\n"
-        + "\t}]\n"
-        + "}]";
+    String json = readFromFile("inconsistentGap.json");
     Object param = mapper.readValue(json, stockCardCreateRequestList);
 
     // when
@@ -291,75 +204,7 @@ public class SiglusMeControllerValidationTest {
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentStockCard()
       throws IOException {
     // given
-    String json = "[{\n"
-        + "\t\"SOH\": \"40\",\n"
-        + "\t\"quantity\": 15,\n"
-        + "\t\"occurred\": \"2021-06-17\",\n"
-        + "\t\"documentationNo\": \"doc-002\",\n"
-        + "\t\"productCode\": \"08S01Z\",\n"
-        + "\t\"type\": \"ADJUSTMENT\",\n"
-        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
-        + "\t\"signature\": \"zhangsan\",\n"
-        + "\t\"lotEventList\": [{\n"
-        + "\t\t\"SOH\": \"15\",\n"
-        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
-        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
-        + "\t\t\"quantity\": -5,\n"
-        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
-        + "\t\t\"documentationNo\": \"doc-001\"\n"
-        + "\t}]\n"
-        + "}, {\n"
-        + "\t\"SOH\": \"20\",\n" // should be 25
-        + "\t\"quantity\": -15,\n"
-        + "\t\"occurred\": \"2021-06-16\",\n"
-        + "\t\"documentationNo\": \"doc-001\",\n"
-        + "\t\"productCode\": \"08S01Z\",\n"
-        + "\t\"type\": \"ADJUSTMENT\",\n"
-        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
-        + "\t\"signature\": \"zhangsan\",\n"
-        + "\t\"lotEventList\": [{\n"
-        + "\t\t\"SOH\": \"40\",\n"
-        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
-        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
-        + "\t\t\"quantity\": -20,\n"
-        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
-        + "\t\t\"documentationNo\": \"doc-001\"\n"
-        + "\t}]\n"
-        + "}, {\n"
-        + "\t\"SOH\": \"40\",\n"
-        + "\t\"quantity\": -20,\n"
-        + "\t\"occurred\": \"2021-06-15\",\n"
-        + "\t\"documentationNo\": \"doc-001\",\n"
-        + "\t\"productCode\": \"08S01Z\",\n"
-        + "\t\"type\": \"ADJUSTMENT\",\n"
-        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
-        + "\t\"signature\": \"zhangsan\",\n"
-        + "\t\"lotEventList\": [{\n"
-        + "\t\t\"SOH\": \"40\",\n"
-        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
-        + "\t\t\"lotNumber\": \"SEM-LOTE-02A01-062021\",\n"
-        + "\t\t\"quantity\": -20,\n"
-        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
-        + "\t\t\"documentationNo\": \"doc-001\"\n"
-        + "\t}]\n"
-        + "}, {\n" // interference item
-        + "\t\"SOH\": \"40\",\n"
-        + "\t\"quantity\": -20,\n"
-        + "\t\"occurred\": \"2021-06-15\",\n"
-        + "\t\"documentationNo\": \"doc-001\",\n"
-        + "\t\"productCode\": \"08S01S\",\n"
-        + "\t\"type\": \"ADJUSTMENT\",\n"
-        + "\t\"processeddate\": \"2021-06-17T14:20:56.000Z\",\n"
-        + "\t\"signature\": \"zhangsan\",\n"
-        + "\t\"lotEventList\": [{\n"
-        + "\t\t\"SOH\": \"40\",\n"
-        + "\t\t\"expirationDate\": \"2021-06-29\",\n"
-        + "\t\t\"lotNumber\": \"SEM-LOTE-02A02-062021\",\n"
-        + "\t\t\"quantity\": -20,\n"
-        + "\t\t\"reasonName\": \"DISTRICT_DDM\",\n"
-        + "\t\t\"documentationNo\": \"doc-001\"\n"
-        + "\t}]\n"
-        + "}]";
+    String json = readFromFile("inconsistentInitStockCard.json");
     Object param = mapper.readValue(json, stockCardCreateRequestList);
 
     // when
@@ -371,6 +216,29 @@ public class SiglusMeControllerValidationTest {
     assertEquals(1, violations.size());
     assertEquals("The records of the product 08S01Z are not consistent.",
         violations.get("createStockCards.arg0"));
+  }
+
+  @SneakyThrows
+  private String readFromFile(String fileName) {
+    String name = this.getClass().getName();
+    String folder = name.replace("org.siglus.siglusapi.", "").replaceAll("\\.", "/");
+    ClassLoader classLoader = this.getClass().getClassLoader();
+    List<String> allLines = Optional.ofNullable(classLoader.getResource(folder + "/" + fileName))
+        .map(this::toUri)
+        .map(Paths::get)
+        .map(this::readAllLines)
+        .orElse(emptyList());
+    return String.join("\n", allLines);
+  }
+
+  @SneakyThrows
+  private URI toUri(URL url) {
+    return url.toURI();
+  }
+
+  @SneakyThrows
+  private List<String> readAllLines(Path path) {
+    return Files.readAllLines(path);
   }
 
 }

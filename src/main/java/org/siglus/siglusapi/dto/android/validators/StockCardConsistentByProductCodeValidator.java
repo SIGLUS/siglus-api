@@ -21,10 +21,12 @@ import java.util.Comparator;
 import java.util.List;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
 import org.siglus.siglusapi.dto.android.constraints.StockCardConsistentByProductCode;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
+@Slf4j
 public class StockCardConsistentByProductCodeValidator implements
     ConstraintValidator<StockCardConsistentByProductCode, List<StockCardCreateRequest>> {
 
@@ -57,6 +59,7 @@ public class StockCardConsistentByProductCodeValidator implements
         .map(r -> r.getStockOnHand() - r.getQuantity())
         .orElse(0);
     if (initStockOnHand < 0) {
+      log.warn("Inconsistent init soh on {}", productCode);
       return false;
     }
     int lastStockOnHand = requests.stream()
@@ -65,13 +68,16 @@ public class StockCardConsistentByProductCodeValidator implements
         .orElse(0);
     int calculatedGap = requests.stream()
         .sorted(Comparator.comparing(StockCardCreateRequest::getOccurred))
-        .reduce(0, (s, r) -> s + r.getQuantity(), Integer::sum);
+        .reduce(0, (gap, req) -> gap + req.getQuantity(), Integer::sum);
     if (lastStockOnHand != initStockOnHand + calculatedGap) {
+      log.warn("Inconsistent gap on {}", productCode);
       return false;
     }
     int stock = initStockOnHand;
     for (StockCardCreateRequest request : requests) {
       if (request.getStockOnHand() != stock + request.getQuantity()) {
+        log.warn("Inconsistent stock card for product {} on {}", productCode,
+            request.getOccurred());
         return false;
       }
       stock = request.getStockOnHand();
