@@ -25,12 +25,12 @@ import java.util.Comparator;
 import java.util.List;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
 import org.siglus.siglusapi.dto.android.constraints.StockCardConsistentByLot;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
+import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 
 @Slf4j
 public class StockCardConsistentByLotValidator implements
@@ -41,78 +41,88 @@ public class StockCardConsistentByLotValidator implements
     // nothing to do
   }
 
+  @Override
+  public boolean isValid(List<StockCardCreateRequest> value, ConstraintValidatorContext context) {
+    if (value == null || value.isEmpty()) {
+      return true;
+    }
+    HibernateConstraintValidatorContext actualContext = context
+        .unwrap(HibernateConstraintValidatorContext.class);
+    return value.stream()
+        .filter(r -> isNotEmpty(r.getLotEvents()))
+        .map(this::toLotEvents)
+        .flatMap(Collection::stream)
+        .sorted(Comparator.comparing(LotEvent::getOccurredDate))
+        .collect(groupingBy(LotEvent::getProductCode)).entrySet().stream()
+        .allMatch(e -> checkConsistentByProduct(e.getKey(), e.getValue(), actualContext));
+  }
+
+  private List<LotEvent> toLotEvents(StockCardCreateRequest product) {
+    return product.getLotEvents().stream()
+        .filter(lot -> lot.getQuantity() != null)
+        .filter(lot -> lot.getStockOnHand() != null)
+        .map(lot -> new LotEvent(product, lot))
+        .collect(toList());
+  }
+
+  private boolean checkConsistentByProduct(String productCode, List<LotEvent> lots,
+      HibernateConstraintValidatorContext context) {
+    context.addExpressionVariable("productCode", productCode);
+    return lots.stream()
+        .collect(groupingBy(LotEvent::getLotNumber)).entrySet().stream()
+        .allMatch(e -> checkConsistentByLot(e.getKey(), e.getValue(), context));
+  }
+
+  private boolean checkConsistentByLot(String lotNumber, List<LotEvent> lots,
+      HibernateConstraintValidatorContext context) {
+    context.addExpressionVariable("lotNumber", lotNumber);
+    int initStockOnHand = lots.stream()
+        .min(Comparator.comparing(LotEvent::getOccurredDate))
+        .map(r -> r.getStockOnHand() - r.getQuantity())
+        .orElse(0);
+    int lastStockOnHand = lots.stream()
+        .max(Comparator.comparing(LotEvent::getOccurredDate))
+        .map(LotEvent::getStockOnHand)
+        .orElse(0);
+    int calculatedGap = lots.stream()
+        .sorted(Comparator.comparing(LotEvent::getOccurredDate))
+        .reduce(0, (gap, req) -> gap + req.getQuantity(), Integer::sum);
+    if (lastStockOnHand != initStockOnHand + calculatedGap) {
+      log.warn("Inconsistent lot by gap on {}", lotNumber);
+      context.addExpressionVariable("failedByGap", true);
+      return false;
+    }
+    context.addExpressionVariable("failedByGap", false);
+    int stock = initStockOnHand;
+    for (LotEvent request : lots) {
+      if (request.getStockOnHand() != stock + request.getQuantity()) {
+        log.warn("Inconsistent lot {} on {}", lotNumber,
+            request.getOccurredDate());
+        context.addExpressionVariable("date", request.getOccurredDate());
+        return false;
+      }
+      stock = request.getStockOnHand();
+    }
+    return true;
+  }
+
   @Data
-  @AllArgsConstructor
-  private static class Entity {
+  private static class LotEvent {
 
     private String productCode;
     private LocalDate occurredDate;
     private String lotNumber;
     private Integer quantity;
     private Integer stockOnHand;
-  }
 
-  @Override
-  public boolean isValid(List<StockCardCreateRequest> value, ConstraintValidatorContext context) {
-    if (value == null || value.isEmpty()) {
-      return true;
+    LotEvent(StockCardCreateRequest product, StockCardLotEventRequest lot) {
+      productCode = product.getProductCode();
+      occurredDate = product.getOccurredDate();
+      lotNumber = lot.getLotNumber();
+      quantity = lot.getQuantity();
+      stockOnHand = lot.getStockOnHand();
     }
-    return value.stream()
-        .filter(r -> isNotEmpty(r.getLotEvents()))
-        .map(r -> r.getLotEvents().stream()
-            .filter(lot -> lot.getQuantity() != null)
-            .filter(lot -> lot.getStockOnHand() != null)
-            .map(
-                lot -> new Entity(r.getProductCode(), r.getOccurredDate(), lot.getLotNumber(),
-                    lot.getQuantity(), lot.getStockOnHand())).collect(toList()))
-        .flatMap(Collection::stream)
-        .sorted(Comparator.comparing(Entity::getOccurredDate))
-        .collect(groupingBy(Entity::getProductCode)).entrySet().stream()
-        .allMatch(e -> checkConsistent(e.getKey(), e.getValue(), context));
-  }
 
-  private boolean checkConsistent(String productCode, List<Entity> lots,
-      ConstraintValidatorContext context) {
-    return lots.stream()
-        .collect(groupingBy(Entity::getLotNumber)).entrySet().stream()
-        .allMatch(e -> checkConsistent1(productCode, e.getKey(), e.getValue(), context));
-  }
-
-  private boolean checkConsistent1(String productCode, String lotNumber, List<Entity> lots,
-      ConstraintValidatorContext context) {
-
-    HibernateConstraintValidatorContext actualContext = context
-        .unwrap(HibernateConstraintValidatorContext.class);
-    actualContext.addExpressionVariable("productCode", productCode);
-    actualContext.addExpressionVariable("lotNumber", lotNumber);
-    int initStockOnHand = lots.stream()
-        .min(Comparator.comparing(Entity::getOccurredDate))
-        .map(r -> r.getStockOnHand() - r.getQuantity())
-        .orElse(0);
-    int lastStockOnHand = lots.stream()
-        .max(Comparator.comparing(Entity::getOccurredDate))
-        .map(Entity::getStockOnHand)
-        .orElse(0);
-    int calculatedGap = lots.stream()
-        .sorted(Comparator.comparing(Entity::getOccurredDate))
-        .reduce(0, (gap, req) -> gap + req.getQuantity(), Integer::sum);
-    if (lastStockOnHand != initStockOnHand + calculatedGap) {
-      log.warn("Inconsistent lot gap on {}", productCode);
-      actualContext.addExpressionVariable("failedByGap", true);
-      return false;
-    }
-    actualContext.addExpressionVariable("failedByGap", false);
-    int stock = initStockOnHand;
-    for (Entity request : lots) {
-      if (request.getStockOnHand() != stock + request.getQuantity()) {
-        log.warn("Inconsistent stock card for lot {} on {}", lotNumber,
-            request.getOccurredDate());
-        actualContext.addExpressionVariable("date", request.getOccurredDate());
-        return false;
-      }
-      stock = request.getStockOnHand();
-    }
-    return true;
   }
 
 }
