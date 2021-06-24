@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.Duration;
 import java.time.Instant;
@@ -41,6 +43,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,7 +56,12 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
+import org.openlmis.stockmanagement.testutils.CanFulfillForMeEntryDtoDataBuilder;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.dto.referencedata.UserDto;
@@ -72,10 +80,12 @@ import org.siglus.siglusapi.repository.android.AppInfoRepository;
 import org.siglus.siglusapi.repository.android.FacilityCmmsRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.android.mapper.ProductChildMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.ContextConfiguration;
@@ -122,6 +132,12 @@ public class SiglusMeServiceTest {
   @Mock
   private FacilityCmmsRepository facilityCmmsRepository;
 
+  @Mock
+  private SiglusLotReferenceDataService lotReferenceDataService;
+
+  @Mock
+  private SiglusStockCardSummariesService stockCardSummariesService;
+
   @Captor
   private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
 
@@ -144,6 +160,8 @@ public class SiglusMeServiceTest {
 
   private final UUID facilityId = UUID.randomUUID();
 
+  public final String tradeItem = "tradeItem";
+
   private ZonedDateTime oldTime;
   private Instant syncTime;
   private ZonedDateTime latestTime;
@@ -155,6 +173,9 @@ public class SiglusMeServiceTest {
   private final String productCode1 = "product 1";
   private final String productCode2 = "product 2";
   private final String productCode3 = "product 3";
+
+  private final String tradeItem1 = "tradeItem1";
+  private final String tradeItem2 = "tradeItem2";
 
   @Before
   public void prepare() {
@@ -302,6 +323,48 @@ public class SiglusMeServiceTest {
   }
 
   @Test
+  public void shouldGetSohValueByLot() {
+    // given
+    ProgramDto programDto = mock(ProgramDto.class);
+    when(programDto.getId()).thenReturn(UUID.randomUUID());
+    when(programDto.getCode()).thenReturn("code");
+    when(approvedProductService.getApprovedProducts(facilityId, programDto.getId(), emptyList()))
+        .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
+    UUID lotId1 = UUID.randomUUID();
+    UUID lotId2 = UUID.randomUUID();
+    String lotCode1 = "lotCode1";
+    String lotCode2 = "lotCode2";
+    when(lotReferenceDataService.findAllLot(any())).thenReturn(Arrays.asList(
+        mockLotDto(lotCode1, lotId1), mockLotDto(lotCode2, lotId2)));
+    StockCardSummaryV2Dto dto1 = new StockCardSummaryV2Dto();
+    dto1.setOrderable(new VersionObjectReferenceDto(productId1, "", "", 1L));
+    CanFulfillForMeEntryDto forMeEntryDto1 = new CanFulfillForMeEntryDtoDataBuilder()
+        .withStockOnHand(10)
+        .withLot(new VersionObjectReferenceDto(lotId1, "", "", 1L))
+        .build();
+    forMeEntryDto1.setStockOnHand(10);
+    dto1.setCanFulfillForMe(newHashSet(forMeEntryDto1));
+
+    StockCardSummaryV2Dto dto2 = new StockCardSummaryV2Dto();
+    dto2.setOrderable(new VersionObjectReferenceDto(productId2, "", "", 1L));
+    CanFulfillForMeEntryDto forMeEntryDto2 = new CanFulfillForMeEntryDtoDataBuilder()
+        .withStockOnHand(10)
+        .withLot(new VersionObjectReferenceDto(lotId2, "", "", 1L))
+        .build();
+    forMeEntryDto2.setStockOnHand(20);
+    dto2.setCanFulfillForMe(newHashSet(forMeEntryDto2));
+    when(stockCardSummariesService
+        .findAllProgramStockSummaries()).thenReturn(Arrays.asList(dto1, dto2));
+
+    // when
+    Map<String, Map<String, Integer>> lotOnHands = service.getLotOnHand();
+
+    // then
+    assertEquals(lotOnHands.get(productCode1).get(lotCode1).intValue(), 10);
+    assertEquals(lotOnHands.get(productCode2).get(lotCode2).intValue(), 20);
+  }
+
+  @Test
   public void shouldCallaArchiveProductServiceWhenDoArchive() {
     // given
     List<String> productCodes = Arrays.asList("product1", "product2", "product3");
@@ -428,6 +491,13 @@ public class SiglusMeServiceTest {
     assertEquals(latestTime.toInstant(), product.getLastUpdated());
   }
 
+  private LotDto mockLotDto(String lotCode, UUID lotId) {
+    LotDto lotDto = new LotDto();
+    lotDto.setLotCode(lotCode);
+    lotDto.setId(lotId);
+    return lotDto;
+  }
+
   private org.siglus.common.dto.referencedata.OrderableDto mockOrderable1() {
     String productCode = productCode1;
     org.siglus.common.dto.referencedata.OrderableDto orderable =
@@ -450,10 +520,11 @@ public class SiglusMeServiceTest {
   }
 
   private ApprovedProductDto mockApprovedProduct1() {
-    String productCode = productCode1;
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
+    orderable.setIdentifiers(ImmutableMap.of(tradeItem, tradeItem1));
     approvedProduct.setOrderable(orderable);
+    String productCode = productCode1;
     orderable.setId(productId1);
     orderable.setProductCode(productCode);
     orderable.setFullProductName(genFullName(productCode));
@@ -491,10 +562,11 @@ public class SiglusMeServiceTest {
   }
 
   private ApprovedProductDto mockApprovedProduct2() {
-    String productCode = productCode2;
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
+    orderable.setIdentifiers(ImmutableMap.of(tradeItem, tradeItem2));
     approvedProduct.setOrderable(orderable);
+    String productCode = productCode2;
     orderable.setId(productId2);
     orderable.setProductCode(productCode);
     orderable.setFullProductName(genFullName(productCode));

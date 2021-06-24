@@ -17,9 +17,11 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
+import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
 import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.common.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
@@ -48,8 +50,10 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.client.SiglusStockCardStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @Service
@@ -59,6 +63,7 @@ public class SiglusStockCardSummariesService {
   private static final String PROGRAM_ID = "programId";
   private static final String EXCLUDE_ARCHIVED = "excludeArchived";
   private static final String ARCHIVED_ONLY = "archivedOnly";
+  private static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
@@ -145,6 +150,16 @@ public class SiglusStockCardSummariesService {
     programIds.add(programId);
 
     return programIds;
+  }
+
+  public List<StockCardSummaryV2Dto> findAllProgramStockSummaries() {
+    MultiValueMap valueMap = new LinkedMultiValueMap();
+    valueMap.set(PROGRAM_ID, ALL_PRODUCTS_PROGRAM_ID.toString());
+    valueMap.set(RIGHT_NAME, STOCK_CARDS_VIEW);
+    valueMap.set(NON_EMPTY_ONLY, Boolean.TRUE.toString());
+    valueMap.set(FACILITY_ID, authenticationHelper.getCurrentUser().getHomeFacilityId().toString());
+    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+    return findSiglusStockCard(valueMap, pageable).getContent();
   }
 
   private void getSummaries(MultiValueMap<String, String> parameters, Set<String> archivedProducts,

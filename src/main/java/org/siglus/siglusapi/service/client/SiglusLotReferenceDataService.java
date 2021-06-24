@@ -28,7 +28,7 @@ public class SiglusLotReferenceDataService extends BaseReferenceDataService<LotD
 
   @Override
   protected String getUrl() {
-    return "/api/lots/";
+    return "/api/lots";
   }
 
   @Override
@@ -46,17 +46,21 @@ public class SiglusLotReferenceDataService extends BaseReferenceDataService<LotD
     return getPage(RequestParameters.init()).getContent();
   }
 
+  public List<LotDto> findAllLot(RequestParameters parameters) {
+    return getPage("", parameters).getContent();
+  }
+
   public List<LotDto> getLots(LotSearchParams lotSearchParams) {
     RequestParameters requestParameters = RequestParameters.init()
         .set(FieldConstants.EXPIRATION_DATE, lotSearchParams.getExpirationDate())
         .set(FieldConstants.TRADE_ITEM_ID, lotSearchParams.getTradeItemId())
         .set(FieldConstants.LOT_CODE, lotSearchParams.getLotCode())
         .set(FieldConstants.ID, lotSearchParams.getId());
-    return getPage(requestParameters).getContent();
+    return getPage("/", requestParameters).getContent();
   }
 
   public LotDto saveLot(LotDto lotDto) {
-    return postResult("", lotDto, getResultClass());
+    return postResult("/", lotDto, getResultClass());
   }
 
 }

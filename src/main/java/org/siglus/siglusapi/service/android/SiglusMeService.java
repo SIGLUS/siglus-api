@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.android;
 
 import static java.util.Collections.emptyList;
+import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 
 import java.time.Instant;
 import java.time.chrono.ChronoZonedDateTime;
@@ -31,13 +32,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
@@ -53,8 +58,10 @@ import org.siglus.siglusapi.repository.android.AppInfoRepository;
 import org.siglus.siglusapi.repository.android.FacilityCmmsRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -67,6 +74,8 @@ import org.springframework.util.LinkedMultiValueMap;
 public class SiglusMeService {
 
   static final String KEY_PROGRAM_CODE = "programCode";
+  static final String KIT_LOT = "kitLot";
+  static final String TRADE_ITEM_ID = "tradeItemId";
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final SiglusArchiveProductService siglusArchiveProductService;
@@ -78,6 +87,8 @@ public class SiglusMeService {
   private final AppInfoRepository appInfoRepository;
   private final ProductMapper mapper;
   private final FacilityCmmsRepository facilityCmmsRepository;
+  private final SiglusStockCardSummariesService stockCardSummariesService;
+  private final SiglusLotReferenceDataService lotReferenceDataService;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -147,6 +158,61 @@ public class SiglusMeService {
 
   public void createStockCards(List<StockCardCreateRequest> requests) {
     throw new UnsupportedOperationException();
+  }
+
+  public Map<String, Map<String, Integer>> getLotOnHand() {
+    List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllAprovedOrderableDtos();
+    Map<UUID, String> orderableIdToCode = getOrderableIdToCode(orderableDtos);
+    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = stockCardSummariesService
+        .findAllProgramStockSummaries();
+    Map<UUID, String> lotIdToLotCode = getLotIdToCode(orderableDtos, stockCardSummaryV2Dtos);
+    return getLotsOnHandMap(orderableIdToCode, stockCardSummaryV2Dtos, lotIdToLotCode);
+  }
+
+  private Map<UUID, String> getOrderableIdToCode(
+      List<org.openlmis.requisition.dto.OrderableDto> orderableDtos) {
+    return orderableDtos.stream()
+        .collect(Collectors.toMap(
+            org.openlmis.requisition.dto.OrderableDto::getId,
+            org.openlmis.requisition.dto.OrderableDto::getProductCode));
+  }
+
+  private Map<UUID, String> getLotIdToCode(
+      List<org.openlmis.requisition.dto.OrderableDto> orderableDtos,
+      List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos) {
+    List<UUID> orderableIdsForStockCard = stockCardSummaryV2Dtos.stream()
+        .map(stockCardSummaryV2Dto -> stockCardSummaryV2Dto.getOrderable().getId())
+        .collect(Collectors.toList());
+    List<String> tradeItems =  orderableDtos.stream()
+        .filter(dto -> orderableIdsForStockCard.contains(dto.getId()))
+        .map(dto -> dto.getIdentifiers().get(TRADE_ITEM))
+        .collect(Collectors.toList());
+    RequestParameters requestParameters = RequestParameters.init();
+    requestParameters.set(TRADE_ITEM_ID, tradeItems);
+    return lotReferenceDataService.findAllLot(requestParameters)
+        .stream()
+        .collect(Collectors.toMap(LotDto::getId, LotDto::getLotCode));
+  }
+
+  private List<org.openlmis.requisition.dto.OrderableDto> getAllAprovedOrderableDtos() {
+    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    return programsHelper
+        .findUserSupportedPrograms().stream()
+        .map(programDataService::findOne)
+        .map(program -> getProgramProducts(homeFacilityId, program))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+  }
+
+  private Map<String, Map<String, Integer>> getLotsOnHandMap(Map<UUID, String> orderableIdToCode,
+      List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos, Map<UUID, String> lotIdToLotCode) {
+    return stockCardSummaryV2Dtos.stream()
+        .collect(Collectors.toMap(dto -> orderableIdToCode.get(dto.getOrderable().getId()),
+            dto -> dto.getCanFulfillForMe()
+                .stream()
+                .collect(Collectors.toMap(fulfillDto -> fulfillDto.getLot() == null
+                        ? KIT_LOT : lotIdToLotCode.get(fulfillDto.getLot().getId()),
+                    CanFulfillForMeEntryDto::getStockOnHand))));
   }
 
   private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId,
