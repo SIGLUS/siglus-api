@@ -30,6 +30,7 @@ import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.android.constraints.StockCardConsistentByLot;
 import org.siglus.siglusapi.dto.android.constraints.StockCardConsistentByProduct;
+import org.siglus.siglusapi.dto.android.constraints.StockCardConsistentOnSoh;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
@@ -78,6 +79,7 @@ public class SiglusMeController {
       @NotEmpty
       @StockCardConsistentByProduct
       @StockCardConsistentByLot
+      @StockCardConsistentOnSoh
           List<StockCardCreateRequest> requests) {
     service.createStockCards(requests);
     return requests;

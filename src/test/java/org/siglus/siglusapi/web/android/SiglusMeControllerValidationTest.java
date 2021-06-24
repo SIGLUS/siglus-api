@@ -41,7 +41,6 @@ import lombok.SneakyThrows;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.hibernate.validator.resourceloading.PlatformResourceBundleLocator;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -227,7 +226,7 @@ public class SiglusMeControllerValidationTest {
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
 
     // then
-    assertEquals(1, violations.size());
+    assertEquals(2, violations.size());
     assertEquals("The stock card for 08S01Z on 2021-06-17 is inconsistent with its lot events.",
         violations.get("createStockCards.arg0[0]"));
   }
@@ -261,7 +260,7 @@ public class SiglusMeControllerValidationTest {
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
 
     // then
-    assertEquals(2, violations.size());
+    assertEquals(1, violations.size());
     assertEquals("The records of the product 08S01Z are not consistent on 2021-06-16.",
         violations.get("createStockCards.arg0"));
   }
@@ -301,7 +300,6 @@ public class SiglusMeControllerValidationTest {
         violations.get("createStockCards.arg0"));
   }
 
-  @Ignore
   @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotsOverProduct()
       throws IOException {
@@ -316,7 +314,7 @@ public class SiglusMeControllerValidationTest {
     // then
     assertEquals(1, violations.size());
     assertEquals(
-        "The product 08S01Z has less SOH than its lots' on 2021-06-16.",
+        "The product 08S01Z has less SOH than the sum its lots' on 2021-06-16.",
         violations.get("createStockCards.arg0"));
   }
 
