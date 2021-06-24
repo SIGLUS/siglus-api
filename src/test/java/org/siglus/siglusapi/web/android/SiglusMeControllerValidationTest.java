@@ -233,10 +233,10 @@ public class SiglusMeControllerValidationTest {
   }
 
   @Test
-  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentGap()
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentProductsByGap()
       throws IOException {
     // given
-    Object param = parseParam("inconsistentGap.json");
+    Object param = parseParam("inconsistentProductsByGap.json");
 
     // when
     Map<String, String> violations = forExecutables
@@ -250,10 +250,10 @@ public class SiglusMeControllerValidationTest {
   }
 
   @Test
-  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentStockCard()
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentProductsByEach()
       throws IOException {
     // given
-    Object param = parseParam("inconsistentStockCard.json");
+    Object param = parseParam("inconsistentProductsByEach.json");
 
     // when
     Map<String, String> violations = forExecutables
