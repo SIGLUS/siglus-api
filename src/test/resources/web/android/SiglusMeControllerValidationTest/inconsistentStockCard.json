@@ -30,7 +30,7 @@
     "signature": "zhangsan",
     "lotEventList": [
       {
-        "SOH": "20",
+        "SOH": "25",
         "expirationDate": "2021-06-29",
         "lotNumber": "SEM-LOTE-02A01-062021",
         "quantity": -15,

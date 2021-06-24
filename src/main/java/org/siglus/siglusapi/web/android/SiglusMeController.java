@@ -28,6 +28,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.constraints.StockCardConsistentByLot;
 import org.siglus.siglusapi.dto.android.constraints.StockCardConsistentByProduct;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
@@ -76,6 +77,7 @@ public class SiglusMeController {
       @Valid @RequestBody
       @NotEmpty
       @StockCardConsistentByProduct
+      @StockCardConsistentByLot
           List<StockCardCreateRequest> requests) {
     service.createStockCards(requests);
     return requests;

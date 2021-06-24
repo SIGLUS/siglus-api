@@ -209,6 +209,7 @@ public class SiglusMeControllerValidationTest {
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
 
     // then
+    System.out.println(violations);
     assertEquals(1, violations.size());
     assertEquals("The stock card for 08S01Z on 2021-06-17 is inconsistent with its lot events.",
         violations.get("createStockCards.arg0[0]"));
@@ -260,17 +261,16 @@ public class SiglusMeControllerValidationTest {
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
 
     // then
-    assertEquals(1, violations.size());
+    assertEquals(2, violations.size());
     assertEquals("The records of the product 08S01Z are not consistent on 2021-06-16.",
         violations.get("createStockCards.arg0"));
   }
 
   @Test
-  @Ignore
-  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLots()
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotsByGap()
       throws IOException {
     // given
-    Object param = parseParam("inconsistentLots.json");
+    Object param = parseParam("inconsistentLotsByGap.json");
 
     // when
     Map<String, String> violations = forExecutables
@@ -279,7 +279,44 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The records of the product 08S01Z are not consistent.",
+    assertEquals("The lot SEM-LOTE-02A01-062021 of the product 08S01Z is not consistent by gap.",
+        violations.get("createStockCards.arg0"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotsByEach()
+      throws IOException {
+    // given
+    Object param = parseParam("inconsistentLotsByEach.json");
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals(
+        "The lot SEM-LOTE-02A01-062021 of the product 08S01Z is not consistent on 2021-06-16.",
+        violations.get("createStockCards.arg0"));
+  }
+
+  @Ignore
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotsOverProduct()
+      throws IOException {
+    // given
+    Object param = parseParam("inconsistentLotsOverProduct.json");
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals(
+        "The product 08S01Z has less SOH than its lots' on 2021-06-16.",
         violations.get("createStockCards.arg0"));
   }
 
