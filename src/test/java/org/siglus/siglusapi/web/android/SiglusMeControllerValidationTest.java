@@ -110,8 +110,9 @@ public class SiglusMeControllerValidationTest {
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
 
     // then
-    assertEquals(7, violations.size());
-    assertEquals(MAY_NOT_BE_EMPTY, violations.get("createStockCards.arg0[0].lotEvents"));
+    assertEquals(6, violations.size());
+    // could be empty when product is kit
+    // assertEquals(MAY_NOT_BE_EMPTY, violations.get("createStockCards.arg0[0].lotEvents"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createStockCards.arg0[0].occurredDate"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createStockCards.arg0[0].processedDate"));
     assertEquals(MAY_NOT_BE_EMPTY, violations.get("createStockCards.arg0[0].productCode"));

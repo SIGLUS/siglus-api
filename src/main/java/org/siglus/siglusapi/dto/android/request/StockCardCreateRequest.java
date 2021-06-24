@@ -24,7 +24,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.dto.android.constraints.ConsistentStockCard;
 import org.siglus.siglusapi.dto.android.constraints.ConsistentStockOnHand;
 
@@ -60,9 +59,7 @@ public class StockCardCreateRequest implements StockCardAdjustment {
 
   private String signature;
 
-  // TODO check consistent by lot
   @Valid
-  @NotEmpty
   @JsonProperty("lotEventList")
   private List<StockCardLotEventRequest> lotEvents;
 }
