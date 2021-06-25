@@ -96,8 +96,7 @@ public class LotStockOnHandConsistentWithQuantityValidator implements
     int stock = initStockOnHand;
     for (LotEvent request : lots) {
       if (request.getStockOnHand() != stock + request.getQuantity()) {
-        log.warn("Inconsistent lot {} on {}", lotNumber,
-            request.getOccurredDate());
+        log.warn("Inconsistent lot {} on {}", lotNumber, request.getOccurredDate());
         context.addExpressionVariable("date", request.getOccurredDate());
         return false;
       }

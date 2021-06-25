@@ -53,8 +53,9 @@ public class StockCardCreateRequest implements StockCardAdjustment {
   @NotNull
   private LocalDate occurredDate;
 
+  @JsonProperty("processedDate")
   @NotNull
-  private Instant processedDate;
+  private Instant createdAt;
 
   private String referenceNumber;
 
