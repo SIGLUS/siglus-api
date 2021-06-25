@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
