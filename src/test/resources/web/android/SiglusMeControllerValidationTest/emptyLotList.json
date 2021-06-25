@@ -1,12 +1,13 @@
 [
   {
-    "SOH": "13",
+    "stockOnHand": "13",
     "quantity": 10,
-    "occurred": "2021-06-17",
+    "occurredDate": "2021-06-17",
     "documentationNo": "doc-001",
     "productCode": "08S01Z",
+    "requested": 10,
     "type": "ADJUSTMENT",
-    "processeddate": "2021-06-17T14:20:56.000Z",
+    "processedDate": "2021-06-17T14:20:56.000Z",
     "signature": "zhangsan",
     "lotEventList": [
       {}

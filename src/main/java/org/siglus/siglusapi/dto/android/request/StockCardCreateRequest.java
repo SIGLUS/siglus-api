@@ -37,7 +37,6 @@ public class StockCardCreateRequest implements StockCardAdjustment {
 
   @Min(0)
   @NotNull
-  @JsonProperty("SOH")
   // after the adjustment
   private Integer stockOnHand;
 
@@ -48,14 +47,14 @@ public class StockCardCreateRequest implements StockCardAdjustment {
   private String type;
 
   @NotNull
-  @JsonProperty("occurred")
   private LocalDate occurredDate;
 
   @NotNull
-  @JsonProperty("processeddate")
   private Instant processedDate;
 
   private String referenceNumber;
+
+  private Integer requested;
 
   private String signature;
 

@@ -35,7 +35,6 @@ public class StockCardLotEventRequest implements StockCardAdjustment {
 
   @Min(0)
   @NotNull
-  @JsonProperty("SOH")
   private Integer stockOnHand;
 
   @NotNull

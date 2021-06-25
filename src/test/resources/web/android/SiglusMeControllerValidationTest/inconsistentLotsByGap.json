@@ -1,16 +1,16 @@
 [
   {
-    "SOH": "55",
+    "stockOnHand": "55",
     "quantity": 15,
-    "occurred": "2021-06-17",
+    "occurredDate": "2021-06-17",
     "documentationNo": "doc-002",
     "productCode": "08S01Z",
     "type": "ADJUSTMENT",
-    "processeddate": "2021-06-17T14:20:56.000Z",
+    "processedDate": "2021-06-17T14:20:56.000Z",
     "signature": "zhangsan",
     "lotEventList": [
       {
-        "SOH": "15",
+        "stockOnHand": "15",
         "expirationDate": "2021-06-29",
         "lotNumber": "SEM-LOTE-02A01-062021",
         "quantity": 15,
@@ -20,17 +20,17 @@
     ]
   },
   {
-    "SOH": "40",
+    "stockOnHand": "40",
     "quantity": -20,
-    "occurred": "2021-06-15",
+    "occurredDate": "2021-06-15",
     "documentationNo": "doc-001",
     "productCode": "08S01Z",
     "type": "ADJUSTMENT",
-    "processeddate": "2021-06-17T14:20:56.000Z",
+    "processedDate": "2021-06-17T14:20:56.000Z",
     "signature": "zhangsan",
     "lotEventList": [
       {
-        "SOH": "15",
+        "stockOnHand": "15",
         "expirationDate": "2021-06-29",
         "lotNumber": "SEM-LOTE-02A01-062021",
         "quantity": -20,
@@ -40,17 +40,17 @@
     ]
   },
   {
-    "SOH": "40",
+    "stockOnHand": "40",
     "quantity": -20,
-    "occurred": "2021-06-15",
+    "occurredDate": "2021-06-15",
     "documentationNo": "doc-001",
     "productCode": "08S01S",
     "type": "ADJUSTMENT",
-    "processeddate": "2021-06-17T14:20:56.000Z",
+    "processedDate": "2021-06-17T14:20:56.000Z",
     "signature": "zhangsan",
     "lotEventList": [
       {
-        "SOH": "40",
+        "stockOnHand": "40",
         "expirationDate": "2021-06-29",
         "lotNumber": "SEM-LOTE-02A01-062021",
         "quantity": -20,
