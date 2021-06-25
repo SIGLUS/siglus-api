@@ -355,6 +355,7 @@ public class SiglusMeControllerValidationTest {
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
 
     // then
+    System.out.println(violations);
     assertEquals(1, violations.size());
     assertEquals("The product 08K should not contain lot events since it's a kit product.",
         violations.get("createStockCards.arg0[0]"));
