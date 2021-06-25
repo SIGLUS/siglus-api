@@ -97,7 +97,6 @@ public class SiglusMeControllerValidationTest {
     createStockCards = SiglusMeController.class.getDeclaredMethod("createStockCards", List.class);
     orderableService = mock(SiglusOrderableService.class);
     OrderableDto notKitProduct = mock(OrderableDto.class);
-    new OrderableDto();
     OrderableDto kitProduct = mock(OrderableDto.class);
     when(kitProduct.getIsKit()).thenReturn(true);
     when(orderableService.getOrderableByCode(any())).then(invocation -> {
