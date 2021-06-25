@@ -13,21 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.validators;
+package org.siglus.siglusapi.dto.android.validators.stockcard;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
-import org.siglus.siglusapi.dto.android.constraints.ConsistentStockOnHand;
+import org.siglus.siglusapi.dto.android.constraints.stockcard.PositiveInitStockOnHand;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 
 @Slf4j
-public class ConsistentStockOnHandValidator implements
-    ConstraintValidator<ConsistentStockOnHand, StockCardAdjustment> {
+public class PositiveInitStockOnHandValidator implements
+    ConstraintValidator<PositiveInitStockOnHand, StockCardAdjustment> {
 
   @Override
-  public void initialize(ConsistentStockOnHand constraintAnnotation) {
+  public void initialize(PositiveInitStockOnHand constraintAnnotation) {
     // nothing to do
   }
 

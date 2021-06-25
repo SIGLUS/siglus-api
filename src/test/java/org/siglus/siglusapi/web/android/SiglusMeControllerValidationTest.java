@@ -34,13 +34,17 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorFactory;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.executable.ExecutableValidator;
 import lombok.SneakyThrows;
+import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.hibernate.validator.resourceloading.PlatformResourceBundleLocator;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -76,6 +80,7 @@ public class SiglusMeControllerValidationTest {
     stockCardCreateRequestListType = mapper.getTypeFactory()
         .constructCollectionType(List.class, StockCardCreateRequest.class);
     forExecutables = Validation.byDefaultProvider().configure()
+        .constraintValidatorFactory(new InnerConstraintValidatorFactory())
         .messageInterpolator(messageInterpolator)
         .buildValidatorFactory().getValidator().forExecutables();
     createStockCards = SiglusMeController.class.getDeclaredMethod("createStockCards", List.class);
@@ -176,7 +181,7 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(2, violations.size());
-    assertEquals("The record with soh[10] is inconsistent with quantity[20].",
+    assertEquals("The adjustment with soh[10] is inconsistent with quantity[20].",
         violations.get("createStockCards.arg0[0]"));
   }
 
@@ -193,7 +198,7 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The record with soh[5] is inconsistent with quantity[10].",
+    assertEquals("The adjustment with soh[5] is inconsistent with quantity[10].",
         violations.get("createStockCards.arg0[0].lotEvents[0]"));
   }
 
@@ -209,7 +214,6 @@ public class SiglusMeControllerValidationTest {
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
 
     // then
-    System.out.println(violations);
     assertEquals(1, violations.size());
     assertEquals("The stock card for 08S01Z on 2021-06-17 is inconsistent with its lot events.",
         violations.get("createStockCards.arg0[0]"));
@@ -245,7 +249,7 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The records of the product 08S01Z are not consistent by gap.",
+    assertEquals("The product 08S01Z is not consistent by gap.",
         violations.get("createStockCards.arg0"));
   }
 
@@ -262,7 +266,7 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The records of the product 08S01Z are not consistent on 2021-06-16.",
+    assertEquals("The product 08S01Z is not consistent on 2021-06-16.",
         violations.get("createStockCards.arg0"));
   }
 
@@ -315,8 +319,65 @@ public class SiglusMeControllerValidationTest {
     // then
     assertEquals(1, violations.size());
     assertEquals(
-        "The product 08S01Z has less SOH than the sum its lots' on 2021-06-16.",
+        "The product 08S01Z is not consistent since it has less SOH than the sum its lots' on 2021-06-16.",
         violations.get("createStockCards.arg0"));
+  }
+
+  @Ignore
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenKitProductWithLots()
+      throws IOException {
+    // given
+    Object param = parseParam("kitProductWithLots.json");
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals(
+        "The product 08K should not contain lot events since it's a kit product",
+        violations.get("createStockCards.arg0[0]"));
+  }
+
+  @Ignore
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenNonKitProductWithEmptyLots()
+      throws IOException {
+    // given
+    Object param = parseParam("nonKitProductWithEmptyLots.json");
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals(
+        "The product 08S01Z should contain at least one lot event since it's not a kit product",
+        violations.get("createStockCards.arg0[0]"));
+  }
+
+  @Ignore
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenNonKitProductWithoutLots()
+      throws IOException {
+    // given
+    Object param = parseParam("nonKitProductWithoutLots.json");
+
+    // when
+    Map<String, String> violations = forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals(
+        "The product 08S01Z should contain at least one lot event since it's not a kit product",
+        violations.get("createStockCards.arg0[0]"));
   }
 
   private Object parseParam(String fileName) throws IOException {
@@ -345,6 +406,21 @@ public class SiglusMeControllerValidationTest {
   @SneakyThrows
   private List<String> readAllLines(Path path) {
     return Files.readAllLines(path);
+  }
+
+  private static class InnerConstraintValidatorFactory implements ConstraintValidatorFactory {
+
+    @Override
+    public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
+      // TODO add support for inject-required validator
+      return NewInstance.action(key, "ConstraintValidator").run();
+    }
+
+    @Override
+    public void releaseInstance(ConstraintValidator<?, ?> instance) {
+      // nothing to do
+    }
+
   }
 
 }

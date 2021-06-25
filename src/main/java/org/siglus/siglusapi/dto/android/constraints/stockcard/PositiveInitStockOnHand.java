@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.constraints;
+package org.siglus.siglusapi.dto.android.constraints.stockcard;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
@@ -26,15 +26,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
-import org.siglus.siglusapi.dto.android.validators.StockCardConsistentByProductValidator;
+import org.siglus.siglusapi.dto.android.validators.stockcard.PositiveInitStockOnHandValidator;
 
 @Target({METHOD, FIELD, TYPE, PARAMETER})
 @Retention(RUNTIME)
 @Documented
-@Constraint(validatedBy = StockCardConsistentByProductValidator.class)
-public @interface StockCardConsistentByProduct {
+@Constraint(validatedBy = PositiveInitStockOnHandValidator.class)
+public @interface PositiveInitStockOnHand {
 
-  String message() default "{org.siglus.siglusapi.dto.android.constraints.StockCardConsistentByProduct.message}";
+  String message() default "{org.siglus.siglusapi.dto.android.constraints.stockcard.PositiveInitStockOnHand.message}";
 
   Class<?>[] groups() default {};
 

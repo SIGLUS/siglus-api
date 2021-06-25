@@ -21,10 +21,10 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
-import org.siglus.siglusapi.dto.android.constraints.ConsistentStockOnHand;
+import org.siglus.siglusapi.dto.android.constraints.stockcard.PositiveInitStockOnHand;
 
 @Data
-@ConsistentStockOnHand
+@PositiveInitStockOnHand
 public class StockCardLotEventRequest implements StockCardAdjustment {
 
   @NotBlank

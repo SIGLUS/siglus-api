@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.constraints;
+package org.siglus.siglusapi.dto.android.constraints.stockcard;
 
 import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
@@ -26,15 +26,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
-import org.siglus.siglusapi.dto.android.validators.ConsistentStockCardValidator;
+import org.siglus.siglusapi.dto.android.validators.stockcard.ProductConsistentWithAllLotsValidator;
 
 @Target({METHOD, FIELD, TYPE, PARAMETER})
 @Retention(RUNTIME)
 @Documented
-@Constraint(validatedBy = ConsistentStockCardValidator.class)
-public @interface ConsistentStockCard {
+@Constraint(validatedBy = ProductConsistentWithAllLotsValidator.class)
+public @interface ProductConsistentWithAllLots {
 
-  String message() default "{org.siglus.siglusapi.dto.android.constraints.ConsistentStockCard.message}";
+  String message() default
+      "{org.siglus.siglusapi.dto.android.constraints.stockcard.ProductConsistentWithAllLots.message}";
 
   Class<?>[] groups() default {};
 

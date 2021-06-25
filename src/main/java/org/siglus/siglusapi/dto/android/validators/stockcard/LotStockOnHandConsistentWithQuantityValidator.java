@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.validators;
+package org.siglus.siglusapi.dto.android.validators.stockcard;
 
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
@@ -28,16 +28,16 @@ import javax.validation.ConstraintValidatorContext;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
-import org.siglus.siglusapi.dto.android.constraints.StockCardConsistentByLot;
+import org.siglus.siglusapi.dto.android.constraints.stockcard.LotStockOnHandConsistentWithQuantity;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 
 @Slf4j
-public class StockCardConsistentByLotValidator implements
-    ConstraintValidator<StockCardConsistentByLot, List<StockCardCreateRequest>> {
+public class LotStockOnHandConsistentWithQuantityValidator implements
+    ConstraintValidator<LotStockOnHandConsistentWithQuantity, List<StockCardCreateRequest>> {
 
   @Override
-  public void initialize(StockCardConsistentByLot constraintAnnotation) {
+  public void initialize(LotStockOnHandConsistentWithQuantity constraintAnnotation) {
     // nothing to do
   }
 
