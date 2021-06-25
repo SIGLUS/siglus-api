@@ -29,6 +29,7 @@ import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EM
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -55,6 +56,7 @@ import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.OrderableChildDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SiglusDateHelper;
@@ -120,6 +122,15 @@ public class SiglusStockEventsServiceTest {
   private final UUID lotId = UUID.randomUUID();
 
   private static final LocalDate CURRENT_DATE = LocalDate.now();
+
+  private UserDto userDto;
+
+  @Before
+  public void prepare() {
+    userDto = new UserDto();
+    userDto.setId(UUID.randomUUID());
+    userDto.setHomeFacilityId(UUID.randomUUID());
+  }
 
   @Test
   public void shouldCallStockEventProcessorWhenCreateStockEventForPhysicalInventory() {
@@ -197,7 +208,7 @@ public class SiglusStockEventsServiceTest {
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
     when(dateHelper.getCurrentDate()).thenReturn(CURRENT_DATE);
 
-    siglusStockEventsService.createAndFillLotId(eventDto, false);
+    siglusStockEventsService.createAndFillLotId(eventDto, false, userDto);
 
     assertEquals(lotId, lineItemDto.getLotId());
   }
@@ -223,7 +234,7 @@ public class SiglusStockEventsServiceTest {
     lineItemDto.setExtraData(extraData);
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
 
-    siglusStockEventsService.createAndFillLotId(eventDto, false);
+    siglusStockEventsService.createAndFillLotId(eventDto, false, userDto);
 
     assertEquals(lotId, lineItemDto.getLotId());
   }
@@ -241,6 +252,6 @@ public class SiglusStockEventsServiceTest {
         .withOrderableId(orderableId).build();
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
 
-    siglusStockEventsService.createAndFillLotId(eventDto, false);
+    siglusStockEventsService.createAndFillLotId(eventDto, false, userDto);
   }
 }

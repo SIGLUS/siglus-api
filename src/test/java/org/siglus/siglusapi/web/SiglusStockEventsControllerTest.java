@@ -44,11 +44,13 @@ public class SiglusStockEventsControllerTest {
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
 
+  private UserDto userDto;
+
   @Before
   public void prepare() {
-    UserDto user = new UserDto();
-    user.setId(UUID.randomUUID());
-    when(authenticationHelper.getCurrentUser()).thenReturn(user);
+    userDto = new UserDto();
+    userDto.setId(UUID.randomUUID());
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
   }
 
   @Test
@@ -57,7 +59,7 @@ public class SiglusStockEventsControllerTest {
     dto.setProgramId(ALL_PRODUCTS_PROGRAM_ID);
     controller.createStockEvent(dto);
 
-    verify(service).createAndFillLotId(dto, false);
+    verify(service).createAndFillLotId(dto, false, userDto);
     assertEquals(dto.getUserId(), authenticationHelper.getCurrentUser().getId());
     verify(service).createStockEventForAllProducts(dto);
   }
@@ -68,7 +70,7 @@ public class SiglusStockEventsControllerTest {
     dto.setProgramId(UUID.randomUUID());
     controller.createStockEvent(dto);
 
-    verify(service).createAndFillLotId(dto, false);
+    verify(service).createAndFillLotId(dto, false, userDto);
     assertEquals(dto.getUserId(), authenticationHelper.getCurrentUser().getId());
     verify(service).createStockEvent(dto);
   }

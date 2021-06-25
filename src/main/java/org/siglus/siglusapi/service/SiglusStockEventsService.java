@@ -48,11 +48,14 @@ import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.LotSearchParams;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.constant.FieldConstants;
+import org.siglus.siglusapi.domain.LotConflict;
+import org.siglus.siglusapi.repository.LotConflictRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
@@ -100,6 +103,9 @@ public class SiglusStockEventsService {
 
   @Autowired
   private SiglusDateHelper dateHelper;
+
+  @Autowired
+  private LotConflictRepository conflictRepository;
 
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;
@@ -156,7 +162,7 @@ public class SiglusStockEventsService {
   }
 
   @Transactional
-  public void createAndFillLotId(StockEventDto eventDto, boolean updateExpirationDate) {
+  public void createAndFillLotId(StockEventDto eventDto, boolean updateExpirationDate, UserDto userDto) {
     final List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     Map<UUID, OrderableDto> orderableDtos = orderableReferenceDataService.findByIds(
         lineItems.stream().map(StockEventLineItemDto::getOrderableId).collect(Collectors.toSet()))
@@ -168,7 +174,7 @@ public class SiglusStockEventsService {
       if (orderableIsNotKit) {
         fillLotIdForNormalOrderable(stockEventLineItem,
             orderableDtos.get(stockEventLineItem.getOrderableId()).getIdentifiers().get(
-                FieldConstants.TRADE_ITEM), updateExpirationDate);
+                FieldConstants.TRADE_ITEM), updateExpirationDate, userDto);
       } else {
         kitOrderableShouldNotContainLotInfo(stockEventLineItem);
       }
@@ -191,14 +197,15 @@ public class SiglusStockEventsService {
   }
 
   private void fillLotIdForNormalOrderable(StockEventLineItemDto stockEventLineItem,
-      String tradeItemId, boolean updateExpirationDate) {
+      String tradeItemId, boolean updateExpirationDate, UserDto userDto) {
     if (stockEventLineItem.getLotId() == null) {
       if (StringUtils.isBlank(stockEventLineItem.getLotCode())) {
         throw new ValidationMessageException(
             new Message(ERROR_LOT_CODE_IS_EMPTY));
       }
       UUID newLotId = createNewLotOrReturnExisted(stockEventLineItem.getLotCode(),
-          stockEventLineItem.getExpirationDate(), tradeItemId, updateExpirationDate).getId();
+          stockEventLineItem.getExpirationDate(), tradeItemId, updateExpirationDate,
+          userDto).getId();
 
       stockEventLineItem.setLotId(newLotId);
     }
@@ -213,7 +220,7 @@ public class SiglusStockEventsService {
   }
 
   private LotDto createNewLotOrReturnExisted(String lotCode, LocalDate expirationDate,
-      String tradeItemId, Boolean updateExpirationDate) {
+      String tradeItemId, Boolean updateExpirationDate, UserDto userDto) {
     if (null == tradeItemId) {
       throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
     }
@@ -225,6 +232,17 @@ public class SiglusStockEventsService {
       LotDto existedLot = existedLots.get(0);
       if (Boolean.TRUE.equals(updateExpirationDate)
           && !existedLot.getExpirationDate().isEqual(expirationDate)) {
+        LotConflict conflict = conflictRepository
+            .findLotConflictByFacilityIdAndLotId(userDto.getHomeFacilityId(), existedLot.getId());
+        if (conflict == null) {
+          LotConflict lotConflict = new LotConflict().builder()
+              .expirationDate(expirationDate)
+              .lotId(existedLot.getId())
+              .facilityId(userDto.getHomeFacilityId())
+              .build();
+          log.info("save lot Conflict: {}", lotConflict);
+          conflictRepository.save(lotConflict);
+        }
         log.info("lot existed date is different: {}", lotCode);
       }
       return existedLot;

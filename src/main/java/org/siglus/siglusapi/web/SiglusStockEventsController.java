@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.StockEventDto;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,11 +42,11 @@ public class SiglusStockEventsController {
   @PostMapping
   @Transactional
   public UUID createStockEvent(@RequestBody StockEventDto eventDto) {
-    stockEventsService.createAndFillLotId(eventDto, false);
     // api sent by fulfilment with context is "trust-client", already has user-id.
-    if (eventDto.getUserId() == null) {
-      eventDto.setUserId(authenticationHelper.getCurrentUser().getId());
-    }
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    eventDto.setUserId(userDto.getId());
+
+    stockEventsService.createAndFillLotId(eventDto, false, userDto);
     if (ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId())) {
       return stockEventsService.createStockEventForAllProducts(eventDto);
     }

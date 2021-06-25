@@ -21,7 +21,6 @@ import static org.openlmis.stockmanagement.service.StockmanagementPermissionServ
 import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.common.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
-import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
@@ -153,7 +152,7 @@ public class SiglusStockCardSummariesService {
   }
 
   public List<StockCardSummaryV2Dto> findAllProgramStockSummaries() {
-    MultiValueMap valueMap = new LinkedMultiValueMap();
+    MultiValueMap<String, String> valueMap = new LinkedMultiValueMap<>();
     valueMap.set(PROGRAM_ID, ALL_PRODUCTS_PROGRAM_ID.toString());
     valueMap.set(RIGHT_NAME, STOCK_CARDS_VIEW);
     valueMap.set(NON_EMPTY_ONLY, Boolean.TRUE.toString());
