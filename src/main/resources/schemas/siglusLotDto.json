@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "siglus lot dto",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "lotCode": {
+      "type": "string",
+      "title": "lotCode"
+    },
+    "expirationDate": {
+      "type": "object",
+      "title": "expirationDate"
+    },
+    "valid": {
+      "type": "boolean",
+      "title": "valid"
+    }
+  }
+}

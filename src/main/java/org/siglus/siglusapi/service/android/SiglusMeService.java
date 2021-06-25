@@ -48,6 +48,7 @@ import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
@@ -58,6 +59,7 @@ import org.siglus.siglusapi.repository.android.AppInfoRepository;
 import org.siglus.siglusapi.repository.android.FacilityCmmsRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.SiglusStockCardLineItemService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
@@ -89,6 +91,7 @@ public class SiglusMeService {
   private final FacilityCmmsRepository facilityCmmsRepository;
   private final SiglusStockCardSummariesService stockCardSummariesService;
   private final SiglusLotReferenceDataService lotReferenceDataService;
+  private final SiglusStockCardLineItemService stockCardLineItemService;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -213,6 +216,12 @@ public class SiglusMeService {
                 .collect(Collectors.toMap(fulfillDto -> fulfillDto.getLot() == null
                         ? KIT_LOT : lotIdToLotCode.get(fulfillDto.getLot().getId()),
                     CanFulfillForMeEntryDto::getStockOnHand))));
+  }
+
+  @Transactional
+  public List<ProductMovementDto> getProductMovements(String startTime, String endTime) {
+    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    return stockCardLineItemService.findProductMovements(facilityId, startTime, endTime);
   }
 
   private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId,

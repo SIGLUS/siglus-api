@@ -28,6 +28,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.LotStockOnHandConsistentWithQuantity;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.ProductConsistentWithAllLots;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.ProductStockOnHandConsistentWithQuantity;
@@ -36,6 +37,7 @@ import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,6 +45,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -83,6 +86,15 @@ public class SiglusMeController {
           List<StockCardCreateRequest> requests) {
     service.createStockCards(requests);
     return requests;
+  }
+
+  @GetMapping("/facility/stockCards")
+  @ResponseStatus(HttpStatus.OK)
+  @ResponseBody
+  public List<ProductMovementDto> getFacilityStockCards(
+      @RequestParam(value = "startTime") String startTime,
+      @RequestParam(value = "endTime") String endTime) {
+    return service.getProductMovements(startTime, endTime);
   }
 
   @PostMapping("/app-info")

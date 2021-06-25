@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "stockcard movement item",
+  "properties": {
+    "movementQuantity": {
+      "type": "number",
+      "title": "movementQuantity"
+    },
+    "type": {
+      "type": "string",
+      "title": "type"
+    },
+    "stockOnHand": {
+      "type": "number",
+      "title": "stockOnHand"
+    },
+    "signature": {
+      "type": "string",
+      "title": "signature"
+    },
+    "processedDate": {
+      "type": "object",
+      "title": "processedDate"
+    },
+    "occurredDatex": {
+      "type": "object",
+      "title": "occurredDate"
+    },
+    "lotMovementItems": {
+      "type": "array",
+      "title": "lotMovementItems",
+      "items": {
+        "type": "object",
+        "title": "lotMovementItemDto",
+        "$ref": "lotMovementItemDto.json"
+      }
+    }
+  }
+}
