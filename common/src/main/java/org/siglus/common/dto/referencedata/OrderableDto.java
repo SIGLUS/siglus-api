@@ -41,7 +41,7 @@ import org.siglus.common.domain.referencedata.Orderable;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public final class OrderableDto extends BaseDto implements Orderable.Importer,
+public class OrderableDto extends BaseDto implements Orderable.Importer,
     Orderable.Exporter, Serializable {
 
   public static final String TRADE_ITEM = "tradeItem";

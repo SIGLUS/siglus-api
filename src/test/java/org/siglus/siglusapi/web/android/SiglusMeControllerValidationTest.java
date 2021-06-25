@@ -18,6 +18,9 @@ package org.siglus.siglusapi.web.android;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toMap;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
@@ -44,12 +47,16 @@ import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.hibernate.validator.resourceloading.PlatformResourceBundleLocator;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
+import org.siglus.siglusapi.dto.android.validators.stockcard.KitProductEmptyLotsValidator;
+import org.siglus.siglusapi.dto.android.validators.stockcard.NonKitProductNotEmptyLotsValidator;
+import org.siglus.siglusapi.service.SiglusOrderableService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
@@ -61,6 +68,9 @@ public class SiglusMeControllerValidationTest {
 
   @InjectMocks
   private SiglusMeController controller;
+
+  @Mock
+  private SiglusOrderableService orderableService;
 
   private final ObjectMapper mapper = new ObjectMapper();
 
@@ -84,6 +94,18 @@ public class SiglusMeControllerValidationTest {
         .messageInterpolator(messageInterpolator)
         .buildValidatorFactory().getValidator().forExecutables();
     createStockCards = SiglusMeController.class.getDeclaredMethod("createStockCards", List.class);
+    orderableService = mock(SiglusOrderableService.class);
+    OrderableDto notKitProduct = mock(OrderableDto.class);
+    new OrderableDto();
+    OrderableDto kitProduct = mock(OrderableDto.class);
+    when(kitProduct.getIsKit()).thenReturn(true);
+    when(orderableService.getOrderableByCode(any())).then(invocation -> {
+      String productCode = invocation.getArgumentAt(0, String.class);
+      if ("08K".equals(productCode)) {
+        return kitProduct;
+      }
+      return notKitProduct;
+    });
   }
 
   @Test
@@ -300,8 +322,7 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals(
-        "The lot SEM-LOTE-02A01-062021 of the product 08S01Z is not consistent on 2021-06-16.",
+    assertEquals("The lot SEM-LOTE-02A01-062021 of the product 08S01Z is not consistent on 2021-06-16.",
         violations.get("createStockCards.arg0"));
   }
 
@@ -318,12 +339,10 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals(
-        "The product 08S01Z is not consistent since it has less SOH than the sum its lots' on 2021-06-16.",
+    assertEquals("The product 08S01Z is not consistent since it has less SOH than the sum its lots' on 2021-06-16.",
         violations.get("createStockCards.arg0"));
   }
 
-  @Ignore
   @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenKitProductWithLots()
       throws IOException {
@@ -337,12 +356,10 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals(
-        "The product 08K should not contain lot events since it's a kit product",
+    assertEquals("The product 08K should not contain lot events since it's a kit product.",
         violations.get("createStockCards.arg0[0]"));
   }
 
-  @Ignore
   @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenNonKitProductWithEmptyLots()
       throws IOException {
@@ -356,12 +373,10 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals(
-        "The product 08S01Z should contain at least one lot event since it's not a kit product",
+    assertEquals("The product 08S01Z should contain at least one lot event since it's not a kit product.",
         violations.get("createStockCards.arg0[0]"));
   }
 
-  @Ignore
   @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenNonKitProductWithoutLots()
       throws IOException {
@@ -375,8 +390,7 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals(
-        "The product 08S01Z should contain at least one lot event since it's not a kit product",
+    assertEquals("The product 08S01Z should contain at least one lot event since it's not a kit product.",
         violations.get("createStockCards.arg0[0]"));
   }
 
@@ -408,11 +422,17 @@ public class SiglusMeControllerValidationTest {
     return Files.readAllLines(path);
   }
 
-  private static class InnerConstraintValidatorFactory implements ConstraintValidatorFactory {
+  private class InnerConstraintValidatorFactory implements ConstraintValidatorFactory {
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
-      // TODO add support for inject-required validator
+      if (key == KitProductEmptyLotsValidator.class) {
+        return (T) new KitProductEmptyLotsValidator(orderableService);
+      }
+      if (key == NonKitProductNotEmptyLotsValidator.class) {
+        return (T) new NonKitProductNotEmptyLotsValidator(orderableService);
+      }
       return NewInstance.action(key, "ConstraintValidator").run();
     }
 
