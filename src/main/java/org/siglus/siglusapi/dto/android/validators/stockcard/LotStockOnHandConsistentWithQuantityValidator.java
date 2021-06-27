@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Comparator;
@@ -52,7 +53,7 @@ public class LotStockOnHandConsistentWithQuantityValidator implements
         .filter(r -> isNotEmpty(r.getLotEvents()))
         .map(this::toLotEvents)
         .flatMap(Collection::stream)
-        .sorted(Comparator.comparing(LotEvent::getOccurredDate))
+        .sorted(Comparator.comparing(LotEvent::getCreatedAt).thenComparing(LotEvent::getOccurredDate))
         .collect(groupingBy(LotEvent::getProductCode)).entrySet().stream()
         .allMatch(e -> checkConsistentByProduct(e.getKey(), e.getValue(), actualContext));
   }
@@ -77,15 +78,15 @@ public class LotStockOnHandConsistentWithQuantityValidator implements
       HibernateConstraintValidatorContext context) {
     context.addExpressionVariable("lotNumber", lotNumber);
     int initStockOnHand = lots.stream()
-        .min(Comparator.comparing(LotEvent::getOccurredDate))
+        .min(Comparator.comparing(LotEvent::getCreatedAt).thenComparing(LotEvent::getOccurredDate))
         .map(r -> r.getStockOnHand() - r.getQuantity())
         .orElse(0);
     int lastStockOnHand = lots.stream()
-        .max(Comparator.comparing(LotEvent::getOccurredDate))
+        .max(Comparator.comparing(LotEvent::getCreatedAt).thenComparing(LotEvent::getOccurredDate))
         .map(LotEvent::getStockOnHand)
         .orElse(0);
     int calculatedGap = lots.stream()
-        .sorted(Comparator.comparing(LotEvent::getOccurredDate))
+        .sorted(Comparator.comparing(LotEvent::getCreatedAt).thenComparing(LotEvent::getOccurredDate))
         .reduce(0, (gap, req) -> gap + req.getQuantity(), Integer::sum);
     if (lastStockOnHand != initStockOnHand + calculatedGap) {
       log.warn("Inconsistent lot by gap on {}", lotNumber);
@@ -96,8 +97,9 @@ public class LotStockOnHandConsistentWithQuantityValidator implements
     int stock = initStockOnHand;
     for (LotEvent request : lots) {
       if (request.getStockOnHand() != stock + request.getQuantity()) {
-        log.warn("Inconsistent lot {} on {}", lotNumber, request.getOccurredDate());
+        log.warn("Inconsistent lot {} at {}", lotNumber, request.getCreatedAt());
         context.addExpressionVariable("date", request.getOccurredDate());
+        context.addExpressionVariable("createdAt", request.getCreatedAt());
         return false;
       }
       stock = request.getStockOnHand();
@@ -110,6 +112,7 @@ public class LotStockOnHandConsistentWithQuantityValidator implements
 
     private String productCode;
     private LocalDate occurredDate;
+    private Instant createdAt;
     private String lotNumber;
     private Integer quantity;
     private Integer stockOnHand;
@@ -117,6 +120,7 @@ public class LotStockOnHandConsistentWithQuantityValidator implements
     LotEvent(StockCardCreateRequest product, StockCardLotEventRequest lot) {
       productCode = product.getProductCode();
       occurredDate = product.getOccurredDate();
+      createdAt = product.getCreatedAt();
       lotNumber = lot.getLotNumber();
       quantity = lot.getQuantity();
       stockOnHand = lot.getStockOnHand();

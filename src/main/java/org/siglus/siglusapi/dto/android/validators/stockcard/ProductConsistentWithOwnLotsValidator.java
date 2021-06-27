@@ -55,7 +55,8 @@ public class ProductConsistentWithOwnLotsValidator implements
     HibernateConstraintValidatorContext actualContext = context
         .unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable("productCode", value.getProductCode());
-    actualContext.addExpressionVariable("occurredDate", value.getOccurredDate());
+    actualContext.addExpressionVariable("date", value.getOccurredDate());
+    actualContext.addExpressionVariable("createdAt", value.getCreatedAt());
     return value.getStockOnHand() >= sohSum && value.getQuantity() == quantitySum;
   }
 

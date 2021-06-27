@@ -47,7 +47,6 @@ import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.hibernate.validator.resourceloading.PlatformResourceBundleLocator;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -237,7 +236,8 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The stock card for 08S01Z on 2021-06-17 is inconsistent with its lot events.",
+    assertEquals(
+        "The stock card for 08S01Z on 2021-06-17(at 2021-06-17T14:20:56Z) is inconsistent with its lot events.",
         violations.get("createStockCards.arg0[0]"));
   }
 
@@ -254,11 +254,11 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(2, violations.size());
-    assertEquals("The stock card for 08S01Z on 2021-06-17 is inconsistent with its lot events.",
+    assertEquals(
+        "The stock card for 08S01Z on 2021-06-17(at 2021-06-17T14:20:56Z) is inconsistent with its lot events.",
         violations.get("createStockCards.arg0[0]"));
   }
 
-  @Ignore
   @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentProductsByGap()
       throws IOException {
@@ -276,7 +276,6 @@ public class SiglusMeControllerValidationTest {
         violations.get("createStockCards.arg0"));
   }
 
-  @Ignore
   @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentProductsByEach()
       throws IOException {
@@ -290,11 +289,10 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The product 08S01Z is not consistent on 2021-06-16.",
+    assertEquals("The product 08S01Z is not consistent on 2021-06-17(at 2021-06-17T13:20:56Z).",
         violations.get("createStockCards.arg0"));
   }
 
-  @Ignore
   @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotsByGap()
       throws IOException {
@@ -312,7 +310,6 @@ public class SiglusMeControllerValidationTest {
         violations.get("createStockCards.arg0"));
   }
 
-  @Ignore
   @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotsByEach()
       throws IOException {
@@ -326,11 +323,11 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The lot SEM-LOTE-02A01-062021 of the product 08S01Z is not consistent on 2021-06-16.",
+    assertEquals(
+        "The lot SEM-LOTE-02A01-062021 of the product 08S01Z is not consistent on 2021-06-17(at 2021-06-17T14:20:56Z).",
         violations.get("createStockCards.arg0"));
   }
 
-  @Ignore
   @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotsOverProduct()
       throws IOException {
@@ -344,7 +341,8 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The product 08S01Z is not consistent since it has less SOH than the sum its lots' on 2021-06-16.",
+    assertEquals(
+        "The product 08S01Z is not consistent since it has less SOH than the sum its lots' on 2021-06-17(at 2021-06-17T14:20:56Z).",
         violations.get("createStockCards.arg0"));
   }
 

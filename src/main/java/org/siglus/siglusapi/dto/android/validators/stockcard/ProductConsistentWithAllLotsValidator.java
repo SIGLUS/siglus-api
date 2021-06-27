@@ -51,7 +51,7 @@ public class ProductConsistentWithAllLotsValidator implements
         .filter(r -> isNotEmpty(r.getLotEvents()))
         .filter(r -> r.getLotEvents().stream().allMatch(l -> l.getQuantity() != null))
         .filter(r -> r.getLotEvents().stream().allMatch(l -> l.getStockOnHand() != null))
-        .sorted(Comparator.comparing(StockCardCreateRequest::getOccurredDate))
+        .sorted(Comparator.comparing(StockCardCreateRequest::getCreatedAt))
         .collect(groupingBy(StockCardCreateRequest::getProductCode)).entrySet().stream()
         .allMatch(e -> checkConsistentByProduct(e.getKey(), e.getValue(), actualContext));
   }
@@ -66,7 +66,8 @@ public class ProductConsistentWithAllLotsValidator implements
         cache.putIfAbsent(lot.getLotNumber(), lot.getStockOnHand());
       });
       if (request.getStockOnHand() < cache.values().stream().mapToInt(Integer::intValue).sum()) {
-        context.addExpressionVariable("occurredDate", request.getOccurredDate());
+        context.addExpressionVariable("date", request.getOccurredDate());
+        context.addExpressionVariable("createdAt", request.getCreatedAt());
         return false;
       }
     }

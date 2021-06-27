@@ -51,20 +51,23 @@ public class ProductStockOnHandConsistentWithQuantityValidator implements
 
   private boolean checkConsistent(String productCode, List<StockCardCreateRequest> requests,
       ConstraintValidatorContext context) {
-    requests.sort(Comparator.comparing(StockCardCreateRequest::getOccurredDate));
+    requests.sort(Comparator.comparing(StockCardCreateRequest::getCreatedAt)
+        .thenComparing(StockCardCreateRequest::getOccurredDate));
     HibernateConstraintValidatorContext actualContext = context
         .unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable("productCode", productCode);
     int initStockOnHand = requests.stream()
-        .min(Comparator.comparing(StockCardCreateRequest::getOccurredDate))
+        .min(Comparator.comparing(StockCardCreateRequest::getCreatedAt)
+            .thenComparing(StockCardCreateRequest::getOccurredDate))
         .map(r -> r.getStockOnHand() - r.getQuantity())
         .orElse(0);
     int lastStockOnHand = requests.stream()
-        .max(Comparator.comparing(StockCardCreateRequest::getOccurredDate))
+        .max(Comparator.comparing(StockCardCreateRequest::getCreatedAt))
         .map(StockCardCreateRequest::getStockOnHand)
         .orElse(0);
     int calculatedGap = requests.stream()
-        .sorted(Comparator.comparing(StockCardCreateRequest::getOccurredDate))
+        .sorted(Comparator.comparing(StockCardCreateRequest::getCreatedAt)
+            .thenComparing(StockCardCreateRequest::getOccurredDate))
         .reduce(0, (gap, req) -> gap + req.getQuantity(), Integer::sum);
     if (lastStockOnHand != initStockOnHand + calculatedGap) {
       log.warn("Inconsistent gap on {}", productCode);
@@ -75,9 +78,9 @@ public class ProductStockOnHandConsistentWithQuantityValidator implements
     int stock = initStockOnHand;
     for (StockCardCreateRequest request : requests) {
       if (request.getStockOnHand() != stock + request.getQuantity()) {
-        log.warn("Inconsistent stock card for product {} on {}", productCode,
-            request.getOccurredDate());
+        log.warn("Inconsistent stock card for product {} at {}", productCode, request.getCreatedAt());
         actualContext.addExpressionVariable("date", request.getOccurredDate());
+        actualContext.addExpressionVariable("createdAt", request.getCreatedAt());
         return false;
       }
       stock = request.getStockOnHand();
