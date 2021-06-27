@@ -17,38 +17,16 @@ package org.siglus.siglusapi.dto.android.request;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
-import lombok.Data;
-import lombok.experimental.Accessors;
-import org.hibernate.validator.constraints.NotBlank;
-import org.siglus.siglusapi.dto.android.constraints.stockcard.PositiveInitStockOnHand;
+import java.util.Comparator;
 
-@Data
-@PositiveInitStockOnHand
-public class StockCardLotEventRequest implements StockCardAdjustment {
+public interface EventTime {
 
-  @NotBlank
-  private String lotNumber;
+  Comparator<StockCardAdjustment> ASCENDING = Comparator
+      .comparing(StockCardAdjustment::getOccurredDate)
+      .thenComparing(StockCardAdjustment::getCreatedAt);
 
-  @NotNull
-  private LocalDate expirationDate;
+  Instant getCreatedAt();
 
-  @Min(0)
-  @NotNull
-  private Integer stockOnHand;
-
-  @NotNull
-  private Integer quantity;
-
-  private String reasonName;
-
-  @Accessors(chain = true)
-  // transient if serializable, read from StockCardCreateRequest
-  private LocalDate occurredDate;
-
-  @Accessors(chain = true)
-  // transient if serializable, read from StockCardCreateRequest
-  private Instant createdAt;
+  LocalDate getOccurredDate();
 
 }

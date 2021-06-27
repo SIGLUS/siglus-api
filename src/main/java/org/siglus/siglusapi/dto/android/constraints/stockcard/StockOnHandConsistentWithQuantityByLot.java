@@ -26,16 +26,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
-import org.siglus.siglusapi.dto.android.validators.stockcard.LotStockOnHandConsistentWithQuantityValidator;
+import org.siglus.siglusapi.dto.android.validators.stockcard.StockOnHandConsistentWithQuantityByLotValidator;
 
 @Target({METHOD, FIELD, TYPE, PARAMETER})
 @Retention(RUNTIME)
 @Documented
-@Constraint(validatedBy = LotStockOnHandConsistentWithQuantityValidator.class)
-public @interface LotStockOnHandConsistentWithQuantity {
+@Constraint(validatedBy = StockOnHandConsistentWithQuantityByLotValidator.class)
+public @interface StockOnHandConsistentWithQuantityByLot {
 
   String message() default
-      "{org.siglus.siglusapi.dto.android.constraints.stockcard.LotStockOnHandConsistentWithQuantity.message}";
+      "{org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsistentWithQuantityByLot.message}";
 
   Class<?>[] groups() default {};
 

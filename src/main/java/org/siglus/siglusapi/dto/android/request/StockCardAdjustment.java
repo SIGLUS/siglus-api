@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
-public interface StockCardAdjustment {
+public interface StockCardAdjustment extends EventTime {
 
   Integer getStockOnHand();
 

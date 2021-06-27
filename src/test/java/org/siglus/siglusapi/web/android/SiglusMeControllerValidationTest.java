@@ -341,8 +341,8 @@ public class SiglusMeControllerValidationTest {
 
     // then
     assertEquals(1, violations.size());
-    assertEquals(
-        "The product 08S01Z is not consistent since it has less SOH than the sum its lots' on 2021-06-17(at 2021-06-17T14:20:56Z).",
+    assertEquals("The product 08S01Z is not consistent "
+            + "since it has less SOH than the sum its lots' on 2021-06-17(at 2021-06-17T14:20:56Z).",
         violations.get("createStockCards.arg0"));
   }
 

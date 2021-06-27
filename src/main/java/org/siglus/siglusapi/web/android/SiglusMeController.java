@@ -29,9 +29,9 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.ProductMovementDto;
-import org.siglus.siglusapi.dto.android.constraints.stockcard.LotStockOnHandConsistentWithQuantity;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.ProductConsistentWithAllLots;
-import org.siglus.siglusapi.dto.android.constraints.stockcard.ProductStockOnHandConsistentWithQuantity;
+import org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsistentWithQuantityByLot;
+import org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsistentWithQuantityByProduct;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
@@ -80,8 +80,8 @@ public class SiglusMeController {
   public List<StockCardCreateRequest> createStockCards(
       @Valid @RequestBody
       @NotEmpty
-      @ProductStockOnHandConsistentWithQuantity
-      @LotStockOnHandConsistentWithQuantity
+      @StockOnHandConsistentWithQuantityByProduct
+      @StockOnHandConsistentWithQuantityByLot
       @ProductConsistentWithAllLots
           List<StockCardCreateRequest> requests) {
     service.createStockCards(requests);

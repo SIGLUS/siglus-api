@@ -44,6 +44,11 @@ public class ProductConsistentWithOwnLotsValidator implements
         .allMatch(r -> r.getStockOnHand() == null && r.getQuantity() == null)) {
       return true;
     }
+    HibernateConstraintValidatorContext actualContext = context
+        .unwrap(HibernateConstraintValidatorContext.class);
+    actualContext.addExpressionVariable("productCode", value.getProductCode());
+    actualContext.addExpressionVariable("date", value.getOccurredDate());
+    actualContext.addExpressionVariable("createdAt", value.getCreatedAt());
     int sohSum = value.getLotEvents().stream()
         .filter(r -> r.getStockOnHand() != null)
         .mapToInt(StockCardLotEventRequest::getStockOnHand)
@@ -52,11 +57,6 @@ public class ProductConsistentWithOwnLotsValidator implements
         .filter(r -> r.getQuantity() != null)
         .mapToInt(StockCardLotEventRequest::getQuantity)
         .sum();
-    HibernateConstraintValidatorContext actualContext = context
-        .unwrap(HibernateConstraintValidatorContext.class);
-    actualContext.addExpressionVariable("productCode", value.getProductCode());
-    actualContext.addExpressionVariable("date", value.getOccurredDate());
-    actualContext.addExpressionVariable("createdAt", value.getCreatedAt());
     return value.getStockOnHand() >= sohSum && value.getQuantity() == quantitySum;
   }
 
