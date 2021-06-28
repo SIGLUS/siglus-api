@@ -57,7 +57,7 @@ public class StockCardCreateRequest implements StockCardAdjustment {
   @NotNull
   private Instant createdAt;
 
-  private String referenceNumber;
+  private String documentationNo;
 
   private Integer requested;
 

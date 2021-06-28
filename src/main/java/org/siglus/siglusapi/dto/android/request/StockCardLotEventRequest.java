@@ -43,6 +43,8 @@ public class StockCardLotEventRequest implements StockCardAdjustment {
 
   private String reasonName;
 
+  private String documentationNo;
+
   @Accessors(chain = true)
   // transient if serializable, read from StockCardCreateRequest
   private LocalDate occurredDate;
