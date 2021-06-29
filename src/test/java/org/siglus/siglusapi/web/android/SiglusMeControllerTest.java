@@ -117,8 +117,7 @@ public class SiglusMeControllerTest {
   public void shouldCallServiceWhenProcessAppInfo()
       throws InvocationTargetException, IllegalAccessException {
     // given
-    MockHttpServletRequest request = new MockHttpServletRequest("POST",
-            "/api/siglusapi/android/me/app-info");
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/siglusapi/android/me/app-info");
     request.addHeader("UserName", "CS_Moine_Role1");
     request.addHeader("FacilityCode", "01080904");
     request.addHeader("FacilityName", "Centro de Saude de Chiunze");
@@ -140,7 +139,7 @@ public class SiglusMeControllerTest {
     assertEquals("01080904", argument.getValue().getFacilityCode());
     assertEquals("ac36c07a09f2fdca", argument.getValue().getUniqueId());
     assertEquals(Integer.valueOf(87), argument.getValue().getVersionCode());
-    assertEquals(Integer.valueOf(28),argument.getValue().getAndroidSdkVersion());
+    assertEquals(Integer.valueOf(28), argument.getValue().getAndroidSdkVersion());
   }
 
   @Test

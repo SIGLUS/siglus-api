@@ -272,10 +272,10 @@ public class SiglusMeServiceTest {
     facilityDto.setCode(facilityCode);
     when(facilityReferenceDataService.getFacilityById(any(UUID.class))).thenReturn(facilityDto);
     when(facilityCmmsRepository
-            .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(facilityDto.getCode(),
-                    requestCmms.get(0).getProductCode(),requestCmms.get(0).getPeriodBegin(),
-                    requestCmms.get(0).getPeriodEnd()))
-            .thenReturn(mockExistFacilityCmms());
+        .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(facilityDto.getCode(),
+            requestCmms.get(0).getProductCode(), requestCmms.get(0).getPeriodBegin(),
+            requestCmms.get(0).getPeriodEnd()))
+        .thenReturn(mockExistFacilityCmms());
     when(facilityCmmsRepository.save(any(HfCmm.class))).thenReturn(mockUpdateSuccessHfCmm());
 
     // when
@@ -283,7 +283,7 @@ public class SiglusMeServiceTest {
 
     // then
     verify(facilityCmmsRepository).findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(any(),
-            any(), any(), any());
+        any(), any(), any());
     verify(facilityCmmsRepository).save(any(HfCmm.class));
     verify(facilityCmmsRepository).save(hfCmmArgumentCaptor.capture());
     HfCmm hfCmms = hfCmmArgumentCaptor.getValue();
@@ -299,10 +299,10 @@ public class SiglusMeServiceTest {
     facilityDto.setCode(facilityCode);
     when(facilityReferenceDataService.getFacilityById(any(UUID.class))).thenReturn(facilityDto);
     when(facilityCmmsRepository
-            .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(facilityDto.getCode(),
-                    requestCmms.get(0).getProductCode(),requestCmms.get(0).getPeriodBegin(),
-                    requestCmms.get(0).getPeriodEnd()))
-            .thenReturn(null);
+        .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(facilityDto.getCode(),
+            requestCmms.get(0).getProductCode(), requestCmms.get(0).getPeriodBegin(),
+            requestCmms.get(0).getPeriodEnd()))
+        .thenReturn(null);
     when(facilityCmmsRepository.save(any(HfCmm.class))).thenReturn(mockInsertSuccessHfCmm());
 
     // when
@@ -310,7 +310,7 @@ public class SiglusMeServiceTest {
 
     // then
     verify(facilityCmmsRepository).findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(any(),
-            any(), any(), any());
+        any(), any(), any());
     verify(facilityCmmsRepository).save(any(HfCmm.class));
     verify(facilityCmmsRepository).save(hfCmmArgumentCaptor.capture());
     HfCmm hfCmms = hfCmmArgumentCaptor.getValue();
@@ -670,39 +670,39 @@ public class SiglusMeServiceTest {
 
   private HfCmm mockExistFacilityCmms() {
     HfCmm existFacilityCmm = HfCmm.builder()
-            .facilityCode(facilityCode)
-            .cmm(12.0)
-            .productCode(productCode)
-            .periodBegin(periodBegin)
-            .periodEnd(periodEnd)
-            .lastUpdated(Instant.now())
-            .build();
+        .facilityCode(facilityCode)
+        .cmm(12.0)
+        .productCode(productCode)
+        .periodBegin(periodBegin)
+        .periodEnd(periodEnd)
+        .lastUpdated(Instant.now())
+        .build();
     existFacilityCmm.setId(hfCmmId);
     return existFacilityCmm;
   }
 
   private HfCmm mockUpdateSuccessHfCmm() {
     HfCmm hfCmm = HfCmm.builder()
-            .facilityCode(facilityCode)
-            .cmm(11.0)
-            .productCode(productCode)
-            .periodBegin(periodBegin)
-            .periodEnd(periodEnd)
-            .lastUpdated(Instant.now())
-            .build();
+        .facilityCode(facilityCode)
+        .cmm(11.0)
+        .productCode(productCode)
+        .periodBegin(periodBegin)
+        .periodEnd(periodEnd)
+        .lastUpdated(Instant.now())
+        .build();
     hfCmm.setId(hfCmmId);
     return hfCmm;
   }
 
   private HfCmm mockInsertSuccessHfCmm() {
     HfCmm hfCmm = HfCmm.builder()
-            .facilityCode(facilityCode)
-            .cmm(11.0)
-            .productCode(productCode)
-            .periodBegin(periodBegin)
-            .periodEnd(periodEnd)
-            .lastUpdated(now)
-            .build();
+        .facilityCode(facilityCode)
+        .cmm(11.0)
+        .productCode(productCode)
+        .periodBegin(periodBegin)
+        .periodEnd(periodEnd)
+        .lastUpdated(now)
+        .build();
     hfCmm.setId(hfCmmId);
     return hfCmm;
   }
