@@ -133,13 +133,25 @@ public class SiglusStockEventsServiceTest {
   }
 
   @Test
+  public void shouldCallV3StockEventApiWhenCreateStockEventForSpecificProgram() {
+    // given
+    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
+    StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
+    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2)).build();
+
+    // when
+    siglusStockEventsService.createStockEvent(eventDto);
+
+    // then
+    verify(stockEventsStockManagementService, times(1)).createStockEvent(any());
+    verify(archiveProductService, times(1)).activateProducts(any(), any());
+  }
+
+  @Test
   public void shouldCallStockEventProcessorWhenCreateStockEventForPhysicalInventory() {
-    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder()
-        .buildForPhysicalInventory();
-    StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder()
-        .buildForPhysicalInventory();
-    StockEventDto eventDto = StockEventDto.builder()
-        .lineItems(newArrayList(lineItemDto1, lineItemDto2)).build();
+    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
+    StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
+    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2)).build();
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().build();
     when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(any(), any(), any()))
         .thenReturn(newArrayList(physicalInventoryDto));
@@ -152,12 +164,9 @@ public class SiglusStockEventsServiceTest {
 
   @Test
   public void shouldCallV3WhenCreateStockEventForAdjustment() {
-    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder()
-        .buildForAdjustment();
-    StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder()
-        .buildForAdjustment();
-    StockEventDto eventDto = StockEventDto.builder()
-        .lineItems(newArrayList(lineItemDto1, lineItemDto2)).build();
+    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
+    StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
+    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2)).build();
     ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", UUID.randomUUID());
 
     siglusStockEventsService.createStockEventForAllProducts(eventDto);
@@ -167,16 +176,12 @@ public class SiglusStockEventsServiceTest {
 
   @Test
   public void shouldAddStockCardCreateTimeWhenStockCardExtensionIsNull() {
-    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder()
-        .buildForAdjustment();
-    StockEventDto eventDto = StockEventDto.builder()
-        .lineItems(newArrayList(lineItemDto)).build();
+    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
+    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
     ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", UUID.randomUUID());
     StockCardLineItem stockCardLineItem = new StockCardLineItemDataBuilder().build();
-    StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withLineItem(stockCardLineItem)
-        .build();
-    when(stockCardRepository.findByProgramIdAndFacilityId(any(), any()))
-        .thenReturn(newArrayList(stockCard));
+    StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withLineItem(stockCardLineItem).build();
+    when(stockCardRepository.findByProgramIdAndFacilityId(any(), any())).thenReturn(newArrayList(stockCard));
 
     siglusStockEventsService.createStockEventForAllProducts(eventDto);
 
@@ -198,8 +203,7 @@ public class SiglusStockEventsServiceTest {
     LotDto lotDto = new LotDto();
     lotDto.setId(lotId);
     when(lotReferenceDataService.saveLot(any())).thenReturn(lotDto);
-    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder()
-        .withOrderableId(orderableId).build();
+    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder().withOrderableId(orderableId).build();
     lineItemDto.setLotId(null);
     Map<String, String> extraData = newHashMap();
     extraData.put(FieldConstants.LOT_CODE, "lotCode");
@@ -225,8 +229,7 @@ public class SiglusStockEventsServiceTest {
     LotDto lotDto = new LotDto();
     lotDto.setId(lotId);
     when(lotReferenceDataService.getLots(any())).thenReturn(newArrayList(lotDto));
-    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder()
-        .withOrderableId(orderableId).build();
+    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder().withOrderableId(orderableId).build();
     lineItemDto.setLotId(null);
     Map<String, String> extraData = newHashMap();
     extraData.put(FieldConstants.LOT_CODE, "lotCode");
@@ -248,8 +251,7 @@ public class SiglusStockEventsServiceTest {
     orderableDto.setId(orderableId);
     orderableDto.setChildren(newHashSet(new OrderableChildDto()));
     when(orderableReferenceDataService.findByIds(any())).thenReturn(newArrayList(orderableDto));
-    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder()
-        .withOrderableId(orderableId).build();
+    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder().withOrderableId(orderableId).build();
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
 
     siglusStockEventsService.createAndFillLotId(eventDto, false, userDto);

@@ -16,9 +16,9 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_CODE_IS_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
+import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 
 import com.google.common.collect.Maps;
 import java.time.LocalDate;
@@ -53,7 +53,6 @@ import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.SiglusDateHelper;
-import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.LotConflict;
 import org.siglus.siglusapi.repository.LotConflictRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
@@ -170,13 +169,12 @@ public class SiglusStockEventsService {
         .collect(Collectors.toMap(OrderableDto::getId, orderableDto -> orderableDto));
     for (StockEventLineItemDto stockEventLineItem : lineItems) {
       UUID orderableId = stockEventLineItem.getOrderableId();
-      boolean orderableIsNotKit = orderableDtos.get(orderableId).getChildren().isEmpty();
-      if (orderableIsNotKit) {
-        fillLotIdForNormalOrderable(stockEventLineItem,
-            orderableDtos.get(stockEventLineItem.getOrderableId()).getIdentifiers().get(
-                FieldConstants.TRADE_ITEM), updateExpirationDate, userDto);
-      } else {
-        kitOrderableShouldNotContainLotInfo(stockEventLineItem);
+      boolean isKit = !orderableDtos.get(orderableId).getChildren().isEmpty();
+      if (isKit) {
+        verifyKitInfo(stockEventLineItem);
+      } else if (stockEventLineItem.getLotId() == null && StringUtils.isNotBlank(stockEventLineItem.getLotCode())) {
+        String tradeItemId = orderableDtos.get(stockEventLineItem.getOrderableId()).getIdentifiers().get(TRADE_ITEM);
+        fillLotIdForNormalOrderable(stockEventLineItem, tradeItemId, updateExpirationDate, userDto);
       }
     }
   }
@@ -196,26 +194,16 @@ public class SiglusStockEventsService {
     archiveProductService.activateProducts(eventDto.getFacilityId(), orderableIds);
   }
 
-  private void fillLotIdForNormalOrderable(StockEventLineItemDto stockEventLineItem,
-      String tradeItemId, boolean updateExpirationDate, UserDto userDto) {
-    if (stockEventLineItem.getLotId() == null) {
-      if (StringUtils.isBlank(stockEventLineItem.getLotCode())) {
-        throw new ValidationMessageException(
-            new Message(ERROR_LOT_CODE_IS_EMPTY));
-      }
-      UUID newLotId = createNewLotOrReturnExisted(stockEventLineItem.getLotCode(),
-          stockEventLineItem.getExpirationDate(), tradeItemId, updateExpirationDate,
-          userDto).getId();
-
-      stockEventLineItem.setLotId(newLotId);
-    }
+  private void fillLotIdForNormalOrderable(StockEventLineItemDto stockEventLineItem, String tradeItemId,
+      boolean updateExpirationDate, UserDto userDto) {
+    UUID lotId = createNewLotOrReturnExisted(stockEventLineItem.getLotCode(),
+        stockEventLineItem.getExpirationDate(), tradeItemId, updateExpirationDate, userDto).getId();
+    stockEventLineItem.setLotId(lotId);
   }
 
-  private void kitOrderableShouldNotContainLotInfo(StockEventLineItemDto stockEventLineItem) {
-    if (StringUtils.isNotBlank(stockEventLineItem.getLotCode())
-        || stockEventLineItem.getLotId() != null) {
-      throw new ValidationMessageException(
-          new Message(ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY));
+  private void verifyKitInfo(StockEventLineItemDto stockEventLineItem) {
+    if (StringUtils.isNotBlank(stockEventLineItem.getLotCode()) || stockEventLineItem.getLotId() != null) {
+      throw new ValidationMessageException(new Message(ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY));
     }
   }
 
@@ -230,12 +218,11 @@ public class SiglusStockEventsService {
     List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
     if (CollectionUtils.isNotEmpty(existedLots)) {
       LotDto existedLot = existedLots.get(0);
-      if (Boolean.TRUE.equals(updateExpirationDate)
-          && !existedLot.getExpirationDate().isEqual(expirationDate)) {
+      if (Boolean.TRUE.equals(updateExpirationDate) && !existedLot.getExpirationDate().isEqual(expirationDate)) {
         LotConflict conflict = lotConflictRepository
             .findLotConflictByFacilityIdAndLotId(userDto.getHomeFacilityId(), existedLot.getId());
         if (conflict == null) {
-          LotConflict lotConflict = new LotConflict().builder()
+          LotConflict lotConflict = LotConflict.builder()
               .expirationDate(expirationDate)
               .lotId(existedLot.getId())
               .lotCode(existedLot.getLotCode())
@@ -288,10 +275,8 @@ public class SiglusStockEventsService {
                 + stockEventLineItemDto.getReasonId()
                 + stockEventLineItemDto.getSourceId()
                 + stockEventLineItemDto.getDestinationId(),
-            stockEventLineItemDto -> Optional.ofNullable(stockEventLineItemDto.getDocumentationNo())
-                .orElse(""),
-            (v1, v2) -> v1
-        ));
+            stockEventLineItemDto -> Optional.ofNullable(stockEventLineItemDto.getDocumentationNo()).orElse(""),
+            (v1, v2) -> v1));
     List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
         .findByOriginEvent(stockEventsRepository.findOne(stockEventId));
     stockCardLineItems.forEach(stockCardLineItem -> {
