@@ -380,17 +380,18 @@ public class SiglusMeControllerValidationTest {
   }
 
   @Test
-  public void shouldReturnNoViolationWhenValidateCreateStockCardsGivenNoStoredStock()
+  public void shouldReturnNoViolationWhenValidateCreateStockCardsGivenNewLotWithNonZeroInitSoh()
       throws IOException {
     // given
-    when(service.getLotStockOnHands()).thenReturn(emptyList());
-    Object param = parseParam("inconsistentLotSohWithExisted.json");
+    Object param = parseParam("newLotWithNonZeroInitSoh.json");
 
     // when
     Map<String, String> violations = executeValidation(param);
 
     // then
-    assertEquals(0, violations.size());
+    assertEquals(1, violations.size());
+    assertEquals("The init SOH of the new lot SEM-LOTE-03A01-062021(of the product 08U) should be 0 "
+        + "but it's 100 on 2021-06-25.", violations.get("createStockCards.arg0"));
   }
 
   @Test

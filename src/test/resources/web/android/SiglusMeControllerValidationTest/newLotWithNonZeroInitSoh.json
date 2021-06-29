@@ -10,7 +10,7 @@
     "signature": "zhangsan",
     "lotEventList": [
       {
-        "stockOnHand": "10",
+        "stockOnHand": "110",
         "expirationDate": "2021-06-29",
         "lotNumber": "SEM-LOTE-03A01-062021",
         "quantity": 10,

@@ -64,24 +64,35 @@ public class LotStockConsistentWithExistedValidator implements
     if (fromDbs.isEmpty()) {
       return true;
     }
+    actualContext.addExpressionVariable("failedByNewLot", false);
+    actualContext.addExpressionVariable("failedByDate", false);
     for (LotStockOnHand fromDb : fromDbs) {
-      LotStockOnHand fromRequest = fromRequests.get(fromDb);
+      LotStockOnHand fromRequest = fromRequests.remove(fromDb);
       if (fromRequest == null) {
         continue;
       }
-      actualContext.addExpressionVariable("failedBySoh", false);
       actualContext.addExpressionVariable("productCode", fromRequest.getProductCode());
       actualContext.addExpressionVariable("lotCode", fromRequest.getLotNumber());
       actualContext.addExpressionVariable("date", fromRequest.getOccurredDate());
       if (fromRequest.getOccurredDate().isBefore(fromDb.getOccurredDate())) {
+        actualContext.addExpressionVariable("failedByDate", true);
         actualContext.addExpressionVariable("existedDate", fromDb.getOccurredDate());
         return false;
       }
       Integer stockOnHand = fromRequest.getStockOnHand();
       if (!stockOnHand.equals(fromDb.getStockOnHand())) {
-        actualContext.addExpressionVariable("failedBySoh", true);
         actualContext.addExpressionVariable("existedSoh", fromDb.getStockOnHand());
         actualContext.addExpressionVariable("soh", fromRequest.getStockOnHand());
+        return false;
+      }
+    }
+    for (LotStockOnHand newLot : fromRequests.values()) {
+      if (newLot.getStockOnHand() != 0) {
+        actualContext.addExpressionVariable("failedByNewLot", true);
+        actualContext.addExpressionVariable("productCode", newLot.getProductCode());
+        actualContext.addExpressionVariable("lotCode", newLot.getLotNumber());
+        actualContext.addExpressionVariable("date", newLot.getOccurredDate());
+        actualContext.addExpressionVariable("soh", newLot.getStockOnHand());
         return false;
       }
     }
