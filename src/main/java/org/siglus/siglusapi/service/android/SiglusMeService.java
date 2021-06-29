@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.android;
 
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
@@ -34,7 +35,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -244,18 +244,14 @@ public class SiglusMeService {
 
   public void createStockCards(List<StockCardCreateRequest> requests) {
     FacilityDto facilityDto = getCurrentFacilityInfo();
-    List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllApprovedProducts();
-    Map<String, org.openlmis.requisition.dto.OrderableDto> codeToOrderableDto =
-        orderableDtos.stream()
-            .collect(Collectors.toMap(org.openlmis.requisition.dto.OrderableDto::getProductCode,
-                Function.identity()));
+    Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts = getAllApprovedProducts().stream()
+        .collect(toMap(org.openlmis.requisition.dto.OrderableDto::getProductCode,
+            Function.identity()));
     requests.stream()
-        .collect(Collectors.groupingBy(StockCardCreateRequest::getCreatedAt))
-        .entrySet()
-        .stream()
+        .collect(groupingBy(StockCardCreateRequest::getCreatedAt))
+        .entrySet().stream()
         .sorted(Map.Entry.comparingByKey())
-        .forEach(entry ->
-            dealWithStockEvent(entry.getValue(), facilityDto, codeToOrderableDto));
+        .forEach(entry -> toStockEvent(entry.getValue(), facilityDto, allApprovedProducts));
   }
 
   @Transactional
@@ -328,7 +324,7 @@ public class SiglusMeService {
     return Optional.empty();
   }
 
-  private void dealWithStockEvent(List<StockCardCreateRequest> requests, FacilityDto facilityDto,
+  private void toStockEvent(List<StockCardCreateRequest> requests, FacilityDto facilityDto,
       Map<String, org.openlmis.requisition.dto.OrderableDto> codeOrderableToMap) {
     StockCardCreateRequest firstStockCard = requests.get(0);
     MovementType type = MovementType.fromString(firstStockCard.getType());
@@ -366,7 +362,7 @@ public class SiglusMeService {
           .getValidReasonsForAllProducts(facilityDto.getType().getId(),
               null, ALL_PRODUCTS_PROGRAM_ID)
           .stream()
-          .collect(Collectors.toMap(ValidReasonAssignmentDto::getProgramId,
+          .collect(toMap(ValidReasonAssignmentDto::getProgramId,
               reasonDto -> ImmutableMap.of(reasonDto.getReason().getName(), reasonDto.getId())));
     }
   }
@@ -376,7 +372,7 @@ public class SiglusMeService {
       programToDestinationNameToId = siglusValidSourceDestinationService
           .findDestinationsForAllProducts(facilityDto.getId())
           .stream()
-          .collect(Collectors.toMap(ValidSourceDestinationDto::getProgramId,
+          .collect(toMap(ValidSourceDestinationDto::getProgramId,
               destination -> ImmutableMap.of(destination.getName(), destination.getId())));
     }
   }

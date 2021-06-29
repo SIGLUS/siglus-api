@@ -424,6 +424,19 @@ public class SiglusMeControllerValidationTest {
         + "should be equals to or after 2021-06-15 but it's 2021-06-11.", violations.get("createStockCards.arg0"));
   }
 
+  @Test
+  public void shouldReturnNoViolationWhenValidateCreateStockCardsGivenHappy()
+      throws IOException {
+    // given
+    Object param = parseParam("happy.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(0, violations.size());
+  }
+
   private Object parseParam(String fileName) throws IOException {
     String json = readFromFile(fileName);
     return mapper.readValue(json, stockCardCreateRequestListType);
