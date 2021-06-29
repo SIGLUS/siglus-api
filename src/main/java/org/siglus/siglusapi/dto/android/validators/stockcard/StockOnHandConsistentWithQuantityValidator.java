@@ -36,19 +36,19 @@ abstract class StockOnHandConsistentWithQuantityValidator<A extends Annotation> 
 
   protected abstract String getGroupName();
 
-  protected boolean checkConsistentByGroup(String groupName, List<? extends StockCardAdjustment> lots,
+  protected boolean checkConsistentByGroup(String groupName, List<? extends StockCardAdjustment> adjustments,
       ConstraintValidatorContext context) {
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable(getGroupName(), groupName);
-    int initStockOnHand = lots.stream()
+    int initStockOnHand = adjustments.stream()
         .min(EventTime.ASCENDING)
         .map(r -> r.getStockOnHand() - r.getQuantity())
         .orElse(0);
-    int lastStockOnHand = lots.stream()
+    int lastStockOnHand = adjustments.stream()
         .max(EventTime.ASCENDING)
         .map(StockCardAdjustment::getStockOnHand)
         .orElse(0);
-    int calculatedGap = lots.stream()
+    int calculatedGap = adjustments.stream()
         .reduce(0, (gap, req) -> gap + req.getQuantity(), Integer::sum);
     if (lastStockOnHand != initStockOnHand + calculatedGap) {
       log.warn("Inconsistent adjustment by gap on {}", groupName);
@@ -57,7 +57,7 @@ abstract class StockOnHandConsistentWithQuantityValidator<A extends Annotation> 
     }
     actualContext.addExpressionVariable("failedByGap", false);
     int stock = initStockOnHand;
-    for (StockCardAdjustment request : lots) {
+    for (StockCardAdjustment request : adjustments) {
       if (request.getStockOnHand() != stock + request.getQuantity()) {
         log.warn("Inconsistent adjustment {} at {}", groupName, request.getCreatedAt());
         actualContext.addExpressionVariable("date", request.getOccurredDate());

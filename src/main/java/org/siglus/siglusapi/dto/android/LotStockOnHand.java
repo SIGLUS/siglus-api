@@ -35,7 +35,7 @@ public class LotStockOnHand {
   private UUID productTradeItemId;
 
   @Include
-  private String lotNumber;
+  private String lotCode;
 
   private UUID lotId;
 

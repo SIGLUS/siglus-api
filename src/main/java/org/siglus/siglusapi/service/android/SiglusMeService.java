@@ -261,7 +261,7 @@ public class SiglusMeService {
               LotStockOnHand productPart = tmp.get(lot.getTradeItemId());
               Optional<CanFulfillForMeEntryDto> stockOnHandMap = findStockOnHand(productPart.getProductId(),
                   lot.getId(), stockSummaries);
-              return productPart.toBuilder().lotId(lot.getId()).lotNumber(lot.getLotCode())
+              return productPart.toBuilder().lotId(lot.getId()).lotCode(lot.getLotCode())
                   .stockOnHand(stockOnHandMap.map(CanFulfillForMeEntryDto::getStockOnHand).orElse(null))
                   .occurredDate(stockOnHandMap.map(CanFulfillForMeEntryDto::getOccurredDate).orElse(null))
                   .build();
@@ -377,7 +377,7 @@ public class SiglusMeService {
           UUID programId = orderableDto.getPrograms().stream().findFirst().get().getProgramId();
           stockEventLineItemDto
               .setProgramId(programId);
-          Map<String, String> map = ImmutableMap.of("lotCode", lotItem.getLotNumber(),
+          Map<String, String> map = ImmutableMap.of("lotCode", lotItem.getLotCode(),
               "expirationDate", lotItem.getExpirationDate().toString());
           stockEventLineItemDto.setExtraData(map);
           stockEventLineItemDto.setQuantity(lotItem.getQuantity());

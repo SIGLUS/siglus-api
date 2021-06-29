@@ -59,7 +59,7 @@ public class StockOnHandConsistentWithQuantityByLotValidator extends
         .flatMap(Collection::stream)
         .filter(lot -> lot.getQuantity() != null)
         .filter(lot -> lot.getStockOnHand() != null)
-        .collect(groupingBy(StockCardLotEventRequest::getLotNumber)).entrySet().stream()
+        .collect(groupingBy(StockCardLotEventRequest::getLotCode)).entrySet().stream()
         .allMatch(e -> checkConsistentByGroup(e.getKey(), e.getValue(), context));
   }
 

@@ -72,7 +72,7 @@ public class LotStockConsistentWithExistedValidator implements
         continue;
       }
       actualContext.addExpressionVariable("productCode", fromRequest.getProductCode());
-      actualContext.addExpressionVariable("lotCode", fromRequest.getLotNumber());
+      actualContext.addExpressionVariable("lotCode", fromRequest.getLotCode());
       actualContext.addExpressionVariable("date", fromRequest.getOccurredDate());
       if (fromRequest.getOccurredDate().isBefore(fromDb.getOccurredDate())) {
         actualContext.addExpressionVariable("failedByDate", true);
@@ -90,7 +90,7 @@ public class LotStockConsistentWithExistedValidator implements
       if (newLot.getStockOnHand() != 0) {
         actualContext.addExpressionVariable("failedByNewLot", true);
         actualContext.addExpressionVariable("productCode", newLot.getProductCode());
-        actualContext.addExpressionVariable("lotCode", newLot.getLotNumber());
+        actualContext.addExpressionVariable("lotCode", newLot.getLotCode());
         actualContext.addExpressionVariable("date", newLot.getOccurredDate());
         actualContext.addExpressionVariable("soh", newLot.getStockOnHand());
         return false;
@@ -103,8 +103,8 @@ public class LotStockConsistentWithExistedValidator implements
     return requests.stream()
         .map(this::toEvents)
         .flatMap(Collection::stream)
-        .filter(lot -> lot.getLotNumber() != null)
-        .collect(groupingBy(StockCardLotEventRequest::getLotNumber)).values().stream()
+        .filter(lot -> lot.getLotCode() != null)
+        .collect(groupingBy(StockCardLotEventRequest::getLotCode)).values().stream()
         .map(lot -> lot.stream().min(ASCENDING).orElse(null))
         .filter(Objects::nonNull)
         .map(lot -> buildLotStock(productCode, lot))
@@ -119,7 +119,7 @@ public class LotStockConsistentWithExistedValidator implements
   }
 
   private LotStockOnHand buildLotStock(String productCode, StockCardLotEventRequest lot) {
-    return LotStockOnHand.builder().productCode(productCode).lotNumber(lot.getLotNumber())
+    return LotStockOnHand.builder().productCode(productCode).lotCode(lot.getLotCode())
         .occurredDate(lot.getOccurredDate()).stockOnHand(lot.getStockOnHand() - lot.getQuantity()).build();
   }
 

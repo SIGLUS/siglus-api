@@ -499,11 +499,11 @@ public class SiglusMeServiceTest {
     assertEquals(latestTime.toInstant(), product.getLastUpdated());
   }
 
-  private LotDto mockLotDto(String lotCode, UUID lotId, UUID tradeItem) {
+  private LotDto mockLotDto(String lotCode, UUID lotId, UUID tradeItemId) {
     LotDto lotDto = new LotDto();
     lotDto.setLotCode(lotCode);
     lotDto.setId(lotId);
-    lotDto.setTradeItemId(tradeItem);
+    lotDto.setTradeItemId(tradeItemId);
     return lotDto;
   }
 

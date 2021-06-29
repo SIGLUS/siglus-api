@@ -116,9 +116,9 @@ public class SiglusMeControllerValidationTest {
       }
       return notKitProduct;
     });
-    LotStockOnHand stock1 = LotStockOnHand.builder().productCode("08U").lotNumber("SEM-LOTE-02A01-082021")
+    LotStockOnHand stock1 = LotStockOnHand.builder().productCode("08U").lotCode("SEM-LOTE-02A01-082021")
         .stockOnHand(0).occurredDate(LocalDate.of(2021, 6, 15)).build();
-    LotStockOnHand stock2 = LotStockOnHand.builder().productCode("08U").lotNumber("SEM-LOTE-02A01-062021")
+    LotStockOnHand stock2 = LotStockOnHand.builder().productCode("08U").lotCode("SEM-LOTE-02A01-062021")
         .stockOnHand(100).occurredDate(LocalDate.of(2021, 6, 15)).build();
     when(service.getLotStockOnHands()).thenReturn(asList(stock1, stock2));
   }
@@ -173,7 +173,7 @@ public class SiglusMeControllerValidationTest {
     assertEquals(MAY_NOT_BE_NULL,
         violations.get("createStockCards.arg0[0].lotEvents[0].stockOnHand"));
     assertEquals(MAY_NOT_BE_EMPTY,
-        violations.get("createStockCards.arg0[0].lotEvents[0].lotNumber"));
+        violations.get("createStockCards.arg0[0].lotEvents[0].lotCode"));
     assertEquals(MAY_NOT_BE_NULL,
         violations.get("createStockCards.arg0[0].lotEvents[0].expirationDate"));
     assertEquals(MAY_NOT_BE_NULL,

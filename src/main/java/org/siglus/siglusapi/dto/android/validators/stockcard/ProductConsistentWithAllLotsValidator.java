@@ -17,8 +17,8 @@ package org.siglus.siglusapi.dto.android.validators.stockcard;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+import static org.siglus.siglusapi.dto.android.request.EventTime.ASCENDING;
 
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +51,7 @@ public class ProductConsistentWithAllLotsValidator implements
         .filter(r -> isNotEmpty(r.getLotEvents()))
         .filter(r -> r.getLotEvents().stream().allMatch(l -> l.getQuantity() != null))
         .filter(r -> r.getLotEvents().stream().allMatch(l -> l.getStockOnHand() != null))
-        .sorted(Comparator.comparing(StockCardCreateRequest::getCreatedAt))
+        .sorted(ASCENDING)
         .collect(groupingBy(StockCardCreateRequest::getProductCode)).entrySet().stream()
         .allMatch(e -> checkConsistentByProduct(e.getKey(), e.getValue(), actualContext));
   }
@@ -62,8 +62,8 @@ public class ProductConsistentWithAllLotsValidator implements
     Map<String, Integer> cache = new HashMap<>();
     for (StockCardCreateRequest request : requests) {
       request.getLotEvents().forEach(lot -> {
-        cache.computeIfPresent(lot.getLotNumber(), (lotNumber, sum) -> sum + lot.getQuantity());
-        cache.putIfAbsent(lot.getLotNumber(), lot.getStockOnHand());
+        cache.computeIfPresent(lot.getLotCode(), (lotCode, sum) -> sum + lot.getQuantity());
+        cache.putIfAbsent(lot.getLotCode(), lot.getStockOnHand());
       });
       if (request.getStockOnHand() < cache.values().stream().mapToInt(Integer::intValue).sum()) {
         context.addExpressionVariable("date", request.getOccurredDate());

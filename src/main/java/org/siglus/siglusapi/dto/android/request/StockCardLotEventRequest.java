@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.time.LocalDate;
 import javax.validation.constraints.Min;
@@ -28,8 +29,9 @@ import org.siglus.siglusapi.dto.android.constraints.stockcard.PositiveInitStockO
 @PositiveInitStockOnHand
 public class StockCardLotEventRequest implements StockCardAdjustment {
 
+  @JsonProperty("lotNumber")
   @NotBlank
-  private String lotNumber;
+  private String lotCode;
 
   @NotNull
   private LocalDate expirationDate;
