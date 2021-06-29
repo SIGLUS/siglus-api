@@ -31,13 +31,13 @@ import org.siglus.common.domain.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-@Table(name = "product_requests", schema = "siglusintegration")
-public class RequestQuantity extends BaseEntity {
+@Table(name = "stock_event_extension", schema = "siglusintegration")
+public class StockEventExtension extends BaseEntity {
 
   private UUID orderableId;
 
   private UUID stockeventId;
 
-  private Integer requestQuantity;
+  private Integer requestedQuantity;
 
 }

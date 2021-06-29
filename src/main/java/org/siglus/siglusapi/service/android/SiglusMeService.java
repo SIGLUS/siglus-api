@@ -59,7 +59,7 @@ import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
-import org.siglus.siglusapi.domain.RequestQuantity;
+import org.siglus.siglusapi.domain.StockEventExtension;
 import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
@@ -298,7 +298,7 @@ public class SiglusMeService {
         codeOrderableToMap);
     UUID stockEventId = stockEventsService.createStockEventForAllProducts(stockEvent);
     if (type == MovementType.ISSUE) {
-      List<RequestQuantity> requestQuantities = requests.stream()
+      List<StockEventExtension> requestQuantities = requests.stream()
           .filter(stockCardCreateRequest -> stockCardCreateRequest.getRequested() != null)
           .map(request -> buildProductRequest(request, stockEventId, codeOrderableToMap))
           .collect(Collectors.toList());
@@ -306,12 +306,12 @@ public class SiglusMeService {
     }
   }
 
-  private RequestQuantity buildProductRequest(StockCardCreateRequest request, UUID stockEventId,
+  private StockEventExtension buildProductRequest(StockCardCreateRequest request, UUID stockEventId,
       Map<String, org.openlmis.requisition.dto.OrderableDto> codeToOrderableDtoMap) {
-    return RequestQuantity.builder()
+    return StockEventExtension.builder()
         .orderableId(codeToOrderableDtoMap.get(request.getProductCode()).getId())
         .stockeventId(stockEventId)
-        .requestQuantity(request.getRequested())
+        .requestedQuantity(request.getRequested())
         .build();
   }
 

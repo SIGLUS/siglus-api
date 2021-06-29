@@ -2,11 +2,11 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-CREATE TABLE siglusintegration.product_requests(
+CREATE TABLE siglusintegration.stock_event_extension(
   id UUID PRIMARY KEY,
   orderableid UUID NOT NULL,
   stockeventid UUID NOT NULL,
-  requestquantity INTEGER
+  requestedquantity INTEGER
 );
 
-CREATE UNIQUE INDEX product_requests_orderableid_stockeventid_idx ON siglusintegration.product_requests(orderableid, stockeventid);
+CREATE UNIQUE INDEX product_requests_orderableid_stockeventid_idx ON siglusintegration.stock_event_extension(orderableid, stockeventid);

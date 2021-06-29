@@ -4,6 +4,7 @@
 CREATE TABLE siglusintegration.lot_conflicts(
   id UUID PRIMARY KEY,
   lotid UUID NOT NULL,
+  lotcode VARCHAR(255),
   expirationdate DATE NOT NULL,
   facilityid UUID NOT NULL,
   updatetime TIMESTAMP WITH TIME ZONE DEFAULT now()

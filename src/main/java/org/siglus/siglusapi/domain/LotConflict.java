@@ -38,6 +38,8 @@ public class LotConflict extends BaseEntity {
 
   private UUID lotId;
 
+  private String lotCode;
+
   private LocalDate expirationDate;
 
   private UUID facilityId;

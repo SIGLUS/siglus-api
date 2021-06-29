@@ -16,9 +16,9 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import org.siglus.siglusapi.domain.RequestQuantity;
+import org.siglus.siglusapi.domain.StockEventExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RequestQuantityRepository extends JpaRepository<RequestQuantity, UUID> {
+public interface RequestQuantityRepository extends JpaRepository<StockEventExtension, UUID> {
 
 }

@@ -105,7 +105,7 @@ public class SiglusStockEventsService {
   private SiglusDateHelper dateHelper;
 
   @Autowired
-  private LotConflictRepository conflictRepository;
+  private LotConflictRepository lotConflictRepository;
 
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;
@@ -232,16 +232,17 @@ public class SiglusStockEventsService {
       LotDto existedLot = existedLots.get(0);
       if (Boolean.TRUE.equals(updateExpirationDate)
           && !existedLot.getExpirationDate().isEqual(expirationDate)) {
-        LotConflict conflict = conflictRepository
+        LotConflict conflict = lotConflictRepository
             .findLotConflictByFacilityIdAndLotId(userDto.getHomeFacilityId(), existedLot.getId());
         if (conflict == null) {
           LotConflict lotConflict = new LotConflict().builder()
               .expirationDate(expirationDate)
               .lotId(existedLot.getId())
+              .lotCode(existedLot.getLotCode())
               .facilityId(userDto.getHomeFacilityId())
               .build();
           log.info("save lot Conflict: {}", lotConflict);
-          conflictRepository.save(lotConflict);
+          lotConflictRepository.save(lotConflict);
         }
         log.info("lot existed date is different: {}", lotCode);
       }
