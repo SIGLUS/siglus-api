@@ -231,7 +231,6 @@ sonarqube {
                 '**/org/siglus/siglusapi/i18n/**, ' +
                 '**/org/siglus/siglusapi/service/client/**, ' +
                 '**/org/siglus/siglusapi/domain/**, ' +
-                '**/org/siglus/siglusapi/dto/**, ' +
                 '**/org/siglus/siglusapi/repository/**'
     }
 }
