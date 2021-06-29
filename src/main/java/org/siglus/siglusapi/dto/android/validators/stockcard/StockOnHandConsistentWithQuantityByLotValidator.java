@@ -48,7 +48,7 @@ public class StockOnHandConsistentWithQuantityByLotValidator extends
 
   @Override
   protected String getGroupName() {
-    return "lotNumber";
+    return "lotCode";
   }
 
   private boolean checkConsistentByProduct(String productCode, List<StockCardCreateRequest> lots,

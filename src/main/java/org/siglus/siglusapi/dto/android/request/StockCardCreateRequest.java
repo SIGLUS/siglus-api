@@ -28,12 +28,13 @@ import org.siglus.siglusapi.dto.android.constraints.stockcard.KitProductEmptyLot
 import org.siglus.siglusapi.dto.android.constraints.stockcard.NonKitProductNotEmptyLots;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.PositiveInitStockOnHand;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.ProductConsistentWithOwnLots;
+import org.siglus.siglusapi.dto.validation.group.PerformanceGroup;
 
 @Data
 @ProductConsistentWithOwnLots
 @PositiveInitStockOnHand
-@KitProductEmptyLots
-@NonKitProductNotEmptyLots
+@KitProductEmptyLots(groups = PerformanceGroup.class)
+@NonKitProductNotEmptyLots(groups = PerformanceGroup.class)
 public class StockCardCreateRequest implements StockCardAdjustment {
 
   @NotBlank

@@ -29,6 +29,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.ProductMovementDto;
+import org.siglus.siglusapi.dto.android.constraints.stockcard.LotStockConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.ProductConsistentWithAllLots;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsistentWithQuantityByLot;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsistentWithQuantityByProduct;
@@ -36,6 +37,8 @@ import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
+import org.siglus.siglusapi.dto.validation.group.PerformanceGroup;
+import org.siglus.siglusapi.dto.validation.group.sequence.PerformanceSequence;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -78,11 +81,13 @@ public class SiglusMeController {
   @PostMapping("/facility/stockCards")
   @ResponseStatus(CREATED)
   public List<StockCardCreateRequest> createStockCards(
-      @Valid @RequestBody
+      @RequestBody
+      @Valid @Validated(PerformanceSequence.class)
       @NotEmpty
       @StockOnHandConsistentWithQuantityByProduct
       @StockOnHandConsistentWithQuantityByLot
       @ProductConsistentWithAllLots
+      @LotStockConsistentWithExisted(groups = PerformanceGroup.class)
           List<StockCardCreateRequest> requests) {
     service.createStockCards(requests);
     return requests;

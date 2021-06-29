@@ -1,0 +1,22 @@
+[
+  {
+    "stockOnHand": "110",
+    "quantity": 10,
+    "occurredDate": "2021-06-25",
+    "documentationNo": "doc-002",
+    "productCode": "08U",
+    "type": "ADJUSTMENT",
+    "processedDate": "2021-06-17T14:20:56.000Z",
+    "signature": "zhangsan",
+    "lotEventList": [
+      {
+        "stockOnHand": "110",
+        "expirationDate": "2021-06-29",
+        "lotNumber": "SEM-LOTE-03A01-062021",
+        "quantity": 10,
+        "reasonName": "CUSTOMER_RETURN",
+        "documentationNo": "doc-001"
+      }
+    ]
+  }
+]

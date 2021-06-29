@@ -29,6 +29,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM_ID;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -43,7 +44,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,6 +71,7 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
@@ -152,15 +153,13 @@ public class SiglusMeServiceTest {
 
   private final String productCode = "05A20";
 
-  private LocalDate periodBegin = LocalDate.of(2021,4,21);
+  private final LocalDate periodBegin = LocalDate.of(2021, 4, 21);
 
-  private LocalDate periodEnd = LocalDate.of(2021,5,20);
+  private final LocalDate periodEnd = LocalDate.of(2021, 5, 20);
 
-  private Instant now = Instant.now();
+  private final Instant now = Instant.now();
 
   private final UUID facilityId = UUID.randomUUID();
-
-  public final String tradeItem = "tradeItem";
 
   private ZonedDateTime oldTime;
   private Instant syncTime;
@@ -174,8 +173,8 @@ public class SiglusMeServiceTest {
   private final String productCode2 = "product 2";
   private final String productCode3 = "product 3";
 
-  private final String tradeItem1 = "tradeItem1";
-  private final String tradeItem2 = "tradeItem2";
+  private final UUID tradeItem1 = UUID.randomUUID();
+  private final UUID tradeItem2 = UUID.randomUUID();
 
   @Before
   public void prepare() {
@@ -335,33 +334,43 @@ public class SiglusMeServiceTest {
     String lotCode1 = "lotCode1";
     String lotCode2 = "lotCode2";
     when(lotReferenceDataService.findAllLot(any())).thenReturn(Arrays.asList(
-        mockLotDto(lotCode1, lotId1), mockLotDto(lotCode2, lotId2)));
-    StockCardSummaryV2Dto dto1 = new StockCardSummaryV2Dto();
-    dto1.setOrderable(new VersionObjectReferenceDto(productId1, "", "", 1L));
+        mockLotDto(lotCode1, lotId1, tradeItem1), mockLotDto(lotCode2, lotId2, tradeItem2)));
+    StockCardSummaryV2Dto summary1 = new StockCardSummaryV2Dto();
+    summary1.setOrderable(new VersionObjectReferenceDto(productId1, "", "", 1L));
     CanFulfillForMeEntryDto forMeEntryDto1 = new CanFulfillForMeEntryDtoDataBuilder()
         .withStockOnHand(10)
         .withLot(new VersionObjectReferenceDto(lotId1, "", "", 1L))
         .build();
     forMeEntryDto1.setStockOnHand(10);
-    dto1.setCanFulfillForMe(newHashSet(forMeEntryDto1));
+    summary1.setCanFulfillForMe(newHashSet(forMeEntryDto1));
 
-    StockCardSummaryV2Dto dto2 = new StockCardSummaryV2Dto();
-    dto2.setOrderable(new VersionObjectReferenceDto(productId2, "", "", 1L));
+    StockCardSummaryV2Dto summary2 = new StockCardSummaryV2Dto();
+    summary2.setOrderable(new VersionObjectReferenceDto(productId2, "", "", 1L));
     CanFulfillForMeEntryDto forMeEntryDto2 = new CanFulfillForMeEntryDtoDataBuilder()
         .withStockOnHand(10)
         .withLot(new VersionObjectReferenceDto(lotId2, "", "", 1L))
         .build();
     forMeEntryDto2.setStockOnHand(20);
-    dto2.setCanFulfillForMe(newHashSet(forMeEntryDto2));
+    summary2.setCanFulfillForMe(newHashSet(forMeEntryDto2));
     when(stockCardSummariesService
-        .findAllProgramStockSummaries()).thenReturn(Arrays.asList(dto1, dto2));
+        .findAllProgramStockSummaries()).thenReturn(Arrays.asList(summary1, summary2));
 
     // when
-    Map<String, Map<String, Integer>> lotOnHands = service.getLotOnHand();
+    List<LotStockOnHand> lotStockOnHands = service.getLotStockOnHands();
 
     // then
-    assertEquals(lotOnHands.get(productCode1).get(lotCode1).intValue(), 10);
-    assertEquals(lotOnHands.get(productCode2).get(lotCode2).intValue(), 20);
+    System.out.println(lotStockOnHands);
+    LotStockOnHand stock1 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId1))
+        .filter(s -> s.getLotId().equals(lotId1))
+        .findFirst().orElse(null);
+    assertNotNull(stock1);
+    assertEquals(10, stock1.getStockOnHand().intValue());
+
+    LotStockOnHand stock2 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId2))
+        .filter(s -> s.getLotId().equals(lotId2))
+        .findFirst().orElse(null);
+    assertNotNull(stock2);
+    assertEquals(20, stock2.getStockOnHand().intValue());
   }
 
   @Test
@@ -491,10 +500,11 @@ public class SiglusMeServiceTest {
     assertEquals(latestTime.toInstant(), product.getLastUpdated());
   }
 
-  private LotDto mockLotDto(String lotCode, UUID lotId) {
+  private LotDto mockLotDto(String lotCode, UUID lotId, UUID tradeItem) {
     LotDto lotDto = new LotDto();
     lotDto.setLotCode(lotCode);
     lotDto.setId(lotId);
+    lotDto.setTradeItemId(tradeItem);
     return lotDto;
   }
 
@@ -522,7 +532,7 @@ public class SiglusMeServiceTest {
   private ApprovedProductDto mockApprovedProduct1() {
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
-    orderable.setIdentifiers(ImmutableMap.of(tradeItem, tradeItem1));
+    orderable.setIdentifiers(ImmutableMap.of(TRADE_ITEM_ID, tradeItem1.toString()));
     approvedProduct.setOrderable(orderable);
     String productCode = productCode1;
     orderable.setId(productId1);
@@ -564,7 +574,7 @@ public class SiglusMeServiceTest {
   private ApprovedProductDto mockApprovedProduct2() {
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
-    orderable.setIdentifiers(ImmutableMap.of(tradeItem, tradeItem2));
+    orderable.setIdentifiers(ImmutableMap.of(TRADE_ITEM_ID, tradeItem2.toString()));
     approvedProduct.setOrderable(orderable);
     String productCode = productCode2;
     orderable.setId(productId2);

@@ -16,8 +16,8 @@
 package org.siglus.siglusapi.service.android;
 
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
-import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.ImmutableMap;
@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
@@ -46,7 +47,6 @@ import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.dto.referencedata.FacilityDto;
-import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
@@ -61,6 +61,7 @@ import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.StockEventExtension;
 import org.siglus.siglusapi.dto.ProductMovementDto;
+import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
@@ -197,7 +198,7 @@ public class SiglusMeService {
     syncResponse.setLastSyncTime(System.currentTimeMillis());
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
-        .collect(Collectors.toMap(OrderableDto::getId, Function.identity()));
+        .collect(toMap(OrderableDto::getId, Function.identity()));
 
     List<OrderableDto> approvedProducts = programsHelper
         .findUserSupportedPrograms().stream()
@@ -220,7 +221,7 @@ public class SiglusMeService {
 
   public void createStockCards(List<StockCardCreateRequest> requests) {
     FacilityDto facilityDto = getCurrentFacilityInfo();
-    List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllAprovedOrderableDtos();
+    List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllApprovedProducts();
     Map<String, org.openlmis.requisition.dto.OrderableDto> codeToOrderableDto =
         orderableDtos.stream()
             .collect(Collectors.toMap(org.openlmis.requisition.dto.OrderableDto::getProductCode,
@@ -234,41 +235,41 @@ public class SiglusMeService {
             dealWithStockEvent(entry.getValue(), facilityDto, codeToOrderableDto));
   }
 
-  public Map<String, Map<String, Integer>> getLotOnHand() {
-    List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllAprovedOrderableDtos();
-    Map<UUID, String> orderableIdToCode = getOrderableIdToCode(orderableDtos);
-    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = stockCardSummariesService
-        .findAllProgramStockSummaries();
-    Map<UUID, String> lotIdToLotCode = getLotIdToCode(orderableDtos, stockCardSummaryV2Dtos);
-    return getLotsOnHandMap(orderableIdToCode, stockCardSummaryV2Dtos, lotIdToLotCode);
-  }
-
-  private Map<UUID, String> getOrderableIdToCode(
-      List<org.openlmis.requisition.dto.OrderableDto> orderableDtos) {
-    return orderableDtos.stream()
-        .collect(Collectors.toMap(
-            org.openlmis.requisition.dto.OrderableDto::getId,
-            org.openlmis.requisition.dto.OrderableDto::getProductCode));
-  }
-
-  private Map<UUID, String> getLotIdToCode(
-      List<org.openlmis.requisition.dto.OrderableDto> orderableDtos,
-      List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos) {
-    List<UUID> orderableIdsForStockCard = stockCardSummaryV2Dtos.stream()
-        .map(stockCardSummaryV2Dto -> stockCardSummaryV2Dto.getOrderable().getId())
+  public List<LotStockOnHand> getLotStockOnHands() {
+    List<org.openlmis.requisition.dto.OrderableDto> approvedProducts = getAllApprovedProducts();
+    List<StockCardSummaryV2Dto> stockSummaries = stockCardSummariesService.findAllProgramStockSummaries();
+    List<UUID> productIdsInStock = stockSummaries.stream()
+        .map(summary -> summary.getOrderable().getId())
         .collect(Collectors.toList());
-    List<String> tradeItems = orderableDtos.stream()
-        .filter(dto -> orderableIdsForStockCard.contains(dto.getId()))
-        .map(dto -> dto.getIdentifiers().get(TRADE_ITEM))
+    Map<UUID, LotStockOnHand> tmp = approvedProducts.stream()
+        .filter(product -> productIdsInStock.contains(product.getId()))
+        .filter(product -> product.getIdentifiers().containsKey(TRADE_ITEM_ID))
+        .map(product -> LotStockOnHand.builder().productId(product.getId())
+            .productTradeItemId(UUID.fromString(product.getIdentifiers().get(TRADE_ITEM_ID)))
+            .productCode(product.getProductCode()).build())
+        .collect(toMap(LotStockOnHand::getProductTradeItemId, Function.identity()));
+
+    List<String> tradeItemIds = tmp.values().stream()
+        .map(LotStockOnHand::getProductTradeItemId)
+        .map(Objects::toString)
         .collect(Collectors.toList());
     RequestParameters requestParameters = RequestParameters.init();
-    requestParameters.set(TRADE_ITEM_ID, tradeItems);
-    return lotReferenceDataService.findAllLot(requestParameters)
-        .stream()
-        .collect(Collectors.toMap(LotDto::getId, LotDto::getLotCode));
+    requestParameters.set(TRADE_ITEM_ID, tradeItemIds);
+    return lotReferenceDataService.findAllLot(requestParameters).stream()
+        .map(
+            lot -> {
+              LotStockOnHand productPart = tmp.get(lot.getTradeItemId());
+              Optional<CanFulfillForMeEntryDto> stockOnHandMap = findStockOnHand(productPart.getProductId(),
+                  lot.getId(), stockSummaries);
+              return productPart.toBuilder().lotId(lot.getId()).lotNumber(lot.getLotCode())
+                  .stockOnHand(stockOnHandMap.map(CanFulfillForMeEntryDto::getStockOnHand).orElse(null))
+                  .occurredDate(stockOnHandMap.map(CanFulfillForMeEntryDto::getOccurredDate).orElse(null))
+                  .build();
+            })
+        .collect(Collectors.toList());
   }
 
-  private List<org.openlmis.requisition.dto.OrderableDto> getAllAprovedOrderableDtos() {
+  private List<org.openlmis.requisition.dto.OrderableDto> getAllApprovedProducts() {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     return programsHelper
         .findUserSupportedPrograms().stream()
@@ -278,15 +279,19 @@ public class SiglusMeService {
         .collect(Collectors.toList());
   }
 
-  private Map<String, Map<String, Integer>> getLotsOnHandMap(Map<UUID, String> orderableIdToCode,
-      List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos, Map<UUID, String> lotIdToLotCode) {
-    return stockCardSummaryV2Dtos.stream()
-        .collect(Collectors.toMap(dto -> orderableIdToCode.get(dto.getOrderable().getId()),
-            dto -> dto.getCanFulfillForMe()
-                .stream()
-                .collect(Collectors.toMap(fulfillDto -> fulfillDto.getLot() == null
-                        ? KIT_LOT : lotIdToLotCode.get(fulfillDto.getLot().getId()),
-                    CanFulfillForMeEntryDto::getStockOnHand))));
+  private Optional<CanFulfillForMeEntryDto> findStockOnHand(UUID productId, UUID lotId,
+      List<StockCardSummaryV2Dto> stockSummaries) {
+    for (StockCardSummaryV2Dto summary : stockSummaries) {
+      if (!summary.getOrderable().getId().equals(productId)) {
+        continue;
+      }
+      for (CanFulfillForMeEntryDto lot : summary.getCanFulfillForMe()) {
+        if (lot.getLot().getId().equals(lotId)) {
+          return Optional.of(lot);
+        }
+      }
+    }
+    return Optional.empty();
   }
 
   private void dealWithStockEvent(List<StockCardCreateRequest> requests, FacilityDto facilityDto,

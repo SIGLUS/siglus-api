@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web.android;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toMap;
 import static org.junit.Assert.assertEquals;
@@ -33,6 +34,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -53,10 +55,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.validators.stockcard.KitProductEmptyLotsValidator;
+import org.siglus.siglusapi.dto.android.validators.stockcard.LotStockConsistentWithExistedValidator;
 import org.siglus.siglusapi.dto.android.validators.stockcard.NonKitProductNotEmptyLotsValidator;
+import org.siglus.siglusapi.dto.validation.group.sequence.PerformanceSequence;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.android.SiglusMeService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
@@ -71,6 +77,9 @@ public class SiglusMeControllerValidationTest {
 
   @Mock
   private SiglusOrderableService orderableService;
+
+  @Mock
+  private SiglusMeService service;
 
   private final ObjectMapper mapper = new ObjectMapper();
 
@@ -105,6 +114,11 @@ public class SiglusMeControllerValidationTest {
       }
       return notKitProduct;
     });
+    LotStockOnHand stock1 = LotStockOnHand.builder().productCode("08U").lotNumber("SEM-LOTE-02A01-082021")
+        .stockOnHand(0).occurredDate(LocalDate.of(2021, 6, 15)).build();
+    LotStockOnHand stock2 = LotStockOnHand.builder().productCode("08U").lotNumber("SEM-LOTE-02A01-062021")
+        .stockOnHand(100).occurredDate(LocalDate.of(2021, 6, 15)).build();
+    when(service.getLotStockOnHands()).thenReturn(asList(stock1, stock2));
   }
 
   @Test
@@ -114,9 +128,7 @@ public class SiglusMeControllerValidationTest {
     Object param = mapper.readValue(json, stockCardCreateRequestListType);
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
@@ -131,9 +143,7 @@ public class SiglusMeControllerValidationTest {
     Object param = mapper.readValue(json, stockCardCreateRequestListType);
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(6, violations.size());
@@ -154,9 +164,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("emptyLotList.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(4, violations.size());
@@ -177,9 +185,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("negativeNumber.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(2, violations.size());
@@ -196,9 +202,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("inconsistentProductSoh.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(2, violations.size());
@@ -213,9 +217,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("inconsistentLotSoh.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
@@ -230,9 +232,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("inconsistentLotQuantitySum.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
@@ -248,9 +248,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("inconsistentLotSohSum.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(2, violations.size());
@@ -266,9 +264,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("inconsistentProductsByGap.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
@@ -283,9 +279,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("inconsistentProductsByEach.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
@@ -300,9 +294,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("inconsistentLotsByGap.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
@@ -317,9 +309,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("inconsistentLotsByEach.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
@@ -335,9 +325,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("inconsistentLotsOverProduct.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
@@ -353,9 +341,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("kitProductWithLots.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     System.out.println(violations);
@@ -371,9 +357,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("nonKitProductWithEmptyLots.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
@@ -388,9 +372,7 @@ public class SiglusMeControllerValidationTest {
     Object param = parseParam("nonKitProductWithoutLots.json");
 
     // when
-    Map<String, String> violations = forExecutables
-        .validateParameters(controller, createStockCards, new Object[]{param}).stream()
-        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
+    Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
@@ -398,9 +380,73 @@ public class SiglusMeControllerValidationTest {
         violations.get("createStockCards.arg0[0]"));
   }
 
+  @Test
+  public void shouldReturnNoViolationWhenValidateCreateStockCardsGivenNewLot()
+      throws IOException {
+    // given
+    Object param = parseParam("newLot.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(0, violations.size());
+  }
+
+  @Test
+  public void shouldReturnNoViolationWhenValidateCreateStockCardsGivenNoStoredStock()
+      throws IOException {
+    // given
+    when(service.getLotStockOnHands()).thenReturn(emptyList());
+    Object param = parseParam("inconsistentLotSohWithExisted.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(0, violations.size());
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentSohWithExisted()
+      throws IOException {
+    // given
+    Object param = parseParam("inconsistentLotSohWithExisted.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The SOH of the lot SEM-LOTE-02A01-062021(of the product 08U) should be 100 "
+        + "but it's 10 on 2021-06-20.", violations.get("createStockCards.arg0"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentOccurredDateWithExisted()
+      throws IOException {
+    // given
+    Object param = parseParam("inconsistentOccurredDateWithExisted.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The occurred date of the lot SEM-LOTE-02A01-062021(of the product 08U) "
+        + "should be equals to or after 2021-06-15 but it's 2021-06-11.", violations.get("createStockCards.arg0"));
+  }
+
   private Object parseParam(String fileName) throws IOException {
     String json = readFromFile(fileName);
     return mapper.readValue(json, stockCardCreateRequestListType);
+  }
+
+  private Map<String, String> executeValidation(Object param) {
+    return forExecutables
+        .validateParameters(controller, createStockCards, new Object[]{param}, PerformanceSequence.class)
+        .stream()
+        .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
   }
 
   @SneakyThrows
@@ -436,6 +482,9 @@ public class SiglusMeControllerValidationTest {
       }
       if (key == NonKitProductNotEmptyLotsValidator.class) {
         return (T) new NonKitProductNotEmptyLotsValidator(orderableService);
+      }
+      if (key == LotStockConsistentWithExistedValidator.class) {
+        return (T) new LotStockConsistentWithExistedValidator(service);
       }
       return NewInstance.action(key, "ConstraintValidator").run();
     }

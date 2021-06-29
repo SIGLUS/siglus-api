@@ -41,9 +41,7 @@ public class NonKitProductNotEmptyLotsValidator implements
 
   @Override
   public boolean isValid(StockCardCreateRequest value, ConstraintValidatorContext context) {
-    if (value == null || value.getProductCode() == null) {
-      return true;
-    }
+    // this validator is supposed to running after the default group, so the value will not be null or empty
     OrderableDto product = orderableService.getOrderableByCode(value.getProductCode());
     if (product.getIsKit()) {
       return true;
