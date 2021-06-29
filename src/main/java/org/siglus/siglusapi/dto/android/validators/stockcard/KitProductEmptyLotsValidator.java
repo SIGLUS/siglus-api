@@ -43,12 +43,16 @@ public class KitProductEmptyLotsValidator implements
   public boolean isValid(StockCardCreateRequest value, ConstraintValidatorContext context) {
     // this validator is supposed to running after the default group, so the value will not be null or empty
     OrderableDto product = orderableService.getOrderableByCode(value.getProductCode());
+    HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
+    actualContext.addExpressionVariable("productCode", value.getProductCode());
+    if (product == null) {
+      actualContext.addExpressionVariable("existed", "false");
+      return false;
+    }
+    actualContext.addExpressionVariable("existed", "true");
     if (!product.getIsKit()) {
       return true;
     }
-    HibernateConstraintValidatorContext actualContext = context
-        .unwrap(HibernateConstraintValidatorContext.class);
-    actualContext.addExpressionVariable("productCode", value.getProductCode());
     return isEmpty(value.getLotEvents());
   }
 

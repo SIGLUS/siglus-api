@@ -359,7 +359,6 @@ public class SiglusMeServiceTest {
     List<LotStockOnHand> lotStockOnHands = service.getLotStockOnHands();
 
     // then
-    System.out.println(lotStockOnHands);
     LotStockOnHand stock1 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId1))
         .filter(s -> s.getLotId().equals(lotId1))
         .findFirst().orElse(null);

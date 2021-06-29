@@ -59,7 +59,6 @@ import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.validators.stockcard.KitProductEmptyLotsValidator;
 import org.siglus.siglusapi.dto.android.validators.stockcard.LotStockConsistentWithExistedValidator;
-import org.siglus.siglusapi.dto.android.validators.stockcard.NonKitProductNotEmptyLotsValidator;
 import org.siglus.siglusapi.dto.validation.group.sequence.PerformanceSequence;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.android.SiglusMeService;
@@ -111,6 +110,9 @@ public class SiglusMeControllerValidationTest {
       String productCode = invocation.getArgumentAt(0, String.class);
       if ("08K".equals(productCode)) {
         return kitProduct;
+      }
+      if ("08A".equals(productCode)) {
+        return null;
       }
       return notKitProduct;
     });
@@ -335,6 +337,21 @@ public class SiglusMeControllerValidationTest {
   }
 
   @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenProductNotExisted()
+      throws IOException {
+    // given
+    Object param = parseParam("productNotExisted.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The product 08A is not a legal one.",
+        violations.get("createStockCards.arg0[0]"));
+  }
+
+  @Test
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenKitProductWithLots()
       throws IOException {
     // given
@@ -344,39 +361,8 @@ public class SiglusMeControllerValidationTest {
     Map<String, String> violations = executeValidation(param);
 
     // then
-    System.out.println(violations);
     assertEquals(1, violations.size());
     assertEquals("The product 08K should not contain lot events since it's a kit product.",
-        violations.get("createStockCards.arg0[0]"));
-  }
-
-  @Test
-  public void shouldReturnViolationWhenValidateCreateStockCardsGivenNonKitProductWithEmptyLots()
-      throws IOException {
-    // given
-    Object param = parseParam("nonKitProductWithEmptyLots.json");
-
-    // when
-    Map<String, String> violations = executeValidation(param);
-
-    // then
-    assertEquals(1, violations.size());
-    assertEquals("The product 08S01Z should contain at least one lot event since it's not a kit product.",
-        violations.get("createStockCards.arg0[0]"));
-  }
-
-  @Test
-  public void shouldReturnViolationWhenValidateCreateStockCardsGivenNonKitProductWithoutLots()
-      throws IOException {
-    // given
-    Object param = parseParam("nonKitProductWithoutLots.json");
-
-    // when
-    Map<String, String> violations = executeValidation(param);
-
-    // then
-    assertEquals(1, violations.size());
-    assertEquals("The product 08S01Z should contain at least one lot event since it's not a kit product.",
         violations.get("createStockCards.arg0[0]"));
   }
 
@@ -479,9 +465,6 @@ public class SiglusMeControllerValidationTest {
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
       if (key == KitProductEmptyLotsValidator.class) {
         return (T) new KitProductEmptyLotsValidator(orderableService);
-      }
-      if (key == NonKitProductNotEmptyLotsValidator.class) {
-        return (T) new NonKitProductNotEmptyLotsValidator(orderableService);
       }
       if (key == LotStockConsistentWithExistedValidator.class) {
         return (T) new LotStockConsistentWithExistedValidator(service);

@@ -25,7 +25,6 @@ import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.KitProductEmptyLots;
-import org.siglus.siglusapi.dto.android.constraints.stockcard.NonKitProductNotEmptyLots;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.PositiveInitStockOnHand;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.ProductConsistentWithOwnLots;
 import org.siglus.siglusapi.dto.validation.group.PerformanceGroup;
@@ -34,7 +33,6 @@ import org.siglus.siglusapi.dto.validation.group.PerformanceGroup;
 @ProductConsistentWithOwnLots
 @PositiveInitStockOnHand
 @KitProductEmptyLots(groups = PerformanceGroup.class)
-@NonKitProductNotEmptyLots(groups = PerformanceGroup.class)
 public class StockCardCreateRequest implements StockCardAdjustment {
 
   @NotBlank
