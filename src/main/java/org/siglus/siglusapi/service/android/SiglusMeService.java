@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.android;
 
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicOrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.dto.StockEventAdjustmentDto;
@@ -47,6 +49,7 @@ import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
@@ -163,7 +166,7 @@ public class SiglusMeService {
             .supportActive(program.isSupportActive())
             .supportStartDate(program.getSupportStartDate())
             .build()
-    ).collect(Collectors.toList());
+    ).collect(toList());
     return FacilityResponse.builder()
         .code(facilityDto.getCode())
         .name(facilityDto.getName())
@@ -210,11 +213,11 @@ public class SiglusMeService {
           dto.getExtraData().put(KEY_PROGRAM_CODE, orderable.getExtraData().get(KEY_PROGRAM_CODE));
           return dto;
         })
-        .collect(Collectors.toList());
+        .collect(toList());
     List<ProductResponse> filteredProducts = approvedProducts.stream()
         .filter(p -> filterByLastUpdated(p, lastSyncTime))
         .map(orderable -> mapper.toResponse(orderable, allProducts))
-        .collect(Collectors.toList());
+        .collect(toList());
     syncResponse.setProducts(filteredProducts);
     return syncResponse;
   }
@@ -235,38 +238,46 @@ public class SiglusMeService {
             dealWithStockEvent(entry.getValue(), facilityDto, codeToOrderableDto));
   }
 
+  @Transactional
+  public List<ProductMovementDto> getProductMovements(String startTime, String endTime) {
+    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    return stockCardLineItemService.findProductMovements(facilityId, startTime, endTime);
+  }
+
   public List<LotStockOnHand> getLotStockOnHands() {
-    List<org.openlmis.requisition.dto.OrderableDto> approvedProducts = getAllApprovedProducts();
     List<StockCardSummaryV2Dto> stockSummaries = stockCardSummariesService.findAllProgramStockSummaries();
     List<UUID> productIdsInStock = stockSummaries.stream()
         .map(summary -> summary.getOrderable().getId())
-        .collect(Collectors.toList());
-    Map<UUID, LotStockOnHand> tmp = approvedProducts.stream()
+        .collect(toList());
+    Map<String, org.openlmis.requisition.dto.OrderableDto> approvedProducts =
+        getAllApprovedProducts().stream()
+            .filter(product -> productIdsInStock.contains(product.getId()))
+            .filter(product -> product.getIdentifiers().containsKey(TRADE_ITEM_ID))
+            .collect(toMap(product -> product.getIdentifiers().get(TRADE_ITEM_ID), Function.identity()));
+    List<String> tradeItemIds = approvedProducts.values().stream()
         .filter(product -> productIdsInStock.contains(product.getId()))
         .filter(product -> product.getIdentifiers().containsKey(TRADE_ITEM_ID))
-        .map(product -> LotStockOnHand.builder().productId(product.getId())
-            .productTradeItemId(UUID.fromString(product.getIdentifiers().get(TRADE_ITEM_ID)))
-            .productCode(product.getProductCode()).build())
-        .collect(toMap(LotStockOnHand::getProductTradeItemId, Function.identity()));
-
-    List<String> tradeItemIds = tmp.values().stream()
-        .map(LotStockOnHand::getProductTradeItemId)
+        .map(product -> product.getIdentifiers().get(TRADE_ITEM_ID))
         .map(Objects::toString)
-        .collect(Collectors.toList());
+        .collect(toList());
     RequestParameters requestParameters = RequestParameters.init();
     requestParameters.set(TRADE_ITEM_ID, tradeItemIds);
     return lotReferenceDataService.findAllLot(requestParameters).stream()
-        .map(
-            lot -> {
-              LotStockOnHand productPart = tmp.get(lot.getTradeItemId());
-              Optional<CanFulfillForMeEntryDto> stockOnHandMap = findStockOnHand(productPart.getProductId(),
-                  lot.getId(), stockSummaries);
-              return productPart.toBuilder().lotId(lot.getId()).lotCode(lot.getLotCode())
-                  .stockOnHand(stockOnHandMap.map(CanFulfillForMeEntryDto::getStockOnHand).orElse(null))
-                  .occurredDate(stockOnHandMap.map(CanFulfillForMeEntryDto::getOccurredDate).orElse(null))
-                  .build();
-            })
-        .collect(Collectors.toList());
+        .map(lot -> toLockStock(lot, approvedProducts, stockSummaries))
+        .collect(toList());
+  }
+
+  private LotStockOnHand toLockStock(LotDto lot, Map<String, ? extends BasicOrderableDto> approvedProducts,
+      List<StockCardSummaryV2Dto> stockSummaries) {
+    BasicOrderableDto product = approvedProducts.get(lot.getTradeItemId().toString());
+    Optional<CanFulfillForMeEntryDto> stockOnHandMap = findStockOnHand(product.getId(),
+        lot.getId(), stockSummaries);
+    return LotStockOnHand.builder()
+        .productId(product.getId()).productCode(product.getProductCode())
+        .lotId(lot.getId()).lotCode(lot.getLotCode())
+        .stockOnHand(stockOnHandMap.map(CanFulfillForMeEntryDto::getStockOnHand).orElse(null))
+        .occurredDate(stockOnHandMap.map(CanFulfillForMeEntryDto::getOccurredDate).orElse(null))
+        .build();
   }
 
   private List<org.openlmis.requisition.dto.OrderableDto> getAllApprovedProducts() {
@@ -276,7 +287,7 @@ public class SiglusMeService {
         .map(programDataService::findOne)
         .map(program -> getProgramProducts(homeFacilityId, program))
         .flatMap(Collection::stream)
-        .collect(Collectors.toList());
+        .collect(toList());
   }
 
   private Optional<CanFulfillForMeEntryDto> findStockOnHand(UUID productId, UUID lotId,
@@ -306,7 +317,7 @@ public class SiglusMeService {
       List<StockEventExtension> requestQuantities = requests.stream()
           .filter(stockCardCreateRequest -> stockCardCreateRequest.getRequested() != null)
           .map(request -> buildProductRequest(request, stockEventId, codeOrderableToMap))
-          .collect(Collectors.toList());
+          .collect(toList());
       requestQuantityRepository.save(requestQuantities);
     }
   }
@@ -360,7 +371,7 @@ public class SiglusMeService {
     eventDto.setLineItems(requests.stream()
         .map(request -> getStockEventLineItemDto(request, codeOrderableToMap))
         .flatMap(Collection::stream)
-        .collect(Collectors.toList()));
+        .collect(toList()));
     return eventDto;
   }
 
@@ -387,7 +398,7 @@ public class SiglusMeService {
           stockEventLineItemDto.setStockAdjustments(getStockAdjustments(type, lotItem, programId));
           return stockEventLineItemDto;
         })
-        .collect(Collectors.toList());
+        .collect(toList());
   }
 
   private UUID getDestinationId(MovementType type, StockCardLotEventRequest lotItem,
@@ -412,12 +423,6 @@ public class SiglusMeService {
     return Collections.emptyList();
   }
 
-  @Transactional
-  public List<ProductMovementDto> getProductMovements(String startTime, String endTime) {
-    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    return stockCardLineItemService.findProductMovements(facilityId, startTime, endTime);
-  }
-
   private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId,
       ProgramDto program) {
     return approvedProductDataService
@@ -427,7 +432,7 @@ public class SiglusMeService {
           orderable.getExtraData().put(KEY_PROGRAM_CODE, program.getCode());
           return orderable;
         })
-        .collect(Collectors.toList());
+        .collect(toList());
   }
 
   private boolean filterByLastUpdated(OrderableDto approvedProduct, Instant lastSyncTime) {
