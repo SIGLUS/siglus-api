@@ -29,7 +29,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
-import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -531,7 +531,7 @@ public class SiglusMeServiceTest {
   private ApprovedProductDto mockApprovedProduct1() {
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
-    orderable.setIdentifiers(ImmutableMap.of(TRADE_ITEM_ID, tradeItem1.toString()));
+    orderable.setIdentifiers(ImmutableMap.of(TRADE_ITEM, tradeItem1.toString()));
     approvedProduct.setOrderable(orderable);
     String productCode = productCode1;
     orderable.setId(productId1);
@@ -573,7 +573,7 @@ public class SiglusMeServiceTest {
   private ApprovedProductDto mockApprovedProduct2() {
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
-    orderable.setIdentifiers(ImmutableMap.of(TRADE_ITEM_ID, tradeItem2.toString()));
+    orderable.setIdentifiers(ImmutableMap.of(TRADE_ITEM, tradeItem2.toString()));
     approvedProduct.setOrderable(orderable);
     String productCode = productCode2;
     orderable.setId(productId2);

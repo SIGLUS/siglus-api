@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
+import static org.siglus.common.dto.referencedata.OrderableDto.TRADE_ITEM;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.ImmutableMap;
@@ -31,10 +32,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -61,6 +62,7 @@ import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.StockEventExtension;
@@ -117,6 +119,7 @@ public class SiglusMeService {
 
   static final Map<String, String> mapSources = ImmutableMap.of(
       "DISTRICT_DDM", "District(DDM)",
+      "INTERMEDIATE_WAREHOUSE", "Armazém Intermediário",
       "PROVINCE_DPM", "Province(DPM)");
   private static final Map<String, String> mapDestination = new HashMap<>();
 
@@ -266,26 +269,33 @@ public class SiglusMeService {
     List<UUID> productIdsInStock = stockSummaries.stream()
         .map(summary -> summary.getOrderable().getId())
         .collect(toList());
-    Map<String, org.openlmis.requisition.dto.OrderableDto> approvedProducts =
-        getAllApprovedProducts().stream()
+    List<org.openlmis.requisition.dto.OrderableDto> approvedProducts = getAllApprovedProducts();
+    Map<String, org.openlmis.requisition.dto.OrderableDto> tradeItemToProduct =
+        approvedProducts.stream()
             .filter(product -> productIdsInStock.contains(product.getId()))
-            .filter(product -> product.getIdentifiers().containsKey(TRADE_ITEM_ID))
+            .filter(product -> product.getIdentifiers().containsKey(TRADE_ITEM))
             .collect(
-                toMap(product -> product.getIdentifiers().get(TRADE_ITEM_ID), Function.identity()));
-    List<String> tradeItemIds = approvedProducts.values().stream()
-        .filter(product -> productIdsInStock.contains(product.getId()))
-        .filter(product -> product.getIdentifiers().containsKey(TRADE_ITEM_ID))
-        .map(product -> product.getIdentifiers().get(TRADE_ITEM_ID))
-        .map(Objects::toString)
-        .collect(toList());
-    RequestParameters requestParameters = RequestParameters.init();
-    requestParameters.set(TRADE_ITEM_ID, tradeItemIds);
-    return lotReferenceDataService.findAllLot(requestParameters).stream()
-        .map(lot -> toLockStock(lot, approvedProducts, stockSummaries))
+                toMap(product -> product.getIdentifiers().get(TRADE_ITEM), Function.identity()));
+    return getLotsList(stockSummaries, approvedProducts).stream()
+        .map(lot -> toLotStock(lot, tradeItemToProduct, stockSummaries))
         .collect(toList());
   }
 
-  private LotStockOnHand toLockStock(LotDto lot,
+  private List<LotDto> getLotsList(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
+      List<org.openlmis.requisition.dto.OrderableDto> approvedProducts) {
+    List<UUID> orderableIdsForStockCard = stockCardSummaryV2Dtos.stream()
+        .map(stockCardSummaryV2Dto -> stockCardSummaryV2Dto.getOrderable().getId())
+        .collect(Collectors.toList());
+    List<String> tradeItems = approvedProducts.stream()
+        .filter(dto -> orderableIdsForStockCard.contains(dto.getId()))
+        .map(dto -> dto.getIdentifiers().get(FieldConstants.TRADE_ITEM))
+        .collect(Collectors.toList());
+    RequestParameters requestParameters = RequestParameters.init();
+    requestParameters.set(TRADE_ITEM_ID, tradeItems);
+    return lotReferenceDataService.findAllLot(requestParameters);
+  }
+
+  private LotStockOnHand toLotStock(LotDto lot,
       Map<String, ? extends BasicOrderableDto> approvedProducts,
       List<StockCardSummaryV2Dto> stockSummaries) {
     BasicOrderableDto product = approvedProducts.get(lot.getTradeItemId().toString());
@@ -297,6 +307,13 @@ public class SiglusMeService {
         .stockOnHand(stockOnHandMap.map(CanFulfillForMeEntryDto::getStockOnHand).orElse(null))
         .occurredDate(stockOnHandMap.map(CanFulfillForMeEntryDto::getOccurredDate).orElse(null))
         .build();
+  }
+
+  private Map<UUID, String> getOrderableIdToCode(
+      List<org.openlmis.requisition.dto.OrderableDto> orderableDtos) {
+    return orderableDtos.stream()
+        .collect(toMap(org.openlmis.requisition.dto.OrderableDto::getId,
+            org.openlmis.requisition.dto.OrderableDto::getProductCode));
   }
 
   private List<org.openlmis.requisition.dto.OrderableDto> getAllApprovedProducts() {
