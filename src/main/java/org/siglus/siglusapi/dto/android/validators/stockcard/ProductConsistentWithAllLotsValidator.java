@@ -59,13 +59,13 @@ public class ProductConsistentWithAllLotsValidator implements
   private boolean checkConsistentByProduct(String productCode,
       List<StockCardCreateRequest> requests, HibernateConstraintValidatorContext context) {
     context.addExpressionVariable("productCode", productCode);
-    Map<String, Integer> cache = new HashMap<>();
+    Map<String, Integer> sohByLotCode = new HashMap<>();
     for (StockCardCreateRequest request : requests) {
       request.getLotEvents().forEach(lot -> {
-        cache.computeIfPresent(lot.getLotCode(), (lotCode, sum) -> sum + lot.getQuantity());
-        cache.putIfAbsent(lot.getLotCode(), lot.getStockOnHand());
+        sohByLotCode.computeIfPresent(lot.getLotCode(), (lotCode, sum) -> sum + lot.getQuantity());
+        sohByLotCode.putIfAbsent(lot.getLotCode(), lot.getStockOnHand());
       });
-      if (request.getStockOnHand() < cache.values().stream().mapToInt(Integer::intValue).sum()) {
+      if (request.getStockOnHand() < sohByLotCode.values().stream().mapToInt(Integer::intValue).sum()) {
         context.addExpressionVariable("date", request.getOccurredDate());
         context.addExpressionVariable("createdAt", request.getCreatedAt());
         return false;

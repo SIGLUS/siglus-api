@@ -21,4 +21,8 @@ public interface StockCardAdjustment extends EventTime {
 
   Integer getQuantity();
 
+  String getDocumentationNo();
+
+  String getReasonName();
+
 }
