@@ -108,7 +108,39 @@ import org.springframework.util.LinkedMultiValueMap;
 public class SiglusMeService {
 
   public enum MovementType {
-    PHYSICAL_INVENTORY, RECEIVE, ISSUE, ADJUSTMENT, UNPACK_KIT;
+    PHYSICAL_INVENTORY() {
+      @Override
+      UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
+        return null;
+      }
+    },
+    RECEIVE() {
+      @Override
+      UUID getSourceId(CreateStockCardContext context, UUID programId, String source) {
+        return context.findSourceId(programId, source);
+      }
+    },
+    ISSUE() {
+      @Override
+      UUID getDestinationId(CreateStockCardContext context, UUID programId, String destination) {
+        return context.findDestinationId(programId, destination);
+      }
+    },
+    ADJUSTMENT,
+    UNPACK_KIT;
+
+    UUID getSourceId(CreateStockCardContext context, UUID programId, String source) {
+      return null;
+    }
+
+    UUID getDestinationId(CreateStockCardContext context, UUID programId, String destination) {
+      return null;
+    }
+
+    UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
+      return context.findSourceId(programId, reason);
+    }
+
   }
 
   @RequiredArgsConstructor
@@ -537,9 +569,9 @@ public class SiglusMeService {
     stockEventLineItem.setQuantity(quantity);
     stockEventLineItem.setDocumentationNo(adjustment.getDocumentationNo());
     String reasonName = adjustment.getReasonName();
-    // TODO set reason
-    // TODO set source
-    stockEventLineItem.setDestinationId(getDestinationId(type, reasonName, programId));
+    stockEventLineItem.setSourceId(type.getSourceId(getCreateStockCardContext(), programId, reasonName));
+    stockEventLineItem.setDestinationId(type.getDestinationId(getCreateStockCardContext(), programId, reasonName));
+    stockEventLineItem.setReasonId(type.getReasonId(getCreateStockCardContext(), programId, reasonName));
     stockEventLineItem.setStockAdjustments(getStockAdjustments(type, reasonName, quantity, programId));
     return stockEventLineItem;
   }
@@ -548,13 +580,6 @@ public class SiglusMeService {
     return orderable.getPrograms().stream().findFirst()
         .map(ProgramOrderableDto::getProgramId)
         .orElseThrow(() -> new IllegalArgumentException("program Not Exist for product"));
-  }
-
-  private UUID getDestinationId(MovementType type, String value, UUID programId) {
-    if (type == MovementType.ISSUE) {
-      return getCreateStockCardContext().findDestinationId(programId, value);
-    }
-    return null;
   }
 
   private List<StockEventAdjustmentDto> getStockAdjustments(MovementType type, String reason,
