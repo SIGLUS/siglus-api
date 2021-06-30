@@ -67,5 +67,18 @@ public interface CalculatedStockOnHandRepository
       + "and occurreddate >= :occurredDate", nativeQuery = true)
   void deleteFollowingStockOnHands(@Param("stockCardIds") Collection<UUID> stockCardIds,
       @Param("occurredDate") LocalDate occurredDate);
+
+  // [change reason]: query needs
+  @Query(value = "select h.* from stockmanagement.calculated_stocks_on_hand h "
+      + "inner join stockmanagement.stock_cards c "
+      + "on c.id = h.stockcardid "
+      + "where "
+      + "c.facilityid = :facilityId "
+      + "and h.processeddate > :startTime "
+      + "and h.processeddate <= :endTime", nativeQuery = true)
+  List<CalculatedStockOnHand> findByFacilityIdAndIdStartTimeEndTime(
+      @Param("facilityId") UUID facilityId,
+      @Param("startTime") String startTime,
+      @Param("endTime") String endTime);
   // [SIGLUS change end]
 }
