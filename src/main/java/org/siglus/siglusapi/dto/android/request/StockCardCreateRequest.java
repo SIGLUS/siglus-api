@@ -60,6 +60,8 @@ public class StockCardCreateRequest implements StockCardAdjustment {
 
   private Integer requested;
 
+  private String reasonName;
+
   private String signature;
 
   @Valid
