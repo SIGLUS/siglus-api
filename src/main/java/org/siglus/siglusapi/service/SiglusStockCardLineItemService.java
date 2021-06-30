@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
-import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.sourcedestination.Organization;
 import org.openlmis.stockmanagement.dto.CalculatedStockOnHandDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
@@ -38,12 +37,14 @@ import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
 import org.siglus.siglusapi.domain.StockEventExtension;
-import org.siglus.siglusapi.dto.LotMovementItemDto;
-import org.siglus.siglusapi.dto.SiglusLotDto;
-import org.siglus.siglusapi.dto.SiglusStockMovementItemDto;
+import org.siglus.siglusapi.dto.android.response.LotMovementItemResponse;
+import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
+import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
+import org.siglus.siglusapi.repository.RequestQuantityRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.siglus.siglusapi.service.android.SiglusMeService.MovementType;
+import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -56,7 +57,7 @@ public class SiglusStockCardLineItemService {
   private static final String INVENTORY = "INVENTORY";
   private static final String UNPACK_KIT = "Unpack Kit";
 
-  private Map<UUID, String> organizationNameToId;
+  private Map<UUID, String> organizationIdToName;
 
   private final SiglusStockCardLineItemRepository stockCardLineItemRepository;
 
@@ -64,11 +65,12 @@ public class SiglusStockCardLineItemService {
 
   private final OrganizationRepository organizationRepository;
 
-  private final SiglusStockEventExtensionService requestQuantityService;
+  private final RequestQuantityRepository requestQuantityRepository;
 
-  public Map<UUID, List<SiglusStockMovementItemDto>> getStockMovementByOrderableId(UUID facilityId, String startTime,
-      String endTime, Map<UUID, SiglusLotDto> siglusLotDtoByLotId) {
-    organizationNameToId = mapOrganizationNameToId(facilityId);
+  public Map<UUID, List<SiglusStockMovementItemResponse>> getStockMovementByOrderableId(UUID facilityId,
+      String startTime,
+      String endTime, Map<UUID, SiglusLotResponse> siglusLotDtoByLotId) {
+    organizationIdToName = mapOrganizationIdToName();
     Map<UUID, Map<LocalDate, CalculatedStockOnHandDto>> stockOnHandDtoMap = mapStockOnHandByStockCardIdAndOccurredDate(
         facilityId, startTime, endTime);
     Map<UUID, List<StockCardLineItem>> lineItemByOrderableIdMap = mapStockCardLineItemByOrderableId(facilityId,
@@ -76,13 +78,13 @@ public class SiglusStockCardLineItemService {
     return getStockMovementItemDtosMap(stockOnHandDtoMap, lineItemByOrderableIdMap, siglusLotDtoByLotId);
   }
 
-  private Map<UUID, List<SiglusStockMovementItemDto>> getStockMovementItemDtosMap(
+  private Map<UUID, List<SiglusStockMovementItemResponse>> getStockMovementItemDtosMap(
       Map<UUID, Map<LocalDate, CalculatedStockOnHandDto>> stockOnHandDtoMap,
-      Map<UUID, List<StockCardLineItem>> lineItemByOrderableIdMap, Map<UUID, SiglusLotDto> siglusLotDtoByLotId) {
+      Map<UUID, List<StockCardLineItem>> lineItemByOrderableIdMap, Map<UUID, SiglusLotResponse> siglusLotDtoByLotId) {
     if (stockOnHandDtoMap.isEmpty() || lineItemByOrderableIdMap.isEmpty()) {
       return Collections.emptyMap();
     }
-    Map<UUID, List<SiglusStockMovementItemDto>> stockMovementItemDtosMap = new HashMap<>();
+    Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemDtosMap = new HashMap<>();
     lineItemByOrderableIdMap.forEach((orderableId, lineItems) -> {
       Map<ZonedDateTime, List<StockCardLineItemDto>> itemDtoByProcessedDateMap = itemDtoByProcessedDateMap(
           stockOnHandDtoMap, lineItemByOrderableIdMap, orderableId);
@@ -92,27 +94,27 @@ public class SiglusStockCardLineItemService {
     return stockMovementItemDtosMap;
   }
 
-  private List<SiglusStockMovementItemDto> convertSiglusStockMovementItemDtos(
+  private List<SiglusStockMovementItemResponse> convertSiglusStockMovementItemDtos(
       Map<ZonedDateTime, List<StockCardLineItemDto>> itemDtoByProcessedDateMap,
-      Map<UUID, SiglusLotDto> siglusLotDtoByLotId) {
-    List<SiglusStockMovementItemDto> siglusStockMovementItemDtos = new ArrayList<>();
+      Map<UUID, SiglusLotResponse> siglusLotDtoByLotId) {
+    List<SiglusStockMovementItemResponse> siglusStockMovementItemResponses = new ArrayList<>();
     itemDtoByProcessedDateMap.forEach((processedDate, itemDtos) -> {
       Optional<StockCardLineItemDto> first = itemDtos.stream().findFirst();
       if (first.isPresent()) {
-        siglusStockMovementItemDtos
+        siglusStockMovementItemResponses
             .add(convertStockMovementItemDto(first.get(), itemDtos, siglusLotDtoByLotId));
       }
     });
-    return siglusStockMovementItemDtos;
+    return siglusStockMovementItemResponses;
   }
 
-  private SiglusStockMovementItemDto convertStockMovementItemDto(StockCardLineItemDto firstItemDto,
-      List<StockCardLineItemDto> itemDtos, Map<UUID, SiglusLotDto> siglusLotDtoByLotId) {
-    SiglusStockMovementItemDto stockMovementItemDto = getFirstStockMovementItemDto(firstItemDto);
+  private SiglusStockMovementItemResponse convertStockMovementItemDto(StockCardLineItemDto firstItemDto,
+      List<StockCardLineItemDto> itemDtos, Map<UUID, SiglusLotResponse> siglusLotDtoByLotId) {
+    SiglusStockMovementItemResponse stockMovementItemDto = getFirstStockMovementItemDto(firstItemDto);
     if (firstItemDto.getStockCard().getLotId() == null) {
       convertStockMovementItemDtoWhenNoLot(stockMovementItemDto, firstItemDto);
     } else {
-      List<LotMovementItemDto> lotMovementItems = new ArrayList<>();
+      List<LotMovementItemResponse> lotMovementItems = new ArrayList<>();
       itemDtos.forEach(itemDto -> {
         stockMovementItemDto
             .setMovementQuantity(Math.addExact(stockMovementItemDto.getMovementQuantity(), itemDto.getQuantity()));
@@ -125,7 +127,7 @@ public class SiglusStockCardLineItemService {
     return stockMovementItemDto;
   }
 
-  private void convertStockMovementItemDtoWhenNoLot(SiglusStockMovementItemDto stockMovementItemDto,
+  private void convertStockMovementItemDtoWhenNoLot(SiglusStockMovementItemResponse stockMovementItemDto,
       StockCardLineItemDto itemDto) {
     stockMovementItemDto.setMovementQuantity(itemDto.getQuantity());
     stockMovementItemDto.setStockOnHand(itemDto.getStockOnHand());
@@ -168,9 +170,9 @@ public class SiglusStockCardLineItemService {
     stockCardLineItemDtoByProcessedDateMap.put(item.getProcessedDate(), stockCardLineItemDtos);
   }
 
-  private LotMovementItemDto convertLotMovementItemDto(StockCardLineItemDto itemDto,
-      Map<UUID, SiglusLotDto> siglusLotDtoByLotId) {
-    return LotMovementItemDto.builder()
+  private LotMovementItemResponse convertLotMovementItemDto(StockCardLineItemDto itemDto,
+      Map<UUID, SiglusLotResponse> siglusLotDtoByLotId) {
+    return LotMovementItemResponse.builder()
         .lotCode(siglusLotDtoByLotId.get(itemDto.getStockCard().getLotId()).getLotCode())
         .documentNumber(itemDto.getDocumentNumber())
         .reason(itemDto.getReason() == null ? null : itemDto.getReason().getName())
@@ -178,8 +180,8 @@ public class SiglusStockCardLineItemService {
         .stockOnHand(itemDto.getStockOnHand()).build();
   }
 
-  private SiglusStockMovementItemDto getFirstStockMovementItemDto(StockCardLineItemDto firstItem) {
-    return SiglusStockMovementItemDto.builder()
+  private SiglusStockMovementItemResponse getFirstStockMovementItemDto(StockCardLineItemDto firstItem) {
+    return SiglusStockMovementItemResponse.builder()
         .requested(getRequested(firstItem))
         .type(firstItem.getReason().getType()).signature(firstItem.getSignature())
         .processedDate(firstItem.getProcessedDate().toInstant().toEpochMilli())
@@ -188,9 +190,9 @@ public class SiglusStockCardLineItemService {
   }
 
   private Integer getRequested(StockCardLineItemDto item) {
-    StockEventExtension stockEventExtension = requestQuantityService
-        .findOneByOrderableIdAndStockeventId(item.getStockCard().getOrderableId(),
-            item.getStockCard().getOriginEvent().getId());
+    StockEventExtension stockEventExtension = requestQuantityRepository.findOne(
+        Example.of(StockEventExtension.builder().orderableId(item.getStockCard().getOrderableId())
+            .stockeventId(item.getStockCard().getOriginEvent().getId()).build()));
     if (stockEventExtension == null) {
       return null;
     }
@@ -229,15 +231,6 @@ public class SiglusStockCardLineItemService {
     return CalculatedStockOnHandDto.newInstance(stockOnHand);
   }
 
-  private boolean isIssue(StockCardLineItem item) {
-    return (item.getDestination() != null) || (item.getReason() != null
-        && item.getReason().getReasonType() == ReasonType.DEBIT);
-  }
-
-  private boolean isAdjustment(StockCardLineItem item) {
-    return item.getSource() == null && item.getDestination() == null && item.getReason() != null;
-  }
-
   private StockCardLineItemDto convertStockCardLineItemDto(StockCardLineItem item, int quantity, int currentSoh) {
     return StockCardLineItemDto.builder().signature(item.getSignature()).processedDate(item.getProcessedDate())
         .occurredDate(item.getOccurredDate()).stockOnHand(currentSoh).quantity(quantity)
@@ -252,34 +245,54 @@ public class SiglusStockCardLineItemService {
     String type = null;
     if (item.isPhysicalInventory()) {
       type = MovementType.PHYSICAL_INVENTORY.name();
-      if (item.getQuantity() < 0) {
-        reason = INVENTORY_NEGATIVE;
-      } else if (item.getQuantity() > 0) {
-        reason = INVENTORY_POSITIVE;
-      } else {
-        reason = INVENTORY;
-      }
+      reason = getPhysicalInventoryReason(item.getQuantity());
     } else if (isAdjustment(item)) {
       type = MovementType.ADJUSTMENT.name();
-      if (UNPACK_KIT.equals(item.getReason().getName())) {
-        reason = item.getReason().getName();
-      } else {
-        reason = SiglusMeService.AdjustmentReason.findByValue(item.getReason().getName());
-      }
-    } else if (item.isPositive()) {
+      reason = getAdjustmentReason(item);
+    } else if (isReceive(item)) {
       type = MovementType.RECEIVE.name();
-      reason = SiglusMeService.Source.findByValue(organizationNameToId.get(item.getSource().getReferenceId()));
+      reason = SiglusMeService.Source.findByValue(organizationIdToName.get(item.getSource().getReferenceId()));
     } else if (isIssue(item)) {
       type = MovementType.ISSUE.name();
       reason = SiglusMeService.Destination
-          .findByValue(organizationNameToId.get(item.getDestination().getReferenceId()));
+          .findByValue(organizationIdToName.get(item.getDestination().getReferenceId()));
     }
     reasonDto.setType(type);
     reasonDto.setName(reason);
     return reasonDto;
   }
 
-  private Map<UUID, String> mapOrganizationNameToId(UUID facilityId) {
+  private boolean isReceive(StockCardLineItem item) {
+    return item.isPositive();
+  }
+
+  private boolean isIssue(StockCardLineItem item) {
+    return item.getDestination() != null && item.getSource() == null;
+  }
+
+  private boolean isAdjustment(StockCardLineItem item) {
+    return item.getSource() == null && item.getDestination() == null && item.getReason() != null;
+  }
+
+  private String getPhysicalInventoryReason(Integer quantity) {
+    if (quantity < 0) {
+      return INVENTORY_NEGATIVE;
+    } else if (quantity > 0) {
+      return INVENTORY_POSITIVE;
+    } else {
+      return INVENTORY;
+    }
+  }
+
+  private String getAdjustmentReason(StockCardLineItem item) {
+    if (UNPACK_KIT.equals(item.getReason().getName())) {
+      return item.getReason().getName();
+    } else {
+      return SiglusMeService.AdjustmentReason.findByValue(item.getReason().getName());
+    }
+  }
+
+  private Map<UUID, String> mapOrganizationIdToName() {
     return organizationRepository.findAll().stream()
         .collect(Collectors.toMap(Organization::getId, Organization::getName));
   }

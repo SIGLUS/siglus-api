@@ -69,7 +69,7 @@ schemas:
   - stockCard: !include schemas/stockCard.json
   - stockManagementDraft: !include schemas/stockManagementDraft.json
   - stockCardSummariesPage: !include schemas/stockCardSummaryV2Page.json
-  - fcProductMovementsDto: !include schemas/fcProductMovementsDto.json
+  - fcProductMovementsDto: !include schemas/fcProductMovementsResponse.json
   - arrayOfStrings: |
       {
         "type": "array",

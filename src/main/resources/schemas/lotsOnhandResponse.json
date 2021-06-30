@@ -17,8 +17,8 @@
     },
     "lot": {
       "type": "object",
-      "title": "siglusLotDto",
-      "$ref": "siglusLotDto.json"
+      "title": "siglusLotResponse",
+      "$ref": "siglusLotResponse.json"
     }
   }
 }

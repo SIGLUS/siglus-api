@@ -44,8 +44,8 @@
       "title": "lotMovementItems",
       "items": {
         "type": "object",
-        "title": "lotMovementItemDto",
-        "$ref": "lotMovementItemDto.json"
+        "title": "lotMovementItemResponse",
+        "$ref": "lotMovementItemResponse.json"
       }
     }
   }

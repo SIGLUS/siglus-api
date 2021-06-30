@@ -13,9 +13,8 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.dto.android.response;
 
-import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,12 +24,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class LotsOnHandDto {
-  
-  private Integer quantityOnHand;
+public class LotMovementItemResponse {
 
-  private LocalDate effectiveDate;
+  private String documentNumber;
 
-  private SiglusLotDto lot;
+  private String reason;
+
+  private String lotCode;
+
+  private Integer quantity;
+
+  private Integer stockOnHand;
 
 }

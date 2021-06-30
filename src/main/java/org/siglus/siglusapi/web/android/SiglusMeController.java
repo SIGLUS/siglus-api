@@ -28,7 +28,6 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
-import org.siglus.siglusapi.dto.FcProductMovementsDto;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.LotStockConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.ProductConsistentWithAllLots;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsistentWithQuantityByLot;
@@ -36,6 +35,7 @@ import org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsist
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
+import org.siglus.siglusapi.dto.android.response.FcProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.validation.group.PerformanceGroup;
 import org.siglus.siglusapi.dto.validation.group.sequence.PerformanceSequence;
@@ -96,7 +96,7 @@ public class SiglusMeController {
   @GetMapping("/facility/stockCards")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public FcProductMovementsDto getFacilityStockCards(
+  public FcProductMovementsResponse getFacilityStockCards(
       @RequestParam(value = "startTime") String startTime,
       @RequestParam(value = "endTime") String endTime) {
     return service.getProductMovements(startTime, endTime);

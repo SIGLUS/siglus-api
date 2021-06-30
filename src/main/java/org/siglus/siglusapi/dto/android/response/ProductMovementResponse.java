@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.dto.android.response;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -25,8 +25,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class FcProductMovementsDto {
+public class ProductMovementResponse {
 
-  private List<ProductMovementDto> productMovements;
+  private String productCode;
+
+  private Integer stockOnHand;
+
+  private List<SiglusStockMovementItemResponse> stockMovementItems;
+
+  private List<LotsOnHandResponse> lotsOnHand;
 
 }

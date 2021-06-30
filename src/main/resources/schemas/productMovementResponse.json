@@ -2,7 +2,7 @@
   "type": "object",
   "$schema": "http://json-schema.org/draft-04/schema",
   "description": "Movements of The product",
-  "title": "productMovementDto",
+  "title": "productMovementResponse",
   "properties": {
     "productCode": {
       "type": "string",
@@ -17,8 +17,8 @@
       "title": "stockMovementItems",
       "items": {
         "type": "object",
-        "title": "siglusStockMovementItemDto",
-        "$ref": "siglusStockMovementItemDto.json"
+        "title": "siglusStockMovementItemResponse",
+        "$ref": "siglusStockMovementItemResponse.json"
       }
     },
     "lotsOnHand": {
@@ -26,8 +26,8 @@
       "title": "lotsOnHand",
       "items": {
         "type": "object",
-        "title": "lotsOnHandDto",
-        "$ref": "lotsOnHandDto.json"
+        "title": "lotsOnhandResponse",
+        "$ref": "lotsOnhandResponse.json"
       }
     }
   }
