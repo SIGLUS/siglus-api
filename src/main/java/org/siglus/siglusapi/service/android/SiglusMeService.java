@@ -82,12 +82,12 @@ import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardLineItemService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
-import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
+import org.siglus.siglusapi.web.SiglusStockEventsController;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -173,9 +173,9 @@ public class SiglusMeService {
   private final SiglusLotReferenceDataService lotReferenceDataService;
   private final SiglusStockCardLineItemService stockCardLineItemService;
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
-  private final SiglusStockEventsService stockEventsService;
   private final RequestQuantityRepository requestQuantityRepository;
   private final SiglusValidSourceDestinationService siglusValidSourceDestinationService;
+  private final SiglusStockEventsController stockEventsController;
   private Map<UUID, Map<String, UUID>> programToReasonNameToId;
   private Map<UUID, Map<String, UUID>> programToDestinationNameToId;
 
@@ -348,7 +348,7 @@ public class SiglusMeService {
     getReasonNameAndOrganization(facilityDto, type);
     StockEventDto stockEvent = buildStockEvent(facilityDto, firstStockCard, requests,
         codeOrderableToMap);
-    UUID stockEventId = stockEventsService.createStockEventForAllProducts(stockEvent);
+    UUID stockEventId = stockEventsController.createStockEvent(stockEvent);
     if (type == MovementType.ISSUE) {
       List<StockEventExtension> requestQuantities = requests.stream()
           .filter(stockCardCreateRequest -> stockCardCreateRequest.getRequested() != null)
@@ -436,7 +436,7 @@ public class SiglusMeService {
         "expirationDate", lotItem.getExpirationDate().toString());
     lineItemDto.setExtraData(map);
     lineItemDto.setQuantity(lotItem.getQuantity());
-    lineItemDto.setOccurredDate(lotItem.getOccurredDate());
+    lineItemDto.setOccurredDate(request.getOccurredDate());
     lineItemDto.setDocumentationNo(lotItem.getDocumentationNo());
     lineItemDto.setDestinationId(getDestinationId(type, lotItem.getReasonName(), programId));
     lineItemDto.setStockAdjustments(getStockAdjustments(type, lotItem.getReasonName(),
