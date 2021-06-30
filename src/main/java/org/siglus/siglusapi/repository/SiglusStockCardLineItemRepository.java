@@ -22,8 +22,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCardLineItem, UUID> {
+
   @Query(value = "select i.* from stockmanagement.stock_card_line_items i "
       + "inner join stockmanagement.stock_cards c  "
       + "on c.id = i.stockcardid "

@@ -11,9 +11,9 @@
       "type": "string",
       "title": "reason"
     },
-    "lotNumber": {
+    "lotCode": {
       "type": "string",
-      "title": "lotNumber"
+      "title": "lotCode"
     },
     "quantity": {
       "type": "number",

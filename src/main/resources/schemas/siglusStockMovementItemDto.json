@@ -23,9 +23,21 @@
       "type": "object",
       "title": "processedDate"
     },
-    "occurredDatex": {
+    "occurredDate": {
       "type": "object",
       "title": "occurredDate"
+    },
+    "documentNumber": {
+      "type": "string",
+      "title": "documentNumber"
+    },
+    "reason": {
+      "type": "string",
+      "title": "reason"
+    },
+    "requested": {
+      "type": "number",
+      "title": "requested"
     },
     "lotMovementItems": {
       "type": "array",

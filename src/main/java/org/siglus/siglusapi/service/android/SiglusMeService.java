@@ -26,6 +26,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.time.chrono.ChronoZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -66,7 +67,9 @@ import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.StockEventExtension;
+import org.siglus.siglusapi.dto.LotsOnHandDto;
 import org.siglus.siglusapi.dto.ProductMovementDto;
+import org.siglus.siglusapi.dto.SiglusLotDto;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
@@ -111,6 +114,30 @@ public class SiglusMeService {
       }
       return null;
     }
+  }
+
+  public static final Map<String, String> mapSwitchSources = new HashMap<>();
+
+  {
+    mapSources.forEach((k, v) -> mapSwitchSources.put(v, k));
+  }
+
+  public static final Map<String, String> mapSwitchDestination = new HashMap<>();
+
+  {
+    mapDestination.forEach((k, v) -> mapSwitchDestination.put(v, k));
+  }
+
+  public static final Map<String, String> mapSwitchPhysicalInventoryReason = new HashMap<>();
+
+  {
+    mapPhysicalInventoryReason.forEach((k, v) -> mapSwitchPhysicalInventoryReason.put(v, k));
+  }
+
+  public static final Map<String, String> mapSwitchAdjustmentReason = new HashMap<>();
+
+  {
+    mapAdjustmentReason.forEach((k, v) -> mapSwitchAdjustmentReason.put(v, k));
   }
 
   static final String KEY_PROGRAM_CODE = "programCode";
@@ -219,6 +246,28 @@ public class SiglusMeService {
     siglusArchiveProductService.archiveAllProducts(facilityId, productCodes);
   }
 
+  @Transactional
+  public List<ProductMovementDto> getProductMovements(String startTime, String endTime) {
+    List<ProductMovementDto> productMovementDtos = new ArrayList<>();
+    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllApprovedProducts();
+    Map<UUID, String> orderableIdToCode = getOrderableIdToCode(orderableDtos);
+    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = stockCardSummariesService
+        .findAllProgramStockSummaries();
+    Map<UUID, SiglusLotDto> siglusLotDtoByLotId = getSiglusLotDtoByLotId(orderableDtos, stockCardSummaryV2Dtos);
+    Map<UUID, List<LotsOnHandDto>> lotsOnHandDtosByOrderableId = getLotsOnHandDtosMap(stockCardSummaryV2Dtos,
+        siglusLotDtoByLotId);
+    stockCardLineItemService
+        .getStockMovementByOrderableId(facilityId, startTime, endTime, siglusLotDtoByLotId)
+        .forEach((orderableId, items) ->
+            productMovementDtos.add(
+                ProductMovementDto.builder().stockMovementItems(items).productCode(orderableIdToCode.get(orderableId))
+                    .lotsOnHand(lotsOnHandDtosByOrderableId.get(orderableId))
+                    .stockOnHand(calculateStockOnHandByLot(lotsOnHandDtosByOrderableId.get(orderableId)))
+                    .build()));
+    return productMovementDtos;
+  }
+
   public ProductSyncResponse getFacilityProducts(Instant lastSyncTime) {
     ProductSyncResponse syncResponse = new ProductSyncResponse();
     syncResponse.setLastSyncTime(System.currentTimeMillis());
@@ -257,11 +306,6 @@ public class SiglusMeService {
         .forEach(entry -> toStockEvent(entry.getValue(), facilityDto, allApprovedProducts));
   }
 
-  @Transactional
-  public List<ProductMovementDto> getProductMovements(String startTime, String endTime) {
-    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    return stockCardLineItemService.findProductMovements(facilityId, startTime, endTime);
-  }
 
   public List<LotStockOnHand> getLotStockOnHands() {
     List<StockCardSummaryV2Dto> stockSummaries = stockCardSummariesService
@@ -295,6 +339,18 @@ public class SiglusMeService {
     return lotReferenceDataService.findAllLot(requestParameters);
   }
 
+  private Integer calculateStockOnHandByLot(List<LotsOnHandDto> lotsOnHandDtos) {
+    return lotsOnHandDtos.stream().mapToInt(LotsOnHandDto::getQuantityOnHand).sum();
+  }
+
+  private Map<UUID, SiglusLotDto> getSiglusLotDtoByLotId(
+      List<org.openlmis.requisition.dto.OrderableDto> orderableDtos,
+      List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos) {
+    return getLotsList(stockCardSummaryV2Dtos, orderableDtos).stream().collect(Collectors.toMap(LotDto::getId,
+        t -> SiglusLotDto.builder().lotCode(t.getLotCode()).expirationDate(t.getExpirationDate())
+            .valid(t.isActive()).build()));
+  }
+
   private LotStockOnHand toLotStock(LotDto lot,
       Map<String, ? extends BasicOrderableDto> approvedProducts,
       List<StockCardSummaryV2Dto> stockSummaries) {
@@ -314,6 +370,28 @@ public class SiglusMeService {
     return orderableDtos.stream()
         .collect(toMap(org.openlmis.requisition.dto.OrderableDto::getId,
             org.openlmis.requisition.dto.OrderableDto::getProductCode));
+  }
+
+  private Map<UUID, List<LotsOnHandDto>> getLotsOnHandDtosMap(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
+      Map<UUID, SiglusLotDto> siglusLotDtoByLotId) {
+    return stockCardSummaryV2Dtos.stream().collect(
+        Collectors.toMap(dto -> dto.getOrderable().getId(),
+            dto -> getLotsOnHandDtos(dto, siglusLotDtoByLotId)));
+  }
+
+  private List<LotsOnHandDto> getLotsOnHandDtos(StockCardSummaryV2Dto dto,
+      Map<UUID, SiglusLotDto> sigluslotDtoByLotId) {
+    return dto.getCanFulfillForMe()
+        .stream()
+        .map(fulfillDto -> convertLotsOnHandDto(fulfillDto, sigluslotDtoByLotId))
+        .collect(Collectors.toList());
+  }
+
+  private LotsOnHandDto convertLotsOnHandDto(CanFulfillForMeEntryDto fulfillDto,
+      Map<UUID, SiglusLotDto> sigluslotDtoByLotId) {
+    return LotsOnHandDto.builder().quantityOnHand(fulfillDto.getStockOnHand())
+        .lot(fulfillDto.getLot() == null ? null : sigluslotDtoByLotId.get(fulfillDto.getLot().getId()))
+        .effectiveDate(fulfillDto.getOccurredDate()).build();
   }
 
   private List<org.openlmis.requisition.dto.OrderableDto> getAllApprovedProducts() {

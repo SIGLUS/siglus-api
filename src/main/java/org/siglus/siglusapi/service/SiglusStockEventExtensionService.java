@@ -13,39 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.service;
 
-import java.time.LocalDate;
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.StockEventExtension;
+import org.siglus.siglusapi.repository.RequestQuantityRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Example;
+import org.springframework.stereotype.Service;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class SiglusStockMovementItemDto {
+@Service
+public class SiglusStockEventExtensionService {
 
-  private Integer movementQuantity;
+  @Autowired
+  private RequestQuantityRepository requestQuantityRepository;
 
-  private String type;
-
-  private Integer stockOnHand;
-
-  private String signature;
-
-  private Long processedDate;
-
-  private LocalDate occurredDate;
-
-  private String documentNumber;
-
-  private String reason;
-
-  private Integer requested;
-
-  private List<LotMovementItemDto> lotMovementItems;
-
+  public StockEventExtension findOneByOrderableIdAndStockeventId(UUID orderableId, UUID stockeventId) {
+    return requestQuantityRepository
+        .findOne(Example.of(StockEventExtension.builder().orderableId(orderableId).stockeventId(stockeventId).build()));
+  }
 }
