@@ -125,7 +125,12 @@ public class SiglusMeService {
         return context.findDestinationId(programId, destination);
       }
     },
-    ADJUSTMENT,
+    ADJUSTMENT() {
+      @Override
+      UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
+        return context.findSourceId(programId, reason);
+      }
+    },
     UNPACK_KIT;
 
     UUID getSourceId(CreateStockCardContext context, UUID programId, String source) {
@@ -302,7 +307,7 @@ public class SiglusMeService {
   @Transactional
   public void createStockCards(List<StockCardCreateRequest> requests) {
     FacilityDto facilityDto = getCurrentFacilityInfo();
-    initCreateStockCardContext(facilityDto.getId());
+    initCreateStockCardContext(facilityDto);
     try {
       Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts = getAllApprovedProducts().stream()
           .collect(toMap(BasicOrderableDto::getProductCode, Function.identity()));
@@ -465,7 +470,6 @@ public class SiglusMeService {
     String signature = requests.stream().findFirst()
         .map(StockCardCreateRequest::getSignature)
         .orElse(null);
-    getReasonNameAndOrganization(facilityDto, type);
     StockEventDto stockEvent = buildStockEvent(facilityDto, signature, requests, allApprovedProducts);
     UUID stockEventId = stockEventsController.createStockEvent(stockEvent);
     if (type == MovementType.ISSUE) {
@@ -484,33 +488,6 @@ public class SiglusMeService {
         .stockeventId(stockEventId)
         .requestedQuantity(request.getRequested())
         .build();
-  }
-
-  private void getReasonNameAndOrganization(FacilityDto facilityDto, MovementType type) {
-    setReasonNameToId(facilityDto, type);
-    setDestinationNameToId(facilityDto, type);
-    // source
-  }
-
-  private void setReasonNameToId(FacilityDto facilityDto, MovementType type) {
-    if (type == MovementType.PHYSICAL_INVENTORY && programToReasonNameToId.isEmpty()) {
-      programToReasonNameToId = validReasonAssignmentService
-          .getValidReasonsForAllProducts(facilityDto.getType().getId(),
-              null, ALL_PRODUCTS_PROGRAM_ID)
-          .stream()
-          .collect(toMap(ValidReasonAssignmentDto::getProgramId,
-              reasonDto -> ImmutableMap.of(reasonDto.getReason().getName(), reasonDto.getId())));
-    }
-  }
-
-  private void setDestinationNameToId(FacilityDto facilityDto, MovementType type) {
-    if (type == MovementType.ISSUE && programToDestinationNameToId.isEmpty()) {
-      programToDestinationNameToId = siglusValidSourceDestinationService
-          .findDestinationsForAllProducts(facilityDto.getId())
-          .stream()
-          .collect(toMap(ValidSourceDestinationDto::getProgramId,
-              destination -> ImmutableMap.of(destination.getName(), destination.getId())));
-    }
   }
 
   private StockEventDto buildStockEvent(FacilityDto facilityDto, String signature,
@@ -585,7 +562,8 @@ public class SiglusMeService {
 
   private List<StockEventAdjustmentDto> getStockAdjustments(MovementType type, String reason,
       Integer quantity, UUID programId) {
-    if (type != MovementType.PHYSICAL_INVENTORY || quantity == 0) {
+    if (type != MovementType.PHYSICAL_INVENTORY || quantity == 0
+        || reason.equalsIgnoreCase("INVENTORY")) {
       return Collections.emptyList();
     }
     UUID reasonId = getCreateStockCardContext().findReasonId(programId, reason);
@@ -657,8 +635,8 @@ public class SiglusMeService {
 
   private final ThreadLocal<CreateStockCardContext> createStockCardContextHolder = new ThreadLocal<>();
 
-  private void initCreateStockCardContext(UUID facilityId) {
-    createStockCardContextHolder.set(new CreateStockCardContext(facilityId));
+  private void initCreateStockCardContext(FacilityDto facilityDto) {
+    createStockCardContextHolder.set(new CreateStockCardContext(facilityDto));
   }
 
   private CreateStockCardContext getCreateStockCardContext() {
@@ -675,34 +653,37 @@ public class SiglusMeService {
     private final Map<UUID, Map<String, UUID>> programToDestinationNameToId;
     private final Map<UUID, Map<String, UUID>> programToSourceNameToId;
 
-    CreateStockCardContext(UUID facilityId) {
+    CreateStockCardContext(FacilityDto facilityDto) {
       programToReasonNameToId = validReasonAssignmentService
-          .getValidReasonsForAllProducts(facilityId, null, ALL_PRODUCTS_PROGRAM_ID)
+          .getValidReasonsForAllProducts(facilityDto.getType().getId(), null, null)
           .stream()
-          .collect(toMap(ValidReasonAssignmentDto::getProgramId,
-              reasonDto -> ImmutableMap.of(reasonDto.getReason().getName(), reasonDto.getId())));
+          .collect(groupingBy(ValidReasonAssignmentDto::getProgramId,
+              Collectors.toMap(lineItem -> lineItem.getReason().getName(),
+                  ValidReasonAssignmentDto::getId)));
 
       programToDestinationNameToId = siglusValidSourceDestinationService
-          .findDestinationsForAllProducts(facilityId)
+          .findDestinationsForAllProducts(facilityDto.getId())
           .stream()
-          .collect(toMap(ValidSourceDestinationDto::getProgramId,
-              destination -> ImmutableMap.of(destination.getName(), destination.getId())));
+          .collect(groupingBy(ValidSourceDestinationDto::getProgramId,
+              Collectors.toMap(ValidSourceDestinationDto::getName,
+                  ValidSourceDestinationDto::getId)));
 
       programToSourceNameToId = siglusValidSourceDestinationService
-          .findSourcesForAllProducts(facilityId)
+          .findSourcesForAllProducts(facilityDto.getId())
           .stream()
-          .collect(toMap(ValidSourceDestinationDto::getProgramId,
-              source -> ImmutableMap.of(source.getName(), source.getId())));
+          .collect(groupingBy(ValidSourceDestinationDto::getProgramId,
+              Collectors.toMap(ValidSourceDestinationDto::getName,
+                  ValidSourceDestinationDto::getId)));
     }
 
     @Nonnull
     UUID findReasonId(UUID programId, String value) {
-      return programToDestinationNameToId.get(programId).get(AdjustmentReason.valueOf(value).getValue());
+      return programToReasonNameToId.get(programId).get(AdjustmentReason.valueOf(value).getValue());
     }
 
     @Nonnull
     UUID findSourceId(UUID programId, String value) {
-      return programToDestinationNameToId.get(programId).get(Source.valueOf(value).getValue());
+      return programToSourceNameToId.get(programId).get(Source.valueOf(value).getValue());
     }
 
     @Nonnull
