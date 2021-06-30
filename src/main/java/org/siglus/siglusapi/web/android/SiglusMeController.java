@@ -28,7 +28,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
-import org.siglus.siglusapi.dto.ProductMovementDto;
+import org.siglus.siglusapi.dto.FcProductMovementsDto;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.LotStockConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.ProductConsistentWithAllLots;
 import org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsistentWithQuantityByLot;
@@ -96,7 +96,7 @@ public class SiglusMeController {
   @GetMapping("/facility/stockCards")
   @ResponseStatus(HttpStatus.OK)
   @ResponseBody
-  public List<ProductMovementDto> getFacilityStockCards(
+  public FcProductMovementsDto getFacilityStockCards(
       @RequestParam(value = "startTime") String startTime,
       @RequestParam(value = "endTime") String endTime) {
     return service.getProductMovements(startTime, endTime);

@@ -69,6 +69,7 @@ import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.StockEventExtension;
+import org.siglus.siglusapi.dto.FcProductMovementsDto;
 import org.siglus.siglusapi.dto.LotsOnHandDto;
 import org.siglus.siglusapi.dto.ProductMovementDto;
 import org.siglus.siglusapi.dto.SiglusLotDto;
@@ -242,7 +243,7 @@ public class SiglusMeService {
   }
 
   @Transactional
-  public List<ProductMovementDto> getProductMovements(String startTime, String endTime) {
+  public FcProductMovementsDto getProductMovements(String startTime, String endTime) {
     List<ProductMovementDto> productMovementDtos = new ArrayList<>();
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllApprovedProducts();
@@ -257,10 +258,10 @@ public class SiglusMeService {
         .forEach((orderableId, items) ->
             productMovementDtos.add(
                 ProductMovementDto.builder().stockMovementItems(items).productCode(orderableIdToCode.get(orderableId))
-                    .lotsOnHand(lotsOnHandDtosByOrderableId.get(orderableId))
+                    .lotsOnHand(judgeReturnLotsOnHandDtos(lotsOnHandDtosByOrderableId.get(orderableId)))
                     .stockOnHand(calculateStockOnHandByLot(lotsOnHandDtosByOrderableId.get(orderableId)))
                     .build()));
-    return productMovementDtos;
+    return FcProductMovementsDto.builder().productMovements(productMovementDtos).build();
   }
 
   public ProductSyncResponse getFacilityProducts(Instant lastSyncTime) {
@@ -341,6 +342,10 @@ public class SiglusMeService {
 
   private Integer calculateStockOnHandByLot(List<LotsOnHandDto> lotsOnHandDtos) {
     return lotsOnHandDtos.stream().mapToInt(LotsOnHandDto::getQuantityOnHand).sum();
+  }
+
+  private List<LotsOnHandDto> judgeReturnLotsOnHandDtos(List<LotsOnHandDto> lotsOnHandDtos) {
+    return lotsOnHandDtos.stream().findFirst().get().getLot() == null ? null : lotsOnHandDtos;
   }
 
   private Map<UUID, SiglusLotDto> getSiglusLotDtoByLotId(
@@ -678,7 +683,5 @@ public class SiglusMeService {
     UUID findDestinationId(UUID programId, String value) {
       return programToDestinationNameToId.get(programId).get(Destination.valueOf(value).getValue());
     }
-
   }
-
 }

@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "Movements of The product",
+  "title": "fcProductMovementsDto",
+  "properties": {
+    "productMovements": {
+      "type": "array",
+      "title": "productMovements",
+      "items": {
+        "type": "object",
+        "title": "productMovementDto",
+        "$ref": "productMovementDto.json"
+      }
+    }
+  }
+}

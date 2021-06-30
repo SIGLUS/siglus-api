@@ -23,7 +23,7 @@
     },
     "lotsOnHand": {
       "type": "array",
-      "title": "LotsOnHand",
+      "title": "lotsOnHand",
       "items": {
         "type": "object",
         "title": "lotsOnHandDto",
