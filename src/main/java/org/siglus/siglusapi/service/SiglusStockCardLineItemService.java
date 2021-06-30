@@ -264,15 +264,15 @@ public class SiglusStockCardLineItemService {
       if (UNPACK_KIT.equals(item.getReason().getName())) {
         reason = item.getReason().getName();
       } else {
-        reason = SiglusMeService.mapSwitchAdjustmentReason.get(item.getReason().getName());
+        reason = SiglusMeService.AdjustmentReason.findByValue(item.getReason().getName());
       }
     } else if (item.isPositive()) {
       type = MovementType.RECEIVE.name();
-      reason = SiglusMeService.mapSwitchSources.get(organizationNameToId.get(item.getSource().getReferenceId()));
+      reason = SiglusMeService.Source.findByValue(organizationNameToId.get(item.getSource().getReferenceId()));
     } else if (isIssue(item)) {
       type = MovementType.ISSUE.name();
-      reason = SiglusMeService.mapSwitchDestination
-          .get(organizationNameToId.get(item.getDestination().getReferenceId()));
+      reason = SiglusMeService.Destination
+          .findByValue(organizationNameToId.get(item.getDestination().getReferenceId()));
     }
     reasonDto.setType(type);
     reasonDto.setName(reason);

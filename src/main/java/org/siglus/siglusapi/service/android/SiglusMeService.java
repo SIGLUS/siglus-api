@@ -20,7 +20,6 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
-import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 import static org.siglus.common.dto.referencedata.OrderableDto.TRADE_ITEM;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
@@ -29,15 +28,17 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -107,86 +108,78 @@ public class SiglusMeService {
 
   public enum MovementType {
     PHYSICAL_INVENTORY, RECEIVE, ISSUE, ADJUSTMENT, UNPACK_KIT;
+  }
 
-    public static MovementType fromString(String type) {
-      for (MovementType movementType : values()) {
-        if (equalsIgnoreCase(type, movementType.name())) {
-          return movementType;
-        }
-      }
-      return null;
+  @RequiredArgsConstructor
+  @Getter
+  public enum Source {
+    DISTRICT_DDM("District(DDM)"),
+    INTERMEDIATE_WAREHOUSE("Armazém Intermediário)"),
+    PROVINCE_DPM("Province(DPM)");
+
+    private final String value;
+
+    public static String findByValue(String value) {
+      return Arrays.stream(values())
+          .filter(e -> e.value.equals(value))
+          .map(Enum::name)
+          .findFirst().orElse(null);
+    }
+
+  }
+
+  @RequiredArgsConstructor
+  @Getter
+  public enum Destination {
+    ACC_EMERGENCY("Banco de Socorro"),
+    DENTAL_WARD("Medicina Dentaria"),
+    GENERAL_WARD("Medicina Geral"),
+    LABORATORY("Laboratorio"),
+    MATERNITY("Maternidade"),
+    MOBILE_UNIT("Unidade Movel"),
+    PAV("PAV"),
+    PNCTL("PNCTL"),
+    PUB_PHARMACY("Farmácia");
+
+    private final String value;
+
+    public static String findByValue(String value) {
+      return Arrays.stream(values())
+          .filter(e -> e.value.equals(value))
+          .map(Enum::name)
+          .findFirst().orElse(null);
     }
   }
 
-  public static final Map<String, String> mapSwitchSources = new HashMap<>();
+  @RequiredArgsConstructor
+  @Getter
+  public enum AdjustmentReason {
+    CUSTOMER_RETURN("Devoluções de clientes (US e Enfermarias Dependentes)"),
+    DAMAGED("Danificado na Chegada"),
+    DONATION("Doação para o Deposito"),
+    EXPIRED_RETURN_FROM_CUSTOMER("Devoluções de Expirados (US e Enfermarias de Dependentes)"),
+    EXPIRED_RETURN_TO_SUPPLIER("Devolvidos ao Fornecedor por terem Expirados em Quarentena"),
+    INVENTORY_NEGATIVE("Correção Negativa"),
+    INVENTORY_POSITIVE("Correção Positiva"),
+    LOANS_DEPOSIT("Loans made from a health facility deposit"),
+    LOANS_RECEIVED("Emprestimo Recebido pela US"),
+    PROD_DEFECTIVE("Produto com defeito, movido para quarentena"),
+    RETURN_FROM_QUARANTINE("Devoluções da Quarentena"),
+    RETURN_TO_DDM("Devolução para o DDM");
 
-  {
-    mapSources.forEach((k, v) -> mapSwitchSources.put(v, k));
-  }
+    private final String value;
 
-  public static final Map<String, String> mapSwitchDestination = new HashMap<>();
-
-  {
-    mapDestination.forEach((k, v) -> mapSwitchDestination.put(v, k));
-  }
-
-  public static final Map<String, String> mapSwitchPhysicalInventoryReason = new HashMap<>();
-
-  {
-    mapPhysicalInventoryReason.forEach((k, v) -> mapSwitchPhysicalInventoryReason.put(v, k));
-  }
-
-  public static final Map<String, String> mapSwitchAdjustmentReason = new HashMap<>();
-
-  {
-    mapAdjustmentReason.forEach((k, v) -> mapSwitchAdjustmentReason.put(v, k));
+    public static String findByValue(String value) {
+      return Arrays.stream(values())
+          .filter(e -> e.value.equals(value))
+          .map(Enum::name)
+          .findFirst().orElse(null);
+    }
   }
 
   static final String KEY_PROGRAM_CODE = "programCode";
   static final String KIT_LOT = "kitLot";
   static final String TRADE_ITEM_ID = "tradeItemId";
-
-  static final Map<String, String> mapSources = ImmutableMap.of(
-      "DISTRICT_DDM", "District(DDM)",
-      "INTERMEDIATE_WAREHOUSE", "Armazém Intermediário",
-      "PROVINCE_DPM", "Province(DPM)");
-  private static final Map<String, String> mapDestination = new HashMap<>();
-
-  static {
-    mapDestination.put("PUB_PHARMACY", "Farmácia");
-    mapDestination.put("MATERNITY", "Maternidade");
-    mapDestination.put("GENERAL_WARD", "Medicina Geral");
-    mapDestination.put("ACC_EMERGENCY", "Banco de Socorro");
-    mapDestination.put("MOBILE_UNIT", "Unidade Movel");
-    mapDestination.put("LABORATORY", "Laboratorio");
-    mapDestination.put("PNCTL", "PNCTL");
-    mapDestination.put("PAV", "PAV");
-    mapDestination.put("DENTAL_WARD", "Medicina Dentaria");
-  }
-
-  private static final Map<String, String> mapAdjustmentReason = new HashMap<>();
-
-  static {
-    mapAdjustmentReason.put("EXPIRED_RETURN_TO_SUPPLIER", "Devolvidos ao Fornecedor por terem Expirados em Quarentena");
-    mapAdjustmentReason.put("DAMAGED", "Danificado na Chegada");
-    mapAdjustmentReason.put("LOANS_DEPOSIT", "Loans made from a health facility deposit");
-    mapAdjustmentReason.put("INVENTORY_NEGATIVE", "Correção Negativa");
-    mapAdjustmentReason.put("PROD_DEFECTIVE", "Produto com defeito, movido para quarentena");
-    mapAdjustmentReason.put("RETURN_TO_DDM", "Devolução para o DDM");
-
-    mapAdjustmentReason.put("CUSTOMER_RETURN", "Devoluções de clientes (US e Enfermarias Dependentes)");
-    mapAdjustmentReason
-        .put("EXPIRED_RETURN_FROM_CUSTOMER", "Devoluções de Expirados (US e Enfermarias de Dependentes)");
-    mapAdjustmentReason.put("DONATION", "Doação para o Deposito");
-    mapAdjustmentReason.put("LOANS_RECEIVED", "Emprestimo Recebido pela US");
-    mapAdjustmentReason.put("INVENTORY_POSITIVE", "Correção Positiva");
-    mapAdjustmentReason.put("RETURN_FROM_QUARANTINE", "Devoluções da Quarentena");
-  }
-
-  static final Map<String, String> mapPhysicalInventoryReason = ImmutableMap.of(
-      "INVENTORY_POSITIVE", "Correção Positiva",
-      "INVENTORY_NEGATIVE", "Correção Negativa");
-
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final SiglusArchiveProductService siglusArchiveProductService;
@@ -299,13 +292,18 @@ public class SiglusMeService {
   @Transactional
   public void createStockCards(List<StockCardCreateRequest> requests) {
     FacilityDto facilityDto = getCurrentFacilityInfo();
-    Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts = getAllApprovedProducts().stream()
-        .collect(toMap(BasicOrderableDto::getProductCode, Function.identity()));
-    requests.stream()
-        .collect(groupingBy(StockCardCreateRequest::getCreatedAt))
-        .entrySet().stream()
-        .sorted(Map.Entry.comparingByKey())
-        .forEach(entry -> createStockEvent(entry.getValue(), facilityDto, allApprovedProducts));
+    initCreateStockCardContext(facilityDto.getId());
+    try {
+      Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts = getAllApprovedProducts().stream()
+          .collect(toMap(BasicOrderableDto::getProductCode, Function.identity()));
+      requests.stream()
+          .collect(groupingBy(StockCardCreateRequest::getCreatedAt))
+          .entrySet().stream()
+          .sorted(Map.Entry.comparingByKey())
+          .forEach(entry -> createStockEvent(entry.getValue(), facilityDto, allApprovedProducts));
+    } finally {
+      clearCreateStockCardContext();
+    }
   }
 
 
@@ -424,7 +422,7 @@ public class SiglusMeService {
       Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts) {
     MovementType type = requests.stream().findFirst()
         .map(StockCardCreateRequest::getType)
-        .map(MovementType::fromString)
+        .map(MovementType::valueOf)
         .orElse(null);
     String signature = requests.stream().findFirst()
         .map(StockCardCreateRequest::getSignature)
@@ -494,7 +492,7 @@ public class SiglusMeService {
 
   private List<StockEventLineItemDto> buildEventItems(StockCardCreateRequest request,
       org.openlmis.requisition.dto.OrderableDto product) {
-    MovementType type = MovementType.fromString(request.getType());
+    MovementType type = MovementType.valueOf(request.getType());
     List<StockCardLotEventRequest> lotEventRequests = request.getLotEvents();
     LocalDate occurredDate = request.getOccurredDate();
     Instant createdAt = request.getCreatedAt();
@@ -547,26 +545,23 @@ public class SiglusMeService {
         .orElseThrow(() -> new IllegalArgumentException("program Not Exist for product"));
   }
 
-  // 我看不懂
-  private UUID getDestinationId(MovementType type, String reason, UUID programId) {
+  private UUID getDestinationId(MovementType type, String value, UUID programId) {
     if (type == MovementType.ISSUE) {
-      return programToDestinationNameToId.get(programId)
-          .get(mapDestination.get(reason));
+      return getCreateStockCardContext().findDestinationId(programId, value);
     }
     return null;
   }
 
-  // 我看不懂
   private List<StockEventAdjustmentDto> getStockAdjustments(MovementType type, String reason,
       Integer quantity, UUID programId) {
-    if (type == MovementType.PHYSICAL_INVENTORY && quantity != 0) {
-      StockEventAdjustmentDto stockEventAdjustmentDto = new StockEventAdjustmentDto();
-      stockEventAdjustmentDto.setReasonId(programToReasonNameToId.get(programId)
-          .get(mapPhysicalInventoryReason.get(reason)));
-      stockEventAdjustmentDto.setQuantity(quantity);
-      return singletonList(stockEventAdjustmentDto);
+    if (type != MovementType.PHYSICAL_INVENTORY || quantity == 0) {
+      return Collections.emptyList();
     }
-    return Collections.emptyList();
+    UUID reasonId = getCreateStockCardContext().findReasonId(programId, reason);
+    StockEventAdjustmentDto stockEventAdjustmentDto = new StockEventAdjustmentDto();
+    stockEventAdjustmentDto.setReasonId(reasonId);
+    stockEventAdjustmentDto.setQuantity(quantity);
+    return singletonList(stockEventAdjustmentDto);
   }
 
   private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId,
@@ -627,6 +622,63 @@ public class SiglusMeService {
     UserDto userDto = authHelper.getCurrentUser();
     UUID homeFacilityId = userDto.getHomeFacilityId();
     return facilityReferenceDataService.getFacilityById(homeFacilityId);
+  }
+
+  private final ThreadLocal<CreateStockCardContext> createStockCardContextHolder = new ThreadLocal<>();
+
+  private void initCreateStockCardContext(UUID facilityId) {
+    createStockCardContextHolder.set(new CreateStockCardContext(facilityId));
+  }
+
+  private CreateStockCardContext getCreateStockCardContext() {
+    return createStockCardContextHolder.get();
+  }
+
+  private void clearCreateStockCardContext() {
+    createStockCardContextHolder.remove();
+  }
+
+  private class CreateStockCardContext {
+
+    private final Map<UUID, Map<String, UUID>> programToReasonNameToId;
+    private final Map<UUID, Map<String, UUID>> programToDestinationNameToId;
+    private final Map<UUID, Map<String, UUID>> programToSourceNameToId;
+
+    CreateStockCardContext(UUID facilityId) {
+      programToReasonNameToId = validReasonAssignmentService
+          .getValidReasonsForAllProducts(facilityId, null, ALL_PRODUCTS_PROGRAM_ID)
+          .stream()
+          .collect(toMap(ValidReasonAssignmentDto::getProgramId,
+              reasonDto -> ImmutableMap.of(reasonDto.getReason().getName(), reasonDto.getId())));
+
+      programToDestinationNameToId = siglusValidSourceDestinationService
+          .findDestinationsForAllProducts(facilityId)
+          .stream()
+          .collect(toMap(ValidSourceDestinationDto::getProgramId,
+              destination -> ImmutableMap.of(destination.getName(), destination.getId())));
+
+      programToSourceNameToId = siglusValidSourceDestinationService
+          .findSourcesForAllProducts(facilityId)
+          .stream()
+          .collect(toMap(ValidSourceDestinationDto::getProgramId,
+              source -> ImmutableMap.of(source.getName(), source.getId())));
+    }
+
+    @Nonnull
+    UUID findReasonId(UUID programId, String value) {
+      return programToDestinationNameToId.get(programId).get(AdjustmentReason.valueOf(value).getValue());
+    }
+
+    @Nonnull
+    UUID findSourceId(UUID programId, String value) {
+      return programToDestinationNameToId.get(programId).get(Source.valueOf(value).getValue());
+    }
+
+    @Nonnull
+    UUID findDestinationId(UUID programId, String value) {
+      return programToDestinationNameToId.get(programId).get(Destination.valueOf(value).getValue());
+    }
+
   }
 
 }

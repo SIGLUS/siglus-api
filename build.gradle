@@ -74,6 +74,8 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.20'
     implementation 'org.mapstruct:mapstruct:1.4.2.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.4.2.Final'
+    implementation('com.google.code.findbugs:annotations:3.0.1')
+
 
     compileTestJava.dependsOn tasks.getByPath(':stockmanagement:testClasses')
     compileTestJava.dependsOn tasks.getByPath(':requisition:testClasses')
@@ -218,7 +220,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.84
+                minimum = 0.8381
             }
         }
     }
