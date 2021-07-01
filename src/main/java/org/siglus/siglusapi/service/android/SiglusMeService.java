@@ -678,19 +678,22 @@ public class SiglusMeService {
           .getValidReasonsForAllProducts(facility.getType().getId(), null, null)
           .stream()
           .collect(groupingBy(ValidReasonAssignmentDto::getProgramId,
-              Collectors.toMap(reason -> reason.getReason().getName(), ValidReasonAssignmentDto::getId)));
+              Collectors.toMap(lineItem -> lineItem.getReason().getName(),
+                  validReasonAssignmentDto -> validReasonAssignmentDto.getReason().getId())));
 
       programToDestinationNameToId = siglusValidSourceDestinationService
           .findDestinationsForAllProducts(facility.getId())
           .stream()
           .collect(groupingBy(ValidSourceDestinationDto::getProgramId,
-              Collectors.toMap(ValidSourceDestinationDto::getName, ValidSourceDestinationDto::getId)));
+              Collectors.toMap(ValidSourceDestinationDto::getName,
+                  validSourceDestinationDto -> validSourceDestinationDto.getNode().getId())));
 
       programToSourceNameToId = siglusValidSourceDestinationService
           .findSourcesForAllProducts(facility.getId())
           .stream()
           .collect(groupingBy(ValidSourceDestinationDto::getProgramId,
-              Collectors.toMap(ValidSourceDestinationDto::getName, ValidSourceDestinationDto::getId)));
+              Collectors.toMap(ValidSourceDestinationDto::getName,
+                  validSourceDestinationDto -> validSourceDestinationDto.getNode().getId())));
     }
 
     @Nonnull
