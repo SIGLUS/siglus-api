@@ -148,18 +148,22 @@ public class SiglusMeService {
       }
     };
 
+    @SuppressWarnings("unused")
     UUID getSourceId(CreateStockCardContext context, UUID programId, String source) {
       return null;
     }
 
+    @SuppressWarnings("unused")
     UUID getDestinationId(CreateStockCardContext context, UUID programId, String destination) {
       return null;
     }
 
+    @SuppressWarnings("unused")
     UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
       return null;
     }
 
+    @SuppressWarnings("unused")
     UUID getPhysicalReasonId(CreateStockCardContext context, UUID programId, String reason) {
       return null;
     }
