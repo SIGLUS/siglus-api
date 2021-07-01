@@ -67,6 +67,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
+@SuppressWarnings({"PMD.TooManyMethods"})
 public class SiglusStockEventsService {
 
   @Autowired
