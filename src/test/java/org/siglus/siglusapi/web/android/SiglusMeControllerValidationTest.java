@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.web.android;
 
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toMap;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -29,22 +28,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorFactory;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.executable.ExecutableValidator;
-import lombok.SneakyThrows;
 import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.hibernate.validator.resourceloading.PlatformResourceBundleLocator;
@@ -65,7 +57,7 @@ import org.siglus.siglusapi.service.android.SiglusMeService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
-public class SiglusMeControllerValidationTest {
+public class SiglusMeControllerValidationTest extends FileBasedTest {
 
   private static final String MAY_NOT_BE_EMPTY = "may not be empty";
   private static final String MAY_NOT_BE_NULL = "may not be null";
@@ -447,29 +439,6 @@ public class SiglusMeControllerValidationTest {
         .validateParameters(controller, createStockCards, new Object[]{param}, PerformanceSequence.class)
         .stream()
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
-  }
-
-  @SneakyThrows
-  private String readFromFile(String fileName) {
-    String name = this.getClass().getName();
-    String folder = name.replace("org.siglus.siglusapi.", "").replaceAll("\\.", "/");
-    ClassLoader classLoader = this.getClass().getClassLoader();
-    List<String> allLines = Optional.ofNullable(classLoader.getResource(folder + "/" + fileName))
-        .map(this::toUri)
-        .map(Paths::get)
-        .map(this::readAllLines)
-        .orElse(emptyList());
-    return String.join("\n", allLines);
-  }
-
-  @SneakyThrows
-  private URI toUri(URL url) {
-    return url.toURI();
-  }
-
-  @SneakyThrows
-  private List<String> readAllLines(Path path) {
-    return Files.readAllLines(path);
   }
 
   private class InnerConstraintValidatorFactory implements ConstraintValidatorFactory {

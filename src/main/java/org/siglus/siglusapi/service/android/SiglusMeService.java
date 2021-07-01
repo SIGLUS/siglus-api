@@ -118,11 +118,21 @@ public class SiglusMeService {
       UUID getSourceId(CreateStockCardContext context, UUID programId, String source) {
         return context.findSourceId(programId, source);
       }
+
+      @Override
+      UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
+        return null;
+      }
     },
     ISSUE() {
       @Override
       UUID getDestinationId(CreateStockCardContext context, UUID programId, String destination) {
         return context.findDestinationId(programId, destination);
+      }
+
+      @Override
+      UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
+        return null;
       }
     },
     ADJUSTMENT() {
@@ -667,27 +677,24 @@ public class SiglusMeService {
     private final Map<UUID, Map<String, UUID>> programToDestinationNameToId;
     private final Map<UUID, Map<String, UUID>> programToSourceNameToId;
 
-    CreateStockCardContext(FacilityDto facilityDto) {
+    CreateStockCardContext(FacilityDto facility) {
       programToReasonNameToId = validReasonAssignmentService
-          .getValidReasonsForAllProducts(facilityDto.getType().getId(), null, null)
+          .getValidReasonsForAllProducts(facility.getType().getId(), null, null)
           .stream()
           .collect(groupingBy(ValidReasonAssignmentDto::getProgramId,
-              Collectors.toMap(lineItem -> lineItem.getReason().getName(),
-                  ValidReasonAssignmentDto::getId)));
+              Collectors.toMap(reason -> reason.getReason().getName(), ValidReasonAssignmentDto::getId)));
 
       programToDestinationNameToId = siglusValidSourceDestinationService
-          .findDestinationsForAllProducts(facilityDto.getId())
+          .findDestinationsForAllProducts(facility.getId())
           .stream()
           .collect(groupingBy(ValidSourceDestinationDto::getProgramId,
-              Collectors.toMap(ValidSourceDestinationDto::getName,
-                  ValidSourceDestinationDto::getId)));
+              Collectors.toMap(ValidSourceDestinationDto::getName, ValidSourceDestinationDto::getId)));
 
       programToSourceNameToId = siglusValidSourceDestinationService
-          .findSourcesForAllProducts(facilityDto.getId())
+          .findSourcesForAllProducts(facility.getId())
           .stream()
           .collect(groupingBy(ValidSourceDestinationDto::getProgramId,
-              Collectors.toMap(ValidSourceDestinationDto::getName,
-                  ValidSourceDestinationDto::getId)));
+              Collectors.toMap(ValidSourceDestinationDto::getName, ValidSourceDestinationDto::getId)));
     }
 
     @Nonnull
