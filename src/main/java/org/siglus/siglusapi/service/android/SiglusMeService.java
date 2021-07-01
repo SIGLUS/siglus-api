@@ -119,10 +119,6 @@ public class SiglusMeService {
         return context.findSourceId(programId, source);
       }
 
-      @Override
-      UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
-        return null;
-      }
     },
     ISSUE() {
       @Override
@@ -130,10 +126,6 @@ public class SiglusMeService {
         return context.findDestinationId(programId, destination);
       }
 
-      @Override
-      UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
-        return null;
-      }
     },
     ADJUSTMENT() {
       @Override
