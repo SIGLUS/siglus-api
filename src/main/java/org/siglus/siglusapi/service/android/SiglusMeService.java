@@ -88,12 +88,12 @@ import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardLineItemService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
+import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
-import org.siglus.siglusapi.web.SiglusStockEventsController;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -109,8 +109,8 @@ public class SiglusMeService {
   public enum MovementType {
     PHYSICAL_INVENTORY() {
       @Override
-      UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
-        return null;
+      UUID getPhysicalReasonId(CreateStockCardContext context, UUID programId, String reason) {
+        return context.findReasonId(programId, reason);
       }
     },
     RECEIVE() {
@@ -128,10 +128,15 @@ public class SiglusMeService {
     ADJUSTMENT() {
       @Override
       UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
-        return context.findSourceId(programId, reason);
+        return context.findReasonId(programId, reason);
       }
     },
-    UNPACK_KIT;
+    UNPACK_KIT {
+      @Override
+      UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
+        return context.findReasonId(programId, "Unpack Kit");
+      }
+    };
 
     UUID getSourceId(CreateStockCardContext context, UUID programId, String source) {
       return null;
@@ -142,9 +147,12 @@ public class SiglusMeService {
     }
 
     UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
-      return context.findSourceId(programId, reason);
+      return null;
     }
 
+    UUID getPhysicalReasonId(CreateStockCardContext context, UUID programId, String reason) {
+      return null;
+    }
   }
 
   @RequiredArgsConstructor
@@ -234,9 +242,7 @@ public class SiglusMeService {
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
   private final RequestQuantityRepository requestQuantityRepository;
   private final SiglusValidSourceDestinationService siglusValidSourceDestinationService;
-  private final SiglusStockEventsController stockEventsController;
-  private Map<UUID, Map<String, UUID>> programToReasonNameToId;
-  private Map<UUID, Map<String, UUID>> programToDestinationNameToId;
+  private final SiglusStockEventsService stockEventsService;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -471,21 +477,24 @@ public class SiglusMeService {
         .map(StockCardCreateRequest::getSignature)
         .orElse(null);
     StockEventDto stockEvent = buildStockEvent(facilityDto, signature, requests, allApprovedProducts);
-    UUID stockEventId = stockEventsController.createStockEvent(stockEvent);
+    Map<UUID, UUID> programToStockEventIds = stockEventsService.createStockEventForNoDraftAllProducts(stockEvent);
     if (type == MovementType.ISSUE) {
       List<StockEventExtension> requestQuantities = requests.stream()
           .filter(stockCardCreateRequest -> stockCardCreateRequest.getRequested() != null)
-          .map(request -> buildProductRequest(request, stockEventId, allApprovedProducts))
+          .map(request -> buildProductRequest(request, programToStockEventIds, allApprovedProducts))
           .collect(toList());
       requestQuantityRepository.save(requestQuantities);
     }
   }
 
-  private StockEventExtension buildProductRequest(StockCardCreateRequest request, UUID stockEventId,
+  private StockEventExtension buildProductRequest(StockCardCreateRequest request,
+      Map<UUID, UUID> programToStockEventIds,
       Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts) {
+    org.openlmis.requisition.dto.OrderableDto orderableDto = allApprovedProducts.get(request.getProductCode());
+    UUID programId = getProgramId(orderableDto);
     return StockEventExtension.builder()
-        .orderableId(allApprovedProducts.get(request.getProductCode()).getId())
-        .stockeventId(stockEventId)
+        .orderableId(orderableDto.getId())
+        .stockeventId(programToStockEventIds.get(programId))
         .requestedQuantity(request.getRequested())
         .build();
   }
@@ -544,7 +553,12 @@ public class SiglusMeService {
     stockEventLineItem.setExtraData(extraData);
     stockEventLineItem.setOccurredDate(occurredDate);
     Integer quantity = adjustment.getQuantity();
-    stockEventLineItem.setQuantity(quantity);
+    if (type == MovementType.PHYSICAL_INVENTORY) {
+      Integer stockOnHand = adjustment.getStockOnHand();
+      stockEventLineItem.setQuantity(stockOnHand);
+    } else {
+      stockEventLineItem.setQuantity(quantity);
+    }
     stockEventLineItem.setDocumentationNo(adjustment.getDocumentationNo());
     String reasonName = adjustment.getReasonName();
     stockEventLineItem.setSourceId(type.getSourceId(getCreateStockCardContext(), programId, reasonName));
@@ -560,15 +574,15 @@ public class SiglusMeService {
         .orElseThrow(() -> new IllegalArgumentException("program Not Exist for product"));
   }
 
-  private List<StockEventAdjustmentDto> getStockAdjustments(MovementType type, String reason,
+  private List<StockEventAdjustmentDto> getStockAdjustments(MovementType type, String reasonName,
       Integer quantity, UUID programId) {
     if (type != MovementType.PHYSICAL_INVENTORY || quantity == 0
-        || reason.equalsIgnoreCase("INVENTORY")) {
+        || reasonName.equalsIgnoreCase("INVENTORY")) {
       return Collections.emptyList();
     }
-    UUID reasonId = getCreateStockCardContext().findReasonId(programId, reason);
     StockEventAdjustmentDto stockEventAdjustmentDto = new StockEventAdjustmentDto();
-    stockEventAdjustmentDto.setReasonId(reasonId);
+    stockEventAdjustmentDto
+        .setReasonId(type.getPhysicalReasonId(getCreateStockCardContext(), programId, reasonName));
     stockEventAdjustmentDto.setQuantity(quantity);
     return singletonList(stockEventAdjustmentDto);
   }
