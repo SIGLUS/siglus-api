@@ -30,6 +30,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItemAdjustment;
+import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.sourcedestination.Organization;
 import org.openlmis.stockmanagement.dto.CalculatedStockOnHandDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
@@ -163,11 +165,33 @@ public class SiglusStockCardLineItemService {
     UUID stockCardId = item.getStockCard().getId();
     CalculatedStockOnHandDto stockOnHand = stockOnHandDtoMap.get(stockCardId).get(item.getOccurredDate());
     Integer currentSoh = stockOnHand.getStockOnHand();
-    int quantity = item.getQuantityWithSign();
+    int quantity = getPositiveOrNegativeQuantity(item);
     stockOnHand.setStockOnHand(currentSoh - quantity);
     stockOnHandDtoMap.get(stockCardId).put(item.getOccurredDate(), stockOnHand);
     stockCardLineItemDtos.add(convertStockCardLineItemDto(item, quantity, currentSoh));
     stockCardLineItemDtoByProcessedDateMap.put(item.getProcessedDate(), stockCardLineItemDtos);
+  }
+
+  private int getPositiveOrNegativeQuantity(StockCardLineItem item) {
+    if (item.isPhysicalInventory()) {
+      return getPhysicalInventoryQuantity(item);
+    }
+    return item.getQuantityWithSign();
+  }
+
+  private int getPhysicalInventoryQuantity(StockCardLineItem item) {
+    int quantity = 0;
+    List<PhysicalInventoryLineItemAdjustment> stockAdjustments = item.getStockAdjustments();
+    if (stockAdjustments != null && !stockAdjustments.isEmpty()) {
+      for (PhysicalInventoryLineItemAdjustment adjustment : stockAdjustments) {
+        if (adjustment.getReason().getReasonType() == ReasonType.CREDIT) {
+          quantity = quantity + adjustment.getQuantity();
+        } else if (adjustment.getReason().getReasonType() == ReasonType.DEBIT) {
+          quantity = quantity - adjustment.getQuantity();
+        }
+      }
+    }
+    return quantity;
   }
 
   private LotMovementItemResponse convertLotMovementItemDto(StockCardLineItemDto itemDto,
