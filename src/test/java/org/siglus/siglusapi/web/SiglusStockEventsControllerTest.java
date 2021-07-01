@@ -15,21 +15,16 @@
 
 package org.siglus.siglusapi.web;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import java.util.UUID;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.StockEventDto;
-import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -41,37 +36,29 @@ public class SiglusStockEventsControllerTest {
   @Mock
   private SiglusStockEventsService service;
 
-  @Mock
-  private SiglusAuthenticationHelper authenticationHelper;
-
-  private UserDto userDto;
-
-  @Before
-  public void prepare() {
-    userDto = new UserDto();
-    userDto.setId(UUID.randomUUID());
-    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
-  }
-
   @Test
   public void shouldCallServiceWhenCreateStockEventGivenAllProductsProgramId() {
+    // given
     StockEventDto dto = new StockEventDto();
     dto.setProgramId(ALL_PRODUCTS_PROGRAM_ID);
+
+    // when
     controller.createStockEvent(dto);
 
-    verify(service).createAndFillLotId(dto, false, userDto);
-    assertEquals(dto.getUserId(), authenticationHelper.getCurrentUser().getId());
-    verify(service).createStockEventForAllProducts(dto);
+    // then
+    verify(service).createStockEvent(dto);
   }
 
   @Test
   public void shouldCallServiceWhenCreateStockEventGivenRandomProgramId() {
+    // given
     StockEventDto dto = new StockEventDto();
     dto.setProgramId(UUID.randomUUID());
+
+    // when
     controller.createStockEvent(dto);
 
-    verify(service).createAndFillLotId(dto, false, userDto);
-    assertEquals(dto.getUserId(), authenticationHelper.getCurrentUser().getId());
+    // then
     verify(service).createStockEvent(dto);
   }
 

@@ -49,6 +49,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
+import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.dto.referencedata.FacilityDto;
@@ -200,6 +201,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
           dto.setId(UUID.randomUUID());
           dto.setProgramId(programId);
           StockCardLineItemReason reason = new StockCardLineItemReason();
+          reason.setId(UUID.randomUUID());
           reason.setName(name);
           dto.setReason(reason);
           return dto;
@@ -212,6 +214,9 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .map(programId -> {
           ValidSourceDestinationDto dto = new ValidSourceDestinationDto();
           dto.setId(UUID.randomUUID());
+          Node node = new Node();
+          node.setId(UUID.randomUUID());
+          dto.setNode(node);
           dto.setProgramId(programId);
           dto.setName(name);
           return dto;

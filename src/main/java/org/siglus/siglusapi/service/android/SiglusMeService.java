@@ -558,7 +558,7 @@ public class SiglusMeService {
     }
     stockEventLineItem.setExtraData(extraData);
     stockEventLineItem.setOccurredDate(occurredDate);
-    Integer quantity = adjustment.getQuantity();
+    Integer quantity = Math.abs(adjustment.getQuantity());
     if (type == MovementType.PHYSICAL_INVENTORY) {
       Integer stockOnHand = adjustment.getStockOnHand();
       stockEventLineItem.setQuantity(stockOnHand);

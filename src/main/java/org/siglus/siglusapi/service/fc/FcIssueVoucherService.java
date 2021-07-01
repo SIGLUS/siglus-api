@@ -329,8 +329,7 @@ public class FcIssueVoucherService {
           .documentNumber(FC_INTEGRATION)
           .facilityId(useDto.getHomeFacilityId())
           .build();
-      stockEventsService.createAndFillLotId(eventDto, true, useDto);
-      stockEventsService.createStockEvent(eventDto);
+      stockEventsService.createStockEventForOneProgram(eventDto, useDto);
     }
   }
 

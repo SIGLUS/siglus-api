@@ -184,7 +184,7 @@ public class FcIssueVoucherServiceTest {
     ReflectionTestUtils.setField(service, "timeZoneId", "UTC");
     ReflectionTestUtils.setField(service, "receiveReason",
         "44814bc4-df64-11e9-9e7e-4c32759554d9");
-    when(stockEventsService.createStockEvent(any())).thenReturn(UUID.randomUUID());
+    when(stockEventsService.createStockEventForOneProgram(any(), any())).thenReturn(UUID.randomUUID());
     facilityDto = new FacilityDto();
     facilityDto.setId(UUID.randomUUID());
     when(siglusFacilityReferenceDataService

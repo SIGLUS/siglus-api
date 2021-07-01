@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.Maps;
 import java.time.LocalDate;
@@ -112,45 +113,47 @@ public class SiglusStockEventsService {
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
 
-  @Autowired
-  private SiglusStockEventsService stockEventsService;
-
-  @Autowired
-  private SiglusPhysicalInventoryService physicalInventoryService;
-
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;
 
   @Transactional
   public UUID createStockEvent(StockEventDto eventDto) {
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId())) {
+      Map<UUID, UUID> programIdToEventId = createStockEventForAllProducts(eventDto, userDto);
+      if (!programIdToEventId.isEmpty()) {
+        return programIdToEventId.values().stream().findFirst().orElse(null);
+      }
+      return null;
+    }
+    return createStockEventForOneProgram(eventDto, userDto);
+  }
+
+  @Transactional
+  public UUID createStockEventForOneProgram(StockEventDto eventDto, UserDto userDto) {
+    eventDto.setUserId(userDto.getId());
+    createAndFillLotId(eventDto, false, userDto);
     UUID stockEventId = stockEventsStockManagementService.createStockEvent(eventDto);
     enhanceStockCard(eventDto, stockEventId);
     return stockEventId;
   }
 
   @Transactional
-  public UUID createStockEventForAllProducts(StockEventDto eventDto) {
-    Map<UUID, UUID> programIdToEventId = callV3StockEventForAllProducts(eventDto);
-    if (!programIdToEventId.isEmpty()) {
-      return programIdToEventId.values().stream().findFirst().orElse(null);
-    }
-    return null;
-  }
-
-  @Transactional
   public Map<UUID, UUID> createStockEventForNoDraftAllProducts(StockEventDto eventDto) {
     UserDto userDto = authenticationHelper.getCurrentUser();
-    PhysicalInventoryDto inventoryDto = PhysicalInventoryDto.builder()
-        .facilityId(userDto.getHomeFacilityId())
-        .isDraft(true)
-        .build();
-    physicalInventoryService.createNewDraftForAllProducts(inventoryDto);
-    eventDto.setUserId(userDto.getId());
-    stockEventsService.createAndFillLotId(eventDto, false, userDto);
-    return callV3StockEventForAllProducts(eventDto);
+    if (eventDto.isPhysicalInventory()) {
+      PhysicalInventoryDto inventoryDto = PhysicalInventoryDto.builder()
+          .facilityId(userDto.getHomeFacilityId())
+          .isDraft(true)
+          .build();
+      siglusPhysicalInventoryService.createNewDraftForAllProducts(inventoryDto);
+    }
+    return createStockEventForAllProducts(eventDto, userDto);
   }
 
-  private Map<UUID, UUID> callV3StockEventForAllProducts(StockEventDto eventDto) {
+  private Map<UUID, UUID> createStockEventForAllProducts(StockEventDto eventDto, UserDto userDto) {
+    eventDto.setUserId(userDto.getId());
+    createAndFillLotId(eventDto, false, userDto);
     Set<UUID> programIds = eventDto.getLineItems().stream()
         .map(StockEventLineItemDto::getProgramId).collect(Collectors.toSet());
     List<StockEventDto> stockEventDtos;
