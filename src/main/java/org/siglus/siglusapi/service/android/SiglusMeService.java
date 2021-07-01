@@ -103,7 +103,7 @@ import org.springframework.util.LinkedMultiValueMap;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@SuppressWarnings({"PMD.TooManyMethods"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class SiglusMeService {
 
   public enum MovementType {
