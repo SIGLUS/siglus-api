@@ -13,21 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.response;
+package org.siglus.siglusapi.repository;
 
-import java.util.List;
-import lombok.Builder;
-import lombok.Data;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.FacilityExtension;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Data
-@Builder
-public class FacilityResponse {
+public interface FacilityExtensionRepository extends JpaRepository<FacilityExtension, UUID> {
 
-  private String code;
+  FacilityExtension findByFacilityId(UUID facilityId);
 
-  private String name;
-
-  private List<ProgramResponse> supportedPrograms;
-
-  private Boolean isAndroid;
 }

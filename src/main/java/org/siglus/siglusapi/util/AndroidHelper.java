@@ -13,21 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.response;
+package org.siglus.siglusapi.util;
 
-import java.util.List;
-import lombok.Builder;
-import lombok.Data;
+import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.domain.FacilityExtension;
+import org.siglus.siglusapi.repository.FacilityExtensionRepository;
+import org.springframework.stereotype.Component;
 
-@Data
-@Builder
-public class FacilityResponse {
+@Component
+@RequiredArgsConstructor
+public class AndroidHelper {
 
-  private String code;
+  private final SiglusAuthenticationHelper authHelper;
+  private final FacilityExtensionRepository facilityExtensionRepository;
 
-  private String name;
-
-  private List<ProgramResponse> supportedPrograms;
-
-  private Boolean isAndroid;
+  public boolean isAndroid() {
+    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(homeFacilityId);
+    if (facilityExtension == null) {
+      return false;
+    }
+    return facilityExtension.getIsAndroid();
+  }
 }

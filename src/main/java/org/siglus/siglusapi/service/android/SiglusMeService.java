@@ -58,7 +58,6 @@ import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
-import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.SiglusAuthenticationHelper;
@@ -81,9 +80,9 @@ import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
+import org.siglus.siglusapi.repository.AppInfoRepository;
+import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
-import org.siglus.siglusapi.repository.android.AppInfoRepository;
-import org.siglus.siglusapi.repository.android.FacilityCmmsRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardLineItemService;
@@ -94,6 +93,7 @@ import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
+import org.siglus.siglusapi.util.AndroidHelper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -249,6 +249,7 @@ public class SiglusMeService {
   private final StockEventProductRequestedRepository requestQuantityRepository;
   private final SiglusValidSourceDestinationService siglusValidSourceDestinationService;
   private final SiglusStockEventsService stockEventsService;
+  private final AndroidHelper androidHelper;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -265,6 +266,7 @@ public class SiglusMeService {
         .code(facilityDto.getCode())
         .name(facilityDto.getName())
         .supportedPrograms(programResponses)
+        .isAndroid(androidHelper.isAndroid())
         .build();
   }
 
@@ -394,8 +396,7 @@ public class SiglusMeService {
   }
 
   private List<LotsOnHandResponse> judgeReturnLotsOnHandDtos(List<LotsOnHandResponse> lotsOnHandResponses) {
-    return lotsOnHandResponses.stream()
-        .findFirst().get().getLot() == null ? null : lotsOnHandResponses;
+    return lotsOnHandResponses.stream().findFirst().get().getLot() == null ? null : lotsOnHandResponses;
   }
 
   private Map<UUID, SiglusLotResponse> getSiglusLotDtoByLotId(
@@ -648,8 +649,7 @@ public class SiglusMeService {
   }
 
   private FacilityDto getCurrentFacilityInfo() {
-    UserDto userDto = authHelper.getCurrentUser();
-    UUID homeFacilityId = userDto.getHomeFacilityId();
+    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     return facilityReferenceDataService.getFacilityById(homeFacilityId);
   }
 

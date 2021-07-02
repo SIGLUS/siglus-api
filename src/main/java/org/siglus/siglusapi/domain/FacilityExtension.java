@@ -13,15 +13,29 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository.android;
+package org.siglus.siglusapi.domain;
 
-import java.time.LocalDate;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.HfCmm;
-import org.springframework.data.jpa.repository.JpaRepository;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
-public interface FacilityCmmsRepository extends JpaRepository<HfCmm, UUID> {
+@Entity
+@Data
+@Builder
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "facility_extension", schema = "siglusintegration")
+public class FacilityExtension extends BaseEntity {
 
-  HfCmm findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(String facilityCode,
-        String productCode, LocalDate periodBegin, LocalDate periodEnd);
+  private UUID facilityId;
+
+  private Boolean isAndroid;
+
 }

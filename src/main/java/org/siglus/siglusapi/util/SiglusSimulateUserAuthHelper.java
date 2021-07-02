@@ -30,18 +30,11 @@ import org.springframework.stereotype.Component;
 public class SiglusSimulateUserAuthHelper {
 
   public void simulateUserAuth(UUID userId) {
-    UserAuthenticationConverter userAuthenticationConverter
-        = new CustomUserAuthenticationConverter();
+    UserAuthenticationConverter userAuthenticationConverter = new CustomUserAuthenticationConverter();
     Authentication authentication = userAuthenticationConverter.extractAuthentication(
         ImmutableMap.of(REFERENCE_DATA_USER_ID, userId.toString()));
-
-    OAuth2Authentication orignAuth = (OAuth2Authentication) SecurityContextHolder
-        .getContext()
-        .getAuthentication();
-    OAuth2Authentication newAuth = new OAuth2Authentication(orignAuth.getOAuth2Request(),
-        authentication);
-
-    SecurityContextHolder
-        .getContext().setAuthentication(newAuth);
+    OAuth2Authentication originAuth = (OAuth2Authentication) SecurityContextHolder.getContext().getAuthentication();
+    OAuth2Authentication newAuth = new OAuth2Authentication(originAuth.getOAuth2Request(), authentication);
+    SecurityContextHolder.getContext().setAuthentication(newAuth);
   }
 }

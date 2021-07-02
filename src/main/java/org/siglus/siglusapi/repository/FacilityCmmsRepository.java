@@ -13,21 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.response;
+package org.siglus.siglusapi.repository;
 
-import java.util.List;
-import lombok.Builder;
-import lombok.Data;
+import java.time.LocalDate;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.HfCmm;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Data
-@Builder
-public class FacilityResponse {
+public interface FacilityCmmsRepository extends JpaRepository<HfCmm, UUID> {
 
-  private String code;
-
-  private String name;
-
-  private List<ProgramResponse> supportedPrograms;
-
-  private Boolean isAndroid;
+  HfCmm findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(String facilityCode,
+        String productCode, LocalDate periodBegin, LocalDate periodEnd);
 }

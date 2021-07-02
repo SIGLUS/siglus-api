@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository.android;
+package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
 import org.siglus.siglusapi.domain.AppInfo;

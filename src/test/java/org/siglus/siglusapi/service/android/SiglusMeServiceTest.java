@@ -77,8 +77,8 @@ import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
-import org.siglus.siglusapi.repository.android.AppInfoRepository;
-import org.siglus.siglusapi.repository.android.FacilityCmmsRepository;
+import org.siglus.siglusapi.repository.AppInfoRepository;
+import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
@@ -87,6 +87,7 @@ import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
+import org.siglus.siglusapi.util.AndroidHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.ContextConfiguration;
@@ -138,6 +139,9 @@ public class SiglusMeServiceTest {
 
   @Mock
   private SiglusStockCardSummariesService stockCardSummariesService;
+
+  @Mock
+  private AndroidHelper androidHelper;
 
   @Captor
   private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
@@ -200,16 +204,15 @@ public class SiglusMeServiceTest {
     when(program2.getId()).thenReturn(programId2);
     when(program2.getCode()).thenReturn("code 2");
     when(programDataService.findOne(programId2)).thenReturn(program2);
-    when(programsHelper.findUserSupportedPrograms())
-        .thenReturn(ImmutableSet.of(programId1, programId2));
+    when(programsHelper.findUserSupportedPrograms()).thenReturn(ImmutableSet.of(programId1, programId2));
     when(orderableDataService.searchOrderables(any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
     when(approvedProductService.getApprovedProducts(facilityId, programId1, emptyList()))
         .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
     when(approvedProductService.getApprovedProducts(facilityId, programId2, emptyList()))
         .thenReturn(singletonList(mockApprovedProduct3()));
-    when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId))
-        .thenReturn(singleton(productId1.toString()));
+    when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId)).thenReturn(singleton(productId1.toString()));
+    when(androidHelper.isAndroid()).thenReturn(true);
   }
 
 
