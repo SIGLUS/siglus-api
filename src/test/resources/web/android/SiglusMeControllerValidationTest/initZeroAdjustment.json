@@ -1,0 +1,30 @@
+[
+  {
+    "lotEventList": [],
+    "occurredDate": "2021-07-02",
+    "processedDate": 1625202629000,
+    "productCode": "08O05Z",
+    "quantity": 0,
+    "reasonName": "INVENTORY",
+    "stockOnHand": 0,
+    "type": "PHYSICAL_INVENTORY"
+  },
+  {
+    "documentationNo": "jing",
+    "lotEventList": [
+      {
+        "expirationDate": "2021-07-31",
+        "lotNumber": "22",
+        "quantity": 20,
+        "stockOnHand": 20
+      }
+    ],
+    "occurredDate": "2021-07-02",
+    "processedDate": 1625202629000,
+    "productCode": "08O05Z",
+    "quantity": 20,
+    "signature": "jing",
+    "stockOnHand": 20,
+    "type": "RECEIVE"
+  }
+]

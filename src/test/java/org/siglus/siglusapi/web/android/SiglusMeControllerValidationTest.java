@@ -429,6 +429,18 @@ public class SiglusMeControllerValidationTest extends FileBasedTest {
     assertEquals(0, violations.size());
   }
 
+  @Test
+  public void shouldReturnNoViolationWhenValidateCreateStockCardsGivenInitZeroAdjustment() throws Exception {
+    // given
+    Object param = parseParam("initZeroAdjustment.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(0, violations.size());
+  }
+
   private Object parseParam(String fileName) throws IOException {
     String json = readFromFile(fileName);
     return mapper.readValue(json, stockCardCreateRequestListType);

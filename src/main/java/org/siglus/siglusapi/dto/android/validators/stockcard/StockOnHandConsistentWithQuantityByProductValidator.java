@@ -48,6 +48,7 @@ public class StockOnHandConsistentWithQuantityByProductValidator extends
         .filter(r -> r.getStockOnHand() != null)
         .filter(r -> r.getQuantity() != null)
         .filter(r -> r.getStockOnHand() >= 0)
+        .filter(r -> !("PHYSICAL_INVENTORY".equals(r.getType()) && "INVENTORY".equals(r.getReasonName())))
         .sorted(EventTime.ASCENDING)
         .collect(groupingBy(StockCardCreateRequest::getProductCode)).entrySet().stream()
         .allMatch(e -> checkConsistentByGroup(e.getKey(), e.getValue(), context));
