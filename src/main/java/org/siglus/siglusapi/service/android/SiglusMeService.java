@@ -67,7 +67,7 @@ import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
-import org.siglus.siglusapi.domain.StockEventExtension;
+import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
@@ -81,7 +81,7 @@ import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
-import org.siglus.siglusapi.repository.RequestQuantityRepository;
+import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.android.AppInfoRepository;
 import org.siglus.siglusapi.repository.android.FacilityCmmsRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
@@ -246,7 +246,7 @@ public class SiglusMeService {
   private final SiglusLotReferenceDataService lotReferenceDataService;
   private final SiglusStockCardLineItemService stockCardLineItemService;
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
-  private final RequestQuantityRepository requestQuantityRepository;
+  private final StockEventProductRequestedRepository requestQuantityRepository;
   private final SiglusValidSourceDestinationService siglusValidSourceDestinationService;
   private final SiglusStockEventsService stockEventsService;
 
@@ -485,7 +485,7 @@ public class SiglusMeService {
     StockEventDto stockEvent = buildStockEvent(facilityDto, signature, requests, allApprovedProducts);
     Map<UUID, UUID> programToStockEventIds = stockEventsService.createStockEventForNoDraftAllProducts(stockEvent);
     if (type == MovementType.ISSUE) {
-      List<StockEventExtension> requestQuantities = requests.stream()
+      List<StockEventProductRequested> requestQuantities = requests.stream()
           .filter(stockCardCreateRequest -> stockCardCreateRequest.getRequested() != null)
           .map(request -> buildProductRequest(request, programToStockEventIds, allApprovedProducts))
           .collect(toList());
@@ -493,12 +493,12 @@ public class SiglusMeService {
     }
   }
 
-  private StockEventExtension buildProductRequest(StockCardCreateRequest request,
+  private StockEventProductRequested buildProductRequest(StockCardCreateRequest request,
       Map<UUID, UUID> programToStockEventIds,
       Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts) {
     org.openlmis.requisition.dto.OrderableDto orderableDto = allApprovedProducts.get(request.getProductCode());
     UUID programId = getProgramId(orderableDto);
-    return StockEventExtension.builder()
+    return StockEventProductRequested.builder()
         .orderableId(orderableDto.getId())
         .stockeventId(programToStockEventIds.get(programId))
         .requestedQuantity(request.getRequested())

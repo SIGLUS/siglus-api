@@ -13,12 +13,31 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.domain;
 
 import java.util.UUID;
-import org.siglus.siglusapi.domain.StockEventExtension;
-import org.springframework.data.jpa.repository.JpaRepository;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
-public interface RequestQuantityRepository extends JpaRepository<StockEventExtension, UUID> {
+@Entity
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = false)
+@Table(name = "stock_event_product_requested", schema = "siglusintegration")
+public class StockEventProductRequested extends BaseEntity {
+
+  private UUID orderableId;
+
+  private UUID stockeventId;
+
+  private Integer requestedQuantity;
 
 }

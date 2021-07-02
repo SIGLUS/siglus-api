@@ -58,8 +58,8 @@ import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
-import org.siglus.siglusapi.domain.StockEventExtension;
-import org.siglus.siglusapi.repository.RequestQuantityRepository;
+import org.siglus.siglusapi.domain.StockEventProductRequested;
+import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
@@ -99,7 +99,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   @Mock
   private SiglusStockEventsService stockEventsService;
   @Mock
-  private RequestQuantityRepository requestQuantityRepository;
+  private StockEventProductRequestedRepository requestQuantityRepository;
 
   private final UUID facilityId = UUID.randomUUID();
   private final UUID facilityTypeId = UUID.randomUUID();
@@ -132,7 +132,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
     verify(stockEventsService, times(9)).createStockEventForNoDraftAllProducts(any());
-    verify(requestQuantityRepository, times(2)).save(anyListOf(StockEventExtension.class));
+    verify(requestQuantityRepository, times(2)).save(anyListOf(StockEventProductRequested.class));
   }
 
   private void mockHomeFacility() {

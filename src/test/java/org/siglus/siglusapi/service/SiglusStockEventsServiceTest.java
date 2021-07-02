@@ -153,11 +153,10 @@ public class SiglusStockEventsServiceTest {
     when(lotReferenceDataService.saveLot(any())).thenReturn(lotDto);
     when(stockEventProcessor.process(any())).thenReturn(UUID.randomUUID());
     lineItemDto1.setOrderableId(orderableId1);
-    lineItemDto1.setExtraData(
-        ImmutableMap.of(FieldConstants.LOT_CODE, "lotCode", FieldConstants.EXPIRATION_DATE, "2020-06-16"));
+    lineItemDto1.setExtraData(getExtraData());
     lineItemDto2.setOrderableId(orderableId2);
-    lineItemDto2.setExtraData(
-        ImmutableMap.of(FieldConstants.LOT_CODE, "lotCode", FieldConstants.EXPIRATION_DATE, "2020-06-16"));
+    lineItemDto2.setExtraData(getExtraData());
+    ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", UUID.randomUUID());
   }
 
   @Test
@@ -182,7 +181,6 @@ public class SiglusStockEventsServiceTest {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().build();
     when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(any(), any(), any()))
         .thenReturn(newArrayList(physicalInventoryDto));
-    ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", UUID.randomUUID());
 
     // when
     siglusStockEventsService.createStockEvent(eventDto);
@@ -199,7 +197,6 @@ public class SiglusStockEventsServiceTest {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().build();
     when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(any(), any(), any()))
         .thenReturn(newArrayList(physicalInventoryDto));
-    ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", UUID.randomUUID());
 
     // when
     siglusStockEventsService.createStockEventForNoDraftAllProducts(eventDto);
@@ -218,7 +215,6 @@ public class SiglusStockEventsServiceTest {
     lineItemDto2.setOrderableId(orderableId2);
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2))
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-    ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", UUID.randomUUID());
 
     // when
     siglusStockEventsService.createStockEvent(eventDto);
@@ -235,7 +231,6 @@ public class SiglusStockEventsServiceTest {
     StockEventDto eventDto = StockEventDto.builder()
         .lineItems(newArrayList(lineItemDto))
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-    ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", UUID.randomUUID());
     StockCardLineItem stockCardLineItem = new StockCardLineItemDataBuilder().build();
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withLineItem(stockCardLineItem).build();
     when(stockCardRepository.findByProgramIdAndFacilityId(any(), any())).thenReturn(newArrayList(stockCard));
@@ -325,5 +320,9 @@ public class SiglusStockEventsServiceTest {
     identifiers.put(FieldConstants.TRADE_ITEM, tradeItemId.toString());
     orderableDto.setIdentifiers(identifiers);
     return orderableDto;
+  }
+
+  private ImmutableMap<String, String> getExtraData() {
+    return ImmutableMap.of(FieldConstants.LOT_CODE, "lotCode", FieldConstants.EXPIRATION_DATE, "2020-06-16");
   }
 }

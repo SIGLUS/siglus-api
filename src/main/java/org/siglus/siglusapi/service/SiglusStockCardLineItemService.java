@@ -38,12 +38,12 @@ import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
-import org.siglus.siglusapi.domain.StockEventExtension;
+import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.response.LotMovementItemResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
-import org.siglus.siglusapi.repository.RequestQuantityRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
+import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.siglus.siglusapi.service.android.SiglusMeService.MovementType;
 import org.springframework.data.domain.Example;
@@ -67,7 +67,7 @@ public class SiglusStockCardLineItemService {
 
   private final OrganizationRepository organizationRepository;
 
-  private final RequestQuantityRepository requestQuantityRepository;
+  private final StockEventProductRequestedRepository requestQuantityRepository;
 
   public Map<UUID, List<SiglusStockMovementItemResponse>> getStockMovementByOrderableId(UUID facilityId,
       String startTime,
@@ -214,8 +214,8 @@ public class SiglusStockCardLineItemService {
   }
 
   private Integer getRequested(StockCardLineItemDto item) {
-    StockEventExtension stockEventExtension = requestQuantityRepository.findOne(
-        Example.of(StockEventExtension.builder().orderableId(item.getStockCard().getOrderableId())
+    StockEventProductRequested stockEventExtension = requestQuantityRepository.findOne(
+        Example.of(StockEventProductRequested.builder().orderableId(item.getStockCard().getOrderableId())
             .stockeventId(item.getStockCard().getOriginEvent().getId()).build()));
     if (stockEventExtension == null) {
       return null;
