@@ -50,15 +50,7 @@ public abstract class AbstractErrorHandling {
    */
   final Message.LocalizedMessage getLocalizedMessage(BaseMessageException exception) {
     Message.LocalizedMessage message = messageService.localize(exception.asMessage());
-    log.error(message.getMessage(), exception);
-    System.out.println("gogogogogogogogogoggogogogogo");
-    for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
-
-      System.out.println(
-          stackTraceElement.getClassName() + " " + stackTraceElement.getFileName() + "@" + stackTraceElement
-              .getMethodName() + "(" + stackTraceElement.getLineNumber());
-    }
-
+    log.error("{}", message);
     return message;
   }
 
