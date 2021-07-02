@@ -69,7 +69,7 @@ schemas:
   - stockCard: !include schemas/stockCard.json
   - stockManagementDraft: !include schemas/stockManagementDraft.json
   - stockCardSummariesPage: !include schemas/stockCardSummaryV2Page.json
-  - fcProductMovementsDto: !include schemas/fcProductMovementsResponse.json
+  - facilityProductMovementsResponse: !include schemas/facilityProductMovementsResponse.json
   - arrayOfStrings: |
       {
         "type": "array",
@@ -2391,7 +2391,7 @@ traits:
               200:
                 body:
                   application/json:
-                    schema: fcProductMovementsDto
+                    schema: facilityProductMovementsResponse
 
       /app-info:
         displayName: Process AppInfo

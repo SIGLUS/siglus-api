@@ -35,8 +35,8 @@ import org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsist
 import org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsistentWithQuantityByProduct;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
+import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
-import org.siglus.siglusapi.dto.android.response.FcProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.validation.group.PerformanceGroup;
 import org.siglus.siglusapi.dto.validation.group.sequence.PerformanceSequence;
@@ -95,7 +95,7 @@ public class SiglusMeController {
   @GetMapping("/facility/stockCards")
   @ResponseStatus(OK)
   @ResponseBody
-  public FcProductMovementsResponse getFacilityStockCards(
+  public FacilityProductMovementsResponse getFacilityStockCards(
       @RequestParam(value = "startTime") String startTime,
       @RequestParam(value = "endTime") String endTime) {
     return service.getProductMovements(startTime, endTime);

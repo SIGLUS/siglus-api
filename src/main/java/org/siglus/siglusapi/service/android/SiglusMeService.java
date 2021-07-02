@@ -72,8 +72,8 @@ import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
+import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
-import org.siglus.siglusapi.dto.android.response.FcProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.LotsOnHandResponse;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
@@ -85,7 +85,6 @@ import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
-import org.siglus.siglusapi.service.SiglusStockCardLineItemService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
@@ -353,14 +352,14 @@ public class SiglusMeService {
         .collect(toList());
   }
 
-  public FcProductMovementsResponse getProductMovements(String startTime, String endTime) {
+  public FacilityProductMovementsResponse getProductMovements(String startTime, String endTime) {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllApprovedProducts();
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(orderableDtos);
     List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = stockCardSummariesService
         .findAllProgramStockSummaries();
     Map<UUID, SiglusLotResponse> siglusLotDtoByLotId = getSiglusLotDtoByLotId(orderableDtos, stockCardSummaryV2Dtos);
-    Map<UUID, List<LotsOnHandResponse>> lotsOnHandDtosByOrderableId = getLotsOnHandDtosMap(stockCardSummaryV2Dtos,
+    Map<UUID, List<LotsOnHandResponse>> lotsOnHandDtosByOrderableId = getLotsOnHandResponsesMap(stockCardSummaryV2Dtos,
         siglusLotDtoByLotId);
     List<ProductMovementResponse> productMovementResponses = stockCardLineItemService
         .getStockMovementByOrderableId(facilityId, startTime, endTime, siglusLotDtoByLotId)
@@ -373,7 +372,7 @@ public class SiglusMeService {
             .stockOnHand(calculateStockOnHandByLot(lotsOnHandDtosByOrderableId.get(entry.getKey())))
             .build())
         .collect(toList());
-    return FcProductMovementsResponse.builder().productMovements(productMovementResponses).build();
+    return FacilityProductMovementsResponse.builder().productMovements(productMovementResponses).build();
   }
 
   private List<LotDto> getLotsList(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
@@ -391,8 +390,7 @@ public class SiglusMeService {
   }
 
   private Integer calculateStockOnHandByLot(List<LotsOnHandResponse> lotsOnHandResponses) {
-    return lotsOnHandResponses.stream()
-        .mapToInt(LotsOnHandResponse::getQuantityOnHand).sum();
+    return lotsOnHandResponses.stream().mapToInt(LotsOnHandResponse::getQuantityOnHand).sum();
   }
 
   private List<LotsOnHandResponse> judgeReturnLotsOnHandDtos(List<LotsOnHandResponse> lotsOnHandResponses) {
@@ -411,8 +409,7 @@ public class SiglusMeService {
   private LotStockOnHand toLotStock(LotDto lot, Map<String, ? extends BasicOrderableDto> approvedProducts,
       List<StockCardSummaryV2Dto> stockSummaries) {
     BasicOrderableDto product = approvedProducts.get(lot.getTradeItemId().toString());
-    Optional<CanFulfillForMeEntryDto> stockOnHandMap = findStockOnHand(product.getId(),
-        lot.getId(), stockSummaries);
+    Optional<CanFulfillForMeEntryDto> stockOnHandMap = findStockOnHand(product.getId(), lot.getId(), stockSummaries);
     return LotStockOnHand.builder()
         .productId(product.getId()).productCode(product.getProductCode())
         .lotId(lot.getId()).lotCode(lot.getLotCode())
@@ -428,24 +425,25 @@ public class SiglusMeService {
             org.openlmis.requisition.dto.OrderableDto::getProductCode));
   }
 
-  private Map<UUID, List<LotsOnHandResponse>> getLotsOnHandDtosMap(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
+  private Map<UUID, List<LotsOnHandResponse>> getLotsOnHandResponsesMap(
+      List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
       Map<UUID, SiglusLotResponse> siglusLotDtoByLotId) {
     return stockCardSummaryV2Dtos.stream()
-        .collect(Collectors.toMap(dto -> dto.getOrderable().getId(),
-            dto -> getLotsOnHandDtos(dto, siglusLotDtoByLotId)));
+        .collect(Collectors
+            .toMap(dto -> dto.getOrderable().getId(), dto -> getLotsOnHandResponses(dto, siglusLotDtoByLotId)));
   }
 
-  private List<LotsOnHandResponse> getLotsOnHandDtos(StockCardSummaryV2Dto dto,
+  private List<LotsOnHandResponse> getLotsOnHandResponses(StockCardSummaryV2Dto dto,
       Map<UUID, SiglusLotResponse> sigluslotDtoByLotId) {
     return dto.getCanFulfillForMe().stream()
-        .map(fulfillDto -> convertLotsOnHandDto(fulfillDto, sigluslotDtoByLotId))
+        .map(fulfillDto -> convertLotsOnHandResponse(fulfillDto, sigluslotDtoByLotId))
         .collect(Collectors.toList());
   }
 
-  private LotsOnHandResponse convertLotsOnHandDto(CanFulfillForMeEntryDto fulfillDto,
-      Map<UUID, SiglusLotResponse> sigluslotDtoByLotId) {
+  private LotsOnHandResponse convertLotsOnHandResponse(CanFulfillForMeEntryDto fulfillDto,
+      Map<UUID, SiglusLotResponse> sigluslotResponseByLotId) {
     return LotsOnHandResponse.builder().quantityOnHand(fulfillDto.getStockOnHand())
-        .lot(fulfillDto.getLot() == null ? null : sigluslotDtoByLotId.get(fulfillDto.getLot().getId()))
+        .lot(fulfillDto.getLot() == null ? null : sigluslotResponseByLotId.get(fulfillDto.getLot().getId()))
         .effectiveDate(fulfillDto.getOccurredDate()).build();
   }
 

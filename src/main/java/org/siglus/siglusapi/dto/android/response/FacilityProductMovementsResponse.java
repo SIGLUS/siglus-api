@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class FcProductMovementsResponse {
+public class FacilityProductMovementsResponse {
 
   private List<ProductMovementResponse> productMovements;
 
