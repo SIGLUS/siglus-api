@@ -13,29 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.dto.referencedata;
+package org.siglus.siglusapi.repository;
 
-import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.siglus.siglusapi.domain.ReportType;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class SupportedProgramDto {
-  private UUID id;
-  private String code;
-  private String name;
-  private String description;
-  private boolean programActive;
-  private boolean showNonFullSupplyTab;
-  private boolean supportActive;
-  private boolean supportLocallyFulfilled;
-  private LocalDate supportStartDate;
+public interface ReportTypesRepository extends JpaRepository<ReportType, UUID> {
+
+  List<ReportType> findByFacilityId(UUID facilityId);
 }

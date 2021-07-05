@@ -13,29 +13,37 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.dto.referencedata;
+package org.siglus.siglusapi.domain;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.siglus.common.domain.BaseEntity;
 
-@Getter
-@Setter
+@Entity
+@Data
 @Builder
-@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
-public class SupportedProgramDto {
+@NoArgsConstructor
+@Table(name = "reporttypes", schema = "siglusintegration")
+public class ReportType extends BaseEntity {
+
   private UUID id;
-  private String code;
+
+  private UUID facilityId;
+
   private String name;
-  private String description;
-  private boolean programActive;
-  private boolean showNonFullSupplyTab;
-  private boolean supportActive;
-  private boolean supportLocallyFulfilled;
-  private LocalDate supportStartDate;
+
+  private String programcode;
+
+  private Boolean active;
+
+  private LocalDate startdate;
 }

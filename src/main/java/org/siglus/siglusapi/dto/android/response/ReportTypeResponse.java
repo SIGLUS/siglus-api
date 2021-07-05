@@ -13,29 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.dto.referencedata;
+package org.siglus.siglusapi.dto.android.response;
 
 import java.time.LocalDate;
-import java.util.UUID;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class SupportedProgramDto {
-  private UUID id;
-  private String code;
+public class ReportTypeResponse {
+
   private String name;
-  private String description;
-  private boolean programActive;
-  private boolean showNonFullSupplyTab;
   private boolean supportActive;
-  private boolean supportLocallyFulfilled;
   private LocalDate supportStartDate;
+  private String programCode;
+  private LocalDate lastReportDate;
 }

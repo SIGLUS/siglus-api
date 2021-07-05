@@ -44,6 +44,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,6 +54,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -71,14 +74,18 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
+import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
+import org.siglus.siglusapi.repository.ReportTypesRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
@@ -142,6 +149,12 @@ public class SiglusMeServiceTest {
 
   @Mock
   private AndroidHelper androidHelper;
+
+  @Mock
+  private ReportTypesRepository reportTypesRepository;
+
+  @Mock
+  private SiglusRequisitionRepository requisitionRepository;
 
   @Captor
   private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
@@ -219,7 +232,7 @@ public class SiglusMeServiceTest {
   @Test
   public void shouldCallFacilityReferenceDataServiceWhenGetFacility() {
     // given
-    programDtos.add(getSupportedProgramDto());
+    programDtos.addAll(getSupportedPrograms());
     FacilityDto facilityDto = new FacilityDto();
     facilityDto.setCode("facilityCode");
     facilityDto.setName("facilityName");
@@ -231,6 +244,42 @@ public class SiglusMeServiceTest {
 
     // then
     assertEquals(programDtos.get(0).getCode(), response.getSupportedPrograms().get(0).getCode());
+  }
+
+  @Test
+  public void shouldGetSupportReportTypesWhenGetFacilityInfo() {
+    // given
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(facilityId);
+    facilityDto.setCode("facilityCode");
+    facilityDto.setName("facilityName");
+    facilityDto.setSupportedPrograms(getSupportedPrograms());
+    List<ReportType> reportTypes = new ArrayList<>(asList(mockReportType1(), mockReportType2()));
+    Optional<Requisition> rnrOpt = mockProgramRnr();
+    when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(facilityDto);
+    when(reportTypesRepository.findByFacilityId(facilityId))
+        .thenReturn(reportTypes);
+    when(requisitionRepository
+        .searchLatestRequisition(facilityId, facilityDto.getSupportedPrograms().get(0).getId()))
+        .thenReturn(rnrOpt);
+    when(requisitionRepository
+        .searchLatestRequisition(facilityId, facilityDto.getSupportedPrograms().get(1).getId()))
+        .thenReturn(Optional.empty());
+
+    // when
+    FacilityResponse response = service.getCurrentFacility();
+
+    // then
+    List<ReportTypeResponse> actualReportTypes = response.getSupportedReportTypes();
+    assertEquals(reportTypes.get(0).getName(), actualReportTypes.get(0).getName());
+    assertEquals(reportTypes.get(0).getStartdate(), actualReportTypes.get(0).getSupportStartDate());
+    assertEquals(reportTypes.get(0).getProgramcode(), actualReportTypes.get(0).getProgramCode());
+    assertEquals(rnrOpt.map(r -> r.getExtraData().get("actualEndDate")).map(String::valueOf)
+        .map(LocalDate::parse).get(), actualReportTypes.get(0).getLastReportDate());
+    assertEquals(reportTypes.get(1).getName(), actualReportTypes.get(1).getName());
+    assertEquals(reportTypes.get(1).getStartdate(), actualReportTypes.get(1).getSupportStartDate());
+    assertEquals(reportTypes.get(1).getProgramcode(), actualReportTypes.get(1).getProgramCode());
+    assertEquals(null, actualReportTypes.get(1).getLastReportDate());
   }
 
   @Test
@@ -385,19 +434,6 @@ public class SiglusMeServiceTest {
 
     // then
     verify(siglusArchiveProductService).archiveAllProducts(facilityId, productCodes);
-  }
-
-  private SupportedProgramDto getSupportedProgramDto() {
-    SupportedProgramDto supportedProgram = new SupportedProgramDto();
-    supportedProgram.setId(UUID.randomUUID());
-    supportedProgram.setCode("ARV");
-    supportedProgram.setName("ARV");
-    supportedProgram.setDescription("description");
-    supportedProgram.setProgramActive(true);
-    supportedProgram.setSupportActive(true);
-    supportedProgram.setSupportLocallyFulfilled(true);
-    supportedProgram.setSupportStartDate(LocalDate.now());
-    return supportedProgram;
   }
 
   @Test
@@ -708,5 +744,72 @@ public class SiglusMeServiceTest {
         .build();
     hfCmm.setId(hfCmmId);
     return hfCmm;
+  }
+
+  private List<SupportedProgramDto> getSupportedPrograms() {
+    SupportedProgramDto supportedProgram1 = SupportedProgramDto.builder()
+        .id(UUID.randomUUID())
+        .code("VC")
+        .name("Via Clássica")
+        .description("description")
+        .programActive(true)
+        .supportActive(true)
+        .supportLocallyFulfilled(true)
+        .supportStartDate(LocalDate.now())
+        .build();
+    SupportedProgramDto supportedProgram2 = SupportedProgramDto.builder()
+        .id(UUID.randomUUID())
+        .code("T")
+        .name("TARV")
+        .description("description")
+        .programActive(true)
+        .supportActive(true)
+        .supportLocallyFulfilled(true)
+        .supportStartDate(LocalDate.now())
+        .build();
+    return asList(supportedProgram1, supportedProgram2);
+  }
+
+  private ReportType mockReportType1() {
+    return ReportType.builder()
+        .id(UUID.randomUUID())
+        .name("Requisition")
+        .active(true)
+        .startdate(LocalDate.parse("2020-08-21"))
+        .programcode("VC")
+        .facilityId(facilityId)
+        .build();
+  }
+
+  private ReportType mockReportType2() {
+    return ReportType.builder()
+        .id(UUID.randomUUID())
+        .facilityId(facilityId)
+        .name("MMIA")
+        .active(false)
+        .startdate(LocalDate.parse("2020-08-21"))
+        .programcode("T")
+        .build();
+  }
+
+  private ReportTypeResponse mockNotExxistReportType() {
+    return ReportTypeResponse.builder()
+        .name("Testes Rápidos")
+        .supportActive(true)
+        .supportStartDate(LocalDate.parse("2020-08-21"))
+        .programCode("TR")
+        .lastReportDate(LocalDate.now())
+        .build();
+  }
+
+  private Optional<Requisition> mockProgramRnr() {
+    Map<String, Object> extraData = new HashMap<>();
+    extraData.put("isSaved", true);
+    extraData.put("actualEndDate", "2021-06-26");
+    extraData.put("actualStartDate", "2021-05-12");
+    extraData.put("signaure", "");
+    Requisition rnr = new Requisition();
+    rnr.setExtraData(extraData);
+    return Optional.ofNullable(rnr);
   }
 }

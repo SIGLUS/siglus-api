@@ -40,6 +40,7 @@ import javax.annotation.Nonnull;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicOrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -66,6 +67,7 @@ import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
@@ -79,9 +81,12 @@ import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
+import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
+import org.siglus.siglusapi.repository.ReportTypesRepository;
+import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -250,6 +255,8 @@ public class SiglusMeService {
   private final SiglusValidSourceDestinationService siglusValidSourceDestinationService;
   private final SiglusStockEventsService stockEventsService;
   private final AndroidHelper androidHelper;
+  private final ReportTypesRepository reportTypesRepository;
+  private final SiglusRequisitionRepository requisitionRepository;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -267,6 +274,7 @@ public class SiglusMeService {
         .name(facilityDto.getName())
         .supportedPrograms(programResponses)
         .isAndroid(androidHelper.isAndroid())
+        .supportedReportTypes(findSupportReportTypes(facilityDto.getId(), programs))
         .build();
   }
 
@@ -708,5 +716,28 @@ public class SiglusMeService {
     UUID findDestinationId(UUID programId, String value) {
       return programToDestinationNameToId.get(programId).get(Destination.valueOf(value).getValue());
     }
+  }
+
+  private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId,
+      List<SupportedProgramDto> programs) {
+    return reportTypesRepository.findByFacilityId(facilityId).stream().map(
+        reportType -> ReportTypeResponse.builder().name(reportType.getName())
+            .supportActive(reportType.getActive())
+            .supportStartDate(reportType.getStartdate())
+            .programCode(reportType.getProgramcode())
+            .lastReportDate(findLastReportDate(facilityId, reportType, programs))
+            .build())
+        .collect(Collectors.toList());
+  }
+
+  private LocalDate findLastReportDate(UUID facilityId, ReportType supportReportType,
+      List<SupportedProgramDto> programs) {
+    Optional<Requisition> requisitionOpt = requisitionRepository.searchLatestRequisition(facilityId,
+        programs.stream()
+            .filter(program -> program.getCode().equals(supportReportType.getProgramcode()))
+            .findAny().map(SupportedProgramDto::getId)
+            .orElseThrow(() -> new IllegalArgumentException("program Not Exist for reportType")));
+    return requisitionOpt.map(r -> r.getExtraData().get("actualEndDate")).map(String::valueOf)
+        .map(LocalDate::parse).orElse(null);
   }
 }

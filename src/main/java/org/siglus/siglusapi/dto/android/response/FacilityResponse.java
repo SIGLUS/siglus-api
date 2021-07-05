@@ -30,4 +30,6 @@ public class FacilityResponse {
   private List<ProgramResponse> supportedPrograms;
 
   private Boolean isAndroid;
+
+  private List<ReportTypeResponse> supportedReportTypes;
 }

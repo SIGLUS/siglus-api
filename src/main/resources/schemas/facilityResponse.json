@@ -19,6 +19,18 @@
         "type": "object",
         "$ref": "program.json"
       }
+    },
+    "supportedReportTypes": {
+      "type": "array",
+      "title": "supportedReportTypes",
+      "items": {
+        "type": "object",
+        "$ref": "reportType.json"
+      }
+    },
+    "isAndroid": {
+      "type": "boolean",
+      "title": "isAndroid"
     }
   }
 }

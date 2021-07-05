@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "ReportType",
+  "description": "A single ReportType",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "facilityId": {
+      "type": "string",
+      "title": "facilityId"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "programCode": {
+      "type": "string",
+      "title": "programCode"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "active"
+    },
+    "startDate": {
+      "type": "object",
+      "title": "startDate"
+    }
+  }
+}
