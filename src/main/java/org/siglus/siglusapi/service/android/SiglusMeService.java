@@ -217,7 +217,7 @@ public class SiglusMeService {
     EXPIRED_RETURN_TO_SUPPLIER("Devolvidos ao Fornecedor por terem Expirados em Quarentena"),
     INVENTORY_NEGATIVE("Correção Negativa"),
     INVENTORY_POSITIVE("Correção Positiva"),
-    LOANS_DEPOSIT("Loans made from a health facility deposit"),
+    LOANS_DEPOSIT("Emprestimo Enviado pela US"),
     LOANS_RECEIVED("Emprestimo Recebido pela US"),
     PROD_DEFECTIVE("Produto com defeito, movido para quarentena"),
     RETURN_FROM_QUARANTINE("Devoluções da Quarentena"),
