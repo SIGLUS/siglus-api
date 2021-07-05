@@ -234,7 +234,6 @@ public class SiglusMeService {
   }
 
   static final String KEY_PROGRAM_CODE = "programCode";
-  static final String KIT_LOT = "kitLot";
   static final String TRADE_ITEM_ID = "tradeItemId";
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
@@ -402,7 +401,12 @@ public class SiglusMeService {
   }
 
   private List<LotsOnHandResponse> judgeReturnLotsOnHandDtos(List<LotsOnHandResponse> lotsOnHandResponses) {
-    return lotsOnHandResponses.stream().findFirst().get().getLot() == null ? null : lotsOnHandResponses;
+    for (LotsOnHandResponse lotsOnHand : lotsOnHandResponses) {
+      if (lotsOnHand.getLot() != null) {
+        return lotsOnHandResponses;
+      }
+    }
+    return emptyList();
   }
 
   private Map<UUID, SiglusLotResponse> getSiglusLotDtoByLotId(

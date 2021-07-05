@@ -44,7 +44,6 @@ import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
-import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.siglus.siglusapi.service.android.SiglusMeService.MovementType;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
@@ -133,11 +132,13 @@ public class SiglusStockCardLineItemService {
     stockMovementItemResponse.setMovementQuantity(itemDto.getQuantity());
     stockMovementItemResponse.setStockOnHand(itemDto.getStockOnHand());
     stockMovementItemResponse.setDocumentNumber(itemDto.getDocumentNumber());
-    if (itemDto.getReason() != null && UNPACK_KIT.equals(itemDto.getReason().getName())) {
-      stockMovementItemResponse.setType(MovementType.UNPACK_KIT.name());
-    } else {
-      stockMovementItemResponse.setReason(itemDto.getReason().getName());
-      stockMovementItemResponse.setType(itemDto.getReason().getType());
+    if (itemDto.getReason() != null) {
+      if (UNPACK_KIT.equals(itemDto.getReason().getName())) {
+        stockMovementItemResponse.setType(MovementType.UNPACK_KIT.name());
+      } else {
+        stockMovementItemResponse.setReason(itemDto.getReason().getName());
+        stockMovementItemResponse.setType(itemDto.getReason().getType());
+      }
     }
   }
 
@@ -207,7 +208,7 @@ public class SiglusStockCardLineItemService {
     return SiglusStockMovementItemResponse.builder()
         .requested(getRequested(firstItem))
         .type(firstItem.getReason().getType()).signature(firstItem.getSignature())
-        .processedDate(firstItem.getProcessedDate().toInstant().toEpochMilli())
+        .processedDate(firstItem.getProcessedDate().toInstant())
         .documentNumber(firstItem.getDocumentNumber())
         .occurredDate(firstItem.getOccurredDate()).movementQuantity(0).stockOnHand(0).build();
   }

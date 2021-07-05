@@ -109,8 +109,6 @@ public class SiglusStockCardLineItemServiceTest {
 
   private final String lotId1FromOrderable1Code = "lotId1FromOrderable1Code";
 
-  private final String lotId2FromOrderable1Code = "lotId2FromOrderable1Code";
-
   private final String lotId1FromOrderable2Code = "lotId1FromOrderable2Code";
 
   private final String lotId2FromOrderable2Code = "lotId2FromOrderable2Code";
@@ -145,15 +143,15 @@ public class SiglusStockCardLineItemServiceTest {
 
   private final UUID orgDestinationId = UUID.randomUUID();
 
-  private UUID homefacilityId = UUID.randomUUID();
+  private final UUID homefacilityId = UUID.randomUUID();
 
-  private String signature = "yyd";
+  private final String signature = "yyd";
 
-  private String documentNumber = "documentTest";
+  private final String documentNumber = "documentTest";
 
   private StockEvent event;
 
-  private Map<UUID, SiglusLotResponse> siglusLotResponseByLotId = new HashMap<>();
+  private final Map<UUID, SiglusLotResponse> siglusLotResponseByLotId = new HashMap<>();
 
   @Before
   public void prepare() {
@@ -177,89 +175,97 @@ public class SiglusStockCardLineItemServiceTest {
         .getStockMovementByOrderableId(homefacilityId, "2021-06-30", "2021-07-03", siglusLotResponseByLotId);
 
     // then
-    //2021-07-01 08:00:00 physicalInventory positive 50
+    // 2021-07-01 08:00:00 physicalInventory positive 50
     SiglusStockMovementItemResponse stockMovementItemResponse1 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070108).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070108).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     LotMovementItemResponse lotMovementItemResponse1 = stockMovementItemResponse1.getLotMovementItems().stream()
-        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code)).findFirst().get();
+        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))
+        .findFirst().orElse(new LotMovementItemResponse());
 
     assertEquals(Integer.valueOf(200), lotMovementItemResponse1.getStockOnHand());
     assertEquals(Integer.valueOf(50), lotMovementItemResponse1.getQuantity());
     assertEquals("INVENTORY_POSITIVE", lotMovementItemResponse1.getReason());
 
-    //2021-07-01 09:00:00 issue 10
+    // 2021-07-01 09:00:00 issue 10
     SiglusStockMovementItemResponse stockMovementItemResponse2 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070109).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070109).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     LotMovementItemResponse lotMovementItemResponse2 = stockMovementItemResponse2.getLotMovementItems().stream()
-        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code)).findFirst().get();
+        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))
+        .findFirst().orElse(new LotMovementItemResponse());
 
     assertEquals(Integer.valueOf(190), lotMovementItemResponse2.getStockOnHand());
     assertEquals(Integer.valueOf(-10), lotMovementItemResponse2.getQuantity());
     assertEquals("PUB_PHARMACY", lotMovementItemResponse2.getReason());
 
-    //2021-07-01 10:00:00 receive 30
+    // 2021-07-01 10:00:00 receive 30
     SiglusStockMovementItemResponse stockMovementItemResponse3 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070110).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070110).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     LotMovementItemResponse lotMovementItemResponse3 = stockMovementItemResponse3.getLotMovementItems().stream()
-        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code)).findFirst().get();
+        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))
+        .findFirst().orElse(new LotMovementItemResponse());
 
     assertEquals(Integer.valueOf(220), lotMovementItemResponse3.getStockOnHand());
     assertEquals(Integer.valueOf(30), lotMovementItemResponse3.getQuantity());
     assertEquals("DISTRICT_DDM", lotMovementItemResponse3.getReason());
 
-    //2021-07-01 11:00:00 physicalInventory inventory 220
+    // 2021-07-01 11:00:00 physicalInventory inventory 220
     SiglusStockMovementItemResponse stockMovementItemResponse4 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070111).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070111).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     LotMovementItemResponse lotMovementItemResponse4 = stockMovementItemResponse4.getLotMovementItems().stream()
-        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code)).findFirst().get();
+        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))
+        .findFirst().orElse(new LotMovementItemResponse());
 
     assertEquals(Integer.valueOf(220), lotMovementItemResponse4.getStockOnHand());
     assertEquals(Integer.valueOf(0), lotMovementItemResponse4.getQuantity());
     assertEquals("INVENTORY", lotMovementItemResponse4.getReason());
 
-    //2021-07-01 12:00:00 adjustment positive 50
+    // 2021-07-01 12:00:00 adjustment positive 50
     SiglusStockMovementItemResponse stockMovementItemResponse5 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070112).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070112).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     LotMovementItemResponse lotMovementItemResponse5 = stockMovementItemResponse5.getLotMovementItems().stream()
-        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code)).findFirst().get();
+        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))
+        .findFirst().orElse(new LotMovementItemResponse());
 
     assertEquals(Integer.valueOf(270), lotMovementItemResponse5.getStockOnHand());
     assertEquals(Integer.valueOf(50), lotMovementItemResponse5.getQuantity());
     assertEquals(customerReturn, lotMovementItemResponse5.getReason());
 
-    //2021-07-02 08:00:00 adjustment negative 10
+    // 2021-07-02 08:00:00 adjustment negative 10
     SiglusStockMovementItemResponse stockMovementItemResponse6 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070208).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070208).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     LotMovementItemResponse lotMovementItemResponse6 = stockMovementItemResponse6.getLotMovementItems().stream()
-        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code)).findFirst().get();
+        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))
+        .findFirst().orElse(new LotMovementItemResponse());
 
     assertEquals(Integer.valueOf(260), lotMovementItemResponse6.getStockOnHand());
     assertEquals(Integer.valueOf(-10), lotMovementItemResponse6.getQuantity());
     assertEquals(customerReturn, lotMovementItemResponse6.getReason());
 
-    //2021-07-02 09:00:00 physicalInventory negative 180
+    // 2021-07-02 09:00:00 physicalInventory negative 180
     SiglusStockMovementItemResponse stockMovementItemResponse7 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070209).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070209).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     LotMovementItemResponse lotMovementItemResponse7 = stockMovementItemResponse7.getLotMovementItems().stream()
-        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code)).findFirst().get();
+        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))
+        .findFirst().orElse(new LotMovementItemResponse());
 
     assertEquals(Integer.valueOf(180), lotMovementItemResponse7.getStockOnHand());
     assertEquals(Integer.valueOf(-80), lotMovementItemResponse7.getQuantity());
     assertEquals("INVENTORY_NEGATIVE", lotMovementItemResponse7.getReason());
 
-    //2021-07-02 10:00:00 issue 10
+    // 2021-07-02 10:00:00 issue 10
     SiglusStockMovementItemResponse stockMovementItemResponse8 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070210).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070210).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     LotMovementItemResponse lotMovementItemResponse8 = stockMovementItemResponse8.getLotMovementItems().stream()
-        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code)).findFirst().get();
+        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))
+        .findFirst().orElse(new LotMovementItemResponse());
 
     assertEquals(Integer.valueOf(170), lotMovementItemResponse8.getStockOnHand());
     assertEquals(Integer.valueOf(-10), lotMovementItemResponse8.getQuantity());
@@ -275,11 +281,10 @@ public class SiglusStockCardLineItemServiceTest {
         .getStockMovementByOrderableId(homefacilityId, "2021-06-30", "2021-07-03", siglusLotResponseByLotId);
 
     // then
-    //2021-07-01 08:00:00 physicalInventory positive 50
+    // 2021-07-01 08:00:00 physicalInventory positive 50
     SiglusStockMovementItemResponse stockMovementItemResponse1 = stockMovementItemResponseMap.get(orderableId3).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070108).toInstant().toEpochMilli()))
-        .findFirst().get();
-
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070108).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     assertNull(stockMovementItemResponse1.getLotMovementItems());
 
     assertEquals(Integer.valueOf(200), stockMovementItemResponse1.getStockOnHand());
@@ -287,70 +292,70 @@ public class SiglusStockCardLineItemServiceTest {
     assertEquals("INVENTORY_POSITIVE", stockMovementItemResponse1.getReason());
     assertEquals(physicalInventory, stockMovementItemResponse1.getType());
 
-    //2021-07-01 09:00:00 issue 10
+    // 2021-07-01 09:00:00 issue 10
     SiglusStockMovementItemResponse stockMovementItemResponse2 = stockMovementItemResponseMap.get(orderableId3).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070109).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070109).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
 
     assertEquals(Integer.valueOf(190), stockMovementItemResponse2.getStockOnHand());
     assertEquals(Integer.valueOf(-10), stockMovementItemResponse2.getMovementQuantity());
     assertEquals("PUB_PHARMACY", stockMovementItemResponse2.getReason());
     assertEquals("ISSUE", stockMovementItemResponse2.getType());
 
-    //2021-07-01 10:00:00 receive 30
+    // 2021-07-01 10:00:00 receive 30
     SiglusStockMovementItemResponse stockMovementItemResponse3 = stockMovementItemResponseMap.get(orderableId3).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070110).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070110).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
 
     assertEquals(Integer.valueOf(220), stockMovementItemResponse3.getStockOnHand());
     assertEquals(Integer.valueOf(30), stockMovementItemResponse3.getMovementQuantity());
     assertEquals("DISTRICT_DDM", stockMovementItemResponse3.getReason());
     assertEquals("RECEIVE", stockMovementItemResponse3.getType());
 
-    //2021-07-01 11:00:00 physicalInventory inventory 220
+    // 2021-07-01 11:00:00 physicalInventory inventory 220
     SiglusStockMovementItemResponse stockMovementItemResponse4 = stockMovementItemResponseMap.get(orderableId3).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070111).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070111).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
 
     assertEquals(Integer.valueOf(220), stockMovementItemResponse4.getStockOnHand());
     assertEquals(Integer.valueOf(0), stockMovementItemResponse4.getMovementQuantity());
     assertEquals("INVENTORY", stockMovementItemResponse4.getReason());
     assertEquals(physicalInventory, stockMovementItemResponse4.getType());
 
-    //2021-07-01 12:00:00 adjustment positive 50
+    // 2021-07-01 12:00:00 adjustment positive 50
     SiglusStockMovementItemResponse stockMovementItemResponse5 = stockMovementItemResponseMap.get(orderableId3).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070112).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070112).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
 
     assertEquals(Integer.valueOf(270), stockMovementItemResponse5.getStockOnHand());
     assertEquals(Integer.valueOf(50), stockMovementItemResponse5.getMovementQuantity());
     assertEquals(customerReturn, stockMovementItemResponse5.getReason());
     assertEquals("ADJUSTMENT", stockMovementItemResponse5.getType());
 
-    //2021-07-02 08:00:00 adjustment negative 10
+    // 2021-07-02 08:00:00 adjustment negative 10
     SiglusStockMovementItemResponse stockMovementItemResponse6 = stockMovementItemResponseMap.get(orderableId3).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070208).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070208).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
 
     assertEquals(Integer.valueOf(260), stockMovementItemResponse6.getStockOnHand());
     assertEquals(Integer.valueOf(-10), stockMovementItemResponse6.getMovementQuantity());
     assertEquals(customerReturn, stockMovementItemResponse6.getReason());
     assertEquals("ADJUSTMENT", stockMovementItemResponse6.getType());
 
-    //2021-07-02 09:00:00 physicalInventory negative 180
+    // 2021-07-02 09:00:00 physicalInventory negative 180
     SiglusStockMovementItemResponse stockMovementItemResponse7 = stockMovementItemResponseMap.get(orderableId3).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070209).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070209).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
 
     assertEquals(Integer.valueOf(180), stockMovementItemResponse7.getStockOnHand());
     assertEquals(Integer.valueOf(-80), stockMovementItemResponse7.getMovementQuantity());
     assertEquals("INVENTORY_NEGATIVE", stockMovementItemResponse7.getReason());
     assertEquals(physicalInventory, stockMovementItemResponse7.getType());
 
-    //2021-07-02 10:00:00 issue 10
+    // 2021-07-02 10:00:00 issue 10
     SiglusStockMovementItemResponse stockMovementItemResponse8 = stockMovementItemResponseMap.get(orderableId3).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070210).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070210).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
 
     assertEquals(Integer.valueOf(190), stockMovementItemResponse8.getStockOnHand());
     assertEquals(Integer.valueOf(10), stockMovementItemResponse8.getMovementQuantity());
@@ -367,10 +372,10 @@ public class SiglusStockCardLineItemServiceTest {
         .getStockMovementByOrderableId(homefacilityId, "2021-06-30", "2021-07-03", siglusLotResponseByLotId);
 
     // then
-    //2021-07-01 08:00:00 physicalInventory positive 50
+    // 2021-07-01 08:00:00 physicalInventory positive 50
     SiglusStockMovementItemResponse stockMovementItemResponse1 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070108).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070108).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     assertEquals(Integer.valueOf(50), stockMovementItemResponse1.getMovementQuantity());
     assertEquals(Integer.valueOf(200), stockMovementItemResponse1.getStockOnHand());
     assertEquals(physicalInventory, stockMovementItemResponse1.getType());
@@ -378,21 +383,22 @@ public class SiglusStockCardLineItemServiceTest {
     assertEquals(Integer.valueOf(200), stockMovementItemResponse1.getRequested());
 
     LotMovementItemResponse lotMovementItemResponse1 = stockMovementItemResponse1.getLotMovementItems().stream()
-        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code)).findFirst().get();
+        .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))
+        .findFirst().orElse(new LotMovementItemResponse());
     assertEquals(documentNumber, lotMovementItemResponse1.getDocumentNumber());
 
-    //2021-07-01 10:00:00 receive 30+40 220 140
+    // 2021-07-01 10:00:00 receive 30+40 220 140
     SiglusStockMovementItemResponse stockMovementItemResponse2 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070110).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070110).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     assertEquals(Integer.valueOf(70), stockMovementItemResponse2.getMovementQuantity());
     assertEquals(Integer.valueOf(360), stockMovementItemResponse2.getStockOnHand());
     assertEquals("RECEIVE", stockMovementItemResponse2.getType());
 
-    //2021-07-02 09:00:00 physicalInventory negative -80 -80 180 60
+    // 2021-07-02 09:00:00 physicalInventory negative -80 -80 180 60
     SiglusStockMovementItemResponse stockMovementItemResponse3 = stockMovementItemResponseMap.get(orderableId1).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070209).toInstant().toEpochMilli()))
-        .findFirst().get();
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070209).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
     assertEquals(Integer.valueOf(-160), stockMovementItemResponse3.getMovementQuantity());
     assertEquals(Integer.valueOf(240), stockMovementItemResponse3.getStockOnHand());
     assertEquals(physicalInventory, stockMovementItemResponse3.getType());
@@ -405,13 +411,13 @@ public class SiglusStockCardLineItemServiceTest {
     StockCard orderable2lot1 = createStockCardToOrderableTwoAndLotOne();
     StockCard orderable2lot2 = createStockCardToOrderableTwoAndLotTwo();
 
-    //2021-07-01 08:00:00 physicalInventory positive
+    // 2021-07-01 08:00:00 physicalInventory positive
     StockCardLineItem physicalInventoryItem1 = createStockCardLineItem(null, null, orderable1lot1, 200,
         day070108, day0701, positiveAdjustment(), null);
 
     Node destinationNode = new Node();
     destinationNode.setReferenceId(orgDestinationId);
-    //2021-07-01 09:00:00 issue
+    // 2021-07-01 09:00:00 issue
     StockCardLineItem issueItem1 = createStockCardLineItem(destinationNode, null, orderable1lot1, 10,
         day070109, day0701, null, null);
     StockCardLineItem issueItem2 = createStockCardLineItem(destinationNode, null, orderable2lot1, 20,
@@ -419,17 +425,17 @@ public class SiglusStockCardLineItemServiceTest {
 
     Node sourceNode = new Node();
     sourceNode.setReferenceId(orgSourceId);
-    //2021-07-01 10:00:00 receive
+    // 2021-07-01 10:00:00 receive
     StockCardLineItem receiveItem1 = createStockCardLineItem(null, sourceNode, orderable1lot1, 30,
         day070110, day0701, null, null);
     StockCardLineItem receiveItem2 = createStockCardLineItem(null, sourceNode, orderable1lot2, 40,
         day070110, day0701, null, null);
 
-    //2021-07-01 11:00:00 physicalInventory inventory
+    // 2021-07-01 11:00:00 physicalInventory inventory
     StockCardLineItem physicalInventoryItem2 = createStockCardLineItem(null, null, orderable1lot1, 220,
         day070111, day0701, null, null);
 
-    //2021-07-01 12:00:00 adjustment positive
+    // 2021-07-01 12:00:00 adjustment positive
     StockCardLineItemReason reason1 = StockCardLineItemReason.builder()
         .name(adjustmentName).reasonType(ReasonType.CREDIT).build();
     StockCardLineItem adjustmentItem1 = createStockCardLineItem(null, null, orderable1lot1, 50,
@@ -437,7 +443,7 @@ public class SiglusStockCardLineItemServiceTest {
     StockCardLineItem adjustmentItem2 = createStockCardLineItem(null, null, orderable2lot2, 60,
         day070112, day0701, null, reason1);
 
-    //2021-07-02 08:00:00 adjustment negative
+    // 2021-07-02 08:00:00 adjustment negative
     StockCardLineItemReason reason2 = StockCardLineItemReason.builder()
         .name(adjustmentName).reasonType(ReasonType.DEBIT).build();
     StockCardLineItem adjustmentItem3 = createStockCardLineItem(null, null, orderable1lot1, 10,
@@ -445,13 +451,13 @@ public class SiglusStockCardLineItemServiceTest {
     StockCardLineItem adjustmentItem4 = createStockCardLineItem(null, null, orderable2lot1, 20,
         day070208, day0702, null, reason2);
 
-    //2021-07-02 09:00:00 physicalInventory negative
+    // 2021-07-02 09:00:00 physicalInventory negative
     StockCardLineItem physicalInventoryItem3 = createStockCardLineItem(null, null, orderable1lot1, 180,
         day070209, day0702, negativeAdjustment(), null);
     StockCardLineItem physicalInventoryItem4 = createStockCardLineItem(null, null, orderable1lot2, 60,
         day070209, day0702, negativeAdjustment(), null);
 
-    //2021-07-02 10:00:00 issue
+    // 2021-07-02 10:00:00 issue
     StockCardLineItem issueItem3 = createStockCardLineItem(destinationNode, null, orderable1lot1, 10,
         day070210, day0702, null, null);
     StockCardLineItem issueItem4 = createStockCardLineItem(destinationNode, null, orderable2lot1, 20,
@@ -463,20 +469,20 @@ public class SiglusStockCardLineItemServiceTest {
             physicalInventoryItem4, issueItem3,
             issueItem4);
 
-    //2021-07-01
-    CalculatedStockOnHand sohOrderable1lot1One = createCalculatedStockOnHand(orderable1lot1, day0701, 270);
-    CalculatedStockOnHand sohOrderable1lot2One = createCalculatedStockOnHand(orderable1lot2, day0701, 140);
-    CalculatedStockOnHand sohOrderable2lot1One = createCalculatedStockOnHand(orderable2lot1, day0701, 80);
-    CalculatedStockOnHand sohOrderable2lot2One = createCalculatedStockOnHand(orderable2lot2, day0701, 160);
+    // 2021-07-01
+    CalculatedStockOnHand sohOrderable1lot1Day1 = createCalculatedStockOnHand(orderable1lot1, day0701, 270);
+    CalculatedStockOnHand sohOrderable1lot2Day1 = createCalculatedStockOnHand(orderable1lot2, day0701, 140);
+    CalculatedStockOnHand sohOrderable2lot1Day1 = createCalculatedStockOnHand(orderable2lot1, day0701, 80);
+    CalculatedStockOnHand sohOrderable2lot2Day1 = createCalculatedStockOnHand(orderable2lot2, day0701, 160);
 
-    //2021-07-02
-    CalculatedStockOnHand sohOrderable1lot1Two = createCalculatedStockOnHand(orderable1lot1, day0702, 170);
-    CalculatedStockOnHand sohOrderable1lot2Two = createCalculatedStockOnHand(orderable1lot2, day0702, 60);
-    CalculatedStockOnHand sohOrderable2lot1Two = createCalculatedStockOnHand(orderable2lot1, day0702, 40);
+    // 2021-07-02
+    CalculatedStockOnHand sohOrderable1lot1Day2 = createCalculatedStockOnHand(orderable1lot1, day0702, 170);
+    CalculatedStockOnHand sohOrderable1lot2Day2 = createCalculatedStockOnHand(orderable1lot2, day0702, 60);
+    CalculatedStockOnHand sohOrderable2lot1Day2 = createCalculatedStockOnHand(orderable2lot1, day0702, 40);
 
     List<CalculatedStockOnHand> stockOnHandList = Arrays
-        .asList(sohOrderable1lot1One, sohOrderable1lot2One, sohOrderable2lot1One, sohOrderable2lot2One,
-            sohOrderable1lot1Two, sohOrderable1lot2Two, sohOrderable2lot1Two);
+        .asList(sohOrderable1lot1Day1, sohOrderable1lot2Day1, sohOrderable2lot1Day1, sohOrderable2lot2Day1,
+            sohOrderable1lot1Day2, sohOrderable1lot2Day2, sohOrderable2lot1Day2);
 
     when(stockCardLineItemRepository
         .findByFacilityIdAndIdStartTimeEndTime(any(UUID.class), any(String.class), any(String.class)))
@@ -489,43 +495,43 @@ public class SiglusStockCardLineItemServiceTest {
   private void createNoLotStockMovements() {
     StockCard orderableNolot = createStockCardToOrderableThreeAndNoLot();
 
-    //2021-07-01 08:00:00 physicalInventory positive
+    // 2021-07-01 08:00:00 physicalInventory positive
     StockCardLineItem physicalInventoryItem1 = createStockCardLineItem(null, null, orderableNolot, 200,
         day070108, day0701, positiveAdjustment(), null);
 
     Node destinationNode = new Node();
     destinationNode.setReferenceId(orgDestinationId);
-    //2021-07-01 09:00:00 issue
+    // 2021-07-01 09:00:00 issue
     StockCardLineItem issueItem1 = createStockCardLineItem(destinationNode, null, orderableNolot, 10,
         day070109, day0701, null, null);
 
     Node sourceNode = new Node();
     sourceNode.setReferenceId(orgSourceId);
-    //2021-07-01 10:00:00 receive
+    // 2021-07-01 10:00:00 receive
     StockCardLineItem receiveItem1 = createStockCardLineItem(null, sourceNode, orderableNolot, 30,
         day070110, day0701, null, null);
 
-    //2021-07-01 11:00:00 physicalInventory inventory
+    // 2021-07-01 11:00:00 physicalInventory inventory
     StockCardLineItem physicalInventoryItem2 = createStockCardLineItem(null, null, orderableNolot, 220,
         day070111, day0701, null, null);
 
-    //2021-07-01 12:00:00 adjustment positive
+    // 2021-07-01 12:00:00 adjustment positive
     StockCardLineItemReason reason1 = StockCardLineItemReason.builder()
         .name(adjustmentName).reasonType(ReasonType.CREDIT).build();
     StockCardLineItem adjustmentItem1 = createStockCardLineItem(null, null, orderableNolot, 50,
         day070112, day0701, null, reason1);
 
-    //2021-07-02 08:00:00 adjustment negative
+    // 2021-07-02 08:00:00 adjustment negative
     StockCardLineItemReason reason2 = StockCardLineItemReason.builder()
         .name(adjustmentName).reasonType(ReasonType.DEBIT).build();
     StockCardLineItem adjustmentItem3 = createStockCardLineItem(null, null, orderableNolot, 10,
         day070208, day0702, null, reason2);
 
-    //2021-07-02 09:00:00 physicalInventory negative
+    // 2021-07-02 09:00:00 physicalInventory negative
     StockCardLineItem physicalInventoryItem3 = createStockCardLineItem(null, null, orderableNolot, 180,
         day070209, day0702, negativeAdjustment(), null);
 
-    //2021-07-02 10:00:00 Unpack Kit
+    // 2021-07-02 10:00:00 Unpack Kit
     StockCardLineItemReason reason3 = StockCardLineItemReason.builder()
         .name("Unpack Kit").reasonType(ReasonType.CREDIT).build();
     StockCardLineItem uppackKit = createStockCardLineItem(null, null, orderableNolot, 10,
@@ -536,14 +542,14 @@ public class SiglusStockCardLineItemServiceTest {
             adjustmentItem1, adjustmentItem3, physicalInventoryItem3,
             uppackKit);
 
-    //2021-07-01
-    CalculatedStockOnHand sohOrderableNoLotOne = createCalculatedStockOnHand(orderableNolot, day0701, 270);
+    // 2021-07-01
+    CalculatedStockOnHand sohOrderableNoLotDay1 = createCalculatedStockOnHand(orderableNolot, day0701, 270);
 
-    //2021-07-02
-    CalculatedStockOnHand sohOrderableNoLot1Two = createCalculatedStockOnHand(orderableNolot, day0702, 190);
+    // 2021-07-02
+    CalculatedStockOnHand sohOrderableNoLot1Day2 = createCalculatedStockOnHand(orderableNolot, day0702, 190);
 
     List<CalculatedStockOnHand> stockOnHandList = Arrays
-        .asList(sohOrderableNoLotOne, sohOrderableNoLot1Two);
+        .asList(sohOrderableNoLotDay1, sohOrderableNoLot1Day2);
 
     when(stockCardLineItemRepository
         .findByFacilityIdAndIdStartTimeEndTime(any(UUID.class), any(String.class), any(String.class)))
@@ -580,6 +586,7 @@ public class SiglusStockCardLineItemServiceTest {
     siglusLotResponseByLotId.put(lotId1FromOrderable1,
         SiglusLotResponse.builder().lotCode(lotId1FromOrderable1Code).expirationDate(getLocalDate(day0701))
             .build());
+    String lotId2FromOrderable1Code = "lotId2FromOrderable1Code";
     siglusLotResponseByLotId.put(lotId2FromOrderable1,
         SiglusLotResponse.builder().lotCode(lotId2FromOrderable1Code).expirationDate(getLocalDate(day0701))
             .build());

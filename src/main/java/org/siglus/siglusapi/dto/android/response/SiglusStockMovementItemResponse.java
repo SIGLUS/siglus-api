@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -36,7 +37,7 @@ public class SiglusStockMovementItemResponse {
 
   private String signature;
 
-  private Long processedDate;
+  private Instant processedDate;
 
   private LocalDate occurredDate;
 

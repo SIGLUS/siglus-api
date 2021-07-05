@@ -37,6 +37,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
@@ -56,6 +57,9 @@ public class SiglusMeControllerTest {
 
   @Mock
   private FacilityResponse facilityResponse;
+
+  @Mock
+  private FacilityProductMovementsResponse facilityProductMovementsResponse;
 
   @Before
   public void setup() {
@@ -153,6 +157,20 @@ public class SiglusMeControllerTest {
 
     // then
     verify(service).processHfCmms(cmmsInfos);
+  }
+
+  @Test
+  public void shouldCallServiceWhenGetFacilityStockCards() {
+    // given
+    when(service.getProductMovements("2021-06-30", "2021-07-02")).thenReturn(facilityProductMovementsResponse);
+
+    // when
+    FacilityProductMovementsResponse productMovementsResponse = controller
+        .getFacilityStockCards("2021-06-30", "2021-07-02");
+
+    // then
+    assertSame(productMovementsResponse, this.facilityProductMovementsResponse);
+    verify(service).getProductMovements("2021-06-30", "2021-07-02");
   }
 
   private List<HfCmmDto> mockFacilityCmms() {
