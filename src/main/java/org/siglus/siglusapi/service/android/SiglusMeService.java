@@ -135,7 +135,7 @@ public class SiglusMeService {
     UNPACK_KIT {
       @Override
       UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
-        return context.findReasonId(programId, "Unpack Kit");
+        return context.findReasonId(programId, AdjustmentReason.valueOf("UNPACK_KIT").getValue());
       }
     };
 
@@ -215,7 +215,8 @@ public class SiglusMeService {
     LOANS_RECEIVED("Emprestimo Recebido pela US"),
     PROD_DEFECTIVE("Produto com defeito, movido para quarentena"),
     RETURN_FROM_QUARANTINE("Devoluções da Quarentena"),
-    RETURN_TO_DDM("Devolução para o DDM");
+    RETURN_TO_DDM("Devolução para o DDM"),
+    UNPACK_KIT("Unpack Kit");
 
     private final String value;
 
@@ -317,7 +318,6 @@ public class SiglusMeService {
     return syncResponse;
   }
 
-  @Transactional
   public void createStockCards(List<StockCardCreateRequest> requests) {
     FacilityDto facilityDto = getCurrentFacilityInfo();
     initCreateStockCardContext(facilityDto);
