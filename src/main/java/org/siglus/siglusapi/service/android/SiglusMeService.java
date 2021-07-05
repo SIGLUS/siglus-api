@@ -170,7 +170,7 @@ public class SiglusMeService {
   @Getter
   public enum Source {
     DISTRICT_DDM("District(DDM)"),
-    INTERMEDIATE_WAREHOUSE("Armazém Intermediário)"),
+    INTERMEDIATE_WAREHOUSE("Armazém Intermediário"),
     PROVINCE_DPM("Province(DPM)");
 
     private final String value;
