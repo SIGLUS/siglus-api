@@ -29,8 +29,8 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
       + "on c.id = i.stockcardid "
       + "where "
       + "c.facilityid = :facilityId "
-      + "and i.processeddate > :startTime "
-      + "and i.processeddate <= :endTime", nativeQuery = true)
+      + "and i.occurreddate > :startTime "
+      + "and i.occurreddate <= :endTime", nativeQuery = true)
   List<StockCardLineItem> findByFacilityIdAndIdStartTimeEndTime(
       @Param("facilityId") UUID facilityId,
       @Param("startTime") String startTime,

@@ -74,8 +74,8 @@ public interface CalculatedStockOnHandRepository
       + "on c.id = h.stockcardid "
       + "where "
       + "c.facilityid = :facilityId "
-      + "and h.processeddate > :startTime "
-      + "and h.processeddate <= :endTime", nativeQuery = true)
+      + "and h.occurreddate > :startTime "
+      + "and h.occurreddate <= :endTime", nativeQuery = true)
   List<CalculatedStockOnHand> findByFacilityIdAndIdStartTimeEndTime(
       @Param("facilityId") UUID facilityId,
       @Param("startTime") String startTime,
