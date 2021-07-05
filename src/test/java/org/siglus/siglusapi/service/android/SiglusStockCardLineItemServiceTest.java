@@ -612,6 +612,7 @@ public class SiglusStockCardLineItemServiceTest {
         .stockAdjustments(adjustments)
         .documentNumber(documentNumber)
         .signature(signature)
+        .originEvent(event)
         .build();
   }
 
@@ -620,7 +621,6 @@ public class SiglusStockCardLineItemServiceTest {
     stockCard.setId(stockCardId1);
     stockCard.setOrderableId(orderableId1);
     stockCard.setLotId(lotId1FromOrderable1);
-    stockCard.setOriginEvent(event);
     return stockCard;
   }
 
@@ -629,7 +629,6 @@ public class SiglusStockCardLineItemServiceTest {
     stockCard.setId(stockCardId2);
     stockCard.setOrderableId(orderableId1);
     stockCard.setLotId(lotId2FromOrderable1);
-    stockCard.setOriginEvent(event);
     return stockCard;
   }
 
@@ -638,7 +637,6 @@ public class SiglusStockCardLineItemServiceTest {
     stockCard.setId(stockCardId3);
     stockCard.setOrderableId(orderableId2);
     stockCard.setLotId(lotId1FromOrderable2);
-    stockCard.setOriginEvent(event);
     return stockCard;
   }
 
@@ -647,7 +645,6 @@ public class SiglusStockCardLineItemServiceTest {
     stockCard.setId(stockCardId4);
     stockCard.setOrderableId(orderableId2);
     stockCard.setLotId(lotId2FromOrderable2);
-    stockCard.setOriginEvent(event);
     return stockCard;
   }
 
@@ -655,7 +652,6 @@ public class SiglusStockCardLineItemServiceTest {
     StockCard stockCard = new StockCard();
     stockCard.setId(stockCardId5);
     stockCard.setOrderableId(orderableId3);
-    stockCard.setOriginEvent(event);
     return stockCard;
   }
 

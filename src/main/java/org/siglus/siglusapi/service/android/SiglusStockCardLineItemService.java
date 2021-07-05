@@ -213,10 +213,10 @@ public class SiglusStockCardLineItemService {
         .occurredDate(firstItem.getOccurredDate()).movementQuantity(0).stockOnHand(0).build();
   }
 
-  private Integer getRequested(StockCardLineItemDto item) {
+  private Integer getRequested(StockCardLineItemDto itemDto) {
     StockEventProductRequested stockEventExtension = requestQuantityRepository.findOne(
-        Example.of(StockEventProductRequested.builder().orderableId(item.getStockCard().getOrderableId())
-            .stockeventId(item.getStockCard().getOriginEvent().getId()).build()));
+        Example.of(StockEventProductRequested.builder().orderableId(itemDto.getStockCard().getOrderableId())
+            .stockeventId(itemDto.getLineItem().getOriginEvent().getId()).build()));
     if (stockEventExtension == null) {
       return null;
     }
@@ -260,7 +260,9 @@ public class SiglusStockCardLineItemService {
         .occurredDate(item.getOccurredDate()).stockOnHand(currentSoh).quantity(quantity)
         .documentNumber(item.getDocumentNumber())
         .reason(getStockCardLineItemReasonDto(item, quantity))
-        .stockCard(item.getStockCard()).build();
+        .stockCard(item.getStockCard())
+        .lineItem(item)
+        .build();
   }
 
   private StockCardLineItemReasonDto getStockCardLineItemReasonDto(StockCardLineItem item, Integer quantity) {
