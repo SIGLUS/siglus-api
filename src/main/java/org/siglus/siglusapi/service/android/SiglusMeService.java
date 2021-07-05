@@ -30,6 +30,7 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -140,7 +141,7 @@ public class SiglusMeService {
     UNPACK_KIT {
       @Override
       UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
-        return context.findReasonId(programId, AdjustmentReason.valueOf("UNPACK_KIT").getValue());
+        return context.findReasonId(programId, "UNPACK_KIT");
       }
     };
 
@@ -325,6 +326,7 @@ public class SiglusMeService {
     return syncResponse;
   }
 
+  @Transactional
   public void createStockCards(List<StockCardCreateRequest> requests) {
     FacilityDto facilityDto = getCurrentFacilityInfo();
     initCreateStockCardContext(facilityDto);
@@ -486,15 +488,29 @@ public class SiglusMeService {
 
   private void createStockEvent(List<StockCardCreateRequest> requests, FacilityDto facilityDto,
       Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts) {
+    String signature = requests.stream().findFirst()
+        .map(StockCardCreateRequest::getSignature)
+        .orElse(null);
+    buildStockEventForProductMovement(requests, facilityDto, allApprovedProducts, signature);
+    buildStockEventForLotMovement(requests, facilityDto, allApprovedProducts, signature);
+  }
+
+  private void buildStockEventForProductMovement(List<StockCardCreateRequest> requests,
+      FacilityDto facilityDto, Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts,
+      String signature) {
+    //kit && no stock
+    buildStockEvent(true, requests, facilityDto, allApprovedProducts, signature);
+  }
+
+  private void buildStockEventForLotMovement(List<StockCardCreateRequest> requests,
+      FacilityDto facilityDto, Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts,
+      String signature) {
+    Map<UUID, UUID> programToStockEventIds = buildStockEvent(false, requests, facilityDto,
+        allApprovedProducts, signature);
     MovementType type = requests.stream().findFirst()
         .map(StockCardCreateRequest::getType)
         .map(MovementType::valueOf)
         .orElse(null);
-    String signature = requests.stream().findFirst()
-        .map(StockCardCreateRequest::getSignature)
-        .orElse(null);
-    StockEventDto stockEvent = buildStockEvent(facilityDto, signature, requests, allApprovedProducts);
-    Map<UUID, UUID> programToStockEventIds = stockEventsService.createStockEventForNoDraftAllProducts(stockEvent);
     if (type == MovementType.ISSUE) {
       List<StockEventProductRequested> requestQuantities = requests.stream()
           .filter(stockCardCreateRequest -> stockCardCreateRequest.getRequested() != null)
@@ -504,16 +520,16 @@ public class SiglusMeService {
     }
   }
 
-  private StockEventProductRequested buildProductRequest(StockCardCreateRequest request,
-      Map<UUID, UUID> programToStockEventIds,
-      Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts) {
-    org.openlmis.requisition.dto.OrderableDto orderableDto = allApprovedProducts.get(request.getProductCode());
-    UUID programId = getProgramId(orderableDto);
-    return StockEventProductRequested.builder()
-        .orderableId(orderableDto.getId())
-        .stockeventId(programToStockEventIds.get(programId))
-        .requestedQuantity(request.getRequested())
-        .build();
+  private Map<UUID, UUID> buildStockEvent(boolean isProductMovement, List<StockCardCreateRequest> requests,
+      FacilityDto facilityDto, Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts,
+      String signature) {
+    List<StockCardCreateRequest> requestMovement = requests.stream()
+        .filter(request -> request.getLotEvents().isEmpty() == isProductMovement).collect(toList());
+    if (!requestMovement.isEmpty()) {
+      StockEventDto stockEvent = buildStockEvent(facilityDto, signature, requestMovement, allApprovedProducts);
+      return stockEventsService.createStockEventForNoDraftAllProducts(stockEvent);
+    }
+    return new HashMap<>();
   }
 
   private StockEventDto buildStockEvent(FacilityDto facilityDto, String signature,
@@ -529,6 +545,18 @@ public class SiglusMeService {
         .flatMap(Collection::stream)
         .collect(toList()));
     return eventDto;
+  }
+
+  private StockEventProductRequested buildProductRequest(StockCardCreateRequest request,
+      Map<UUID, UUID> programToStockEventIds,
+      Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts) {
+    org.openlmis.requisition.dto.OrderableDto orderableDto = allApprovedProducts.get(request.getProductCode());
+    UUID programId = getProgramId(orderableDto);
+    return StockEventProductRequested.builder()
+        .orderableId(orderableDto.getId())
+        .stockeventId(programToStockEventIds.get(programId))
+        .requestedQuantity(request.getRequested())
+        .build();
   }
 
   private List<StockEventLineItemDto> buildEventItems(StockCardCreateRequest request,

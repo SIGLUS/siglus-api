@@ -386,23 +386,51 @@ public class SiglusMeServiceTest {
   }
 
   @Test
-  @Ignore
   public void shouldGetSohValueByLot() {
     // given
-    createSohValueByIsNolot(false);
+    ProgramDto programDto = mock(ProgramDto.class);
+    when(programDto.getId()).thenReturn(UUID.randomUUID());
+    when(programDto.getCode()).thenReturn("code");
+    when(approvedProductService.getApprovedProducts(facilityId, programDto.getId(), emptyList()))
+        .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
+    UUID lotId1 = UUID.randomUUID();
+    UUID lotId2 = UUID.randomUUID();
+    String lotCode1 = "lotCode1";
+    String lotCode2 = "lotCode2";
+    when(lotReferenceDataService.findAllLot(any())).thenReturn(Arrays.asList(
+        mockLotDto(lotCode1, lotId1, tradeItem1), mockLotDto(lotCode2, lotId2, tradeItem2)));
+    StockCardSummaryV2Dto summary1 = new StockCardSummaryV2Dto();
+    summary1.setOrderable(new VersionObjectReferenceDto(productId1, "", "", 1L));
+    CanFulfillForMeEntryDto forMeEntryDto1 = new CanFulfillForMeEntryDtoDataBuilder()
+        .withStockOnHand(10)
+        .withLot(new VersionObjectReferenceDto(lotId1, "", "", 1L))
+        .build();
+    forMeEntryDto1.setStockOnHand(10);
+    summary1.setCanFulfillForMe(newHashSet(forMeEntryDto1));
+
+    StockCardSummaryV2Dto summary2 = new StockCardSummaryV2Dto();
+    summary2.setOrderable(new VersionObjectReferenceDto(productId2, "", "", 1L));
+    CanFulfillForMeEntryDto forMeEntryDto2 = new CanFulfillForMeEntryDtoDataBuilder()
+        .withStockOnHand(10)
+        .withLot(new VersionObjectReferenceDto(lotId2, "", "", 1L))
+        .build();
+    forMeEntryDto2.setStockOnHand(20);
+    summary2.setCanFulfillForMe(newHashSet(forMeEntryDto2));
+    when(stockCardSummariesService
+        .findAllProgramStockSummaries()).thenReturn(Arrays.asList(summary1, summary2));
 
     // when
     List<LotStockOnHand> lotStockOnHands = service.getLotStockOnHands();
 
     // then
     LotStockOnHand stock1 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId1))
-        .filter(s -> s.getLotId().equals(lotId1OrderableId1))
+        .filter(s -> s.getLotId().equals(lotId1))
         .findFirst().orElse(null);
     assertNotNull(stock1);
     assertEquals(10, stock1.getStockOnHand().intValue());
 
     LotStockOnHand stock2 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId2))
-        .filter(s -> s.getLotId().equals(lotId1OrderableId2))
+        .filter(s -> s.getLotId().equals(lotId2))
         .findFirst().orElse(null);
     assertNotNull(stock2);
     assertEquals(20, stock2.getStockOnHand().intValue());

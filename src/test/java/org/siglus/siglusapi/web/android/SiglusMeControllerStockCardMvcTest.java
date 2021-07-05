@@ -131,7 +131,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     // then
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
-    verify(stockEventsService, times(9)).createStockEventForNoDraftAllProducts(any());
+    verify(stockEventsService, times(13)).createStockEventForNoDraftAllProducts(any());
     verify(requestQuantityRepository, times(2)).save(anyListOf(StockEventProductRequested.class));
   }
 
