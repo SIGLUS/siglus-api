@@ -57,4 +57,8 @@ public class RequisitionTemplateService {
     }
   }
 
+  public RequisitionTemplate findTemplateById(UUID id) {
+    return requisitionTemplateRepository.findOne(id);
+  }
+
 }

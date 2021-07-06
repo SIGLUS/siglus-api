@@ -72,6 +72,7 @@ import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.request.RequisitionRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
@@ -258,6 +259,7 @@ public class SiglusMeService {
   private final AndroidHelper androidHelper;
   private final ReportTypesRepository reportTypesRepository;
   private final SiglusRequisitionRepository requisitionRepository;
+  private final SiglusRequisitionService siglusRequisitionService;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -383,6 +385,11 @@ public class SiglusMeService {
             .build())
         .collect(toList());
     return FacilityProductMovementsResponse.builder().productMovements(productMovementResponses).build();
+  }
+
+  @Transactional
+  public void createRequisition(RequisitionRequest request) {
+    siglusRequisitionService.create(request);
   }
 
   private List<LotDto> getLotsList(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,

@@ -35,8 +35,8 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_REQUISITION_NOT_FO
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_REQUISITION_WAS_SPLIT;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_VALIDATION_CANNOT_CONVERT_WITHOUT_APPROVED_QTY;
 import static org.openlmis.requisition.service.PermissionService.ORDERS_EDIT;
-import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
-import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 
 import com.google.common.collect.Sets;
 import java.time.LocalDate;

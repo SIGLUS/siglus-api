@@ -13,18 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.constant;
+package org.siglus.siglusapi.dto;
 
-public class FieldConstants {
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-  private FieldConstants() { }
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class ExtraDataSignatureDto {
 
-  public static final String ACTUAL_START_DATE = "actualStartDate";
+  private String submit;
 
-  public static final String ACTUAL_END_DATE = "actualEndDate";
+  private String authorize;
 
-  public static final String EXTRA_DATA_IS_SAVED = "isSaved";
-
-  public static final String EXTRA_DATA_SIGNATURE = "signaure";
+  private String[] approve;
 
 }

@@ -22,8 +22,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
-import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

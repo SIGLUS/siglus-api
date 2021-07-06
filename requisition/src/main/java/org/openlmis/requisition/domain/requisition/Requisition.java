@@ -39,10 +39,10 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_MUST_BE_SUBMITTED_
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_PROGRAM_DOES_NOT_ALLOW_SKIP;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_SKIP_FAILED_EMERGENCY;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_SKIP_FAILED_WRONG_STATUS;
-import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
-import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
-import static org.siglus.common.constant.FieldConstants.EXTRA_DATA_IS_SAVED;
-import static org.siglus.common.constant.FieldConstants.EXTRA_DATA_SIGNATURE;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
+import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
@@ -541,7 +541,7 @@ public class Requisition extends BaseTimestampedEntity {
   // [SIGLUS change start]
   // [change reason]: for our frontend difference initial && second time to fill some filed.
   private void setIsSavedExtraData(Boolean isSaved) {
-    this.extraData.put(EXTRA_DATA_IS_SAVED, isSaved);
+    this.extraData.put(IS_SAVED, isSaved);
   }
   // [SIGLUS change end]
 
@@ -1076,9 +1076,9 @@ public class Requisition extends BaseTimestampedEntity {
   // [SIGLUS change start]
   // [change reason]: #344 clear the signature from extra data
   private void clearSignature() {
-    if (this.extraData.containsKey(EXTRA_DATA_SIGNATURE)) {
+    if (this.extraData.containsKey(SIGNATURE)) {
       Map<String, Object> extra = this.extraData.getExtraData();
-      extra.entrySet().removeIf(entry -> entry.getKey().equals(EXTRA_DATA_SIGNATURE));
+      extra.entrySet().removeIf(entry -> entry.getKey().equals(SIGNATURE));
     }
   }
   // [SIGLUS change end]

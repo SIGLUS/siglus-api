@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.domain;
 
-import static org.siglus.common.constant.FieldConstants.EXTRA_DATA_IS_SAVED;
+import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 
 import java.util.Collections;
 import java.util.List;
@@ -134,7 +134,7 @@ public class RequisitionDraft extends BaseEntity {
     draft.setRequisitionId(requisitionDto.getId());
     draft.setDraftStatusMessage(requisitionDto.getDraftStatusMessage());
     draft.extraData.updateFrom(requisitionDto.getExtraData());
-    draft.extraData.put(EXTRA_DATA_IS_SAVED, true);
+    draft.extraData.put(IS_SAVED, true);
     RequisitionTemplateExtension extension = template.getTemplateExtension();
     if (Boolean.TRUE.equals(extension.getEnableProduct())) {
       draft.setLineItems(requisitionDto.getRequisitionLineItems().stream().map(lineItem ->

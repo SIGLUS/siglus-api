@@ -25,6 +25,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.siglus.common.exception.ValidationMessageException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +49,14 @@ public class SiglusProgramService {
       return getAllProgramDto();
     }
     return programRefDataService.findOne(programId);
+  }
+
+  public UUID getProgramIdByCode(String code) {
+    ProgramDto program = programRefDataService.findAll().stream()
+        .filter(programDto -> programDto.getCode().equals(code))
+        .findFirst()
+        .orElseThrow(() -> new ValidationMessageException("invalid program code"));
+    return program.getId();
   }
 
   private ProgramDto getAllProgramDto() {

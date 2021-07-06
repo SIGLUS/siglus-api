@@ -17,8 +17,8 @@ package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_REPORTING_TEMPLATE_NOT_FOUND_WITH_NAME;
-import static org.siglus.common.constant.FieldConstants.ACTUAL_END_DATE;
-import static org.siglus.common.constant.FieldConstants.ACTUAL_START_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 import static org.siglus.siglusapi.constant.FieldConstants.CONSUMED;
 
 import java.time.LocalDate;
