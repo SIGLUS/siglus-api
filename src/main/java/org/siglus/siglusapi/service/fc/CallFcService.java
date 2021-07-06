@@ -90,8 +90,7 @@ public class CallFcService {
     apiToClassMap.put(GEOGRAPHIC_ZONE_API, FcGeographicZoneNationalDto[].class);
   }
 
-  @Retryable(value = Exception.class, maxAttempts = 5, backoff = @Backoff(delay = 5000,
-      multiplier = 2))
+  @Retryable(value = Exception.class, backoff = @Backoff(delay = 2000, multiplier = 2))
   public void fetchData(String url, String api) {
     String param = url.split("psize=20&")[1];
     log.info("[FC] fetch {}: {}", api, param);

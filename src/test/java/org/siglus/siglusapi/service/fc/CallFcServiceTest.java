@@ -72,7 +72,7 @@ public class CallFcServiceTest {
   }
 
   @Test(expected = Exception.class)
-  public void shouldRetry5TimesAndThrowExceptionWhenFetchDataFailed() {
+  public void shouldRetryAndThrowExceptionWhenFetchDataFailed() {
     // given
     Class<IssueVoucherDto[]> clazz = IssueVoucherDto[].class;
     when(remoteRestTemplate.getForEntity(URL, clazz))
