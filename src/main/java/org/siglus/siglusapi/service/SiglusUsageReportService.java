@@ -57,7 +57,7 @@ import org.siglus.siglusapi.dto.KitUsageServiceLineItemDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusUsageTemplateDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
-import org.siglus.siglusapi.dto.validation.group.sequence.RequisitionActionSequence;
+import org.siglus.siglusapi.dto.sequence.RequisitionActionSequence;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
 import org.springframework.beans.factory.annotation.Autowired;

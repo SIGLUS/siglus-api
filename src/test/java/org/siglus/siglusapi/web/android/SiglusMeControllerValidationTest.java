@@ -49,9 +49,9 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
-import org.siglus.siglusapi.dto.android.validators.stockcard.KitProductEmptyLotsValidator;
-import org.siglus.siglusapi.dto.android.validators.stockcard.LotStockConsistentWithExistedValidator;
-import org.siglus.siglusapi.dto.validation.group.sequence.PerformanceSequence;
+import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
+import org.siglus.siglusapi.dto.android.validator.stockcard.KitProductEmptyLotsValidator;
+import org.siglus.siglusapi.dto.android.validator.stockcard.LotStockConsistentWithExistedValidator;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 

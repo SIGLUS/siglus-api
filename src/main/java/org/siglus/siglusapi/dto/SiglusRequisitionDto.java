@@ -24,9 +24,9 @@ import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
-import org.siglus.siglusapi.dto.validation.constraint.ConsultationNumberConstraint;
-import org.siglus.siglusapi.dto.validation.constraint.PatientDataConstraint;
-import org.siglus.siglusapi.dto.validation.group.RequisitionActionGroup;
+import org.siglus.siglusapi.dto.constraint.ConsultationNumberConstraint;
+import org.siglus.siglusapi.dto.constraint.PatientDataConstraint;
+import org.siglus.siglusapi.dto.group.RequisitionActionGroup;
 import org.springframework.beans.BeanUtils;
 
 @Data

@@ -24,10 +24,10 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
-import org.siglus.siglusapi.dto.android.constraints.stockcard.KitProductEmptyLots;
-import org.siglus.siglusapi.dto.android.constraints.stockcard.PositiveInitStockOnHand;
-import org.siglus.siglusapi.dto.android.constraints.stockcard.ProductConsistentWithOwnLots;
-import org.siglus.siglusapi.dto.validation.group.PerformanceGroup;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.KitProductEmptyLots;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.PositiveInitStockOnHand;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithOwnLots;
+import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 
 @Data
 @ProductConsistentWithOwnLots
