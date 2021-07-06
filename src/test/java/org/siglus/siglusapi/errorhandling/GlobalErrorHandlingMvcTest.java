@@ -134,7 +134,7 @@ public class GlobalErrorHandlingMvcTest {
   }
 
   @Test
-  public void shouldReturnBadRequestWhenHandleErrorGivenConstraintViolation() throws Exception {
+  public void shouldReturnBadRequestWhenHandleErrorGivenConstraintViolationException() throws Exception {
     // given
     RequestBuilder request = get("/test/constraint-violation").contentType(MediaType.APPLICATION_JSON);
 
@@ -144,7 +144,9 @@ public class GlobalErrorHandlingMvcTest {
     // when
     response.andExpect(status().isBadRequest())
         .andExpect(jsonPath("messageKey").value("siglusapi.error.validationFail"))
-        .andExpect(jsonPath("message").value("siglusapi.error.validationFail"));
+        .andExpect(jsonPath("message").value("siglusapi.error.validationFail"))
+        .andExpect(jsonPath("fields[0].propertyPath").value("propertyPath"))
+        .andExpect(jsonPath("fields[0].message").value("text"));
   }
 
 }
