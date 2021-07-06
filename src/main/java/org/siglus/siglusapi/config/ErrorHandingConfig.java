@@ -13,35 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.errorhandling.message;
+package org.siglus.siglusapi.config;
 
-import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.zalando.problem.ProblemModule;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import javax.validation.ConstraintViolation;
-import lombok.Getter;
-import org.siglus.common.util.Message.LocalizedMessage;
+@Configuration
+public class ErrorHandingConfig {
 
-@Getter
-public class ValidationFailMessage {
-
-  private final String messageKey;
-
-  private final String message;
-
-  private final List<ValidationFailField> fields = new ArrayList<>();
-
-  public ValidationFailMessage(LocalizedMessage message, Set<ConstraintViolation<?>> violations) {
-    messageKey = message.getMessageKey();
-    this.message = message.getMessage();
-    if (isEmpty(violations)) {
-      return;
-    }
-    for (ConstraintViolation<?> violation : violations) {
-      fields.add(new ValidationFailField(violation));
-    }
-
+  @Bean
+  public ProblemModule problemModule() {
+    return new ProblemModule().withStackTraces(false);
   }
+
 }

@@ -18,8 +18,8 @@ package org.siglus.siglusapi.errorhandling.message;
 import static java.util.Optional.ofNullable;
 
 import java.util.Objects;
-import javax.validation.ConstraintViolation;
 import lombok.Getter;
+import org.zalando.problem.spring.web.advice.validation.Violation;
 
 @Getter
 public class ValidationFailField {
@@ -28,9 +28,8 @@ public class ValidationFailField {
 
   private final String message;
 
-  public ValidationFailField(ConstraintViolation<?> constraintViolation) {
-    propertyPath = ofNullable(constraintViolation.getPropertyPath()).map(Objects::toString)
-        .orElse(null);
-    message = constraintViolation.getMessage();
+  public ValidationFailField(Violation violation) {
+    propertyPath = ofNullable(violation.getField()).map(Objects::toString).orElse(null);
+    message = violation.getMessage();
   }
 }

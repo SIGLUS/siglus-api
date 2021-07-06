@@ -22,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Locale;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,10 +42,15 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver;
+import org.zalando.problem.ProblemModule;
 
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals"})
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {ExceptionHandlerExceptionResolver.class, GlobalErrorHandling.class})
+@ContextConfiguration(classes = {
+    ExceptionHandlerExceptionResolver.class,
+    ObjectMapper.class,
+    GlobalErrorHandling.class
+})
 public class GlobalErrorHandlingMvcTest {
 
   static final String ERROR_MESSAGE = "error-message";
@@ -59,12 +65,17 @@ public class GlobalErrorHandlingMvcTest {
   @Autowired
   private ExceptionHandlerExceptionResolver exceptionResolver;
 
+  @Autowired
+  private ObjectMapper mapper;
+
   private MockMvc mockMvc;
 
   @Before
   public void setUp() {
+    // this part has been done in ErrorHandingConfig
+    mapper.registerModule(new ProblemModule().withStackTraces(false));
     // otherwise the bean can't be write into the response
-    exceptionResolver.getMessageConverters().add(new MappingJackson2HttpMessageConverter());
+    exceptionResolver.getMessageConverters().add(new MappingJackson2HttpMessageConverter(mapper));
     mockMvc = MockMvcBuilders.standaloneSetup(new GlobalErrorHandlingTestController())
         .setControllerAdvice(exceptionResolver)
         .build();

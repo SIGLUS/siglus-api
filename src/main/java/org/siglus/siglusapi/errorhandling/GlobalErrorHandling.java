@@ -16,30 +16,45 @@
 package org.siglus.siglusapi.errorhandling;
 
 import static org.siglus.common.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
+import static org.zalando.problem.Problem.DEFAULT_TYPE;
+import static org.zalando.problem.Status.BAD_REQUEST;
 
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.Message.LocalizedMessage;
-import org.siglus.siglusapi.errorhandling.message.ValidationFailMessage;
+import org.siglus.siglusapi.errorhandling.message.ValidationFailField;
 import org.siglus.siglusapi.exception.NotAcceptableException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.context.request.NativeWebRequest;
+import org.zalando.problem.Problem;
+import org.zalando.problem.StatusType;
+import org.zalando.problem.ThrowableProblem;
+import org.zalando.problem.spring.web.advice.ProblemHandling;
+import org.zalando.problem.spring.web.advice.validation.Violation;
 
 /**
  * Global error handling for all controllers in the service. Contains common error handling mappings.
  */
 @ControllerAdvice
-public class GlobalErrorHandling extends AbstractErrorHandling {
+public class GlobalErrorHandling extends AbstractErrorHandling implements ProblemHandling {
 
-  private static final Map<String, String> CONSTRAINT_MAP = new HashMap<>();
+  private static final String MESSAGE_KEY = "messageKey";
+  private static final String MESSAGE = "message";
+  private static final Map<String, String> CONSTRAINT_MAP = new ConcurrentHashMap<>();
 
   static {
     CONSTRAINT_MAP.put("unq_widget_code", MessageKeys.ERROR_WIDGET_CODE_DUPLICATED);
@@ -53,46 +68,58 @@ public class GlobalErrorHandling extends AbstractErrorHandling {
     return getLocalizedMessage(ex);
   }
 
-  /**
-   * Handles Message exceptions and returns status 400 Bad Request.
-   *
-   * @param ex the ValidationMessageException to handle
-   * @return the error response for the user
-   */
-  @ExceptionHandler(ValidationMessageException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  @ResponseBody
-  public Message.LocalizedMessage handleMessageException(ValidationMessageException ex) {
-    return getLocalizedMessage(ex);
+  @ExceptionHandler
+  public ResponseEntity<Problem> handleDataIntegrityViolation(
+      final ValidationMessageException exception,
+      final NativeWebRequest request) {
+    LocalizedMessage localizedMessage = getLocalizedMessage(exception);
+    ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE)
+        .with(MESSAGE_KEY, localizedMessage.getMessageKey())
+        .with(MESSAGE, localizedMessage.getMessage())
+        .build();
+    return create(problem, request);
   }
 
-  /**
-   * Handles data integrity violation exception.
-   * @param ex the data integrity exception
-   * @return the user-oriented error message.
-   */
-  @ExceptionHandler(DataIntegrityViolationException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  @ResponseBody
-  public Message.LocalizedMessage handleDataIntegrityViolation(DataIntegrityViolationException ex) {
-    if (ex.getCause() instanceof ConstraintViolationException) {
-      ConstraintViolationException cause = (ConstraintViolationException) ex.getCause();
-      String messageKey = CONSTRAINT_MAP.get(cause.getConstraintName());
+  @ExceptionHandler
+  public ResponseEntity<Problem> handleDataIntegrityViolation(
+      final DataIntegrityViolationException exception,
+      final NativeWebRequest request) {
+    String messageKey = null;
+    String message = null;
+    if (exception.getCause() instanceof ConstraintViolationException) {
+      ConstraintViolationException cause = (ConstraintViolationException) exception.getCause();
+      messageKey = CONSTRAINT_MAP.get(cause.getConstraintName());
       if (messageKey != null) {
-        return getLocalizedMessage(new Message(messageKey));
+        message = getLocalizedMessage(new Message(messageKey)).getMessage();
       }
     }
-
-    return getLocalizedMessage(new Message(ex.getMessage()));
+    if (messageKey == null) {
+      messageKey = exception.getMessage();
+    }
+    ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE)
+        .with(MESSAGE_KEY, messageKey)
+        .with(MESSAGE, message != null ? message : messageKey)
+        .build();
+    return create(problem, request);
   }
 
-  @ExceptionHandler(javax.validation.ConstraintViolationException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  @ResponseBody
-  public ValidationFailMessage handleConstraintViolationException(
-      javax.validation.ConstraintViolationException ex) {
+  @Override
+  public ResponseEntity<Problem> newConstraintViolationProblem(@Nonnull Throwable throwable,
+      Collection<Violation> violations,
+      @Nonnull NativeWebRequest request) {
+    final StatusType status = defaultConstraintViolationStatus();
     LocalizedMessage localizedMessage = getLocalizedMessage(new Message(ERROR_VALIDATION_FAIL));
-    return new ValidationFailMessage(localizedMessage, ex.getConstraintViolations());
+    List<ValidationFailField> fields = violations.stream()
+        .map(ValidationFailField::new)
+        .collect(Collectors.toList());
+    ThrowableProblem problem = Problem.builder()
+        .withStatus(status)
+        .with(MESSAGE_KEY, localizedMessage.getMessageKey())
+        .with(MESSAGE, localizedMessage.getMessage())
+        .with("fields", fields)
+        .build();
+    return create(problem, request);
   }
+
 
 }
