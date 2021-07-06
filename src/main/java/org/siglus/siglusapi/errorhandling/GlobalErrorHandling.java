@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
@@ -50,6 +50,7 @@ import org.zalando.problem.spring.web.advice.validation.Violation;
  * Global error handling for all controllers in the service. Contains common error handling mappings.
  */
 @ControllerAdvice
+@ParametersAreNonnullByDefault
 public class GlobalErrorHandling extends AbstractErrorHandling implements ProblemHandling {
 
   private static final String MESSAGE_KEY = "messageKey";
@@ -104,9 +105,8 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   }
 
   @Override
-  public ResponseEntity<Problem> newConstraintViolationProblem(@Nonnull Throwable throwable,
-      Collection<Violation> violations,
-      @Nonnull NativeWebRequest request) {
+  public ResponseEntity<Problem> newConstraintViolationProblem(Throwable throwable, Collection<Violation> violations,
+      NativeWebRequest request) {
     final StatusType status = defaultConstraintViolationStatus();
     LocalizedMessage localizedMessage = getLocalizedMessage(new Message(ERROR_VALIDATION_FAIL));
     List<ValidationFailField> fields = violations.stream()
