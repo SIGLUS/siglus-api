@@ -74,6 +74,7 @@ import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
 
@@ -133,6 +134,24 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     // TODO a little further?
     verify(stockEventsService, times(13)).createStockEventForNoDraftAllProducts(any());
     verify(requestQuantityRepository, times(2)).save(anyListOf(StockEventProductRequested.class));
+  }
+
+  @Test
+  public void shouldReturnCreatedWhenSaveStockCardsGivenUatsRequest() throws Exception {
+    // given
+    RequestBuilder request = post("/api/siglusapi/android/me/facility/stockCards")
+        .contentType(MediaType.APPLICATION_JSON)
+        .content(readFromFile("uats.json"))
+        .characterEncoding("utf-8");
+
+    // when
+    ResultActions resultActions = mockMvc.perform(request).andDo(print());
+
+    // then
+    resultActions.andExpect(status().isCreated());
+    // TODO a little further?
+    verify(stockEventsService, times(1)).createStockEventForNoDraftAllProducts(any());
+    verify(requestQuantityRepository, times(1)).save(anyListOf(StockEventProductRequested.class));
   }
 
   private void mockHomeFacility() {

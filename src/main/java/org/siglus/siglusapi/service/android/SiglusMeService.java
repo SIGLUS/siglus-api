@@ -195,7 +195,8 @@ public class SiglusMeService {
     MOBILE_UNIT("Unidade Movel"),
     PAV("PAV"),
     PNCTL("PNCTL"),
-    PUB_PHARMACY("Farmácia");
+    PUB_PHARMACY("Farmácia"),
+    UATS("UATS");
 
     private final String value;
 
