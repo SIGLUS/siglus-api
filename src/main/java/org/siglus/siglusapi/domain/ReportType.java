@@ -32,7 +32,7 @@ import org.siglus.common.domain.BaseEntity;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "reporttypes", schema = "siglusintegration")
+@Table(name = "report_types", schema = "siglusintegration")
 public class ReportType extends BaseEntity {
 
   private UUID id;

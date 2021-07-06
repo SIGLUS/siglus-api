@@ -2,13 +2,14 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-CREATE TABLE siglusintegration.reporttypes(
+CREATE TABLE siglusintegration.report_types(
   id UUID PRIMARY KEY,
   facilityid UUID NOT NULL,
   name VARCHAR(255) NOT NULL,
   programcode VARCHAR(255) NOT NULL,
   active BOOLEAN NOT NULL,
-  startdate DATE
+  startdate DATE,
+  UNIQUE (facilityid, programcode)
 );
 
-CREATE INDEX siglusintegration_reporttypes_idx ON siglusintegration.reporttypes(facilityid);
+CREATE INDEX ON siglusintegration.report_types(facilityid);
