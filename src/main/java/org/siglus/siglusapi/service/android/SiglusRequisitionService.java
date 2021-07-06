@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
@@ -35,29 +36,35 @@ import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
-import org.openlmis.requisition.service.RequisitionService;
+import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionTemplateService;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
+import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 
 @RequiredArgsConstructor
+@Slf4j
 public class SiglusRequisitionService {
 
-  private final RequisitionService requisitionService;
   private final RequisitionTemplateService requisitionTemplateService;
   private final SiglusProgramService siglusProgramService;
   private final SiglusOrderableService siglusOrderableService;
-  private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final SiglusAuthenticationHelper authHelper;
+  private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+  private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
+  private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+  private final RequisitionRepository requisitionRepository;
 
   public void create(RequisitionRequest request) {
     initiateRequisition(request);
@@ -71,16 +78,41 @@ public class SiglusRequisitionService {
     requisitionTemplate.setTemplateExtension(templateExtension);
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
-    Requisition requisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
-    requisition.setStatus(RequisitionStatus.INITIATED);
+    Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
+    newRequisition.setStatus(RequisitionStatus.INITIATED);
     // TODO: find Android peridId by Android period start date
     UUID initiator = authHelper.getCurrentUser().getId();
-    requisition.setStatus(RequisitionStatus.INITIATED);
-    requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, initiator));
-    requisition.setProcessingPeriodId(UUID.fromString("1934880e-d955-11eb-afc2-acde48001122"));
-    requisition.setReportOnly(false);
-    buildExtraData(requisition, request);
-    buildRequisitionLineItems(requisition, request);
+    newRequisition.setStatus(RequisitionStatus.INITIATED);
+    newRequisition.getStatusChanges().add(StatusChange.newStatusChange(newRequisition, initiator));
+    newRequisition.setProcessingPeriodId(UUID.fromString("1934880e-d955-11eb-afc2-acde48001122"));
+    newRequisition.setReportOnly(false);
+    buildExtraData(newRequisition, request);
+    buildRequisitionLineItems(newRequisition, request);
+    log.info("save android requisition: {}", newRequisition);
+    Requisition requisition = requisitionRepository.save(newRequisition);
+    initiateRequisitionNumber(requisition);
+    initiateAuthorizedQuantity(requisition, request);
+  }
+
+  private void initiateRequisitionNumber(Requisition requisition) {
+    siglusRequisitionExtensionService.createRequisitionExtension(requisition.getId(), requisition.getEmergency(),
+        requisition.getFacilityId());
+  }
+
+  private void initiateAuthorizedQuantity(Requisition requisition, RequisitionRequest request) {
+    requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
+      RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
+      extension.setRequisitionLineItemId(requisitionLineItem.getId());
+      Integer authorizedQuantity = request.getProducts().stream()
+          .filter(product -> siglusOrderableService.getOrderableByCode(product.getProductCode()).getId()
+              .equals(requisitionLineItem.getOrderable().getId()))
+          .findFirst()
+          .map(RequisitionLineItemRequest::getAuthorizedQuantity)
+          .orElse(null);
+      extension.setAuthorizedQuantity(authorizedQuantity);
+      log.info("save requisition line item extensions: {}", extension);
+      requisitionLineItemExtensionRepository.save(extension);
+    });
   }
 
   private void buildExtraData(Requisition requisition, RequisitionRequest request) {
@@ -96,7 +128,6 @@ public class SiglusRequisitionService {
 
   private ExtraDataSignatureDto buildSignature(RequisitionRequest request) {
     String author = getSignatureNameByEventType(request, "APPROVER");
-    // "signaure": {"submit": "zhangsan", "approve": ["zhangsan"], "authorize": "zhangsan"}
     return ExtraDataSignatureDto.builder()
         .submit(getSignatureNameByEventType(request, "SUBMITTER"))
         .authorize(author)

@@ -74,7 +74,7 @@ import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
-import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
@@ -119,7 +119,7 @@ public class SiglusFcIntegrationService {
   private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
 
   @Autowired
-  private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
+  private RequisitionLineItemExtensionRepository lineItemExtensionRepository;
 
   @Autowired
   private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;

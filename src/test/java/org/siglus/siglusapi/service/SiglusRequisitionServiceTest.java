@@ -156,7 +156,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.i18n.MessageService;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
-import org.siglus.siglusapi.repository.SiglusRequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -265,7 +265,7 @@ public class SiglusRequisitionServiceTest {
   private RequisitionDraftRepository draftRepository;
 
   @Mock
-  private SiglusRequisitionLineItemExtensionRepository lineItemExtensionRepository;
+  private RequisitionLineItemExtensionRepository lineItemExtensionRepository;
 
   @Mock
   private OperatePermissionService operatePermissionService;

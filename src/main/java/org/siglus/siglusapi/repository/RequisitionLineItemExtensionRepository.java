@@ -22,8 +22,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface SiglusRequisitionLineItemExtensionRepository
-    extends JpaRepository<RequisitionLineItemExtension, UUID> {
+public interface RequisitionLineItemExtensionRepository extends JpaRepository<RequisitionLineItemExtension, UUID> {
 
   @Query(value = "SELECT item.*"
       + " FROM siglusintegration.requisition_line_items_extension item"
