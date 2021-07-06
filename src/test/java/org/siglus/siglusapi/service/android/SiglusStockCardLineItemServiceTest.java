@@ -273,44 +273,22 @@ public class SiglusStockCardLineItemServiceTest {
   }
 
   @Test
-  public void shouldEqualStockMovementItemsWhenMoveNoLot() {
+  public void shouldEqualStockMovementItemsWhenAdjustmentNoLot() {
     // given
     createNoLotStockMovements();
     // when
     Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemResponseMap = stockCardLineItemService
-        .getStockMovementByOrderableId(homefacilityId, "2021-06-30", "2021-07-03", siglusLotResponseByLotId);
+        .getStockMovementByOrderableId(homefacilityId, "2021-06-29", "2021-07-05", siglusLotResponseByLotId);
 
     // then
     // 2021-07-01 08:00:00 physicalInventory positive 50
     SiglusStockMovementItemResponse stockMovementItemResponse1 = stockMovementItemResponseMap.get(orderableId3).stream()
         .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070108).toInstant()))
         .findFirst().orElse(new SiglusStockMovementItemResponse());
-    assertNull(stockMovementItemResponse1.getLotMovementItems());
-
     assertEquals(Integer.valueOf(200), stockMovementItemResponse1.getStockOnHand());
     assertEquals(Integer.valueOf(50), stockMovementItemResponse1.getMovementQuantity());
     assertEquals("INVENTORY_POSITIVE", stockMovementItemResponse1.getReason());
     assertEquals(physicalInventory, stockMovementItemResponse1.getType());
-
-    // 2021-07-01 09:00:00 issue 10
-    SiglusStockMovementItemResponse stockMovementItemResponse2 = stockMovementItemResponseMap.get(orderableId3).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070109).toInstant()))
-        .findFirst().orElse(new SiglusStockMovementItemResponse());
-
-    assertEquals(Integer.valueOf(190), stockMovementItemResponse2.getStockOnHand());
-    assertEquals(Integer.valueOf(-10), stockMovementItemResponse2.getMovementQuantity());
-    assertEquals("PUB_PHARMACY", stockMovementItemResponse2.getReason());
-    assertEquals("ISSUE", stockMovementItemResponse2.getType());
-
-    // 2021-07-01 10:00:00 receive 30
-    SiglusStockMovementItemResponse stockMovementItemResponse3 = stockMovementItemResponseMap.get(orderableId3).stream()
-        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070110).toInstant()))
-        .findFirst().orElse(new SiglusStockMovementItemResponse());
-
-    assertEquals(Integer.valueOf(220), stockMovementItemResponse3.getStockOnHand());
-    assertEquals(Integer.valueOf(30), stockMovementItemResponse3.getMovementQuantity());
-    assertEquals("DISTRICT_DDM", stockMovementItemResponse3.getReason());
-    assertEquals("RECEIVE", stockMovementItemResponse3.getType());
 
     // 2021-07-01 11:00:00 physicalInventory inventory 220
     SiglusStockMovementItemResponse stockMovementItemResponse4 = stockMovementItemResponseMap.get(orderableId3).stream()
@@ -364,12 +342,42 @@ public class SiglusStockCardLineItemServiceTest {
   }
 
   @Test
+  public void shouldEqualStockMovementItemsWhenIssueReceiveNoLot() {
+    // given
+    createNoLotStockMovements();
+    // when
+    Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemResponseMap = stockCardLineItemService
+        .getStockMovementByOrderableId(homefacilityId, "2021-06-28", "2021-07-06", siglusLotResponseByLotId);
+    // then
+    // 2021-07-01 09:00:00 issue 10
+    SiglusStockMovementItemResponse stockMovementItemResponse2 = stockMovementItemResponseMap.get(orderableId3).stream()
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070109).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
+    assertNull(stockMovementItemResponse2.getLotMovementItems());
+
+    assertEquals(Integer.valueOf(190), stockMovementItemResponse2.getStockOnHand());
+    assertEquals(Integer.valueOf(-10), stockMovementItemResponse2.getMovementQuantity());
+    assertEquals("PUB_PHARMACY", stockMovementItemResponse2.getReason());
+    assertEquals("ISSUE", stockMovementItemResponse2.getType());
+
+    // 2021-07-01 10:00:00 receive 30
+    SiglusStockMovementItemResponse stockMovementItemResponse3 = stockMovementItemResponseMap.get(orderableId3).stream()
+        .filter(i -> i.getProcessedDate().equals(getProcessedTime(day070110).toInstant()))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
+
+    assertEquals(Integer.valueOf(220), stockMovementItemResponse3.getStockOnHand());
+    assertEquals(Integer.valueOf(30), stockMovementItemResponse3.getMovementQuantity());
+    assertEquals("DISTRICT_DDM", stockMovementItemResponse3.getReason());
+    assertEquals("RECEIVE", stockMovementItemResponse3.getType());
+  }
+
+  @Test
   public void shouldEqualStockMovementItemInfo() {
     // given
     createStockMovements();
     // when
     Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemResponseMap = stockCardLineItemService
-        .getStockMovementByOrderableId(homefacilityId, "2021-06-30", "2021-07-03", siglusLotResponseByLotId);
+        .getStockMovementByOrderableId(homefacilityId, "2021-06-27", "2021-07-07", siglusLotResponseByLotId);
 
     // then
     // 2021-07-01 08:00:00 physicalInventory positive 50

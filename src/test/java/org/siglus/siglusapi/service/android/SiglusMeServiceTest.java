@@ -475,12 +475,6 @@ public class SiglusMeServiceTest {
   }
 
   @Test
-  public void shouldGetFacilityProductMovementsResponse() {
-    // given
-    createSohValueByIsNolot(false);
-  }
-
-  @Test
   public void shouldCallaArchiveProductServiceWhenDoArchive() {
     // given
     List<String> productCodes = Arrays.asList("product1", "product2", "product3");
