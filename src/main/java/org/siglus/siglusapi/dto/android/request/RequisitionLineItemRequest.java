@@ -25,9 +25,6 @@ public class RequisitionLineItemRequest {
   @NotBlank
   private String productCode;
 
-  @NotBlank
-  private String productName;
-
   @NotNull
   private Integer beginningBalance;
 

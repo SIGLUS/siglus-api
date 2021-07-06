@@ -77,6 +77,7 @@ import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.request.RequisitionRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
@@ -161,6 +162,9 @@ public class SiglusMeServiceTest {
 
   @Mock
   private SiglusRequisitionRepository requisitionRepository;
+
+  @Mock
+  private SiglusRequisitionService siglusRequisitionService;
 
   @Captor
   private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
@@ -521,6 +525,18 @@ public class SiglusMeServiceTest {
 
     ProductResponse product2 = syncResponse.getProducts().get(1);
     assertProduct3(product2);
+  }
+
+  @Test
+  public void shouldCallaSiglusRequisitionServiceWhenCreateRequisition() {
+    // given
+    RequisitionRequest requisitionRequest = new RequisitionRequest();
+
+    // when
+    service.createRequisition(requisitionRequest);
+
+    // then
+    verify(siglusRequisitionService).create(requisitionRequest);
   }
 
   private SupportedProgramDto getSupportedProgramDto() {

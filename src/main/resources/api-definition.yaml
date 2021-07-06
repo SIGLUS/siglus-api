@@ -133,6 +133,7 @@ schemas:
   - facilityResponse: !include schemas/facilityResponse.json
   - regimenResponse: !include schemas/regimenResponse.json
   - hfCmmsDtos: !include schemas/hfCmmsDto.json
+  - androidRequisitionRequest: !include schemas/androidRequisitionRequest.json
 
 resourceTypes:
   - collection:
@@ -2392,6 +2393,17 @@ traits:
                 body:
                   application/json:
                     schema: facilityProductMovementsResponse
+
+        /requisitions:
+          displayName: Submit requisition
+          post:
+            is: [ secured ]
+            body:
+              application/json:
+                schema: androidRequisitionRequest
+            responses:
+              201:
+                description: submit success
 
       /app-info:
         displayName: Process AppInfo
