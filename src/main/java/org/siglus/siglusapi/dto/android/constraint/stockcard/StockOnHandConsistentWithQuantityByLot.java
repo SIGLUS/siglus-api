@@ -35,7 +35,7 @@ import org.siglus.siglusapi.dto.android.validator.stockcard.StockOnHandConsisten
 public @interface StockOnHandConsistentWithQuantityByLot {
 
   String message() default
-      "{org.siglus.siglusapi.dto.android.constraints.stockcard.StockOnHandConsistentWithQuantityByLot.message}";
+      "{org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByLot.message}";
 
   Class<?>[] groups() default {};
 

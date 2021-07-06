@@ -34,7 +34,7 @@ import org.siglus.siglusapi.dto.android.validator.stockcard.KitProductEmptyLotsV
 @Constraint(validatedBy = KitProductEmptyLotsValidator.class)
 public @interface KitProductEmptyLots {
 
-  String message() default "{org.siglus.siglusapi.dto.android.constraints.stockcard.KitProductEmptyLots.message}";
+  String message() default "{org.siglus.siglusapi.dto.android.constraint.stockcard.KitProductEmptyLots.message}";
 
   Class<?>[] groups() default {};
 

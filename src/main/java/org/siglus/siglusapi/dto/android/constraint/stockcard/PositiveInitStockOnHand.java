@@ -34,7 +34,7 @@ import org.siglus.siglusapi.dto.android.validator.stockcard.PositiveInitStockOnH
 @Constraint(validatedBy = PositiveInitStockOnHandValidator.class)
 public @interface PositiveInitStockOnHand {
 
-  String message() default "{org.siglus.siglusapi.dto.android.constraints.stockcard.PositiveInitStockOnHand.message}";
+  String message() default "{org.siglus.siglusapi.dto.android.constraint.stockcard.PositiveInitStockOnHand.message}";
 
   Class<?>[] groups() default {};
 

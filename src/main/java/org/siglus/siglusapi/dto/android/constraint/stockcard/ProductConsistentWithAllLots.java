@@ -35,7 +35,7 @@ import org.siglus.siglusapi.dto.android.validator.stockcard.ProductConsistentWit
 public @interface ProductConsistentWithAllLots {
 
   String message() default
-      "{org.siglus.siglusapi.dto.android.constraints.stockcard.ProductConsistentWithAllLots.message}";
+      "{org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithAllLots.message}";
 
   Class<?>[] groups() default {};
 

@@ -35,7 +35,7 @@ import org.siglus.siglusapi.dto.android.validator.stockcard.LotStockConsistentWi
 public @interface LotStockConsistentWithExisted {
 
   String message() default
-      "{org.siglus.siglusapi.dto.android.constraints.stockcard.LotStockConsistentWithExisted.message}";
+      "{org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted.message}";
 
   Class<?>[] groups() default {};
 
