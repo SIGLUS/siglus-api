@@ -52,7 +52,10 @@ import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Service
 @RequiredArgsConstructor
 @Slf4j
 public class AndroidRequisitionService {
@@ -66,6 +69,7 @@ public class AndroidRequisitionService {
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final RequisitionRepository requisitionRepository;
 
+  @Transactional
   public void create(RequisitionRequest request) {
     initiateRequisition(request);
   }
