@@ -85,6 +85,7 @@ import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
+import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.ReportTypesRepository;
@@ -373,15 +374,15 @@ public class SiglusMeService {
     Map<UUID, SiglusLotResponse> siglusLotDtoByLotId = getSiglusLotDtoByLotId(orderableDtos, stockCardSummaryV2Dtos);
     Map<UUID, List<LotsOnHandResponse>> lotsOnHandDtosByOrderableId = getLotsOnHandResponsesMap(stockCardSummaryV2Dtos,
         siglusLotDtoByLotId);
-    List<ProductMovementResponse> productMovementResponses = stockCardLineItemService
-        .getStockMovementByOrderableId(facilityId, startTime, endTime, siglusLotDtoByLotId)
-        .entrySet()
-        .stream()
+    Map<UUID, List<SiglusStockMovementItemResponse>> productMovementResponsesByOrderableId = stockCardLineItemService
+        .getStockMovementByOrderableId(facilityId, startTime, endTime, siglusLotDtoByLotId);
+    List<ProductMovementResponse> productMovementResponses = lotsOnHandDtosByOrderableId.entrySet().stream()
         .map(entry -> ProductMovementResponse.builder()
-            .stockMovementItems(entry.getValue())
+            .stockMovementItems(productMovementResponsesByOrderableId.get(entry.getKey()) == null ? emptyList()
+                : productMovementResponsesByOrderableId.get(entry.getKey()))
             .productCode(orderableIdToCode.get(entry.getKey()))
-            .lotsOnHand(judgeReturnLotsOnHandDtos(lotsOnHandDtosByOrderableId.get(entry.getKey())))
-            .stockOnHand(calculateStockOnHandByLot(lotsOnHandDtosByOrderableId.get(entry.getKey())))
+            .lotsOnHand(judgeReturnLotsOnHandDtos(entry.getValue()))
+            .stockOnHand(calculateStockOnHandByLot(entry.getValue()))
             .build())
         .collect(toList());
     return FacilityProductMovementsResponse.builder().productMovements(productMovementResponses).build();

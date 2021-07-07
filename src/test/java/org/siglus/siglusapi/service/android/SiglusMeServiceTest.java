@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.android;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -440,7 +441,7 @@ public class SiglusMeServiceTest {
   }
 
   @Test
-  public void shouldGetproductMovementsByLot() {
+  public void shouldGetProductMovementResponsesByLot() {
     createSohValueByIsNolot(false);
     Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemMap = new HashMap<>();
     stockMovementItemMap.put(productId1, new ArrayList<>());
@@ -459,7 +460,7 @@ public class SiglusMeServiceTest {
   }
 
   @Test
-  public void shouldGetproductMovementsByNoLot() {
+  public void shouldGetProductMovementResponsesWhenNoLot() {
     createSohValueByIsNolot(true);
     Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemMap = new HashMap<>();
     stockMovementItemMap.put(productId1, new ArrayList<>());
@@ -475,6 +476,22 @@ public class SiglusMeServiceTest {
         .findFirst().orElse(new ProductMovementResponse());
 
     assertEquals(emptyList(), response.getStockMovementItems());
+    assertEquals(30, response.getStockOnHand().intValue());
+  }
+
+  @Test
+  public void shouldGetProductMovementResponsesWhenNoMovement() {
+    createSohValueByIsNolot(false);
+    when(
+        stockCardLineItemService
+            .getStockMovementByOrderableId(any(), any(), any(), any()))
+        .thenReturn(emptyMap());
+    FacilityProductMovementsResponse productMovementsResponse = service.getProductMovements("2021-06-30", "2021-07-01");
+    List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
+    ProductMovementResponse response = productMovementsResponseList.stream()
+        .filter(i -> i.getProductCode().equals(productCode1))
+        .findFirst().orElse(new ProductMovementResponse());
+
     assertEquals(30, response.getStockOnHand().intValue());
   }
 
