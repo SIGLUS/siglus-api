@@ -164,7 +164,7 @@ public class SiglusMeServiceTest {
   private SiglusRequisitionRepository requisitionRepository;
 
   @Mock
-  private SiglusRequisitionService siglusRequisitionService;
+  private AndroidRequisitionService androidRequisitionService;
 
   @Captor
   private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
@@ -536,7 +536,7 @@ public class SiglusMeServiceTest {
     service.createRequisition(requisitionRequest);
 
     // then
-    verify(siglusRequisitionService).create(requisitionRequest);
+    verify(androidRequisitionService).create(requisitionRequest);
   }
 
   private SupportedProgramDto getSupportedProgramDto() {

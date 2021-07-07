@@ -259,7 +259,7 @@ public class SiglusMeService {
   private final AndroidHelper androidHelper;
   private final ReportTypesRepository reportTypesRepository;
   private final SiglusRequisitionRepository requisitionRepository;
-  private final SiglusRequisitionService siglusRequisitionService;
+  private final AndroidRequisitionService androidRequisitionService;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -389,7 +389,7 @@ public class SiglusMeService {
 
   @Transactional
   public void createRequisition(RequisitionRequest request) {
-    siglusRequisitionService.create(request);
+    androidRequisitionService.create(request);
   }
 
   private List<LotDto> getLotsList(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,

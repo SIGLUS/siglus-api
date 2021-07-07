@@ -55,7 +55,7 @@ import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 
 @RequiredArgsConstructor
 @Slf4j
-public class SiglusRequisitionService {
+public class AndroidRequisitionService {
 
   private final RequisitionTemplateService requisitionTemplateService;
   private final SiglusProgramService siglusProgramService;
