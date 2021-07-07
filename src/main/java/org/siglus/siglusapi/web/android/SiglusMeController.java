@@ -108,6 +108,12 @@ public class SiglusMeController {
     service.processHfCmms(hfCmmDtos);
   }
 
+  @PostMapping("/facility/requisitions")
+  @ResponseStatus(CREATED)
+  public void createRequisition(@RequestBody @Valid RequisitionRequest request) {
+    service.createRequisition(request);
+  }
+
   @PostMapping("/app-info")
   @ResponseStatus(NO_CONTENT)
   public void processAppInfo(HttpServletRequest httpServletRequest)
@@ -117,9 +123,4 @@ public class SiglusMeController {
     service.processAppInfo(appInfo);
   }
 
-  @PostMapping("/requisitions")
-  @ResponseStatus(CREATED)
-  public void createRequisition(@RequestBody @Valid RequisitionRequest request) {
-    service.createRequisition(request);
-  }
 }

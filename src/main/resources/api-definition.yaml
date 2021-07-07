@@ -2395,16 +2395,16 @@ traits:
                     application/json:
                       schema: facilityProductMovementsResponse
 
-        /requisitions:
-          displayName: Submit requisition
-          post:
-            is: [ secured ]
-            body:
-              application/json:
-                schema: androidRequisitionRequest
-            responses:
-              201:
-                description: submit success
+          /requisitions:
+            displayName: Submit requisition
+            post:
+              is: [ secured ]
+              body:
+                application/json:
+                  schema: androidRequisitionRequest
+              responses:
+                201:
+                  description: submit success
 
         /app-info:
           displayName: Process AppInfo
