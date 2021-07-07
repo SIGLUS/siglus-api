@@ -77,7 +77,7 @@ dependencies {
     implementation 'org.mapstruct:mapstruct:1.4.2.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.4.2.Final'
     implementation('com.google.code.findbugs:annotations:3.0.1')
-    implementation('org.zalando:problem-spring-web:0.23.0')
+    compile('org.zalando:problem-spring-web:0.23.0')
 
     compileTestJava.dependsOn tasks.getByPath(':stockmanagement:testClasses')
     compileTestJava.dependsOn tasks.getByPath(':requisition:testClasses')
