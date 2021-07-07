@@ -52,6 +52,7 @@ import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +60,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class AndroidRequisitionService {
+
+  @Value("${android.via.templateId}")
+  private String androidViaTemplateId;
 
   private final RequisitionTemplateService requisitionTemplateService;
   private final SiglusProgramService siglusProgramService;
@@ -76,7 +80,7 @@ public class AndroidRequisitionService {
 
   private void initiateRequisition(RequisitionRequest request) {
     RequisitionTemplate requisitionTemplate = requisitionTemplateService
-        .findTemplateById(UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d"));
+        .findTemplateById(UUID.fromString(androidViaTemplateId));
     RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
         .findByRequisitionTemplateId(requisitionTemplate.getId());
     requisitionTemplate.setTemplateExtension(templateExtension);
@@ -131,11 +135,12 @@ public class AndroidRequisitionService {
   }
 
   private ExtraDataSignatureDto buildSignature(RequisitionRequest request) {
-    String author = getSignatureNameByEventType(request, "APPROVER");
+    String submitter = getSignatureNameByEventType(request, "SUBMITTER");
+    String approver = getSignatureNameByEventType(request, "APPROVER");
     return ExtraDataSignatureDto.builder()
-        .submit(getSignatureNameByEventType(request, "SUBMITTER"))
-        .authorize(author)
-        .approve(new String[]{author})
+        .submit(submitter)
+        .authorize(submitter)
+        .approve(new String[]{approver})
         .build();
   }
 
