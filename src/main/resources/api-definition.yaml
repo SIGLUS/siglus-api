@@ -2314,85 +2314,86 @@ traits:
                 application/json:
                   schema: regimenResponse
 
+      /me:
 
-      /me/facility:
-        displayName: get facility info
-        get:
-          is: [ secured ]
-          responses:
-            200:
+        /facility:
+          displayName: get facility info
+          get:
+            is: [ secured ]
+            responses:
+              200:
+                body:
+                  application/json:
+                    schema: facilityResponse
+
+          /cmms:
+            displayName: update facility cmms info
+            put:
+              is: [ secured ]
+              description: update facility cmms info
               body:
                 application/json:
-                  schema: facilityResponse
+                  schema: hfCmmsDtos
+              responses:
+                204:
+                  description: Full update facility cmms of current facility
 
-        /cmms:
-          displayName: update facility cmms info
-          put:
-            is: [ secured ]
-            description: update facility cmms info
-            body:
-              application/json:
-                schema: hfCmmsDtos
-            responses:
-              204:
-                description: Full update facility cmms of current facility
+          /products:
+            displayName: Products of the current facility
+            get:
+              is: [ secured ]
+              queryParameters:
+                lastSyncTime:
+                  displayName: last sync time
+                  type: integer
+                  required: false
+                  repeat: false
+              responses:
+                200:
+                  body:
+                    application/json:
+                      schema: productSyncResponse
 
-        /products:
-          displayName: Products of the current facility
-          get:
-            is: [ secured ]
-            queryParameters:
-              lastSyncTime:
-                displayName: last sync time
-                type: integer
-                required: false
-                repeat: false
-            responses:
-              200:
-                body:
-                  application/json:
-                    schema: productSyncResponse
+          /archivedProducts:
+            displayName: Archived products of the current facility
+            post:
+              is: [ secured ]
+              description: Archive products of the current facility by product codes
+              body:
+                application/json:
+                  schema: arrayOfStrings
+              responses:
+                204:
+                  description: Full update archived products of current facility
 
-        /archivedProducts:
-          displayName: Archived products of the current facility
-          post:
-            is: [ secured ]
-            description: Archive products of the current facility by product codes
-            body:
-              application/json:
-                schema: arrayOfStrings
-            responses:
-              204:
-                description: Full update archived products of current facility
-
-        /stockCards:
-          displayName: Submit stock cards
-          post:
-            is: [ secured ]
-            body:
-              application/json:
-                schema: arrayOfStrings
-            responses:
-              201:
-                description: submit success
-          get:
-            is: [ secured ]
-            queryParameters:
-              startTime:
-                displayName: start time
-                type: string
-                required: true
-                repeat: false
-              endTime:
-                displayName: end time
-                type: string
-                required: true
-                repeat: false
-            responses:
-              200:
-                body:
-                  application/json:
-                    schema: facilityProductMovementsResponse
+          /stockCards:
+            displayName: Submit stock cards
+            post:
+              is: [ secured ]
+              body:
+                application/json:
+                  schema: arrayOfStrings
+              responses:
+                201:
+                  description: submit success
+            get:
+              is: [ secured ]
+              queryParameters:
+                startTime:
+                  displayName: start time
+                  type: string
+                  required: true
+                  repeat: false
+                endTime:
+                  displayName: end time
+                  type: string
+                  required: true
+                  repeat: false
+              responses:
+                200:
+                  body:
+                    application/json:
+                      schema: facilityProductMovementsResponse
 
         /requisitions:
           displayName: Submit requisition

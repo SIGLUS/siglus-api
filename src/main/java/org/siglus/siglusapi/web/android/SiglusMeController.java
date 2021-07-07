@@ -102,6 +102,12 @@ public class SiglusMeController {
     return service.getProductMovements(startTime, endTime);
   }
 
+  @PutMapping(value = "/facility/cmms")
+  @ResponseStatus(NO_CONTENT)
+  public void updateCmmsForFacility(@RequestBody List<HfCmmDto> hfCmmDtos) {
+    service.processHfCmms(hfCmmDtos);
+  }
+
   @PostMapping("/app-info")
   @ResponseStatus(NO_CONTENT)
   public void processAppInfo(HttpServletRequest httpServletRequest)
@@ -109,12 +115,6 @@ public class SiglusMeController {
     AppInfo appInfo = new AppInfo();
     BeanUtils.copyProperties(appInfo, AndroidConstants.getAndroidHeader(httpServletRequest));
     service.processAppInfo(appInfo);
-  }
-
-  @PutMapping(value = "/facility/cmms")
-  @ResponseStatus(NO_CONTENT)
-  public void updateCmmsForFacility(@RequestBody List<HfCmmDto> hfCmmDtos) {
-    service.processHfCmms(hfCmmDtos);
   }
 
   @PostMapping("/requisitions")
