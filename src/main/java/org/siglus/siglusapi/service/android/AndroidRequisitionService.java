@@ -26,18 +26,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.RequisitionTemplate;
+import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
+import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionTemplateService;
+import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.exception.ValidationMessageException;
@@ -64,6 +69,7 @@ public class AndroidRequisitionService {
   @Value("${android.via.templateId}")
   private String androidViaTemplateId;
 
+  private final RequisitionService requisitionService;
   private final RequisitionTemplateService requisitionTemplateService;
   private final SiglusProgramService siglusProgramService;
   private final SiglusOrderableService siglusOrderableService;
@@ -79,35 +85,41 @@ public class AndroidRequisitionService {
   }
 
   private void initiateRequisition(RequisitionRequest request) {
+    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
+    Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
+    newRequisition.setTemplate(getRequisitionTemplate());
+    newRequisition.setStatus(RequisitionStatus.INITIATED);
+    UUID initiator = authHelper.getCurrentUser().getId();
+    newRequisition.getStatusChanges().add(StatusChange.newStatusChange(newRequisition, initiator));
+    // TODO: find Android processingPeriodId by actualStartDate
+    newRequisition.setProcessingPeriodId(UUID.fromString("1934885e-d955-11eb-afc2-acde48001122"));
+    newRequisition.setReportOnly(false);
+    newRequisition.setNumberOfMonthsInPeriod(1);
+    buildRequisitionApprovedProduct(newRequisition, request);
+    buildRequisitionExtraData(newRequisition, request);
+    buildRequisitionLineItems(newRequisition, request);
+    log.info("save android requisition: {}", newRequisition);
+    Requisition requisition = requisitionRepository.save(newRequisition);
+    buildRequisitionExtension(requisition);
+    buildRequisitionLineItemsExtension(requisition, request);
+  }
+
+  private RequisitionTemplate getRequisitionTemplate() {
     RequisitionTemplate requisitionTemplate = requisitionTemplateService
         .findTemplateById(UUID.fromString(androidViaTemplateId));
     RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
         .findByRequisitionTemplateId(requisitionTemplate.getId());
     requisitionTemplate.setTemplateExtension(templateExtension);
-    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
-    Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
-    newRequisition.setStatus(RequisitionStatus.INITIATED);
-    // TODO: find Android peridId by Android period start date
-    UUID initiator = authHelper.getCurrentUser().getId();
-    newRequisition.setStatus(RequisitionStatus.INITIATED);
-    newRequisition.getStatusChanges().add(StatusChange.newStatusChange(newRequisition, initiator));
-    newRequisition.setProcessingPeriodId(UUID.fromString("1934880e-d955-11eb-afc2-acde48001122"));
-    newRequisition.setReportOnly(false);
-    buildExtraData(newRequisition, request);
-    buildRequisitionLineItems(newRequisition, request);
-    log.info("save android requisition: {}", newRequisition);
-    Requisition requisition = requisitionRepository.save(newRequisition);
-    initiateRequisitionNumber(requisition);
-    initiateAuthorizedQuantity(requisition, request);
+    return requisitionTemplate;
   }
 
-  private void initiateRequisitionNumber(Requisition requisition) {
+  private void buildRequisitionExtension(Requisition requisition) {
     siglusRequisitionExtensionService.createRequisitionExtension(requisition.getId(), requisition.getEmergency(),
         requisition.getFacilityId());
   }
 
-  private void initiateAuthorizedQuantity(Requisition requisition, RequisitionRequest request) {
+  private void buildRequisitionLineItemsExtension(Requisition requisition, RequisitionRequest request) {
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
       extension.setRequisitionLineItemId(requisitionLineItem.getId());
@@ -123,12 +135,12 @@ public class AndroidRequisitionService {
     });
   }
 
-  private void buildExtraData(Requisition requisition, RequisitionRequest request) {
+  private void buildRequisitionExtraData(Requisition requisition, RequisitionRequest request) {
     Map<String, Object> extraData = new HashMap<>();
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     extraData.put(ACTUAL_START_DATE, request.getActualStartDate().format(dateTimeFormatter));
     extraData.put(ACTUAL_END_DATE, request.getActualEndDate().format(dateTimeFormatter));
-    extraData.put(CLIENT_SUBMITTED_TIME, request.getClientSubmittedTime());
+    extraData.put(CLIENT_SUBMITTED_TIME, request.getClientSubmittedTime().toString());
     extraData.put(SIGNATURE, buildSignature(request));
     extraData.put(IS_SAVED, false);
     requisition.setExtraData(extraData);
@@ -157,6 +169,7 @@ public class AndroidRequisitionService {
     for (RequisitionLineItemRequest product : request.getProducts()) {
       OrderableDto orderableDto = siglusOrderableService.getOrderableByCode(product.getProductCode());
       RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+      requisitionLineItem.setRequisition(requisition);
       requisitionLineItem.setOrderable(new VersionEntityReference(orderableDto.getId(),
           orderableDto.getVersionNumber()));
       requisitionLineItem.setBeginningBalance(product.getBeginningBalance());
@@ -164,9 +177,28 @@ public class AndroidRequisitionService {
       requisitionLineItem.setTotalConsumedQuantity(product.getTotalConsumedQuantity());
       requisitionLineItem.setStockOnHand(product.getStockOnHand());
       requisitionLineItem.setRequestedQuantity(product.getRequestedQuantity());
+      VersionEntityReference approvedProduct = requisition.getAvailableProducts().stream()
+          .filter(approvedProductReference -> approvedProductReference.getOrderable().getId()
+              .equals(requisitionLineItem.getOrderable().getId()))
+          .findFirst()
+          .orElseThrow(NullPointerException::new)
+          .getFacilityTypeApprovedProduct();
+      requisitionLineItem.setFacilityTypeApprovedProduct(
+          new VersionEntityReference(approvedProduct.getId(), approvedProduct.getVersionNumber()));
       requisitionLineItems.add(requisitionLineItem);
     }
     requisition.setRequisitionLineItems(requisitionLineItems);
+  }
+
+  private void buildRequisitionApprovedProduct(Requisition requisition, RequisitionRequest request) {
+    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
+    ApproveProductsAggregator approvedProductsContainKit = requisitionService
+        .getApproveProduct(homeFacilityId, programId, false);
+    List<ApprovedProductDto> approvedProductDtos = approvedProductsContainKit.getFullSupplyProducts();
+    ApproveProductsAggregator approvedProducts = new ApproveProductsAggregator(approvedProductDtos, programId);
+    Set<ApprovedProductReference> availableProductIdentities = approvedProducts.getApprovedProductReferences();
+    requisition.setAvailableProducts(availableProductIdentities);
   }
 
 }
