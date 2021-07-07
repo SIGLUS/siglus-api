@@ -2405,60 +2405,60 @@ traits:
               201:
                 description: submit success
 
-      /app-info:
-        displayName: Process AppInfo
-        post:
-          is: [ secured ]
-          description: save appinfo of the current facility by ficility codes and device unique id
-          headers:
-            Authorization:
-              displayName: Authorization
-              description: OAuth2 authorization token header. Takes the form of 'Bearer <token> '.
-              type: string
-              required: true
-              repeat: false
-            UserName:
-              displayName: UserName
-              description: Current username.
-              type: string
-              required: false
-              repeat: false
-            FacilityCode:
-              displayName: FacilityCode
-              description: Current facility code.
-              type: string
-              required: true
-              repeat: false
-            FacilityName:
-              displayName: FacilityName
-              description: Facility name.
-              type: string
-              required: false
-              repeat: false
-            UniqueId:
-              displayName: UniqueId
-              description: device uniqueId.
-              type: string
-              required: true
-              repeat: false
-            DeviceInfo:
-              displayName: DeviceInfo
-              description: DeviceInfo.
-              type: string
-              required: false
-              repeat: false
-            VersionCode:
-              displayName: VersionCode
-              description: VersionCode.
-              type: integer
-              required: false
-              repeat: false
-            AndroidSDKVersion:
-              displayName: AndroidSDKVersion
-              description: AndroidSDKVersion
-              type: integer
-              required: false
-              repeat: false
-          responses:
-            204:
-              description: Full update current AppInfo
+        /app-info:
+          displayName: Process AppInfo
+          post:
+            is: [ secured ]
+            description: save appinfo of the current facility by ficility codes and device unique id
+            headers:
+              Authorization:
+                displayName: Authorization
+                description: OAuth2 authorization token header. Takes the form of 'Bearer <token> '.
+                type: string
+                required: true
+                repeat: false
+              UserName:
+                displayName: UserName
+                description: Current username.
+                type: string
+                required: false
+                repeat: false
+              FacilityCode:
+                displayName: FacilityCode
+                description: Current facility code.
+                type: string
+                required: true
+                repeat: false
+              FacilityName:
+                displayName: FacilityName
+                description: Facility name.
+                type: string
+                required: false
+                repeat: false
+              UniqueId:
+                displayName: UniqueId
+                description: device uniqueId.
+                type: string
+                required: true
+                repeat: false
+              DeviceInfo:
+                displayName: DeviceInfo
+                description: DeviceInfo.
+                type: string
+                required: false
+                repeat: false
+              VersionCode:
+                displayName: VersionCode
+                description: VersionCode.
+                type: integer
+                required: false
+                repeat: false
+              AndroidSDKVersion:
+                displayName: AndroidSDKVersion
+                description: AndroidSDKVersion
+                type: integer
+                required: false
+                repeat: false
+            responses:
+              204:
+                description: Full update current AppInfo
