@@ -221,8 +221,8 @@ public class SiglusStockEventsService {
     lotSearchParams.setLotCode(lotCode);
     lotSearchParams.setTradeItemId(newArrayList(UUID.fromString(tradeItemId)));
     List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
-    if (CollectionUtils.isNotEmpty(existedLots)) {
-      LotDto existedLot = existedLots.get(0);
+    LotDto existedLot = getExistedLot(existedLots, lotCode);
+    if (existedLot != null) {
       if (Boolean.TRUE.equals(updateExpirationDate)
           && !existedLot.getExpirationDate().isEqual(expirationDate)) {
         log.info("lot existed date is different: {}", lotCode);
@@ -236,6 +236,14 @@ public class SiglusStockEventsService {
     lotDto.setActive(true);
     lotDto.setLotCode(lotCode);
     return lotReferenceDataService.saveLot(lotDto);
+  }
+
+  private LotDto getExistedLot(List<LotDto> existedLots, String lotCode) {
+    if (CollectionUtils.isEmpty(existedLots)) {
+      return null;
+    }
+    return existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode))
+        .findFirst().orElse(null);
   }
 
   private void addStockCardCreateTime(StockEventDto eventDto) {
