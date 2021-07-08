@@ -778,8 +778,7 @@ public class SiglusRequisitionService {
     // call modify OpenLMIS API
     RequisitionDraft draft = null;
     if (requisitionDto == null) {
-      RequisitionV2Dto dto =
-          siglusRequisitionRequisitionService.searchRequisition(requisitionId);
+      RequisitionV2Dto dto = siglusRequisitionRequisitionService.searchRequisition(requisitionId);
       requisitionDto = SiglusRequisitionDto.from(dto);
       draft = draftRepository.findByRequisitionId(requisitionDto.getId());
       if (draft != null) {

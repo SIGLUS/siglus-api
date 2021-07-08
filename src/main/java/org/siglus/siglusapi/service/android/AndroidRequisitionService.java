@@ -21,6 +21,7 @@ import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIM
 import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,10 +40,13 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionTemplateService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
+import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.openlmis.requisition.service.referencedata.SupplyLineReferenceDataService;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.exception.ValidationMessageException;
@@ -64,6 +68,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings("PMD.TooManyMethods")
 public class AndroidRequisitionService {
 
   @Value("${android.via.templateId}")
@@ -75,34 +80,73 @@ public class AndroidRequisitionService {
   private final SiglusOrderableService siglusOrderableService;
   private final SiglusAuthenticationHelper authHelper;
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+  private final SupervisoryNodeReferenceDataService supervisoryNodeService;
+  private final SupplyLineReferenceDataService supplyLineReferenceDataService;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final RequisitionRepository requisitionRepository;
 
   @Transactional
   public void create(RequisitionRequest request) {
-    initiateRequisition(request);
+    Requisition requisition = initiateRequisition(request);
+    requisition = submitRequisition(requisition);
+    requisition = authorizeRequisition(requisition);
+    internalApproveRequisition(requisition);
   }
 
-  private void initiateRequisition(RequisitionRequest request) {
+  private Requisition initiateRequisition(RequisitionRequest requisitionRequest) {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
-    Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
+    UUID programId = siglusProgramService.getProgramIdByCode(requisitionRequest.getProgramCode());
+    Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId,
+        requisitionRequest.getEmergency());
     newRequisition.setTemplate(getRequisitionTemplate());
-    newRequisition.setStatus(RequisitionStatus.INITIATED);
     UUID initiator = authHelper.getCurrentUser().getId();
+    newRequisition.setStatus(RequisitionStatus.INITIATED);
     newRequisition.getStatusChanges().add(StatusChange.newStatusChange(newRequisition, initiator));
     // TODO: find Android processingPeriodId by actualStartDate
     newRequisition.setProcessingPeriodId(UUID.fromString("1934885e-d955-11eb-afc2-acde48001122"));
     newRequisition.setReportOnly(false);
     newRequisition.setNumberOfMonthsInPeriod(1);
-    buildRequisitionApprovedProduct(newRequisition, request);
-    buildRequisitionExtraData(newRequisition, request);
-    buildRequisitionLineItems(newRequisition, request);
-    log.info("save android requisition: {}", newRequisition);
+    buildRequisitionApprovedProduct(newRequisition, requisitionRequest);
+    buildRequisitionExtraData(newRequisition, requisitionRequest);
+    buildRequisitionLineItems(newRequisition, requisitionRequest);
+    log.info("initiate android requisition: {}", newRequisition);
     Requisition requisition = requisitionRepository.save(newRequisition);
     buildRequisitionExtension(requisition);
-    buildRequisitionLineItemsExtension(requisition, request);
+    buildRequisitionLineItemsExtension(requisition, requisitionRequest);
+    return requisition;
+  }
+
+  private Requisition submitRequisition(Requisition requisition) {
+    UUID submitter = authHelper.getCurrentUser().getId();
+    requisition.setStatus(RequisitionStatus.SUBMITTED);
+    requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, submitter));
+    log.info("submit android requisition: {}", requisition);
+    requisition.setModifiedDate(ZonedDateTime.now());
+    return requisitionRepository.save(requisition);
+  }
+
+  private Requisition authorizeRequisition(Requisition requisition) {
+    UUID supervisoryNodeId = supervisoryNodeService.findSupervisoryNode(
+        requisition.getProgramId(), requisition.getFacilityId()).getId();
+    requisition.setSupervisoryNodeId(supervisoryNodeId);
+    UUID authorizer = authHelper.getCurrentUser().getId();
+    requisition.setStatus(RequisitionStatus.AUTHORIZED);
+    requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, authorizer));
+    requisition.setModifiedDate(ZonedDateTime.now());
+    log.info("authorize android requisition: {}", requisition);
+    return requisitionRepository.save(requisition);
+  }
+
+  private void internalApproveRequisition(Requisition requisition) {
+    SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService.findOne(requisition.getSupervisoryNodeId());
+    requisition.setSupervisoryNodeId(supervisoryNodeDto.getParentNodeId());
+    UUID approver = authHelper.getCurrentUser().getId();
+    requisition.setStatus(RequisitionStatus.IN_APPROVAL);
+    requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, approver));
+    requisition.setModifiedDate(ZonedDateTime.now());
+    log.info("internal-approve android requisition: {}", requisition);
+    requisitionRepository.save(requisition);
   }
 
   private RequisitionTemplate getRequisitionTemplate() {
@@ -119,11 +163,11 @@ public class AndroidRequisitionService {
         requisition.getFacilityId());
   }
 
-  private void buildRequisitionLineItemsExtension(Requisition requisition, RequisitionRequest request) {
+  private void buildRequisitionLineItemsExtension(Requisition requisition, RequisitionRequest requisitionRequest) {
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
       extension.setRequisitionLineItemId(requisitionLineItem.getId());
-      Integer authorizedQuantity = request.getProducts().stream()
+      Integer authorizedQuantity = requisitionRequest.getProducts().stream()
           .filter(product -> siglusOrderableService.getOrderableByCode(product.getProductCode()).getId()
               .equals(requisitionLineItem.getOrderable().getId()))
           .findFirst()
@@ -135,20 +179,20 @@ public class AndroidRequisitionService {
     });
   }
 
-  private void buildRequisitionExtraData(Requisition requisition, RequisitionRequest request) {
+  private void buildRequisitionExtraData(Requisition requisition, RequisitionRequest requisitionRequest) {
     Map<String, Object> extraData = new HashMap<>();
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    extraData.put(ACTUAL_START_DATE, request.getActualStartDate().format(dateTimeFormatter));
-    extraData.put(ACTUAL_END_DATE, request.getActualEndDate().format(dateTimeFormatter));
-    extraData.put(CLIENT_SUBMITTED_TIME, request.getClientSubmittedTime().toString());
-    extraData.put(SIGNATURE, buildSignature(request));
+    extraData.put(ACTUAL_START_DATE, requisitionRequest.getActualStartDate().format(dateTimeFormatter));
+    extraData.put(ACTUAL_END_DATE, requisitionRequest.getActualEndDate().format(dateTimeFormatter));
+    extraData.put(CLIENT_SUBMITTED_TIME, requisitionRequest.getClientSubmittedTime().toString());
+    extraData.put(SIGNATURE, buildSignature(requisitionRequest));
     extraData.put(IS_SAVED, false);
     requisition.setExtraData(extraData);
   }
 
-  private ExtraDataSignatureDto buildSignature(RequisitionRequest request) {
-    String submitter = getSignatureNameByEventType(request, "SUBMITTER");
-    String approver = getSignatureNameByEventType(request, "APPROVER");
+  private ExtraDataSignatureDto buildSignature(RequisitionRequest requisitionRequest) {
+    String submitter = getSignatureNameByEventType(requisitionRequest, "SUBMITTER");
+    String approver = getSignatureNameByEventType(requisitionRequest, "APPROVER");
     return ExtraDataSignatureDto.builder()
         .submit(submitter)
         .authorize(submitter)
@@ -156,17 +200,17 @@ public class AndroidRequisitionService {
         .build();
   }
 
-  private String getSignatureNameByEventType(RequisitionRequest request, String eventType) {
-    RequisitionSignatureRequest signatureRequest = request.getSignatures().stream()
+  private String getSignatureNameByEventType(RequisitionRequest requisitionRequest, String eventType) {
+    RequisitionSignatureRequest signatureRequest = requisitionRequest.getSignatures().stream()
         .filter(signature -> eventType.equals(signature.getType()))
         .findFirst()
         .orElseThrow(() -> new ValidationMessageException("signature missed"));
     return signatureRequest.getName();
   }
 
-  private void buildRequisitionLineItems(Requisition requisition, RequisitionRequest request) {
+  private void buildRequisitionLineItems(Requisition requisition, RequisitionRequest requisitionRequest) {
     List<RequisitionLineItem> requisitionLineItems = new ArrayList<>();
-    for (RequisitionLineItemRequest product : request.getProducts()) {
+    for (RequisitionLineItemRequest product : requisitionRequest.getProducts()) {
       OrderableDto orderableDto = siglusOrderableService.getOrderableByCode(product.getProductCode());
       RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
       requisitionLineItem.setRequisition(requisition);
@@ -190,9 +234,9 @@ public class AndroidRequisitionService {
     requisition.setRequisitionLineItems(requisitionLineItems);
   }
 
-  private void buildRequisitionApprovedProduct(Requisition requisition, RequisitionRequest request) {
+  private void buildRequisitionApprovedProduct(Requisition requisition, RequisitionRequest requisitionRequest) {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
+    UUID programId = siglusProgramService.getProgramIdByCode(requisitionRequest.getProgramCode());
     ApproveProductsAggregator approvedProductsContainKit = requisitionService
         .getApproveProduct(homeFacilityId, programId, false);
     List<ApprovedProductDto> approvedProductDtos = approvedProductsContainKit.getFullSupplyProducts();
