@@ -221,7 +221,7 @@ public class SiglusStockEventsService {
     lotSearchParams.setLotCode(lotCode);
     lotSearchParams.setTradeItemId(newArrayList(UUID.fromString(tradeItemId)));
     List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
-    LotDto existedLot = getExitedLot(existedLots, lotCode);
+    LotDto existedLot = getExistedLot(existedLots, lotCode);
     if (existedLot != null) {
       if (Boolean.TRUE.equals(updateExpirationDate)
           && !existedLot.getExpirationDate().isEqual(expirationDate)) {
@@ -238,7 +238,7 @@ public class SiglusStockEventsService {
     return lotReferenceDataService.saveLot(lotDto);
   }
 
-  private LotDto getExitedLot(List<LotDto> existedLots, String lotCode) {
+  private LotDto getExistedLot(List<LotDto> existedLots, String lotCode) {
     if (CollectionUtils.isEmpty(existedLots)) {
       return null;
     }
