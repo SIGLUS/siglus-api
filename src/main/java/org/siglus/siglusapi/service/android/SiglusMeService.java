@@ -772,8 +772,8 @@ public class SiglusMeService {
     return reportTypesRepository.findByFacilityId(facilityId).stream().map(
         reportType -> ReportTypeResponse.builder().name(reportType.getName())
             .supportActive(reportType.getActive())
-            .supportStartDate(reportType.getStartdate())
-            .programCode(reportType.getProgramcode())
+            .supportStartDate(reportType.getStartDate())
+            .programCode(reportType.getProgramCode())
             .lastReportDate(findLastReportDate(reportType, programs, requisitions))
             .build())
         .collect(Collectors.toList());
@@ -782,7 +782,7 @@ public class SiglusMeService {
   private LocalDate findLastReportDate(ReportType supportReportType,
       List<SupportedProgramDto> programs, List<Requisition> requisitions) {
     UUID supportProgramId = programs.stream()
-        .filter(program -> program.getCode().equals(supportReportType.getProgramcode()))
+        .filter(program -> program.getCode().equals(supportReportType.getProgramCode()))
         .findAny()
         .map(SupportedProgramDto::getId)
         .orElseThrow(() -> new IllegalArgumentException("program Not Exist by reportType"));

@@ -39,9 +39,9 @@ public class ReportType extends BaseEntity {
 
   private String name;
 
-  private String programcode;
+  private String programCode;
 
   private Boolean active;
 
-  private LocalDate startdate;
+  private LocalDate startDate;
 }

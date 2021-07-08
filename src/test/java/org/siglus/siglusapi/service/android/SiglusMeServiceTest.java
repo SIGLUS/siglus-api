@@ -292,13 +292,13 @@ public class SiglusMeServiceTest {
     // then
     List<ReportTypeResponse> actualReportTypes = response.getSupportedReportTypes();
     assertEquals(reportTypes.get(0).getName(), actualReportTypes.get(0).getName());
-    assertEquals(reportTypes.get(0).getStartdate(), actualReportTypes.get(0).getSupportStartDate());
-    assertEquals(reportTypes.get(0).getProgramcode(), actualReportTypes.get(0).getProgramCode());
+    assertEquals(reportTypes.get(0).getStartDate(), actualReportTypes.get(0).getSupportStartDate());
+    assertEquals(reportTypes.get(0).getProgramCode(), actualReportTypes.get(0).getProgramCode());
     assertEquals(rnrOpt.map(r -> r.getExtraData().get(ACTUAL_END_DATE)).map(String::valueOf)
         .map(LocalDate::parse).get(), actualReportTypes.get(0).getLastReportDate());
     assertEquals(reportTypes.get(1).getName(), actualReportTypes.get(1).getName());
-    assertEquals(reportTypes.get(1).getStartdate(), actualReportTypes.get(1).getSupportStartDate());
-    assertEquals(reportTypes.get(1).getProgramcode(), actualReportTypes.get(1).getProgramCode());
+    assertEquals(reportTypes.get(1).getStartDate(), actualReportTypes.get(1).getSupportStartDate());
+    assertEquals(reportTypes.get(1).getProgramCode(), actualReportTypes.get(1).getProgramCode());
     assertEquals(null, actualReportTypes.get(1).getLastReportDate());
   }
 
@@ -912,8 +912,8 @@ public class SiglusMeServiceTest {
     return ReportType.builder()
         .name("Requisition")
         .active(true)
-        .startdate(LocalDate.parse("2020-08-21"))
-        .programcode("VC")
+        .startDate(LocalDate.parse("2020-08-21"))
+        .programCode("VC")
         .facilityId(facilityId)
         .build();
   }
@@ -923,8 +923,8 @@ public class SiglusMeServiceTest {
         .facilityId(facilityId)
         .name("MMIA")
         .active(false)
-        .startdate(LocalDate.parse("2020-08-21"))
-        .programcode("T")
+        .startDate(LocalDate.parse("2020-08-21"))
+        .programCode("T")
         .build();
   }
 
