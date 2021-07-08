@@ -35,8 +35,6 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "report_types", schema = "siglusintegration")
 public class ReportType extends BaseEntity {
 
-  private UUID id;
-
   private UUID facilityId;
 
   private String name;

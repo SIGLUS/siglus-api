@@ -17,7 +17,6 @@ package org.siglus.siglusapi.repository;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -75,10 +74,8 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       @Param("programId") UUID programId, @Param("periodId") UUID periodId,
       @Param("emergency") Boolean emergency, @Param("statusSet") Set<String> statusSet);
 
-  @Query(value = "select r.* from requisition.requisitions r "
-      + "where r.facilityid = :facilityId "
-      + "and r.programId = :programId "
-      + "order by r.createddate desc limit 1 ", nativeQuery = true)
-  Optional<Requisition> searchLatestRequisition(@Param("facilityId") UUID facilityId,
-      @Param("programId") UUID programId);
+  @Query(value = "select DISTINCT ON(t.programid) t.* from requisition.requisitions t "
+      + " where t.facilityid = :facilityId "
+      + " order by t.programid,t.createddate desc ", nativeQuery = true)
+  List<Requisition> findLatestRequisitionByFacilityId(@Param("facilityId") UUID facilityId);
 }

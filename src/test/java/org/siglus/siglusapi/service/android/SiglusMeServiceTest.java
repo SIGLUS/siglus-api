@@ -30,6 +30,9 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
+import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 
 import com.google.common.collect.ImmutableMap;
@@ -209,6 +212,9 @@ public class SiglusMeServiceTest {
   private final UUID lotId2OrderableId1 = UUID.randomUUID();
   private final UUID lotId1OrderableId2 = UUID.randomUUID();
 
+  private final UUID supportProgramId1 = UUID.randomUUID();
+  private final UUID supportProgramId2 = UUID.randomUUID();
+
   @Before
   public void prepare() {
     ReflectionTestUtils.setField(service, "mapper", mapper);
@@ -272,15 +278,13 @@ public class SiglusMeServiceTest {
     facilityDto.setSupportedPrograms(getSupportedPrograms());
     List<ReportType> reportTypes = new ArrayList<>(asList(mockReportType1(), mockReportType2()));
     Optional<Requisition> rnrOpt = mockProgramRnr();
+    List<Requisition> requisitions = Collections.singletonList(rnrOpt.get());
     when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(facilityDto);
     when(reportTypesRepository.findByFacilityId(facilityId))
         .thenReturn(reportTypes);
     when(requisitionRepository
-        .searchLatestRequisition(facilityId, facilityDto.getSupportedPrograms().get(0).getId()))
-        .thenReturn(rnrOpt);
-    when(requisitionRepository
-        .searchLatestRequisition(facilityId, facilityDto.getSupportedPrograms().get(1).getId()))
-        .thenReturn(Optional.empty());
+        .findLatestRequisitionByFacilityId(facilityId))
+        .thenReturn(requisitions);
 
     // when
     FacilityResponse response = service.getCurrentFacility();
@@ -290,7 +294,7 @@ public class SiglusMeServiceTest {
     assertEquals(reportTypes.get(0).getName(), actualReportTypes.get(0).getName());
     assertEquals(reportTypes.get(0).getStartdate(), actualReportTypes.get(0).getSupportStartDate());
     assertEquals(reportTypes.get(0).getProgramcode(), actualReportTypes.get(0).getProgramCode());
-    assertEquals(rnrOpt.map(r -> r.getExtraData().get("actualEndDate")).map(String::valueOf)
+    assertEquals(rnrOpt.map(r -> r.getExtraData().get(ACTUAL_END_DATE)).map(String::valueOf)
         .map(LocalDate::parse).get(), actualReportTypes.get(0).getLastReportDate());
     assertEquals(reportTypes.get(1).getName(), actualReportTypes.get(1).getName());
     assertEquals(reportTypes.get(1).getStartdate(), actualReportTypes.get(1).getSupportStartDate());
@@ -886,7 +890,7 @@ public class SiglusMeServiceTest {
 
   private List<SupportedProgramDto> getSupportedPrograms() {
     SupportedProgramDto supportedProgram1 = SupportedProgramDto.builder()
-        .id(UUID.randomUUID())
+        .id(supportProgramId1)
         .code("VC")
         .name("Via Clássica")
         .description("description")
@@ -896,7 +900,7 @@ public class SiglusMeServiceTest {
         .supportStartDate(LocalDate.now())
         .build();
     SupportedProgramDto supportedProgram2 = SupportedProgramDto.builder()
-        .id(UUID.randomUUID())
+        .id(supportProgramId2)
         .code("T")
         .name("TARV")
         .description("description")
@@ -910,7 +914,6 @@ public class SiglusMeServiceTest {
 
   private ReportType mockReportType1() {
     return ReportType.builder()
-        .id(UUID.randomUUID())
         .name("Requisition")
         .active(true)
         .startdate(LocalDate.parse("2020-08-21"))
@@ -921,7 +924,6 @@ public class SiglusMeServiceTest {
 
   private ReportType mockReportType2() {
     return ReportType.builder()
-        .id(UUID.randomUUID())
         .facilityId(facilityId)
         .name("MMIA")
         .active(false)
@@ -930,24 +932,15 @@ public class SiglusMeServiceTest {
         .build();
   }
 
-  private ReportTypeResponse mockNotExxistReportType() {
-    return ReportTypeResponse.builder()
-        .name("Testes Rápidos")
-        .supportActive(true)
-        .supportStartDate(LocalDate.parse("2020-08-21"))
-        .programCode("TR")
-        .lastReportDate(LocalDate.now())
-        .build();
-  }
-
   private Optional<Requisition> mockProgramRnr() {
     Map<String, Object> extraData = new HashMap<>();
-    extraData.put("isSaved", true);
-    extraData.put("actualEndDate", "2021-06-26");
-    extraData.put("actualStartDate", "2021-05-12");
-    extraData.put("signaure", "");
+    extraData.put(IS_SAVED, true);
+    extraData.put(ACTUAL_END_DATE, "2021-06-26");
+    extraData.put(ACTUAL_END_DATE, "2021-05-12");
+    extraData.put(SIGNATURE, "");
     Requisition rnr = new Requisition();
     rnr.setExtraData(extraData);
+    rnr.setProgramId(supportProgramId1);
     return Optional.ofNullable(rnr);
   }
 }

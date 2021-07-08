@@ -20,6 +20,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 import static org.siglus.common.dto.referencedata.OrderableDto.TRADE_ITEM;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
@@ -761,24 +762,31 @@ public class SiglusMeService {
 
   private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId,
       List<SupportedProgramDto> programs) {
+    List<Requisition> requisitions = requisitionRepository
+        .findLatestRequisitionByFacilityId(facilityId);
     return reportTypesRepository.findByFacilityId(facilityId).stream().map(
         reportType -> ReportTypeResponse.builder().name(reportType.getName())
             .supportActive(reportType.getActive())
             .supportStartDate(reportType.getStartdate())
             .programCode(reportType.getProgramcode())
-            .lastReportDate(findLastReportDate(facilityId, reportType, programs))
+            .lastReportDate(findLastReportDate(reportType, programs, requisitions))
             .build())
         .collect(Collectors.toList());
   }
 
-  private LocalDate findLastReportDate(UUID facilityId, ReportType supportReportType,
-      List<SupportedProgramDto> programs) {
-    Optional<Requisition> requisitionOpt = requisitionRepository.searchLatestRequisition(facilityId,
-        programs.stream()
-            .filter(program -> program.getCode().equals(supportReportType.getProgramcode()))
-            .findAny().map(SupportedProgramDto::getId)
-            .orElseThrow(() -> new IllegalArgumentException("program Not Exist for reportType")));
-    return requisitionOpt.map(r -> r.getExtraData().get("actualEndDate")).map(String::valueOf)
+  private LocalDate findLastReportDate(ReportType supportReportType,
+      List<SupportedProgramDto> programs, List<Requisition> requisitions) {
+    UUID supportProgramId = programs.stream()
+        .filter(program -> program.getCode().equals(supportReportType.getProgramcode()))
+        .findAny()
+        .map(SupportedProgramDto::getId)
+        .orElseThrow(() -> new IllegalArgumentException("program Not Exist by reportType"));
+    Optional<Requisition> requisitionOpt = requisitions.stream()
+        .filter(requisition -> requisition.getProgramId().equals(supportProgramId))
+        .findAny();
+    return requisitionOpt
+        .map(r -> r.getExtraData().get(ACTUAL_END_DATE))
+        .map(String::valueOf)
         .map(LocalDate::parse).orElse(null);
   }
 }
