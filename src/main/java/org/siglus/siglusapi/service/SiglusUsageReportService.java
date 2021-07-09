@@ -127,24 +127,12 @@ public class SiglusUsageReportService {
     return saveUsageReport(requisition, updatedDto);
   }
 
-  public SiglusRequisitionDto saveUsageReport(SiglusRequisitionDto requisitionDto,
-      RequisitionV2Dto updatedDto) {
+  public SiglusRequisitionDto saveUsageReport(SiglusRequisitionDto requisitionDto, RequisitionV2Dto updatedDto) {
     SiglusRequisitionDto siglusUpdatedDto = SiglusRequisitionDto.from(updatedDto);
-    usageReportDataProcessors.forEach(processor -> processor.update(requisitionDto,
-        siglusUpdatedDto));
+    usageReportDataProcessors.forEach(processor -> processor.update(requisitionDto, siglusUpdatedDto));
     updateKitUsageLineItem(requisitionDto, siglusUpdatedDto);
     return siglusUpdatedDto;
   }
-
-  private void updateKitUsageLineItem(SiglusRequisitionDto requisitionDto,
-      SiglusRequisitionDto updatedDto) {
-    List<KitUsageLineItemDto> kitUsageLineItemDtos = requisitionDto.getKitUsageLineItems();
-    List<KitUsageLineItem> lineItems = KitUsageLineItem.from(kitUsageLineItemDtos, requisitionDto);
-    log.info("save all kit line item: {}", lineItems);
-    List<KitUsageLineItem> kitUsageLineUpdate = kitUsageRepository.save(lineItems);
-    updatedDto.setKitUsageLineItems(getKitUsageLineItemDtos(kitUsageLineUpdate));
-  }
-
 
   public SiglusRequisitionDto initiateUsageReport(RequisitionV2Dto requisitionV2Dto) {
     List<UsageTemplateColumnSection> templateColumnSections =
@@ -153,8 +141,7 @@ public class SiglusUsageReportService {
     if (templateColumnSections.isEmpty()) {
       return siglusRequisitionDto;
     }
-    usageReportDataProcessors
-        .forEach(processor -> processor.initiate(siglusRequisitionDto, templateColumnSections));
+    usageReportDataProcessors.forEach(processor -> processor.initiate(siglusRequisitionDto, templateColumnSections));
     updateKitUsage(requisitionV2Dto, templateColumnSections, siglusRequisitionDto);
     setUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
     return siglusRequisitionDto;
@@ -166,24 +153,37 @@ public class SiglusUsageReportService {
     setUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
   }
 
+  public UsageTemplateColumnSection getColumnSection(List<UsageTemplateColumnSection> templateColumnSections,
+      UsageCategory category, String sectionName) {
+    return templateColumnSections.stream()
+        .filter(templateColumnSection ->
+            templateColumnSection.getCategory().equals(category)
+                && templateColumnSection.getName().equals(sectionName))
+        .findFirst().orElse(null);
+  }
+
+  private void updateKitUsageLineItem(SiglusRequisitionDto requisitionDto, SiglusRequisitionDto updatedDto) {
+    List<KitUsageLineItemDto> kitUsageLineItemDtos = requisitionDto.getKitUsageLineItems();
+    List<KitUsageLineItem> lineItems = KitUsageLineItem.from(kitUsageLineItemDtos, requisitionDto);
+    log.info("save all kit line item: {}", lineItems);
+    List<KitUsageLineItem> kitUsageLineUpdate = kitUsageRepository.save(lineItems);
+    updatedDto.setKitUsageLineItems(getKitUsageLineItemDtos(kitUsageLineUpdate));
+  }
+
   private void setUsageTemplateDto(SiglusRequisitionDto requisitionDto,
       List<UsageTemplateColumnSection> columnSections) {
     SiglusUsageTemplateDto templateDto = new SiglusUsageTemplateDto();
     SiglusRequisitionTemplateService templateService = new SiglusRequisitionTemplateService();
     Map<UsageCategory, List<UsageTemplateSectionDto>> categoryListMap =
         templateService.getUsageTempateDto(columnSections);
-    templateDto
-        .setKitUsage(templateService.getCategoryDto(categoryListMap, UsageCategory.KITUSAGE));
+    templateDto.setKitUsage(templateService.getCategoryDto(categoryListMap, UsageCategory.KITUSAGE));
     templateDto.setPatient(templateService.getCategoryDto(categoryListMap, UsageCategory.PATIENT));
     templateDto.setRegimen(templateService.getCategoryDto(categoryListMap, UsageCategory.REGIMEN));
-    templateDto
-        .setConsultationNumber(
-            templateService.getCategoryDto(categoryListMap, UsageCategory.CONSULTATIONNUMBER));
-    templateDto.setRapidTestConsumption(
-        templateService.getCategoryDto(categoryListMap, UsageCategory.RAPIDTESTCONSUMPTION));
-    templateDto
-        .setUsageInformation(
-            templateService.getCategoryDto(categoryListMap, UsageCategory.USAGEINFORMATION));
+    templateDto.setConsultationNumber(templateService.getCategoryDto(categoryListMap,
+        UsageCategory.CONSULTATIONNUMBER));
+    templateDto.setRapidTestConsumption(templateService.getCategoryDto(categoryListMap,
+        UsageCategory.RAPIDTESTCONSUMPTION));
+    templateDto.setUsageInformation(templateService.getCategoryDto(categoryListMap, UsageCategory.USAGEINFORMATION));
     requisitionDto.setUsageTemplate(templateDto);
   }
 
@@ -193,12 +193,10 @@ public class SiglusUsageReportService {
     if (isEnableKit(requisitionV2Dto, templateColumnSections)) {
       log.info("get all kit products");
       List<Orderable> kitProducts = getKitProducts(requisitionV2Dto);
-      List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos =
-          stockCardRangeSummaryDtos(templateColumnSections,
-              requisitionV2Dto, kitProducts);
+      List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos = stockCardRangeSummaryDtos(templateColumnSections,
+          requisitionV2Dto, kitProducts);
       List<KitUsageLineItem> kitUsageLineItems = getKitUsageLineItems(requisitionV2Dto,
-          templateColumnSections, kitProducts,
-          stockCardRangeSummaryDtos);
+          templateColumnSections, kitProducts, stockCardRangeSummaryDtos);
       log.info("save all kit line item: {}", kitUsageLineItems);
       List<KitUsageLineItem> kitUsageLineUpdate = kitUsageRepository.save(kitUsageLineItems);
       List<KitUsageLineItemDto> kitDtos = getKitUsageLineItemDtos(kitUsageLineUpdate);
@@ -261,8 +259,7 @@ public class SiglusUsageReportService {
     return summaryDtos;
   }
 
-  private boolean isExistCalculateStockCard(
-      List<UsageTemplateColumnSection> templateColumnSections) {
+  private boolean isExistCalculateStockCard(List<UsageTemplateColumnSection> templateColumnSections) {
     UsageTemplateColumnSection section = getColumnSection(templateColumnSections,
         UsageCategory.KITUSAGE, KIT_COLLECTION);
     if (section == null) {
@@ -270,27 +267,14 @@ public class SiglusUsageReportService {
     }
     return section.getColumns()
         .stream()
-        .anyMatch(column -> column.getIsDisplayed() && column.getSource()
-            .equals(CALCULATE_FROM_STOCK_CARD));
-  }
-
-  public UsageTemplateColumnSection getColumnSection(
-      List<UsageTemplateColumnSection> templateColumnSections,
-      UsageCategory category, String sectionName) {
-    return templateColumnSections.stream()
-        .filter(templateColumnSection ->
-            templateColumnSection.getCategory().equals(category)
-                && templateColumnSection.getName().equals(sectionName))
-        .findFirst().orElse(null);
+        .anyMatch(column -> column.getIsDisplayed() && column.getSource().equals(CALCULATE_FROM_STOCK_CARD));
   }
 
   private void updateSupportProgramStockCardRange(RequisitionV2Dto requisitionV2Dto,
-      List<StockCardRangeSummaryDto> summaryDtos,
-      Entry<UUID, List<Orderable>> groupKit) {
+      List<StockCardRangeSummaryDto> summaryDtos, Entry<UUID, List<Orderable>> groupKit) {
     Set<VersionIdentityDto> kitProducts = groupKit.getValue()
         .stream()
-        .map(orderable -> new VersionIdentityDto(orderable.getId(),
-            orderable.getVersionNumber()))
+        .map(orderable -> new VersionIdentityDto(orderable.getId(), orderable.getVersionNumber()))
         .collect(toSet());
     List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos =
         stockCardRangeSummaryStockManagementService.search(groupKit.getKey(),
@@ -301,8 +285,7 @@ public class SiglusUsageReportService {
     summaryDtos.addAll(stockCardRangeSummaryDtos);
   }
 
-  private LocalDate getActualDate(Map<String, Object> extraData,
-      String field) {
+  private LocalDate getActualDate(Map<String, Object> extraData, String field) {
     if (extraData != null && extraData.get(field) != null) {
       DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
       return LocalDate.parse((String) extraData.get(field), dateTimeFormatter);
@@ -315,8 +298,7 @@ public class SiglusUsageReportService {
       List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos) {
     UsageTemplateColumnSection collection = getColumnSection(templateColumnSections,
         UsageCategory.KITUSAGE, KIT_COLLECTION);
-    UsageTemplateColumnSection service = getColumnSection(templateColumnSections,
-        UsageCategory.KITUSAGE, KIT_SERVICE);
+    UsageTemplateColumnSection service = getColumnSection(templateColumnSections, UsageCategory.KITUSAGE, KIT_SERVICE);
     if (collection == null || service == null) {
       throwError(ERROR_REPORTING_TEMPLATE_NOT_FOUND_WITH_NAME, UsageCategory.KITUSAGE.toString());
     }
@@ -341,13 +323,10 @@ public class SiglusUsageReportService {
     return kitUsageLineItems;
   }
 
-  private Integer getInitialValue(UsageTemplateColumn collection,
-      UsageTemplateColumn service,
-      List<Orderable> kitProducts,
-      List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos) {
+  private Integer getInitialValue(UsageTemplateColumn collection, UsageTemplateColumn service,
+      List<Orderable> kitProducts, List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos) {
     Set<UUID> kitProductIds = kitProducts.stream().map(Orderable::getId).collect(toSet());
-    if (service.getName().equals(SERVICE_HF) && collection.getSource()
-        .equals(CALCULATE_FROM_STOCK_CARD)) {
+    if (service.getName().equals(SERVICE_HF) && collection.getSource().equals(CALCULATE_FROM_STOCK_CARD)) {
       return getKitQuantity(collection, kitProductIds, stockCardRangeSummaryDtos);
     }
     return null;
@@ -374,8 +353,7 @@ public class SiglusUsageReportService {
     return valueByTag;
   }
 
-  private List<KitUsageLineItemDto> getKitUsageLineItemDtos(
-      List<KitUsageLineItem> kitUsageLineUpdate) {
+  private List<KitUsageLineItemDto> getKitUsageLineItemDtos(List<KitUsageLineItem> kitUsageLineUpdate) {
     List<KitUsageLineItemDto> kitDtos = new ArrayList<>();
     Map<String, List<KitUsageLineItem>> groupKitUsages = kitUsageLineUpdate.stream()
         .collect(Collectors.groupingBy(KitUsageLineItem::getCollection));

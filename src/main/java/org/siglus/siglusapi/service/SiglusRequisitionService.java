@@ -799,8 +799,7 @@ public class SiglusRequisitionService {
 
     saveLineItemExtension(requisitionDto, updateRequisitionDto);
     if (validate) {
-      return siglusUsageReportService
-          .saveUsageReportWithValidation(requisitionDto, updateRequisitionDto);
+      return siglusUsageReportService.saveUsageReportWithValidation(requisitionDto, updateRequisitionDto);
     }
     return siglusUsageReportService.saveUsageReport(requisitionDto, updateRequisitionDto);
   }

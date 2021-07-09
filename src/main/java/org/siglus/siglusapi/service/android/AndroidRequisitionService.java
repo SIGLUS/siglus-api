@@ -15,11 +15,14 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static org.openlmis.requisition.web.ResourceNames.PROCESSING_PERIODS;
+import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIME;
 import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
+import static org.siglus.siglusapi.domain.UsageCategory.CONSULTATIONNUMBER;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
 
 import java.time.YearMonth;
@@ -43,6 +46,9 @@ import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.RequisitionService;
@@ -52,6 +58,7 @@ import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDa
 import org.openlmis.requisition.service.referencedata.SupplyLineReferenceDataService;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.ProcessingPeriodRepository;
@@ -60,12 +67,14 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
+import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
+import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,7 +95,7 @@ public class AndroidRequisitionService {
   private final SiglusAuthenticationHelper authHelper;
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
   private final SupervisoryNodeReferenceDataService supervisoryNodeService;
-  private final SupplyLineReferenceDataService supplyLineReferenceDataService;
+  private final SiglusUsageReportService siglusUsageReportService;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final RequisitionRepository requisitionRepository;
@@ -123,6 +132,7 @@ public class AndroidRequisitionService {
     Requisition requisition = requisitionRepository.save(newRequisition);
     buildRequisitionExtension(requisition);
     buildRequisitionLineItemsExtension(requisition, request);
+    buildRequisitionConsultationNumber(requisition, request);
     return requisition;
   }
 
@@ -253,6 +263,25 @@ public class AndroidRequisitionService {
     ApproveProductsAggregator approvedProducts = new ApproveProductsAggregator(approvedProductDtos, programId);
     Set<ApprovedProductReference> availableProductIdentities = approvedProducts.getApprovedProductReferences();
     requisition.setAvailableProducts(availableProductIdentities);
+  }
+
+  private void buildRequisitionConsultationNumber(Requisition requisition, RequisitionCreateRequest request) {
+
+    RequisitionV2Dto dto = new RequisitionV2Dto();
+    requisition.export(dto);
+    BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(requisition.getTemplate());
+    templateDto.setExtension(RequisitionTemplateExtensionDto.from(requisition.getTemplate().getTemplateExtension()));
+    dto.setTemplate(templateDto);
+    dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(), "", PROCESSING_PERIODS));
+    dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), "", PROGRAMS));
+    SiglusRequisitionDto requisitionDto = siglusUsageReportService.initiateUsageReport(dto);
+    requisitionDto.getConsultationNumberLineItems().stream()
+        .findFirst()
+        .orElseThrow(NullPointerException::new)
+        .getColumns()
+        .get(CONSULTATIONNUMBER.getName())
+        .setValue(Integer.valueOf(request.getConsultationNumber()));
+    siglusUsageReportService.saveUsageReport(requisitionDto, dto);
   }
 
 }
