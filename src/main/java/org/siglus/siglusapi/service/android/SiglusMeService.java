@@ -515,8 +515,26 @@ public class SiglusMeService {
   private void buildStockEventForLotMovement(List<StockCardCreateRequest> requests,
       FacilityDto facilityDto, Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts,
       String signature) {
-    Map<UUID, UUID> programToStockEventIds = buildStockEvent(false, requests, facilityDto,
-        allApprovedProducts, signature);
+    buildStockEvent(false, requests, facilityDto, allApprovedProducts, signature);
+  }
+
+  private void buildStockEvent(boolean isProductMovement, List<StockCardCreateRequest> requests,
+      FacilityDto facilityDto, Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts,
+      String signature) {
+    List<StockCardCreateRequest> requestMovement = requests.stream()
+        .filter(request -> request.getLotEvents().isEmpty() == isProductMovement).collect(toList());
+    if (!requestMovement.isEmpty()) {
+      StockEventDto stockEvent = buildStockEvent(facilityDto, signature, requestMovement, allApprovedProducts);
+      Map<UUID, UUID> programToStockEventIds = stockEventsService.createStockEventForNoDraftAllProducts(stockEvent);
+      dealWithIssue(requestMovement, programToStockEventIds, allApprovedProducts);
+    }
+  }
+
+  private void dealWithIssue(List<StockCardCreateRequest> requests, Map<UUID, UUID> programToStockEventIds,
+      Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts) {
+    if (programToStockEventIds.isEmpty()) {
+      return;
+    }
     MovementType type = requests.stream().findFirst()
         .map(StockCardCreateRequest::getType)
         .map(MovementType::valueOf)
@@ -528,18 +546,6 @@ public class SiglusMeService {
           .collect(toList());
       requestQuantityRepository.save(requestQuantities);
     }
-  }
-
-  private Map<UUID, UUID> buildStockEvent(boolean isProductMovement, List<StockCardCreateRequest> requests,
-      FacilityDto facilityDto, Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts,
-      String signature) {
-    List<StockCardCreateRequest> requestMovement = requests.stream()
-        .filter(request -> request.getLotEvents().isEmpty() == isProductMovement).collect(toList());
-    if (!requestMovement.isEmpty()) {
-      StockEventDto stockEvent = buildStockEvent(facilityDto, signature, requestMovement, allApprovedProducts);
-      return stockEventsService.createStockEventForNoDraftAllProducts(stockEvent);
-    }
-    return new HashMap<>();
   }
 
   private StockEventDto buildStockEvent(FacilityDto facilityDto, String signature,

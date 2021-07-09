@@ -30,6 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -125,6 +126,9 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .contentType(MediaType.APPLICATION_JSON)
         .content(readFromFile("happy.json"))
         .characterEncoding("utf-8");
+    when(stockEventsService.createStockEventForNoDraftAllProducts(any()))
+        .thenReturn(ImmutableMap.of(UUID.randomUUID(), UUID.randomUUID()));
+
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());
@@ -143,6 +147,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .contentType(MediaType.APPLICATION_JSON)
         .content(readFromFile("uats.json"))
         .characterEncoding("utf-8");
+    when(stockEventsService.createStockEventForNoDraftAllProducts(any()))
+        .thenReturn(ImmutableMap.of(UUID.randomUUID(), UUID.randomUUID()));
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());
