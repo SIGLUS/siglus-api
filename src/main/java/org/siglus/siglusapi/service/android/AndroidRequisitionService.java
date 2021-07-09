@@ -130,7 +130,7 @@ public class AndroidRequisitionService {
   }
 
   private UUID getPeriodId(RequisitionCreateRequest request) {
-    return periodRepo.findByProcessingScheduleCodeAndStartDate(SCHEDULE_CODE, request.getActualStartDate())
+    return periodRepo.findPeriodByCode(SCHEDULE_CODE, request.getActualStartDate())
         .map(BaseEntity::getId)
         .orElseThrow(EntityNotFoundException::new);
   }

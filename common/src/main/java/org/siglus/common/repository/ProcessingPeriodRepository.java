@@ -23,11 +23,16 @@ import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.domain.referencedata.ProcessingSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface ProcessingPeriodRepository extends JpaRepository<ProcessingPeriod, UUID> {
+public interface ProcessingPeriodRepository extends JpaRepository<ProcessingPeriod, UUID>,
+    JpaSpecificationExecutor<ProcessingPeriod> {
 
   List<ProcessingPeriod> findByProcessingSchedule(ProcessingSchedule schedule);
 
-  Optional<ProcessingPeriod> findByProcessingScheduleCodeAndStartDate(Code code, LocalDate startDate);
+  default Optional<ProcessingPeriod> findPeriodByCode(Code code, LocalDate startDate) {
+    return Optional.ofNullable(findOne((root, query, cb) ->
+        cb.and(cb.equal(root.get("code"), code), cb.equal(root.get("startDate"), startDate))));
+  }
 
 }
