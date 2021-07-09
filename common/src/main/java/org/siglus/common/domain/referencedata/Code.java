@@ -30,7 +30,7 @@ public class Code {
     this.code = "";
   }
 
-  private Code(String code) {
+  public Code(String code) {
     this.code = code.replaceAll("\\s", "");
   }
 

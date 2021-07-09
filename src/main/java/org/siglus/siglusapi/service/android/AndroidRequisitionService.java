@@ -22,8 +22,8 @@ import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIME;
 import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
-import static org.siglus.siglusapi.domain.UsageCategory.CONSULTATIONNUMBER;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
+import static org.siglus.siglusapi.domain.UsageCategory.CONSULTATIONNUMBER;
 
 import java.time.YearMonth;
 import java.time.ZonedDateTime;
@@ -55,9 +55,9 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionTemplateService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
-import org.openlmis.requisition.service.referencedata.SupplyLineReferenceDataService;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.exception.ValidationMessageException;
@@ -66,8 +66,8 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
-import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -112,17 +112,12 @@ public class AndroidRequisitionService {
   private Requisition initiateRequisition(RequisitionCreateRequest request) {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
-    Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId,
-        request.getEmergency());
+    Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
     newRequisition.setTemplate(getRequisitionTemplate());
     UUID initiator = authHelper.getCurrentUser().getId();
     newRequisition.setStatus(RequisitionStatus.INITIATED);
     newRequisition.getStatusChanges().add(StatusChange.newStatusChange(newRequisition, initiator));
-    String periodName = request.getActualStartDate().query(YearMonth::from).toString();
-    UUID periodId = periodRepo.findOneByProcessingScheduleCodeAndName(SCHEDULE_CODE, periodName)
-        .map(BaseEntity::getId)
-        .orElseThrow(EntityNotFoundException::new);
-    newRequisition.setProcessingPeriodId(periodId);
+    newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setReportOnly(false);
     newRequisition.setNumberOfMonthsInPeriod(1);
     buildRequisitionApprovedProduct(newRequisition, request);
@@ -134,6 +129,13 @@ public class AndroidRequisitionService {
     buildRequisitionLineItemsExtension(requisition, request);
     buildRequisitionConsultationNumber(requisition, request);
     return requisition;
+  }
+
+  private UUID getPeriodId(RequisitionCreateRequest request) {
+    String periodName = request.getActualStartDate().query(YearMonth::from).toString();
+    return periodRepo.findByProcessingScheduleCodeAndName(new Code(SCHEDULE_CODE), periodName)
+        .map(BaseEntity::getId)
+        .orElseThrow(EntityNotFoundException::new);
   }
 
   private Requisition submitRequisition(Requisition requisition) {
@@ -266,7 +268,6 @@ public class AndroidRequisitionService {
   }
 
   private void buildRequisitionConsultationNumber(Requisition requisition, RequisitionCreateRequest request) {
-
     RequisitionV2Dto dto = new RequisitionV2Dto();
     requisition.export(dto);
     BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(requisition.getTemplate());

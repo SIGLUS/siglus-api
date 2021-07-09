@@ -18,6 +18,7 @@ package org.siglus.common.repository;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.domain.referencedata.ProcessingSchedule;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,6 +27,6 @@ public interface ProcessingPeriodRepository extends JpaRepository<ProcessingPeri
 
   List<ProcessingPeriod> findByProcessingSchedule(ProcessingSchedule schedule);
 
-  Optional<ProcessingPeriod> findOneByProcessingScheduleCodeAndName(String code, String name);
+  Optional<ProcessingPeriod> findByProcessingScheduleCodeAndName(Code code, String name);
 
 }

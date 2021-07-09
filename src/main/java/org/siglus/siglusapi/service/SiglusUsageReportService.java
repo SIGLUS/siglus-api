@@ -143,14 +143,14 @@ public class SiglusUsageReportService {
     }
     usageReportDataProcessors.forEach(processor -> processor.initiate(siglusRequisitionDto, templateColumnSections));
     updateKitUsage(requisitionV2Dto, templateColumnSections, siglusRequisitionDto);
-    setUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
+    buildUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
     return siglusRequisitionDto;
   }
 
   public void setUsageTemplateDto(UUID templateId, SiglusRequisitionDto siglusRequisitionDto) {
     List<UsageTemplateColumnSection> templateColumnSections =
         columnSectionRepository.findByRequisitionTemplateId(templateId);
-    setUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
+    buildUsageTemplateDto(siglusRequisitionDto, templateColumnSections);
   }
 
   public UsageTemplateColumnSection getColumnSection(List<UsageTemplateColumnSection> templateColumnSections,
@@ -170,7 +170,7 @@ public class SiglusUsageReportService {
     updatedDto.setKitUsageLineItems(getKitUsageLineItemDtos(kitUsageLineUpdate));
   }
 
-  private void setUsageTemplateDto(SiglusRequisitionDto requisitionDto,
+  private void buildUsageTemplateDto(SiglusRequisitionDto requisitionDto,
       List<UsageTemplateColumnSection> columnSections) {
     SiglusUsageTemplateDto templateDto = new SiglusUsageTemplateDto();
     SiglusRequisitionTemplateService templateService = new SiglusRequisitionTemplateService();
