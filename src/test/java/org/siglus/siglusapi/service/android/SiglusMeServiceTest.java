@@ -451,8 +451,7 @@ public class SiglusMeServiceTest {
     stockMovementItemMap.put(productId1, new ArrayList<>());
     stockMovementItemMap.put(productId2, new ArrayList<>());
     when(
-        stockCardLineItemService
-            .getStockMovementByOrderableId(any(), any(), any(), any()))
+        stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any()))
         .thenReturn(stockMovementItemMap);
     FacilityProductMovementsResponse productMovementsResponse = service.getProductMovements("2021-06-30", "2021-07-01");
     List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
@@ -470,8 +469,7 @@ public class SiglusMeServiceTest {
     stockMovementItemMap.put(productId1, new ArrayList<>());
     stockMovementItemMap.put(productId2, new ArrayList<>());
     when(
-        stockCardLineItemService
-            .getStockMovementByOrderableId(any(), any(), any(), any()))
+        stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any()))
         .thenReturn(stockMovementItemMap);
     FacilityProductMovementsResponse productMovementsResponse = service.getProductMovements("2021-06-30", "2021-07-01");
     List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
@@ -487,9 +485,7 @@ public class SiglusMeServiceTest {
   public void shouldGetProductMovementResponsesWhenNoMovement() {
     createSohValueByIsNolot(false);
     when(
-        stockCardLineItemService
-            .getStockMovementByOrderableId(any(), any(), any(), any()))
-        .thenReturn(emptyMap());
+        stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any())).thenReturn(emptyMap());
     FacilityProductMovementsResponse productMovementsResponse = service.getProductMovements("2021-06-30", "2021-07-01");
     List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
     ProductMovementResponse response = productMovementsResponseList.stream()

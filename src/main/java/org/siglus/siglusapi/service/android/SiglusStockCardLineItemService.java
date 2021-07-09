@@ -196,8 +196,9 @@ public class SiglusStockCardLineItemService {
 
   private LotMovementItemResponse convertLotMovementItemDto(StockCardLineItemDto itemDto,
       Map<UUID, SiglusLotResponse> siglusLotDtoByLotId) {
+    SiglusLotResponse siglusLotResponse = siglusLotDtoByLotId.get(itemDto.getStockCard().getLotId());
     return LotMovementItemResponse.builder()
-        .lotCode(siglusLotDtoByLotId.get(itemDto.getStockCard().getLotId()).getLotCode())
+        .lotCode(siglusLotResponse == null ? null : siglusLotResponse.getLotCode())
         .documentNumber(itemDto.getDocumentNumber())
         .reason(itemDto.getReason() == null ? null : itemDto.getReason().getName())
         .quantity(itemDto.getQuantity())
