@@ -46,6 +46,7 @@ import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
+import org.siglus.siglusapi.util.AndroidHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -72,6 +73,9 @@ public class SiglusStockCardService {
 
   @Autowired
   private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+
+  @Autowired
+  private AndroidHelper androidHelper;
 
   @Autowired
   private SiglusDateHelper dateHelper;
@@ -111,7 +115,9 @@ public class SiglusStockCardService {
     }
     List<StockCardLineItemDto> calculateNewLineItemDtos =
         calculateStockOnHandByOrderable(stockCardLineItemDtos, lineItemsSource);
-    addCreateInventory(calculateNewLineItemDtos, stockCards);
+    if (!androidHelper.isAndroid()) {
+      addCreateInventory(calculateNewLineItemDtos, stockCards);
+    }
     List<StockCardLineItemDto> reasonFilter = calculateNewLineItemDtos.stream().map(dto -> {
       if (dto.getSource() != null || dto.getDestination() != null) {
         dto.setReason(null);

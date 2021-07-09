@@ -52,6 +52,7 @@ import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
+import org.siglus.siglusapi.util.AndroidHelper;
 import org.springframework.beans.BeanUtils;
 
 @SuppressWarnings("PMD.TooManyMethods")
@@ -82,6 +83,9 @@ public class SiglusStockCardServiceTest {
   @Mock
   private SiglusDateHelper dateHelper;
 
+  @Mock
+  private AndroidHelper androidHelper;
+
   @InjectMocks
   private SiglusStockCardService siglusStockCardService;
 
@@ -102,6 +106,7 @@ public class SiglusStockCardServiceTest {
 
     when(unpackService.orderablesInKit()).thenReturn(new HashSet<>());
     when(archiveProductService.isArchived(any(UUID.class))).thenReturn(true);
+    when(androidHelper.isAndroid()).thenReturn(false);
     CalculatedStockOnHand calculatedStockOnHand = new CalculatedStockOnHandDataBuilder().build();
     calculatedStockOnHand.setStockOnHand(10);
     when(calculatedStockOnHandRepository
