@@ -37,7 +37,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
-import org.siglus.siglusapi.dto.android.request.RequisitionRequest;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
@@ -177,7 +177,7 @@ public class SiglusMeControllerTest {
   @Test
   public void shouldCallServiceWhenCreateRequisition() {
     // given
-    RequisitionRequest requisitionRequest = new RequisitionRequest();
+    RequisitionCreateRequest requisitionRequest = new RequisitionCreateRequest();
 
     // when
     controller.createRequisition(requisitionRequest);

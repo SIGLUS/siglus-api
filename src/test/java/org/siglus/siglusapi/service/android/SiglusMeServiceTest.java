@@ -81,7 +81,7 @@ import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
-import org.siglus.siglusapi.dto.android.request.RequisitionRequest;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
@@ -551,7 +551,7 @@ public class SiglusMeServiceTest {
   @Test
   public void shouldCallaSiglusRequisitionServiceWhenCreateRequisition() {
     // given
-    RequisitionRequest requisitionRequest = new RequisitionRequest();
+    RequisitionCreateRequest requisitionRequest = new RequisitionCreateRequest();
 
     // when
     service.createRequisition(requisitionRequest);

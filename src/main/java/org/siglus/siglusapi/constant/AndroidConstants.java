@@ -36,15 +36,17 @@ public class AndroidConstants {
 
   public static final String ANDROID_SDK_VERSION = "AndroidSDKVersion";
 
+  public static final String SCHEDULE_CODE = "Android-M1";
+
   public static AndroidHeader getAndroidHeader(HttpServletRequest request) {
     return AndroidHeader.builder()
-            .username(request.getHeader(USER_NAME))
-            .facilityCode(request.getHeader(FACILITY_CODE))
-            .facilityName(request.getHeader(FACILITY_NAME))
-            .uniqueId(request.getHeader(UNIQUE_ID))
-            .deviceInfo(request.getHeader(DEVICE_INFO))
-            .versionCode(request.getHeader(VERSION_CODE))
-            .androidSdkVersion(request.getHeader(ANDROID_SDK_VERSION))
+        .username(request.getHeader(USER_NAME))
+        .facilityCode(request.getHeader(FACILITY_CODE))
+        .facilityName(request.getHeader(FACILITY_NAME))
+        .uniqueId(request.getHeader(UNIQUE_ID))
+        .deviceInfo(request.getHeader(DEVICE_INFO))
+        .versionCode(request.getHeader(VERSION_CODE))
+        .androidSdkVersion(request.getHeader(ANDROID_SDK_VERSION))
             .build();
   }
 }

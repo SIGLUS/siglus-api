@@ -20,7 +20,9 @@ import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIME;
 import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
+import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
 
+import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import javax.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.RequisitionTemplate;
@@ -47,15 +50,17 @@ import org.openlmis.requisition.service.RequisitionTemplateService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.referencedata.SupplyLineReferenceDataService;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.exception.ValidationMessageException;
+import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
-import org.siglus.siglusapi.dto.android.request.RequisitionRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -85,35 +90,39 @@ public class AndroidRequisitionService {
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final RequisitionRepository requisitionRepository;
+  private final ProcessingPeriodRepository periodRepo;
 
   @Transactional
-  public void create(RequisitionRequest request) {
+  public void create(RequisitionCreateRequest request) {
     Requisition requisition = initiateRequisition(request);
     requisition = submitRequisition(requisition);
     requisition = authorizeRequisition(requisition);
     internalApproveRequisition(requisition);
   }
 
-  private Requisition initiateRequisition(RequisitionRequest requisitionRequest) {
+  private Requisition initiateRequisition(RequisitionCreateRequest request) {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    UUID programId = siglusProgramService.getProgramIdByCode(requisitionRequest.getProgramCode());
+    UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId,
-        requisitionRequest.getEmergency());
+        request.getEmergency());
     newRequisition.setTemplate(getRequisitionTemplate());
     UUID initiator = authHelper.getCurrentUser().getId();
     newRequisition.setStatus(RequisitionStatus.INITIATED);
     newRequisition.getStatusChanges().add(StatusChange.newStatusChange(newRequisition, initiator));
-    // TODO: find Android processingPeriodId by actualStartDate
-    newRequisition.setProcessingPeriodId(UUID.fromString("1934885e-d955-11eb-afc2-acde48001122"));
+    String periodName = request.getActualStartDate().query(YearMonth::from).toString();
+    UUID periodId = periodRepo.findOneByProcessingScheduleCodeAndName(SCHEDULE_CODE, periodName)
+        .map(BaseEntity::getId)
+        .orElseThrow(EntityNotFoundException::new);
+    newRequisition.setProcessingPeriodId(periodId);
     newRequisition.setReportOnly(false);
     newRequisition.setNumberOfMonthsInPeriod(1);
-    buildRequisitionApprovedProduct(newRequisition, requisitionRequest);
-    buildRequisitionExtraData(newRequisition, requisitionRequest);
-    buildRequisitionLineItems(newRequisition, requisitionRequest);
+    buildRequisitionApprovedProduct(newRequisition, request);
+    buildRequisitionExtraData(newRequisition, request);
+    buildRequisitionLineItems(newRequisition, request);
     log.info("initiate android requisition: {}", newRequisition);
     Requisition requisition = requisitionRepository.save(newRequisition);
     buildRequisitionExtension(requisition);
-    buildRequisitionLineItemsExtension(requisition, requisitionRequest);
+    buildRequisitionLineItemsExtension(requisition, request);
     return requisition;
   }
 
@@ -163,7 +172,8 @@ public class AndroidRequisitionService {
         requisition.getFacilityId());
   }
 
-  private void buildRequisitionLineItemsExtension(Requisition requisition, RequisitionRequest requisitionRequest) {
+  private void buildRequisitionLineItemsExtension(Requisition requisition,
+      RequisitionCreateRequest requisitionRequest) {
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
       extension.setRequisitionLineItemId(requisitionLineItem.getId());
@@ -179,7 +189,7 @@ public class AndroidRequisitionService {
     });
   }
 
-  private void buildRequisitionExtraData(Requisition requisition, RequisitionRequest requisitionRequest) {
+  private void buildRequisitionExtraData(Requisition requisition, RequisitionCreateRequest requisitionRequest) {
     Map<String, Object> extraData = new HashMap<>();
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     extraData.put(ACTUAL_START_DATE, requisitionRequest.getActualStartDate().format(dateTimeFormatter));
@@ -190,7 +200,7 @@ public class AndroidRequisitionService {
     requisition.setExtraData(extraData);
   }
 
-  private ExtraDataSignatureDto buildSignature(RequisitionRequest requisitionRequest) {
+  private ExtraDataSignatureDto buildSignature(RequisitionCreateRequest requisitionRequest) {
     String submitter = getSignatureNameByEventType(requisitionRequest, "SUBMITTER");
     String approver = getSignatureNameByEventType(requisitionRequest, "APPROVER");
     return ExtraDataSignatureDto.builder()
@@ -200,7 +210,7 @@ public class AndroidRequisitionService {
         .build();
   }
 
-  private String getSignatureNameByEventType(RequisitionRequest requisitionRequest, String eventType) {
+  private String getSignatureNameByEventType(RequisitionCreateRequest requisitionRequest, String eventType) {
     RequisitionSignatureRequest signatureRequest = requisitionRequest.getSignatures().stream()
         .filter(signature -> eventType.equals(signature.getType()))
         .findFirst()
@@ -208,7 +218,7 @@ public class AndroidRequisitionService {
     return signatureRequest.getName();
   }
 
-  private void buildRequisitionLineItems(Requisition requisition, RequisitionRequest requisitionRequest) {
+  private void buildRequisitionLineItems(Requisition requisition, RequisitionCreateRequest requisitionRequest) {
     List<RequisitionLineItem> requisitionLineItems = new ArrayList<>();
     for (RequisitionLineItemRequest product : requisitionRequest.getProducts()) {
       OrderableDto orderableDto = siglusOrderableService.getOrderableByCode(product.getProductCode());
@@ -234,7 +244,7 @@ public class AndroidRequisitionService {
     requisition.setRequisitionLineItems(requisitionLineItems);
   }
 
-  private void buildRequisitionApprovedProduct(Requisition requisition, RequisitionRequest requisitionRequest) {
+  private void buildRequisitionApprovedProduct(Requisition requisition, RequisitionCreateRequest requisitionRequest) {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     UUID programId = siglusProgramService.getProgramIdByCode(requisitionRequest.getProgramCode());
     ApproveProductsAggregator approvedProductsContainKit = requisitionService

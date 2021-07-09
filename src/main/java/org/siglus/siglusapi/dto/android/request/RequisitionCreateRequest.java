@@ -30,7 +30,7 @@ import org.hibernate.validator.constraints.NotBlank;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RequisitionRequest {
+public class RequisitionCreateRequest {
 
   @NotBlank
   private String programCode;

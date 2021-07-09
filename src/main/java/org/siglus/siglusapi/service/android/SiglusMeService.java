@@ -73,7 +73,7 @@ import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
-import org.siglus.siglusapi.dto.android.request.RequisitionRequest;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
@@ -390,7 +390,7 @@ public class SiglusMeService {
   }
 
   @Transactional
-  public void createRequisition(RequisitionRequest request) {
+  public void createRequisition(RequisitionCreateRequest request) {
     androidRequisitionService.create(request);
   }
 

@@ -35,7 +35,7 @@ import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsiste
 import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByProduct;
 import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
-import org.siglus.siglusapi.dto.android.request.RequisitionRequest;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
@@ -110,7 +110,7 @@ public class SiglusMeController {
 
   @PostMapping("/facility/requisitions")
   @ResponseStatus(CREATED)
-  public void createRequisition(@RequestBody @Valid RequisitionRequest request) {
+  public void createRequisition(@RequestBody @Valid RequisitionCreateRequest request) {
     service.createRequisition(request);
   }
 
