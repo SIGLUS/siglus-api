@@ -15,10 +15,12 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import lombok.Builder;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
 
 @Data
+@Builder
 public class RequisitionSignatureRequest {
 
   @NotBlank

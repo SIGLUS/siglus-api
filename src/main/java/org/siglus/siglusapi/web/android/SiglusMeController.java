@@ -22,6 +22,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -110,8 +111,8 @@ public class SiglusMeController {
 
   @PostMapping("/facility/requisitions")
   @ResponseStatus(CREATED)
-  public void createRequisition(@RequestBody @Valid RequisitionCreateRequest request) {
-    service.createRequisition(request);
+  public UUID createRequisition(@RequestBody @Valid RequisitionCreateRequest request) {
+    return service.createRequisition(request);
   }
 
   @PostMapping("/app-info")

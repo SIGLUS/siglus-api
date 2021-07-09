@@ -47,8 +47,8 @@ public class RequisitionCreateRequest {
   @NotNull
   private LocalDate actualEndDate;
 
-  @NotBlank
-  private String consultationNumber;
+  @NotNull
+  private Integer consultationNumber;
 
   @Valid
   private List<RequisitionLineItemRequest> products;

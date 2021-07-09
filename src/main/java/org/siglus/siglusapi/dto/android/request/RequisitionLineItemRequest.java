@@ -16,10 +16,12 @@
 package org.siglus.siglusapi.dto.android.request;
 
 import javax.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
 
 @Data
+@Builder
 public class RequisitionLineItemRequest {
 
   @NotBlank

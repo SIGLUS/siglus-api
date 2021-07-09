@@ -86,25 +86,26 @@ public class AndroidRequisitionService {
   @Value("${android.via.templateId}")
   private String androidViaTemplateId;
 
+  private final SiglusAuthenticationHelper authHelper;
   private final RequisitionService requisitionService;
   private final RequisitionTemplateService requisitionTemplateService;
   private final SiglusProgramService siglusProgramService;
   private final SiglusOrderableService siglusOrderableService;
-  private final SiglusAuthenticationHelper authHelper;
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
   private final SupervisoryNodeReferenceDataService supervisoryNodeService;
   private final SiglusUsageReportService siglusUsageReportService;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final RequisitionRepository requisitionRepository;
-  private final ProcessingPeriodRepository periodRepo;
+  private final ProcessingPeriodRepository processingPeriodRepository;
 
   @Transactional
-  public void create(RequisitionCreateRequest request) {
+  public UUID create(RequisitionCreateRequest request) {
     Requisition requisition = initiateRequisition(request);
     requisition = submitRequisition(requisition);
     requisition = authorizeRequisition(requisition);
-    internalApproveRequisition(requisition);
+    requisition = internalApproveRequisition(requisition);
+    return requisition.getId();
   }
 
   private Requisition initiateRequisition(RequisitionCreateRequest request) {
@@ -130,7 +131,7 @@ public class AndroidRequisitionService {
   }
 
   private UUID getPeriodId(RequisitionCreateRequest request) {
-    return periodRepo.findPeriodByCode(SCHEDULE_CODE, request.getActualStartDate())
+    return processingPeriodRepository.findPeriodByCode(SCHEDULE_CODE, request.getActualStartDate())
         .map(BaseEntity::getId)
         .orElseThrow(EntityNotFoundException::new);
   }
@@ -156,7 +157,7 @@ public class AndroidRequisitionService {
     return requisitionRepository.save(requisition);
   }
 
-  private void internalApproveRequisition(Requisition requisition) {
+  private Requisition internalApproveRequisition(Requisition requisition) {
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService.findOne(requisition.getSupervisoryNodeId());
     requisition.setSupervisoryNodeId(supervisoryNodeDto.getParentNodeId());
     UUID approver = authHelper.getCurrentUser().getId();
@@ -164,7 +165,7 @@ public class AndroidRequisitionService {
     requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, approver));
     requisition.setModifiedDate(ZonedDateTime.now());
     log.info("internal-approve android requisition: {}", requisition);
-    requisitionRepository.save(requisition);
+    return requisitionRepository.save(requisition);
   }
 
   private RequisitionTemplate getRequisitionTemplate() {
@@ -278,7 +279,7 @@ public class AndroidRequisitionService {
         .orElseThrow(NullPointerException::new)
         .getColumns()
         .get(CONSULTATIONNUMBER.getName())
-        .setValue(Integer.valueOf(request.getConsultationNumber()));
+        .setValue(request.getConsultationNumber());
     siglusUsageReportService.saveUsageReport(requisitionDto, dto);
   }
 

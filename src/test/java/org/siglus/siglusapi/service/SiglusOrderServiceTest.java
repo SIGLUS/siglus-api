@@ -816,8 +816,7 @@ public class SiglusOrderServiceTest {
     ApprovedProductDto productDto = createApprovedProductDto(orderableId1);
     List<ApprovedProductDto> list = new ArrayList<>();
     list.add(productDto);
-    ApproveProductsAggregator aggregator = new ApproveProductsAggregator(list, programId);
-    return aggregator;
+    return new ApproveProductsAggregator(list, programId);
   }
 
   private ApproveProductsAggregator createUserAggregator() {
@@ -826,8 +825,7 @@ public class SiglusOrderServiceTest {
     List<ApprovedProductDto> list = new ArrayList<>();
     list.add(productDto1);
     list.add(productDto2);
-    ApproveProductsAggregator aggregator = new ApproveProductsAggregator(list, programId);
-    return aggregator;
+    return new ApproveProductsAggregator(list, programId);
   }
 
   private ApprovedProductDto createApprovedProductDto(UUID orderableId) {

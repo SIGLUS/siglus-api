@@ -390,8 +390,8 @@ public class SiglusMeService {
   }
 
   @Transactional
-  public void createRequisition(RequisitionCreateRequest request) {
-    androidRequisitionService.create(request);
+  public UUID createRequisition(RequisitionCreateRequest request) {
+    return androidRequisitionService.create(request);
   }
 
   private List<LotDto> getLotsList(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
