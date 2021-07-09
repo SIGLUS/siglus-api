@@ -191,7 +191,7 @@ public class SiglusMeService {
   @Getter
   public enum Destination {
     ACC_EMERGENCY("Banco de Socorro"),
-    DENTAL_WARD("Medicina Dentaria"),
+    DENTAL_WARD("Estomatologia"),
     GENERAL_WARD("Medicina Geral"),
     LABORATORY("Laboratorio"),
     MATERNITY("Maternidade"),
