@@ -177,7 +177,7 @@ public class AndroidRequisitionServiceTest {
     ProcessingPeriod processingPeriod = new ProcessingPeriod();
     processingPeriod.setId(processingPeriodId);
     Optional<ProcessingPeriod> processingPeriodOptional = Optional.of(processingPeriod);
-    when(processingPeriodRepository.findPeriodByCode(SCHEDULE_CODE, LocalDate.of(2021, 6, 21)))
+    when(processingPeriodRepository.findPeriodByCodeAndName(SCHEDULE_CODE, "Jun 21-2021"))
         .thenReturn(processingPeriodOptional);
 
     Requisition requisition = new Requisition();

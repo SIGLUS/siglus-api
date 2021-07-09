@@ -15,13 +15,13 @@
 
 package org.siglus.common.repository;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.domain.referencedata.ProcessingSchedule;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -30,9 +30,12 @@ public interface ProcessingPeriodRepository extends JpaRepository<ProcessingPeri
 
   List<ProcessingPeriod> findByProcessingSchedule(ProcessingSchedule schedule);
 
-  default Optional<ProcessingPeriod> findPeriodByCode(Code code, LocalDate startDate) {
-    return Optional.ofNullable(findOne((root, query, cb) ->
-        cb.and(cb.equal(root.get("code"), code), cb.equal(root.get("startDate"), startDate))));
+  default Optional<ProcessingPeriod> findPeriodByCodeAndName(Code code, String name) {
+    Specification<ProcessingPeriod> spec = (root, query, cb) -> cb.and(
+        cb.equal(root.get("code"), code),
+        cb.equal(root.get("name"), name)
+    );
+    return Optional.ofNullable(findOne(spec));
   }
 
 }
