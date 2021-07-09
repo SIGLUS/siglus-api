@@ -25,6 +25,7 @@ import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
 import com.google.common.collect.Sets;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -177,7 +178,7 @@ public class AndroidRequisitionServiceTest {
     ProcessingPeriod processingPeriod = new ProcessingPeriod();
     processingPeriod.setId(processingPeriodId);
     Optional<ProcessingPeriod> processingPeriodOptional = Optional.of(processingPeriod);
-    when(processingPeriodRepository.findPeriodByCodeAndName(SCHEDULE_CODE, "Jun 21-2021"))
+    when(processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, YearMonth.of(2021, 6)))
         .thenReturn(processingPeriodOptional);
 
     Requisition requisition = new Requisition();

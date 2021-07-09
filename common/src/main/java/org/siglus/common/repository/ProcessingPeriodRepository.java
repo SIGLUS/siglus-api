@@ -15,6 +15,7 @@
 
 package org.siglus.common.repository;
 
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,10 +31,10 @@ public interface ProcessingPeriodRepository extends JpaRepository<ProcessingPeri
 
   List<ProcessingPeriod> findByProcessingSchedule(ProcessingSchedule schedule);
 
-  default Optional<ProcessingPeriod> findPeriodByCodeAndName(Code code, String name) {
+  default Optional<ProcessingPeriod> findPeriodByCodeAndMonth(Code code, YearMonth month) {
     Specification<ProcessingPeriod> spec = (root, query, cb) -> cb.and(
-        cb.equal(root.get("code"), code),
-        cb.equal(root.get("name"), name)
+        cb.equal(root.get("processingSchedule").get("code"), code),
+        cb.like(root.get("startDate").as(String.class), month.toString() + "%")
     );
     return Optional.ofNullable(findOne(spec));
   }

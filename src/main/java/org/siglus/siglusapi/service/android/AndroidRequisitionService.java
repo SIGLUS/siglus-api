@@ -22,10 +22,10 @@ import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIME;
 import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
-import static org.siglus.siglusapi.constant.AndroidConstants.PERIOD_NAME_FORMATTER;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
 import static org.siglus.siglusapi.domain.UsageCategory.CONSULTATIONNUMBER;
 
+import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -132,8 +132,8 @@ public class AndroidRequisitionService {
   }
 
   private UUID getPeriodId(RequisitionCreateRequest request) {
-    String periodName = PERIOD_NAME_FORMATTER.format(request.getActualStartDate());
-    return processingPeriodRepository.findPeriodByCodeAndName(SCHEDULE_CODE, periodName)
+    YearMonth month = request.getActualStartDate().query(YearMonth::from);
+    return processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
         .map(BaseEntity::getId)
         .orElseThrow(EntityNotFoundException::new);
   }

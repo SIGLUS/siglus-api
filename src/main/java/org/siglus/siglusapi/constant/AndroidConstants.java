@@ -17,8 +17,6 @@ package org.siglus.siglusapi.constant;
 
 import static org.siglus.common.domain.referencedata.Code.code;
 
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 import javax.servlet.http.HttpServletRequest;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
@@ -42,10 +40,6 @@ public class AndroidConstants {
   public static final String ANDROID_SDK_VERSION = "AndroidSDKVersion";
 
   public static final Code SCHEDULE_CODE = code("Android-M1");
-
-  // please change the format in master data if there is any update on this formatter
-  public static final DateTimeFormatter PERIOD_NAME_FORMATTER = DateTimeFormatter
-      .ofPattern("MMM dd-yyyy", Locale.ENGLISH);
 
   public static AndroidHeader getAndroidHeader(HttpServletRequest request) {
     return AndroidHeader.builder()
