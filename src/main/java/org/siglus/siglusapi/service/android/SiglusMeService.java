@@ -31,7 +31,6 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -524,7 +523,7 @@ public class SiglusMeService {
     List<StockCardCreateRequest> requestMovement = requests.stream()
         .filter(request -> request.getLotEvents().isEmpty() == isProductMovement).collect(toList());
     if (!requestMovement.isEmpty()) {
-      StockEventDto stockEvent = buildStockEvent(facilityDto, signature, requestMovement, allApprovedProducts);
+      StockEventDto stockEvent = buildStockEventDto(facilityDto, signature, requestMovement, allApprovedProducts);
       Map<UUID, UUID> programToStockEventIds = stockEventsService.createStockEventForNoDraftAllProducts(stockEvent);
       dealWithIssue(requestMovement, programToStockEventIds, allApprovedProducts);
     }
@@ -548,7 +547,7 @@ public class SiglusMeService {
     }
   }
 
-  private StockEventDto buildStockEvent(FacilityDto facilityDto, String signature,
+  private StockEventDto buildStockEventDto(FacilityDto facilityDto, String signature,
       List<StockCardCreateRequest> requests,
       Map<String, org.openlmis.requisition.dto.OrderableDto> codeOrderableToMap) {
     StockEventDto eventDto = StockEventDto.builder()
