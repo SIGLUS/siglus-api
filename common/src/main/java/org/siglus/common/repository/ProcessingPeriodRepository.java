@@ -15,6 +15,7 @@
 
 package org.siglus.common.repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -27,6 +28,6 @@ public interface ProcessingPeriodRepository extends JpaRepository<ProcessingPeri
 
   List<ProcessingPeriod> findByProcessingSchedule(ProcessingSchedule schedule);
 
-  Optional<ProcessingPeriod> findByProcessingScheduleCodeAndName(Code code, String name);
+  Optional<ProcessingPeriod> findByProcessingScheduleCodeAndStartDate(Code code, LocalDate startDate);
 
 }

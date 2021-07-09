@@ -15,7 +15,10 @@
 
 package org.siglus.siglusapi.constant;
 
+import static org.siglus.common.domain.referencedata.Code.code;
+
 import javax.servlet.http.HttpServletRequest;
+import org.siglus.common.domain.referencedata.Code;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 
 public class AndroidConstants {
@@ -36,7 +39,7 @@ public class AndroidConstants {
 
   public static final String ANDROID_SDK_VERSION = "AndroidSDKVersion";
 
-  public static final String SCHEDULE_CODE = "Android-M1";
+  public static final Code SCHEDULE_CODE = code("Android-M1");
 
   public static AndroidHeader getAndroidHeader(HttpServletRequest request) {
     return AndroidHeader.builder()

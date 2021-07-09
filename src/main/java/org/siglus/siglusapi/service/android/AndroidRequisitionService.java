@@ -25,7 +25,6 @@ import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
 import static org.siglus.siglusapi.domain.UsageCategory.CONSULTATIONNUMBER;
 
-import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -57,7 +56,6 @@ import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.RequisitionTemplateExtension;
-import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.exception.ValidationMessageException;
@@ -132,8 +130,7 @@ public class AndroidRequisitionService {
   }
 
   private UUID getPeriodId(RequisitionCreateRequest request) {
-    String periodName = request.getActualStartDate().query(YearMonth::from).toString();
-    return periodRepo.findByProcessingScheduleCodeAndName(new Code(SCHEDULE_CODE), periodName)
+    return periodRepo.findByProcessingScheduleCodeAndStartDate(SCHEDULE_CODE, request.getActualStartDate())
         .map(BaseEntity::getId)
         .orElseThrow(EntityNotFoundException::new);
   }
