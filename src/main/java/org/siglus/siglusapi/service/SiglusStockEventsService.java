@@ -253,9 +253,8 @@ public class SiglusStockEventsService {
     lotSearchParams.setLotCode(lotCode);
     lotSearchParams.setTradeItemId(newArrayList(UUID.fromString(tradeItemId)));
     List<LotDto> existedLots = lotReferenceDataService.getLots(lotSearchParams);
-    if (CollectionUtils.isNotEmpty(existedLots) && getExitLotDto(existedLots, lotCode) != null) {
-      LotDto existedLot = existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode))
-          .findFirst().orElseThrow(() -> new IllegalArgumentException("lotCode is not exit"));
+    LotDto existedLot = getExistedLot(existedLots, lotCode);
+    if (existedLot != null) {
       if (Boolean.TRUE.equals(updateExpirationDate) && !existedLot.getExpirationDate().isEqual(expirationDate)) {
         LotConflict conflict = lotConflictRepository
             .findLotConflictByFacilityIdAndLotId(userDto.getHomeFacilityId(), existedLot.getId());
@@ -282,9 +281,11 @@ public class SiglusStockEventsService {
     return lotReferenceDataService.saveLot(lotDto);
   }
 
-  private LotDto getExitLotDto(List<LotDto> existedLots, String lotCode) {
-    return existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode))
-        .findFirst().orElse(null);
+  private LotDto getExistedLot(List<LotDto> existedLots, String lotCode) {
+    if (CollectionUtils.isEmpty(existedLots)) {
+      return null;
+    }
+    return existedLots.stream().filter(lotDto -> lotDto.getLotCode().equals(lotCode)).findFirst().orElse(null);
   }
 
   private void addStockCardCreateTime(StockEventDto eventDto) {
