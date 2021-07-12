@@ -765,31 +765,28 @@ public class SiglusMeService {
     }
   }
 
-  private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId,
-      List<SupportedProgramDto> programs) {
+  private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId, List<SupportedProgramDto> programs) {
     List<Requisition> requisitions = requisitionRepository.findLatestRequisitionByFacilityId(facilityId);
+    Map<UUID, String> programIdToCode = programs.stream()
+        .collect(toMap(SupportedProgramDto::getId, SupportedProgramDto::getCode));
+    Map<String, Requisition> programCodeToRequisition = requisitions.stream()
+        .collect(toMap(requisition -> programIdToCode.get(requisition.getProgramId()), Function.identity()));
     return reportTypeRepository.findByFacilityId(facilityId).stream()
         .map(
             reportType -> ReportTypeResponse.builder().name(reportType.getName())
                 .supportActive(reportType.getActive())
                 .supportStartDate(reportType.getStartDate())
                 .programCode(reportType.getProgramCode())
-                .lastReportDate(findLastReportDate(reportType, programs, requisitions))
+                .lastReportDate(findLastReportDate(reportType, programCodeToRequisition))
                 .build())
         .collect(Collectors.toList());
   }
 
-  private LocalDate findLastReportDate(ReportType supportReportType, List<SupportedProgramDto> programs,
-      List<Requisition> requisitions) {
-    Map<String, UUID> supportProgramCodeToId = programs.stream()
-        .collect(toMap(SupportedProgramDto::getCode, SupportedProgramDto::getId));
-    Map<UUID, Map<String, Object>> programIdToExtraData = requisitions.stream()
-        .collect(toMap(Requisition::getProgramId, Requisition::getExtraData));
-    Map<String, Object> extraData = programIdToExtraData
-        .get(supportProgramCodeToId.get(supportReportType.getProgramCode()));
-    if (extraData == null) {
+  private LocalDate findLastReportDate(ReportType reportType, Map<String, Requisition> programCodeToRequisition) {
+    Requisition requisition = programCodeToRequisition.get(reportType.getProgramCode());
+    if (requisition == null || requisition.getExtraData() == null) {
       return null;
     }
-    return LocalDate.parse(String.valueOf(extraData.get(ACTUAL_END_DATE)));
+    return LocalDate.parse(String.valueOf(requisition.getExtraData().get(ACTUAL_END_DATE)));
   }
 }
