@@ -43,10 +43,8 @@ public class RequisitionLineItemRequest {
   @NotNull
   private Integer stockOnHand;
 
-  @NotNull
   private Integer requestedQuantity;
 
-  @NotNull
   private Integer authorizedQuantity;
 
 }

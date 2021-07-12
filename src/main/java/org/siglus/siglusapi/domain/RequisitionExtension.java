@@ -15,17 +15,20 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
 
 @Entity
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -39,4 +42,8 @@ public class RequisitionExtension extends BaseEntity {
   private Integer requisitionNumber;
 
   private Boolean isApprovedByInternal;
+
+  private UUID facilityId;
+
+  private LocalDate actualStartDate;
 }

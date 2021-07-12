@@ -63,12 +63,14 @@ import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
@@ -99,6 +101,7 @@ public class AndroidRequisitionService {
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final RequisitionRepository requisitionRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
+  private final RequisitionExtensionRepository requisitionExtensionRepository;
 
   @Transactional
   public UUID create(RequisitionCreateRequest request) {
@@ -114,36 +117,27 @@ public class AndroidRequisitionService {
     UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
     newRequisition.setTemplate(getRequisitionTemplate());
-    UUID initiator = authHelper.getCurrentUser().getId();
     newRequisition.setStatus(RequisitionStatus.INITIATED);
-    newRequisition.getStatusChanges().add(StatusChange.newStatusChange(newRequisition, initiator));
     newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setReportOnly(false);
     newRequisition.setNumberOfMonthsInPeriod(1);
+    buildStatusChanges(newRequisition);
     buildRequisitionApprovedProduct(newRequisition, request);
     buildRequisitionExtraData(newRequisition, request);
     buildRequisitionLineItems(newRequisition, request);
     log.info("initiate android requisition: {}", newRequisition);
     Requisition requisition = requisitionRepository.save(newRequisition);
-    buildRequisitionExtension(requisition);
+    buildRequisitionExtension(requisition, request);
     buildRequisitionLineItemsExtension(requisition, request);
     buildRequisitionConsultationNumber(requisition, request);
     return requisition;
   }
 
-  private UUID getPeriodId(RequisitionCreateRequest request) {
-    YearMonth month = request.getActualStartDate().query(YearMonth::from);
-    return processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
-        .map(BaseEntity::getId)
-        .orElseThrow(EntityNotFoundException::new);
-  }
-
   private Requisition submitRequisition(Requisition requisition) {
-    UUID submitter = authHelper.getCurrentUser().getId();
-    requisition.setStatus(RequisitionStatus.SUBMITTED);
-    requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, submitter));
-    log.info("submit android requisition: {}", requisition);
     requisition.setModifiedDate(ZonedDateTime.now());
+    requisition.setStatus(RequisitionStatus.SUBMITTED);
+    buildStatusChanges(requisition);
+    log.info("submit android requisition: {}", requisition);
     return requisitionRepository.save(requisition);
   }
 
@@ -151,10 +145,9 @@ public class AndroidRequisitionService {
     UUID supervisoryNodeId = supervisoryNodeService.findSupervisoryNode(
         requisition.getProgramId(), requisition.getFacilityId()).getId();
     requisition.setSupervisoryNodeId(supervisoryNodeId);
-    UUID authorizer = authHelper.getCurrentUser().getId();
-    requisition.setStatus(RequisitionStatus.AUTHORIZED);
-    requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, authorizer));
     requisition.setModifiedDate(ZonedDateTime.now());
+    requisition.setStatus(RequisitionStatus.AUTHORIZED);
+    buildStatusChanges(requisition);
     log.info("authorize android requisition: {}", requisition);
     return requisitionRepository.save(requisition);
   }
@@ -162,12 +155,23 @@ public class AndroidRequisitionService {
   private Requisition internalApproveRequisition(Requisition requisition) {
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService.findOne(requisition.getSupervisoryNodeId());
     requisition.setSupervisoryNodeId(supervisoryNodeDto.getParentNodeId());
-    UUID approver = authHelper.getCurrentUser().getId();
-    requisition.setStatus(RequisitionStatus.IN_APPROVAL);
-    requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, approver));
     requisition.setModifiedDate(ZonedDateTime.now());
+    requisition.setStatus(RequisitionStatus.IN_APPROVAL);
+    buildStatusChanges(requisition);
     log.info("internal-approve android requisition: {}", requisition);
     return requisitionRepository.save(requisition);
+  }
+
+  private void buildStatusChanges(Requisition requisition) {
+    UUID authorId = authHelper.getCurrentUser().getId();
+    requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, authorId));
+  }
+
+  private UUID getPeriodId(RequisitionCreateRequest request) {
+    YearMonth month = request.getActualStartDate().query(YearMonth::from);
+    return processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
+        .map(BaseEntity::getId)
+        .orElseThrow(EntityNotFoundException::new);
   }
 
   private RequisitionTemplate getRequisitionTemplate() {
@@ -179,9 +183,13 @@ public class AndroidRequisitionService {
     return requisitionTemplate;
   }
 
-  private void buildRequisitionExtension(Requisition requisition) {
-    siglusRequisitionExtensionService.createRequisitionExtension(requisition.getId(), requisition.getEmergency(),
-        requisition.getFacilityId());
+  private void buildRequisitionExtension(Requisition requisition, RequisitionCreateRequest request) {
+    RequisitionExtension requisitionExtension = siglusRequisitionExtensionService
+        .buildRequisitionExtension(requisition.getId(), requisition.getEmergency(), requisition.getFacilityId());
+    requisitionExtension.setIsApprovedByInternal(true);
+    requisitionExtension.setActualStartDate(request.getActualStartDate());
+    log.info("save requisition extension: {}", requisitionExtension);
+    requisitionExtensionRepository.save(requisitionExtension);
   }
 
   private void buildRequisitionLineItemsExtension(Requisition requisition,

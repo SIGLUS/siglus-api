@@ -62,6 +62,7 @@ import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
 import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
@@ -69,6 +70,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
@@ -119,6 +121,9 @@ public class AndroidRequisitionServiceTest {
   @Mock
   private ProcessingPeriodRepository processingPeriodRepository;
 
+  @Mock
+  private RequisitionExtensionRepository requisitionExtensionRepository;
+
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
@@ -127,6 +132,9 @@ public class AndroidRequisitionServiceTest {
 
   @Captor
   private ArgumentCaptor<RequisitionV2Dto> requisitionV2DtoArgumentCaptor;
+
+  @Captor
+  private ArgumentCaptor<RequisitionExtension> requisitionExtensionArgumentCaptor;
 
   private final UUID facilityId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
@@ -204,6 +212,12 @@ public class AndroidRequisitionServiceTest {
     requisitionDto.setConsultationNumberLineItems(Collections.singletonList(consultationNumberGroupDto));
     when(siglusUsageReportService.initiateUsageReport(requisitionV2DtoArgumentCaptor.capture()))
         .thenReturn(requisitionDto);
+
+    RequisitionExtension requisitionExtension = new RequisitionExtension();
+    when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId))
+        .thenReturn(requisitionExtension);
+    when(requisitionExtensionRepository.save(requisitionExtensionArgumentCaptor.capture()))
+        .thenReturn(requisitionExtension);
   }
 
   @Test
@@ -213,7 +227,7 @@ public class AndroidRequisitionServiceTest {
 
     // then
     verify(requisitionRepository, times(4)).save(requisitionArgumentCaptor.capture());
-    verify(siglusRequisitionExtensionService).createRequisitionExtension(requisitionId, false, facilityId);
+    verify(siglusRequisitionExtensionService).buildRequisitionExtension(requisitionId, false, facilityId);
     verify(siglusUsageReportService).initiateUsageReport(any());
     verify(siglusUsageReportService).saveUsageReport(any(), any());
     verify(requisitionLineItemExtensionRepository).save(requisitionLineItemExtensionArgumentCaptor.capture());

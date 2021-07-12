@@ -40,17 +40,21 @@ public class SiglusRequisitionExtensionService {
   @Autowired
   private RequisitionExtensionRepository requisitionExtensionRepository;
 
-  public RequisitionExtension createRequisitionExtension(UUID requisitionId, Boolean emergency,
-      UUID facilityId) {
+  public RequisitionExtension createRequisitionExtension(UUID requisitionId, Boolean emergency, UUID facilityId) {
+    RequisitionExtension requisitionExtension = buildRequisitionExtension(requisitionId, emergency, facilityId);
+    log.info("save requisition extension: {}", requisitionExtension);
+    return requisitionExtensionRepository.save(requisitionExtension);
+  }
+
+  public RequisitionExtension buildRequisitionExtension(UUID requisitionId, Boolean emergency, UUID facilityId) {
     String facilityCode = siglusFacilityReferenceDataService.findOne(facilityId).getCode();
     Integer requisitionNumber = siglusGeneratedNumberService.getGeneratedNumber(facilityId);
-    RequisitionExtension requisitionExtension = RequisitionExtension.builder()
+    return RequisitionExtension.builder()
         .requisitionId(requisitionId)
         .requisitionNumberPrefix("RNR-" + (Boolean.TRUE.equals(emergency) ? "EM" : "NO") + facilityCode)
         .requisitionNumber(requisitionNumber)
+        .facilityId(facilityId)
         .build();
-    log.info("save requisition extension by requisition id: {}", requisitionId);
-    return requisitionExtensionRepository.save(requisitionExtension);
   }
 
   public String formatRequisitionNumber(RequisitionExtension requisitionExtension) {
