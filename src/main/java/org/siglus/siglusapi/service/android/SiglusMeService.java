@@ -88,7 +88,7 @@ import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
-import org.siglus.siglusapi.repository.ReportTypesRepository;
+import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
@@ -258,7 +258,7 @@ public class SiglusMeService {
   private final SiglusValidSourceDestinationService siglusValidSourceDestinationService;
   private final SiglusStockEventsService stockEventsService;
   private final AndroidHelper androidHelper;
-  private final ReportTypesRepository reportTypesRepository;
+  private final ReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
   private final AndroidRequisitionService androidRequisitionService;
 
@@ -768,13 +768,14 @@ public class SiglusMeService {
   private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId,
       List<SupportedProgramDto> programs) {
     List<Requisition> requisitions = requisitionRepository.findLatestRequisitionByFacilityId(facilityId);
-    return reportTypesRepository.findByFacilityId(facilityId).stream().map(
-        reportType -> ReportTypeResponse.builder().name(reportType.getName())
-            .supportActive(reportType.getActive())
-            .supportStartDate(reportType.getStartDate())
-            .programCode(reportType.getProgramCode())
-            .lastReportDate(findLastReportDate(reportType, programs, requisitions))
-            .build())
+    return reportTypeRepository.findByFacilityId(facilityId).stream()
+        .map(
+            reportType -> ReportTypeResponse.builder().name(reportType.getName())
+                .supportActive(reportType.getActive())
+                .supportStartDate(reportType.getStartDate())
+                .programCode(reportType.getProgramCode())
+                .lastReportDate(findLastReportDate(reportType, programs, requisitions))
+                .build())
         .collect(Collectors.toList());
   }
 

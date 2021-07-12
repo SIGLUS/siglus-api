@@ -92,7 +92,7 @@ import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
-import org.siglus.siglusapi.repository.ReportTypesRepository;
+import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -162,7 +162,7 @@ public class SiglusMeServiceTest {
   private AndroidHelper androidHelper;
 
   @Mock
-  private ReportTypesRepository reportTypesRepository;
+  private ReportTypeRepository reportTypeRepository;
 
   @Mock
   private SiglusRequisitionRepository requisitionRepository;
@@ -280,7 +280,7 @@ public class SiglusMeServiceTest {
     Optional<Requisition> rnrOpt = mockProgramRnr();
     List<Requisition> requisitions = Collections.singletonList(rnrOpt.get());
     when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(facilityDto);
-    when(reportTypesRepository.findByFacilityId(facilityId))
+    when(reportTypeRepository.findByFacilityId(facilityId))
         .thenReturn(reportTypes);
     when(requisitionRepository
         .findLatestRequisitionByFacilityId(facilityId))

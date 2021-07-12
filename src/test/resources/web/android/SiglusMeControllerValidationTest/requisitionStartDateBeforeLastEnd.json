@@ -1,0 +1,11 @@
+{
+  "programCode": "13",
+  "emergency": false,
+  "comment": "actualStartDate supposed to be equal to 2021-06-21",
+  "actualStartDate": "2021-06-17",
+  "actualEndDate": "2021-07-20",
+  "clientSubmittedTime": "2021-08-17T14:20:56.000Z",
+  "consultationNumber": "41",
+  "products": [],
+  "signatures": []
+}
