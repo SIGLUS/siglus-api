@@ -148,7 +148,8 @@ public class SiglusMeControllerValidationTest extends FileBasedTest {
 
     ReportType reportType = mock(ReportType.class);
     when(reportType.getStartDate()).thenReturn(LocalDate.of(2021, 6, 1));
-    when(reportTypeRepo.findOneByFacilityIdAndProgramcode(facilityId, "13")).thenReturn(Optional.of(reportType));
+    when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(facilityId, "13"))
+        .thenReturn(Optional.of(reportType));
 
     ProgramDto otherProgram = mock(ProgramDto.class);
     when(programDataService.findOne(any())).thenReturn(otherProgram);

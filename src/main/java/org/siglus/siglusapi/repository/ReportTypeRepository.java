@@ -25,5 +25,5 @@ public interface ReportTypeRepository extends JpaRepository<ReportType, UUID> {
 
   List<ReportType> findByFacilityId(UUID facilityId);
 
-  Optional<ReportType> findOneByFacilityIdAndProgramcode(UUID facilityId, String programCode);
+  Optional<ReportType> findOneByFacilityIdAndProgramCodeAndActiveIsTrue(UUID facilityId, String programCode);
 }

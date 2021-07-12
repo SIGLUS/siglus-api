@@ -52,7 +52,8 @@ public class RequisitionValidStartDateValidator implements
     // this validator is supposed to running after the default group, so the value will not be null or empty
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     String programCode = value.getProgramCode();
-    LocalDate reportRestartDate = reportTypeRepo.findOneByFacilityIdAndProgramcode(homeFacilityId, programCode)
+    LocalDate reportRestartDate = reportTypeRepo
+        .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(homeFacilityId, programCode)
         .map(ReportType::getStartDate)
         .orElseThrow(EntityNotFoundException::new);
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
