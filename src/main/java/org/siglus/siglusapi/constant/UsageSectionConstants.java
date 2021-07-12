@@ -15,19 +15,24 @@
 
 package org.siglus.siglusapi.constant;
 
-import java.util.UUID;
+public class UsageSectionConstants {
 
-public class ProgramConstants {
+  private UsageSectionConstants() { }
 
-  private ProgramConstants() {
+  public static class ConsultationNumberLineItems {
+    private ConsultationNumberLineItems() { }
+
+    public static final String GROUP_NAME = "number";
+    public static final String COLUMN_NAME = "consultationNumber";
   }
 
-  public static final UUID ALL_PRODUCTS_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+  public static class KitUsageLineItems {
+    private KitUsageLineItems() { }
 
-  public static final UUID ALL_PRODUCTS_PROGRAM_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
-
-  public static final String ALL_PRODUCTS_PROGRAM_CODE = "ALL";
-
-  public static final String ALL_PRODUCTS_PROGRAM_NAME = "Todos os produtos";
+    public static final String COLLECTION_KIT_OPENED = "kitOpened";
+    public static final String COLLECTION_KIT_RECEIVED = "kitReceived";
+    public static final String SERVICE_CHW = "CHW";
+    public static final String SERVICE_HF = "HF";
+  }
 
 }

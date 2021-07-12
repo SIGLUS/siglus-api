@@ -22,8 +22,15 @@ import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIME;
 import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
+import static org.siglus.common.constant.KitConstants.apeKits;
+import static org.siglus.common.constant.KitConstants.usKits;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
-import static org.siglus.siglusapi.domain.UsageCategory.CONSULTATIONNUMBER;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_OPENED;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_RECEIVED;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.SERVICE_CHW;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.SERVICE_HF;
 
 import java.time.YearMonth;
 import java.time.ZonedDateTime;
@@ -129,7 +136,7 @@ public class AndroidRequisitionService {
     Requisition requisition = requisitionRepository.save(newRequisition);
     buildRequisitionExtension(requisition, request);
     buildRequisitionLineItemsExtension(requisition, request);
-    buildRequisitionConsultationNumber(requisition, request);
+    buildRequisitionUsageSections(requisition, request);
     return requisition;
   }
 
@@ -275,7 +282,7 @@ public class AndroidRequisitionService {
     requisition.setAvailableProducts(availableProductIdentities);
   }
 
-  private void buildRequisitionConsultationNumber(Requisition requisition, RequisitionCreateRequest request) {
+  private void buildRequisitionUsageSections(Requisition requisition, RequisitionCreateRequest request) {
     RequisitionV2Dto dto = new RequisitionV2Dto();
     requisition.export(dto);
     BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(requisition.getTemplate());
@@ -284,13 +291,45 @@ public class AndroidRequisitionService {
     dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(), "", PROCESSING_PERIODS));
     dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), "", PROGRAMS));
     SiglusRequisitionDto requisitionDto = siglusUsageReportService.initiateUsageReport(dto);
-    requisitionDto.getConsultationNumberLineItems().stream()
-        .findFirst()
-        .orElseThrow(NullPointerException::new)
-        .getColumns()
-        .get(CONSULTATIONNUMBER.getName())
-        .setValue(request.getConsultationNumber());
+    buildConsultationNumber(requisitionDto, request);
+    buildRequisitionKitUsage(requisitionDto, request);
     siglusUsageReportService.saveUsageReport(requisitionDto, dto);
+  }
+
+  private void buildConsultationNumber(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+    requisitionDto.getConsultationNumberLineItems().forEach(consultationNumber -> {
+      if (GROUP_NAME.equals(consultationNumber.getName())) {
+        consultationNumber.getColumns().get(COLUMN_NAME).setValue(request.getConsultationNumber());
+      }
+    });
+  }
+
+  private void buildRequisitionKitUsage(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+    int kitReceivedChw = request.getProducts().stream()
+        .filter(product -> apeKits.contains(product.getProductCode()))
+        .mapToInt(RequisitionLineItemRequest::getTotalReceivedQuantity)
+        .sum();
+    int kitReceivedHf = request.getProducts().stream()
+        .filter(product -> usKits.contains(product.getProductCode()))
+        .mapToInt(RequisitionLineItemRequest::getTotalReceivedQuantity)
+        .sum();
+    int kitOpenedChw = request.getProducts().stream()
+        .filter(product -> apeKits.contains(product.getProductCode()))
+        .mapToInt(RequisitionLineItemRequest::getTotalConsumedQuantity)
+        .sum();
+    int kitOpenedHf = request.getProducts().stream()
+        .filter(product -> usKits.contains(product.getProductCode()))
+        .mapToInt(RequisitionLineItemRequest::getTotalConsumedQuantity)
+        .sum();
+    requisitionDto.getKitUsageLineItems().forEach(kitUsage -> {
+      if (COLLECTION_KIT_RECEIVED.equals(kitUsage.getCollection())) {
+        kitUsage.getServices().get(SERVICE_CHW).setValue(kitReceivedChw);
+        kitUsage.getServices().get(SERVICE_HF).setValue(kitReceivedHf);
+      } else if (COLLECTION_KIT_OPENED.equals(kitUsage.getCollection())) {
+        kitUsage.getServices().get(SERVICE_CHW).setValue(kitOpenedChw);
+        kitUsage.getServices().get(SERVICE_HF).setValue(kitOpenedHf);
+      }
+    });
   }
 
 }

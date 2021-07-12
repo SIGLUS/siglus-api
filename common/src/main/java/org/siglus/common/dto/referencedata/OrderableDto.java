@@ -16,11 +16,11 @@
 package org.siglus.common.dto.referencedata;
 
 import static com.google.common.collect.Maps.newHashMap;
+import static org.siglus.common.constant.KitConstants.apeKits;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -124,8 +124,7 @@ public class OrderableDto extends BaseDto implements Orderable.Importer,
   }
 
   public boolean getIsKit() {
-    List<String> notChildrenKit = Arrays.asList("26A02", "26B02");
-    return CollectionUtils.isNotEmpty(children) || notChildrenKit.contains(productCode);
+    return CollectionUtils.isNotEmpty(children) || apeKits.contains(productCode);
   }
 
   public void setTradeItemIdentifier(UUID tradeItemId) {

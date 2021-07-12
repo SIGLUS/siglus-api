@@ -13,21 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.constant;
+package org.siglus.common.constant;
 
-import java.util.UUID;
+import java.util.Arrays;
+import java.util.List;
 
-public class ProgramConstants {
+public class KitConstants {
 
-  private ProgramConstants() {
-  }
+  private KitConstants() { }
 
-  public static final UUID ALL_PRODUCTS_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
+  public static final List<String> usKits = Arrays.asList("26A01", "26B01");
 
-  public static final UUID ALL_PRODUCTS_PROGRAM_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
-
-  public static final String ALL_PRODUCTS_PROGRAM_CODE = "ALL";
-
-  public static final String ALL_PRODUCTS_PROGRAM_NAME = "Todos os produtos";
+  public static final List<String> apeKits = Arrays.asList("26A02", "26B02");
 
 }
