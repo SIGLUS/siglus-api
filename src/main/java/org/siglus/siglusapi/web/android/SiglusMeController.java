@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.beanutils.BeanUtils;
 import org.hibernate.validator.constraints.NotEmpty;
@@ -79,11 +80,12 @@ public class SiglusMeController {
     return service.getFacilityProducts(lastSync);
   }
 
+  @Validated(PerformanceSequence.class)
   @PostMapping("/facility/stockCards")
   @ResponseStatus(CREATED)
   public void createStockCards(
       @RequestBody
-      @Validated(PerformanceSequence.class)
+      @Valid
       @NotEmpty
       @StockOnHandConsistentWithQuantityByProduct
       @StockOnHandConsistentWithQuantityByLot
@@ -108,10 +110,11 @@ public class SiglusMeController {
     service.processHfCmms(hfCmmDtos);
   }
 
+  @Validated(PerformanceSequence.class)
   @PostMapping("/facility/requisitions")
   @ResponseStatus(CREATED)
   public UUID createRequisition(
-      @RequestBody @Validated(PerformanceSequence.class) RequisitionCreateRequest request) {
+      @RequestBody @Valid RequisitionCreateRequest request) {
     return service.createRequisition(request);
   }
 
