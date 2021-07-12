@@ -75,7 +75,7 @@ public interface SiglusRequisitionRepository extends JpaRepository<Requisition, 
       @Param("emergency") Boolean emergency, @Param("statusSet") Set<String> statusSet);
 
   @Query(value = "select DISTINCT ON(t.programid) t.* from requisition.requisitions t "
-      + " where t.facilityid = :facilityId "
-      + " order by t.programid,t.createddate desc ", nativeQuery = true)
+      + "where t.facilityid = :facilityId "
+      + "order by t.programid,t.createddate desc ", nativeQuery = true)
   List<Requisition> findLatestRequisitionByFacilityId(@Param("facilityId") UUID facilityId);
 }

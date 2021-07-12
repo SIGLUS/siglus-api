@@ -767,8 +767,7 @@ public class SiglusMeService {
 
   private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId,
       List<SupportedProgramDto> programs) {
-    List<Requisition> requisitions = requisitionRepository
-        .findLatestRequisitionByFacilityId(facilityId);
+    List<Requisition> requisitions = requisitionRepository.findLatestRequisitionByFacilityId(facilityId);
     return reportTypesRepository.findByFacilityId(facilityId).stream().map(
         reportType -> ReportTypeResponse.builder().name(reportType.getName())
             .supportActive(reportType.getActive())
@@ -779,19 +778,17 @@ public class SiglusMeService {
         .collect(Collectors.toList());
   }
 
-  private LocalDate findLastReportDate(ReportType supportReportType,
-      List<SupportedProgramDto> programs, List<Requisition> requisitions) {
-    UUID supportProgramId = programs.stream()
-        .filter(program -> program.getCode().equals(supportReportType.getProgramCode()))
-        .findAny()
-        .map(SupportedProgramDto::getId)
-        .orElseThrow(() -> new IllegalArgumentException("program Not Exist by reportType"));
-    Optional<Requisition> requisitionOpt = requisitions.stream()
-        .filter(requisition -> requisition.getProgramId().equals(supportProgramId))
-        .findAny();
-    return requisitionOpt
-        .map(r -> r.getExtraData().get(ACTUAL_END_DATE))
-        .map(String::valueOf)
-        .map(LocalDate::parse).orElse(null);
+  private LocalDate findLastReportDate(ReportType supportReportType, List<SupportedProgramDto> programs,
+      List<Requisition> requisitions) {
+    Map<String, UUID> supportProgramCodeToId = programs.stream()
+        .collect(toMap(SupportedProgramDto::getCode, SupportedProgramDto::getId));
+    Map<UUID, Map<String, Object>> programIdToExtraData = requisitions.stream()
+        .collect(toMap(Requisition::getProgramId, Requisition::getExtraData));
+    Map<String, Object> extraData = programIdToExtraData
+        .get(supportProgramCodeToId.get(supportReportType.getProgramCode()));
+    if (extraData == null) {
+      return null;
+    }
+    return LocalDate.parse(String.valueOf(extraData.get(ACTUAL_END_DATE)));
   }
 }
