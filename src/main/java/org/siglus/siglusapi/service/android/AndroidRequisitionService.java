@@ -69,6 +69,7 @@ import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
@@ -116,15 +117,17 @@ public class AndroidRequisitionService {
 
   @Transactional
   public void create(RequisitionCreateRequest request) {
-    Requisition requisition = initiateRequisition(request);
-    requisition = submitRequisition(requisition);
-    requisition = authorizeRequisition(requisition);
-    internalApproveRequisition(requisition);
+    UserDto user = authHelper.getCurrentUser();
+    UUID authorId = user.getId();
+    UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
+    Requisition requisition = initiateRequisition(request, user.getHomeFacilityId(), programId, authorId);
+    requisition = submitRequisition(requisition, authorId);
+    requisition = authorizeRequisition(requisition, authorId);
+    internalApproveRequisition(requisition, authorId);
   }
 
-  private Requisition initiateRequisition(RequisitionCreateRequest request) {
-    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
+  private Requisition initiateRequisition(RequisitionCreateRequest request, UUID homeFacilityId, UUID programId,
+      UUID authorId) {
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
     newRequisition.setTemplate(getRequisitionTemplate());
@@ -132,7 +135,7 @@ public class AndroidRequisitionService {
     newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setReportOnly(false);
     newRequisition.setNumberOfMonthsInPeriod(1);
-    buildStatusChanges(newRequisition);
+    buildStatusChanges(newRequisition, authorId);
     buildRequisitionApprovedProduct(newRequisition, request);
     buildRequisitionExtraData(newRequisition, request);
     buildRequisitionLineItems(newRequisition, request);
@@ -144,34 +147,34 @@ public class AndroidRequisitionService {
     return requisition;
   }
 
-  private Requisition submitRequisition(Requisition requisition) {
+  private Requisition submitRequisition(Requisition requisition, UUID authorId) {
     checkPermission(() -> permissionService.canSubmitRequisition(requisition));
     requisition.setModifiedDate(ZonedDateTime.now());
     requisition.setStatus(RequisitionStatus.SUBMITTED);
-    buildStatusChanges(requisition);
+    buildStatusChanges(requisition, authorId);
     log.info("submit android requisition: {}", requisition);
     return requisitionRepository.save(requisition);
   }
 
-  private Requisition authorizeRequisition(Requisition requisition) {
+  private Requisition authorizeRequisition(Requisition requisition, UUID authorId) {
     checkPermission(() -> permissionService.canAuthorizeRequisition(requisition));
     UUID supervisoryNodeId = supervisoryNodeService.findSupervisoryNode(
         requisition.getProgramId(), requisition.getFacilityId()).getId();
     requisition.setSupervisoryNodeId(supervisoryNodeId);
     requisition.setModifiedDate(ZonedDateTime.now());
     requisition.setStatus(RequisitionStatus.AUTHORIZED);
-    buildStatusChanges(requisition);
+    buildStatusChanges(requisition, authorId);
     log.info("authorize android requisition: {}", requisition);
     return requisitionRepository.save(requisition);
   }
 
-  private void internalApproveRequisition(Requisition requisition) {
+  private void internalApproveRequisition(Requisition requisition, UUID authorId) {
     checkPermission(() -> permissionService.canApproveRequisition(requisition));
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService.findOne(requisition.getSupervisoryNodeId());
     requisition.setSupervisoryNodeId(supervisoryNodeDto.getParentNodeId());
     requisition.setModifiedDate(ZonedDateTime.now());
     requisition.setStatus(RequisitionStatus.IN_APPROVAL);
-    buildStatusChanges(requisition);
+    buildStatusChanges(requisition, authorId);
     log.info("internal-approve android requisition: {}", requisition);
     requisitionRepository.save(requisition);
   }
@@ -180,8 +183,7 @@ public class AndroidRequisitionService {
     supplier.get().throwExceptionIfHasErrors();
   }
 
-  private void buildStatusChanges(Requisition requisition) {
-    UUID authorId = authHelper.getCurrentUser().getId();
+  private void buildStatusChanges(Requisition requisition, UUID authorId) {
     requisition.getStatusChanges().add(StatusChange.newStatusChange(requisition, authorId));
   }
 

@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.android;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
@@ -57,6 +58,7 @@ import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionTemplateService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
+import org.openlmis.requisition.web.PermissionMessageException;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.dto.referencedata.OrderableDto;
@@ -82,6 +84,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("PMD.TooManyMethods")
 public class AndroidRequisitionServiceTest {
 
   @InjectMocks
@@ -152,77 +155,92 @@ public class AndroidRequisitionServiceTest {
   @Before
   public void prepare() {
     ReflectionTestUtils.setField(service, "androidViaTemplateId", templateId.toString());
-
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
-
     ApprovedProductDto productDto = createApprovedProductDto(orderableId);
     when(requisitionService.getApproveProduct(facilityId, programId, false))
         .thenReturn(new ApproveProductsAggregator(Collections.singletonList(productDto), programId));
-
     RequisitionTemplate template = new RequisitionTemplate();
     template.setId(templateId);
     when(requisitionTemplateService.findTemplateById(templateId)).thenReturn(template);
-
     when(siglusProgramService.getProgramIdByCode("VC")).thenReturn(programId);
-
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
     when(siglusOrderableService.getOrderableByCode("02A01")).thenReturn(orderableDto);
-
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
     supervisoryNodeDto.setId(supervisoryNodeId);
     when(supervisoryNodeService.findSupervisoryNode(programId, facilityId)).thenReturn(supervisoryNodeDto);
     when(supervisoryNodeService.findOne(supervisoryNodeId)).thenReturn(supervisoryNodeDto);
-
-    RequisitionTemplateExtension templateExtension = new RequisitionTemplateExtension();
-    templateExtension.setRequisitionTemplateId(templateId);
-    templateExtension.setEnableConsultationNumber(true);
-    templateExtension.setEnableKitUsage(true);
-    templateExtension.setEnableProduct(true);
-    templateExtension.setEnablePatientLineItem(false);
-    templateExtension.setEnableRapidTestConsumption(false);
-    templateExtension.setEnableRegimen(false);
-    templateExtension.setEnableUsageInformation(false);
-    templateExtension.setEnableQuicklyFill(false);
-    when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(templateId)).thenReturn(templateExtension);
-
-    ProcessingPeriod processingPeriod = new ProcessingPeriod();
-    processingPeriod.setId(processingPeriodId);
-    Optional<ProcessingPeriod> processingPeriodOptional = Optional.of(processingPeriod);
+    when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(templateId))
+        .thenReturn(buildRequisitionTemplateExtension());
     when(processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, YearMonth.of(2021, 6)))
-        .thenReturn(processingPeriodOptional);
-
-    Requisition requisition = new Requisition();
-    requisition.setId(requisitionId);
-    requisition.setFacilityId(facilityId);
-    requisition.setProgramId(programId);
-    requisition.setEmergency(false);
-    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
-    requisitionLineItem.setRequisition(requisition);
-    VersionEntityReference orderable = new VersionEntityReference();
-    orderable.setId(orderableId);
-    requisitionLineItem.setOrderable(orderable);
-    requisition.setRequisitionLineItems(Collections.singletonList(requisitionLineItem));
-    requisition.setTemplate(template);
-    when(requisitionRepository.save(requisitionArgumentCaptor.capture())).thenReturn(requisition);
-
-    ConsultationNumberGroupDto consultationNumberGroupDto = new ConsultationNumberGroupDto();
-    consultationNumberGroupDto.setName("number");
-    Map<String, ConsultationNumberColumnDto> consultationNumberColumnDtoMap = new HashMap<>();
-    consultationNumberColumnDtoMap.put("consultationNumber", new ConsultationNumberColumnDto(UUID.randomUUID(), 20));
-    consultationNumberGroupDto.setColumns(consultationNumberColumnDtoMap);
-    SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
-    requisitionDto.setConsultationNumberLineItems(Collections.singletonList(consultationNumberGroupDto));
+        .thenReturn(buildProcessingPeriod());
+    when(requisitionRepository.save(requisitionArgumentCaptor.capture()))
+        .thenReturn(buildRequisition(template));
     when(siglusUsageReportService.initiateUsageReport(requisitionV2DtoArgumentCaptor.capture()))
-        .thenReturn(requisitionDto);
-
+        .thenReturn(buildSiglusRequisitionDto());
     RequisitionExtension requisitionExtension = new RequisitionExtension();
     when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId))
         .thenReturn(requisitionExtension);
     when(requisitionExtensionRepository.save(requisitionExtensionArgumentCaptor.capture()))
         .thenReturn(requisitionExtension);
+  }
+
+  @Test(expected = PermissionMessageException.class)
+  public void shouldThrowExceptionWhenCreateRequisitionFromAndroidIfMissInitRequisitionPermission() {
+    // given
+    ValidationResult success = ValidationResult.success();
+    ValidationResult fail = ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, "INIT");
+    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(fail);
+    when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+
+    // when
+    service.create(buildRequisitionCreateRequest());
+  }
+
+  @Test(expected = PermissionMessageException.class)
+  public void shouldThrowExceptionWhenCreateRequisitionFromAndroidIfMissSubmitRequisitionPermission() {
+    // given
+    ValidationResult success = ValidationResult.success();
+    ValidationResult fail = ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, "SUBMIT");
+    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(success);
+    when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(fail);
+    when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+
+    // when
+    service.create(buildRequisitionCreateRequest());
+  }
+
+  @Test(expected = PermissionMessageException.class)
+  public void shouldThrowExceptionWhenCreateRequisitionFromAndroidIfMissAuthorizeRequisitionPermission() {
+    // given
+    ValidationResult success = ValidationResult.success();
+    ValidationResult fail = ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, "AUTHORIZE");
+    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(success);
+    when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(fail);
+    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+
+    // when
+    service.create(buildRequisitionCreateRequest());
+  }
+
+  @Test(expected = PermissionMessageException.class)
+  public void shouldThrowExceptionWhenCreateRequisitionFromAndroidIfMissInternalApproveRequisitionPermission() {
+    // given
+    ValidationResult success = ValidationResult.success();
+    ValidationResult fail = ValidationResult.noPermission(ERROR_NO_FOLLOWING_PERMISSION, "APPROVE");
+    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(success);
+    when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(fail);
+
+    // when
+    service.create(buildRequisitionCreateRequest());
   }
 
   @Test
@@ -307,6 +325,53 @@ public class AndroidRequisitionServiceTest {
         .name("lisi")
         .build();
     return Arrays.asList(signature1, signature2);
+  }
+
+  private RequisitionTemplateExtension buildRequisitionTemplateExtension() {
+    RequisitionTemplateExtension templateExtension = new RequisitionTemplateExtension();
+    templateExtension.setRequisitionTemplateId(templateId);
+    templateExtension.setEnableConsultationNumber(true);
+    templateExtension.setEnableKitUsage(true);
+    templateExtension.setEnableProduct(true);
+    templateExtension.setEnablePatientLineItem(false);
+    templateExtension.setEnableRapidTestConsumption(false);
+    templateExtension.setEnableRegimen(false);
+    templateExtension.setEnableUsageInformation(false);
+    templateExtension.setEnableQuicklyFill(false);
+    return templateExtension;
+  }
+
+  private Requisition buildRequisition(RequisitionTemplate template) {
+    Requisition requisition = new Requisition();
+    requisition.setId(requisitionId);
+    requisition.setFacilityId(facilityId);
+    requisition.setProgramId(programId);
+    requisition.setEmergency(false);
+    RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
+    requisitionLineItem.setRequisition(requisition);
+    VersionEntityReference orderable = new VersionEntityReference();
+    orderable.setId(orderableId);
+    requisitionLineItem.setOrderable(orderable);
+    requisition.setRequisitionLineItems(Collections.singletonList(requisitionLineItem));
+    requisition.setTemplate(template);
+    return requisition;
+  }
+
+  private Optional<ProcessingPeriod> buildProcessingPeriod() {
+    ProcessingPeriod processingPeriod = new ProcessingPeriod();
+    processingPeriod.setId(processingPeriodId);
+    return Optional.of(processingPeriod);
+  }
+
+  private SiglusRequisitionDto buildSiglusRequisitionDto() {
+    ConsultationNumberGroupDto consultationNumberGroupDto = new ConsultationNumberGroupDto();
+    consultationNumberGroupDto.setName("number");
+    Map<String, ConsultationNumberColumnDto> consultationNumberColumnDtoMap = new HashMap<>();
+    consultationNumberColumnDtoMap.put("consultationNumber", new ConsultationNumberColumnDto(UUID.randomUUID(), 20));
+    consultationNumberGroupDto.setColumns(consultationNumberColumnDtoMap);
+    SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
+    requisitionDto.setConsultationNumberLineItems(Collections.singletonList(consultationNumberGroupDto));
+    return requisitionDto;
   }
 
 }
