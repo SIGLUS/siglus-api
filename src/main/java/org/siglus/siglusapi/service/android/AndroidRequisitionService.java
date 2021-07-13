@@ -125,7 +125,6 @@ public class AndroidRequisitionService {
   private Requisition initiateRequisition(RequisitionCreateRequest request) {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
-    checkPermission(() -> permissionService.canViewRequisition(programId, homeFacilityId));
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
     newRequisition.setTemplate(getRequisitionTemplate());

@@ -257,7 +257,8 @@ public class SiglusStockEventsService {
     LotDto existedLot = getExistedLot(existedLots, lotCode);
     if (existedLot != null) {
       if (Boolean.TRUE.equals(updateExpirationDate) && !existedLot.getExpirationDate().isEqual(expirationDate)) {
-        LotConflict conflict = lotConflictRepository.findLotConflictByFacilityIdAndLotId(facilityId, existedLot.getId());
+        LotConflict conflict =
+            lotConflictRepository.findLotConflictByFacilityIdAndLotId(facilityId, existedLot.getId());
         if (conflict == null) {
           LotConflict lotConflict = LotConflict.builder()
               .expirationDate(expirationDate)

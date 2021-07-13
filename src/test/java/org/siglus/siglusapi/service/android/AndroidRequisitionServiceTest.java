@@ -50,7 +50,9 @@ import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
+import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionTemplateService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
@@ -123,6 +125,9 @@ public class AndroidRequisitionServiceTest {
 
   @Mock
   private RequisitionExtensionRepository requisitionExtensionRepository;
+
+  @Mock
+  private PermissionService permissionService;
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
@@ -222,6 +227,13 @@ public class AndroidRequisitionServiceTest {
 
   @Test
   public void shouldSave4TimesRequisitionWhenCreateRequisitionFromAndroid() {
+    // given
+    ValidationResult success = ValidationResult.success();
+    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(success);
+    when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+
     // when
     service.create(buildRequisitionCreateRequest());
 
