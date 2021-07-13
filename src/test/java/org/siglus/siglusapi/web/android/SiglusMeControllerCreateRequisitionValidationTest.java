@@ -229,7 +229,6 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     Map<String, String> violations = executeValidation(param);
 
     // then
-    System.out.println(violations);
     assertEquals(0, violations.size());
   }
 
