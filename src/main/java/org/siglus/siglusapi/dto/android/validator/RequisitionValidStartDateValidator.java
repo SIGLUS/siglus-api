@@ -63,7 +63,7 @@ public class RequisitionValidStartDateValidator implements
     LocalDate reportRestartDate = reportTypeRepo
         .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(homeFacilityId, programCode)
         .map(ReportType::getStartDate)
-        .orElseThrow(null);
+        .orElse(null);
     if (reportRestartDate != null && reportRestartDate.isAfter(value.getActualStartDate())) {
       actualContext.addExpressionVariable("failedByReportRestartDate", true);
       actualContext.addExpressionVariable("reportRestartDate", reportRestartDate);
