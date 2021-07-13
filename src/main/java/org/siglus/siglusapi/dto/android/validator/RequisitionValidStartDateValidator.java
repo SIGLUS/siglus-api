@@ -15,13 +15,17 @@
 
 package org.siglus.siglusapi.dto.android.validator;
 
+import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
+
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.UUID;
 import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.repository.ProcessingPeriodRepository;
@@ -52,28 +56,43 @@ public class RequisitionValidStartDateValidator implements
     // this validator is supposed to running after the default group, so the value will not be null or empty
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     String programCode = value.getProgramCode();
+    HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
+    actualContext.addExpressionVariable("startDate", value.getActualStartDate());
+    actualContext.addExpressionVariable("failedByReportRestartDate", false);
+    actualContext.addExpressionVariable("failedByPeriod", false);
     LocalDate reportRestartDate = reportTypeRepo
         .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(homeFacilityId, programCode)
         .map(ReportType::getStartDate)
         .orElseThrow(EntityNotFoundException::new);
-    HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
-    actualContext.addExpressionVariable("startDate", value.getActualStartDate());
-    actualContext.addExpressionVariable("failedByReportRestartDate", false);
-    if (!reportRestartDate.isBefore(value.getActualStartDate())) {
+    if (reportRestartDate.isAfter(value.getActualStartDate())) {
       actualContext.addExpressionVariable("failedByReportRestartDate", true);
       actualContext.addExpressionVariable("reportRestartDate", reportRestartDate);
       return false;
     }
-    ProcessingPeriod lastPeriod = requisitionRepo.findLatestRequisitionByFacilityId(homeFacilityId).stream()
+    Requisition lastRequisition = requisitionRepo.findLatestRequisitionByFacilityId(homeFacilityId).stream()
         .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
-        .map(req -> periodRepo.findOne(req.getProcessingPeriodId()))
         .findFirst()
-        .orElseThrow(EntityNotFoundException::new);
-    if (!lastPeriod.getEndDate().equals(value.getActualStartDate().minusDays(1))) {
-      actualContext.addExpressionVariable("lastEnd", lastPeriod.getEndDate());
+        .orElse(null);
+    if (lastRequisition == null || lastRequisition.getActualEndDate().isBefore(reportRestartDate)) {
+      return true;
+    }
+    if (!lastRequisition.getActualEndDate().equals(value.getActualStartDate().minusDays(1))) {
+      actualContext.addExpressionVariable("lastEnd", lastRequisition.getActualEndDate());
+      return false;
+    }
+    ProcessingPeriod lastPeriod = periodRepo.findOne(lastRequisition.getProcessingPeriodId());
+    ProcessingPeriod period = getPeriod(value);
+    if (!lastPeriod.getEndDate().equals(period.getStartDate().minusDays(1))) {
+      actualContext.addExpressionVariable("failedByPeriod", true);
       return false;
     }
     return true;
+  }
+
+  private ProcessingPeriod getPeriod(RequisitionCreateRequest request) {
+    YearMonth month = request.getActualStartDate().query(YearMonth::from);
+    return periodRepo.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
+        .orElseThrow(EntityNotFoundException::new);
   }
 
 }
