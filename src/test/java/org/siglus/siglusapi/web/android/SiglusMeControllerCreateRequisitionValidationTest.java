@@ -245,7 +245,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The start date 2021-06-17 should be right after last actual end 2021-06-20.",
+    assertEquals("The start date 2021-06-17 should be equal to last actual end 2021-06-20.",
         violations.get("createRequisition.arg0"));
   }
 
@@ -261,7 +261,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The start date 2021-06-25 should be right after last actual end 2021-06-20.",
+    assertEquals("The start date 2021-06-25 should be equal to last actual end 2021-06-20.",
         violations.get("createRequisition.arg0"));
   }
 

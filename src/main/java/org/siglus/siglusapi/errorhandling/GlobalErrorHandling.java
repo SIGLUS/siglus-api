@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.annotation.ParametersAreNonnullByDefault;
+import javax.validation.ValidationException;
 import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
@@ -121,5 +122,12 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
     return create(problem, request);
   }
 
+  @ExceptionHandler
+  public ResponseEntity<Problem> handleEntityNotFound(
+      final ValidationException exception, final NativeWebRequest request) {
+    String detail = String.format("%s Caused by %s", exception.getMessage(), exception.getCause());
+    ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE).withDetail(detail).build();
+    return create(problem, request);
+  }
 
 }
