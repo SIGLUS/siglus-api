@@ -119,21 +119,21 @@ public class SiglusStockEventsService {
 
   @Transactional
   public UUID createStockEvent(StockEventDto eventDto) {
-    UserDto userDto = authenticationHelper.getCurrentUser();
+    UUID userId = getUserId(eventDto);
     if (ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId())) {
-      Map<UUID, UUID> programIdToEventId = createStockEventForAllProducts(eventDto, userDto);
+      Map<UUID, UUID> programIdToEventId = createStockEventForAllPrograms(eventDto, userId);
       if (!programIdToEventId.isEmpty()) {
         return programIdToEventId.values().stream().findFirst().orElse(null);
       }
       return null;
     }
-    return createStockEventForOneProgram(eventDto, userDto);
+    return createStockEventForOneProgram(eventDto, userId);
   }
 
   @Transactional
-  public UUID createStockEventForOneProgram(StockEventDto eventDto, UserDto userDto) {
-    eventDto.setUserId(userDto.getId());
-    createAndFillLotId(eventDto, false, userDto);
+  public UUID createStockEventForOneProgram(StockEventDto eventDto, UUID userId) {
+    eventDto.setUserId(userId);
+    createAndFillLotId(eventDto, false);
     UUID stockEventId = stockEventsStockManagementService.createStockEvent(eventDto);
     enhanceStockCard(eventDto, stockEventId);
     return stockEventId;
@@ -149,12 +149,12 @@ public class SiglusStockEventsService {
           .build();
       siglusPhysicalInventoryService.createNewDraftForAllProducts(inventoryDto);
     }
-    return createStockEventForAllProducts(eventDto, userDto);
+    return createStockEventForAllPrograms(eventDto, userDto.getId());
   }
 
-  private Map<UUID, UUID> createStockEventForAllProducts(StockEventDto eventDto, UserDto userDto) {
-    eventDto.setUserId(userDto.getId());
-    createAndFillLotId(eventDto, false, userDto);
+  private Map<UUID, UUID> createStockEventForAllPrograms(StockEventDto eventDto, UUID userId) {
+    eventDto.setUserId(userId);
+    createAndFillLotId(eventDto, false);
     Set<UUID> programIds = eventDto.getLineItems().stream()
         .map(StockEventLineItemDto::getProgramId).collect(Collectors.toSet());
     List<StockEventDto> stockEventDtos;
@@ -198,7 +198,7 @@ public class SiglusStockEventsService {
   }
 
   @Transactional
-  public void createAndFillLotId(StockEventDto eventDto, boolean updateExpirationDate, UserDto userDto) {
+  public void createAndFillLotId(StockEventDto eventDto, boolean updateExpirationDate) {
     final List<StockEventLineItemDto> lineItems = eventDto.getLineItems();
     Map<UUID, OrderableDto> orderableDtos = orderableReferenceDataService.findByIds(
         lineItems.stream().map(StockEventLineItemDto::getOrderableId).collect(Collectors.toSet()))
@@ -211,7 +211,8 @@ public class SiglusStockEventsService {
         verifyKitInfo(stockEventLineItem);
       } else if (stockEventLineItem.getLotId() == null && StringUtils.isNotBlank(stockEventLineItem.getLotCode())) {
         String tradeItemId = orderableDtos.get(stockEventLineItem.getOrderableId()).getIdentifiers().get(TRADE_ITEM);
-        fillLotIdForNormalOrderable(stockEventLineItem, tradeItemId, updateExpirationDate, userDto);
+        UUID facilityId = getFacilityId(eventDto);
+        fillLotIdForNormalOrderable(stockEventLineItem, tradeItemId, updateExpirationDate, facilityId);
       }
     }
   }
@@ -232,9 +233,9 @@ public class SiglusStockEventsService {
   }
 
   private void fillLotIdForNormalOrderable(StockEventLineItemDto stockEventLineItem, String tradeItemId,
-      boolean updateExpirationDate, UserDto userDto) {
+      boolean updateExpirationDate, UUID facilityId) {
     UUID lotId = createNewLotOrReturnExisted(stockEventLineItem.getLotCode(),
-        stockEventLineItem.getExpirationDate(), tradeItemId, updateExpirationDate, userDto).getId();
+        stockEventLineItem.getExpirationDate(), tradeItemId, updateExpirationDate, facilityId).getId();
     stockEventLineItem.setLotId(lotId);
   }
 
@@ -245,7 +246,7 @@ public class SiglusStockEventsService {
   }
 
   private LotDto createNewLotOrReturnExisted(String lotCode, LocalDate expirationDate,
-      String tradeItemId, Boolean updateExpirationDate, UserDto userDto) {
+      String tradeItemId, Boolean updateExpirationDate, UUID facilityId) {
     if (null == tradeItemId) {
       throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
     }
@@ -256,14 +257,13 @@ public class SiglusStockEventsService {
     LotDto existedLot = getExistedLot(existedLots, lotCode);
     if (existedLot != null) {
       if (Boolean.TRUE.equals(updateExpirationDate) && !existedLot.getExpirationDate().isEqual(expirationDate)) {
-        LotConflict conflict = lotConflictRepository
-            .findLotConflictByFacilityIdAndLotId(userDto.getHomeFacilityId(), existedLot.getId());
+        LotConflict conflict = lotConflictRepository.findLotConflictByFacilityIdAndLotId(facilityId, existedLot.getId());
         if (conflict == null) {
           LotConflict lotConflict = LotConflict.builder()
               .expirationDate(expirationDate)
               .lotId(existedLot.getId())
               .lotCode(existedLot.getLotCode())
-              .facilityId(userDto.getHomeFacilityId())
+              .facilityId(facilityId)
               .build();
           log.info("save lot Conflict: {}", lotConflict);
           lotConflictRepository.save(lotConflict);
@@ -279,6 +279,20 @@ public class SiglusStockEventsService {
     lotDto.setActive(true);
     lotDto.setLotCode(lotCode);
     return lotReferenceDataService.saveLot(lotDto);
+  }
+
+  private UUID getUserId(StockEventDto eventDto) {
+    if (eventDto.getUserId() != null) {
+      return eventDto.getUserId();
+    }
+    return authenticationHelper.getCurrentUser().getId();
+  }
+
+  private UUID getFacilityId(StockEventDto eventDto) {
+    if (eventDto.getFacilityId() != null) {
+      return eventDto.getFacilityId();
+    }
+    return authenticationHelper.getCurrentUser().getHomeFacilityId();
   }
 
   private LotDto getExistedLot(List<LotDto> existedLots, String lotCode) {

@@ -263,7 +263,7 @@ public class SiglusStockEventsServiceTest {
     when(dateHelper.getCurrentDate()).thenReturn(CURRENT_DATE);
 
     // when
-    siglusStockEventsService.createAndFillLotId(eventDto, false, userDto);
+    siglusStockEventsService.createAndFillLotId(eventDto, false);
 
     // then
     assertEquals(lotId, lineItemDto.getLotId());
@@ -287,7 +287,7 @@ public class SiglusStockEventsServiceTest {
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
 
     // when
-    siglusStockEventsService.createAndFillLotId(eventDto, false, userDto);
+    siglusStockEventsService.createAndFillLotId(eventDto, false);
 
     // then
     assertEquals(lotId, lineItemDto.getLotId());
@@ -309,7 +309,7 @@ public class SiglusStockEventsServiceTest {
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
 
     // when
-    siglusStockEventsService.createAndFillLotId(eventDto, false, userDto);
+    siglusStockEventsService.createAndFillLotId(eventDto, false);
   }
 
   private OrderableDto createOrderable(UUID orderableId, UUID tradeItemId) {
