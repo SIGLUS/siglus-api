@@ -73,8 +73,8 @@ public class RequisitionValidStartDateValidator implements
         .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
         .findFirst()
         .orElse(null);
-    if (lastRequisition == null ||
-        (reportRestartDate != null && lastRequisition.getActualEndDate().isBefore(reportRestartDate))) {
+    if (lastRequisition == null
+        || (reportRestartDate != null && lastRequisition.getActualEndDate().isBefore(reportRestartDate))) {
       return true;
     }
     if (!lastRequisition.getActualEndDate().equals(value.getActualStartDate().minusDays(1))) {
