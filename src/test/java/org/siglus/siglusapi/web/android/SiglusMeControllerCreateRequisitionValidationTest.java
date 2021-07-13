@@ -131,10 +131,10 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(periodRepo.findOne(period1Id)).thenReturn(period1);
     ProcessingPeriod periodForJun = mock(ProcessingPeriod.class);
     when(periodForJun.getStartDate()).thenReturn(LocalDate.of(2021, 6, 21));
-    when(periodRepo.findPeriodByCodeAndMonth(any(), YearMonth.of(2021, 6))).thenReturn(Optional.of(periodForJun));
+    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 6)))).thenReturn(Optional.of(periodForJun));
     ProcessingPeriod periodForJul = mock(ProcessingPeriod.class);
     when(periodForJul.getStartDate()).thenReturn(LocalDate.of(2021, 7, 21));
-    when(periodRepo.findPeriodByCodeAndMonth(any(), YearMonth.of(2021, 7))).thenReturn(Optional.of(periodForJul));
+    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 7)))).thenReturn(Optional.of(periodForJul));
 
     Requisition req1 = mock(Requisition.class);
     when(req1.getProgramId()).thenReturn(program1Id);
