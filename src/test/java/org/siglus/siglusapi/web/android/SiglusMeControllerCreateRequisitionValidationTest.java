@@ -36,10 +36,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorFactory;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
+import javax.validation.ValidationException;
 import javax.validation.executable.ExecutableValidator;
 import org.hibernate.validator.internal.util.privilegedactions.NewInstance;
 import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
@@ -91,6 +93,9 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
   private Method method;
 
+  @Mock
+  // last requisition
+  private Requisition req1;
   // facility with some requisitions
   private final UUID facilityId = UUID.randomUUID();
   // facility with no requisitions
@@ -112,7 +117,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     method = SiglusMeController.class.getDeclaredMethod("createRequisition", RequisitionCreateRequest.class);
 
     ReportType reportType = mock(ReportType.class);
-    when(reportType.getStartDate()).thenReturn(LocalDate.of(2021, 6, 1));
+    when(reportType.getStartDate()).thenReturn(LocalDate.of(2021, 3, 1));
     when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("13")))
         .thenReturn(Optional.of(reportType));
 
@@ -127,16 +132,25 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(periodRepo.findOne(any(UUID.class))).thenReturn(otherPeriod);
     UUID period1Id = UUID.randomUUID();
     ProcessingPeriod period1 = mock(ProcessingPeriod.class);
+    when(period1.getName()).thenReturn("May 21-2021");
+    when(period1.getStartDate()).thenReturn(LocalDate.of(2021, 5, 21));
     when(period1.getEndDate()).thenReturn(LocalDate.of(2021, 6, 20));
     when(periodRepo.findOne(period1Id)).thenReturn(period1);
+    ProcessingPeriod periodForApr = mock(ProcessingPeriod.class);
+    when(periodForApr.getName()).thenReturn("Apr 21-2021");
+    when(periodForApr.getStartDate()).thenReturn(LocalDate.of(2021, 4, 21));
+    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 4)))).thenReturn(Optional.of(periodForApr));
+    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 5)))).thenReturn(Optional.of(period1));
     ProcessingPeriod periodForJun = mock(ProcessingPeriod.class);
+    when(periodForJun.getName()).thenReturn("Jun 21-2021");
     when(periodForJun.getStartDate()).thenReturn(LocalDate.of(2021, 6, 21));
     when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 6)))).thenReturn(Optional.of(periodForJun));
     ProcessingPeriod periodForJul = mock(ProcessingPeriod.class);
+    when(periodForJul.getName()).thenReturn("Jul 21-2021");
     when(periodForJul.getStartDate()).thenReturn(LocalDate.of(2021, 7, 21));
     when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 7)))).thenReturn(Optional.of(periodForJul));
 
-    Requisition req1 = mock(Requisition.class);
+    req1 = mock(Requisition.class);
     when(req1.getProgramId()).thenReturn(program1Id);
     when(req1.getProcessingPeriodId()).thenReturn(period1Id);
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 6, 20));
@@ -174,7 +188,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       throws Exception {
     // given
     mockFacilityId(facilityId);
-    Object param = parseParam("requisitionValidStartDate.json");
+    Object param = parseParam("validStartDate.json");
 
     // when
     Map<String, String> violations = executeValidation(param);
@@ -188,14 +202,14 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       throws Exception {
     // given
     mockFacilityId(facilityId);
-    Object param = parseParam("requisitionActualStartDateBeforeReportRestartDate.json");
+    Object param = parseParam("actualStartDateBeforeReportRestartDate.json");
 
     // when
     Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The start date 2021-05-17 should be after the report restart date 2021-06-01.",
+    assertEquals("The start date 2021-02-17 should be after the report restart date 2021-03-01.",
         violations.get("createRequisition.arg0"));
 
   }
@@ -204,45 +218,50 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   public void shouldReturnViolationWhenValidateCreateRequisitionGivenActualStartDateEqualToReportRestartDate()
       throws Exception {
     // given
+    when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 2, 28));
+    ProcessingPeriod period1 = mock(ProcessingPeriod.class);
+    when(period1.getEndDate()).thenReturn(LocalDate.of(2021, 4, 20));
+    when(periodRepo.findOne(req1.getProcessingPeriodId())).thenReturn(period1);
     mockFacilityId(facilityId);
-    Object param = parseParam("requisitionActualStartDateEqualToReportRestartDate.json");
+    Object param = parseParam("actualStartDateEqualToReportRestartDate.json");
 
     // when
     Map<String, String> violations = executeValidation(param);
 
     // then
+    System.out.println(violations);
     assertEquals(0, violations.size());
   }
 
   @Test
-  public void shouldReturnViolationWhenValidateCreateRequisitionGivenStartDateBeforeLastEnd()
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenActualStartDateBeforeLastActualEnd()
       throws Exception {
     // given
     mockFacilityId(facilityId);
-    Object param = parseParam("requisitionActualStartDateBeforeLastEnd.json");
+    Object param = parseParam("actualStartDateBeforeLastActualEnd.json");
 
     // when
     Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The start date 2021-06-17 is not right after last period's end 2021-06-20.",
+    assertEquals("The start date 2021-06-17 should be right after last actual end 2021-06-20.",
         violations.get("createRequisition.arg0"));
   }
 
   @Test
-  public void shouldReturnViolationWhenValidateCreateRequisitionGivenStartDateAfterLastEnd()
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenActualStartDateAfterLastActualEnd()
       throws Exception {
     // given
     mockFacilityId(facilityId);
-    Object param = parseParam("requisitionActualStartDateAfterLastEnd.json");
+    Object param = parseParam("actualStartDateAfterLastActualEnd.json");
 
     // when
     Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The start date 2021-06-25 is not right after last period's end 2021-06-20.",
+    assertEquals("The start date 2021-06-25 should be right after last actual end 2021-06-20.",
         violations.get("createRequisition.arg0"));
   }
 
@@ -251,7 +270,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       throws Exception {
     // given
     mockFacilityId(newFacilityId);
-    Object param = parseParam("requisitionActualStartDateAfterLastEnd.json");
+    Object param = parseParam("actualStartDateAfterLastActualEnd.json");
 
     // when
     Map<String, String> violations = executeValidation(param);
@@ -265,13 +284,80 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       throws Exception {
     // given
     mockFacilityId(restartedFacilityId);
-    Object param = parseParam("requisitionActualStartDateAfterLastEnd.json");
+    Object param = parseParam("actualStartDateAfterLastActualEnd.json");
 
     // when
     Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(0, violations.size());
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenPeriodApr()
+      throws Exception {
+    // given
+    when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 4, 20));
+    mockFacilityId(facilityId);
+    Object param = parseParam("periodApr.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The period Apr 21-2021 should be right after last period May 21-2021.",
+        violations.get("createRequisition.arg0"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenPeriodMay()
+      throws Exception {
+    // given
+    when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 5, 20));
+    mockFacilityId(facilityId);
+    Object param = parseParam("periodMay.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The period May 21-2021 should be right after last period May 21-2021.",
+        violations.get("createRequisition.arg0"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenPeriodJul()
+      throws Exception {
+    // given
+    when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 7, 20));
+    mockFacilityId(facilityId);
+    Object param = parseParam("periodJul.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The period Jul 21-2021 should be right after last period May 21-2021.",
+        violations.get("createRequisition.arg0"));
+  }
+
+  @Test
+  public void shouldThrowEntityNotFoundWhenValidateCreateRequisitionGivenNoReportType()
+      throws Exception {
+    // given
+    when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("13"))).thenReturn(Optional.empty());
+    mockFacilityId(facilityId);
+    Object param = parseParam("validStartDate.json");
+
+    // when
+    try {
+      executeValidation(param);
+    } catch (ValidationException e) {
+      assertEquals(EntityNotFoundException.class, e.getCause().getClass());
+    }
   }
 
   private Object parseParam(String fileName) throws IOException {

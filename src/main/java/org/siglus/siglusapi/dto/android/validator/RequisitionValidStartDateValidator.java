@@ -63,8 +63,8 @@ public class RequisitionValidStartDateValidator implements
     LocalDate reportRestartDate = reportTypeRepo
         .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(homeFacilityId, programCode)
         .map(ReportType::getStartDate)
-        .orElse(null);
-    if (reportRestartDate != null && reportRestartDate.isAfter(value.getActualStartDate())) {
+        .orElseThrow(EntityNotFoundException::new);
+    if (reportRestartDate.isAfter(value.getActualStartDate())) {
       actualContext.addExpressionVariable("failedByReportRestartDate", true);
       actualContext.addExpressionVariable("reportRestartDate", reportRestartDate);
       return false;
@@ -73,18 +73,19 @@ public class RequisitionValidStartDateValidator implements
         .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
         .findFirst()
         .orElse(null);
-    if (lastRequisition == null
-        || (reportRestartDate != null && lastRequisition.getActualEndDate().isBefore(reportRestartDate))) {
+    if (lastRequisition == null || lastRequisition.getActualEndDate().isBefore(reportRestartDate)) {
       return true;
     }
     if (!lastRequisition.getActualEndDate().equals(value.getActualStartDate().minusDays(1))) {
-      actualContext.addExpressionVariable("lastEnd", lastRequisition.getActualEndDate());
+      actualContext.addExpressionVariable("lastActualEnd", lastRequisition.getActualEndDate());
       return false;
     }
     ProcessingPeriod lastPeriod = periodRepo.findOne(lastRequisition.getProcessingPeriodId());
     ProcessingPeriod period = getPeriod(value);
     if (!lastPeriod.getEndDate().equals(period.getStartDate().minusDays(1))) {
       actualContext.addExpressionVariable("failedByPeriod", true);
+      actualContext.addExpressionVariable("periodName", period.getName());
+      actualContext.addExpressionVariable("lastPeriodName", lastPeriod.getName());
       return false;
     }
     return true;
