@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Supplier;
 import javax.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +58,9 @@ import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
+import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.repository.RequisitionRepository;
+import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.RequisitionTemplateService;
 import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
@@ -104,6 +107,7 @@ public class AndroidRequisitionService {
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
   private final SupervisoryNodeReferenceDataService supervisoryNodeService;
   private final SiglusUsageReportService siglusUsageReportService;
+  private final PermissionService permissionService;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final RequisitionRepository requisitionRepository;
@@ -122,6 +126,8 @@ public class AndroidRequisitionService {
   private Requisition initiateRequisition(RequisitionCreateRequest request) {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
+    checkPermission(() -> permissionService.canViewRequisition(programId, homeFacilityId));
+    checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
     newRequisition.setTemplate(getRequisitionTemplate());
     newRequisition.setStatus(RequisitionStatus.INITIATED);
@@ -141,6 +147,7 @@ public class AndroidRequisitionService {
   }
 
   private Requisition submitRequisition(Requisition requisition) {
+    checkPermission(() -> permissionService.canSubmitRequisition(requisition));
     requisition.setModifiedDate(ZonedDateTime.now());
     requisition.setStatus(RequisitionStatus.SUBMITTED);
     buildStatusChanges(requisition);
@@ -149,6 +156,7 @@ public class AndroidRequisitionService {
   }
 
   private Requisition authorizeRequisition(Requisition requisition) {
+    checkPermission(() -> permissionService.canAuthorizeRequisition(requisition));
     UUID supervisoryNodeId = supervisoryNodeService.findSupervisoryNode(
         requisition.getProgramId(), requisition.getFacilityId()).getId();
     requisition.setSupervisoryNodeId(supervisoryNodeId);
@@ -160,6 +168,7 @@ public class AndroidRequisitionService {
   }
 
   private Requisition internalApproveRequisition(Requisition requisition) {
+    checkPermission(() -> permissionService.canApproveRequisition(requisition));
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService.findOne(requisition.getSupervisoryNodeId());
     requisition.setSupervisoryNodeId(supervisoryNodeDto.getParentNodeId());
     requisition.setModifiedDate(ZonedDateTime.now());
@@ -167,6 +176,10 @@ public class AndroidRequisitionService {
     buildStatusChanges(requisition);
     log.info("internal-approve android requisition: {}", requisition);
     return requisitionRepository.save(requisition);
+  }
+
+  private void checkPermission(Supplier<ValidationResult> supplier) {
+    supplier.get().throwExceptionIfHasErrors();
   }
 
   private void buildStatusChanges(Requisition requisition) {
