@@ -36,4 +36,9 @@ public interface RequisitionExtensionRepository extends JpaRepository<Requisitio
       + " concat(r.requisitionnumberprefix, "
       + "to_char(r.requisitionnumber, 'fm0000000')) = :requisitionNumber);", nativeQuery = true)
   RequisitionExtension findByRequisitionNumber(@Param("requisitionNumber") String requisitionNumber);
+
+  @Query(value = "SELECT * FROM siglusintegration.requisition_extension e "
+      + "WHERE e.facilityId = :facilityId and e.actualstartdate > :startDate", nativeQuery = true)
+  List<RequisitionExtension> searchRequisitionIdByFacilityAndDate(@Param("facilityId") UUID facilityId,
+      @Param("startDate") String startDate);
 }

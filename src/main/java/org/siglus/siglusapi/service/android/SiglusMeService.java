@@ -347,6 +347,13 @@ public class SiglusMeService {
     }
   }
 
+  public List<RequisitionCreateRequest> getRequisitionResponse(String startDate) {
+    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    Map<UUID, String> orderableIdToCode = getOrderableIdToCode(getAllApprovedProducts());
+    return androidRequisitionService
+        .getRequisitionResponseByFacilityIdAndDate(facilityId, startDate, orderableIdToCode);
+  }
+
   public List<LotStockOnHand> getLotStockOnHands() {
     List<StockCardSummaryV2Dto> stockSummaries = stockCardSummariesService
         .findAllProgramStockSummaries();

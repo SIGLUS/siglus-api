@@ -32,30 +32,38 @@ import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineIt
 import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.SERVICE_CHW;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.SERVICE_HF;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionBuilder;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
+import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
@@ -76,6 +84,7 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
@@ -83,10 +92,12 @@ import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.service.ConsultationNumberDataProcessor;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
+import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,11 +120,13 @@ public class AndroidRequisitionService {
   private final SupervisoryNodeReferenceDataService supervisoryNodeService;
   private final SiglusUsageReportService siglusUsageReportService;
   private final PermissionService permissionService;
+  private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
   private final RequisitionRepository requisitionRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
+  private final ConsultationNumberDataProcessor consultationNumberDataProcessor;
 
   @Transactional
   public void create(RequisitionCreateRequest request) {
@@ -124,6 +137,128 @@ public class AndroidRequisitionService {
     requisition = submitRequisition(requisition, authorId);
     requisition = authorizeRequisition(requisition, authorId);
     internalApproveRequisition(requisition, authorId);
+  }
+
+  public List<RequisitionCreateRequest> getRequisitionResponseByFacilityIdAndDate(UUID facilityId, String startDate,
+      Map<UUID, String> orderableIdToCode) {
+    List<RequisitionExtension> requisitionExtensions = requisitionExtensionRepository
+        .searchRequisitionIdByFacilityAndDate(facilityId, startDate);
+    if (!requisitionExtensions.isEmpty()) {
+      List<RequisitionV2Dto> requisitionV2Dtos = requisitionExtensions.stream()
+          .map(e -> siglusRequisitionRequisitionService.searchRequisition(e.getRequisitionId()))
+          .collect(Collectors.toList());
+      List<RequisitionCreateRequest> requisitionCreateRequests = new ArrayList<>();
+      requisitionV2Dtos.forEach(
+          requisitionV2Dto -> {
+            RequisitionCreateRequest requisitionCreateRequest = RequisitionCreateRequest.builder()
+                .programCode(getProgramCode(requisitionV2Dto.getProgram().getId()))
+                .emergency(requisitionV2Dto.getEmergency())
+                .consultationNumber(getConsultationNumber(requisitionV2Dto.getId()))
+                .products(getProducts(requisitionV2Dto, orderableIdToCode))
+                .build();
+            setTime(requisitionCreateRequest, requisitionV2Dto);
+            requisitionCreateRequests.add(requisitionCreateRequest);
+          }
+      );
+      return requisitionCreateRequests;
+    } else {
+      return Collections.emptyList();
+    }
+  }
+
+  private Integer getConsultationNumber(UUID requisitionId) {
+    Integer consultationNumber = 0;
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+    siglusRequisitionDto.setId(requisitionId);
+    consultationNumberDataProcessor.get(siglusRequisitionDto);
+    List<ConsultationNumberGroupDto> consultationNumberGroupDtos = siglusRequisitionDto
+        .getConsultationNumberLineItems();
+    if (!consultationNumberGroupDtos.isEmpty()) {
+      consultationNumber = consultationNumberGroupDtos.stream()
+          .filter(i -> GROUP_NAME.equals(i.getName()))
+          .findFirst()
+          .orElseThrow(NullPointerException::new)
+          .getColumns()
+          .get(COLUMN_NAME)
+          .getValue();
+    }
+    return consultationNumber;
+  }
+
+  private String getProgramCode(UUID programId) {
+    String programCode = null;
+    ProgramDto programDto = siglusProgramService.getProgram(programId);
+    if (programDto != null) {
+      programCode = programDto.getCode();
+    }
+    return programCode;
+  }
+
+  private void setTime(RequisitionCreateRequest requisitionCreateRequest, RequisitionV2Dto requisitionV2Dto) {
+    Map<String, Object> extraData = requisitionV2Dto.getExtraData();
+    Instant clientSubmittedTime = extraData.get(CLIENT_SUBMITTED_TIME) == null ? null
+        : Instant.parse(String.valueOf(extraData.get(CLIENT_SUBMITTED_TIME)));
+    LocalDate actualStartDate = extraData.get(ACTUAL_START_DATE) == null ? null
+        : LocalDate.parse(String.valueOf(extraData.get(ACTUAL_START_DATE)));
+    LocalDate actualEndDate = extraData.get(ACTUAL_END_DATE) == null ? null
+        : LocalDate.parse(String.valueOf(extraData.get(ACTUAL_END_DATE)));
+    List<RequisitionSignatureRequest> signatures = new ArrayList<>();
+    if (extraData.get(SIGNATURE) != null) {
+      ObjectMapper objectMapper = new ObjectMapper();
+      ExtraDataSignatureDto signatureDto = objectMapper
+          .convertValue(extraData.get(SIGNATURE), ExtraDataSignatureDto.class);
+      if (signatureDto.getSubmit() != null) {
+        signatures.add(
+            RequisitionSignatureRequest.builder().type("submit").name(signatureDto.getSubmit())
+                .build());
+      }
+      if (signatureDto.getAuthorize() != null) {
+        signatures.add(RequisitionSignatureRequest.builder().type("authorize")
+            .name(String.valueOf(signatureDto.getAuthorize()))
+            .build());
+      }
+      String[] approves = signatureDto.getApprove();
+      if (approves != null && approves.length > 0) {
+        signatures.add(RequisitionSignatureRequest.builder().type("approve").name(approves[0])
+            .build());
+      }
+      requisitionCreateRequest.setClientSubmittedTime(clientSubmittedTime);
+      requisitionCreateRequest.setActualStartDate(actualStartDate);
+      requisitionCreateRequest.setActualEndDate(actualEndDate);
+      requisitionCreateRequest.setSignatures(signatures);
+    }
+  }
+
+  private List<RequisitionLineItemRequest> getProducts(RequisitionV2Dto requisitionDto,
+      Map<UUID, String> orderableIdToCode) {
+    List<RequisitionLineItem.Importer> lineItems = requisitionDto.getRequisitionLineItems();
+    if (lineItems.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<RequisitionLineItemRequest> requisitionLineItemRequestList = new ArrayList<>();
+    List<UUID> lineItemIdList = lineItems.stream()
+        .map(Importer::getId)
+        .collect(Collectors.toList());
+    Map<UUID, RequisitionLineItemExtension> requisitionLineItemExtensionMap =
+        requisitionLineItemExtensionRepository.findLineItems(lineItemIdList).stream()
+            .collect(Collectors.toMap(RequisitionLineItemExtension::getRequisitionLineItemId, Function.identity(),
+                (key1, key2) -> key2));
+    lineItems.forEach(lineItem -> {
+      RequisitionLineItemExtension itemExtension = requisitionLineItemExtensionMap.get(lineItem.getId());
+      RequisitionLineItemRequest lineItemRequest = RequisitionLineItemRequest.builder()
+          .beginningBalance(lineItem.getBeginningBalance())
+          .totalReceivedQuantity(lineItem.getTotalReceivedQuantity())
+          .totalConsumedQuantity(lineItem.getTotalConsumedQuantity())
+          .stockOnHand(lineItem.getStockOnHand())
+          .requestedQuantity(lineItem.getRequestedQuantity())
+          .authorizedQuantity(itemExtension == null ? null : itemExtension.getAuthorizedQuantity())
+          .productCode(lineItem.getOrderableIdentity() == null ? null
+              : orderableIdToCode.get(lineItem.getOrderableIdentity().getId()))
+          .build();
+      requisitionLineItemRequestList.add(lineItemRequest);
+
+    });
+    return requisitionLineItemRequestList;
   }
 
   private Requisition initiateRequisition(RequisitionCreateRequest request, UUID homeFacilityId, UUID programId,

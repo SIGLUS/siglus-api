@@ -15,13 +15,17 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
+import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
 
 import com.google.common.collect.Sets;
 import java.time.Instant;
@@ -34,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,15 +47,20 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.MetadataDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
+import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
+import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PermissionService;
@@ -70,16 +80,19 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
 import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
+import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.service.ConsultationNumberDataProcessor;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
+import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -115,6 +128,9 @@ public class AndroidRequisitionServiceTest {
   private SiglusUsageReportService siglusUsageReportService;
 
   @Mock
+  private SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
+
+  @Mock
   private RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
 
   @Mock
@@ -132,6 +148,9 @@ public class AndroidRequisitionServiceTest {
   @Mock
   private PermissionService permissionService;
 
+  @Mock
+  private ConsultationNumberDataProcessor consultationNumberDataProcessor;
+
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
@@ -147,10 +166,16 @@ public class AndroidRequisitionServiceTest {
   private final UUID facilityId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
+  private final UUID orderableId2 = UUID.randomUUID();
   private final UUID templateId = UUID.randomUUID();
   private final UUID supervisoryNodeId = UUID.randomUUID();
   private final UUID processingPeriodId = UUID.randomUUID();
   private final UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionLineItemId = UUID.randomUUID();
+  private final UUID requisitionLineItemId2 = UUID.randomUUID();
+  private final Map<UUID, String> orderableIdToCode = new HashMap<>();
+  private final String orderableCode = "orderableCode";
+  private final String orderableCode2 = "orderableCode2";
 
   @Before
   public void prepare() {
@@ -185,6 +210,7 @@ public class AndroidRequisitionServiceTest {
         .thenReturn(requisitionExtension);
     when(requisitionExtensionRepository.save(requisitionExtensionArgumentCaptor.capture()))
         .thenReturn(requisitionExtension);
+    createGetRequisitionData();
   }
 
   @Test(expected = PermissionMessageException.class)
@@ -261,6 +287,113 @@ public class AndroidRequisitionServiceTest {
     verify(siglusUsageReportService).initiateUsageReport(any());
     verify(siglusUsageReportService).saveUsageReport(any(), any());
     verify(requisitionLineItemExtensionRepository).save(requisitionLineItemExtensionArgumentCaptor.capture());
+  }
+
+  @Test
+  public void shouldGetRequisitionResponse() {
+    // when
+    List<RequisitionCreateRequest> responseList = service
+        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), "2021-07-13", orderableIdToCode);
+
+    // then
+    RequisitionCreateRequest response = responseList.get(0);
+    assertEquals("VC", response.getProgramCode());
+    assertEquals("2021-06-21T07:59:59Z", String.valueOf(response.getClientSubmittedTime()));
+    assertEquals(true, response.getEmergency());
+    assertEquals("2021-05-01", String.valueOf(response.getActualStartDate()));
+    assertEquals("2021-05-11", String.valueOf(response.getActualEndDate()));
+    assertEquals(Integer.valueOf(10), response.getConsultationNumber());
+
+    List<RequisitionLineItemRequest> products = response.getProducts();
+    RequisitionLineItemRequest product = products.get(1);
+    assertEquals(orderableCode2, product.getProductCode());
+    assertEquals(Integer.valueOf(200), product.getBeginningBalance());
+    assertEquals(Integer.valueOf(300), product.getTotalReceivedQuantity());
+    assertEquals(Integer.valueOf(400), product.getTotalConsumedQuantity());
+    assertEquals(Integer.valueOf(500), product.getStockOnHand());
+    assertEquals(Integer.valueOf(100), product.getRequestedQuantity());
+    assertEquals(Integer.valueOf(40), product.getAuthorizedQuantity());
+
+    Map<String, String> signatureMap = response.getSignatures().stream()
+        .collect(Collectors.toMap(RequisitionSignatureRequest::getType, RequisitionSignatureRequest::getName));
+    assertEquals("yyd1", signatureMap.get("submit"));
+    assertEquals("yyd2", signatureMap.get("authorize"));
+    assertEquals("yyd3", signatureMap.get("approve"));
+  }
+
+  private void createGetRequisitionData() {
+    orderableIdToCode.put(orderableId, orderableCode);
+    orderableIdToCode.put(orderableId2, orderableCode2);
+
+    when(requisitionExtensionRepository.searchRequisitionIdByFacilityAndDate(any(), any()))
+        .thenReturn(Collections.singletonList(RequisitionExtension.builder().requisitionId(requisitionId).build()));
+
+    ConsultationNumberGroupDto groupDto = new ConsultationNumberGroupDto();
+    Map<String, ConsultationNumberColumnDto> columns = new HashMap<>();
+    columns.put(COLUMN_NAME, new ConsultationNumberColumnDto(UUID.randomUUID(), 10));
+    columns.put("test", new ConsultationNumberColumnDto(UUID.randomUUID(), 20));
+    groupDto.setName(GROUP_NAME);
+    groupDto.setColumns(columns);
+    doAnswer((Answer) invocation -> {
+      SiglusRequisitionDto dto = invocation.getArgumentAt(0, SiglusRequisitionDto.class);
+      dto.setConsultationNumberLineItems(Collections.singletonList(groupDto));
+      return dto;
+    }).when(consultationNumberDataProcessor).get(any());
+
+    RequisitionLineItemV2Dto itemV2Dto = new RequisitionLineItemV2Dto();
+    itemV2Dto.setId(requisitionLineItemId);
+    itemV2Dto.setBeginningBalance(20);
+    itemV2Dto.setTotalReceivedQuantity(30);
+    itemV2Dto.setTotalConsumedQuantity(40);
+    itemV2Dto.setStockOnHand(50);
+    itemV2Dto.setRequestedQuantity(10);
+    VersionObjectReferenceDto orderableReference = new VersionObjectReferenceDto();
+    orderableReference.setId(orderableId);
+    itemV2Dto.setOrderable(orderableReference);
+
+    RequisitionLineItemV2Dto itemV2Dto2 = new RequisitionLineItemV2Dto();
+    itemV2Dto2.setId(requisitionLineItemId2);
+    itemV2Dto2.setBeginningBalance(200);
+    itemV2Dto2.setTotalReceivedQuantity(300);
+    itemV2Dto2.setTotalConsumedQuantity(400);
+    itemV2Dto2.setStockOnHand(500);
+    itemV2Dto2.setRequestedQuantity(100);
+    VersionObjectReferenceDto orderableReference2 = new VersionObjectReferenceDto();
+    orderableReference2.setId(orderableId2);
+    itemV2Dto2.setOrderable(orderableReference2);
+
+    ExtraDataSignatureDto signatureDto = new ExtraDataSignatureDto();
+    signatureDto.setSubmit("yyd1");
+    signatureDto.setAuthorize("yyd2");
+    String[] approve = {"yyd3", "yye4"};
+    signatureDto.setApprove(approve);
+
+    Map<String, Object> extraData = new HashMap<>();
+    extraData.put("signaure", signatureDto);
+    extraData.put("actualStartDate", "2021-05-01");
+    extraData.put("actualEndDate", "2021-05-11");
+    extraData.put("clientSubmittedTime", "2021-06-21T07:59:59Z");
+
+    RequisitionV2Dto v2Dto = new RequisitionV2Dto();
+    v2Dto.setId(requisitionId);
+    v2Dto.setProgram(new ObjectReferenceDto(programId));
+    v2Dto.setEmergency(true);
+    v2Dto.setExtraData(extraData);
+    v2Dto.setRequisitionLineItems(Arrays.asList(itemV2Dto, itemV2Dto2));
+
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId)).thenReturn(v2Dto);
+
+    List<RequisitionLineItemExtension> extensions = Arrays
+        .asList(RequisitionLineItemExtension.builder().requisitionLineItemId(requisitionLineItemId)
+                .authorizedQuantity(30).build(),
+            RequisitionLineItemExtension.builder().requisitionLineItemId(requisitionLineItemId2)
+                .authorizedQuantity(40).build());
+    when(requisitionLineItemExtensionRepository.findLineItems(any())).thenReturn(extensions);
+
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode("VC");
+    programDto.setId(programId);
+    when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
   }
 
   private ApprovedProductDto createApprovedProductDto(UUID orderableId) {

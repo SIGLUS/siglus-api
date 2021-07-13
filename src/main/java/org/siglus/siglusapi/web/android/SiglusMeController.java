@@ -116,6 +116,14 @@ public class SiglusMeController {
     service.createRequisition(request);
   }
 
+  @GetMapping("/facility/requisitions")
+  @ResponseStatus(OK)
+  @ResponseBody
+  public List<RequisitionCreateRequest> getRequisitionResponse(
+      @RequestParam(value = "startDate") String startDate) {
+    return service.getRequisitionResponse(startDate);
+  }
+
   @PostMapping("/app-info")
   @ResponseStatus(NO_CONTENT)
   public void processAppInfo(HttpServletRequest httpServletRequest)
