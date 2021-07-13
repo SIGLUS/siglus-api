@@ -290,7 +290,7 @@ public class AndroidRequisitionServiceTest {
   }
 
   @Test
-  public void shouldGetRequisitionResponse() {
+  public void shouldGetRequisitionResponseWhenByFacilityIdAndStartDate() {
     // when
     List<RequisitionCreateRequest> responseList = service
         .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), "2021-07-13", orderableIdToCode);

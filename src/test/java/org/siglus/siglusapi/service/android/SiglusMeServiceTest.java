@@ -556,6 +556,15 @@ public class SiglusMeServiceTest {
     verify(androidRequisitionService).create(requisitionRequest);
   }
 
+  @Test
+  public void shouldCallaSiglusRequisitionServiceWhenGetRequisition() {
+    // when
+    service.getRequisitionResponse("2021-05-01");
+
+    // then
+    verify(androidRequisitionService).getRequisitionResponseByFacilityIdAndDate(any(), any(), any());
+  }
+
   private SupportedProgramDto getSupportedProgramDto() {
     SupportedProgramDto supportedProgram = new SupportedProgramDto();
     supportedProgram.setId(UUID.randomUUID());

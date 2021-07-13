@@ -134,6 +134,11 @@ schemas:
   - regimenResponse: !include schemas/regimenResponse.json
   - hfCmmsDtos: !include schemas/hfCmmsDto.json
   - androidRequisitionRequest: !include schemas/androidRequisitionRequest.json
+  - androidRequisitionRequests: |
+      {
+        "type": "array",
+        "items": { "type": "object", "$ref": "schemas/androidRequisitionRequest.json" }
+      }
 
 resourceTypes:
   - collection:
@@ -2405,6 +2410,19 @@ traits:
               responses:
                 201:
                   description: submit success
+            get:
+              is: [ secured ]
+              queryParameters:
+                startDate:
+                  displayName: start date
+                  type: string
+                  required: true
+                  repeat: false
+              responses:
+                200:
+                  body:
+                    application/json:
+                      schema: androidRequisitionRequests
 
         /app-info:
           displayName: Process AppInfo

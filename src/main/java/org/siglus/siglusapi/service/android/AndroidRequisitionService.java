@@ -144,19 +144,18 @@ public class AndroidRequisitionService {
     List<RequisitionExtension> requisitionExtensions = requisitionExtensionRepository
         .searchRequisitionIdByFacilityAndDate(facilityId, startDate);
     if (!requisitionExtensions.isEmpty()) {
-      List<RequisitionV2Dto> requisitionV2Dtos = requisitionExtensions.stream()
-          .map(e -> siglusRequisitionRequisitionService.searchRequisition(e.getRequisitionId()))
-          .collect(Collectors.toList());
       List<RequisitionCreateRequest> requisitionCreateRequests = new ArrayList<>();
-      requisitionV2Dtos.forEach(
-          requisitionV2Dto -> {
+      requisitionExtensions.forEach(
+          extension -> {
+            RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
+                .searchRequisition(extension.getRequisitionId());
             RequisitionCreateRequest requisitionCreateRequest = RequisitionCreateRequest.builder()
                 .programCode(getProgramCode(requisitionV2Dto.getProgram().getId()))
                 .emergency(requisitionV2Dto.getEmergency())
                 .consultationNumber(getConsultationNumber(requisitionV2Dto.getId()))
                 .products(getProducts(requisitionV2Dto, orderableIdToCode))
                 .build();
-            setTime(requisitionCreateRequest, requisitionV2Dto);
+            setTimeAndSignature(requisitionCreateRequest, requisitionV2Dto);
             requisitionCreateRequests.add(requisitionCreateRequest);
           }
       );
@@ -194,7 +193,8 @@ public class AndroidRequisitionService {
     return programCode;
   }
 
-  private void setTime(RequisitionCreateRequest requisitionCreateRequest, RequisitionV2Dto requisitionV2Dto) {
+  private void setTimeAndSignature(RequisitionCreateRequest requisitionCreateRequest,
+      RequisitionV2Dto requisitionV2Dto) {
     Map<String, Object> extraData = requisitionV2Dto.getExtraData();
     Instant clientSubmittedTime = extraData.get(CLIENT_SUBMITTED_TIME) == null ? null
         : Instant.parse(String.valueOf(extraData.get(CLIENT_SUBMITTED_TIME)));

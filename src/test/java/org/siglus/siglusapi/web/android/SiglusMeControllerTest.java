@@ -62,6 +62,9 @@ public class SiglusMeControllerTest {
   @Mock
   private FacilityProductMovementsResponse facilityProductMovementsResponse;
 
+  @Mock
+  private List<RequisitionCreateRequest> requisitionCreateRequestList;
+
   @Before
   public void setup() {
     when(service.getFacilityProducts(any())).thenReturn(syncResponse);
@@ -184,6 +187,20 @@ public class SiglusMeControllerTest {
 
     // then
     verify(service).createRequisition(requisitionRequest);
+  }
+
+  @Test
+  public void shouldCallServiceWhenGetRequisition() {
+    // given
+    when(service.getRequisitionResponse("2021-06-01")).thenReturn(requisitionCreateRequestList);
+
+    // when
+    List<RequisitionCreateRequest> requisitionCreateRequestList = controller
+        .getRequisitionResponse("2021-06-01");
+
+    // then
+    assertSame(requisitionCreateRequestList, this.requisitionCreateRequestList);
+    verify(service).getRequisitionResponse("2021-06-01");
   }
 
   private List<HfCmmDto> mockFacilityCmms() {
