@@ -113,9 +113,8 @@ public class SiglusMeController {
   @Validated(PerformanceSequence.class)
   @PostMapping("/facility/requisitions")
   @ResponseStatus(CREATED)
-  public UUID createRequisition(
-      @RequestBody @Valid RequisitionCreateRequest request) {
-    return service.createRequisition(request);
+  public void createRequisition(@RequestBody @Valid RequisitionCreateRequest request) {
+    service.createRequisition(request);
   }
 
   @PostMapping("/app-info")

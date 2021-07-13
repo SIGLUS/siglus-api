@@ -115,12 +115,11 @@ public class AndroidRequisitionService {
   private final RequisitionExtensionRepository requisitionExtensionRepository;
 
   @Transactional
-  public UUID create(RequisitionCreateRequest request) {
+  public void create(RequisitionCreateRequest request) {
     Requisition requisition = initiateRequisition(request);
     requisition = submitRequisition(requisition);
     requisition = authorizeRequisition(requisition);
-    requisition = internalApproveRequisition(requisition);
-    return requisition.getId();
+    internalApproveRequisition(requisition);
   }
 
   private Requisition initiateRequisition(RequisitionCreateRequest request) {
@@ -167,7 +166,7 @@ public class AndroidRequisitionService {
     return requisitionRepository.save(requisition);
   }
 
-  private Requisition internalApproveRequisition(Requisition requisition) {
+  private void internalApproveRequisition(Requisition requisition) {
     checkPermission(() -> permissionService.canApproveRequisition(requisition));
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService.findOne(requisition.getSupervisoryNodeId());
     requisition.setSupervisoryNodeId(supervisoryNodeDto.getParentNodeId());
@@ -175,7 +174,7 @@ public class AndroidRequisitionService {
     requisition.setStatus(RequisitionStatus.IN_APPROVAL);
     buildStatusChanges(requisition);
     log.info("internal-approve android requisition: {}", requisition);
-    return requisitionRepository.save(requisition);
+    requisitionRepository.save(requisition);
   }
 
   private void checkPermission(Supplier<ValidationResult> supplier) {
