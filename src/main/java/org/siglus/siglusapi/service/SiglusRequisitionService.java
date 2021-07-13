@@ -395,26 +395,6 @@ public class SiglusRequisitionService {
     return setIsFinalApproval(siglusRequisitionDto);
   }
 
-  public SiglusRequisitionDto searchRequisition(UUID requisitionId,  HttpServletResponse response) {
-    // call origin OpenLMIS API
-    // reason: 1. set template extension
-    //         1. 2. set line item authorized quality extension
-    RequisitionV2Dto requisitionDto = requisitionV2Controller.getRequisition(requisitionId, response);
-    setLineItemExtension(requisitionDto);
-    RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
-
-    filterKitProductsIfInternal(requisitionDto);
-    filterProductsIfEmergency(requisitionDto);
-    SiglusRequisitionDto siglusRequisitionDto = getSiglusRequisitionDto(requisitionId,
-        extension, requisitionDto);
-    // set available products in approve page
-    setAvailableProductsForApprovePage(siglusRequisitionDto);
-    setApprovedByInternal(requisitionId, siglusRequisitionDto);
-    siglusRequisitionDto.setRequisitionNumber(
-        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
-    return setIsFinalApproval(siglusRequisitionDto);
-  }
-
   @Transactional
   public BasicRequisitionDto submitRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
