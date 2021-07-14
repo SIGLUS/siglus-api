@@ -18,6 +18,7 @@ package org.openlmis.requisition.service.referencedata;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,7 +30,11 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 
-public final class ApproveProductsAggregator {
+// [SIGLUS change start]
+// [change reason]: add Serializable
+// public final class ApproveProductsAggregator
+public final class ApproveProductsAggregator implements Serializable {
+  // [SIGLUS change end]
   private Map<VersionIdentityDto, ApprovedProductDto> allProducts;
   private Set<ApprovedProductReference> allProductReferences;
   private Set<VersionIdentityDto> allOrderableIdentities;

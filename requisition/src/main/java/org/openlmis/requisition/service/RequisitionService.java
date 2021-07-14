@@ -111,6 +111,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -976,14 +977,12 @@ public class RequisitionService {
 
   // [SIGLUS change start]
   // [change reason]: provide additional approved product
-  public ApproveProductsAggregator getApproveProduct(UUID facilityId,
-      UUID programId, boolean reportOnly) {
+  @Cacheable("siglus-approved-products")
+  public ApproveProductsAggregator getApproveProduct(UUID facilityId, UUID programId, boolean reportOnly) {
     if (reportOnly) {
-      return approvedProductReferenceDataService
-          .getAdditionalApprovedProducts(facilityId, programId);
+      return approvedProductReferenceDataService.getAdditionalApprovedProducts(facilityId, programId);
     } else {
-      return approvedProductReferenceDataService
-          .getApprovedProducts(facilityId, programId);
+      return approvedProductReferenceDataService.getApprovedProducts(facilityId, programId);
     }
   }
   // [SIGLUS change end]

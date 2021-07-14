@@ -27,6 +27,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.exception.ValidationMessageException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -35,7 +36,8 @@ public class SiglusProgramService {
   @Autowired
   private ProgramReferenceDataService programRefDataService;
 
-  public List<ProgramDto> getPrograms(/*@Nullable*/ String code) {
+  @Cacheable("siglus-getPrograms")
+  public List<ProgramDto> getPrograms(String code) {
     if (ALL_PRODUCTS_PROGRAM_CODE.equals(code)) {
       return Collections.singletonList(getAllProgramDto());
     }
@@ -44,6 +46,7 @@ public class SiglusProgramService {
         .collect(Collectors.toList());
   }
 
+  @Cacheable("siglus-getProgram")
   public ProgramDto getProgram(UUID programId) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
       return getAllProgramDto();
@@ -51,6 +54,7 @@ public class SiglusProgramService {
     return programRefDataService.findOne(programId);
   }
 
+  @Cacheable("siglus-getProgramIdByCode")
   public UUID getProgramIdByCode(String code) {
     ProgramDto program = programRefDataService.findAll().stream()
         .filter(programDto -> programDto.getCode().equals(code))

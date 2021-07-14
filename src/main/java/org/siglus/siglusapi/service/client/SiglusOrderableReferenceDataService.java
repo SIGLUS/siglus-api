@@ -56,8 +56,7 @@ public class SiglusOrderableReferenceDataService
   }
 
   @Cacheable("siglus-orderables")
-  public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
-      Pageable pageable) {
+  public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams, Pageable pageable) {
     RequestParameters parameters = RequestParameters.init()
         .set(FieldConstants.CODE, searchParams.getCode())
         .set(FieldConstants.NAME, searchParams.getName())

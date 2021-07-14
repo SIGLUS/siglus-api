@@ -272,7 +272,7 @@ public class AndroidRequisitionService {
     newRequisition.setReportOnly(false);
     newRequisition.setNumberOfMonthsInPeriod(1);
     buildStatusChanges(newRequisition, authorId);
-    buildRequisitionApprovedProduct(newRequisition, request);
+    buildRequisitionApprovedProduct(newRequisition, homeFacilityId, programId);
     buildRequisitionExtraData(newRequisition, request);
     buildRequisitionLineItems(newRequisition, request);
     log.info("initiate android requisition: {}", newRequisition);
@@ -420,9 +420,7 @@ public class AndroidRequisitionService {
     requisition.setRequisitionLineItems(requisitionLineItems);
   }
 
-  private void buildRequisitionApprovedProduct(Requisition requisition, RequisitionCreateRequest requisitionRequest) {
-    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    UUID programId = siglusProgramService.getProgramIdByCode(requisitionRequest.getProgramCode());
+  private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {
     ApproveProductsAggregator approvedProductsContainKit = requisitionService
         .getApproveProduct(homeFacilityId, programId, false);
     List<ApprovedProductDto> approvedProductDtos = approvedProductsContainKit.getFullSupplyProducts();

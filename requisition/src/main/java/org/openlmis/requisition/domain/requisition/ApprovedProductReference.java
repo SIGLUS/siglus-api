@@ -15,6 +15,7 @@
 
 package org.openlmis.requisition.domain.requisition;
 
+import java.io.Serializable;
 import java.util.UUID;
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
@@ -33,7 +34,11 @@ import lombok.ToString;
 @AllArgsConstructor
 @EqualsAndHashCode
 @ToString
-public final class ApprovedProductReference {
+// [SIGLUS change start]
+// [change reason]: add Serializable
+// public final class ApprovedProductReference {
+public final class ApprovedProductReference implements Serializable {
+// [SIGLUS change end]
 
   @Embedded
   @AttributeOverrides({
