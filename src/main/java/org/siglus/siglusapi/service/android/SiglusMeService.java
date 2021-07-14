@@ -84,6 +84,7 @@ import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
+import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
@@ -347,7 +348,7 @@ public class SiglusMeService {
     }
   }
 
-  public List<RequisitionCreateRequest> getRequisitionResponse(String startDate) {
+  public RequisitionResponse getRequisitionResponse(String startDate) {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(getAllApprovedProducts());
     return androidRequisitionService

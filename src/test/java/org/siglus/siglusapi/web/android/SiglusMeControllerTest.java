@@ -41,6 +41,7 @@ import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
+import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.springframework.mock.web.MockHttpServletRequest;
 
@@ -63,7 +64,7 @@ public class SiglusMeControllerTest {
   private FacilityProductMovementsResponse facilityProductMovementsResponse;
 
   @Mock
-  private List<RequisitionCreateRequest> requisitionCreateRequestList;
+  private RequisitionResponse requisitionResponse;
 
   @Before
   public void setup() {
@@ -192,14 +193,14 @@ public class SiglusMeControllerTest {
   @Test
   public void shouldCallServiceWhenGetRequisition() {
     // given
-    when(service.getRequisitionResponse("2021-06-01")).thenReturn(requisitionCreateRequestList);
+    when(service.getRequisitionResponse("2021-06-01")).thenReturn(requisitionResponse);
 
     // when
-    List<RequisitionCreateRequest> requisitionCreateRequestList = controller
+    RequisitionResponse requisitionResponse = controller
         .getRequisitionResponse("2021-06-01");
 
     // then
-    assertSame(requisitionCreateRequestList, this.requisitionCreateRequestList);
+    assertSame(requisitionResponse, this.requisitionResponse);
     verify(service).getRequisitionResponse("2021-06-01");
   }
 

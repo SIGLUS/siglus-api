@@ -40,6 +40,7 @@ import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
+import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.springframework.validation.annotation.Validated;
@@ -119,7 +120,7 @@ public class SiglusMeController {
   @GetMapping("/facility/requisitions")
   @ResponseStatus(OK)
   @ResponseBody
-  public List<RequisitionCreateRequest> getRequisitionResponse(
+  public RequisitionResponse getRequisitionResponse(
       @RequestParam(value = "startDate") String startDate) {
     return service.getRequisitionResponse(startDate);
   }

@@ -85,6 +85,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.ConsultationNumberDataProcessor;
@@ -292,11 +293,11 @@ public class AndroidRequisitionServiceTest {
   @Test
   public void shouldGetRequisitionResponseWhenByFacilityIdAndStartDate() {
     // when
-    List<RequisitionCreateRequest> responseList = service
+    RequisitionResponse requisitionResponse = service
         .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), "2021-07-13", orderableIdToCode);
 
     // then
-    RequisitionCreateRequest response = responseList.get(0);
+    RequisitionCreateRequest response = requisitionResponse.getRequisitionResponseList().get(0);
     assertEquals("VC", response.getProgramCode());
     assertEquals("2021-06-21T07:59:59Z", String.valueOf(response.getClientSubmittedTime()));
     assertEquals(true, response.getEmergency());

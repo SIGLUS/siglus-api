@@ -90,6 +90,7 @@ import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.ConsultationNumberDataProcessor;
@@ -139,8 +140,9 @@ public class AndroidRequisitionService {
     internalApproveRequisition(requisition, authorId);
   }
 
-  public List<RequisitionCreateRequest> getRequisitionResponseByFacilityIdAndDate(UUID facilityId, String startDate,
+  public RequisitionResponse getRequisitionResponseByFacilityIdAndDate(UUID facilityId, String startDate,
       Map<UUID, String> orderableIdToCode) {
+    RequisitionResponse response = new RequisitionResponse();
     List<RequisitionExtension> requisitionExtensions = requisitionExtensionRepository
         .searchRequisitionIdByFacilityAndDate(facilityId, startDate);
     if (!requisitionExtensions.isEmpty()) {
@@ -159,10 +161,9 @@ public class AndroidRequisitionService {
             requisitionCreateRequests.add(requisitionCreateRequest);
           }
       );
-      return requisitionCreateRequests;
-    } else {
-      return Collections.emptyList();
+      response.setRequisitionResponseList(requisitionCreateRequests);
     }
+    return response;
   }
 
   private Integer getConsultationNumber(UUID requisitionId) {
