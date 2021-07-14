@@ -38,7 +38,7 @@ import lombok.ToString;
 // [change reason]: add Serializable
 // public final class ApprovedProductReference {
 public final class ApprovedProductReference implements Serializable {
-// [SIGLUS change end]
+  // [SIGLUS change end]
 
   @Embedded
   @AttributeOverrides({
