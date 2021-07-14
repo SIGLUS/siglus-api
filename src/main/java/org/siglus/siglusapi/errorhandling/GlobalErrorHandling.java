@@ -130,4 +130,9 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
     return create(problem, request);
   }
 
+  @Override
+  public void log(Throwable throwable, Problem problem, NativeWebRequest request, HttpStatus status) {
+    LOG.error(status.getReasonPhrase(), throwable);
+  }
+
 }

@@ -490,17 +490,13 @@ public class SiglusMeService {
 
   private Optional<CanFulfillForMeEntryDto> findStockOnHand(UUID productId, UUID lotId,
       List<StockCardSummaryV2Dto> stockSummaries) {
-    for (StockCardSummaryV2Dto summary : stockSummaries) {
-      if (!summary.getOrderable().getId().equals(productId)) {
-        continue;
-      }
-      for (CanFulfillForMeEntryDto lot : summary.getCanFulfillForMe()) {
-        if (lot.getLot().getId().equals(lotId)) {
-          return Optional.of(lot);
-        }
-      }
-    }
-    return Optional.empty();
+    return stockSummaries.stream()
+        .filter(summary -> productId.equals(summary.getOrderable().getId()))
+        .map(StockCardSummaryV2Dto::getCanFulfillForMe)
+        .flatMap(Collection::stream)
+        .filter(lot -> lot.getLot() != null)
+        .filter(lot -> lotId.equals(lot.getLot().getId()))
+        .findFirst();
   }
 
   private void createStockEvent(List<StockCardCreateRequest> requests, FacilityDto facilityDto,
