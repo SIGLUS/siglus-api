@@ -54,19 +54,19 @@ public class WebLogAspect {
     HttpServletRequest request = attributes.getRequest();
     String method = request.getMethod();
     String url = request.getRequestURL().toString();
-    String body = Arrays.toString(joinPoint.getArgs());
+    String args = Arrays.toString(joinPoint.getArgs());
     if (isAndroid(request)) {
       AndroidHeader androidHeader = getAndroidHeader(request);
-      log.info("[Android_API_START] {} {}, header: {}, body: {}", method, url, androidHeader, body);
+      log.info("[Android-API][START] {} {}, header: {}, args: {}", method, url, androidHeader, args);
     } else {
-      log.info("[API_START] {} {}, body: {}", method, url, body);
+      log.info("[Web-API][START] {} {}, args: {}", method, url, args);
     }
     Object result = joinPoint.proceed();
     long costTime = System.currentTimeMillis() - startTime;
     if (isAndroid(request)) {
-      log.info("[Android_API_FINISH] {} {}, cost-time: {}ms", method, url, costTime);
+      log.info("[Android-API][END] {} {}, cost-time: {}ms", method, url, costTime);
     } else {
-      log.info("[API_FINISH] {} {}, cost-time: {}ms", method, url, costTime);
+      log.info("[Web-API][END] {} {}, cost-time: {}ms", method, url, costTime);
     }
     return result;
   }
