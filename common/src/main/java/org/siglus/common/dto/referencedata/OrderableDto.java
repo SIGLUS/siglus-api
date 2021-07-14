@@ -16,7 +16,7 @@
 package org.siglus.common.dto.referencedata;
 
 import static com.google.common.collect.Maps.newHashMap;
-import static org.siglus.common.constant.KitConstants.apeKits;
+import static org.siglus.common.constant.KitConstants.APE_KITS;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
@@ -124,7 +124,7 @@ public class OrderableDto extends BaseDto implements Orderable.Importer,
   }
 
   public boolean getIsKit() {
-    return CollectionUtils.isNotEmpty(children) || apeKits.contains(productCode);
+    return CollectionUtils.isNotEmpty(children) || APE_KITS.contains(productCode);
   }
 
   public void setTradeItemIdentifier(UUID tradeItemId) {

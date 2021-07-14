@@ -22,8 +22,8 @@ public class KitConstants {
 
   private KitConstants() { }
 
-  public static final List<String> usKits = Arrays.asList("26A01", "26B01");
+  public static final List<String> US_KITS = Arrays.asList("26A01", "26B01");
 
-  public static final List<String> apeKits = Arrays.asList("26A02", "26B02");
+  public static final List<String> APE_KITS = Arrays.asList("26A02", "26B02");
 
 }

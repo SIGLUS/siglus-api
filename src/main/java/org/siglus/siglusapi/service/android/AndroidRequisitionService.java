@@ -22,8 +22,8 @@ import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIME;
 import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
-import static org.siglus.common.constant.KitConstants.apeKits;
-import static org.siglus.common.constant.KitConstants.usKits;
+import static org.siglus.common.constant.KitConstants.APE_KITS;
+import static org.siglus.common.constant.KitConstants.US_KITS;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
@@ -453,19 +453,19 @@ public class AndroidRequisitionService {
 
   private void buildRequisitionKitUsage(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
     int kitReceivedChw = request.getProducts().stream()
-        .filter(product -> apeKits.contains(product.getProductCode()))
+        .filter(product -> APE_KITS.contains(product.getProductCode()))
         .mapToInt(RequisitionLineItemRequest::getTotalReceivedQuantity)
         .sum();
     int kitReceivedHf = request.getProducts().stream()
-        .filter(product -> usKits.contains(product.getProductCode()))
+        .filter(product -> US_KITS.contains(product.getProductCode()))
         .mapToInt(RequisitionLineItemRequest::getTotalReceivedQuantity)
         .sum();
     int kitOpenedChw = request.getProducts().stream()
-        .filter(product -> apeKits.contains(product.getProductCode()))
+        .filter(product -> APE_KITS.contains(product.getProductCode()))
         .mapToInt(RequisitionLineItemRequest::getTotalConsumedQuantity)
         .sum();
     int kitOpenedHf = request.getProducts().stream()
-        .filter(product -> usKits.contains(product.getProductCode()))
+        .filter(product -> US_KITS.contains(product.getProductCode()))
         .mapToInt(RequisitionLineItemRequest::getTotalConsumedQuantity)
         .sum();
     requisitionDto.getKitUsageLineItems().forEach(kitUsage -> {
