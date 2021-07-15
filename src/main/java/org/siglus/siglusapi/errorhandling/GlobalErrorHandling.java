@@ -137,7 +137,9 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   public void log(Throwable throwable, Problem problem, NativeWebRequest request, HttpStatus status) {
     LOG.error(status.getReasonPhrase(), throwable);
     ArrayList<ValidationFailField> fields = (ArrayList<ValidationFailField>) problem.getParameters().get("fields");
-    fields.forEach(field -> log.error(field.getMessage()));
+    if (fields != null) {
+      fields.forEach(field -> log.error(field.getMessage()));
+    }
   }
 
 }
