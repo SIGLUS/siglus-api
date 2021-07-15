@@ -35,14 +35,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SiglusRegimenService {
 
-  private final RegimenRepository repo;
+  private final RegimenRepository regimenRepository;
   private final RegimentMapper mapper;
   private final ProgramReferenceDataService programDataService;
 
   public List<RegimenResponse> getRegimens() {
     Map<UUID, ProgramDto> allPrograms = programDataService.findAll().stream()
         .collect(toMap(BaseDto::getId, Function.identity()));
-    return repo.findAll().stream()
+    return regimenRepository.findAll().stream()
+        .filter(regimen -> Boolean.TRUE.equals(regimen.getIsAndroid()))
         .map(regimen -> mapper.toResponse(regimen, allPrograms))
         .collect(Collectors.toList());
   }

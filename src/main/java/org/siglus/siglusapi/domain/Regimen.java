@@ -53,6 +53,8 @@ public class Regimen extends BaseEntity {
 
   private UUID realProgramId;
 
+  private Boolean isAndroid;
+
   @ManyToOne(cascade = CascadeType.PERSIST)
   @JoinColumn(name = "categoryId")
   protected RegimenCategory regimenCategory;

@@ -28,5 +28,6 @@ public class RegimenResponse {
   private Integer displayOrder;
   private Boolean isCustom;
   private RegimenCategoryResponse category;
+  private Boolean isAndroid;
 
 }
