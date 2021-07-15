@@ -29,4 +29,10 @@ public class ExtraDataConstants {
 
   public static final String CLIENT_SUBMITTED_TIME = "clientSubmittedTime";
 
+  public static final String SUBMIT = "submit";
+
+  public static final String AUTHORIZE = "authorize";
+
+  public static final String APPROVE = "approve";
+
 }

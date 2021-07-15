@@ -19,9 +19,12 @@ import static org.openlmis.requisition.web.ResourceNames.PROCESSING_PERIODS;
 import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.APPROVE;
+import static org.siglus.common.constant.ExtraDataConstants.AUTHORIZE;
 import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIME;
 import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
+import static org.siglus.common.constant.ExtraDataConstants.SUBMIT;
 import static org.siglus.common.constant.KitConstants.APE_KITS;
 import static org.siglus.common.constant.KitConstants.US_KITS;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
@@ -84,6 +87,7 @@ import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
 import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -145,44 +149,41 @@ public class AndroidRequisitionService {
     RequisitionResponse response = new RequisitionResponse();
     List<RequisitionExtension> requisitionExtensions = requisitionExtensionRepository
         .searchRequisitionIdByFacilityAndDate(facilityId, startDate);
-    if (!requisitionExtensions.isEmpty()) {
-      List<RequisitionCreateRequest> requisitionCreateRequests = new ArrayList<>();
-      requisitionExtensions.forEach(
-          extension -> {
-            RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
-                .searchRequisition(extension.getRequisitionId());
-            RequisitionCreateRequest requisitionCreateRequest = RequisitionCreateRequest.builder()
-                .programCode(getProgramCode(requisitionV2Dto.getProgram().getId()))
-                .emergency(requisitionV2Dto.getEmergency())
-                .consultationNumber(getConsultationNumber(requisitionV2Dto.getId()))
-                .products(getProducts(requisitionV2Dto, orderableIdToCode))
-                .build();
-            setTimeAndSignature(requisitionCreateRequest, requisitionV2Dto);
-            requisitionCreateRequests.add(requisitionCreateRequest);
-          }
-      );
-      response.setRequisitionResponseList(requisitionCreateRequests);
-    }
+    List<RequisitionCreateRequest> requisitionCreateRequests = new ArrayList<>();
+    requisitionExtensions.forEach(
+        extension -> {
+          RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
+              .searchRequisition(extension.getRequisitionId());
+          RequisitionCreateRequest requisitionCreateRequest = RequisitionCreateRequest.builder()
+              .programCode(getProgramCode(requisitionV2Dto.getProgram().getId()))
+              .emergency(requisitionV2Dto.getEmergency())
+              .consultationNumber(getConsultationNumber(requisitionV2Dto.getId()))
+              .products(getProducts(requisitionV2Dto, orderableIdToCode))
+              .build();
+          setTimeAndSignature(requisitionCreateRequest, requisitionV2Dto);
+          requisitionCreateRequests.add(requisitionCreateRequest);
+        }
+    );
+    response.setRequisitionResponseList(requisitionCreateRequests);
     return response;
   }
 
   private Integer getConsultationNumber(UUID requisitionId) {
-    Integer consultationNumber = 0;
     SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
     siglusRequisitionDto.setId(requisitionId);
     consultationNumberDataProcessor.get(siglusRequisitionDto);
     List<ConsultationNumberGroupDto> consultationNumberGroupDtos = siglusRequisitionDto
         .getConsultationNumberLineItems();
-    if (!consultationNumberGroupDtos.isEmpty()) {
-      consultationNumber = consultationNumberGroupDtos.stream()
-          .filter(i -> GROUP_NAME.equals(i.getName()))
-          .findFirst()
-          .orElseThrow(NullPointerException::new)
-          .getColumns()
-          .get(COLUMN_NAME)
-          .getValue();
+    if (consultationNumberGroupDtos == null) {
+      return null;
     }
-    return consultationNumber;
+    Map<String, Map<String, ConsultationNumberColumnDto>> mapColumnDtoByName = consultationNumberGroupDtos.stream()
+        .collect(Collectors.toMap(ConsultationNumberGroupDto::getName, ConsultationNumberGroupDto::getColumns));
+    Map<String, ConsultationNumberColumnDto> columnDtoMap = mapColumnDtoByName.get(GROUP_NAME);
+    if (columnDtoMap == null || columnDtoMap.get(COLUMN_NAME) == null) {
+      return null;
+    }
+    return columnDtoMap.get(COLUMN_NAME).getValue();
   }
 
   private String getProgramCode(UUID programId) {
@@ -197,36 +198,36 @@ public class AndroidRequisitionService {
   private void setTimeAndSignature(RequisitionCreateRequest requisitionCreateRequest,
       RequisitionV2Dto requisitionV2Dto) {
     Map<String, Object> extraData = requisitionV2Dto.getExtraData();
-    Instant clientSubmittedTime = extraData.get(CLIENT_SUBMITTED_TIME) == null ? null
-        : Instant.parse(String.valueOf(extraData.get(CLIENT_SUBMITTED_TIME)));
-    LocalDate actualStartDate = extraData.get(ACTUAL_START_DATE) == null ? null
-        : LocalDate.parse(String.valueOf(extraData.get(ACTUAL_START_DATE)));
-    LocalDate actualEndDate = extraData.get(ACTUAL_END_DATE) == null ? null
-        : LocalDate.parse(String.valueOf(extraData.get(ACTUAL_END_DATE)));
     List<RequisitionSignatureRequest> signatures = new ArrayList<>();
     if (extraData.get(SIGNATURE) != null) {
       ObjectMapper objectMapper = new ObjectMapper();
       ExtraDataSignatureDto signatureDto = objectMapper
           .convertValue(extraData.get(SIGNATURE), ExtraDataSignatureDto.class);
       if (signatureDto.getSubmit() != null) {
-        signatures.add(
-            RequisitionSignatureRequest.builder().type("submit").name(signatureDto.getSubmit())
-                .build());
+        signatures
+            .add(RequisitionSignatureRequest.builder().type(SUBMIT).name(signatureDto.getSubmit()).build());
       }
       if (signatureDto.getAuthorize() != null) {
-        signatures.add(RequisitionSignatureRequest.builder().type("authorize")
-            .name(String.valueOf(signatureDto.getAuthorize()))
-            .build());
+        signatures
+            .add(RequisitionSignatureRequest.builder().type(AUTHORIZE).name(signatureDto.getAuthorize()).build());
       }
       String[] approves = signatureDto.getApprove();
       if (approves != null && approves.length > 0) {
-        signatures.add(RequisitionSignatureRequest.builder().type("approve").name(approves[0])
-            .build());
+        signatures.add(RequisitionSignatureRequest.builder().type(APPROVE).name(approves[0]).build());
       }
-      requisitionCreateRequest.setClientSubmittedTime(clientSubmittedTime);
-      requisitionCreateRequest.setActualStartDate(actualStartDate);
-      requisitionCreateRequest.setActualEndDate(actualEndDate);
       requisitionCreateRequest.setSignatures(signatures);
+    }
+    if (extraData.get(CLIENT_SUBMITTED_TIME) != null) {
+      requisitionCreateRequest
+          .setClientSubmittedTime(Instant.parse(String.valueOf(extraData.get(CLIENT_SUBMITTED_TIME))));
+    }
+
+    if (extraData.get(ACTUAL_START_DATE) != null) {
+      requisitionCreateRequest.setActualStartDate(LocalDate.parse(String.valueOf(extraData.get(ACTUAL_START_DATE))));
+    }
+
+    if (extraData.get(ACTUAL_END_DATE) != null) {
+      requisitionCreateRequest.setActualEndDate(LocalDate.parse(String.valueOf(extraData.get(ACTUAL_END_DATE))));
     }
   }
 
