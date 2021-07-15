@@ -19,7 +19,6 @@ import static org.siglus.common.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
 import static org.zalando.problem.Problem.DEFAULT_TYPE;
 import static org.zalando.problem.Status.BAD_REQUEST;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +81,7 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
         .with(MESSAGE_KEY, localizedMessage.getMessageKey())
         .with(MESSAGE, localizedMessage.getMessage())
         .build();
-    return create(problem, request);
+    return create(exception, problem, request);
   }
 
   @ExceptionHandler
@@ -105,12 +104,16 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
         .with(MESSAGE_KEY, messageKey)
         .with(MESSAGE, message != null ? message : messageKey)
         .build();
-    return create(problem, request);
+    return create(exception, problem, request);
   }
 
   @Override
   public ResponseEntity<Problem> newConstraintViolationProblem(Throwable throwable, Collection<Violation> violations,
       NativeWebRequest request) {
+    if (!violations.isEmpty()) {
+      LOG.error("Validation failed!");
+    }
+    violations.forEach(field -> LOG.error("{} - {}", field.getField(), field.getMessage()));
     final StatusType status = defaultConstraintViolationStatus();
     LocalizedMessage localizedMessage = getLocalizedMessage(new Message(ERROR_VALIDATION_FAIL));
     List<ValidationFailField> fields = violations.stream()
@@ -122,24 +125,20 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
         .with(MESSAGE, localizedMessage.getMessage())
         .with("fields", fields)
         .build();
-    return create(problem, request);
+    return create(throwable, problem, request);
   }
 
   @ExceptionHandler
-  public ResponseEntity<Problem> handleEntityNotFound(
+  public ResponseEntity<Problem> handleValidationException(
       final ValidationException exception, final NativeWebRequest request) {
     String detail = String.format("%s Caused by %s", exception.getMessage(), exception.getCause());
     ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE).withDetail(detail).build();
-    return create(problem, request);
+    return create(exception, problem, request);
   }
 
   @Override
   public void log(Throwable throwable, Problem problem, NativeWebRequest request, HttpStatus status) {
     LOG.error(status.getReasonPhrase(), throwable);
-    ArrayList<ValidationFailField> fields = (ArrayList<ValidationFailField>) problem.getParameters().get("fields");
-    if (fields != null) {
-      fields.forEach(field -> log.error(field.getMessage()));
-    }
   }
 
 }
