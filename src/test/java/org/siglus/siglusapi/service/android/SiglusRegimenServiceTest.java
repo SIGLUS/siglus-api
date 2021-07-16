@@ -69,6 +69,7 @@ public class SiglusRegimenServiceTest {
     when(regimen1.getProgramId()).thenReturn(programId1);
     when(regimen1.getIsCustom()).thenReturn(false);
     when(regimen1.getDisplayOrder()).thenReturn(1);
+    when(regimen1.getIsAndroid()).thenReturn(Boolean.TRUE);
     RegimenCategory category1 = mock(RegimenCategory.class);
     when(category1.getCode()).thenReturn("category code 1");
     when(category1.getName()).thenReturn("category name 1");
@@ -82,6 +83,7 @@ public class SiglusRegimenServiceTest {
     when(regimen2.getProgramId()).thenReturn(programId2);
     when(regimen2.getIsCustom()).thenReturn(true);
     when(regimen2.getDisplayOrder()).thenReturn(2);
+    when(regimen2.getIsAndroid()).thenReturn(Boolean.TRUE);
     RegimenCategory category2 = mock(RegimenCategory.class);
     when(category2.getCode()).thenReturn("category code 2");
     when(category2.getName()).thenReturn("category name 2");
