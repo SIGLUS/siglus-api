@@ -15,12 +15,20 @@
 
 package org.siglus.siglusapi.service;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
+import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,19 +40,10 @@ public class SiglusValidSourceDestinationService {
   private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
 
   @Autowired
+  private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
+
+  @Autowired
   private SupportedProgramsHelper supportedVirtualProgramsHelper;
-
-  public Collection<ValidSourceDestinationDto> findDestinations(UUID programId, UUID facilityId) {
-    return validSourceDestinationStockManagementService.getValidDestinations(programId, facilityId);
-  }
-
-  public Collection<ValidSourceDestinationDto> findDestinationsForAllProducts(UUID facilityId) {
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
-        .findUserSupportedPrograms();
-    return supportedVirtualPrograms.stream()
-        .map(supportedVirtualProgram -> findDestinations(supportedVirtualProgram, facilityId))
-        .flatMap(Collection::stream).collect(Collectors.toList());
-  }
 
   public Collection<ValidSourceDestinationDto> findSources(UUID programId, UUID facilityId) {
     return validSourceDestinationStockManagementService.getValidSources(programId, facilityId);
@@ -56,5 +55,61 @@ public class SiglusValidSourceDestinationService {
     return supportedVirtualPrograms.stream()
         .map(supportedVirtualProgram -> findSources(supportedVirtualProgram, facilityId))
         .flatMap(Collection::stream).collect(Collectors.toList());
+  }
+
+  public Collection<ValidSourceDestinationDto> findDestinations(UUID programId, UUID facilityId) {
+    Set<UUID> programIds = new HashSet<>();
+    programIds.add(programId);
+    Map<UUID, List<UUID>> mapGroupMembersDtoByProgramId = mapGroupMembersDtoByProgramId(
+        facilityId, programIds);
+    return filterFacilityByRequisitionGroup(mapGroupMembersDtoByProgramId.get(programId),
+        findDestinationDtos(programId, facilityId));
+  }
+
+  public Collection<ValidSourceDestinationDto> findDestinationsForAllProducts(UUID facilityId) {
+    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+        .findUserSupportedPrograms();
+    Map<UUID, List<UUID>> mapGroupMembersDtoByProgramId = mapGroupMembersDtoByProgramId(
+        facilityId, supportedVirtualPrograms);
+    return supportedVirtualPrograms.stream()
+        .map(supportedVirtualProgram ->
+            filterFacilityByRequisitionGroup(mapGroupMembersDtoByProgramId.get(supportedVirtualProgram),
+                findDestinationDtos(supportedVirtualProgram, facilityId)))
+        .flatMap(Collection::stream).collect(Collectors.toList());
+  }
+
+  private Collection<ValidSourceDestinationDto> findDestinationDtos(UUID programId, UUID facilityId) {
+    return validSourceDestinationStockManagementService.getValidDestinations(programId, facilityId);
+  }
+
+  private Collection<ValidSourceDestinationDto> filterFacilityByRequisitionGroup(
+      List<UUID> facilityIds,
+      Collection<ValidSourceDestinationDto> validSourceDestinationDtos) {
+    Collection<ValidSourceDestinationDto> destinationDtosAfterFilter = new ArrayList<>();
+    validSourceDestinationDtos.forEach(
+        dto -> {
+          if (!dto.getNode().isRefDataFacility() || facilityIds.contains(dto.getNode().getReferenceId())) {
+            destinationDtosAfterFilter.add(dto);
+          }
+        }
+    );
+    return destinationDtosAfterFilter;
+  }
+
+  private Map<UUID, List<UUID>> mapGroupMembersDtoByProgramId(UUID facilityId,
+      Set<UUID> supportedVirtualPrograms) {
+    List<RequisitionGroupMembersDto> requisitionGroupMembersList = requisitionGroupMembersRepository
+        .searchByFacilityIdAndProgramAndRequisitionGroup(facilityId, supportedVirtualPrograms);
+    if (requisitionGroupMembersList.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    return requisitionGroupMembersList.stream()
+        .collect(Collectors.groupingBy(RequisitionGroupMembersDto::getProgramId))
+        .entrySet().stream()
+        .collect(Collectors.toMap(Entry::getKey, e -> getFacilityId(e.getValue())));
+  }
+
+  private List<UUID> getFacilityId(List<RequisitionGroupMembersDto> list) {
+    return list.stream().map(RequisitionGroupMembersDto::getFacilityId).collect(Collectors.toList());
   }
 }
