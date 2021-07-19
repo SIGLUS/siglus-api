@@ -43,38 +43,36 @@ public class SiglusValidSourceDestinationService {
   private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
 
   @Autowired
-  private SupportedProgramsHelper supportedVirtualProgramsHelper;
+  private SupportedProgramsHelper supportedProgramsHelper;
 
   public Collection<ValidSourceDestinationDto> findSources(UUID programId, UUID facilityId) {
     return validSourceDestinationStockManagementService.getValidSources(programId, facilityId);
   }
 
   public Collection<ValidSourceDestinationDto> findSourcesForAllProducts(UUID facilityId) {
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+    Set<UUID> supportedPrograms = supportedProgramsHelper
         .findUserSupportedPrograms();
-    return supportedVirtualPrograms.stream()
-        .map(supportedVirtualProgram -> findSources(supportedVirtualProgram, facilityId))
+    return supportedPrograms.stream()
+        .map(supportedProgram -> findSources(supportedProgram, facilityId))
         .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
   public Collection<ValidSourceDestinationDto> findDestinations(UUID programId, UUID facilityId) {
     Set<UUID> programIds = new HashSet<>();
     programIds.add(programId);
-    Map<UUID, List<UUID>> mapGroupMembersDtoByProgramId = mapGroupMembersDtoByProgramId(
-        facilityId, programIds);
-    return filterFacilityByRequisitionGroup(mapGroupMembersDtoByProgramId.get(programId),
+    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToGroupMembersDto(facilityId, programIds);
+    return filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(programId),
         findDestinationDtos(programId, facilityId));
   }
 
   public Collection<ValidSourceDestinationDto> findDestinationsForAllProducts(UUID facilityId) {
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+    Set<UUID> supportedPrograms = supportedProgramsHelper
         .findUserSupportedPrograms();
-    Map<UUID, List<UUID>> mapGroupMembersDtoByProgramId = mapGroupMembersDtoByProgramId(
-        facilityId, supportedVirtualPrograms);
-    return supportedVirtualPrograms.stream()
-        .map(supportedVirtualProgram ->
-            filterFacilityByRequisitionGroup(mapGroupMembersDtoByProgramId.get(supportedVirtualProgram),
-                findDestinationDtos(supportedVirtualProgram, facilityId)))
+    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToGroupMembersDto(facilityId, supportedPrograms);
+    return supportedPrograms.stream()
+        .map(supportedProgram ->
+            filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(supportedProgram),
+                findDestinationDtos(supportedProgram, facilityId)))
         .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
@@ -88,7 +86,10 @@ public class SiglusValidSourceDestinationService {
     Collection<ValidSourceDestinationDto> destinationDtosAfterFilter = new ArrayList<>();
     validSourceDestinationDtos.forEach(
         dto -> {
-          if (!dto.getNode().isRefDataFacility() || facilityIds.contains(dto.getNode().getReferenceId())) {
+          boolean isCommonDestination = !dto.getNode().isRefDataFacility();
+          boolean isDestinationFromFacilityName =
+              facilityIds != null && facilityIds.contains(dto.getNode().getReferenceId());
+          if (isCommonDestination || isDestinationFromFacilityName) {
             destinationDtosAfterFilter.add(dto);
           }
         }
@@ -96,10 +97,10 @@ public class SiglusValidSourceDestinationService {
     return destinationDtosAfterFilter;
   }
 
-  private Map<UUID, List<UUID>> mapGroupMembersDtoByProgramId(UUID facilityId,
-      Set<UUID> supportedVirtualPrograms) {
+  private Map<UUID, List<UUID>> mapProgramIdToGroupMembersDto(UUID facilityId,
+      Set<UUID> supportedPrograms) {
     List<RequisitionGroupMembersDto> requisitionGroupMembersList = requisitionGroupMembersRepository
-        .searchByFacilityIdAndProgramAndRequisitionGroup(facilityId, supportedVirtualPrograms);
+        .searchByFacilityIdAndProgramAndRequisitionGroup(facilityId, supportedPrograms);
     if (requisitionGroupMembersList.isEmpty()) {
       return Collections.emptyMap();
     }
