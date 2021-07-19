@@ -405,32 +405,42 @@ public class SiglusMeServiceTest {
     UUID lotId2 = UUID.randomUUID();
     String lotCode1 = "lotCode1";
     String lotCode2 = "lotCode2";
+    String extraLotCode3 = "lotCode3";
     when(lotReferenceDataService.findAllLot(any())).thenReturn(Arrays.asList(
-        mockLotDto(lotCode1, lotId1, tradeItem1), mockLotDto(lotCode2, lotId2, tradeItem2)));
+        mockLotDto(lotCode1, lotId1, tradeItem1), mockLotDto(lotCode2, lotId2, tradeItem2),
+        mockLotDto(extraLotCode3, UUID.randomUUID(), tradeItem2)));
     StockCardSummaryV2Dto summary1 = new StockCardSummaryV2Dto();
-    summary1.setOrderable(new VersionObjectReferenceDto(productId1, "", "", 1L));
+    VersionObjectReferenceDto orderableRef1 = new VersionObjectReferenceDto(productId1, "", "", 1L);
+    summary1.setOrderable(orderableRef1);
     CanFulfillForMeEntryDto forMeEntryDto1 = new CanFulfillForMeEntryDtoDataBuilder()
         .withStockOnHand(10)
+        .withOrderable(orderableRef1)
         .withLot(new VersionObjectReferenceDto(lotId1, "", "", 1L))
         .build();
     forMeEntryDto1.setStockOnHand(10);
     summary1.setCanFulfillForMe(newHashSet(forMeEntryDto1));
 
     StockCardSummaryV2Dto summary2 = new StockCardSummaryV2Dto();
-    summary2.setOrderable(new VersionObjectReferenceDto(productId2, "", "", 1L));
+    VersionObjectReferenceDto orderableRef2 = new VersionObjectReferenceDto(productId2, "", "", 1L);
+    summary2.setOrderable(orderableRef2);
     CanFulfillForMeEntryDto forMeEntryDto2 = new CanFulfillForMeEntryDtoDataBuilder()
-        .withStockOnHand(10)
+        .withStockOnHand(7)
+        .withOrderable(orderableRef2)
         .withLot(new VersionObjectReferenceDto(lotId2, "", "", 1L))
         .build();
-    forMeEntryDto2.setStockOnHand(20);
-    summary2.setCanFulfillForMe(newHashSet(forMeEntryDto2));
-    when(stockCardSummariesService
-        .findAllProgramStockSummaries()).thenReturn(Arrays.asList(summary1, summary2));
+    CanFulfillForMeEntryDto forMeEntryDto3WithNullLot = new CanFulfillForMeEntryDtoDataBuilder()
+        .withStockOnHand(15)
+        .withOrderable(orderableRef2)
+        .withLot(null)
+        .build();
+    summary2.setCanFulfillForMe(newHashSet(forMeEntryDto2, forMeEntryDto3WithNullLot));
+    when(stockCardSummariesService.findAllProgramStockSummaries()).thenReturn(Arrays.asList(summary1, summary2));
 
     // when
     List<LotStockOnHand> lotStockOnHands = service.getLotStockOnHands();
 
     // then
+    assertEquals(3, lotStockOnHands.size());
     LotStockOnHand stock1 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId1))
         .filter(s -> s.getLotId().equals(lotId1))
         .findFirst().orElse(null);
@@ -438,10 +448,17 @@ public class SiglusMeServiceTest {
     assertEquals(10, stock1.getStockOnHand().intValue());
 
     LotStockOnHand stock2 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId2))
+        .filter(s -> s.getLotId() != null)
         .filter(s -> s.getLotId().equals(lotId2))
         .findFirst().orElse(null);
     assertNotNull(stock2);
-    assertEquals(20, stock2.getStockOnHand().intValue());
+    assertEquals(7, stock2.getStockOnHand().intValue());
+
+    LotStockOnHand stock3 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId2))
+        .filter(s -> s.getLotId() == null)
+        .findFirst().orElse(null);
+    assertNotNull(stock3);
+    assertEquals(15, stock3.getStockOnHand().intValue());
   }
 
   @Test

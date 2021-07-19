@@ -80,7 +80,7 @@ public class SiglusMeController {
     return service.getFacilityProducts(lastSync);
   }
 
-  // @Validated(PerformanceSequence.class)
+  @Validated(PerformanceSequence.class)
   @PostMapping("/facility/stockCards")
   @ResponseStatus(CREATED)
   public void createStockCards(
