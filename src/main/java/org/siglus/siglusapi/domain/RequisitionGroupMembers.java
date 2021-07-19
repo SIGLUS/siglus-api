@@ -44,18 +44,18 @@ import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 @Table(name = "requisition_group_members", schema = "referencedata")
 @NamedNativeQueries({
     @NamedNativeQuery(name = "RequisitionGroupMembers.findRequisitonIdFacilityId",
-        query = "select rm.requisitiongroupid as requisitionGroupId,rm.facilityid as facilityId,"
-            + "ps.programid as programId "
-            + "from referencedata.requisition_group_members rm "
+        query = "select rgm.requisitiongroupid requisitionGroupId,rgm.facilityid facilityId,"
+            + "rgps.programid programId "
+            + "from referencedata.requisition_group_members rgm "
             + "inner join "
-            + "referencedata.requisition_groups rg on rm.requisitiongroupid = rg.id "
+            + "referencedata.requisition_groups rg on rgm.requisitiongroupid = rg.id "
             + "inner join "
-            + "referencedata.requisition_group_program_schedules ps on rg.id = ps.requisitiongroupid "
+            + "referencedata.requisition_group_program_schedules rgps on rg.id = rgps.requisitiongroupid "
             + "inner join "
-            + "referencedata.supervisory_nodes rs on rs.id=rg.supervisorynodeid "
-            + "where rs.facilityid = :facilityId "
-            + "and rs.parentid is not null "
-            + "and ps.programid in :programIds",
+            + "referencedata.supervisory_nodes sn on sn.id=rg.supervisorynodeid "
+            + "where sn.facilityid = :facilityId "
+            + "and sn.parentid is not null "
+            + "and rgps.programid in :programIds",
         resultSetMapping = "RequisitionGroupMembers.RequisitionGroupMembersDto")
 })
 @SqlResultSetMappings({
@@ -65,12 +65,9 @@ import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
             @ConstructorResult(
                 targetClass = RequisitionGroupMembersDto.class,
                 columns = {
-                    @ColumnResult(name = "requisitionGroupId",
-                        type = UUID.class),
-                    @ColumnResult(name = "facilityId",
-                        type = UUID.class),
-                    @ColumnResult(name = "programId",
-                        type = UUID.class)
+                    @ColumnResult(name = "requisitionGroupId", type = UUID.class),
+                    @ColumnResult(name = "facilityId", type = UUID.class),
+                    @ColumnResult(name = "programId", type = UUID.class)
                 }
             )
         }
