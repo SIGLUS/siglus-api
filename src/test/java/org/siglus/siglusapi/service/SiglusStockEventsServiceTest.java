@@ -70,7 +70,7 @@ import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings("PMD.UnusedPrivateField")
+@SuppressWarnings({"PMD.UnusedPrivateField", "PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class SiglusStockEventsServiceTest {
 
   @Captor
@@ -310,6 +310,30 @@ public class SiglusStockEventsServiceTest {
 
     // when
     siglusStockEventsService.createAndFillLotId(eventDto);
+  }
+
+  @Test
+  public void shouldReturnExistedLotAndFillLotIdWhenFillLotId() {
+    // given
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId1);
+    orderableDto.setChildren(newHashSet());
+    Map<String, String> identifiers = newHashMap();
+    identifiers.put(FieldConstants.TRADE_ITEM, tradeItemId1.toString());
+    orderableDto.setIdentifiers(identifiers);
+    StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder().withOrderableId(orderableId1).build();
+    lineItemDto.setLotId(null);
+    Map<String, String> extraData = newHashMap();
+    extraData.put(FieldConstants.LOT_CODE, "lotCode");
+    extraData.put(FieldConstants.EXPIRATION_DATE, "2020-06-16");
+    lineItemDto.setExtraData(extraData);
+    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto)).build();
+
+    // when
+    siglusStockEventsService.createAndFillLotId(eventDto);
+
+    // then
+    assertEquals(lotId, lineItemDto.getLotId());
   }
 
   private OrderableDto createOrderable(UUID orderableId, UUID tradeItemId) {

@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.validation.ValidationException;
-import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
@@ -53,7 +52,6 @@ import org.zalando.problem.spring.web.advice.validation.Violation;
  */
 @ControllerAdvice
 @ParametersAreNonnullByDefault
-@Slf4j
 public class GlobalErrorHandling extends AbstractErrorHandling implements ProblemHandling {
 
   private static final String MESSAGE_KEY = "messageKey";

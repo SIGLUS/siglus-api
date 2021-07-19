@@ -19,23 +19,25 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
-@Data
-@Builder
-@AllArgsConstructor
+@Getter
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "lot_conflicts", schema = "siglusintegration")
 public class LotConflict extends BaseEntity {
 
+  // conflict with
   private UUID lotId;
 
   private String lotCode;
@@ -44,5 +46,16 @@ public class LotConflict extends BaseEntity {
 
   private UUID facilityId;
 
+  @LastModifiedDate
   private ZonedDateTime updateTime;
+
+  public static LotConflict of(UUID facilityId, UUID existedLotId, StockEventLineItemDto eventLineItem) {
+    LotConflict conflict = new LotConflict();
+    conflict.facilityId = facilityId;
+    conflict.lotId = existedLotId;
+    conflict.lotCode = eventLineItem.getLotCode();
+    conflict.expirationDate = eventLineItem.getExpirationDate();
+    return conflict;
+  }
+
 }
