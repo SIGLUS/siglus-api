@@ -15,19 +15,30 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Sets;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.stockmanagement.domain.sourcedestination.Node;
+import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
+import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -40,11 +51,39 @@ public class SiglusValidSourceDestinationServiceTest {
   private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
 
   @Mock
+  private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
+
+  @Mock
   private SupportedProgramsHelper supportedVirtualProgramsHelper;
 
   private final UUID programId = UUID.randomUUID();
 
+  private final UUID programId2 = UUID.randomUUID();
+
   private final UUID facilityId = UUID.randomUUID();
+
+  private final UUID facilityId2 = UUID.randomUUID();
+
+  private final UUID facilityId3 = UUID.randomUUID();
+
+  private final UUID facilityIdFalseNotContain = UUID.randomUUID();
+
+  private final UUID facilityIdTrueNotContain = UUID.randomUUID();
+
+  private final String destinationName = "destination";
+
+  private final String destinationName2 = "destination2";
+
+  private final String destinationName3 = "destination3";
+
+  private final String destinationNameFalseNotContain = "destinationFalseNotContain";
+
+  private final String destinationNameTrueNotContain = "destinationTrueNotContain";
+
+  @Before
+  public void prepare() {
+    createDestinationData();
+  }
 
   @Test
   public void shouldCallGetValidDestinationsWhenFindDestinations() {
@@ -81,5 +120,82 @@ public class SiglusValidSourceDestinationServiceTest {
 
     verify(validSourceDestinationStockManagementService, times(2))
         .getValidSources(any(), any());
+  }
+
+  @Test
+  public void shouldGetDestinationWhenFacilityInRequisitionGroup() {
+    // when
+    List<String> destinationNameList = siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId)
+        .stream()
+        .map(ValidSourceDestinationDto::getName)
+        .collect(Collectors.toList());
+
+    // then
+    assertEquals(true, destinationNameList.contains(destinationName));
+    assertEquals(true, destinationNameList.contains(destinationName2));
+    assertEquals(true, destinationNameList.contains(destinationName3));
+    assertEquals(true, destinationNameList.contains(destinationNameFalseNotContain));
+    assertEquals(false, destinationNameList.contains(destinationNameTrueNotContain));
+  }
+
+  private void createDestinationData() {
+    Set<UUID> programIds = new HashSet<>();
+    programIds.add(programId);
+    programIds.add(programId2);
+    when(supportedVirtualProgramsHelper.findUserSupportedPrograms()).thenReturn(programIds);
+
+    RequisitionGroupMembersDto reqProgramIdFacilityId = RequisitionGroupMembersDto.builder()
+        .programId(programId).facilityId(facilityId).build();
+    RequisitionGroupMembersDto reqProgramIdFacilityId2 = RequisitionGroupMembersDto.builder()
+        .programId(programId).facilityId(facilityId2).build();
+    RequisitionGroupMembersDto reqProgramId2FacilityId3 = RequisitionGroupMembersDto.builder()
+        .programId(programId2).facilityId(facilityId3).build();
+    when(requisitionGroupMembersRepository.searchByFacilityIdAndProgramAndRequisitionGroup(any(), any())).thenReturn(
+        Arrays.asList(reqProgramIdFacilityId, reqProgramIdFacilityId2, reqProgramId2FacilityId3));
+
+    ValidSourceDestinationDto desProgramNodeFalseContain = new ValidSourceDestinationDto();
+    Node nodefalseContain = new Node();
+    nodefalseContain.setReferenceId(facilityId);
+    nodefalseContain.setRefDataFacility(false);
+    desProgramNodeFalseContain.setNode(nodefalseContain);
+    desProgramNodeFalseContain.setProgramId(programId);
+    desProgramNodeFalseContain.setName(destinationName);
+
+    ValidSourceDestinationDto desProgramNodeFalseNotContain = new ValidSourceDestinationDto();
+    Node nodefalseNotContain = new Node();
+    nodefalseNotContain.setReferenceId(facilityIdFalseNotContain);
+    nodefalseNotContain.setRefDataFacility(false);
+    desProgramNodeFalseNotContain.setNode(nodefalseNotContain);
+    desProgramNodeFalseNotContain.setProgramId(programId);
+    desProgramNodeFalseNotContain.setName(destinationNameFalseNotContain);
+
+    ValidSourceDestinationDto desProgramNodeTrueContain = new ValidSourceDestinationDto();
+    Node nodeTrueContain = new Node();
+    nodeTrueContain.setReferenceId(facilityId2);
+    nodeTrueContain.setRefDataFacility(true);
+    desProgramNodeTrueContain.setNode(nodeTrueContain);
+    desProgramNodeTrueContain.setProgramId(programId);
+    desProgramNodeTrueContain.setName(destinationName2);
+
+    ValidSourceDestinationDto desProgramNodeTrueNotContain = new ValidSourceDestinationDto();
+    Node nodeTrueNotContain = new Node();
+    nodeTrueNotContain.setReferenceId(facilityIdTrueNotContain);
+    nodeTrueNotContain.setRefDataFacility(true);
+    desProgramNodeTrueNotContain.setNode(nodeTrueNotContain);
+    desProgramNodeTrueNotContain.setProgramId(programId);
+    desProgramNodeTrueNotContain.setName(destinationNameTrueNotContain);
+
+    ValidSourceDestinationDto desProgram2NodeTrueContain = new ValidSourceDestinationDto();
+    Node node2TrueContain = new Node();
+    node2TrueContain.setReferenceId(facilityId3);
+    node2TrueContain.setRefDataFacility(true);
+    desProgram2NodeTrueContain.setNode(node2TrueContain);
+    desProgram2NodeTrueContain.setProgramId(programId2);
+    desProgram2NodeTrueContain.setName(destinationName3);
+    when(validSourceDestinationStockManagementService.getValidDestinations(programId, facilityId))
+        .thenReturn(Arrays.asList(desProgramNodeFalseContain, desProgramNodeFalseNotContain, desProgramNodeTrueContain,
+            desProgramNodeTrueNotContain));
+    when(validSourceDestinationStockManagementService.getValidDestinations(programId2, facilityId))
+        .thenReturn(Arrays.asList(desProgram2NodeTrueContain));
   }
 }
