@@ -53,6 +53,7 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.MetadataDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -363,24 +364,28 @@ public class AndroidRequisitionServiceTest {
     orderableReference2.setId(orderableId2);
     itemV2Dto2.setOrderable(orderableReference2);
 
+    RequisitionV2Dto v2Dto = new RequisitionV2Dto();
+    v2Dto.setRequisitionLineItems(Arrays.asList(itemV2Dto, itemV2Dto2));
+
     ExtraDataSignatureDto signatureDto = new ExtraDataSignatureDto();
     signatureDto.setSubmit("yyd1");
     signatureDto.setAuthorize("yyd2");
     String[] approve = {"yyd3", "yye4"};
     signatureDto.setApprove(approve);
-
     Map<String, Object> extraData = new HashMap<>();
     extraData.put("signaure", signatureDto);
     extraData.put("actualStartDate", "2021-05-01");
     extraData.put("actualEndDate", "2021-05-11");
     extraData.put("clientSubmittedTime", "2021-06-21T07:59:59Z");
 
-    RequisitionV2Dto v2Dto = new RequisitionV2Dto();
+    v2Dto.setExtraData(extraData);
+
+    BasicRequisitionTemplateDto templateDto = new BasicRequisitionTemplateDto();
+    templateDto.setId(templateId);
+    v2Dto.setTemplate(templateDto);
     v2Dto.setId(requisitionId);
     v2Dto.setProgram(new ObjectReferenceDto(programId));
     v2Dto.setEmergency(true);
-    v2Dto.setExtraData(extraData);
-    v2Dto.setRequisitionLineItems(Arrays.asList(itemV2Dto, itemV2Dto2));
 
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId)).thenReturn(v2Dto);
 

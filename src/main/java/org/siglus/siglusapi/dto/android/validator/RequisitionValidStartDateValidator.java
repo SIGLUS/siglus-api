@@ -32,6 +32,7 @@ import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
+import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -45,6 +46,7 @@ public class RequisitionValidStartDateValidator implements
   private final SiglusRequisitionRepository requisitionRepo;
   private final ProcessingPeriodRepository periodRepo;
   private final ProgramReferenceDataService programDataService;
+  private final AndroidTemplateConfig androidTemplateConfig;
 
   @Override
   public void initialize(RequisitionValidStartDate constraintAnnotation) {
@@ -69,7 +71,9 @@ public class RequisitionValidStartDateValidator implements
       actualContext.addExpressionVariable("reportRestartDate", reportRestartDate);
       return false;
     }
-    Requisition lastRequisition = requisitionRepo.findLatestRequisitionByFacilityId(homeFacilityId).stream()
+    Requisition lastRequisition = requisitionRepo
+        .findLatestRequisitionByFacilityIdAndroidTempId(homeFacilityId, androidTemplateConfig.getAndroidTemplateIds())
+        .stream()
         .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
         .findFirst()
         .orElse(null);
@@ -96,5 +100,4 @@ public class RequisitionValidStartDateValidator implements
     return periodRepo.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
         .orElseThrow(EntityNotFoundException::new);
   }
-
 }

@@ -71,6 +71,7 @@ import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
+import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
@@ -262,6 +263,8 @@ public class SiglusMeService {
   private final ReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
   private final AndroidRequisitionService androidRequisitionService;
+  private final AndroidTemplateConfig androidTemplateConfig;
+
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -758,7 +761,8 @@ public class SiglusMeService {
   }
 
   private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId, List<SupportedProgramDto> programs) {
-    List<Requisition> requisitions = requisitionRepository.findLatestRequisitionByFacilityId(facilityId);
+    List<Requisition> requisitions = requisitionRepository
+        .findLatestRequisitionByFacilityIdAndroidTempId(facilityId, androidTemplateConfig.getAndroidTemplateIds());
     Map<UUID, String> programIdToCode = programs.stream()
         .collect(toMap(SupportedProgramDto::getId, SupportedProgramDto::getCode));
     Map<String, Requisition> programCodeToRequisition = requisitions.stream()

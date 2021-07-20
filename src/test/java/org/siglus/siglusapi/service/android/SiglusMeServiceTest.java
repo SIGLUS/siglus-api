@@ -25,12 +25,14 @@ import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
+import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
@@ -50,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -80,6 +83,7 @@ import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
+import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
@@ -170,6 +174,9 @@ public class SiglusMeServiceTest {
   @Mock
   private AndroidRequisitionService androidRequisitionService;
 
+  @Mock
+  private AndroidTemplateConfig androidTemplateConfig;
+
   @Captor
   private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
 
@@ -248,6 +255,11 @@ public class SiglusMeServiceTest {
         .thenReturn(singletonList(mockApprovedProduct3()));
     when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId)).thenReturn(singleton(productId1.toString()));
     when(androidHelper.isAndroid()).thenReturn(true);
+    Set<String> androidTemplateIds = new HashSet<>();
+    androidTemplateIds.add("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
+    androidTemplateIds.add("873c25d6-e53b-11eb-8494-acde48001122");
+    when(androidTemplateConfig.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
+    ReflectionTestUtils.setField(service, "androidTemplateConfig", androidTemplateConfig);
   }
 
 
@@ -277,13 +289,12 @@ public class SiglusMeServiceTest {
     facilityDto.setName("facilityName");
     facilityDto.setSupportedPrograms(getSupportedPrograms());
     List<ReportType> reportTypes = new ArrayList<>(asList(mockReportType1(), mockReportType2()));
-    Optional<Requisition> rnrOpt = mockProgramRnr();
-    List<Requisition> requisitions = Collections.singletonList(rnrOpt.get());
     when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(facilityDto);
     when(reportTypeRepository.findByFacilityId(facilityId))
         .thenReturn(reportTypes);
+    List<Requisition> requisitions = mockProgramRnr().map(Collections::singletonList).orElse(emptyList());
     when(requisitionRepository
-        .findLatestRequisitionByFacilityId(facilityId))
+        .findLatestRequisitionByFacilityIdAndroidTempId(facilityId, androidTemplateConfig.getAndroidTemplateIds()))
         .thenReturn(requisitions);
 
     // when
@@ -294,12 +305,12 @@ public class SiglusMeServiceTest {
     assertEquals(reportTypes.get(0).getName(), actualReportTypes.get(0).getName());
     assertEquals(reportTypes.get(0).getStartDate(), actualReportTypes.get(0).getSupportStartDate());
     assertEquals(reportTypes.get(0).getProgramCode(), actualReportTypes.get(0).getProgramCode());
-    assertEquals(rnrOpt.map(r -> r.getExtraData().get(ACTUAL_END_DATE)).map(String::valueOf)
-        .map(LocalDate::parse).get(), actualReportTypes.get(0).getLastReportDate());
+    assertEquals(mockProgramRnr().map(r -> r.getExtraData().get(ACTUAL_END_DATE)).map(String::valueOf)
+        .map(LocalDate::parse).orElse(null), actualReportTypes.get(0).getLastReportDate());
     assertEquals(reportTypes.get(1).getName(), actualReportTypes.get(1).getName());
     assertEquals(reportTypes.get(1).getStartDate(), actualReportTypes.get(1).getSupportStartDate());
     assertEquals(reportTypes.get(1).getProgramCode(), actualReportTypes.get(1).getProgramCode());
-    assertEquals(null, actualReportTypes.get(1).getLastReportDate());
+    assertNull(actualReportTypes.get(1).getLastReportDate());
   }
 
   @Test
@@ -958,11 +969,11 @@ public class SiglusMeServiceTest {
     Map<String, Object> extraData = new HashMap<>();
     extraData.put(IS_SAVED, true);
     extraData.put(ACTUAL_END_DATE, "2021-06-26");
-    extraData.put(ACTUAL_END_DATE, "2021-05-12");
+    extraData.put(ACTUAL_START_DATE, "2021-05-12");
     extraData.put(SIGNATURE, "");
     Requisition rnr = new Requisition();
     rnr.setExtraData(extraData);
     rnr.setProgramId(supportProgramId1);
-    return Optional.ofNullable(rnr);
+    return Optional.of(rnr);
   }
 }

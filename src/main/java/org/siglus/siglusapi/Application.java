@@ -39,6 +39,7 @@ import org.openlmis.fulfillment.i18n.FulfillmentExposedMessageSourceImpl;
 import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
 import org.openlmis.stockmanagement.i18n.StockmanagementExposedMessageSourceImpl;
 import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -109,6 +110,12 @@ public class Application {
 
   @Value("${redis.password}")
   private String redisPassword;
+
+  @Value("${android.via.templateId}")
+  private String androidViaTemplateId;
+
+  @Value("${android.mmia.templateId}")
+  private String androidMmiaTemplateId;
 
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
@@ -282,16 +289,6 @@ public class Application {
     return () -> authenticationHelper.getCurrentUserId().orElse(null);
   }
 
-  // diff from messageSource() is in this method, the useCodeAsDefaultMessage is disabled
-  // so the expression will be explained in the EL container instead of direct return code
-  // https://stackoverflow.com/questions/38714521/hibernate-expression-language-does-not-work
-  private MessageSource validationMessageSource() {
-    ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
-    messageSource.setBasenames(CLASSPATH_MESSAGES);
-    messageSource.setDefaultEncoding(UTF_8);
-    return messageSource;
-  }
-
   @Bean
   public LocalValidatorFactoryBean getValidator() {
     LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean();
@@ -307,4 +304,21 @@ public class Application {
     return new RestTemplate(requestFactory);
   }
 
+  @Bean
+  public AndroidTemplateConfig androidTemplateConfig() {
+    AndroidTemplateConfig androidTemplateConfig = new AndroidTemplateConfig();
+    androidTemplateConfig.setAndroidViaTemplateId(androidViaTemplateId);
+    androidTemplateConfig.setAndroidMmiaTemplateId(androidMmiaTemplateId);
+    return androidTemplateConfig;
+  }
+
+  // diff from messageSource() is in this method, the useCodeAsDefaultMessage is disabled
+  // so the expression will be explained in the EL container instead of direct return code
+  // https://stackoverflow.com/questions/38714521/hibernate-expression-language-does-not-work
+  private MessageSource validationMessageSource() {
+    ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
+    messageSource.setBasenames(CLASSPATH_MESSAGES);
+    messageSource.setDefaultEncoding(UTF_8);
+    return messageSource;
+  }
 }

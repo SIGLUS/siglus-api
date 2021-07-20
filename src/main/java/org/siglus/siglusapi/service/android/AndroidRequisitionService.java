@@ -154,6 +154,9 @@ public class AndroidRequisitionService {
         extension -> {
           RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
               .searchRequisition(extension.getRequisitionId());
+          if (!androidViaTemplateId.equals(String.valueOf(requisitionV2Dto.getTemplate().getId()))) {
+            return;
+          }
           RequisitionCreateRequest requisitionCreateRequest = RequisitionCreateRequest.builder()
               .programCode(getProgramCode(requisitionV2Dto.getProgram().getId()))
               .emergency(requisitionV2Dto.getEmergency())
@@ -204,12 +207,10 @@ public class AndroidRequisitionService {
       ExtraDataSignatureDto signatureDto = objectMapper
           .convertValue(extraData.get(SIGNATURE), ExtraDataSignatureDto.class);
       if (signatureDto.getSubmit() != null) {
-        signatures
-            .add(RequisitionSignatureRequest.builder().type(SUBMIT).name(signatureDto.getSubmit()).build());
+        signatures.add(RequisitionSignatureRequest.builder().type(SUBMIT).name(signatureDto.getSubmit()).build());
       }
       if (signatureDto.getAuthorize() != null) {
-        signatures
-            .add(RequisitionSignatureRequest.builder().type(AUTHORIZE).name(signatureDto.getAuthorize()).build());
+        signatures.add(RequisitionSignatureRequest.builder().type(AUTHORIZE).name(signatureDto.getAuthorize()).build());
       }
       String[] approves = signatureDto.getApprove();
       if (approves != null && approves.length > 0) {
