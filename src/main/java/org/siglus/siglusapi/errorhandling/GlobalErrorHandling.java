@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.validation.ValidationException;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
@@ -52,6 +53,7 @@ import org.zalando.problem.spring.web.advice.validation.Violation;
  */
 @ControllerAdvice
 @ParametersAreNonnullByDefault
+@Slf4j
 public class GlobalErrorHandling extends AbstractErrorHandling implements ProblemHandling {
 
   private static final String MESSAGE_KEY = "messageKey";
@@ -108,10 +110,6 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   @Override
   public ResponseEntity<Problem> newConstraintViolationProblem(Throwable throwable, Collection<Violation> violations,
       NativeWebRequest request) {
-    if (!violations.isEmpty()) {
-      LOG.error("Validation failed!");
-    }
-    violations.forEach(field -> LOG.error("{} - {}", field.getField(), field.getMessage()));
     final StatusType status = defaultConstraintViolationStatus();
     LocalizedMessage localizedMessage = getLocalizedMessage(new Message(ERROR_VALIDATION_FAIL));
     List<ValidationFailField> fields = violations.stream()
@@ -136,7 +134,10 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
 
   @Override
   public void log(Throwable throwable, Problem problem, NativeWebRequest request, HttpStatus status) {
-    LOG.error(status.getReasonPhrase(), throwable);
+    if (throwable instanceof javax.validation.ConstraintViolationException) {
+      return;
+    }
+    log.error(status.getReasonPhrase(), throwable);
   }
 
 }
