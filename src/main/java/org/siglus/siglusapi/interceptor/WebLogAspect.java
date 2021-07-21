@@ -15,7 +15,9 @@
 
 package org.siglus.siglusapi.interceptor;
 
+import com.alibaba.fastjson.JSON;
 import java.util.Arrays;
+import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -55,18 +57,21 @@ public class WebLogAspect {
     String method = request.getMethod();
     String url = request.getRequestURL().toString();
     String args = Arrays.toString(joinPoint.getArgs());
+    String traceId = "trace-" + UUID.randomUUID();
     if (isAndroid(request)) {
       AndroidHeader androidHeader = getAndroidHeader(request);
-      log.info("[Android-API][START] {} {}, header: {}, args: {}", method, url, androidHeader, args);
+      log.info("[Android-API][START] {} {}, {}, header: {}, request: {}", method, url, traceId, androidHeader, args);
     } else {
-      log.info("[Web-API][START] {} {}, args: {}", method, url, args);
+      log.info("[Web-API][START] {} {}, {}, request: {}", method, url, traceId, args);
     }
     Object result = joinPoint.proceed();
     long costTime = System.currentTimeMillis() - startTime;
     if (isAndroid(request)) {
-      log.info("[Android-API][END] {} {}, cost-time: {}ms", method, url, costTime);
+      log.info("[Android-API][END] {} {}, {}, response: {}, cost-time: {}ms",
+          method, url, traceId, JSON.toJSON(result), costTime);
     } else {
-      log.info("[Web-API][END] {} {}, cost-time: {}ms", method, url, costTime);
+      log.info("[Web-API][END] {} {}, {}, response: {}, cost-time: {}ms",
+          method, url, traceId, JSON.toJSON(result), costTime);
     }
     return result;
   }
@@ -86,5 +91,4 @@ public class WebLogAspect {
   private boolean isAndroid(HttpServletRequest request) {
     return StringUtils.isNotEmpty(request.getHeader(FACILITY_CODE));
   }
-
 }

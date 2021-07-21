@@ -19,6 +19,7 @@ import static org.siglus.common.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
 import static org.zalando.problem.Problem.DEFAULT_TYPE;
 import static org.zalando.problem.Status.BAD_REQUEST;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -135,6 +136,10 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   @Override
   public void log(Throwable throwable, Problem problem, NativeWebRequest request, HttpStatus status) {
     if (throwable instanceof javax.validation.ConstraintViolationException) {
+      ArrayList<ValidationFailField> fields = (ArrayList<ValidationFailField>) problem.getParameters().get("fields");
+      if (fields != null) {
+        fields.forEach(field -> log.error("{}: {}", field.getPropertyPath(), field.getMessage()));
+      }
       return;
     }
     log.error(status.getReasonPhrase(), throwable);
