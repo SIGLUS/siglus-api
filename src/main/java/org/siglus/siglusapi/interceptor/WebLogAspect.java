@@ -16,17 +16,28 @@
 package org.siglus.siglusapi.interceptor;
 
 import com.alibaba.fastjson.JSON;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -51,18 +62,19 @@ public class WebLogAspect {
   @Around("webLog()")
   public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
     long startTime = System.currentTimeMillis();
-    ServletRequestAttributes attributes = (ServletRequestAttributes)
-        RequestContextHolder.getRequestAttributes();
+    ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
     HttpServletRequest request = attributes.getRequest();
     String method = request.getMethod();
     String url = request.getRequestURL().toString();
-    String args = Arrays.toString(joinPoint.getArgs());
     String traceId = "trace-" + UUID.randomUUID();
+    Object requestParam = getRequestParams(joinPoint, request);
+    Object requestBody = JSON.toJSON(joinPoint.getArgs()[0]);
     if (isAndroid(request)) {
       AndroidHeader androidHeader = getAndroidHeader(request);
-      log.info("[Android-API][START] {} {}, {}, header: {}, request: {}", method, url, traceId, androidHeader, args);
+      log.info("[Android-API][START] {} {}, {}, header: {}, param: {}, body: {}", method, url, traceId, androidHeader,
+          requestParam, requestBody);
     } else {
-      log.info("[Web-API][START] {} {}, {}, request: {}", method, url, traceId, args);
+      log.info("[Web-API][START] {} {}, {}, param: {}, body: {}", method, url, traceId, requestParam, requestBody);
     }
     Object result = joinPoint.proceed();
     long costTime = System.currentTimeMillis() - startTime;
@@ -74,6 +86,26 @@ public class WebLogAspect {
           method, url, traceId, JSON.toJSON(result), costTime);
     }
     return result;
+  }
+
+  private Object getRequestParams(ProceedingJoinPoint joinPoint, HttpServletRequest request) {
+    Object requestParam = null;
+    Signature signature = joinPoint.getSignature();
+    MethodSignature methodSignature = (MethodSignature) signature;
+    Method targetMethod = methodSignature.getMethod();
+    Annotation[] annotations = targetMethod.getAnnotations();
+    for (Annotation annotation : annotations) {
+      if (getRequestMappingClasses().contains(annotation.annotationType())) {
+        requestParam = JSON.toJSON(request.getParameterMap());
+        break;
+      }
+    }
+    return requestParam;
+  }
+
+  private List<Object> getRequestMappingClasses() {
+    return Arrays.asList(RequestMapping.class, PostMapping.class, GetMapping.class, PutMapping.class,
+        DeleteMapping.class, PatchMapping.class);
   }
 
   private AndroidHeader getAndroidHeader(HttpServletRequest request) {
