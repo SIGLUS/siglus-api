@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
@@ -68,7 +67,7 @@ public class WebLogAspect {
     String url = request.getRequestURL().toString();
     String traceId = "trace-" + UUID.randomUUID();
     Object requestParam = getRequestParams(joinPoint, request);
-    Object requestBody = JSON.toJSON(joinPoint.getArgs()[0]);
+    Object requestBody = joinPoint.getArgs() == null ? null : JSON.toJSON(joinPoint.getArgs()[0]);
     if (isAndroid(request)) {
       AndroidHeader androidHeader = getAndroidHeader(request);
       log.info("[Android-API][START] {} {}, {}, header: {}, param: {}, body: {}", method, url, traceId, androidHeader,
@@ -90,14 +89,14 @@ public class WebLogAspect {
 
   private Object getRequestParams(ProceedingJoinPoint joinPoint, HttpServletRequest request) {
     Object requestParam = null;
-    Signature signature = joinPoint.getSignature();
-    MethodSignature methodSignature = (MethodSignature) signature;
-    Method targetMethod = methodSignature.getMethod();
-    Annotation[] annotations = targetMethod.getAnnotations();
-    for (Annotation annotation : annotations) {
-      if (getRequestMappingClasses().contains(annotation.annotationType())) {
-        requestParam = JSON.toJSON(request.getParameterMap());
-        break;
+    Method targetMethod = ((MethodSignature) joinPoint.getSignature()).getMethod();
+    if (targetMethod != null) {
+      Annotation[] annotations = targetMethod.getAnnotations();
+      for (Annotation annotation : annotations) {
+        if (getRequestMappingClasses().contains(annotation.annotationType())) {
+          requestParam = JSON.toJSON(request.getParameterMap());
+          break;
+        }
       }
     }
     return requestParam;
