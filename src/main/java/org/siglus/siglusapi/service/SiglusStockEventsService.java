@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.Collections.singletonList;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
@@ -230,10 +229,6 @@ public class SiglusStockEventsService {
   }
 
   private void fillLotIdIfNull(UUID facilityId, OrderableDto orderable, StockEventLineItemDto eventLineItem) {
-    if (eventLineItem.getLotId() != null || isBlank(eventLineItem.getLotCode())) {
-      // already done or nothing we can do
-      return;
-    }
     UUID lotId = createNewLotOrReturnExisted(facilityId, orderable, eventLineItem).getId();
     eventLineItem.setLotId(lotId);
   }
