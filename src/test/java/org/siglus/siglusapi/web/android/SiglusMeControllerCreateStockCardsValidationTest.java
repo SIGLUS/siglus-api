@@ -84,11 +84,12 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   public void setup() throws NoSuchMethodException {
     Locale.setDefault(Locale.ENGLISH);
     mapper.registerModule(new JavaTimeModule());
-    ResourceBundleMessageInterpolator messageInterpolator =
-        new ResourceBundleMessageInterpolator(new PlatformResourceBundleLocator("messages"));
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
     stockCardCreateRequestListType = mapper.getTypeFactory()
         .constructCollectionType(List.class, StockCardCreateRequest.class);
+    ResourceBundleMessageInterpolator messageInterpolator =
+        new ResourceBundleMessageInterpolator(new PlatformResourceBundleLocator("messages"));
     forExecutables = Validation.byDefaultProvider().configure()
         .constraintValidatorFactory(new InnerConstraintValidatorFactory())
         .messageInterpolator(messageInterpolator)

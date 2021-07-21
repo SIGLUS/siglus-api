@@ -211,10 +211,8 @@ public class SiglusStockEventsServiceTest {
     // given
     StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
     lineItemDto1.setOrderableId(orderableId1);
-    lineItemDto1.setExtraData(ImmutableMap.of("expirationDate", "2021-07-19"));
     StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
     lineItemDto2.setOrderableId(orderableId2);
-    lineItemDto2.setExtraData(ImmutableMap.of("expirationDate", "2021-07-19"));
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2))
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
 
@@ -230,7 +228,6 @@ public class SiglusStockEventsServiceTest {
     // given
     StockEventLineItemDto lineItemDto = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
     lineItemDto.setOrderableId(orderableId1);
-    lineItemDto.setExtraData(ImmutableMap.of("expirationDate", "2021-07-19"));
     StockEventDto eventDto = StockEventDto.builder()
         .lineItems(newArrayList(lineItemDto))
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
