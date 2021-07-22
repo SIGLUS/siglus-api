@@ -70,36 +70,28 @@ public class WebLogAspect {
     String method = request.getMethod();
     String url = request.getRequestURL().toString();
     String traceId = "trace-" + UUID.randomUUID();
-    Object requestParam = getRequestParams(joinPoint, request);
-    Object requestBody = getRequestBody(joinPoint.getArgs(), method);
+    Object requestParam = getRequestParam(joinPoint, request);
+    Object requestBody = getRequestBody(joinPoint, request);
     if (isAndroid(request)) {
       AndroidHeader androidHeader = getAndroidHeader(request);
-      log.info("[Android-API][START] {} {}, {}, header: {}, param: {}, body: {}", method, url, traceId, androidHeader,
+      log.info("[Android][START] {} {}, {}, header: {}, param: {}, body: {}", method, url, traceId, androidHeader,
           requestParam, requestBody);
     } else {
-      log.info("[Web-API][START] {} {}, {}, param: {}, body: {}", method, url, traceId, requestParam, requestBody);
+      log.info("[Web][START] {} {}, {}, param: {}, body: {}", method, url, traceId, requestParam, requestBody);
     }
     Object result = joinPoint.proceed();
     long costTime = System.currentTimeMillis() - startTime;
     if (isAndroid(request)) {
-      log.info("[Android-API][END] {} {}, {}, response: {}, cost-time: {}ms",
+      log.info("[Android][END] {} {}, {}, response: {}, cost-time: {}ms",
           method, url, traceId, JSON.toJSON(result), costTime);
     } else {
-      log.info("[Web-API][END] {} {}, {}, response: {}, cost-time: {}ms",
+      log.info("[Web][END] {} {}, {}, response: {}, cost-time: {}ms",
           method, url, traceId, JSON.toJSON(result), costTime);
     }
     return result;
   }
 
-  private Object getRequestBody(Object[] args, String method) {
-    if (args == null || args.length == 0 || args[0] instanceof ServletRequest || args[0] instanceof ServletResponse
-        || args[0] instanceof MultipartFile || RequestMethod.GET.name().equals(method)) {
-      return null;
-    }
-    return JSON.toJSON(args[0]);
-  }
-
-  private Object getRequestParams(ProceedingJoinPoint joinPoint, HttpServletRequest request) {
+  private Object getRequestParam(ProceedingJoinPoint joinPoint, HttpServletRequest request) {
     Object requestParam = null;
     Method targetMethod = ((MethodSignature) joinPoint.getSignature()).getMethod();
     if (targetMethod != null) {
@@ -112,6 +104,15 @@ public class WebLogAspect {
       }
     }
     return requestParam;
+  }
+
+  private Object getRequestBody(ProceedingJoinPoint joinPoint, HttpServletRequest request) {
+    Object[] args = joinPoint.getArgs();
+    if (args == null || args.length == 0 || args[0] instanceof ServletRequest || args[0] instanceof ServletResponse
+        || args[0] instanceof MultipartFile || RequestMethod.GET.name().equals(request.getMethod())) {
+      return null;
+    }
+    return JSON.toJSON(args[0]);
   }
 
   private List<Object> getRequestMappingClasses() {
