@@ -21,8 +21,11 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.data.http.RequestMethod;
 import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -39,6 +42,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.multipart.MultipartFile;
 
 @Aspect
 @Component
@@ -67,8 +71,7 @@ public class WebLogAspect {
     String url = request.getRequestURL().toString();
     String traceId = "trace-" + UUID.randomUUID();
     Object requestParam = getRequestParams(joinPoint, request);
-    Object[] args = joinPoint.getArgs();
-    Object requestBody = args == null || args.length == 0 ? null : JSON.toJSON(args[0]);
+    Object requestBody = getRequestBody(joinPoint.getArgs(), method);
     if (isAndroid(request)) {
       AndroidHeader androidHeader = getAndroidHeader(request);
       log.info("[Android-API][START] {} {}, {}, header: {}, param: {}, body: {}", method, url, traceId, androidHeader,
@@ -86,6 +89,14 @@ public class WebLogAspect {
           method, url, traceId, JSON.toJSON(result), costTime);
     }
     return result;
+  }
+
+  private Object getRequestBody(Object[] args, String method) {
+    if (args == null || args.length == 0 || args[0] instanceof ServletRequest || args[0] instanceof ServletResponse
+        || args[0] instanceof MultipartFile || RequestMethod.GET.name().equals(method)) {
+      return null;
+    }
+    return JSON.toJSON(args[0]);
   }
 
   private Object getRequestParams(ProceedingJoinPoint joinPoint, HttpServletRequest request) {
