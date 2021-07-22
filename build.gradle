@@ -77,6 +77,7 @@ dependencies {
     compile 'com.google.code.findbugs:annotations:3.0.1'
     compile 'org.zalando:problem-spring-web:0.23.0'
     compile 'com.alibaba:fastjson:1.2.76'
+    compile 'org.zalando:logbook-spring-boot-starter:2.11.0'
 
     compileTestJava.dependsOn tasks.getByPath(':stockmanagement:testClasses')
     compileTestJava.dependsOn tasks.getByPath(':requisition:testClasses')

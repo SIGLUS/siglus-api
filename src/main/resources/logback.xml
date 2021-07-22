@@ -1,5 +1,5 @@
 <configuration>
-  <include resource="org/springframework/boot/logging/logback/base.xml" />
+<!--  <include resource="org/springframework/boot/logging/logback/base.xml" />-->
   <conversionRule conversionWord="crlf" converterClass="org.owasp.security.logging.mask.CRLFConverter" />
 
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
