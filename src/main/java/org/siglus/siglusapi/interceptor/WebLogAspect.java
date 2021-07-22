@@ -67,7 +67,8 @@ public class WebLogAspect {
     String url = request.getRequestURL().toString();
     String traceId = "trace-" + UUID.randomUUID();
     Object requestParam = getRequestParams(joinPoint, request);
-    Object requestBody = joinPoint.getArgs() == null ? null : JSON.toJSON(joinPoint.getArgs()[0]);
+    Object[] args = joinPoint.getArgs();
+    Object requestBody = args == null || args.length == 0 ? null : JSON.toJSON(args[0]);
     if (isAndroid(request)) {
       AndroidHeader androidHeader = getAndroidHeader(request);
       log.info("[Android-API][START] {} {}, {}, header: {}, param: {}, body: {}", method, url, traceId, androidHeader,
