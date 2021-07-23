@@ -360,7 +360,7 @@ public class AndroidRequisitionService {
               .equals(requisitionLineItem.getOrderable().getId()))
           .findFirst()
           .map(RequisitionLineItemRequest::getAuthorizedQuantity)
-          .orElse(0);
+          .orElse(null);
       extension.setAuthorizedQuantity(authorizedQuantity);
       log.info("save requisition line item extensions: {}", extension);
       requisitionLineItemExtensionRepository.save(extension);
@@ -408,8 +408,7 @@ public class AndroidRequisitionService {
       requisitionLineItem.setTotalReceivedQuantity(product.getTotalReceivedQuantity());
       requisitionLineItem.setTotalConsumedQuantity(product.getTotalConsumedQuantity());
       requisitionLineItem.setStockOnHand(product.getStockOnHand());
-      requisitionLineItem.setRequestedQuantity(
-          product.getRequestedQuantity() == null ? 0 : product.getRequestedQuantity());
+      requisitionLineItem.setRequestedQuantity(product.getRequestedQuantity());
       VersionEntityReference approvedProduct = requisition.getAvailableProducts().stream()
           .filter(approvedProductReference -> approvedProductReference.getOrderable().getId()
               .equals(requisitionLineItem.getOrderable().getId()))

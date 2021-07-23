@@ -435,12 +435,10 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionDto = new SiglusRequisitionDto();
     BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
     when(siglusUsageReportService.searchUsageReport(any())).thenReturn(siglusRequisitionDto);
-    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
-        .thenReturn(requisitionV2Dto);
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId)).thenReturn(requisitionV2Dto);
     when(requisitionTemplateExtensionRepository
         .findByRequisitionTemplateId(templateId)).thenReturn(createTemplateExtension());
-    when(requisitionController.getProfiler(
-        profilerName, requisitionId)).thenReturn(profiler);
+    when(requisitionController.getProfiler(profilerName, requisitionId)).thenReturn(profiler);
     when(requisitionController.findRequisition(any(), any())).thenReturn(requisition);
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(requisitionController.findProgram(programId, profiler)).thenReturn(programDto);
@@ -455,8 +453,11 @@ public class SiglusRequisitionServiceTest {
     when(orderableKitRepository.findAllKitProduct()).thenReturn(Collections.emptyList());
     when(orderExternalRepository.findByRequisitionId(any())).thenReturn(newArrayList());
     when(siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(any(), any(), any()))
-        .thenReturn(Arrays.asList(new RequisitionV2Dto()));
+        .thenReturn(singletonList(new RequisitionV2Dto()));
     mockSearchOrder();
+    org.siglus.common.dto.referencedata.OrderableDto orderableDto =
+        new org.siglus.common.dto.referencedata.OrderableDto();
+    when(siglusOrderableService.getOrderableByCode(any())).thenReturn(orderableDto);
   }
 
   @Test

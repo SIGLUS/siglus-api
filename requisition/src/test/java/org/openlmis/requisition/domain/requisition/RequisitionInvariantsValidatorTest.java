@@ -161,6 +161,10 @@ public class RequisitionInvariantsValidatorTest {
   }
 
   @Test
+  // [SIGLUS change start]
+  // [change reason]: not valid because android kit line item should not display
+  @Ignore
+  // [SIGLUS change end]
   public void shouldRejectIfFullSupplyLineWasRemovedForRegularRequisition() {
     requisitionUpdater.setRequisitionLineItems(Lists.newArrayList());
 

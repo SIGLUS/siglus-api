@@ -15,9 +15,6 @@
 
 package org.openlmis.requisition.domain.requisition;
 
-import static java.util.stream.Collectors.toList;
-import static org.apache.commons.lang3.BooleanUtils.isNotTrue;
-import static org.apache.commons.lang3.BooleanUtils.isTrue;
 import static org.openlmis.requisition.domain.requisition.Requisition.EMERGENCY_FIELD;
 import static org.openlmis.requisition.domain.requisition.Requisition.FACILITY_ID;
 import static org.openlmis.requisition.domain.requisition.Requisition.NUMBER_OF_MONTHS_IN_PERIOD;
@@ -26,13 +23,11 @@ import static org.openlmis.requisition.domain.requisition.Requisition.PROGRAM_ID
 import static org.openlmis.requisition.domain.requisition.Requisition.REQUISITION_LINE_ITEMS;
 import static org.openlmis.requisition.domain.requisition.Requisition.SUPERVISORY_NODE_ID;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_IS_INVARIANT;
-import static org.openlmis.requisition.i18n.MessageKeys.ERROR_LINE_ITEM_REMOVED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_STOCK_BASED_VALUE_MODIFIED;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_VALUE_MUST_BE_ENTERED;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -83,9 +78,12 @@ class RequisitionInvariantsValidator
     rejectIfValueChanged(errors, requisitionUpdater.getNumberOfMonthsInPeriod(),
         requisitionToUpdate.getNumberOfMonthsInPeriod(), NUMBER_OF_MONTHS_IN_PERIOD);
 
-    if (errors.isEmpty() && isNotTrue(requisitionToUpdate.getEmergency())) {
-      validateRegularLineItemSize(errors);
-    }
+    // [SIGLUS change start]
+    // [change reason]: not valid because android kit line item should not display
+    // if (errors.isEmpty() && isNotTrue(requisitionToUpdate.getEmergency())) {
+    //   validateRegularLineItemSize(errors);
+    // }
+    // [SIGLUS change end]
 
     if (requisitionToUpdate.getTemplate().isPopulateStockOnHandFromStockCards()) {
       validateRegularLineItemStockFields(errors);
@@ -133,48 +131,45 @@ class RequisitionInvariantsValidator
     }
   }
 
-  private void validateRegularLineItemSize(Map<String, Message> errors) {
-    List<UUID> currentIds = requisitionUpdater
-        .getRequisitionLineItems()
-        .stream()
-        .filter(line -> orderables.containsKey(new VersionIdentityDto(line.getOrderable())))
-        .filter(line -> isTrue(orderables
-            .get(new VersionIdentityDto(line.getOrderable()))
-            // [SIGLUS change start]
-            // [change reason]: program relation
-            // .getProgramOrderable(requisitionUpdater.getProgramId())
-            .getPrograms().iterator().next()
-            // [SIGLUS change end]
-            .getFullSupply()))
-        .map(BaseEntity::getId)
-        .collect(toList());
+  // private void validateRegularLineItemSize(Map<String, Message> errors) {
+  //   List<UUID> currentIds = requisitionUpdater
+  //       .getRequisitionLineItems()
+  //       .stream()
+  //       .filter(line -> orderables.containsKey(new VersionIdentityDto(line.getOrderable())))
+  //       .filter(line -> isTrue(orderables
+  //           .get(new VersionIdentityDto(line.getOrderable()))
+  //           // [SIGLUS change start]
+  //           // [change reason]: program relation
+  //           // .getProgramOrderable(requisitionUpdater.getProgramId())
+  //           .getPrograms().iterator().next()
+  //           // [SIGLUS change end]
+  //           .getFullSupply()))
+  //       .map(BaseEntity::getId)
+  //       .collect(toList());
 
-    List<UUID> existingIds = requisitionToUpdate
-        .getRequisitionLineItems()
-        .stream()
-        .filter(line -> isTrue(orderables
-            .get(new VersionIdentityDto(line.getOrderable()))
-            // [SIGLUS change start]
-            // [change reason]: program relation
-            // .getProgramOrderable(requisitionUpdater.getProgramId())
-            .getPrograms().iterator().next()
-            // [SIGLUS change end]
-            .getFullSupply()))
-        .map(BaseEntity::getId)
-        .collect(toList());
+  //   List<UUID> existingIds = requisitionToUpdate
+  //       .getRequisitionLineItems()
+  //       .stream()
+  //       .filter(line -> isTrue(orderables
+  //           .get(new VersionIdentityDto(line.getOrderable()))
+  //           // [SIGLUS change start]
+  //           // [change reason]: program relation
+  //           // .getProgramOrderable(requisitionUpdater.getProgramId())
+  //           .getPrograms().iterator().next()
+  //           // [SIGLUS change end]
+  //           .getFullSupply()))
+  //       .map(BaseEntity::getId)
+  //       .collect(toList());
 
-    // [SIGLUS change start]
-    // [change reason]: we can add product for regular and Emergency.
-    // if (currentIds.stream().anyMatch(id -> !existingIds.contains(id))) {
-    //   errors.put(REQUISITION_LINE_ITEMS, new Message(ERROR_LINE_ITEM_ADDED));
-    // } else if (existingIds.stream().anyMatch(id -> !currentIds.contains(id))) {
-    //   errors.put(REQUISITION_LINE_ITEMS, new Message(ERROR_LINE_ITEM_REMOVED));
-    // }
-    if (existingIds.stream().anyMatch(id -> !currentIds.contains(id))) {
-      errors.put(REQUISITION_LINE_ITEMS, new Message(ERROR_LINE_ITEM_REMOVED));
-    }
-    // [SIGLUS change end]
-  }
+  //   // [SIGLUS change start]
+  //   // [change reason]: we can add product for regular and emergency
+  //   // if (currentIds.stream().anyMatch(id -> !existingIds.contains(id))) {
+  //   //   errors.put(REQUISITION_LINE_ITEMS, new Message(ERROR_LINE_ITEM_ADDED));
+  //   // } else if (existingIds.stream().anyMatch(id -> !currentIds.contains(id))) {
+  //   //   errors.put(REQUISITION_LINE_ITEMS, new Message(ERROR_LINE_ITEM_REMOVED));
+  //   // }
+  //   // [SIGLUS change end]
+  // }
 
   private void validateRegularLineItemStockFields(Map<String, Message> errors) {
     RequisitionTemplate template = requisitionToUpdate.getTemplate();

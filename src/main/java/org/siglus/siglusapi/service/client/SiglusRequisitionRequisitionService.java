@@ -77,8 +77,8 @@ public class SiglusRequisitionRequisitionService extends BaseRequisitionService<
     queryParams.set(QueryRequisitionSearchParams.FACILITY, facilityId.toString());
     return searchRequisitions(new QueryRequisitionSearchParams(queryParams), UNPAGED)
         .getContent().stream()
-        .filter(req -> !req.getId().equals(requisitionId))
         .map(BaseDto::getId)
+        .filter(id -> !id.equals(requisitionId))
         .map(this::searchRequisition)
         .collect(toList());
   }
