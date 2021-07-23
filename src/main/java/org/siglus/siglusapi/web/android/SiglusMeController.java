@@ -21,6 +21,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
@@ -43,6 +44,8 @@ import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -118,11 +121,16 @@ public class SiglusMeController {
   }
 
   @GetMapping("/facility/requisitions")
-  @ResponseStatus(OK)
-  @ResponseBody
   public RequisitionResponse getRequisitionResponse(
       @RequestParam(value = "startDate") String startDate) {
     return service.getRequisitionResponse(startDate);
+  }
+
+  @GetMapping("/facility/pods")
+  public RequisitionResponse getProofsOfDelivery(
+      @RequestParam(name = "initiatedOnly", defaultValue = "false") boolean initiatedOnly,
+      @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate since) {
+    throw new UnsupportedOperationException();
   }
 
   @PostMapping("/app-info")
