@@ -25,8 +25,8 @@ import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIM
 import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 import static org.siglus.common.constant.ExtraDataConstants.SUBMIT;
-import static org.siglus.common.constant.KitConstants.APE_KITS;
-import static org.siglus.common.constant.KitConstants.US_KITS;
+import static org.siglus.common.constant.KitConstants.CHW_KIT_CODE;
+import static org.siglus.common.constant.KitConstants.HF_KIT_CODE;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
@@ -360,7 +360,7 @@ public class AndroidRequisitionService {
               .equals(requisitionLineItem.getOrderable().getId()))
           .findFirst()
           .map(RequisitionLineItemRequest::getAuthorizedQuantity)
-          .orElse(null);
+          .orElse(0);
       extension.setAuthorizedQuantity(authorizedQuantity);
       log.info("save requisition line item extensions: {}", extension);
       requisitionLineItemExtensionRepository.save(extension);
@@ -408,7 +408,8 @@ public class AndroidRequisitionService {
       requisitionLineItem.setTotalReceivedQuantity(product.getTotalReceivedQuantity());
       requisitionLineItem.setTotalConsumedQuantity(product.getTotalConsumedQuantity());
       requisitionLineItem.setStockOnHand(product.getStockOnHand());
-      requisitionLineItem.setRequestedQuantity(product.getRequestedQuantity());
+      requisitionLineItem.setRequestedQuantity(
+          product.getRequestedQuantity() == null ? 0 : product.getRequestedQuantity());
       VersionEntityReference approvedProduct = requisition.getAvailableProducts().stream()
           .filter(approvedProductReference -> approvedProductReference.getOrderable().getId()
               .equals(requisitionLineItem.getOrderable().getId()))
@@ -455,19 +456,19 @@ public class AndroidRequisitionService {
 
   private void buildRequisitionKitUsage(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
     int kitReceivedChw = request.getProducts().stream()
-        .filter(product -> APE_KITS.contains(product.getProductCode()))
+        .filter(product -> CHW_KIT_CODE.equals(product.getProductCode()))
         .mapToInt(RequisitionLineItemRequest::getTotalReceivedQuantity)
         .sum();
     int kitReceivedHf = request.getProducts().stream()
-        .filter(product -> US_KITS.contains(product.getProductCode()))
+        .filter(product -> HF_KIT_CODE.equals(product.getProductCode()))
         .mapToInt(RequisitionLineItemRequest::getTotalReceivedQuantity)
         .sum();
     int kitOpenedChw = request.getProducts().stream()
-        .filter(product -> APE_KITS.contains(product.getProductCode()))
+        .filter(product -> CHW_KIT_CODE.equals(product.getProductCode()))
         .mapToInt(RequisitionLineItemRequest::getTotalConsumedQuantity)
         .sum();
     int kitOpenedHf = request.getProducts().stream()
-        .filter(product -> US_KITS.contains(product.getProductCode()))
+        .filter(product -> HF_KIT_CODE.equals(product.getProductCode()))
         .mapToInt(RequisitionLineItemRequest::getTotalConsumedQuantity)
         .sum();
     requisitionDto.getKitUsageLineItems().forEach(kitUsage -> {

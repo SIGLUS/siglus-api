@@ -70,23 +70,18 @@ public class WebLogAspect {
     String method = request.getMethod();
     String url = request.getRequestURL().toString();
     String traceId = "trace-" + UUID.randomUUID();
-    Object requestParam = getRequestParam(joinPoint, request);
-    Object requestBody = getRequestBody(joinPoint, request);
     if (isAndroid(request)) {
       AndroidHeader androidHeader = getAndroidHeader(request);
-      log.info("[Android][START] {} {}, {}, header: {}, param: {}, body: {}", method, url, traceId, androidHeader,
-          requestParam, requestBody);
+      log.info("[Android][START] {} {}, {}, header: {}", method, url, traceId, androidHeader);
     } else {
-      log.info("[Web][START] {} {}, {}, param: {}, body: {}", method, url, traceId, requestParam, requestBody);
+      log.info("[Web][START] {} {}, {}", method, url, traceId);
     }
     Object result = joinPoint.proceed();
     long costTime = System.currentTimeMillis() - startTime;
     if (isAndroid(request)) {
-      log.info("[Android][END] {} {}, {}, response: {}, cost-time: {}ms",
-          method, url, traceId, JSON.toJSON(result), costTime);
+      log.info("[Android][END] {} {}, {}, cost-time: {}ms", method, url, traceId, costTime);
     } else {
-      log.info("[Web][END] {} {}, {}, response: {}, cost-time: {}ms",
-          method, url, traceId, JSON.toJSON(result), costTime);
+      log.info("[Web][END] {} {}, {}, cost-time: {}ms", method, url, traceId, costTime);
     }
     return result;
   }
