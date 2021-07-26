@@ -433,7 +433,7 @@ public class SiglusMeService {
     } else {
       pods = podRepo.findAllByFacilitySince(homeFacilityId, since, OrderStatus.SHIPPED, OrderStatus.RECEIVED);
     }
-    Map<UUID, OrderDto> orderMap = pods.stream()
+    Map<UUID, OrderDto> allOrders = pods.stream()
         .map(ProofOfDelivery::getShipment)
         .map(Shipment::getOrder)
         .map(BaseEntity::getId)
@@ -456,18 +456,22 @@ public class SiglusMeService {
         .getValidReasonsForAllProducts(homeFacility.getType().getId(), null, null).stream()
         .collect(toMap(ValidReasonAssignmentDto::getId, r -> r.getReason().getName()));
     return pods.stream()
-        .map(pod -> {
-          PodResponse podResponse = podMapper.toResponse(pod, orderMap);
-          podResponse.getProducts().forEach(productLine -> {
-            List<PodLotLineResponse> lotLines = pod.getLineItems().stream()
-                .filter(podLine -> productCodesById.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
-                .map(l -> podLotLineMapper.toLotResponse(l, lotsById, reasonNamesById))
-                .collect(toList());
-            productLine.setLots(lotLines);
-          });
-          return podResponse;
-        })
+        .map(pod -> toPodResponse(pod, allOrders, productCodesById, lotsById, reasonNamesById))
         .collect(toList());
+  }
+
+  private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> allOrders,
+      Map<UUID, String> productCodesById,
+      Map<UUID, LotDto> lotsById, Map<UUID, String> reasonNamesById) {
+    PodResponse podResponse = podMapper.toResponse(pod, allOrders);
+    podResponse.getProducts().forEach(productLine -> {
+      List<PodLotLineResponse> lotLines = pod.getLineItems().stream()
+          .filter(podLine -> productCodesById.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
+          .map(l -> podLotLineMapper.toLotResponse(l, lotsById, reasonNamesById))
+          .collect(toList());
+      productLine.setLots(lotLines);
+    });
+    return podResponse;
   }
 
   private List<LotDto> getLotList(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,

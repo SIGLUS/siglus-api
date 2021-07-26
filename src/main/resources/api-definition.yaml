@@ -135,6 +135,7 @@ schemas:
   - hfCmmsDtos: !include schemas/hfCmmsDto.json
   - androidRequisitionRequest: !include schemas/androidRequisitionRequest.json
   - androidRequisitionResponse: !include schemas/androidRequisitionResponse.json
+  - androidPodResponse: !include schemas/androidPodResponse.json
 
 resourceTypes:
   - collection:

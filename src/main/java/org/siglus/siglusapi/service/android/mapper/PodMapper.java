@@ -20,16 +20,26 @@ import java.util.UUID;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 
 @Mapper(componentModel = "spring", uses = {PodOrderMapper.class, PodProductLineMapper.class})
 public interface PodMapper {
 
-  //TODO documentNo;
   @Mapping(target = "order", source = "shipment.order.id")
   @Mapping(target = "products", source = "shipment.order.id")
+  @Mapping(target = "documentNo", source = "shipment", qualifiedByName = "toDocumentNo")
   PodResponse toResponse(ProofOfDelivery pod, @Context Map<UUID, OrderDto> allOrders);
+
+  @Named("toDocumentNo")
+  default String toDocumentNo(Shipment domain) {
+    if (domain.getExtraData() == null) {
+      return null;
+    }
+    return domain.getExtraData().get("documentNo");
+  }
 
 }
