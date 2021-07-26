@@ -34,6 +34,7 @@ import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 @NoArgsConstructor
 @AllArgsConstructor
 @RequisitionValidStartDate(groups = {PerformanceGroup.class})
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequisitionCreateRequest {
 
   @NotBlank
@@ -51,7 +52,6 @@ public class RequisitionCreateRequest {
   @NotNull
   private LocalDate actualEndDate;
 
-  @JsonInclude(JsonInclude.Include.NON_NULL)
   @NotNull
   private Integer consultationNumber;
 

@@ -621,6 +621,8 @@ public class AndroidRequisitionService {
           .authorizedQuantity(itemExtension == null ? null : itemExtension.getAuthorizedQuantity())
           .productCode(lineItem.getOrderableIdentity() == null ? null
               : orderableIdToCode.get(lineItem.getOrderableIdentity().getId()))
+          .expirationDate(itemExtension.getExpirationDate())
+          .totalLossesAndAdjustments(lineItem.getTotalLossesAndAdjustments())
           .build();
       requisitionLineItemRequestList.add(lineItemRequest);
 

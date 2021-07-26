@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import java.time.LocalDate;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +28,7 @@ import org.hibernate.validator.constraints.NotBlank;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequisitionLineItemRequest {
 
   @NotBlank
@@ -47,4 +50,7 @@ public class RequisitionLineItemRequest {
 
   private Integer authorizedQuantity;
 
+  private LocalDate expirationDate;
+
+  private Integer totalLossesAndAdjustments;
 }
