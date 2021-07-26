@@ -1073,7 +1073,7 @@ public class SiglusRequisitionService {
 
   private RequisitionLineItemV2Dto from(Importer lineItem) {
     RequisitionLineItemV2Dto requisitionLineItemV2Dto = new RequisitionLineItemV2Dto();
-    BeanUtils.copyProperties(requisitionLineItemV2Dto, lineItem);
+    BeanUtils.copyProperties(lineItem, requisitionLineItemV2Dto);
     return requisitionLineItemV2Dto;
   }
 
