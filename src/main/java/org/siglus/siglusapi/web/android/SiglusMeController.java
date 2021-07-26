@@ -40,6 +40,7 @@ import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
+import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
@@ -127,10 +128,10 @@ public class SiglusMeController {
   }
 
   @GetMapping("/facility/pods")
-  public RequisitionResponse getProofsOfDelivery(
+  public List<PodResponse> getProofsOfDelivery(
       @RequestParam(name = "initiatedOnly", defaultValue = "false") boolean initiatedOnly,
       @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate since) {
-    throw new UnsupportedOperationException();
+    return service.getProofsOfDelivery(since, initiatedOnly);
   }
 
   @PostMapping("/app-info")

@@ -207,6 +207,11 @@ public class SiglusOrderService {
     return extendOrderDto(orderDto);
   }
 
+  public SiglusOrderDto searchOrderByIdWithoutProducts(UUID orderId) {
+    OrderDto orderDto = orderController.getOrder(orderId, null);
+    return extendOrderDtoWithoutProducts(orderDto);
+  }
+
   public SiglusOrderDto searchOrderByIdForMultiWareHouseSupply(UUID orderId) {
     Order order = orderRepository.findOne(orderId);
     OrderDto orderDto = orderDtoBuilder.build(order);
@@ -301,6 +306,15 @@ public class SiglusOrderService {
     return SiglusOrderDto.builder()
         .order(orderDto)
         .availableProducts(getAllUserAvailableProductAggregator(orderDto)).build();
+  }
+
+  private SiglusOrderDto extendOrderDtoWithoutProducts(OrderDto orderDto) {
+    setOrderLineItemExtension(orderDto);
+    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
+    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
+    orderDto.setRequisitionNumber(
+        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
+    return SiglusOrderDto.builder().order(orderDto).build();
   }
 
   private boolean currentDateIsAfterNextPeriodEndDate(OrderDto orderDto) {

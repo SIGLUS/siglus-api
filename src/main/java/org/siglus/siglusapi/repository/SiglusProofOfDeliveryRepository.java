@@ -15,17 +15,28 @@
 
 package org.siglus.siglusapi.repository;
 
+import static org.javers.common.collections.Arrays.asList;
+
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Predicate;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDelivery, UUID> {
+public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDelivery, UUID>,
+    JpaSpecificationExecutor<ProofOfDelivery> {
 
   @Query(value = "select * from fulfillment.proofs_of_delivery p "
       + "join fulfillment.shipments s2 on p.shipmentid = s2.id "
@@ -43,4 +54,20 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
   Page<ProofOfDelivery> search(@Param("date") LocalDate date, @Param("today") String today,
       @Param("requestingFacilityIds") Set<UUID> requestingFacilityIds,
       Pageable pageable);
+
+  default List<ProofOfDelivery> findAllByFacilitySince(UUID facilityId, @Nonnull LocalDate since,
+      OrderStatus... statuses) {
+    return findAll((root, query, cb) -> {
+      Path<Order> orderRoot = root.get("shipment").get("order");
+      Predicate byFacilityAndDate = cb.and(
+          cb.greaterThanOrEqualTo(orderRoot.get("createdDate"), since.atStartOfDay().atZone(ZoneId.systemDefault())),
+          cb.equal(orderRoot.get("requestingFacilityId"), facilityId)
+      );
+      if (statuses.length == 0) {
+        return byFacilityAndDate;
+      }
+      return cb.and(byFacilityAndDate, orderRoot.get("status").in(asList(statuses)));
+    });
+  }
+
 }

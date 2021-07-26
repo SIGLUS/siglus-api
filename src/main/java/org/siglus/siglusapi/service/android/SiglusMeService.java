@@ -21,11 +21,13 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
+import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,9 +39,17 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.fulfillment.domain.BaseEntity;
+import org.openlmis.fulfillment.domain.OrderStatus;
+import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
+import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.fulfillment.domain.VersionEntityReference;
+import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicOrderableDto;
@@ -65,11 +75,11 @@ import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
-import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
+import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
@@ -80,6 +90,8 @@ import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.LotsOnHandResponse;
+import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
+import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
@@ -91,17 +103,22 @@ import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
+import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
+import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
+import org.siglus.siglusapi.service.android.mapper.PodLotLineMapper;
+import org.siglus.siglusapi.service.android.mapper.PodMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -244,7 +261,7 @@ public class SiglusMeService {
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final SiglusArchiveProductService siglusArchiveProductService;
-  private final SiglusOrderableService orderableDataService;
+  private final SiglusOrderableService orderableService;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final SiglusAuthenticationHelper authHelper;
   private final SupportedProgramsHelper programsHelper;
@@ -264,6 +281,11 @@ public class SiglusMeService {
   private final SiglusRequisitionRepository requisitionRepository;
   private final AndroidRequisitionService androidRequisitionService;
   private final AndroidTemplateConfig androidTemplateConfig;
+  private final SiglusProofOfDeliveryRepository podRepo;
+  private final SiglusOrderService orderService;
+  private final PodMapper podMapper;
+  private final PodLotLineMapper podLotLineMapper;
+  private final SiglusOrderableReferenceDataService orderableDataService;
 
 
   public FacilityResponse getCurrentFacility() {
@@ -399,6 +421,55 @@ public class SiglusMeService {
     androidRequisitionService.create(request);
   }
 
+  public List<PodResponse> getProofsOfDelivery(@Nullable LocalDate since, boolean initiatedOnly) {
+    FacilityDto homeFacility = getCurrentFacilityInfo();
+    UUID homeFacilityId = homeFacility.getId();
+    if (since == null) {
+      since = YearMonth.now().minusMonths(13L).atDay(1);
+    }
+    List<ProofOfDelivery> pods;
+    if (initiatedOnly) {
+      pods = podRepo.findAllByFacilitySince(homeFacilityId, since, OrderStatus.SHIPPED);
+    } else {
+      pods = podRepo.findAllByFacilitySince(homeFacilityId, since, OrderStatus.SHIPPED, OrderStatus.RECEIVED);
+    }
+    Map<UUID, OrderDto> orderMap = pods.stream()
+        .map(ProofOfDelivery::getShipment)
+        .map(Shipment::getOrder)
+        .map(BaseEntity::getId)
+        .map(orderService::searchOrderByIdWithoutProducts)
+        .collect(toMap(o -> o.getOrder().getId(), SiglusOrderDto::getOrder));
+    Collection<UUID> productIds = pods.stream()
+        .map(ProofOfDelivery::getLineItems).flatMap(Collection::stream)
+        .map(ProofOfDeliveryLineItem::getOrderable)
+        .map(VersionEntityReference::getId)
+        .collect(Collectors.toSet());
+    Map<UUID, String> productCodesById = orderableDataService.findByIds(productIds).stream()
+        .collect(toMap(BaseDto::getId, OrderableDto::getProductCode));
+    Collection<UUID> lotIds = pods.stream()
+        .map(ProofOfDelivery::getLineItems).flatMap(Collection::stream)
+        .map(ProofOfDeliveryLineItem::getLotId)
+        .collect(Collectors.toSet());
+    Map<UUID, LotDto> lotsById = lotReferenceDataService.findByIds(lotIds).stream()
+        .collect(toMap(BaseDto::getId, Function.identity()));
+    Map<UUID, String> reasonNamesById = validReasonAssignmentService
+        .getValidReasonsForAllProducts(homeFacility.getType().getId(), null, null).stream()
+        .collect(toMap(ValidReasonAssignmentDto::getId, r -> r.getReason().getName()));
+    return pods.stream()
+        .map(pod -> {
+          PodResponse podResponse = podMapper.toResponse(pod, orderMap);
+          podResponse.getProducts().forEach(productLine -> {
+            List<PodLotLineResponse> lotLines = pod.getLineItems().stream()
+                .filter(podLine -> productCodesById.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
+                .map(l -> podLotLineMapper.toLotResponse(l, lotsById, reasonNamesById))
+                .collect(toList());
+            productLine.setLots(lotLines);
+          });
+          return podResponse;
+        })
+        .collect(toList());
+  }
+
   private List<LotDto> getLotList(List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
       Collection<org.openlmis.requisition.dto.OrderableDto> approvedProducts) {
     List<UUID> orderableIdsForStockCard = stockCardSummaryV2Dtos.stream()
@@ -406,7 +477,7 @@ public class SiglusMeService {
         .collect(Collectors.toList());
     List<String> tradeItems = approvedProducts.stream()
         .filter(dto -> orderableIdsForStockCard.contains(dto.getId()))
-        .map(dto -> dto.getIdentifiers().get(FieldConstants.TRADE_ITEM))
+        .map(dto -> dto.getIdentifiers().get(TRADE_ITEM))
         .collect(Collectors.toList());
     RequestParameters requestParameters = RequestParameters.init();
     requestParameters.set(TRADE_ITEM_ID, tradeItems);
@@ -669,7 +740,7 @@ public class SiglusMeService {
   private List<OrderableDto> getAllProducts(UUID homeFacilityId) {
     QueryOrderableSearchParams params = new QueryOrderableSearchParams(new LinkedMultiValueMap<>());
     Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, Pagination.NO_PAGINATION);
-    return orderableDataService.searchOrderables(params, pageable, homeFacilityId).getContent();
+    return orderableService.searchOrderables(params, pageable, homeFacilityId).getContent();
   }
 
   private HfCmm buildCmm(HfCmmDto hfCmmDto) {
