@@ -144,24 +144,20 @@ public class RequisitionDraft extends BaseEntity {
       draft.setKitUsageLineItems(KitUsageLineItemDraft.from(draft, requisitionDto));
     }
     if (Boolean.TRUE.equals(extension.getEnableUsageInformation())) {
-      draft.setUsageInformationLineItemDrafts(
-          UsageInformationLineItemDraft.from(draft, requisitionDto));
+      draft.setUsageInformationLineItemDrafts(UsageInformationLineItemDraft.from(draft, requisitionDto));
     }
     if (Boolean.TRUE.equals(extension.getEnableRapidTestConsumption())) {
-      draft.setTestConsumptionLineItemDrafts(
-          TestConsumptionLineItemDraft.from(draft, requisitionDto));
+      draft.setTestConsumptionLineItemDrafts(TestConsumptionLineItemDraft.from(draft, requisitionDto));
     }
     if (Boolean.TRUE.equals(extension.getEnablePatientLineItem())) {
       draft.setPatientLineItemDrafts(PatientLineItemDraft.from(draft, requisitionDto));
     }
     if (Boolean.TRUE.equals(extension.getEnableConsultationNumber())) {
-      draft.setConsultationNumberLineItemDrafts(
-          ConsultationNumberLineItemDraft.from(draft, requisitionDto));
+      draft.setConsultationNumberLineItemDrafts(ConsultationNumberLineItemDraft.from(draft, requisitionDto));
     }
     if (Boolean.TRUE.equals(extension.getEnableRegimen())) {
       draft.setRegimenLineItemDrafts(RegimenLineItemDraft.from(draft, requisitionDto));
-      draft.setRegimenSummaryLineItemDrafts(
-          RegimenSummaryLineItemDraft.from(draft, requisitionDto));
+      draft.setRegimenSummaryLineItemDrafts(RegimenSummaryLineItemDraft.from(draft, requisitionDto));
     }
     return draft;
   }

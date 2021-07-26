@@ -23,6 +23,7 @@ import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.RandomUtils.nextInt;
 import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -366,6 +367,8 @@ public class SiglusRequisitionServiceTest {
   private final UUID processingPeriodId = UUID.randomUUID();
 
   private final UUID regimenId = UUID.randomUUID();
+
+  private final UUID requisitionLineItemId = UUID.randomUUID();
 
   private final String rowName = "1stLinhas";
 
@@ -717,8 +720,8 @@ public class SiglusRequisitionServiceTest {
     RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
     OrderableDto productDto = new OrderableDto();
     productDto.setId(UUID.randomUUID());
+    lineItemV2Dto.setId(requisitionLineItemId);
     lineItemV2Dto.setOrderable(productDto);
-    lineItemV2Dto.setId(UUID.randomUUID());
     lineItemV2Dto.setAuthorizedQuantity(10);
     requisitionV2Dto.setRequisitionLineItems(singletonList(lineItemV2Dto));
     siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItemV2Dto));
@@ -869,8 +872,7 @@ public class SiglusRequisitionServiceTest {
   public void shouldFillDraftWhenRequisitionCanEditAndHaveDraft() {
     // given
     mockEmergencyRequisition();
-    when(requisitionService
-        .validateCanApproveRequisition(any(), any())).thenReturn(ValidationResult.success());
+    when(requisitionService.validateCanApproveRequisition(any(), any())).thenReturn(ValidationResult.success());
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
         .thenReturn(new PageImpl<>(singletonList(newBasicReq)));
     when(operatePermissionService.isEditable(any())).thenReturn(true);
@@ -946,7 +948,7 @@ public class SiglusRequisitionServiceTest {
     when(requisitionController.authorizeRequisition(requisitionId, request, response))
         .thenReturn(mockBasicRequisitionDto);
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
-    lineItem.setId(UUID.randomUUID());
+    lineItem.setId(requisitionLineItemId);
     siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
         .thenReturn(siglusRequisitionDto);
@@ -998,10 +1000,9 @@ public class SiglusRequisitionServiceTest {
     HttpServletRequest request = new MockHttpServletRequest();
     HttpServletResponse response = new MockHttpServletResponse();
     BasicRequisitionDto dto = new BasicRequisitionDto();
-    when(requisitionController.rejectRequisition(requisitionId, request, response))
-        .thenReturn(dto);
+    when(requisitionController.rejectRequisition(requisitionId, request, response)).thenReturn(dto);
     RequisitionLineItem lineItem = new RequisitionLineItem();
-    lineItem.setId(UUID.randomUUID());
+    lineItem.setId(requisitionLineItemId);
     lineItem.setBeginningBalance(10);
     lineItem.setApprovedQuantity(20);
     lineItem.setRemarks("123");
@@ -1015,12 +1016,11 @@ public class SiglusRequisitionServiceTest {
 
     // then
     verify(requisitionRepository).save(requisitionArgumentCaptor.capture());
-    RequisitionLineItem lineItemCaptor = requisitionArgumentCaptor.getValue()
-        .getRequisitionLineItems().get(0);
+    RequisitionLineItem lineItemCaptor = requisitionArgumentCaptor.getValue().getRequisitionLineItems().get(0);
     assertEquals(Integer.valueOf(10), lineItemCaptor.getBeginningBalance());
-    assertEquals(null, lineItemCaptor.getRemarks());
+    assertNull(lineItemCaptor.getRemarks());
     assertEquals(false, lineItemCaptor.getSkipped());
-    assertEquals(null, lineItemCaptor.getApprovedQuantity());
+    assertNull(lineItemCaptor.getApprovedQuantity());
     verify(notificationService).postReject(dto);
   }
 
@@ -1040,36 +1040,29 @@ public class SiglusRequisitionServiceTest {
     HttpServletResponse response = new MockHttpServletResponse();
     when(requisitionController.approveRequisition(requisitionId, request, response))
         .thenReturn(mockBasicRequisitionDto);
-    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
-        .thenReturn(siglusRequisitionDto);
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionId)).thenReturn(siglusRequisitionDto);
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setApprovedQuantity(10);
     lineItem.setId(UUID.randomUUID());
-    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
+    siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItem));
     siglusRequisitionDto.setStatus(AUTHORIZED);
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
-    when(requisitionV2Controller
-        .updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
-            any(HttpServletRequest.class), any(HttpServletResponse.class)))
-        .thenReturn(requisitionV2Dto);
+    when(requisitionV2Controller.updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
+        any(HttpServletRequest.class), any(HttpServletResponse.class))).thenReturn(requisitionV2Dto);
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
     supervisoryNodeDto.setId(supervisoryNodeId);
-    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId))
-        .thenReturn(supervisoryNodeDto);
+    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId)).thenReturn(supervisoryNodeDto);
     RightDto right = new RightDto();
     right.setId(rightId);
-    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
-        .thenReturn(right);
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE)).thenReturn(right);
     when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
     when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
       Message message = invocation.getArgumentAt(0, Message.class);
       return message.localMessage(messageSource, Locale.ENGLISH);
     });
-    when(messageSource.getMessage(any(), any(), any()))
-        .thenReturn(MESSAGE);
-    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
-        .thenReturn(siglusRequisitionDto);
+    when(messageSource.getMessage(any(), any(), any())).thenReturn(MESSAGE);
+    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any())).thenReturn(siglusRequisitionDto);
 
     // when
     siglusRequisitionService.approveRequisition(requisitionId, request, response);
@@ -1104,30 +1097,23 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(mockBasicRequisitionDto);
     requisition.setRequisitionLineItems(emptyList());
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
-    when(requisitionV2Controller
-        .updateRequisition(any(UUID.class), any(RequisitionV2Dto.class),
-            any(HttpServletRequest.class), any(HttpServletResponse.class)))
-        .thenReturn(requisitionV2Dto);
-    when(draftRepository.findByRequisitionId(requisitionId))
-        .thenReturn(getRequisitionDraft(requisitionId));
+    when(requisitionV2Controller.updateRequisition(any(UUID.class), any(RequisitionV2Dto.class),
+        any(HttpServletRequest.class), any(HttpServletResponse.class))).thenReturn(requisitionV2Dto);
+    when(draftRepository.findByRequisitionId(requisitionId)).thenReturn(getRequisitionDraft(requisitionId));
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
     supervisoryNodeDto.setId(supervisoryNodeId);
-    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId))
-        .thenReturn(supervisoryNodeDto);
+    when(supervisoryNodeReferenceDataService.findSupervisoryNode(programId, facilityId)).thenReturn(supervisoryNodeDto);
     RightDto right = new RightDto();
     right.setId(rightId);
-    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
-        .thenReturn(right);
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE)).thenReturn(right);
     when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
     when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
       Message message = invocation.getArgumentAt(0, Message.class);
       return message.localMessage(messageSource, Locale.ENGLISH);
     });
-    when(messageSource.getMessage(any(), any(), any()))
-        .thenReturn(MESSAGE);
-    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
-        .thenReturn(siglusRequisitionDto);
+    when(messageSource.getMessage(any(), any(), any())).thenReturn(MESSAGE);
+    when(siglusUsageReportService.saveUsageReportWithValidation(any(), any())).thenReturn(siglusRequisitionDto);
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
 
     // when
@@ -1146,11 +1132,12 @@ public class SiglusRequisitionServiceTest {
     OrderableDto productDto = new OrderableDto();
     productDto.setId(UUID.randomUUID());
     RequisitionLineItemV2Dto lineItemV2Dto = new RequisitionLineItemV2Dto();
+    lineItemV2Dto.setId(requisitionLineItemId);
     lineItemV2Dto.setOrderable(productDto);
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
     approvedProductDto.setId(UUID.randomUUID());
     lineItemV2Dto.setApprovedProduct(approvedProductDto);
-    lineItemV2Dto.setId(UUID.randomUUID());
+    lineItemV2Dto.setId(requisitionLineItemId);
     lineItemV2Dto.setAuthorizedQuantity(10);
     siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItemV2Dto));
     when(operatePermissionService.canSubmit(siglusRequisitionDto)).thenReturn(false);
@@ -1159,8 +1146,7 @@ public class SiglusRequisitionServiceTest {
     RequisitionTemplateExtension templateExtension = createTemplateExtension();
     requisitionTemplate.setTemplateExtension(templateExtension);
     requisition.setTemplate(requisitionTemplate);
-    when(requisitionRepository.findOne(siglusRequisitionDto.getId()))
-        .thenReturn(requisition);
+    when(requisitionRepository.findOne(siglusRequisitionDto.getId())).thenReturn(requisition);
     when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(
         siglusRequisitionDto.getId())).thenReturn(templateExtension);
     RequisitionDraft draft = getRequisitionDraft(siglusRequisitionDto.getId());
@@ -1173,10 +1159,8 @@ public class SiglusRequisitionServiceTest {
         new MockHttpServletResponse());
 
     // then
-    assertEquals(Integer.valueOf(20),
-        requisitionDto.getLineItems().get(0).getApprovedQuantity());
-    UsageInformationLineItemDraft usageLineItemDraft = draft.getUsageInformationLineItemDrafts()
-        .get(0);
+    assertEquals(Integer.valueOf(20), requisitionDto.getLineItems().get(0).getApprovedQuantity());
+    UsageInformationLineItemDraft usageLineItemDraft = draft.getUsageInformationLineItemDrafts().get(0);
     assertEquals(usageLineItemDraft.getValue(),
         requisitionDto.getUsageInformationLineItems().get(0).getInformations().get("information")
             .getOrderables().get(usageLineItemDraft.getOrderableId()).getValue());
@@ -1197,12 +1181,10 @@ public class SiglusRequisitionServiceTest {
 
   @Test
   public void shouldGetFacilitiesForInternalApproval() {
-    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
-        .thenReturn(mockRightDto());
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE)).thenReturn(mockRightDto());
     when(roleReferenceDataService.search(rightId)).thenReturn(mockRoleDto());
     when(authenticationHelper.getCurrentUser()).thenReturn(mockInternalUserDto());
-    when(supervisoryNodeReferenceDataService.findAllSupervisoryNodes())
-        .thenReturn(mockAllSupervisoryNodeForInternal());
+    when(supervisoryNodeReferenceDataService.findAllSupervisoryNodes()).thenReturn(mockAllSupervisoryNodeForInternal());
     when(requisitionGroupReferenceDataService.findAll()).thenReturn(mockAllRequisitionGroup());
     when(facilityReferenceDataService.findAll()).thenReturn(mockAllFacilityDto());
 
@@ -1214,8 +1196,7 @@ public class SiglusRequisitionServiceTest {
 
   @Test
   public void shouldGetFacilitiesForExternalApproval() {
-    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
-        .thenReturn(mockRightDto());
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE)).thenReturn(mockRightDto());
     when(roleReferenceDataService.search(rightId)).thenReturn(mockRoleDto());
     when(authenticationHelper.getCurrentUser()).thenReturn(mockExternalUserDto());
     when(supervisoryNodeReferenceDataService.findAllSupervisoryNodes())
@@ -1259,20 +1240,18 @@ public class SiglusRequisitionServiceTest {
     draft.setRequisitionId(requisitionId);
     draft.setDraftStatusMessage("draft status");
     RequisitionLineItemDraft lineItemDraft1 = new RequisitionLineItemDraft();
-    lineItemDraft1.setRequisitionLineItemId(UUID.randomUUID());
-    lineItemDraft1.setOrderable(
-        new VersionEntityReference(UUID.randomUUID(), (long) 1));
-    lineItemDraft1.setFacilityTypeApprovedProduct(new VersionEntityReference(UUID.randomUUID(),
-        (long) 1));
+    lineItemDraft1.setRequisitionLineItemId(requisitionLineItemId);
+    lineItemDraft1.setOrderable(new VersionEntityReference(UUID.randomUUID(), (long) 1));
+    lineItemDraft1.setFacilityTypeApprovedProduct(new VersionEntityReference(UUID.randomUUID(), (long) 1));
     lineItemDraft1.setStockAdjustments(emptyList());
     lineItemDraft1.setApprovedQuantity(20);
-    draft.setLineItems(Arrays.asList(lineItemDraft1));
+    draft.setLineItems(singletonList(lineItemDraft1));
     KitUsageLineItemDraft usageLineItemDraft = getKitUsageLineItemDraft();
-    draft.setKitUsageLineItems(Arrays.asList(usageLineItemDraft));
+    draft.setKitUsageLineItems(singletonList(usageLineItemDraft));
     UsageInformationLineItemDraft usageLineItem = getUsageInformationLineItemDraft();
-    draft.setUsageInformationLineItemDrafts(Arrays.asList(usageLineItem));
+    draft.setUsageInformationLineItemDrafts(singletonList(usageLineItem));
     TestConsumptionLineItemDraft testConsumptionLineItemDraft = getTestConsumptionLineItemDraft();
-    draft.setTestConsumptionLineItemDrafts(Arrays.asList(testConsumptionLineItemDraft));
+    draft.setTestConsumptionLineItemDrafts(singletonList(testConsumptionLineItemDraft));
     return draft;
   }
 
@@ -1714,6 +1693,7 @@ public class SiglusRequisitionServiceTest {
 
   private Requisition createRequisition() {
     RequisitionLineItem lineItem = new RequisitionLineItemDataBuilder()
+        .withId(requisitionLineItemId)
         .withOrderable(orderableId, 1L)
         .build();
     Requisition requisition = new Requisition();
@@ -1733,6 +1713,7 @@ public class SiglusRequisitionServiceTest {
 
   private Requisition createMockRequisition() {
     RequisitionLineItem lineItem = new RequisitionLineItemDataBuilder()
+        .withId(requisitionLineItemId)
         .withOrderable(orderableId, 1L)
         .build();
     Requisition requisition = mock(Requisition.class);

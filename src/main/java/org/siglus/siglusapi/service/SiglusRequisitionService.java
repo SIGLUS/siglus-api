@@ -519,7 +519,7 @@ public class SiglusRequisitionService {
       if (draft != null) {
         siglusRequisitionDto = SiglusRequisitionDto.from(requisitionDto);
         siglusUsageReportService.setUsageTemplateDto(requisitionDto.getTemplate().getId(), siglusRequisitionDto);
-        fillRequisitionDraft(draft, extension, siglusRequisitionDto);
+        fillRequisitionFromDraft(draft, extension, siglusRequisitionDto);
         return siglusRequisitionDto;
       }
     }
@@ -686,7 +686,7 @@ public class SiglusRequisitionService {
         .from(requisitionDto, template, (draft == null ? null : draft.getId()), user);
     log.info("save requisition draft extension: {}", requisitionDraft);
     draft = draftRepository.save(requisitionDraft);
-    fillRequisitionDraft(draft, template.getTemplateExtension(), requisitionDto);
+    fillRequisitionFromDraft(draft, template.getTemplateExtension(), requisitionDto);
     return requisitionDto;
   }
 
@@ -712,7 +712,7 @@ public class SiglusRequisitionService {
       if (draft != null) {
         RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
             .findByRequisitionTemplateId(dto.getTemplate().getId());
-        fillRequisitionDraft(draft, templateExtension, requisitionDto);
+        fillRequisitionFromDraft(draft, templateExtension, requisitionDto);
       } else {
         setLineItemExtension(requisitionDto);
         RequisitionTemplateExtension extension = setTemplateExtension(requisitionDto);
@@ -793,17 +793,14 @@ public class SiglusRequisitionService {
             requisition.getReportOnly() && Boolean.FALSE.equals(requisition.getEmergency()));
     Map<UUID, List<ApprovedProductDto>> groupApprovedProduct =
         approvedProducts.stream().collect(groupingBy(approvedProduct -> approvedProduct.getProgram().getId()));
-    if (requisitionTemplate.isPopulateStockOnHandFromStockCards()
-        && Boolean.TRUE.equals(requisition.getEmergency())) {
+    if (requisitionTemplate.isPopulateStockOnHandFromStockCards() && Boolean.TRUE.equals(requisition.getEmergency())) {
       stockCardRangeSummaryDtos = getStockCardRangeSummaryDtos(facility,
           groupApprovedProduct, requisition.getActualStartDate(), requisition.getActualEndDate());
       LocalDate startDateForCalculateAvg;
       LocalDate endDateForCalculateAvg = requisition.getActualEndDate();
       ProcessingPeriodDto period = periodService.getPeriod(requisition.getProcessingPeriodId());
       if (CollectionUtils.isNotEmpty(previousRequisitions)) {
-        Set<UUID> periodIds = previousRequisitions.stream()
-            .map(Requisition::getProcessingPeriodId)
-            .collect(toSet());
+        Set<UUID> periodIds = previousRequisitions.stream().map(Requisition::getProcessingPeriodId).collect(toSet());
         periods = periodService.getPeriods(periodIds);
         periods.add(period);
         startDateForCalculateAvg = previousRequisitions.stream()
@@ -811,9 +808,8 @@ public class SiglusRequisitionService {
             .orElseThrow(() -> new NotFoundException("Earlier Rquisition Not Found"))
             .getActualStartDate();
         if (Boolean.TRUE.equals(requisition.getEmergency())) {
-          List<Requisition> requisitions =
-              requisitionService.searchAfterAuthorizedRequisitions(requisition.getFacilityId(),
-                  requisition.getProgramId(), period.getId(), false);
+          List<Requisition> requisitions = requisitionService.searchAfterAuthorizedRequisitions(
+              requisition.getFacilityId(), requisition.getProgramId(), period.getId(), false);
           endDateForCalculateAvg = requisitions.get(0).getActualEndDate();
         }
       } else {
@@ -828,8 +824,7 @@ public class SiglusRequisitionService {
 
     OAuth2Authentication originAuth = simulateAuthenticationHelper.simulateCrossServiceAuth();
     Map<UUID, Integer> orderableSoh = getOrderableSohMap(requisitionTemplate,
-        facility.getId(), requisition.getActualEndDate(), RequisitionLineItem.STOCK_ON_HAND,
-        groupApprovedProduct);
+        facility.getId(), requisition.getActualEndDate(), RequisitionLineItem.STOCK_ON_HAND, groupApprovedProduct);
     Map<UUID, Integer> orderableBeginning = getOrderableSohMap(requisitionTemplate,
         facility.getId(), requisition.getActualStartDate().minusDays(1),
         RequisitionLineItem.BEGINNING_BALANCE, groupApprovedProduct);
@@ -850,7 +845,6 @@ public class SiglusRequisitionService {
       UUID orderableId = approvedProductDto.getOrderable().getId();
       Integer stockOnHand = orderableSoh.get(orderableId);
       Integer beginningBalances = orderableBeginning.get(orderableId);
-
       lineItemList.add(requisition.constructLineItem(requisitionTemplate, stockOnHand,
           beginningBalances, approvedProductDto, numberOfPreviousPeriodsToAverage,
           idealStockAmounts, stockCardRangeSummaryDtos, stockCardRangeSummariesToAverage,
@@ -1214,15 +1208,12 @@ public class SiglusRequisitionService {
     return canSeeRequisitionStatus;
   }
 
-  private void fillRequisitionDraft(RequisitionDraft draft,
+  private void fillRequisitionFromDraft(RequisitionDraft draft,
       RequisitionTemplateExtension templateExtension, SiglusRequisitionDto dto) {
     dto.setExtraData(draft.getExtraData().getExtraData());
     dto.setDraftStatusMessage(draft.getDraftStatusMessage());
     if (Boolean.TRUE.equals(templateExtension.getEnableProduct())) {
-      dto.setRequisitionLineItems(draft.getLineItems()
-          .stream()
-          .map(RequisitionLineItemDraft::getLineItemDto)
-          .collect(toList()));
+      dto.setRequisitionLineItems(buildRequisitionLineItems(draft, dto));
     }
     if (Boolean.TRUE.equals(templateExtension.getEnableKitUsage())) {
       dto.setKitUsageLineItems(KitUsageLineItemDraft.from(draft.getKitUsageLineItems()));
@@ -1233,12 +1224,10 @@ public class SiglusRequisitionService {
     }
     if (Boolean.TRUE.equals(templateExtension.getEnableRapidTestConsumption())) {
       dto.setTestConsumptionLineItems(
-          TestConsumptionLineItemDraft.getLineItemDto(draft.getTestConsumptionLineItemDrafts())
-      );
+          TestConsumptionLineItemDraft.getLineItemDto(draft.getTestConsumptionLineItemDrafts()));
     }
     if (Boolean.TRUE.equals(templateExtension.getEnablePatientLineItem())) {
-      dto.setPatientLineItems(PatientLineItemDraft.getLineItemDto(draft.getPatientLineItemDrafts())
-      );
+      dto.setPatientLineItems(PatientLineItemDraft.getLineItemDto(draft.getPatientLineItemDrafts()));
     }
     if (Boolean.TRUE.equals(templateExtension.getEnableConsultationNumber())) {
       dto.setConsultationNumberLineItems(ConsultationNumberLineItemDraft
@@ -1253,6 +1242,22 @@ public class SiglusRequisitionService {
       dto.setRegimenSummaryLineItems(RegimenSummaryLineItemDraft.getRegimenSummaryLineDtos(
           draft.getRegimenSummaryLineItemDrafts()));
     }
+  }
+
+  private List<RequisitionLineItemV2Dto> buildRequisitionLineItems(RequisitionDraft draft, SiglusRequisitionDto dto) {
+    List<RequisitionLineItemV2Dto> draftLineItems = draft.getLineItems().stream()
+        .map(RequisitionLineItemDraft::getLineItemDto)
+        .collect(toList());
+    Set<UUID> draftLineItemIds = draftLineItems.stream()
+        .map(BaseDto::getId)
+        .filter(Objects::nonNull)
+        .collect(toSet());
+    List<RequisitionLineItemV2Dto> lineItems = dto.getLineItems().stream()
+        .filter(lineItem -> !draftLineItemIds.contains(lineItem.getId()))
+        .map(this::from)
+        .collect(toList());
+    lineItems.addAll(draftLineItems);
+    return lineItems;
   }
 
   private void initiateRequisitionNumber(SiglusRequisitionDto siglusRequisitionDto) {

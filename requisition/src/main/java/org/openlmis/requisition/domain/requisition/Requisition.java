@@ -895,40 +895,27 @@ public class Requisition extends BaseTimestampedEntity {
 
   // [SIGLUS change start]
   // [change reason]: create lineitem for add-product
-  public RequisitionLineItem constructLineItem(
-      RequisitionTemplate template,
-      Integer stockOnHand, Integer beginningBalance,
-      ApprovedProductDto productDto,
-      int numberOfPreviousPeriodsToAverage,
-      Map<UUID, Integer> idealStockAmounts,
-      List<StockCardRangeSummaryDto> stockCardRangeSummaries,
-      List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage,
-      List<ProcessingPeriodDto> periods,
-      ProofOfDeliveryDto pod,
-      Collection<ApprovedProductDto> fullSupplyProducts) {
+  public RequisitionLineItem constructLineItem(RequisitionTemplate template, Integer stockOnHand,
+      Integer beginningBalance, ApprovedProductDto productDto, int numberOfPreviousPeriodsToAverage,
+      Map<UUID, Integer> idealStockAmounts, List<StockCardRangeSummaryDto> stockCardRangeSummaries,
+      List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage, List<ProcessingPeriodDto> periods,
+      ProofOfDeliveryDto pod, Collection<ApprovedProductDto> fullSupplyProducts) {
     if (requisitionLineItems == null) {
       requisitionLineItems = new ArrayList<>();
     }
-
     RequisitionLineItem lineItem;
     if (template.isPopulateStockOnHandFromStockCards()) {
-      lineItem = buildLineItem(idealStockAmounts,
-          stockOnHand,
-          beginningBalance,
-          stockCardRangeSummaries,
-          stockCardRangeSummariesToAverage,
-          periods,
-          productDto);
+      lineItem = buildLineItem(idealStockAmounts, stockOnHand, beginningBalance, stockCardRangeSummaries,
+          stockCardRangeSummariesToAverage, periods, productDto);
     } else {
       lineItem = new RequisitionLineItem(this, productDto);
       lineItem.setIdealStockAmount(extractIdealStockAmount(idealStockAmounts, productDto));
-
       setLineItemBeginningBalance(lineItem);
       setLineItemTotalReceivedQuantity(pod, lineItem);
-
+      lineItem.setTotalConsumedQuantity(0);
+      lineItem.setStockOnHand(0);
       setPreviousAdjustedConsumptions(numberOfPreviousPeriodsToAverage);
     }
-
     return lineItem;
   }
 
@@ -952,6 +939,8 @@ public class Requisition extends BaseTimestampedEntity {
       // ... and in the end we use it to calculate beginning balance in a new line.
       requisitionLineItem.setBeginningBalance(
           LineItemFieldsCalculator.calculateBeginningBalance(previousLine));
+    } else {
+      requisitionLineItem.setBeginningBalance(0);
     }
   }
 
@@ -976,6 +965,8 @@ public class Requisition extends BaseTimestampedEntity {
             OpenLmisNumberUtils.zeroIfNull(proofOfDeliveryLine.getQuantityAccepted())
         );
       }
+    } else {
+      requisitionLineItem.setTotalReceivedQuantity(0);
     }
   }
 
@@ -987,25 +978,19 @@ public class Requisition extends BaseTimestampedEntity {
       List<StockCardRangeSummaryDto> stockCardRangeSummariesToAverage,
       List<ProcessingPeriodDto> periods,
       ApprovedProductDto product) {
-
     RequisitionLineItem lineItem = new RequisitionLineItem(this, product);
     lineItem.setIdealStockAmount(extractIdealStockAmount(idealStockAmounts, product));
     lineItem.setStockOnHand(initiateQuantity(stockOnHand));
     lineItem.setBeginningBalance(initiateQuantity(beginningBalance));
-
-    StockCardRangeSummaryDto summary =
-        findStockCardRangeSummary(stockCardRangeSummaries, lineItem.getOrderable().getId());
-
+    StockCardRangeSummaryDto summary = findStockCardRangeSummary(stockCardRangeSummaries,
+        lineItem.getOrderable().getId());
     setTotalReceivedQuantity(template, lineItem, summary);
     setTotalStockoutDays(lineItem, summary, numberOfMonthsInPeriod);
     setTotalConsumedQuantity(template, lineItem, summary);
-    StockCardRangeSummaryDto summaryToAverage =
-        findStockCardRangeSummary(stockCardRangeSummariesToAverage,
-            lineItem.getOrderable().getId());
-    setAverageConsumption(summaryToAverage, template, periods,
-        previousRequisitions, lineItem);
+    StockCardRangeSummaryDto summaryToAverage = findStockCardRangeSummary(stockCardRangeSummariesToAverage,
+        lineItem.getOrderable().getId());
+    setAverageConsumption(summaryToAverage, template, periods, previousRequisitions, lineItem);
     setTotalLossesAndAdjustments(template, lineItem, summary);
-
     return lineItem;
   }
 
@@ -1299,7 +1284,6 @@ public class Requisition extends BaseTimestampedEntity {
         .map(Requisition::getNonSkippedRequisitionLineItems)
         .flatMap(Collection::stream)
         .collect(Collectors.groupingBy(RequisitionLineItem::getOrderable));
-
     requisitionLineItems
         .forEach(line -> line.setPreviousAdjustedConsumptions(Optional
             .ofNullable(orderables.get(line.getOrderable()))
@@ -1309,7 +1293,6 @@ public class Requisition extends BaseTimestampedEntity {
             .filter(Objects::nonNull)
             .collect(toList())));
   }
-
   Map<VersionEntityReference, Object> getAllColumnsValuesByColumnName(String columnName) {
     return requisitionLineItems
         .stream()

@@ -22,12 +22,13 @@ public class KitConstants {
 
   private KitConstants() { }
 
-  public static final String HF_KIT_CODE = "26A01";
+  public static final String KIT_26A01 = "26A01";
+  public static final String KIT_26A02 = "26A02";
+  public static final String KIT_26B01 = "26B01";
+  public static final String KIT_26B02 = "26B02";
 
-  public static final String CHW_KIT_CODE = "26A02";
-
-  public static final List<String> US_KITS = Arrays.asList(HF_KIT_CODE, "26B01");
-
-  public static final List<String> APE_KITS = Arrays.asList(CHW_KIT_CODE, "26B02");
+  public static final List<String> US_KITS = Arrays.asList(KIT_26A01, KIT_26B01);
+  public static final List<String> APE_KITS = Arrays.asList(KIT_26A02, KIT_26B02);
+  public static final List<String> ALL_KITS = Arrays.asList(KIT_26A01, KIT_26A02, KIT_26B01, KIT_26B02);
 
 }
