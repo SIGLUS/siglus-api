@@ -586,7 +586,7 @@ public class AndroidRequisitionServiceTest {
     regimenIdSet.add(regimenId);
     when(regimenRepository.findByIdIn(regimenIdSet)).thenReturn(buildRegimens());
     when(regimenLineItemRepository.findByRequisitionIdIn(requisitionIdSet)).thenReturn(buildRegimenLineItems());
-    when(regimenSummaryLineItemRepository.findByRequisitionIds(requisitionIdSet))
+    when(regimenSummaryLineItemRepository.findByRequisitionIdIn(requisitionIdSet))
         .thenReturn(buildRegimenSummaryLineItems());
     when(patientLineItemRepository.findByRequisitionIdIn(requisitionIdSet)).thenReturn(buildPatientLineItems());
     when(patientLineItemMapper.from(buildPatientLineItems())).thenReturn(buildPatientGroupDtos());

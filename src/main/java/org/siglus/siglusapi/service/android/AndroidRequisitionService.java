@@ -439,7 +439,7 @@ public class AndroidRequisitionService {
   private Map<UUID, List<RegimenSummaryLineItemRequest>> buildIdToRegimenSummaryLineRequestsMap(
       Set<UUID> requisitionIdSet) {
     List<RegimenSummaryLineItem> regimenSummaryLineItems = regimenSummaryLineItemRepository
-        .findByRequisitionIds(requisitionIdSet);
+        .findByRequisitionIdIn(requisitionIdSet);
     Map<UUID, List<RegimenSummaryLineItem>> idToRegimenSummaryLineItem = regimenSummaryLineItems.stream()
         .collect(Collectors.groupingBy(RegimenSummaryLineItem::getRequisitionId));
     Map<UUID, List<RegimenSummaryLineItemRequest>> idToRegimenSummaryLineRequests = new HashMap<>();

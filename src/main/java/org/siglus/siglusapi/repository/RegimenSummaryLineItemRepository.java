@@ -20,16 +20,11 @@ import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 public interface RegimenSummaryLineItemRepository
     extends JpaRepository<RegimenSummaryLineItem, UUID> {
 
   List<RegimenSummaryLineItem> findByRequisitionId(UUID requisitionId);
 
-  @Query(value = "select rs.* from siglusintegration.regimen_summary_line_items rs "
-      + "where rs.requisitionid in :requisitionIdSet ", nativeQuery = true)
-  List<RegimenSummaryLineItem> findByRequisitionIds(@Param("requisitionIdSet") Set<UUID> requisitionIdSet);
-
+  List<RegimenSummaryLineItem> findByRequisitionIdIn(Set<UUID> requisitionIdSet);
 }
