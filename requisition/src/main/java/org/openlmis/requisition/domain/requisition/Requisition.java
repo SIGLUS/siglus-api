@@ -1293,6 +1293,7 @@ public class Requisition extends BaseTimestampedEntity {
             .filter(Objects::nonNull)
             .collect(toList())));
   }
+
   Map<VersionEntityReference, Object> getAllColumnsValuesByColumnName(String columnName) {
     return requisitionLineItems
         .stream()
