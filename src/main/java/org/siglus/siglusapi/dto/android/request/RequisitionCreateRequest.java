@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -50,6 +51,7 @@ public class RequisitionCreateRequest {
   @NotNull
   private LocalDate actualEndDate;
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   @NotNull
   private Integer consultationNumber;
 
@@ -58,4 +60,12 @@ public class RequisitionCreateRequest {
 
   @Valid
   private List<RequisitionSignatureRequest> signatures;
+
+  private String comments;
+
+  private List<RegimenLineItemRequest> regimenLineItems;
+
+  private List<RegimenSummaryLineItemRequest> regimenSummaryLineItems;
+
+  private List<PatientLineItemsRequest> patientLineItems;
 }

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,5 +24,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface PatientLineItemRepository extends JpaRepository<PatientLineItem, UUID> {
 
   List<PatientLineItem> findByRequisitionId(UUID requisitionId);
+
+  List<PatientLineItem> findByRequisitionIdIn(Set<UUID> requisitionIdSet);
 
 }

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,5 +24,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RegimenLineItemRepository extends JpaRepository<RegimenLineItem, UUID> {
 
   List<RegimenLineItem> findByRequisitionId(UUID requisitionId);
+
+  List<RegimenLineItem> findByRequisitionIdIn(Set<UUID> requisitionIdSet);
 
 }

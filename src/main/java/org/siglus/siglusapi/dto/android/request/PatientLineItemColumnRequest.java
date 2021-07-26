@@ -13,23 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto.android.request;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.NotBlank;
 
-public interface RegimenSummaryLineItemRepository
-    extends JpaRepository<RegimenSummaryLineItem, UUID> {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PatientLineItemColumnRequest {
 
-  List<RegimenSummaryLineItem> findByRequisitionId(UUID requisitionId);
+  @NotBlank
+  private String name;
 
-  @Query(value = "select rs.* from siglusintegration.regimen_summary_line_items rs "
-      + "where rs.requisitionid in :requisitionIdSet ", nativeQuery = true)
-  List<RegimenSummaryLineItem> findByRequisitionIds(@Param("requisitionIdSet") Set<UUID> requisitionIdSet);
+  @NotBlank
+  private Integer value;
 
+  private String tableName;
 }

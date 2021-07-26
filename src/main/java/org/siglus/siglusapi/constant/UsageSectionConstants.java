@@ -35,4 +35,36 @@ public class UsageSectionConstants {
     public static final String SERVICE_HF = "HF";
   }
 
+  public static class RegimenLineItems {
+    private RegimenLineItems() { }
+
+    public static final String COLUMN_NAME_PATIENT = "patients";
+    public static final String COLUMN_NAME_COMMUNITY = "community";
+  }
+
+  public static class PatientLineItems {
+    private PatientLineItems() { }
+
+    public static final String TABLE_DISPENSED = "table_dispensed";
+    public static final String TABLE_DISPENSED_KEY = "table_dispensed_key";
+
+    public static final String NEW_COLUMN = "new";
+    public static final String NEW_COLUMN_0 = "newColumn0";
+    public static final String NEW_COLUMN_1 = "newColumn1";
+    public static final String NEW_COLUMN_2 = "newColumn2";
+    public static final String NEW_COLUMN_3 = "newColumn3";
+    public static final String NEW_COLUMN_4 = "newColumn4";
+    public static final String NEW_COLUMN_5 = "newColumn5";
+
+    public static final String PATIENT_TYPE = "patientType";
+    public static final String NEW_SECTION_0 = "newSection0";
+    public static final String NEW_SECTION_1 = "newSection1";
+    public static final String NEW_SECTION_2 = "newSection2";
+    public static final String NEW_SECTION_3 = "newSection3";
+    public static final String NEW_SECTION_4 = "newSection4";
+
+    public static final String TOTAL = "total";
+
+  }
+
 }
