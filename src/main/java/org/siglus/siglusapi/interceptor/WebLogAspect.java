@@ -15,34 +15,18 @@
 
 package org.siglus.siglusapi.interceptor;
 
-import com.alibaba.fastjson.JSON;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jasperreports.data.http.RequestMethod;
 import org.apache.commons.lang.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.aspectj.lang.reflect.MethodSignature;
 import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.multipart.MultipartFile;
 
 @Aspect
 @Component
@@ -84,35 +68,6 @@ public class WebLogAspect {
       log.info("[Web][END] {} {}, {}, cost-time: {}ms", method, url, traceId, costTime);
     }
     return result;
-  }
-
-  private Object getRequestParam(ProceedingJoinPoint joinPoint, HttpServletRequest request) {
-    Object requestParam = null;
-    Method targetMethod = ((MethodSignature) joinPoint.getSignature()).getMethod();
-    if (targetMethod != null) {
-      Annotation[] annotations = targetMethod.getAnnotations();
-      for (Annotation annotation : annotations) {
-        if (getRequestMappingClasses().contains(annotation.annotationType())) {
-          requestParam = JSON.toJSON(request.getParameterMap());
-          break;
-        }
-      }
-    }
-    return requestParam;
-  }
-
-  private Object getRequestBody(ProceedingJoinPoint joinPoint, HttpServletRequest request) {
-    Object[] args = joinPoint.getArgs();
-    if (args == null || args.length == 0 || args[0] instanceof ServletRequest || args[0] instanceof ServletResponse
-        || args[0] instanceof MultipartFile || RequestMethod.GET.name().equals(request.getMethod())) {
-      return null;
-    }
-    return JSON.toJSON(args[0]);
-  }
-
-  private List<Object> getRequestMappingClasses() {
-    return Arrays.asList(RequestMapping.class, PostMapping.class, GetMapping.class, PutMapping.class,
-        DeleteMapping.class, PatchMapping.class);
   }
 
   private AndroidHeader getAndroidHeader(HttpServletRequest request) {
