@@ -32,7 +32,6 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -362,7 +361,6 @@ public class SiglusMeService {
     List<ProductResponse> filteredProducts = approvedProducts.stream()
         .filter(p -> filterByLastUpdated(p, lastSyncTime))
         .map(orderable -> mapper.toResponse(orderable, allProducts, programCodesByAdditionalProductId))
-        .sorted(Comparator.comparing(ProductResponse::getLastUpdated).reversed())
         .collect(toList());
     syncResponse.setProducts(filteredProducts);
     filteredProducts.stream()
