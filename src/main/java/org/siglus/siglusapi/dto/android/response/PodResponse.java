@@ -24,6 +24,8 @@ public class PodResponse {
 
   private OrderBasicResponse order;
 
+  private LocalDate shippedDate;
+
   private String deliveredBy;
 
   private String receivedBy;

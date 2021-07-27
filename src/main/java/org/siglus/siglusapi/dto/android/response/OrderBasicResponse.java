@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
-import java.time.LocalDate;
 import lombok.Data;
 
 @Data
@@ -27,7 +26,9 @@ public class OrderBasicResponse {
 
   private String status;
 
-  private LocalDate date;
+  private Long createdDate;
+
+  private Long lastModifiedDate;
 
   private RequisitionBasicResponse requisition;
 

@@ -148,6 +148,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     ReflectionTestUtils.setField(service, "podMapper", podMapper);
     ReflectionTestUtils.setField(service, "podLotLineMapper", podLotLineMapper);
     objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
     objectMapper.registerModule(new JavaTimeModule());
     jackson2HttpMessageConverter.setObjectMapper(objectMapper);
     SiglusMeController controller = new SiglusMeController(service);
@@ -175,12 +176,14 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
 
     // then
     resultActions.andExpect(status().isOk())
+        .andExpect(jsonPath("[0].shippedDate").value("2020-09-02"))
         .andExpect(jsonPath("[0].receivedDate").value("2020-10-01"))
         .andExpect(jsonPath("[0].deliveredBy").value("qla"))
         .andExpect(jsonPath("[0].receivedBy").value("zjj"))
         .andExpect(jsonPath("[0].order.code").value("ORDER-AS20JF"))
         .andExpect(jsonPath("[0].order.supplyFacilityName").value("Centro de Saude de ntopa"))
-        .andExpect(jsonPath("[0].order.date").value("2020-09-02"))
+        .andExpect(jsonPath("[0].order.createdDate").value(1598976000000L))
+        .andExpect(jsonPath("[0].order.lastModifiedDate").value(1599012900000L))
         .andExpect(jsonPath("[0].order.status").value("RECEIVED"))
         .andExpect(jsonPath("[0].order.requisition.number").value("RNR-NO01050119-0"))
         .andExpect(jsonPath("[0].order.requisition.isEmergency").value("false"))
@@ -196,12 +199,14 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .andExpect(jsonPath("[0].products[0].lots[0].acceptedQuantity").value(10))
         .andExpect(jsonPath("[0].products[0].lots[0].rejectedReason").value("reject"))
         .andExpect(jsonPath("[0].products[0].lots[0].notes").value("123"))
+        .andExpect(jsonPath("[1].shippedDate").value("2020-10-02"))
         .andExpect(jsonPath("[1].receivedDate").value("2020-11-01"))
         .andExpect(jsonPath("[1].deliveredBy").value("qla"))
         .andExpect(jsonPath("[1].receivedBy").value("zjj"))
         .andExpect(jsonPath("[1].order.code").value("ORDER-AS21JF"))
         .andExpect(jsonPath("[1].order.supplyFacilityName").value("Centro de Saude de ntopa"))
-        .andExpect(jsonPath("[1].order.date").value("2020-10-02"))
+        .andExpect(jsonPath("[1].order.createdDate").value(1601568000000L))
+        .andExpect(jsonPath("[1].order.lastModifiedDate").value(1601604900000L))
         .andExpect(jsonPath("[1].order.status").value("RECEIVED"))
         .andExpect(jsonPath("[1].order.requisition.number").value("RNR-NO01050120-0"))
         .andExpect(jsonPath("[1].order.requisition.isEmergency").value("false"))
@@ -217,12 +222,14 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .andExpect(jsonPath("[1].products[0].lots[0].acceptedQuantity").value(20))
         .andExpect(jsonPath("[1].products[0].lots[0].rejectedReason").isEmpty())
         .andExpect(jsonPath("[1].products[0].lots[0].notes").value("123"))
+        .andExpect(jsonPath("[2].shippedDate").value("2020-11-02"))
         .andExpect(jsonPath("[2].receivedDate").isEmpty())
         .andExpect(jsonPath("[2].deliveredBy").isEmpty())
         .andExpect(jsonPath("[2].receivedBy").isEmpty())
         .andExpect(jsonPath("[2].order.code").value("ORDER-AS22JF"))
         .andExpect(jsonPath("[2].order.supplyFacilityName").value("Centro de Saude de ntopa"))
-        .andExpect(jsonPath("[2].order.date").value("2020-11-02"))
+        .andExpect(jsonPath("[2].order.createdDate").value(1604246400000L))
+        .andExpect(jsonPath("[2].order.lastModifiedDate").value(1604283300000L))
         .andExpect(jsonPath("[2].order.status").value("SHIPPED"))
         .andExpect(jsonPath("[2].order.requisition.number").value("RNR-NO01050121-0"))
         .andExpect(jsonPath("[2].order.requisition.isEmergency").value("false"))
@@ -374,6 +381,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(pod1.getReceivedBy()).thenReturn("zjj");
     Shipment shipment1 = mock(Shipment.class);
     when(pod1.getShipment()).thenReturn(shipment1);
+    when(shipment1.getShippedDate()).thenReturn(LocalDate.of(2020, 9, 2).atStartOfDay(ZoneId.systemDefault()));
     Order order1 = mock(Order.class);
     when(shipment1.getOrder()).thenReturn(order1);
     ShipmentLineItem shipment1Line1 = mock(ShipmentLineItem.class);
@@ -402,6 +410,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(pod2.getShipment()).thenReturn(shipment2);
     Order order2 = mock(Order.class);
     when(shipment2.getOrder()).thenReturn(order2);
+    when(shipment2.getShippedDate()).thenReturn(LocalDate.of(2020, 10, 2).atStartOfDay(ZoneId.systemDefault()));
     ShipmentLineItem shipment2Line1 = mock(ShipmentLineItem.class);
     when(shipment2Line1.getLotId()).thenReturn(product2Lot1Id);
     when(shipment2Line1.getQuantityShipped()).thenReturn(20L);
@@ -424,6 +433,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(pod3.getShipment()).thenReturn(shipment3);
     Order order3 = mock(Order.class);
     when(shipment3.getOrder()).thenReturn(order3);
+    when(shipment3.getShippedDate()).thenReturn(LocalDate.of(2020, 11, 2).atStartOfDay(ZoneId.systemDefault()));
     when(order3.getId()).thenReturn(order3Id);
     ShipmentLineItem shipment3Line1 = mock(ShipmentLineItem.class);
     when(shipment3Line1.getLotId()).thenReturn(product1Lot1Id);
@@ -459,6 +469,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(order1.getId()).thenReturn(order1Id);
     when(order1.getOrderCode()).thenReturn("ORDER-AS20JF");
     when(order1.getCreatedDate()).thenReturn(LocalDate.of(2020, 9, 2).atStartOfDay(ZoneId.systemDefault()));
+    when(order1.getLastUpdatedDate())
+        .thenReturn(LocalDate.of(2020, 9, 2).atTime(10, 15).atZone(ZoneId.systemDefault()));
     when(order1.getStatus()).thenReturn(OrderStatus.RECEIVED);
     when(order1.getRequisitionNumber()).thenReturn("RNR-NO01050119-0");
     when(order1.getEmergency()).thenReturn(false);
@@ -483,6 +495,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(order2.getId()).thenReturn(order2Id);
     when(order2.getOrderCode()).thenReturn("ORDER-AS21JF");
     when(order2.getCreatedDate()).thenReturn(LocalDate.of(2020, 10, 2).atStartOfDay(ZoneId.systemDefault()));
+    when(order2.getLastUpdatedDate())
+        .thenReturn(LocalDate.of(2020, 10, 2).atTime(10, 15).atZone(ZoneId.systemDefault()));
     when(order2.getStatus()).thenReturn(OrderStatus.RECEIVED);
     when(order2.getRequisitionNumber()).thenReturn("RNR-NO01050120-0");
     when(order2.getEmergency()).thenReturn(false);
@@ -507,6 +521,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(order3.getId()).thenReturn(order3Id);
     when(order3.getOrderCode()).thenReturn("ORDER-AS22JF");
     when(order3.getCreatedDate()).thenReturn(LocalDate.of(2020, 11, 2).atStartOfDay(ZoneId.systemDefault()));
+    when(order3.getLastUpdatedDate())
+        .thenReturn(LocalDate.of(2020, 11, 2).atTime(10, 15).atZone(ZoneId.systemDefault()));
     when(order3.getStatus()).thenReturn(OrderStatus.SHIPPED);
     when(order3.getRequisitionNumber()).thenReturn("RNR-NO01050121-0");
     when(order3.getEmergency()).thenReturn(false);

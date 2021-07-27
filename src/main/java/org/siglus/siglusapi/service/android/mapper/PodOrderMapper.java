@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.android.mapper;
 
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -35,13 +34,13 @@ public interface PodOrderMapper {
     return toOrderResponse(allOrders.get(orderId), allOrders);
   }
 
-  default LocalDate toLocalDate(ZonedDateTime dateTime) {
-    return dateTime.toLocalDate();
+  default long toEpochMilli(ZonedDateTime dateTime) {
+    return dateTime.toInstant().toEpochMilli();
   }
 
   @Mapping(target = "code", source = "orderCode")
+  @Mapping(target = "lastModifiedDate", source = "lastUpdatedDate")
   @Mapping(target = "supplyFacilityName", source = "supplyingFacility.name")
-  @Mapping(target = "date", source = "createdDate")
   @Mapping(target = "requisition", source = "id")
   OrderBasicResponse toOrderResponse(OrderDto order, @Context Map<UUID, OrderDto> allOrders);
 

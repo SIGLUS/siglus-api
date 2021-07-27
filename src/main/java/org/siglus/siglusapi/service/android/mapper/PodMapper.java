@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service.android.mapper;
 
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.UUID;
 import org.mapstruct.Context;
@@ -29,8 +31,13 @@ import org.siglus.siglusapi.dto.android.response.PodResponse;
 @Mapper(componentModel = "spring", uses = {PodOrderMapper.class, PodProductLineMapper.class})
 public interface PodMapper {
 
+  default LocalDate toLocalDate(ZonedDateTime dateTime) {
+    return dateTime.toLocalDate();
+  }
+
   @Mapping(target = "order", source = "shipment.order.id")
   @Mapping(target = "products", source = "shipment.order.id")
+  @Mapping(target = "shippedDate", source = "shipment.shippedDate")
   @Mapping(target = "documentNo", source = "shipment", qualifiedByName = "toDocumentNo")
   PodResponse toResponse(ProofOfDelivery pod, @Context Map<UUID, OrderDto> allOrders);
 
