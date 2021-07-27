@@ -48,6 +48,7 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -465,9 +466,12 @@ public class SiglusMeService {
       Map<UUID, LotDto> lotsById, Map<UUID, String> reasonNamesById) {
     PodResponse podResponse = podMapper.toResponse(pod, allOrders);
     podResponse.getProducts().forEach(productLine -> {
+      Map<UUID, ShipmentLineItem> shipmentLineMap = pod.getShipment().getLineItems().stream()
+          .filter(podLine -> productCodesById.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
+          .collect(toMap(ShipmentLineItem::getLotId, Function.identity()));
       List<PodLotLineResponse> lotLines = pod.getLineItems().stream()
           .filter(podLine -> productCodesById.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
-          .map(l -> podLotLineMapper.toLotResponse(l, lotsById, reasonNamesById))
+          .map(l -> podLotLineMapper.toLotResponse(l, shipmentLineMap.get(l.getLotId()), lotsById, reasonNamesById))
           .collect(toList());
       productLine.setLots(lotLines);
     });

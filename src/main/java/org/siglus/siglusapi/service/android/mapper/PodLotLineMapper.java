@@ -22,6 +22,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
 
@@ -29,11 +30,11 @@ import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
 public interface PodLotLineMapper {
 
   @Named("toShippedQuantity")
-  default Integer toShippedQuantity(ProofOfDeliveryLineItem podLine) {
-    if (podLine.getQuantityAccepted() == null || podLine.getQuantityRejected() == null) {
+  default Integer toShippedQuantity(ProofOfDeliveryLineItem podLine, @Context ShipmentLineItem shipmentLine) {
+    if (shipmentLine == null) {
       return null;
     }
-    return podLine.getQuantityAccepted() + podLine.getQuantityRejected();
+    return shipmentLine.getQuantityShipped().intValue();
   }
 
   @Named("toReason")
@@ -45,7 +46,8 @@ public interface PodLotLineMapper {
   @Mapping(target = "shippedQuantity", source = ".", qualifiedByName = "toShippedQuantity")
   @Mapping(target = "acceptedQuantity", source = "quantityAccepted")
   @Mapping(target = "rejectedReason", source = "rejectionReasonId", qualifiedByName = "toReason")
-  PodLotLineResponse toLotResponse(ProofOfDeliveryLineItem podLine, @Context Map<UUID, LotDto> allLots,
+  PodLotLineResponse toLotResponse(ProofOfDeliveryLineItem podLine,
+      @Context ShipmentLineItem shipmentLine, @Context Map<UUID, LotDto> allLots,
       @Context Map<UUID, String> allReasons);
 
 }

@@ -50,6 +50,7 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
@@ -233,7 +234,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .andExpect(jsonPath("[2].products[0].partialFulfilledQuantity").value(0))
         .andExpect(jsonPath("[2].products[0].lots[0].lot.code").value("SME-LOTE-22A01-062023"))
         .andExpect(jsonPath("[2].products[0].lots[0].lot.expirationDate").value("2023-06-30"))
-        .andExpect(jsonPath("[2].products[0].lots[0].shippedQuantity").isEmpty())
+        .andExpect(jsonPath("[2].products[0].lots[0].shippedQuantity").value(20))
         .andExpect(jsonPath("[2].products[0].lots[0].acceptedQuantity").isEmpty())
         .andExpect(jsonPath("[2].products[0].lots[0].rejectedReason").isEmpty())
         .andExpect(jsonPath("[2].products[0].lots[0].notes").isEmpty());
@@ -375,6 +376,11 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(pod1.getShipment()).thenReturn(shipment1);
     Order order1 = mock(Order.class);
     when(shipment1.getOrder()).thenReturn(order1);
+    ShipmentLineItem shipment1Line1 = mock(ShipmentLineItem.class);
+    when(shipment1Line1.getLotId()).thenReturn(product1Lot1Id);
+    when(shipment1Line1.getQuantityShipped()).thenReturn(20L);
+    when(shipment1Line1.getOrderable()).thenReturn(orderable1);
+    when(shipment1.getLineItems()).thenReturn(singletonList(shipment1Line1));
     when(order1.getId()).thenReturn(order1Id);
     ProofOfDeliveryLineItem pod1Line1 = mock(ProofOfDeliveryLineItem.class);
     when(pod1Line1.getLotId()).thenReturn(product1Lot1Id);
@@ -396,6 +402,11 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(pod2.getShipment()).thenReturn(shipment2);
     Order order2 = mock(Order.class);
     when(shipment2.getOrder()).thenReturn(order2);
+    ShipmentLineItem shipment2Line1 = mock(ShipmentLineItem.class);
+    when(shipment2Line1.getLotId()).thenReturn(product2Lot1Id);
+    when(shipment2Line1.getQuantityShipped()).thenReturn(20L);
+    when(shipment2Line1.getOrderable()).thenReturn(orderable2);
+    when(shipment2.getLineItems()).thenReturn(singletonList(shipment2Line1));
     when(order2.getId()).thenReturn(order2Id);
     ProofOfDeliveryLineItem pod2Line1 = mock(ProofOfDeliveryLineItem.class);
     when(pod2Line1.getLotId()).thenReturn(product2Lot1Id);
@@ -414,6 +425,11 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     Order order3 = mock(Order.class);
     when(shipment3.getOrder()).thenReturn(order3);
     when(order3.getId()).thenReturn(order3Id);
+    ShipmentLineItem shipment3Line1 = mock(ShipmentLineItem.class);
+    when(shipment3Line1.getLotId()).thenReturn(product1Lot1Id);
+    when(shipment3Line1.getQuantityShipped()).thenReturn(20L);
+    when(shipment3Line1.getOrderable()).thenReturn(orderable1);
+    when(shipment3.getLineItems()).thenReturn(singletonList(shipment3Line1));
     ProofOfDeliveryLineItem pod3Line1 = mock(ProofOfDeliveryLineItem.class);
     when(pod3Line1.getLotId()).thenReturn(product1Lot1Id);
     when(pod3Line1.getQuantityAccepted()).thenReturn(null);
