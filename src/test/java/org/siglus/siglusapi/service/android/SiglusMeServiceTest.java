@@ -549,13 +549,20 @@ public class SiglusMeServiceTest {
     assertEquals(latestTime.toInstant().toEpochMilli(), (long) syncResponse.getLastSyncTime());
     assertNotNull(syncResponse.getProducts());
     assertEquals(3, syncResponse.getProducts().size());
-    ProductResponse product1 = syncResponse.getProducts().get(0);
+
+    ProductResponse product1 = syncResponse.getProducts().stream().filter(p -> "product 1".equals(p.getProductCode()))
+        .findFirst().orElse(null);
+    assertNotNull(product1);
     assertProduct1(product1);
 
-    ProductResponse product2 = syncResponse.getProducts().get(1);
+    ProductResponse product2 = syncResponse.getProducts().stream().filter(p -> "product 2".equals(p.getProductCode()))
+        .findFirst().orElse(null);
+    assertNotNull(product2);
     assertProduct2(product2);
 
-    ProductResponse product3 = syncResponse.getProducts().get(2);
+    ProductResponse product3 = syncResponse.getProducts().stream().filter(p -> "product 3".equals(p.getProductCode()))
+        .findFirst().orElse(null);
+    assertNotNull(product3);
     assertProduct3(product3);
   }
 
@@ -569,11 +576,15 @@ public class SiglusMeServiceTest {
     assertEquals(latestTime.toInstant().toEpochMilli(), (long) syncResponse.getLastSyncTime());
     assertNotNull(syncResponse.getProducts());
     assertEquals(2, syncResponse.getProducts().size());
-    ProductResponse product1 = syncResponse.getProducts().get(0);
-    assertProduct2(product1);
+    ProductResponse product2 = syncResponse.getProducts().stream().filter(p -> "product 2".equals(p.getProductCode()))
+        .findFirst().orElse(null);
+    assertNotNull(product2);
+    assertProduct2(product2);
 
-    ProductResponse product2 = syncResponse.getProducts().get(1);
-    assertProduct3(product2);
+    ProductResponse product3 = syncResponse.getProducts().stream().filter(p -> "product 3".equals(p.getProductCode()))
+        .findFirst().orElse(null);
+    assertNotNull(product3);
+    assertProduct3(product3);
   }
 
   @Test
