@@ -76,6 +76,7 @@ import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ArchivedProductRepository;
+import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
@@ -140,6 +141,8 @@ public class SiglusMeServiceTest {
 
   @Mock
   private SupportedProgramsHelper programsHelper;
+  @Mock
+  private ProgramAdditionalOrderableRepository additionalProductRepo;
 
   @Mock
   private ProgramReferenceDataService programDataService;

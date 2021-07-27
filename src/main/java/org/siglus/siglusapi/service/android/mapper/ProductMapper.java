@@ -30,17 +30,25 @@ import org.siglus.siglusapi.dto.android.response.ProductResponse;
 public interface ProductMapper {
 
   @Mapping(target = "programCode", source = ".", qualifiedByName = "getProgramCode")
+  @Mapping(target = "additionalProgramCode", source = "id", qualifiedByName = "getAdditionalProgramCode")
   @Mapping(target = "active", expression = "java(parseKey(domain, \"active\", true))")
   @Mapping(target = "isBasic", expression = "java(parseKey(domain, \"isBasic\", false))")
   @Mapping(target = "isNos", expression = "java(parseKey(domain, \"isNos\", false))")
   @Mapping(target = "isHiv", expression = "java(parseKey(domain, \"isHiv\", false))")
   @Mapping(target = "category", source = ".", qualifiedByName = "getCategory")
   @Mapping(target = "lastUpdated", source = ".", qualifiedByName = "getLastUpdated")
-  ProductResponse toResponse(OrderableDto domain, @Context Map<UUID, OrderableDto> allProducts);
+  ProductResponse toResponse(OrderableDto domain, @Context Map<UUID, OrderableDto> allProducts,
+      @Context Map<UUID, String> programCodesByAdditionalProductId);
 
   @Named("getProgramCode")
   default String getProgramCode(OrderableDto domain) {
     return (String) domain.getExtraData().get("programCode");
+  }
+
+  @Named("getAdditionalProgramCode")
+  default String getAdditionalProgramCode(UUID productId,
+      @Context Map<UUID, String> programCodesByAdditionalProductId) {
+    return programCodesByAdditionalProductId.get(productId);
   }
 
   default Boolean parseKey(OrderableDto orderable, String key, boolean defaultValue) {

@@ -33,6 +33,7 @@ public class ProductResponse {
   private Boolean roundToZero;
   private String category;
   private String programCode;
+  private String additionalProgramCode;
   private Boolean isKit;
   private List<ProductChildResponse> children = Collections.emptyList();
   private Boolean isBasic;

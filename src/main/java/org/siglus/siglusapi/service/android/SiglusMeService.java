@@ -32,6 +32,7 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,6 +54,7 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicOrderableDto;
+import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
@@ -63,6 +65,7 @@ import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.BaseDto;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.LotDto;
@@ -70,6 +73,7 @@ import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
+import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.SiglusAuthenticationHelper;
@@ -265,6 +269,7 @@ public class SiglusMeService {
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final SiglusAuthenticationHelper authHelper;
   private final SupportedProgramsHelper programsHelper;
+  private final ProgramAdditionalOrderableRepository additionalProductRepo;
   private final ProgramReferenceDataService programDataService;
   private final AppInfoRepository appInfoRepository;
   private final ProductMapper mapper;
@@ -336,8 +341,15 @@ public class SiglusMeService {
     Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
 
-    List<OrderableDto> approvedProducts = programsHelper
-        .findUserSupportedPrograms().stream()
+    Map<UUID, String> programCodesById = programsHelper.findUserSupportedPrograms().stream()
+        .map(programDataService::findOne)
+        .collect(toMap(ProgramDto::getId, BasicProgramDto::getCode));
+
+    Map<UUID, String> programCodesByAdditionalProductId = additionalProductRepo.findAll().stream()
+        .collect(
+            toMap(ProgramAdditionalOrderable::getAdditionalOrderableId, p -> programCodesById.get(p.getProgramId())));
+
+    List<OrderableDto> approvedProducts = programCodesById.keySet().stream()
         .map(programDataService::findOne)
         .map(program -> getProgramProducts(homeFacilityId, program))
         .flatMap(Collection::stream)
@@ -349,7 +361,8 @@ public class SiglusMeService {
         .collect(toList());
     List<ProductResponse> filteredProducts = approvedProducts.stream()
         .filter(p -> filterByLastUpdated(p, lastSyncTime))
-        .map(orderable -> mapper.toResponse(orderable, allProducts))
+        .map(orderable -> mapper.toResponse(orderable, allProducts, programCodesByAdditionalProductId))
+        .sorted(Comparator.comparing(ProductResponse::getLastUpdated).reversed())
         .collect(toList());
     syncResponse.setProducts(filteredProducts);
     filteredProducts.stream()
@@ -746,7 +759,7 @@ public class SiglusMeService {
         .map(OrderableDto::getMeta)
         .map(MetadataDto::getLastUpdated)
         .map(ChronoZonedDateTime::toInstant)
-        .map(lastUpdated -> !lastUpdated.isBefore(lastSyncTime))
+        .map(lastUpdated -> lastUpdated.isAfter(lastSyncTime))
         .orElse(true);
   }
 
