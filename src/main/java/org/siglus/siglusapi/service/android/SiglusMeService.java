@@ -46,7 +46,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.BaseEntity;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
@@ -441,15 +440,17 @@ public class SiglusMeService {
         .map(orderService::searchOrderByIdWithoutProducts)
         .collect(toMap(o -> o.getOrder().getId(), SiglusOrderDto::getOrder));
     Collection<UUID> productIds = pods.stream()
-        .map(ProofOfDelivery::getLineItems).flatMap(Collection::stream)
-        .map(ProofOfDeliveryLineItem::getOrderable)
+        .map(ProofOfDelivery::getShipment)
+        .map(Shipment::getLineItems).flatMap(Collection::stream)
+        .map(ShipmentLineItem::getOrderable)
         .map(VersionEntityReference::getId)
         .collect(Collectors.toSet());
     Map<UUID, String> productCodesById = orderableDataService.findByIds(productIds).stream()
         .collect(toMap(BaseDto::getId, OrderableDto::getProductCode));
     Collection<UUID> lotIds = pods.stream()
-        .map(ProofOfDelivery::getLineItems).flatMap(Collection::stream)
-        .map(ProofOfDeliveryLineItem::getLotId)
+        .map(ProofOfDelivery::getShipment)
+        .map(Shipment::getLineItems).flatMap(Collection::stream)
+        .map(ShipmentLineItem::getLotId)
         .collect(Collectors.toSet());
     Map<UUID, LotDto> lotsById = lotReferenceDataService.findByIds(lotIds).stream()
         .collect(toMap(BaseDto::getId, Function.identity()));
