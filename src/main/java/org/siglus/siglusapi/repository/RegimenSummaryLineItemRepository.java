@@ -26,5 +26,5 @@ public interface RegimenSummaryLineItemRepository
 
   List<RegimenSummaryLineItem> findByRequisitionId(UUID requisitionId);
 
-  List<RegimenSummaryLineItem> findByRequisitionIdIn(Set<UUID> requisitionIdSet);
+  List<RegimenSummaryLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 }

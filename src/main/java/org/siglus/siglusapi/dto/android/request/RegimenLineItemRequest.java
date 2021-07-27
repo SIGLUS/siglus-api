@@ -15,12 +15,27 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_COMMUNITY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_PATIENT;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.constant.FieldConstants;
+import org.siglus.siglusapi.domain.RegimenLineItem;
+import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
+import org.siglus.siglusapi.dto.RegimenDto;
+import org.siglus.siglusapi.dto.RegimenLineDto;
+import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
+import org.siglus.siglusapi.dto.android.androidenum.RegimenSummaryCode;
+import org.springframework.util.StringUtils;
 
 @Data
 @Builder
@@ -40,4 +55,33 @@ public class RegimenLineItemRequest {
   @NotNull
   @Min(value = 0)
   private Integer comunitaryPharmacy;
+
+  public static List<RegimenLineItemRequest> from(List<RegimenLineItem> regimenLineItems,
+      Map<UUID, RegimenDto> idToRegimenDto) {
+    List<RegimenLineDto> regimenLineDtos = RegimenLineDto.from(regimenLineItems, idToRegimenDto);
+    List<RegimenLineItemRequest> regimenLineItemRequests = regimenLineDtos.stream()
+        .filter(regimenLineDto -> StringUtils.isEmpty(regimenLineDto.getName()))
+        .map(regimenLineDto -> RegimenLineItemRequest.builder()
+            .name(regimenLineDto.getRegimen().getFullProductName())
+            .code(regimenLineDto.getRegimen().getCode())
+            .comunitaryPharmacy(regimenLineDto.getColumns().get(COLUMN_NAME_COMMUNITY).getValue())
+            .patientsOnTreatment(regimenLineDto.getColumns().get(COLUMN_NAME_PATIENT).getValue())
+            .build())
+        .collect(Collectors.toList());
+    return regimenLineItemRequests;
+  }
+
+  public static List<RegimenLineItemRequest> from(List<RegimenSummaryLineItem> regimenSummaryLineItems) {
+    List<RegimenSummaryLineDto> regimenSummaryLineDtos = RegimenSummaryLineDto.from(regimenSummaryLineItems);
+    List<RegimenLineItemRequest> regimenLineItemRequests = regimenSummaryLineDtos.stream()
+        .filter(regimenSummaryLineDto -> !regimenSummaryLineDto.getName().equals(FieldConstants.TOTAL))
+        .map(
+            regimenSummaryLineDto -> RegimenLineItemRequest.builder()
+                .code(RegimenSummaryCode.findKeyByValue(regimenSummaryLineDto.getName()))
+                .comunitaryPharmacy(regimenSummaryLineDto.getColumns().get(COLUMN_NAME_COMMUNITY).getValue())
+                .patientsOnTreatment(regimenSummaryLineDto.getColumns().get(COLUMN_NAME_PATIENT).getValue())
+                .build()
+        ).collect(Collectors.toList());
+    return regimenLineItemRequests;
+  }
 }

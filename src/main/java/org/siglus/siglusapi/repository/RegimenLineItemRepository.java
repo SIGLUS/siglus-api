@@ -25,6 +25,6 @@ public interface RegimenLineItemRepository extends JpaRepository<RegimenLineItem
 
   List<RegimenLineItem> findByRequisitionId(UUID requisitionId);
 
-  List<RegimenLineItem> findByRequisitionIdIn(Set<UUID> requisitionIdSet);
+  List<RegimenLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
 }

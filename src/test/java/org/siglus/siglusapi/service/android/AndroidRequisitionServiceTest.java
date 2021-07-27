@@ -367,7 +367,15 @@ public class AndroidRequisitionServiceTest {
     assertEquals("yyd1", signatureMap.get("submit"));
     assertEquals("yyd2", signatureMap.get("authorize"));
     assertEquals("yyd3", signatureMap.get("approve"));
+  }
 
+  @Test
+  public void shouldGetMmiaRequisitionResponseWhenByFacilityIdAndStartDate() {
+    // when
+    RequisitionResponse requisitionResponse = service
+        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), "2021-07-13", orderableIdToCode);
+
+    // then
     RequisitionCreateRequest mmiaResponse = requisitionResponse.getRequisitionResponseList().get(1);
     List<RegimenLineItemRequest> regimenLineItemRequests = mmiaResponse.getRegimenLineItems();
     assertEquals("1alt1", regimenLineItemRequests.get(0).getCode());
@@ -458,7 +466,7 @@ public class AndroidRequisitionServiceTest {
     v2Dto.setId(requisitionId);
     v2Dto.setProgram(new ObjectReferenceDto(programId));
     v2Dto.setEmergency(true);
-    v2Dto.setStatus(RequisitionStatus.SUBMITTED);
+    v2Dto.setStatus(RequisitionStatus.AUTHORIZED);
 
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId)).thenReturn(v2Dto);
 
@@ -625,7 +633,7 @@ public class AndroidRequisitionServiceTest {
     v2Dto.setTemplate(templateDto);
     v2Dto.setId(requisitionIdMmia);
     v2Dto.setDraftStatusMessage("comments");
-    v2Dto.setStatus(RequisitionStatus.SUBMITTED);
+    v2Dto.setStatus(RequisitionStatus.AUTHORIZED);
     v2Dto.setProgram(new ObjectReferenceDto(programIdMmia));
     v2Dto.setEmergency(false);
     return v2Dto;

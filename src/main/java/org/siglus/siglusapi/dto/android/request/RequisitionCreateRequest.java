@@ -52,7 +52,6 @@ public class RequisitionCreateRequest {
   @NotNull
   private LocalDate actualEndDate;
 
-  @JsonInclude(JsonInclude.Include.NON_NULL)
   private Integer consultationNumber;
 
   @Valid

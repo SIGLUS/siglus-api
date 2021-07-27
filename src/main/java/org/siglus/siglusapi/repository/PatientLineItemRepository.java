@@ -25,6 +25,6 @@ public interface PatientLineItemRepository extends JpaRepository<PatientLineItem
 
   List<PatientLineItem> findByRequisitionId(UUID requisitionId);
 
-  List<PatientLineItem> findByRequisitionIdIn(Set<UUID> requisitionIdSet);
+  List<PatientLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
 }

@@ -212,15 +212,12 @@ public class AndroidRequisitionService {
       Map<UUID, String> orderableIdToCode) {
     List<RequisitionExtension> requisitionExtensions = requisitionExtensionRepository
         .searchRequisitionIdByFacilityAndDate(facilityId, startDate);
-
-    Set<UUID> requisitionIdSet = requisitionExtensions.stream().map(RequisitionExtension::getRequisitionId)
+    Set<UUID> requisitionIds = requisitionExtensions.stream().map(RequisitionExtension::getRequisitionId)
         .collect(Collectors.toSet());
-
-    Map<UUID, List<RegimenLineItemRequest>> idToRegimenLines = buildIdToRegimenLineRequestsMap(requisitionIdSet);
+    Map<UUID, List<RegimenLineItemRequest>> idToRegimenLines = buildIdToRegimenLineRequestsMap(requisitionIds);
     Map<UUID, List<RegimenLineItemRequest>> idToRegimenSummaryLines = buildIdToRegimenSummaryLineRequestsMap(
-        requisitionIdSet);
-    Map<UUID, List<PatientLineItemsRequest>> idToPatientLines = buildIdToPatientLineRequestsMap(requisitionIdSet);
-
+        requisitionIds);
+    Map<UUID, List<PatientLineItemsRequest>> idToPatientLines = buildIdToPatientLineRequestsMap(requisitionIds);
     List<RequisitionCreateRequest> requisitionCreateRequests = new ArrayList<>();
 
     requisitionExtensions.forEach(
@@ -228,7 +225,7 @@ public class AndroidRequisitionService {
           RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
               .searchRequisition(extension.getRequisitionId());
           if (!isAndroidTemplate(requisitionV2Dto.getTemplate().getId())
-              || requisitionV2Dto.getStatus().equals(RequisitionStatus.INITIATED)) {
+              || !requisitionV2Dto.getStatus().isAuthorized()) {
             return;
           }
           RequisitionCreateRequest requisitionCreateRequest = RequisitionCreateRequest.builder()
@@ -277,79 +274,45 @@ public class AndroidRequisitionService {
     return androidTemplateSet.contains(programTemplatedId);
   }
 
-  private Map<UUID, List<RegimenLineItemRequest>> buildIdToRegimenLineRequestsMap(Set<UUID> requisitionIdSet) {
-    List<RegimenLineItem> regimenLineItems = regimenLineItemRepository.findByRequisitionIdIn(requisitionIdSet);
-    Set<UUID> regimenIds = regimenLineItems.stream()
-        .map(RegimenLineItem::getRegimenId)
-        .filter(Objects::nonNull)
+  private Map<UUID, List<RegimenLineItemRequest>> buildIdToRegimenLineRequestsMap(Set<UUID> requisitionIds) {
+    List<RegimenLineItem> regimenLineItems = regimenLineItemRepository.findByRequisitionIdIn(requisitionIds);
+    Set<UUID> regimenIds = regimenLineItems.stream().map(RegimenLineItem::getRegimenId).filter(Objects::nonNull)
         .collect(Collectors.toSet());
-
     List<Regimen> regimens = regimenRepository.findByIdIn(regimenIds);
-
-    Map<UUID, RegimenDto> idToRegimenDto = regimens.stream()
-        .map(RegimenDto::from)
+    Map<UUID, RegimenDto> idToRegimenDto = regimens.stream().map(RegimenDto::from)
         .collect(Collectors.toMap(RegimenDto::getId, Function.identity()));
-
     Map<UUID, List<RegimenLineItem>> idToRegimenLineItem = regimenLineItems.stream()
         .collect(Collectors.groupingBy(RegimenLineItem::getRequisitionId));
-
-    Map<UUID, List<RegimenLineItemRequest>> idToRegimenLineRequest = new HashMap<>();
-
-    idToRegimenLineItem.forEach((requisitionId, lineItems) -> {
-      List<RegimenLineDto> regimenLineDtos = RegimenLineDto.from(lineItems, idToRegimenDto);
-      List<RegimenLineItemRequest> regimenLineItemRequests = regimenLineDtos.stream()
-          .filter(regimenLineDto -> StringUtils.isEmpty(regimenLineDto.getName()))
-          .map(regimenLineDto -> RegimenLineItemRequest
-              .builder()
-              .name(regimenLineDto.getRegimen().getFullProductName())
-              .code(regimenLineDto.getRegimen().getCode())
-              .comunitaryPharmacy(regimenLineDto.getColumns().get(COLUMN_NAME_COMMUNITY).getValue())
-              .patientsOnTreatment(regimenLineDto.getColumns().get(COLUMN_NAME_PATIENT).getValue())
-              .build())
-          .collect(Collectors.toList());
-      idToRegimenLineRequest.put(requisitionId, regimenLineItemRequests);
-    });
-    return idToRegimenLineRequest;
+    return idToRegimenLineItem.entrySet().stream()
+        .collect(Collectors
+            .toMap(Map.Entry::getKey, entry -> RegimenLineItemRequest.from(entry.getValue(), idToRegimenDto)));
   }
 
   private Map<UUID, List<RegimenLineItemRequest>> buildIdToRegimenSummaryLineRequestsMap(
-      Set<UUID> requisitionIdSet) {
+      Set<UUID> requisitionIds) {
     List<RegimenSummaryLineItem> regimenSummaryLineItems = regimenSummaryLineItemRepository
-        .findByRequisitionIdIn(requisitionIdSet);
+        .findByRequisitionIdIn(requisitionIds);
     Map<UUID, List<RegimenSummaryLineItem>> idToRegimenSummaryLineItem = regimenSummaryLineItems.stream()
         .collect(Collectors.groupingBy(RegimenSummaryLineItem::getRequisitionId));
-    Map<UUID, List<RegimenLineItemRequest>> idToRegimenSummaryLineRequests = new HashMap<>();
-
-    idToRegimenSummaryLineItem.forEach((requisitionId, lineItems) -> {
-      List<RegimenSummaryLineDto> regimenSummaryLineDtos = RegimenSummaryLineDto.from(lineItems);
-      List<RegimenLineItemRequest> regimenLineItemRequests = regimenSummaryLineDtos.stream()
-          .filter(regimenSummaryLineDto -> !regimenSummaryLineDto.getName().equals(FieldConstants.TOTAL))
-          .map(
-              regimenSummaryLineDto -> RegimenLineItemRequest.builder()
-                  .code(RegimenSummaryCode.findKeyByValue(regimenSummaryLineDto.getName()))
-                  .comunitaryPharmacy(regimenSummaryLineDto.getColumns().get(COLUMN_NAME_COMMUNITY).getValue())
-                  .patientsOnTreatment(regimenSummaryLineDto.getColumns().get(COLUMN_NAME_PATIENT).getValue())
-                  .build()
-          ).collect(Collectors.toList());
-      idToRegimenSummaryLineRequests.put(requisitionId, regimenLineItemRequests);
-    });
-    return idToRegimenSummaryLineRequests;
+    return idToRegimenSummaryLineItem.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, entry -> RegimenLineItemRequest.from(entry.getValue())));
   }
 
-  private Map<UUID, List<PatientLineItemsRequest>> buildIdToPatientLineRequestsMap(Set<UUID> requisitionIdSet) {
-    List<PatientLineItem> patientLineItems = patientLineItemRepository.findByRequisitionIdIn(requisitionIdSet);
+  private Map<UUID, List<PatientLineItemsRequest>> buildIdToPatientLineRequestsMap(Set<UUID> requisitionIds) {
+    List<PatientLineItem> patientLineItems = patientLineItemRepository.findByRequisitionIdIn(requisitionIds);
     Map<UUID, List<PatientLineItem>> idToPatientLines = patientLineItems.stream()
         .collect(Collectors.groupingBy(PatientLineItem::getRequisitionId));
-    Map<UUID, List<PatientLineItemsRequest>> idToPatienLineRequests = new HashMap<>();
-    idToPatientLines.forEach((requisitionId, lineItems) -> {
-      List<PatientGroupDto> patientGroupDtos = patientLineItemMapper.from(lineItems);
-      List<PatientLineItemsRequest> list = patientGroupDtos.stream()
-          .filter(t -> !StringUtils.isEmpty(PatientLineItemName.findKeyByValue(t.getName())))
-          .map(this::buildPatientLineItemRequest)
-          .collect(Collectors.toList());
-      idToPatienLineRequests.put(requisitionId, dealDispensedPatientLineRequest(list));
-    });
-    return idToPatienLineRequests;
+    return idToPatientLines.entrySet().stream()
+        .collect(Collectors.toMap(Map.Entry::getKey, entry -> buildPatientLineItemRequestList(entry.getValue())));
+  }
+
+  private List<PatientLineItemsRequest> buildPatientLineItemRequestList(List<PatientLineItem> patientLineItems) {
+    List<PatientGroupDto> patientGroupDtos = patientLineItemMapper.from(patientLineItems);
+    List<PatientLineItemsRequest> list = patientGroupDtos.stream()
+        .filter(t -> !StringUtils.isEmpty(PatientLineItemName.findKeyByValue(t.getName())))
+        .map(this::buildPatientLineItemRequest)
+        .collect(Collectors.toList());
+    return reBuildPatientLineList(list);
   }
 
   private PatientLineItemsRequest buildPatientLineItemRequest(PatientGroupDto patientGroupDto) {
@@ -357,7 +320,7 @@ public class AndroidRequisitionService {
     String name = PatientLineItemName.findKeyByValue(patientGroupDto.getName());
     Map<String, PatientColumnDto> map = patientGroupDto.getColumns();
     map.forEach((colName, patientColumnDto) -> {
-      if (colName.equals(FieldConstants.TOTAL) && !name.equals(TABLE_PROPHYLAXY_KEY)) {
+      if (FieldConstants.TOTAL.equals(colName) && !TABLE_PROPHYLAXY_KEY.equals(name)) {
         return;
       }
       columns.add(PatientLineItemColumnRequest.builder()
@@ -372,16 +335,18 @@ public class AndroidRequisitionService {
         .build();
   }
 
-  private List<PatientLineItemsRequest> dealDispensedPatientLineRequest(List<PatientLineItemsRequest> list) {
-    List<PatientLineItemsRequest> dealList = list.stream().filter(t -> !t.getName().contains(TABLE_DISPENSED))
+  private List<PatientLineItemsRequest> reBuildPatientLineList(List<PatientLineItemsRequest> patientLineItemList) {
+    List<PatientLineItemsRequest> despenseList = patientLineItemList.stream()
+        .filter(t -> t.getName().contains(TABLE_DISPENSED))
         .collect(Collectors.toList());
-    dealList.add(mergeDispensedColumns(list));
-    return dealList;
+    List<PatientLineItemsRequest> arvtList = patientLineItemList.stream()
+        .filter(t -> !t.getName().contains(TABLE_DISPENSED)).collect(Collectors.toList());
+    arvtList.add(buildDespensePatientLine(despenseList));
+    return arvtList;
   }
 
-  private PatientLineItemsRequest mergeDispensedColumns(List<PatientLineItemsRequest> list) {
-    List<PatientLineItemColumnRequest> dispensedColumns = list.stream()
-        .filter(t -> t.getName().contains(TABLE_DISPENSED))
+  private PatientLineItemsRequest buildDespensePatientLine(List<PatientLineItemsRequest> despenseList) {
+    List<PatientLineItemColumnRequest> dispensedColumns = despenseList.stream()
         .flatMap(m -> m.getColumns().stream())
         .map(n -> PatientLineItemColumnRequest.builder()
             .name(n.getName())
