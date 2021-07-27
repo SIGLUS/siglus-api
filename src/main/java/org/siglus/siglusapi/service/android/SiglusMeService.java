@@ -332,7 +332,6 @@ public class SiglusMeService {
 
   public ProductSyncResponse getFacilityProducts(Instant lastSyncTime) {
     ProductSyncResponse syncResponse = new ProductSyncResponse();
-    syncResponse.setLastSyncTime(System.currentTimeMillis());
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
@@ -353,6 +352,11 @@ public class SiglusMeService {
         .map(orderable -> mapper.toResponse(orderable, allProducts))
         .collect(toList());
     syncResponse.setProducts(filteredProducts);
+    filteredProducts.stream()
+        .map(ProductResponse::getLastUpdated)
+        .mapToLong(Instant::toEpochMilli)
+        .max()
+        .ifPresent(syncResponse::setLastSyncTime);
     return syncResponse;
   }
 

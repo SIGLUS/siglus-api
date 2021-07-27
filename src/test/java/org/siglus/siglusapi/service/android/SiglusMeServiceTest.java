@@ -542,7 +542,7 @@ public class SiglusMeServiceTest {
 
     // then
     assertNotNull(syncResponse);
-    assertJustNow(syncResponse.getLastSyncTime());
+    assertEquals(latestTime.toInstant().toEpochMilli(), (long) syncResponse.getLastSyncTime());
     assertNotNull(syncResponse.getProducts());
     assertEquals(3, syncResponse.getProducts().size());
     ProductResponse product1 = syncResponse.getProducts().get(0);
@@ -562,7 +562,7 @@ public class SiglusMeServiceTest {
 
     // then
     assertNotNull(syncResponse);
-    assertJustNow(syncResponse.getLastSyncTime());
+    assertEquals(latestTime.toInstant().toEpochMilli(), (long) syncResponse.getLastSyncTime());
     assertNotNull(syncResponse.getProducts());
     assertEquals(2, syncResponse.getProducts().size());
     ProductResponse product1 = syncResponse.getProducts().get(0);
