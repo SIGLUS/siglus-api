@@ -19,6 +19,7 @@ import static org.javers.common.collections.Arrays.asList;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import javax.persistence.criteria.Predicate;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.Shipment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -58,9 +60,11 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
   default List<ProofOfDelivery> findAllByFacilitySince(UUID facilityId, @Nonnull LocalDate since,
       OrderStatus... statuses) {
     return findAll((root, query, cb) -> {
-      Path<Order> orderRoot = root.get("shipment").get("order");
+      Path<Shipment> shipmentRoot = root.get("shipment");
+      Path<Order> orderRoot = shipmentRoot.get("order");
+      ZonedDateTime sinceTime = since.atStartOfDay().atZone(ZoneId.systemDefault());
       Predicate byFacilityAndDate = cb.and(
-          cb.greaterThanOrEqualTo(orderRoot.get("createdDate"), since.atStartOfDay().atZone(ZoneId.systemDefault())),
+          cb.greaterThanOrEqualTo(shipmentRoot.get("shipDetails").get("date"), sinceTime),
           cb.equal(orderRoot.get("requestingFacilityId"), facilityId)
       );
       if (statuses.length == 0) {
