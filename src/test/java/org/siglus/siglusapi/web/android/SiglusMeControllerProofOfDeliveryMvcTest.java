@@ -37,6 +37,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -145,6 +146,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
 
   @Before
   public void setup() throws JsonProcessingException {
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
     ReflectionTestUtils.setField(service, "podMapper", podMapper);
     ReflectionTestUtils.setField(service, "podLotLineMapper", podLotLineMapper);
     objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
@@ -182,8 +184,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .andExpect(jsonPath("[0].receivedBy").value("zjj"))
         .andExpect(jsonPath("[0].order.code").value("ORDER-AS20JF"))
         .andExpect(jsonPath("[0].order.supplyFacilityName").value("Centro de Saude de ntopa"))
-        .andExpect(jsonPath("[0].order.createdDate").value(1598976000000L))
-        .andExpect(jsonPath("[0].order.lastModifiedDate").value(1599012900000L))
+        .andExpect(jsonPath("[0].order.createdDate").value(1599004800000L))
+        .andExpect(jsonPath("[0].order.lastModifiedDate").value(1599041700000L))
         .andExpect(jsonPath("[0].order.status").value("RECEIVED"))
         .andExpect(jsonPath("[0].order.requisition.number").value("RNR-NO01050119-0"))
         .andExpect(jsonPath("[0].order.requisition.isEmergency").value("false"))
@@ -205,8 +207,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .andExpect(jsonPath("[1].receivedBy").value("zjj"))
         .andExpect(jsonPath("[1].order.code").value("ORDER-AS21JF"))
         .andExpect(jsonPath("[1].order.supplyFacilityName").value("Centro de Saude de ntopa"))
-        .andExpect(jsonPath("[1].order.createdDate").value(1601568000000L))
-        .andExpect(jsonPath("[1].order.lastModifiedDate").value(1601604900000L))
+        .andExpect(jsonPath("[1].order.createdDate").value(1601596800000L))
+        .andExpect(jsonPath("[1].order.lastModifiedDate").value(1601633700000L))
         .andExpect(jsonPath("[1].order.status").value("RECEIVED"))
         .andExpect(jsonPath("[1].order.requisition.number").value("RNR-NO01050120-0"))
         .andExpect(jsonPath("[1].order.requisition.isEmergency").value("false"))
@@ -228,8 +230,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .andExpect(jsonPath("[2].receivedBy").isEmpty())
         .andExpect(jsonPath("[2].order.code").value("ORDER-AS22JF"))
         .andExpect(jsonPath("[2].order.supplyFacilityName").value("Centro de Saude de ntopa"))
-        .andExpect(jsonPath("[2].order.createdDate").value(1604246400000L))
-        .andExpect(jsonPath("[2].order.lastModifiedDate").value(1604283300000L))
+        .andExpect(jsonPath("[2].order.createdDate").value(1604275200000L))
+        .andExpect(jsonPath("[2].order.lastModifiedDate").value(1604312100000L))
         .andExpect(jsonPath("[2].order.status").value("SHIPPED"))
         .andExpect(jsonPath("[2].order.requisition.number").value("RNR-NO01050121-0"))
         .andExpect(jsonPath("[2].order.requisition.isEmergency").value("false"))
