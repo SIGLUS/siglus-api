@@ -241,9 +241,9 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   }
 
   @Test
-  public void shouldReturnAllWhenGetPodsGivenStartDateAndInitiatedOnly() throws Exception {
+  public void shouldReturnAllWhenGetPodsGivenStartDateAndShippedOnly() throws Exception {
     // given
-    RequestBuilder request = get("/api/siglusapi/android/me/facility/pods?startDate=2020-09-11&initiatedOnly=true")
+    RequestBuilder request = get("/api/siglusapi/android/me/facility/pods?startDate=2020-09-11&shippedOnly=true")
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
 
@@ -283,9 +283,9 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
 
 
   @Test
-  public void shouldReturnAllWhenGetPodsGivenInitiatedOnly() throws Exception {
+  public void shouldReturnAllWhenGetPodsGivenShippedOnly() throws Exception {
     // given
-    RequestBuilder request = get("/api/siglusapi/android/me/facility/pods?initiatedOnly=true")
+    RequestBuilder request = get("/api/siglusapi/android/me/facility/pods?shippedOnly=true")
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
 
