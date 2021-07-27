@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,11 +28,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RegimenLineItemRequest {
 
+  @NotNull
   private String code;
 
   private String name;
 
+  @NotNull
+  @Min(value = 0)
   private Integer patientsOnTreatment;
 
+  @NotNull
+  @Min(value = 0)
   private Integer comunitaryPharmacy;
 }

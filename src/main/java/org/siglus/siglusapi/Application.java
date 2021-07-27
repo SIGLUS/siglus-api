@@ -112,10 +112,13 @@ public class Application {
   private String redisPassword;
 
   @Value("${android.via.templateId}")
-  private String androidViaTemplateId;
+  private UUID androidViaTemplateId;
 
   @Value("${android.mmia.templateId}")
-  private String androidMmiaTemplateId;
+  private UUID androidMmiaTemplateId;
+
+  @Value("${android.malaria.templateId}")
+  private UUID androidMalariaTemplateId;
 
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
@@ -309,6 +312,7 @@ public class Application {
     AndroidTemplateConfig androidTemplateConfig = new AndroidTemplateConfig();
     androidTemplateConfig.setAndroidViaTemplateId(androidViaTemplateId);
     androidTemplateConfig.setAndroidMmiaTemplateId(androidMmiaTemplateId);
+    androidTemplateConfig.setAndroidMalariaTemplateId(androidMalariaTemplateId);
     return androidTemplateConfig;
   }
 

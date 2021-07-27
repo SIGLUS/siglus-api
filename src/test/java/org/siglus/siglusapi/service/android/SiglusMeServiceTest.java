@@ -259,9 +259,10 @@ public class SiglusMeServiceTest {
         .thenReturn(singletonList(mockApprovedProduct3()));
     when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId)).thenReturn(singleton(productId1.toString()));
     when(androidHelper.isAndroid()).thenReturn(true);
-    Set<String> androidTemplateIds = new HashSet<>();
-    androidTemplateIds.add("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
-    androidTemplateIds.add("873c25d6-e53b-11eb-8494-acde48001122");
+    Set<UUID> androidTemplateIds = new HashSet<>();
+    androidTemplateIds.add(UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d"));
+    androidTemplateIds.add(UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122"));
+    androidTemplateIds.add(UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122"));
     when(androidTemplateConfig.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
     ReflectionTestUtils.setField(service, "androidTemplateConfig", androidTemplateConfig);
   }
@@ -298,7 +299,8 @@ public class SiglusMeServiceTest {
         .thenReturn(reportTypes);
     List<Requisition> requisitions = mockProgramRnr().map(Collections::singletonList).orElse(emptyList());
     when(requisitionRepository
-        .findLatestRequisitionByFacilityIdAndroidTempId(facilityId, androidTemplateConfig.getAndroidTemplateIds()))
+        .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
+            androidTemplateConfig.getAndroidTemplateIds()))
         .thenReturn(requisitions);
 
     // when

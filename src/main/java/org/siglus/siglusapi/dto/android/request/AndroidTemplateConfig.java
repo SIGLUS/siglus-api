@@ -17,6 +17,7 @@ package org.siglus.siglusapi.dto.android.request;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,14 +27,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AndroidTemplateConfig {
 
-  private String androidViaTemplateId;
+  private UUID androidViaTemplateId;
 
-  private String androidMmiaTemplateId;
+  private UUID androidMmiaTemplateId;
 
-  public Set<String> getAndroidTemplateIds() {
-    Set<String> androidTemplateIds = new HashSet<>();
+  private UUID androidMalariaTemplateId;
+
+  public Set<UUID> getAndroidTemplateIds() {
+    Set<UUID> androidTemplateIds = new HashSet<>();
     androidTemplateIds.add(androidViaTemplateId);
     androidTemplateIds.add(androidMmiaTemplateId);
+    androidTemplateIds.add(androidMalariaTemplateId);
     return androidTemplateIds;
   }
 }

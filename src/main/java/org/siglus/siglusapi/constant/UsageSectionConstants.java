@@ -48,13 +48,15 @@ public class UsageSectionConstants {
     public static final String TABLE_DISPENSED = "table_dispensed";
     public static final String TABLE_DISPENSED_KEY = "table_dispensed_key";
 
+    public static final String TOTAL_COLUMN = "total";
     public static final String NEW_COLUMN = "new";
     public static final String NEW_COLUMN_0 = "newColumn0";
     public static final String NEW_COLUMN_1 = "newColumn1";
     public static final String NEW_COLUMN_2 = "newColumn2";
     public static final String NEW_COLUMN_3 = "newColumn3";
     public static final String NEW_COLUMN_4 = "newColumn4";
-    public static final String NEW_COLUMN_5 = "newColumn5";
+
+    public static final String STLINHAS = "1stLinhas";
 
     public static final String PATIENT_TYPE = "patientType";
     public static final String NEW_SECTION_0 = "newSection0";
@@ -62,9 +64,54 @@ public class UsageSectionConstants {
     public static final String NEW_SECTION_2 = "newSection2";
     public static final String NEW_SECTION_3 = "newSection3";
     public static final String NEW_SECTION_4 = "newSection4";
+    public static final String NEW_SECTION_5 = "newSection5";
+    public static final String NEW_SECTION_6 = "newSection6";
+    public static final String NEW_SECTION_7 = "newSection7";
 
-    public static final String TOTAL = "total";
+    public static final String TABLE_ARVT_KEY = "table_arvt_key";
+    public static final String TABLE_PATIENTS_KEY = "table_patients_key";
+    public static final String TABLE_PROPHYLAXY_KEY = "table_prophylaxy_key";
+    public static final String TABLE_DISPENSED_DS_KEY = "table_dispensed_ds_key";
+    public static final String TABLE_DISPENSED_DT_KEY = "table_dispensed_dt_key";
+    public static final String TABLE_DISPENSED_DM_KEY = "table_dispensed_dm_key";
 
+    public static final String TABLE_TRAV_LABEL_NEW_KEY = "table_trav_label_new_key";
+    public static final String TABLE_TRAV_LABEL_MAINTENANCE_KEY = "table_trav_label_maintenance_key";
+    public static final String TABLE_TRAV_LABEL_TRANSIT_KEY = "table_trav_label_transit_key";
+    public static final String TABLE_TRAV_LABEL_TRANSFERS_KEY = "table_trav_label_transfers_key";
+    public static final String TABLE_TRAV_LABEL_ALTERATION_KEY = "table_trav_label_alteration_key";
+
+    public static final String TABLE_PATIENTS_ADULTS_KEY = "table_patients_adults_key";
+    public static final String TABLE_PATIENTS_0TO4_KEY = "table_patients_0to4_key";
+    public static final String TABLE_PATIENTS_5TO9_KEY = "table_patients_5to9_key";
+    public static final String TABLE_PATIENTS_10TO14_KEY = "table_patients_10to14_key";
+
+    public static final String TABLE_PROPHYLAXIS_PPE_KEY = "table_prophylaxis_ppe_key";
+    public static final String TABLE_PROPHYLAXIS_PREP_KEY = "table_prophylaxis_prep_key";
+    public static final String TABLE_PROPHYLAXIS_CHILD_KEY = "table_prophylaxis_child_key";
+    public static final String TABLE_PROPHYLAXIS_VALUE_KEY = "table_prophylaxis_value_key";
+
+
+    public static final String DISPENSED_DS5 = "dispensed_ds5";
+    public static final String DISPENSED_DS4 = "dispensed_ds4";
+    public static final String DISPENSED_DS3 = "dispensed_ds3";
+    public static final String DISPENSED_DS2 = "dispensed_ds2";
+    public static final String DISPENSED_DS1 = "dispensed_ds1";
+    public static final String DISPENSED_DS = "dispensed_ds";
+
+    public static final String DISPENSED_DT2 = "dispensed_dt2";
+    public static final String DISPENSED_DT1 = "dispensed_dt1";
+    public static final String DISPENSED_DT = "dispensed_dt";
+
+    public static final String DISPENSED_DM = "dispensed_dm";
+
+    public static final String CONTAIN_DS = "ds";
+    public static final String CONTAIN_DT = "dt";
+    public static final String CONTAIN_DM = "dm";
+
+    public static final String KEY_REGIME_3LINES_1 = "key_regime_3lines_1";
+    public static final String KEY_REGIME_3LINES_2 = "key_regime_3lines_2";
+    public static final String KEY_REGIME_3LINES_3 = "key_regime_3lines_3";
   }
 
 }

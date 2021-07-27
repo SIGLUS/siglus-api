@@ -36,21 +36,31 @@ import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineIt
 import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.COLLECTION_KIT_RECEIVED;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.SERVICE_CHW;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.KitUsageLineItems.SERVICE_HF;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.CONTAIN_DM;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.CONTAIN_DS;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.CONTAIN_DT;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_3;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_4;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_0;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_1;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_2;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_3;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_4;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_5;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_6;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_7;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.PATIENT_TYPE;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_ARVT_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DM_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DS_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DT_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TOTAL;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXY_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TOTAL_COLUMN;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_COMMUNITY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_PATIENT;
 
@@ -60,10 +70,8 @@ import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -72,11 +80,10 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.persistence.EntityNotFoundException;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -105,6 +112,7 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
@@ -121,14 +129,23 @@ import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
+import org.siglus.siglusapi.dto.RegimenColumnDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.android.androidenum.NewSection0;
+import org.siglus.siglusapi.dto.android.androidenum.NewSection1;
+import org.siglus.siglusapi.dto.android.androidenum.NewSection2;
+import org.siglus.siglusapi.dto.android.androidenum.NewSection3;
+import org.siglus.siglusapi.dto.android.androidenum.NewSection4;
+import org.siglus.siglusapi.dto.android.androidenum.PatientLineItemName;
+import org.siglus.siglusapi.dto.android.androidenum.PatientType;
+import org.siglus.siglusapi.dto.android.androidenum.RegimenSummaryCode;
+import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
-import org.siglus.siglusapi.dto.android.request.RegimenSummaryLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
@@ -146,7 +163,6 @@ import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.PatientLineItemMapper;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -156,12 +172,6 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @SuppressWarnings("PMD.TooManyMethods")
 public class AndroidRequisitionService {
-
-  @Value("${android.via.templateId}")
-  private UUID androidViaTemplateId;
-
-  @Value("${android.mmia.templateId}")
-  private UUID androidMmiaTemplateId;
 
   private final SiglusAuthenticationHelper authHelper;
   private final RequisitionService requisitionService;
@@ -179,154 +189,20 @@ public class AndroidRequisitionService {
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final ConsultationNumberDataProcessor consultationNumberDataProcessor;
+  private final AndroidTemplateConfig androidTemplateConfig;
   private final RegimenLineItemRepository regimenLineItemRepository;
   private final RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   private final RegimenRepository regimenRepository;
   private final PatientLineItemRepository patientLineItemRepository;
   private final PatientLineItemMapper patientLineItemMapper;
 
-  @RequiredArgsConstructor
-  @Getter
-  public enum RegimenSummaryCode {
-    key_regime_3lines_1("1stLinhas"),
-    key_regime_3lines_2("newColumn0"),
-    key_regime_3lines_3("newColumn1");
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-  }
-
-  @RequiredArgsConstructor
-  @Getter
-  public enum PatientLineItemName {
-    table_arvt_key(PATIENT_TYPE),
-    table_patients_key(NEW_SECTION_0),
-    table_prophylaxy_key(NEW_SECTION_1),
-    table_dispensed_ds_key(NEW_SECTION_2),
-    table_dispensed_dt_key(NEW_SECTION_3),
-    table_dispensed_dm_key(NEW_SECTION_4);
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-  }
-
-  @RequiredArgsConstructor
-  @Getter
-  public enum PatientType {
-    table_trav_label_new_key(NEW_COLUMN),
-    table_trav_label_maintenance_key(NEW_COLUMN_0),
-    table_trav_label_transit_key(NEW_COLUMN_1),
-    table_trav_label_transfers_key(NEW_COLUMN_2),
-    table_trav_label_alteration_key(NEW_COLUMN_3);
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-  }
-
-  @RequiredArgsConstructor
-  @Getter
-  public enum NewSection0 {
-    table_patients_adults_key(NEW_COLUMN),
-    table_patients_0to4_key(NEW_COLUMN_0),
-    table_patients_5to9_key(NEW_COLUMN_1),
-    table_patients_10to14_key(NEW_COLUMN_2);
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-  }
-
-  @RequiredArgsConstructor
-  @Getter
-  public enum NewSection1 {
-    table_prophylaxis_ppe_key(NEW_COLUMN),
-    table_prophylaxis_prep_key(NEW_COLUMN_0),
-    table_prophylaxis_child_key(NEW_COLUMN_1),
-    table_prophylaxis_value_key(TOTAL);
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-  }
-
-  @RequiredArgsConstructor
-  @Getter
-  public enum NewSection2 {
-    dispensed_ds5(NEW_COLUMN),
-    dispensed_ds4(NEW_COLUMN_0),
-    dispensed_ds3(NEW_COLUMN_1),
-    dispensed_ds2(NEW_COLUMN_2),
-    dispensed_ds1(NEW_COLUMN_3),
-    dispensed_ds(NEW_COLUMN_4);
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-  }
-
-  @RequiredArgsConstructor
-  @Getter
-  public enum NewSection3 {
-    dispensed_dt2(NEW_COLUMN),
-    dispensed_dt1(NEW_COLUMN_0),
-    dispensed_dt(NEW_COLUMN_1);
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-  }
-
-  @RequiredArgsConstructor
-  @Getter
-  public enum NewSection4 {
-    dispensed_dm(NEW_COLUMN);
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-  }
-
   @Transactional
   public void create(RequisitionCreateRequest request) {
     UserDto user = authHelper.getCurrentUser();
     UUID authorId = user.getId();
     UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
-    Requisition requisition = initiateRequisition(request, user.getHomeFacilityId(), programId, authorId);
+    Requisition requisition = initiateRequisition(request, user.getHomeFacilityId(), programId, authorId,
+        request.getProgramCode());
     requisition = submitRequisition(requisition, authorId);
     requisition = authorizeRequisition(requisition, authorId);
     internalApproveRequisition(requisition, authorId);
@@ -341,7 +217,7 @@ public class AndroidRequisitionService {
         .collect(Collectors.toSet());
 
     Map<UUID, List<RegimenLineItemRequest>> idToRegimenLines = buildIdToRegimenLineRequestsMap(requisitionIdSet);
-    Map<UUID, List<RegimenSummaryLineItemRequest>> idToRegimenSummaryLines = buildIdToRegimenSummaryLineRequestsMap(
+    Map<UUID, List<RegimenLineItemRequest>> idToRegimenSummaryLines = buildIdToRegimenSummaryLineRequestsMap(
         requisitionIdSet);
     Map<UUID, List<PatientLineItemsRequest>> idToPatientLines = buildIdToPatientLineRequestsMap(requisitionIdSet);
 
@@ -380,8 +256,8 @@ public class AndroidRequisitionService {
     return idToRegimenLineRequests.get(requisitionV2Dto.getId());
   }
 
-  private List<RegimenSummaryLineItemRequest> getRegimenSummaryLineItems(RequisitionV2Dto requisitionV2Dto,
-      Map<UUID, List<RegimenSummaryLineItemRequest>> idToRegimenSummaryLineRequests) {
+  private List<RegimenLineItemRequest> getRegimenSummaryLineItems(RequisitionV2Dto requisitionV2Dto,
+      Map<UUID, List<RegimenLineItemRequest>> idToRegimenSummaryLineRequests) {
     if (idToRegimenSummaryLineRequests.get(requisitionV2Dto.getId()) == null) {
       return Collections.emptyList();
     }
@@ -397,8 +273,7 @@ public class AndroidRequisitionService {
   }
 
   private boolean isAndroidTemplate(UUID programTemplatedId) {
-    Set<UUID> androidTemplateSet = Stream.of(androidViaTemplateId, androidMmiaTemplateId)
-        .collect(Collectors.toCollection(HashSet::new));
+    Set<UUID> androidTemplateSet = androidTemplateConfig.getAndroidTemplateIds();
     return androidTemplateSet.contains(programTemplatedId);
   }
 
@@ -437,21 +312,21 @@ public class AndroidRequisitionService {
     return idToRegimenLineRequest;
   }
 
-  private Map<UUID, List<RegimenSummaryLineItemRequest>> buildIdToRegimenSummaryLineRequestsMap(
+  private Map<UUID, List<RegimenLineItemRequest>> buildIdToRegimenSummaryLineRequestsMap(
       Set<UUID> requisitionIdSet) {
     List<RegimenSummaryLineItem> regimenSummaryLineItems = regimenSummaryLineItemRepository
         .findByRequisitionIdIn(requisitionIdSet);
     Map<UUID, List<RegimenSummaryLineItem>> idToRegimenSummaryLineItem = regimenSummaryLineItems.stream()
         .collect(Collectors.groupingBy(RegimenSummaryLineItem::getRequisitionId));
-    Map<UUID, List<RegimenSummaryLineItemRequest>> idToRegimenSummaryLineRequests = new HashMap<>();
+    Map<UUID, List<RegimenLineItemRequest>> idToRegimenSummaryLineRequests = new HashMap<>();
 
     idToRegimenSummaryLineItem.forEach((requisitionId, lineItems) -> {
       List<RegimenSummaryLineDto> regimenSummaryLineDtos = RegimenSummaryLineDto.from(lineItems);
-      List<RegimenSummaryLineItemRequest> regimenLineItemRequests = regimenSummaryLineDtos.stream()
+      List<RegimenLineItemRequest> regimenLineItemRequests = regimenSummaryLineDtos.stream()
           .filter(regimenSummaryLineDto -> !regimenSummaryLineDto.getName().equals(FieldConstants.TOTAL))
           .map(
-              regimenSummaryLineDto -> RegimenSummaryLineItemRequest.builder()
-                  .code(RegimenSummaryCode.findByValue(regimenSummaryLineDto.getName()))
+              regimenSummaryLineDto -> RegimenLineItemRequest.builder()
+                  .code(RegimenSummaryCode.findKeyByValue(regimenSummaryLineDto.getName()))
                   .comunitaryPharmacy(regimenSummaryLineDto.getColumns().get(COLUMN_NAME_COMMUNITY).getValue())
                   .patientsOnTreatment(regimenSummaryLineDto.getColumns().get(COLUMN_NAME_PATIENT).getValue())
                   .build()
@@ -469,7 +344,7 @@ public class AndroidRequisitionService {
     idToPatientLines.forEach((requisitionId, lineItems) -> {
       List<PatientGroupDto> patientGroupDtos = patientLineItemMapper.from(lineItems);
       List<PatientLineItemsRequest> list = patientGroupDtos.stream()
-          .filter(t -> !StringUtils.isEmpty(PatientLineItemName.findByValue(t.getName())))
+          .filter(t -> !StringUtils.isEmpty(PatientLineItemName.findKeyByValue(t.getName())))
           .map(this::buildPatientLineItemRequest)
           .collect(Collectors.toList());
       idToPatienLineRequests.put(requisitionId, dealDispensedPatientLineRequest(list));
@@ -479,10 +354,10 @@ public class AndroidRequisitionService {
 
   private PatientLineItemsRequest buildPatientLineItemRequest(PatientGroupDto patientGroupDto) {
     List<PatientLineItemColumnRequest> columns = newArrayList();
-    String name = PatientLineItemName.findByValue(patientGroupDto.getName());
+    String name = PatientLineItemName.findKeyByValue(patientGroupDto.getName());
     Map<String, PatientColumnDto> map = patientGroupDto.getColumns();
     map.forEach((colName, patientColumnDto) -> {
-      if (colName.equals(FieldConstants.TOTAL)  && !name.equals(PatientLineItemName.table_prophylaxy_key.name())) {
+      if (colName.equals(FieldConstants.TOTAL) && !name.equals(TABLE_PROPHYLAXY_KEY)) {
         return;
       }
       columns.add(PatientLineItemColumnRequest.builder()
@@ -518,18 +393,18 @@ public class AndroidRequisitionService {
   }
 
   private String getRealColumnName(String tableName, String columnName) {
-    if (tableName.equals(PatientLineItemName.table_arvt_key.name())) {
-      return PatientType.findByValue(columnName);
-    } else if (tableName.equals(PatientLineItemName.table_patients_key.name())) {
-      return NewSection0.findByValue(columnName);
-    } else if (tableName.equals(PatientLineItemName.table_prophylaxy_key.name())) {
-      return NewSection1.findByValue(columnName);
-    } else if (tableName.equals(PatientLineItemName.table_dispensed_ds_key.name())) {
-      return NewSection2.findByValue(columnName);
-    } else if (tableName.equals(PatientLineItemName.table_dispensed_dt_key.name())) {
-      return NewSection3.findByValue(columnName);
-    } else if (tableName.equals(PatientLineItemName.table_dispensed_dm_key.name())) {
-      return NewSection4.findByValue(columnName);
+    if (tableName.equals(TABLE_ARVT_KEY)) {
+      return PatientType.findKeyByValue(columnName);
+    } else if (tableName.equals(TABLE_PATIENTS_KEY)) {
+      return NewSection0.findKeyByValue(columnName);
+    } else if (tableName.equals(TABLE_PROPHYLAXY_KEY)) {
+      return NewSection1.findKeyByValue(columnName);
+    } else if (tableName.equals(TABLE_DISPENSED_DS_KEY)) {
+      return NewSection2.findKeyByValue(columnName);
+    } else if (tableName.equals(TABLE_DISPENSED_DT_KEY)) {
+      return NewSection3.findKeyByValue(columnName);
+    } else if (tableName.equals(TABLE_DISPENSED_DM_KEY)) {
+      return NewSection4.findKeyByValue(columnName);
     } else {
       return "";
     }
@@ -631,14 +506,15 @@ public class AndroidRequisitionService {
   }
 
   private Requisition initiateRequisition(RequisitionCreateRequest request, UUID homeFacilityId, UUID programId,
-      UUID authorId) {
+      UUID authorId, String programCode) {
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
-    newRequisition.setTemplate(getRequisitionTemplate());
+    newRequisition.setTemplate(getRequisitionTemplate(programCode));
     newRequisition.setStatus(RequisitionStatus.INITIATED);
     newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setReportOnly(false);
     newRequisition.setNumberOfMonthsInPeriod(1);
+    newRequisition.setDraftStatusMessage(request.getComments());
     buildStatusChanges(newRequisition, authorId);
     buildRequisitionApprovedProduct(newRequisition, homeFacilityId, programId);
     buildRequisitionExtraData(newRequisition, request);
@@ -647,7 +523,7 @@ public class AndroidRequisitionService {
     Requisition requisition = requisitionRepository.save(newRequisition);
     buildRequisitionExtension(requisition, request);
     buildRequisitionLineItemsExtension(requisition, request);
-    buildRequisitionUsageSections(requisition, request);
+    buildRequisitionUsageSections(requisition, request, programId);
     return requisition;
   }
 
@@ -698,12 +574,25 @@ public class AndroidRequisitionService {
         .orElseThrow(EntityNotFoundException::new);
   }
 
-  private RequisitionTemplate getRequisitionTemplate() {
-    RequisitionTemplate requisitionTemplate = requisitionTemplateService.findTemplateById(androidViaTemplateId);
+  private RequisitionTemplate getRequisitionTemplate(String programCode) {
+    RequisitionTemplate requisitionTemplate = requisitionTemplateService
+        .findTemplateById(getAndroidTemplateId(programCode));
     RequisitionTemplateExtension templateExtension = requisitionTemplateExtensionRepository
         .findByRequisitionTemplateId(requisitionTemplate.getId());
     requisitionTemplate.setTemplateExtension(templateExtension);
     return requisitionTemplate;
+  }
+
+  private UUID getAndroidTemplateId(String programCode) {
+    if ("VC".equals(programCode)) {
+      return androidTemplateConfig.getAndroidViaTemplateId();
+    } else if ("T".equals(programCode)) {
+      return androidTemplateConfig.getAndroidMmiaTemplateId();
+    } else if ("ML".equals(programCode)) {
+      return androidTemplateConfig.getAndroidMalariaTemplateId();
+    } else {
+      return null;
+    }
   }
 
   private void buildRequisitionExtension(Requisition requisition, RequisitionCreateRequest request) {
@@ -720,13 +609,13 @@ public class AndroidRequisitionService {
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
       extension.setRequisitionLineItemId(requisitionLineItem.getId());
-      Integer authorizedQuantity = requisitionRequest.getProducts().stream()
+      RequisitionLineItemRequest requisitionProduct = requisitionRequest.getProducts().stream()
           .filter(product -> siglusOrderableService.getOrderableByCode(product.getProductCode()).getId()
               .equals(requisitionLineItem.getOrderable().getId()))
           .findFirst()
-          .map(RequisitionLineItemRequest::getAuthorizedQuantity)
-          .orElse(null);
-      extension.setAuthorizedQuantity(authorizedQuantity);
+          .orElse(new RequisitionLineItemRequest());
+      extension.setAuthorizedQuantity(requisitionProduct.getAuthorizedQuantity());
+      extension.setExpirationDate(requisitionProduct.getExpirationDate());
       log.info("save requisition line item extensions: {}", extension);
       requisitionLineItemExtensionRepository.save(extension);
     });
@@ -770,6 +659,7 @@ public class AndroidRequisitionService {
       requisitionLineItem.setOrderable(new VersionEntityReference(orderableDto.getId(),
           orderableDto.getVersionNumber()));
       requisitionLineItem.setBeginningBalance(product.getBeginningBalance());
+      requisitionLineItem.setTotalLossesAndAdjustments(product.getTotalLossesAndAdjustments());
       requisitionLineItem.setTotalReceivedQuantity(product.getTotalReceivedQuantity());
       requisitionLineItem.setTotalConsumedQuantity(product.getTotalConsumedQuantity());
       requisitionLineItem.setStockOnHand(product.getStockOnHand());
@@ -798,7 +688,8 @@ public class AndroidRequisitionService {
     requisition.setAvailableProducts(availableProductIdentities);
   }
 
-  private void buildRequisitionUsageSections(Requisition requisition, RequisitionCreateRequest request) {
+  private void buildRequisitionUsageSections(Requisition requisition, RequisitionCreateRequest request,
+      UUID programId) {
     RequisitionV2Dto dto = new RequisitionV2Dto();
     requisition.export(dto);
     BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(requisition.getTemplate());
@@ -809,7 +700,217 @@ public class AndroidRequisitionService {
     SiglusRequisitionDto requisitionDto = siglusUsageReportService.initiateUsageReport(dto);
     buildConsultationNumber(requisitionDto, request);
     buildRequisitionKitUsage(requisitionDto, request);
+    updateRegimenLineItems(requisitionDto, programId, request);
+    updateRegimenSummaryLineItems(requisitionDto, request);
+    updatePatientLineItems(requisitionDto, request);
     siglusUsageReportService.saveUsageReport(requisitionDto, dto);
+  }
+
+  private void updatePatientLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+    if (requisitionDto.getPatientLineItems() == null || requisitionDto.getPatientLineItems().isEmpty()) {
+      return;
+    }
+    Map<String, PatientGroupDto> patientNameToPatientGroupDto = requisitionDto.getPatientLineItems().stream()
+        .collect(Collectors.toMap(PatientGroupDto::getName, Function.identity()));
+    List<PatientLineItemsRequest> patientLineItemsRequests = request.getPatientLineItems();
+    splitTableDispensedPatientData(patientLineItemsRequests);
+    patientLineItemsRequests.forEach(patientRequest ->
+        buildPatientGroupDtoData(
+            patientNameToPatientGroupDto.get(PatientLineItemName.findValueByKey(patientRequest.getName())),
+            patientRequest)
+    );
+    caculatePatientDispensedTotal(patientNameToPatientGroupDto);
+  }
+
+  private void splitTableDispensedPatientData(List<PatientLineItemsRequest> patientLineItemsRequests) {
+    PatientLineItemsRequest dispensed = patientLineItemsRequests.stream()
+        .filter(p -> TABLE_DISPENSED_KEY.equals(p.getName()))
+        .findFirst()
+        .orElse(null);
+    if (dispensed != null) {
+      List<PatientLineItemColumnRequest> dsList = new ArrayList<>();
+      List<PatientLineItemColumnRequest> dtList = new ArrayList<>();
+      List<PatientLineItemColumnRequest> dmList = new ArrayList<>();
+      dispensed.getColumns().forEach(v -> {
+        if (v.getName().contains(CONTAIN_DS)) {
+          dsList.add(v);
+        } else if (v.getName().contains(CONTAIN_DT)) {
+          dtList.add(v);
+        } else if (v.getName().contains(CONTAIN_DM)) {
+          dmList.add(v);
+        }
+      });
+      patientLineItemsRequests.add(new PatientLineItemsRequest(TABLE_DISPENSED_DS_KEY, dsList));
+      patientLineItemsRequests.add(new PatientLineItemsRequest(TABLE_DISPENSED_DT_KEY, dtList));
+      patientLineItemsRequests.add(new PatientLineItemsRequest(TABLE_DISPENSED_DM_KEY, dmList));
+      patientLineItemsRequests.remove(dispensed);
+    }
+  }
+
+  private void buildPatientGroupDtoData(PatientGroupDto patientGroupDto, PatientLineItemsRequest patientRequest) {
+    if (patientGroupDto == null) {
+      throw new NotFoundException("patientGroupDto not found");
+    }
+    Map<String, PatientColumnDto> patientGroupDtoColumns = patientGroupDto.getColumns();
+    List<PatientLineItemColumnRequest> patientRequestColumns = patientRequest.getColumns();
+    patientRequestColumns.forEach(k -> {
+      String name = patientGroupDto.getName();
+      String patientGroupDtoKey = null;
+      if (PATIENT_TYPE.equals(name)) {
+        patientGroupDtoKey = PatientType.findValueByKey(k.getName());
+      } else if (NEW_SECTION_0.equals(name)) {
+        patientGroupDtoKey = NewSection0.findValueByKey(k.getName());
+      } else if (NEW_SECTION_1.equals(name)) {
+        patientGroupDtoKey = NewSection1.findValueByKey(k.getName());
+      } else if (NEW_SECTION_2.equals(name)) {
+        patientGroupDtoKey = NewSection2.findValueByKey(k.getName());
+      } else if (NEW_SECTION_3.equals(name)) {
+        patientGroupDtoKey = NewSection3.findValueByKey(k.getName());
+      } else if (NEW_SECTION_4.equals(name)) {
+        patientGroupDtoKey = NewSection4.findValueByKey(k.getName());
+      }
+      PatientColumnDto patientColumnDto = patientGroupDtoColumns.get(patientGroupDtoKey);
+      patientColumnDto.setValue(k.getValue());
+    });
+  }
+
+  private void caculatePatientDispensedTotal(Map<String, PatientGroupDto> patientNameToPatientGroupDto) {
+    PatientGroupDto patientGroupDtoSection5 = patientNameToPatientGroupDto.get(NEW_SECTION_5);
+    PatientColumnDto section5TotalDto = patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN);
+    if (section5TotalDto.getValue() == null) {
+      section5TotalDto.setValue(0);
+    }
+    caculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_2), patientGroupDtoSection5,
+        NEW_SECTION_2);
+    caculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_3), patientGroupDtoSection5,
+        NEW_SECTION_3);
+    caculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_4), patientGroupDtoSection5,
+        NEW_SECTION_4);
+
+    PatientGroupDto patientGroupDtoSection6 = patientNameToPatientGroupDto.get(NEW_SECTION_6);
+    Integer section2TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_2).getColumns().get(TOTAL_COLUMN)
+        .getValue();
+    Integer section3TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_3).getColumns().get(TOTAL_COLUMN)
+        .getValue();
+    Integer section4TotalValue = patientNameToPatientGroupDto.get(NEW_SECTION_4).getColumns().get(TOTAL_COLUMN)
+        .getValue();
+
+    patientGroupDtoSection6.getColumns().get(NEW_COLUMN).setValue(section2TotalValue);
+    patientGroupDtoSection6.getColumns().get(NEW_COLUMN_0).setValue(section3TotalValue);
+    patientGroupDtoSection6.getColumns().get(NEW_COLUMN_1).setValue(section4TotalValue);
+    patientGroupDtoSection6.getColumns().get(TOTAL_COLUMN)
+        .setValue(section2TotalValue + section3TotalValue + section4TotalValue);
+
+    PatientGroupDto patientGroupDtoSection7 = patientNameToPatientGroupDto.get(NEW_SECTION_7);
+    patientGroupDtoSection7.getColumns().get(NEW_COLUMN).setValue(
+        Math.round(Float.valueOf(patientGroupDtoSection6.getColumns().get(TOTAL_COLUMN).getValue())
+            / Float.valueOf(patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue())));
+  }
+
+  private void caculatePatientDispensedTotalBySection(PatientGroupDto patientGroupDtoSection,
+      PatientGroupDto patientGroupDtoSection5, String sectionKey) {
+    PatientColumnDto sectionTotalDto = patientGroupDtoSection.getColumns().get(TOTAL_COLUMN);
+    if (sectionTotalDto.getValue() == null) {
+      sectionTotalDto.setValue(0);
+    }
+    patientGroupDtoSection.getColumns().forEach((k, v) -> {
+      if (TOTAL_COLUMN.equals(k)) {
+        return;
+      }
+      int updateValue = v.getValue();
+      int totalValue = sectionTotalDto.getValue();
+      sectionTotalDto.setValue(totalValue + updateValue);
+      PatientColumnDto section5TotalDto = patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN);
+      if (NEW_SECTION_2.equals(sectionKey) && NEW_COLUMN_4.equals(k)) {
+        patientGroupDtoSection5.getColumns().get(NEW_COLUMN).setValue(updateValue);
+        section5TotalDto.setValue(section5TotalDto.getValue() + updateValue);
+      } else if (NEW_SECTION_3.equals(sectionKey) && NEW_COLUMN_1.equals(k)) {
+        patientGroupDtoSection5.getColumns().get(NEW_COLUMN_0).setValue(updateValue);
+        section5TotalDto.setValue(section5TotalDto.getValue() + updateValue);
+      } else if (NEW_SECTION_4.equals(sectionKey) && NEW_COLUMN.equals(k)) {
+        patientGroupDtoSection5.getColumns().get(NEW_COLUMN_1).setValue(updateValue);
+        section5TotalDto.setValue(section5TotalDto.getValue() + updateValue);
+      }
+    });
+  }
+
+  private void updateRegimenSummaryLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+    if (requisitionDto.getRegimenSummaryLineItems() == null || requisitionDto.getRegimenSummaryLineItems().isEmpty()) {
+      return;
+    }
+    Map<String, RegimenSummaryLineDto> regimenNameToRegimenSummaryLineDto = requisitionDto.getRegimenSummaryLineItems()
+        .stream()
+        .collect(Collectors.toMap(RegimenSummaryLineDto::getName, Function.identity()));
+
+    request.getRegimenSummaryLineItems().forEach(
+        summaryRequest -> buildRegimenSummaryPatientsAndCommunity(
+            regimenNameToRegimenSummaryLineDto.get(RegimenSummaryCode.findValueByKey(summaryRequest.getCode())),
+            summaryRequest, regimenNameToRegimenSummaryLineDto.get(TOTAL_COLUMN))
+    );
+  }
+
+  private void buildRegimenSummaryPatientsAndCommunity(RegimenSummaryLineDto summaryLineDto,
+      RegimenLineItemRequest summaryRequest, RegimenSummaryLineDto totalDto) {
+    if (summaryLineDto == null) {
+      throw new NotFoundException("summaryLineDto not found");
+    }
+    Map<String, RegimenColumnDto> columns = summaryLineDto.getColumns();
+    columns.get(COLUMN_NAME_PATIENT).setValue(summaryRequest.getPatientsOnTreatment());
+    columns.get(COLUMN_NAME_COMMUNITY).setValue(summaryRequest.getComunitaryPharmacy());
+
+    Map<String, RegimenColumnDto> totalColumns = totalDto.getColumns();
+    int patientsTotal =
+        totalColumns.get(COLUMN_NAME_PATIENT).getValue() == null ? 0 : totalColumns.get(COLUMN_NAME_PATIENT).getValue();
+    int communityTotal =
+        totalColumns.get(COLUMN_NAME_COMMUNITY).getValue() == null ? 0
+            : totalColumns.get(COLUMN_NAME_COMMUNITY).getValue();
+    totalColumns.get(COLUMN_NAME_PATIENT).setValue(patientsTotal + summaryRequest.getPatientsOnTreatment());
+    totalColumns.get(COLUMN_NAME_COMMUNITY).setValue(communityTotal + summaryRequest.getComunitaryPharmacy());
+  }
+
+  private void updateRegimenLineItems(SiglusRequisitionDto requisitionDto, UUID programId,
+      RequisitionCreateRequest request) {
+    if (requisitionDto.getRegimenLineItems() == null || requisitionDto.getRegimenLineItems().isEmpty()) {
+      return;
+    }
+    List<RegimenDto> regimenDtosByProgramId = regimenRepository.findAllByProgramIdAndActiveTrue(programId).stream()
+        .map(RegimenDto::from).collect(Collectors.toList());
+    if (CollectionUtils.isEmpty(regimenDtosByProgramId)) {
+      return;
+    }
+    Map<String, RegimenDto> regimenCodeToRegimenDto = regimenDtosByProgramId.stream()
+        .collect(Collectors.toMap(RegimenDto::getCode, Function.identity()));
+    Map<UUID, RegimenDto> regimenIdToRegimenDto = regimenDtosByProgramId.stream()
+        .collect(Collectors.toMap(RegimenDto::getId, Function.identity()));
+    List<RegimenLineItem> regimenLineItems = buildRegimenPatientsAndCommunity(request.getRegimenLineItems(),
+        requisitionDto.getId(), regimenCodeToRegimenDto);
+    requisitionDto.setRegimenLineItems(RegimenLineDto.from(regimenLineItems, regimenIdToRegimenDto));
+  }
+
+  private List<RegimenLineItem> buildRegimenPatientsAndCommunity(List<RegimenLineItemRequest> regimenLineItemRequests,
+      UUID requisitionId, Map<String, RegimenDto> regimenCodeToRegimenDto) {
+    List<RegimenLineItem> regimenLineItems = new ArrayList<>();
+    regimenLineItemRequests.forEach(itemRequest -> {
+      RegimenDto regimenDto = regimenCodeToRegimenDto.get(itemRequest.getCode());
+      if (regimenDto == null) {
+        throw new NotFoundException("regimenDto not found");
+      }
+      RegimenLineItem patientRegimenLineItem = RegimenLineItem.builder()
+          .requisitionId(requisitionId)
+          .regimenId(regimenDto.getId())
+          .column(COLUMN_NAME_PATIENT)
+          .value(itemRequest.getPatientsOnTreatment())
+          .build();
+      RegimenLineItem communityRegimenLineItem = RegimenLineItem.builder()
+          .requisitionId(requisitionId)
+          .regimenId(regimenDto.getId())
+          .column(COLUMN_NAME_COMMUNITY)
+          .value(itemRequest.getComunitaryPharmacy())
+          .build();
+      regimenLineItems.add(patientRegimenLineItem);
+      regimenLineItems.add(communityRegimenLineItem);
+    });
+    return regimenLineItems;
   }
 
   private void buildConsultationNumber(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
@@ -847,5 +948,5 @@ public class AndroidRequisitionService {
       }
     });
   }
-
 }
+

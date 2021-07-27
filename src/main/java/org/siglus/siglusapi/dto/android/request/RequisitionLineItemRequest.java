@@ -17,6 +17,7 @@ package org.siglus.siglusapi.dto.android.request;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDate;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,22 +36,29 @@ public class RequisitionLineItemRequest {
   private String productCode;
 
   @NotNull
+  @Min(value = 0)
   private Integer beginningBalance;
 
   @NotNull
+  @Min(value = 0)
   private Integer totalReceivedQuantity;
 
   @NotNull
+  @Min(value = 0)
   private Integer totalConsumedQuantity;
 
+  private Integer totalLossesAndAdjustments;
+
   @NotNull
+  @Min(value = 0)
   private Integer stockOnHand;
 
+  @Min(value = 0)
   private Integer requestedQuantity;
 
+  @Min(value = 0)
   private Integer authorizedQuantity;
 
   private LocalDate expirationDate;
-
-  private Integer totalLossesAndAdjustments;
 }
+

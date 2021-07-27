@@ -52,7 +52,7 @@ public class RequisitionCreateRequest {
   @NotNull
   private LocalDate actualEndDate;
 
-  @NotNull
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private Integer consultationNumber;
 
   @Valid
@@ -63,9 +63,13 @@ public class RequisitionCreateRequest {
 
   private String comments;
 
+  @Valid
   private List<RegimenLineItemRequest> regimenLineItems;
 
-  private List<RegimenSummaryLineItemRequest> regimenSummaryLineItems;
+  @Valid
+  private List<RegimenLineItemRequest> regimenSummaryLineItems;
 
+  @Valid
   private List<PatientLineItemsRequest> patientLineItems;
 }
+

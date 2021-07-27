@@ -159,22 +159,25 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(req1.getProgramId()).thenReturn(program1Id);
     when(req1.getProcessingPeriodId()).thenReturn(period1Id);
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 6, 20));
-    Set<String> androidTemplateIds = new HashSet<>();
-    androidTemplateIds.add("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
-    androidTemplateIds.add("873c25d6-e53b-11eb-8494-acde48001122");
+    Set<UUID> androidTemplateIds = new HashSet<>();
+    androidTemplateIds.add(UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d"));
+    androidTemplateIds.add(UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122"));
+    androidTemplateIds.add(UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122"));
     when(androidTemplateConfig.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
     // interfering item
     Requisition req2 = mock(Requisition.class);
     when(requisitionRepo
-        .findLatestRequisitionByFacilityIdAndroidTempId(facilityId, androidTemplateConfig.getAndroidTemplateIds()))
+        .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
+            androidTemplateConfig.getAndroidTemplateIds()))
         .thenReturn(asList(req1, req2));
     when(requisitionRepo
-        .findLatestRequisitionByFacilityIdAndroidTempId(newFacilityId, androidTemplateConfig.getAndroidTemplateIds()))
+        .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(newFacilityId,
+            androidTemplateConfig.getAndroidTemplateIds()))
         .thenReturn(emptyList());
     Requisition req3 = mock(Requisition.class);
     when(req3.getProgramId()).thenReturn(program1Id);
     when(req3.getActualEndDate()).thenReturn(LocalDate.of(2020, 8, 20));
-    when(requisitionRepo.findLatestRequisitionByFacilityIdAndroidTempId(restartedFacilityId,
+    when(requisitionRepo.findLatestRequisitionsByFacilityIdAndAndroidTemplateId(restartedFacilityId,
         androidTemplateConfig.getAndroidTemplateIds())).thenReturn(singletonList(req3));
   }
 
@@ -188,11 +191,10 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     Map<String, String> violations = executeValidation(param);
 
     // then
-    assertEquals(6, violations.size());
+    assertEquals(5, violations.size());
     assertEquals(MAY_NOT_BE_EMPTY, violations.get("createRequisition.arg0.programCode"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createRequisition.arg0.actualEndDate"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createRequisition.arg0.actualStartDate"));
-    assertEquals(MAY_NOT_BE_NULL, violations.get("createRequisition.arg0.consultationNumber"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createRequisition.arg0.clientSubmittedTime"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createRequisition.arg0.emergency"));
   }

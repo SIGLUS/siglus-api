@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import javax.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,6 +32,7 @@ public class PatientLineItemColumnRequest {
   private String name;
 
   @NotBlank
+  @Min(value = 0)
   private Integer value;
 
   private String tableName;

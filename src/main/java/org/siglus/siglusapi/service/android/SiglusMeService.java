@@ -860,7 +860,8 @@ public class SiglusMeService {
 
   private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId, List<SupportedProgramDto> programs) {
     List<Requisition> requisitions = requisitionRepository
-        .findLatestRequisitionByFacilityIdAndroidTempId(facilityId, androidTemplateConfig.getAndroidTemplateIds());
+        .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
+            androidTemplateConfig.getAndroidTemplateIds());
     Map<UUID, String> programIdToCode = programs.stream()
         .collect(toMap(SupportedProgramDto::getId, SupportedProgramDto::getCode));
     Map<String, Requisition> programCodeToRequisition = requisitions.stream()

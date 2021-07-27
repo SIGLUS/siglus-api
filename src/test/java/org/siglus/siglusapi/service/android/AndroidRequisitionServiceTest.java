@@ -92,9 +92,9 @@ import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
-import org.siglus.siglusapi.dto.android.request.RegimenSummaryLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
@@ -113,7 +113,6 @@ import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.mapper.PatientLineItemMapper;
 import org.springframework.beans.BeanUtils;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
@@ -185,6 +184,9 @@ public class AndroidRequisitionServiceTest {
   @Mock
   private PatientLineItemMapper patientLineItemMapper;
 
+  @Mock
+  private AndroidTemplateConfig androidTemplateConfig;
+
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
@@ -202,8 +204,9 @@ public class AndroidRequisitionServiceTest {
   private final UUID programIdMmia = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID orderableId2 = UUID.randomUUID();
-  private final UUID templateId = UUID.randomUUID();
-  private final UUID mmiaTemplateId = UUID.randomUUID();
+  private final UUID templateId = UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
+  private final UUID mmiaTemplateId = UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122");
+  private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
   private final UUID supervisoryNodeId = UUID.randomUUID();
   private final UUID processingPeriodId = UUID.randomUUID();
   private final UUID requisitionId = UUID.randomUUID();
@@ -217,8 +220,13 @@ public class AndroidRequisitionServiceTest {
 
   @Before
   public void prepare() {
-    ReflectionTestUtils.setField(service, "androidViaTemplateId", templateId);
-    ReflectionTestUtils.setField(service, "androidMmiaTemplateId", mmiaTemplateId);
+    Set<UUID> androidTemplateIds = new HashSet<>();
+    androidTemplateIds.add(templateId);
+    androidTemplateIds.add(mmiaTemplateId);
+    androidTemplateIds.add(malariaTemplateId);
+    when(androidTemplateConfig.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
+    when(androidTemplateConfig.getAndroidViaTemplateId()).thenReturn(templateId);
+    when(androidTemplateConfig.getAndroidMmiaTemplateId()).thenReturn(mmiaTemplateId);
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
@@ -367,7 +375,7 @@ public class AndroidRequisitionServiceTest {
     assertEquals(Integer.valueOf(2), regimenLineItemRequests.get(0).getPatientsOnTreatment());
     assertEquals(Integer.valueOf(1), regimenLineItemRequests.get(0).getComunitaryPharmacy());
 
-    List<RegimenSummaryLineItemRequest> regimenSummaryLineItemRequests = mmiaResponse.getRegimenSummaryLineItems();
+    List<RegimenLineItemRequest> regimenSummaryLineItemRequests = mmiaResponse.getRegimenSummaryLineItems();
     assertEquals("key_regime_3lines_1", regimenSummaryLineItemRequests.get(0).getCode());
     assertEquals(Integer.valueOf(2), regimenSummaryLineItemRequests.get(0).getComunitaryPharmacy());
     assertEquals(Integer.valueOf(1), regimenSummaryLineItemRequests.get(0).getPatientsOnTreatment());
