@@ -129,9 +129,9 @@ public class SiglusMeController {
 
   @GetMapping("/facility/pods")
   public List<PodResponse> getProofsOfDelivery(
-      @RequestParam(name = "initiatedOnly", defaultValue = "false") boolean initiatedOnly,
+      @RequestParam(name = "shippedOnly", defaultValue = "false") boolean shippedOnly,
       @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate since) {
-    return service.getProofsOfDelivery(since, initiatedOnly);
+    return service.getProofsOfDelivery(since, shippedOnly);
   }
 
   @PostMapping("/app-info")

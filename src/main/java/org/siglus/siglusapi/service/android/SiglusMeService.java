@@ -421,14 +421,14 @@ public class SiglusMeService {
     androidRequisitionService.create(request);
   }
 
-  public List<PodResponse> getProofsOfDelivery(@Nullable LocalDate since, boolean initiatedOnly) {
+  public List<PodResponse> getProofsOfDelivery(@Nullable LocalDate since, boolean shippedOnly) {
     FacilityDto homeFacility = getCurrentFacilityInfo();
     UUID homeFacilityId = homeFacility.getId();
     if (since == null) {
       since = YearMonth.now().minusMonths(13L).atDay(1);
     }
     List<ProofOfDelivery> pods;
-    if (initiatedOnly) {
+    if (shippedOnly) {
       pods = podRepo.findAllByFacilitySince(homeFacilityId, since, OrderStatus.SHIPPED);
     } else {
       pods = podRepo.findAllByFacilitySince(homeFacilityId, since, OrderStatus.SHIPPED, OrderStatus.RECEIVED);
