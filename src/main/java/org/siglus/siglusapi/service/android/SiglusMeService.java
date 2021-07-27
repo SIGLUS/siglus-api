@@ -336,6 +336,9 @@ public class SiglusMeService {
 
   public ProductSyncResponse getFacilityProducts(Instant lastSyncTime) {
     ProductSyncResponse syncResponse = new ProductSyncResponse();
+    if (lastSyncTime != null) {
+      syncResponse.setLastSyncTime(lastSyncTime.toEpochMilli());
+    }
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));

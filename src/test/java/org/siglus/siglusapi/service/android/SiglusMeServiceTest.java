@@ -141,6 +141,7 @@ public class SiglusMeServiceTest {
 
   @Mock
   private SupportedProgramsHelper programsHelper;
+  @SuppressWarnings("unused")
   @Mock
   private ProgramAdditionalOrderableRepository additionalProductRepo;
 
