@@ -78,13 +78,13 @@ import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
-import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
@@ -134,7 +134,6 @@ import org.springframework.util.LinkedMultiValueMap;
 @Slf4j
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class SiglusMeService {
-
   public enum MovementType {
     PHYSICAL_INVENTORY() {
       @Override
@@ -283,8 +282,9 @@ public class SiglusMeService {
   private final AndroidHelper androidHelper;
   private final ReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
-  private final AndroidRequisitionService androidRequisitionService;
-  private final AndroidTemplateConfig androidTemplateConfig;
+  private final AndroidCreateRequisitionService androidCreateRequisitionService;
+  private final AndroidGetRequisitionService androidGetRequisitionService;
+  private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final SiglusProofOfDeliveryRepository podRepo;
   private final SiglusOrderService orderService;
   private final PodMapper podMapper;
@@ -394,7 +394,7 @@ public class SiglusMeService {
   public RequisitionResponse getRequisitionResponse(String startDate) {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(getAllApprovedProducts());
-    return androidRequisitionService
+    return androidGetRequisitionService
         .getRequisitionResponseByFacilityIdAndDate(facilityId, startDate, orderableIdToCode);
   }
 
@@ -436,7 +436,7 @@ public class SiglusMeService {
 
   @Transactional
   public void createRequisition(RequisitionCreateRequest request) {
-    androidRequisitionService.create(request);
+    androidCreateRequisitionService.create(request);
   }
 
   public List<PodResponse> getProofsOfDelivery(@Nullable LocalDate since, boolean shippedOnly) {
@@ -861,7 +861,7 @@ public class SiglusMeService {
   private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId, List<SupportedProgramDto> programs) {
     List<Requisition> requisitions = requisitionRepository
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
-            androidTemplateConfig.getAndroidTemplateIds());
+            androidTemplateConfigProperties.findAndroidTemplateIds());
     Map<UUID, String> programIdToCode = programs.stream()
         .collect(toMap(SupportedProgramDto::getId, SupportedProgramDto::getCode));
     Map<String, Requisition> programCodeToRequisition = requisitions.stream()

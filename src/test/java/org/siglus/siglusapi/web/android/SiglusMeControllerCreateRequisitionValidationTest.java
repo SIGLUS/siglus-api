@@ -61,8 +61,8 @@ import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.ReportType;
-import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidStartDateValidator;
@@ -90,7 +90,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   @Mock
   private ProgramReferenceDataService programDataService;
   @Mock
-  private AndroidTemplateConfig androidTemplateConfig;
+  private AndroidTemplateConfigProperties androidTemplateConfigProperties;
 
   private final ObjectMapper mapper = new ObjectMapper();
 
@@ -163,22 +163,22 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     androidTemplateIds.add(UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d"));
     androidTemplateIds.add(UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122"));
     androidTemplateIds.add(UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122"));
-    when(androidTemplateConfig.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
+    when(androidTemplateConfigProperties.findAndroidTemplateIds()).thenReturn(androidTemplateIds);
     // interfering item
     Requisition req2 = mock(Requisition.class);
     when(requisitionRepo
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
-            androidTemplateConfig.getAndroidTemplateIds()))
+            androidTemplateConfigProperties.findAndroidTemplateIds()))
         .thenReturn(asList(req1, req2));
     when(requisitionRepo
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(newFacilityId,
-            androidTemplateConfig.getAndroidTemplateIds()))
+            androidTemplateConfigProperties.findAndroidTemplateIds()))
         .thenReturn(emptyList());
     Requisition req3 = mock(Requisition.class);
     when(req3.getProgramId()).thenReturn(program1Id);
     when(req3.getActualEndDate()).thenReturn(LocalDate.of(2020, 8, 20));
     when(requisitionRepo.findLatestRequisitionsByFacilityIdAndAndroidTemplateId(restartedFacilityId,
-        androidTemplateConfig.getAndroidTemplateIds())).thenReturn(singletonList(req3));
+        androidTemplateConfigProperties.findAndroidTemplateIds())).thenReturn(singletonList(req3));
   }
 
   @Test
@@ -400,7 +400,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
       if (key == RequisitionValidStartDateValidator.class) {
         return (T) new RequisitionValidStartDateValidator(authHelper, reportTypeRepo, requisitionRepo, periodRepo,
-            programDataService, androidTemplateConfig);
+            programDataService, androidTemplateConfigProperties);
       }
       return NewInstance.action(key, "ConstraintValidator").run();
     }

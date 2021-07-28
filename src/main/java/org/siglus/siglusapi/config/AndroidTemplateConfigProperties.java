@@ -13,19 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.request;
+package org.siglus.siglusapi.config;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
-public class AndroidTemplateConfig {
+public class AndroidTemplateConfigProperties {
 
   private UUID androidViaTemplateId;
 
@@ -33,11 +32,27 @@ public class AndroidTemplateConfig {
 
   private UUID androidMalariaTemplateId;
 
-  public Set<UUID> getAndroidTemplateIds() {
+  private Map<String, UUID> programIdByCode;
+
+  public AndroidTemplateConfigProperties(UUID androidViaTemplateId, UUID androidMmiaTemplateId,
+      UUID androidMalariaTemplateId) {
+    this.androidViaTemplateId = androidViaTemplateId;
+    this.androidMmiaTemplateId = androidMmiaTemplateId;
+    this.androidMalariaTemplateId = androidMalariaTemplateId;
+    programIdByCode.put("VC", androidViaTemplateId);
+    programIdByCode.put("T", androidMmiaTemplateId);
+    programIdByCode.put("ML", androidMalariaTemplateId);
+  }
+
+  public Set<UUID> findAndroidTemplateIds() {
     Set<UUID> androidTemplateIds = new HashSet<>();
     androidTemplateIds.add(androidViaTemplateId);
     androidTemplateIds.add(androidMmiaTemplateId);
     androidTemplateIds.add(androidMalariaTemplateId);
     return androidTemplateIds;
+  }
+
+  public UUID findAndroidTemplateId(String programCode) {
+    return programIdByCode.get(programCode);
   }
 }

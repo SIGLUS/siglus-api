@@ -39,7 +39,7 @@ import org.openlmis.fulfillment.i18n.FulfillmentExposedMessageSourceImpl;
 import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
 import org.openlmis.stockmanagement.i18n.StockmanagementExposedMessageSourceImpl;
 import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
+import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -308,12 +308,12 @@ public class Application {
   }
 
   @Bean
-  public AndroidTemplateConfig androidTemplateConfig() {
-    AndroidTemplateConfig androidTemplateConfig = new AndroidTemplateConfig();
-    androidTemplateConfig.setAndroidViaTemplateId(androidViaTemplateId);
-    androidTemplateConfig.setAndroidMmiaTemplateId(androidMmiaTemplateId);
-    androidTemplateConfig.setAndroidMalariaTemplateId(androidMalariaTemplateId);
-    return androidTemplateConfig;
+  public AndroidTemplateConfigProperties androidTemplateConfig() {
+    AndroidTemplateConfigProperties androidTemplateConfigProperties = new AndroidTemplateConfigProperties();
+    androidTemplateConfigProperties.setAndroidViaTemplateId(androidViaTemplateId);
+    androidTemplateConfigProperties.setAndroidMmiaTemplateId(androidMmiaTemplateId);
+    androidTemplateConfigProperties.setAndroidMalariaTemplateId(androidMalariaTemplateId);
+    return androidTemplateConfigProperties;
   }
 
   // diff from messageSource() is in this method, the useCodeAsDefaultMessage is disabled

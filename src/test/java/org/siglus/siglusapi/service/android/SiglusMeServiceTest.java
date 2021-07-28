@@ -80,11 +80,11 @@ import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
-import org.siglus.siglusapi.dto.android.request.AndroidTemplateConfig;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
@@ -176,10 +176,13 @@ public class SiglusMeServiceTest {
   private SiglusRequisitionRepository requisitionRepository;
 
   @Mock
-  private AndroidRequisitionService androidRequisitionService;
+  private AndroidCreateRequisitionService androidCreateRequisitionService;
 
   @Mock
-  private AndroidTemplateConfig androidTemplateConfig;
+  private AndroidGetRequisitionService androidGetRequisitionService;
+
+  @Mock
+  private AndroidTemplateConfigProperties androidTemplateConfigProperties;
 
   @Captor
   private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
@@ -214,6 +217,10 @@ public class SiglusMeServiceTest {
   private final String productCode1 = "product 1";
   private final String productCode2 = "product 2";
   private final String productCode3 = "product 3";
+
+  private final UUID templateId = UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
+  private final UUID mmiaTemplateId = UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122");
+  private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
 
   private final UUID tradeItem1 = UUID.randomUUID();
   private final UUID tradeItem2 = UUID.randomUUID();
@@ -260,11 +267,12 @@ public class SiglusMeServiceTest {
     when(archivedProductRepo.findArchivedProductsByFacilityId(facilityId)).thenReturn(singleton(productId1.toString()));
     when(androidHelper.isAndroid()).thenReturn(true);
     Set<UUID> androidTemplateIds = new HashSet<>();
-    androidTemplateIds.add(UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d"));
-    androidTemplateIds.add(UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122"));
-    androidTemplateIds.add(UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122"));
-    when(androidTemplateConfig.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
-    ReflectionTestUtils.setField(service, "androidTemplateConfig", androidTemplateConfig);
+    androidTemplateIds.add(templateId);
+    androidTemplateIds.add(mmiaTemplateId);
+    androidTemplateIds.add(malariaTemplateId);
+    when(androidTemplateConfigProperties.findAndroidTemplateIds()).thenReturn(androidTemplateIds);
+    when(androidTemplateConfigProperties.findAndroidTemplateId(any())).thenReturn(templateId);
+    ReflectionTestUtils.setField(service, "androidTemplateConfigProperties", androidTemplateConfigProperties);
   }
 
 
@@ -300,7 +308,7 @@ public class SiglusMeServiceTest {
     List<Requisition> requisitions = mockProgramRnr().map(Collections::singletonList).orElse(emptyList());
     when(requisitionRepository
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
-            androidTemplateConfig.getAndroidTemplateIds()))
+            androidTemplateConfigProperties.findAndroidTemplateIds()))
         .thenReturn(requisitions);
 
     // when
@@ -598,7 +606,7 @@ public class SiglusMeServiceTest {
     service.createRequisition(requisitionRequest);
 
     // then
-    verify(androidRequisitionService).create(requisitionRequest);
+    verify(androidCreateRequisitionService).create(requisitionRequest);
   }
 
   @Test
@@ -607,7 +615,7 @@ public class SiglusMeServiceTest {
     service.getRequisitionResponse("2021-05-01");
 
     // then
-    verify(androidRequisitionService).getRequisitionResponseByFacilityIdAndDate(any(), any(), any());
+    verify(androidGetRequisitionService).getRequisitionResponseByFacilityIdAndDate(any(), any(), any());
   }
 
   private SupportedProgramDto getSupportedProgramDto() {
