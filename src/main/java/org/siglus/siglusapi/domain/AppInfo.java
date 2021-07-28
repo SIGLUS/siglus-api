@@ -42,9 +42,9 @@ public class AppInfo extends BaseEntity {
 
   private String deviceInfo;
 
-  private Integer versionCode;
+  private String versionCode;
 
-  private Integer androidSdkVersion;
+  private String androidSdkVersion;
 
   private String username;
 

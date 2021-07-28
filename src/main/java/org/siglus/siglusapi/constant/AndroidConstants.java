@@ -50,6 +50,6 @@ public class AndroidConstants {
         .deviceInfo(request.getHeader(DEVICE_INFO))
         .versionCode(request.getHeader(VERSION_CODE))
         .androidSdkVersion(request.getHeader(ANDROID_SDK_VERSION))
-            .build();
+        .build();
   }
 }

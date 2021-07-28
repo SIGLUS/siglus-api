@@ -19,14 +19,12 @@ import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.http.HttpStatus.OK;
 
-import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.beanutils.BeanUtils;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
@@ -45,6 +43,7 @@ import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.validation.annotation.Validated;
@@ -122,8 +121,7 @@ public class SiglusMeController {
   }
 
   @GetMapping("/facility/requisitions")
-  public RequisitionResponse getRequisitionResponse(
-      @RequestParam(value = "startDate") String startDate) {
+  public RequisitionResponse getRequisitionResponse(@RequestParam(value = "startDate") String startDate) {
     return service.getRequisitionResponse(startDate);
   }
 
@@ -136,10 +134,9 @@ public class SiglusMeController {
 
   @PostMapping("/app-info")
   @ResponseStatus(NO_CONTENT)
-  public void processAppInfo(HttpServletRequest httpServletRequest)
-      throws InvocationTargetException, IllegalAccessException {
+  public void processAppInfo(HttpServletRequest httpServletRequest) {
     AppInfo appInfo = new AppInfo();
-    BeanUtils.copyProperties(appInfo, AndroidConstants.getAndroidHeader(httpServletRequest));
+    BeanUtils.copyProperties(AndroidConstants.getAndroidHeader(httpServletRequest), appInfo);
     service.processAppInfo(appInfo);
   }
 
