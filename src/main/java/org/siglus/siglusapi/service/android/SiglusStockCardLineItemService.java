@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
+import org.siglus.common.exception.NotFoundException;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.response.LotMovementItemResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
@@ -206,10 +208,18 @@ public class SiglusStockCardLineItemService {
   }
 
   private SiglusStockMovementItemResponse getFirstStockMovementItemResponse(StockCardLineItemDto firstItem) {
+    if (firstItem.getExtraData() == null) {
+      throw new NotFoundException("Stockcardlineitem ExtraData Not Found");
+    }
+    String originEventTime = firstItem.getExtraData().entrySet().stream()
+        .filter(e -> "originEventTime".equals(e.getKey()))
+        .findFirst()
+        .map(Entry::getValue)
+        .orElseThrow(() -> new NotFoundException("OriginEventTime Not Found"));
     return SiglusStockMovementItemResponse.builder()
         .requested(getRequested(firstItem))
         .type(firstItem.getReason().getType()).signature(firstItem.getSignature())
-        .processedDate(firstItem.getProcessedDate().toInstant())
+        .processedDate(Instant.parse(originEventTime))
         .documentNumber(firstItem.getDocumentNumber())
         .occurredDate(firstItem.getOccurredDate()).movementQuantity(0).stockOnHand(0).build();
   }
@@ -263,6 +273,7 @@ public class SiglusStockCardLineItemService {
         .reason(getStockCardLineItemReasonDto(item, quantity))
         .stockCard(item.getStockCard())
         .lineItem(item)
+        .extraData(item.getExtraData())
         .build();
   }
 
