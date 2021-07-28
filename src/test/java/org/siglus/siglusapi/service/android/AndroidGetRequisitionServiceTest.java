@@ -140,7 +140,7 @@ public class AndroidGetRequisitionServiceTest {
     androidTemplateIds.add(templateId);
     androidTemplateIds.add(mmiaTemplateId);
     androidTemplateIds.add(malariaTemplateId);
-    when(androidTemplateConfigProperties.findAndroidTemplateIds()).thenReturn(androidTemplateIds);
+    when(androidTemplateConfigProperties.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
     when(androidTemplateConfigProperties.findAndroidTemplateId(any())).thenReturn(templateId);
     createGetRequisitionData();
     createGetMmiaRequisitionData();

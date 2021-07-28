@@ -270,7 +270,7 @@ public class SiglusMeServiceTest {
     androidTemplateIds.add(templateId);
     androidTemplateIds.add(mmiaTemplateId);
     androidTemplateIds.add(malariaTemplateId);
-    when(androidTemplateConfigProperties.findAndroidTemplateIds()).thenReturn(androidTemplateIds);
+    when(androidTemplateConfigProperties.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
     when(androidTemplateConfigProperties.findAndroidTemplateId(any())).thenReturn(templateId);
     ReflectionTestUtils.setField(service, "androidTemplateConfigProperties", androidTemplateConfigProperties);
   }
@@ -308,7 +308,7 @@ public class SiglusMeServiceTest {
     List<Requisition> requisitions = mockProgramRnr().map(Collections::singletonList).orElse(emptyList());
     when(requisitionRepository
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
-            androidTemplateConfigProperties.findAndroidTemplateIds()))
+            androidTemplateConfigProperties.getAndroidTemplateIds()))
         .thenReturn(requisitions);
 
     // when

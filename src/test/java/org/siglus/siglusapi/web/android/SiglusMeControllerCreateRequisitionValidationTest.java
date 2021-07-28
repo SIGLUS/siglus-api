@@ -163,22 +163,22 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     androidTemplateIds.add(UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d"));
     androidTemplateIds.add(UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122"));
     androidTemplateIds.add(UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122"));
-    when(androidTemplateConfigProperties.findAndroidTemplateIds()).thenReturn(androidTemplateIds);
+    when(androidTemplateConfigProperties.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
     // interfering item
     Requisition req2 = mock(Requisition.class);
     when(requisitionRepo
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
-            androidTemplateConfigProperties.findAndroidTemplateIds()))
+            androidTemplateConfigProperties.getAndroidTemplateIds()))
         .thenReturn(asList(req1, req2));
     when(requisitionRepo
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(newFacilityId,
-            androidTemplateConfigProperties.findAndroidTemplateIds()))
+            androidTemplateConfigProperties.getAndroidTemplateIds()))
         .thenReturn(emptyList());
     Requisition req3 = mock(Requisition.class);
     when(req3.getProgramId()).thenReturn(program1Id);
     when(req3.getActualEndDate()).thenReturn(LocalDate.of(2020, 8, 20));
     when(requisitionRepo.findLatestRequisitionsByFacilityIdAndAndroidTemplateId(restartedFacilityId,
-        androidTemplateConfigProperties.findAndroidTemplateIds())).thenReturn(singletonList(req3));
+        androidTemplateConfigProperties.getAndroidTemplateIds())).thenReturn(singletonList(req3));
   }
 
   @Test

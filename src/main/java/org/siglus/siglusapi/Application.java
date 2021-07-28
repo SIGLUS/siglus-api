@@ -309,11 +309,7 @@ public class Application {
 
   @Bean
   public AndroidTemplateConfigProperties androidTemplateConfig() {
-    AndroidTemplateConfigProperties androidTemplateConfigProperties = new AndroidTemplateConfigProperties();
-    androidTemplateConfigProperties.setAndroidViaTemplateId(androidViaTemplateId);
-    androidTemplateConfigProperties.setAndroidMmiaTemplateId(androidMmiaTemplateId);
-    androidTemplateConfigProperties.setAndroidMalariaTemplateId(androidMalariaTemplateId);
-    return androidTemplateConfigProperties;
+    return new AndroidTemplateConfigProperties(androidViaTemplateId, androidMmiaTemplateId, androidMalariaTemplateId);
   }
 
   // diff from messageSource() is in this method, the useCodeAsDefaultMessage is disabled

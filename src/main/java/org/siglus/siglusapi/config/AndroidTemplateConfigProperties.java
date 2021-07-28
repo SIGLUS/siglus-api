@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.config;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +33,9 @@ public class AndroidTemplateConfigProperties {
 
   private UUID androidMalariaTemplateId;
 
-  private Map<String, UUID> programIdByCode;
+  private Map<String, UUID> programIdByCode = new HashMap<>();
+
+  private Set<UUID> androidTemplateIds = new HashSet<>();
 
   public AndroidTemplateConfigProperties(UUID androidViaTemplateId, UUID androidMmiaTemplateId,
       UUID androidMalariaTemplateId) {
@@ -42,14 +45,9 @@ public class AndroidTemplateConfigProperties {
     programIdByCode.put("VC", androidViaTemplateId);
     programIdByCode.put("T", androidMmiaTemplateId);
     programIdByCode.put("ML", androidMalariaTemplateId);
-  }
-
-  public Set<UUID> findAndroidTemplateIds() {
-    Set<UUID> androidTemplateIds = new HashSet<>();
     androidTemplateIds.add(androidViaTemplateId);
     androidTemplateIds.add(androidMmiaTemplateId);
     androidTemplateIds.add(androidMalariaTemplateId);
-    return androidTemplateIds;
   }
 
   public UUID findAndroidTemplateId(String programCode) {

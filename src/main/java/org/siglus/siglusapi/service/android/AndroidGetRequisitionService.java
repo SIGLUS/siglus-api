@@ -173,7 +173,7 @@ public class AndroidGetRequisitionService {
   }
 
   private boolean isAndroidTemplate(UUID programTemplatedId) {
-    Set<UUID> androidTemplateSet = androidTemplateConfigProperties.findAndroidTemplateIds();
+    Set<UUID> androidTemplateSet = androidTemplateConfigProperties.getAndroidTemplateIds();
     return androidTemplateSet.contains(programTemplatedId);
   }
 

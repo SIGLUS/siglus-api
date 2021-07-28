@@ -73,7 +73,7 @@ public class RequisitionValidStartDateValidator implements
     }
     Requisition lastRequisition = requisitionRepo
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(homeFacilityId,
-            androidTemplateConfigProperties.findAndroidTemplateIds())
+            androidTemplateConfigProperties.getAndroidTemplateIds())
         .stream()
         .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
         .findFirst()

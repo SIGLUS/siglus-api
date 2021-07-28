@@ -172,7 +172,7 @@ public class AndroidCreateRequisitionServiceTest {
     androidTemplateIds.add(templateId);
     androidTemplateIds.add(mmiaTemplateId);
     androidTemplateIds.add(malariaTemplateId);
-    when(androidTemplateConfigProperties.findAndroidTemplateIds()).thenReturn(androidTemplateIds);
+    when(androidTemplateConfigProperties.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
     when(androidTemplateConfigProperties.findAndroidTemplateId(any())).thenReturn(templateId);
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
