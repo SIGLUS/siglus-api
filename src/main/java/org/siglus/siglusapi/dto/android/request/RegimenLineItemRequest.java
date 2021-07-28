@@ -59,7 +59,7 @@ public class RegimenLineItemRequest {
   public static List<RegimenLineItemRequest> from(List<RegimenLineItem> regimenLineItems,
       Map<UUID, RegimenDto> idToRegimenDto) {
     List<RegimenLineDto> regimenLineDtos = RegimenLineDto.from(regimenLineItems, idToRegimenDto);
-    List<RegimenLineItemRequest> regimenLineItemRequests = regimenLineDtos.stream()
+    return regimenLineDtos.stream()
         .filter(regimenLineDto -> StringUtils.isEmpty(regimenLineDto.getName()))
         .map(regimenLineDto -> RegimenLineItemRequest.builder()
             .name(regimenLineDto.getRegimen().getFullProductName())
@@ -68,12 +68,11 @@ public class RegimenLineItemRequest {
             .patientsOnTreatment(regimenLineDto.getColumns().get(COLUMN_NAME_PATIENT).getValue())
             .build())
         .collect(Collectors.toList());
-    return regimenLineItemRequests;
   }
 
   public static List<RegimenLineItemRequest> from(List<RegimenSummaryLineItem> regimenSummaryLineItems) {
     List<RegimenSummaryLineDto> regimenSummaryLineDtos = RegimenSummaryLineDto.from(regimenSummaryLineItems);
-    List<RegimenLineItemRequest> regimenLineItemRequests = regimenSummaryLineDtos.stream()
+    return regimenSummaryLineDtos.stream()
         .filter(regimenSummaryLineDto -> !regimenSummaryLineDto.getName().equals(FieldConstants.TOTAL))
         .map(
             regimenSummaryLineDto -> RegimenLineItemRequest.builder()
@@ -82,6 +81,5 @@ public class RegimenLineItemRequest {
                 .patientsOnTreatment(regimenSummaryLineDto.getColumns().get(COLUMN_NAME_PATIENT).getValue())
                 .build()
         ).collect(Collectors.toList());
-    return regimenLineItemRequests;
   }
 }
