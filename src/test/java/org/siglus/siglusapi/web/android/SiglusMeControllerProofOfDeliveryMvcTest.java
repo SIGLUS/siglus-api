@@ -192,6 +192,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .andExpect(jsonPath("[0].order.requisition.programCode").value("VC"))
         .andExpect(jsonPath("[0].order.requisition.startDate").value("2020-07-21"))
         .andExpect(jsonPath("[0].order.requisition.endDate").value("2020-08-20"))
+        .andExpect(jsonPath("[0].order.requisition.actualStartDate").value("2020-07-22"))
+        .andExpect(jsonPath("[0].order.requisition.actualEndDate").value("2020-08-25"))
         .andExpect(jsonPath("[0].products[0].code").value("22A01"))
         .andExpect(jsonPath("[0].products[0].orderedQuantity").value(20))
         .andExpect(jsonPath("[0].products[0].partialFulfilledQuantity").value(0))
@@ -215,6 +217,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .andExpect(jsonPath("[1].order.requisition.programCode").value("VC"))
         .andExpect(jsonPath("[1].order.requisition.startDate").value("2020-08-21"))
         .andExpect(jsonPath("[1].order.requisition.endDate").value("2020-09-20"))
+        .andExpect(jsonPath("[1].order.requisition.actualStartDate").value("2020-08-26"))
+        .andExpect(jsonPath("[1].order.requisition.actualEndDate").value("2020-09-21"))
         .andExpect(jsonPath("[1].products[0].code").value("22B01"))
         .andExpect(jsonPath("[1].products[0].orderedQuantity").value(20))
         .andExpect(jsonPath("[1].products[0].partialFulfilledQuantity").value(0))
@@ -238,6 +242,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .andExpect(jsonPath("[2].order.requisition.programCode").value("VC"))
         .andExpect(jsonPath("[2].order.requisition.startDate").value("2020-09-21"))
         .andExpect(jsonPath("[2].order.requisition.endDate").value("2020-10-20"))
+        .andExpect(jsonPath("[2].order.requisition.actualStartDate").value("2020-09-22"))
+        .andExpect(jsonPath("[2].order.requisition.actualEndDate").value("2020-10-23"))
         .andExpect(jsonPath("[2].products[0].code").value("22A01"))
         .andExpect(jsonPath("[2].products[0].orderedQuantity").value(20))
         .andExpect(jsonPath("[2].products[0].partialFulfilledQuantity").value(0))
@@ -480,6 +486,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     ProcessingPeriodDto order1Period = new ProcessingPeriodDto();
     order1Period.setStartDate(LocalDate.of(2020, 7, 21));
     order1Period.setEndDate(LocalDate.of(2020, 8, 20));
+    when(order1.getActualStartDate()).thenReturn(LocalDate.of(2020, 7, 22));
+    when(order1.getActualEndDate()).thenReturn(LocalDate.of(2020, 8, 25));
     when(order1.getProcessingPeriod()).thenReturn(order1Period);
     ProgramDto order1Program = mock(ProgramDto.class);
     when(order1Program.getCode()).thenReturn("VC");
@@ -506,6 +514,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     ProcessingPeriodDto order2Period = new ProcessingPeriodDto();
     order2Period.setStartDate(LocalDate.of(2020, 8, 21));
     order2Period.setEndDate(LocalDate.of(2020, 9, 20));
+    when(order2.getActualStartDate()).thenReturn(LocalDate.of(2020, 8, 26));
+    when(order2.getActualEndDate()).thenReturn(LocalDate.of(2020, 9, 21));
     when(order2.getProcessingPeriod()).thenReturn(order2Period);
     ProgramDto order2Program = mock(ProgramDto.class);
     when(order2Program.getCode()).thenReturn("VC");
@@ -532,6 +542,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     ProcessingPeriodDto order3Period = new ProcessingPeriodDto();
     order3Period.setStartDate(LocalDate.of(2020, 9, 21));
     order3Period.setEndDate(LocalDate.of(2020, 10, 20));
+    when(order3.getActualStartDate()).thenReturn(LocalDate.of(2020, 9, 22));
+    when(order3.getActualEndDate()).thenReturn(LocalDate.of(2020, 10, 23));
     when(order3.getProcessingPeriod()).thenReturn(order3Period);
     ProgramDto order3Program = mock(ProgramDto.class);
     when(order3Program.getCode()).thenReturn("VC");

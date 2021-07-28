@@ -481,8 +481,7 @@ public class SiglusMeService {
   }
 
   private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> allOrders,
-      Map<UUID, String> productCodesById,
-      Map<UUID, LotDto> lotsById, Map<UUID, String> reasonNamesById) {
+      Map<UUID, String> productCodesById, Map<UUID, LotDto> lotsById, Map<UUID, String> reasonNamesById) {
     PodResponse podResponse = podMapper.toResponse(pod, allOrders);
     podResponse.getProducts().forEach(productLine -> {
       Map<UUID, ShipmentLineItem> shipmentLineMap = pod.getShipment().getLineItems().stream()

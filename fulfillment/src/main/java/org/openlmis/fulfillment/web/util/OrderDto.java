@@ -17,6 +17,7 @@ package org.openlmis.fulfillment.web.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -127,6 +128,16 @@ public class OrderDto implements Order.Importer, Order.Exporter, UpdateDetails.E
   @Getter
   @Setter
   private String requisitionNumber;
+  // [SIGLUS change end]
+
+  // [SIGLUS change start]
+  // [change reason]: support for requisition actual start/end date.
+  @Getter
+  @Setter
+  private LocalDate actualStartDate;
+  @Getter
+  @Setter
+  private LocalDate actualEndDate;
   // [SIGLUS change end]
 
   @Override

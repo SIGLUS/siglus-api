@@ -31,4 +31,8 @@ public class RequisitionBasicResponse {
 
   private LocalDate endDate;
 
+  private LocalDate actualStartDate;
+
+  private LocalDate actualEndDate;
+
 }

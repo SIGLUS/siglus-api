@@ -297,24 +297,25 @@ public class SiglusOrderService {
   }
 
   private SiglusOrderDto extendOrderDto(OrderDto orderDto) {
-    //totalDispensingUnits not present in lineitem of previous OrderFulfillmentService
-    setOrderLineItemExtension(orderDto);
-    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
-    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
-    orderDto.setRequisitionNumber(
-        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
-    return SiglusOrderDto.builder()
-        .order(orderDto)
-        .availableProducts(getAllUserAvailableProductAggregator(orderDto)).build();
+    return doExtendOrderDto(orderDto, true);
   }
 
   private SiglusOrderDto extendOrderDtoWithoutProducts(OrderDto orderDto) {
+    return doExtendOrderDto(orderDto, false);
+  }
+
+  private SiglusOrderDto doExtendOrderDto(OrderDto orderDto, boolean withAvailableProducts) {
+    //totalDispensingUnits not present in lineitem of previous OrderFulfillmentService
     setOrderLineItemExtension(orderDto);
-    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
-    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
-    orderDto.setRequisitionNumber(
-        siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId));
-    return SiglusOrderDto.builder().order(orderDto).build();
+    Requisition requisition = getRequisitionByOrder(orderDto);
+    orderDto.setRequisitionNumber(siglusRequisitionExtensionService.formatRequisitionNumber(requisition.getId()));
+    orderDto.setActualStartDate(requisition.getActualStartDate());
+    orderDto.setActualEndDate(requisition.getActualEndDate());
+    SiglusOrderDto order = SiglusOrderDto.builder().order(orderDto).build();
+    if (withAvailableProducts) {
+      order.setAvailableProducts(getAllUserAvailableProductAggregator(orderDto));
+    }
+    return order;
   }
 
   private boolean currentDateIsAfterNextPeriodEndDate(OrderDto orderDto) {
@@ -401,10 +402,7 @@ public class SiglusOrderService {
   }
 
   private Set<VersionObjectReferenceDto> getAllUserAvailableProductAggregator(OrderDto orderDto) {
-    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
-    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
-    Requisition requisition = requisitionController.findRequisition(requisitionId,
-        requisitionController.getProfiler("GET_ORDER"));
+    Requisition requisition = getRequisitionByOrder(orderDto);
 
     UUID approverFacilityId = orderDto.getCreatedBy().getHomeFacilityId();
     UUID userHomeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -453,6 +451,12 @@ public class SiglusOrderService {
         .map(orderable -> new VersionObjectReferenceDto(
             orderable.getId(), serviceUrl, ORDERABLES, orderable.getVersionNumber())
         ).collect(Collectors.toSet());
+  }
+
+  private Requisition getRequisitionByOrder(OrderDto orderDto) {
+    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
+    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
+    return requisitionController.findRequisition(requisitionId, requisitionController.getProfiler("GET_ORDER"));
   }
 
   private Set<UUID> getEmergencyFilteredProducts(Requisition requisition) {
