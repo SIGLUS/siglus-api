@@ -15,16 +15,17 @@
 
 package org.siglus.siglusapi.errorhandling;
 
+import static java.util.stream.Collectors.toList;
 import static org.siglus.common.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
 import static org.zalando.problem.Problem.DEFAULT_TYPE;
 import static org.zalando.problem.Status.BAD_REQUEST;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.validation.ValidationException;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +67,8 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
     CONSTRAINT_MAP.put("unq_programid_additionalorderableid", MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
   }
 
+  private static final URI CONSTRAINT_VIOLATION_TYPE = URI.create("/errors/constraint-violation");
+
   @ExceptionHandler(NotAcceptableException.class)
   @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
   @ResponseBody
@@ -74,9 +77,8 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   }
 
   @ExceptionHandler
-  public ResponseEntity<Problem> handleDataIntegrityViolation(
-      final ValidationMessageException exception,
-      final NativeWebRequest request) {
+  public ResponseEntity<Problem> handleDataIntegrityViolation(ValidationMessageException exception,
+      NativeWebRequest request) {
     LocalizedMessage localizedMessage = getLocalizedMessage(exception);
     ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE)
         .with(MESSAGE_KEY, localizedMessage.getMessageKey())
@@ -86,9 +88,8 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   }
 
   @ExceptionHandler
-  public ResponseEntity<Problem> handleDataIntegrityViolation(
-      final DataIntegrityViolationException exception,
-      final NativeWebRequest request) {
+  public ResponseEntity<Problem> handleDataIntegrityViolation(DataIntegrityViolationException exception,
+      NativeWebRequest request) {
     String messageKey = null;
     String message = null;
     if (exception.getCause() instanceof ConstraintViolationException) {
@@ -111,13 +112,10 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   @Override
   public ResponseEntity<Problem> newConstraintViolationProblem(Throwable throwable, Collection<Violation> violations,
       NativeWebRequest request) {
-    final StatusType status = defaultConstraintViolationStatus();
+    StatusType status = defaultConstraintViolationStatus();
     LocalizedMessage localizedMessage = getLocalizedMessage(new Message(ERROR_VALIDATION_FAIL));
-    List<ValidationFailField> fields = violations.stream()
-        .map(ValidationFailField::new)
-        .collect(Collectors.toList());
-    ThrowableProblem problem = Problem.builder()
-        .withStatus(status)
+    List<ValidationFailField> fields = violations.stream().map(ValidationFailField::new).collect(toList());
+    ThrowableProblem problem = prepare(throwable, status, CONSTRAINT_VIOLATION_TYPE)
         .with(MESSAGE_KEY, localizedMessage.getMessageKey())
         .with(MESSAGE, localizedMessage.getMessage())
         .with("fields", fields)
@@ -126,8 +124,7 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   }
 
   @ExceptionHandler
-  public ResponseEntity<Problem> handleValidationException(
-      final ValidationException exception, final NativeWebRequest request) {
+  public ResponseEntity<Problem> handleValidationException(ValidationException exception, NativeWebRequest request) {
     String detail = String.format("%s Caused by %s", exception.getMessage(), exception.getCause());
     ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE).withDetail(detail).build();
     return create(exception, problem, request);
