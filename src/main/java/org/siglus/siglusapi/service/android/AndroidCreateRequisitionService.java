@@ -394,7 +394,7 @@ public class AndroidCreateRequisitionService {
             patientNameToPatientGroupDto.get(PatientLineItemName.findValueByKey(patientRequest.getName())),
             patientRequest)
     );
-    caculatePatientDispensedTotal(patientNameToPatientGroupDto);
+    calculatePatientDispensedTotal(patientNameToPatientGroupDto);
   }
 
   private void splitTableDispensedPatientData(List<PatientLineItemsRequest> patientLineItemsRequests) {
@@ -449,17 +449,17 @@ public class AndroidCreateRequisitionService {
     });
   }
 
-  private void caculatePatientDispensedTotal(Map<String, PatientGroupDto> patientNameToPatientGroupDto) {
+  private void calculatePatientDispensedTotal(Map<String, PatientGroupDto> patientNameToPatientGroupDto) {
     PatientGroupDto patientGroupDtoSection5 = patientNameToPatientGroupDto.get(NEW_SECTION_5);
     PatientColumnDto section5TotalDto = patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN);
     if (section5TotalDto.getValue() == null) {
       section5TotalDto.setValue(0);
     }
-    caculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_2), patientGroupDtoSection5,
+    calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_2), patientGroupDtoSection5,
         NEW_SECTION_2);
-    caculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_3), patientGroupDtoSection5,
+    calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_3), patientGroupDtoSection5,
         NEW_SECTION_3);
-    caculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_4), patientGroupDtoSection5,
+    calculatePatientDispensedTotalBySection(patientNameToPatientGroupDto.get(NEW_SECTION_4), patientGroupDtoSection5,
         NEW_SECTION_4);
 
     PatientGroupDto patientGroupDtoSection6 = patientNameToPatientGroupDto.get(NEW_SECTION_6);
@@ -482,7 +482,7 @@ public class AndroidCreateRequisitionService {
             / Float.valueOf(patientGroupDtoSection5.getColumns().get(TOTAL_COLUMN).getValue())));
   }
 
-  private void caculatePatientDispensedTotalBySection(PatientGroupDto patientGroupDtoSection,
+  private void calculatePatientDispensedTotalBySection(PatientGroupDto patientGroupDtoSection,
       PatientGroupDto patientGroupDtoSection5, String sectionKey) {
     PatientColumnDto sectionTotalDto = patientGroupDtoSection.getColumns().get(TOTAL_COLUMN);
     if (sectionTotalDto.getValue() == null) {
