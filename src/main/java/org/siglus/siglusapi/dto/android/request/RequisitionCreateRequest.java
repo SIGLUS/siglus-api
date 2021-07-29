@@ -26,6 +26,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
+import org.siglus.siglusapi.dto.android.constraint.RequisitionValidEndDate;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
 import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 
@@ -34,6 +35,7 @@ import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 @NoArgsConstructor
 @AllArgsConstructor
 @RequisitionValidStartDate(groups = {PerformanceGroup.class})
+@RequisitionValidEndDate
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequisitionCreateRequest {
 

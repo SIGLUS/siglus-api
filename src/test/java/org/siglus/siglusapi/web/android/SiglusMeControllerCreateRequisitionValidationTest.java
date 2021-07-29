@@ -65,6 +65,7 @@ import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
+import org.siglus.siglusapi.dto.android.validator.RequisitionValidEndDateValidator;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidStartDateValidator;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -375,6 +376,22 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     }
   }
 
+  @Test
+  public void shouldThrowErrorWhenActualEndDateBeforeActualStartDate()
+      throws Exception {
+    // given
+    Object param = parseParam("actualEndDateBeforeActualStartDate.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The end date 2021-06-24 should be after start date 2021-06-25.",
+        violations.get("createRequisition.arg0"));
+
+  }
+
   private Object parseParam(String fileName) throws IOException {
     String json = readFromFile(fileName);
     return mapper.readValue(json, RequisitionCreateRequest.class);
@@ -401,6 +418,9 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       if (key == RequisitionValidStartDateValidator.class) {
         return (T) new RequisitionValidStartDateValidator(authHelper, reportTypeRepo, requisitionRepo, periodRepo,
             programDataService, androidTemplateConfigProperties);
+      }
+      if (key == RequisitionValidEndDateValidator.class) {
+        return (T) new RequisitionValidEndDateValidator();
       }
       return NewInstance.action(key, "ConstraintValidator").run();
     }
