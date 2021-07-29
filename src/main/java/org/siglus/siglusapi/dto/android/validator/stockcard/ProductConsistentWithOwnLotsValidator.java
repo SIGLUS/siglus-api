@@ -40,12 +40,10 @@ public class ProductConsistentWithOwnLotsValidator implements
         || value.getLotEvents() == null || value.getLotEvents().isEmpty()) {
       return true;
     }
-    if (value.getLotEvents().stream()
-        .allMatch(r -> r.getStockOnHand() == null && r.getQuantity() == null)) {
+    if (value.getLotEvents().stream().allMatch(r -> r.getStockOnHand() == null && r.getQuantity() == null)) {
       return true;
     }
-    HibernateConstraintValidatorContext actualContext = context
-        .unwrap(HibernateConstraintValidatorContext.class);
+    HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable("productCode", value.getProductCode());
     actualContext.addExpressionVariable("date", value.getOccurredDate());
     actualContext.addExpressionVariable("createdAt", value.getCreatedAt());

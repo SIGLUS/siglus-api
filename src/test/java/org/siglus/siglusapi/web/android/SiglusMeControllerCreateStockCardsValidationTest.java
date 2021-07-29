@@ -184,10 +184,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
     // then
     assertEquals(2, violations.size());
-    assertEquals(MUST_BE_POSITIVE,
-        violations.get("createStockCards.arg0[0].stockOnHand"));
-    assertEquals(MUST_BE_POSITIVE,
-        violations.get("createStockCards.arg0[0].lotEvents[0].stockOnHand"));
+    assertEquals(MUST_BE_POSITIVE, violations.get("createStockCards.arg0[0].stockOnHand"));
+    assertEquals(MUST_BE_POSITIVE, violations.get("createStockCards.arg0[0].lotEvents[0].stockOnHand"));
   }
 
   @Test
