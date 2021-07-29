@@ -114,4 +114,12 @@ public class UsageSectionConstants {
     public static final String KEY_REGIME_3LINES_3 = "key_regime_3lines_3";
   }
 
+  public static class UsageInformationLineItems {
+    private UsageInformationLineItems() { }
+
+    public static final String SERVICE_TOTAL = "total";
+    public static final String SERVICE_CHW = "newColumn0";
+    public static final String SERVICE_HF = "HF";
+  }
+
 }

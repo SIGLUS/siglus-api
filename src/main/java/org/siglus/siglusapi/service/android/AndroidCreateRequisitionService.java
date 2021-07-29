@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
 import static org.openlmis.requisition.web.ResourceNames.PROCESSING_PERIODS;
 import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
@@ -60,9 +61,14 @@ import java.time.YearMonth;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
@@ -71,7 +77,6 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -85,6 +90,7 @@ import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
+import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.PermissionService;
@@ -103,9 +109,11 @@ import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
+import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
@@ -114,6 +122,7 @@ import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.UsageInformationServiceDto;
 import org.siglus.siglusapi.dto.android.androidenum.NewSection0;
 import org.siglus.siglusapi.dto.android.androidenum.NewSection1;
 import org.siglus.siglusapi.dto.android.androidenum.NewSection2;
@@ -128,6 +137,7 @@ import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -137,6 +147,7 @@ import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -180,9 +191,9 @@ public class AndroidCreateRequisitionService {
     newRequisition.setTemplate(getRequisitionTemplate(programCode));
     newRequisition.setStatus(RequisitionStatus.INITIATED);
     newRequisition.setProcessingPeriodId(getPeriodId(request));
-    newRequisition.setReportOnly(false);
     newRequisition.setNumberOfMonthsInPeriod(1);
     newRequisition.setDraftStatusMessage(request.getComments());
+    newRequisition.setReportOnly("ML".equals(request.getProgramCode()));
     buildStatusChanges(newRequisition, authorId);
     buildRequisitionApprovedProduct(newRequisition, homeFacilityId, programId);
     buildRequisitionExtraData(newRequisition, request);
@@ -262,6 +273,9 @@ public class AndroidCreateRequisitionService {
 
   private void buildRequisitionLineItemsExtension(Requisition requisition,
       RequisitionCreateRequest requisitionRequest) {
+    if (CollectionUtils.isEmpty(requisition.getRequisitionLineItems())) {
+      return;
+    }
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
       extension.setRequisitionLineItemId(requisitionLineItem.getId());
@@ -307,6 +321,9 @@ public class AndroidCreateRequisitionService {
   }
 
   private void buildRequisitionLineItems(Requisition requisition, RequisitionCreateRequest requisitionRequest) {
+    if (CollectionUtils.isEmpty(requisitionRequest.getProducts())) {
+      return;
+    }
     List<RequisitionLineItem> requisitionLineItems = new ArrayList<>();
     for (RequisitionLineItemRequest product : requisitionRequest.getProducts()) {
       OrderableDto orderableDto = siglusOrderableService.getOrderableByCode(product.getProductCode());
@@ -337,7 +354,7 @@ public class AndroidCreateRequisitionService {
 
   private void buildRequisitionApprovedProduct(Requisition requisition, UUID homeFacilityId, UUID programId) {
     ApproveProductsAggregator approvedProductsContainKit = requisitionService
-        .getApproveProduct(homeFacilityId, programId, false);
+        .getApproveProduct(homeFacilityId, programId, requisition.getReportOnly());
     List<ApprovedProductDto> approvedProductDtos = approvedProductsContainKit.getFullSupplyProducts();
     ApproveProductsAggregator approvedProducts = new ApproveProductsAggregator(approvedProductDtos, programId);
     Set<ApprovedProductReference> availableProductIdentities = approvedProducts.getApprovedProductReferences();
@@ -353,17 +370,19 @@ public class AndroidCreateRequisitionService {
     dto.setTemplate(templateDto);
     dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(), "", PROCESSING_PERIODS));
     dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), "", PROGRAMS));
+    buildAvailableProducts(dto, requisition);
     SiglusRequisitionDto requisitionDto = siglusUsageReportService.initiateUsageReport(dto);
     buildConsultationNumber(requisitionDto, request);
     buildRequisitionKitUsage(requisitionDto, request);
     updateRegimenLineItems(requisitionDto, programId, request);
     updateRegimenSummaryLineItems(requisitionDto, request);
     updatePatientLineItems(requisitionDto, request);
+    updateUsageInformationLineItems(requisitionDto, request);
     siglusUsageReportService.saveUsageReport(requisitionDto, dto);
   }
 
   private void updatePatientLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
-    if (requisitionDto.getPatientLineItems() == null || requisitionDto.getPatientLineItems().isEmpty()) {
+    if (CollectionUtils.isEmpty(request.getPatientLineItems())) {
       return;
     }
     Map<String, PatientGroupDto> patientNameToPatientGroupDto = requisitionDto.getPatientLineItems().stream()
@@ -491,7 +510,7 @@ public class AndroidCreateRequisitionService {
   }
 
   private void updateRegimenSummaryLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
-    if (requisitionDto.getRegimenSummaryLineItems() == null || requisitionDto.getRegimenSummaryLineItems().isEmpty()) {
+    if (CollectionUtils.isEmpty(request.getRegimenSummaryLineItems())) {
       return;
     }
     Map<String, RegimenSummaryLineDto> regimenNameToRegimenSummaryLineDto = requisitionDto.getRegimenSummaryLineItems()
@@ -526,9 +545,6 @@ public class AndroidCreateRequisitionService {
 
   private void updateRegimenLineItems(SiglusRequisitionDto requisitionDto, UUID programId,
       RequisitionCreateRequest request) {
-    if (requisitionDto.getRegimenLineItems() == null || requisitionDto.getRegimenLineItems().isEmpty()) {
-      return;
-    }
     List<RegimenDto> regimenDtosByProgramId = regimenRepository.findAllByProgramIdAndActiveTrue(programId).stream()
         .map(RegimenDto::from).collect(Collectors.toList());
     if (CollectionUtils.isEmpty(regimenDtosByProgramId)) {
@@ -545,6 +561,9 @@ public class AndroidCreateRequisitionService {
 
   private List<RegimenLineItem> buildRegimenPatientsAndCommunity(List<RegimenLineItemRequest> regimenLineItemRequests,
       UUID requisitionId, Map<String, RegimenDto> regimenCodeToRegimenDto) {
+    if (CollectionUtils.isEmpty(regimenLineItemRequests)) {
+      return Collections.emptyList();
+    }
     List<RegimenLineItem> regimenLineItems = new ArrayList<>();
     regimenLineItemRequests.forEach(itemRequest -> {
       RegimenDto regimenDto = regimenCodeToRegimenDto.get(itemRequest.getCode());
@@ -578,6 +597,9 @@ public class AndroidCreateRequisitionService {
   }
 
   private void buildRequisitionKitUsage(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+    if (CollectionUtils.isEmpty(request.getProducts())) {
+      return;
+    }
     int kitReceivedChw = request.getProducts().stream()
         .filter(product -> KIT_26A02.equals(product.getProductCode()))
         .mapToInt(RequisitionLineItemRequest::getTotalReceivedQuantity)
@@ -603,6 +625,61 @@ public class AndroidCreateRequisitionService {
         kitUsage.getServices().get(SERVICE_HF).setValue(kitOpenedHf);
       }
     });
+  }
+
+  private void updateUsageInformationLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+    if (CollectionUtils.isEmpty(request.getUsageInformationLineItems())) {
+      return;
+    }
+    List<UsageInformationLineItemRequest> usageInformationLineItemRequests = request.getUsageInformationLineItems();
+    List<UsageInformationLineItem> usageInformationLineItems = usageInformationLineItemRequests.stream()
+        .map(t -> buildUsageInfos(requisitionDto.getId(), t))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    List<UsageInformationServiceDto> usageInformationServiceDtos = UsageInformationServiceDto
+        .from(usageInformationLineItems);
+    requisitionDto.setUsageInformationLineItems(usageInformationServiceDtos);
+  }
+
+  private List<UsageInformationLineItem> buildUsageInfos(UUID requisitionId,
+      UsageInformationLineItemRequest usageInforLineRequest) {
+    UsageInformationLineItem hfUsageInfoLineItem = UsageInformationLineItem.builder()
+        .information(usageInforLineRequest.getInformation())
+        .requisitionId(requisitionId)
+        .orderableId(siglusOrderableService.getOrderableByCode(usageInforLineRequest.getProductCode()).getId())
+        .service(UsageInformationLineItems.SERVICE_HF)
+        .value(usageInforLineRequest.getHf())
+        .build();
+    UsageInformationLineItem chwUsageInfoLineItem = UsageInformationLineItem.builder()
+        .information(usageInforLineRequest.getInformation())
+        .requisitionId(requisitionId)
+        .orderableId(siglusOrderableService.getOrderableByCode(usageInforLineRequest.getProductCode()).getId())
+        .service(UsageInformationLineItems.SERVICE_CHW)
+        .value(usageInforLineRequest.getChw())
+        .build();
+    UsageInformationLineItem totalUsageInfoLineItem = UsageInformationLineItem.builder()
+        .information(usageInforLineRequest.getInformation())
+        .requisitionId(requisitionId)
+        .orderableId(siglusOrderableService.getOrderableByCode(usageInforLineRequest.getProductCode()).getId())
+        .service(UsageInformationLineItems.SERVICE_TOTAL)
+        .value(Math.addExact(usageInforLineRequest.getHf(), usageInforLineRequest.getChw()))
+        .build();
+    return Arrays.asList(hfUsageInfoLineItem, chwUsageInfoLineItem, totalUsageInfoLineItem);
+  }
+
+  private void buildAvailableProducts(RequisitionV2Dto dto, Requisition requisition) {
+    Set<VersionObjectReferenceDto> availableProducts = new HashSet<>();
+    Optional
+        .ofNullable(requisition.getAvailableProducts())
+        .orElse(Collections.emptySet())
+        .stream()
+        .map(ApprovedProductReference::getOrderable)
+        .forEach(orderable -> {
+          VersionObjectReferenceDto reference = new VersionObjectReferenceDto(
+              orderable.getId(), "", ORDERABLES, orderable.getVersionNumber());
+          availableProducts.add(reference);
+        });
+    dto.setAvailableProducts(availableProducts);
   }
 }
 

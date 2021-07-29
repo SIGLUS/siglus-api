@@ -15,63 +15,31 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.List;
-import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
-import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
-import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@RequisitionValidStartDate(groups = {PerformanceGroup.class})
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class RequisitionCreateRequest {
+public class UsageInformationLineItemRequest {
 
   @NotBlank
-  private String programCode;
+  private String information;
+
+  @NotBlank
+  private String productCode;
 
   @NotNull
-  private Instant clientSubmittedTime;
+  @Min(0)
+  private Integer hf;
 
   @NotNull
-  private Boolean emergency;
-
-  @NotNull
-  private LocalDate actualStartDate;
-
-  @NotNull
-  private LocalDate actualEndDate;
-
-  private Integer consultationNumber;
-
-  @Valid
-  private List<RequisitionLineItemRequest> products;
-
-  @Valid
-  private List<RequisitionSignatureRequest> signatures;
-
-  private String comments;
-
-  @Valid
-  private List<RegimenLineItemRequest> regimenLineItems;
-
-  @Valid
-  private List<RegimenLineItemRequest> regimenSummaryLineItems;
-
-  @Valid
-  private List<PatientLineItemsRequest> patientLineItems;
-
-  @Valid
-  private List<UsageInformationLineItemRequest> usageInformationLineItems;
+  @Min(0)
+  private Integer chw;
 }
-
