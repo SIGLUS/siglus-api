@@ -36,14 +36,18 @@ public class UsageSectionConstants {
   }
 
   public static class RegimenLineItems {
-    private RegimenLineItems() { }
+
+    private RegimenLineItems() {
+    }
 
     public static final String COLUMN_NAME_PATIENT = "patients";
     public static final String COLUMN_NAME_COMMUNITY = "community";
   }
 
   public static class PatientLineItems {
-    private PatientLineItems() { }
+
+    private PatientLineItems() {
+    }
 
     public static final String TABLE_DISPENSED = "table_dispensed";
     public static final String TABLE_DISPENSED_KEY = "table_dispensed_key";
@@ -115,11 +119,15 @@ public class UsageSectionConstants {
   }
 
   public static class UsageInformationLineItems {
-    private UsageInformationLineItems() { }
+
+    private UsageInformationLineItems() {
+    }
 
     public static final String SERVICE_TOTAL = "total";
     public static final String SERVICE_CHW = "newColumn0";
     public static final String SERVICE_HF = "HF";
+    public static final String EXISTENT_STOCK = "existentStock";
+    public static final String TREATMENTS_ATTENDED = "treatmentsAttended";
   }
 
 }

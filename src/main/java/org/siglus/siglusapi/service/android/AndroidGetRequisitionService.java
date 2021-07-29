@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -52,21 +53,26 @@ import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem.Importer;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
+import org.siglus.common.exception.NotFoundException;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.constant.FieldConstants;
+import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
+import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
 import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.RegimenDto;
-import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.UsageInformationInformationDto;
+import org.siglus.siglusapi.dto.UsageInformationServiceDto;
 import org.siglus.siglusapi.dto.android.androidenum.NewSection0;
 import org.siglus.siglusapi.dto.android.androidenum.NewSection1;
 import org.siglus.siglusapi.dto.android.androidenum.NewSection2;
@@ -80,16 +86,19 @@ import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
+import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
-import org.siglus.siglusapi.service.ConsultationNumberDataProcessor;
+import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.service.mapper.ConsultationNumberLineItemMapper;
 import org.siglus.siglusapi.service.mapper.PatientLineItemMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -99,17 +108,20 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @SuppressWarnings("PMD.TooManyMethods")
 public class AndroidGetRequisitionService {
+
   private final SiglusProgramService siglusProgramService;
   private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
   private final RequisitionLineItemExtensionRepository requisitionLineItemExtensionRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
-  private final ConsultationNumberDataProcessor consultationNumberDataProcessor;
   private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final RegimenLineItemRepository regimenLineItemRepository;
   private final RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
   private final RegimenRepository regimenRepository;
+  private final ConsultationNumberLineItemRepository consultationNumberLineItemRepository;
   private final PatientLineItemRepository patientLineItemRepository;
+  private final UsageInformationLineItemRepository usageInformationLineItemRepository;
   private final PatientLineItemMapper patientLineItemMapper;
+  private final ConsultationNumberLineItemMapper consultationNumberLineItemMapper;
 
   public RequisitionResponse getRequisitionResponseByFacilityIdAndDate(UUID facilityId, String startDate,
       Map<UUID, String> orderableIdToCode) {
@@ -117,12 +129,17 @@ public class AndroidGetRequisitionService {
         .searchRequisitionIdByFacilityAndDate(facilityId, startDate);
     Set<UUID> requisitionIds = requisitionExtensions.stream().map(RequisitionExtension::getRequisitionId)
         .collect(Collectors.toSet());
-    Map<UUID, List<RegimenLineItemRequest>> idToRegimenLines = buildIdToRegimenLineRequestsMap(requisitionIds);
-    Map<UUID, List<RegimenLineItemRequest>> idToRegimenSummaryLines = buildIdToRegimenSummaryLineRequestsMap(
+    Map<UUID, List<RegimenLineItemRequest>> requisitionIdToRegimenLines = buildIdToRegimenLineRequestsMap(
         requisitionIds);
-    Map<UUID, List<PatientLineItemsRequest>> idToPatientLines = buildIdToPatientLineRequestsMap(requisitionIds);
+    Map<UUID, List<RegimenLineItemRequest>> requisitionIdToRegimenSummaryLines = buildIdToRegimenSummaryLineRequestsMap(
+        requisitionIds);
+    Map<UUID, List<PatientLineItemsRequest>> requisitionIdToPatientLines = buildIdToPatientLineRequestsMap(
+        requisitionIds);
+    Map<UUID, List<ConsultationNumberGroupDto>> requisitionIdToConsultationNumbers = buildIdToConsultationNumbersMap(
+        requisitionIds);
+    Map<UUID, List<UsageInformationServiceDto>> requisitionIdToUsageInfoDtos = buildIdToUsageInformationLineItemMap(
+        requisitionIds);
     List<RequisitionCreateRequest> requisitionCreateRequests = new ArrayList<>();
-
     requisitionExtensions.forEach(
         extension -> {
           RequisitionV2Dto requisitionV2Dto = siglusRequisitionRequisitionService
@@ -134,11 +151,13 @@ public class AndroidGetRequisitionService {
           RequisitionCreateRequest requisitionCreateRequest = RequisitionCreateRequest.builder()
               .programCode(getProgramCode(requisitionV2Dto.getProgram().getId()))
               .emergency(requisitionV2Dto.getEmergency())
-              .consultationNumber(getConsultationNumber(requisitionV2Dto.getId()))
+              .consultationNumber(getConsultationNumber(requisitionV2Dto, requisitionIdToConsultationNumbers))
               .products(getProducts(requisitionV2Dto, orderableIdToCode))
-              .regimenLineItems(getRegimenLineItems(requisitionV2Dto, idToRegimenLines))
-              .regimenSummaryLineItems(getRegimenSummaryLineItems(requisitionV2Dto, idToRegimenSummaryLines))
-              .patientLineItems(getPatientLineItems(requisitionV2Dto, idToPatientLines))
+              .regimenLineItems(getRegimenLineItems(requisitionV2Dto, requisitionIdToRegimenLines))
+              .regimenSummaryLineItems(getRegimenSummaryLineItems(requisitionV2Dto, requisitionIdToRegimenSummaryLines))
+              .patientLineItems(getPatientLineItems(requisitionV2Dto, requisitionIdToPatientLines))
+              .usageInformationLineItems(
+                  getUsageInformationLineItems(orderableIdToCode, requisitionIdToUsageInfoDtos, requisitionV2Dto))
               .comments(requisitionV2Dto.getDraftStatusMessage())
               .build();
           setTimeAndSignature(requisitionCreateRequest, requisitionV2Dto);
@@ -189,6 +208,20 @@ public class AndroidGetRequisitionService {
     return idToRegimenLineItem.entrySet().stream()
         .collect(Collectors
             .toMap(Map.Entry::getKey, entry -> RegimenLineItemRequest.from(entry.getValue(), idToRegimenDto)));
+  }
+
+  private Map<UUID, List<ConsultationNumberGroupDto>> buildIdToConsultationNumbersMap(Set<UUID> requisitionIds) {
+    return consultationNumberLineItemRepository.findByRequisitionIdIn(requisitionIds).stream()
+        .collect(Collectors.groupingBy(ConsultationNumberLineItem::getRequisitionId))
+        .entrySet().stream()
+        .collect(Collectors.toMap(Entry::getKey, e -> consultationNumberLineItemMapper.fromLineItems(e.getValue())));
+  }
+
+  private Map<UUID, List<UsageInformationServiceDto>> buildIdToUsageInformationLineItemMap(Set<UUID> requisitionIds) {
+    return usageInformationLineItemRepository.findByRequisitionIdIn(requisitionIds).stream()
+        .collect(Collectors.groupingBy(UsageInformationLineItem::getRequisitionId))
+        .entrySet().stream()
+        .collect(Collectors.toMap(Entry::getKey, e -> UsageInformationServiceDto.from(e.getValue())));
   }
 
   private Map<UUID, List<RegimenLineItemRequest>> buildIdToRegimenSummaryLineRequestsMap(
@@ -278,12 +311,61 @@ public class AndroidGetRequisitionService {
     }
   }
 
-  private Integer getConsultationNumber(UUID requisitionId) {
-    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
-    siglusRequisitionDto.setId(requisitionId);
-    consultationNumberDataProcessor.get(siglusRequisitionDto);
-    List<ConsultationNumberGroupDto> consultationNumberGroupDtos = siglusRequisitionDto
-        .getConsultationNumberLineItems();
+  private List<UsageInformationLineItemRequest> getUsageInformationLineItems(Map<UUID, String> orderableIdToCode,
+      Map<UUID, List<UsageInformationServiceDto>> requisitionIdToUsageInfoDtos, RequisitionV2Dto requisitionV2Dto) {
+    List<UsageInformationServiceDto> usageInformationServiceDtos = requisitionIdToUsageInfoDtos
+        .get(requisitionV2Dto.getId());
+    if (usageInformationServiceDtos == null) {
+      return Collections.emptyList();
+    }
+    UsageInformationServiceDto hfUsageInformationDto = usageInformationServiceDtos.stream()
+        .filter(dto -> UsageInformationLineItems.SERVICE_HF.equals(dto.getService()))
+        .findFirst()
+        .orElseThrow(() -> new NotFoundException("UsageInformation HF Service Not Found"));
+    Map<UUID, Integer> orderableIdToHfExistentValue = orderableIdToUsageValue(hfUsageInformationDto,
+        UsageInformationLineItems.EXISTENT_STOCK);
+    Map<UUID, Integer> orderableIdToHfTreatMentValue = orderableIdToUsageValue(hfUsageInformationDto,
+        UsageInformationLineItems.TREATMENTS_ATTENDED);
+    UsageInformationServiceDto chwUsageInformationServiceDto = usageInformationServiceDtos.stream()
+        .filter(dto -> UsageInformationLineItems.SERVICE_CHW.equals(dto.getService()))
+        .findFirst()
+        .orElseThrow(() -> new NotFoundException("UsageInformation CHW Service Not Found"));
+    Map<UUID, Integer> orderableIdToChwExistentValue = orderableIdToUsageValue(chwUsageInformationServiceDto,
+        UsageInformationLineItems.EXISTENT_STOCK);
+    Map<UUID, Integer> orderableIdToChwTreatMentValue = orderableIdToUsageValue(chwUsageInformationServiceDto,
+        UsageInformationLineItems.TREATMENTS_ATTENDED);
+    List<UsageInformationLineItemRequest> existentUsageRequest = orderableIdToHfExistentValue.entrySet().stream()
+        .map(e -> convertUsageInformationRequest(e.getValue(), orderableIdToChwExistentValue.get(e.getKey()),
+            UsageInformationLineItems.EXISTENT_STOCK, orderableIdToCode.get(e.getKey())))
+        .collect(Collectors.toList());
+    List<UsageInformationLineItemRequest> treatmentUsageRequest = orderableIdToHfTreatMentValue.entrySet().stream()
+        .map(e -> convertUsageInformationRequest(e.getValue(), orderableIdToChwTreatMentValue.get(e.getKey()),
+            UsageInformationLineItems.TREATMENTS_ATTENDED, orderableIdToCode.get(e.getKey())))
+        .collect(Collectors.toList());
+    existentUsageRequest.addAll(treatmentUsageRequest);
+    return existentUsageRequest;
+  }
+
+  private Map<UUID, Integer> orderableIdToUsageValue(UsageInformationServiceDto usageInformationServiceDto,
+      String information) {
+    UsageInformationInformationDto hfUsageDtos = usageInformationServiceDto.getInformations().get(information);
+    if (hfUsageDtos == null || hfUsageDtos.getOrderables() == null) {
+      return Collections.emptyMap();
+    }
+    return hfUsageDtos.getOrderables().entrySet().stream()
+        .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().getValue()));
+  }
+
+  private UsageInformationLineItemRequest convertUsageInformationRequest(Integer hf, Integer chw, String information,
+      String productCode) {
+    return UsageInformationLineItemRequest.builder()
+        .information(information).productCode(productCode).hf(hf).chw(chw).build();
+  }
+
+  private Integer getConsultationNumber(RequisitionV2Dto requisitionV2Dto,
+      Map<UUID, List<ConsultationNumberGroupDto>> requisitionIdToConsultationNumbers) {
+    List<ConsultationNumberGroupDto> consultationNumberGroupDtos = requisitionIdToConsultationNumbers
+        .get(requisitionV2Dto.getId());
     if (consultationNumberGroupDtos == null) {
       return null;
     }

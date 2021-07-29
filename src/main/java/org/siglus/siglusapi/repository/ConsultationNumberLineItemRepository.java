@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +26,5 @@ public interface ConsultationNumberLineItemRepository extends
 
   List<ConsultationNumberLineItem> findByRequisitionId(UUID requisitionId);
 
+  List<ConsultationNumberLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 }

@@ -16,13 +16,13 @@
 package org.siglus.siglusapi.service.android;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.powermock.api.mockito.PowerMockito.doAnswer;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
 
-import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,45 +38,46 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
+import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
-import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
-import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
+import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
-import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
+import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
 import org.siglus.siglusapi.repository.PatientLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenLineItemRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
-import org.siglus.siglusapi.service.ConsultationNumberDataProcessor;
+import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.service.mapper.ConsultationNumberLineItemMapper;
 import org.siglus.siglusapi.service.mapper.PatientLineItemMapper;
-import org.springframework.beans.BeanUtils;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
@@ -98,13 +99,16 @@ public class AndroidGetRequisitionServiceTest {
   private RequisitionExtensionRepository requisitionExtensionRepository;
 
   @Mock
-  private ConsultationNumberDataProcessor consultationNumberDataProcessor;
+  private ConsultationNumberLineItemRepository consultationNumberLineItemRepository;
 
   @Mock
   private RegimenLineItemRepository regimenLineItemRepository;
 
   @Mock
   private RegimenSummaryLineItemRepository regimenSummaryLineItemRepository;
+
+  @Mock
+  private UsageInformationLineItemRepository usageInformationLineItemRepository;
 
   @Mock
   private RegimenRepository regimenRepository;
@@ -120,22 +124,29 @@ public class AndroidGetRequisitionServiceTest {
 
   private final UUID programId = UUID.randomUUID();
   private final UUID programIdMmia = UUID.randomUUID();
+  private final UUID programIdMalaria = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID orderableId2 = UUID.randomUUID();
   private final UUID templateId = UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
   private final UUID mmiaTemplateId = UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122");
   private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
   private final UUID requisitionId = UUID.randomUUID();
+  private final UUID requisitionIdMmia = UUID.randomUUID();
+  private final UUID requisitionIdMalaria = UUID.randomUUID();
   private final UUID requisitionLineItemId = UUID.randomUUID();
   private final UUID requisitionLineItemId2 = UUID.randomUUID();
   private final Map<UUID, String> orderableIdToCode = new HashMap<>();
   private final String orderableCode = "orderableCode";
   private final String orderableCode2 = "orderableCode2";
   private final UUID regimenId = UUID.randomUUID();
-  private final UUID requisitionIdMmia = UUID.randomUUID();
+  private String existentStock = "existentStock";
+  private String treatmentsAttended = "treatmentsAttended";
+  private String newColumn0 = "newColumn0";
 
   @Before
   public void prepare() {
+    ConsultationNumberLineItemMapper consultationNumberLineItemMapper = new ConsultationNumberLineItemMapper();
+    ReflectionTestUtils.setField(service, "consultationNumberLineItemMapper", consultationNumberLineItemMapper);
     Set<UUID> androidTemplateIds = new HashSet<>();
     androidTemplateIds.add(templateId);
     androidTemplateIds.add(mmiaTemplateId);
@@ -144,10 +155,11 @@ public class AndroidGetRequisitionServiceTest {
     when(androidTemplateConfigProperties.findAndroidTemplateId(any())).thenReturn(templateId);
     createGetRequisitionData();
     createGetMmiaRequisitionData();
+    createGetMalariaRequisitionData();
   }
 
   @Test
-  public void shouldGetRequisitionResponseWhenByFacilityIdAndStartDate() {
+  public void shouldGetViaRequisitionResponseWhenByFacilityIdAndStartDate() {
     // when
     RequisitionResponse requisitionResponse = service
         .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), "2021-07-13", orderableIdToCode);
@@ -200,36 +212,71 @@ public class AndroidGetRequisitionServiceTest {
     List<PatientLineItemsRequest> patientLineItemsRequests = mmiaResponse.getPatientLineItems();
     assertEquals("table_dispensed_key", patientLineItemsRequests.get(0).getName());
     assertEquals(2, patientLineItemsRequests.get(0).getColumns().size());
-    Set<String> columnNmaes = patientLineItemsRequests.get(0).getColumns().stream().map(t -> t.getName()).collect(
-        Collectors.toSet());
-    Set<Integer> columnValues = patientLineItemsRequests.get(0).getColumns().stream().map(t -> t.getValue()).collect(
-        Collectors.toSet());
-    assertEquals(true, columnNmaes.contains("dispensed_ds5"));
-    assertEquals(true, columnNmaes.contains("dispensed_dt1"));
-    assertEquals(true, columnValues.contains(20));
-    assertEquals(true, columnValues.contains(27));
+    Set<String> columnNmaes = patientLineItemsRequests.get(0).getColumns().stream()
+        .map(PatientLineItemColumnRequest::getName).collect(Collectors.toSet());
+    Set<Integer> columnValues = patientLineItemsRequests.get(0).getColumns().stream()
+        .map(PatientLineItemColumnRequest::getValue).collect(Collectors.toSet());
+    assertTrue(columnNmaes.contains("dispensed_ds5"));
+    assertTrue(columnNmaes.contains("dispensed_dt1"));
+    assertTrue(columnValues.contains(20));
+    assertTrue(columnValues.contains(27));
 
     assertEquals("comments", mmiaResponse.getComments());
+  }
+
+  @Test
+  public void shouldGetMalariaRequisitionResponseWhenByFacilityIdAndStartDate() {
+    // when
+    RequisitionResponse requisitionResponse = service
+        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), "2021-07-13", orderableIdToCode);
+
+    // then
+    RequisitionCreateRequest response = requisitionResponse.getRequisitionResponseList().get(2);
+    assertEquals("ML", response.getProgramCode());
+    assertEquals("2021-07-21T07:59:59Z", String.valueOf(response.getClientSubmittedTime()));
+    assertEquals(false, response.getEmergency());
+    assertEquals("2021-07-01", String.valueOf(response.getActualStartDate()));
+    assertEquals("2021-07-21", String.valueOf(response.getActualEndDate()));
+    assertNull(response.getConsultationNumber());
+    assertNull(response.getComments());
+    assertEquals(0, response.getProducts().size());
+
+    Map<String, String> signatureMap = response.getSignatures().stream()
+        .collect(Collectors.toMap(RequisitionSignatureRequest::getType, RequisitionSignatureRequest::getName));
+    assertEquals("yyds2", signatureMap.get("submit"));
+    assertEquals("yyds3", signatureMap.get("authorize"));
+    assertEquals("yyds4", signatureMap.get("approve"));
+
+    UsageInformationLineItemRequest existenInfo = response.getUsageInformationLineItems().stream()
+        .filter(item -> existentStock.equals(item.getInformation()))
+        .filter(item -> orderableCode.equals(item.getProductCode()))
+        .findFirst()
+        .orElse(new UsageInformationLineItemRequest());
+    assertEquals(Integer.valueOf(100), existenInfo.getHf());
+    assertEquals(Integer.valueOf(300), existenInfo.getChw());
+
+    UsageInformationLineItemRequest treatmentInfo = response.getUsageInformationLineItems().stream()
+        .filter(item -> treatmentsAttended.equals(item.getInformation()))
+        .filter(item -> orderableCode2.equals(item.getProductCode()))
+        .findFirst()
+        .orElse(new UsageInformationLineItemRequest());
+    assertEquals(Integer.valueOf(600), treatmentInfo.getHf());
+    assertEquals(Integer.valueOf(800), treatmentInfo.getChw());
+
   }
 
   private void createGetRequisitionData() {
     orderableIdToCode.put(orderableId, orderableCode);
     orderableIdToCode.put(orderableId2, orderableCode2);
-
     when(requisitionExtensionRepository.searchRequisitionIdByFacilityAndDate(any(), any()))
         .thenReturn(buildRequisitionExtension());
 
-    ConsultationNumberGroupDto groupDto = new ConsultationNumberGroupDto();
-    Map<String, ConsultationNumberColumnDto> columns = new HashMap<>();
-    columns.put(COLUMN_NAME, new ConsultationNumberColumnDto(UUID.randomUUID(), 10));
-    columns.put("test", new ConsultationNumberColumnDto(UUID.randomUUID(), 20));
-    groupDto.setName(GROUP_NAME);
-    groupDto.setColumns(columns);
-    doAnswer((Answer) invocation -> {
-      SiglusRequisitionDto dto = invocation.getArgumentAt(0, SiglusRequisitionDto.class);
-      dto.setConsultationNumberLineItems(Collections.singletonList(groupDto));
-      return dto;
-    }).when(consultationNumberDataProcessor).get(any());
+    ConsultationNumberLineItem consultationNumberLineItem = ConsultationNumberLineItem.builder()
+        .requisitionId(requisitionId).column(COLUMN_NAME).group(GROUP_NAME).value(10).build();
+    ConsultationNumberLineItem mmiaConsultationNumberLineItem = ConsultationNumberLineItem.builder()
+        .requisitionId(requisitionId).column("test").group(GROUP_NAME).value(20).build();
+    when(consultationNumberLineItemRepository.findByRequisitionIdIn(any()))
+        .thenReturn(Arrays.asList(consultationNumberLineItem, mmiaConsultationNumberLineItem));
 
     RequisitionLineItemV2Dto itemV2Dto = new RequisitionLineItemV2Dto();
     itemV2Dto.setId(requisitionLineItemId);
@@ -292,27 +339,14 @@ public class AndroidGetRequisitionServiceTest {
     when(siglusProgramService.getProgram(programId)).thenReturn(programDto);
   }
 
-  private org.openlmis.requisition.dto.OrderableDto convertOrderableDto(
-      org.openlmis.fulfillment.service.referencedata.OrderableDto sourceDto) {
-    org.openlmis.requisition.dto.OrderableDto orderableDto = new org.openlmis.requisition.dto.OrderableDto();
-    BeanUtils.copyProperties(sourceDto, orderableDto);
-    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
-    programOrderableDto.setFullSupply(true);
-    orderableDto.setPrograms(Sets.newHashSet(programOrderableDto));
-    return orderableDto;
-  }
-
   private void createGetMmiaRequisitionData() {
-    Set<UUID> requisitionIdSet = new HashSet<>();
-    requisitionIdSet.add(requisitionIdMmia);
-    requisitionIdSet.add(requisitionId);
     Set<UUID> regimenIdSet = new HashSet<>();
     regimenIdSet.add(regimenId);
     when(regimenRepository.findByIdIn(regimenIdSet)).thenReturn(buildRegimens());
-    when(regimenLineItemRepository.findByRequisitionIdIn(requisitionIdSet)).thenReturn(buildRegimenLineItems());
-    when(regimenSummaryLineItemRepository.findByRequisitionIdIn(requisitionIdSet))
+    when(regimenLineItemRepository.findByRequisitionIdIn(any())).thenReturn(buildRegimenLineItems());
+    when(regimenSummaryLineItemRepository.findByRequisitionIdIn(any()))
         .thenReturn(buildRegimenSummaryLineItems());
-    when(patientLineItemRepository.findByRequisitionIdIn(requisitionIdSet)).thenReturn(buildPatientLineItems());
+    when(patientLineItemRepository.findByRequisitionIdIn(any())).thenReturn(buildPatientLineItems());
     when(patientLineItemMapper.from(buildPatientLineItems())).thenReturn(buildPatientGroupDtos());
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionIdMmia)).thenReturn(buildMmiaV2Dto());
 
@@ -320,6 +354,72 @@ public class AndroidGetRequisitionServiceTest {
     programDto.setCode("T");
     programDto.setId(programIdMmia);
     when(siglusProgramService.getProgram(programIdMmia)).thenReturn(programDto);
+  }
+
+  private void createGetMalariaRequisitionData() {
+    when(usageInformationLineItemRepository.findByRequisitionIdIn(any())).thenReturn(buildUsageInformationLineItems());
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionIdMalaria)).thenReturn(buildMalariaV2Dto());
+
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode("ML");
+    programDto.setId(programIdMalaria);
+    when(siglusProgramService.getProgram(programIdMalaria)).thenReturn(programDto);
+  }
+
+  private List<UsageInformationLineItem> buildUsageInformationLineItems() {
+    UsageInformationLineItem existenHfOrderable = UsageInformationLineItem.builder()
+        .requisitionId(requisitionIdMalaria).information(existentStock).service("HF").orderableId(orderableId)
+        .value(100).build();
+    UsageInformationLineItem existenHfOrderable2 = UsageInformationLineItem.builder()
+        .requisitionId(requisitionIdMalaria).information(existentStock).service("HF").orderableId(orderableId2)
+        .value(200).build();
+    UsageInformationLineItem existenChwOrderable = UsageInformationLineItem.builder()
+        .requisitionId(requisitionIdMalaria).information(existentStock).service(newColumn0).orderableId(orderableId)
+        .value(300).build();
+    UsageInformationLineItem existenChwOrderable2 = UsageInformationLineItem.builder()
+        .requisitionId(requisitionIdMalaria).information(existentStock).service(newColumn0)
+        .orderableId(orderableId2)
+        .value(400).build();
+    UsageInformationLineItem treatmentHfUsageOrderable = UsageInformationLineItem.builder()
+        .requisitionId(requisitionIdMalaria).information(treatmentsAttended).service("HF").orderableId(orderableId)
+        .value(500).build();
+    UsageInformationLineItem treatmentHfUsageOrderable2 = UsageInformationLineItem.builder()
+        .requisitionId(requisitionIdMalaria).information(treatmentsAttended).service("HF").orderableId(orderableId2)
+        .value(600).build();
+    UsageInformationLineItem treatmentChwUsageOrderable = UsageInformationLineItem.builder()
+        .requisitionId(requisitionIdMalaria).information(treatmentsAttended).service(newColumn0)
+        .orderableId(orderableId)
+        .value(700).build();
+    UsageInformationLineItem treatmentChwUsageOrderable2 = UsageInformationLineItem.builder()
+        .requisitionId(requisitionIdMalaria).information(treatmentsAttended).service(newColumn0)
+        .orderableId(orderableId2)
+        .value(800).build();
+    return Arrays.asList(existenHfOrderable, existenHfOrderable2, existenChwOrderable, existenChwOrderable2,
+        treatmentHfUsageOrderable, treatmentHfUsageOrderable2, treatmentChwUsageOrderable, treatmentChwUsageOrderable2);
+  }
+
+  private RequisitionV2Dto buildMalariaV2Dto() {
+    ExtraDataSignatureDto signatureDto = new ExtraDataSignatureDto();
+    signatureDto.setSubmit("yyds2");
+    signatureDto.setAuthorize("yyds3");
+    String[] approve = {"yyds4", "yyds5"};
+    signatureDto.setApprove(approve);
+    Map<String, Object> extraData = new HashMap<>();
+    extraData.put("signaure", signatureDto);
+    extraData.put("actualStartDate", "2021-07-01");
+    extraData.put("actualEndDate", "2021-07-21");
+    extraData.put("clientSubmittedTime", "2021-07-21T07:59:59Z");
+
+    BasicRequisitionTemplateDto templateDto = new BasicRequisitionTemplateDto();
+    templateDto.setId(malariaTemplateId);
+    RequisitionV2Dto v2Dto = new RequisitionV2Dto();
+    v2Dto.setExtraData(extraData);
+    v2Dto.setTemplate(templateDto);
+    v2Dto.setId(requisitionIdMalaria);
+    v2Dto.setStatus(RequisitionStatus.AUTHORIZED);
+    v2Dto.setProgram(new ObjectReferenceDto(programIdMalaria));
+    v2Dto.setEmergency(false);
+    return v2Dto;
   }
 
   private RequisitionV2Dto buildMmiaV2Dto() {
@@ -354,7 +454,10 @@ public class AndroidGetRequisitionServiceTest {
     RequisitionExtension mmiaRequisitionExtension = RequisitionExtension.builder()
         .requisitionId(requisitionIdMmia)
         .build();
-    return Arrays.asList(viaRequisitionExtension, mmiaRequisitionExtension);
+    RequisitionExtension malariaRequisitionExtension = RequisitionExtension.builder()
+        .requisitionId(requisitionIdMalaria)
+        .build();
+    return Arrays.asList(viaRequisitionExtension, mmiaRequisitionExtension, malariaRequisitionExtension);
   }
 
   private List<RegimenLineItem> buildRegimenLineItems() {
@@ -397,7 +500,7 @@ public class AndroidGetRequisitionServiceTest {
     PatientLineItem patientLineItem1 = new PatientLineItem();
     patientLineItem1.setRequisitionId(requisitionIdMmia);
     patientLineItem1.setGroup("newSection3");
-    patientLineItem1.setColumn("newColumn0");
+    patientLineItem1.setColumn(newColumn0);
     patientLineItem1.setValue(27);
 
     return Arrays.asList(patientLineItem0, patientLineItem1);
@@ -417,7 +520,7 @@ public class AndroidGetRequisitionServiceTest {
     patientColumnDto1.setId(UUID.randomUUID());
     patientColumnDto1.setValue(27);
     Map<String, PatientColumnDto> columns1 = new HashMap<>();
-    columns1.put("newColumn0", patientColumnDto1);
+    columns1.put(newColumn0, patientColumnDto1);
     PatientGroupDto patientGroupDto1 = new PatientGroupDto();
     patientGroupDto1.setName("newSection3");
     patientGroupDto1.setColumns(columns1);
