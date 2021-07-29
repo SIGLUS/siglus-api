@@ -729,12 +729,11 @@ public class SiglusMeService {
   private List<StockEventAdjustmentDto> getStockAdjustments(MovementType type, String reasonName,
       Integer quantity, UUID programId) {
     if (type != MovementType.PHYSICAL_INVENTORY || quantity == 0
-        || reasonName.equalsIgnoreCase("INVENTORY")) {
+        || "INVENTORY".equalsIgnoreCase(reasonName)) {
       return Collections.emptyList();
     }
     StockEventAdjustmentDto stockEventAdjustmentDto = new StockEventAdjustmentDto();
-    stockEventAdjustmentDto
-        .setReasonId(type.getPhysicalReasonId(getCreateStockCardContext(), programId, reasonName));
+    stockEventAdjustmentDto.setReasonId(type.getPhysicalReasonId(getCreateStockCardContext(), programId, reasonName));
     stockEventAdjustmentDto.setQuantity(quantity);
     return singletonList(stockEventAdjustmentDto);
   }
