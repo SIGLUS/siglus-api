@@ -155,7 +155,8 @@ public class SiglusStockEventsService {
     eventDto.setUserId(userId);
     createAndFillLotId(eventDto);
     Set<UUID> programIds = eventDto.getLineItems().stream()
-        .map(StockEventLineItemDto::getProgramId).collect(Collectors.toSet());
+        .map(StockEventLineItemDto::getProgramId)
+        .collect(Collectors.toSet());
     List<StockEventDto> stockEventDtos;
     if (eventDto.isPhysicalInventory()) {
       List<PhysicalInventoryDto> inventories = programIds.stream()
@@ -172,7 +173,7 @@ public class SiglusStockEventsService {
           .collect(Collectors.toList());
     }
     Map<UUID, UUID> programIdToEventId = new HashMap<>();
-    stockEventDtos.stream().forEach(stockEventDto -> {
+    stockEventDtos.forEach(stockEventDto -> {
       stockEventDto.setFacilityId(eventDto.getFacilityId());
       stockEventDto.setSignature(eventDto.getSignature());
       stockEventDto.setDocumentNumber(eventDto.getDocumentNumber());
@@ -186,8 +187,7 @@ public class SiglusStockEventsService {
     });
     if (!programIdToEventId.isEmpty()) {
       if (eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService
-            .deletePhysicalInventoryForAllProducts(eventDto.getFacilityId());
+        siglusPhysicalInventoryService.deletePhysicalInventoryForAllProducts(eventDto.getFacilityId());
       } else if (!eventDto.hasReason(unpackReasonId)) {
         setType(eventDto);
         stockManagementDraftService.deleteStockManagementDraft(eventDto);

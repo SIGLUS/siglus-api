@@ -73,9 +73,7 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(savedDraft);
   }
 
-  public List<StockManagementDraftDto> findStockManagementDraft(UUID programId,
-      UUID userId,
-      String type,
+  public List<StockManagementDraftDto> findStockManagementDraft(UUID programId, UUID userId, String type,
       Boolean isDraft) {
     draftValidator.validateProgramId(programId);
     draftValidator.validateUserId(userId);
@@ -91,35 +89,30 @@ public class SiglusStockManagementDraftService {
     StockManagementDraft drafts = stockManagementDraftRepository.findOne(id);
     if (drafts != null) {
       draftValidator.validateDraftUser(drafts);
+      log.info("delete stockmanagement draft: {}", drafts);
       stockManagementDraftRepository.delete(drafts);
     } else {
       throw new ResourceNotFoundException(
-          new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
-              id));
+          new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND, id));
     }
   }
 
 
   public void deleteStockManagementDraft(StockEventDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndUserIdAndIsDraftAndDraftType(dto.getProgramId(),
-            dto.getUserId(), true, dto.getType());
+        .findByProgramIdAndUserIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getUserId(), true, dto.getType());
     if (!drafts.isEmpty()) {
+      log.info("delete stockmanagement draft: {}", drafts);
       stockManagementDraftRepository.delete(drafts);
     }
   }
 
   private void checkIfDraftExists(StockManagementDraftDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndUserIdAndIsDraftAndDraftType(
-            dto.getProgramId(),
-            dto.getUserId(),
-            true,
-            dto.getDraftType());
+        .findByProgramIdAndUserIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getUserId(), true, dto.getDraftType());
     if (!drafts.isEmpty()) {
       throw new ValidationMessageException(
-          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(),
-              dto.getUserId()));
+          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(), dto.getUserId()));
     }
   }
 }
