@@ -588,9 +588,8 @@ public class SiglusMeService {
 
   private void createStockEvent(List<StockCardCreateRequest> requests, FacilityDto facilityDto,
       Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts) {
-    String signature = requests.stream().findFirst()
-        .map(StockCardCreateRequest::getSignature)
-        .orElse(null);
+    String signature = requests.stream().filter(r -> r.getSignature() != null)
+        .findFirst().map(StockCardCreateRequest::getSignature).orElse(null);
     buildStockEventForProductMovement(requests, facilityDto, allApprovedProducts, signature);
     buildStockEventForLotMovement(requests, facilityDto, allApprovedProducts, signature);
   }
