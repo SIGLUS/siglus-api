@@ -26,9 +26,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidEndDate;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
 import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
+import org.siglus.siglusapi.util.HashEncoder;
 
 @Data
 @Builder
@@ -78,5 +80,9 @@ public class RequisitionCreateRequest {
 
   @Valid
   private List<TestConsumptionLineItemRequest> testConsumptionLineItems;
-}
 
+  public String getSyncUpHash(UserDto user) {
+    return HashEncoder.hash(actualStartDate.toString() + actualEndDate + clientSubmittedTime
+        + user.getId() + user.getHomeFacilityId() + programCode + emergency);
+  }
+}

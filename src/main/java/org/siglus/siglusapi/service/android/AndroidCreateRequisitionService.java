@@ -113,6 +113,7 @@ import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineI
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
@@ -141,6 +142,7 @@ import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
@@ -155,6 +157,7 @@ import org.springframework.util.CollectionUtils;
 @SuppressWarnings("PMD.TooManyMethods")
 public class AndroidCreateRequisitionService {
 
+  private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final SiglusAuthenticationHelper authHelper;
   private final RequisitionService requisitionService;
   private final RequisitionTemplateService requisitionTemplateService;
@@ -169,23 +172,30 @@ public class AndroidCreateRequisitionService {
   private final RequisitionRepository requisitionRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final RequisitionExtensionRepository requisitionExtensionRepository;
-  private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final RegimenRepository regimenRepository;
+  private final SyncUpHashRepository syncUpHashRepository;
 
   @Transactional
   public void create(RequisitionCreateRequest request) {
     UserDto user = authHelper.getCurrentUser();
+    String syncUpHash = request.getSyncUpHash(user);
+    if (syncUpHashRepository.findOne(syncUpHash) != null) {
+      log.info("skip create requisition as syncUpHash: {} existed", syncUpHash);
+      return;
+    }
     UUID authorId = user.getId();
-    UUID programId = siglusProgramService.getProgramIdByCode(request.getProgramCode());
-    Requisition requisition = initiateRequisition(request, user.getHomeFacilityId(), programId, authorId,
-        request.getProgramCode());
+    Requisition requisition = initiateRequisition(request, user);
     requisition = submitRequisition(requisition, authorId);
     requisition = authorizeRequisition(requisition, authorId);
     internalApproveRequisition(requisition, authorId);
+    log.info("save requisition syncUpHash: {}", syncUpHash);
+    syncUpHashRepository.save(new SyncUpHash(syncUpHash));
   }
 
-  private Requisition initiateRequisition(RequisitionCreateRequest request, UUID homeFacilityId, UUID programId,
-      UUID authorId, String programCode) {
+  private Requisition initiateRequisition(RequisitionCreateRequest request, UserDto user) {
+    String programCode = request.getProgramCode();
+    UUID programId = siglusProgramService.getProgramIdByCode(programCode);
+    UUID homeFacilityId = user.getHomeFacilityId();
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
     newRequisition.setTemplate(getRequisitionTemplate(programCode));
@@ -193,8 +203,8 @@ public class AndroidCreateRequisitionService {
     newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setNumberOfMonthsInPeriod(1);
     newRequisition.setDraftStatusMessage(request.getComments());
-    newRequisition.setReportOnly("ML".equals(request.getProgramCode()));
-    buildStatusChanges(newRequisition, authorId);
+    newRequisition.setReportOnly("ML".equals(programCode));
+    buildStatusChanges(newRequisition, user.getId());
     buildRequisitionApprovedProduct(newRequisition, homeFacilityId, programId);
     buildRequisitionExtraData(newRequisition, request);
     buildRequisitionLineItems(newRequisition, request);
@@ -642,27 +652,27 @@ public class AndroidCreateRequisitionService {
   }
 
   private List<UsageInformationLineItem> buildUsageInfos(UUID requisitionId,
-      UsageInformationLineItemRequest usageInforLineRequest) {
+      UsageInformationLineItemRequest usageInfoLineRequest) {
     UsageInformationLineItem hfUsageInfoLineItem = UsageInformationLineItem.builder()
-        .information(usageInforLineRequest.getInformation())
+        .information(usageInfoLineRequest.getInformation())
         .requisitionId(requisitionId)
-        .orderableId(siglusOrderableService.getOrderableByCode(usageInforLineRequest.getProductCode()).getId())
+        .orderableId(siglusOrderableService.getOrderableByCode(usageInfoLineRequest.getProductCode()).getId())
         .service(UsageInformationLineItems.SERVICE_HF)
-        .value(usageInforLineRequest.getHf())
+        .value(usageInfoLineRequest.getHf())
         .build();
     UsageInformationLineItem chwUsageInfoLineItem = UsageInformationLineItem.builder()
-        .information(usageInforLineRequest.getInformation())
+        .information(usageInfoLineRequest.getInformation())
         .requisitionId(requisitionId)
-        .orderableId(siglusOrderableService.getOrderableByCode(usageInforLineRequest.getProductCode()).getId())
+        .orderableId(siglusOrderableService.getOrderableByCode(usageInfoLineRequest.getProductCode()).getId())
         .service(UsageInformationLineItems.SERVICE_CHW)
-        .value(usageInforLineRequest.getChw())
+        .value(usageInfoLineRequest.getChw())
         .build();
     UsageInformationLineItem totalUsageInfoLineItem = UsageInformationLineItem.builder()
-        .information(usageInforLineRequest.getInformation())
+        .information(usageInfoLineRequest.getInformation())
         .requisitionId(requisitionId)
-        .orderableId(siglusOrderableService.getOrderableByCode(usageInforLineRequest.getProductCode()).getId())
+        .orderableId(siglusOrderableService.getOrderableByCode(usageInfoLineRequest.getProductCode()).getId())
         .service(UsageInformationLineItems.SERVICE_TOTAL)
-        .value(Math.addExact(usageInforLineRequest.getHf(), usageInforLineRequest.getChw()))
+        .value(Math.addExact(usageInfoLineRequest.getHf(), usageInfoLineRequest.getChw()))
         .build();
     return Arrays.asList(hfUsageInfoLineItem, chwUsageInfoLineItem, totalUsageInfoLineItem);
   }

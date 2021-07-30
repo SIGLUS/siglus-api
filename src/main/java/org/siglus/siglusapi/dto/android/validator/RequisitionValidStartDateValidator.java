@@ -24,10 +24,12 @@ import javax.persistence.EntityNotFoundException;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
@@ -36,17 +38,20 @@ import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SyncUpHashRepository;
 
 @RequiredArgsConstructor
+@Slf4j
 public class RequisitionValidStartDateValidator implements
     ConstraintValidator<RequisitionValidStartDate, RequisitionCreateRequest> {
 
-  private final SiglusAuthenticationHelper authHelper;
-  private final ReportTypeRepository reportTypeRepo;
-  private final SiglusRequisitionRepository requisitionRepo;
-  private final ProcessingPeriodRepository periodRepo;
-  private final ProgramReferenceDataService programDataService;
   private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
+  private final SiglusAuthenticationHelper authHelper;
+  private final ProgramReferenceDataService programDataService;
+  private final ReportTypeRepository reportTypeRepository;
+  private final SiglusRequisitionRepository requisitionRepository;
+  private final ProcessingPeriodRepository periodRepository;
+  private final SyncUpHashRepository syncUpHashRepository;
 
   @Override
   public void initialize(RequisitionValidStartDate constraintAnnotation) {
@@ -56,13 +61,18 @@ public class RequisitionValidStartDateValidator implements
   @Override
   public boolean isValid(RequisitionCreateRequest value, ConstraintValidatorContext context) {
     // this validator is supposed to running after the default group, so the value will not be null or empty
-    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    UserDto user = authHelper.getCurrentUser();
+    boolean alreadySynced = syncUpHashRepository.findOne(value.getSyncUpHash(user)) != null;
+    if (alreadySynced || Boolean.TRUE.equals(value.getEmergency())) {
+      return true;
+    }
     String programCode = value.getProgramCode();
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable("startDate", value.getActualStartDate());
     actualContext.addExpressionVariable("failedByReportRestartDate", false);
     actualContext.addExpressionVariable("failedByPeriod", false);
-    LocalDate reportRestartDate = reportTypeRepo
+    UUID homeFacilityId = user.getHomeFacilityId();
+    LocalDate reportRestartDate = reportTypeRepository
         .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(homeFacilityId, programCode)
         .map(ReportType::getStartDate)
         .orElseThrow(() -> new EntityNotFoundException("Report type not found"));
@@ -71,7 +81,7 @@ public class RequisitionValidStartDateValidator implements
       actualContext.addExpressionVariable("reportRestartDate", reportRestartDate);
       return false;
     }
-    Requisition lastRequisition = requisitionRepo
+    Requisition lastRequisition = requisitionRepository
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(homeFacilityId,
             androidTemplateConfigProperties.getAndroidTemplateIds())
         .stream()
@@ -85,7 +95,7 @@ public class RequisitionValidStartDateValidator implements
       actualContext.addExpressionVariable("lastActualEnd", lastRequisition.getActualEndDate());
       return false;
     }
-    ProcessingPeriod lastPeriod = periodRepo.findOne(lastRequisition.getProcessingPeriodId());
+    ProcessingPeriod lastPeriod = periodRepository.findOne(lastRequisition.getProcessingPeriodId());
     ProcessingPeriod period = getPeriod(value);
     if (!lastPeriod.getEndDate().equals(period.getStartDate().minusDays(1))) {
       actualContext.addExpressionVariable("failedByPeriod", true);
@@ -98,7 +108,7 @@ public class RequisitionValidStartDateValidator implements
 
   private ProcessingPeriod getPeriod(RequisitionCreateRequest request) {
     YearMonth month = request.getActualStartDate().query(YearMonth::from);
-    return periodRepo.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
+    return periodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
         .orElseThrow(EntityNotFoundException::new);
   }
 }

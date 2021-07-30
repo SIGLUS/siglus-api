@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.android;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
@@ -74,6 +75,7 @@ import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
 import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -85,6 +87,7 @@ import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
@@ -146,6 +149,9 @@ public class AndroidCreateRequisitionServiceTest {
   @Mock
   private AndroidTemplateConfigProperties androidTemplateConfigProperties;
 
+  @Mock
+  private SyncUpHashRepository syncUpHashRepository;
+
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
@@ -160,6 +166,9 @@ public class AndroidCreateRequisitionServiceTest {
 
   @Captor
   private ArgumentCaptor<RequisitionExtension> requisitionExtensionArgumentCaptor;
+
+  @Captor
+  private ArgumentCaptor<SyncUpHash> syncUpHashArgumentCaptor;
 
   private final UUID facilityId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
@@ -220,6 +229,7 @@ public class AndroidCreateRequisitionServiceTest {
     regimen.setId(regimenId);
     regimen.setCode(regimenCode);
     when(regimenRepository.findAllByProgramIdAndActiveTrue(any())).thenReturn(Collections.singletonList(regimen));
+    when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
   }
 
   @Test(expected = PermissionMessageException.class)
@@ -296,6 +306,29 @@ public class AndroidCreateRequisitionServiceTest {
     verify(siglusUsageReportService).initiateUsageReport(any());
     verify(siglusUsageReportService).saveUsageReport(any(), any());
     verify(requisitionLineItemExtensionRepository).save(requisitionLineItemExtensionArgumentCaptor.capture());
+    verify(syncUpHashRepository).save(syncUpHashArgumentCaptor.capture());
+  }
+
+  @Test
+  public void shouldSkipSaveRequisitionWhenCreateRequisitionIfAlreadySaved() {
+    // given
+    ValidationResult success = ValidationResult.success();
+    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(success);
+    when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    when(syncUpHashRepository.findOne(anyString())).thenReturn(new SyncUpHash("hash-code"));
+
+    // when
+    service.create(buildRequisitionCreateRequest());
+
+    // then
+    verify(requisitionRepository, times(0)).save(requisitionArgumentCaptor.capture());
+    verify(siglusRequisitionExtensionService, times(0)).buildRequisitionExtension(requisitionId, false, facilityId);
+    verify(siglusUsageReportService, times(0)).initiateUsageReport(any());
+    verify(siglusUsageReportService, times(0)).saveUsageReport(any(), any());
+    verify(requisitionLineItemExtensionRepository, times(0)).save(requisitionLineItemExtensionArgumentCaptor.capture());
+    verify(syncUpHashRepository, times(0)).save(syncUpHashArgumentCaptor.capture());
   }
 
   @Test

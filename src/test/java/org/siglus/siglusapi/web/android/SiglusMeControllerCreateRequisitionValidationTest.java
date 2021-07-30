@@ -21,6 +21,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toMap;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -63,12 +64,14 @@ import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.ReportType;
+import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidEndDateValidator;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidStartDateValidator;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SyncUpHashRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
@@ -92,6 +95,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   private ProgramReferenceDataService programDataService;
   @Mock
   private AndroidTemplateConfigProperties androidTemplateConfigProperties;
+  @Mock
+  private SyncUpHashRepository syncUpHashRepository;
 
   private final ObjectMapper mapper = new ObjectMapper();
 
@@ -181,6 +186,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(req3.getActualEndDate()).thenReturn(LocalDate.of(2020, 8, 20));
     when(requisitionRepo.findLatestRequisitionsByFacilityIdAndAndroidTemplateId(restartedFacilityId,
         androidTemplateConfigProperties.getAndroidTemplateIds())).thenReturn(singletonList(req3));
+    when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
   }
 
   @Test
@@ -378,8 +384,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   }
 
   @Test
-  public void shouldThrowErrorWhenActualEndDateBeforeActualStartDate()
-      throws Exception {
+  public void shouldThrowErrorWhenActualEndDateBeforeActualStartDate() throws Exception {
     // given
     Object param = parseParam("actualEndDateBeforeActualStartDate.json");
 
@@ -391,6 +396,33 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     assertEquals("The end date 2021-06-24 should be after start date 2021-06-25.",
         violations.get("createRequisition.arg0"));
 
+  }
+
+  @Test
+  public void shouldNotThrowErrorWhenSameRequisitionAlreadySaved() throws Exception {
+    // given
+    mockFacilityId(restartedFacilityId);
+    Object param = parseParam("actualStartDateAfterLastActualEnd.json");
+    when(syncUpHashRepository.findOne(anyString())).thenReturn(new SyncUpHash("hash-code"));
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(0, violations.size());
+  }
+
+  @Test
+  public void shouldNotThrowErrorWhenSaveEmergencyRequisition() throws Exception {
+    // given
+    mockFacilityId(restartedFacilityId);
+    Object param = parseParam("emergencyRequisition.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(0, violations.size());
   }
 
   private Object parseParam(String fileName) throws IOException {
@@ -417,8 +449,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     @SuppressWarnings("unchecked")
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
       if (key == RequisitionValidStartDateValidator.class) {
-        return (T) new RequisitionValidStartDateValidator(authHelper, reportTypeRepo, requisitionRepo, periodRepo,
-            programDataService, androidTemplateConfigProperties);
+        return (T) new RequisitionValidStartDateValidator(androidTemplateConfigProperties, authHelper,
+            programDataService, reportTypeRepo, requisitionRepo, periodRepo, syncUpHashRepository);
       }
       if (key == RequisitionValidEndDateValidator.class) {
         return (T) new RequisitionValidEndDateValidator();
