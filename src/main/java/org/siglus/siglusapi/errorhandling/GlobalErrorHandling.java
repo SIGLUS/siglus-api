@@ -21,7 +21,6 @@ import static org.zalando.problem.Problem.DEFAULT_TYPE;
 import static org.zalando.problem.Status.BAD_REQUEST;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -77,8 +76,8 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   }
 
   @ExceptionHandler
-  public ResponseEntity<Problem> handleDataIntegrityViolation(ValidationMessageException exception,
-      NativeWebRequest request) {
+  public ResponseEntity<Problem> handleGenericError(ValidationMessageException exception, NativeWebRequest request) {
+    // TODO hardcode on Portuguese
     LocalizedMessage localizedMessage = getLocalizedMessage(exception);
     ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE)
         .with(MESSAGE_KEY, localizedMessage.getMessageKey())
@@ -96,6 +95,7 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
       ConstraintViolationException cause = (ConstraintViolationException) exception.getCause();
       messageKey = CONSTRAINT_MAP.get(cause.getConstraintName());
       if (messageKey != null) {
+        // TODO hardcode on Portuguese
         message = getLocalizedMessage(new Message(messageKey)).getMessage();
       }
     }
@@ -113,6 +113,7 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   public ResponseEntity<Problem> newConstraintViolationProblem(Throwable throwable, Collection<Violation> violations,
       NativeWebRequest request) {
     StatusType status = defaultConstraintViolationStatus();
+    // TODO hardcode on Portuguese
     LocalizedMessage localizedMessage = getLocalizedMessage(new Message(ERROR_VALIDATION_FAIL));
     List<ValidationFailField> fields = violations.stream().map(ValidationFailField::new).collect(toList());
     ThrowableProblem problem = prepare(throwable, status, CONSTRAINT_VIOLATION_TYPE)
@@ -133,10 +134,6 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   @Override
   public void log(Throwable throwable, Problem problem, NativeWebRequest request, HttpStatus status) {
     if (throwable instanceof javax.validation.ConstraintViolationException) {
-      ArrayList<ValidationFailField> fields = (ArrayList<ValidationFailField>) problem.getParameters().get("fields");
-      if (fields != null) {
-        fields.forEach(field -> log.error("{}: {}", field.getPropertyPath(), field.getMessage()));
-      }
       return;
     }
     log.error(status.getReasonPhrase(), throwable);

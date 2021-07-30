@@ -15,10 +15,15 @@
 
 package org.siglus.common.constant;
 
+import java.util.Locale;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class DateFormatConstants {
 
-  private DateFormatConstants() { }
-
   public static final String PROCESSING_PERIOD_DATE_FORMAT = "yyyy-MM-dd";
+
+  public static final Locale PORTUGAL = new Locale("pt");
 
 }

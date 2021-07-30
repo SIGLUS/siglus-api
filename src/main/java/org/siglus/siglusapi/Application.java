@@ -25,6 +25,7 @@ import java.util.concurrent.Executors;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
+import org.hibernate.validator.messageinterpolation.ResourceBundleMessageInterpolator;
 import org.javers.core.Javers;
 import org.javers.core.MappingStyle;
 import org.javers.core.diff.ListCompareAlgorithm;
@@ -41,6 +42,7 @@ import org.openlmis.stockmanagement.i18n.StockmanagementExposedMessageSourceImpl
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
+import org.siglus.siglusapi.validation.SiglusMessageInterpolator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -64,6 +66,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.validation.beanvalidation.MessageSourceResourceBundleLocator;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
@@ -296,6 +299,9 @@ public class Application {
   public LocalValidatorFactoryBean getValidator() {
     LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean();
     bean.setValidationMessageSource(validationMessageSource());
+    ResourceBundleMessageInterpolator nativeMessageInterpolator =
+        new ResourceBundleMessageInterpolator(new MessageSourceResourceBundleLocator(validationMessageSource()));
+    bean.setMessageInterpolator(new SiglusMessageInterpolator(nativeMessageInterpolator));
     return bean;
   }
 

@@ -71,8 +71,7 @@ public class SiglusStockCardLineItemService {
   private final StockEventProductRequestedRepository requestQuantityRepository;
 
   public Map<UUID, List<SiglusStockMovementItemResponse>> getStockMovementByOrderableId(UUID facilityId,
-      String startTime,
-      String endTime, Map<UUID, SiglusLotResponse> siglusLotResponseByLotId) {
+      String startTime, String endTime, Map<UUID, SiglusLotResponse> siglusLotResponseByLotId) {
     organizationIdToName = mapOrganizationIdToName();
     Map<UUID, Map<LocalDate, CalculatedStockOnHandDto>> stockOnHandDtoMap = mapStockOnHandByStockCardIdAndOccurredDate(
         facilityId, startTime, endTime);

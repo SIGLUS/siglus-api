@@ -26,10 +26,14 @@ public class ValidationFailField {
 
   private final String propertyPath;
 
-  private final String message;
+  private final String messageInEnglish;
+
+  private final String messageInPortuguese;
 
   public ValidationFailField(Violation violation) {
     propertyPath = ofNullable(violation.getField()).map(Objects::toString).orElse(null);
-    message = violation.getMessage();
+    String[] messages = violation.getMessage().split("\\|");
+    messageInEnglish = messages[0];
+    messageInPortuguese = messages[1];
   }
 }

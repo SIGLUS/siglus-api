@@ -17,7 +17,6 @@ package org.siglus.siglusapi.web.android;
 
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
-import static org.springframework.http.HttpStatus.OK;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -53,7 +52,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -99,8 +97,6 @@ public class SiglusMeController {
   }
 
   @GetMapping("/facility/stockCards")
-  @ResponseStatus(OK)
-  @ResponseBody
   public FacilityProductMovementsResponse getFacilityStockCards(
       @RequestParam(value = "startTime") String startTime,
       @RequestParam(value = "endTime") String endTime) {

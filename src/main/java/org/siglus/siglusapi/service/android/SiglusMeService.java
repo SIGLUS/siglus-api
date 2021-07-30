@@ -415,8 +415,7 @@ public class SiglusMeService {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllApprovedProducts();
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(orderableDtos);
-    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = stockCardSummariesService
-        .findAllProgramStockSummaries();
+    List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = stockCardSummariesService.findAllProgramStockSummaries();
     Map<UUID, SiglusLotResponse> siglusLotDtoByLotId = getSiglusLotDtoByLotId(orderableDtos, stockCardSummaryV2Dtos);
     Map<UUID, List<LotsOnHandResponse>> lotsOnHandDtosByOrderableId = getLotsOnHandResponsesMap(stockCardSummaryV2Dtos,
         siglusLotDtoByLotId);
