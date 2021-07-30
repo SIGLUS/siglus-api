@@ -75,5 +75,8 @@ public class RequisitionCreateRequest {
 
   @Valid
   private List<UsageInformationLineItemRequest> usageInformationLineItems;
+
+  @Valid
+  private List<TestConsumptionLineItemRequest> testConsumptionLineItems;
 }
 

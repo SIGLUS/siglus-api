@@ -33,21 +33,26 @@ public class AndroidTemplateConfigProperties {
 
   private UUID androidMalariaTemplateId;
 
+  private UUID androidRapidtestTemplateId;
+
   private Map<String, UUID> programIdByCode = new HashMap<>();
 
   private Set<UUID> androidTemplateIds = new HashSet<>();
 
   public AndroidTemplateConfigProperties(UUID androidViaTemplateId, UUID androidMmiaTemplateId,
-      UUID androidMalariaTemplateId) {
+      UUID androidMalariaTemplateId, UUID androidRapidtestTemplateId) {
     this.androidViaTemplateId = androidViaTemplateId;
     this.androidMmiaTemplateId = androidMmiaTemplateId;
     this.androidMalariaTemplateId = androidMalariaTemplateId;
+    this.androidRapidtestTemplateId = androidRapidtestTemplateId;
     programIdByCode.put("VC", androidViaTemplateId);
     programIdByCode.put("T", androidMmiaTemplateId);
     programIdByCode.put("ML", androidMalariaTemplateId);
+    programIdByCode.put("TR", androidRapidtestTemplateId);
     androidTemplateIds.add(androidViaTemplateId);
     androidTemplateIds.add(androidMmiaTemplateId);
     androidTemplateIds.add(androidMalariaTemplateId);
+    androidTemplateIds.add(androidRapidtestTemplateId);
   }
 
   public UUID findAndroidTemplateId(String programCode) {

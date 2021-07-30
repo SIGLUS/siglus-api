@@ -123,6 +123,9 @@ public class Application {
   @Value("${android.malaria.templateId}")
   private UUID androidMalariaTemplateId;
 
+  @Value("${android.rapidtest.templateId}")
+  private UUID androidRapidtestTemplateId;
+
   public static void main(String[] args) {
     SpringApplication.run(Application.class, args);
   }
@@ -315,7 +318,8 @@ public class Application {
 
   @Bean
   public AndroidTemplateConfigProperties androidTemplateConfig() {
-    return new AndroidTemplateConfigProperties(androidViaTemplateId, androidMmiaTemplateId, androidMalariaTemplateId);
+    return new AndroidTemplateConfigProperties(androidViaTemplateId, androidMmiaTemplateId, androidMalariaTemplateId,
+        androidRapidtestTemplateId);
   }
 
   // diff from messageSource() is in this method, the useCodeAsDefaultMessage is disabled

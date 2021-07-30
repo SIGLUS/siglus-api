@@ -164,6 +164,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     androidTemplateIds.add(UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d"));
     androidTemplateIds.add(UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122"));
     androidTemplateIds.add(UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122"));
+    androidTemplateIds.add(UUID.fromString("2c10856e-eead-11eb-9718-acde48001122"));
     when(androidTemplateConfigProperties.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
     // interfering item
     Requisition req2 = mock(Requisition.class);
