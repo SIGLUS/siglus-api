@@ -81,10 +81,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
-public class AndroidGetRequisitionServiceTest {
+public class AndroidSearchRequisitionServiceTest {
 
   @InjectMocks
-  private AndroidGetRequisitionService service;
+  private AndroidSearchRequisitionService service;
 
   @Mock
   private SiglusProgramService siglusProgramService;

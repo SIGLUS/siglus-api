@@ -17,17 +17,22 @@ package org.siglus.siglusapi.constant;
 
 public class UsageSectionConstants {
 
-  private UsageSectionConstants() { }
+  private UsageSectionConstants() {
+  }
 
   public static class ConsultationNumberLineItems {
-    private ConsultationNumberLineItems() { }
+
+    private ConsultationNumberLineItems() {
+    }
 
     public static final String GROUP_NAME = "number";
     public static final String COLUMN_NAME = "consultationNumber";
   }
 
   public static class KitUsageLineItems {
-    private KitUsageLineItems() { }
+
+    private KitUsageLineItems() {
+    }
 
     public static final String COLLECTION_KIT_OPENED = "kitOpened";
     public static final String COLLECTION_KIT_RECEIVED = "kitReceived";
@@ -128,6 +133,27 @@ public class UsageSectionConstants {
     public static final String SERVICE_HF = "HF";
     public static final String EXISTENT_STOCK = "existentStock";
     public static final String TREATMENTS_ATTENDED = "treatmentsAttended";
+  }
+
+  public static class TestConsumptionLineItems {
+
+    private TestConsumptionLineItems() {
+    }
+
+    public static final String NEW_COLUMN_0 = "newColumn0";
+    public static final String NEW_COLUMN_1 = "newColumn1";
+    public static final String NEW_COLUMN_2 = "newColumn2";
+    public static final String NEW_COLUMN_3 = "newColumn3";
+    public static final String NEW_COLUMN_4 = "newColumn4";
+    public static final String NEW_COLUMN_5 = "newColumn5";
+    public static final String NEW_COLUMN_6 = "newColumn6";
+    public static final String NEW_COLUMN_7 = "newColumn7";
+    public static final String PROJECT_HIVDETERMINE = "hivDetermine";
+    public static final String PROJECT_CONSUMO = "consumo";
+    public static final String PROJECT_POSITIVE = "positive";
+    public static final String PROJECT_UNJUSTIFIED = "unjustified";
+    public static final String SERVICE_HF = "HF";
+    public static final String SERVICE_APES = "APES";
   }
 
 }

@@ -107,7 +107,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 @Slf4j
 @SuppressWarnings("PMD.TooManyMethods")
-public class AndroidGetRequisitionService {
+public class AndroidSearchRequisitionService {
 
   private final SiglusProgramService siglusProgramService;
   private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;

@@ -179,7 +179,7 @@ public class SiglusMeServiceTest {
   private AndroidCreateRequisitionService androidCreateRequisitionService;
 
   @Mock
-  private AndroidGetRequisitionService androidGetRequisitionService;
+  private AndroidSearchRequisitionService androidSearchRequisitionService;
 
   @Mock
   private AndroidTemplateConfigProperties androidTemplateConfigProperties;
@@ -617,7 +617,7 @@ public class SiglusMeServiceTest {
     service.getRequisitionResponse("2021-05-01");
 
     // then
-    verify(androidGetRequisitionService).getRequisitionResponseByFacilityIdAndDate(any(), any(), any());
+    verify(androidSearchRequisitionService).getRequisitionResponseByFacilityIdAndDate(any(), any(), any());
   }
 
   private SupportedProgramDto getSupportedProgramDto() {

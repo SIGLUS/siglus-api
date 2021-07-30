@@ -283,7 +283,7 @@ public class SiglusMeService {
   private final ReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
   private final AndroidCreateRequisitionService androidCreateRequisitionService;
-  private final AndroidGetRequisitionService androidGetRequisitionService;
+  private final AndroidSearchRequisitionService androidSearchRequisitionService;
   private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final SiglusProofOfDeliveryRepository podRepo;
   private final SiglusOrderService orderService;
@@ -394,7 +394,7 @@ public class SiglusMeService {
   public RequisitionResponse getRequisitionResponse(String startDate) {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(getAllApprovedProducts());
-    return androidGetRequisitionService
+    return androidSearchRequisitionService
         .getRequisitionResponseByFacilityIdAndDate(facilityId, startDate, orderableIdToCode);
   }
 
