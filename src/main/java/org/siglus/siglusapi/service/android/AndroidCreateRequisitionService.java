@@ -545,6 +545,9 @@ public class AndroidCreateRequisitionService {
 
   private void updateRegimenLineItems(SiglusRequisitionDto requisitionDto, UUID programId,
       RequisitionCreateRequest request) {
+    if (CollectionUtils.isEmpty(request.getRegimenLineItems())) {
+      return;
+    }
     List<RegimenDto> regimenDtosByProgramId = regimenRepository.findAllByProgramIdAndActiveTrue(programId).stream()
         .map(RegimenDto::from).collect(Collectors.toList());
     if (CollectionUtils.isEmpty(regimenDtosByProgramId)) {
@@ -561,9 +564,6 @@ public class AndroidCreateRequisitionService {
 
   private List<RegimenLineItem> buildRegimenPatientsAndCommunity(List<RegimenLineItemRequest> regimenLineItemRequests,
       UUID requisitionId, Map<String, RegimenDto> regimenCodeToRegimenDto) {
-    if (CollectionUtils.isEmpty(regimenLineItemRequests)) {
-      return Collections.emptyList();
-    }
     List<RegimenLineItem> regimenLineItems = new ArrayList<>();
     regimenLineItemRequests.forEach(itemRequest -> {
       RegimenDto regimenDto = regimenCodeToRegimenDto.get(itemRequest.getCode());

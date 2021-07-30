@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -45,6 +46,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.RequisitionTemplate;
+import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
@@ -75,9 +77,11 @@ import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
 import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
 import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.UsageInformationServiceDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -146,6 +150,9 @@ public class AndroidCreateRequisitionServiceTest {
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
   @Captor
+  private ArgumentCaptor<SiglusRequisitionDto> siglusRequisitionDtoArgumentCaptor;
+
+  @Captor
   private ArgumentCaptor<RequisitionLineItemExtension> requisitionLineItemExtensionArgumentCaptor;
 
   @Captor
@@ -156,7 +163,9 @@ public class AndroidCreateRequisitionServiceTest {
 
   private final UUID facilityId = UUID.randomUUID();
   private final UUID programId = UUID.randomUUID();
+  private final UUID malariaProgramId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
+  private final UUID mlOrderableId = UUID.randomUUID();
   private final UUID templateId = UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
   private final UUID mmiaTemplateId = UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122");
   private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
@@ -190,6 +199,7 @@ public class AndroidCreateRequisitionServiceTest {
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
     supervisoryNodeDto.setId(supervisoryNodeId);
     when(supervisoryNodeService.findSupervisoryNode(programId, facilityId)).thenReturn(supervisoryNodeDto);
+    when(supervisoryNodeService.findSupervisoryNode(malariaProgramId, facilityId)).thenReturn(supervisoryNodeDto);
     when(supervisoryNodeService.findOne(supervisoryNodeId)).thenReturn(supervisoryNodeDto);
     when(requisitionTemplateExtensionRepository.findByRequisitionTemplateId(templateId))
         .thenReturn(buildRequisitionTemplateExtension());
@@ -284,6 +294,37 @@ public class AndroidCreateRequisitionServiceTest {
     verify(siglusUsageReportService).initiateUsageReport(any());
     verify(siglusUsageReportService).saveUsageReport(any(), any());
     verify(requisitionLineItemExtensionRepository).save(requisitionLineItemExtensionArgumentCaptor.capture());
+  }
+
+  @Test
+  public void shouldGetTotalValueWhenCreateRequisitionFromAndroid() {
+    // given
+    ValidationResult success = ValidationResult.success();
+    when(permissionService.canInitRequisition(malariaProgramId, facilityId)).thenReturn(success);
+    when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+
+    when(androidTemplateConfigProperties.findAndroidTemplateId("ML")).thenReturn(malariaTemplateId);
+    RequisitionTemplate mlTemplate = new RequisitionTemplate();
+    mlTemplate.setId(malariaTemplateId);
+    ApprovedProductDto productDto = createApprovedProductDto(mlOrderableId);
+    when(requisitionService.getApproveProduct(facilityId, malariaProgramId, true))
+        .thenReturn(new ApproveProductsAggregator(Collections.singletonList(productDto), malariaProgramId));
+    when(requisitionTemplateService.findTemplateById(malariaTemplateId)).thenReturn(mlTemplate);
+    when(siglusProgramService.getProgramIdByCode("ML")).thenReturn(malariaProgramId);
+    when(requisitionRepository.save(requisitionArgumentCaptor.capture()))
+        .thenReturn(buildMlRequisition(mlTemplate));
+    when(siglusOrderableService.getOrderableByCode("08O05")).thenReturn(buildOrderableDto());
+
+    // when
+    service.create(buildMlRequisitionCreateRequest());
+
+    // then
+    verify(siglusUsageReportService).saveUsageReport(siglusRequisitionDtoArgumentCaptor.capture(), any());
+    SiglusRequisitionDto siglusRequisitionDto = siglusRequisitionDtoArgumentCaptor.getValue();
+    assertEquals(Integer.valueOf(3), getTotalValue(siglusRequisitionDto, "existentStock"));
+    assertEquals(3, siglusRequisitionDto.getUsageInformationLineItems().size());
   }
 
   private ApprovedProductDto createApprovedProductDto(UUID orderableId) {
@@ -395,6 +436,65 @@ public class AndroidCreateRequisitionServiceTest {
     SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
     requisitionDto.setConsultationNumberLineItems(Collections.singletonList(consultationNumberGroupDto));
     return requisitionDto;
+  }
+
+  private RequisitionCreateRequest buildMlRequisitionCreateRequest() {
+    return RequisitionCreateRequest.builder()
+        .programCode("ML")
+        .clientSubmittedTime(Instant.parse("2021-07-21T07:59:59Z"))
+        .emergency(false)
+        .actualStartDate(LocalDate.of(2021, 6, 21))
+        .actualEndDate(LocalDate.of(2021, 7, 20))
+        .usageInformationLineItems(buildUsageInfoLineItemRequest())
+        .signatures(buildSignatures())
+        .build();
+  }
+
+  private List<UsageInformationLineItemRequest> buildUsageInfoLineItemRequest() {
+    UsageInformationLineItemRequest usageInfo1 = UsageInformationLineItemRequest.builder()
+        .productCode("08O05")
+        .information("existentStock")
+        .hf(1)
+        .chw(2)
+        .build();
+    UsageInformationLineItemRequest usageInfo2 = UsageInformationLineItemRequest.builder()
+        .productCode("08O05")
+        .information("treatmentsAttended")
+        .hf(3)
+        .chw(4)
+        .build();
+    return Arrays.asList(usageInfo1, usageInfo2);
+  }
+
+  private Requisition buildMlRequisition(RequisitionTemplate template) {
+    VersionEntityReference orderable = new VersionEntityReference(malariaProgramId, 2L);
+    ApprovedProductReference avalibleProduct = new ApprovedProductReference(orderable,
+        any(VersionEntityReference.class));
+    Set<ApprovedProductReference> set = new HashSet<>();
+    set.add(avalibleProduct);
+    Requisition requisition = new Requisition();
+    requisition.setId(requisitionId);
+    requisition.setFacilityId(facilityId);
+    requisition.setProgramId(malariaProgramId);
+    requisition.setEmergency(false);
+    requisition.setRequisitionLineItems(Collections.emptyList());
+    requisition.setTemplate(template);
+    requisition.setAvailableProducts(set);
+    return requisition;
+  }
+
+  private OrderableDto buildOrderableDto() {
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(mlOrderableId);
+    return orderableDto;
+  }
+
+  private Integer getTotalValue(SiglusRequisitionDto requisitionDto, String informationCode) {
+    Optional<UsageInformationServiceDto> siglusRequisitionDto = requisitionDto.getUsageInformationLineItems().stream()
+        .filter(t -> "total".equals(t.getService())).findFirst();
+    return siglusRequisitionDto.map(
+        m -> m.getInformations().get(informationCode).getOrderables().values().stream().findFirst()
+            .map(n -> n.getValue())).orElse(Optional.of(-1)).get();
   }
 
 }
