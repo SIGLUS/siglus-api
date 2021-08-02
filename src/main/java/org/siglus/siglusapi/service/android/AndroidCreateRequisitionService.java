@@ -40,15 +40,12 @@ import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineIte
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_4;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_0;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_1;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_2;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_3;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_4;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_5;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_6;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_SECTION_7;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.PATIENT_TYPE;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DM_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DS_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DT_KEY;
@@ -124,13 +121,8 @@ import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
-import org.siglus.siglusapi.dto.android.androidenum.NewSection0;
-import org.siglus.siglusapi.dto.android.androidenum.NewSection1;
-import org.siglus.siglusapi.dto.android.androidenum.NewSection2;
-import org.siglus.siglusapi.dto.android.androidenum.NewSection3;
-import org.siglus.siglusapi.dto.android.androidenum.NewSection4;
 import org.siglus.siglusapi.dto.android.androidenum.PatientLineItemName;
-import org.siglus.siglusapi.dto.android.androidenum.PatientType;
+import org.siglus.siglusapi.dto.android.androidenum.PatientTableName;
 import org.siglus.siglusapi.dto.android.androidenum.RegimenSummaryCode;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
@@ -440,20 +432,7 @@ public class AndroidCreateRequisitionService {
     List<PatientLineItemColumnRequest> patientRequestColumns = patientRequest.getColumns();
     patientRequestColumns.forEach(k -> {
       String name = patientGroupDto.getName();
-      String patientGroupDtoKey = null;
-      if (PATIENT_TYPE.equals(name)) {
-        patientGroupDtoKey = PatientType.findValueByKey(k.getName());
-      } else if (NEW_SECTION_0.equals(name)) {
-        patientGroupDtoKey = NewSection0.findValueByKey(k.getName());
-      } else if (NEW_SECTION_1.equals(name)) {
-        patientGroupDtoKey = NewSection1.findValueByKey(k.getName());
-      } else if (NEW_SECTION_2.equals(name)) {
-        patientGroupDtoKey = NewSection2.findValueByKey(k.getName());
-      } else if (NEW_SECTION_3.equals(name)) {
-        patientGroupDtoKey = NewSection3.findValueByKey(k.getName());
-      } else if (NEW_SECTION_4.equals(name)) {
-        patientGroupDtoKey = NewSection4.findValueByKey(k.getName());
-      }
+      String patientGroupDtoKey = PatientTableName.valueOf(name.toUpperCase()).findValueByKey(k.getName());
       PatientColumnDto patientColumnDto = patientGroupDtoColumns.get(patientGroupDtoKey);
       patientColumnDto.setValue(k.getValue());
     });

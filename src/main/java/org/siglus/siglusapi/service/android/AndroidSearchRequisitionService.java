@@ -25,13 +25,8 @@ import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 import static org.siglus.common.constant.ExtraDataConstants.SUBMIT;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_ARVT_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DM_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DS_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_DT_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXY_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TOTAL_COLUMN;
 
@@ -75,13 +70,8 @@ import org.siglus.siglusapi.dto.PatientGroupDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.UsageInformationInformationDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
-import org.siglus.siglusapi.dto.android.androidenum.NewSection0;
-import org.siglus.siglusapi.dto.android.androidenum.NewSection1;
-import org.siglus.siglusapi.dto.android.androidenum.NewSection2;
-import org.siglus.siglusapi.dto.android.androidenum.NewSection3;
-import org.siglus.siglusapi.dto.android.androidenum.NewSection4;
 import org.siglus.siglusapi.dto.android.androidenum.PatientLineItemName;
-import org.siglus.siglusapi.dto.android.androidenum.PatientType;
+import org.siglus.siglusapi.dto.android.androidenum.PatientTableName;
 import org.siglus.siglusapi.dto.android.androidenum.TestOutcome;
 import org.siglus.siglusapi.dto.android.androidenum.TestProject;
 import org.siglus.siglusapi.dto.android.androidenum.TestService;
@@ -312,21 +302,7 @@ public class AndroidSearchRequisitionService {
   }
 
   private String getRealColumnName(String tableName, String columnName) {
-    if (tableName.equals(TABLE_ARVT_KEY)) {
-      return PatientType.findKeyByValue(columnName);
-    } else if (tableName.equals(TABLE_PATIENTS_KEY)) {
-      return NewSection0.findKeyByValue(columnName);
-    } else if (tableName.equals(TABLE_PROPHYLAXY_KEY)) {
-      return NewSection1.findKeyByValue(columnName);
-    } else if (tableName.equals(TABLE_DISPENSED_DS_KEY)) {
-      return NewSection2.findKeyByValue(columnName);
-    } else if (tableName.equals(TABLE_DISPENSED_DT_KEY)) {
-      return NewSection3.findKeyByValue(columnName);
-    } else if (tableName.equals(TABLE_DISPENSED_DM_KEY)) {
-      return NewSection4.findKeyByValue(columnName);
-    } else {
-      return "";
-    }
+    return PatientTableName.valueOf(tableName.toUpperCase()).findKeyByValue(columnName);
   }
 
   private List<UsageInformationLineItemRequest> getUsageInformationLineItems(Map<UUID, String> orderableIdToCode,
