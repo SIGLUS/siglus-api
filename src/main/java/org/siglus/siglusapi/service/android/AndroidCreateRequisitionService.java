@@ -203,7 +203,7 @@ public class AndroidCreateRequisitionService {
     newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setNumberOfMonthsInPeriod(1);
     newRequisition.setDraftStatusMessage(request.getComments());
-    newRequisition.setReportOnly("ML".equals(programCode));
+    newRequisition.setReportOnly("ML" .equals(programCode));
     buildStatusChanges(newRequisition, user.getId());
     buildRequisitionApprovedProduct(newRequisition, homeFacilityId, programId);
     buildRequisitionExtraData(newRequisition, request);
@@ -568,34 +568,53 @@ public class AndroidCreateRequisitionService {
     Map<UUID, RegimenDto> regimenIdToRegimenDto = regimenDtosByProgramId.stream()
         .collect(Collectors.toMap(RegimenDto::getId, Function.identity()));
     List<RegimenLineItem> regimenLineItems = buildRegimenPatientsAndCommunity(request.getRegimenLineItems(),
-        requisitionDto.getId(), regimenCodeToRegimenDto);
+        regimenCodeToRegimenDto);
     requisitionDto.setRegimenLineItems(RegimenLineDto.from(regimenLineItems, regimenIdToRegimenDto));
   }
 
   private List<RegimenLineItem> buildRegimenPatientsAndCommunity(List<RegimenLineItemRequest> regimenLineItemRequests,
-      UUID requisitionId, Map<String, RegimenDto> regimenCodeToRegimenDto) {
+      Map<String, RegimenDto> regimenCodeToRegimenDto) {
+    Map<String, Integer> totalMap = new HashMap<>();
+    totalMap.put(COLUMN_NAME_PATIENT, 0);
+    totalMap.put(COLUMN_NAME_COMMUNITY, 0);
     List<RegimenLineItem> regimenLineItems = new ArrayList<>();
     regimenLineItemRequests.forEach(itemRequest -> {
       RegimenDto regimenDto = regimenCodeToRegimenDto.get(itemRequest.getCode());
       if (regimenDto == null) {
         throw new NotFoundException("regimenDto not found");
       }
+      int patientTotal = totalMap.get(COLUMN_NAME_PATIENT);
       RegimenLineItem patientRegimenLineItem = RegimenLineItem.builder()
-          .requisitionId(requisitionId)
           .regimenId(regimenDto.getId())
           .column(COLUMN_NAME_PATIENT)
           .value(itemRequest.getPatientsOnTreatment())
           .build();
+      totalMap.put(COLUMN_NAME_PATIENT, patientTotal + itemRequest.getPatientsOnTreatment());
+      int communityTotal = totalMap.get(COLUMN_NAME_COMMUNITY);
       RegimenLineItem communityRegimenLineItem = RegimenLineItem.builder()
-          .requisitionId(requisitionId)
           .regimenId(regimenDto.getId())
           .column(COLUMN_NAME_COMMUNITY)
           .value(itemRequest.getComunitaryPharmacy())
           .build();
+      totalMap.put(COLUMN_NAME_COMMUNITY, communityTotal + itemRequest.getComunitaryPharmacy());
       regimenLineItems.add(patientRegimenLineItem);
       regimenLineItems.add(communityRegimenLineItem);
     });
+    buildRegimenLineItemTotalValue(regimenLineItems, totalMap);
     return regimenLineItems;
+  }
+
+  private void buildRegimenLineItemTotalValue(List<RegimenLineItem> regimenLineItems, Map<String, Integer> totalMap) {
+    RegimenLineItem totalPatientRegimenLineItem = RegimenLineItem.builder()
+        .column(COLUMN_NAME_PATIENT)
+        .value(totalMap.get(COLUMN_NAME_PATIENT))
+        .build();
+    RegimenLineItem totalCommunityRegimenLineItem = RegimenLineItem.builder()
+        .column(COLUMN_NAME_COMMUNITY)
+        .value(totalMap.get(COLUMN_NAME_COMMUNITY))
+        .build();
+    regimenLineItems.add(totalPatientRegimenLineItem);
+    regimenLineItems.add(totalCommunityRegimenLineItem);
   }
 
   private void buildConsultationNumber(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
