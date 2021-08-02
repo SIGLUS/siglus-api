@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,5 +25,7 @@ public interface TestConsumptionLineItemRepository
     extends JpaRepository<TestConsumptionLineItem, UUID> {
 
   List<TestConsumptionLineItem> findByRequisitionId(UUID requisitionId);
+
+  List<TestConsumptionLineItem> findByRequisitionIdIn(Set<UUID> requisitionIds);
 
 }

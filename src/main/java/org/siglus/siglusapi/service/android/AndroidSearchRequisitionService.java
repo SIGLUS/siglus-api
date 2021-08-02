@@ -33,6 +33,7 @@ import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineIte
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_DISPENSED_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_KEY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PROPHYLAXY_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TOTAL_COLUMN;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -64,6 +65,7 @@ import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.ConsultationNumberColumnDto;
 import org.siglus.siglusapi.dto.ConsultationNumberGroupDto;
@@ -80,12 +82,16 @@ import org.siglus.siglusapi.dto.android.androidenum.NewSection3;
 import org.siglus.siglusapi.dto.android.androidenum.NewSection4;
 import org.siglus.siglusapi.dto.android.androidenum.PatientLineItemName;
 import org.siglus.siglusapi.dto.android.androidenum.PatientType;
+import org.siglus.siglusapi.dto.android.androidenum.TestOutcome;
+import org.siglus.siglusapi.dto.android.androidenum.TestProject;
+import org.siglus.siglusapi.dto.android.androidenum.TestService;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
@@ -95,6 +101,7 @@ import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -120,6 +127,7 @@ public class AndroidSearchRequisitionService {
   private final ConsultationNumberLineItemRepository consultationNumberLineItemRepository;
   private final PatientLineItemRepository patientLineItemRepository;
   private final UsageInformationLineItemRepository usageInformationLineItemRepository;
+  private final TestConsumptionLineItemRepository testConsumptionLineItemRepository;
   private final PatientLineItemMapper patientLineItemMapper;
   private final ConsultationNumberLineItemMapper consultationNumberLineItemMapper;
 
@@ -139,6 +147,8 @@ public class AndroidSearchRequisitionService {
         requisitionIds);
     Map<UUID, List<UsageInformationServiceDto>> requisitionIdToUsageInfoDtos = buildIdToUsageInformationLineItemMap(
         requisitionIds);
+    Map<UUID, List<TestConsumptionLineItemRequest>> requisitionIdToTestConsumptionLines =
+        buildToTestConsumptionLineRequestsMap(requisitionIds);
     List<RequisitionCreateRequest> requisitionCreateRequests = new ArrayList<>();
     requisitionExtensions.forEach(
         extension -> {
@@ -153,11 +163,12 @@ public class AndroidSearchRequisitionService {
               .emergency(requisitionV2Dto.getEmergency())
               .consultationNumber(getConsultationNumber(requisitionV2Dto, requisitionIdToConsultationNumbers))
               .products(getProducts(requisitionV2Dto, orderableIdToCode))
-              .regimenLineItems(getRegimenLineItems(requisitionV2Dto, requisitionIdToRegimenLines))
-              .regimenSummaryLineItems(getRegimenSummaryLineItems(requisitionV2Dto, requisitionIdToRegimenSummaryLines))
-              .patientLineItems(getPatientLineItems(requisitionV2Dto, requisitionIdToPatientLines))
+              .regimenLineItems(getLineItems(requisitionV2Dto, requisitionIdToRegimenLines))
+              .regimenSummaryLineItems(getLineItems(requisitionV2Dto, requisitionIdToRegimenSummaryLines))
+              .patientLineItems(getLineItems(requisitionV2Dto, requisitionIdToPatientLines))
               .usageInformationLineItems(
                   getUsageInformationLineItems(orderableIdToCode, requisitionIdToUsageInfoDtos, requisitionV2Dto))
+              .testConsumptionLineItems(getLineItems(requisitionV2Dto, requisitionIdToTestConsumptionLines))
               .comments(requisitionV2Dto.getDraftStatusMessage())
               .build();
           setTimeAndSignature(requisitionCreateRequest, requisitionV2Dto);
@@ -167,28 +178,11 @@ public class AndroidSearchRequisitionService {
     return RequisitionResponse.builder().requisitionResponseList(requisitionCreateRequests).build();
   }
 
-  private List<RegimenLineItemRequest> getRegimenLineItems(RequisitionV2Dto requisitionV2Dto,
-      Map<UUID, List<RegimenLineItemRequest>> idToRegimenLineRequests) {
-    if (idToRegimenLineRequests.get(requisitionV2Dto.getId()) == null) {
+  private <T> List<T> getLineItems(RequisitionV2Dto requisitionV2Dto, Map<UUID, List<T>> idToLineItemRequests) {
+    if (idToLineItemRequests.get(requisitionV2Dto.getId()) == null) {
       return Collections.emptyList();
     }
-    return idToRegimenLineRequests.get(requisitionV2Dto.getId());
-  }
-
-  private List<RegimenLineItemRequest> getRegimenSummaryLineItems(RequisitionV2Dto requisitionV2Dto,
-      Map<UUID, List<RegimenLineItemRequest>> idToRegimenSummaryLineRequests) {
-    if (idToRegimenSummaryLineRequests.get(requisitionV2Dto.getId()) == null) {
-      return Collections.emptyList();
-    }
-    return idToRegimenSummaryLineRequests.get(requisitionV2Dto.getId());
-  }
-
-  private List<PatientLineItemsRequest> getPatientLineItems(RequisitionV2Dto requisitionV2Dto,
-      Map<UUID, List<PatientLineItemsRequest>> idToPatientLineRequests) {
-    if (idToPatientLineRequests.get(requisitionV2Dto.getId()) == null) {
-      return Collections.emptyList();
-    }
-    return idToPatientLineRequests.get(requisitionV2Dto.getId());
+    return idToLineItemRequests.get(requisitionV2Dto.getId());
   }
 
   private boolean isAndroidTemplate(UUID programTemplatedId) {
@@ -207,7 +201,7 @@ public class AndroidSearchRequisitionService {
         .collect(Collectors.groupingBy(RegimenLineItem::getRequisitionId));
     return idToRegimenLineItem.entrySet().stream()
         .collect(Collectors
-            .toMap(Map.Entry::getKey, entry -> RegimenLineItemRequest.from(entry.getValue(), idToRegimenDto)));
+            .toMap(Entry::getKey, e -> RegimenLineItemRequest.from(e.getValue(), idToRegimenDto)));
   }
 
   private Map<UUID, List<ConsultationNumberGroupDto>> buildIdToConsultationNumbersMap(Set<UUID> requisitionIds) {
@@ -231,7 +225,7 @@ public class AndroidSearchRequisitionService {
     Map<UUID, List<RegimenSummaryLineItem>> idToRegimenSummaryLineItem = regimenSummaryLineItems.stream()
         .collect(Collectors.groupingBy(RegimenSummaryLineItem::getRequisitionId));
     return idToRegimenSummaryLineItem.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, entry -> RegimenLineItemRequest.from(entry.getValue())));
+        .collect(Collectors.toMap(Entry::getKey, e -> RegimenLineItemRequest.from(e.getValue())));
   }
 
   private Map<UUID, List<PatientLineItemsRequest>> buildIdToPatientLineRequestsMap(Set<UUID> requisitionIds) {
@@ -239,7 +233,31 @@ public class AndroidSearchRequisitionService {
     Map<UUID, List<PatientLineItem>> idToPatientLines = patientLineItems.stream()
         .collect(Collectors.groupingBy(PatientLineItem::getRequisitionId));
     return idToPatientLines.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, entry -> buildPatientLineItemRequestList(entry.getValue())));
+        .collect(Collectors.toMap(Entry::getKey, e -> buildPatientLineItemRequestList(e.getValue())));
+  }
+
+  private Map<UUID, List<TestConsumptionLineItemRequest>> buildToTestConsumptionLineRequestsMap(
+      Set<UUID> requisitionIds) {
+    List<TestConsumptionLineItem> testConsumptionLineItems = testConsumptionLineItemRepository
+        .findByRequisitionIdIn(requisitionIds);
+    Map<UUID, List<TestConsumptionLineItem>> idToTestConsumptionLines = testConsumptionLineItems.stream().collect(
+        Collectors.groupingBy(TestConsumptionLineItem::getRequisitionId));
+    return idToTestConsumptionLines.entrySet().stream()
+        .collect(Collectors.toMap(Entry::getKey, e -> buildTestConsumptionsFromItems(e.getValue())));
+  }
+
+
+  private List<TestConsumptionLineItemRequest> buildTestConsumptionsFromItems(
+      List<TestConsumptionLineItem> testConsumptionLineItems) {
+    return testConsumptionLineItems.stream()
+        .filter(item -> !TOTAL_COLUMN.equals(item.getService()) && item.getValue() != null).map(
+            t -> TestConsumptionLineItemRequest.builder()
+                .service(TestService.findByValue(t.getService()))
+                .testProject(TestProject.findByValue(t.getProject()))
+                .testOutcome(TestOutcome.findByValue(t.getOutcome()))
+                .value(t.getValue())
+                .build()
+        ).collect(Collectors.toList());
   }
 
   private List<PatientLineItemsRequest> buildPatientLineItemRequestList(List<PatientLineItem> patientLineItems) {

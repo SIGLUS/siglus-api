@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.siglus.siglusapi.constant.FieldConstants.TOTAL;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.COLUMN_NAME;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.ConsultationNumberLineItems.GROUP_NAME;
 
@@ -46,6 +47,7 @@ import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
+import org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItem;
 import org.siglus.siglusapi.domain.PatientLineItem;
 import org.siglus.siglusapi.domain.Regimen;
@@ -53,16 +55,19 @@ import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.domain.RequisitionLineItemExtension;
+import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
+import org.siglus.siglusapi.dto.android.androidenum.TestOutcome;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.repository.ConsultationNumberLineItemRepository;
@@ -72,6 +77,7 @@ import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RegimenSummaryLineItemRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.TestConsumptionLineItemRepository;
 import org.siglus.siglusapi.repository.UsageInformationLineItemRepository;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
@@ -117,6 +123,9 @@ public class AndroidSearchRequisitionServiceTest {
   private PatientLineItemRepository patientLineItemRepository;
 
   @Mock
+  private TestConsumptionLineItemRepository testConsumptionLineItemRepository;
+
+  @Mock
   private PatientLineItemMapper patientLineItemMapper;
 
   @Mock
@@ -125,6 +134,7 @@ public class AndroidSearchRequisitionServiceTest {
   private final UUID programId = UUID.randomUUID();
   private final UUID programIdMmia = UUID.randomUUID();
   private final UUID programIdMalaria = UUID.randomUUID();
+  private final UUID programIdRapidTest = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID orderableId2 = UUID.randomUUID();
   private final UUID templateId = UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
@@ -134,6 +144,7 @@ public class AndroidSearchRequisitionServiceTest {
   private final UUID requisitionId = UUID.randomUUID();
   private final UUID requisitionIdMmia = UUID.randomUUID();
   private final UUID requisitionIdMalaria = UUID.randomUUID();
+  private final UUID requisitionIdRapidTest = UUID.randomUUID();
   private final UUID requisitionLineItemId = UUID.randomUUID();
   private final UUID requisitionLineItemId2 = UUID.randomUUID();
   private final Map<UUID, String> orderableIdToCode = new HashMap<>();
@@ -143,6 +154,7 @@ public class AndroidSearchRequisitionServiceTest {
   private String existentStock = "existentStock";
   private String treatmentsAttended = "treatmentsAttended";
   private String newColumn0 = "newColumn0";
+  private final String startDate = "2021-07-13";
 
   @Before
   public void prepare() {
@@ -158,13 +170,14 @@ public class AndroidSearchRequisitionServiceTest {
     createGetRequisitionData();
     createGetMmiaRequisitionData();
     createGetMalariaRequisitionData();
+    createGetRapidTestRequisitionData();
   }
 
   @Test
   public void shouldGetViaRequisitionResponseWhenByFacilityIdAndStartDate() {
     // when
     RequisitionResponse requisitionResponse = service
-        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), "2021-07-13", orderableIdToCode);
+        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), startDate, orderableIdToCode);
 
     // then
     RequisitionCreateRequest response = requisitionResponse.getRequisitionResponseList().get(0);
@@ -196,7 +209,7 @@ public class AndroidSearchRequisitionServiceTest {
   public void shouldGetMmiaRequisitionResponseWhenByFacilityIdAndStartDate() {
     // when
     RequisitionResponse requisitionResponse = service
-        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), "2021-07-13", orderableIdToCode);
+        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), startDate, orderableIdToCode);
 
     // then
     RequisitionCreateRequest mmiaResponse = requisitionResponse.getRequisitionResponseList().get(1);
@@ -230,7 +243,7 @@ public class AndroidSearchRequisitionServiceTest {
   public void shouldGetMalariaRequisitionResponseWhenByFacilityIdAndStartDate() {
     // when
     RequisitionResponse requisitionResponse = service
-        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), "2021-07-13", orderableIdToCode);
+        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), startDate, orderableIdToCode);
 
     // then
     RequisitionCreateRequest response = requisitionResponse.getRequisitionResponseList().get(2);
@@ -265,6 +278,35 @@ public class AndroidSearchRequisitionServiceTest {
     assertEquals(Integer.valueOf(600), treatmentInfo.getHf());
     assertEquals(Integer.valueOf(800), treatmentInfo.getChw());
 
+  }
+
+  @Test
+  public void shouldGetRapidTestRequisitionResponseWhenByFacilityIdAndStartDate() {
+    // when
+    RequisitionResponse requisitionResponse = service
+        .getRequisitionResponseByFacilityIdAndDate(UUID.randomUUID(), startDate, orderableIdToCode);
+
+    // then
+    RequisitionCreateRequest trResponse = requisitionResponse.getRequisitionResponseList().get(3);
+    List<TestConsumptionLineItemRequest> testConsumptionLineItems = trResponse.getTestConsumptionLineItems();
+
+    assertEquals(3, testConsumptionLineItems.size());
+
+    TestConsumptionLineItemRequest testConsumptionLineItemRequest = testConsumptionLineItems.stream()
+        .filter(item -> TestOutcome.POSITIVE.name().equals(item.getTestOutcome()))
+        .findFirst()
+        .orElse(new TestConsumptionLineItemRequest());
+    assertEquals(Integer.valueOf(2), testConsumptionLineItemRequest.getValue());
+    TestConsumptionLineItemRequest testConsumptionLineItemRequest1 = testConsumptionLineItems.stream()
+        .filter(item -> TestOutcome.CONSUME.name().equals(item.getTestOutcome()))
+        .findFirst()
+        .orElse(new TestConsumptionLineItemRequest());
+    assertEquals(Integer.valueOf(1), testConsumptionLineItemRequest1.getValue());
+    TestConsumptionLineItemRequest testConsumptionLineItemRequest2 = testConsumptionLineItems.stream()
+        .filter(item -> TestOutcome.UNJUSTIFIED.name().equals(item.getTestOutcome()))
+        .findFirst()
+        .orElse(new TestConsumptionLineItemRequest());
+    assertEquals(Integer.valueOf(1), testConsumptionLineItemRequest2.getValue());
   }
 
   private void createGetRequisitionData() {
@@ -310,13 +352,8 @@ public class AndroidSearchRequisitionServiceTest {
     signatureDto.setAuthorize("yyd2");
     String[] approve = {"yyd3", "yye4"};
     signatureDto.setApprove(approve);
-    Map<String, Object> extraData = new HashMap<>();
-    extraData.put("signaure", signatureDto);
-    extraData.put("actualStartDate", "2021-05-01");
-    extraData.put("actualEndDate", "2021-05-11");
-    extraData.put("clientSubmittedTime", "2021-06-21T07:59:59Z");
 
-    v2Dto.setExtraData(extraData);
+    v2Dto.setExtraData(buildExtraData(signatureDto));
 
     BasicRequisitionTemplateDto templateDto = new BasicRequisitionTemplateDto();
     templateDto.setId(templateId);
@@ -368,6 +405,17 @@ public class AndroidSearchRequisitionServiceTest {
     when(siglusProgramService.getProgram(programIdMalaria)).thenReturn(programDto);
   }
 
+  private void createGetRapidTestRequisitionData() {
+    when(testConsumptionLineItemRepository.findByRequisitionIdIn(any())).thenReturn(buildTestConsumptionLineItems());
+    when(siglusRequisitionRequisitionService.searchRequisition(requisitionIdRapidTest))
+        .thenReturn(buildRapidTestV2Dto());
+
+    ProgramDto programDto = new ProgramDto();
+    programDto.setCode("TR");
+    programDto.setId(programIdRapidTest);
+    when(siglusProgramService.getProgram(programIdRapidTest)).thenReturn(programDto);
+  }
+
   private List<UsageInformationLineItem> buildUsageInformationLineItems() {
     UsageInformationLineItem existenHfOrderable = UsageInformationLineItem.builder()
         .requisitionId(requisitionIdMalaria).information(existentStock).service("HF").orderableId(orderableId)
@@ -400,6 +448,32 @@ public class AndroidSearchRequisitionServiceTest {
         treatmentHfUsageOrderable, treatmentHfUsageOrderable2, treatmentChwUsageOrderable, treatmentChwUsageOrderable2);
   }
 
+  private List<TestConsumptionLineItem> buildTestConsumptionLineItems() {
+    TestConsumptionLineItem testConsumptionLineItem1 = TestConsumptionLineItem.builder()
+        .requisitionId(requisitionIdRapidTest)
+        .service(TestConsumptionLineItems.SERVICE_HF).project(TestConsumptionLineItems.PROJECT_HIVDETERMINE)
+        .outcome(TestConsumptionLineItems.PROJECT_POSITIVE).value(2).build();
+    TestConsumptionLineItem testConsumptionLineItem2 = TestConsumptionLineItem.builder()
+        .requisitionId(requisitionIdRapidTest)
+        .service(TestConsumptionLineItems.SERVICE_HF).project(TestConsumptionLineItems.PROJECT_HIVDETERMINE)
+        .outcome(TestConsumptionLineItems.PROJECT_CONSUMO).value(1).build();
+    TestConsumptionLineItem testConsumptionLineItem3 = TestConsumptionLineItem.builder()
+        .requisitionId(requisitionIdRapidTest)
+        .service(TestConsumptionLineItems.SERVICE_HF).project(TestConsumptionLineItems.PROJECT_HIVDETERMINE)
+        .outcome(TestConsumptionLineItems.PROJECT_UNJUSTIFIED).value(1).build();
+    TestConsumptionLineItem testConsumptionLineItem4 = TestConsumptionLineItem.builder()
+        .requisitionId(requisitionIdRapidTest)
+        .service(TestConsumptionLineItems.SERVICE_HF).project(TestConsumptionLineItems.NEW_COLUMN_1)
+        .outcome(TestConsumptionLineItems.PROJECT_POSITIVE).value(null).build();
+    TestConsumptionLineItem testConsumptionLineItem5 = TestConsumptionLineItem.builder()
+        .requisitionId(requisitionIdRapidTest)
+        .service(TOTAL).project(TestConsumptionLineItems.PROJECT_HIVDETERMINE)
+        .outcome(TestConsumptionLineItems.PROJECT_POSITIVE).value(2).build();
+    return Arrays
+        .asList(testConsumptionLineItem1, testConsumptionLineItem2, testConsumptionLineItem3, testConsumptionLineItem4,
+            testConsumptionLineItem5);
+  }
+
   private RequisitionV2Dto buildMalariaV2Dto() {
     ExtraDataSignatureDto signatureDto = new ExtraDataSignatureDto();
     signatureDto.setSubmit("yyds2");
@@ -430,21 +504,35 @@ public class AndroidSearchRequisitionServiceTest {
     signatureDto.setAuthorize("wangj2");
     String[] approve = {"wangj3", "wangj4"};
     signatureDto.setApprove(approve);
-    Map<String, Object> extraData = new HashMap<>();
-    extraData.put("signaure", signatureDto);
-    extraData.put("actualStartDate", "2021-05-01");
-    extraData.put("actualEndDate", "2021-05-11");
-    extraData.put("clientSubmittedTime", "2021-06-21T07:59:59Z");
 
     BasicRequisitionTemplateDto templateDto = new BasicRequisitionTemplateDto();
     templateDto.setId(mmiaTemplateId);
     RequisitionV2Dto v2Dto = new RequisitionV2Dto();
-    v2Dto.setExtraData(extraData);
+    v2Dto.setExtraData(buildExtraData(signatureDto));
     v2Dto.setTemplate(templateDto);
     v2Dto.setId(requisitionIdMmia);
     v2Dto.setDraftStatusMessage("comments");
     v2Dto.setStatus(RequisitionStatus.AUTHORIZED);
     v2Dto.setProgram(new ObjectReferenceDto(programIdMmia));
+    v2Dto.setEmergency(false);
+    return v2Dto;
+  }
+
+  private RequisitionV2Dto buildRapidTestV2Dto() {
+    ExtraDataSignatureDto signatureDto = new ExtraDataSignatureDto();
+    signatureDto.setSubmit("wangj5");
+    signatureDto.setAuthorize("wangj6");
+    String[] approve = {"wangj7", "wangj8"};
+    signatureDto.setApprove(approve);
+
+    BasicRequisitionTemplateDto templateDto = new BasicRequisitionTemplateDto();
+    templateDto.setId(rapidtestTemplateId);
+    RequisitionV2Dto v2Dto = new RequisitionV2Dto();
+    v2Dto.setExtraData(buildExtraData(signatureDto));
+    v2Dto.setTemplate(templateDto);
+    v2Dto.setId(requisitionIdRapidTest);
+    v2Dto.setStatus(RequisitionStatus.AUTHORIZED);
+    v2Dto.setProgram(new ObjectReferenceDto(programIdRapidTest));
     v2Dto.setEmergency(false);
     return v2Dto;
   }
@@ -459,7 +547,11 @@ public class AndroidSearchRequisitionServiceTest {
     RequisitionExtension malariaRequisitionExtension = RequisitionExtension.builder()
         .requisitionId(requisitionIdMalaria)
         .build();
-    return Arrays.asList(viaRequisitionExtension, mmiaRequisitionExtension, malariaRequisitionExtension);
+    RequisitionExtension rapidTestRequisitionExtension = RequisitionExtension.builder()
+        .requisitionId(requisitionIdRapidTest)
+        .build();
+    return Arrays.asList(viaRequisitionExtension, mmiaRequisitionExtension, malariaRequisitionExtension,
+        rapidTestRequisitionExtension);
   }
 
   private List<RegimenLineItem> buildRegimenLineItems() {
@@ -528,6 +620,15 @@ public class AndroidSearchRequisitionServiceTest {
     patientGroupDto1.setColumns(columns1);
 
     return Arrays.asList(patientGroupDto, patientGroupDto1);
+  }
+
+  private Map buildExtraData(ExtraDataSignatureDto signatureDto) {
+    Map<String, Object> extraData = new HashMap<>();
+    extraData.put("signaure", signatureDto);
+    extraData.put("actualStartDate", "2021-05-01");
+    extraData.put("actualEndDate", "2021-05-11");
+    extraData.put("clientSubmittedTime", "2021-06-21T07:59:59Z");
+    return extraData;
   }
 
 }
