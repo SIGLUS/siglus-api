@@ -98,7 +98,7 @@ public class UsageSectionConstants {
     public static final String TABLE_PROPHYLAXIS_PPE_KEY = "table_prophylaxis_ppe_key";
     public static final String TABLE_PROPHYLAXIS_PREP_KEY = "table_prophylaxis_prep_key";
     public static final String TABLE_PROPHYLAXIS_CHILD_KEY = "table_prophylaxis_child_key";
-    public static final String TABLE_PROPHYLAXIS_VALUE_KEY = "table_prophylaxis_value_key";
+    public static final String TABLE_PROPHYLAXIS_TOTAL_KEY = "table_prophylaxis_total_key";
 
 
     public static final String DISPENSED_DS5 = "dispensed_ds5";
