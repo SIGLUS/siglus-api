@@ -57,8 +57,8 @@ public class RegimenLineItemRequest {
   private Integer comunitaryPharmacy;
 
   public static List<RegimenLineItemRequest> from(List<RegimenLineItem> regimenLineItems,
-      Map<UUID, RegimenDto> idToRegimenDto) {
-    List<RegimenLineDto> regimenLineDtos = RegimenLineDto.from(regimenLineItems, idToRegimenDto);
+      Map<UUID, RegimenDto> regimenIdToRegimenDto) {
+    List<RegimenLineDto> regimenLineDtos = RegimenLineDto.from(regimenLineItems, regimenIdToRegimenDto);
     return regimenLineDtos.stream()
         .filter(regimenLineDto -> StringUtils.isEmpty(regimenLineDto.getName()))
         .map(regimenLineDto -> RegimenLineItemRequest.builder()

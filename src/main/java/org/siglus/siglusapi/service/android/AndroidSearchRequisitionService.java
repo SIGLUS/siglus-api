@@ -153,12 +153,12 @@ public class AndroidSearchRequisitionService {
               .emergency(requisitionV2Dto.getEmergency())
               .consultationNumber(getConsultationNumber(requisitionV2Dto, requisitionIdToConsultationNumbers))
               .products(getProducts(requisitionV2Dto, orderableIdToCode))
-              .regimenLineItems(getLineItems(requisitionV2Dto, requisitionIdToRegimenLines))
-              .regimenSummaryLineItems(getLineItems(requisitionV2Dto, requisitionIdToRegimenSummaryLines))
-              .patientLineItems(getLineItems(requisitionV2Dto, requisitionIdToPatientLines))
+              .regimenLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToRegimenLines))
+              .regimenSummaryLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToRegimenSummaryLines))
+              .patientLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToPatientLines))
               .usageInformationLineItems(
                   getUsageInformationLineItems(orderableIdToCode, requisitionIdToUsageInfoDtos, requisitionV2Dto))
-              .testConsumptionLineItems(getLineItems(requisitionV2Dto, requisitionIdToTestConsumptionLines))
+              .testConsumptionLineItems(getLineItems(requisitionV2Dto.getId(), requisitionIdToTestConsumptionLines))
               .comments(requisitionV2Dto.getDraftStatusMessage())
               .build();
           setTimeAndSignature(requisitionCreateRequest, requisitionV2Dto);
@@ -168,11 +168,11 @@ public class AndroidSearchRequisitionService {
     return RequisitionResponse.builder().requisitionResponseList(requisitionCreateRequests).build();
   }
 
-  private <T> List<T> getLineItems(RequisitionV2Dto requisitionV2Dto, Map<UUID, List<T>> idToLineItemRequests) {
-    if (idToLineItemRequests.get(requisitionV2Dto.getId()) == null) {
+  private <T> List<T> getLineItems(UUID requisitionId, Map<UUID, List<T>> requisitionIdToLineItemRequests) {
+    if (requisitionIdToLineItemRequests.get(requisitionId) == null) {
       return Collections.emptyList();
     }
-    return idToLineItemRequests.get(requisitionV2Dto.getId());
+    return requisitionIdToLineItemRequests.get(requisitionId);
   }
 
   private boolean isAndroidTemplate(UUID programTemplatedId) {
@@ -185,13 +185,13 @@ public class AndroidSearchRequisitionService {
     Set<UUID> regimenIds = regimenLineItems.stream().map(RegimenLineItem::getRegimenId).filter(Objects::nonNull)
         .collect(Collectors.toSet());
     List<Regimen> regimens = regimenRepository.findByIdIn(regimenIds);
-    Map<UUID, RegimenDto> idToRegimenDto = regimens.stream().map(RegimenDto::from)
+    Map<UUID, RegimenDto> regimenIdToRegimenDto = regimens.stream().map(RegimenDto::from)
         .collect(Collectors.toMap(RegimenDto::getId, Function.identity()));
-    Map<UUID, List<RegimenLineItem>> idToRegimenLineItem = regimenLineItems.stream()
+    Map<UUID, List<RegimenLineItem>> requisitionIdToRegimenLineItem = regimenLineItems.stream()
         .collect(Collectors.groupingBy(RegimenLineItem::getRequisitionId));
-    return idToRegimenLineItem.entrySet().stream()
-        .collect(Collectors
-            .toMap(Entry::getKey, e -> RegimenLineItemRequest.from(e.getValue(), idToRegimenDto)));
+    return requisitionIdToRegimenLineItem.entrySet().stream().collect(
+        Collectors.toMap(Entry::getKey, e -> RegimenLineItemRequest.from(e.getValue(), regimenIdToRegimenDto))
+    );
   }
 
   private Map<UUID, List<ConsultationNumberGroupDto>> buildIdToConsultationNumbersMap(Set<UUID> requisitionIds) {
@@ -256,7 +256,14 @@ public class AndroidSearchRequisitionService {
         .filter(t -> !StringUtils.isEmpty(PatientLineItemName.findKeyByValue(t.getName())))
         .map(this::buildPatientLineItemRequest)
         .collect(Collectors.toList());
-    return reBuildPatientLineList(list);
+    List<PatientLineItemsRequest> despenseList = list.stream()
+        .filter(t -> t.getName().contains(TABLE_DISPENSED))
+        .collect(Collectors.toList());
+    List<PatientLineItemsRequest> arvtList = list.stream()
+        .filter(t -> !t.getName().contains(TABLE_DISPENSED))
+        .collect(Collectors.toList());
+    arvtList.add(buildDespensePatientLine(despenseList));
+    return arvtList;
   }
 
   private PatientLineItemsRequest buildPatientLineItemRequest(PatientGroupDto patientGroupDto) {
@@ -277,16 +284,6 @@ public class AndroidSearchRequisitionService {
         .name(name)
         .columns(columns)
         .build();
-  }
-
-  private List<PatientLineItemsRequest> reBuildPatientLineList(List<PatientLineItemsRequest> patientLineItemList) {
-    List<PatientLineItemsRequest> despenseList = patientLineItemList.stream()
-        .filter(t -> t.getName().contains(TABLE_DISPENSED))
-        .collect(Collectors.toList());
-    List<PatientLineItemsRequest> arvtList = patientLineItemList.stream()
-        .filter(t -> !t.getName().contains(TABLE_DISPENSED)).collect(Collectors.toList());
-    arvtList.add(buildDespensePatientLine(despenseList));
-    return arvtList;
   }
 
   private PatientLineItemsRequest buildDespensePatientLine(List<PatientLineItemsRequest> despenseList) {
