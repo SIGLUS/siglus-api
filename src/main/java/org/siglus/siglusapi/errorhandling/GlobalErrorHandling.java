@@ -23,18 +23,22 @@ import static org.zalando.problem.Status.BAD_REQUEST;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.validation.ValidationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
+import org.siglus.common.constant.DateFormatConstants;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
 import org.siglus.common.util.Message;
-import org.siglus.common.util.Message.LocalizedMessage;
 import org.siglus.siglusapi.errorhandling.message.ValidationFailField;
 import org.siglus.siglusapi.exception.NotAcceptableException;
+import org.siglus.siglusapi.i18n.ExposedMessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +48,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.zalando.problem.Problem;
+import org.zalando.problem.ProblemBuilder;
 import org.zalando.problem.StatusType;
 import org.zalando.problem.ThrowableProblem;
 import org.zalando.problem.spring.web.advice.ProblemHandling;
@@ -55,10 +60,13 @@ import org.zalando.problem.spring.web.advice.validation.Violation;
 @ControllerAdvice
 @ParametersAreNonnullByDefault
 @Slf4j
-public class GlobalErrorHandling extends AbstractErrorHandling implements ProblemHandling {
+@RequiredArgsConstructor
+public class GlobalErrorHandling implements ProblemHandling {
 
   private static final String MESSAGE_KEY = "messageKey";
   private static final String MESSAGE = "message";
+  private static final String MESSAGE_IN_ENGLISH = "messageInEnglish";
+  private static final String MESSAGE_IN_PORTUGUESE = "messageInPortuguese";
   private static final Map<String, String> CONSTRAINT_MAP = new ConcurrentHashMap<>();
 
   static {
@@ -68,21 +76,20 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
 
   private static final URI CONSTRAINT_VIOLATION_TYPE = URI.create("/errors/constraint-violation");
 
+  private final ExposedMessageSource messageSource;
+
+  // why we need this?
   @ExceptionHandler(NotAcceptableException.class)
   @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
   @ResponseBody
   public Message.LocalizedMessage handlePermissionException(NotAcceptableException ex) {
-    return getLocalizedMessage(ex);
+    return ex.asMessage().localMessage(messageSource, LocaleContextHolder.getLocale());
   }
 
   @ExceptionHandler
   public ResponseEntity<Problem> handleGenericError(ValidationMessageException exception, NativeWebRequest request) {
-    // TODO hardcode on Portuguese
-    LocalizedMessage localizedMessage = getLocalizedMessage(exception);
-    ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE)
-        .with(MESSAGE_KEY, localizedMessage.getMessageKey())
-        .with(MESSAGE, localizedMessage.getMessage())
-        .build();
+    String messageKey = exception.asMessage().getKey();
+    ThrowableProblem problem = prepare(messageKey, exception, BAD_REQUEST, DEFAULT_TYPE).build();
     return create(exception, problem, request);
   }
 
@@ -90,22 +97,14 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   public ResponseEntity<Problem> handleDataIntegrityViolation(DataIntegrityViolationException exception,
       NativeWebRequest request) {
     String messageKey = null;
-    String message = null;
     if (exception.getCause() instanceof ConstraintViolationException) {
       ConstraintViolationException cause = (ConstraintViolationException) exception.getCause();
       messageKey = CONSTRAINT_MAP.get(cause.getConstraintName());
-      if (messageKey != null) {
-        // TODO hardcode on Portuguese
-        message = getLocalizedMessage(new Message(messageKey)).getMessage();
-      }
     }
     if (messageKey == null) {
       messageKey = exception.getMessage();
     }
-    ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE)
-        .with(MESSAGE_KEY, messageKey)
-        .with(MESSAGE, message != null ? message : messageKey)
-        .build();
+    ThrowableProblem problem = prepare(messageKey, exception, BAD_REQUEST, DEFAULT_TYPE).build();
     return create(exception, problem, request);
   }
 
@@ -113,12 +112,8 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
   public ResponseEntity<Problem> newConstraintViolationProblem(Throwable throwable, Collection<Violation> violations,
       NativeWebRequest request) {
     StatusType status = defaultConstraintViolationStatus();
-    // TODO hardcode on Portuguese
-    LocalizedMessage localizedMessage = getLocalizedMessage(new Message(ERROR_VALIDATION_FAIL));
     List<ValidationFailField> fields = violations.stream().map(ValidationFailField::new).collect(toList());
-    ThrowableProblem problem = prepare(throwable, status, CONSTRAINT_VIOLATION_TYPE)
-        .with(MESSAGE_KEY, localizedMessage.getMessageKey())
-        .with(MESSAGE, localizedMessage.getMessage())
+    ThrowableProblem problem = prepare(ERROR_VALIDATION_FAIL, throwable, status, CONSTRAINT_VIOLATION_TYPE)
         .with("fields", fields)
         .build();
     return create(throwable, problem, request);
@@ -137,6 +132,21 @@ public class GlobalErrorHandling extends AbstractErrorHandling implements Proble
       return;
     }
     log.error(status.getReasonPhrase(), throwable);
+  }
+
+  public ProblemBuilder prepare(String messageKey, Throwable throwable, StatusType status, URI type) {
+    String localizedMessage = getLocalizedMessage(messageKey, LocaleContextHolder.getLocale());
+    String messageInEnglish = getLocalizedMessage(messageKey, Locale.ENGLISH);
+    String messageInPortuguese = getLocalizedMessage(messageKey, DateFormatConstants.PORTUGAL);
+    return prepare(throwable, status, type)
+        .with(MESSAGE_KEY, messageKey)
+        .with(MESSAGE, localizedMessage)
+        .with(MESSAGE_IN_ENGLISH, messageInEnglish)
+        .with(MESSAGE_IN_PORTUGUESE, messageInPortuguese);
+  }
+
+  private String getLocalizedMessage(String key, Locale locale) {
+    return messageSource.getMessage(key, null, locale);
   }
 
 }

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.errorhandling;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -27,12 +28,10 @@ import java.util.Locale;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.siglus.common.util.Message;
-import org.siglus.siglusapi.i18n.MessageService;
+import org.siglus.common.constant.DateFormatConstants;
+import org.siglus.siglusapi.i18n.ExposedMessageSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.ContextConfiguration;
@@ -47,20 +46,14 @@ import org.zalando.problem.ProblemModule;
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals"})
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {
-    ExceptionHandlerExceptionResolver.class,
-    ObjectMapper.class,
-    GlobalErrorHandling.class
+    ExceptionHandlerExceptionResolver.class, ObjectMapper.class, GlobalErrorHandling.class
 })
 public class GlobalErrorHandlingMvcTest {
 
   static final String ERROR_MESSAGE = "error-message";
-  private static final Locale ENGLISH_LOCALE = Locale.ENGLISH;
 
   @MockBean
-  private MessageService messageService;
-
-  @Mock
-  private MessageSource messageSource;
+  private ExposedMessageSource messageSource;
 
   @Autowired
   private ExceptionHandlerExceptionResolver exceptionResolver;
@@ -80,9 +73,9 @@ public class GlobalErrorHandlingMvcTest {
         .setControllerAdvice(exceptionResolver)
         .build();
 
-    when(messageSource.getMessage(any(), any(), any())).then(i -> i.getArgumentAt(0, String.class));
-    when(messageService.localize(any(Message.class)))
-        .then(i -> i.getArgumentAt(0, Message.class).localMessage(messageSource, ENGLISH_LOCALE));
+    when(messageSource.getMessage(any(), any(), eq(Locale.ENGLISH))).then(i -> i.getArgumentAt(0, String.class));
+    when(messageSource.getMessage(any(), any(), eq(DateFormatConstants.PORTUGAL)))
+        .then(i -> i.getArgumentAt(0, String.class) + " in Portuguese");
   }
 
   @Test
@@ -96,7 +89,9 @@ public class GlobalErrorHandlingMvcTest {
     // when
     response.andExpect(status().isBadRequest())
         .andExpect(jsonPath("messageKey").value("key"))
-        .andExpect(jsonPath("message").value("key"));
+        .andExpect(jsonPath("message").value("key"))
+        .andExpect(jsonPath("messageInEnglish").value("key"))
+        .andExpect(jsonPath("messageInPortuguese").value("key in Portuguese"));
   }
 
   @Test
@@ -110,7 +105,9 @@ public class GlobalErrorHandlingMvcTest {
     // when
     response.andExpect(status().isBadRequest())
         .andExpect(jsonPath("messageKey").value("siglusapi.error.widget.code.duplicated"))
-        .andExpect(jsonPath("message").value("siglusapi.error.widget.code.duplicated"));
+        .andExpect(jsonPath("message").value("siglusapi.error.widget.code.duplicated"))
+        .andExpect(jsonPath("messageInEnglish").value("siglusapi.error.widget.code.duplicated"))
+        .andExpect(jsonPath("messageInPortuguese").value("siglusapi.error.widget.code.duplicated in Portuguese"));
   }
 
   @Test
@@ -127,7 +124,11 @@ public class GlobalErrorHandlingMvcTest {
         .andExpect(
             jsonPath("messageKey").value("nested exception is org.hibernate.exception.ConstraintViolationException"))
         .andExpect(
-            jsonPath("message").value("nested exception is org.hibernate.exception.ConstraintViolationException"));
+            jsonPath("message").value("nested exception is org.hibernate.exception.ConstraintViolationException"))
+        .andExpect(jsonPath("messageInEnglish")
+            .value("nested exception is org.hibernate.exception.ConstraintViolationException"))
+        .andExpect(jsonPath("messageInPortuguese")
+            .value("nested exception is org.hibernate.exception.ConstraintViolationException in Portuguese"));
   }
 
   @Test
@@ -141,7 +142,9 @@ public class GlobalErrorHandlingMvcTest {
     // when
     response.andExpect(status().isBadRequest())
         .andExpect(jsonPath("messageKey").value("error-message"))
-        .andExpect(jsonPath("message").value("error-message"));
+        .andExpect(jsonPath("message").value("error-message"))
+        .andExpect(jsonPath("messageInEnglish").value("error-message"))
+        .andExpect(jsonPath("messageInPortuguese").value("error-message in Portuguese"));
   }
 
   @Test
@@ -156,6 +159,8 @@ public class GlobalErrorHandlingMvcTest {
     response.andExpect(status().isBadRequest())
         .andExpect(jsonPath("messageKey").value("siglusapi.error.validationFail"))
         .andExpect(jsonPath("message").value("siglusapi.error.validationFail"))
+        .andExpect(jsonPath("messageInEnglish").value("siglusapi.error.validationFail"))
+        .andExpect(jsonPath("messageInPortuguese").value("siglusapi.error.validationFail in Portuguese"))
         .andExpect(jsonPath("fields[0].propertyPath").value("propertyPath"))
         .andExpect(jsonPath("fields[0].messageInEnglish").value("text"))
         .andExpect(jsonPath("fields[0].messageInPortuguese").value("text"));
