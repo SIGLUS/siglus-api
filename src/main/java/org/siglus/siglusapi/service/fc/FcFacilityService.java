@@ -38,6 +38,7 @@ import org.siglus.common.dto.referencedata.FacilityTypeDto;
 import org.siglus.common.dto.referencedata.OpenLmisGeographicZoneDto;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.fc.FcFacilityDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
@@ -149,15 +150,15 @@ public class FcFacilityService {
     Set<String> codes = fcFacilityDto.getAreas()
         .stream().map(fcAreaDto -> {
           String code = fcAreaDto.getAreaCode();
-          if (code.equalsIgnoreCase("ML")) {
+          if (code.equalsIgnoreCase(ProgramConstants.MALARIA_PROGRAM_NAME)) {
             return code;
           }
           return codeToRealProgramMap.containsKey(code) ? codeToRealProgramMap.get(code)
               .getProgramCode() : null;
         }).filter(Objects::nonNull)
         .collect(Collectors.toSet());
-    if (codes.contains("ML") && !codes.contains("VC")) {
-      codes.add("VC");
+    if (codes.contains(ProgramConstants.MALARIA_PROGRAM_NAME) && !codes.contains(ProgramConstants.VIA_PROGRAM_NAME)) {
+      codes.add(ProgramConstants.VIA_PROGRAM_NAME);
     }
     return codes;
   }

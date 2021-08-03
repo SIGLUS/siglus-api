@@ -140,12 +140,6 @@ public class FcSourceDestinationServiceTest {
         dpmFacilityTypeCode);
     ReflectionTestUtils.setField(fcSourceDestinationService, "warehouseFacilityTypeCode",
         warehouseFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "arvProgramCode",
-        arvProgramCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "mpProgramCode",
-        mpProgramCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "rapidTestProgramCode",
-        rapidTestProgramCode);
     mockFacilityType();
     mockProgram();
   }

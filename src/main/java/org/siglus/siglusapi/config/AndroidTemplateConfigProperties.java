@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.constant.ProgramConstants;
 
 @Data
 @NoArgsConstructor
@@ -45,10 +46,10 @@ public class AndroidTemplateConfigProperties {
     this.androidMmiaTemplateId = androidMmiaTemplateId;
     this.androidMalariaTemplateId = androidMalariaTemplateId;
     this.androidRapidtestTemplateId = androidRapidtestTemplateId;
-    programIdByCode.put("VC", androidViaTemplateId);
-    programIdByCode.put("T", androidMmiaTemplateId);
-    programIdByCode.put("ML", androidMalariaTemplateId);
-    programIdByCode.put("TR", androidRapidtestTemplateId);
+    programIdByCode.put(ProgramConstants.VIA_PROGRAM_NAME, androidViaTemplateId);
+    programIdByCode.put(ProgramConstants.MMIA_PROGRAM_NAME, androidMmiaTemplateId);
+    programIdByCode.put(ProgramConstants.MALARIA_PROGRAM_NAME, androidMalariaTemplateId);
+    programIdByCode.put(ProgramConstants.RAPIDTEST_PROGRAM_NAME, androidRapidtestTemplateId);
     androidTemplateIds.add(androidViaTemplateId);
     androidTemplateIds.add(androidMmiaTemplateId);
     androidTemplateIds.add(androidMalariaTemplateId);

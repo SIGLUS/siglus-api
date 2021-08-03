@@ -53,6 +53,7 @@ import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineIte
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TOTAL_COLUMN;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_COMMUNITY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_PATIENT;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.SERVICE_APES;
 
 import java.time.YearMonth;
 import java.time.ZonedDateTime;
@@ -107,6 +108,7 @@ import org.siglus.common.repository.ProcessingPeriodRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
+import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -121,16 +123,23 @@ import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
+import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
+import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
 import org.siglus.siglusapi.dto.android.androidenum.PatientLineItemName;
 import org.siglus.siglusapi.dto.android.androidenum.PatientTableName;
 import org.siglus.siglusapi.dto.android.androidenum.RegimenSummaryCode;
+import org.siglus.siglusapi.dto.android.androidenum.TestOutcome;
+import org.siglus.siglusapi.dto.android.androidenum.TestProject;
+import org.siglus.siglusapi.dto.android.androidenum.TestService;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
+import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.repository.RegimenRepository;
@@ -200,7 +209,7 @@ public class AndroidCreateRequisitionService {
     newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setNumberOfMonthsInPeriod(1);
     newRequisition.setDraftStatusMessage(request.getComments());
-    newRequisition.setReportOnly("ML".equals(programCode));
+    newRequisition.setReportOnly(ProgramConstants.MALARIA_PROGRAM_NAME.equals(programCode));
     buildStatusChanges(newRequisition, user.getId());
     buildRequisitionApprovedProduct(newRequisition, homeFacilityId, programId);
     buildRequisitionExtraData(newRequisition, request);
@@ -385,6 +394,7 @@ public class AndroidCreateRequisitionService {
     updateRegimenSummaryLineItems(requisitionDto, request);
     updatePatientLineItems(requisitionDto, request);
     updateUsageInformationLineItems(requisitionDto, request);
+    updateTestConsumptionLineItems(requisitionDto, request);
     siglusUsageReportService.saveUsageReport(requisitionDto, dto);
   }
 
@@ -535,6 +545,33 @@ public class AndroidCreateRequisitionService {
             : totalColumns.get(COLUMN_NAME_COMMUNITY).getValue();
     totalColumns.get(COLUMN_NAME_PATIENT).setValue(patientsTotal + summaryRequest.getPatientsOnTreatment());
     totalColumns.get(COLUMN_NAME_COMMUNITY).setValue(communityTotal + summaryRequest.getComunitaryPharmacy());
+  }
+
+  private void updateTestConsumptionLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
+    if (CollectionUtils.isEmpty(request.getTestConsumptionLineItems())) {
+      return;
+    }
+    Map<String, Map<String, TestConsumptionProjectDto>> serviceToTestProjectDto = requisitionDto
+        .getTestConsumptionLineItems().stream()
+        .collect(Collectors.toMap(TestConsumptionServiceDto::getService, TestConsumptionServiceDto::getProjects));
+    request.getTestConsumptionLineItems().forEach(item -> buildTestOutcomeValue(item, serviceToTestProjectDto));
+  }
+
+  private void buildTestOutcomeValue(TestConsumptionLineItemRequest testRequest,
+      Map<String, Map<String, TestConsumptionProjectDto>> serviceToTestProjectDto) {
+    if (!SERVICE_APES.equals(testRequest.getService())) {
+      TestConsumptionOutcomeDto totalOutcomeDto = serviceToTestProjectDto.get(UsageInformationLineItems.SERVICE_TOTAL)
+          .get(TestProject.valueOf(testRequest.getTestProject()).getValue())
+          .getOutcomes()
+          .get(TestOutcome.valueOf(testRequest.getTestOutcome()).getValue());
+      int totalValue = totalOutcomeDto.getValue() == null ? 0 : totalOutcomeDto.getValue();
+      totalOutcomeDto.setValue(totalValue + testRequest.getValue());
+    }
+    serviceToTestProjectDto.get(TestService.valueOf(testRequest.getService()).getValue())
+        .get(TestProject.valueOf(testRequest.getTestProject()).getValue())
+        .getOutcomes()
+        .get(TestOutcome.valueOf(testRequest.getTestOutcome()).getValue())
+        .setValue(testRequest.getValue());
   }
 
   private void updateRegimenLineItems(SiglusRequisitionDto requisitionDto, UUID programId,

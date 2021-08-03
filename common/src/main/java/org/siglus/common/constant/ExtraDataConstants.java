@@ -35,4 +35,6 @@ public class ExtraDataConstants {
 
   public static final String APPROVE = "approve";
 
+  public static final String ORIGIN_EVENT_TIME = "originEventTime";
+
 }

@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static org.siglus.common.constant.ExtraDataConstants.ORIGIN_EVENT_TIME;
+
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
@@ -211,7 +213,7 @@ public class SiglusStockCardLineItemService {
       throw new NotFoundException("Stockcardlineitem ExtraData Not Found");
     }
     String originEventTime = firstItem.getExtraData().entrySet().stream()
-        .filter(e -> "originEventTime".equals(e.getKey()))
+        .filter(e -> ORIGIN_EVENT_TIME.equals(e.getKey()))
         .findFirst()
         .map(Entry::getValue)
         .orElseThrow(() -> new NotFoundException("OriginEventTime Not Found"));

@@ -31,6 +31,7 @@ import org.openlmis.stockmanagement.repository.NodeRepository;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.FacilityTypeDto;
 import org.siglus.common.util.RequestParameters;
+import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,18 +96,9 @@ public class FcSourceDestinationService {
   @Value("${warehouse.facilityTypeCode}")
   private String warehouseFacilityTypeCode;
 
-  @Value("${arv.programCode}")
-  private String arvProgramCode;
-
   private UUID arvProgramId;
 
-  @Value("${mp.programCode}")
-  private String mpProgramCode;
-
   private UUID mpProgramId;
-
-  @Value("${rapidTest.programCode}")
-  private String rapidTestProgramCode;
 
   private UUID rapidTestProgramId;
 
@@ -259,8 +251,8 @@ public class FcSourceDestinationService {
         .collect(Collectors.toMap(FacilityTypeDto::getCode, FacilityTypeDto::getId));
     Map<String, UUID> programCodeToIdMap = programReferenceDataService.findAll().stream()
         .collect(Collectors.toMap(BasicProgramDto::getCode, BaseDto::getId));
-    mpProgramId = programCodeToIdMap.get(mpProgramCode);
-    rapidTestProgramId = programCodeToIdMap.get(rapidTestProgramCode);
-    arvProgramId = programCodeToIdMap.get(arvProgramCode);
+    mpProgramId = programCodeToIdMap.get(ProgramConstants.VIA_PROGRAM_NAME);
+    rapidTestProgramId = programCodeToIdMap.get(ProgramConstants.RAPIDTEST_PROGRAM_NAME);
+    arvProgramId = programCodeToIdMap.get(ProgramConstants.MMIA_PROGRAM_NAME);
   }
 }

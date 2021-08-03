@@ -22,6 +22,72 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum PatientTableName {
 
+  PATIENTTYPE() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return PatientType.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return PatientType.findValueByKey(key);
+    }
+  },
+  NEWSECTION0() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return NewSection0.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return NewSection0.findValueByKey(key);
+    }
+  },
+  NEWSECTION1() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return NewSection1.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return NewSection1.findValueByKey(key);
+    }
+  },
+  NEWSECTION2() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return NewSection2.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return NewSection2.findValueByKey(key);
+    }
+  },
+  NEWSECTION3() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return NewSection3.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return NewSection3.findValueByKey(key);
+    }
+  },
+  NEWSECTION4() {
+    @Override
+    public String findKeyByValue(String columnName) {
+      return NewSection4.findKeyByValue(columnName);
+    }
+
+    @Override
+    public String findValueByKey(String key) {
+      return NewSection4.findValueByKey(key);
+    }
+  },
   TABLE_ARVT_KEY() {
     @Override
     public String findKeyByValue(String columnName) {
