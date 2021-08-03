@@ -173,7 +173,7 @@ public class AndroidCreateRequisitionService {
 
   @Transactional
   @Validated(PerformanceSequence.class)
-  public void create(@Valid RequisitionCreateRequest request) {
+  public void createRequisition(@Valid RequisitionCreateRequest request) {
     UserDto user = authHelper.getCurrentUser();
     String syncUpHash = request.getSyncUpHash(user);
     if (syncUpHashRepository.findOne(syncUpHash) != null) {

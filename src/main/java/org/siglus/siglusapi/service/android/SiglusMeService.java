@@ -441,7 +441,7 @@ public class SiglusMeService {
 
   public void createRequisition(RequisitionCreateRequest request) {
     try {
-      androidCreateRequisitionService.create(request);
+      androidCreateRequisitionService.createRequisition(request);
     } catch (Exception e) {
       backupRequisitionRequest(request, e);
       throw (e);

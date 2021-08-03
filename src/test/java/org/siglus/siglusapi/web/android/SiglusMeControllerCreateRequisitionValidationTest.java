@@ -70,8 +70,10 @@ import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidEndDateValidator;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidStartDateValidator;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
+import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
+import org.siglus.siglusapi.service.android.AndroidCreateRequisitionService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
@@ -81,7 +83,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   private static final String MAY_NOT_BE_NULL = "may not be null";
 
   @InjectMocks
-  private SiglusMeController controller;
+  private AndroidCreateRequisitionService androidCreateRequisitionService;
 
   @Mock
   private SiglusAuthenticationHelper authHelper;
@@ -97,6 +99,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   private AndroidTemplateConfigProperties androidTemplateConfigProperties;
   @Mock
   private SyncUpHashRepository syncUpHashRepository;
+  @Mock
+  private RequisitionRequestBackupRepository requisitionRequestBackupRepository;
 
   private final ObjectMapper mapper = new ObjectMapper();
 
@@ -125,7 +129,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
         .constraintValidatorFactory(new InnerConstraintValidatorFactory())
         .messageInterpolator(messageInterpolator)
         .buildValidatorFactory().getValidator().forExecutables();
-    method = SiglusMeController.class.getDeclaredMethod("createRequisition", RequisitionCreateRequest.class);
+    method = AndroidCreateRequisitionService.class.getDeclaredMethod("createRequisition",
+        RequisitionCreateRequest.class);
 
     ReportType reportType = mock(ReportType.class);
     when(reportType.getStartDate()).thenReturn(LocalDate.of(2021, 3, 1));
@@ -187,6 +192,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(requisitionRepo.findLatestRequisitionsByFacilityIdAndAndroidTemplateId(restartedFacilityId,
         androidTemplateConfigProperties.getAndroidTemplateIds())).thenReturn(singletonList(req3));
     when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
+    when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
   }
 
   @Test
@@ -432,7 +438,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
   private Map<String, String> executeValidation(Object... params) {
     return forExecutables
-        .validateParameters(controller, method, params, PerformanceSequence.class)
+        .validateParameters(androidCreateRequisitionService, method, params, PerformanceSequence.class)
         .stream()
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
   }

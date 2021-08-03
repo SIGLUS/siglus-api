@@ -28,6 +28,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -54,6 +57,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import javax.validation.ConstraintViolationException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -84,6 +88,7 @@ import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
+import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
@@ -98,6 +103,7 @@ import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
+import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -184,8 +190,14 @@ public class SiglusMeServiceTest {
   @Mock
   private AndroidTemplateConfigProperties androidTemplateConfigProperties;
 
+  @Mock
+  private RequisitionRequestBackupRepository requisitionRequestBackupRepository;
+
   @Captor
   private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
+
+  @Captor
+  private ArgumentCaptor<RequisitionRequestBackup> requestBackupArgumentCaptor;
 
   @Autowired
   private ProductMapper mapper;
@@ -275,6 +287,7 @@ public class SiglusMeServiceTest {
     when(androidTemplateConfigProperties.getAndroidTemplateIds()).thenReturn(androidTemplateIds);
     when(androidTemplateConfigProperties.findAndroidTemplateId(any())).thenReturn(templateId);
     ReflectionTestUtils.setField(service, "androidTemplateConfigProperties", androidTemplateConfigProperties);
+    when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
   }
 
 
@@ -602,13 +615,13 @@ public class SiglusMeServiceTest {
   @Test
   public void shouldCallaSiglusRequisitionServiceWhenCreateRequisition() {
     // given
-    RequisitionCreateRequest requisitionRequest = new RequisitionCreateRequest();
+    RequisitionCreateRequest requisitionRequest = buildRequisitionCreateRequest();
 
     // when
     service.createRequisition(requisitionRequest);
 
     // then
-    verify(androidCreateRequisitionService).create(requisitionRequest);
+    verify(androidCreateRequisitionService).createRequisition(requisitionRequest);
   }
 
   @Test
@@ -618,6 +631,52 @@ public class SiglusMeServiceTest {
 
     // then
     verify(androidSearchRequisitionService).getRequisitionResponseByFacilityIdAndDate(any(), any(), any());
+  }
+
+  @Test
+  public void shouldBackupRequisitionRequestWhenErrorHappenedIfBackupNotExisted() {
+    // given
+    RequisitionCreateRequest requisitionRequest = buildRequisitionCreateRequest();
+    when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
+    doThrow(new NullPointerException()).when(androidCreateRequisitionService).createRequisition(requisitionRequest);
+
+    try {
+      // when
+      service.createRequisition(requisitionRequest);
+    } catch (Exception e) {
+      // then
+      verify(androidCreateRequisitionService).createRequisition(requisitionRequest);
+      verify(requisitionRequestBackupRepository).save(requestBackupArgumentCaptor.capture());
+    }
+  }
+
+  @Test
+  public void shouldSkipBackupRequisitionRequestWhenErrorHappenedIfBackupExisted() {
+    // given
+    RequisitionCreateRequest requisitionRequest = buildRequisitionCreateRequest();
+    RequisitionRequestBackup backup = new RequisitionRequestBackup();
+    when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(backup);
+    doThrow(new ConstraintViolationException(Collections.emptySet()))
+        .when(androidCreateRequisitionService).createRequisition(requisitionRequest);
+
+    try {
+      // when
+      service.createRequisition(requisitionRequest);
+    } catch (Exception e) {
+      // then
+      verify(androidCreateRequisitionService).createRequisition(requisitionRequest);
+      verify(requisitionRequestBackupRepository, times(0)).save(backup);
+    }
+  }
+
+  private RequisitionCreateRequest buildRequisitionCreateRequest() {
+    return RequisitionCreateRequest.builder()
+        .actualStartDate(LocalDate.of(2021, 5, 20))
+        .actualEndDate(LocalDate.of(2021, 6, 20))
+        .emergency(false)
+        .programCode("VC")
+        .clientSubmittedTime(Instant.now())
+        .build();
   }
 
   private SupportedProgramDto getSupportedProgramDto() {

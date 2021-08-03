@@ -243,7 +243,7 @@ public class AndroidCreateRequisitionServiceTest {
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
 
     // when
-    service.create(buildRequisitionCreateRequest());
+    service.createRequisition(buildRequisitionCreateRequest());
   }
 
   @Test(expected = PermissionMessageException.class)
@@ -257,7 +257,7 @@ public class AndroidCreateRequisitionServiceTest {
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
 
     // when
-    service.create(buildRequisitionCreateRequest());
+    service.createRequisition(buildRequisitionCreateRequest());
   }
 
   @Test(expected = PermissionMessageException.class)
@@ -271,7 +271,7 @@ public class AndroidCreateRequisitionServiceTest {
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
 
     // when
-    service.create(buildRequisitionCreateRequest());
+    service.createRequisition(buildRequisitionCreateRequest());
   }
 
   @Test(expected = PermissionMessageException.class)
@@ -285,7 +285,7 @@ public class AndroidCreateRequisitionServiceTest {
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(fail);
 
     // when
-    service.create(buildRequisitionCreateRequest());
+    service.createRequisition(buildRequisitionCreateRequest());
   }
 
   @Test
@@ -298,7 +298,7 @@ public class AndroidCreateRequisitionServiceTest {
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
 
     // when
-    service.create(buildRequisitionCreateRequest());
+    service.createRequisition(buildRequisitionCreateRequest());
 
     // then
     verify(requisitionRepository, times(4)).save(requisitionArgumentCaptor.capture());
@@ -320,7 +320,7 @@ public class AndroidCreateRequisitionServiceTest {
     when(syncUpHashRepository.findOne(anyString())).thenReturn(new SyncUpHash("hash-code"));
 
     // when
-    service.create(buildRequisitionCreateRequest());
+    service.createRequisition(buildRequisitionCreateRequest());
 
     // then
     verify(requisitionRepository, times(0)).save(requisitionArgumentCaptor.capture());
@@ -353,7 +353,7 @@ public class AndroidCreateRequisitionServiceTest {
     when(siglusOrderableService.getOrderableByCode("08O05")).thenReturn(buildOrderableDto());
 
     // when
-    service.create(buildMlRequisitionCreateRequest());
+    service.createRequisition(buildMlRequisitionCreateRequest());
 
     // then
     verify(siglusUsageReportService).saveUsageReport(siglusRequisitionDtoArgumentCaptor.capture(), any());
