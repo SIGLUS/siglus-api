@@ -914,6 +914,7 @@ public class SiglusMeService {
         .actualEndDate(request.getActualEndDate())
         .emergency(request.getEmergency())
         .programCode(request.getProgramCode())
+        .clientSubmittedTime(request.getClientSubmittedTime())
         .errorMessage(errorMessage)
         .requestBody(JSON.toJSONString(request))
         .build();
