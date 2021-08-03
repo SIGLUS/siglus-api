@@ -67,7 +67,6 @@ import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
-import org.siglus.siglusapi.dto.android.validator.RequisitionValidEndDateValidator;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidStartDateValidator;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
@@ -457,9 +456,6 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       if (key == RequisitionValidStartDateValidator.class) {
         return (T) new RequisitionValidStartDateValidator(androidTemplateConfigProperties, authHelper,
             programDataService, reportTypeRepo, requisitionRepo, periodRepo, syncUpHashRepository);
-      }
-      if (key == RequisitionValidEndDateValidator.class) {
-        return (T) new RequisitionValidEndDateValidator();
       }
       return NewInstance.action(key, "ConstraintValidator").run();
     }

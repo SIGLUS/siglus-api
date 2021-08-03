@@ -34,9 +34,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.constant.DateFormatConstants;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
-import org.siglus.common.util.Message;
 import org.siglus.siglusapi.errorhandling.message.ValidationFailField;
-import org.siglus.siglusapi.exception.NotAcceptableException;
 import org.siglus.siglusapi.i18n.ExposedMessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -44,8 +42,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.zalando.problem.Problem;
 import org.zalando.problem.ProblemBuilder;
@@ -70,21 +66,12 @@ public class GlobalErrorHandling implements ProblemHandling {
   private static final Map<String, String> CONSTRAINT_MAP = new ConcurrentHashMap<>();
 
   static {
-    CONSTRAINT_MAP.put("unq_widget_code", MessageKeys.ERROR_WIDGET_CODE_DUPLICATED);
     CONSTRAINT_MAP.put("unq_programid_additionalorderableid", MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
   }
 
   private static final URI CONSTRAINT_VIOLATION_TYPE = URI.create("/errors/constraint-violation");
 
   private final ExposedMessageSource messageSource;
-
-  // why we need this?
-  @ExceptionHandler(NotAcceptableException.class)
-  @ResponseStatus(HttpStatus.NOT_ACCEPTABLE)
-  @ResponseBody
-  public Message.LocalizedMessage handlePermissionException(NotAcceptableException ex) {
-    return ex.asMessage().localMessage(messageSource, LocaleContextHolder.getLocale());
-  }
 
   @ExceptionHandler
   public ResponseEntity<Problem> handleGenericError(ValidationMessageException exception, NativeWebRequest request) {

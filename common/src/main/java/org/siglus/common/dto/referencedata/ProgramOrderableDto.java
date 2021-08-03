@@ -38,8 +38,7 @@ import org.siglus.common.serializer.MoneySerializer;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class ProgramOrderableDto implements ProgramOrderable.Importer, ProgramOrderable.Exporter,
-    Serializable {
+public class ProgramOrderableDto implements ProgramOrderable.Importer, ProgramOrderable.Exporter, Serializable {
 
   private UUID programId;
 

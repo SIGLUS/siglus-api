@@ -42,11 +42,11 @@ import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
+import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
-import org.siglus.siglusapi.exception.NotAcceptableException;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
@@ -85,6 +85,7 @@ public class SiglusPhysicalInventoryService {
     return physicalInventoryStockManagementService.createEmptyPhysicalInventory(dto);
   }
 
+  // #171 this is calling the rest api
   @Transactional
   public PhysicalInventoryDto createNewDraftForAllProducts(PhysicalInventoryDto dto) {
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
@@ -282,7 +283,7 @@ public class SiglusPhysicalInventoryService {
       return saveDraftForAllProducts(dto);
     }
     if (canInitialInventory) {
-      throw new NotAcceptableException(new Message(ERROR_NOT_ACCEPTABLE));
+      throw new ValidationMessageException(new Message(ERROR_NOT_ACCEPTABLE));
     }
     return null;
   }

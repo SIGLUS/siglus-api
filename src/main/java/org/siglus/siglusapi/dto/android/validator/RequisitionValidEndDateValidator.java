@@ -40,12 +40,9 @@ public class RequisitionValidEndDateValidator implements
     if (actualStartDate == null || actualEndDate == null) {
       return true;
     }
-    if (actualEndDate.isBefore(actualStartDate)) {
-      actualContext.addExpressionVariable("startDate", actualStartDate);
-      actualContext.addExpressionVariable("endDate", actualEndDate);
-      return false;
-    }
-    return true;
+    actualContext.addExpressionVariable("startDate", actualStartDate);
+    actualContext.addExpressionVariable("endDate", actualEndDate);
+    return !actualEndDate.isBefore(actualStartDate);
   }
 
 }
