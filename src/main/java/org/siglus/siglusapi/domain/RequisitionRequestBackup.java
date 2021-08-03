@@ -18,7 +18,9 @@ package org.siglus.siglusapi.domain;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +28,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
@@ -33,6 +37,7 @@ import org.siglus.common.domain.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "requisition_request_backup", schema = "siglusintegration")
 public class RequisitionRequestBackup extends BaseEntity {
 
@@ -54,5 +59,7 @@ public class RequisitionRequestBackup extends BaseEntity {
 
   private String requestBody;
 
+  @CreatedDate
+  @Column(updatable = false)
   private ZonedDateTime createdDate;
 }
