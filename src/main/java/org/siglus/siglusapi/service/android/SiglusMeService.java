@@ -24,6 +24,7 @@ import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -40,9 +41,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.validation.ConstraintViolationException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.internal.engine.ConstraintViolationImpl;
 import org.openlmis.fulfillment.domain.BaseEntity;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
@@ -72,6 +75,7 @@ import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.RequestParameters;
@@ -82,6 +86,7 @@ import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
+import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
@@ -106,6 +111,7 @@ import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
+import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
@@ -290,7 +296,7 @@ public class SiglusMeService {
   private final PodMapper podMapper;
   private final PodLotLineMapper podLotLineMapper;
   private final SiglusOrderableReferenceDataService orderableDataService;
-
+  private final RequisitionRequestBackupRepository requisitionRequestBackupRepository;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -433,9 +439,13 @@ public class SiglusMeService {
     return FacilityProductMovementsResponse.builder().productMovements(productMovementResponses).build();
   }
 
-  @Transactional
   public void createRequisition(RequisitionCreateRequest request) {
-    androidCreateRequisitionService.create(request);
+    try {
+      androidCreateRequisitionService.create(request);
+    } catch (Exception e) {
+      backupRequisitionRequest(request, e);
+      throw (e);
+    }
   }
 
   public List<PodResponse> getProofsOfDelivery(@Nullable LocalDate since, boolean shippedOnly) {
@@ -880,4 +890,35 @@ public class SiglusMeService {
     }
     return LocalDate.parse(String.valueOf(requisition.getExtraData().get(ACTUAL_END_DATE)));
   }
+
+  private void backupRequisitionRequest(RequisitionCreateRequest request, Exception e) {
+    UserDto user = authHelper.getCurrentUser();
+    String syncUpHash = request.getSyncUpHash(user);
+    RequisitionRequestBackup existedBackup = requisitionRequestBackupRepository.findOneByHash(syncUpHash);
+    if (existedBackup != null) {
+      log.info("skip backup requisition request as syncUpHash: {} existed", syncUpHash);
+      return;
+    }
+    String errorMessage = "";
+    if (e instanceof javax.validation.ConstraintViolationException) {
+      errorMessage = ((ConstraintViolationImpl) (((ConstraintViolationException) e).getConstraintViolations())
+          .toArray()[0]).getMessage();
+    } else {
+      errorMessage = e.getMessage();
+    }
+    RequisitionRequestBackup backup = RequisitionRequestBackup.builder()
+        .hash(syncUpHash)
+        .facilityId(user.getHomeFacilityId())
+        .userId(user.getId())
+        .actualStartDate(request.getActualStartDate())
+        .actualEndDate(request.getActualEndDate())
+        .emergency(request.getEmergency())
+        .programCode(request.getProgramCode())
+        .errorMessage(errorMessage)
+        .requestBody(JSON.toJSONString(request))
+        .build();
+    log.info("backup requisition request, syncUpHash: {}", syncUpHash);
+    requisitionRequestBackupRepository.save(backup);
+  }
+
 }

@@ -91,14 +91,12 @@ public class SiglusMeController {
       @StockOnHandConsistentWithQuantityByProduct
       @StockOnHandConsistentWithQuantityByLot
       @ProductConsistentWithAllLots
-      @LotStockConsistentWithExisted(groups = PerformanceGroup.class)
-          List<StockCardCreateRequest> requests) {
+      @LotStockConsistentWithExisted(groups = PerformanceGroup.class) List<StockCardCreateRequest> requests) {
     service.createStockCards(requests);
   }
 
   @GetMapping("/facility/stockCards")
-  public FacilityProductMovementsResponse getFacilityStockCards(
-      @RequestParam(value = "startTime") String startTime,
+  public FacilityProductMovementsResponse getFacilityStockCards(@RequestParam(value = "startTime") String startTime,
       @RequestParam(value = "endTime") String endTime) {
     return service.getProductMovements(startTime, endTime);
   }
@@ -109,10 +107,9 @@ public class SiglusMeController {
     service.processHfCmms(hfCmmDtos);
   }
 
-  @Validated(PerformanceSequence.class)
   @PostMapping("/facility/requisitions")
   @ResponseStatus(CREATED)
-  public void createRequisition(@RequestBody @Valid RequisitionCreateRequest request) {
+  public void createRequisition(@RequestBody RequisitionCreateRequest request) {
     service.createRequisition(request);
   }
 

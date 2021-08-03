@@ -72,6 +72,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.domain.RequisitionTemplate;
@@ -131,6 +132,7 @@ import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
+import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -142,10 +144,12 @@ import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.validation.annotation.Validated;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 @SuppressWarnings("PMD.TooManyMethods")
 public class AndroidCreateRequisitionService {
 
@@ -168,7 +172,8 @@ public class AndroidCreateRequisitionService {
   private final SyncUpHashRepository syncUpHashRepository;
 
   @Transactional
-  public void create(RequisitionCreateRequest request) {
+  @Validated(PerformanceSequence.class)
+  public void create(@Valid RequisitionCreateRequest request) {
     UserDto user = authHelper.getCurrentUser();
     String syncUpHash = request.getSyncUpHash(user);
     if (syncUpHashRepository.findOne(syncUpHash) != null) {
