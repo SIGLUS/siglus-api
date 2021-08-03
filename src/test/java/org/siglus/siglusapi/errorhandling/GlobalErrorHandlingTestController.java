@@ -42,7 +42,7 @@ class GlobalErrorHandlingTestController {
 
   @GetMapping("/data-integrity")
   public void dataIntegrity() {
-    String constraintName = "unq_widget_code";
+    String constraintName = "unq_programid_additionalorderableid";
     ConstraintViolationException constraintViolation = new ConstraintViolationException(null, null, constraintName);
     throw new DataIntegrityViolationException(null, constraintViolation);
   }

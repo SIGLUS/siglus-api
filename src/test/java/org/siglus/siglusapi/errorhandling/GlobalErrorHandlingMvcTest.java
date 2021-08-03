@@ -104,10 +104,11 @@ public class GlobalErrorHandlingMvcTest {
 
     // when
     response.andExpect(status().isBadRequest())
-        .andExpect(jsonPath("messageKey").value("siglusapi.error.widget.code.duplicated"))
-        .andExpect(jsonPath("message").value("siglusapi.error.widget.code.duplicated"))
-        .andExpect(jsonPath("messageInEnglish").value("siglusapi.error.widget.code.duplicated"))
-        .andExpect(jsonPath("messageInPortuguese").value("siglusapi.error.widget.code.duplicated in Portuguese"));
+        .andExpect(jsonPath("messageKey").value("siglusapi.error.additionalorderable.duplicated"))
+        .andExpect(jsonPath("message").value("siglusapi.error.additionalorderable.duplicated"))
+        .andExpect(jsonPath("messageInEnglish").value("siglusapi.error.additionalorderable.duplicated"))
+        .andExpect(
+            jsonPath("messageInPortuguese").value("siglusapi.error.additionalorderable.duplicated in Portuguese"));
   }
 
   @Test

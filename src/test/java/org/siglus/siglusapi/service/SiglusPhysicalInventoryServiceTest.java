@@ -56,6 +56,7 @@ import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
+import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
@@ -99,6 +100,9 @@ public class SiglusPhysicalInventoryServiceTest {
   @Mock
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
 
+  @Mock
+  private PhysicalInventoryController inventoryController;
+
   private final UUID facilityId = UUID.randomUUID();
 
   private final UUID orderableId = UUID.randomUUID();
@@ -124,15 +128,13 @@ public class SiglusPhysicalInventoryServiceTest {
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
     when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
-    when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto))
-        .thenReturn(physicalInventoryDto);
+    when(inventoryController.createEmptyPhysicalInventory(physicalInventoryDto)).thenReturn(physicalInventoryDto);
 
     // when
     siglusPhysicalInventoryService.createNewDraftForAllProducts(physicalInventoryDto);
 
     // then
-    verify(physicalInventoryStockManagementService, times(2))
-        .createEmptyPhysicalInventory(physicalInventoryDto);
+    verify(inventoryController, times(2)).createEmptyPhysicalInventory(physicalInventoryDto);
   }
 
   @Test
@@ -340,15 +342,13 @@ public class SiglusPhysicalInventoryServiceTest {
     when(approvedProductReferenceDataService
         .getApprovedProducts(facilityId, programIdOne, emptyList()))
         .thenReturn(Collections.singletonList(approvedProductDto));
-    when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(any()))
-        .thenReturn(PhysicalInventoryDto.builder().build());
+    when(inventoryController.createEmptyPhysicalInventory(any())).thenReturn(PhysicalInventoryDto.builder().build());
 
     // when
     siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facilityId, true, true);
 
     // then
-    verify(physicalInventoryStockManagementService).createEmptyPhysicalInventory(
-        physicalInventoryDtoArgumentCaptor.capture());
+    verify(inventoryController).createEmptyPhysicalInventory(physicalInventoryDtoArgumentCaptor.capture());
     PhysicalInventoryDto physicalInventoryDto = physicalInventoryDtoArgumentCaptor.getValue();
     assertEquals(1, physicalInventoryDto.getLineItems().size());
     assertEquals(orderableId, physicalInventoryDto.getLineItems().get(0).getOrderableId());
