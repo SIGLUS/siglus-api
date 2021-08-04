@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -89,6 +90,9 @@ import org.siglus.siglusapi.dto.RegimenColumnDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
+import org.siglus.siglusapi.dto.TestConsumptionOutcomeDto;
+import org.siglus.siglusapi.dto.TestConsumptionProjectDto;
+import org.siglus.siglusapi.dto.TestConsumptionServiceDto;
 import org.siglus.siglusapi.dto.UsageInformationOrderableDto;
 import org.siglus.siglusapi.dto.UsageInformationServiceDto;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;
@@ -189,9 +193,11 @@ public class AndroidCreateRequisitionServiceTest extends FileBasedTest {
   private final UUID programId = UUID.randomUUID();
   private final UUID malariaProgramId = UUID.randomUUID();
   private final UUID mmiaProgramId = UUID.randomUUID();
+  private final UUID rapidTestProgramId = UUID.randomUUID();
   private final UUID orderableId = UUID.randomUUID();
   private final UUID mlOrderableId = UUID.randomUUID();
   private final UUID mmiaOrderableId = UUID.randomUUID();
+  private final UUID rapidTestOrderableId = UUID.randomUUID();
   private final UUID templateId = UUID.fromString("610a52a5-2217-4fb7-9e8e-90bba3051d4d");
   private final UUID mmiaTemplateId = UUID.fromString("873c25d6-e53b-11eb-8494-acde48001122");
   private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
@@ -212,8 +218,15 @@ public class AndroidCreateRequisitionServiceTest extends FileBasedTest {
   private final String newColumn2 = "newColumn2";
   private final String newColumn3 = "newColumn3";
   private final String newColumn4 = "newColumn4";
+  private final String newColumn5 = "newColumn5";
   private final String newColumn = "new";
   private final String total = "total";
+  private final String hivDetermine = "hivDetermine";
+  private final String hf = "HF";
+  private final String apes = "APES";
+  private final String consumo = "consumo";
+  private final String positive = "positive";
+  private final String unjustified = "unjustified";
 
   @Before
   public void prepare() {
@@ -402,7 +415,6 @@ public class AndroidCreateRequisitionServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
-
     when(androidTemplateConfigProperties.findAndroidTemplateId("T")).thenReturn(mmiaTemplateId);
     RequisitionTemplate mmiaTemplate = new RequisitionTemplate();
     mmiaTemplate.setId(mmiaTemplateId);
@@ -443,6 +455,54 @@ public class AndroidCreateRequisitionServiceTest extends FileBasedTest {
         getPatientGroupDto("newSection6", siglusRequisitionDto).getColumns().get(newColumn0).getValue());
     assertEquals(Integer.valueOf(3),
         getPatientGroupDto("newSection7", siglusRequisitionDto).getColumns().get(newColumn).getValue());
+  }
+
+  @Test
+  public void shouldEqualsValueWhenCreateRapidTestRequisitionFromAndroid() throws IOException {
+    // given
+    ValidationResult success = ValidationResult.success();
+    when(permissionService.canInitRequisition(rapidTestProgramId, facilityId)).thenReturn(success);
+    when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
+    when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
+    when(androidTemplateConfigProperties.findAndroidTemplateId("TR")).thenReturn(rapidtestTemplateId);
+    RequisitionTemplate trTemplate = new RequisitionTemplate();
+    trTemplate.setId(rapidtestTemplateId);
+    ApprovedProductDto productDto = createApprovedProductDto(rapidTestOrderableId);
+    when(requisitionService.getApproveProduct(facilityId, rapidTestProgramId, false))
+        .thenReturn(new ApproveProductsAggregator(Collections.singletonList(productDto), rapidTestProgramId));
+    when(requisitionTemplateService.findTemplateById(rapidtestTemplateId)).thenReturn(trTemplate);
+    when(siglusProgramService.getProgramIdByCode("TR")).thenReturn(rapidTestProgramId);
+    when(requisitionRepository.save(requisitionArgumentCaptor.capture()))
+        .thenReturn(buildMmiaRequisition(trTemplate));
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(rapidTestOrderableId);
+    when(siglusOrderableService.getOrderableByCode("08A07")).thenReturn(orderableDto);
+    when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildRapidTestSiglusRequisitionDto());
+
+    // when
+    service.createRequisition(parseParam("buildRapidTestRequisitionCreateRequest.json"));
+
+    // then
+    verify(siglusUsageReportService).saveUsageReport(siglusRequisitionDtoArgumentCaptor.capture(), any());
+    SiglusRequisitionDto siglusRequisitionDto = siglusRequisitionDtoArgumentCaptor.getValue();
+    assertEquals(Integer.valueOf(5),
+        getTestOutcomeDto(newColumn5, hivDetermine, consumo, siglusRequisitionDto).getValue());
+    assertEquals(Integer.valueOf(2),
+        getTestOutcomeDto(hf, newColumn0, positive, siglusRequisitionDto).getValue());
+    assertEquals(Integer.valueOf(7),
+        getTestOutcomeDto(apes, newColumn2, unjustified, siglusRequisitionDto).getValue());
+    assertEquals(Integer.valueOf(7),
+        getTestOutcomeDto(total, newColumn1, unjustified, siglusRequisitionDto).getValue());
+  }
+
+  private TestConsumptionOutcomeDto getTestOutcomeDto(String service, String project, String outcome,
+      SiglusRequisitionDto siglusRequisitionDto) {
+    List<TestConsumptionOutcomeDto> outcomeDto = siglusRequisitionDto.getTestConsumptionLineItems().stream()
+        .filter(item -> service.equals(item.getService()))
+        .map(p -> p.getProjects().get(project).getOutcomes().get(outcome))
+        .collect(Collectors.toList());
+    return outcomeDto.get(0);
   }
 
   private RegimenLineDto getRegimenLineDto(String name, SiglusRequisitionDto siglusRequisitionDto) {
@@ -575,6 +635,60 @@ public class AndroidCreateRequisitionServiceTest extends FileBasedTest {
     SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
     requisitionDto.setConsultationNumberLineItems(Collections.singletonList(consultationNumberGroupDto));
     return requisitionDto;
+  }
+
+  private SiglusRequisitionDto buildRapidTestSiglusRequisitionDto() {
+    SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
+    requisitionDto.setTestConsumptionLineItems(buildTestConsumptionServiceDto());
+    return requisitionDto;
+  }
+
+  private List<TestConsumptionServiceDto> buildTestConsumptionServiceDto() {
+    TestConsumptionServiceDto consumptionNewColumn5 = new TestConsumptionServiceDto();
+    consumptionNewColumn5.setService(newColumn5);
+    consumptionNewColumn5.setProjects(buildConsumptionProjectMap());
+    TestConsumptionServiceDto consumptionNewHf = new TestConsumptionServiceDto();
+    consumptionNewHf.setService(hf);
+    consumptionNewHf.setProjects(buildConsumptionProjectMap());
+    TestConsumptionServiceDto consumptionNewApe = new TestConsumptionServiceDto();
+    consumptionNewApe.setService(apes);
+    consumptionNewApe.setProjects(buildConsumptionProjectMap());
+    TestConsumptionServiceDto consumptionNewTotal = new TestConsumptionServiceDto();
+    consumptionNewTotal.setService(total);
+    consumptionNewTotal.setProjects(buildConsumptionProjectMap());
+    return Arrays.asList(consumptionNewColumn5, consumptionNewHf, consumptionNewApe, consumptionNewTotal);
+  }
+
+  private Map<String, TestConsumptionProjectDto> buildConsumptionProjectMap() {
+    TestConsumptionProjectDto hivDetermineDto = new TestConsumptionProjectDto();
+    hivDetermineDto.setProject(hivDetermine);
+    hivDetermineDto.setOutcomes(buildOutcomeMap());
+    TestConsumptionProjectDto newColumnDto0 = new TestConsumptionProjectDto();
+    newColumnDto0.setProject(newColumn0);
+    newColumnDto0.setOutcomes(buildOutcomeMap());
+    TestConsumptionProjectDto newColumnDto1 = new TestConsumptionProjectDto();
+    newColumnDto1.setProject(newColumn1);
+    newColumnDto1.setOutcomes(buildOutcomeMap());
+    TestConsumptionProjectDto newColumnDto2 = new TestConsumptionProjectDto();
+    newColumnDto2.setProject(newColumn2);
+    newColumnDto2.setOutcomes(buildOutcomeMap());
+    Map<String, TestConsumptionProjectDto> projects = new HashMap<>();
+    projects.put(hivDetermine, hivDetermineDto);
+    projects.put(newColumn0, newColumnDto0);
+    projects.put(newColumn1, newColumnDto1);
+    projects.put(newColumn2, newColumnDto2);
+    return projects;
+  }
+
+  private Map<String, TestConsumptionOutcomeDto> buildOutcomeMap() {
+    TestConsumptionOutcomeDto consumoOutcome = TestConsumptionOutcomeDto.builder().outcome(consumo).build();
+    TestConsumptionOutcomeDto positiveOutcome = TestConsumptionOutcomeDto.builder().outcome(positive).build();
+    TestConsumptionOutcomeDto unjustifiedOutcome = TestConsumptionOutcomeDto.builder().outcome(unjustified).build();
+    Map<String, TestConsumptionOutcomeDto> outcomes = new HashMap<>();
+    outcomes.put(consumo, consumoOutcome);
+    outcomes.put(positive, positiveOutcome);
+    outcomes.put(unjustified, unjustifiedOutcome);
+    return outcomes;
   }
 
   private SiglusRequisitionDto buildMmiaSiglusRequisitionDto() {
