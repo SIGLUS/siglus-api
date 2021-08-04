@@ -15,6 +15,7 @@
 
 package org.openlmis.stockmanagement.domain.sourcedestination;
 
+import java.io.Serializable;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -27,7 +28,11 @@ import org.openlmis.stockmanagement.domain.BaseEntity;
 @Entity
 @Data
 @Table(name = "nodes", schema = "stockmanagement")
-public class Node extends BaseEntity {
+// [SIGLUS change start]
+// [change reason]: add Serializable for @Cacheable
+// public class Node extends BaseEntity {
+public class Node extends BaseEntity implements Serializable {
+  // [SIGLUS change end]
   @Column(nullable = false)
   @Type(type = PG_UUID)
   UUID referenceId;

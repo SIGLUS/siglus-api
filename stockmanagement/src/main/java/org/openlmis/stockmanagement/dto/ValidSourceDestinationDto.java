@@ -15,13 +15,18 @@
 
 package org.openlmis.stockmanagement.dto;
 
+import java.io.Serializable;
 import java.util.UUID;
 import lombok.Data;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.domain.sourcedestination.SourceDestinationAssignment;
 
 @Data
-public class ValidSourceDestinationDto {
+// [SIGLUS change start]
+// [change reason]: add Serializable for @Cacheable
+// public class ValidSourceDestinationDto {
+public class ValidSourceDestinationDto implements Serializable {
+  // [SIGLUS change end]
   private UUID id;
   private UUID programId;
   private UUID facilityTypeId;
