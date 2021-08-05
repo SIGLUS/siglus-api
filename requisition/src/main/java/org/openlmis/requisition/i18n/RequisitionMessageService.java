@@ -30,8 +30,7 @@ public class RequisitionMessageService {
   private final XLogger logger = XLoggerFactory.getXLogger(getClass());
 
   @Autowired
-  @Qualifier("requisitionMessageSource")
-  private ExposedMessageSource messageSource;
+  private ExposedMessageSource requisitionMessageSource;
 
   /**
    * Translates message.
@@ -53,7 +52,7 @@ public class RequisitionMessageService {
   public Message.LocalizedMessage localize(Message message, Locale locale) {
     logger.info("Requisition message service message key {}", message.getKey());
     logger.info("Requisition message service locale {}", LocaleContextHolder.getLocale());
-    Message.LocalizedMessage localized = message.localMessage(messageSource, locale);
+    Message.LocalizedMessage localized = message.localMessage(requisitionMessageSource, locale);
     logger.info("Requisition message service localized {}", localized.asMessage());
     return localized;
   }

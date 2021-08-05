@@ -87,7 +87,13 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class Application {
 
-  private static final String CLASSPATH_MESSAGES = "classpath:messages";
+  private static final String[] MESSAGE_SOURCE_BASE_NAME = new String[]{
+      "classpath:messages",
+      "classpath:/messages/stockmanagement_messages_en",
+      "classpath:/messages/requisition_messages_en",
+      "classpath:/messages/fulfillment_messages_en"
+  };
+
   private static final String UTF_8 = "UTF-8";
 
   @Value("${defaultLocale}")
@@ -130,11 +136,6 @@ public class Application {
     SpringApplication.run(Application.class, args);
   }
 
-  /**
-   * Creates new LocaleResolver.
-   *
-   * @return Created LocalResolver.
-   */
   @Bean
   public LocaleResolver localeResolver() {
     CookieLocaleResolver lr = new CookieLocaleResolver();
@@ -143,49 +144,37 @@ public class Application {
     return lr;
   }
 
-  /**
-   * Creates new MessageSource.
-   *
-   * @return Created MessageSource.
-   */
   @Bean
   public ExposedMessageSourceImpl messageSource() {
     ExposedMessageSourceImpl messageSource = new ExposedMessageSourceImpl();
-    messageSource.setBasename(CLASSPATH_MESSAGES);
+    messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
     messageSource.setDefaultEncoding(UTF_8);
     messageSource.setUseCodeAsDefaultMessage(true);
     return messageSource;
   }
 
-  // copy fromGroups stockmanagement Application.java start
-
-  /**
-   * Creates new MessageSource.
-   *
-   * @return Created MessageSource.
-   */
   @Bean
   public StockmanagementExposedMessageSourceImpl stockmanagementMessageSource() {
-    StockmanagementExposedMessageSourceImpl messageSource =
-        new StockmanagementExposedMessageSourceImpl();
-    messageSource.setBasename(CLASSPATH_MESSAGES);
+    StockmanagementExposedMessageSourceImpl messageSource = new StockmanagementExposedMessageSourceImpl();
+    messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
     messageSource.setDefaultEncoding(UTF_8);
     messageSource.setUseCodeAsDefaultMessage(true);
     return messageSource;
   }
-  // copy fromGroups stockmanagement Application.java end
 
-  // copy fromGroups requisition Application.java start
-
-  /**
-   * Creates new MessageSource.
-   *
-   * @return Created MessageSource.
-   */
   @Bean
   public RequisitionExposedMessageSourceImpl requisitionMessageSource() {
     RequisitionExposedMessageSourceImpl messageSource = new RequisitionExposedMessageSourceImpl();
-    messageSource.setBasename(CLASSPATH_MESSAGES);
+    messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
+    messageSource.setDefaultEncoding(UTF_8);
+    messageSource.setUseCodeAsDefaultMessage(true);
+    return messageSource;
+  }
+
+  @Bean
+  public FulfillmentExposedMessageSourceImpl fulfillmentMessageSource() {
+    FulfillmentExposedMessageSourceImpl messageSource = new FulfillmentExposedMessageSourceImpl();
+    messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
     messageSource.setDefaultEncoding(UTF_8);
     messageSource.setUseCodeAsDefaultMessage(true);
     return messageSource;
@@ -195,18 +184,7 @@ public class Application {
   public Clock clock() {
     return Clock.system(ZoneId.of(timeZoneId));
   }
-  // copy fromGroups requisition Application.java end
 
-  // copy fromGroups referencedata Application.java start
-  /**
-   * Create and return an instance of JaVers precisely configured as necessary.
-   * This is particularly helpful for getting JaVers to create and use tables
-   * within a particular schema (specified via the withSchema method).
-   *
-   * @See <a href="https://github.com/javers/javers/blob/master/javers-spring-boot-starter-sql/src
-   * /main/java/org/javers/spring/boot/sql/JaversSqlAutoConfiguration.java">
-   * JaversSqlAutoConfiguration.java</a> for the default configuration upon which this code is based
-   */
   @Bean
   public Javers javersProvider(ConnectionProvider connectionProvider,
       PlatformTransactionManager transactionManager) {
@@ -216,16 +194,13 @@ public class Application {
         .withDialect(dialectName)
         .withSchema(preferredSchema)
         .build();
-
     return TransactionalJaversBuilder
         .javers()
         .withTxManager(transactionManager)
         .registerJaversRepository(sqlRepository)
         .withObjectAccessHook(new HibernateUnproxyObjectAccessHook())
-        .withListCompareAlgorithm(
-            ListCompareAlgorithm.valueOf(javersProperties.getAlgorithm().toUpperCase()))
-        .withMappingStyle(
-            MappingStyle.valueOf(javersProperties.getMappingStyle().toUpperCase()))
+        .withListCompareAlgorithm(ListCompareAlgorithm.valueOf(javersProperties.getAlgorithm().toUpperCase()))
+        .withMappingStyle(MappingStyle.valueOf(javersProperties.getMappingStyle().toUpperCase()))
         .withNewObjectsSnapshot(javersProperties.isNewObjectSnapshot())
         .withPrettyPrint(javersProperties.isPrettyPrint())
         .withTypeSafeValues(javersProperties.isTypeSafeValues())
@@ -258,40 +233,16 @@ public class Application {
     redisTemplate.setConnectionFactory(factory);
     return redisTemplate;
   }
-  // copy fromGroups referencedata Application.java end
 
-  // copy fromGroups fulfillment Application.java start
-
-  /**
-   * Creates new camelContext.
-   *
-   * @return Created camelContext.
-   */
   @Bean
   public CamelContext camelContext() {
     return new DefaultCamelContext();
   }
 
-  /**
-   * Creates new camelTemplate.
-   *
-   * @return Created camelTemplate.
-   */
   @Bean
   public ProducerTemplate camelTemplate() {
     return camelContext().createProducerTemplate();
   }
-
-  @Bean
-  @Primary
-  public FulfillmentExposedMessageSourceImpl fulfillmentMessageSource() {
-    FulfillmentExposedMessageSourceImpl messageSource = new FulfillmentExposedMessageSourceImpl();
-    messageSource.setBasename(CLASSPATH_MESSAGES);
-    messageSource.setDefaultEncoding(UTF_8);
-    messageSource.setUseCodeAsDefaultMessage(true);
-    return messageSource;
-  }
-  // copy fromGroups fulfillment Application.java end
 
   @Bean
   public AuditorAware<UUID> auditorAware(SiglusAuthenticationHelper authenticationHelper) {
@@ -327,7 +278,7 @@ public class Application {
   // https://stackoverflow.com/questions/38714521/hibernate-expression-language-does-not-work
   private MessageSource validationMessageSource() {
     ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
-    messageSource.setBasenames(CLASSPATH_MESSAGES);
+    messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
     messageSource.setDefaultEncoding(UTF_8);
     return messageSource;
   }
