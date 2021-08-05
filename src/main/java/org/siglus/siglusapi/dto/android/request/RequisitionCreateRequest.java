@@ -21,13 +21,16 @@ import java.time.LocalDate;
 import java.util.List;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidEndDate;
+import org.siglus.siglusapi.dto.android.constraint.RequisitionValidNotNull;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
 import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 import org.siglus.siglusapi.util.HashEncoder;
@@ -36,12 +39,14 @@ import org.siglus.siglusapi.util.HashEncoder;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@RequisitionValidNotNull
 @RequisitionValidStartDate(groups = {PerformanceGroup.class})
 @RequisitionValidEndDate
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequisitionCreateRequest {
 
   @NotBlank
+  @Pattern(regexp = "(ML)|(TR)|(T)|(VC)", message = "The program code is invalid.")
   private String programCode;
 
   @NotNull
@@ -56,13 +61,13 @@ public class RequisitionCreateRequest {
   @NotNull
   private LocalDate actualEndDate;
 
-  private Integer consultationNumber;
-
   @Valid
   private List<RequisitionLineItemRequest> products;
 
-  @Valid
+  @NotEmpty
   private List<RequisitionSignatureRequest> signatures;
+
+  private Integer consultationNumber;
 
   private String comments;
 

@@ -443,8 +443,12 @@ public class SiglusMeService {
     try {
       androidCreateRequisitionService.createRequisition(request);
     } catch (Exception e) {
-      backupRequisitionRequest(request, e);
-      throw (e);
+      try {
+        backupRequisitionRequest(request, e);
+      } catch (NullPointerException ignore) {
+        log.warn("backup requisiton request error", ignore);
+      }
+      throw e;
     }
   }
 

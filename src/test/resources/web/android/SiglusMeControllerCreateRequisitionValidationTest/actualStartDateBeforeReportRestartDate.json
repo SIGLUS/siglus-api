@@ -1,11 +1,30 @@
 {
-  "programCode": "13",
+  "programCode": "VC",
   "emergency": false,
   "comment": "actualStartDate supposed to be after report restart date 2021-06-01",
   "actualStartDate": "2021-02-17",
   "actualEndDate": "2021-06-20",
   "clientSubmittedTime": "2021-08-17T14:20:56.000Z",
   "consultationNumber": "23",
-  "products": [],
-  "signatures": []
+  "products": [
+    {
+      "productCode": "02A01",
+      "beginningBalance": 200,
+      "totalReceivedQuantity": 20,
+      "totalConsumedQuantity": 14,
+      "stockOnHand": 202,
+      "requestedQuantity": 28,
+      "authorizedQuantity": 30
+    }
+  ],
+  "signatures": [
+    {
+      "name": "qianlian",
+      "type": "SUBMITTER"
+    },
+    {
+      "name": "zhaojing",
+      "type": "APPROVER"
+    }
+  ]
 }

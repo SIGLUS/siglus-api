@@ -1,10 +1,29 @@
 {
-  "programCode": "13",
+  "programCode": "VC",
   "emergency": false,
   "actualStartDate": "2021-04-20",
   "actualEndDate": "2021-05-20",
   "clientSubmittedTime": "2021-08-17T14:20:56.000Z",
   "consultationNumber": "44",
-  "products": [],
-  "signatures": []
+  "products": [
+    {
+      "productCode": "02A01",
+      "beginningBalance": 200,
+      "totalReceivedQuantity": 20,
+      "totalConsumedQuantity": 14,
+      "stockOnHand": 202,
+      "requestedQuantity": 28,
+      "authorizedQuantity": 30
+    }
+  ],
+  "signatures": [
+    {
+      "name": "qianlian",
+      "type": "SUBMITTER"
+    },
+    {
+      "name": "zhaojing",
+      "type": "APPROVER"
+    }
+  ]
 }

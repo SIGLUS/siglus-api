@@ -133,14 +133,14 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     ReportType reportType = mock(ReportType.class);
     when(reportType.getStartDate()).thenReturn(LocalDate.of(2021, 3, 1));
-    when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("13")))
+    when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("VC")))
         .thenReturn(Optional.of(reportType));
 
     ProgramDto otherProgram = mock(ProgramDto.class);
     when(programDataService.findOne(any())).thenReturn(otherProgram);
     UUID program1Id = UUID.randomUUID();
     ProgramDto program1 = mock(ProgramDto.class);
-    when(program1.getCode()).thenReturn("13");
+    when(program1.getCode()).thenReturn("VC");
     when(programDataService.findOne(program1Id)).thenReturn(program1);
 
     ProcessingPeriod otherPeriod = mock(ProcessingPeriod.class);
@@ -204,12 +204,13 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     Map<String, String> violations = executeValidation(param);
 
     // then
-    assertEquals(5, violations.size());
+    assertEquals(6, violations.size());
     assertEquals(MAY_NOT_BE_EMPTY, violations.get("createRequisition.arg0.programCode"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createRequisition.arg0.actualEndDate"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createRequisition.arg0.actualStartDate"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createRequisition.arg0.clientSubmittedTime"));
     assertEquals(MAY_NOT_BE_NULL, violations.get("createRequisition.arg0.emergency"));
+    assertEquals(MAY_NOT_BE_EMPTY, violations.get("createRequisition.arg0.signatures"));
   }
 
   @Test
@@ -356,8 +357,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   }
 
   @Test
-  public void shouldReturnViolationWhenValidateCreateRequisitionGivenPeriodJul()
-      throws Exception {
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenPeriodJul() throws Exception {
     // given
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 7, 20));
     mockFacilityId(facilityId);
@@ -373,10 +373,46 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   }
 
   @Test
+  public void shouldReturnViolationWhenNecessaryParameterEmptyByProgramCode() throws Exception {
+    // given
+    Object paramVia = parseParam("viaNecessaryParameterEmpty.json");
+    // when
+    Map<String, String> violationsVia = executeValidation(paramVia);
+    // then
+    assertEquals(1, violationsVia.size());
+    assertEquals(" products may not be empty.", violationsVia.get("createRequisition.arg0"));
+
+    // given
+    Object paramMmia = parseParam("mmiaNecessaryParameterEmpty.json");
+    // when
+    Map<String, String> violationsMmia = executeValidation(paramMmia);
+    // then
+    assertEquals(1, violationsMmia.size());
+    assertEquals(" products regimenLineItems patientLineItems may not be empty.",
+        violationsMmia.get("createRequisition.arg0"));
+
+    // given
+    Object paramMalaria = parseParam("malariaNecessaryParameterEmpty.json");
+    // when
+    Map<String, String> violationsMalaria = executeValidation(paramMalaria);
+    // then
+    assertEquals(1, violationsMalaria.size());
+    assertEquals(" usageInfomationLineItems may not be empty.", violationsMalaria.get("createRequisition.arg0"));
+
+    // given
+    Object paramRapidtest = parseParam("rapidtestNecessaryParameterEmpty.json");
+    // when
+    Map<String, String> violationsRapidtest = executeValidation(paramRapidtest);
+    // then
+    assertEquals(1, violationsRapidtest.size());
+    assertEquals(" testConsumptionLineItems may not be empty.", violationsRapidtest.get("createRequisition.arg0"));
+  }
+
+  @Test
   public void shouldThrowEntityNotFoundWhenValidateCreateRequisitionGivenNoReportType()
       throws Exception {
     // given
-    when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("13"))).thenReturn(Optional.empty());
+    when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("VC"))).thenReturn(Optional.empty());
     mockFacilityId(facilityId);
     Object param = parseParam("validStartDate.json");
 

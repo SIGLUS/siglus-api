@@ -1,0 +1,37 @@
+{
+  "programCode": "T",
+  "actualStartDate": "2021-05-01",
+  "actualEndDate": "2021-05-30",
+  "clientSubmittedTime": "2021-07-30T06:23:33.058Z",
+  "comments": "uu",
+  "emergency": false,
+  "products": [],
+  "regimenLineItems": [],
+  "regimenSummaryLineItems": [
+    {
+      "patientsOnTreatment": 2,
+      "comunitaryPharmacy": 5,
+      "code": "key_regime_3lines_1"
+    },
+    {
+      "patientsOnTreatment": 3,
+      "comunitaryPharmacy": 3,
+      "code": "key_regime_3lines_2"
+    },
+    {
+      "patientsOnTreatment": 2,
+      "comunitaryPharmacy": 2,
+      "code": "key_regime_3lines_3"
+    }
+  ],
+  "signatures": [
+    {
+      "name": "jing",
+      "type": "SUBMITTER"
+    },
+    {
+      "name": "jing",
+      "type": "APPROVER"
+    }
+  ]
+}
