@@ -37,6 +37,8 @@ import org.siglus.common.i18n.MessageKeys;
 import org.siglus.siglusapi.errorhandling.message.ValidationFailField;
 import org.siglus.siglusapi.i18n.ExposedMessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +59,7 @@ import org.zalando.problem.spring.web.advice.validation.Violation;
 @ParametersAreNonnullByDefault
 @Slf4j
 @RequiredArgsConstructor
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class GlobalErrorHandling implements ProblemHandling {
 
   private static final String MESSAGE_KEY = "messageKey";

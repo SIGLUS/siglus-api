@@ -29,6 +29,8 @@ import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.service.referencedata.DataRetrievalException;
 import org.openlmis.stockmanagement.util.ErrorResponse;
 import org.openlmis.stockmanagement.util.Message;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -40,6 +42,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Base classes for controller advices dealing with error handling.
  */
 @ControllerAdvice
+// [SIGLUS change start]
+// [change reason]: should load before siglus GlobalErrorHandling
+@Order(Ordered.HIGHEST_PRECEDENCE)
+// [SIGLUS change end]
 public class StockmanagementGlobalErrorHandling extends AbstractErrorHandling {
   private static final Map<String, String> SQL_STATES = new HashMap<>();
 

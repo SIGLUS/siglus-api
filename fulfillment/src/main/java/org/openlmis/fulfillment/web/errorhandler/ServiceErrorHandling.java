@@ -38,6 +38,8 @@ import org.openlmis.fulfillment.service.ReportingException;
 import org.openlmis.fulfillment.util.Message;
 import org.openlmis.fulfillment.web.ServerException;
 import org.openlmis.fulfillment.web.util.LocalizedMessageDto;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,6 +52,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Controller advice responsible for handling errors from service layer.
  */
 @ControllerAdvice
+// [SIGLUS change start]
+// [change reason]: should load before siglus GlobalErrorHandling
+@Order(Ordered.HIGHEST_PRECEDENCE)
+// [SIGLUS change end]
 public class ServiceErrorHandling extends AbstractErrorHandling {
 
   private static final Map<String, String> CONSTRAINT_MAP = new HashMap<>();

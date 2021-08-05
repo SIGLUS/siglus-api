@@ -20,6 +20,8 @@ import java.util.Map;
 import org.openlmis.requisition.exception.BindingResultException;
 import org.openlmis.requisition.exception.ContentNotFoundMessageException;
 import org.openlmis.requisition.utils.Message;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,6 +32,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Error handling for requisition related exceptions.
  */
 @ControllerAdvice
+// [SIGLUS change start]
+// [change reason]: should load before siglus GlobalErrorHandling
+@Order(Ordered.HIGHEST_PRECEDENCE)
+// [SIGLUS change end]
 public class RequisitionErrorHandling extends AbstractErrorHandling {
 
   @ExceptionHandler(ContentNotFoundMessageException.class)

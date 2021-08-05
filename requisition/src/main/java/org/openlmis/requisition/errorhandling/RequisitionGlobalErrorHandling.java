@@ -38,6 +38,8 @@ import org.openlmis.requisition.exception.VersionMismatchException;
 import org.openlmis.requisition.service.DataRetrievalException;
 import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.web.PermissionMessageException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -53,6 +55,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  */
 @SuppressWarnings("PMD.TooManyMethods")
 @ControllerAdvice
+// [SIGLUS change start]
+// [change reason]: should load before siglus GlobalErrorHandling
+@Order(Ordered.HIGHEST_PRECEDENCE)
+// [SIGLUS change end]
 public class RequisitionGlobalErrorHandling extends AbstractErrorHandling {
   private static final Map<String, String> CONSTRAINT_MAP = new HashMap<>();
   private static final Map<String, String> SQL_STATES = new HashMap<>();

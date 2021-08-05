@@ -19,6 +19,8 @@ import org.openlmis.fulfillment.util.Message;
 import org.openlmis.fulfillment.web.MissingPermissionException;
 import org.openlmis.fulfillment.web.NotFoundException;
 import org.openlmis.fulfillment.web.ValidationException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -29,6 +31,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * Controller advice responsible for handling errors from web layer.
  */
 @ControllerAdvice
+// [SIGLUS change start]
+// [change reason]: should load before siglus GlobalErrorHandling
+@Order(Ordered.HIGHEST_PRECEDENCE)
+// [SIGLUS change end]
 public class WebErrorHandling extends AbstractErrorHandling {
 
   @ExceptionHandler(MissingPermissionException.class)
