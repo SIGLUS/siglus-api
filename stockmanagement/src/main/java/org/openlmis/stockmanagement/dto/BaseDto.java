@@ -16,6 +16,7 @@
 package org.openlmis.stockmanagement.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.io.Serializable;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -27,8 +28,11 @@ import lombok.Setter;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class BaseDto {
-
+// [SIGLUS change start]
+// [change reason]: add Serializable for @Cacheable
+// public abstract class BaseDto {
+  public abstract class BaseDto implements Serializable {
+  // [SIGLUS change end]
   @Getter
   @Setter
   private UUID id;

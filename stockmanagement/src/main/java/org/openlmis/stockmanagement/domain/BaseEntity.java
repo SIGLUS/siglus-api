@@ -15,6 +15,7 @@
 
 package org.openlmis.stockmanagement.domain;
 
+import java.io.Serializable;
 import java.util.UUID;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -25,7 +26,11 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
 @MappedSuperclass
-public abstract class BaseEntity {
+// [SIGLUS change start]
+// [change reason]: add Serializable for @Cacheable
+// public abstract class BaseEntity {
+public abstract class BaseEntity implements Serializable {
+  // [SIGLUS change end]
   protected static final String TEXT_COLUMN_DEFINITION = "text";
   protected static final String PG_UUID = "pg-uuid";
 
