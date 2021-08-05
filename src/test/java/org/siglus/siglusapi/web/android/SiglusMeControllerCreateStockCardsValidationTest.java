@@ -89,7 +89,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     stockCardCreateRequestListType = mapper.getTypeFactory()
         .constructCollectionType(List.class, StockCardCreateRequest.class);
     ResourceBundleMessageInterpolator messageInterpolator =
-        new ResourceBundleMessageInterpolator(new PlatformResourceBundleLocator("messages"));
+        new ResourceBundleMessageInterpolator(new PlatformResourceBundleLocator("messages/messages"));
     forExecutables = Validation.byDefaultProvider().configure()
         .constraintValidatorFactory(new InnerConstraintValidatorFactory())
         .messageInterpolator(messageInterpolator)

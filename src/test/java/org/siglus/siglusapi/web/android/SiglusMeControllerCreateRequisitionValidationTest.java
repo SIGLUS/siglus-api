@@ -122,7 +122,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     Locale.setDefault(Locale.ENGLISH);
     mapper.registerModule(new JavaTimeModule());
     ResourceBundleMessageInterpolator messageInterpolator =
-        new ResourceBundleMessageInterpolator(new PlatformResourceBundleLocator("messages"));
+        new ResourceBundleMessageInterpolator(new PlatformResourceBundleLocator("messages/messages"));
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     forExecutables = Validation.byDefaultProvider().configure()
         .constraintValidatorFactory(new InnerConstraintValidatorFactory())

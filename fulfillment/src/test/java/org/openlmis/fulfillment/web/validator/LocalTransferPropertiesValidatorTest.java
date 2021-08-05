@@ -51,7 +51,7 @@ public class LocalTransferPropertiesValidatorTest {
 
   @Before
   public void setUp() throws IllegalAccessException {
-    FieldUtils.writeField(messageService, "messageSource", messageSource, true);
+    FieldUtils.writeField(messageService, "fulfillmentMessageSource", messageSource, true);
     when(messageSource.getMessage(anyString(), any(), any())).thenReturn("message");
     properties = new LocalTransferProperties();
   }

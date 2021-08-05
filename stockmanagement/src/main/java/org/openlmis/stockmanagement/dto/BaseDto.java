@@ -31,7 +31,7 @@ import lombok.Setter;
 // [SIGLUS change start]
 // [change reason]: add Serializable for @Cacheable
 // public abstract class BaseDto {
-  public abstract class BaseDto implements Serializable {
+public abstract class BaseDto implements Serializable {
   // [SIGLUS change end]
   @Getter
   @Setter
