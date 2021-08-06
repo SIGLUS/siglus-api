@@ -46,10 +46,10 @@ public class AndroidTemplateConfigProperties {
     this.androidMmiaTemplateId = androidMmiaTemplateId;
     this.androidMalariaTemplateId = androidMalariaTemplateId;
     this.androidRapidtestTemplateId = androidRapidtestTemplateId;
-    programIdByCode.put(ProgramConstants.VIA_PROGRAM_NAME, androidViaTemplateId);
-    programIdByCode.put(ProgramConstants.MMIA_PROGRAM_NAME, androidMmiaTemplateId);
-    programIdByCode.put(ProgramConstants.MALARIA_PROGRAM_NAME, androidMalariaTemplateId);
-    programIdByCode.put(ProgramConstants.RAPIDTEST_PROGRAM_NAME, androidRapidtestTemplateId);
+    programIdByCode.put(ProgramConstants.VIA_PROGRAM_CODE, androidViaTemplateId);
+    programIdByCode.put(ProgramConstants.TARV_PROGRAM_CODE, androidMmiaTemplateId);
+    programIdByCode.put(ProgramConstants.MALARIA_PROGRAM_CODE, androidMalariaTemplateId);
+    programIdByCode.put(ProgramConstants.RAPIDTEST_PROGRAM_CODE, androidRapidtestTemplateId);
     androidTemplateIds.add(androidViaTemplateId);
     androidTemplateIds.add(androidMmiaTemplateId);
     androidTemplateIds.add(androidMalariaTemplateId);

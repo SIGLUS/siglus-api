@@ -446,8 +446,8 @@ public class SiglusMeService {
     } catch (Exception e) {
       try {
         backupRequisitionRequest(request, e);
-      } catch (NullPointerException ignore) {
-        log.warn("backup requisiton request error", ignore);
+      } catch (NullPointerException backupError) {
+        log.warn("backup requisition request error", backupError);
       }
       throw e;
     }

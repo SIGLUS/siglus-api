@@ -209,7 +209,7 @@ public class AndroidCreateRequisitionService {
     newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setNumberOfMonthsInPeriod(1);
     newRequisition.setDraftStatusMessage(request.getComments());
-    newRequisition.setReportOnly(ProgramConstants.MALARIA_PROGRAM_NAME.equals(programCode));
+    newRequisition.setReportOnly(ProgramConstants.MALARIA_PROGRAM_CODE.equals(programCode));
     buildStatusChanges(newRequisition, user.getId());
     buildRequisitionApprovedProduct(newRequisition, homeFacilityId, programId);
     buildRequisitionExtraData(newRequisition, request);

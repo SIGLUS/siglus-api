@@ -251,8 +251,8 @@ public class FcSourceDestinationService {
         .collect(Collectors.toMap(FacilityTypeDto::getCode, FacilityTypeDto::getId));
     Map<String, UUID> programCodeToIdMap = programReferenceDataService.findAll().stream()
         .collect(Collectors.toMap(BasicProgramDto::getCode, BaseDto::getId));
-    mpProgramId = programCodeToIdMap.get(ProgramConstants.VIA_PROGRAM_NAME);
-    rapidTestProgramId = programCodeToIdMap.get(ProgramConstants.RAPIDTEST_PROGRAM_NAME);
-    arvProgramId = programCodeToIdMap.get(ProgramConstants.MMIA_PROGRAM_NAME);
+    mpProgramId = programCodeToIdMap.get(ProgramConstants.VIA_PROGRAM_CODE);
+    rapidTestProgramId = programCodeToIdMap.get(ProgramConstants.RAPIDTEST_PROGRAM_CODE);
+    arvProgramId = programCodeToIdMap.get(ProgramConstants.TARV_PROGRAM_CODE);
   }
 }

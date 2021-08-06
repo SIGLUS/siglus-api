@@ -29,9 +29,9 @@ import org.siglus.siglusapi.dto.android.validator.RequisitionValidNotNullValidat
 @Retention(RUNTIME)
 @Documented
 @Constraint(validatedBy = {RequisitionValidNotNullValidator.class})
-public @interface RequisitionValidNotNull {
+public @interface RequisitionValidDataSection {
 
-  String message() default "{org.siglus.siglusapi.dto.android.constraint.RequisitionValidNotNull.message}";
+  String message() default "{org.siglus.siglusapi.dto.android.constraint.RequisitionValidDataSection.message}";
 
   Class<?>[] groups() default {};
 

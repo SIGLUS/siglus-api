@@ -20,52 +20,49 @@ import javax.validation.ConstraintValidatorContext;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
 import org.siglus.siglusapi.constant.ProgramConstants;
-import org.siglus.siglusapi.dto.android.constraint.RequisitionValidNotNull;
+import org.siglus.siglusapi.dto.android.constraint.RequisitionValidDataSection;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.springframework.util.CollectionUtils;
 
 @NoArgsConstructor
 public class RequisitionValidNotNullValidator implements
-    ConstraintValidator<RequisitionValidNotNull, RequisitionCreateRequest> {
+    ConstraintValidator<RequisitionValidDataSection, RequisitionCreateRequest> {
 
   @Override
-  public void initialize(RequisitionValidNotNull constraintAnnotation) {
+  public void initialize(RequisitionValidDataSection constraintAnnotation) {
     // do nothing
   }
 
   @Override
   public boolean isValid(RequisitionCreateRequest value, ConstraintValidatorContext context) {
     String programCode = value.getProgramCode();
-    boolean nullProducts = false;
-    if (ProgramConstants.VIA_PROGRAM_NAME.equals(programCode)) {
-      nullProducts = CollectionUtils.isEmpty(value.getProducts());
-    }
-    boolean nullRegimenLineItems = false;
-    boolean nullRegimenSummaryLineItems = false;
-    boolean nullPatientLineItems = false;
-    if (ProgramConstants.MMIA_PROGRAM_NAME.equals(programCode)) {
-      nullProducts = CollectionUtils.isEmpty(value.getProducts());
-      nullRegimenLineItems = CollectionUtils.isEmpty(value.getRegimenLineItems());
-      nullRegimenSummaryLineItems = CollectionUtils.isEmpty(value.getRegimenSummaryLineItems());
-      nullPatientLineItems = CollectionUtils.isEmpty(value.getPatientLineItems());
-    }
-    boolean nullUsageInfomationLineItems = false;
-    if (ProgramConstants.MALARIA_PROGRAM_NAME.equals(programCode)) {
-      nullUsageInfomationLineItems = CollectionUtils.isEmpty(value.getUsageInformationLineItems());
-    }
-    boolean nullTestConsumptionLineItems = false;
-    if (ProgramConstants.RAPIDTEST_PROGRAM_NAME.equals(programCode)) {
-      nullProducts = CollectionUtils.isEmpty(value.getProducts());
-      nullTestConsumptionLineItems = CollectionUtils.isEmpty(value.getTestConsumptionLineItems());
+    boolean isEmptyProducts = false;
+    boolean isEmptyRegimenLineItems = false;
+    boolean isEmptyRegimenSummaryLineItems = false;
+    boolean isEmptyPatientLineItems = false;
+    boolean isEmptyUsageInfomationLineItems = false;
+    boolean isEmptyTestConsumptionLineItems = false;
+    if (ProgramConstants.VIA_PROGRAM_CODE.equals(programCode)) {
+      isEmptyProducts = CollectionUtils.isEmpty(value.getProducts());
+    } else if (ProgramConstants.TARV_PROGRAM_CODE.equals(programCode)) {
+      isEmptyProducts = CollectionUtils.isEmpty(value.getProducts());
+      isEmptyRegimenLineItems = CollectionUtils.isEmpty(value.getRegimenLineItems());
+      isEmptyRegimenSummaryLineItems = CollectionUtils.isEmpty(value.getRegimenSummaryLineItems());
+      isEmptyPatientLineItems = CollectionUtils.isEmpty(value.getPatientLineItems());
+    } else if (ProgramConstants.MALARIA_PROGRAM_CODE.equals(programCode)) {
+      isEmptyUsageInfomationLineItems = CollectionUtils.isEmpty(value.getUsageInformationLineItems());
+    } else if (ProgramConstants.RAPIDTEST_PROGRAM_CODE.equals(programCode)) {
+      isEmptyProducts = CollectionUtils.isEmpty(value.getProducts());
+      isEmptyTestConsumptionLineItems = CollectionUtils.isEmpty(value.getTestConsumptionLineItems());
     }
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
-    actualContext.addExpressionVariable("nullProducts", nullProducts);
-    actualContext.addExpressionVariable("nullRegimenLineItems", nullRegimenLineItems);
-    actualContext.addExpressionVariable("nullRegimenSummaryLineItems", nullRegimenSummaryLineItems);
-    actualContext.addExpressionVariable("nullPatientLineItems", nullPatientLineItems);
-    actualContext.addExpressionVariable("nullTestConsumptionLineItems", nullTestConsumptionLineItems);
-    actualContext.addExpressionVariable("nullUsageInfomationLineItems", nullUsageInfomationLineItems);
-    return !nullProducts && !nullRegimenLineItems && !nullRegimenSummaryLineItems
-        && !nullPatientLineItems && !nullTestConsumptionLineItems && !nullUsageInfomationLineItems;
+    actualContext.addExpressionVariable("isEmptyProducts", isEmptyProducts);
+    actualContext.addExpressionVariable("isEmptyRegimenLineItems", isEmptyRegimenLineItems);
+    actualContext.addExpressionVariable("isEmptyRegimenSummaryLineItems", isEmptyRegimenSummaryLineItems);
+    actualContext.addExpressionVariable("isEmptyPatientLineItems", isEmptyPatientLineItems);
+    actualContext.addExpressionVariable("isEmptyTestConsumptionLineItems", isEmptyTestConsumptionLineItems);
+    actualContext.addExpressionVariable("isEmptyUsageInfomationLineItems", isEmptyUsageInfomationLineItems);
+    return !isEmptyProducts && !isEmptyRegimenLineItems && !isEmptyRegimenSummaryLineItems
+        && !isEmptyPatientLineItems && !isEmptyTestConsumptionLineItems && !isEmptyUsageInfomationLineItems;
   }
 }

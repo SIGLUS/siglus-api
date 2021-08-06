@@ -30,11 +30,11 @@ public class ProgramConstants {
 
   public static final String ALL_PRODUCTS_PROGRAM_NAME = "Todos os produtos";
 
-  public static final String VIA_PROGRAM_NAME = "VC";
+  public static final String VIA_PROGRAM_CODE = "VC";
 
-  public static final String MMIA_PROGRAM_NAME = "T";
+  public static final String TARV_PROGRAM_CODE = "T";
 
-  public static final String MALARIA_PROGRAM_NAME = "ML";
+  public static final String MALARIA_PROGRAM_CODE = "ML";
 
-  public static final String RAPIDTEST_PROGRAM_NAME = "TR";
+  public static final String RAPIDTEST_PROGRAM_CODE = "TR";
 }

@@ -669,6 +669,21 @@ public class SiglusMeServiceTest {
     }
   }
 
+  @Test
+  public void shouldThrowExceptionWhenCreateRequisitionRequestIsEmpty() {
+    // given
+    RequisitionCreateRequest requisitionRequest = new RequisitionCreateRequest();
+    doThrow(new ConstraintViolationException(Collections.emptySet()))
+        .when(androidCreateRequisitionService).createRequisition(requisitionRequest);
+    // when
+    try {
+      // when
+      service.createRequisition(requisitionRequest);
+    } catch (Exception e) {
+      verify(requisitionRequestBackupRepository, times(0)).save((RequisitionRequestBackup) any());
+    }
+  }
+
   private RequisitionCreateRequest buildRequisitionCreateRequest() {
     return RequisitionCreateRequest.builder()
         .actualStartDate(LocalDate.of(2021, 5, 20))

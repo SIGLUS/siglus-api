@@ -150,15 +150,15 @@ public class FcFacilityService {
     Set<String> codes = fcFacilityDto.getAreas()
         .stream().map(fcAreaDto -> {
           String code = fcAreaDto.getAreaCode();
-          if (code.equalsIgnoreCase(ProgramConstants.MALARIA_PROGRAM_NAME)) {
+          if (code.equalsIgnoreCase(ProgramConstants.MALARIA_PROGRAM_CODE)) {
             return code;
           }
           return codeToRealProgramMap.containsKey(code) ? codeToRealProgramMap.get(code)
               .getProgramCode() : null;
         }).filter(Objects::nonNull)
         .collect(Collectors.toSet());
-    if (codes.contains(ProgramConstants.MALARIA_PROGRAM_NAME) && !codes.contains(ProgramConstants.VIA_PROGRAM_NAME)) {
-      codes.add(ProgramConstants.VIA_PROGRAM_NAME);
+    if (codes.contains(ProgramConstants.MALARIA_PROGRAM_CODE) && !codes.contains(ProgramConstants.VIA_PROGRAM_CODE)) {
+      codes.add(ProgramConstants.VIA_PROGRAM_CODE);
     }
     return codes;
   }
