@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.sourcedestination.SourceDestinationAssignment;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,7 +42,6 @@ public class ValidSourceDestinationStockManagementService extends
     return ValidSourceDestinationDto[].class;
   }
 
-  @Cacheable("siglus-destinations")
   public Collection<ValidSourceDestinationDto> getValidDestinations(UUID programId,
       UUID facilityId) {
     Map<String, Object> params = new HashMap<>();
@@ -56,7 +54,6 @@ public class ValidSourceDestinationStockManagementService extends
     return postResult("validDestinations", assignment, getResultClass());
   }
 
-  @Cacheable("siglus-sources")
   public Collection<ValidSourceDestinationDto> getValidSources(UUID programId, UUID facilityId) {
     Map<String, Object> params = new HashMap<>();
     params.put("programId", programId);
