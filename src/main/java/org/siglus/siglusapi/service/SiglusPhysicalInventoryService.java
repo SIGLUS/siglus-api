@@ -42,7 +42,6 @@ import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
-import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.SupportedProgramsHelper;
@@ -81,14 +80,12 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
 
-  @Autowired
-  private PhysicalInventoryController inventoryController;
-
   @Transactional
   public PhysicalInventoryDto createNewDraft(PhysicalInventoryDto dto) {
-    return inventoryController.createEmptyPhysicalInventory(dto);
+    return physicalInventoryStockManagementService.createEmptyPhysicalInventory(dto);
   }
 
+  // #171 this is calling the rest api
   @Transactional
   public PhysicalInventoryDto createNewDraftForAllProducts(PhysicalInventoryDto dto) {
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper

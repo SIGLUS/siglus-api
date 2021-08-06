@@ -63,6 +63,7 @@ import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -137,7 +138,7 @@ public class SiglusStockEventsService {
     return stockEventId;
   }
 
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public Map<UUID, UUID> createStockEventForNoDraftAllProducts(StockEventDto eventDto) {
     UserDto userDto = authenticationHelper.getCurrentUser();
     if (eventDto.isPhysicalInventory()) {
