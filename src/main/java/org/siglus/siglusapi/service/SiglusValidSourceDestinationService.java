@@ -31,7 +31,6 @@ import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -46,12 +45,10 @@ public class SiglusValidSourceDestinationService {
   @Autowired
   private SupportedProgramsHelper supportedProgramsHelper;
 
-  @Cacheable("siglus-sources-one-program")
   public Collection<ValidSourceDestinationDto> findSources(UUID programId, UUID facilityId) {
     return validSourceDestinationStockManagementService.getValidSources(programId, facilityId);
   }
 
-  @Cacheable("siglus-sources-all-programs")
   public Collection<ValidSourceDestinationDto> findSourcesForAllProducts(UUID facilityId) {
     Set<UUID> supportedPrograms = supportedProgramsHelper
         .findUserSupportedPrograms();
@@ -60,7 +57,6 @@ public class SiglusValidSourceDestinationService {
         .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
-  @Cacheable("siglus-destinations-one-program")
   public Collection<ValidSourceDestinationDto> findDestinations(UUID programId, UUID facilityId) {
     Set<UUID> programIds = new HashSet<>();
     programIds.add(programId);
@@ -69,7 +65,6 @@ public class SiglusValidSourceDestinationService {
         findDestinationDtos(programId, facilityId));
   }
 
-  @Cacheable("siglus-destinations-all-programs")
   public Collection<ValidSourceDestinationDto> findDestinationsForAllProducts(UUID facilityId) {
     Set<UUID> supportedPrograms = supportedProgramsHelper
         .findUserSupportedPrograms();
