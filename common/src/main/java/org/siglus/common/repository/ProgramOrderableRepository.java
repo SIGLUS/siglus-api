@@ -31,5 +31,11 @@ public interface ProgramOrderableRepository extends JpaRepository<ProgramOrderab
       + WHERE_LATEST_PROGRAM_ORDERABLE
       + "      AND po.programid = :programId",
       nativeQuery = true)
-  List<ProgramOrderable> findByProgramId(@Param("programId")UUID programId);
+  List<ProgramOrderable> findByProgramId(@Param("programId") UUID programId);
+
+  @Query(value = "Select count(*) FROM referencedata.program_orderables po "
+      + WHERE_LATEST_PROGRAM_ORDERABLE
+      + "AND po.programid = :programId",
+      nativeQuery = true)
+  Long countByProgramId(@Param("programId") UUID programId);
 }

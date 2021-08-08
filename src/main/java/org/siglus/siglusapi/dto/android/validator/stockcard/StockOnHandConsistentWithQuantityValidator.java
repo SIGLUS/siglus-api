@@ -21,7 +21,6 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
-import org.siglus.siglusapi.dto.android.request.EventTime;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
@@ -41,11 +40,11 @@ abstract class StockOnHandConsistentWithQuantityValidator<A extends Annotation> 
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable(getGroupName(), groupName);
     int initStockOnHand = adjustments.stream()
-        .min(EventTime.ASCENDING)
+        .min(StockCardAdjustment.ASCENDING)
         .map(r -> r.getStockOnHand() - r.getQuantity())
         .orElse(0);
     int lastStockOnHand = adjustments.stream()
-        .max(EventTime.ASCENDING)
+        .max(StockCardAdjustment.ASCENDING)
         .map(StockCardAdjustment::getStockOnHand)
         .orElse(0);
     int calculatedGap = adjustments.stream()
@@ -59,9 +58,9 @@ abstract class StockOnHandConsistentWithQuantityValidator<A extends Annotation> 
     int stock = initStockOnHand;
     for (StockCardAdjustment request : adjustments) {
       if (request.getStockOnHand() != stock + request.getQuantity()) {
-        log.warn("Inconsistent adjustment {} at {}", groupName, request.getCreatedAt());
-        actualContext.addExpressionVariable("date", request.getOccurredDate());
-        actualContext.addExpressionVariable("createdAt", request.getCreatedAt());
+        log.warn("Inconsistent adjustment {} at {}", groupName, request.getEventTime().getRecordedAt());
+        actualContext.addExpressionVariable("date", request.getEventTime().getOccurredDate());
+        actualContext.addExpressionVariable("createdAt", request.getEventTime().getRecordedAt());
         return false;
       }
       stock = request.getStockOnHand();

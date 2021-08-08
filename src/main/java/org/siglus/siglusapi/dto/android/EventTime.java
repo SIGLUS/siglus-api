@@ -13,20 +13,30 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.request;
+package org.siglus.siglusapi.dto.android;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
+import javax.annotation.Nonnull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-public interface EventTime {
+@Data
+@AllArgsConstructor(staticName = "of")
+public class EventTime implements Comparable<EventTime> {
 
-  Comparator<StockCardAdjustment> ASCENDING = Comparator
-      .comparing(StockCardAdjustment::getOccurredDate)
-      .thenComparing(StockCardAdjustment::getCreatedAt);
+  public static final Comparator<EventTime> ASCENDING = Comparator
+      .comparing(EventTime::getOccurredDate)
+      .thenComparing(EventTime::getRecordedAt);
 
-  Instant getCreatedAt();
+  public static final Comparator<EventTime> DESCENDING = ASCENDING.reversed();
 
-  LocalDate getOccurredDate();
+  private final LocalDate occurredDate;
+  private final Instant recordedAt;
 
+  @Override
+  public int compareTo(@Nonnull EventTime o) {
+    return ASCENDING.compare(this, o);
+  }
 }

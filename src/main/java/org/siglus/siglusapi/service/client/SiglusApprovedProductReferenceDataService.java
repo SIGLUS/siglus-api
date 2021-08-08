@@ -92,7 +92,7 @@ public class SiglusApprovedProductReferenceDataService extends
     if (!isEmpty(orderableIds)) {
       params.set("orderableId", orderableIds);
     }
-    if (!programOrderableRepository.findByProgramId(programId).isEmpty()) {
+    if (programOrderableRepository.countByProgramId(programId) > 0) {
 
       return getPage(facilityId + "/approvedProducts", params).getContent();
     }
@@ -111,7 +111,7 @@ public class SiglusApprovedProductReferenceDataService extends
           .collect(Collectors.toList());
       params.set("orderableId", orderableIds);
     }
-    if (!programOrderableRepository.findByProgramId(programId).isEmpty()) {
+    if (programOrderableRepository.countByProgramId(programId) > 0) {
 
       return getPage(facilityId + "/approvedProducts", params).getContent();
     }

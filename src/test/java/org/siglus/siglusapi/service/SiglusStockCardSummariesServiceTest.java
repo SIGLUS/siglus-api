@@ -54,7 +54,6 @@ import org.openlmis.stockmanagement.testutils.OrderableDtoDataBuilder;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.siglus.common.domain.referencedata.ProgramOrderable;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
@@ -143,8 +142,7 @@ public class SiglusStockCardSummariesServiceTest {
     // given
     StockCardSummaries summaries = new StockCardSummaries(newArrayList(), newArrayList(),
         newHashMap(), null, null);
-    when(programOrderableRepository.findByProgramId(any()))
-        .thenReturn(newArrayList(new ProgramOrderable()));
+    when(programOrderableRepository.countByProgramId(any())).thenReturn(1L);
     when(stockCardSummariesService.findStockCards(any())).thenReturn(summaries);
     when(stockCardSummariesV2DtoBuilder
         .build(any(List.class), any(List.class), any(Map.class), any(boolean.class)))
@@ -171,8 +169,7 @@ public class SiglusStockCardSummariesServiceTest {
         .thenReturn(archivedProduct);
     StockCardSummaries summaries = new StockCardSummaries(newArrayList(), newArrayList(),
         newHashMap(), null, null);
-    when(programOrderableRepository.findByProgramId(any()))
-        .thenReturn(newArrayList(new ProgramOrderable()));
+    when(programOrderableRepository.countByProgramId(any())).thenReturn(1L);
     when(stockCardSummariesService.findStockCards(any())).thenReturn(summaries);
     StockCardSummaryV2Dto summaryV2Dto = createSummaryV2Dto(firstOrderableId, 15);
     StockCardSummaryV2Dto summaryV2Dto2 = createSummaryV2Dto(UUID.randomUUID(), 20);
@@ -203,8 +200,7 @@ public class SiglusStockCardSummariesServiceTest {
     // when
     StockCardSummaries summaries = new StockCardSummaries(newArrayList(), newArrayList(),
         newHashMap(), null, null);
-    when(programOrderableRepository.findByProgramId(any()))
-        .thenReturn(newArrayList(new ProgramOrderable()));
+    when(programOrderableRepository.countByProgramId(any())).thenReturn(1L);
     when(stockCardSummariesService.findStockCards(any())).thenReturn(summaries);
     StockCardSummaryV2Dto summaryV2Dto = createSummaryV2Dto(firstOrderableId, 15);
     StockCardSummaryV2Dto summaryV2Dto2 = createSummaryV2Dto(UUID.randomUUID(), 20);
@@ -227,8 +223,7 @@ public class SiglusStockCardSummariesServiceTest {
     dtos.addAll(Arrays.asList(summaryV2Dto, summaryV2Dto2));
     StockCardSummaries summaries = new StockCardSummaries(newArrayList(), newArrayList(),
         newHashMap(), null, null);
-    when(programOrderableRepository.findByProgramId(any()))
-        .thenReturn(newArrayList(new ProgramOrderable()));
+    when(programOrderableRepository.countByProgramId(any())).thenReturn(1L);
     when(stockCardSummariesService.findStockCards(any())).thenReturn(summaries);
     when(stockCardSummariesV2DtoBuilder
         .build(any(List.class), any(List.class), any(Map.class), any(boolean.class)))

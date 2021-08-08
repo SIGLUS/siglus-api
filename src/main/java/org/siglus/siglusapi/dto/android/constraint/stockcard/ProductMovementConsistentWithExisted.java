@@ -26,16 +26,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
-import org.siglus.siglusapi.dto.android.validator.stockcard.LotStockConsistentWithExistedValidator;
+import org.siglus.siglusapi.dto.android.validator.stockcard.ProductMovementConsistentWithExistedValidator;
 
 @Target({METHOD, FIELD, TYPE, PARAMETER})
 @Retention(RUNTIME)
 @Documented
-@Constraint(validatedBy = LotStockConsistentWithExistedValidator.class)
-public @interface LotStockConsistentWithExisted {
+@Constraint(validatedBy = ProductMovementConsistentWithExistedValidator.class)
+public @interface ProductMovementConsistentWithExisted {
 
   String message() default
-      "{org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted.message}";
+      "{org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementConsistentWithExisted.message}";
 
   Class<?>[] groups() default {};
 

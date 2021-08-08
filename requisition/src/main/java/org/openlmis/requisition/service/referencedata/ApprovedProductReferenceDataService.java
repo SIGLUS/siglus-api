@@ -78,7 +78,7 @@ public class ApprovedProductReferenceDataService extends
 
     // [SIGLUS change start]
     // [change reason]: support for additional product
-    if (!programOrderableRepository.findByProgramId(programId).isEmpty()) {
+    if (programOrderableRepository.countByProgramId(programId) > 0) {
       // [SIGLUS change end]
 
       Page<ApprovedProductDto> page = getPage(facilityId + "/approvedProducts", params);

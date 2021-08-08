@@ -16,13 +16,13 @@
 package org.siglus.siglusapi.dto.android.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.Instant;
 import java.time.LocalDate;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.experimental.Accessors;
 import org.hibernate.validator.constraints.NotBlank;
+import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.PositiveInitStockOnHand;
 
 @Data
@@ -49,10 +49,6 @@ public class StockCardLotEventRequest implements StockCardAdjustment {
 
   @Accessors(chain = true)
   // transient if serializable, read from StockCardCreateRequest
-  private LocalDate occurredDate;
-
-  @Accessors(chain = true)
-  // transient if serializable, read from StockCardCreateRequest
-  private Instant createdAt;
+  private EventTime eventTime;
 
 }

@@ -89,7 +89,6 @@ import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
-import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
@@ -431,74 +430,6 @@ public class SiglusMeServiceTest {
     assertEquals(requestCmms.get(0).getProductCode(), mockInsertSuccessHfCmm().getProductCode());
     assertEquals(requestCmms.get(0).getPeriodBegin(), mockInsertSuccessHfCmm().getPeriodBegin());
     assertEquals(requestCmms.get(0).getPeriodEnd(), mockInsertSuccessHfCmm().getPeriodEnd());
-  }
-
-  @Test
-  public void shouldGetSohValueByLot() {
-    // given
-    ProgramDto programDto = mock(ProgramDto.class);
-    when(programDto.getId()).thenReturn(UUID.randomUUID());
-    when(programDto.getCode()).thenReturn("code");
-    when(approvedProductService.getApprovedProducts(facilityId, programDto.getId(), emptyList()))
-        .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
-    UUID lotId1 = UUID.randomUUID();
-    UUID lotId2 = UUID.randomUUID();
-    String lotCode1 = "lotCode1";
-    String lotCode2 = "lotCode2";
-    String extraLotCode3 = "lotCode3";
-    when(lotReferenceDataService.findAllLot(any())).thenReturn(Arrays.asList(
-        mockLotDto(lotCode1, lotId1, tradeItem1), mockLotDto(lotCode2, lotId2, tradeItem2),
-        mockLotDto(extraLotCode3, UUID.randomUUID(), tradeItem2)));
-    StockCardSummaryV2Dto summary1 = new StockCardSummaryV2Dto();
-    VersionObjectReferenceDto orderableRef1 = new VersionObjectReferenceDto(productId1, "", "", 1L);
-    summary1.setOrderable(orderableRef1);
-    CanFulfillForMeEntryDto forMeEntryDto1 = new CanFulfillForMeEntryDtoDataBuilder()
-        .withStockOnHand(10)
-        .withOrderable(orderableRef1)
-        .withLot(new VersionObjectReferenceDto(lotId1, "", "", 1L))
-        .build();
-    forMeEntryDto1.setStockOnHand(10);
-    summary1.setCanFulfillForMe(newHashSet(forMeEntryDto1));
-
-    StockCardSummaryV2Dto summary2 = new StockCardSummaryV2Dto();
-    VersionObjectReferenceDto orderableRef2 = new VersionObjectReferenceDto(productId2, "", "", 1L);
-    summary2.setOrderable(orderableRef2);
-    CanFulfillForMeEntryDto forMeEntryDto2 = new CanFulfillForMeEntryDtoDataBuilder()
-        .withStockOnHand(7)
-        .withOrderable(orderableRef2)
-        .withLot(new VersionObjectReferenceDto(lotId2, "", "", 1L))
-        .build();
-    CanFulfillForMeEntryDto forMeEntryDto3WithNullLot = new CanFulfillForMeEntryDtoDataBuilder()
-        .withStockOnHand(15)
-        .withOrderable(orderableRef2)
-        .withLot(null)
-        .build();
-    summary2.setCanFulfillForMe(newHashSet(forMeEntryDto2, forMeEntryDto3WithNullLot));
-    when(stockCardSummariesService.findAllProgramStockSummaries()).thenReturn(Arrays.asList(summary1, summary2));
-
-    // when
-    List<LotStockOnHand> lotStockOnHands = service.getLotStockOnHands();
-
-    // then
-    assertEquals(3, lotStockOnHands.size());
-    LotStockOnHand stock1 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId1))
-        .filter(s -> s.getLotId().equals(lotId1))
-        .findFirst().orElse(null);
-    assertNotNull(stock1);
-    assertEquals(10, stock1.getStockOnHand().intValue());
-
-    LotStockOnHand stock2 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId2))
-        .filter(s -> s.getLotId() != null)
-        .filter(s -> s.getLotId().equals(lotId2))
-        .findFirst().orElse(null);
-    assertNotNull(stock2);
-    assertEquals(7, stock2.getStockOnHand().intValue());
-
-    LotStockOnHand stock3 = lotStockOnHands.stream().filter(s -> s.getProductId().equals(productId2))
-        .filter(s -> s.getLotId() == null)
-        .findFirst().orElse(null);
-    assertNotNull(stock3);
-    assertEquals(15, stock3.getStockOnHand().intValue());
   }
 
   @Test

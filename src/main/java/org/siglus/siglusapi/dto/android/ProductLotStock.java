@@ -13,24 +13,27 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.request;
+package org.siglus.siglusapi.dto.android;
 
-import java.util.Comparator;
-import org.siglus.siglusapi.dto.android.EventTime;
+import javax.annotation.Nonnull;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-public interface StockCardAdjustment {
+@ToString
+@Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class ProductLotStock {
 
-  Comparator<StockCardAdjustment> ASCENDING =
-      (o1, o2) -> EventTime.ASCENDING.compare(o1.getEventTime(), o2.getEventTime());
-
-  Integer getStockOnHand();
-
-  Integer getQuantity();
-
-  EventTime getEventTime();
-
-  String getDocumentationNo();
-
-  String getReasonName();
+  @Nonnull
+  private final ProductLotCode code;
+  private final Integer inventory;
+  @Setter
+  @Nonnull
+  private EventTime eventTime;
 
 }

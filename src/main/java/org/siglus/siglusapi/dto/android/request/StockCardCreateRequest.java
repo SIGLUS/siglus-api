@@ -24,6 +24,8 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
+import org.siglus.siglusapi.dto.android.EventTime;
+import org.siglus.siglusapi.dto.android.ProductMovementKey;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.KitProductEmptyLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.PositiveInitStockOnHand;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithOwnLots;
@@ -54,7 +56,7 @@ public class StockCardCreateRequest implements StockCardAdjustment {
 
   @JsonProperty("processedDate")
   @NotNull
-  private Instant createdAt;
+  private Instant recordedAt;
 
   private String documentationNo;
 
@@ -67,4 +69,14 @@ public class StockCardCreateRequest implements StockCardAdjustment {
   @Valid
   @JsonProperty("lotEventList")
   private List<StockCardLotEventRequest> lotEvents;
+
+  @Override
+  public EventTime getEventTime() {
+    return EventTime.of(occurredDate, recordedAt);
+  }
+
+  public ProductMovementKey getProductMovementKey() {
+    return ProductMovementKey.of(productCode, getEventTime());
+  }
+
 }

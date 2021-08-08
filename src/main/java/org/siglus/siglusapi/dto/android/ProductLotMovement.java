@@ -13,30 +13,39 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.common.constant;
+package org.siglus.siglusapi.dto.android;
 
-import java.util.Arrays;
-import java.util.List;
+import javax.annotation.Nonnull;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
-public class KitConstants {
+@EqualsAndHashCode
+@ToString
+@Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class ProductLotMovement {
 
-  private KitConstants() {
+  @Nonnull
+  private final ProductLotCode code;
+
+  private final EventTime eventTime;
+
+  private MovementDetail movementDetail;
+
+  private final Integer requestedQuantity;
+
+  public Integer populateInventory(Integer inventory) {
+    this.movementDetail = movementDetail.populateInventory(inventory);
+    return inventory - movementDetail.getAdjustment();
   }
 
-  public static final String KIT_26A01 = "26A01";
-  public static final String KIT_26A02 = "26A02";
-  public static final String KIT_26B01 = "26B01";
-  public static final String KIT_26B02 = "26B02";
-
-  public static final List<String> US_KITS = Arrays.asList(KIT_26A01, KIT_26B01);
-  public static final List<String> APE_KITS = Arrays.asList(KIT_26A02, KIT_26B02);
-  public static final List<String> ALL_KITS = Arrays.asList(KIT_26A01, KIT_26A02, KIT_26B01, KIT_26B02);
-
-  public static boolean isKit(String productCode) {
-    if (productCode == null) {
-      return false;
-    }
-    return ALL_KITS.stream().anyMatch(productCode::equals);
+  public ProductMovementKey getProductMovementKey() {
+    return ProductMovementKey.of(code.getProductCode(), eventTime);
   }
 
 }

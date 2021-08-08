@@ -17,7 +17,6 @@ package org.siglus.siglusapi.dto.android.validator.stockcard;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
-import static org.siglus.siglusapi.dto.android.request.EventTime.ASCENDING;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +26,7 @@ import javax.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithAllLots;
+import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
 @Slf4j
@@ -51,7 +51,7 @@ public class ProductConsistentWithAllLotsValidator implements
         .filter(r -> isNotEmpty(r.getLotEvents()))
         .filter(r -> r.getLotEvents().stream().allMatch(l -> l.getQuantity() != null))
         .filter(r -> r.getLotEvents().stream().allMatch(l -> l.getStockOnHand() != null))
-        .sorted(ASCENDING)
+        .sorted(StockCardAdjustment.ASCENDING)
         .collect(groupingBy(StockCardCreateRequest::getProductCode)).entrySet().stream()
         .allMatch(e -> checkConsistentByProduct(e.getKey(), e.getValue(), actualContext));
   }
@@ -67,7 +67,7 @@ public class ProductConsistentWithAllLotsValidator implements
       });
       if (request.getStockOnHand() < sohByLotCode.values().stream().mapToInt(Integer::intValue).sum()) {
         context.addExpressionVariable("date", request.getOccurredDate());
-        context.addExpressionVariable("createdAt", request.getCreatedAt());
+        context.addExpressionVariable("createdAt", request.getRecordedAt());
         return false;
       }
     }

@@ -35,7 +35,7 @@ public class SiglusStockCardStockManagementService
 
   public Page<StockCardSummaryV2Dto> search(StockCardSummariesV2SearchParams v2SearchParams,
       Pageable pageable) {
-    if (!programOrderableRepository.findByProgramId(v2SearchParams.getProgramId()).isEmpty()) {
+    if (programOrderableRepository.countByProgramId(v2SearchParams.getProgramId()) > 0) {
       RequestParameters params = RequestParameters.init()
           .set("programId", v2SearchParams.getProgramId())
           .set("facilityId", v2SearchParams.getFacilityId())

@@ -61,6 +61,7 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
+import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
@@ -102,6 +103,9 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   private SiglusStockEventsService stockEventsService;
   @Mock
   private StockEventProductRequestedRepository requestQuantityRepository;
+  @Mock
+  @SuppressWarnings("unused")
+  private StockManagementRepository stockManagementRepository;
 
   private final UUID facilityId = UUID.randomUUID();
   private final UUID facilityTypeId = UUID.randomUUID();

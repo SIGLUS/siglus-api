@@ -33,6 +33,7 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -90,6 +91,8 @@ import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
+import org.siglus.siglusapi.dto.android.ProductMovement;
+import org.siglus.siglusapi.dto.android.ProductMovementKey;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
@@ -115,6 +118,7 @@ import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
+import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -140,14 +144,35 @@ import org.springframework.util.LinkedMultiValueMap;
 @Slf4j
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class SiglusMeService {
+
+  private static final String INVENTORY_NEGATIVE = "INVENTORY_NEGATIVE";
+  private static final String INVENTORY_POSITIVE = "INVENTORY_POSITIVE";
+  private static final String INVENTORY = "INVENTORY";
+
   public enum MovementType {
     PHYSICAL_INVENTORY() {
+      @Override
+      public String getReason(String reasonName, Integer adjustment) {
+        if (adjustment < 0) {
+          return INVENTORY_NEGATIVE;
+        } else if (adjustment > 0) {
+          return INVENTORY_POSITIVE;
+        } else {
+          return INVENTORY;
+        }
+      }
+
       @Override
       UUID getPhysicalReasonId(CreateStockCardContext context, UUID programId, String reason) {
         return context.findReasonId(programId, reason);
       }
     },
     RECEIVE() {
+      @Override
+      public String getReason(String reasonName, Integer adjustment) {
+        return Source.findByValue(reasonName);
+      }
+
       @Override
       UUID getSourceId(CreateStockCardContext context, UUID programId, String source) {
         return context.findSourceId(programId, source);
@@ -156,12 +181,22 @@ public class SiglusMeService {
     },
     ISSUE() {
       @Override
+      public String getReason(String reasonName, Integer adjustment) {
+        return Destination.findByValue(reasonName);
+      }
+
+      @Override
       UUID getDestinationId(CreateStockCardContext context, UUID programId, String destination) {
         return context.findDestinationId(programId, destination);
       }
 
     },
     ADJUSTMENT() {
+      @Override
+      public String getReason(String reasonName, Integer adjustment) {
+        return AdjustmentReason.findByValue(reasonName);
+      }
+
       @Override
       UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
         return context.findReasonId(programId, reason);
@@ -173,6 +208,10 @@ public class SiglusMeService {
         return context.findReasonId(programId, "UNPACK_KIT");
       }
     };
+
+    public String getReason(String reasonName, Integer adjustment) {
+      return null;
+    }
 
     @SuppressWarnings("unused")
     UUID getSourceId(CreateStockCardContext context, UUID programId, String source) {
@@ -297,6 +336,7 @@ public class SiglusMeService {
   private final PodLotLineMapper podLotLineMapper;
   private final SiglusOrderableReferenceDataService orderableDataService;
   private final RequisitionRequestBackupRepository requisitionRequestBackupRepository;
+  private final StockManagementRepository stockManagementRepository;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -388,8 +428,11 @@ public class SiglusMeService {
     try {
       Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts = getAllApprovedProducts().stream()
           .collect(toMap(BasicOrderableDto::getProductCode, Function.identity()));
+      List<ProductMovementKey> existed = stockManagementRepository.getLatestProductMovements(facilityDto.getId())
+          .stream().map(ProductMovement::getProductMovementKey).collect(toList());
       requests.stream()
-          .collect(groupingBy(StockCardCreateRequest::getCreatedAt))
+          .filter(r -> !existed.contains(r.getProductMovementKey()))
+          .collect(groupingBy(StockCardCreateRequest::getRecordedAt))
           .entrySet().stream()
           .sorted(Map.Entry.comparingByKey())
           .forEach(entry -> createStockEvent(entry.getValue(), facilityDto, allApprovedProducts));
@@ -405,17 +448,9 @@ public class SiglusMeService {
         .getRequisitionResponseByFacilityIdAndDate(facilityId, startDate, orderableIdToCode);
   }
 
-  public List<LotStockOnHand> getLotStockOnHands() {
-    List<StockCardSummaryV2Dto> stockSummaries = stockCardSummariesService.findAllProgramStockSummaries();
-    Map<UUID, org.openlmis.requisition.dto.OrderableDto> approvedProducts = getAllApprovedProducts().stream()
-        .collect(toMap(BasicOrderableDto::getId, Function.identity()));
-    Map<UUID, LotDto> storedLots = getLotList(stockSummaries, approvedProducts.values()).stream()
-        .collect(toMap(BaseDto::getId, Function.identity()));
-    return stockSummaries.stream()
-        .map(StockCardSummaryV2Dto::getCanFulfillForMe)
-        .flatMap(Collection::stream)
-        .map(lot -> toLotStock(lot, approvedProducts, storedLots))
-        .collect(toList());
+  public List<ProductMovement> getLatestProductMovements() {
+    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    return stockManagementRepository.getLatestProductMovements(facilityId);
   }
 
   public FacilityProductMovementsResponse getProductMovements(String startTime, String endTime) {
@@ -437,6 +472,9 @@ public class SiglusMeService {
             .stockOnHand(calculateStockOnHandByLot(entry.getValue()))
             .build())
         .collect(toList());
+    productMovementResponses.forEach(m -> m.getStockMovementItems().sort(Comparator
+        .comparing(SiglusStockMovementItemResponse::getOccurredDate)
+        .thenComparing(SiglusStockMovementItemResponse::getProcessedDate)));
     return FacilityProductMovementsResponse.builder().productMovements(productMovementResponses).build();
   }
 
@@ -686,7 +724,7 @@ public class SiglusMeService {
     MovementType type = MovementType.valueOf(request.getType());
     List<StockCardLotEventRequest> lotEventRequests = request.getLotEvents();
     LocalDate occurredDate = request.getOccurredDate();
-    Instant createdAt = request.getCreatedAt();
+    Instant createdAt = request.getRecordedAt();
     if (lotEventRequests.isEmpty()) {
       //kit product && no stock
       return singletonList(buildEventItem(type, occurredDate, createdAt, request, product));

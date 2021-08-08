@@ -21,7 +21,7 @@ import java.util.List;
 import javax.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByProduct;
-import org.siglus.siglusapi.dto.android.request.EventTime;
+import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
 @Slf4j
@@ -49,7 +49,7 @@ public class StockOnHandConsistentWithQuantityByProductValidator extends
         .filter(r -> r.getQuantity() != null)
         .filter(r -> r.getStockOnHand() >= 0)
         .filter(r -> !("PHYSICAL_INVENTORY".equals(r.getType()) && "INVENTORY".equals(r.getReasonName())))
-        .sorted(EventTime.ASCENDING)
+        .sorted(StockCardAdjustment.ASCENDING)
         .collect(groupingBy(StockCardCreateRequest::getProductCode)).entrySet().stream()
         .allMatch(e -> checkConsistentByGroup(e.getKey(), e.getValue(), context));
   }

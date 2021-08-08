@@ -215,6 +215,7 @@ public class SiglusStockEventsService {
   }
 
   private UUID siglusCreateStockEvent(StockEventDto eventDto) {
+    // do the creation
     UUID stockEventId = stockEventProcessor.process(eventDto);
     enhanceStockCard(eventDto, stockEventId);
     return stockEventId;

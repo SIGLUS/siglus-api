@@ -111,7 +111,7 @@ public class SiglusStockCardSummariesService {
         getSummaries(parameters, archivedProducts, v2SearchParams, orderableIds, summaryV2Dtos);
       } else {
         // revert below code after V3 upgraded
-        if (!programOrderableRepository.findByProgramId(v2SearchParams.getProgramId()).isEmpty()) {
+        if (programOrderableRepository.countByProgramId(v2SearchParams.getProgramId()) > 0) {
           StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
           List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
               summaries.getPageOfApprovedProducts(),
@@ -166,7 +166,7 @@ public class SiglusStockCardSummariesService {
       List<StockCardSummaryV2Dto> summaryV2Dtos) {
     // revert below code after V3 upgraded
     List<StockCardSummaryV2Dto> summaries = newArrayList();
-    if (!programOrderableRepository.findByProgramId(v2SearchParams.getProgramId()).isEmpty()) {
+    if (programOrderableRepository.countByProgramId(v2SearchParams.getProgramId()) > 0) {
       StockCardSummaries stockCardSummaries = stockCardSummariesService
           .findStockCards(v2SearchParams);
       summaries = stockCardSummariesV2DtoBuilder.build(
