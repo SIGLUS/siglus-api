@@ -420,7 +420,6 @@ public class SiglusMeService {
     return syncResponse;
   }
 
-  // #171
   @Transactional
   public void createStockCards(List<StockCardCreateRequest> requests) {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -629,7 +628,6 @@ public class SiglusMeService {
         .effectiveDate(fulfillDto.getOccurredDate()).build();
   }
 
-  // #171 out of transaction
   private List<org.openlmis.requisition.dto.OrderableDto> getAllApprovedProducts() {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     return programsHelper
@@ -668,7 +666,6 @@ public class SiglusMeService {
         .filter(request -> request.getLotEvents().isEmpty() == isProductMovement).collect(toList());
     if (!requestMovement.isEmpty()) {
       StockEventDto stockEvent = buildStockEventDto(facilityDto, signature, requestMovement, allApprovedProducts);
-      // #171 start a new transaction, not in transaction to create the inventory
       Map<UUID, UUID> programToStockEventIds = stockEventsService.createStockEventForNoDraftAllProducts(stockEvent);
       dealWithIssue(requestMovement, programToStockEventIds, allApprovedProducts);
     }

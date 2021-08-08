@@ -42,6 +42,7 @@ import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
+import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.SupportedProgramsHelper;
@@ -52,7 +53,6 @@ import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementServi
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -80,34 +80,30 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
 
-  @Transactional
+  @Autowired
+  private PhysicalInventoryController inventoryController;
+
   public PhysicalInventoryDto createNewDraft(PhysicalInventoryDto dto) {
     return physicalInventoryStockManagementService.createEmptyPhysicalInventory(dto);
   }
 
-  // #171 this is calling the rest api
-  @Transactional
-  public PhysicalInventoryDto createNewDraftForAllProducts(PhysicalInventoryDto dto) {
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
-        .findUserSupportedPrograms();
-    List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
-        supportedVirtualProgram -> {
-          dto.setProgramId(supportedVirtualProgram);
-          return createNewDraft(dto);
-        }).collect(Collectors.toList());
-    if (CollectionUtils.isNotEmpty(inventories)) {
-      return getResultInventory(inventories, emptyList());
-    }
-    return null;
+  public PhysicalInventoryDto createNewDraftDirectly(PhysicalInventoryDto dto) {
+    return inventoryController.createEmptyPhysicalInventory(dto);
   }
 
-  @Transactional
+  public PhysicalInventoryDto createNewDraftForAllProducts(PhysicalInventoryDto dto) {
+    return doCreateNewDraftForAllProducts(dto, false);
+  }
+
+  public void createNewDraftForAllProductsDirectly(PhysicalInventoryDto dto) {
+    doCreateNewDraftForAllProducts(dto, true);
+  }
+
   public PhysicalInventoryDto saveDraft(PhysicalInventoryDto dto, UUID id) {
     physicalInventoryStockManagementService.savePhysicalInventory(id, dto);
     return dto;
   }
 
-  @Transactional
   public PhysicalInventoryDto saveDraftForAllProducts(PhysicalInventoryDto dto) {
     deletePhysicalInventoryForAllProducts(dto.getFacilityId());
     createNewDraftForAllProducts(dto);
@@ -129,24 +125,20 @@ public class SiglusPhysicalInventoryService {
     return null;
   }
 
-  @Transactional
   public void deletePhysicalInventory(UUID id) {
     physicalInventoryStockManagementService.deletePhysicalInventory(id);
   }
 
-  @Transactional
+  public void deletePhysicalInventoryDirectly(UUID id) {
+    inventoryController.deletePhysicalInventory(id);
+  }
+
   public void deletePhysicalInventoryForAllProducts(UUID facilityId) {
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
-        .findUserSupportedPrograms();
-    List<UUID> ids = supportedVirtualPrograms.stream().map(
-        supportedVirtualProgram -> physicalInventoriesRepository
-            .findIdByProgramIdAndFacilityIdAndIsDraft(supportedVirtualProgram, facilityId,
-                Boolean.TRUE))
-        .filter(Objects::nonNull)
-        .map(UUID::fromString)
-        .collect(Collectors.toList());
-    ids.forEach(this::deletePhysicalInventory);
-    lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(ids);
+    doDeletePhysicalInventoryForAllProducts(facilityId, false);
+  }
+
+  public void deletePhysicalInventoryForAllProductsDirectly(UUID facilityId) {
+    doDeletePhysicalInventoryForAllProducts(facilityId, true);
   }
 
   public PhysicalInventoryDto getPhysicalInventory(UUID id) {
@@ -167,6 +159,11 @@ public class SiglusPhysicalInventoryService {
     physicalInventoryService.checkPermission(program, facility);
     return physicalInventoryStockManagementService
         .searchPhysicalInventory(program, facility, isDraft);
+  }
+
+  public List<PhysicalInventoryDto> getPhysicalInventoryDtosDirectly(UUID program, UUID facility,
+      Boolean isDraft) {
+    return inventoryController.searchPhysicalInventory(program, facility, isDraft).getBody();
   }
 
   public List<PhysicalInventoryDto> getPhysicalInventoryDtosForAllProducts(
@@ -204,6 +201,42 @@ public class SiglusPhysicalInventoryService {
       throw new PermissionMessageException(
           new org.openlmis.stockmanagement.util.Message(ERROR_PERMISSION_NOT_SUPPORTED), e);
     }
+  }
+
+  private PhysicalInventoryDto doCreateNewDraftForAllProducts(PhysicalInventoryDto dto, boolean directly) {
+    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+        .findUserSupportedPrograms();
+    List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
+        supportedVirtualProgram -> {
+          dto.setProgramId(supportedVirtualProgram);
+          if (directly) {
+            return createNewDraftDirectly(dto);
+          } else {
+            return createNewDraft(dto);
+          }
+        }).collect(Collectors.toList());
+    if (CollectionUtils.isNotEmpty(inventories)) {
+      return getResultInventory(inventories, emptyList());
+    }
+    return null;
+  }
+
+  private void doDeletePhysicalInventoryForAllProducts(UUID facilityId, boolean directly) {
+    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+        .findUserSupportedPrograms();
+    List<UUID> ids = supportedVirtualPrograms.stream().map(
+        supportedVirtualProgram -> physicalInventoriesRepository
+            .findIdByProgramIdAndFacilityIdAndIsDraft(supportedVirtualProgram, facilityId,
+                Boolean.TRUE))
+        .filter(Objects::nonNull)
+        .map(UUID::fromString)
+        .collect(Collectors.toList());
+    if (directly) {
+      ids.forEach(this::deletePhysicalInventoryDirectly);
+    } else {
+      ids.forEach(this::deletePhysicalInventory);
+    }
+    lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(ids);
   }
 
   private List<PhysicalInventoryLineItemsExtension> updateExtension(

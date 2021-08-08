@@ -63,7 +63,6 @@ import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -138,7 +137,7 @@ public class SiglusStockEventsService {
     return stockEventId;
   }
 
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Transactional
   public Map<UUID, UUID> createStockEventForNoDraftAllProducts(StockEventDto eventDto) {
     UserDto userDto = authenticationHelper.getCurrentUser();
     if (eventDto.isPhysicalInventory()) {
@@ -146,7 +145,7 @@ public class SiglusStockEventsService {
           .facilityId(userDto.getHomeFacilityId())
           .isDraft(true)
           .build();
-      siglusPhysicalInventoryService.createNewDraftForAllProducts(inventoryDto);
+      siglusPhysicalInventoryService.createNewDraftForAllProductsDirectly(inventoryDto);
     }
     return createStockEventForAllPrograms(eventDto, userDto.getId());
   }
@@ -161,7 +160,7 @@ public class SiglusStockEventsService {
     if (eventDto.isPhysicalInventory()) {
       List<PhysicalInventoryDto> inventories = programIds.stream()
           .map(programId -> siglusPhysicalInventoryService
-              .getPhysicalInventoryDtos(programId, eventDto.getFacilityId(), Boolean.TRUE))
+              .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE))
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
       stockEventDtos = inventories.stream()
@@ -187,7 +186,7 @@ public class SiglusStockEventsService {
     });
     if (!programIdToEventId.isEmpty()) {
       if (eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService.deletePhysicalInventoryForAllProducts(eventDto.getFacilityId());
+        siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
       } else if (!eventDto.hasReason(unpackReasonId)) {
         setType(eventDto);
         stockManagementDraftService.deleteStockManagementDraft(eventDto);

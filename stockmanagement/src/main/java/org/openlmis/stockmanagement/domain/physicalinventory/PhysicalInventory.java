@@ -19,6 +19,7 @@ import static javax.persistence.CascadeType.ALL;
 import static org.hibernate.annotations.LazyCollectionOption.FALSE;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
@@ -55,4 +56,11 @@ public class PhysicalInventory extends BaseEntity {
 
   @OneToOne
   private StockEvent stockEvent;
+
+  // [SIGLUS change start]
+  // [change reason]: JPA @OneToMany may return null
+  public List<PhysicalInventoryLineItem> getLineItems() {
+    return lineItems == null ? Collections.emptyList() : lineItems;
+  }
+  // [SIGLUS change end]
 }

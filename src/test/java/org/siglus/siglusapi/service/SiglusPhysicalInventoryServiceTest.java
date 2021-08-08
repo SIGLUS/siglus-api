@@ -56,6 +56,7 @@ import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
+import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
@@ -99,6 +100,9 @@ public class SiglusPhysicalInventoryServiceTest {
   @Mock
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
 
+  @Mock
+  private PhysicalInventoryController inventoryController;
+
   private final UUID facilityId = UUID.randomUUID();
 
   private final UUID orderableId = UUID.randomUUID();
@@ -131,8 +135,24 @@ public class SiglusPhysicalInventoryServiceTest {
     siglusPhysicalInventoryService.createNewDraftForAllProducts(physicalInventoryDto);
 
     // then
-    verify(physicalInventoryStockManagementService, times(2))
-        .createEmptyPhysicalInventory(physicalInventoryDto);
+    verify(physicalInventoryStockManagementService, times(2)).createEmptyPhysicalInventory(physicalInventoryDto);
+  }
+
+  @Test
+  public void shouldCallV3MultipleTimesWhenCreateNewDraftForAllProductsDirectly() {
+    // given
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
+        .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
+    when(inventoryController.createEmptyPhysicalInventory(physicalInventoryDto))
+        .thenReturn(physicalInventoryDto);
+
+    // when
+    siglusPhysicalInventoryService.createNewDraftForAllProductsDirectly(physicalInventoryDto);
+
+    // then
+    verify(inventoryController, times(2)).createEmptyPhysicalInventory(physicalInventoryDto);
   }
 
   @Test
@@ -189,6 +209,26 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // then
     verify(physicalInventoryStockManagementService, times(2)).deletePhysicalInventory(any());
+    verify(lineItemsExtensionRepository, times(1)).deleteByPhysicalInventoryIdIn(any());
+  }
+
+  @Test
+  public void shouldCallV3MultipleTimesWhenDeletePhysicalInventoryForAllProductsDirectly() {
+    // given
+    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
+        .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
+    when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programIdOne,
+        facilityId, true))
+        .thenReturn(inventoryOne.toString());
+    when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programIdTwo,
+        facilityId, true))
+        .thenReturn(inventoryTwo.toString());
+
+    // when
+    siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(facilityId);
+
+    // then
+    verify(inventoryController, times(2)).deletePhysicalInventory(any());
     verify(lineItemsExtensionRepository, times(1)).deleteByPhysicalInventoryIdIn(any());
   }
 

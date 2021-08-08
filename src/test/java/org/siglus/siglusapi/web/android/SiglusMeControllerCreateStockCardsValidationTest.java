@@ -51,10 +51,10 @@ import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.dto.android.validator.stockcard.KitProductEmptyLotsValidator;
+import org.siglus.siglusapi.dto.android.validator.stockcard.ProductMovementConsistentWithExistedValidator;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 
-@Ignore
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods", "unused"})
 public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedTest {
@@ -130,6 +130,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   }
 
   @Test
+  @Ignore
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenEmptyRequest()
       throws IOException {
     // given
@@ -357,6 +358,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   }
 
   @Test
+  @Ignore
   public void shouldReturnNoViolationWhenValidateCreateStockCardsGivenNewLot()
       throws IOException {
     // given
@@ -370,6 +372,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   }
 
   @Test
+  @Ignore
   public void shouldReturnNoViolationWhenValidateCreateStockCardsGivenNewLotWithNonZeroInitSoh()
       throws IOException {
     // given
@@ -385,6 +388,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   }
 
   @Test
+  @Ignore
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentSohWithExisted()
       throws IOException {
     // given
@@ -400,6 +404,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   }
 
   @Test
+  @Ignore
   public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentOccurredDateWithExisted()
       throws IOException {
     // given
@@ -415,6 +420,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   }
 
   @Test
+  @Ignore
   public void shouldReturnNoViolationWhenValidateCreateStockCardsGivenHappy()
       throws IOException {
     // given
@@ -458,6 +464,9 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
       if (key == KitProductEmptyLotsValidator.class) {
         return (T) new KitProductEmptyLotsValidator(orderableService);
+      }
+      if (key == ProductMovementConsistentWithExistedValidator.class) {
+        return (T) new ProductMovementConsistentWithExistedValidator(service);
       }
       return NewInstance.action(key, "ConstraintValidator").run();
     }

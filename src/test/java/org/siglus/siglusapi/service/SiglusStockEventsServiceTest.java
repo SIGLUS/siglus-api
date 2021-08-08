@@ -179,7 +179,7 @@ public class SiglusStockEventsServiceTest {
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2))
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().build();
-    when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(any(), any(), any()))
+    when(siglusPhysicalInventoryService.getPhysicalInventoryDtosDirectly(any(), any(), any()))
         .thenReturn(newArrayList(physicalInventoryDto));
 
     // when
@@ -202,7 +202,7 @@ public class SiglusStockEventsServiceTest {
     siglusStockEventsService.createStockEventForNoDraftAllProducts(eventDto);
 
     // then
-    verify(siglusPhysicalInventoryService).createNewDraftForAllProducts(any());
+    verify(siglusPhysicalInventoryService).createNewDraftForAllProductsDirectly(any());
   }
 
 
