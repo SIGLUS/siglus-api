@@ -977,7 +977,7 @@ public class RequisitionService {
 
   // [SIGLUS change start]
   // [change reason]: provide additional approved product
-  @Cacheable("siglus-getApproveProduct")
+  @Cacheable(value = "siglus-approved-products", keyGenerator = "cacheKeyGenerator")
   public ApproveProductsAggregator getApproveProduct(UUID facilityId, UUID programId, boolean reportOnly) {
     if (reportOnly) {
       return approvedProductReferenceDataService.getAdditionalApprovedProducts(facilityId, programId);

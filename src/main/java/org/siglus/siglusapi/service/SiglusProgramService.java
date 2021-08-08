@@ -36,7 +36,7 @@ public class SiglusProgramService {
   @Autowired
   private ProgramReferenceDataService programRefDataService;
 
-  @Cacheable("siglus-getPrograms")
+  @Cacheable(value = "siglus-programs", keyGenerator = "cacheKeyGenerator")
   public List<ProgramDto> getPrograms(String code) {
     if (ALL_PRODUCTS_PROGRAM_CODE.equals(code)) {
       return Collections.singletonList(getAllProgramDto());
@@ -46,7 +46,7 @@ public class SiglusProgramService {
         .collect(Collectors.toList());
   }
 
-  @Cacheable("siglus-getProgram")
+  @Cacheable(value = "siglus-program", keyGenerator = "cacheKeyGenerator")
   public ProgramDto getProgram(UUID programId) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(programId)) {
       return getAllProgramDto();
@@ -54,7 +54,7 @@ public class SiglusProgramService {
     return programRefDataService.findOne(programId);
   }
 
-  @Cacheable("siglus-getProgramIdByCode")
+  @Cacheable(value = "siglus-program-id", keyGenerator = "cacheKeyGenerator")
   public UUID getProgramIdByCode(String code) {
     ProgramDto program = programRefDataService.findAll().stream()
         .filter(programDto -> programDto.getCode().equals(code))

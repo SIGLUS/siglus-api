@@ -83,9 +83,8 @@ public class SiglusApprovedProductReferenceDataService extends
    * @param programId  id of the program
    * @return wrapped collection of approved products matching the search criteria
    */
-  @Cacheable("siglus-approved-products")
-  public List<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId,
-      Collection<UUID> orderableIds) {
+  @Cacheable(value = "siglus-approved-products-by-orderables", keyGenerator = "cacheKeyGenerator")
+  public List<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId, Collection<UUID> orderableIds) {
     RequestParameters params = RequestParameters.init();
 
     params.set("programId", programId);

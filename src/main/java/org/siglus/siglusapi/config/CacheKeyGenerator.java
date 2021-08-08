@@ -34,8 +34,10 @@ public class CacheKeyGenerator implements KeyGenerator {
     Object param = params[0];
     StringBuilder builder = new StringBuilder();
     // className + methodName + params
-    builder.append(target.getClass().getSimpleName()).append(DOT);
-    builder.append(method.getName()).append(DOT);
+    builder.append(target.getClass().getSimpleName())
+        .append(DOT)
+        .append(method.getName())
+        .append(DOT);
     if (param instanceof Map) {
       Map<String, Object> map = (Map<String, Object>) param;
       if (map.isEmpty()) {
