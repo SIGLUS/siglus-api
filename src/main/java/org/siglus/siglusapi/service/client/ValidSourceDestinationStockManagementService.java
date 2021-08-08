@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.sourcedestination.SourceDestinationAssignment;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -42,18 +43,19 @@ public class ValidSourceDestinationStockManagementService extends
     return ValidSourceDestinationDto[].class;
   }
 
-  public Collection<ValidSourceDestinationDto> getValidDestinations(UUID programId,
-      UUID facilityId) {
+  @Cacheable(value = "siglus-destinations", keyGenerator = "cacheKeyGenerator")
+  public Collection<ValidSourceDestinationDto> getValidDestinations(UUID programId, UUID facilityId) {
     Map<String, Object> params = new HashMap<>();
     params.put("programId", programId);
     params.put("facilityId", facilityId);
     return findAll("validDestinations", params);
   }
 
-  public ValidSourceDestinationDto assignDestination(SourceDestinationAssignment assignment) {
-    return postResult("validDestinations", assignment, getResultClass());
+  public void assignDestination(SourceDestinationAssignment assignment) {
+    postResult("validDestinations", assignment, getResultClass());
   }
 
+  @Cacheable(value = "siglus-sources", keyGenerator = "cacheKeyGenerator")
   public Collection<ValidSourceDestinationDto> getValidSources(UUID programId, UUID facilityId) {
     Map<String, Object> params = new HashMap<>();
     params.put("programId", programId);
@@ -61,8 +63,8 @@ public class ValidSourceDestinationStockManagementService extends
     return findAll("validSources", params);
   }
 
-  public ValidSourceDestinationDto assignSource(SourceDestinationAssignment assignment) {
-    return postResult("validSources", assignment, getResultClass());
+  public void assignSource(SourceDestinationAssignment assignment) {
+    postResult("validSources", assignment, getResultClass());
   }
 }
 
