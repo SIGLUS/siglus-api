@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -36,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -169,7 +171,11 @@ public class PhysicalInventoryServiceTest {
     assertEquals(programId, captured.getProgramId());
     assertEquals(facilityId, captured.getFacilityId());
     assertEquals(true, captured.getIsDraft());
-    assertNull(captured.getLineItems());
+    // [SIGLUS change start]
+    // [change reason]: if it's new created, PhysicalInventoryDto.from will cause an NPE
+    // assertNull(captured.getLineItems());
+    assertTrue(CollectionUtils.isEmpty(captured.getLineItems()));
+    // [SIGLUS change end]
 
     verify(homeFacilityPermissionService, times(1)).checkProgramSupported(programId);
     verify(permissionService, times(1)).canEditPhysicalInventory(programId, facilityId);

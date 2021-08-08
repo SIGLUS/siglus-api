@@ -58,7 +58,7 @@ public class PhysicalInventory extends BaseEntity {
   private StockEvent stockEvent;
 
   // [SIGLUS change start]
-  // [change reason]: JPA @OneToMany may return null
+  // [change reason]: if it's new created, PhysicalInventoryDto.from will cause an NPE
   public List<PhysicalInventoryLineItem> getLineItems() {
     return lineItems == null ? Collections.emptyList() : lineItems;
   }
