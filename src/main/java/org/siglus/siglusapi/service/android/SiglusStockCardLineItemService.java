@@ -43,12 +43,15 @@ import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
 import org.siglus.common.exception.NotFoundException;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
+import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
+import org.siglus.siglusapi.dto.android.enumeration.Destination;
+import org.siglus.siglusapi.dto.android.enumeration.MovementType;
+import org.siglus.siglusapi.dto.android.enumeration.Source;
 import org.siglus.siglusapi.dto.android.response.LotMovementItemResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
-import org.siglus.siglusapi.service.android.SiglusMeService.MovementType;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 
@@ -290,11 +293,14 @@ public class SiglusStockCardLineItemService {
       reason = getAdjustmentReason(item);
     } else if (isReceive(item)) {
       type = MovementType.RECEIVE.name();
-      reason = SiglusMeService.Source.findByValue(organizationIdToName.get(item.getSource().getReferenceId()));
+      String sourceName = organizationIdToName.get(item.getSource().getReferenceId());
+      reason = Source.findByName(sourceName).map(Enum::name)
+          .orElseThrow(() -> new NotFoundException("No such source: " + sourceName));
     } else if (isIssue(item)) {
       type = MovementType.ISSUE.name();
-      reason = SiglusMeService.Destination
-          .findByValue(organizationIdToName.get(item.getDestination().getReferenceId()));
+      String destinationName = organizationIdToName.get(item.getDestination().getReferenceId());
+      reason = Destination.findByName(destinationName).map(Enum::name)
+          .orElseThrow(() -> new NotFoundException("No such destination: " + destinationName));
     }
     reasonDto.setType(type);
     reasonDto.setName(reason);
@@ -324,10 +330,12 @@ public class SiglusStockCardLineItemService {
   }
 
   private String getAdjustmentReason(StockCardLineItem item) {
-    if (UNPACK_KIT.equals(item.getReason().getName())) {
-      return item.getReason().getName();
+    String reasonName = item.getReason().getName();
+    if (UNPACK_KIT.equals(reasonName)) {
+      return reasonName;
     } else {
-      return SiglusMeService.AdjustmentReason.findByValue(item.getReason().getName());
+      return AdjustmentReason.findByName(reasonName).map(Enum::name)
+          .orElseThrow(() -> new NotFoundException("No such reason: " + reasonName));
     }
   }
 

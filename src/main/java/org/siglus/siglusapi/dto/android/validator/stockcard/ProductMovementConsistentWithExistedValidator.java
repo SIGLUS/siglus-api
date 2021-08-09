@@ -35,11 +35,11 @@ import org.siglus.siglusapi.dto.android.MovementDetail;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementConsistentWithExisted;
+import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.service.android.SiglusMeService;
-import org.siglus.siglusapi.service.android.SiglusMeService.MovementType;
 
 @Slf4j
 @RequiredArgsConstructor

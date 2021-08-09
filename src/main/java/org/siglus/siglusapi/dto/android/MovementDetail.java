@@ -22,7 +22,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import org.siglus.siglusapi.service.android.SiglusMeService.MovementType;
+import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 
 @EqualsAndHashCode
 @ToString
@@ -114,7 +114,7 @@ public class MovementDetail {
     if (inventory == null) {
       throw new IllegalStateException("Inventory not populated");
     }
-    return inventory - adjustment == former.adjustment;
+    return inventory - adjustment == former.inventory;
   }
 
 }

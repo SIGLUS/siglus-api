@@ -30,7 +30,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.chrono.ChronoZonedDateTime;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,10 +39,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.ConstraintViolationException;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.internal.engine.ConstraintViolationImpl;
@@ -65,7 +62,6 @@ import org.openlmis.stockmanagement.dto.StockEventAdjustmentDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
-import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
@@ -90,9 +86,9 @@ import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
-import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
+import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
@@ -125,7 +121,7 @@ import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
-import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
+import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 import org.siglus.siglusapi.service.android.mapper.PodLotLineMapper;
 import org.siglus.siglusapi.service.android.mapper.PodMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
@@ -144,164 +140,6 @@ import org.springframework.util.LinkedMultiValueMap;
 @Slf4j
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class SiglusMeService {
-
-  private static final String INVENTORY_NEGATIVE = "INVENTORY_NEGATIVE";
-  private static final String INVENTORY_POSITIVE = "INVENTORY_POSITIVE";
-  private static final String INVENTORY = "INVENTORY";
-
-  public enum MovementType {
-    PHYSICAL_INVENTORY() {
-      @Override
-      public String getReason(String reasonName, Integer adjustment) {
-        if (adjustment < 0) {
-          return INVENTORY_NEGATIVE;
-        } else if (adjustment > 0) {
-          return INVENTORY_POSITIVE;
-        } else {
-          return INVENTORY;
-        }
-      }
-
-      @Override
-      UUID getPhysicalReasonId(CreateStockCardContext context, UUID programId, String reason) {
-        return context.findReasonId(programId, reason);
-      }
-    },
-    RECEIVE() {
-      @Override
-      public String getReason(String reasonName, Integer adjustment) {
-        return Source.findByValue(reasonName);
-      }
-
-      @Override
-      UUID getSourceId(CreateStockCardContext context, UUID programId, String source) {
-        return context.findSourceId(programId, source);
-      }
-
-    },
-    ISSUE() {
-      @Override
-      public String getReason(String reasonName, Integer adjustment) {
-        return Destination.findByValue(reasonName);
-      }
-
-      @Override
-      UUID getDestinationId(CreateStockCardContext context, UUID programId, String destination) {
-        return context.findDestinationId(programId, destination);
-      }
-
-    },
-    ADJUSTMENT() {
-      @Override
-      public String getReason(String reasonName, Integer adjustment) {
-        return AdjustmentReason.findByValue(reasonName);
-      }
-
-      @Override
-      UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
-        return context.findReasonId(programId, reason);
-      }
-    },
-    UNPACK_KIT {
-      @Override
-      UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
-        return context.findReasonId(programId, "UNPACK_KIT");
-      }
-    };
-
-    public String getReason(String reasonName, Integer adjustment) {
-      return null;
-    }
-
-    @SuppressWarnings("unused")
-    UUID getSourceId(CreateStockCardContext context, UUID programId, String source) {
-      return null;
-    }
-
-    @SuppressWarnings("unused")
-    UUID getDestinationId(CreateStockCardContext context, UUID programId, String destination) {
-      return null;
-    }
-
-    @SuppressWarnings("unused")
-    UUID getReasonId(CreateStockCardContext context, UUID programId, String reason) {
-      return null;
-    }
-
-    @SuppressWarnings("unused")
-    UUID getPhysicalReasonId(CreateStockCardContext context, UUID programId, String reason) {
-      return null;
-    }
-  }
-
-  @RequiredArgsConstructor
-  @Getter
-  public enum Source {
-    DISTRICT_DDM("District(DDM)"),
-    INTERMEDIATE_WAREHOUSE("Armazém Intermediário"),
-    PROVINCE_DPM("Province(DPM)");
-
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-
-  }
-
-  @RequiredArgsConstructor
-  @Getter
-  public enum Destination {
-    ACC_EMERGENCY("Banco de Socorro"),
-    DENTAL_WARD("Estomatologia"),
-    GENERAL_WARD("Medicina Geral"),
-    LABORATORY("Laboratorio"),
-    MATERNITY("Maternidade"),
-    MOBILE_UNIT("Unidade Movel"),
-    PAV("PAV"),
-    PNCTL("PNCTL"),
-    PUB_PHARMACY("Farmácia"),
-    UATS("UATS");
-
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-  }
-
-  @RequiredArgsConstructor
-  @Getter
-  public enum AdjustmentReason {
-    CUSTOMER_RETURN("Devoluções de clientes (US e Enfermarias Dependentes)"),
-    DAMAGED("Danificado na Chegada"),
-    DONATION("Doação para o Deposito"),
-    EXPIRED_RETURN_FROM_CUSTOMER("Devoluções de Expirados (US e Enfermarias de Dependentes)"),
-    EXPIRED_RETURN_TO_SUPPLIER("Devolvidos ao Fornecedor por terem Expirados em Quarentena"),
-    INVENTORY_NEGATIVE("Correção Negativa"),
-    INVENTORY_POSITIVE("Correção Positiva"),
-    LOANS_DEPOSIT("Emprestimo Enviado pela US"),
-    LOANS_RECEIVED("Emprestimo Recebido pela US"),
-    PROD_DEFECTIVE("Produto com defeito, movido para quarentena"),
-    RETURN_FROM_QUARANTINE("Devoluções da Quarentena"),
-    RETURN_TO_DDM("Devolução para o DDM"),
-    UNPACK_KIT("Unpack Kit");
-
-    private final String value;
-
-    public static String findByValue(String value) {
-      return Arrays.stream(values())
-          .filter(e -> e.value.equals(value))
-          .map(Enum::name)
-          .findFirst().orElse(null);
-    }
-  }
 
   static final String KEY_PROGRAM_CODE = "programCode";
   static final String TRADE_ITEM_ID = "tradeItemId";
@@ -322,7 +160,6 @@ public class SiglusMeService {
   private final SiglusStockCardLineItemService stockCardLineItemService;
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
   private final StockEventProductRequestedRepository requestQuantityRepository;
-  private final SiglusValidSourceDestinationService siglusValidSourceDestinationService;
   private final SiglusStockEventsService stockEventsService;
   private final AndroidHelper androidHelper;
   private final ReportTypeRepository reportTypeRepository;
@@ -337,6 +174,7 @@ public class SiglusMeService {
   private final SiglusOrderableReferenceDataService orderableDataService;
   private final RequisitionRequestBackupRepository requisitionRequestBackupRepository;
   private final StockManagementRepository stockManagementRepository;
+  private final CreateStockCardContextHolder createStockCardContextHolder;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -423,7 +261,7 @@ public class SiglusMeService {
   @Transactional
   public void createStockCards(List<StockCardCreateRequest> requests) {
     FacilityDto facilityDto = getCurrentFacilityInfo();
-    initCreateStockCardContext(facilityDto);
+    createStockCardContextHolder.initContext(facilityDto);
     try {
       Map<String, org.openlmis.requisition.dto.OrderableDto> allApprovedProducts = getAllApprovedProducts().stream()
           .collect(toMap(BasicOrderableDto::getProductCode, Function.identity()));
@@ -436,7 +274,7 @@ public class SiglusMeService {
           .sorted(Map.Entry.comparingByKey())
           .forEach(entry -> createStockEvent(entry.getValue(), facilityDto, allApprovedProducts));
     } finally {
-      clearCreateStockCardContext();
+      CreateStockCardContextHolder.clearContext();
     }
   }
 
@@ -583,24 +421,7 @@ public class SiglusMeService {
                 .valid(t.isActive()).build()));
   }
 
-  private LotStockOnHand toLotStock(CanFulfillForMeEntryDto lot,
-      Map<UUID, org.openlmis.requisition.dto.OrderableDto> approvedProducts, Map<UUID, LotDto> storedLots) {
-    UUID lotId = null;
-    if (lot.getLot() != null) {
-      lotId = lot.getLot().getId();
-    }
-    return LotStockOnHand.builder()
-        .productId(lot.getOrderable().getId())
-        .productCode(approvedProducts.get(lot.getOrderable().getId()).getProductCode())
-        .lotId(lotId)
-        .lotCode(lotId == null ? null : storedLots.get(lotId).getLotCode())
-        .stockOnHand(lot.getStockOnHand())
-        .occurredDate(lot.getOccurredDate())
-        .build();
-  }
-
-  private Map<UUID, String> getOrderableIdToCode(
-      List<org.openlmis.requisition.dto.OrderableDto> orderableDtos) {
+  private Map<UUID, String> getOrderableIdToCode(List<org.openlmis.requisition.dto.OrderableDto> orderableDtos) {
     return orderableDtos.stream()
         .collect(toMap(org.openlmis.requisition.dto.OrderableDto::getId,
             org.openlmis.requisition.dto.OrderableDto::getProductCode));
@@ -763,9 +584,9 @@ public class SiglusMeService {
     }
     stockEventLineItem.setDocumentationNo(adjustment.getDocumentationNo());
     String reasonName = adjustment.getReasonName();
-    stockEventLineItem.setSourceId(type.getSourceId(getCreateStockCardContext(), programId, reasonName));
-    stockEventLineItem.setDestinationId(type.getDestinationId(getCreateStockCardContext(), programId, reasonName));
-    stockEventLineItem.setReasonId(type.getReasonId(getCreateStockCardContext(), programId, reasonName));
+    stockEventLineItem.setSourceId(type.getSourceId(programId, reasonName));
+    stockEventLineItem.setDestinationId(type.getDestinationId(programId, reasonName));
+    stockEventLineItem.setReasonId(type.getAdjustmentReasonId(programId, reasonName));
     stockEventLineItem.setStockAdjustments(getStockAdjustments(type, reasonName, quantity, programId));
     return stockEventLineItem;
   }
@@ -778,12 +599,11 @@ public class SiglusMeService {
 
   private List<StockEventAdjustmentDto> getStockAdjustments(MovementType type, String reasonName,
       Integer quantity, UUID programId) {
-    if (type != MovementType.PHYSICAL_INVENTORY || quantity == 0
-        || "INVENTORY".equalsIgnoreCase(reasonName)) {
+    if (type != MovementType.PHYSICAL_INVENTORY || quantity == 0 || "INVENTORY".equalsIgnoreCase(reasonName)) {
       return Collections.emptyList();
     }
     StockEventAdjustmentDto stockEventAdjustmentDto = new StockEventAdjustmentDto();
-    stockEventAdjustmentDto.setReasonId(type.getPhysicalReasonId(getCreateStockCardContext(), programId, reasonName));
+    stockEventAdjustmentDto.setReasonId(type.getInventoryReasonId(programId, reasonName));
     stockEventAdjustmentDto.setQuantity(quantity);
     return singletonList(stockEventAdjustmentDto);
   }
@@ -845,65 +665,6 @@ public class SiglusMeService {
   private FacilityDto getCurrentFacilityInfo() {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     return facilityReferenceDataService.getFacilityById(homeFacilityId);
-  }
-
-  private final ThreadLocal<CreateStockCardContext> createStockCardContextHolder = new ThreadLocal<>();
-
-  private void initCreateStockCardContext(FacilityDto facilityDto) {
-    createStockCardContextHolder.set(new CreateStockCardContext(facilityDto));
-  }
-
-  private CreateStockCardContext getCreateStockCardContext() {
-    return createStockCardContextHolder.get();
-  }
-
-  private void clearCreateStockCardContext() {
-    createStockCardContextHolder.remove();
-  }
-
-  private class CreateStockCardContext {
-
-    private final Map<UUID, Map<String, UUID>> programToReasonNameToId;
-    private final Map<UUID, Map<String, UUID>> programToDestinationNameToId;
-    private final Map<UUID, Map<String, UUID>> programToSourceNameToId;
-
-    CreateStockCardContext(FacilityDto facility) {
-      programToReasonNameToId = validReasonAssignmentService
-          .getValidReasonsForAllProducts(facility.getType().getId(), null, null)
-          .stream()
-          .collect(groupingBy(ValidReasonAssignmentDto::getProgramId,
-              Collectors.toMap(lineItem -> lineItem.getReason().getName(),
-                  validReasonAssignmentDto -> validReasonAssignmentDto.getReason().getId())));
-
-      programToDestinationNameToId = siglusValidSourceDestinationService
-          .findDestinationsForAllProducts(facility.getId())
-          .stream()
-          .collect(groupingBy(ValidSourceDestinationDto::getProgramId,
-              Collectors.toMap(ValidSourceDestinationDto::getName,
-                  validSourceDestinationDto -> validSourceDestinationDto.getNode().getId())));
-
-      programToSourceNameToId = siglusValidSourceDestinationService
-          .findSourcesForAllProducts(facility.getId())
-          .stream()
-          .collect(groupingBy(ValidSourceDestinationDto::getProgramId,
-              Collectors.toMap(ValidSourceDestinationDto::getName,
-                  validSourceDestinationDto -> validSourceDestinationDto.getNode().getId())));
-    }
-
-    @Nonnull
-    UUID findReasonId(UUID programId, String value) {
-      return programToReasonNameToId.get(programId).get(AdjustmentReason.valueOf(value).getValue());
-    }
-
-    @Nonnull
-    UUID findSourceId(UUID programId, String value) {
-      return programToSourceNameToId.get(programId).get(Source.valueOf(value).getValue());
-    }
-
-    @Nonnull
-    UUID findDestinationId(UUID programId, String value) {
-      return programToDestinationNameToId.get(programId).get(Destination.valueOf(value).getValue());
-    }
   }
 
   private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId, List<SupportedProgramDto> programs) {

@@ -60,17 +60,19 @@ import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
+import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
+import org.siglus.siglusapi.dto.android.enumeration.Destination;
+import org.siglus.siglusapi.dto.android.enumeration.Source;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.SiglusMeService;
-import org.siglus.siglusapi.service.android.SiglusMeService.AdjustmentReason;
-import org.siglus.siglusapi.service.android.SiglusMeService.Destination;
-import org.siglus.siglusapi.service.android.SiglusMeService.Source;
+import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
@@ -107,6 +109,9 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   @SuppressWarnings("unused")
   private StockManagementRepository stockManagementRepository;
 
+  @InjectMocks
+  private CreateStockCardContextHolder holder;
+
   private final UUID facilityId = UUID.randomUUID();
   private final UUID facilityTypeId = UUID.randomUUID();
   private final UUID programId1 = UUID.randomUUID();
@@ -119,6 +124,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     mockApprovedProducts();
     mockSourceDestinations();
     mockReasons();
+    ReflectionTestUtils.setField(service, "createStockCardContextHolder", holder);
     SiglusMeController controller = new SiglusMeController(service);
     this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
   }
@@ -197,14 +203,14 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
 
   private void mockSourceDestinations() {
     List<ValidSourceDestinationDto> sources = Stream.of(Source.values())
-        .map(Enum::name)
+        .map(Source::getName)
         .map(this::mockValidSourceDestination)
         .flatMap(Collection::stream)
         .collect(toList());
     when(siglusValidSourceDestinationService.findSourcesForAllProducts(eq(facilityId)))
         .thenReturn(sources);
     List<ValidSourceDestinationDto> destinations = Stream.of(Destination.values())
-        .map(Enum::name)
+        .map(Destination::getName)
         .map(this::mockValidSourceDestination)
         .flatMap(Collection::stream)
         .collect(toList());
@@ -214,7 +220,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
 
   private void mockReasons() {
     List<ValidReasonAssignmentDto> reasons = Stream.of(AdjustmentReason.values())
-        .map(Enum::name)
+        .map(AdjustmentReason::getName)
         .map(this::mockReason)
         .flatMap(Collection::stream)
         .collect(toList());
