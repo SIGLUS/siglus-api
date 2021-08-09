@@ -24,7 +24,6 @@ import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -719,7 +718,7 @@ public class SiglusMeService {
         .programCode(request.getProgramCode())
         .clientSubmittedTime(request.getClientSubmittedTime())
         .errorMessage(errorMessage)
-        .requestBody(JSON.toJSONString(request))
+        .requestBody(request)
         .build();
     log.info("backup requisition request, syncUpHash: {}", syncUpHash);
     requisitionRequestBackupRepository.save(backup);

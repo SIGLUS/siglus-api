@@ -20,6 +20,7 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.Table;
@@ -29,6 +30,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -60,7 +62,9 @@ public class RequisitionRequestBackup extends BaseEntity {
 
   private String errorMessage;
 
-  private String requestBody;
+  @Column(name = "requestbody", columnDefinition = "jsonb")
+  @Convert(converter = RequisitionRequestConverter.class)
+  private RequisitionCreateRequest requestBody;
 
   @CreatedDate
   @Column(updatable = false)

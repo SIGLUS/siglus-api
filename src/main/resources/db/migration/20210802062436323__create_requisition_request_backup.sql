@@ -13,6 +13,6 @@ CREATE TABLE siglusintegration.requisition_request_backup (
     emergency BOOLEAN,
     clientsubmittedtime TIMESTAMP WITH TIME ZONE,
     errormessage TEXT,
-    requestbody TEXT NOT NULL,
+    requestbody jsonb,
     createddate TIMESTAMP WITH TIME ZONE
 );
