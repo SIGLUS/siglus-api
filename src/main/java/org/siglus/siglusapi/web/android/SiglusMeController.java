@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithAllLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByLot;
@@ -91,6 +92,7 @@ public class SiglusMeController {
       @StockOnHandConsistentWithQuantityByProduct
       @StockOnHandConsistentWithQuantityByLot
       @ProductConsistentWithAllLots
+      @LotStockConsistentWithExisted(groups = PerformanceGroup.class)
       @ProductMovementConsistentWithExisted(groups = PerformanceGroup.class)
           List<StockCardCreateRequest> requests) {
     service.createStockCards(requests);

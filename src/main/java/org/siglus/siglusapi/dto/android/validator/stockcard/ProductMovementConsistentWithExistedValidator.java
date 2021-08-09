@@ -59,7 +59,6 @@ public class ProductMovementConsistentWithExistedValidator implements
   private static final String INIT_INVENTORY = "initInventory";
   private static final String LOT_CODE = "lotCode";
 
-
   private final SiglusMeService service;
 
   @Override

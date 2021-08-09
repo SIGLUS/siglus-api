@@ -87,6 +87,7 @@ import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
+import org.siglus.siglusapi.dto.android.StockOnHand;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
@@ -287,6 +288,11 @@ public class SiglusMeService {
   public List<ProductMovement> getLatestProductMovements() {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     return stockManagementRepository.getLatestProductMovements(facilityId);
+  }
+
+  public StockOnHand getLatestStockOnHand() {
+    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    return stockManagementRepository.getStockOnHand(facilityId);
   }
 
   public FacilityProductMovementsResponse getProductMovements(String startTime, String endTime) {

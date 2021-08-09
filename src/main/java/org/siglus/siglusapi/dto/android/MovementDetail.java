@@ -114,7 +114,7 @@ public class MovementDetail {
     if (inventory == null) {
       throw new IllegalStateException("Inventory not populated");
     }
-    return inventory - adjustment == former.inventory;
+    return getInitInventory().equals(former.inventory);
   }
 
 }
