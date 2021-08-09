@@ -26,6 +26,7 @@ public class ProductLotCode {
 
   @Nonnull
   private final String productCode;
+
   @Nullable
   private final String lotCode;
 

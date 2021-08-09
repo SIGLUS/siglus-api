@@ -178,21 +178,21 @@ public class ProductMovementConsistentWithExistedValidator implements
     return -1;
   }
 
-  private boolean validateContinuity(ProductMovement former, ProductMovement latter,
+  private boolean validateContinuity(ProductMovement previous, ProductMovement next,
       HibernateConstraintValidatorContext actualContext) {
-    if (former.getEventTime().compareTo(latter.getEventTime()) >= 0) {
+    if (previous.getEventTime().compareTo(next.getEventTime()) >= 0) {
       throw new IllegalArgumentException("Incorrect argument sequence");
     }
-    if (latter.getMovementDetail().isRightAfter(former.getMovementDetail())) {
+    if (next.getMovementDetail().isRightAfter(previous.getMovementDetail())) {
       // valid 2
       return true;
     }
     // violation 5
     actualContext.addExpressionVariable("failedByContinuity", true);
-    actualContext.addExpressionVariable(OCCURRED_DATE, latter.getEventTime().getOccurredDate());
-    actualContext.addExpressionVariable(RECORDED_AT, latter.getEventTime().getRecordedAt());
-    actualContext.addExpressionVariable(INIT_INVENTORY, latter.getMovementDetail().getInitInventory());
-    actualContext.addExpressionVariable("formerInventory", former.getMovementDetail().getInventory());
+    actualContext.addExpressionVariable(OCCURRED_DATE, next.getEventTime().getOccurredDate());
+    actualContext.addExpressionVariable(RECORDED_AT, next.getEventTime().getRecordedAt());
+    actualContext.addExpressionVariable(INIT_INVENTORY, next.getMovementDetail().getInventoryBeforeAdjustment());
+    actualContext.addExpressionVariable("previousInventory", previous.getMovementDetail().getInventory());
     return false;
   }
 
@@ -285,7 +285,7 @@ public class ProductMovementConsistentWithExistedValidator implements
     if (initInventory != 0) {
       actualContext.addExpressionVariable("failedByNew", true);
       actualContext.addExpressionVariable(INIT_INVENTORY, initInventory);
-      actualContext.addExpressionVariable("formerInventory", 0);
+      actualContext.addExpressionVariable("previousInventory", 0);
       return false;
     }
     // lot inventory will be handled in the LotStockConsistentWithExistedValidator

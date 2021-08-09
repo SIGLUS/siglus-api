@@ -29,6 +29,8 @@ import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 @Getter
 public class MovementDetail {
 
+  private static final String INVENTORY_NOT_POPULATED = "Inventory not populated";
+
   private final Integer adjustment;
   @Nullable
   private final Integer inventory;
@@ -89,12 +91,12 @@ public class MovementDetail {
     return new MovementDetail(adjustment, inventory, type, reason);
   }
 
-  public MovementDetail assemble(MovementDetail movementDetail) {
+  public MovementDetail merge(MovementDetail movementDetail) {
     if (type != movementDetail.getType()) {
-      throw new IllegalStateException("Can't assemble different types");
+      throw new IllegalStateException("Can't merge different types");
     }
     if (inventory == null || movementDetail.inventory == null) {
-      throw new IllegalStateException("Inventory not populated");
+      throw new IllegalStateException(INVENTORY_NOT_POPULATED);
     }
     int assembledAdjustment = adjustment + movementDetail.getAdjustment();
     int assembledInventory = inventory + movementDetail.inventory;
@@ -103,18 +105,18 @@ public class MovementDetail {
     return new MovementDetail(assembledAdjustment, assembledInventory, type, assembledReason);
   }
 
-  public Integer getInitInventory() {
+  public Integer getInventoryBeforeAdjustment() {
     if (inventory == null) {
-      throw new IllegalStateException("Inventory not populated");
+      throw new IllegalStateException(INVENTORY_NOT_POPULATED);
     }
     return inventory - adjustment;
   }
 
-  public boolean isRightAfter(MovementDetail former) {
+  public boolean isRightAfter(MovementDetail previous) {
     if (inventory == null) {
-      throw new IllegalStateException("Inventory not populated");
+      throw new IllegalStateException(INVENTORY_NOT_POPULATED);
     }
-    return getInitInventory().equals(former.inventory);
+    return getInventoryBeforeAdjustment().equals(previous.inventory);
   }
 
 }

@@ -22,7 +22,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode
 @ToString
 @Builder
 @Getter
@@ -31,7 +31,6 @@ public class LotMovement {
 
   protected final String lotCode;
 
-  @Getter
   protected MovementDetail movementDetail;
 
 }

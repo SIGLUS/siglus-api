@@ -238,7 +238,7 @@ public class StockManagementRepository {
       movementBuilder.lotMovements(lotMovements);
       MovementDetail movementDetail = productLotMovements.stream()
           .map(ProductLotMovement::getMovementDetail)
-          .reduce(MovementDetail::assemble)
+          .reduce(MovementDetail::merge)
           .orElse(null);
       movementBuilder.movementDetail(movementDetail);
     }
