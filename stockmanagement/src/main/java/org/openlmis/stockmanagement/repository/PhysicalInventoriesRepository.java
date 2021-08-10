@@ -16,6 +16,7 @@
 package org.openlmis.stockmanagement.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.springframework.data.jpa.repository.Query;
@@ -60,6 +61,15 @@ public interface PhysicalInventoriesRepository
       @Param("facility") UUID facility,
       @Param("startDate") String startDate,
       @Param("endDate") String endDate);
+
+  @Query(value = "SELECT * FROM stockmanagement.physical_inventories pi "
+      + "inner join  stockmanagement.stock_cards c "
+      + "on c.origineventid = pi.stockeventid "
+      + "WHERE pi.facilityid = :facility "
+      + "AND pi.isdraft = false "
+      + "AND c.orderableid in :orderableIds) ", nativeQuery = true)
+  List<PhysicalInventory> findByFacilityIdAndOrderableIds(
+      @Param("facility") UUID facility, @Param("orderableIds") Set<UUID> orderableIds);
   // [SIGLUS change end]
 
 }

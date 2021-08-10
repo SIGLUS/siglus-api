@@ -68,4 +68,6 @@ public class FieldConstants {
 
   public static final String TOTAL = "total";
 
+  public static final String DELETE = "delete";
+
 }

@@ -72,7 +72,7 @@ import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
-import org.siglus.siglusapi.service.android.AndroidCreateRequisitionService;
+import org.siglus.siglusapi.service.android.RequisitionCreateService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
@@ -82,7 +82,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   private static final String MAY_NOT_BE_NULL = "may not be null";
 
   @InjectMocks
-  private AndroidCreateRequisitionService androidCreateRequisitionService;
+  private RequisitionCreateService requisitionCreateService;
 
   @Mock
   private SiglusAuthenticationHelper authHelper;
@@ -128,7 +128,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
         .constraintValidatorFactory(new InnerConstraintValidatorFactory())
         .messageInterpolator(messageInterpolator)
         .buildValidatorFactory().getValidator().forExecutables();
-    method = AndroidCreateRequisitionService.class.getDeclaredMethod("createRequisition",
+    method = RequisitionCreateService.class.getDeclaredMethod("createRequisition",
         RequisitionCreateRequest.class);
 
     ReportType reportType = mock(ReportType.class);
@@ -473,7 +473,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
   private Map<String, String> executeValidation(Object... params) {
     return forExecutables
-        .validateParameters(androidCreateRequisitionService, method, params, PerformanceSequence.class)
+        .validateParameters(requisitionCreateService, method, params, PerformanceSequence.class)
         .stream()
         .collect(toMap(v -> v.getPropertyPath().toString(), ConstraintViolation::getMessage));
   }

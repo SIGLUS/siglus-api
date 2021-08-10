@@ -36,6 +36,7 @@ import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
+import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
@@ -47,6 +48,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -102,6 +104,12 @@ public class SiglusMeController {
   public FacilityProductMovementsResponse getFacilityStockCards(@RequestParam(value = "startTime") String startTime,
       @RequestParam(value = "endTime") String endTime) {
     return service.getProductMovements(startTime, endTime);
+  }
+
+  @DeleteMapping("/facility/stockCards")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteAdditionalOrderable(@RequestBody List<StockCardDeleteRequest> requests) {
+    service.deleteStockCardByProduct(requests);
   }
 
   @PutMapping(value = "/facility/cmms")

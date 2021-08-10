@@ -16,9 +16,11 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -35,4 +37,24 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
       @Param("facilityId") UUID facilityId,
       @Param("startTime") String startTime,
       @Param("endTime") String endTime);
+
+  @Query(value = "select i.* from stockmanagement.stock_card_line_items i "
+      + "inner join stockmanagement.stock_cards c  "
+      + "on c.id = i.stockcardid "
+      + "where "
+      + "c.facilityid = :facilityId "
+      + "and c.orderableid in (:orderableIds) ", nativeQuery = true)
+  List<StockCardLineItem> findByFacilityIdAndOrderableIdIn(
+      @Param("facilityId") UUID facilityId,
+      @Param("orderableIds") Set<UUID> orderableIds);
+
+  @Modifying
+  @Query(value = "delete from stockmanagement.stock_card_line_items i "
+      + "where i.stockcardid in ("
+      + "select c.id "
+      + "from stockmanagement.stock_cards c "
+      + "where c.facilityid = :facilityId "
+      + "and c.orderableid in :orderableIds) ", nativeQuery = true)
+  void deleteByFacilityIdAndOrderableIds(@Param("orderableIds") Set<UUID> orderableIds,
+      @Param("facilityId") UUID facilityId);
 }

@@ -13,22 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto.android.request;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import org.openlmis.stockmanagement.domain.card.StockCard;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.query.Param;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
-public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID> {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class StockCardDeleteRequest {
 
-  List<StockCard> findByFacilityIdAndOrderableId(
-      @Param("facilityId") UUID facilityId,
-      @Param("orderableId") UUID orderableId);
+  private String clientMovements;
 
-  void deleteStockCardsByFacilityIdAndOrderableIdIn(@Param("facilityId") UUID facilityId,
-      @Param("orderableId") Set<UUID> orderableIds);
+  private boolean fullyDelete;
+
+  private String productCode;
 }

@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,24 +30,19 @@ import org.springframework.data.repository.query.Param;
 public interface CalculatedStockOnHandRepository
     extends JpaRepository<CalculatedStockOnHand, UUID> {
 
-  Optional<CalculatedStockOnHand>
-      findFirstByStockCardIdAndOccurredDateLessThanEqualOrderByOccurredDateDesc(
-          @Param("stockCardId") UUID stockCardId,
-          @Param("asOfDate") LocalDate asOfDate);
+  Optional<CalculatedStockOnHand> findFirstByStockCardIdAndOccurredDateLessThanEqualOrderByOccurredDateDesc(
+      @Param("stockCardId") UUID stockCardId, @Param("asOfDate") LocalDate asOfDate);
 
-  Optional<CalculatedStockOnHand> findFirstByStockCardIdAndOccurredDate(
-          UUID stockCardId, LocalDate occurredDate);
+  Optional<CalculatedStockOnHand> findFirstByStockCardIdAndOccurredDate(UUID stockCardId, LocalDate occurredDate);
 
-  List<CalculatedStockOnHand>
-      findByStockCardIdAndOccurredDateGreaterThanEqualOrderByOccurredDateAsc(
-          UUID stockCardId, LocalDate asOfDate);
+  List<CalculatedStockOnHand> findByStockCardIdAndOccurredDateGreaterThanEqualOrderByOccurredDateAsc(
+      UUID stockCardId, LocalDate asOfDate);
 
-  List<CalculatedStockOnHand> findByStockCardIdAndOccurredDateBetween(
-      Collection<UUID> stockCardId, LocalDate startDate, LocalDate endDate);
+  List<CalculatedStockOnHand> findByStockCardIdAndOccurredDateBetween(Collection<UUID> stockCardId, LocalDate startDate,
+      LocalDate endDate);
 
-  List<CalculatedStockOnHand>
-      findByStockCardIdInAndOccurredDateLessThanEqual(
-        Collection<UUID> stockCardId, LocalDate endDate);
+  List<CalculatedStockOnHand> findByStockCardIdInAndOccurredDateLessThanEqual(Collection<UUID> stockCardId,
+      LocalDate endDate);
 
   // [SIGLUS change start]
   // [change reason]: performance optimization
@@ -57,8 +53,7 @@ public interface CalculatedStockOnHandRepository
       + "where c.stockcardid in :stockCardIds "
       + "and c.occurreddate < :occurredDate "
       + "group by c.stockcardid)", nativeQuery = true)
-  List<CalculatedStockOnHand> findPreviousStockOnHands(
-      @Param("stockCardIds") Collection<UUID> stockCardIds,
+  List<CalculatedStockOnHand> findPreviousStockOnHands(@Param("stockCardIds") Collection<UUID> stockCardIds,
       @Param("occurredDate") LocalDate occurredDate);
 
   @Modifying
@@ -68,6 +63,16 @@ public interface CalculatedStockOnHandRepository
   void deleteFollowingStockOnHands(@Param("stockCardIds") Collection<UUID> stockCardIds,
       @Param("occurredDate") LocalDate occurredDate);
 
+  @Modifying
+  @Query(value = "delete from stockmanagement.calculated_stocks_on_hand h "
+      + "where h.stockcardid in ("
+      + "select c.id "
+      + "from stockmanagement.stock_cards c "
+      + "where c.facilityid = :facilityId "
+      + "and c.orderableid in :orderableIds) ", nativeQuery = true)
+  void deleteByFacilityIdAndOrderableIds(@Param("orderableIds") Set<UUID> orderableIds,
+      @Param("facilityId") UUID facilityId);
+
   // [change reason]: query needs
   @Query(value = "select h.* from stockmanagement.calculated_stocks_on_hand h "
       + "inner join stockmanagement.stock_cards c "
@@ -76,9 +81,17 @@ public interface CalculatedStockOnHandRepository
       + "c.facilityid = :facilityId "
       + "and h.occurreddate > :startTime "
       + "and h.occurreddate <= :endTime", nativeQuery = true)
-  List<CalculatedStockOnHand> findByFacilityIdAndIdStartTimeEndTime(
-      @Param("facilityId") UUID facilityId,
-      @Param("startTime") String startTime,
-      @Param("endTime") String endTime);
+  List<CalculatedStockOnHand> findByFacilityIdAndIdStartTimeEndTime(@Param("facilityId") UUID facilityId,
+      @Param("startTime") String startTime, @Param("endTime") String endTime);
+
+  // [change reason]: query needs
+  @Query(value = "select h.* from stockmanagement.calculated_stocks_on_hand h "
+      + "inner join stockmanagement.stock_cards c  "
+      + "on c.id = h.stockcardid "
+      + "where "
+      + "c.facilityid = :facilityId "
+      + "and c.orderableid in (:orderableIds) ", nativeQuery = true)
+  List<CalculatedStockOnHand> findByFacilityIdAndOrderableIdIn(@Param("facilityId") UUID facilityId,
+      @Param("orderableIds") Set<UUID> orderableIds);
   // [SIGLUS change end]
 }

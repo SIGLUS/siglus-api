@@ -113,10 +113,10 @@ import org.springframework.beans.BeanUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
-public class AndroidCreateRequisitionServiceTest extends FileBasedTest {
+public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @InjectMocks
-  private AndroidCreateRequisitionService service;
+  private RequisitionCreateService service;
 
   @Mock
   private RequisitionService requisitionService;

@@ -188,7 +188,8 @@ public class SiglusStockCardLineItemServiceTest {
     createStockMovements();
     // when
     Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemResponseMap = stockCardLineItemService
-        .getStockMovementByOrderableId(homefacilityId, "2021-06-30", "2021-07-03", siglusLotResponseByLotId);
+        .getStockMovementByOrderableId(homefacilityId, "2021-06-30", "2021-07-03", null, null,
+            siglusLotResponseByLotId);
 
     // then
     // 2021-07-01 08:00:00 physicalInventory positive 50
@@ -294,7 +295,8 @@ public class SiglusStockCardLineItemServiceTest {
     createNoLotStockMovements();
     // when
     Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemResponseMap = stockCardLineItemService
-        .getStockMovementByOrderableId(homefacilityId, "2021-06-29", "2021-07-05", siglusLotResponseByLotId);
+        .getStockMovementByOrderableId(homefacilityId, "2021-06-29", "2021-07-05", null, null,
+            siglusLotResponseByLotId);
 
     // then
     // 2021-07-01 08:00:00 physicalInventory positive 50
@@ -363,7 +365,8 @@ public class SiglusStockCardLineItemServiceTest {
     createNoLotStockMovements();
     // when
     Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemResponseMap = stockCardLineItemService
-        .getStockMovementByOrderableId(homefacilityId, "2021-06-28", "2021-07-06", siglusLotResponseByLotId);
+        .getStockMovementByOrderableId(homefacilityId, "2021-06-28", "2021-07-06", null, null,
+            siglusLotResponseByLotId);
     // then
     // 2021-07-01 09:00:00 issue 10
     SiglusStockMovementItemResponse stockMovementItemResponse2 = stockMovementItemResponseMap.get(orderableId3).stream()
@@ -393,7 +396,8 @@ public class SiglusStockCardLineItemServiceTest {
     createStockMovements();
     // when
     Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemResponseMap = stockCardLineItemService
-        .getStockMovementByOrderableId(homefacilityId, "2021-06-27", "2021-07-07", siglusLotResponseByLotId);
+        .getStockMovementByOrderableId(homefacilityId, "2021-06-27", "2021-07-07", null, null,
+            siglusLotResponseByLotId);
 
     // then
     // 2021-07-01 08:00:00 physicalInventory positive 50

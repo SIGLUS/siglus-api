@@ -160,7 +160,7 @@ import org.springframework.validation.annotation.Validated;
 @Slf4j
 @Validated
 @SuppressWarnings("PMD.TooManyMethods")
-public class AndroidCreateRequisitionService {
+public class RequisitionCreateService {
 
   private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final SiglusAuthenticationHelper authHelper;
@@ -189,6 +189,7 @@ public class AndroidCreateRequisitionService {
       log.info("skip create requisition as syncUpHash: {} existed", syncUpHash);
       return;
     }
+
     UUID authorId = user.getId();
     Requisition requisition = initiateRequisition(request, user);
     requisition = submitRequisition(requisition, authorId);

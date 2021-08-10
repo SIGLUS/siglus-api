@@ -21,6 +21,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,11 +29,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
+import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
+import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItem;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItemAdjustment;
 import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.sourcedestination.Organization;
@@ -41,7 +45,9 @@ import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
+import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.siglus.common.exception.NotFoundException;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
 import org.siglus.siglusapi.dto.android.enumeration.Destination;
@@ -50,7 +56,10 @@ import org.siglus.siglusapi.dto.android.enumeration.Source;
 import org.siglus.siglusapi.dto.android.response.LotMovementItemResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
+import org.siglus.siglusapi.repository.PhysicalInventoryLineItemAdjustmentRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
@@ -75,13 +84,41 @@ public class SiglusStockCardLineItemService {
 
   private final StockEventProductRequestedRepository requestQuantityRepository;
 
+  private final SiglusStockCardRepository siglusStockCardRepository;
+
+  private final PhysicalInventoriesRepository physicalInventoriesRepository;
+
+  private final PhysicalInventoryLineItemRepository physicalInventoryLineItemRepository;
+
+  private final PhysicalInventoryLineItemAdjustmentRepository physicalInventoryLineItemAdjustmentRepository;
+
+  public void deleteStockCardByProduct(UUID facilityId, Set<UUID> orderableIds) {
+    List<PhysicalInventory> physicalInventories = physicalInventoriesRepository
+        .findByFacilityIdAndOrderableIds(facilityId, orderableIds);
+    List<PhysicalInventoryLineItem> physicalInventoryLineItems = physicalInventories.stream()
+        .map(PhysicalInventory::getLineItems)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    List<PhysicalInventoryLineItemAdjustment> stockAdjustments = physicalInventoryLineItems.stream()
+        .map(PhysicalInventoryLineItem::getStockAdjustments)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    physicalInventoryLineItemAdjustmentRepository.delete(stockAdjustments);
+    physicalInventoryLineItemRepository.delete(physicalInventoryLineItems);
+    physicalInventoriesRepository.delete(physicalInventories);
+    calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(orderableIds, facilityId);
+    stockCardLineItemRepository.deleteByFacilityIdAndOrderableIds(orderableIds, facilityId);
+    siglusStockCardRepository.deleteStockCardsByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
+  }
+
   public Map<UUID, List<SiglusStockMovementItemResponse>> getStockMovementByOrderableId(UUID facilityId,
-      String startTime, String endTime, Map<UUID, SiglusLotResponse> siglusLotResponseByLotId) {
+      String startTime, String endTime, Set<UUID> orderableIds, String type,
+      Map<UUID, SiglusLotResponse> siglusLotResponseByLotId) {
     organizationIdToName = mapOrganizationIdToName();
     Map<UUID, Map<LocalDate, CalculatedStockOnHandDto>> stockOnHandDtoMap = mapStockOnHandByStockCardIdAndOccurredDate(
-        facilityId, startTime, endTime);
+        facilityId, startTime, endTime, orderableIds, type);
     Map<UUID, List<StockCardLineItem>> lineItemByOrderableIdMap = mapStockCardLineItemByOrderableId(facilityId,
-        startTime, endTime);
+        startTime, endTime, orderableIds, type);
     return getStockMovementItemDtosMap(stockOnHandDtoMap, lineItemByOrderableIdMap, siglusLotResponseByLotId);
   }
 
@@ -239,9 +276,14 @@ public class SiglusStockCardLineItemService {
   }
 
   private Map<UUID, List<StockCardLineItem>> mapStockCardLineItemByOrderableId(UUID facilityId, String startTime,
-      String endTime) {
-    List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
-        .findByFacilityIdAndIdStartTimeEndTime(facilityId, startTime, endTime);
+      String endTime, Set<UUID> orderableIds, String type) {
+    List<StockCardLineItem> stockCardLineItems = null;
+    if (FieldConstants.DELETE.equals(type)) {
+      stockCardLineItems = stockCardLineItemRepository.findByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
+    } else {
+      stockCardLineItems = stockCardLineItemRepository
+          .findByFacilityIdAndIdStartTimeEndTime(facilityId, startTime, endTime);
+    }
     if (stockCardLineItems == null) {
       return Collections.emptyMap();
     }
@@ -250,9 +292,15 @@ public class SiglusStockCardLineItemService {
   }
 
   private Map<UUID, Map<LocalDate, CalculatedStockOnHandDto>> mapStockOnHandByStockCardIdAndOccurredDate(
-      UUID facilityId, String startTime, String endTime) {
-    List<CalculatedStockOnHand> calculatedStockOnHands = calculatedStockOnHandRepository
-        .findByFacilityIdAndIdStartTimeEndTime(facilityId, startTime, endTime);
+      UUID facilityId, String startTime, String endTime, Set<UUID> orderableIds, String type) {
+    List<CalculatedStockOnHand> calculatedStockOnHands = null;
+    if (FieldConstants.DELETE.equals(type)) {
+      calculatedStockOnHands = calculatedStockOnHandRepository
+          .findByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
+    } else {
+      calculatedStockOnHands = calculatedStockOnHandRepository
+          .findByFacilityIdAndIdStartTimeEndTime(facilityId, startTime, endTime);
+    }
     if (calculatedStockOnHands.isEmpty()) {
       return Collections.emptyMap();
     }

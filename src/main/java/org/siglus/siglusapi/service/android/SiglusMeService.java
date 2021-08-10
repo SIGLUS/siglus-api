@@ -72,6 +72,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
+import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
@@ -129,8 +130,8 @@ public class SiglusMeService {
   private final AndroidHelper androidHelper;
   private final ReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
-  private final AndroidCreateRequisitionService androidCreateRequisitionService;
-  private final AndroidSearchRequisitionService androidSearchRequisitionService;
+  private final RequisitionCreateService requisitionCreateService;
+  private final RequisitionSearchService requisitionSearchService;
   private final AndroidTemplateConfigProperties androidTemplateConfigProperties;
   private final SiglusProofOfDeliveryRepository podRepo;
   private final SiglusOrderService orderService;
@@ -227,20 +228,24 @@ public class SiglusMeService {
     stockCardSyncService.createStockCards(requests);
   }
 
+  public void deleteStockCardByProduct(List<StockCardDeleteRequest> stockCardDeleteRequests) {
+    stockCardSyncService.deleteStockCardByProduct(stockCardDeleteRequests);
+  }
+
   public FacilityProductMovementsResponse getProductMovements(String startTime, String endTime) {
-    return stockCardSyncService.getProductMovements(startTime, endTime);
+    return stockCardSyncService.getProductMovementsByTime(startTime, endTime);
   }
 
   public RequisitionResponse getRequisitionResponse(String startDate) {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     Map<UUID, String> orderableIdToCode = getOrderableIdToCode(getAllApprovedProducts());
-    return androidSearchRequisitionService
+    return requisitionSearchService
         .getRequisitionResponseByFacilityIdAndDate(facilityId, startDate, orderableIdToCode);
   }
 
   public void createRequisition(RequisitionCreateRequest request) {
     try {
-      androidCreateRequisitionService.createRequisition(request);
+      requisitionCreateService.createRequisition(request);
     } catch (Exception e) {
       try {
         backupRequisitionRequest(request, e);

@@ -182,10 +182,10 @@ public class SiglusMeServiceTest {
   private SiglusRequisitionRepository requisitionRepository;
 
   @Mock
-  private AndroidCreateRequisitionService androidCreateRequisitionService;
+  private RequisitionCreateService requisitionCreateService;
 
   @Mock
-  private AndroidSearchRequisitionService androidSearchRequisitionService;
+  private RequisitionSearchService requisitionSearchService;
 
   @Mock
   private AndroidTemplateConfigProperties androidTemplateConfigProperties;
@@ -447,8 +447,7 @@ public class SiglusMeServiceTest {
     Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemMap = new HashMap<>();
     stockMovementItemMap.put(productId1, new ArrayList<>());
     stockMovementItemMap.put(productId2, new ArrayList<>());
-    when(
-        stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any()))
+    when(stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any(), any(), any()))
         .thenReturn(stockMovementItemMap);
     FacilityProductMovementsResponse productMovementsResponse = service.getProductMovements("2021-06-30", "2021-07-01");
     List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
@@ -465,8 +464,7 @@ public class SiglusMeServiceTest {
     Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemMap = new HashMap<>();
     stockMovementItemMap.put(productId1, new ArrayList<>());
     stockMovementItemMap.put(productId2, new ArrayList<>());
-    when(
-        stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any()))
+    when(stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any(), any(), any()))
         .thenReturn(stockMovementItemMap);
     FacilityProductMovementsResponse productMovementsResponse = service.getProductMovements("2021-06-30", "2021-07-01");
     List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
@@ -481,8 +479,8 @@ public class SiglusMeServiceTest {
   @Test
   public void shouldGetProductMovementResponsesWhenNoMovement() {
     createSohValueByIsNolot(false);
-    when(
-        stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any())).thenReturn(emptyMap());
+    when(stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any(), any(), any()))
+        .thenReturn(emptyMap());
     FacilityProductMovementsResponse productMovementsResponse = service.getProductMovements("2021-06-30", "2021-07-01");
     List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
     ProductMovementResponse response = productMovementsResponseList.stream()
@@ -561,7 +559,7 @@ public class SiglusMeServiceTest {
     service.createRequisition(requisitionRequest);
 
     // then
-    verify(androidCreateRequisitionService).createRequisition(requisitionRequest);
+    verify(requisitionCreateService).createRequisition(requisitionRequest);
   }
 
   @Test
@@ -570,7 +568,7 @@ public class SiglusMeServiceTest {
     service.getRequisitionResponse("2021-05-01");
 
     // then
-    verify(androidSearchRequisitionService).getRequisitionResponseByFacilityIdAndDate(any(), any(), any());
+    verify(requisitionSearchService).getRequisitionResponseByFacilityIdAndDate(any(), any(), any());
   }
 
   @Test
@@ -578,14 +576,14 @@ public class SiglusMeServiceTest {
     // given
     RequisitionCreateRequest requisitionRequest = buildRequisitionCreateRequest();
     when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
-    doThrow(new NullPointerException()).when(androidCreateRequisitionService).createRequisition(requisitionRequest);
+    doThrow(new NullPointerException()).when(requisitionCreateService).createRequisition(requisitionRequest);
 
     try {
       // when
       service.createRequisition(requisitionRequest);
     } catch (Exception e) {
       // then
-      verify(androidCreateRequisitionService).createRequisition(requisitionRequest);
+      verify(requisitionCreateService).createRequisition(requisitionRequest);
       verify(requisitionRequestBackupRepository).save(requestBackupArgumentCaptor.capture());
     }
   }
@@ -597,14 +595,14 @@ public class SiglusMeServiceTest {
     RequisitionRequestBackup backup = new RequisitionRequestBackup();
     when(requisitionRequestBackupRepository.findOneByHash(anyString())).thenReturn(backup);
     doThrow(new ConstraintViolationException(Collections.emptySet()))
-        .when(androidCreateRequisitionService).createRequisition(requisitionRequest);
+        .when(requisitionCreateService).createRequisition(requisitionRequest);
 
     try {
       // when
       service.createRequisition(requisitionRequest);
     } catch (Exception e) {
       // then
-      verify(androidCreateRequisitionService).createRequisition(requisitionRequest);
+      verify(requisitionCreateService).createRequisition(requisitionRequest);
       verify(requisitionRequestBackupRepository, times(0)).save(backup);
     }
   }
@@ -614,7 +612,7 @@ public class SiglusMeServiceTest {
     // given
     RequisitionCreateRequest requisitionRequest = new RequisitionCreateRequest();
     doThrow(new ConstraintViolationException(Collections.emptySet()))
-        .when(androidCreateRequisitionService).createRequisition(requisitionRequest);
+        .when(requisitionCreateService).createRequisition(requisitionRequest);
     // when
     try {
       // when
