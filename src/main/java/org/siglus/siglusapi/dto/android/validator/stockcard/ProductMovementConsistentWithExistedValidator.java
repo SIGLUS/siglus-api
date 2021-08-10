@@ -74,6 +74,7 @@ public class ProductMovementConsistentWithExistedValidator implements
     actualContext.addExpressionVariable("failedByContinuity", false);
     actualContext.addExpressionVariable(FAILED_BY_SAME_LOT, false);
     actualContext.addExpressionVariable(FAILED_BY_SAME_PRODUCT, false);
+    actualContext.addExpressionVariable("failedByNew", false);
     Map<String, List<ProductMovement>> existed = service.getLatestProductMovements().stream()
         .collect(groupingBy(ProductMovement::getProductCode));
     if (!validateToTheExisted(value, existed, actualContext)) {
@@ -282,21 +283,12 @@ public class ProductMovementConsistentWithExistedValidator implements
     actualContext.addExpressionVariable(RECORDED_AT, newProduct.getRecordedAt());
     int initInventory = newProduct.getStockOnHand() - newProduct.getQuantity();
     if (initInventory != 0) {
-      actualContext.addExpressionVariable("failedByNewProduct", true);
+      actualContext.addExpressionVariable("failedByNew", true);
       actualContext.addExpressionVariable(INIT_INVENTORY, initInventory);
+      actualContext.addExpressionVariable("formerInventory", 0);
       return false;
     }
-    return newProduct.getLotEvents().stream().allMatch(l -> validateNewLot(l, actualContext));
-  }
-
-  private boolean validateNewLot(StockCardLotEventRequest newLot, HibernateConstraintValidatorContext actualContext) {
-    actualContext.addExpressionVariable("getLotCode", newLot.getLotCode());
-    int initInventory = newLot.getStockOnHand() - newLot.getQuantity();
-    if (initInventory != 0) {
-      actualContext.addExpressionVariable("failedByNewProduct", true);
-      actualContext.addExpressionVariable(INIT_INVENTORY, initInventory);
-      return false;
-    }
+    // lot inventory will be handled in the LotStockConsistentWithExistedValidator
     return true;
   }
 

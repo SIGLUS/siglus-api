@@ -1,0 +1,81 @@
+[
+  {
+    "productCode": "08O05Y",
+    "quantity": -200,
+    "stockOnHand": 0,
+    "type": "ISSUE",
+    "signature": "Mh",
+    "occurredDate": "2021-08-06",
+    "processedDate": "2021-08-06T08:48:58.690Z",
+    "documentationNo": null,
+    "reason": null,
+    "requested": 200,
+    "lotEventList": [
+      {
+        "quantity": -200,
+        "stockOnHand": 0,
+        "lotNumber": "SME-LOTE-08O05Y-072021",
+        "expirationDate": "2023-07-31",
+        "documentationNo": "",
+        "reasonName": "PUB_PHARMACY"
+      }
+    ]
+  },
+  {
+    "productCode": "08O05Y",
+    "quantity": 0,
+    "stockOnHand": 0,
+    "type": "PHYSICAL_INVENTORY",
+    "signature": "Mh",
+    "occurredDate": "2021-08-06",
+    "processedDate": "2021-08-06T08:49:13.784Z",
+    "documentationNo": null,
+    "reason": null,
+    "requested": null,
+    "lotEventList": []
+  },
+  {
+    "productCode": "08O05Y",
+    "quantity": 200,
+    "stockOnHand": 200,
+    "type": "RECEIVE",
+    "signature": "Mh",
+    "occurredDate": "2021-08-06",
+    "processedDate": "2021-08-06T08:52:42.063Z",
+    "documentationNo": null,
+    "reason": null,
+    "requested": null,
+    "lotEventList": [
+      {
+        "quantity": 200,
+        "stockOnHand": 200,
+        "lotNumber": "SME-LOTE-08O05Y-072021",
+        "expirationDate": "2023-07-31",
+        "documentationNo": "",
+        "reasonName": "DISTRICT_DDM"
+      }
+    ]
+  },
+  {
+    "productCode": "08O05Y",
+    "quantity": 100,
+    "stockOnHand": 300,
+    "type": "RECEIVE",
+    "signature": "Mh",
+    "occurredDate": "2021-08-08",
+    "processedDate": "2021-08-08T08:52:42.063Z",
+    "documentationNo": null,
+    "reason": null,
+    "requested": null,
+    "lotEventList": [
+      {
+        "quantity": 100,
+        "stockOnHand": 300,
+        "lotNumber": "SME-LOTE-08O05Y-072021",
+        "expirationDate": "2023-07-31",
+        "documentationNo": "",
+        "reasonName": "DISTRICT_DDM"
+      }
+    ]
+  }
+]
