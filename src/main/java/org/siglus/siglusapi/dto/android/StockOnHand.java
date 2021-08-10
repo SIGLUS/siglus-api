@@ -54,9 +54,9 @@ public class StockOnHand {
             .filter(s -> s.getEventTime().compareTo(noStock.getEventTime()) < 0)
             .forEach(s -> s.setEventTime(noStock.getEventTime()));
       }
-      this.noStocks = noStocks.stream().collect(toMap(ProductLotStock::getCode, Function.identity()));
-      this.lotStocks = lotStocks.stream().collect(toMap(ProductLotStock::getCode, Function.identity()));
     }
+    this.noStocks = noStocks.stream().collect(toMap(ProductLotStock::getCode, Function.identity()));
+    this.lotStocks = lotStocks.stream().collect(toMap(ProductLotStock::getCode, Function.identity()));
   }
 
   @Nullable
