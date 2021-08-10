@@ -19,6 +19,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
@@ -151,9 +152,6 @@ public class SiglusFcIntegrationService {
   @Value("${dpm.facilityTypeId}")
   private UUID dpmFacilityTypeId;
 
-  @Value("${dpm.facilityTypeCode}")
-  private String dpmFacilityTypeCode;
-
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
@@ -188,10 +186,10 @@ public class SiglusFcIntegrationService {
     List<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.findAll();
     Set<UUID> dpmRequestingFacilityIds = facilityDtos
         .stream()
-        .filter(facilityDto -> dpmFacilityTypeCode.equals(facilityDto.getType().getCode()))
+        .filter(facilityDto -> DPM.equals(facilityDto.getType().getCode()))
         .map(FacilityDto::getId)
         .collect(toSet());
-    Map<UUID, String> facilityIdTofacilityCodeMap = facilityDtos
+    Map<UUID, String> facilityIdToFacilityCodeMap = facilityDtos
         .stream()
         .collect(toMap(FacilityDto::getId, FacilityDto::getCode));
 
@@ -261,7 +259,7 @@ public class SiglusFcIntegrationService {
         .lotIdToLotMap(lotIdToLotMap)
         .reasonIdToReasonMap(reasonIdToReasonMap)
         .podIdToRequisitionIdMap(podIdToRequisitionIdMap)
-        .facilityIdTofacilityCodeMap(facilityIdTofacilityCodeMap)
+        .facilityIdTofacilityCodeMap(facilityIdToFacilityCodeMap)
         .shipmenIdToPodExtensionMap(shipmenIdToPodExtensionMap)
         .build();
 

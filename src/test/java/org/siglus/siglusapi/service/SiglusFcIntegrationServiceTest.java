@@ -160,8 +160,6 @@ public class SiglusFcIntegrationServiceTest {
 
   private final UUID dpmFacilityTypeId = UUID.randomUUID();
 
-  private final String dpmFacilityTypeCode = "DPM";
-
   private final UUID dpmSupervisoryNodeId = UUID.randomUUID();
 
   private final UUID fcFacilityTypeId = UUID.randomUUID();
@@ -255,12 +253,8 @@ public class SiglusFcIntegrationServiceTest {
 
   @Before
   public void prepare() {
-    ReflectionTestUtils
-        .setField(siglusFcIntegrationService, "dpmFacilityTypeId", dpmFacilityTypeId);
-    ReflectionTestUtils
-        .setField(siglusFcIntegrationService, "dpmFacilityTypeCode", dpmFacilityTypeCode);
-    ReflectionTestUtils
-        .setField(siglusFcIntegrationService, "fcFacilityTypeId", fcFacilityTypeId);
+    ReflectionTestUtils.setField(siglusFcIntegrationService, "dpmFacilityTypeId", dpmFacilityTypeId);
+    ReflectionTestUtils.setField(siglusFcIntegrationService, "fcFacilityTypeId", fcFacilityTypeId);
     mockSupervisoryNodeInfo();
     when(dateHelper.getTodayDateStr()).thenReturn(today);
     mockRequisitionInfo(dpmSupervisoryNodeId);

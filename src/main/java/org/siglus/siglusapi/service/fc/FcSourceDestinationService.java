@@ -15,6 +15,20 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.AC;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.AI;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.CS;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.DDM;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.HC;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.HD;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.HG;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.HM;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.HP;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.HPSIQ;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.HR;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.OUTROS;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.PS;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 
 import com.google.common.collect.Lists;
@@ -35,7 +49,6 @@ import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @SuppressWarnings({"PMD.TooManyMethods"})
@@ -54,48 +67,6 @@ public class FcSourceDestinationService {
   @Autowired
   private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
 
-  @Value("${cs.facilityTypeCode}")
-  private String csFacilityTypeCode;
-
-  @Value("${ps.facilityTypeCode}")
-  private String psFacilityTypeCode;
-
-  @Value("${hg.facilityTypeCode}")
-  private String hgFacilityTypeCode;
-
-  @Value("${hp.facilityTypeCode}")
-  private String hpFacilityTypeCode;
-
-  @Value("${hr.facilityTypeCode}")
-  private String hrFacilityTypeCode;
-
-  @Value("${hd.facilityTypeCode}")
-  private String hdFacilityTypeCode;
-
-  @Value("${outros.facilityTypeCode}")
-  private String outrosFacilityTypeCode;
-
-  @Value("${hpsiq.facilityTypeCode}")
-  private String hpsiqFacilityTypeCode;
-
-  @Value("${hm.facilityTypeCode}")
-  private String hmFacilityTypeCode;
-
-  @Value("${ddm.facilityTypeCode}")
-  private String ddmFacilityTypeCode;
-
-  @Value("${dpm.facilityTypeCode}")
-  private String dpmFacilityTypeCode;
-
-  @Value("${hc.facilityTypeCode}")
-  private String hcFacilityTypeCode;
-
-  @Value("${ai.facilityTypeCode}")
-  private String aiFacilityTypeCode;
-
-  @Value("${warehouse.facilityTypeCode}")
-  private String warehouseFacilityTypeCode;
-
   private UUID arvProgramId;
 
   private UUID mpProgramId;
@@ -112,33 +83,29 @@ public class FcSourceDestinationService {
       node.setReferenceId(facility.getId());
       node = nodeRepository.save(node);
       String code = facility.getType().getCode();
-      List<String> csAndPsInCountryLevel = Lists.newArrayList(csFacilityTypeCode,
-          psFacilityTypeCode);
+      List<String> csAndPsInCountryLevel = Lists.newArrayList(CS, PS);
       List<String> hgAndHpAndHrAndHdAndOutRosAndHpSiqAndHmInCountryLevel =
-          Lists.newArrayList(hgFacilityTypeCode, hpFacilityTypeCode, hrFacilityTypeCode,
-              hdFacilityTypeCode, outrosFacilityTypeCode, hpsiqFacilityTypeCode,
-              hmFacilityTypeCode);
-      List<String> dpmAndAiInProvinceLevel = Lists.newArrayList(dpmFacilityTypeCode,
-          aiFacilityTypeCode);
+          Lists.newArrayList(HG, HP, HR, HD, OUTROS, HPSIQ, HM);
+      List<String> dpmAndAiInProvinceLevel = Lists.newArrayList(DPM, AI);
       if (csAndPsInCountryLevel.contains(code)) {
         createForHfOrPsInCountryLevel(node);
       } else if (hgAndHpAndHrAndHdAndOutRosAndHpSiqAndHmInCountryLevel.contains(code)) {
         createForHgAndHpAndHrAndHdAndOutrosAndHpsiqAndHmInCountryLevel(node);
-      } else if (code.equalsIgnoreCase(ddmFacilityTypeCode)) {
+      } else if (code.equalsIgnoreCase(DDM)) {
         createForDdmInDistrictLevel(node);
       } else if (dpmAndAiInProvinceLevel.contains(code)) {
         createForDpmOrAiInProvinceLevel(node, code);
-      } else if (code.equals(hcFacilityTypeCode)) {
+      } else if (code.equals(HC)) {
         createForHcInSpecificProvinceLevel(node);
-      } else if (code.equalsIgnoreCase(warehouseFacilityTypeCode)) {
+      } else if (code.equalsIgnoreCase(AC)) {
         createForWarehouse(node);
       }
     });
   }
 
   private void createForHfOrPsInCountryLevel(Node node) {
-    UUID ddmFacilityTypeId = facilityTypeCodeToIdMap.get(ddmFacilityTypeCode);
-    UUID dpmFacilityTypeId = facilityTypeCodeToIdMap.get(dpmFacilityTypeCode);
+    UUID ddmFacilityTypeId = facilityTypeCodeToIdMap.get(DDM);
+    UUID dpmFacilityTypeId = facilityTypeCodeToIdMap.get(DPM);
     assignDestination(node, ddmFacilityTypeId, mpProgramId);
     assignDestination(node, dpmFacilityTypeId, rapidTestProgramId);
     assignDestination(node, dpmFacilityTypeId, arvProgramId);
@@ -146,29 +113,29 @@ public class FcSourceDestinationService {
   }
 
   private void createForHgAndHpAndHrAndHdAndOutrosAndHpsiqAndHmInCountryLevel(Node node) {
-    UUID dpmFacilityTypeId = facilityTypeCodeToIdMap.get(dpmFacilityTypeCode);
+    UUID dpmFacilityTypeId = facilityTypeCodeToIdMap.get(DPM);
     assignDestinationForAllProgram(node, dpmFacilityTypeId);
     assignAiTypeDestinationForAllProgram(node);
   }
 
   private void createForDdmInDistrictLevel(Node node) {
-    assignDestination(node, facilityTypeCodeToIdMap.get(dpmFacilityTypeCode), mpProgramId);
-    assignSource(node, facilityTypeCodeToIdMap.get(csFacilityTypeCode), mpProgramId);
-    assignSource(node, facilityTypeCodeToIdMap.get(psFacilityTypeCode), mpProgramId);
+    assignDestination(node, facilityTypeCodeToIdMap.get(DPM), mpProgramId);
+    assignSource(node, facilityTypeCodeToIdMap.get(CS), mpProgramId);
+    assignSource(node, facilityTypeCodeToIdMap.get(PS), mpProgramId);
   }
 
   private void createForDpmOrAiInProvinceLevel(Node node, String code) {
     assignWarehouseTypeDestinationForAllProgram(node);
-    UUID csFacilityTypeId = facilityTypeCodeToIdMap.get(csFacilityTypeCode);
-    UUID psFacilityTypeId = facilityTypeCodeToIdMap.get(psFacilityTypeCode);
-    UUID ddmFacilityTypeId = facilityTypeCodeToIdMap.get(ddmFacilityTypeCode);
+    UUID csFacilityTypeId = facilityTypeCodeToIdMap.get(CS);
+    UUID psFacilityTypeId = facilityTypeCodeToIdMap.get(PS);
+    UUID ddmFacilityTypeId = facilityTypeCodeToIdMap.get(DDM);
     assignSource(node, csFacilityTypeId, rapidTestProgramId);
     assignSource(node, csFacilityTypeId, arvProgramId);
     assignSource(node, psFacilityTypeId, rapidTestProgramId);
     assignSource(node, psFacilityTypeId, arvProgramId);
-    if (dpmFacilityTypeCode.equalsIgnoreCase(code)) {
+    if (DPM.equalsIgnoreCase(code)) {
       assignSource(node, ddmFacilityTypeId, mpProgramId);
-    } else if (aiFacilityTypeCode.equalsIgnoreCase(code)) {
+    } else if (AI.equalsIgnoreCase(code)) {
       assignSource(node, csFacilityTypeId, mpProgramId);
       assignSource(node, psFacilityTypeId, mpProgramId);
     }
@@ -180,21 +147,21 @@ public class FcSourceDestinationService {
   }
 
   private void createForWarehouse(Node node) {
-    UUID dpmFacilityTypeId = facilityTypeCodeToIdMap.get(dpmFacilityTypeCode);
-    UUID aiFacilityTypeId = facilityTypeCodeToIdMap.get(aiFacilityTypeCode);
-    UUID hcFacilityTypeId = facilityTypeCodeToIdMap.get(hcFacilityTypeCode);
+    UUID dpmFacilityTypeId = facilityTypeCodeToIdMap.get(DPM);
+    UUID aiFacilityTypeId = facilityTypeCodeToIdMap.get(AI);
+    UUID hcFacilityTypeId = facilityTypeCodeToIdMap.get(HC);
     assignSourceForAllProgram(node, dpmFacilityTypeId);
     assignSourceForAllProgram(node, aiFacilityTypeId);
     assignSourceForAllProgram(node, hcFacilityTypeId);
   }
 
   private void assignAiTypeDestinationForAllProgram(Node node) {
-    UUID aiFacilityTypeId = facilityTypeCodeToIdMap.get(aiFacilityTypeCode);
+    UUID aiFacilityTypeId = facilityTypeCodeToIdMap.get(AI);
     assignDestinationForAllProgram(node, aiFacilityTypeId);
   }
 
   private void assignWarehouseTypeDestinationForAllProgram(Node node) {
-    UUID warehouseFacilityTypeId = facilityTypeCodeToIdMap.get(warehouseFacilityTypeCode);
+    UUID warehouseFacilityTypeId = facilityTypeCodeToIdMap.get(AC);
     assignDestinationForAllProgram(node, warehouseFacilityTypeId);
   }
 
@@ -205,19 +172,19 @@ public class FcSourceDestinationService {
   }
 
   private void assignHgAndHpAndHrAndHdAndOutrosAndHpsiqAndHmInCountryLevelType(Node node) {
-    UUID hgFacilityTypeId = facilityTypeCodeToIdMap.get(hgFacilityTypeCode);
+    UUID hgFacilityTypeId = facilityTypeCodeToIdMap.get(HG);
     assignSourceForAllProgram(node, hgFacilityTypeId);
-    UUID hpFacilityTypeId = facilityTypeCodeToIdMap.get(hpFacilityTypeCode);
+    UUID hpFacilityTypeId = facilityTypeCodeToIdMap.get(HP);
     assignSourceForAllProgram(node, hpFacilityTypeId);
-    UUID hrFacilityTypeId = facilityTypeCodeToIdMap.get(hrFacilityTypeCode);
+    UUID hrFacilityTypeId = facilityTypeCodeToIdMap.get(HR);
     assignSourceForAllProgram(node, hrFacilityTypeId);
-    UUID hdFacilityTypeId = facilityTypeCodeToIdMap.get(hdFacilityTypeCode);
+    UUID hdFacilityTypeId = facilityTypeCodeToIdMap.get(HD);
     assignSourceForAllProgram(node, hdFacilityTypeId);
-    UUID outRosFacilityTypeId = facilityTypeCodeToIdMap.get(outrosFacilityTypeCode);
+    UUID outRosFacilityTypeId = facilityTypeCodeToIdMap.get(OUTROS);
     assignSourceForAllProgram(node, outRosFacilityTypeId);
-    UUID hpSiqFacilityTypeId = facilityTypeCodeToIdMap.get(hpsiqFacilityTypeCode);
+    UUID hpSiqFacilityTypeId = facilityTypeCodeToIdMap.get(HPSIQ);
     assignSourceForAllProgram(node, hpSiqFacilityTypeId);
-    UUID hmFacilityTypeId = facilityTypeCodeToIdMap.get(hmFacilityTypeCode);
+    UUID hmFacilityTypeId = facilityTypeCodeToIdMap.get(HM);
     assignSourceForAllProgram(node, hmFacilityTypeId);
   }
 

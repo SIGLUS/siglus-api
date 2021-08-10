@@ -20,6 +20,10 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.AI;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.CS;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.DDM;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +44,6 @@ import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataServic
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcSourceDestinationServiceTest {
@@ -62,39 +65,11 @@ public class FcSourceDestinationServiceTest {
 
   private final Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
-  private final String hfFacilityTypeCode = "CS";
-
-  private final String psFacilityTypeCode = "PS";
-
-  private final String hgFacilityTypeCode = "HG";
-
-  private final String hpFacilityTypeCode = "HP";
-
-  private final String hrFacilityTypeCode = "HR";
-
-  private final String hdFacilityTypeCode = "HD";
-
-  private final String outrosFacilityTypeCode = "OUTROS";
-
-  private final String hpsiqFacilityTypeCode = "HP";
-
-  private final String hmFacilityTypeCode = "HM";
-
-  private final String hcFacilityTypeCode = "HC";
-
-  private final String aiFacilityTypeCode = "AI";
-
   private final UUID hfFacilityTypeId = UUID.randomUUID();
-
-  private final String ddmFacilityTypeCode = "DDM";
 
   private final UUID ddmFacilityTypeId = UUID.randomUUID();
 
-  private final String dpmFacilityTypeCode = "DPM";
-
   private final UUID dpmFacilityTypeId = UUID.randomUUID();
-
-  private final String warehouseFacilityTypeCode = "AC";
 
   private final UUID warehouseFacilityTypeId = UUID.randomUUID();
 
@@ -112,34 +87,6 @@ public class FcSourceDestinationServiceTest {
 
   @Before
   public void prepare() {
-    ReflectionTestUtils.setField(fcSourceDestinationService, "csFacilityTypeCode",
-        hfFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "psFacilityTypeCode",
-        psFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "hgFacilityTypeCode",
-        hgFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "hpFacilityTypeCode",
-        hpFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "hrFacilityTypeCode",
-        hrFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "hdFacilityTypeCode",
-        hdFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "outrosFacilityTypeCode",
-        outrosFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "hpsiqFacilityTypeCode",
-        hpsiqFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "hmFacilityTypeCode",
-        hmFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "hcFacilityTypeCode",
-        hcFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "aiFacilityTypeCode",
-        aiFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "ddmFacilityTypeCode",
-        ddmFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "dpmFacilityTypeCode",
-        dpmFacilityTypeCode);
-    ReflectionTestUtils.setField(fcSourceDestinationService, "warehouseFacilityTypeCode",
-        warehouseFacilityTypeCode);
     mockFacilityType();
     mockProgram();
   }
@@ -200,16 +147,16 @@ public class FcSourceDestinationServiceTest {
 
   private void mockFacilityType() {
     FacilityTypeDto hfFacilityType = new FacilityTypeDto();
-    hfFacilityType.setCode(hfFacilityTypeCode);
+    hfFacilityType.setCode(CS);
     hfFacilityType.setId(hfFacilityTypeId);
     FacilityTypeDto ddmFacilityType = new FacilityTypeDto();
-    ddmFacilityType.setCode(ddmFacilityTypeCode);
+    ddmFacilityType.setCode(DDM);
     ddmFacilityType.setId(ddmFacilityTypeId);
     FacilityTypeDto dpmFacilityType = new FacilityTypeDto();
-    dpmFacilityType.setCode(dpmFacilityTypeCode);
+    dpmFacilityType.setCode(DPM);
     dpmFacilityType.setId(dpmFacilityTypeId);
     FacilityTypeDto whFacilityType = new FacilityTypeDto();
-    whFacilityType.setCode(warehouseFacilityTypeCode);
+    whFacilityType.setCode(AI);
     whFacilityType.setId(warehouseFacilityTypeId);
     when(facilityTypeReferenceDataService.getPage(any())).thenReturn(
         Pagination.getPage(newArrayList(hfFacilityType, ddmFacilityType, dpmFacilityType,
@@ -226,8 +173,7 @@ public class FcSourceDestinationServiceTest {
     ProgramDto rapidTestProgram = new ProgramDto();
     rapidTestProgram.setCode(rapidTestProgramCode);
     rapidTestProgram.setId(rapidTestProgramId);
-    when(programReferenceDataService.findAll())
-        .thenReturn(newArrayList(arvProgram, mpProgram, rapidTestProgram));
+    when(programReferenceDataService.findAll()).thenReturn(newArrayList(arvProgram, mpProgram, rapidTestProgram));
   }
 
   private List<FacilityDto> buildFacility(UUID facilityTypeId, String typeCode) {
