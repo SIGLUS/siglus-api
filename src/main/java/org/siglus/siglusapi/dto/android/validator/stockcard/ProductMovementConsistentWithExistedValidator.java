@@ -39,7 +39,7 @@ import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
-import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.siglus.siglusapi.service.android.StockCardSyncService;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -59,7 +59,7 @@ public class ProductMovementConsistentWithExistedValidator implements
   private static final String INIT_INVENTORY = "initInventory";
   private static final String LOT_CODE = "lotCode";
 
-  private final SiglusMeService service;
+  private final StockCardSyncService service;
 
   @Override
   public void initialize(ProductMovementConsistentWithExisted constraintAnnotation) {

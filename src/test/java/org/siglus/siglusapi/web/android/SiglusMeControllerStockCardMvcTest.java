@@ -69,6 +69,7 @@ import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.siglus.siglusapi.service.android.StockCardSyncService;
 import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.springframework.http.MediaType;
@@ -111,6 +112,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
 
   @InjectMocks
   private CreateStockCardContextHolder holder;
+  @InjectMocks
+  private StockCardSyncService stockCardSyncService;
 
   private final UUID facilityId = UUID.randomUUID();
   private final UUID facilityTypeId = UUID.randomUUID();
@@ -124,7 +127,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     mockApprovedProducts();
     mockSourceDestinations();
     mockReasons();
-    ReflectionTestUtils.setField(service, "createStockCardContextHolder", holder);
+    ReflectionTestUtils.setField(stockCardSyncService, "createStockCardContextHolder", holder);
+    ReflectionTestUtils.setField(service, "stockCardSyncService", stockCardSyncService);
     SiglusMeController controller = new SiglusMeController(service);
     this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
   }

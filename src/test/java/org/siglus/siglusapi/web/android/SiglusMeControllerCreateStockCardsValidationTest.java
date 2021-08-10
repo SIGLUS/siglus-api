@@ -54,7 +54,7 @@ import org.siglus.siglusapi.dto.android.validator.stockcard.KitProductEmptyLotsV
 import org.siglus.siglusapi.dto.android.validator.stockcard.LotStockConsistentWithExistedValidator;
 import org.siglus.siglusapi.dto.android.validator.stockcard.ProductMovementConsistentWithExistedValidator;
 import org.siglus.siglusapi.service.SiglusOrderableService;
-import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.siglus.siglusapi.service.android.StockCardSyncService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods", "unused"})
@@ -71,7 +71,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   private SiglusOrderableService orderableService;
 
   @Mock
-  private SiglusMeService service;
+  private StockCardSyncService service;
 
   private final ObjectMapper mapper = new ObjectMapper();
 

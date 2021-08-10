@@ -107,6 +107,7 @@ import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
+import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 import org.siglus.siglusapi.service.android.mapper.ProductChildMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapperImpl;
@@ -198,6 +199,12 @@ public class SiglusMeServiceTest {
   @Captor
   private ArgumentCaptor<RequisitionRequestBackup> requestBackupArgumentCaptor;
 
+  @InjectMocks
+  private CreateStockCardContextHolder holder;
+
+  @InjectMocks
+  private StockCardSyncService stockCardSyncService;
+
   @Autowired
   private ProductMapper mapper;
 
@@ -248,6 +255,8 @@ public class SiglusMeServiceTest {
   @Before
   public void prepare() {
     ReflectionTestUtils.setField(service, "mapper", mapper);
+    ReflectionTestUtils.setField(stockCardSyncService, "createStockCardContextHolder", holder);
+    ReflectionTestUtils.setField(service, "stockCardSyncService", stockCardSyncService);
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
