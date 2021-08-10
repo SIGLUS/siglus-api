@@ -455,7 +455,7 @@ public class SiglusRequisitionServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(mockUserDto(facilityId));
     when(orderableKitRepository.findAllKitProduct()).thenReturn(Collections.emptyList());
     when(orderExternalRepository.findByRequisitionId(any())).thenReturn(newArrayList());
-    when(siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(any(), any(), any()))
+    when(siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(any()))
         .thenReturn(singletonList(new RequisitionV2Dto()));
     mockSearchOrder();
     org.siglus.common.dto.referencedata.OrderableDto orderableDto =
@@ -764,7 +764,7 @@ public class SiglusRequisitionServiceTest {
     when(operatePermissionService.isEditable(any())).thenReturn(true);
     when(siglusUsageReportService.searchUsageReport(any(RequisitionV2Dto.class)))
         .thenAnswer(i -> convert((RequisitionV2Dto) i.getArguments()[0]));
-    when(siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(any(), any(), any()))
+    when(siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(any()))
         .thenReturn(Arrays.asList(new RequisitionV2Dto()));
 
     // when
@@ -772,8 +772,7 @@ public class SiglusRequisitionServiceTest {
 
     // then
     Set<VersionObjectReferenceDto> availableProducts = requisition.getAvailableProducts();
-    verify(siglusRequisitionRequisitionService)
-        .getPreviousEmergencyRequisition(any(), any(), any());
+    verify(siglusRequisitionRequisitionService).getPreviousEmergencyRequisition(any());
     assertEquals(1, availableProducts.size());
     assertThat(availableProducts,
         hasItems(productVersionObjectReference2));
@@ -793,14 +792,11 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
-    verify(siglusRequisitionRequisitionService)
-        .getPreviousEmergencyRequisition(any(), any(), any());
+    verify(siglusRequisitionRequisitionService).getPreviousEmergencyRequisition(any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(2, availableProducts.size());
-    assertThat(availableProducts,
-        hasItems(productVersionObjectReference2));
-    assertThat(availableProducts,
-        hasItems(productVersionObjectReference1));
+    assertThat(availableProducts, hasItems(productVersionObjectReference2));
+    assertThat(availableProducts, hasItems(productVersionObjectReference1));
   }
 
   @Test
@@ -811,19 +807,16 @@ public class SiglusRequisitionServiceTest {
     when(siglusRequisitionRequisitionService.searchRequisitions(any(), any()))
         .thenReturn(new PageImpl<>(asList(newBasicReq, previousBasicReq1)));
     when(filterProductService.getInProgressProducts(any())).thenReturn(Collections.emptySet());
-    when(filterProductService.getNotFullyShippedProducts(any()))
-        .thenReturn(Sets.newHashSet(productId1));
+    when(filterProductService.getNotFullyShippedProducts(any())).thenReturn(Sets.newHashSet(productId1));
 
     // when
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
-    verify(siglusRequisitionRequisitionService)
-        .getPreviousEmergencyRequisition(any(), any(), any());
+    verify(siglusRequisitionRequisitionService).getPreviousEmergencyRequisition(any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(1, availableProducts.size());
-    assertThat(availableProducts,
-        hasItems(productVersionObjectReference2));
+    assertThat(availableProducts, hasItems(productVersionObjectReference2));
   }
 
   @Test
@@ -839,12 +832,10 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
-    verify(siglusRequisitionRequisitionService)
-        .getPreviousEmergencyRequisition(any(), any(), any());
+    verify(siglusRequisitionRequisitionService).getPreviousEmergencyRequisition(any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(1, availableProducts.size());
-    assertThat(availableProducts,
-        hasItems(productVersionObjectReference2));
+    assertThat(availableProducts, hasItems(productVersionObjectReference2));
   }
 
   @Test
@@ -860,12 +851,10 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
-    verify(siglusRequisitionRequisitionService)
-        .getPreviousEmergencyRequisition(any(), any(), any());
+    verify(siglusRequisitionRequisitionService).getPreviousEmergencyRequisition(any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(1, availableProducts.size());
-    assertThat(availableProducts,
-        hasItems(productVersionObjectReference2));
+    assertThat(availableProducts, hasItems(productVersionObjectReference2));
   }
 
   @Test
@@ -1008,7 +997,7 @@ public class SiglusRequisitionServiceTest {
     lineItem.setRemarks("123");
     lineItem.setSkipped(true);
     Requisition requisition = new Requisition();
-    requisition.setRequisitionLineItems(Arrays.asList(lineItem));
+    requisition.setRequisitionLineItems(singletonList(lineItem));
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
 
     // when
@@ -1300,8 +1289,7 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionService.searchRequisition(requisitionId);
 
     // then
-    verify(siglusRequisitionRequisitionService)
-        .getPreviousEmergencyRequisition(any(), any(), any());
+    verify(siglusRequisitionRequisitionService).getPreviousEmergencyRequisition(any());
     Set<VersionObjectReferenceDto> availableProducts = verifyEmergencyReqResult();
     assertEquals(2, availableProducts.size());
     assertThat(availableProducts,
@@ -1330,11 +1318,10 @@ public class SiglusRequisitionServiceTest {
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setApprovedQuantity(10);
     lineItem.setId(UUID.randomUUID());
-    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
+    siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItem));
     siglusRequisitionDto.setStatus(AUTHORIZED);
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
-    when(requisitionV2Controller
-        .updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
+    when(requisitionV2Controller.updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
             any(HttpServletRequest.class), any(HttpServletResponse.class)))
         .thenReturn(requisitionV2Dto);
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
@@ -1388,7 +1375,7 @@ public class SiglusRequisitionServiceTest {
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setApprovedQuantity(10);
     lineItem.setId(UUID.randomUUID());
-    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
+    siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItem));
     siglusRequisitionDto.setStatus(AUTHORIZED);
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     when(requisitionV2Controller

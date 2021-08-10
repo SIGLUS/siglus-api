@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.RELEASED;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -61,10 +60,9 @@ public class SiglusFilterAddProductForEmergencyService {
   }
 
   private Set<UUID> mapToNotFullyShippedProductIds(RequisitionV2Dto requisition) {
-    List<String> orderExternals = orderExternalRepository
-        .findOrderExternalIdByRequisitionId(requisition.getId());
+    List<String> orderExternals = orderExternalRepository.findOrderExternalIdByRequisitionId(requisition.getId());
     List<UUID> externalIds = CollectionUtils.isEmpty(orderExternals)
-        ? Arrays.asList(requisition.getId())
+        ? Collections.singletonList(requisition.getId())
         : orderExternals.stream().map(UUID::fromString).collect(toList());
     Order order = orderRepository.findCanFulfillOrderByExternalIdIn(externalIds);
     if (order != null) {

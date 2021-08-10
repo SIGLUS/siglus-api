@@ -16,11 +16,14 @@
 package org.siglus.siglusapi.service.client;
 
 import static java.util.stream.Collectors.toList;
+import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIME;
 import static org.siglus.siglusapi.constant.PaginationConstants.UNPAGED;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import org.openlmis.requisition.dto.BaseDto;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
@@ -69,17 +72,22 @@ public class SiglusRequisitionRequisitionService extends BaseRequisitionService<
         BasicRequisitionDto.class, true);
   }
 
-  public List<RequisitionV2Dto> getPreviousEmergencyRequisition(UUID requisitionId, UUID periodId,
-      UUID facilityId) {
+  public List<RequisitionV2Dto> getPreviousEmergencyRequisition(Requisition requisition) {
     MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
     queryParams.set(QueryRequisitionSearchParams.EMERGENCY, Boolean.TRUE.toString());
-    queryParams.set(QueryRequisitionSearchParams.PROCESSING_PERIOD, periodId.toString());
-    queryParams.set(QueryRequisitionSearchParams.FACILITY, facilityId.toString());
+    queryParams.set(QueryRequisitionSearchParams.PROCESSING_PERIOD, requisition.getProcessingPeriodId().toString());
+    queryParams.set(QueryRequisitionSearchParams.FACILITY, requisition.getFacilityId().toString());
+    Instant clientSubmittedTime = getClientSubmittedTime(requisition.getExtraData());
     return searchRequisitions(new QueryRequisitionSearchParams(queryParams), UNPAGED)
         .getContent().stream()
-        .map(BaseDto::getId)
-        .filter(id -> !id.equals(requisitionId))
-        .map(this::searchRequisition)
+        .filter(r -> {
+          Instant previousClientSubmittedTime = getClientSubmittedTime(r.getExtraData());
+          if (clientSubmittedTime != null && previousClientSubmittedTime != null) {
+            return previousClientSubmittedTime.isBefore(clientSubmittedTime);
+          }
+          return r.getCreatedDate().isBefore(requisition.getCreatedDate());
+        })
+        .map(r -> searchRequisition(r.getId()))
         .collect(toList());
   }
 
@@ -89,6 +97,14 @@ public class SiglusRequisitionRequisitionService extends BaseRequisitionService<
 
   public void deleteRequisition(UUID id) {
     delete("requisitions/" + id.toString(), Boolean.TRUE);
+  }
+
+  private Instant getClientSubmittedTime(Map<String, Object> extraData) {
+    Object clientSubmittedTime = extraData.get(CLIENT_SUBMITTED_TIME);
+    if (clientSubmittedTime == null) {
+      return null;
+    }
+    return Instant.parse(String.valueOf(clientSubmittedTime));
   }
 
 }

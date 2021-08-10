@@ -261,8 +261,8 @@ public class SiglusOrderServiceTest {
         .thenReturn(newArrayList(extension));
     when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId))
         .thenReturn("requisitionNumber-2");
-    when(siglusRequisitionService.getPreviousEmergencyRequisition(any(), any(), any()))
-        .thenReturn(Arrays.asList(new RequisitionV2Dto()));
+    when(siglusRequisitionService.getPreviousEmergencyRequisition(any()))
+        .thenReturn(Collections.singletonList(new RequisitionV2Dto()));
     when(filterAddProductForEmergencyService.getInProgressProducts(anyList()))
         .thenReturn(Sets.newHashSet(orderableId2));
 
@@ -309,8 +309,8 @@ public class SiglusOrderServiceTest {
         .thenReturn(newArrayList(extension));
     when(siglusRequisitionExtensionService.formatRequisitionNumber(requisitionId))
         .thenReturn("requisitionNumber-3");
-    when(siglusRequisitionService.getPreviousEmergencyRequisition(any(), any(), any()))
-        .thenReturn(Arrays.asList(new RequisitionV2Dto()));
+    when(siglusRequisitionService.getPreviousEmergencyRequisition(any()))
+        .thenReturn(Collections.singletonList(new RequisitionV2Dto()));
     when(filterAddProductForEmergencyService.getInProgressProducts(anyList()))
         .thenReturn(Sets.newHashSet(orderableId2));
     when(filterAddProductForEmergencyService.getNotFullyShippedProducts(anyList()))

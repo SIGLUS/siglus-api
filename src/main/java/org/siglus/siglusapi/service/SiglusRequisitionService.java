@@ -864,10 +864,7 @@ public class SiglusRequisitionService {
   }
 
   private List<RequisitionV2Dto> getPreviousEmergencyRequisition(BaseRequisitionDto requisition) {
-    UUID periodId = requisition.getProcessingPeriod().getId();
-    UUID facilityId = requisition.getFacility().getId();
-    return siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(requisition.getId(),
-        periodId, facilityId);
+    return siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(from(requisition));
   }
 
   private void deleteExtensionForRequisition(UUID requisitionId) {
@@ -1069,6 +1066,12 @@ public class SiglusRequisitionService {
     RequisitionLineItemV2Dto requisitionLineItemV2Dto = new RequisitionLineItemV2Dto();
     BeanUtils.copyProperties(lineItem, requisitionLineItemV2Dto);
     return requisitionLineItemV2Dto;
+  }
+
+  private Requisition from(BaseRequisitionDto requisitionDto) {
+    Requisition requisition = new Requisition();
+    BeanUtils.copyProperties(requisitionDto, requisition);
+    return requisition;
   }
 
   private void filterProductsIfEmergency(RequisitionV2Dto requisition) {

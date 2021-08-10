@@ -462,14 +462,11 @@ public class SiglusOrderService {
   private Set<UUID> getEmergencyFilteredProducts(Requisition requisition) {
     Set<UUID> emergencyOrderableIds = new HashSet<>();
     if (Boolean.TRUE.equals(requisition.getEmergency())) {
-      List<RequisitionV2Dto> previousRequisitions = siglusRequisitionService
-          .getPreviousEmergencyRequisition(requisition.getId(),
-              requisition.getProcessingPeriodId(), requisition.getFacilityId());
+      List<RequisitionV2Dto> previousRequisitions =
+          siglusRequisitionService.getPreviousEmergencyRequisition(requisition);
       if (CollectionUtils.isNotEmpty(previousRequisitions)) {
-        emergencyOrderableIds
-            .addAll(filterProductService.getInProgressProducts(previousRequisitions));
-        emergencyOrderableIds
-            .addAll(filterProductService.getNotFullyShippedProducts(previousRequisitions));
+        emergencyOrderableIds.addAll(filterProductService.getInProgressProducts(previousRequisitions));
+        emergencyOrderableIds.addAll(filterProductService.getNotFullyShippedProducts(previousRequisitions));
       }
     }
     return emergencyOrderableIds;
