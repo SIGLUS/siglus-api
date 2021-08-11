@@ -101,7 +101,7 @@ public class StockManagementRepository {
             .adjustmentReason((String) arr[7])
             .adjustmentReasonType((String) arr[8])
             .inventoryReason((String) arr[9])
-            .inventoryReasonType((String) arr[9])
+            .inventoryReasonType((String) arr[10])
             .unsignedInventoryAdjustment((Integer) arr[11])
             .build()
         )
