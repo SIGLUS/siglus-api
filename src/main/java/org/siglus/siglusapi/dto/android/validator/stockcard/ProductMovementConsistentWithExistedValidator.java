@@ -254,8 +254,7 @@ public class ProductMovementConsistentWithExistedValidator implements
       actualContext.addExpressionVariable(VALUE_FROM_EXISTED, movementDetailFromExisted.getType());
       return true;
     }
-    if (movementDetailFromRequest.getReason() != null
-        && !Objects.equals(movementDetailFromRequest.getReason(), movementDetailFromExisted.getReason())) {
+    if (!istSameReason(movementDetailFromRequest, movementDetailFromExisted)) {
       actualContext.addExpressionVariable(FIELD_NAME, "reasonName");
       actualContext.addExpressionVariable(VALUE_FROM_REQUEST, movementDetailFromRequest.getReason());
       actualContext.addExpressionVariable(VALUE_FROM_EXISTED, movementDetailFromExisted.getReason());
@@ -274,6 +273,16 @@ public class ProductMovementConsistentWithExistedValidator implements
       return true;
     }
     return false;
+  }
+
+  private boolean istSameReason(MovementDetail movementDetailFromRequest, MovementDetail movementDetailFromExisted) {
+    if (movementDetailFromRequest.getReason() == null) {
+      return true;
+    }
+    if ("INVENTORY".equals(movementDetailFromExisted.getReason())) {
+      return true;
+    }
+    return Objects.equals(movementDetailFromRequest.getReason(), movementDetailFromExisted.getReason());
   }
 
   private boolean validateNewProduct(StockCardCreateRequest newProduct,
