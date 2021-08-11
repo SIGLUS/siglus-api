@@ -62,9 +62,11 @@ public interface PhysicalInventoriesRepository
       @Param("endDate") String endDate);
 
   @Query(value = "SELECT * FROM stockmanagement.physical_inventories pi "
-      + "inner join  stockmanagement.stock_cards sc "
-      + "on sc.origineventid = pi.stockeventid "
-      + "WHERE pi.facilityid = :facility "
+      + "inner join stockmanagement.stock_card_line_items scli "
+      + "on scli.origineventid = pi.stockeventid "
+      + "inner join stockmanagement.stock_cards sc "
+      + "on sc.id = scli.stockcardid "
+      + "WHERE sc.facilityid = :facility "
       + "AND sc.orderableid in :orderableIds) ", nativeQuery = true)
   List<PhysicalInventory> findByFacilityIdAndOrderableIds(
       @Param("facility") UUID facility, @Param("orderableIds") Set<UUID> orderableIds);
