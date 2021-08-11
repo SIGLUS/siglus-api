@@ -27,16 +27,13 @@ import org.siglus.common.constant.KitConstants;
 
 public class StockOnHand {
 
-  private Map<ProductLotCode, ProductLotStock> lotStocks;
+  private final Map<ProductLotCode, ProductLotStock> lotStockMap;
 
-  private Map<ProductLotCode, ProductLotStock> noStocks;
+  private final Map<ProductLotCode, ProductLotStock> noStockMap;
 
-  private Map<ProductLotCode, ProductLotStock> kitStocks;
+  private final Map<ProductLotCode, ProductLotStock> kitStockMap;
 
   public StockOnHand(List<ProductLotStock> allLotStocks) {
-    kitStocks = allLotStocks.stream()
-        .filter(s -> s.getCode().getLotCode() == null && KitConstants.isKit(s.getCode().getProductCode()))
-        .collect(toMap(ProductLotStock::getCode, Function.identity()));
     List<ProductLotStock> lotStocks = allLotStocks.stream().filter(s -> s.getCode().getLotCode() != null)
         .collect(toList());
     List<ProductLotStock> noStocks = allLotStocks.stream()
@@ -55,19 +52,22 @@ public class StockOnHand {
             .forEach(s -> s.setEventTime(noStock.getEventTime()));
       }
     }
-    this.noStocks = noStocks.stream().collect(toMap(ProductLotStock::getCode, Function.identity()));
-    this.lotStocks = lotStocks.stream().collect(toMap(ProductLotStock::getCode, Function.identity()));
+    this.noStockMap = noStocks.stream().collect(toMap(ProductLotStock::getCode, Function.identity()));
+    this.lotStockMap = lotStocks.stream().collect(toMap(ProductLotStock::getCode, Function.identity()));
+    kitStockMap = allLotStocks.stream()
+        .filter(s -> KitConstants.isKit(s.getCode().getProductCode()))
+        .collect(toMap(ProductLotStock::getCode, Function.identity()));
   }
 
   @Nullable
   public ProductLotStock findInventory(ProductLotCode code) {
-    if (kitStocks.containsKey(code)) {
-      return kitStocks.get(code);
+    if (kitStockMap.containsKey(code)) {
+      return kitStockMap.get(code);
     }
-    if (lotStocks.containsKey(code)) {
-      return lotStocks.get(code);
+    if (lotStockMap.containsKey(code)) {
+      return lotStockMap.get(code);
     }
-    return noStocks.get(ProductLotCode.of(code.getProductCode(), null));
+    return noStockMap.get(ProductLotCode.of(code.getProductCode(), null));
   }
 
 }

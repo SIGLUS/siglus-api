@@ -64,27 +64,34 @@ public class LotStockConsistentWithExistedValidator implements
         actualContext.addExpressionVariable("lotCode", productLotCode.getLotCode());
         actualContext.addExpressionVariable("occurredDate", lotEvent.getEventTime().getOccurredDate());
         actualContext.addExpressionVariable("recordedAt", lotEvent.getEventTime().getRecordedAt());
-        int initInventory = lotEvent.getStockOnHand() - lotEvent.getQuantity();
-        actualContext.addExpressionVariable("initInventory", initInventory);
         ProductLotStock inventory = stockOnHand.findInventory(productLotCode);
-        if (inventory == null) {
-          if (initInventory != 0) {
-            actualContext.addExpressionVariable("existedInventory", 0);
-            return false;
-          }
-          verified.add(productLotCode);
-          continue;
-        }
-        if (inventory.getEventTime().compareTo(lotEvent.getEventTime()) < 0) {
-          if (inventory.getInventory() != initInventory) {
-            actualContext.addExpressionVariable("existedInventory", inventory.getInventory());
-            return false;
-          }
-          verified.add(productLotCode);
+        if (invalidInventoryBeforeAdjustment(actualContext, verified, lotEvent, productLotCode, inventory)) {
+          return false;
         }
       }
     }
     return true;
+  }
+
+  private boolean invalidInventoryBeforeAdjustment(HibernateConstraintValidatorContext actualContext,
+      Set<ProductLotCode> verified, StockCardLotEventRequest lotEvent, ProductLotCode productLotCode,
+      ProductLotStock inventory) {
+    int inventoryBeforeAdjustment = lotEvent.getStockOnHand() - lotEvent.getQuantity();
+    actualContext.addExpressionVariable("inventoryBeforeAdjustment", inventoryBeforeAdjustment);
+    if (inventory != null) {
+      if (inventory.getEventTime().compareTo(lotEvent.getEventTime()) < 0
+          && inventory.getInventory() != inventoryBeforeAdjustment) {
+        actualContext.addExpressionVariable("existedInventory", inventory.getInventory());
+        return true;
+      }
+    } else {
+      if (inventoryBeforeAdjustment != 0) {
+        actualContext.addExpressionVariable("existedInventory", 0);
+        return true;
+      }
+      verified.add(productLotCode);
+    }
+    return false;
   }
 
 }

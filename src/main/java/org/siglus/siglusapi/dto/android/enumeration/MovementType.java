@@ -37,7 +37,7 @@ public enum MovementType {
     @Override
     public UUID getInventoryReasonId(UUID programId, String reason) {
       return CreateStockCardContextHolder.getContext().findReasonId(programId, reason)
-          .orElseThrow(() -> new NotFoundException("No such reason: " + reason));
+          .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reason));
     }
   },
 
@@ -75,13 +75,13 @@ public enum MovementType {
     @Override
     public String getReason(String reasonName, Integer adjustment) {
       return AdjustmentReason.findByName(reasonName).map(Enum::name)
-          .orElseThrow(() -> new NotFoundException("No such reason: " + reasonName));
+          .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reasonName));
     }
 
     @Override
     public UUID getAdjustmentReasonId(UUID programId, String reason) {
       return CreateStockCardContextHolder.getContext().findReasonId(programId, reason)
-          .orElseThrow(() -> new NotFoundException("No such reason: " + reason));
+          .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reason));
     }
 
   },
@@ -90,14 +90,15 @@ public enum MovementType {
     @Override
     public UUID getAdjustmentReasonId(UUID programId, String reason) {
       return CreateStockCardContextHolder.getContext().findReasonId(programId, "UNPACK_KIT")
-          .orElseThrow(() -> new NotFoundException("No such reason: " + reason));
+          .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reason));
     }
   };
 
   private static final String INVENTORY_NEGATIVE = "INVENTORY_NEGATIVE";
   private static final String INVENTORY_POSITIVE = "INVENTORY_POSITIVE";
   private static final String INVENTORY = "INVENTORY";
-
+  private static final String NO_SUCH_REASON = "No such reason: ";
+  
   @SuppressWarnings("unused")
   public String getReason(String reasonName, Integer adjustment) {
     return null;
