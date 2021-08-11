@@ -54,7 +54,6 @@ public interface PhysicalInventoriesRepository
 
   @Query(value = "SELECT * FROM stockmanagement.physical_inventories pi "
       + "WHERE pi.facilityid = :facility "
-      + "      AND pi.isdraft = false "
       + "      AND pi.occurreddate >= :startDate "
       + "      AND pi.occurreddate <= :endDate ", nativeQuery = true)
   List<PhysicalInventory> findByFacilityIdAndStartDateAndEndDate(
@@ -63,11 +62,10 @@ public interface PhysicalInventoriesRepository
       @Param("endDate") String endDate);
 
   @Query(value = "SELECT * FROM stockmanagement.physical_inventories pi "
-      + "inner join  stockmanagement.stock_cards c "
-      + "on c.origineventid = pi.stockeventid "
+      + "inner join  stockmanagement.stock_cards sc "
+      + "on sc.origineventid = pi.stockeventid "
       + "WHERE pi.facilityid = :facility "
-      + "AND pi.isdraft = false "
-      + "AND c.orderableid in :orderableIds) ", nativeQuery = true)
+      + "AND sc.orderableid in :orderableIds) ", nativeQuery = true)
   List<PhysicalInventory> findByFacilityIdAndOrderableIds(
       @Param("facility") UUID facility, @Param("orderableIds") Set<UUID> orderableIds);
   // [SIGLUS change end]

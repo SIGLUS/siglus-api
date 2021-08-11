@@ -18,6 +18,10 @@ package org.siglus.siglusapi.service.android;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.openlmis.stockmanagement.domain.reason.ReasonCategory.ADJUSTMENT;
+import static org.openlmis.stockmanagement.domain.reason.ReasonType.CREDIT;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.time.LocalDate;
@@ -26,6 +30,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +46,8 @@ import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.domain.event.StockEvent;
+import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
+import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItem;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItemAdjustment;
 import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
@@ -49,13 +56,17 @@ import org.openlmis.stockmanagement.domain.sourcedestination.Organization;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.OrganizationRepository;
+import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.testutils.CalculatedStockOnHandDataBuilder;
 import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.response.LotMovementItemResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
+import org.siglus.siglusapi.repository.PhysicalInventoryLineItemAdjustmentRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.springframework.data.domain.Example;
 
@@ -74,6 +85,18 @@ public class SiglusStockCardLineItemServiceTest {
 
   @Mock
   private StockEventProductRequestedRepository requestQuantityRepository;
+
+  @Mock
+  private PhysicalInventoryLineItemAdjustmentRepository physicalInventoryLineItemAdjustmentRepository;
+
+  @Mock
+  private PhysicalInventoryLineItemRepository physicalInventoryLineItemRepository;
+
+  @Mock
+  private PhysicalInventoriesRepository physicalInventoriesRepository;
+
+  @Mock
+  private SiglusStockCardRepository siglusStockCardRepository;
 
   @Mock
   private StockmanagementAuthenticationHelper authenticationHelper;
@@ -164,6 +187,16 @@ public class SiglusStockCardLineItemServiceTest {
   private final String signature = "yyd";
 
   private final String documentNumber = "documentTest";
+
+  private final UUID physicalAdjustmentId = UUID.randomUUID();
+
+  private final UUID physicalAdjustmentId2 = UUID.randomUUID();
+
+  private final UUID physicalLineItemId = UUID.randomUUID();
+
+  private final UUID physicalInventoryId = UUID.randomUUID();
+
+  private final UUID stockCardLineItemId = UUID.randomUUID();
 
   private StockEvent event;
 
@@ -432,6 +465,61 @@ public class SiglusStockCardLineItemServiceTest {
     assertEquals(physicalInventory, stockMovementItemResponse3.getType());
   }
 
+  @Test
+  public void shouldDeleteStockCardWhenCallDeleteMethod() {
+    List<PhysicalInventory> physicalInventories = createPhysicalInventorys();
+    List<StockCardLineItem> stockCardLineItems = createStockCardLineItems();
+    // given
+    when(physicalInventoriesRepository.findByFacilityIdAndOrderableIds(any(), any()))
+        .thenReturn(physicalInventories);
+    when(stockCardLineItemRepository.findByFacilityIdAndOrderableIdIn(any(), any()))
+        .thenReturn(stockCardLineItems);
+
+    // when
+    stockCardLineItemService.deleteStockCardByProduct(any(), any());
+
+    // then
+    verify(physicalInventoryLineItemAdjustmentRepository, times(2))
+        .delete(physicalInventories.get(0).getLineItems().get(0).getStockAdjustments());
+    verify(physicalInventoryLineItemRepository).delete(physicalInventories.get(0).getLineItems());
+    verify(physicalInventoriesRepository).delete(physicalInventories);
+    verify(calculatedStockOnHandRepository).deleteByFacilityIdAndOrderableIds(any(), any());
+    verify(stockCardLineItemRepository).delete(stockCardLineItems);
+    verify(siglusStockCardRepository).deleteStockCardsByFacilityIdAndOrderableIdIn(any(), any());
+  }
+
+  private List<PhysicalInventory> createPhysicalInventorys() {
+    PhysicalInventoryLineItemAdjustment physicalAdjustment = new PhysicalInventoryLineItemAdjustment();
+    physicalAdjustment.setId(physicalAdjustmentId);
+    physicalAdjustment.setReason(createStockCardLineItemReason());
+    physicalAdjustment.setQuantity(20);
+
+    PhysicalInventoryLineItem physicalInventoryLineItem = new PhysicalInventoryLineItem();
+    physicalInventoryLineItem.setId(physicalLineItemId);
+    physicalInventoryLineItem.setStockAdjustments(Collections.singletonList(physicalAdjustment));
+
+    PhysicalInventory physicalInventory = new PhysicalInventory();
+    physicalInventory.setId(physicalInventoryId);
+    physicalInventory.setLineItems(Collections.singletonList(physicalInventoryLineItem));
+    return Collections.singletonList(physicalInventory);
+  }
+
+  private List<StockCardLineItem> createStockCardLineItems() {
+    PhysicalInventoryLineItemAdjustment physicalAdjustment = new PhysicalInventoryLineItemAdjustment();
+    physicalAdjustment.setId(physicalAdjustmentId2);
+    physicalAdjustment.setReason(createStockCardLineItemReason());
+    physicalAdjustment.setQuantity(20);
+
+    StockCardLineItem stockCardLineItem = new StockCardLineItem();
+    stockCardLineItem.setId(stockCardLineItemId);
+    stockCardLineItem.setStockAdjustments(Collections.singletonList(physicalAdjustment));
+    return Collections.singletonList(stockCardLineItem);
+  }
+
+  private StockCardLineItemReason createStockCardLineItemReason() {
+    return StockCardLineItemReason.builder().reasonCategory(ADJUSTMENT).reasonType(CREDIT).name("heheh").build();
+  }
+
   private void createStockMovements() {
     StockCard orderable1lot1 = createStockCardToOrderableOneAndLotOne();
     StockCard orderable1lot2 = createStockCardToOrderableOneAndLotTwo();
@@ -465,7 +553,7 @@ public class SiglusStockCardLineItemServiceTest {
 
     // 2021-07-01 12:00:00 adjustment positive
     StockCardLineItemReason reason1 = StockCardLineItemReason.builder()
-        .name(adjustmentName).reasonType(ReasonType.CREDIT).build();
+        .name(adjustmentName).reasonType(CREDIT).build();
     StockCardLineItem adjustmentItem1 = createStockCardLineItem(null, null, orderable1lot1, 50,
         day070112, dayOrigin070112, day0701, null, reason1);
     StockCardLineItem adjustmentItem2 = createStockCardLineItem(null, null, orderable2lot2, 60,
@@ -545,7 +633,7 @@ public class SiglusStockCardLineItemServiceTest {
 
     // 2021-07-01 12:00:00 adjustment positive
     StockCardLineItemReason reason1 = StockCardLineItemReason.builder()
-        .name(adjustmentName).reasonType(ReasonType.CREDIT).build();
+        .name(adjustmentName).reasonType(CREDIT).build();
     StockCardLineItem adjustmentItem1 = createStockCardLineItem(null, null, orderableNolot, 50,
         day070112, dayOrigin070112, day0701, null, reason1);
 
@@ -561,7 +649,7 @@ public class SiglusStockCardLineItemServiceTest {
 
     // 2021-07-02 10:00:00 Unpack Kit
     StockCardLineItemReason reason3 = StockCardLineItemReason.builder()
-        .name("Unpack Kit").reasonType(ReasonType.CREDIT).build();
+        .name("Unpack Kit").reasonType(CREDIT).build();
     StockCardLineItem uppackKit = createStockCardLineItem(null, null, orderableNolot, 10,
         day070210, dayOrigin070210, day0702, null, reason3);
 
@@ -590,9 +678,9 @@ public class SiglusStockCardLineItemServiceTest {
   private List<PhysicalInventoryLineItemAdjustment> positiveAdjustment() {
     List<PhysicalInventoryLineItemAdjustment> positiveAdjustments = new ArrayList<>();
     positiveAdjustments.add(PhysicalInventoryLineItemAdjustment.builder().quantity(20)
-        .reason(StockCardLineItemReason.builder().reasonType(ReasonType.CREDIT).build()).build());
+        .reason(StockCardLineItemReason.builder().reasonType(CREDIT).build()).build());
     positiveAdjustments.add(PhysicalInventoryLineItemAdjustment.builder().quantity(30)
-        .reason(StockCardLineItemReason.builder().reasonType(ReasonType.CREDIT).build()).build());
+        .reason(StockCardLineItemReason.builder().reasonType(CREDIT).build()).build());
     return positiveAdjustments;
   }
 

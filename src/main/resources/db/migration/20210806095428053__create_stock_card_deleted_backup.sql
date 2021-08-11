@@ -2,21 +2,18 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-CREATE TABLE  siglusintegration.stock_card_backup
+CREATE TABLE siglusintegration.stock_card_deleted_backup
 (
     id              uuid PRIMARY KEY,
-    facilityid      uuid NOT NULL,
-    productid       uuid NOT NULL,
-    fullydelete     boolean NOT NULL,
+    facilityid      uuid  NOT NULL,
+    productid       uuid  NOT NULL,
     servermovements jsonb,
-    clientmovements jsonb   NOT NULL,
+    clientmovements jsonb NOT NULL,
     createdby       uuid,
     createddate     timestamp with time zone
 );
 
 CREATE
-UNIQUE INDEX unq_id ON siglusintegration.stock_card_backup(id uuid_ops);
+UNIQUE INDEX unq_id ON siglusintegration.stock_card_deleted_backup(id uuid_ops);
 CREATE
-INDEX index_createddate ON siglusintegration.stock_card_backup(createddate timestamptz_ops);
-CREATE
-INDEX index_facilityid_productid ON siglusintegration.stock_card_backup(facilityid uuid_ops,productid uuid_ops);
+INDEX index_facilityid_productid ON siglusintegration.stock_card_deleted_backup(facilityid uuid_ops,productid uuid_ops);

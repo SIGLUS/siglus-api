@@ -38,23 +38,24 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
       @Param("startTime") String startTime,
       @Param("endTime") String endTime);
 
-  @Query(value = "select i.* from stockmanagement.stock_card_line_items i "
-      + "inner join stockmanagement.stock_cards c  "
-      + "on c.id = i.stockcardid "
+  @Query(value = "select i.* from stockmanagement.stock_card_line_items scli "
+      + "inner join stockmanagement.stock_cards sc  "
+      + "on sc.id = scli.stockcardid "
       + "where "
-      + "c.facilityid = :facilityId "
-      + "and c.orderableid in (:orderableIds) ", nativeQuery = true)
+      + "sc.facilityid = :facilityId "
+      + "and sc.orderableid in (:orderableIds) ", nativeQuery = true)
   List<StockCardLineItem> findByFacilityIdAndOrderableIdIn(
       @Param("facilityId") UUID facilityId,
       @Param("orderableIds") Set<UUID> orderableIds);
 
   @Modifying
-  @Query(value = "delete from stockmanagement.stock_card_line_items i "
-      + "where i.stockcardid in ("
-      + "select c.id "
-      + "from stockmanagement.stock_cards c "
-      + "where c.facilityid = :facilityId "
-      + "and c.orderableid in :orderableIds) ", nativeQuery = true)
+  @Query(value = "delete from stockmanagement.stock_card_line_items scli "
+      + "where scli.stockcardid in ("
+      + "select sc.id "
+      + "from stockmanagement.stock_cards sc "
+      + "where sc.facilityid = :facilityId "
+      + "and sc.orderableid in :orderableIds) ", nativeQuery = true)
   void deleteByFacilityIdAndOrderableIds(@Param("orderableIds") Set<UUID> orderableIds,
       @Param("facilityId") UUID facilityId);
+
 }

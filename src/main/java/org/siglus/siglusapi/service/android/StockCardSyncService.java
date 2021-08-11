@@ -38,6 +38,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicOrderableDto;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -57,7 +58,7 @@ import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.constant.FieldConstants;
-import org.siglus.siglusapi.domain.StockCardBackup;
+import org.siglus.siglusapi.domain.StockCardDeletedBackup;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
@@ -85,6 +86,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class StockCardSyncService {
 
@@ -115,11 +117,12 @@ public class StockCardSyncService {
     Map<String, ProductMovementResponse> productCodeToMovements = productMovementsResponse.getProductMovements()
         .stream()
         .collect(Collectors.toMap(ProductMovementResponse::getProductCode, Function.identity()));
-    List<StockCardBackup> stockCardBackups = stockCardDeleteRequests.stream()
+    List<StockCardDeletedBackup> stockCardDeletedBackups = stockCardDeleteRequests.stream()
         .map(r -> buildStockCardBackup(r, productCodeToMovements.get(r.getProductCode()),
             orderableCodeToId.get(r.getProductCode()), userDto.getHomeFacilityId(), userDto.getId()))
         .collect(Collectors.toList());
-    stockCardBackupRepository.save(stockCardBackups);
+    log.info("save stock card deleted backup info: {}", stockCardDeletedBackups);
+    stockCardBackupRepository.save(stockCardDeletedBackups);
     stockCardLineItemService.deleteStockCardByProduct(userDto.getHomeFacilityId(), orderableIds);
   }
 
@@ -184,13 +187,12 @@ public class StockCardSyncService {
     return FacilityProductMovementsResponse.builder().productMovements(productMovementResponses).build();
   }
 
-  private StockCardBackup buildStockCardBackup(StockCardDeleteRequest stockCardDeleteRequest,
+  private StockCardDeletedBackup buildStockCardBackup(StockCardDeleteRequest stockCardDeleteRequest,
       ProductMovementResponse productMovementResponse, UUID productId, UUID facilityId, UUID userId) {
-    return StockCardBackup.builder()
+    return StockCardDeletedBackup.builder()
         .clientmovements(stockCardDeleteRequest.getClientMovements())
         .productid(productId)
         .productMovementResponse(productMovementResponse)
-        .fullydelete(stockCardDeleteRequest.isFullyDelete())
         .facilityid(facilityId)
         .createdby(userId)
         .build();

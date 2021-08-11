@@ -26,9 +26,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class StockCardDeleteRequest {
 
-  private String clientMovements;
-
-  private boolean fullyDelete;
-
+  private StockCardListCreateRequest clientMovements;
+  
   private String productCode;
 }

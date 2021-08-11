@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
@@ -66,6 +67,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusStockCardLineItemService {
 
@@ -95,19 +97,26 @@ public class SiglusStockCardLineItemService {
   public void deleteStockCardByProduct(UUID facilityId, Set<UUID> orderableIds) {
     List<PhysicalInventory> physicalInventories = physicalInventoriesRepository
         .findByFacilityIdAndOrderableIds(facilityId, orderableIds);
-    List<PhysicalInventoryLineItem> physicalInventoryLineItems = physicalInventories.stream()
-        .map(PhysicalInventory::getLineItems)
-        .flatMap(Collection::stream)
-        .collect(Collectors.toList());
-    List<PhysicalInventoryLineItemAdjustment> stockAdjustments = physicalInventoryLineItems.stream()
-        .map(PhysicalInventoryLineItem::getStockAdjustments)
-        .flatMap(Collection::stream)
-        .collect(Collectors.toList());
-    physicalInventoryLineItemAdjustmentRepository.delete(stockAdjustments);
+    List<PhysicalInventoryLineItem> physicalInventoryLineItems = getPhysicalInventoryLineItems(physicalInventories);
+    List<PhysicalInventoryLineItemAdjustment> phycicalAdjustments = getPhysicalInventoryLineItemAdjustments(
+        physicalInventoryLineItems);
+    List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
+        .findByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
+    List<PhysicalInventoryLineItemAdjustment> stockCardAdjustments = getStockCardLineItemAdjustments(
+        stockCardLineItems);
+    log.info("delete phycical inventory line item adjustments: {}", phycicalAdjustments);
+    physicalInventoryLineItemAdjustmentRepository.delete(phycicalAdjustments);
+    log.info("delete stock card line item adjustments: {}", stockCardAdjustments);
+    physicalInventoryLineItemAdjustmentRepository.delete(stockCardAdjustments);
+    log.info("delete phycical inventory line items: {}", physicalInventoryLineItems);
     physicalInventoryLineItemRepository.delete(physicalInventoryLineItems);
+    log.info("delete phycical inventories: {}", physicalInventories);
     physicalInventoriesRepository.delete(physicalInventories);
-    calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(orderableIds, facilityId);
-    stockCardLineItemRepository.deleteByFacilityIdAndOrderableIds(orderableIds, facilityId);
+    log.info("delete calculated stockOnHand by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
+    calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(facilityId, orderableIds);
+    log.info("delete stock card line items: {}", stockCardLineItems);
+    stockCardLineItemRepository.delete(stockCardLineItems);
+    log.info("delete calculated stockOnHand by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
     siglusStockCardRepository.deleteStockCardsByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
   }
 
@@ -120,6 +129,29 @@ public class SiglusStockCardLineItemService {
     Map<UUID, List<StockCardLineItem>> lineItemByOrderableIdMap = mapStockCardLineItemByOrderableId(facilityId,
         startTime, endTime, orderableIds, type);
     return getStockMovementItemDtosMap(stockOnHandDtoMap, lineItemByOrderableIdMap, siglusLotResponseByLotId);
+  }
+
+  private List<PhysicalInventoryLineItem> getPhysicalInventoryLineItems(List<PhysicalInventory> physicalInventories) {
+    return physicalInventories.stream()
+        .map(PhysicalInventory::getLineItems)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+  }
+
+  private List<PhysicalInventoryLineItemAdjustment> getPhysicalInventoryLineItemAdjustments(
+      List<PhysicalInventoryLineItem> physicalInventoryLineItems) {
+    return physicalInventoryLineItems.stream()
+        .map(PhysicalInventoryLineItem::getStockAdjustments)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+  }
+
+  private List<PhysicalInventoryLineItemAdjustment> getStockCardLineItemAdjustments(
+      List<StockCardLineItem> stockCardLineItems) {
+    return stockCardLineItems.stream()
+        .map(StockCardLineItem::getStockAdjustments)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
   }
 
   private Map<UUID, List<SiglusStockMovementItemResponse>> getStockMovementItemDtosMap(

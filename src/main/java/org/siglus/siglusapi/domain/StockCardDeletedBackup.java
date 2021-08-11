@@ -28,6 +28,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.android.request.StockCardListCreateRequest;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -39,21 +40,20 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "stock_card_backup", schema = "siglusintegration")
-public class StockCardBackup extends BaseEntity {
+@Table(name = "stock_card_deleted_backup", schema = "siglusintegration")
+public class StockCardDeletedBackup extends BaseEntity {
 
   private UUID facilityid;
 
   private UUID productid;
-
-  private boolean fullydelete;
 
   @Column(name = "servermovements", columnDefinition = "jsonb")
   @Convert(converter = ProductMovementConverter.class)
   private ProductMovementResponse productMovementResponse;
 
   @Column(name = "clientmovements", columnDefinition = "jsonb")
-  private String clientmovements;
+  @Convert(converter = StockCardListCreateRequestConverter.class)
+  private StockCardListCreateRequest clientmovements;
 
   private UUID createdby;
 

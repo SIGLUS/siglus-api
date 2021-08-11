@@ -64,14 +64,14 @@ public interface CalculatedStockOnHandRepository
       @Param("occurredDate") LocalDate occurredDate);
 
   @Modifying
-  @Query(value = "delete from stockmanagement.calculated_stocks_on_hand h "
-      + "where h.stockcardid in ("
-      + "select c.id "
-      + "from stockmanagement.stock_cards c "
-      + "where c.facilityid = :facilityId "
-      + "and c.orderableid in :orderableIds) ", nativeQuery = true)
-  void deleteByFacilityIdAndOrderableIds(@Param("orderableIds") Set<UUID> orderableIds,
-      @Param("facilityId") UUID facilityId);
+  @Query(value = "delete from stockmanagement.calculated_stocks_on_hand cson "
+      + "where cson.stockcardid in ("
+      + "select sc.id "
+      + "from stockmanagement.stock_cards sc "
+      + "where sc.facilityid = :facilityId "
+      + "and sc.orderableid in :orderableIds) ", nativeQuery = true)
+  void deleteByFacilityIdAndOrderableIds(@Param("facilityId") UUID facilityId,
+      @Param("orderableIds") Set<UUID> orderableIds);
 
   // [change reason]: query needs
   @Query(value = "select h.* from stockmanagement.calculated_stocks_on_hand h "
@@ -85,12 +85,12 @@ public interface CalculatedStockOnHandRepository
       @Param("startTime") String startTime, @Param("endTime") String endTime);
 
   // [change reason]: query needs
-  @Query(value = "select h.* from stockmanagement.calculated_stocks_on_hand h "
-      + "inner join stockmanagement.stock_cards c  "
-      + "on c.id = h.stockcardid "
+  @Query(value = "select h.* from stockmanagement.calculated_stocks_on_hand csoh "
+      + "inner join stockmanagement.stock_cards sc  "
+      + "on sc.id = csoh.stockcardid "
       + "where "
-      + "c.facilityid = :facilityId "
-      + "and c.orderableid in (:orderableIds) ", nativeQuery = true)
+      + "sc.facilityid = :facilityId "
+      + "and sc.orderableid in (:orderableIds) ", nativeQuery = true)
   List<CalculatedStockOnHand> findByFacilityIdAndOrderableIdIn(@Param("facilityId") UUID facilityId,
       @Param("orderableIds") Set<UUID> orderableIds);
   // [SIGLUS change end]

@@ -13,12 +13,13 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto.android.request;
 
-import java.util.UUID;
-import org.siglus.siglusapi.domain.StockCardDeletedBackup;
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+import lombok.Data;
 
-public interface StockCardBackupRepository extends JpaRepository<StockCardDeletedBackup, UUID> {
+@Data
+public class StockCardListCreateRequest {
 
+  private List<StockCardCreateRequest> stockCardCreateRequests;
 }

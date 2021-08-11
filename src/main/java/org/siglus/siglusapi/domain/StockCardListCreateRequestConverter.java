@@ -25,49 +25,49 @@ import javax.persistence.AttributeConverter;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
+import org.siglus.siglusapi.dto.android.request.StockCardListCreateRequest;
 
 @Slf4j
-public class ProductMovementConverter implements AttributeConverter<ProductMovementResponse, String> {
+public class StockCardListCreateRequestConverter implements AttributeConverter<StockCardListCreateRequest, String> {
 
-  private static final TypeReference<ProductMovementResponse> TYPE_REF =
-      new TypeReference<ProductMovementResponse>() {
+  private static final TypeReference<StockCardListCreateRequest> TYPE_REF =
+      new TypeReference<StockCardListCreateRequest>() {
       };
 
   private final ObjectMapper objectMapper;
 
-  public ProductMovementConverter() {
+  public StockCardListCreateRequestConverter() {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
     mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     this.objectMapper = mapper;
   }
 
-  ProductMovementConverter(ObjectMapper objectMapper) {
+  StockCardListCreateRequestConverter(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
 
   @Override
-  public String convertToDatabaseColumn(@NotNull ProductMovementResponse request) {
+  public String convertToDatabaseColumn(@NotNull StockCardListCreateRequest request) {
     try {
       return objectMapper.writeValueAsString(request);
     } catch (JsonProcessingException ex) {
-      log.error("Can't convert product movement to database column", ex);
+      log.error("Can't convert stockcard list request to database column", ex);
       return null;
     }
   }
 
   @Override
   @NotNull
-  public ProductMovementResponse convertToEntityAttribute(@NotNull String requestAsString) {
+  public StockCardListCreateRequest convertToEntityAttribute(@NotNull String requestAsString) {
     if (StringUtils.isBlank(requestAsString)) {
-      return new ProductMovementResponse();
+      return new StockCardListCreateRequest();
     }
     try {
       return objectMapper.readValue(requestAsString, TYPE_REF);
     } catch (IOException ex) {
-      log.error("Can't convert string to product movement response", ex);
-      return new ProductMovementResponse();
+      log.error("Can't convert string to stockcard list response", ex);
+      return new StockCardListCreateRequest();
     }
   }
 }
