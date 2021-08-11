@@ -128,8 +128,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
         .constraintValidatorFactory(new InnerConstraintValidatorFactory())
         .messageInterpolator(messageInterpolator)
         .buildValidatorFactory().getValidator().forExecutables();
-    method = RequisitionCreateService.class.getDeclaredMethod("createRequisition",
-        RequisitionCreateRequest.class);
+    method = RequisitionCreateService.class.getDeclaredMethod("createRequisition", RequisitionCreateRequest.class);
 
     ReportType reportType = mock(ReportType.class);
     when(reportType.getStartDate()).thenReturn(LocalDate.of(2021, 3, 1));
@@ -292,6 +291,20 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     assertEquals(1, violations.size());
     assertEquals("The start date 2021-06-25 should be equal to last actual end 2021-06-20.",
         violations.get("createRequisition.arg0"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenActualStartDate13MonthsLater()
+      throws Exception {
+    // given
+    mockFacilityId(facilityId);
+    Object param = parseParam("actualStartDateIs13MonthsFromLastActualEnd.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(0, violations.size());
   }
 
   @Test
