@@ -104,18 +104,25 @@ public class SiglusStockCardLineItemService {
         .findByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
     List<PhysicalInventoryLineItemAdjustment> stockCardAdjustments = getStockCardLineItemAdjustments(
         stockCardLineItems);
-    log.info("delete phycical inventory line item adjustments: {}", phycicalAdjustments);
-    physicalInventoryLineItemAdjustmentRepository.delete(phycicalAdjustments);
-    log.info("delete stock card line item adjustments: {}", stockCardAdjustments);
-    physicalInventoryLineItemAdjustmentRepository.delete(stockCardAdjustments);
-    log.info("delete phycical inventory line items: {}", physicalInventoryLineItems);
-    physicalInventoryLineItemRepository.delete(physicalInventoryLineItems);
-    log.info("delete phycical inventories: {}", physicalInventories);
-    physicalInventoriesRepository.delete(physicalInventories);
+    if (!phycicalAdjustments.isEmpty()) {
+      log.info("delete phycical inventory line item adjustments: {}", phycicalAdjustments);
+      physicalInventoryLineItemAdjustmentRepository.delete(phycicalAdjustments);
+    }
+    if (!stockCardAdjustments.isEmpty()) {
+      log.info("delete stock card line item adjustments: {}", stockCardAdjustments);
+      physicalInventoryLineItemAdjustmentRepository.delete(stockCardAdjustments);
+    }
+    if (!physicalInventoryLineItems.isEmpty()) {
+      physicalInventoryLineItemRepository.delete(physicalInventoryLineItems);
+    }
+    if (!physicalInventories.isEmpty()) {
+      physicalInventoriesRepository.delete(physicalInventories);
+    }
     log.info("delete calculated stockOnHand by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
     calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(facilityId, orderableIds);
-    log.info("delete stock card line items: {}", stockCardLineItems);
-    stockCardLineItemRepository.delete(stockCardLineItems);
+    if (!physicalInventories.isEmpty()) {
+      stockCardLineItemRepository.delete(stockCardLineItems);
+    }
     log.info("delete calculated stockOnHand by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
     siglusStockCardRepository.deleteStockCardsByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
   }
@@ -131,7 +138,16 @@ public class SiglusStockCardLineItemService {
     return getStockMovementItemDtosMap(stockOnHandDtoMap, lineItemByOrderableIdMap, siglusLotResponseByLotId);
   }
 
+  private Set<UUID> getPhysicalInventoryIds(List<PhysicalInventory> physicalInventories) {
+    return physicalInventories.stream()
+        .map(PhysicalInventory::getId)
+        .collect(Collectors.toSet());
+  }
+
   private List<PhysicalInventoryLineItem> getPhysicalInventoryLineItems(List<PhysicalInventory> physicalInventories) {
+    if (physicalInventories.isEmpty()) {
+      return Collections.emptyList();
+    }
     return physicalInventories.stream()
         .map(PhysicalInventory::getLineItems)
         .flatMap(Collection::stream)
@@ -140,6 +156,9 @@ public class SiglusStockCardLineItemService {
 
   private List<PhysicalInventoryLineItemAdjustment> getPhysicalInventoryLineItemAdjustments(
       List<PhysicalInventoryLineItem> physicalInventoryLineItems) {
+    if (physicalInventoryLineItems.isEmpty()) {
+      return Collections.emptyList();
+    }
     return physicalInventoryLineItems.stream()
         .map(PhysicalInventoryLineItem::getStockAdjustments)
         .flatMap(Collection::stream)
@@ -148,6 +167,9 @@ public class SiglusStockCardLineItemService {
 
   private List<PhysicalInventoryLineItemAdjustment> getStockCardLineItemAdjustments(
       List<StockCardLineItem> stockCardLineItems) {
+    if (stockCardLineItems.isEmpty()) {
+      return Collections.emptyList();
+    }
     return stockCardLineItems.stream()
         .map(StockCardLineItem::getStockAdjustments)
         .flatMap(Collection::stream)

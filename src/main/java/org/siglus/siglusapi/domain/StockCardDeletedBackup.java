@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.domain;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -28,7 +29,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.android.request.StockCardListCreateRequest;
+import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -53,7 +54,7 @@ public class StockCardDeletedBackup extends BaseEntity {
 
   @Column(name = "clientmovements", columnDefinition = "jsonb")
   @Convert(converter = StockCardListCreateRequestConverter.class)
-  private StockCardListCreateRequest clientmovements;
+  private List<StockCardCreateRequest> clientmovements;
 
   private UUID createdby;
 

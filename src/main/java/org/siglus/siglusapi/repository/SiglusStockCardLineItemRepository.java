@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -38,7 +37,7 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
       @Param("startTime") String startTime,
       @Param("endTime") String endTime);
 
-  @Query(value = "select i.* from stockmanagement.stock_card_line_items scli "
+  @Query(value = "select scli.* from stockmanagement.stock_card_line_items scli "
       + "inner join stockmanagement.stock_cards sc  "
       + "on sc.id = scli.stockcardid "
       + "where "
@@ -47,15 +46,4 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
   List<StockCardLineItem> findByFacilityIdAndOrderableIdIn(
       @Param("facilityId") UUID facilityId,
       @Param("orderableIds") Set<UUID> orderableIds);
-
-  @Modifying
-  @Query(value = "delete from stockmanagement.stock_card_line_items scli "
-      + "where scli.stockcardid in ("
-      + "select sc.id "
-      + "from stockmanagement.stock_cards sc "
-      + "where sc.facilityid = :facilityId "
-      + "and sc.orderableid in :orderableIds) ", nativeQuery = true)
-  void deleteByFacilityIdAndOrderableIds(@Param("orderableIds") Set<UUID> orderableIds,
-      @Param("facilityId") UUID facilityId);
-
 }

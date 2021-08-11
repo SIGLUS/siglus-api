@@ -61,9 +61,9 @@ public interface PhysicalInventoriesRepository
       @Param("startDate") String startDate,
       @Param("endDate") String endDate);
 
-  @Query(value = "SELECT * FROM stockmanagement.physical_inventories pi "
-      + "inner join stockmanagement.stock_card_line_items scli "
-      + "on scli.origineventid = pi.stockeventid "
+  @Query(value = "SELECT pi.* FROM stockmanagement.physical_inventories pi "
+      + "where pi.stockeventid in ("
+      + "select scli.origineventid from stockmanagement.stock_card_line_items scli "
       + "inner join stockmanagement.stock_cards sc "
       + "on sc.id = scli.stockcardid "
       + "WHERE sc.facilityid = :facility "

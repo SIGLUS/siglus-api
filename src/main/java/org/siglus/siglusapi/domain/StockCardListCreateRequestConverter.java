@@ -17,21 +17,24 @@ package org.siglus.siglusapi.domain;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import javax.persistence.AttributeConverter;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.siglus.siglusapi.dto.android.request.StockCardListCreateRequest;
+import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
 @Slf4j
-public class StockCardListCreateRequestConverter implements AttributeConverter<StockCardListCreateRequest, String> {
+public class StockCardListCreateRequestConverter implements AttributeConverter<List<StockCardCreateRequest>, String> {
 
-  private static final TypeReference<StockCardListCreateRequest> TYPE_REF =
-      new TypeReference<StockCardListCreateRequest>() {
+  private static final TypeReference<List<StockCardCreateRequest>> TYPE_REF =
+      new TypeReference<List<StockCardCreateRequest>>() {
       };
 
   private final ObjectMapper objectMapper;
@@ -40,6 +43,7 @@ public class StockCardListCreateRequestConverter implements AttributeConverter<S
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
     mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     this.objectMapper = mapper;
   }
 
@@ -48,7 +52,7 @@ public class StockCardListCreateRequestConverter implements AttributeConverter<S
   }
 
   @Override
-  public String convertToDatabaseColumn(@NotNull StockCardListCreateRequest request) {
+  public String convertToDatabaseColumn(@NotNull List<StockCardCreateRequest> request) {
     try {
       return objectMapper.writeValueAsString(request);
     } catch (JsonProcessingException ex) {
@@ -59,15 +63,15 @@ public class StockCardListCreateRequestConverter implements AttributeConverter<S
 
   @Override
   @NotNull
-  public StockCardListCreateRequest convertToEntityAttribute(@NotNull String requestAsString) {
+  public List<StockCardCreateRequest> convertToEntityAttribute(@NotNull String requestAsString) {
     if (StringUtils.isBlank(requestAsString)) {
-      return new StockCardListCreateRequest();
+      return Collections.emptyList();
     }
     try {
       return objectMapper.readValue(requestAsString, TYPE_REF);
     } catch (IOException ex) {
       log.error("Can't convert string to stockcard list response", ex);
-      return new StockCardListCreateRequest();
+      return Collections.emptyList();
     }
   }
 }

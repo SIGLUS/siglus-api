@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,7 +27,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class StockCardDeleteRequest {
 
-  private StockCardListCreateRequest clientMovements;
+  private List<StockCardCreateRequest> clientMovements;
   
   private String productCode;
 }

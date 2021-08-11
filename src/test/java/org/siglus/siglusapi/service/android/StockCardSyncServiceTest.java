@@ -58,7 +58,6 @@ import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.StockCardDeletedBackup;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
-import org.siglus.siglusapi.dto.android.request.StockCardListCreateRequest;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.StockCardBackupRepository;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
@@ -168,22 +167,21 @@ public class StockCardSyncServiceTest {
   }
 
   private List<StockCardDeleteRequest> createStockCardDeleteRequests() {
-    StockCardListCreateRequest stockCardListCreateRequest = new StockCardListCreateRequest();
     StockCardCreateRequest stockCardCreateRequest = new StockCardCreateRequest();
     stockCardCreateRequest.setProductCode(productCode1);
     stockCardCreateRequest.setStockOnHand(100);
-    stockCardListCreateRequest.setStockCardCreateRequests(singletonList(stockCardCreateRequest));
+    List<StockCardCreateRequest> stockCardCreateRequests = singletonList(stockCardCreateRequest);
     StockCardDeleteRequest request1 = StockCardDeleteRequest.builder()
         .productCode(productCode1)
-        .clientMovements(stockCardListCreateRequest)
+        .clientMovements(stockCardCreateRequests)
         .build();
     StockCardDeleteRequest request2 = StockCardDeleteRequest.builder()
         .productCode(productCode2)
-        .clientMovements(stockCardListCreateRequest)
+        .clientMovements(stockCardCreateRequests)
         .build();
     StockCardDeleteRequest request3 = StockCardDeleteRequest.builder()
         .productCode(productCode2)
-        .clientMovements(stockCardListCreateRequest)
+        .clientMovements(stockCardCreateRequests)
         .build();
     return Arrays.asList(request1, request2, request3);
   }

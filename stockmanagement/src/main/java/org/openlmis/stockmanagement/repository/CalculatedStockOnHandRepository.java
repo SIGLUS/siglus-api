@@ -85,7 +85,7 @@ public interface CalculatedStockOnHandRepository
       @Param("startTime") String startTime, @Param("endTime") String endTime);
 
   // [change reason]: query needs
-  @Query(value = "select h.* from stockmanagement.calculated_stocks_on_hand csoh "
+  @Query(value = "select csoh.* from stockmanagement.calculated_stocks_on_hand csoh "
       + "inner join stockmanagement.stock_cards sc  "
       + "on sc.id = csoh.stockcardid "
       + "where "
