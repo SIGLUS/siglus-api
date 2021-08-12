@@ -26,6 +26,8 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.common.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS;
+import static org.siglus.common.constant.CacheConstants.SIGLUS_ORDERABLES;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
@@ -187,10 +189,10 @@ public class FcProductServiceTest {
     when(basicProductCodeRepository.findAll()).thenReturn(newArrayList(basicProductCode));
 
     when(cacheManager.getCacheNames())
-        .thenReturn(Arrays.asList("token", "siglus-orderables", "siglus-approved-products"));
+        .thenReturn(Arrays.asList("token", SIGLUS_ORDERABLES, SIGLUS_APPROVED_PRODUCTS));
     when(cacheManager.getCache("token")).thenReturn(cache1);
-    when(cacheManager.getCache("siglus-orderables")).thenReturn(cache2);
-    when(cacheManager.getCache("siglus-approved-products")).thenReturn(cache3);
+    when(cacheManager.getCache(SIGLUS_ORDERABLES)).thenReturn(cache2);
+    when(cacheManager.getCache(SIGLUS_APPROVED_PRODUCTS)).thenReturn(cache3);
   }
 
   @Test

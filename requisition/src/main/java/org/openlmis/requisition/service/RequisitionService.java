@@ -35,6 +35,7 @@ import static org.openlmis.requisition.i18n.MessageKeys.ERROR_REQUISITION_NOT_FO
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_REQUISITION_WAS_SPLIT;
 import static org.openlmis.requisition.i18n.MessageKeys.ERROR_VALIDATION_CANNOT_CONVERT_WITHOUT_APPROVED_QTY;
 import static org.openlmis.requisition.service.PermissionService.ORDERS_EDIT;
+import static org.siglus.common.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_START_DATE;
 
@@ -977,7 +978,7 @@ public class RequisitionService {
 
   // [SIGLUS change start]
   // [change reason]: provide additional approved product
-  @Cacheable(value = "siglus-approved-products", keyGenerator = "cacheKeyGenerator")
+  @Cacheable(value = SIGLUS_APPROVED_PRODUCTS, keyGenerator = "cacheKeyGenerator")
   public ApproveProductsAggregator getApproveProduct(UUID facilityId, UUID programId, boolean reportOnly) {
     if (reportOnly) {
       return approvedProductReferenceDataService.getAdditionalApprovedProducts(facilityId, programId);

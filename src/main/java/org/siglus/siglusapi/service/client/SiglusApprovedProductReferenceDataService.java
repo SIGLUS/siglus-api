@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.client;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.siglus.common.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -83,7 +84,7 @@ public class SiglusApprovedProductReferenceDataService extends
    * @param programId  id of the program
    * @return wrapped collection of approved products matching the search criteria
    */
-  @Cacheable(value = "siglus-approved-products-by-orderables", keyGenerator = "cacheKeyGenerator")
+  @Cacheable(value = SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES, keyGenerator = "cacheKeyGenerator")
   public List<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId, Collection<UUID> orderableIds) {
     RequestParameters params = RequestParameters.init();
 

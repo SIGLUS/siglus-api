@@ -19,6 +19,9 @@ import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.siglus.common.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS;
+import static org.siglus.common.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
+import static org.siglus.common.constant.CacheConstants.SIGLUS_ORDERABLES;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 
@@ -139,9 +142,9 @@ public class FcProductService {
 
   private void clearProductCaches() {
     cacheManager.getCacheNames().stream()
-        .filter(name -> "siglus-orderables".equals(name)
-            || "siglus-approved-products".equals(name)
-            || "siglus-approved-products-by-orderables".equals(name))
+        .filter(name -> SIGLUS_ORDERABLES.equals(name)
+            || SIGLUS_APPROVED_PRODUCTS.equals(name)
+            || SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES.equals(name))
         .map(cacheManager::getCache)
         .forEach(Cache::clear);
   }

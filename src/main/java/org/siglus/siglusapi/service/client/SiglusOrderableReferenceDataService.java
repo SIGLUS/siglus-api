@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service.client;
 
+import static org.siglus.common.constant.CacheConstants.SIGLUS_ORDERABLES;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +57,7 @@ public class SiglusOrderableReferenceDataService
         : getPage(RequestParameters.init().set(FieldConstants.ID, ids)).getContent();
   }
 
-  @Cacheable(value = "siglus-orderables", keyGenerator = "cacheKeyGenerator")
+  @Cacheable(value = SIGLUS_ORDERABLES, keyGenerator = "cacheKeyGenerator")
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams, Pageable pageable) {
     RequestParameters parameters = RequestParameters.init()
         .set(FieldConstants.CODE, searchParams.getCode())
