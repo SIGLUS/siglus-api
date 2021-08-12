@@ -294,17 +294,43 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   }
 
   @Test
-  public void shouldReturnViolationWhenValidateCreateRequisitionGivenActualStartDate13MonthsLater()
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenLastEndTooFar1()
       throws Exception {
     // given
+    ReportType reportType = mock(ReportType.class);
+    when(reportType.getStartDate()).thenReturn(LocalDate.of(1999, 3, 1));
+    when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("VC")))
+        .thenReturn(Optional.of(reportType));
     mockFacilityId(facilityId);
-    Object param = parseParam("actualStartDateIs13MonthsFromLastActualEnd.json");
+    when(req1.getActualEndDate()).thenReturn(LocalDate.of(2013, 6, 20));
+    Object param = parseParam("actualStartDateAfterLastActualEnd.json");
 
     // when
     Map<String, String> violations = executeValidation(param);
 
     // then
     assertEquals(0, violations.size());
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenLastEndTooFar2()
+      throws Exception {
+    // given
+    ReportType reportType = mock(ReportType.class);
+    when(reportType.getStartDate()).thenReturn(LocalDate.of(1999, 3, 1));
+    when(reportTypeRepo.findOneByFacilityIdAndProgramCodeAndActiveIsTrue(any(), eq("VC")))
+        .thenReturn(Optional.of(reportType));
+    mockFacilityId(facilityId);
+    when(req1.getActualEndDate()).thenReturn(LocalDate.of(2013, 6, 20));
+    Object param = parseParam("actualStartDateBeforeLastEnd.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals("The start date 2008-07-25 should be equal to last actual end 2013-06-20.",
+        violations.get("createRequisition.arg0"));
   }
 
   @Test

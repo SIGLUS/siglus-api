@@ -18,7 +18,6 @@ package org.siglus.siglusapi.dto.android.validator;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
 
 import java.time.LocalDate;
-import java.time.Period;
 import java.time.YearMonth;
 import java.util.UUID;
 import javax.persistence.EntityNotFoundException;
@@ -92,13 +91,13 @@ public class RequisitionValidStartDateValidator implements
     if (lastRequisition == null || lastRequisition.getActualEndDate().isBefore(reportRestartDate)) {
       return true;
     }
-    Period gap = Period.between(lastRequisition.getActualEndDate(), value.getActualStartDate());
-    // if the gap is over one year
-    if (gap.toTotalMonths() > 12) {
+    LocalDate oneYearAgo = YearMonth.now().minusMonths(13L).atDay(1);
+    LocalDate lastEndDate = lastRequisition.getActualEndDate();
+    if (lastEndDate.isBefore(oneYearAgo) && value.getActualStartDate().isAfter(lastEndDate)) {
       return true;
     }
-    if (!lastRequisition.getActualEndDate().equals(value.getActualStartDate())) {
-      actualContext.addExpressionVariable("lastActualEnd", lastRequisition.getActualEndDate());
+    if (!lastEndDate.equals(value.getActualStartDate())) {
+      actualContext.addExpressionVariable("lastActualEnd", lastEndDate);
       return false;
     }
     ProcessingPeriod lastPeriod = periodRepository.findOne(lastRequisition.getProcessingPeriodId());
