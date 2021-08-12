@@ -29,6 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.requisition.dto.BaseDto;
@@ -58,42 +59,26 @@ import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataServic
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.TradeItemReferenceDataService;
 import org.siglus.siglusapi.util.FcUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class FcProductService {
 
-  @Autowired
-  private SiglusOrderableService orderableService;
-
-  @Autowired
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
-
-  @Autowired
-  private TradeItemReferenceDataService tradeItemReferenceDataService;
-
-  @Autowired
-  private SiglusFacilityTypeReferenceDataService facilityTypeReferenceDataService;
-
-  @Autowired
-  private SiglusFacilityTypeApprovedProductReferenceDataService ftapReferenceDataService;
-
-  @Autowired
-  private ProgramRealProgramRepository programRealProgramRepository;
-
-  @Autowired
-  private ProgramReferenceDataService programReferenceDataService;
-
-  @Autowired
-  private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
-
-  @Autowired
-  private OrderableDisplayCategoryReferenceDataService categoryRefDataService;
-
-  @Autowired
-  private BasicProductCodeRepository basicProductCodeRepository;
+  private final SiglusOrderableService orderableService;
+  private final SiglusOrderableReferenceDataService orderableReferenceDataService;
+  private final TradeItemReferenceDataService tradeItemReferenceDataService;
+  private final SiglusFacilityTypeReferenceDataService facilityTypeReferenceDataService;
+  private final SiglusFacilityTypeApprovedProductReferenceDataService ftapReferenceDataService;
+  private final ProgramReferenceDataService programReferenceDataService;
+  private final OrderableDisplayCategoryReferenceDataService categoryRefDataService;
+  private final ProgramRealProgramRepository programRealProgramRepository;
+  private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
+  private final BasicProductCodeRepository basicProductCodeRepository;
+  private final CacheManager cacheManager;
 
   private static final String SYSTEM_DEFAULT_MANUFACTURER = "Mozambique";
 
@@ -134,15 +119,15 @@ public class FcProductService {
           OrderableDto orderableDto = updateOrderable(existingOrderable, product);
           createProgramOrderablesExtension(product, orderableDto.getId());
           updateNum.getAndIncrement();
-          log.info("[FC] update existed product: {} to new product: {}", existingOrderable,
-              product);
+          log.info("[FC] update existed product: {} to new product: {}", existingOrderable, product);
         } else {
           sameNum.getAndIncrement();
         }
       });
+      log.info("[FC] clear product caches");
+      clearProductCaches();
       log.info("[FC] process product data createNum: {}, updateNum: {}, sameNum: {}",
-          createNum.get(),
-          updateNum.get(), sameNum.get());
+          createNum.get(), updateNum.get(), sameNum.get());
       return true;
     } catch (Exception e) {
       log.info("[FC] process product data createNum: {}, updateNum: {}, sameNum: {}",
@@ -150,6 +135,15 @@ public class FcProductService {
       log.error("[FC] process product data error", e);
       return false;
     }
+  }
+
+  private void clearProductCaches() {
+    cacheManager.getCacheNames().stream()
+        .filter(name -> "siglus-orderables".equals(name)
+            || "siglus-approved-products".equals(name)
+            || "siglus-approved-products-by-orderables".equals(name))
+        .map(cacheManager::getCache)
+        .forEach(Cache::clear);
   }
 
   private void createProgramOrderablesExtension(ProductInfoDto product, UUID orderableId) {

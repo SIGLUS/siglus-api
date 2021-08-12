@@ -58,8 +58,7 @@ public class SiglusOrderableService {
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
-    Page<OrderableDto> orderableDtoPage = orderableReferenceDataService
-        .searchOrderables(searchParams, pageable);
+    Page<OrderableDto> orderableDtoPage = orderableReferenceDataService.searchOrderables(searchParams, pageable);
     Set<String> archivedProducts = archiveProductService
         .searchArchivedProductsByFacilityId(facilityId);
     orderableDtoPage.getContent().forEach(orderableDto -> orderableDto
@@ -76,8 +75,8 @@ public class SiglusOrderableService {
       Pageable pageable) {
     Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
         Pagination.NO_PAGINATION, pageable.getSort());
-    List<OrderableDto> orderableDtos = orderableReferenceDataService
-        .searchOrderables(searchParams, noPagination).getContent();
+    List<OrderableDto> orderableDtos = orderableReferenceDataService.searchOrderables(searchParams, noPagination)
+        .getContent();
     Set<UUID> additionalOrderableIds = programAdditionalOrderableRepository
         .findAllByProgramId(programId)
         .stream()
@@ -110,13 +109,12 @@ public class SiglusOrderableService {
   }
 
   public OrderableDto getOrderableByCode(String productCode) {
-    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
-        Pagination.NO_PAGINATION);
+    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, Pagination.NO_PAGINATION);
     MultiValueMap<String, Object> queryParams = new LinkedMultiValueMap<>();
     queryParams.set(CODE, productCode);
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
-    List<OrderableDto> orderableDtos = orderableReferenceDataService
-        .searchOrderables(searchParams, noPagination).getContent();
+    List<OrderableDto> orderableDtos = orderableReferenceDataService.searchOrderables(searchParams, noPagination)
+        .getContent();
     return orderableDtos.stream()
         .filter(orderableDto -> productCode.equals(orderableDto.getProductCode()))
         .findFirst()

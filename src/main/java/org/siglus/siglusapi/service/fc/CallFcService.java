@@ -95,8 +95,7 @@ public class CallFcService {
     String param = url.split("psize=20&")[1];
     log.info("[FC] fetch {}: {}", api, param);
     try {
-      ResponseEntity<Object[]> responseEntity = remoteRestTemplate.getForEntity(url,
-          getClassByApi(api));
+      ResponseEntity<Object[]> responseEntity = remoteRestTemplate.getForEntity(url, getClassByApi(api));
       Object[] body = responseEntity.getBody();
       if (body.length == 0) {
         log.info("[FC] fetch {}: no result returned from fc", api);

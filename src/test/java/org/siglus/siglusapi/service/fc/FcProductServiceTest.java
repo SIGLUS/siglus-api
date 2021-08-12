@@ -23,12 +23,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -63,6 +65,8 @@ import org.siglus.siglusapi.service.client.SiglusFacilityTypeApprovedProductRefe
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.TradeItemReferenceDataService;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
@@ -111,6 +115,9 @@ public class FcProductServiceTest {
   @Mock
   private BasicProductCodeRepository basicProductCodeRepository;
 
+  @Mock
+  private CacheManager cacheManager;
+
   private final Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
   private final UUID orderableId = UUID.randomUUID();
@@ -143,6 +150,15 @@ public class FcProductServiceTest {
 
   private final int displayOrder = 1;
 
+  @Mock
+  private final ConcurrentMapCache cache1 = new ConcurrentMapCache("cache1");
+
+  @Mock
+  private final ConcurrentMapCache cache2 = new ConcurrentMapCache("cache2");
+
+  @Mock
+  private final ConcurrentMapCache cache3 = new ConcurrentMapCache("cache3");
+
   @Before
   public void prepare() {
     ProgramRealProgram programRealProgram = ProgramRealProgram.builder()
@@ -169,6 +185,12 @@ public class FcProductServiceTest {
     BasicProductCode basicProductCode = new BasicProductCode();
     basicProductCode.setProductCode(fnm);
     when(basicProductCodeRepository.findAll()).thenReturn(newArrayList(basicProductCode));
+
+    when(cacheManager.getCacheNames())
+        .thenReturn(Arrays.asList("token", "siglus-orderables", "siglus-approved-products"));
+    when(cacheManager.getCache("token")).thenReturn(cache1);
+    when(cacheManager.getCache("siglus-orderables")).thenReturn(cache2);
+    when(cacheManager.getCache("siglus-approved-products")).thenReturn(cache3);
   }
 
   @Test
@@ -298,5 +320,36 @@ public class FcProductServiceTest {
     assertEquals(programName, extension.getProgramName());
     assertEquals(realProgramCode, extension.getRealProgramCode());
     assertEquals(realProgramName, extension.getRealProgramName());
+  }
+
+  @Test
+  public void shouldClearProductCache() {
+    // given
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    orderableDto.setExtraData(newHashMap());
+    when(orderableService.getOrderableByCode(fnm)).thenReturn(orderableDto);
+    when(orderableReferenceDataService.update(any())).thenReturn(orderableDto);
+    AreaDto area = AreaDto.builder()
+        .areaCode(realProgramCode)
+        .areaDescription(realProgramName)
+        .status(STATUS_ACTIVE)
+        .build();
+    ProductInfoDto product = ProductInfoDto.builder()
+        .fnm(fnm)
+        .description(description)
+        .fullDescription(fullDescription)
+        .status(STATUS_ACTIVE)
+        .areas(newArrayList(area))
+        .categoryCode(categoryCode)
+        .build();
+
+    // when
+    fcProductService.processProductData(newArrayList(product));
+
+    // then
+    verify(cache1, times(0)).clear();
+    verify(cache2).clear();
+    verify(cache3).clear();
   }
 }

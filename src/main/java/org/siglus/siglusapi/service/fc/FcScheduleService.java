@@ -505,8 +505,7 @@ public class FcScheduleService {
         callFcService.fetchData(getUrl(api, page, date), api);
       }
       long costTime = currentTimeMillis() - startTime;
-      log.info("[FC] fetch {} finish, total size: {}, cost: {}ms", api, getTotalSize(api),
-          costTime);
+      log.info("[FC] fetch {} finish, total size: {}, cost: {}ms", api, getTotalSize(api), costTime);
       return Math.toIntExact(costTime / 1000);
     } catch (Exception e) {
       fcIntegrationResultService.recordCallFcFailed(api, date);
