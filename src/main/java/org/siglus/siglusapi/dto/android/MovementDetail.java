@@ -80,7 +80,7 @@ public class MovementDetail {
       movementType = MovementType.PHYSICAL_INVENTORY;
       return new MovementDetail(adjustment, null, movementType, movementType.getReason(inventoryReason, adjustment));
     }
-    return new MovementDetail(0, unsignedAdjustment, MovementType.PHYSICAL_INVENTORY, null);
+    return new MovementDetail(0, unsignedAdjustment, MovementType.PHYSICAL_INVENTORY, "INVENTORY");
   }
 
   public MovementDetail populateInventory(Integer inventory) {
