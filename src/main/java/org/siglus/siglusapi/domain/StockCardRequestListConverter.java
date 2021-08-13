@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import javax.persistence.AttributeConverter;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -29,15 +31,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
 @Slf4j
-public class StockCardRequestConverter implements AttributeConverter<StockCardCreateRequest, String> {
+public class StockCardRequestListConverter implements AttributeConverter<List<StockCardCreateRequest>, String> {
 
-  private static final TypeReference<StockCardCreateRequest> TYPE_REF =
-      new TypeReference<StockCardCreateRequest>() {
+  private static final TypeReference<List<StockCardCreateRequest>> TYPE_REF =
+      new TypeReference<List<StockCardCreateRequest>>() {
       };
 
   private final ObjectMapper objectMapper;
 
-  public StockCardRequestConverter() {
+  public StockCardRequestListConverter() {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
     mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -45,31 +47,31 @@ public class StockCardRequestConverter implements AttributeConverter<StockCardCr
     this.objectMapper = mapper;
   }
 
-  StockCardRequestConverter(ObjectMapper objectMapper) {
+  StockCardRequestListConverter(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
 
   @Override
-  public String convertToDatabaseColumn(@NotNull StockCardCreateRequest request) {
+  public String convertToDatabaseColumn(@NotNull List<StockCardCreateRequest> request) {
     try {
       return objectMapper.writeValueAsString(request);
     } catch (JsonProcessingException ex) {
-      log.error("Can't convert stock card request to database column", ex);
+      log.error("Can't convert stock card request list to database column", ex);
       return null;
     }
   }
 
   @Override
   @NotNull
-  public StockCardCreateRequest convertToEntityAttribute(@NotNull String requestAsString) {
+  public List<StockCardCreateRequest> convertToEntityAttribute(@NotNull String requestAsString) {
     if (StringUtils.isBlank(requestAsString)) {
-      return new StockCardCreateRequest();
+      return Collections.emptyList();
     }
     try {
       return objectMapper.readValue(requestAsString, TYPE_REF);
     } catch (IOException ex) {
-      log.error("Can't convert string to stock card request", ex);
-      return new StockCardCreateRequest();
+      log.error("Can't convert string to stock card request list", ex);
+      return Collections.emptyList();
     }
   }
 }

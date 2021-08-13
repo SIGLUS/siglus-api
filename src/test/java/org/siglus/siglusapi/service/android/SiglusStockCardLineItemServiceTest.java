@@ -442,11 +442,12 @@ public class SiglusStockCardLineItemServiceTest {
     assertEquals(physicalInventory, stockMovementItemResponse1.getType());
     assertEquals(signature, stockMovementItemResponse1.getSignature());
     assertEquals(Integer.valueOf(200), stockMovementItemResponse1.getRequested());
+    assertEquals(documentNumber, stockMovementItemResponse1.getDocumentNumber());
 
     LotMovementItemResponse lotMovementItemResponse1 = stockMovementItemResponse1.getLotMovementItems().stream()
         .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))
         .findFirst().orElse(new LotMovementItemResponse());
-    assertEquals(documentNumber, lotMovementItemResponse1.getDocumentNumber());
+    assertNull(lotMovementItemResponse1.getDocumentNumber());
 
     // 2021-07-01 10:00:00 receive 30+40 220 140
     SiglusStockMovementItemResponse stockMovementItemResponse2 = stockMovementItemResponseMap.get(orderableId1).stream()
@@ -455,6 +456,7 @@ public class SiglusStockCardLineItemServiceTest {
     assertEquals(Integer.valueOf(70), stockMovementItemResponse2.getMovementQuantity());
     assertEquals(Integer.valueOf(360), stockMovementItemResponse2.getStockOnHand());
     assertEquals("RECEIVE", stockMovementItemResponse2.getType());
+    assertEquals("DISTRICT_DDM", stockMovementItemResponse2.getReason());
 
     // 2021-07-02 09:00:00 physicalInventory negative -80 -80 180 60
     SiglusStockMovementItemResponse stockMovementItemResponse3 = stockMovementItemResponseMap.get(orderableId1).stream()
@@ -463,6 +465,12 @@ public class SiglusStockCardLineItemServiceTest {
     assertEquals(Integer.valueOf(-160), stockMovementItemResponse3.getMovementQuantity());
     assertEquals(Integer.valueOf(240), stockMovementItemResponse3.getStockOnHand());
     assertEquals(physicalInventory, stockMovementItemResponse3.getType());
+
+    // 2021-07-02 09:00:00 physicalInventory negative 180
+    SiglusStockMovementItemResponse stockMovementItemResponse7 = stockMovementItemResponseMap.get(orderableId1).stream()
+        .filter(i -> i.getProcessedDate().toString().equals(dayOrigin070209))
+        .findFirst().orElse(new SiglusStockMovementItemResponse());
+    assertEquals("INVENTORY_NEGATIVE", stockMovementItemResponse7.getReason());
   }
 
   @Test

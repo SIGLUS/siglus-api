@@ -28,14 +28,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.validator.internal.engine.ConstraintViolationImpl;
 import org.openlmis.fulfillment.domain.BaseEntity;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
@@ -436,8 +437,10 @@ public class SiglusMeService {
     }
     String errorMessage = "";
     if (e instanceof javax.validation.ConstraintViolationException) {
-      errorMessage = ((ConstraintViolationImpl) (((ConstraintViolationException) e).getConstraintViolations())
-          .toArray()[0]).getMessage();
+      StringBuilder messageString = new StringBuilder();
+      Set<ConstraintViolation<?>> constraintViolations = (((ConstraintViolationException) e).getConstraintViolations());
+      constraintViolations.forEach(violation -> messageString.append(violation.getMessage()));
+      errorMessage = messageString.toString();
     } else {
       errorMessage = e.getMessage();
     }
@@ -459,34 +462,32 @@ public class SiglusMeService {
 
   private void backupStockCardRequest(List<StockCardCreateRequest> stockCardCreateRequests, Exception e) {
     UserDto user = authHelper.getCurrentUser();
-    stockCardCreateRequests.forEach(stockCardCreateRequest -> {
-      String syncUpHash = stockCardCreateRequest.getSyncUpHash(user);
-      StockCardRequestBackup existedBackup = stockCardRequestBackupRepository.findOneByHash(syncUpHash);
-      if (existedBackup != null) {
-        log.info("skip backup stock card request as syncUpHash: {} existed", syncUpHash);
-        return;
-      }
-      String errorMessage = "";
-      if (e instanceof javax.validation.ConstraintViolationException) {
-        errorMessage = ((ConstraintViolationImpl) (((ConstraintViolationException) e).getConstraintViolations())
-            .toArray()[0]).getMessage();
-      } else {
-        errorMessage = e.getMessage();
-      }
-      StockCardRequestBackup backup = StockCardRequestBackup.builder()
-          .hash(syncUpHash)
-          .facilityId(user.getHomeFacilityId())
-          .userId(user.getId())
-          .processedDate(stockCardCreateRequest.getRecordedAt())
-          .programCode(stockCardCreateRequest.getProductCode())
-          .type(stockCardCreateRequest.getType())
-          .stockOnHand(stockCardCreateRequest.getStockOnHand())
-          .quantity(stockCardCreateRequest.getQuantity())
-          .errorMessage(errorMessage)
-          .requestBody(stockCardCreateRequest)
-          .build();
-      log.info("backup stock card request, syncUpHash: {}", syncUpHash);
-      stockCardRequestBackupRepository.save(backup);
-    });
+    StringBuilder hashStringBuilder = new StringBuilder(user.getId().toString() + user.getHomeFacilityId().toString());
+    stockCardCreateRequests
+        .forEach(stockCardCreateRequest -> hashStringBuilder.append(stockCardCreateRequest.getSyncUpProperties()));
+    String syncUpHash = hashStringBuilder.toString();
+    StockCardRequestBackup existedBackup = stockCardRequestBackupRepository.findOneByHash(syncUpHash);
+    if (existedBackup != null) {
+      log.info("skip backup stock card request as syncUpHash: {} existed", syncUpHash);
+      return;
+    }
+    String errorMessage = "";
+    if (e instanceof javax.validation.ConstraintViolationException) {
+      StringBuilder messageString = new StringBuilder();
+      Set<ConstraintViolation<?>> constraintViolations = (((ConstraintViolationException) e).getConstraintViolations());
+      constraintViolations.forEach(violation -> messageString.append(violation.getMessage()));
+      errorMessage = messageString.toString();
+    } else {
+      errorMessage = e.getMessage() + e.getCause();
+    }
+    StockCardRequestBackup backup = StockCardRequestBackup.builder()
+        .hash(syncUpHash)
+        .facilityId(user.getHomeFacilityId())
+        .userId(user.getId())
+        .errorMessage(errorMessage)
+        .requestBody(stockCardCreateRequests)
+        .build();
+    log.info("backup stock card request, syncUpHash: {}", syncUpHash);
+    stockCardRequestBackupRepository.save(backup);
   }
 }

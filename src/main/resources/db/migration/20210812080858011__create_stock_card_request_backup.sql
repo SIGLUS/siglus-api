@@ -8,11 +8,6 @@ CREATE TABLE siglusintegration.stock_card_request_backup
     hash          CHARACTER VARYING(255)   NOT NULL UNIQUE,
     facilityid    UUID                     NOT NULL,
     userid        UUID                     NOT NULL,
-    programcode   CHARACTER VARYING(255)   ,
-    processedDate TIMESTAMP WITH TIME ZONE ,
-    stockOnHand   INTEGER                  ,
-    quantity      INTEGER                  ,
-    type          CHARACTER VARYING(255)   ,
     errormessage  TEXT,
     requestbody   jsonb,
     createddate   TIMESTAMP WITH TIME ZONE

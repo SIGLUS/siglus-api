@@ -39,6 +39,7 @@ import org.openlmis.stockmanagement.domain.event.CalculatedStockOnHand;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItem;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItemAdjustment;
+import org.openlmis.stockmanagement.domain.reason.ReasonCategory;
 import org.openlmis.stockmanagement.domain.reason.ReasonType;
 import org.openlmis.stockmanagement.domain.sourcedestination.Organization;
 import org.openlmis.stockmanagement.dto.CalculatedStockOnHandDto;
@@ -244,8 +245,24 @@ public class SiglusStockCardLineItemService {
         lotMovementItems.add(convertLotMovementItemDto(itemDto, siglusLotResponseByLotId));
       });
       stockMovementItemResponse.setLotMovementItems(lotMovementItems);
+      setStockMovementItemResponseReason(stockMovementItemResponse, lotMovementItems.get(0));
     }
     return stockMovementItemResponse;
+  }
+
+  private void setStockMovementItemResponseReason(SiglusStockMovementItemResponse stockMovementItemResponse,
+      LotMovementItemResponse lotMovementItemResponse) {
+    if (ReasonCategory.PHYSICAL_INVENTORY.toString().equals(stockMovementItemResponse.getType())) {
+      if (stockMovementItemResponse.getMovementQuantity() > 0) {
+        stockMovementItemResponse.setReason(INVENTORY_POSITIVE);
+      } else if (stockMovementItemResponse.getMovementQuantity() < 0) {
+        stockMovementItemResponse.setReason(INVENTORY_NEGATIVE);
+      } else {
+        stockMovementItemResponse.setReason(INVENTORY);
+      }
+    } else {
+      stockMovementItemResponse.setReason(lotMovementItemResponse.getReason());
+    }
   }
 
   private void convertStockMovementItemResponseWhenNoLot(SiglusStockMovementItemResponse stockMovementItemResponse,
@@ -320,7 +337,6 @@ public class SiglusStockCardLineItemService {
     SiglusLotResponse siglusLotResponse = siglusLotDtoByLotId.get(itemDto.getStockCard().getLotId());
     return LotMovementItemResponse.builder()
         .lotCode(siglusLotResponse == null ? null : siglusLotResponse.getLotCode())
-        .documentNumber(itemDto.getDocumentNumber())
         .reason(itemDto.getReason() == null ? null : itemDto.getReason().getName())
         .quantity(itemDto.getQuantity())
         .stockOnHand(itemDto.getStockOnHand()).build();
@@ -337,10 +353,14 @@ public class SiglusStockCardLineItemService {
         .orElseThrow(() -> new NotFoundException("OriginEventTime Not Found"));
     return SiglusStockMovementItemResponse.builder()
         .requested(getRequested(firstItem))
-        .type(firstItem.getReason().getType()).signature(firstItem.getSignature())
+        .type(firstItem.getReason().getType())
+        .signature(firstItem.getSignature())
         .processedDate(Instant.parse(originEventTime))
         .documentNumber(firstItem.getDocumentNumber())
-        .occurredDate(firstItem.getOccurredDate()).movementQuantity(0).stockOnHand(0).build();
+        .occurredDate(firstItem.getOccurredDate())
+        .movementQuantity(0)
+        .stockOnHand(0)
+        .build();
   }
 
   private Integer getRequested(StockCardLineItemDto itemDto) {

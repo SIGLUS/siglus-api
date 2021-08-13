@@ -15,8 +15,8 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -49,21 +49,11 @@ public class StockCardRequestBackup extends BaseEntity {
 
   private UUID userId;
 
-  private String programCode;
-
-  private Instant processedDate;
-
-  private Integer stockOnHand;
-
-  private Integer quantity;
-
-  private String type;
-
   private String errorMessage;
 
   @Column(name = "requestbody", columnDefinition = "jsonb")
-  @Convert(converter = StockCardRequestConverter.class)
-  private StockCardCreateRequest requestBody;
+  @Convert(converter = StockCardRequestListConverter.class)
+  private List<StockCardCreateRequest> requestBody;
 
   @CreatedDate
   @Column(updatable = false)

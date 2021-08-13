@@ -233,6 +233,7 @@ public class SiglusMeServiceTest {
   private final Instant now = Instant.now();
 
   private final UUID facilityId = UUID.randomUUID();
+  private final UUID userId = UUID.randomUUID();
 
   private ZonedDateTime oldTime;
   private Instant syncTime;
@@ -271,6 +272,7 @@ public class SiglusMeServiceTest {
     ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncService);
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
+    when(user.getId()).thenReturn(userId);
     when(authHelper.getCurrentUser()).thenReturn(user);
 
     String oldTimeStr = "2020-12-31T09:18:34.001Z";
@@ -675,7 +677,7 @@ public class SiglusMeServiceTest {
   @Test
   public void shouldThrowExceptionWhenCreateStockCardRequestIsEmpty() {
     // given
-    List<StockCardCreateRequest> stockCardCreateRequests = buildStockCardCreateRequests();
+    List<StockCardCreateRequest> stockCardCreateRequests = singletonList(new StockCardCreateRequest());
     StockCardSyncService stockCardSyncServiceMock = mock(StockCardSyncService.class);
     ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncServiceMock);
     doThrow(new ConstraintViolationException(Collections.emptySet()))
