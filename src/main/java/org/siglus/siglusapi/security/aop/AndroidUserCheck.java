@@ -33,7 +33,7 @@ public class AndroidUserCheck {
 
   private final AndroidHelper androidHelper;
 
-  @Pointcut("within(org.siglus.siglusapi.web.android.SiglusMeController)")
+  @Pointcut("within(org.siglus.siglusapi.web.android.*)")
   public void androidApi() {
     // do nothing
   }
