@@ -22,17 +22,9 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
-import org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted;
-import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithAllLots;
-import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementConsistentWithExisted;
-import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByLot;
-import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByProduct;
-import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
@@ -42,7 +34,6 @@ import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
-import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -84,19 +75,9 @@ public class SiglusMeController {
     return service.getFacilityProducts(lastSync);
   }
 
-  @Validated(PerformanceSequence.class)
   @PostMapping("/facility/stockCards")
   @ResponseStatus(CREATED)
-  public void createStockCards(
-      @RequestBody
-      @Valid
-      @NotEmpty
-      @StockOnHandConsistentWithQuantityByProduct
-      @StockOnHandConsistentWithQuantityByLot
-      @ProductConsistentWithAllLots
-      @LotStockConsistentWithExisted(groups = PerformanceGroup.class)
-      @ProductMovementConsistentWithExisted(groups = PerformanceGroup.class)
-          List<StockCardCreateRequest> requests) {
+  public void createStockCards(@RequestBody List<StockCardCreateRequest> requests) {
     service.createStockCards(requests);
   }
 

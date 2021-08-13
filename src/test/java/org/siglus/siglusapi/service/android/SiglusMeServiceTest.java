@@ -89,8 +89,11 @@ import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
+import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
+import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
+import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
@@ -104,6 +107,7 @@ import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
@@ -193,6 +197,12 @@ public class SiglusMeServiceTest {
   @Mock
   private RequisitionRequestBackupRepository requisitionRequestBackupRepository;
 
+  @Mock
+  private StockCardRequestBackupRepository stockCardRequestBackupRepository;
+
+  @Captor
+  private ArgumentCaptor<StockCardRequestBackup> stockCardRequestBackupArgumentCaptor;
+
   @Captor
   private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
 
@@ -241,6 +251,8 @@ public class SiglusMeServiceTest {
   private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
   private final UUID rapidtestTemplateId = UUID.fromString("2c10856e-eead-11eb-9718-acde48001122");
 
+  private final String nameStockCardSyncService = "stockCardSyncService";
+
   private final UUID tradeItem1 = UUID.randomUUID();
   private final UUID tradeItem2 = UUID.randomUUID();
   private final UUID tradeItem3 = UUID.randomUUID();
@@ -256,7 +268,7 @@ public class SiglusMeServiceTest {
   public void prepare() {
     ReflectionTestUtils.setField(service, "mapper", mapper);
     ReflectionTestUtils.setField(stockCardSyncService, "createStockCardContextHolder", holder);
-    ReflectionTestUtils.setField(service, "stockCardSyncService", stockCardSyncService);
+    ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncService);
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
@@ -620,6 +632,79 @@ public class SiglusMeServiceTest {
     } catch (Exception e) {
       verify(requisitionRequestBackupRepository, times(0)).save((RequisitionRequestBackup) any());
     }
+  }
+
+  @Test
+  public void shouldBackupStockCardRequestWhenErrorHappenedIfBackupNotExisted() {
+    // given
+    List<StockCardCreateRequest> stockCardCreateRequests = buildStockCardCreateRequests();
+    when(stockCardRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
+    StockCardSyncService stockCardSyncServiceMock = mock(StockCardSyncService.class);
+    ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncServiceMock);
+    doThrow(new NullPointerException()).when(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+    try {
+      // when
+      service.createStockCards(stockCardCreateRequests);
+    } catch (Exception e) {
+      // then
+      verify(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+      verify(stockCardRequestBackupRepository).save(stockCardRequestBackupArgumentCaptor.capture());
+    }
+  }
+
+  @Test
+  public void shouldSkipBackupStockCardRequestWhenErrorHappenedIfBackupExisted() {
+    // given
+    List<StockCardCreateRequest> stockCardCreateRequests = buildStockCardCreateRequests();
+    StockCardRequestBackup backup = new StockCardRequestBackup();
+    when(stockCardRequestBackupRepository.findOneByHash(anyString())).thenReturn(backup);
+    StockCardSyncService stockCardSyncServiceMock = mock(StockCardSyncService.class);
+    ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncServiceMock);
+    doThrow(new ConstraintViolationException(Collections.emptySet()))
+        .when(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+    try {
+      // when
+      service.createStockCards(stockCardCreateRequests);
+    } catch (Exception e) {
+      // then
+      verify(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+      verify(stockCardRequestBackupRepository, times(0)).save(backup);
+    }
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenCreateStockCardRequestIsEmpty() {
+    // given
+    List<StockCardCreateRequest> stockCardCreateRequests = buildStockCardCreateRequests();
+    StockCardSyncService stockCardSyncServiceMock = mock(StockCardSyncService.class);
+    ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncServiceMock);
+    doThrow(new ConstraintViolationException(Collections.emptySet()))
+        .when(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+    // when
+    try {
+      // when
+      service.createStockCards(stockCardCreateRequests);
+    } catch (Exception e) {
+      verify(stockCardRequestBackupRepository, times(0)).save((StockCardRequestBackup) any());
+    }
+  }
+
+  private List<StockCardCreateRequest> buildStockCardCreateRequests() {
+    StockCardLotEventRequest eventRequest = new StockCardLotEventRequest();
+    eventRequest.setStockOnHand(100);
+    eventRequest.setDocumentationNo("document");
+    eventRequest.setLotCode("20210811-yyd");
+    eventRequest.setExpirationDate(LocalDate.of(2021, 10, 20));
+    eventRequest.setQuantity(20);
+    StockCardCreateRequest stockCardRequest = new StockCardCreateRequest();
+    stockCardRequest.setStockOnHand(100);
+    stockCardRequest.setQuantity(20);
+    stockCardRequest.setProductCode("02A05");
+    stockCardRequest.setOccurredDate(LocalDate.of(2021, 8, 11));
+    stockCardRequest.setType("ADJUSTMENT");
+    stockCardRequest.setRecordedAt(Instant.now());
+    stockCardRequest.setLotEvents(singletonList(eventRequest));
+    return singletonList(stockCardRequest);
   }
 
   private RequisitionCreateRequest buildRequisitionCreateRequest() {

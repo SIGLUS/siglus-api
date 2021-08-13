@@ -37,8 +37,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicOrderableDto;
 import org.openlmis.requisition.dto.OrderableDto;
@@ -63,7 +65,13 @@ import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
 import org.siglus.siglusapi.dto.android.StockOnHand;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithAllLots;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementConsistentWithExisted;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByLot;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByProduct;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
+import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
@@ -73,7 +81,8 @@ import org.siglus.siglusapi.dto.android.response.LotsOnHandResponse;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
-import org.siglus.siglusapi.repository.StockCardBackupRepository;
+import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
+import org.siglus.siglusapi.repository.StockCardDeletedBackupRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
@@ -83,10 +92,12 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class StockCardSyncService {
 
@@ -102,7 +113,7 @@ public class StockCardSyncService {
   private final SiglusStockCardSummariesService stockCardSummariesService;
   private final SiglusStockCardLineItemService stockCardLineItemService;
   private final SiglusLotReferenceDataService lotReferenceDataService;
-  private final StockCardBackupRepository stockCardBackupRepository;
+  private final StockCardDeletedBackupRepository stockCardDeletedBackupRepository;
 
   @Transactional
   public void deleteStockCardByProduct(List<StockCardDeleteRequest> stockCardDeleteRequests) {
@@ -122,7 +133,7 @@ public class StockCardSyncService {
             orderableCodeToId.get(r.getProductCode()), userDto.getHomeFacilityId(), userDto.getId()))
         .collect(Collectors.toList());
     log.info("save stock card deleted backup info: {}", stockCardDeletedBackups);
-    stockCardBackupRepository.save(stockCardDeletedBackups);
+    stockCardDeletedBackupRepository.save(stockCardDeletedBackups);
     stockCardLineItemService.deleteStockCardByProduct(userDto.getHomeFacilityId(), orderableIds);
   }
 
@@ -134,7 +145,16 @@ public class StockCardSyncService {
   }
 
   @Transactional
-  public void createStockCards(List<StockCardCreateRequest> requests) {
+  @Validated(PerformanceSequence.class)
+  public void createStockCards(
+      @Valid
+      @NotEmpty
+      @StockOnHandConsistentWithQuantityByProduct
+      @StockOnHandConsistentWithQuantityByLot
+      @ProductConsistentWithAllLots
+      @LotStockConsistentWithExisted(groups = PerformanceGroup.class)
+      @ProductMovementConsistentWithExisted(groups = PerformanceGroup.class)
+          List<StockCardCreateRequest> requests) {
     FacilityDto facilityDto = getCurrentFacilityInfo();
     createStockCardContextHolder.initContext(facilityDto);
     try {

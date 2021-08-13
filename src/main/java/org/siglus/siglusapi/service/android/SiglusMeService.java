@@ -68,6 +68,7 @@ import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
+import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
@@ -88,6 +89,7 @@ import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -139,6 +141,7 @@ public class SiglusMeService {
   private final PodLotLineMapper podLotLineMapper;
   private final SiglusOrderableReferenceDataService orderableDataService;
   private final RequisitionRequestBackupRepository requisitionRequestBackupRepository;
+  private final StockCardRequestBackupRepository stockCardRequestBackupRepository;
   private final StockCardSyncService stockCardSyncService;
 
   public FacilityResponse getCurrentFacility() {
@@ -223,9 +226,17 @@ public class SiglusMeService {
     return syncResponse;
   }
 
-  @Transactional
   public void createStockCards(List<StockCardCreateRequest> requests) {
-    stockCardSyncService.createStockCards(requests);
+    try {
+      stockCardSyncService.createStockCards(requests);
+    } catch (Exception e) {
+      try {
+        backupStockCardRequest(requests, e);
+      } catch (NullPointerException backupError) {
+        log.warn("backup stock card request error", backupError);
+      }
+      throw e;
+    }
   }
 
   public void deleteStockCardByProduct(List<StockCardDeleteRequest> stockCardDeleteRequests) {
@@ -446,4 +457,36 @@ public class SiglusMeService {
     requisitionRequestBackupRepository.save(backup);
   }
 
+  private void backupStockCardRequest(List<StockCardCreateRequest> stockCardCreateRequests, Exception e) {
+    UserDto user = authHelper.getCurrentUser();
+    stockCardCreateRequests.forEach(stockCardCreateRequest -> {
+      String syncUpHash = stockCardCreateRequest.getSyncUpHash(user);
+      StockCardRequestBackup existedBackup = stockCardRequestBackupRepository.findOneByHash(syncUpHash);
+      if (existedBackup != null) {
+        log.info("skip backup stock card request as syncUpHash: {} existed", syncUpHash);
+        return;
+      }
+      String errorMessage = "";
+      if (e instanceof javax.validation.ConstraintViolationException) {
+        errorMessage = ((ConstraintViolationImpl) (((ConstraintViolationException) e).getConstraintViolations())
+            .toArray()[0]).getMessage();
+      } else {
+        errorMessage = e.getMessage();
+      }
+      StockCardRequestBackup backup = StockCardRequestBackup.builder()
+          .hash(syncUpHash)
+          .facilityId(user.getHomeFacilityId())
+          .userId(user.getId())
+          .processedDate(stockCardCreateRequest.getRecordedAt())
+          .programCode(stockCardCreateRequest.getProductCode())
+          .type(stockCardCreateRequest.getType())
+          .stockOnHand(stockCardCreateRequest.getStockOnHand())
+          .quantity(stockCardCreateRequest.getQuantity())
+          .errorMessage(errorMessage)
+          .requestBody(stockCardCreateRequest)
+          .build();
+      log.info("backup stock card request, syncUpHash: {}", syncUpHash);
+      stockCardRequestBackupRepository.save(backup);
+    });
+  }
 }

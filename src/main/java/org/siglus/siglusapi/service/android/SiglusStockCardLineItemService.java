@@ -113,9 +113,11 @@ public class SiglusStockCardLineItemService {
       physicalInventoryLineItemAdjustmentRepository.delete(stockCardAdjustments);
     }
     if (!physicalInventoryLineItems.isEmpty()) {
+      log.info("delete phycical inventory line item: {}", logPhysicalInventoryLineItems(physicalInventoryLineItems));
       physicalInventoryLineItemRepository.delete(physicalInventoryLineItems);
     }
     if (!physicalInventories.isEmpty()) {
+      log.info("delete phycical inventory: {}", logPhysicalInventories(physicalInventories));
       physicalInventoriesRepository.delete(physicalInventories);
     }
     log.info("delete calculated stockOnHand by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
@@ -138,10 +140,32 @@ public class SiglusStockCardLineItemService {
     return getStockMovementItemDtosMap(stockOnHandDtoMap, lineItemByOrderableIdMap, siglusLotResponseByLotId);
   }
 
-  private Set<UUID> getPhysicalInventoryIds(List<PhysicalInventory> physicalInventories) {
-    return physicalInventories.stream()
-        .map(PhysicalInventory::getId)
-        .collect(Collectors.toSet());
+  private String logPhysicalInventoryLineItems(List<PhysicalInventoryLineItem> physicalInventoryLineItems) {
+    StringBuilder stringBuilder = new StringBuilder(50);
+    physicalInventoryLineItems.forEach(lineItem -> {
+      stringBuilder.append("[lotId:");
+      stringBuilder.append(lineItem.getLotId());
+      stringBuilder.append(",orderableId:");
+      stringBuilder.append(lineItem.getOrderableId());
+      stringBuilder.append(",quantity:");
+      stringBuilder.append(lineItem.getQuantity());
+      stringBuilder.append("],");
+    });
+    return stringBuilder.toString();
+  }
+
+  private String logPhysicalInventories(List<PhysicalInventory> physicalInventories) {
+    StringBuilder stringBuilder = new StringBuilder(50);
+    physicalInventories.forEach(physicalInventory -> {
+      stringBuilder.append("[facilityId:");
+      stringBuilder.append(physicalInventory.getFacilityId());
+      stringBuilder.append(",programId:");
+      stringBuilder.append(physicalInventory.getProgramId());
+      stringBuilder.append(",occurredDate:");
+      stringBuilder.append(physicalInventory.getOccurredDate());
+      stringBuilder.append("],");
+    });
+    return stringBuilder.toString();
   }
 
   private List<PhysicalInventoryLineItem> getPhysicalInventoryLineItems(List<PhysicalInventory> physicalInventories) {

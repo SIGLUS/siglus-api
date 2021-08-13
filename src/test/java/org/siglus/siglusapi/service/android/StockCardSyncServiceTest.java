@@ -59,7 +59,7 @@ import org.siglus.siglusapi.domain.StockCardDeletedBackup;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
-import org.siglus.siglusapi.repository.StockCardBackupRepository;
+import org.siglus.siglusapi.repository.StockCardDeletedBackupRepository;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
@@ -72,7 +72,7 @@ public class StockCardSyncServiceTest {
   private StockCardSyncService service;
 
   @Mock
-  private StockCardBackupRepository stockCardBackupRepository;
+  private StockCardDeletedBackupRepository stockCardDeletedBackupRepository;
 
   @Mock
   private SiglusAuthenticationHelper authHelper;
@@ -160,7 +160,7 @@ public class StockCardSyncServiceTest {
     service.deleteStockCardByProduct(stockCardDeleteRequests);
 
     // then
-    verify(stockCardBackupRepository).save(stockCardDeletedBackupsArgumentCaptor.capture());
+    verify(stockCardDeletedBackupRepository).save(stockCardDeletedBackupsArgumentCaptor.capture());
     verify(stockCardLineItemService).deleteStockCardByProduct(any(), any());
     List<StockCardDeletedBackup> stockCardDeletedBackups = stockCardDeletedBackupsArgumentCaptor.getValue();
     assertEquals(3, stockCardDeletedBackups.size());

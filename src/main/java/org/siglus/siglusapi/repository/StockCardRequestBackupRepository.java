@@ -16,9 +16,11 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import org.siglus.siglusapi.domain.StockCardDeletedBackup;
+import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface StockCardBackupRepository extends JpaRepository<StockCardDeletedBackup, UUID> {
+public interface StockCardRequestBackupRepository extends JpaRepository<StockCardRequestBackup, UUID> {
+
+  StockCardRequestBackup findOneByHash(String hash);
 
 }

@@ -24,12 +24,14 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
+import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.KitProductEmptyLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.PositiveInitStockOnHand;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithOwnLots;
 import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
+import org.siglus.siglusapi.util.HashEncoder;
 
 @Data
 @ProductConsistentWithOwnLots
@@ -79,4 +81,8 @@ public class StockCardCreateRequest implements StockCardAdjustment {
     return ProductMovementKey.of(productCode, getEventTime());
   }
 
+  public String getSyncUpHash(UserDto user) {
+    return HashEncoder.hash(recordedAt.toString() + productCode + stockOnHand + quantity + type
+        + user.getId() + user.getHomeFacilityId());
+  }
 }

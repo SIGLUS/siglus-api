@@ -26,18 +26,18 @@ import javax.persistence.AttributeConverter;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
+import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
 @Slf4j
-public class ProductMovementConverter implements AttributeConverter<ProductMovementResponse, String> {
+public class StockCardRequestConverter implements AttributeConverter<StockCardCreateRequest, String> {
 
-  private static final TypeReference<ProductMovementResponse> TYPE_REF =
-      new TypeReference<ProductMovementResponse>() {
+  private static final TypeReference<StockCardCreateRequest> TYPE_REF =
+      new TypeReference<StockCardCreateRequest>() {
       };
 
   private final ObjectMapper objectMapper;
 
-  public ProductMovementConverter() {
+  public StockCardRequestConverter() {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
     mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -45,31 +45,31 @@ public class ProductMovementConverter implements AttributeConverter<ProductMovem
     this.objectMapper = mapper;
   }
 
-  ProductMovementConverter(ObjectMapper objectMapper) {
+  StockCardRequestConverter(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
 
   @Override
-  public String convertToDatabaseColumn(@NotNull ProductMovementResponse request) {
+  public String convertToDatabaseColumn(@NotNull StockCardCreateRequest request) {
     try {
       return objectMapper.writeValueAsString(request);
     } catch (JsonProcessingException ex) {
-      log.error("Can't convert product movement to database column", ex);
+      log.error("Can't convert stock card request to database column", ex);
       return null;
     }
   }
 
   @Override
   @NotNull
-  public ProductMovementResponse convertToEntityAttribute(@NotNull String requestAsString) {
+  public StockCardCreateRequest convertToEntityAttribute(@NotNull String requestAsString) {
     if (StringUtils.isBlank(requestAsString)) {
-      return new ProductMovementResponse();
+      return new StockCardCreateRequest();
     }
     try {
       return objectMapper.readValue(requestAsString, TYPE_REF);
     } catch (IOException ex) {
-      log.error("Can't convert string to product movement response", ex);
-      return new ProductMovementResponse();
+      log.error("Can't convert string to stock card request", ex);
+      return new StockCardCreateRequest();
     }
   }
 }
