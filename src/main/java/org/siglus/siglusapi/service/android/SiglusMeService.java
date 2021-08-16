@@ -102,6 +102,7 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.util.HashEncoder;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -463,9 +464,9 @@ public class SiglusMeService {
   private void backupStockCardRequest(List<StockCardCreateRequest> stockCardCreateRequests, Exception e) {
     UserDto user = authHelper.getCurrentUser();
     StringBuilder hashStringBuilder = new StringBuilder(user.getId().toString() + user.getHomeFacilityId().toString());
-    stockCardCreateRequests
-        .forEach(stockCardCreateRequest -> hashStringBuilder.append(stockCardCreateRequest.getSyncUpProperties()));
-    String syncUpHash = hashStringBuilder.toString();
+    stockCardCreateRequests.forEach(stockCardCreateRequest
+        -> hashStringBuilder.append(stockCardCreateRequest.getSyncUpProperties()));
+    String syncUpHash = HashEncoder.hash(hashStringBuilder.toString());
     StockCardRequestBackup existedBackup = stockCardRequestBackupRepository.findOneByHash(syncUpHash);
     if (existedBackup != null) {
       log.info("skip backup stock card request as syncUpHash: {} existed", syncUpHash);
