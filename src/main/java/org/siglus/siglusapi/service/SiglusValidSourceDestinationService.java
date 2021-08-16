@@ -25,8 +25,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.openlmis.stockmanagement.domain.sourcedestination.Organization;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
+import org.openlmis.stockmanagement.repository.OrganizationRepository;
+import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
@@ -45,6 +49,12 @@ public class SiglusValidSourceDestinationService {
   @Autowired
   private SupportedProgramsHelper supportedProgramsHelper;
 
+  @Autowired
+  private OrganizationRepository organizationRepository;
+
+  @Autowired
+  private SiglusFacilityReferenceDataService facilityReferenceDataService;
+
   public Collection<ValidSourceDestinationDto> findSources(UUID programId, UUID facilityId) {
     return validSourceDestinationStockManagementService.getValidSources(programId, facilityId);
   }
@@ -62,17 +72,19 @@ public class SiglusValidSourceDestinationService {
     programIds.add(programId);
     Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToGroupMembersDto(facilityId, programIds);
     return filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(programId),
-        findDestinationDtos(programId, facilityId));
+        findDestinationDtos(programId, facilityId), isFilterFacility(facilityId), getOrganizationNames());
   }
 
   public Collection<ValidSourceDestinationDto> findDestinationsForAllProducts(UUID facilityId) {
     Set<UUID> supportedPrograms = supportedProgramsHelper
         .findUserSupportedPrograms();
     Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToGroupMembersDto(facilityId, supportedPrograms);
+    List<String> organizationNames = getOrganizationNames();
+    boolean isFilterFacility = isFilterFacility(facilityId);
     return supportedPrograms.stream()
         .map(supportedProgram ->
             filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(supportedProgram),
-                findDestinationDtos(supportedProgram, facilityId)))
+                findDestinationDtos(supportedProgram, facilityId), isFilterFacility, organizationNames))
         .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
@@ -80,21 +92,31 @@ public class SiglusValidSourceDestinationService {
     return validSourceDestinationStockManagementService.getValidDestinations(programId, facilityId);
   }
 
-  private Collection<ValidSourceDestinationDto> filterFacilityByRequisitionGroup(
-      List<UUID> facilityIds,
-      Collection<ValidSourceDestinationDto> validSourceDestinationDtos) {
+  private Collection<ValidSourceDestinationDto> filterFacilityByRequisitionGroup(List<UUID> facilityIds,
+      Collection<ValidSourceDestinationDto> validSourceDestinationDtos, boolean isFilterFacility,
+      List<String> organizationNames) {
     Collection<ValidSourceDestinationDto> destinationDtosAfterFilter = new ArrayList<>();
     validSourceDestinationDtos.forEach(
         dto -> {
           boolean isCommonDestination = !dto.getNode().isRefDataFacility();
           boolean isDestinationFromFacilityName =
               facilityIds != null && facilityIds.contains(dto.getNode().getReferenceId());
-          if (isCommonDestination || isDestinationFromFacilityName) {
+          boolean isIgnoreDestinationFromFacilityType = isFilterFacility && organizationNames.contains(dto.getName());
+          if ((isCommonDestination || isDestinationFromFacilityName) && !isIgnoreDestinationFromFacilityType) {
             destinationDtosAfterFilter.add(dto);
           }
         }
     );
     return destinationDtosAfterFilter;
+  }
+
+  private boolean isFilterFacility(UUID facilityId) {
+    return FacilityTypeConstants.getIssueFilterFacilityTypes()
+        .contains(facilityReferenceDataService.findOne(facilityId).getType().getCode());
+  }
+
+  private List<String> getOrganizationNames() {
+    return organizationRepository.findAll().stream().map(Organization::getName).collect(Collectors.toList());
   }
 
   private Map<UUID, List<UUID>> mapProgramIdToGroupMembersDto(UUID facilityId,

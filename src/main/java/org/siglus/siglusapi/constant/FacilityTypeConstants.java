@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.constant;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
@@ -49,4 +52,7 @@ public class FacilityTypeConstants {
 
   public static final String AC = "AC";
 
+  public static Set<String> getIssueFilterFacilityTypes() {
+    return Stream.of(DPM, DDM, AI).collect(Collectors.toSet());
+  }
 }
