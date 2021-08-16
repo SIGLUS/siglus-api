@@ -476,7 +476,7 @@ public class SiglusMeService {
     if (e instanceof javax.validation.ConstraintViolationException) {
       StringBuilder messageString = new StringBuilder();
       Set<ConstraintViolation<?>> constraintViolations = (((ConstraintViolationException) e).getConstraintViolations());
-      constraintViolations.forEach(violation -> messageString.append(violation.getMessage()));
+      constraintViolations.forEach(violation -> messageString.append(violation.getMessage()).append("\n"));
       errorMessage = messageString.toString();
     } else {
       errorMessage = e.getMessage() + e.getCause();
