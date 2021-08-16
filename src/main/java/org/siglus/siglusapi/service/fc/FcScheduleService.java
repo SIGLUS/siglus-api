@@ -171,8 +171,7 @@ public class FcScheduleService {
     log.info("schedule start syncGeographicZoneFromFc");
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(GEOGRAPHIC_ZONE_API, date);
-    Boolean finalSuccess = fcGeographicZoneService.processGeographicZones(
-        callFcService.getGeographicZones());
+    Boolean finalSuccess = fcGeographicZoneService.processGeographicZones(callFcService.getGeographicZones());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(GEOGRAPHIC_ZONE_API)
         .date(date)
@@ -210,8 +209,7 @@ public class FcScheduleService {
     log.info("schedule start syncReceiptPlanFromFc");
     final long startTime = currentTimeMillis();
     Integer callFcCostTimeInSeconds = fetchDataFromFc(RECEIPT_PLAN_API, date);
-    Boolean finalSuccess = fcReceiptPlanService.processReceiptPlans(
-        callFcService.getReceiptPlans());
+    Boolean finalSuccess = fcReceiptPlanService.processReceiptPlans(callFcService.getReceiptPlans());
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(RECEIPT_PLAN_API)
         .date(date)
@@ -232,7 +230,7 @@ public class FcScheduleService {
       if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
         redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
         String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
-        issueVoucherService.updateIssueVourch(date);
+        issueVoucherService.updateIssueVoucher(date);
         Thread.sleep(DELAY);
         redisTemplate.delete(redisKey);
       } else {

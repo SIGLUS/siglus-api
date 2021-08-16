@@ -111,7 +111,7 @@ public class CallFcService {
 
   @Recover
   public void recover(RuntimeException e) {
-    log.error("[FC] call fc api failed with retry 5 times, message: {}", e.getMessage());
+    log.error("[FC] call fc api failed with retry 3 times, message: {}", e.getMessage());
     throw e;
   }
 

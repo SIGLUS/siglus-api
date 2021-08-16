@@ -177,7 +177,7 @@ public class FcScheduleServiceTest {
     fcScheduleService.syncIssueVoucherFromFc();
 
     // then
-    verify(issueVoucherService).updateIssueVourch(anyString());
+    verify(issueVoucherService).updateIssueVoucher(anyString());
   }
 
 
