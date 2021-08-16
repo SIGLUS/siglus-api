@@ -20,6 +20,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.validator.constraints.NotBlank;
+import org.hibernate.validator.constraints.NotEmpty;
 
 @Data
 @Builder
@@ -27,7 +29,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class StockCardDeleteRequest {
 
-  private List<StockCardCreateRequest> clientMovements;
-  
+  @NotBlank
   private String productCode;
+
+  @NotEmpty
+  private List<StockCardCreateRequest> clientMovements;
+
 }

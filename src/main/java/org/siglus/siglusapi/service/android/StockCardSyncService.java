@@ -55,6 +55,7 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2D
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.exception.NotFoundException;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.SiglusAuthenticationHelper;
@@ -116,13 +117,16 @@ public class StockCardSyncService {
   private final StockCardDeletedBackupRepository stockCardDeletedBackupRepository;
 
   @Transactional
-  public void deleteStockCardByProduct(List<StockCardDeleteRequest> stockCardDeleteRequests) {
+  public void deleteStockCardByProduct(@Valid List<StockCardDeleteRequest> stockCardDeleteRequests) {
     List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllApprovedProducts();
     UserDto userDto = authHelper.getCurrentUser();
     Map<String, UUID> orderableCodeToId = orderableCodeToIdMap(orderableDtos);
     Set<UUID> orderableIds = stockCardDeleteRequests.stream()
         .map(r -> orderableCodeToId.get(r.getProductCode()))
         .collect(Collectors.toSet());
+    if (orderableIds.contains(null)) {
+      throw new NotFoundException("There are products that do not exist in the approved product list");
+    }
     FacilityProductMovementsResponse productMovementsResponse = getProductMovements(null, null,
         userDto.getHomeFacilityId(), orderableDtos, orderableIds, FieldConstants.DELETE);
     Map<String, ProductMovementResponse> productCodeToMovements = productMovementsResponse.getProductMovements()
