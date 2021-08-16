@@ -573,6 +573,19 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         "createStockCards.arg0", violations);
   }
 
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenViolation6Bug1()
+      throws IOException {
+    // given
+    Object param = parseParam("advanceViolation6Bug1.json");
+
+    // when
+    Map<String, List<String>> violations = executeValidation(param);
+
+    // then
+    assertEquals(0, violations.size());
+  }
+
   private void assertViolation(String message, String key, Map<String, List<String>> violations) {
     assertTrue(violations.containsKey(key));
     assertNotNull(violations.get(key));

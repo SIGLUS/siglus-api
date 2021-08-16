@@ -79,10 +79,16 @@ public class LotStockConsistentWithExistedValidator implements
     int inventoryBeforeAdjustment = lotEvent.getStockOnHand() - lotEvent.getQuantity();
     actualContext.addExpressionVariable("inventoryBeforeAdjustment", inventoryBeforeAdjustment);
     if (inventory != null) {
-      if (inventory.getEventTime().compareTo(lotEvent.getEventTime()) < 0
-          && inventory.getInventory() != inventoryBeforeAdjustment) {
+      if (inventory.getEventTime().compareTo(lotEvent.getEventTime()) >= 0) {
+        // skip before inventory
+        return false;
+      }
+      if (inventory.getInventory() != inventoryBeforeAdjustment) {
         actualContext.addExpressionVariable("existedInventory", inventory.getInventory());
         return true;
+      } else {
+        verified.add(productLotCode);
+        return false;
       }
     } else {
       if (inventoryBeforeAdjustment != 0) {
