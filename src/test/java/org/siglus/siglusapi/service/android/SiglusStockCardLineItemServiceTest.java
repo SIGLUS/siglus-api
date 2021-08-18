@@ -443,6 +443,7 @@ public class SiglusStockCardLineItemServiceTest {
     assertEquals(signature, stockMovementItemResponse1.getSignature());
     assertEquals(Integer.valueOf(200), stockMovementItemResponse1.getRequested());
     assertEquals(documentNumber, stockMovementItemResponse1.getDocumentNumber());
+    assertEquals("2021-07-01T00:00:00Z", stockMovementItemResponse1.getServerProcessedDate().toString());
 
     LotMovementItemResponse lotMovementItemResponse1 = stockMovementItemResponse1.getLotMovementItems().stream()
         .filter(i -> i.getLotCode().equals(lotId1FromOrderable1Code))

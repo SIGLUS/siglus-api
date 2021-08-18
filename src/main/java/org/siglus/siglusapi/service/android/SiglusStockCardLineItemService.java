@@ -350,12 +350,13 @@ public class SiglusStockCardLineItemService {
         .filter(e -> ORIGIN_EVENT_TIME.equals(e.getKey()))
         .findFirst()
         .map(Entry::getValue)
-        .orElseThrow(() -> new NotFoundException("OriginEventTime Not Found"));
+        .orElse(null);
     return SiglusStockMovementItemResponse.builder()
         .requested(getRequested(firstItem))
         .type(firstItem.getReason().getType())
         .signature(firstItem.getSignature())
-        .processedDate(Instant.parse(originEventTime))
+        .processedDate(originEventTime == null ? null : Instant.parse(originEventTime))
+        .serverProcessedDate(firstItem.getProcessedDate().toInstant())
         .documentNumber(firstItem.getDocumentNumber())
         .occurredDate(firstItem.getOccurredDate())
         .movementQuantity(0)

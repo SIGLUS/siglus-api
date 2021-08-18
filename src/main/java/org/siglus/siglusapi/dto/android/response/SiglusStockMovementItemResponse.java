@@ -39,6 +39,8 @@ public class SiglusStockMovementItemResponse {
 
   private Instant processedDate;
 
+  private Instant serverProcessedDate;
+
   private LocalDate occurredDate;
 
   private String documentNumber;
