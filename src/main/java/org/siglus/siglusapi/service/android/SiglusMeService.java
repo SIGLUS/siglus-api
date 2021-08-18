@@ -440,10 +440,10 @@ public class SiglusMeService {
     if (e instanceof javax.validation.ConstraintViolationException) {
       StringBuilder messageString = new StringBuilder();
       Set<ConstraintViolation<?>> constraintViolations = (((ConstraintViolationException) e).getConstraintViolations());
-      constraintViolations.forEach(violation -> messageString.append(violation.getMessage()));
+      constraintViolations.forEach(violation -> messageString.append(violation.getMessage()).append("\n"));
       errorMessage = messageString.toString();
     } else {
-      errorMessage = e.getMessage();
+      errorMessage = e.getMessage() + e.getCause();
     }
     RequisitionRequestBackup backup = RequisitionRequestBackup.builder()
         .hash(syncUpHash)
@@ -464,8 +464,7 @@ public class SiglusMeService {
   private void backupStockCardRequest(List<StockCardCreateRequest> stockCardCreateRequests, Exception e) {
     UserDto user = authHelper.getCurrentUser();
     StringBuilder hashStringBuilder = new StringBuilder(user.getId().toString() + user.getHomeFacilityId().toString());
-    stockCardCreateRequests.forEach(stockCardCreateRequest
-        -> hashStringBuilder.append(stockCardCreateRequest.getSyncUpProperties()));
+    stockCardCreateRequests.forEach(r -> hashStringBuilder.append(r.getSyncUpProperties()));
     String syncUpHash = HashEncoder.hash(hashStringBuilder.toString());
     StockCardRequestBackup existedBackup = stockCardRequestBackupRepository.findOneByHash(syncUpHash);
     if (existedBackup != null) {

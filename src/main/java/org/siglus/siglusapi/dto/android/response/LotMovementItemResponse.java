@@ -25,9 +25,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class LotMovementItemResponse {
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private String documentNumber;
 
   private String reason;
