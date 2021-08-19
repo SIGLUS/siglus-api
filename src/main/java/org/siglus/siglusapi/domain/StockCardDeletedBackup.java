@@ -53,7 +53,7 @@ public class StockCardDeletedBackup extends BaseEntity {
   private ProductMovementResponse productMovementResponse;
 
   @Column(name = "clientmovements", columnDefinition = "jsonb")
-  @Convert(converter = StockCardListCreateRequestConverter.class)
+  @Convert(converter = StockCardRequestListConverter.class)
   private List<StockCardCreateRequest> clientmovements;
 
   private UUID createdby;
