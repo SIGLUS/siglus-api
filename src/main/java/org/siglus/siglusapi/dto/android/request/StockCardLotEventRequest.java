@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import javax.validation.constraints.Min;
@@ -48,6 +49,7 @@ public class StockCardLotEventRequest implements StockCardAdjustment {
   private String documentationNo;
 
   @Accessors(chain = true)
+  @JsonIgnore
   // transient if serializable, read from StockCardCreateRequest
   private EventTime eventTime;
 

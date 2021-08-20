@@ -233,10 +233,12 @@ public class StockManagementRepository {
     } else {
       List<LotMovement> lotMovements = productLotMovements.stream()
           .map(this::toLotMovement)
+          .filter(lot -> lot.getLotCode() != null)
           .sorted(comparing(LotMovement::getLotCode))
           .collect(toList());
       movementBuilder.lotMovements(lotMovements);
       MovementDetail movementDetail = productLotMovements.stream()
+          .filter(p -> p.getCode().getLotCode() != null)
           .map(ProductLotMovement::getMovementDetail)
           .reduce(MovementDetail::merge)
           .orElse(null);

@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -62,6 +65,7 @@ public class StockCardCreateRequest implements StockCardAdjustment {
 
   private Integer requested;
 
+  @JsonInclude(Include.NON_NULL)
   private String reasonName;
 
   private String signature;
@@ -71,14 +75,17 @@ public class StockCardCreateRequest implements StockCardAdjustment {
   private List<StockCardLotEventRequest> lotEvents;
 
   @Override
+  @JsonIgnore
   public EventTime getEventTime() {
     return EventTime.of(occurredDate, recordedAt);
   }
 
+  @JsonIgnore
   public ProductMovementKey getProductMovementKey() {
     return ProductMovementKey.of(productCode, getEventTime());
   }
 
+  @JsonIgnore
   public String getSyncUpProperties() {
     return recordedAt.toString() + productCode + stockOnHand + quantity + type;
   }
