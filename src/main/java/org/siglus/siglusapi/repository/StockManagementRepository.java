@@ -217,7 +217,8 @@ public class StockManagementRepository {
         + LEFT_JOIN + reasonRoot + " on root.reasonid = reason.id "
         + LEFT_JOIN + lineAdjRoot + " on pilia.stockcardlineitemid = root.id "
         + LEFT_JOIN + adjustmentReasonRoot + " on pilia.reasonid = adjstreason.id "
-        + LEFT_JOIN + requestedRoot + " on requested.stockeventid = root.origineventid "
+        + LEFT_JOIN + requestedRoot
+        + " on requested.stockeventid = root.origineventid and requested.orderableid = o.id "
         + where;
   }
 
