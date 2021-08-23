@@ -129,24 +129,27 @@ public class StockManagementRepository {
   @ParametersAreNullableByDefault
   private List<ProductLotStock> findAllLotStocks(@Nonnull UUID facilityId, LocalDate at) {
     requireNonNull(facilityId, "facilityId should not be null");
-    String select = "SELECT DISTINCT ON (stockcardid) o.code AS productcode, l.lotcode, "
-        + "root.stockonhand, root.occurreddate, root.processeddate ";
+    String select = "SELECT DISTINCT ON (root.stockcardid) o.code AS productcode, l.lotcode, "
+        + "root.stockonhand, li.occurreddate, li.extradata \\:\\: json ->> 'originEventTime' as recordedat ";
     String root = "stockmanagement.calculated_stocks_on_hand root";
     List<Object> params = new ArrayList<>(2);
     String where = generateWhere(facilityId, null, at, params);
-    String orderBy = "ORDER BY stockcardid, occurreddate DESC, processeddate DESC";
+    String orderBy = "ORDER BY root.stockcardid, root.occurreddate DESC, root.processeddate DESC, "
+        + "li.occurreddate DESC, recordedat DESC";
     String sql = select
         + "FROM " + root + ' '
         + LEFT_JOIN + STOCK_CARD_ROOT + " on root.stockcardid = sc.id "
         + LEFT_JOIN + ORDERABLE_ROOT + " on sc.orderableid = o.id "
         + LEFT_JOIN + LOT_ROOT + " on sc.lotid = l.id "
+        + "LEFT JOIN stockmanagement.stock_card_line_items li ON "
+        + "li.stockcardid = sc.id AND li.occurreddate = root.occurreddate "
         + where
         + orderBy;
     return executeQuery(sql, params,
         (arr -> ProductLotStock.builder()
             .code(ProductLotCode.of((String) arr[0], (String) arr[1]))
             .inventory((Integer) arr[2])
-            .eventTime(EventTime.of(((java.sql.Date) arr[3]).toLocalDate(), ((java.sql.Timestamp) arr[4]).toInstant()))
+            .eventTime(EventTime.of(((java.sql.Date) arr[3]).toLocalDate(), Instant.parse((String) arr[4])))
             .build()
         )
     );
