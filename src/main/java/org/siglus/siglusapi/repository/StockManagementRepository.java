@@ -124,7 +124,7 @@ public class StockManagementRepository {
   private List<ProductLotStock> findAllLotStocks(@Nonnull UUID facilityId, LocalDate at) {
     requireNonNull(facilityId, "facilityId should not be null");
     String select = "SELECT DISTINCT ON (root.stockcardid) o.code AS productcode, l.lotcode, "
-        + "root.stockonhand, li.occurreddate, li.extradata \\:\\: json ->> 'originEventTime' as recordedat, "
+        + "root.stockonhand, root.occurreddate, li.extradata \\:\\: json ->> 'originEventTime' as recordedat, "
         + "li.processeddate, l.expirationdate ";
     String root = "stockmanagement.calculated_stocks_on_hand root";
     List<Object> params = new ArrayList<>(2);

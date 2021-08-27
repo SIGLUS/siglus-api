@@ -54,12 +54,16 @@ public class EventTime implements Comparable<EventTime> {
   }
 
   public static EventTime fromDatabase(java.sql.Date occurredDate, @Nullable String recordedAtStr,
-      Timestamp processedAt) {
+      Timestamp processedAtTs) {
     Instant recordedAt = null;
     if (recordedAtStr != null) {
       recordedAt = Instant.parse(recordedAtStr);
     }
-    return new EventTime(occurredDate.toLocalDate(), recordedAt, processedAt.toInstant());
+    Instant processedAt = null;
+    if (processedAtTs != null) {
+      processedAt = processedAtTs.toInstant();
+    }
+    return new EventTime(occurredDate.toLocalDate(), recordedAt, processedAt);
   }
 
   @Override
