@@ -31,6 +31,6 @@ public class LotsOnHandResponse {
 
   private LocalDate effectiveDate;
 
-  private LotLegacyResponse lot;
+  private LotBasicResponse lot;
 
 }

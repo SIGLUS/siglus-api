@@ -16,13 +16,16 @@
 package org.siglus.siglusapi.dto.android.response;
 
 import java.time.LocalDate;
+import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
+@Builder
+@RequiredArgsConstructor
 public class LotBasicResponse {
 
-  private String code;
-
-  private LocalDate expirationDate;
+  private final String code;
+  private final LocalDate expirationDate;
 
 }

@@ -79,7 +79,7 @@ import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
-import org.siglus.siglusapi.dto.android.response.LotLegacyResponse;
+import org.siglus.siglusapi.dto.android.response.LotBasicResponse;
 import org.siglus.siglusapi.dto.android.response.LotsOnHandResponse;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
@@ -204,7 +204,7 @@ public class StockCardSyncService {
       Set<UUID> orderableIds) {
     Map<UUID, String> orderableIdToCode = orderableIdToCodeMap(orderableDtos);
     List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = stockCardSummariesService.findAllProgramStockSummaries();
-    Map<UUID, LotLegacyResponse> siglusLotDtoByLotId = getSiglusLotDtoByLotId(orderableDtos, stockCardSummaryV2Dtos);
+    Map<UUID, LotBasicResponse> siglusLotDtoByLotId = getSiglusLotDtoByLotId(orderableDtos, stockCardSummaryV2Dtos);
     Map<UUID, List<LotsOnHandResponse>> lotsOnHandDtosByOrderableId = getLotsOnHandResponsesMap(stockCardSummaryV2Dtos,
         siglusLotDtoByLotId);
     Map<UUID, List<SiglusStockMovementItemResponse>> productMovementResponsesByOrderableId = stockCardLineItemService
@@ -435,17 +435,17 @@ public class StockCardSyncService {
     return emptyList();
   }
 
-  private Map<UUID, LotLegacyResponse> getSiglusLotDtoByLotId(
+  private Map<UUID, LotBasicResponse> getSiglusLotDtoByLotId(
       List<org.openlmis.requisition.dto.OrderableDto> orderableDtos,
       List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos) {
     return getLotList(stockCardSummaryV2Dtos, orderableDtos).stream()
         .collect(Collectors.toMap(LotDto::getId,
-            t -> LotLegacyResponse.builder().lotCode(t.getLotCode()).expirationDate(t.getExpirationDate()).build()));
+            t -> LotBasicResponse.builder().code(t.getLotCode()).expirationDate(t.getExpirationDate()).build()));
   }
 
   private Map<UUID, List<LotsOnHandResponse>> getLotsOnHandResponsesMap(
       List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
-      Map<UUID, LotLegacyResponse> siglusLotDtoByLotId) {
+      Map<UUID, LotBasicResponse> siglusLotDtoByLotId) {
     return stockCardSummaryV2Dtos.stream()
         .collect(Collectors
             .toMap(dto -> dto.getOrderable().getId(), dto -> getLotsOnHandResponses(dto, siglusLotDtoByLotId)));
@@ -466,14 +466,14 @@ public class StockCardSyncService {
   }
 
   private List<LotsOnHandResponse> getLotsOnHandResponses(StockCardSummaryV2Dto dto,
-      Map<UUID, LotLegacyResponse> sigluslotDtoByLotId) {
+      Map<UUID, LotBasicResponse> sigluslotDtoByLotId) {
     return dto.getCanFulfillForMe().stream()
         .map(fulfillDto -> convertLotsOnHandResponse(fulfillDto, sigluslotDtoByLotId))
         .collect(Collectors.toList());
   }
 
   private LotsOnHandResponse convertLotsOnHandResponse(CanFulfillForMeEntryDto fulfillDto,
-      Map<UUID, LotLegacyResponse> sigluslotResponseByLotId) {
+      Map<UUID, LotBasicResponse> sigluslotResponseByLotId) {
     return LotsOnHandResponse.builder().quantityOnHand(fulfillDto.getStockOnHand())
         .lot(fulfillDto.getLot() == null ? null : sigluslotResponseByLotId.get(fulfillDto.getLot().getId()))
         .effectiveDate(fulfillDto.getOccurredDate()).build();

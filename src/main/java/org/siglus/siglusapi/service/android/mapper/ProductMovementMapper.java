@@ -30,7 +30,7 @@ import org.siglus.siglusapi.dto.android.LotMovement;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
-import org.siglus.siglusapi.dto.android.response.LotLegacyResponse;
+import org.siglus.siglusapi.dto.android.response.LotBasicResponse;
 import org.siglus.siglusapi.dto.android.response.LotMovementItemResponse;
 import org.siglus.siglusapi.dto.android.response.LotsOnHandResponse;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
@@ -76,24 +76,25 @@ public interface ProductMovementMapper {
     return stocksOnHand.getStockQuantityByProduct(productCode);
   }
 
-  @Mapping(target = "lot", source = "productLotCode", qualifiedByName = "getLot")
-  @Mapping(target = "quantityOnHand", source = "inventoryDetail.stockQuantity")
-  @Mapping(target = "effectiveDate", source = "inventoryDetail.eventTime.occurredDate")
-  LotsOnHandResponse toLotOnHand(ProductLotCode productLotCode, InventoryDetail inventoryDetail,
-      @Context StocksOnHand stocksOnHand);
 
   @Named("getLot")
-  default LotLegacyResponse getLot(ProductLotCode productLotCode, @Context StocksOnHand stocksOnHand) {
+  default LotBasicResponse getLot(ProductLotCode productLotCode, @Context StocksOnHand stocksOnHand) {
     Lot lot = stocksOnHand.getLot(productLotCode);
-    return LotLegacyResponse.builder().lotCode(lot.getCode()).expirationDate(lot.getExpirationDate()).build();
+    return LotBasicResponse.builder().code(lot.getCode()).expirationDate(lot.getExpirationDate()).build();
   }
 
   @Named("getLotsOnHand")
   default List<LotsOnHandResponse> getLotsOnHand(String productCode, @Context StocksOnHand stocksOnHand) {
     return stocksOnHand.getLotInventoriesByProduct(productCode).entrySet().stream()
         .map(e -> toLotOnHand(e.getKey(), e.getValue(), stocksOnHand))
-        .sorted(comparing(r -> r.getLot().getLotCode()))
+        .sorted(comparing(r -> r.getLot().getCode()))
         .collect(toList());
   }
+
+  @Mapping(target = "lot", source = "productLotCode", qualifiedByName = "getLot")
+  @Mapping(target = "quantityOnHand", source = "inventoryDetail.stockQuantity")
+  @Mapping(target = "effectiveDate", source = "inventoryDetail.eventTime.occurredDate")
+  LotsOnHandResponse toLotOnHand(ProductLotCode productLotCode, InventoryDetail inventoryDetail,
+      @Context StocksOnHand stocksOnHand);
 
 }
