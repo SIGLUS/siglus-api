@@ -20,27 +20,34 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
-import java.time.Instant;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNullableByDefault;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.android.EventTime;
+import org.siglus.siglusapi.dto.android.EventTimeContainer;
+import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.LotMovement;
 import org.siglus.siglusapi.dto.android.MovementDetail;
+import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductLotMovement;
 import org.siglus.siglusapi.dto.android.ProductLotStock;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovement.ProductMovementBuilder;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
-import org.siglus.siglusapi.dto.android.StockOnHand;
+import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -55,45 +62,46 @@ public class StockManagementRepository {
       "(select distinct on (id) * from referencedata.orderables order by id, versionnumber desc) o";
   private static final String LOT_ROOT = "referencedata.lots l";
 
-  @ParametersAreNullableByDefault
-  public List<ProductMovement> getLatestProductMovements(@Nonnull UUID facilityId) {
+  public PeriodOfProductMovements getLatestProductMovements(@Nonnull UUID facilityId) {
     return getAllProductMovements(facilityId, null, null);
   }
 
   @ParametersAreNullableByDefault
-  public List<ProductMovement> getAllProductMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate at) {
-    List<ProductLotMovement> allLotMovements = findAllLotMovements(facilityId, since, at);
-    return allLotMovements.stream()
+  public PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till) {
+    List<ProductLotMovement> allLotMovements = findAllLotMovements(facilityId, since, till);
+    StocksOnHand stocksOnHand = getStockOnHand(facilityId, till);
+    Map<String, Integer> productInventories = stocksOnHand.getProductInventories();
+    Map<ProductLotCode, Integer> lotInventories = stocksOnHand.getLotInventories();
+    List<ProductMovement> productMovements = allLotMovements.stream()
         .collect(groupingBy(ProductLotMovement::getProductMovementKey))
         .entrySet().stream()
-        .map(e -> toProductMovement(e.getKey(), e.getValue()))
+        .sorted(Entry.comparingByKey(EventTimeContainer.DESCENDING))
+        .map(e -> toProductMovement(e.getKey(), e.getValue(), productInventories, lotInventories))
+        .sorted(EventTimeContainer.ASCENDING)
         .collect(toList());
+    return new PeriodOfProductMovements(productMovements, stocksOnHand);
   }
 
-  @ParametersAreNullableByDefault
-  public StockOnHand getStockOnHand(@Nonnull UUID facilityId) {
+  public StocksOnHand getStockOnHand(@Nonnull UUID facilityId) {
     return getStockOnHand(facilityId, null);
   }
 
-  @ParametersAreNullableByDefault
-  public StockOnHand getStockOnHand(@Nonnull UUID facilityId, LocalDate at) {
-    return new StockOnHand(findAllLotStocks(facilityId, at));
+  public StocksOnHand getStockOnHand(@Nonnull UUID facilityId, @Nullable LocalDate at) {
+    return new StocksOnHand(findAllLotStocks(facilityId, at));
   }
 
   @ParametersAreNullableByDefault
-  private List<ProductLotMovement> findAllLotMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate at) {
+  private List<ProductLotMovement> findAllLotMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till) {
     requireNonNull(facilityId, "facilityId should not be null");
     List<Object> params = new ArrayList<>(2);
-    String sql = generateMovementQuery(facilityId, since, at, params);
-    List<ProductLotMovement> productLotMovements = executeQuery(sql, params, buildProductLotMovementFromResult());
-    populateInventory(facilityId, at, productLotMovements);
-    return productLotMovements;
+    String sql = generateMovementQuery(facilityId, since, till, params);
+    return executeQuery(sql, params, buildProductLotMovementFromResult());
   }
 
   private Function<Object[], ProductLotMovement> buildProductLotMovementFromResult() {
     return arr -> ProductLotMovement.builder()
         .code(ProductLotCode.of((String) arr[0], (String) arr[1]))
-        .eventTime(EventTime.of(((java.sql.Date) arr[2]).toLocalDate(), Instant.parse((String) arr[3])))
+        .eventTime(EventTime.fromDatabase((java.sql.Date) arr[2], (String) arr[3], (Timestamp) arr[15]))
         .movementDetail(MovementDetail.builder()
             .unsignedAdjustment((Integer) arr[4])
             .source((String) arr[5])
@@ -106,38 +114,24 @@ public class StockManagementRepository {
             .build()
         )
         .requestedQuantity((Integer) arr[12])
+        .signature((String) arr[13])
+        .documentNumber((String) arr[14])
+        .lot(Lot.of((String) arr[1], (java.sql.Date) arr[16]))
         .build();
-  }
-
-  private void populateInventory(UUID facilityId, LocalDate at, List<ProductLotMovement> productLotMovements) {
-    StockOnHand stockOnHand = getStockOnHand(facilityId, at);
-    productLotMovements.stream()
-        .filter(m -> stockOnHand.findInventory(m.getCode()) != null)
-        .collect(groupingBy(ProductLotMovement::getCode))
-        .forEach((key, value) -> {
-          ProductLotStock productLotStock = stockOnHand.findInventory(key);
-          Integer inventory = requireNonNull(productLotStock).getInventory();
-          List<ProductLotMovement> movements = value.stream()
-              .sorted(((o1, o2) -> EventTime.DESCENDING.compare(o1.getEventTime(), o2.getEventTime())))
-              .collect(toList());
-          for (ProductLotMovement movement : movements) {
-            inventory = movement.populateInventory(inventory);
-          }
-        });
   }
 
   @ParametersAreNullableByDefault
   private List<ProductLotStock> findAllLotStocks(@Nonnull UUID facilityId, LocalDate at) {
     requireNonNull(facilityId, "facilityId should not be null");
     String select = "SELECT DISTINCT ON (root.stockcardid) o.code AS productcode, l.lotcode, "
-        + "root.stockonhand, li.occurreddate, li.extradata \\:\\: json ->> 'originEventTime' as recordedat ";
+        + "root.stockonhand, li.occurreddate, li.extradata \\:\\: json ->> 'originEventTime' as recordedat, "
+        + "li.processeddate, l.expirationdate ";
     String root = "stockmanagement.calculated_stocks_on_hand root";
     List<Object> params = new ArrayList<>(2);
     String where = generateWhere(facilityId, null, at, params);
     String orderBy = "ORDER BY root.stockcardid, root.occurreddate DESC, root.processeddate DESC, "
         + "li.occurreddate DESC, recordedat DESC";
-    String sql = select
-        + "FROM " + root + ' '
+    String sql = select + "FROM " + root + ' '
         + LEFT_JOIN + STOCK_CARD_ROOT + " on root.stockcardid = sc.id "
         + LEFT_JOIN + ORDERABLE_ROOT + " on sc.orderableid = o.id "
         + LEFT_JOIN + LOT_ROOT + " on sc.lotid = l.id "
@@ -148,8 +142,9 @@ public class StockManagementRepository {
     return executeQuery(sql, params,
         (arr -> ProductLotStock.builder()
             .code(ProductLotCode.of((String) arr[0], (String) arr[1]))
-            .inventory((Integer) arr[2])
-            .eventTime(EventTime.of(((java.sql.Date) arr[3]).toLocalDate(), Instant.parse((String) arr[4])))
+            .stockQuantity((Integer) arr[2])
+            .eventTime(EventTime.fromDatabase((java.sql.Date) arr[3], (String) arr[4], (Timestamp) arr[5]))
+            .expirationDate((java.sql.Date) arr[6])
             .build()
         )
     );
@@ -167,9 +162,8 @@ public class StockManagementRepository {
     return resultList;
   }
 
-  @ParametersAreNullableByDefault
   @SuppressWarnings("PMD.ConsecutiveLiteralAppends")
-  private static String generateWhere(@Nonnull UUID facilityId, LocalDate since, LocalDate at,
+  private static String generateWhere(@Nonnull UUID facilityId, @Nullable LocalDate since, @Nullable LocalDate at,
       @Nonnull List<Object> params) {
     StringBuilder where = new StringBuilder("WHERE sc.facilityid = ?0 ");
     params.add(facilityId);
@@ -184,7 +178,8 @@ public class StockManagementRepository {
     return where.toString();
   }
 
-  private String generateMovementQuery(UUID facilityId, LocalDate since, LocalDate at, List<Object> params) {
+  private String generateMovementQuery(@Nonnull UUID facilityId, @Nullable LocalDate since, @Nullable LocalDate at,
+      @Nonnull List<Object> params) {
     String select = "SELECT o.code AS productcode, "
         + "l.lotcode, "
         + "root.occurreddate, "
@@ -197,8 +192,13 @@ public class StockManagementRepository {
         + "adjstreason.name AS inventoryReason, "
         + "adjstreason.reasontype AS inventoryReasontype,"
         + "pilia.quantity inventoryadjustment,"
-        + "requested.requestedquantity ";
+        + "requested.requestedquantity, "
+        + "se.signature, "
+        + "root.documentnumber, "
+        + "root.processeddate, "
+        + "l.expirationdate ";
     String root = "stockmanagement.stock_card_line_items root";
+    String eventRoot = "stockmanagement.stock_events se";
     String srcNodeRoot = "stockmanagement.nodes srcnode";
     String srcOrgRoot = "stockmanagement.organizations srcorg";
     String destNodeRoot = "stockmanagement.nodes destnode";
@@ -210,51 +210,72 @@ public class StockManagementRepository {
     String where = generateWhere(facilityId, since, at, params);
     return select
         + "FROM " + root + ' '
-        + LEFT_JOIN + STOCK_CARD_ROOT + " on root.stockcardid = sc.id "
-        + LEFT_JOIN + ORDERABLE_ROOT + " on sc.orderableid = o.id "
-        + LEFT_JOIN + LOT_ROOT + " on sc.lotid = l.id "
-        + LEFT_JOIN + srcNodeRoot + " on root.sourceid = srcnode.id "
-        + LEFT_JOIN + srcOrgRoot + " on srcnode.referenceid = srcorg.id "
-        + LEFT_JOIN + destNodeRoot + " on root.destinationid = destnode.id "
-        + LEFT_JOIN + destOrgRoot + " on destnode.referenceid = destorg.id "
-        + LEFT_JOIN + reasonRoot + " on root.reasonid = reason.id "
-        + LEFT_JOIN + lineAdjRoot + " on pilia.stockcardlineitemid = root.id "
-        + LEFT_JOIN + adjustmentReasonRoot + " on pilia.reasonid = adjstreason.id "
+        + LEFT_JOIN + STOCK_CARD_ROOT + " ON root.stockcardid = sc.id "
+        + LEFT_JOIN + eventRoot + " ON sc.origineventid = se.id "
+        + LEFT_JOIN + ORDERABLE_ROOT + " ON sc.orderableid = o.id "
+        + LEFT_JOIN + LOT_ROOT + " ON sc.lotid = l.id "
+        + LEFT_JOIN + srcNodeRoot + " ON root.sourceid = srcnode.id "
+        + LEFT_JOIN + srcOrgRoot + " ON srcnode.referenceid = srcorg.id "
+        + LEFT_JOIN + destNodeRoot + " ON root.destinationid = destnode.id "
+        + LEFT_JOIN + destOrgRoot + " ON destnode.referenceid = destorg.id "
+        + LEFT_JOIN + reasonRoot + " ON root.reasonid = reason.id "
+        + LEFT_JOIN + lineAdjRoot + " ON pilia.stockcardlineitemid = root.id "
+        + LEFT_JOIN + adjustmentReasonRoot + " ON pilia.reasonid = adjstreason.id "
         + LEFT_JOIN + requestedRoot
         + " on requested.stockeventid = root.origineventid and requested.orderableid = o.id "
         + where;
   }
 
-  private ProductMovement toProductMovement(ProductMovementKey key, List<ProductLotMovement> productLotMovements) {
+  private ProductMovement toProductMovement(ProductMovementKey key, List<ProductLotMovement> productLotMovements,
+      Map<String, Integer> productInventoryMap, Map<ProductLotCode, Integer> lotInventories) {
     ProductMovementBuilder movementBuilder = ProductMovement.builder()
         .productCode(key.getProductCode())
         .eventTime(key.getEventTime());
     Integer requestedQuantity = productLotMovements.stream().findAny().map(ProductLotMovement::getRequestedQuantity)
         .orElse(null);
     movementBuilder.requestedQuantity(requestedQuantity);
-    if (productLotMovements.size() == 1 && productLotMovements.get(0).getCode().getLotCode() == null) {
-      movementBuilder.movementDetail(productLotMovements.get(0).getMovementDetail());
-    } else {
+    ProductLotMovement anyLot;
+    if (productLotMovements.size() == 1 && !productLotMovements.get(0).getCode().isLot()) {
+      ProductLotMovement theOnlyLot = productLotMovements.get(0);
+      movementBuilder.movementDetail(theOnlyLot.getMovementDetail());
+      movementBuilder.documentNumber(theOnlyLot.getDocumentNumber());
+      anyLot = theOnlyLot;
+    } else if (productLotMovements.stream().allMatch(m -> m.getCode().isLot())) {
       List<LotMovement> lotMovements = productLotMovements.stream()
-          .map(this::toLotMovement)
-          .filter(lot -> lot.getLotCode() != null)
-          .sorted(comparing(LotMovement::getLotCode))
+          .map(m -> toLotMovement(m, lotInventories))
+          .sorted(comparing(m -> m.getLot().getCode()))
           .collect(toList());
       movementBuilder.lotMovements(lotMovements);
       MovementDetail movementDetail = productLotMovements.stream()
-          .filter(p -> p.getCode().getLotCode() != null)
           .map(ProductLotMovement::getMovementDetail)
           .reduce(MovementDetail::merge)
-          .orElse(null);
+          .orElseThrow(IllegalStateException::new);
+      Integer stockQuantity = productInventoryMap.get(key.getProductCode());
+      movementBuilder.stockQuantity(stockQuantity);
+      productInventoryMap.put(key.getProductCode(), stockQuantity - movementDetail.getAdjustment());
       movementBuilder.movementDetail(movementDetail);
+      anyLot = productLotMovements.stream().findAny().orElseThrow(IllegalStateException::new);
+      String documentNumber = anyLot.getDocumentNumber();
+      if (productLotMovements.stream().map(ProductLotMovement::getDocumentNumber)
+          .allMatch(n -> Objects.equals(n, documentNumber))) {
+        movementBuilder.documentNumber(documentNumber);
+      }
+    } else {
+      throw new IllegalStateException("dirty data");
     }
+    movementBuilder.signature(anyLot.getSignature());
     return movementBuilder.build();
   }
 
-  private LotMovement toLotMovement(ProductLotMovement productLotMovement) {
+  private LotMovement toLotMovement(ProductLotMovement movement, Map<ProductLotCode, Integer> lotInventories) {
+    MovementDetail movementDetail = movement.getMovementDetail();
+    Integer stockQuantity = lotInventories.get(movement.getCode());
+    lotInventories.put(movement.getCode(), stockQuantity - movementDetail.getAdjustment());
     return LotMovement.builder()
-        .lotCode(productLotMovement.getCode().getLotCode())
-        .movementDetail(productLotMovement.getMovementDetail())
+        .lot(movement.getLot())
+        .movementDetail(movementDetail)
+        .stockQuantity(stockQuantity)
+        .documentNumber(movement.getDocumentNumber())
         .build();
   }
 

@@ -21,6 +21,7 @@ import static org.springframework.http.HttpStatus.NO_CONTENT;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.constant.AndroidConstants;
@@ -82,9 +83,14 @@ public class SiglusMeController {
   }
 
   @GetMapping("/facility/stockCards")
-  public FacilityProductMovementsResponse getFacilityStockCards(@RequestParam(value = "startTime") String startTime,
-      @RequestParam(value = "endTime") String endTime) {
-    return service.getProductMovements(startTime, endTime);
+  public FacilityProductMovementsResponse getFacilityStockCards(
+      @RequestParam(value = "startTime", required = false)
+      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+      @Nullable LocalDate since,
+      @RequestParam(value = "endTime", required = false)
+      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+      @Nullable LocalDate till) {
+    return service.getProductMovements(since, till);
   }
 
   @DeleteMapping("/facility/stockCards")

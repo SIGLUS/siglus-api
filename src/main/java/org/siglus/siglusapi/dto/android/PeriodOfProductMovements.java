@@ -15,23 +15,19 @@
 
 package org.siglus.siglusapi.dto.android;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 @EqualsAndHashCode
 @ToString
-@Builder
 @Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class LotMovement {
+@RequiredArgsConstructor
+public class PeriodOfProductMovements {
 
-  private final Lot lot;
-  private final MovementDetail movementDetail;
-  private final Integer stockQuantity;
-  private final String documentNumber;
+  private final List<ProductMovement> productMovements;
+  private final StocksOnHand stocksOnHand;
 
 }

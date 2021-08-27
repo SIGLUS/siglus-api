@@ -20,7 +20,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor(staticName = "of")
-public class ProductMovementKey {
+public class ProductMovementKey implements EventTimeContainer {
 
   protected final String productCode;
   protected final EventTime eventTime;

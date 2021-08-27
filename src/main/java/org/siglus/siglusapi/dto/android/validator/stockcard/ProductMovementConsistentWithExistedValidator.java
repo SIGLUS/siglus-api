@@ -30,13 +30,14 @@ import javax.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
+import org.siglus.siglusapi.dto.android.EventTimeContainer;
+import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.LotMovement;
 import org.siglus.siglusapi.dto.android.MovementDetail;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
-import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.service.android.StockCardSyncService;
@@ -83,7 +84,7 @@ public class ProductMovementConsistentWithExistedValidator implements
     Set<String> existedProductCodes = existed.keySet();
     return value.stream()
         .filter(r -> !existedProductCodes.contains(r.getProductCode()))
-        .collect(groupingBy(StockCardCreateRequest::getProductCode, minBy(StockCardAdjustment.ASCENDING)))
+        .collect(groupingBy(StockCardCreateRequest::getProductCode, minBy(EventTimeContainer.ASCENDING)))
         .values().stream().map(Optional::get).allMatch(r -> validateNewProduct(r, actualContext));
   }
 
@@ -101,9 +102,9 @@ public class ProductMovementConsistentWithExistedValidator implements
       HibernateConstraintValidatorContext actualContext) {
     List<ProductMovement> fromRequests = value.stream()
         .map(this::convertToProductMovement)
-        .sorted(ProductMovement.ASCENDING)
+        .sorted(EventTimeContainer.ASCENDING)
         .collect(toList());
-    existed.sort(ProductMovement.ASCENDING);
+    existed.sort(EventTimeContainer.ASCENDING);
     ProductMovement firstInRequest = fromRequests.get(0);
     ProductMovement lastInExisted = existed.get(existed.size() - 1);
     int foundInExisted = findInExisted(firstInRequest.getProductMovementKey(), existed);
@@ -144,11 +145,10 @@ public class ProductMovementConsistentWithExistedValidator implements
 
   private ProductMovement convertToProductMovement(StockCardCreateRequest request) {
     MovementType movementType = MovementType.valueOf(request.getType());
-    MovementDetail movementDetail = new MovementDetail(request.getQuantity(), request.getStockOnHand(), movementType,
-        request.getReasonName());
+    MovementDetail movementDetail = new MovementDetail(request.getQuantity(), movementType, request.getReasonName());
     List<LotMovement> lotMovements = request.getLotEvents().stream()
         .map(l -> convertToLotMovement(l, movementType))
-        .sorted(comparing(LotMovement::getLotCode))
+        .sorted(comparing(m -> m.getLot().getCode()))
         .collect(toList());
     return ProductMovement.builder()
         .productCode(request.getProductCode())
@@ -156,15 +156,17 @@ public class ProductMovementConsistentWithExistedValidator implements
         .requestedQuantity(request.getRequested())
         .movementDetail(movementDetail)
         .lotMovements(lotMovements)
+        .stockQuantity(request.getStockOnHand())
         .build();
   }
 
   private LotMovement convertToLotMovement(StockCardLotEventRequest lotEventRequest, MovementType movementType) {
-    MovementDetail movementDetail = new MovementDetail(lotEventRequest.getQuantity(), lotEventRequest.getStockOnHand(),
-        movementType, lotEventRequest.getReasonName());
+    MovementDetail movementDetail = new MovementDetail(lotEventRequest.getQuantity(), movementType,
+        lotEventRequest.getReasonName());
     return LotMovement.builder()
-        .lotCode(lotEventRequest.getLotCode())
+        .lot(Lot.of(lotEventRequest.getLotCode(), null))
         .movementDetail(movementDetail)
+        .stockQuantity(lotEventRequest.getStockOnHand())
         .build();
   }
 
@@ -183,7 +185,7 @@ public class ProductMovementConsistentWithExistedValidator implements
     if (previous.getEventTime().compareTo(next.getEventTime()) >= 0) {
       throw new IllegalArgumentException("Incorrect argument sequence");
     }
-    if (next.getMovementDetail().isRightAfter(previous.getMovementDetail())) {
+    if (next.isRightAfter(previous)) {
       // valid 2
       return true;
     }
@@ -191,8 +193,8 @@ public class ProductMovementConsistentWithExistedValidator implements
     actualContext.addExpressionVariable("failedByContinuity", true);
     actualContext.addExpressionVariable(OCCURRED_DATE, next.getEventTime().getOccurredDate());
     actualContext.addExpressionVariable(RECORDED_AT, next.getEventTime().getRecordedAt());
-    actualContext.addExpressionVariable(INIT_INVENTORY, next.getMovementDetail().getInventoryBeforeAdjustment());
-    actualContext.addExpressionVariable("previousInventory", previous.getMovementDetail().getInventory());
+    actualContext.addExpressionVariable(INIT_INVENTORY, next.getInventoryBeforeAdjustment());
+    actualContext.addExpressionVariable("previousInventory", previous.getStockQuantity());
     return false;
   }
 
@@ -211,6 +213,13 @@ public class ProductMovementConsistentWithExistedValidator implements
       actualContext.addExpressionVariable(VALUE_FROM_EXISTED, fromExisted.getRequestedQuantity());
       return false;
     }
+    if (!Objects.equals(fromRequest.getStockQuantity(), fromExisted.getStockQuantity())) {
+      actualContext.addExpressionVariable(FAILED_BY_SAME_PRODUCT, true);
+      actualContext.addExpressionVariable(FIELD_NAME, "stockOnHand");
+      actualContext.addExpressionVariable(VALUE_FROM_REQUEST, fromRequest.getStockQuantity());
+      actualContext.addExpressionVariable(VALUE_FROM_EXISTED, fromExisted.getStockQuantity());
+      return false;
+    }
     if (notSame(movementDetailFromRequest, movementDetailFromExisted, actualContext)) {
       actualContext.addExpressionVariable(FAILED_BY_SAME_PRODUCT, true);
       return false;
@@ -227,13 +236,20 @@ public class ProductMovementConsistentWithExistedValidator implements
     for (int i = 0; i < lotMovementsFromRequest.size(); i++) {
       LotMovement lotMovementFromRequest = lotMovementsFromRequest.get(i);
       LotMovement lotMovementFromExisted = lotMovementsFromExisted.get(i);
-      actualContext.addExpressionVariable(LOT_CODE, lotMovementFromRequest.getLotCode());
+      actualContext.addExpressionVariable(LOT_CODE, lotMovementFromRequest.getLot().getCode());
       actualContext.addExpressionVariable("index", i);
-      if (!Objects.equals(lotMovementFromRequest.getLotCode(), lotMovementFromExisted.getLotCode())) {
+      if (!Objects.equals(lotMovementFromRequest.getLot().getCode(), lotMovementFromExisted.getLot().getCode())) {
         actualContext.addExpressionVariable(FAILED_BY_SAME_LOT, true);
         actualContext.addExpressionVariable(FIELD_NAME, LOT_CODE);
-        actualContext.addExpressionVariable(VALUE_FROM_REQUEST, lotMovementFromRequest.getLotCode());
-        actualContext.addExpressionVariable(VALUE_FROM_EXISTED, lotMovementFromExisted.getLotCode());
+        actualContext.addExpressionVariable(VALUE_FROM_REQUEST, lotMovementFromRequest.getLot().getCode());
+        actualContext.addExpressionVariable(VALUE_FROM_EXISTED, lotMovementFromExisted.getLot().getCode());
+        return false;
+      }
+      if (!Objects.equals(lotMovementFromRequest.getStockQuantity(), lotMovementFromExisted.getStockQuantity())) {
+        actualContext.addExpressionVariable(FAILED_BY_SAME_LOT, true);
+        actualContext.addExpressionVariable(FIELD_NAME, "stockOnHand");
+        actualContext.addExpressionVariable(VALUE_FROM_REQUEST, lotMovementFromRequest.getStockQuantity());
+        actualContext.addExpressionVariable(VALUE_FROM_EXISTED, lotMovementFromExisted.getStockQuantity());
         return false;
       }
       MovementDetail lotMovementDetailFromRequest = lotMovementFromRequest.getMovementDetail();
@@ -258,12 +274,6 @@ public class ProductMovementConsistentWithExistedValidator implements
       actualContext.addExpressionVariable(FIELD_NAME, "reasonName");
       actualContext.addExpressionVariable(VALUE_FROM_REQUEST, movementDetailFromRequest.getReason());
       actualContext.addExpressionVariable(VALUE_FROM_EXISTED, movementDetailFromExisted.getReason());
-      return true;
-    }
-    if (!Objects.equals(movementDetailFromRequest.getInventory(), movementDetailFromExisted.getInventory())) {
-      actualContext.addExpressionVariable(FIELD_NAME, "stockOnHand");
-      actualContext.addExpressionVariable(VALUE_FROM_REQUEST, movementDetailFromRequest.getInventory());
-      actualContext.addExpressionVariable(VALUE_FROM_EXISTED, movementDetailFromExisted.getInventory());
       return true;
     }
     if (!Objects.equals(movementDetailFromRequest.getAdjustment(), movementDetailFromExisted.getAdjustment())) {

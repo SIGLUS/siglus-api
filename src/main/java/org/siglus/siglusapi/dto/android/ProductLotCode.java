@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.dto.android;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,10 +23,13 @@ import lombok.Data;
 @AllArgsConstructor(staticName = "of")
 public class ProductLotCode {
 
-  @Nonnull
   private final String productCode;
 
   @Nullable
   private final String lotCode;
+
+  public boolean isLot() {
+    return lotCode != null;
+  }
 
 }

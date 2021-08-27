@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 import javax.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
+import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByLot;
-import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 
@@ -41,7 +41,7 @@ public class StockOnHandConsistentWithQuantityByLotValidator extends
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     return value.stream()
         .filter(r -> isNotEmpty(r.getLotEvents()))
-        .sorted(StockCardAdjustment.ASCENDING)
+        .sorted(EventTimeContainer.ASCENDING)
         .collect(groupingBy(StockCardCreateRequest::getProductCode)).entrySet().stream()
         .allMatch(e -> checkConsistentByProduct(e.getKey(), e.getValue(), actualContext));
   }

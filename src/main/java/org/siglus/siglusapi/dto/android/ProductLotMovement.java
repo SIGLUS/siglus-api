@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.dto.android;
 
-import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,21 +28,23 @@ import lombok.ToString;
 @Getter
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class ProductLotMovement {
+public class ProductLotMovement implements EventTimeContainer {
 
-  @Nonnull
   private final ProductLotCode code;
+
+  private final Lot lot;
 
   private final EventTime eventTime;
 
-  private MovementDetail movementDetail;
+  private final MovementDetail movementDetail;
 
+  @Nullable
   private final Integer requestedQuantity;
 
-  public Integer populateInventory(Integer inventory) {
-    this.movementDetail = movementDetail.populateInventory(inventory);
-    return inventory - movementDetail.getAdjustment();
-  }
+  private final String signature;
+
+  @Nullable
+  private final String documentNumber;
 
   public ProductMovementKey getProductMovementKey() {
     return ProductMovementKey.of(code.getProductCode(), eventTime);

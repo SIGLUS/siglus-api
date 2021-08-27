@@ -15,25 +15,26 @@
 
 package org.siglus.siglusapi.dto.android;
 
-import javax.annotation.Nonnull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 @ToString
 @Getter
-@Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ProductLotStock {
 
-  @Nonnull
   private final ProductLotCode code;
-  private final Integer inventory;
-  @Setter
-  @Nonnull
-  private EventTime eventTime;
+  private final Lot lot;
+  private final InventoryDetail inventoryDetail;
+
+  @Builder
+  private static ProductLotStock of(ProductLotCode code, java.sql.Date expirationDate, Integer stockQuantity,
+      EventTime eventTime) {
+    Lot lot = Lot.of(code.getLotCode(), expirationDate);
+    return new ProductLotStock(code, lot, new InventoryDetail(stockQuantity, eventTime));
+  }
 
 }

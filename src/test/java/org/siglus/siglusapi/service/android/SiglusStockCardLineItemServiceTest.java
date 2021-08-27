@@ -60,8 +60,8 @@ import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.testutils.CalculatedStockOnHandDataBuilder;
 import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
+import org.siglus.siglusapi.dto.android.response.LotLegacyResponse;
 import org.siglus.siglusapi.dto.android.response.LotMovementItemResponse;
-import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemAdjustmentRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemRepository;
@@ -200,7 +200,7 @@ public class SiglusStockCardLineItemServiceTest {
 
   private StockEvent event;
 
-  private final Map<UUID, SiglusLotResponse> siglusLotResponseByLotId = new HashMap<>();
+  private final Map<UUID, LotLegacyResponse> siglusLotResponseByLotId = new HashMap<>();
 
   @Before
   public void prepare() {
@@ -709,17 +709,17 @@ public class SiglusStockCardLineItemServiceTest {
 
   private void initSiglusLotResponse() {
     siglusLotResponseByLotId.put(lotId1FromOrderable1,
-        SiglusLotResponse.builder().lotCode(lotId1FromOrderable1Code).expirationDate(getLocalDate(day0701))
+        LotLegacyResponse.builder().lotCode(lotId1FromOrderable1Code).expirationDate(getLocalDate(day0701))
             .build());
     String lotId2FromOrderable1Code = "lotId2FromOrderable1Code";
     siglusLotResponseByLotId.put(lotId2FromOrderable1,
-        SiglusLotResponse.builder().lotCode(lotId2FromOrderable1Code).expirationDate(getLocalDate(day0701))
+        LotLegacyResponse.builder().lotCode(lotId2FromOrderable1Code).expirationDate(getLocalDate(day0701))
             .build());
     siglusLotResponseByLotId.put(lotId1FromOrderable2,
-        SiglusLotResponse.builder().lotCode(lotId1FromOrderable2Code).expirationDate(getLocalDate(day0701))
+        LotLegacyResponse.builder().lotCode(lotId1FromOrderable2Code).expirationDate(getLocalDate(day0701))
             .build());
     siglusLotResponseByLotId.put(lotId2FromOrderable2,
-        SiglusLotResponse.builder().lotCode(lotId2FromOrderable2Code).expirationDate(getLocalDate(day0701))
+        LotLegacyResponse.builder().lotCode(lotId2FromOrderable2Code).expirationDate(getLocalDate(day0701))
             .build());
   }
 

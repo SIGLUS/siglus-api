@@ -15,23 +15,26 @@
 
 package org.siglus.siglusapi.dto.android;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import java.time.LocalDate;
+import javax.annotation.Nullable;
+import lombok.Data;
 
-@EqualsAndHashCode
-@ToString
-@Builder
-@Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class LotMovement {
+@Data
+public class Lot {
 
-  private final Lot lot;
-  private final MovementDetail movementDetail;
-  private final Integer stockQuantity;
-  private final String documentNumber;
+  private final String code;
 
+  private final LocalDate expirationDate;
+
+  private Lot(String code, LocalDate expirationDate) {
+    this.code = code;
+    this.expirationDate = expirationDate;
+  }
+
+  public static Lot of(String code, @Nullable java.sql.Date expirationDate) {
+    if (code == null) {
+      return null;
+    }
+    return new Lot(code, expirationDate == null ? null : expirationDate.toLocalDate());
+  }
 }

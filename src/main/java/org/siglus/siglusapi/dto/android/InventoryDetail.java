@@ -13,23 +13,20 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.response;
+package org.siglus.siglusapi.dto.android;
 
-import java.time.LocalDate;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class SiglusLotResponse {
+@ToString
+@Getter
+@RequiredArgsConstructor
+public class InventoryDetail implements EventTimeContainer {
 
-  private String lotCode;
+  public static final InventoryDetail NO_RECORD = new InventoryDetail(0, null);
 
-  private LocalDate expirationDate;
+  private final Integer stockQuantity;
+  private final EventTime eventTime;
 
-  private boolean valid;
 }

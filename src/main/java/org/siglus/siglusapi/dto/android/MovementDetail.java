@@ -32,15 +32,12 @@ public class MovementDetail {
   private static final String INVENTORY_NOT_POPULATED = "Inventory not populated";
 
   private final Integer adjustment;
-  @Nullable
-  private final Integer inventory;
   private final MovementType type;
   @Nullable
   private final String reason;
 
-  public MovementDetail(Integer adjustment, Integer inventory, MovementType type, @Nullable String reason) {
+  public MovementDetail(Integer adjustment, MovementType type, @Nullable String reason) {
     this.adjustment = adjustment;
-    this.inventory = inventory;
     this.type = type;
     this.reason = reason;
   }
@@ -51,72 +48,54 @@ public class MovementDetail {
       String adjustmentReason, String adjustmentReasonType,
       Integer unsignedInventoryAdjustment, String inventoryReason, String inventoryReasonType) {
     MovementType movementType;
+    Integer adjustment;
+    String reasonName;
     if (source != null) {
       movementType = MovementType.RECEIVE;
-      return new MovementDetail(unsignedAdjustment, null, movementType,
-          movementType.getReason(source, unsignedAdjustment));
-    }
-    if (destination != null) {
+      adjustment = unsignedAdjustment;
+      reasonName = movementType.getReason(source, adjustment);
+    } else if (destination != null) {
       movementType = MovementType.ISSUE;
-      return new MovementDetail(-1 * unsignedAdjustment, null, movementType,
-          movementType.getReason(destination, -1 * unsignedAdjustment));
-    }
-    if (adjustmentReason != null) {
+      adjustment = -unsignedAdjustment;
+      reasonName = movementType.getReason(destination, adjustment);
+    } else if (adjustmentReason != null) {
       if ("Unpack Kit".equals(adjustmentReason)) {
-        return new MovementDetail(-1 * unsignedAdjustment, null, MovementType.UNPACK_KIT, null);
+        movementType = MovementType.UNPACK_KIT;
+        adjustment = -unsignedAdjustment;
+        reasonName = null;
+      } else {
+        movementType = MovementType.ADJUSTMENT;
+        if ("DEBIT".equals(adjustmentReasonType)) {
+          adjustment = -unsignedAdjustment;
+        } else {
+          adjustment = unsignedAdjustment;
+        }
+        reasonName = movementType.getReason(adjustmentReason, adjustment);
       }
-      movementType = MovementType.ADJUSTMENT;
-      Integer adjustment = unsignedAdjustment;
-      if ("DEBIT".equals(adjustmentReasonType)) {
-        adjustment = -1 * unsignedAdjustment;
-      }
-      return new MovementDetail(adjustment, null, movementType, movementType.getReason(adjustmentReason, adjustment));
-    }
-    if (inventoryReason != null) {
-      Integer adjustment = unsignedInventoryAdjustment;
-      if ("DEBIT".equals(inventoryReasonType)) {
-        adjustment = -1 * unsignedInventoryAdjustment;
-      }
+    } else if (inventoryReason != null) {
       movementType = MovementType.PHYSICAL_INVENTORY;
-      return new MovementDetail(adjustment, null, movementType, movementType.getReason(inventoryReason, adjustment));
+      if ("DEBIT".equals(inventoryReasonType)) {
+        adjustment = -unsignedInventoryAdjustment;
+      } else {
+        adjustment = unsignedInventoryAdjustment;
+      }
+      reasonName = movementType.getReason(inventoryReason, adjustment);
+    } else {
+      movementType = MovementType.PHYSICAL_INVENTORY;
+      adjustment = 0;
+      reasonName = "INVENTORY";
     }
-    return new MovementDetail(0, unsignedAdjustment, MovementType.PHYSICAL_INVENTORY, "INVENTORY");
-  }
-
-  public MovementDetail populateInventory(Integer inventory) {
-    Objects.requireNonNull(inventory);
-    if (this.inventory != null && !this.inventory.equals(inventory)) {
-      throw new IllegalStateException("Inconsistent inventory");
-    }
-    return new MovementDetail(adjustment, inventory, type, reason);
+    return new MovementDetail(adjustment, movementType, reasonName);
   }
 
   public MovementDetail merge(MovementDetail movementDetail) {
     if (type != movementDetail.getType()) {
       throw new IllegalStateException("Can't merge different types");
     }
-    if (inventory == null || movementDetail.inventory == null) {
-      throw new IllegalStateException(INVENTORY_NOT_POPULATED);
-    }
-    int assembledAdjustment = adjustment + movementDetail.getAdjustment();
-    int assembledInventory = inventory + movementDetail.inventory;
-    boolean differentReason = Objects.equals(this.reason, movementDetail.getReason());
-    String assembledReason = differentReason ? null : reason;
-    return new MovementDetail(assembledAdjustment, assembledInventory, type, assembledReason);
-  }
-
-  public Integer getInventoryBeforeAdjustment() {
-    if (inventory == null) {
-      throw new IllegalStateException(INVENTORY_NOT_POPULATED);
-    }
-    return inventory - adjustment;
-  }
-
-  public boolean isRightAfter(MovementDetail previous) {
-    if (inventory == null) {
-      throw new IllegalStateException(INVENTORY_NOT_POPULATED);
-    }
-    return getInventoryBeforeAdjustment().equals(previous.inventory);
+    int mergedAdjustment = adjustment + movementDetail.getAdjustment();
+    boolean differentReason = !Objects.equals(this.reason, movementDetail.getReason());
+    String mergedReason = differentReason ? null : reason;
+    return new MovementDetail(mergedAdjustment, type, mergedReason);
   }
 
 }

@@ -60,6 +60,7 @@ import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
+import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
 import org.siglus.siglusapi.dto.android.enumeration.Destination;
 import org.siglus.siglusapi.dto.android.enumeration.Source;
@@ -129,6 +130,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     mockReasons();
     ReflectionTestUtils.setField(stockCardSyncService, "createStockCardContextHolder", holder);
     ReflectionTestUtils.setField(service, "stockCardSyncService", stockCardSyncService);
+    when(stockManagementRepository.getLatestProductMovements(any()))
+        .thenReturn(new PeriodOfProductMovements(emptyList(), null));
     SiglusMeController controller = new SiglusMeController(service);
     this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
   }

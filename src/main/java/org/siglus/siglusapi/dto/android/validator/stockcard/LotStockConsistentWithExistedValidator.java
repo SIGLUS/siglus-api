@@ -24,11 +24,11 @@ import javax.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
+import org.siglus.siglusapi.dto.android.EventTimeContainer;
+import org.siglus.siglusapi.dto.android.InventoryDetail;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
-import org.siglus.siglusapi.dto.android.ProductLotStock;
-import org.siglus.siglusapi.dto.android.StockOnHand;
+import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted;
-import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.service.android.StockCardSyncService;
@@ -50,9 +50,9 @@ public class LotStockConsistentWithExistedValidator implements
   public boolean isValid(List<StockCardCreateRequest> value, ConstraintValidatorContext context) {
     // this validator is supposed to running after the default group, so the value will not be null or empty
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
-    StockOnHand stockOnHand = service.getLatestStockOnHand();
+    StocksOnHand stocksOnHand = service.getLatestStockOnHand();
     Set<ProductLotCode> verified = new HashSet<>();
-    value.sort(StockCardAdjustment.ASCENDING);
+    value.sort(EventTimeContainer.ASCENDING);
     for (StockCardCreateRequest request : value) {
       request.getLotEvents().sort(Comparator.comparing(StockCardLotEventRequest::getLotCode));
       for (StockCardLotEventRequest lotEvent : request.getLotEvents()) {
@@ -64,7 +64,7 @@ public class LotStockConsistentWithExistedValidator implements
         actualContext.addExpressionVariable("lotCode", productLotCode.getLotCode());
         actualContext.addExpressionVariable("occurredDate", lotEvent.getEventTime().getOccurredDate());
         actualContext.addExpressionVariable("recordedAt", lotEvent.getEventTime().getRecordedAt());
-        ProductLotStock inventory = stockOnHand.findInventory(productLotCode);
+        InventoryDetail inventory = stocksOnHand.findInventory(productLotCode);
         if (invalidInventoryBeforeAdjustment(actualContext, verified, lotEvent, productLotCode, inventory)) {
           return false;
         }
@@ -75,16 +75,16 @@ public class LotStockConsistentWithExistedValidator implements
 
   private boolean invalidInventoryBeforeAdjustment(HibernateConstraintValidatorContext actualContext,
       Set<ProductLotCode> verified, StockCardLotEventRequest lotEvent, ProductLotCode productLotCode,
-      ProductLotStock inventory) {
+      InventoryDetail inventory) {
     int inventoryBeforeAdjustment = lotEvent.getStockOnHand() - lotEvent.getQuantity();
     actualContext.addExpressionVariable("inventoryBeforeAdjustment", inventoryBeforeAdjustment);
-    if (inventory != null) {
+    if (inventory != null && inventory.getEventTime() != null) {
       if (inventory.getEventTime().compareTo(lotEvent.getEventTime()) >= 0) {
         // skip before inventory
         return false;
       }
-      if (inventory.getInventory() != inventoryBeforeAdjustment) {
-        actualContext.addExpressionVariable("existedInventory", inventory.getInventory());
+      if (inventory.getStockQuantity() != inventoryBeforeAdjustment) {
+        actualContext.addExpressionVariable("existedInventory", inventory.getStockQuantity());
         return true;
       } else {
         verified.add(productLotCode);

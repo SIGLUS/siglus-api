@@ -33,6 +33,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNullableByDefault;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -245,8 +246,9 @@ public class SiglusMeService {
     stockCardSyncService.deleteStockCardByProduct(stockCardDeleteRequests);
   }
 
-  public FacilityProductMovementsResponse getProductMovements(String startTime, String endTime) {
-    return stockCardSyncService.getProductMovementsByTime(startTime, endTime);
+  @ParametersAreNullableByDefault
+  public FacilityProductMovementsResponse getProductMovements(LocalDate since, LocalDate till) {
+    return stockCardSyncService.getProductMovementsByTime(since, till);
   }
 
   public RequisitionResponse getRequisitionResponse(String startDate) {

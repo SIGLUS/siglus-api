@@ -21,6 +21,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
+import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
@@ -40,11 +41,11 @@ abstract class StockOnHandConsistentWithQuantityValidator<A extends Annotation> 
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable(getGroupName(), groupName);
     int initStockOnHand = adjustments.stream()
-        .min(StockCardAdjustment.ASCENDING)
+        .min(EventTimeContainer.ASCENDING)
         .map(r -> r.getStockOnHand() - r.getQuantity())
         .orElse(0);
     int lastStockOnHand = adjustments.stream()
-        .max(StockCardAdjustment.ASCENDING)
+        .max(EventTimeContainer.ASCENDING)
         .map(StockCardAdjustment::getStockOnHand)
         .orElse(0);
     int calculatedGap = adjustments.stream()

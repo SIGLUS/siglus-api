@@ -55,8 +55,8 @@ import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
 import org.siglus.siglusapi.dto.android.enumeration.Destination;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.enumeration.Source;
+import org.siglus.siglusapi.dto.android.response.LotLegacyResponse;
 import org.siglus.siglusapi.dto.android.response.LotMovementItemResponse;
-import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemAdjustmentRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemRepository;
@@ -132,7 +132,7 @@ public class SiglusStockCardLineItemService {
 
   public Map<UUID, List<SiglusStockMovementItemResponse>> getStockMovementByOrderableId(UUID facilityId,
       String startTime, String endTime, Set<UUID> orderableIds, String type,
-      Map<UUID, SiglusLotResponse> siglusLotResponseByLotId) {
+      Map<UUID, LotLegacyResponse> siglusLotResponseByLotId) {
     organizationIdToName = mapOrganizationIdToName();
     Map<UUID, Map<LocalDate, CalculatedStockOnHandDto>> stockOnHandDtoMap = mapStockOnHandByStockCardIdAndOccurredDate(
         facilityId, startTime, endTime, orderableIds, type);
@@ -204,7 +204,7 @@ public class SiglusStockCardLineItemService {
   private Map<UUID, List<SiglusStockMovementItemResponse>> getStockMovementItemDtosMap(
       Map<UUID, Map<LocalDate, CalculatedStockOnHandDto>> stockOnHandDtoMap,
       Map<UUID, List<StockCardLineItem>> lineItemByOrderableIdMap,
-      Map<UUID, SiglusLotResponse> siglusLotResponseByLotId) {
+      Map<UUID, LotLegacyResponse> siglusLotResponseByLotId) {
     if (stockOnHandDtoMap.isEmpty() || lineItemByOrderableIdMap.isEmpty()) {
       return Collections.emptyMap();
     }
@@ -220,7 +220,7 @@ public class SiglusStockCardLineItemService {
 
   private List<SiglusStockMovementItemResponse> convertSiglusStockMovementItemResponses(
       Map<ZonedDateTime, List<StockCardLineItemDto>> itemDtoByProcessedDateMap,
-      Map<UUID, SiglusLotResponse> siglusLotResponseByLotId) {
+      Map<UUID, LotLegacyResponse> siglusLotResponseByLotId) {
     List<SiglusStockMovementItemResponse> siglusStockMovementItemResponses = new ArrayList<>();
     itemDtoByProcessedDateMap.forEach((processedDate, itemDtos) -> {
       Optional<StockCardLineItemDto> first = itemDtos.stream().findFirst();
@@ -231,7 +231,7 @@ public class SiglusStockCardLineItemService {
   }
 
   private SiglusStockMovementItemResponse convertStockMovementItemResponse(StockCardLineItemDto firstItemDto,
-      List<StockCardLineItemDto> itemDtos, Map<UUID, SiglusLotResponse> siglusLotResponseByLotId) {
+      List<StockCardLineItemDto> itemDtos, Map<UUID, LotLegacyResponse> siglusLotResponseByLotId) {
     SiglusStockMovementItemResponse stockMovementItemResponse = getFirstStockMovementItemResponse(firstItemDto);
     if (firstItemDto.getStockCard().getLotId() == null) {
       convertStockMovementItemResponseWhenNoLot(stockMovementItemResponse, firstItemDto);
@@ -333,8 +333,8 @@ public class SiglusStockCardLineItemService {
   }
 
   private LotMovementItemResponse convertLotMovementItemDto(StockCardLineItemDto itemDto,
-      Map<UUID, SiglusLotResponse> siglusLotDtoByLotId) {
-    SiglusLotResponse siglusLotResponse = siglusLotDtoByLotId.get(itemDto.getStockCard().getLotId());
+      Map<UUID, LotLegacyResponse> siglusLotDtoByLotId) {
+    LotLegacyResponse siglusLotResponse = siglusLotDtoByLotId.get(itemDto.getStockCard().getLotId());
     return LotMovementItemResponse.builder()
         .lotCode(siglusLotResponse == null ? null : siglusLotResponse.getLotCode())
         .reason(itemDto.getReason() == null ? null : itemDto.getReason().getName())

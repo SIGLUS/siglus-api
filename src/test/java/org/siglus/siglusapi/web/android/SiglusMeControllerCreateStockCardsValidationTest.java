@@ -59,13 +59,15 @@ import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.android.EventTime;
+import org.siglus.siglusapi.dto.android.InventoryDetail;
+import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.LotMovement;
 import org.siglus.siglusapi.dto.android.LotStockOnHand;
 import org.siglus.siglusapi.dto.android.MovementDetail;
+import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
-import org.siglus.siglusapi.dto.android.ProductLotStock;
 import org.siglus.siglusapi.dto.android.ProductMovement;
-import org.siglus.siglusapi.dto.android.StockOnHand;
+import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
@@ -143,41 +145,45 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         .stockOnHand(0).occurredDate(LocalDate.of(2021, 6, 15)).build();
     LotStockOnHand stock2 = LotStockOnHand.builder().productCode("08U").lotCode("SEM-LOTE-02A01-062021")
         .stockOnHand(100).occurredDate(LocalDate.of(2021, 6, 15)).build();
-    StockOnHand stockOnHand = mock(StockOnHand.class);
-    when(stockOnHand.findInventory(any())).thenReturn(null);
-    ProductLotStock lotStock = ProductLotStock.builder()
-        .code(ProductLotCode.of("08O05Y", "SME-LOTE-08O05Y-072021"))
-        .inventory(200)
-        .eventTime(EventTime.of(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:52:42.063Z"))).build();
-    when(stockOnHand.findInventory(eq(ProductLotCode.of("08O05Y", "SME-LOTE-08O05Y-072021"))))
-        .thenReturn(lotStock);
-    when(stockManagementRepository.getStockOnHand(any())).thenReturn(stockOnHand);
-    MovementDetail movementDetail = new MovementDetail(-200, 0, MovementType.ISSUE, "PUB_PHARMACY");
+    StocksOnHand stocksOnHand = mock(StocksOnHand.class);
+    when(stocksOnHand.findInventory(any())).thenReturn(null);
+    InventoryDetail inventoryDetail = new InventoryDetail(200,
+        EventTime.fromRequest(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:52:42.063Z")));
+    when(stocksOnHand.findInventory(eq(ProductLotCode.of("08O05Y", "SME-LOTE-08O05Y-072021"))))
+        .thenReturn(inventoryDetail);
+    when(stockManagementRepository.getStockOnHand(any())).thenReturn(stocksOnHand);
+    MovementDetail movementDetail = new MovementDetail(-200, MovementType.ISSUE, "PUB_PHARMACY");
     ProductMovement movement0 = ProductMovement.builder()
         .productCode("08O05Y")
-        .eventTime(EventTime.of(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:48:58.690Z")))
+        .eventTime(EventTime.fromRequest(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:48:58.690Z")))
         .movementDetail(movementDetail)
         .requestedQuantity(200)
-        .lotMovements(singletonList(
-            LotMovement.builder().lotCode("SME-LOTE-08O05Y-072021").movementDetail(movementDetail).build()))
+        .stockQuantity(0)
+        .lotMovements(singletonList(newLotMovement(movementDetail, 0)))
         .build();
-    movementDetail = new MovementDetail(0, 0, MovementType.PHYSICAL_INVENTORY, null);
+    movementDetail = new MovementDetail(0, MovementType.PHYSICAL_INVENTORY, null);
     ProductMovement movement1 = ProductMovement.builder()
         .productCode("08O05Y")
-        .eventTime(EventTime.of(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:49:13.784Z")))
+        .eventTime(EventTime.fromRequest(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:49:13.784Z")))
         .movementDetail(movementDetail)
         .lotMovements(emptyList())
+        .stockQuantity(0)
         .build();
-    movementDetail = new MovementDetail(200, 200, MovementType.RECEIVE, "DISTRICT_DDM");
+    movementDetail = new MovementDetail(200, MovementType.RECEIVE, "DISTRICT_DDM");
     ProductMovement movement2 = ProductMovement.builder()
         .productCode("08O05Y")
-        .eventTime(EventTime.of(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:52:42.063Z")))
+        .eventTime(EventTime.fromRequest(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:52:42.063Z")))
         .movementDetail(movementDetail)
-        .lotMovements(singletonList(
-            LotMovement.builder().lotCode("SME-LOTE-08O05Y-072021").movementDetail(movementDetail).build()))
+        .lotMovements(singletonList(newLotMovement(movementDetail, 200)))
+        .stockQuantity(200)
         .build();
     when(stockManagementRepository.getLatestProductMovements(any()))
-        .thenReturn(asList(movement0, movement1, movement2));
+        .thenReturn(new PeriodOfProductMovements(asList(movement0, movement1, movement2), null));
+  }
+
+  private LotMovement newLotMovement(MovementDetail movementDetail, Integer stockQuantity) {
+    return LotMovement.builder().lot(Lot.of("SME-LOTE-08O05Y-072021", java.sql.Date.valueOf("2021-07-31")))
+        .stockQuantity(stockQuantity).movementDetail(movementDetail).build();
   }
 
   @Test

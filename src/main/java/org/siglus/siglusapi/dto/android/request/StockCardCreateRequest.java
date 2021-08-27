@@ -77,7 +77,7 @@ public class StockCardCreateRequest implements StockCardAdjustment {
   @Override
   @JsonIgnore
   public EventTime getEventTime() {
-    return EventTime.of(occurredDate, recordedAt);
+    return EventTime.fromRequest(occurredDate, recordedAt);
   }
 
   @JsonIgnore

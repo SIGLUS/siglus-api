@@ -15,19 +15,13 @@
 
 package org.siglus.siglusapi.dto.android.request;
 
-import java.util.Comparator;
-import org.siglus.siglusapi.dto.android.EventTime;
+import org.siglus.siglusapi.dto.android.EventTimeContainer;
 
-public interface StockCardAdjustment {
-
-  Comparator<StockCardAdjustment> ASCENDING =
-      (o1, o2) -> EventTime.ASCENDING.compare(o1.getEventTime(), o2.getEventTime());
+public interface StockCardAdjustment extends EventTimeContainer {
 
   Integer getStockOnHand();
 
   Integer getQuantity();
-
-  EventTime getEventTime();
 
   String getDocumentationNo();
 

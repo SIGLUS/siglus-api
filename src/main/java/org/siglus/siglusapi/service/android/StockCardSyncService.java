@@ -30,13 +30,13 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.ParametersAreNullableByDefault;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,9 +63,10 @@ import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockCardDeletedBackup;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
+import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
-import org.siglus.siglusapi.dto.android.StockOnHand;
+import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithAllLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementConsistentWithExisted;
@@ -78,9 +79,9 @@ import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
+import org.siglus.siglusapi.dto.android.response.LotLegacyResponse;
 import org.siglus.siglusapi.dto.android.response.LotsOnHandResponse;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
-import org.siglus.siglusapi.dto.android.response.SiglusLotResponse;
 import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.repository.StockCardDeletedBackupRepository;
@@ -89,6 +90,7 @@ import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
+import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.springframework.stereotype.Service;
@@ -115,6 +117,7 @@ public class StockCardSyncService {
   private final SiglusStockCardLineItemService stockCardLineItemService;
   private final SiglusLotReferenceDataService lotReferenceDataService;
   private final StockCardDeletedBackupRepository stockCardDeletedBackupRepository;
+  private final ProductMovementMapper mapper;
 
   @Transactional
   public void deleteStockCardByProduct(@Valid List<StockCardDeleteRequest> stockCardDeleteRequests) {
@@ -127,8 +130,8 @@ public class StockCardSyncService {
     if (orderableIds.contains(null)) {
       throw new NotFoundException("There are products that do not exist in the approved product list");
     }
-    FacilityProductMovementsResponse productMovementsResponse = getProductMovements(null, null,
-        userDto.getHomeFacilityId(), orderableDtos, orderableIds, FieldConstants.DELETE);
+    FacilityProductMovementsResponse productMovementsResponse = getProductMovements(
+        userDto.getHomeFacilityId(), orderableDtos, orderableIds);
     Map<String, ProductMovementResponse> productCodeToMovements = productMovementsResponse.getProductMovements()
         .stream()
         .collect(Collectors.toMap(ProductMovementResponse::getProductCode, Function.identity()));
@@ -142,10 +145,16 @@ public class StockCardSyncService {
   }
 
 
-  public FacilityProductMovementsResponse getProductMovementsByTime(String startTime, String endTime) {
-    List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = getAllApprovedProducts();
+  @ParametersAreNullableByDefault
+  public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since, LocalDate till) {
+    if (since == null) {
+      since = LocalDate.now().withDayOfYear(1);
+    }
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    return getProductMovements(startTime, endTime, facilityId, orderableDtos, null, null);
+    PeriodOfProductMovements period = stockManagementRepository
+        .getAllProductMovements(facilityId, since, till);
+    return FacilityProductMovementsResponse.builder()
+        .productMovements(mapper.toResponses(period.getProductMovements(), period.getStocksOnHand())).build();
   }
 
   @Transactional
@@ -165,7 +174,7 @@ public class StockCardSyncService {
       Map<String, OrderableDto> allApprovedProducts = getAllApprovedProducts().stream()
           .collect(toMap(BasicOrderableDto::getProductCode, Function.identity()));
       List<ProductMovementKey> existed = stockManagementRepository.getLatestProductMovements(facilityDto.getId())
-          .stream().map(ProductMovement::getProductMovementKey).collect(toList());
+          .getProductMovements().stream().map(ProductMovement::getProductMovementKey).collect(toList());
       requests.stream()
           .filter(r -> !existed.contains(r.getProductMovementKey()))
           .collect(groupingBy(StockCardCreateRequest::getRecordedAt))
@@ -179,23 +188,28 @@ public class StockCardSyncService {
 
   public List<ProductMovement> getLatestProductMovements() {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    return stockManagementRepository.getLatestProductMovements(facilityId);
+    return stockManagementRepository.getLatestProductMovements(facilityId).getProductMovements();
   }
 
-  public StockOnHand getLatestStockOnHand() {
+  public StocksOnHand getLatestStockOnHand() {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     return stockManagementRepository.getStockOnHand(facilityId);
   }
 
-  private FacilityProductMovementsResponse getProductMovements(String startTime, String endTime, UUID facilityId,
-      List<org.openlmis.requisition.dto.OrderableDto> orderableDtos, Set<UUID> orderableIds, String type) {
+  private StocksOnHand getStockOnHand(UUID facilityId, LocalDate at) {
+    return stockManagementRepository.getStockOnHand(facilityId, at);
+  }
+
+  private FacilityProductMovementsResponse getProductMovements(UUID facilityId, List<OrderableDto> orderableDtos,
+      Set<UUID> orderableIds) {
     Map<UUID, String> orderableIdToCode = orderableIdToCodeMap(orderableDtos);
     List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos = stockCardSummariesService.findAllProgramStockSummaries();
-    Map<UUID, SiglusLotResponse> siglusLotDtoByLotId = getSiglusLotDtoByLotId(orderableDtos, stockCardSummaryV2Dtos);
+    Map<UUID, LotLegacyResponse> siglusLotDtoByLotId = getSiglusLotDtoByLotId(orderableDtos, stockCardSummaryV2Dtos);
     Map<UUID, List<LotsOnHandResponse>> lotsOnHandDtosByOrderableId = getLotsOnHandResponsesMap(stockCardSummaryV2Dtos,
         siglusLotDtoByLotId);
     Map<UUID, List<SiglusStockMovementItemResponse>> productMovementResponsesByOrderableId = stockCardLineItemService
-        .getStockMovementByOrderableId(facilityId, startTime, endTime, orderableIds, type, siglusLotDtoByLotId);
+        .getStockMovementByOrderableId(facilityId, null, null, orderableIds, FieldConstants.DELETE,
+            siglusLotDtoByLotId);
     List<ProductMovementResponse> productMovementResponses = lotsOnHandDtosByOrderableId.entrySet().stream()
         .map(entry -> ProductMovementResponse.builder()
             .stockMovementItems(productMovementResponsesByOrderableId.get(entry.getKey()) == null ? emptyList()
@@ -205,9 +219,6 @@ public class StockCardSyncService {
             .stockOnHand(calculateStockOnHandByLot(entry.getValue()))
             .build())
         .collect(toList());
-    productMovementResponses.forEach(m -> m.getStockMovementItems().sort(Comparator
-        .comparing(SiglusStockMovementItemResponse::getOccurredDate)
-        .thenComparing(SiglusStockMovementItemResponse::getProcessedDate)));
     return FacilityProductMovementsResponse.builder().productMovements(productMovementResponses).build();
   }
 
@@ -424,18 +435,17 @@ public class StockCardSyncService {
     return emptyList();
   }
 
-  private Map<UUID, SiglusLotResponse> getSiglusLotDtoByLotId(
+  private Map<UUID, LotLegacyResponse> getSiglusLotDtoByLotId(
       List<org.openlmis.requisition.dto.OrderableDto> orderableDtos,
       List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos) {
     return getLotList(stockCardSummaryV2Dtos, orderableDtos).stream()
         .collect(Collectors.toMap(LotDto::getId,
-            t -> SiglusLotResponse.builder().lotCode(t.getLotCode()).expirationDate(t.getExpirationDate())
-                .valid(t.isActive()).build()));
+            t -> LotLegacyResponse.builder().lotCode(t.getLotCode()).expirationDate(t.getExpirationDate()).build()));
   }
 
   private Map<UUID, List<LotsOnHandResponse>> getLotsOnHandResponsesMap(
       List<StockCardSummaryV2Dto> stockCardSummaryV2Dtos,
-      Map<UUID, SiglusLotResponse> siglusLotDtoByLotId) {
+      Map<UUID, LotLegacyResponse> siglusLotDtoByLotId) {
     return stockCardSummaryV2Dtos.stream()
         .collect(Collectors
             .toMap(dto -> dto.getOrderable().getId(), dto -> getLotsOnHandResponses(dto, siglusLotDtoByLotId)));
@@ -456,14 +466,14 @@ public class StockCardSyncService {
   }
 
   private List<LotsOnHandResponse> getLotsOnHandResponses(StockCardSummaryV2Dto dto,
-      Map<UUID, SiglusLotResponse> sigluslotDtoByLotId) {
+      Map<UUID, LotLegacyResponse> sigluslotDtoByLotId) {
     return dto.getCanFulfillForMe().stream()
         .map(fulfillDto -> convertLotsOnHandResponse(fulfillDto, sigluslotDtoByLotId))
         .collect(Collectors.toList());
   }
 
   private LotsOnHandResponse convertLotsOnHandResponse(CanFulfillForMeEntryDto fulfillDto,
-      Map<UUID, SiglusLotResponse> sigluslotResponseByLotId) {
+      Map<UUID, LotLegacyResponse> sigluslotResponseByLotId) {
     return LotsOnHandResponse.builder().quantityOnHand(fulfillDto.getStockOnHand())
         .lot(fulfillDto.getLot() == null ? null : sigluslotResponseByLotId.get(fulfillDto.getLot().getId()))
         .effectiveDate(fulfillDto.getOccurredDate()).build();

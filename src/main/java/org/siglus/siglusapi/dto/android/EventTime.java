@@ -15,25 +15,52 @@
 
 package org.siglus.siglusapi.dto.android;
 
+import static java.util.Comparator.comparing;
+import static java.util.Comparator.naturalOrder;
+import static java.util.Comparator.nullsFirst;
+import static java.util.Comparator.nullsLast;
+
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
 import javax.annotation.Nonnull;
-import lombok.AllArgsConstructor;
+import javax.annotation.Nullable;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor(staticName = "of")
 public class EventTime implements Comparable<EventTime> {
 
-  public static final Comparator<EventTime> ASCENDING = Comparator
-      .comparing(EventTime::getOccurredDate)
-      .thenComparing(EventTime::getRecordedAt);
+  public static final Comparator<EventTime> ASCENDING = comparing(EventTime::getOccurredDate)
+      .thenComparing(EventTime::getRecordedAt, nullsFirst(naturalOrder()))
+      .thenComparing(EventTime::getProcessedAt, nullsLast(naturalOrder()));
 
   public static final Comparator<EventTime> DESCENDING = ASCENDING.reversed();
 
   private final LocalDate occurredDate;
+  @Nullable
   private final Instant recordedAt;
+  @Nullable
+  private final Instant processedAt;
+
+  private EventTime(LocalDate occurredDate, @Nullable Instant recordedAt, @Nullable Instant processedAt) {
+    this.occurredDate = occurredDate;
+    this.recordedAt = recordedAt;
+    this.processedAt = processedAt;
+  }
+
+  public static EventTime fromRequest(LocalDate occurredDate, Instant recordedAt) {
+    return new EventTime(occurredDate, recordedAt, null);
+  }
+
+  public static EventTime fromDatabase(java.sql.Date occurredDate, @Nullable String recordedAtStr,
+      Timestamp processedAt) {
+    Instant recordedAt = null;
+    if (recordedAtStr != null) {
+      recordedAt = Instant.parse(recordedAtStr);
+    }
+    return new EventTime(occurredDate.toLocalDate(), recordedAt, processedAt.toInstant());
+  }
 
   @Override
   public int compareTo(@Nonnull EventTime o) {

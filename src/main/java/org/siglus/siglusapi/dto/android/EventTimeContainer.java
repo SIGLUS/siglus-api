@@ -15,23 +15,16 @@
 
 package org.siglus.siglusapi.dto.android;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import static java.util.Comparator.comparing;
 
-@EqualsAndHashCode
-@ToString
-@Builder
-@Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class LotMovement {
+import java.util.Comparator;
 
-  private final Lot lot;
-  private final MovementDetail movementDetail;
-  private final Integer stockQuantity;
-  private final String documentNumber;
+public interface EventTimeContainer {
+
+  Comparator<EventTimeContainer> ASCENDING = comparing(EventTimeContainer::getEventTime, EventTime.ASCENDING);
+
+  Comparator<EventTimeContainer> DESCENDING = comparing(EventTimeContainer::getEventTime, EventTime.DESCENDING);
+
+  EventTime getEventTime();
 
 }

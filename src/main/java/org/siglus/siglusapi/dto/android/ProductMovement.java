@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.dto.android;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -31,20 +30,28 @@ import lombok.ToString;
 @Getter
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class ProductMovement {
-
-  public static final Comparator<ProductMovement> ASCENDING =
-      (o1, o2) -> EventTime.ASCENDING.compare(o1.getEventTime(), o2.getEventTime());
+public class ProductMovement implements EventTimeContainer {
 
   private final String productCode;
   private final EventTime eventTime;
   private final Integer requestedQuantity;
   private final MovementDetail movementDetail;
+  private final Integer stockQuantity;
+  private final String signature;
+  private final String documentNumber;
   @Default
-  private List<LotMovement> lotMovements = Collections.emptyList();
+  private final List<LotMovement> lotMovements = Collections.emptyList();
 
   public ProductMovementKey getProductMovementKey() {
     return ProductMovementKey.of(productCode, eventTime);
+  }
+
+  public Integer getInventoryBeforeAdjustment() {
+    return stockQuantity - movementDetail.getAdjustment();
+  }
+
+  public boolean isRightAfter(ProductMovement previous) {
+    return getInventoryBeforeAdjustment().equals(previous.stockQuantity);
   }
 
 }
