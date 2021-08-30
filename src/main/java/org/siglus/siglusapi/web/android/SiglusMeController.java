@@ -30,6 +30,7 @@ import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
+import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
@@ -78,8 +79,8 @@ public class SiglusMeController {
 
   @PostMapping("/facility/stockCards")
   @ResponseStatus(CREATED)
-  public void createStockCards(@RequestBody List<StockCardCreateRequest> requests) {
-    service.createStockCards(requests);
+  public CreateStockCardResponse createStockCards(@RequestBody List<StockCardCreateRequest> requests) {
+    return service.createStockCards(requests);
   }
 
   @GetMapping("/facility/stockCards")

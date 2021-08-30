@@ -22,6 +22,8 @@ import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.validation.Validator;
+import javax.validation.executable.ExecutableValidator;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
@@ -250,7 +252,12 @@ public class Application {
 
   @Bean
   public LocalValidatorFactoryBean getValidator() {
-    LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean();
+    LocalValidatorFactoryBean bean = new LocalValidatorFactoryBean() {
+      @Override
+      public ExecutableValidator forExecutables() {
+        return unwrap(Validator.class).forExecutables();
+      }
+    };
     bean.setValidationMessageSource(validationMessageSource());
     ResourceBundleMessageInterpolator nativeMessageInterpolator =
         new ResourceBundleMessageInterpolator(new MessageSourceResourceBundleLocator(validationMessageSource()));

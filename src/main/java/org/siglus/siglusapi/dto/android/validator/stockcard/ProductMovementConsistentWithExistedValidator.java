@@ -30,6 +30,7 @@ import javax.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
+import org.siglus.siglusapi.constant.ValidatorConstants;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.LotMovement;
@@ -111,6 +112,7 @@ public class ProductMovementConsistentWithExistedValidator implements
     if (foundInExisted < 0) {
       if (lastInExisted.getEventTime().compareTo(firstInRequest.getEventTime()) >= 0) {
         // violation 2 & 3 not same root
+        actualContext.addExpressionVariable(ValidatorConstants.PRODUCT_CODE, firstInRequest.getProductCode());
         actualContext.addExpressionVariable(FAILED_BY_NOT_FOUND, true);
         actualContext.addExpressionVariable(OCCURRED_DATE, firstInRequest.getEventTime().getOccurredDate());
         actualContext.addExpressionVariable(RECORDED_AT, firstInRequest.getEventTime().getRecordedAt());
@@ -190,6 +192,7 @@ public class ProductMovementConsistentWithExistedValidator implements
       return true;
     }
     // violation 5
+    actualContext.addExpressionVariable(ValidatorConstants.PRODUCT_CODE, next.getProductCode());
     actualContext.addExpressionVariable("failedByContinuity", true);
     actualContext.addExpressionVariable(OCCURRED_DATE, next.getEventTime().getOccurredDate());
     actualContext.addExpressionVariable(RECORDED_AT, next.getEventTime().getRecordedAt());
@@ -202,7 +205,7 @@ public class ProductMovementConsistentWithExistedValidator implements
       HibernateConstraintValidatorContext actualContext) {
     actualContext.addExpressionVariable(OCCURRED_DATE, fromRequest.getEventTime().getOccurredDate());
     actualContext.addExpressionVariable(RECORDED_AT, fromRequest.getEventTime().getRecordedAt());
-    actualContext.addExpressionVariable("productCode", fromRequest.getProductCode());
+    actualContext.addExpressionVariable(ValidatorConstants.PRODUCT_CODE, fromRequest.getProductCode());
     actualContext.addExpressionVariable(LOT_CODE, null);
     MovementDetail movementDetailFromRequest = fromRequest.getMovementDetail();
     MovementDetail movementDetailFromExisted = fromExisted.getMovementDetail();
@@ -297,7 +300,7 @@ public class ProductMovementConsistentWithExistedValidator implements
 
   private boolean validateNewProduct(StockCardCreateRequest newProduct,
       HibernateConstraintValidatorContext actualContext) {
-    actualContext.addExpressionVariable("productCode", newProduct.getProductCode());
+    actualContext.addExpressionVariable(ValidatorConstants.PRODUCT_CODE, newProduct.getProductCode());
     actualContext.addExpressionVariable(OCCURRED_DATE, newProduct.getOccurredDate());
     actualContext.addExpressionVariable(RECORDED_AT, newProduct.getRecordedAt());
     int initInventory = newProduct.getStockOnHand() - newProduct.getQuantity();

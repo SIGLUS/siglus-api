@@ -37,10 +37,13 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorFactory;
 import javax.validation.ConstraintViolation;
@@ -55,9 +58,13 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
 import org.siglus.siglusapi.dto.android.Lot;
@@ -71,12 +78,15 @@ import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
+import org.siglus.siglusapi.dto.android.validator.stockcard.FacilitySupportProductValidator;
 import org.siglus.siglusapi.dto.android.validator.stockcard.KitProductEmptyLotsValidator;
 import org.siglus.siglusapi.dto.android.validator.stockcard.LotStockConsistentWithExistedValidator;
 import org.siglus.siglusapi.dto.android.validator.stockcard.ProductMovementConsistentWithExistedValidator;
+import org.siglus.siglusapi.dto.android.validator.stockcard.SupportReasonNameValidator;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.android.StockCardSyncService;
+import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods", "unused"})
@@ -87,6 +97,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   private static final String MUST_BE_POSITIVE = "must be greater than or equal to 0";
   private final UUID facilityId = UUID.randomUUID();
   private final UUID userId = UUID.randomUUID();
+  private final UUID supportProgramId = UUID.randomUUID();
+  private final String supportProgramCode = "programCode";
 
   @InjectMocks
   private StockCardSyncService stockCardSyncService;
@@ -99,6 +111,18 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
   @Mock
   private StockManagementRepository stockManagementRepository;
+
+  @Mock
+  private SiglusOrderableService siglusOrderableService;
+
+  @Mock
+  private SupportedProgramsHelper programsHelper;
+
+  @Mock
+  private ProgramReferenceDataService programDataService;
+
+  @Mock
+  private SiglusApprovedProductReferenceDataService approvedProductDataService;
 
   private final ObjectMapper mapper = new ObjectMapper();
 
@@ -179,6 +203,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         .build();
     when(stockManagementRepository.getLatestProductMovements(any()))
         .thenReturn(new PeriodOfProductMovements(asList(movement0, movement1, movement2), null));
+    mockFacilitySupportOrdrables();
   }
 
   private LotMovement newLotMovement(MovementDetail movementDetail, Integer stockQuantity) {
@@ -264,24 +289,9 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     Map<String, List<String>> violations = executeValidation(param);
 
     // then
-    assertEquals(2, violations.size());
-    assertViolation("The adjustment with soh[10] is inconsistent with quantity[20].",
-        "createStockCards.arg0[0]", violations);
-  }
-
-  @Test
-  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInconsistentLotSoh()
-      throws IOException {
-    // given
-    Object param = parseParam("inconsistentLotSoh.json");
-
-    // when
-    Map<String, List<String>> violations = executeValidation(param);
-
-    // then
     assertEquals(1, violations.size());
-    assertViolation("The adjustment with soh[5] is inconsistent with quantity[10].",
-        "createStockCards.arg0[0].lotEvents[0]", violations);
+    assertViolation("Adjust quantity of [08S01Z] cannot be larger than SOH.",
+        "createStockCards.arg0[0]", violations);
   }
 
   @Test
@@ -358,7 +368,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
     // then
     assertEquals(1, violations.size());
-    assertViolation("The lot SEM-LOTE-02A01-062021 of the product 08S01Z is not consistent by gap.",
+    assertViolation("SOH of SEM-LOTE-02A01-062021(08S01Z) is not consistent.",
         "createStockCards.arg0", violations);
   }
 
@@ -375,7 +385,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     assertEquals(1, violations.size());
 
     assertViolation(
-        "The lot SEM-LOTE-02A01-062021 of the product 08S01Z is not consistent on 2021-06-17(at 2021-06-17T14:20:56Z).",
+        "SOH of SEM-LOTE-02A01-062021(08S01Z) is not consistent.",
         "createStockCards.arg0", violations);
   }
 
@@ -406,7 +416,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
     // then
     assertEquals(1, violations.size());
-    assertViolation("The product 08A is not a legal one.",
+    assertViolation("08A is not supported by the facility " + facilityId + ".",
         "createStockCards.arg0[0]", violations);
   }
 
@@ -421,7 +431,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
     // then
     assertEquals(1, violations.size());
-    assertViolation("The product 08K should not contain lot events since it's a kit product.",
+    assertViolation("Kit(08K) should not contain any lot events.",
         "createStockCards.arg0[0]", violations);
   }
 
@@ -475,7 +485,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
     // then
     assertEquals(1, violations.size());
-    assertViolation("The record on 2021-08-06(recorded at 2021-08-06T08:49:03.784Z) doesn't existed on server.",
+    assertViolation("In product(08O05Y) the record on 2021-08-06(recorded at 2021-08-06T08:49:03.784Z) "
+            + "doesn't existed on server.",
         "createStockCards.arg0", violations);
   }
 
@@ -490,7 +501,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
     // then
     assertEquals(1, violations.size());
-    assertViolation("The record on 2021-08-05(recorded at 2021-08-05T08:49:13.784Z) doesn't existed on server.",
+    assertViolation("In product(08O05Y) the record on 2021-08-05(recorded at 2021-08-05T08:49:13.784Z) "
+            + "doesn't existed on server.",
         "createStockCards.arg0", violations);
   }
 
@@ -505,7 +517,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
     // then
     assertEquals(1, violations.size());
-    assertViolation("The record on 2021-08-05(recorded at 2021-08-05T08:49:13.784Z) doesn't existed on server.",
+    assertViolation("In product(08O05Y) the record on 2021-08-05(recorded at 2021-08-05T08:49:13.784Z) "
+            + "doesn't existed on server.",
         "createStockCards.arg0", violations);
   }
 
@@ -522,7 +535,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     assertEquals(1, violations.size());
 
     assertViolation(
-        "The stockOnHand of the record on 2021-08-06(recorded at 2021-08-06T08:52:42.063Z) should be 200 but is 100.",
+        "In product(08O05Y) the stockOnHand of the record on 2021-08-06(recorded at 2021-08-06T08:52:42.063Z) "
+            + "should be 200 but is 100.",
         "createStockCards.arg0", violations);
   }
 
@@ -539,8 +553,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     assertEquals(1, violations.size());
 
     assertViolation(
-        "The lotCode of the record on 2021-08-06(recorded at 2021-08-06T08:52:42.063Z) should be "
-            + "SME-LOTE-08O05Y-072021 but is SEM-LOTE-08O05Y-072021.",
+        "In product(08O05Y) the lotCode of the record on 2021-08-06(recorded at 2021-08-06T08:52:42.063Z) "
+            + "should be SME-LOTE-08O05Y-072021 but is SEM-LOTE-08O05Y-072021.",
         "createStockCards.arg0", violations);
   }
 
@@ -557,7 +571,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     assertEquals(1, violations.size());
 
     assertViolation(
-        "The stock on hand before the adjustment of the record on "
+        "In product(08O05Y) the stock on hand before the adjustment of the record on "
             + "2021-08-07(recorded at 2021-08-07T08:52:42.063Z) should be 200 but is 400.",
         "createStockCards.arg0", violations);
   }
@@ -574,8 +588,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     // then
     assertEquals(1, violations.size());
     assertViolation(
-        "The stock on hand before the adjustment of record on 2021-08-07(recorded at 2021-08-07T08:52:42.063Z) "
-            + "for the lot SME-LOTE-08O05Y-072021 of the product 08O05Y should be 200 but is 100.",
+        "SOH of SME-LOTE-08O05Y-072021(08O05Y) does not match latest record in DB.",
         "createStockCards.arg0", violations);
   }
 
@@ -624,6 +637,13 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
       if (key == LotStockConsistentWithExistedValidator.class) {
         return (T) new LotStockConsistentWithExistedValidator(stockCardSyncService);
       }
+      if (key == SupportReasonNameValidator.class) {
+        return (T) new SupportReasonNameValidator(orderableService);
+      }
+      if (key == FacilitySupportProductValidator.class) {
+        return (T) new FacilitySupportProductValidator(authHelper, programsHelper, programDataService,
+            approvedProductDataService);
+      }
       return NewInstance.action(key, "ConstraintValidator").run();
     }
 
@@ -634,4 +654,28 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
   }
 
+  private void mockFacilitySupportOrdrables() {
+    List<ApprovedProductDto> approvedProductDtos = new ArrayList<>();
+    org.openlmis.requisition.dto.OrderableDto orderableDto1 = new org.openlmis.requisition.dto.OrderableDto();
+    orderableDto1.setProductCode("08O05Y");
+    ApprovedProductDto approvedProductDto1 = new ApprovedProductDto();
+    approvedProductDto1.setOrderable(orderableDto1);
+    approvedProductDtos.add(approvedProductDto1);
+    List<ApprovedProductDto> facilitySupportOrderables = new ArrayList<>();
+    facilitySupportOrderables.add(approvedProductDto1);
+
+    when(programsHelper.findUserSupportedPrograms())
+        .thenReturn(Stream.of(supportProgramId).collect(Collectors.toSet()));
+    when(programDataService.findOne(supportProgramId)).thenReturn(buildSupportProgramDto());
+    when(approvedProductDataService
+        .getApprovedProducts(facilityId, supportProgramId, emptyList()))
+        .thenReturn(facilitySupportOrderables);
+  }
+
+  private ProgramDto buildSupportProgramDto() {
+    ProgramDto programDto = new ProgramDto();
+    programDto.setId(supportProgramId);
+    programDto.setCode(supportProgramCode);
+    return programDto;
+  }
 }

@@ -15,14 +15,20 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.constant.ValidatorConstants;
 import org.siglus.siglusapi.dto.android.InvalidProduct;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.CollectionUtils;
 
 @Data
 @Builder
@@ -38,28 +44,31 @@ public class CreateStockCardResponse {
 
   private String details;
 
+  private List<String> errorProductCodes;
+
   public static CreateStockCardResponse from(ValidatedStockCards validatedStockCards) {
-    StringBuilder message = new StringBuilder("Sync [");
-    StringBuilder messageInPortuguese = new StringBuilder("Erro na sincronização do produto [");
-    StringBuilder details = new StringBuilder("Sync [");
+    StringBuilder message = new StringBuilder(ValidatorConstants.MESSAGE_SYNC);
+    StringBuilder messageInPortuguese = new StringBuilder(ValidatorConstants.MESSAGE_SYNC_PT);
     String messageInvalidCodes = "";
     String allInvalidCodes = "";
     String errorMessages = "";
-    if(!validatedStockCards.getInvalidProducts().isEmpty()) {
-      messageInvalidCodes = validatedStockCards.getInvalidProducts().stream().limit(3)
-          .map(InvalidProduct::getProductCode).collect(
-              Collectors.joining(","));
-      allInvalidCodes = validatedStockCards.getInvalidProducts().stream().map(InvalidProduct::getProductCode)
-          .collect(Collectors.joining(","));
+    Set<String> invalidProductCodes = new HashSet<>();
+    if (!CollectionUtils.isEmpty(validatedStockCards.getInvalidProducts())) {
+      invalidProductCodes = validatedStockCards.getInvalidProducts().stream()
+          .map(InvalidProduct::getProductCode).collect(Collectors.toSet());
+      messageInvalidCodes = invalidProductCodes.stream().limit(3).collect(Collectors.joining(","));
+      allInvalidCodes = invalidProductCodes.stream().collect(Collectors.joining(","));
       errorMessages = validatedStockCards.getInvalidProducts().stream().map(InvalidProduct::getErrorMessage)
           .collect(Collectors.joining("\n"));
     }
+    StringBuilder details = new StringBuilder(ValidatorConstants.MESSAGE_SYNC);
     message.append(messageInvalidCodes).append("] error.");
     messageInPortuguese.append(messageInvalidCodes).append("].");
     details.append(allInvalidCodes).append("] error.\n").append(errorMessages);
     return CreateStockCardResponse.builder()
         .message(message.toString())
         .messageInPortuguese(messageInPortuguese.toString())
+        .errorProductCodes(new ArrayList<>(invalidProductCodes))
         .details(details.toString()).status(HttpStatus.CREATED.value())
         .build();
   }

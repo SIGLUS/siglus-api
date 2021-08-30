@@ -87,12 +87,13 @@ import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.repository.StockCardDeletedBackupRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
+import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
-import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
+import org.siglus.siglusapi.util.AndroidHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -108,7 +109,6 @@ public class StockCardSyncService {
   private final SupportedProgramsHelper programsHelper;
   private final ProgramReferenceDataService programDataService;
   private final StockManagementRepository stockManagementRepository;
-  private final CreateStockCardContextHolder createStockCardContextHolder;
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final StockEventProductRequestedRepository requestQuantityRepository;
@@ -118,6 +118,8 @@ public class StockCardSyncService {
   private final SiglusLotReferenceDataService lotReferenceDataService;
   private final StockCardDeletedBackupRepository stockCardDeletedBackupRepository;
   private final ProductMovementMapper mapper;
+  private final AndroidHelper androidHelper;
+  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
 
   @Transactional
   public void deleteStockCardByProduct(@Valid List<StockCardDeleteRequest> stockCardDeleteRequests) {
@@ -168,21 +170,17 @@ public class StockCardSyncService {
       @ProductMovementConsistentWithExisted(groups = PerformanceGroup.class)
           List<StockCardCreateRequest> requests) {
     FacilityDto facilityDto = getCurrentFacilityInfo();
-    createStockCardContextHolder.initContext(facilityDto);
-    try {
-      Map<String, OrderableDto> allApprovedProducts = getAllApprovedProducts().stream()
-          .collect(toMap(BasicOrderableDto::getProductCode, Function.identity()));
-      List<ProductMovementKey> existed = stockManagementRepository.getLatestProductMovements(facilityDto.getId())
-          .getProductMovements().stream().map(ProductMovement::getProductMovementKey).collect(toList());
-      requests.stream()
-          .filter(r -> !existed.contains(r.getProductMovementKey()))
-          .collect(groupingBy(StockCardCreateRequest::getRecordedAt))
-          .entrySet().stream()
-          .sorted(Map.Entry.comparingByKey())
-          .forEach(entry -> createStockEvent(entry.getValue(), facilityDto, allApprovedProducts));
-    } finally {
-      CreateStockCardContextHolder.clearContext();
-    }
+    deletePhysicalInventoryDraftForAndroidUser(facilityDto.getId());
+    Map<String, OrderableDto> allApprovedProducts = getAllApprovedProducts().stream()
+        .collect(toMap(BasicOrderableDto::getProductCode, Function.identity()));
+    List<ProductMovementKey> existed = stockManagementRepository.getLatestProductMovements(facilityDto.getId())
+        .getProductMovements().stream().map(ProductMovement::getProductMovementKey).collect(toList());
+    requests.stream()
+        .filter(r -> !existed.contains(r.getProductMovementKey()))
+        .collect(groupingBy(StockCardCreateRequest::getRecordedAt))
+        .entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .forEach(entry -> createStockEvent(entry.getValue(), facilityDto, allApprovedProducts));
   }
 
   public List<ProductMovement> getLatestProductMovements() {
@@ -474,4 +472,9 @@ public class StockCardSyncService {
         .effectiveDate(fulfillDto.getOccurredDate()).build();
   }
 
+  private void deletePhysicalInventoryDraftForAndroidUser(UUID facilityId) {
+    if (androidHelper.isAndroid()) {
+      siglusPhysicalInventoryService.deletePhysicalInventoryForAllProducts(facilityId);
+    }
+  }
 }

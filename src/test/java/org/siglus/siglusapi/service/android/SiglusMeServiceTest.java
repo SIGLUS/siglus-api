@@ -211,10 +211,11 @@ public class SiglusMeServiceTest {
   private ArgumentCaptor<RequisitionRequestBackup> requestBackupArgumentCaptor;
 
   @InjectMocks
-  private CreateStockCardContextHolder holder;
-
-  @InjectMocks
   private StockCardSyncService stockCardSyncService;
+
+  @SuppressWarnings("unused")
+  @Mock
+  private CreateStockCardContextHolder createStockCardContextHolder;
 
   @Autowired
   private ProductMapper mapper;
@@ -269,7 +270,6 @@ public class SiglusMeServiceTest {
   @Before
   public void prepare() {
     ReflectionTestUtils.setField(service, "mapper", mapper);
-    ReflectionTestUtils.setField(stockCardSyncService, "createStockCardContextHolder", holder);
     ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncService);
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);

@@ -13,29 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.validation;
+package org.siglus.siglusapi.constant;
 
-import java.util.Locale;
-import javax.annotation.Nonnull;
-import javax.validation.MessageInterpolator;
-import lombok.RequiredArgsConstructor;
+public class ValidatorConstants {
 
-@RequiredArgsConstructor
-public class SiglusMessageInterpolator implements MessageInterpolator {
+  private ValidatorConstants() {}
 
-  @Nonnull
-  private final MessageInterpolator targetInterpolator;
+  public static String MESSAGE_SYNC = "Sync [";
 
-  @Override
-  public String interpolate(String message, Context context) {
-    String messageInEnglish = this.targetInterpolator.interpolate(message, context, Locale.ENGLISH);
-    return String.format("%s", messageInEnglish);
-  }
+  public static String MESSAGE_SYNC_PT = "Erro na sincronização do produto [";
 
-  @Override
-  public String interpolate(String message, Context context, Locale locale) {
-    return this.interpolate(message, context);
-  }
-
+  public static String PRODUCT_CODE = "productCode";
 
 }

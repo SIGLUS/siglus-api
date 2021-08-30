@@ -24,10 +24,8 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import org.hibernate.validator.constraints.NotBlank;
 import org.siglus.siglusapi.dto.android.EventTime;
-import org.siglus.siglusapi.dto.android.constraint.stockcard.PositiveInitStockOnHand;
 
 @Data
-@PositiveInitStockOnHand
 public class StockCardLotEventRequest implements StockCardAdjustment {
 
   @JsonProperty("lotNumber")

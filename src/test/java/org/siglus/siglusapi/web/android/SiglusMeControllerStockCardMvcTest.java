@@ -30,7 +30,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -61,9 +66,11 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
+import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
 import org.siglus.siglusapi.dto.android.enumeration.Destination;
 import org.siglus.siglusapi.dto.android.enumeration.Source;
+import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
@@ -73,6 +80,8 @@ import org.siglus.siglusapi.service.android.SiglusMeService;
 import org.siglus.siglusapi.service.android.StockCardSyncService;
 import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
@@ -110,6 +119,10 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   @Mock
   @SuppressWarnings("unused")
   private StockManagementRepository stockManagementRepository;
+  @Mock
+  private StockCardCreateRequestValidator stockCardCreateRequestValidator;
+  @Mock
+  private AndroidHelper androidHelper;
 
   @InjectMocks
   private CreateStockCardContextHolder holder;
@@ -120,6 +133,9 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   private final UUID facilityTypeId = UUID.randomUUID();
   private final UUID programId1 = UUID.randomUUID();
   private final UUID programId2 = UUID.randomUUID();
+  private final UUID userId = UUID.randomUUID();
+  private final ObjectMapper mapper = new ObjectMapper();
+  private JavaType stockCardCreateRequestListType;
 
   @Before
   public void setup() {
@@ -128,12 +144,18 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     mockApprovedProducts();
     mockSourceDestinations();
     mockReasons();
-    ReflectionTestUtils.setField(stockCardSyncService, "createStockCardContextHolder", holder);
+    ReflectionTestUtils.setField(service, "createStockCardContextHolder", holder);
     ReflectionTestUtils.setField(service, "stockCardSyncService", stockCardSyncService);
     when(stockManagementRepository.getLatestProductMovements(any()))
         .thenReturn(new PeriodOfProductMovements(emptyList(), null));
     SiglusMeController controller = new SiglusMeController(service);
     this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    mapper.registerModule(new JavaTimeModule());
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+    stockCardCreateRequestListType = mapper.getTypeFactory()
+        .constructCollectionType(List.class, StockCardCreateRequest.class);
+    when(androidHelper.isAndroid()).thenReturn(false);
   }
 
   @Test
@@ -143,9 +165,10 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .contentType(MediaType.APPLICATION_JSON)
         .content(readFromFile("happy.json"))
         .characterEncoding("utf-8");
+
+    when(stockCardCreateRequestValidator.validateStockCardCreateRequest(any())).thenReturn(mockHappyCreateRequest());
     when(stockEventsService.createStockEventForNoDraftAllProducts(any()))
         .thenReturn(ImmutableMap.of(UUID.randomUUID(), UUID.randomUUID()));
-
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());
@@ -164,6 +187,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .contentType(MediaType.APPLICATION_JSON)
         .content(readFromFile("uats.json"))
         .characterEncoding("utf-8");
+    when(stockCardCreateRequestValidator.validateStockCardCreateRequest(any())).thenReturn(mockUatsCreateRequest());
     when(stockEventsService.createStockEventForNoDraftAllProducts(any()))
         .thenReturn(ImmutableMap.of(UUID.randomUUID(), UUID.randomUUID()));
 
@@ -180,6 +204,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   private void mockHomeFacility() {
     UserDto user = new UserDto();
     user.setHomeFacilityId(facilityId);
+    user.setId(userId);
     when(authHelper.getCurrentUser()).thenReturn(user);
     FacilityDto facility = new FacilityDto();
     facility.setId(facilityId);
@@ -284,5 +309,17 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     return approvedProduct;
   }
 
+  private ValidatedStockCards mockHappyCreateRequest() throws Exception {
+    String requestJsonStr = readFromFile("happy.json");
+    List<StockCardCreateRequest> happyRequests = mapper.readValue(requestJsonStr, stockCardCreateRequestListType);
+    return ValidatedStockCards.builder().validStockCardRequests(happyRequests).invalidProducts(new ArrayList<>())
+        .build();
+  }
 
+  private ValidatedStockCards mockUatsCreateRequest() throws Exception {
+    String requestJsonStr = readFromFile("uats.json");
+    List<StockCardCreateRequest> uatsRequests = mapper.readValue(requestJsonStr, stockCardCreateRequestListType);
+    return ValidatedStockCards.builder().validStockCardRequests(uatsRequests).invalidProducts(new ArrayList<>())
+        .build();
+  }
 }

@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,10 +73,12 @@ import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
+import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
@@ -96,6 +99,7 @@ import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
+import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 import org.siglus.siglusapi.service.android.mapper.PodLotLineMapper;
 import org.siglus.siglusapi.service.android.mapper.PodMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
@@ -104,10 +108,13 @@ import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.HashEncoder;
+import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 @Service
@@ -146,6 +153,8 @@ public class SiglusMeService {
   private final RequisitionRequestBackupRepository requisitionRequestBackupRepository;
   private final StockCardRequestBackupRepository stockCardRequestBackupRepository;
   private final StockCardSyncService stockCardSyncService;
+  private final StockCardCreateRequestValidator stockCardCreateRequestValidator;
+  private final CreateStockCardContextHolder createStockCardContextHolder;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -229,17 +238,34 @@ public class SiglusMeService {
     return syncResponse;
   }
 
-  public void createStockCards(List<StockCardCreateRequest> requests) {
+  public CreateStockCardResponse createStockCards(List<StockCardCreateRequest> requests) {
+    ValidatedStockCards validatedStockCards = ValidatedStockCards.builder()
+        .validStockCardRequests(requests)
+        .invalidProducts(Collections.emptyList())
+        .build();
+    CreateStockCardResponse createStockCardResponse = new CreateStockCardResponse();
+    FacilityDto facilityDto = getCurrentFacilityInfo();
+    createStockCardContextHolder.initContext(facilityDto);
     try {
-      stockCardSyncService.createStockCards(requests);
+      validatedStockCards = stockCardCreateRequestValidator.validateStockCardCreateRequest(requests);
+      createStockCardResponse = CreateStockCardResponse.from(validatedStockCards);
+      if (!CollectionUtils.isEmpty(validatedStockCards.getInvalidProducts())) {
+        backupStockCardRequest(requests, createStockCardResponse.getDetails());
+      }
+      if (!CollectionUtils.isEmpty(validatedStockCards.getValidStockCardRequests())) {
+        stockCardSyncService.createStockCards(validatedStockCards.getValidStockCardRequests());
+      }
     } catch (Exception e) {
+      createStockCardResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
       try {
-        backupStockCardRequest(requests, e);
+        backupStockCardRequest(validatedStockCards.getValidStockCardRequests(), createStockCardResponse.getDetails());
       } catch (NullPointerException backupError) {
         log.warn("backup stock card request error", backupError);
       }
-      throw e;
+    } finally {
+      CreateStockCardContextHolder.clearContext();
     }
+    return createStockCardResponse;
   }
 
   public void deleteStockCardByProduct(List<StockCardDeleteRequest> stockCardDeleteRequests) {
@@ -463,7 +489,7 @@ public class SiglusMeService {
     requisitionRequestBackupRepository.save(backup);
   }
 
-  private void backupStockCardRequest(List<StockCardCreateRequest> stockCardCreateRequests, Exception e) {
+  private void backupStockCardRequest(List<StockCardCreateRequest> stockCardCreateRequests, String errorMessage) {
     UserDto user = authHelper.getCurrentUser();
     StringBuilder hashStringBuilder = new StringBuilder(user.getId().toString() + user.getHomeFacilityId().toString());
     stockCardCreateRequests.forEach(r -> hashStringBuilder.append(r.getSyncUpProperties()));
@@ -472,15 +498,6 @@ public class SiglusMeService {
     if (existedBackup != null) {
       log.info("skip backup stock card request as syncUpHash: {} existed", syncUpHash);
       return;
-    }
-    String errorMessage = "";
-    if (e instanceof javax.validation.ConstraintViolationException) {
-      StringBuilder messageString = new StringBuilder();
-      Set<ConstraintViolation<?>> constraintViolations = (((ConstraintViolationException) e).getConstraintViolations());
-      constraintViolations.forEach(violation -> messageString.append(violation.getMessage()).append("\n"));
-      errorMessage = messageString.toString();
-    } else {
-      errorMessage = e.getMessage() + e.getCause();
     }
     StockCardRequestBackup backup = StockCardRequestBackup.builder()
         .hash(syncUpHash)
