@@ -87,13 +87,18 @@ public interface ProductMovementMapper {
   @Named("getLot")
   default LotBasicResponse getLot(ProductLotCode productLotCode, @Context StocksOnHand stocksOnHand) {
     Lot lot = stocksOnHand.getLot(productLotCode);
+    if (lot == null) {
+      return null;
+    }
     return LotBasicResponse.builder().code(lot.getCode()).expirationDate(lot.getExpirationDate()).build();
   }
 
   @Named("getLotsOnHand")
   default List<LotsOnHandResponse> getLotsOnHand(String productCode, @Context StocksOnHand stocksOnHand) {
     return stocksOnHand.getLotInventoriesByProduct(productCode).entrySet().stream()
+        .filter(e -> !e.getKey().isNoStock())
         .map(e -> toLotOnHand(e.getKey(), e.getValue(), stocksOnHand))
+        .filter(s -> s.getLot() != null)
         .sorted(comparing(r -> r.getLot().getCode()))
         .collect(toList());
   }
