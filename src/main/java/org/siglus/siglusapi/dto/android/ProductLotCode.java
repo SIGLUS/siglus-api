@@ -18,6 +18,7 @@ package org.siglus.siglusapi.dto.android;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.siglus.common.constant.KitConstants;
 
 @Data
 @AllArgsConstructor(staticName = "of")
@@ -27,6 +28,10 @@ public class ProductLotCode {
 
   @Nullable
   private final String lotCode;
+
+  public boolean isNoStock() {
+    return lotCode == null && !KitConstants.isKit(productCode);
+  }
 
   public boolean isLot() {
     return lotCode != null;

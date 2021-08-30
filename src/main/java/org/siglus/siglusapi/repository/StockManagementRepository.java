@@ -237,7 +237,11 @@ public class StockManagementRepository {
     ProductLotMovement anyLot;
     if (productLotMovements.size() == 1 && !productLotMovements.get(0).getCode().isLot()) {
       ProductLotMovement theOnlyLot = productLotMovements.get(0);
-      movementBuilder.movementDetail(theOnlyLot.getMovementDetail());
+      MovementDetail movementDetail = theOnlyLot.getMovementDetail();
+      movementBuilder.movementDetail(movementDetail);
+      Integer stockQuantity = productInventoryMap.get(key.getProductCode());
+      movementBuilder.stockQuantity(stockQuantity);
+      productInventoryMap.put(key.getProductCode(), stockQuantity - movementDetail.getAdjustment());
       movementBuilder.documentNumber(theOnlyLot.getDocumentNumber());
       anyLot = theOnlyLot;
     } else if (productLotMovements.stream().allMatch(m -> m.getCode().isLot())) {

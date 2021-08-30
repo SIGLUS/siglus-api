@@ -15,12 +15,11 @@
 
 package org.siglus.siglusapi.dto.android;
 
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.reducing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -33,11 +32,19 @@ public class StocksOnHand {
   private final Map<ProductLotCode, InventoryDetail> noStockInventories;
   private final Map<ProductLotCode, InventoryDetail> kitInventories;
   private final List<ProductLotCode> allLotCodes;
+  private final List<String> allProductCodes;
   private final Map<ProductLotCode, Lot> lots;
 
   public StocksOnHand(List<ProductLotStock> allLotStocks) {
     this.allLotCodes = allLotStocks.stream()
-        .map(ProductLotStock::getCode).filter(ProductLotCode::isLot).collect(toList());
+        .map(ProductLotStock::getCode)
+        .filter(productLotCode -> !productLotCode.isNoStock())
+        .collect(toList());
+    this.allProductCodes = allLotStocks.stream()
+        .map(ProductLotStock::getCode)
+        .map(ProductLotCode::getProductCode)
+        .distinct()
+        .collect(toList());
     List<ProductLotStock> lotStocks = allLotStocks.stream().filter(s -> s.getCode().isLot()).collect(toList());
     this.lots = lotStocks.stream().collect(toMap(ProductLotStock::getCode, ProductLotStock::getLot));
     List<ProductLotStock> noStocks = allLotStocks.stream()
@@ -82,12 +89,11 @@ public class StocksOnHand {
   }
 
   public Map<String, Integer> getProductInventories() {
-    return allLotCodes.stream().collect(groupingBy(ProductLotCode::getProductCode,
-        reducing(0, c -> findInventory(c).getStockQuantity(), Integer::sum)));
+    return allProductCodes.stream().collect(toMap(Function.identity(), this::getStockQuantityByProduct));
   }
 
   public Collection<String> getAllProductCodes() {
-    return allLotCodes.stream().map(ProductLotCode::getProductCode).distinct().collect(toList());
+    return Collections.unmodifiableList(allProductCodes);
   }
 
   public Map<ProductLotCode, Integer> getLotInventories() {

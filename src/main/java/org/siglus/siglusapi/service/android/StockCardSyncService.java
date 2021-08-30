@@ -195,10 +195,6 @@ public class StockCardSyncService {
     return stockManagementRepository.getStockOnHand(facilityId);
   }
 
-  private StocksOnHand getStockOnHand(UUID facilityId, LocalDate at) {
-    return stockManagementRepository.getStockOnHand(facilityId, at);
-  }
-
   private FacilityProductMovementsResponse getProductMovements(UUID facilityId, List<OrderableDto> orderableDtos,
       Set<UUID> orderableIds) {
     Map<UUID, String> orderableIdToCode = orderableIdToCodeMap(orderableDtos);
