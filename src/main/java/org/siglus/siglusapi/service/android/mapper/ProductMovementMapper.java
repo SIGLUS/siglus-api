@@ -15,11 +15,13 @@
 
 package org.siglus.siglusapi.service.android.mapper;
 
+import static java.util.Collections.emptyList;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
 import java.util.List;
+import java.util.Map;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -27,9 +29,11 @@ import org.mapstruct.Named;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.LotMovement;
+import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
+import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.LotBasicResponse;
 import org.siglus.siglusapi.dto.android.response.LotMovementItemResponse;
 import org.siglus.siglusapi.dto.android.response.LotsOnHandResponse;
@@ -40,11 +44,14 @@ import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface ProductMovementMapper {
 
-  default List<ProductMovementResponse> toResponses(List<ProductMovement> allProductMovements,
-      @Context StocksOnHand stocksOnHand) {
-    return allProductMovements.stream().collect(groupingBy(ProductMovement::getProductCode)).entrySet().stream()
-        .map(e -> toResponse(e.getKey(), e.getValue(), stocksOnHand))
+  default FacilityProductMovementsResponse toResponses(PeriodOfProductMovements period) {
+    Map<String, List<ProductMovement>> movementsByProductCode = period.getProductMovements().stream()
+        .collect(groupingBy(ProductMovement::getProductCode));
+    StocksOnHand stocksOnHand = period.getStocksOnHand();
+    List<ProductMovementResponse> responses = stocksOnHand.getAllProductCodes().stream()
+        .map(c -> toResponse(c, movementsByProductCode.getOrDefault(c, emptyList()), stocksOnHand))
         .collect(toList());
+    return FacilityProductMovementsResponse.builder().productMovements(responses).build();
   }
 
   @Mapping(target = "productCode", source = "productCode")

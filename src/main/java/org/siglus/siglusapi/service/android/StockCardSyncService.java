@@ -153,8 +153,7 @@ public class StockCardSyncService {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     PeriodOfProductMovements period = stockManagementRepository
         .getAllProductMovements(facilityId, since, till);
-    return FacilityProductMovementsResponse.builder()
-        .productMovements(mapper.toResponses(period.getProductMovements(), period.getStocksOnHand())).build();
+    return mapper.toResponses(period);
   }
 
   @Transactional

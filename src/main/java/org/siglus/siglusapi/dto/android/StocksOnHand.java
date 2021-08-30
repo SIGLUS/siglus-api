@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.reducing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +84,10 @@ public class StocksOnHand {
   public Map<String, Integer> getProductInventories() {
     return allLotCodes.stream().collect(groupingBy(ProductLotCode::getProductCode,
         reducing(0, c -> findInventory(c).getStockQuantity(), Integer::sum)));
+  }
+
+  public Collection<String> getAllProductCodes() {
+    return allLotCodes.stream().map(ProductLotCode::getProductCode).distinct().collect(toList());
   }
 
   public Map<ProductLotCode, Integer> getLotInventories() {
