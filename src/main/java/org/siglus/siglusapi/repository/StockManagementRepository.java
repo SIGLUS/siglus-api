@@ -193,7 +193,7 @@ public class StockManagementRepository {
         + "adjstreason.reasontype AS inventoryReasontype,"
         + "pilia.quantity inventoryadjustment,"
         + "requested.requestedquantity, "
-        + "se.signature, "
+        + "root.signature, "
         + "root.documentnumber, "
         + "root.processeddate, "
         + "l.expirationdate ";
