@@ -15,17 +15,26 @@
 
 package org.siglus.siglusapi.service.android.context;
 
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
+import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -36,6 +45,9 @@ public class CreateStockCardContextHolder {
 
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
   private final SiglusValidSourceDestinationService siglusValidSourceDestinationService;
+  private final SupportedProgramsHelper programsHelper;
+  private final ProgramReferenceDataService programDataService;
+  private final SiglusApprovedProductReferenceDataService approvedProductDataService;
 
   public void initContext(FacilityDto facility) {
     UUID facilityTypeId = facility.getType().getId();
@@ -59,8 +71,15 @@ public class CreateStockCardContextHolder {
         .collect(groupingBy(ValidSourceDestinationDto::getProgramId,
             toMap(ValidSourceDestinationDto::getName,
                 validSourceDestinationDto -> validSourceDestinationDto.getNode().getId())));
+
+    List<org.openlmis.requisition.dto.OrderableDto> currentFacilitySupportOrderables = programsHelper
+        .findUserSupportedPrograms().stream()
+        .map(programDataService::findOne)
+        .map(program -> getProgramProducts(facility.getId(), program))
+        .flatMap(Collection::stream)
+        .collect(toList());
     CreateStockCardContext context = new CreateStockCardContext(programToReasonNameToId, programToSourceNameToId,
-        programToDestinationNameToId);
+        programToDestinationNameToId, currentFacilitySupportOrderables);
     HOLDER.set(context);
   }
 
@@ -74,5 +93,13 @@ public class CreateStockCardContextHolder {
 
   public static void clearContext() {
     HOLDER.remove();
+  }
+
+  private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId,
+      ProgramDto program) {
+    return approvedProductDataService
+        .getApprovedProducts(homeFacilityId, program.getId(), emptyList()).stream()
+        .map(ApprovedProductDto::getOrderable)
+        .collect(toList());
   }
 }

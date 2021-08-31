@@ -15,26 +15,17 @@
 
 package org.siglus.siglusapi.dto.android.validator.stockcard;
 
-import static java.util.Collections.emptyList;
-import static java.util.stream.Collectors.toList;
-
-import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
-import org.openlmis.requisition.dto.ApprovedProductDto;
-import org.openlmis.requisition.dto.ProgramDto;
-import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.constant.ValidatorConstants;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.FacilitySupportProduct;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -42,12 +33,6 @@ public class FacilitySupportProductValidator implements
     ConstraintValidator<FacilitySupportProduct, StockCardCreateRequest> {
 
   private final SiglusAuthenticationHelper authHelper;
-
-  private final SupportedProgramsHelper programsHelper;
-
-  private final ProgramReferenceDataService programDataService;
-
-  private final SiglusApprovedProductReferenceDataService approvedProductDataService;
 
   @Override
   public void initialize(FacilitySupportProduct constraintAnnotation) {
@@ -57,24 +42,9 @@ public class FacilitySupportProductValidator implements
   @Override
   public boolean isValid(StockCardCreateRequest value, ConstraintValidatorContext context) {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    List<org.openlmis.requisition.dto.OrderableDto> currentFacilityOrderables = programsHelper
-        .findUserSupportedPrograms().stream()
-        .map(programDataService::findOne)
-        .map(program -> getProgramProducts(homeFacilityId, program))
-        .flatMap(Collection::stream)
-        .collect(toList());
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable(ValidatorConstants.PRODUCT_CODE, value.getProductCode());
     actualContext.addExpressionVariable("facilityId", homeFacilityId);
-    return currentFacilityOrderables.stream()
-        .anyMatch(orderable -> orderable.getProductCode().equals(value.getProductCode()));
-  }
-
-  private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId,
-      ProgramDto program) {
-    return approvedProductDataService
-        .getApprovedProducts(homeFacilityId, program.getId(), emptyList()).stream()
-        .map(ApprovedProductDto::getOrderable)
-        .collect(toList());
+    return CreateStockCardContextHolder.getContext().isSupportByCurrentFacility(value.getProductCode());
   }
 }

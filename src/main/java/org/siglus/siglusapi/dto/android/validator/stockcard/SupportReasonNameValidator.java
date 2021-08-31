@@ -81,6 +81,7 @@ public class SupportReasonNameValidator implements
         }
       }
     } catch (Exception e) {
+      log.warn("validate support reasonName exception {}", e.getMessage() + e.getCause());
       return false;
     }
     return true;

@@ -238,6 +238,7 @@ public class SiglusMeService {
     return syncResponse;
   }
 
+  @Transactional
   public CreateStockCardResponse createStockCards(List<StockCardCreateRequest> requests) {
     ValidatedStockCards validatedStockCards = ValidatedStockCards.builder()
         .validStockCardRequests(requests)
@@ -255,17 +256,19 @@ public class SiglusMeService {
       if (!CollectionUtils.isEmpty(validatedStockCards.getValidStockCardRequests())) {
         stockCardSyncService.createStockCards(validatedStockCards.getValidStockCardRequests());
       }
+      return createStockCardResponse;
     } catch (Exception e) {
       createStockCardResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
       try {
-        backupStockCardRequest(validatedStockCards.getValidStockCardRequests(), createStockCardResponse.getDetails());
+        backupStockCardRequest(validatedStockCards.getValidStockCardRequests(),
+            e.getMessage() + e.getCause());
       } catch (NullPointerException backupError) {
         log.warn("backup stock card request error", backupError);
       }
+      throw e;
     } finally {
       CreateStockCardContextHolder.clearContext();
     }
-    return createStockCardResponse;
   }
 
   public void deleteStockCardByProduct(List<StockCardDeleteRequest> stockCardDeleteRequests) {

@@ -91,6 +91,8 @@ import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
+import org.siglus.siglusapi.dto.android.InvalidProduct;
+import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
@@ -119,6 +121,7 @@ import org.siglus.siglusapi.service.android.mapper.ProductMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.ContextConfiguration;
@@ -213,9 +216,11 @@ public class SiglusMeServiceTest {
   @InjectMocks
   private StockCardSyncService stockCardSyncService;
 
-  @SuppressWarnings("unused")
   @Mock
   private CreateStockCardContextHolder createStockCardContextHolder;
+
+  @Mock
+  private StockCardCreateRequestValidator stockCardCreateRequestValidator;
 
   @Autowired
   private ProductMapper mapper;
@@ -651,6 +656,8 @@ public class SiglusMeServiceTest {
     StockCardSyncService stockCardSyncServiceMock = mock(StockCardSyncService.class);
     ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncServiceMock);
     doThrow(new NullPointerException()).when(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+    when(stockCardCreateRequestValidator.validateStockCardCreateRequest(stockCardCreateRequests))
+        .thenReturn(mock(ValidatedStockCards.class));
     try {
       // when
       service.createStockCards(stockCardCreateRequests);
@@ -669,6 +676,8 @@ public class SiglusMeServiceTest {
     when(stockCardRequestBackupRepository.findOneByHash(anyString())).thenReturn(backup);
     StockCardSyncService stockCardSyncServiceMock = mock(StockCardSyncService.class);
     ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncServiceMock);
+    when(stockCardCreateRequestValidator.validateStockCardCreateRequest(stockCardCreateRequests))
+        .thenReturn(mock(ValidatedStockCards.class));
     doThrow(new ConstraintViolationException(Collections.emptySet()))
         .when(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
     try {
@@ -696,6 +705,44 @@ public class SiglusMeServiceTest {
     } catch (Exception e) {
       verify(stockCardRequestBackupRepository, times(0)).save((StockCardRequestBackup) any());
     }
+  }
+
+  @Test
+  public void shouldCallCreateStockCardContextHolder() {
+    // given
+    List<StockCardCreateRequest> stockCardCreateRequests = buildStockCardCreateRequests();
+    ValidatedStockCards validatedStockCards = mock(ValidatedStockCards.class);
+    when(stockCardCreateRequestValidator.validateStockCardCreateRequest(stockCardCreateRequests))
+        .thenReturn(validatedStockCards);
+
+    // when
+    service.createStockCards(stockCardCreateRequests);
+
+    // then
+    verify(createStockCardContextHolder, times(1)).initContext(any());
+  }
+
+  @Test
+  public void shouldCallBackupStockCardRequest() {
+    // given
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    userDto.setId(userId);
+    List<StockCardCreateRequest> stockCardCreateRequests = buildStockCardCreateRequests();
+    InvalidProduct invalidProduct = InvalidProduct.builder().productCode("code").build();
+    ValidatedStockCards validatedStockCards = ValidatedStockCards.builder()
+        .validStockCardRequests(Collections.emptyList())
+        .invalidProducts(Collections.singletonList(invalidProduct)).build();
+    when(stockCardCreateRequestValidator.validateStockCardCreateRequest(stockCardCreateRequests))
+        .thenReturn(validatedStockCards);
+    when(authHelper.getCurrentUser()).thenReturn(userDto);
+    when(stockCardRequestBackupRepository.findOneByHash(any())).thenReturn(null);
+
+    // when
+    service.createStockCards(stockCardCreateRequests);
+
+    //then
+    verify(stockCardRequestBackupRepository, times(1)).save(any(StockCardRequestBackup.class));
   }
 
   private List<StockCardCreateRequest> buildStockCardCreateRequests() {

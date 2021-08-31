@@ -61,6 +61,8 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.FacilityTypeDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
@@ -85,7 +87,10 @@ import org.siglus.siglusapi.dto.android.validator.stockcard.ProductMovementConsi
 import org.siglus.siglusapi.dto.android.validator.stockcard.SupportReasonNameValidator;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
+import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.StockCardSyncService;
+import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -99,6 +104,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   private final UUID userId = UUID.randomUUID();
   private final UUID supportProgramId = UUID.randomUUID();
   private final String supportProgramCode = "programCode";
+  private final UUID facilityTypeId = UUID.randomUUID();
 
   @InjectMocks
   private StockCardSyncService stockCardSyncService;
@@ -123,6 +129,15 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
   @Mock
   private SiglusApprovedProductReferenceDataService approvedProductDataService;
+
+  @InjectMocks
+  private CreateStockCardContextHolder holder;
+
+  @Mock
+  private SiglusValidReasonAssignmentService validReasonAssignmentService;
+
+  @Mock
+  private SiglusValidSourceDestinationService siglusValidSourceDestinationService;
 
   private final ObjectMapper mapper = new ObjectMapper();
 
@@ -486,7 +501,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     // then
     assertEquals(1, violations.size());
     assertViolation("In product(08O05Y) the record on 2021-08-06(recorded at 2021-08-06T08:49:03.784Z) "
-            + "doesn't existed on server.",
+            + "is earlier than the latest record in DB.",
         "createStockCards.arg0", violations);
   }
 
@@ -502,7 +517,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     // then
     assertEquals(1, violations.size());
     assertViolation("In product(08O05Y) the record on 2021-08-05(recorded at 2021-08-05T08:49:13.784Z) "
-            + "doesn't existed on server.",
+            + "is earlier than the latest record in DB.",
         "createStockCards.arg0", violations);
   }
 
@@ -518,7 +533,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     // then
     assertEquals(1, violations.size());
     assertViolation("In product(08O05Y) the record on 2021-08-05(recorded at 2021-08-05T08:49:13.784Z) "
-            + "doesn't existed on server.",
+            + "is earlier than the latest record in DB.",
         "createStockCards.arg0", violations);
   }
 
@@ -617,6 +632,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   }
 
   private Map<String, List<String>> executeValidation(Object... params) {
+    holder.initContext(mockFacilityDto());
     return forExecutables
         .validateParameters(stockCardSyncService, method, params, PerformanceSequence.class)
         .stream()
@@ -641,8 +657,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         return (T) new SupportReasonNameValidator(orderableService);
       }
       if (key == FacilitySupportProductValidator.class) {
-        return (T) new FacilitySupportProductValidator(authHelper, programsHelper, programDataService,
-            approvedProductDataService);
+        return (T) new FacilitySupportProductValidator(authHelper);
       }
       return NewInstance.action(key, "ConstraintValidator").run();
     }
@@ -667,8 +682,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     when(programsHelper.findUserSupportedPrograms())
         .thenReturn(Stream.of(supportProgramId).collect(Collectors.toSet()));
     when(programDataService.findOne(supportProgramId)).thenReturn(buildSupportProgramDto());
-    when(approvedProductDataService
-        .getApprovedProducts(facilityId, supportProgramId, emptyList()))
+    when(approvedProductDataService.getApprovedProducts(facilityId, supportProgramId, emptyList()))
         .thenReturn(facilitySupportOrderables);
   }
 
@@ -677,5 +691,14 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     programDto.setId(supportProgramId);
     programDto.setCode(supportProgramCode);
     return programDto;
+  }
+
+  private FacilityDto mockFacilityDto() {
+    FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
+    facilityTypeDto.setId(facilityTypeId);
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(facilityId);
+    facilityDto.setType(facilityTypeDto);
+    return facilityDto;
   }
 }

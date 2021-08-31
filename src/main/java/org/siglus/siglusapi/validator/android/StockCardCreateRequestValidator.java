@@ -43,23 +43,24 @@ public class StockCardCreateRequestValidator {
 
   private final StockCardSyncService stockCardSyncService;
 
-  public ValidatedStockCards validateStockCardCreateRequest(List<StockCardCreateRequest> requests)
-      throws NoSuchMethodException {
+  public ValidatedStockCards validateStockCardCreateRequest(List<StockCardCreateRequest> requests) {
     ExecutableValidator forExecutables = validator.forExecutables();
-    Method method = StockCardSyncService.class.getDeclaredMethod("createStockCards", List.class);
+    Method method = null;
+    try {
+      method = StockCardSyncService.class.getDeclaredMethod("createStockCards", List.class);
+    } catch (NoSuchMethodException e) {
+      log.warn(e.getMessage());
+    }
     Set<ConstraintViolation<StockCardSyncService>> violations;
     List<InvalidProduct> invalidProducts = new ArrayList<>();
     List<StockCardCreateRequest> originRequest = new ArrayList<>(requests);
     do {
-      violations = forExecutables
-          .validateParameters(stockCardSyncService, method, new List[]{originRequest}, PerformanceSequence.class);
+      violations = forExecutables.validateParameters(
+          stockCardSyncService, method, new List[]{originRequest}, PerformanceSequence.class);
       invalidProducts.addAll(getInvalidProducts(violations));
-      originRequest
-          .removeIf(r -> invalidProducts.stream().anyMatch(i -> i.getProductCode().equals(r.getProductCode())));
-      if (originRequest.isEmpty()) {
-        break;
-      }
-    } while (!CollectionUtils.isEmpty(violations));
+      originRequest.removeIf(
+          r -> invalidProducts.stream().anyMatch(i -> i.getProductCode().equals(r.getProductCode())));
+    } while (!CollectionUtils.isEmpty(violations) && !originRequest.isEmpty());
     return ValidatedStockCards.builder().validStockCardRequests(originRequest).invalidProducts(invalidProducts).build();
   }
 
