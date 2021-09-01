@@ -45,14 +45,10 @@ public class KitProductEmptyLotsValidator implements
     OrderableDto product = orderableService.getOrderableByCode(value.getProductCode());
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable("productCode", value.getProductCode());
-    if (product == null) {
-      actualContext.addExpressionVariable("existed", "false");
-      return false;
-    }
-    actualContext.addExpressionVariable("existed", "true");
-    if (!product.getIsKit()) {
+    if (product == null || !product.getIsKit()) {
       return true;
     }
+    actualContext.addExpressionVariable("existed", "true");
     return isEmpty(value.getLotEvents());
   }
 

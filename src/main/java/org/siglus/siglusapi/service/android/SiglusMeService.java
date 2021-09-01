@@ -111,7 +111,6 @@ import org.siglus.siglusapi.util.HashEncoder;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -238,13 +237,12 @@ public class SiglusMeService {
     return syncResponse;
   }
 
-  @Transactional
   public CreateStockCardResponse createStockCards(List<StockCardCreateRequest> requests) {
     ValidatedStockCards validatedStockCards = ValidatedStockCards.builder()
         .validStockCardRequests(requests)
         .invalidProducts(Collections.emptyList())
         .build();
-    CreateStockCardResponse createStockCardResponse = new CreateStockCardResponse();
+    CreateStockCardResponse createStockCardResponse;
     FacilityDto facilityDto = getCurrentFacilityInfo();
     createStockCardContextHolder.initContext(facilityDto);
     try {
@@ -258,10 +256,8 @@ public class SiglusMeService {
       }
       return createStockCardResponse;
     } catch (Exception e) {
-      createStockCardResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
       try {
-        backupStockCardRequest(validatedStockCards.getValidStockCardRequests(),
-            e.getMessage() + e.getCause());
+        backupStockCardRequest(validatedStockCards.getValidStockCardRequests(), e.getMessage());
       } catch (NullPointerException backupError) {
         log.warn("backup stock card request error", backupError);
       }
