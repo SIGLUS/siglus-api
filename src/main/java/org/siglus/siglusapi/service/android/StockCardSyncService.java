@@ -146,15 +146,17 @@ public class StockCardSyncService {
     stockCardLineItemService.deleteStockCardByProduct(userDto.getHomeFacilityId(), orderableIds);
   }
 
-
   @ParametersAreNullableByDefault
-  public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since, LocalDate till) {
+  public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since, LocalDate tillExclusive) {
     if (since == null) {
       since = LocalDate.now().withDayOfYear(1);
     }
+    LocalDate till = null;
+    if (tillExclusive != null) {
+      till = tillExclusive.minusDays(1);
+    }
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    PeriodOfProductMovements period = stockManagementRepository
-        .getAllProductMovements(facilityId, since, till);
+    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, since, till);
     return mapper.toResponses(period);
   }
 

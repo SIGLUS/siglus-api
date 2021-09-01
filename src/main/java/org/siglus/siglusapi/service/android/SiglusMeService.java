@@ -272,8 +272,8 @@ public class SiglusMeService {
   }
 
   @ParametersAreNullableByDefault
-  public FacilityProductMovementsResponse getProductMovements(LocalDate since, LocalDate till) {
-    return stockCardSyncService.getProductMovementsByTime(since, till);
+  public FacilityProductMovementsResponse getProductMovements(LocalDate since, LocalDate tillExclusive) {
+    return stockCardSyncService.getProductMovementsByTime(since, tillExclusive);
   }
 
   public RequisitionResponse getRequisitionResponse(String startDate) {

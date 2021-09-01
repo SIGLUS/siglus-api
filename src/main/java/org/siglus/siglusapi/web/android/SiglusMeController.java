@@ -90,8 +90,8 @@ public class SiglusMeController {
       @Nullable LocalDate since,
       @RequestParam(value = "endTime", required = false)
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-      @Nullable LocalDate till) {
-    return service.getProductMovements(since, till);
+      @Nullable LocalDate tillExclusive) {
+    return service.getProductMovements(since, tillExclusive);
   }
 
   @DeleteMapping("/facility/stockCards")
