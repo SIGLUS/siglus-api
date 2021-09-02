@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
@@ -63,13 +64,14 @@ public class StockManagementRepository {
   private static final String LOT_ROOT = "referencedata.lots l";
 
   public PeriodOfProductMovements getLatestProductMovements(@Nonnull UUID facilityId) {
-    return getAllProductMovements(facilityId, null, null);
+    return getAllProductMovements(facilityId, null, null, null);
   }
 
   @ParametersAreNullableByDefault
-  public PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till) {
-    List<ProductLotMovement> allLotMovements = findAllLotMovements(facilityId, since, till);
-    StocksOnHand stocksOnHand = getStockOnHand(facilityId, till);
+  public PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till,
+      Set<UUID> orderableIds) {
+    List<ProductLotMovement> allLotMovements = findAllLotMovements(facilityId, since, till, orderableIds);
+    StocksOnHand stocksOnHand = getStockOnHand(facilityId, till, orderableIds);
     Map<String, Integer> productInventories = stocksOnHand.getProductInventories();
     Map<ProductLotCode, Integer> lotInventories = stocksOnHand.getLotInventories();
     List<ProductMovement> productMovements = allLotMovements.stream()
@@ -82,19 +84,21 @@ public class StockManagementRepository {
     return new PeriodOfProductMovements(productMovements, stocksOnHand);
   }
 
-  public StocksOnHand getStockOnHand(@Nonnull UUID facilityId) {
-    return getStockOnHand(facilityId, null);
+  public StocksOnHand getStockOnHand(@Nonnull UUID facilityId, @Nullable Set<UUID> orderableIds) {
+    return getStockOnHand(facilityId, null, orderableIds);
   }
 
-  public StocksOnHand getStockOnHand(@Nonnull UUID facilityId, @Nullable LocalDate at) {
-    return new StocksOnHand(findAllLotStocks(facilityId, at));
+  public StocksOnHand getStockOnHand(@Nonnull UUID facilityId, @Nullable LocalDate at,
+      @Nullable Set<UUID> orderableIds) {
+    return new StocksOnHand(findAllLotStocks(facilityId, at, orderableIds));
   }
 
   @ParametersAreNullableByDefault
-  private List<ProductLotMovement> findAllLotMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till) {
+  private List<ProductLotMovement> findAllLotMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till,
+      Set<UUID> orderableIds) {
     requireNonNull(facilityId, "facilityId should not be null");
     List<Object> params = new ArrayList<>(2);
-    String sql = generateMovementQuery(facilityId, since, till, params);
+    String sql = generateMovementQuery(facilityId, since, till, params, orderableIds);
     return executeQuery(sql, params, buildProductLotMovementFromResult());
   }
 
@@ -121,14 +125,14 @@ public class StockManagementRepository {
   }
 
   @ParametersAreNullableByDefault
-  private List<ProductLotStock> findAllLotStocks(@Nonnull UUID facilityId, LocalDate at) {
+  private List<ProductLotStock> findAllLotStocks(@Nonnull UUID facilityId, LocalDate at, Set<UUID> orderableIds) {
     requireNonNull(facilityId, "facilityId should not be null");
     String select = "SELECT DISTINCT ON (root.stockcardid) o.code AS productcode, l.lotcode, "
         + "root.stockonhand, root.occurreddate, li.extradata \\:\\: json ->> 'originEventTime' as recordedat, "
         + "li.processeddate, l.expirationdate ";
     String root = "stockmanagement.calculated_stocks_on_hand root";
     List<Object> params = new ArrayList<>(2);
-    String where = generateWhere(facilityId, null, at, params);
+    String where = generateWhere(facilityId, null, at, params, orderableIds);
     String orderBy = "ORDER BY root.stockcardid, root.occurreddate DESC, root.processeddate DESC, "
         + "li.occurreddate DESC, recordedat DESC";
     String sql = select + "FROM " + root + ' '
@@ -164,7 +168,7 @@ public class StockManagementRepository {
 
   @SuppressWarnings("PMD.ConsecutiveLiteralAppends")
   private static String generateWhere(@Nonnull UUID facilityId, @Nullable LocalDate since, @Nullable LocalDate at,
-      @Nonnull List<Object> params) {
+      @Nonnull List<Object> params, @Nullable Set<UUID> orderableIds) {
     StringBuilder where = new StringBuilder("WHERE sc.facilityid = ?0 ");
     params.add(facilityId);
     if (since != null) {
@@ -175,11 +179,15 @@ public class StockManagementRepository {
       where.append(' ').append("AND root.occurreddate <= ?").append(params.size()).append(' ');
       params.add(at);
     }
+    if (orderableIds != null) {
+      where.append(' ').append("AND sc.orderableid in ?").append(params.size()).append(' ');
+      params.add(orderableIds);
+    }
     return where.toString();
   }
 
   private String generateMovementQuery(@Nonnull UUID facilityId, @Nullable LocalDate since, @Nullable LocalDate at,
-      @Nonnull List<Object> params) {
+      @Nonnull List<Object> params, @Nullable Set<UUID> orderableIds) {
     String select = "SELECT o.code AS productcode, "
         + "l.lotcode, "
         + "root.occurreddate, "
@@ -207,7 +215,7 @@ public class StockManagementRepository {
     String lineAdjRoot = "stockmanagement.physical_inventory_line_item_adjustments pilia";
     String adjustmentReasonRoot = "stockmanagement.stock_card_line_item_reasons adjstreason";
     String requestedRoot = "siglusintegration.stock_event_product_requested requested";
-    String where = generateWhere(facilityId, since, at, params);
+    String where = generateWhere(facilityId, since, at, params, orderableIds);
     return select
         + "FROM " + root + ' '
         + LEFT_JOIN + STOCK_CARD_ROOT + " ON root.stockcardid = sc.id "

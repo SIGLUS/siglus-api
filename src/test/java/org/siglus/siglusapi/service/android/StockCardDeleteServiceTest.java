@@ -21,19 +21,20 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.openlmis.stockmanagement.domain.reason.ReasonCategory.ADJUSTMENT;
+import static org.openlmis.stockmanagement.domain.reason.ReasonType.CREDIT;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,19 +47,29 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
+import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
+import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItem;
+import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItemAdjustment;
+import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
+import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
+import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.testutils.CanFulfillForMeEntryDtoDataBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.StockCardDeletedBackup;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
-import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
+import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
+import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
+import org.siglus.siglusapi.repository.PhysicalInventoryLineItemAdjustmentRepository;
+import org.siglus.siglusapi.repository.PhysicalInventoryLineItemRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardDeletedBackupRepository;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
@@ -66,22 +77,16 @@ import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
-public class StockCardSyncServiceTest {
+public class StockCardDeleteServiceTest {
 
   @InjectMocks
-  private StockCardSyncService service;
+  private StockCardDeleteService service;
 
   @Mock
   private StockCardDeletedBackupRepository stockCardDeletedBackupRepository;
 
   @Mock
   private SiglusAuthenticationHelper authHelper;
-
-  @Mock
-  private ProgramReferenceDataService programDataService;
-
-  @Mock
-  private SiglusStockCardLineItemService stockCardLineItemService;
 
   @Mock
   private SiglusLotReferenceDataService lotReferenceDataService;
@@ -92,11 +97,35 @@ public class StockCardSyncServiceTest {
   @Mock
   private SiglusStockCardSummariesService stockCardSummariesService;
 
+  @Mock
+  private PhysicalInventoryLineItemRepository physicalInventoryLineItemRepository;
+
+  @Mock
+  private PhysicalInventoryLineItemAdjustmentRepository physicalInventoryLineItemAdjustmentRepository;
+
+  @Mock
+  private PhysicalInventoriesRepository physicalInventoriesRepository;
+
+  @Mock
+  private SiglusStockCardLineItemRepository stockCardLineItemRepository;
+
+  @Mock
+  private CalculatedStockOnHandRepository calculatedStockOnHandRepository;
+
+  @Mock
+  private StockCardSearchService stockCardSearchService;
+
+  @Mock
+  private StockCardCreateService stockCardCreateService;
+
+  @Mock
+  private SiglusStockCardRepository siglusStockCardRepository;
+
   @Captor
   private ArgumentCaptor<List<StockCardDeletedBackup>> stockCardDeletedBackupsArgumentCaptor;
 
-  @Mock
-  private SupportedProgramsHelper programsHelper;
+  private ZonedDateTime oldTime;
+  private ZonedDateTime latestTime;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -106,20 +135,22 @@ public class StockCardSyncServiceTest {
   private final UUID tradeItem2 = UUID.randomUUID();
   private final UUID tradeItem3 = UUID.randomUUID();
 
-  private ZonedDateTime oldTime;
-  private ZonedDateTime latestTime;
-
   private final UUID productId1 = UUID.randomUUID();
   private final UUID productId2 = UUID.randomUUID();
-  private final UUID productId3 = UUID.randomUUID();
 
   private final String productCode1 = "product 1";
   private final String productCode2 = "product 2";
-  private final String productCode3 = "product 3";
 
   private final UUID lotId1OrderableId1 = UUID.randomUUID();
   private final UUID lotId2OrderableId1 = UUID.randomUUID();
   private final UUID lotId1OrderableId2 = UUID.randomUUID();
+
+  private final UUID physicalAdjustmentId = UUID.randomUUID();
+  private final UUID physicalAdjustmentId2 = UUID.randomUUID();
+  private final UUID physicalLineItemId = UUID.randomUUID();
+  private final UUID physicalInventoryId = UUID.randomUUID();
+
+  private final UUID stockCardLineItemId = UUID.randomUUID();
 
   @Before
   public void prepare() {
@@ -127,26 +158,19 @@ public class StockCardSyncServiceTest {
     userDto.setHomeFacilityId(facilityId);
     userDto.setId(userId);
     when(authHelper.getCurrentUser()).thenReturn(userDto);
-    UUID programId1 = UUID.randomUUID();
-    ProgramDto program1 = mock(ProgramDto.class);
-    when(program1.getId()).thenReturn(programId1);
-    when(program1.getCode()).thenReturn("code 1");
-    when(programDataService.findOne(programId1)).thenReturn(program1);
-    UUID programId2 = UUID.randomUUID();
-    ProgramDto program2 = mock(ProgramDto.class);
-    when(program2.getId()).thenReturn(programId2);
-    when(program2.getCode()).thenReturn("code 2");
-    when(programDataService.findOne(programId2)).thenReturn(program2);
-    when(programsHelper.findUserSupportedPrograms()).thenReturn(ImmutableSet.of(programId1, programId2));
-    when(approvedProductService.getApprovedProducts(facilityId, programId1, emptyList()))
-        .thenReturn(asList(mockApprovedProduct1(), mockApprovedProduct2()));
-    when(approvedProductService.getApprovedProducts(facilityId, programId2, emptyList()))
-        .thenReturn(singletonList(mockApprovedProduct3()));
-    Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemMap = new HashMap<>();
-    stockMovementItemMap.put(productId1, new ArrayList<>());
-    stockMovementItemMap.put(productId2, new ArrayList<>());
-    when(stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any(), any(), any()))
-        .thenReturn(stockMovementItemMap);
+    OrderableDto orderableDto1 = new OrderableDto();
+    orderableDto1.setId(productId1);
+    orderableDto1.setProductCode(productCode1);
+    OrderableDto orderableDto2 = new OrderableDto();
+    orderableDto2.setId(productId2);
+    orderableDto2.setProductCode(productCode2);
+    when(stockCardCreateService.getAllApprovedProducts()).thenReturn(Arrays.asList(orderableDto1, orderableDto2));
+    stockCardCreateService.getAllApprovedProducts();
+    FacilityProductMovementsResponse facilityResponse = new FacilityProductMovementsResponse();
+    ProductMovementResponse productResponse1 = ProductMovementResponse.builder().productCode(productCode1).build();
+    ProductMovementResponse productResponse2 = ProductMovementResponse.builder().productCode(productCode2).build();
+    facilityResponse.setProductMovements(Arrays.<ProductMovementResponse>asList(productResponse1, productResponse2));
+    when(stockCardSearchService.getProductMovementsByOrderables(any())).thenReturn(facilityResponse);
 
   }
 
@@ -155,15 +179,28 @@ public class StockCardSyncServiceTest {
     // given
     createSohValueByIsNolot(true);
     List<StockCardDeleteRequest> stockCardDeleteRequests = createStockCardDeleteRequests();
+    List<PhysicalInventory> physicalInventories = createPhysicalInventorys();
+    List<StockCardLineItem> stockCardLineItems = createStockCardLineItems();
+    when(physicalInventoriesRepository.findByFacilityIdAndOrderableIds(any(), any()))
+        .thenReturn(physicalInventories);
+    when(stockCardLineItemRepository.findByFacilityIdAndOrderableIdIn(any(), any()))
+        .thenReturn(stockCardLineItems);
 
     // when
     service.deleteStockCardByProduct(stockCardDeleteRequests);
 
     // then
     verify(stockCardDeletedBackupRepository).save(stockCardDeletedBackupsArgumentCaptor.capture());
-    verify(stockCardLineItemService).deleteStockCardByProduct(any(), any());
+    verify(stockCardSearchService).getProductMovementsByOrderables(any());
     List<StockCardDeletedBackup> stockCardDeletedBackups = stockCardDeletedBackupsArgumentCaptor.getValue();
     assertEquals(3, stockCardDeletedBackups.size());
+    verify(physicalInventoryLineItemAdjustmentRepository, times(2))
+        .delete(physicalInventories.get(0).getLineItems().get(0).getStockAdjustments());
+    verify(physicalInventoryLineItemRepository).delete(physicalInventories.get(0).getLineItems());
+    verify(physicalInventoriesRepository).delete(physicalInventories);
+    verify(calculatedStockOnHandRepository).deleteByFacilityIdAndOrderableIds(any(), any());
+    verify(stockCardLineItemRepository).delete(stockCardLineItems);
+    verify(siglusStockCardRepository).deleteStockCardsByFacilityIdAndOrderableIdIn(any(), any());
   }
 
   private List<StockCardDeleteRequest> createStockCardDeleteRequests() {
@@ -266,26 +303,40 @@ public class StockCardSyncServiceTest {
     return approvedProduct;
   }
 
-  private ApprovedProductDto mockApprovedProduct3() {
-    String productCode = productCode3;
-    ApprovedProductDto approvedProduct = new ApprovedProductDto();
-    OrderableDto orderable = new OrderableDto();
-    approvedProduct.setOrderable(orderable);
-    orderable.setId(productId3);
-    orderable.setProductCode(productCode);
-    orderable.setFullProductName(genFullName(productCode));
-    orderable.setNetContent(2L);
-    orderable.setExtraData(new HashMap<>());
-    orderable.getExtraData().put("isBasic", "true");
-    orderable.getMeta().setLastUpdated(latestTime);
-    return approvedProduct;
+  private List<PhysicalInventory> createPhysicalInventorys() {
+    PhysicalInventoryLineItemAdjustment physicalAdjustment = new PhysicalInventoryLineItemAdjustment();
+    physicalAdjustment.setId(physicalAdjustmentId);
+    physicalAdjustment.setReason(createStockCardLineItemReason());
+    physicalAdjustment.setQuantity(20);
+
+    PhysicalInventoryLineItem physicalInventoryLineItem = new PhysicalInventoryLineItem();
+    physicalInventoryLineItem.setId(physicalLineItemId);
+    physicalInventoryLineItem.setStockAdjustments(Collections.singletonList(physicalAdjustment));
+
+    PhysicalInventory physicalInventory = new PhysicalInventory();
+    physicalInventory.setId(physicalInventoryId);
+    physicalInventory.setLineItems(Collections.singletonList(physicalInventoryLineItem));
+    return Collections.singletonList(physicalInventory);
   }
+
+  private List<StockCardLineItem> createStockCardLineItems() {
+    PhysicalInventoryLineItemAdjustment physicalAdjustment = new PhysicalInventoryLineItemAdjustment();
+    physicalAdjustment.setId(physicalAdjustmentId2);
+    physicalAdjustment.setReason(createStockCardLineItemReason());
+    physicalAdjustment.setQuantity(20);
+
+    StockCardLineItem stockCardLineItem = new StockCardLineItem();
+    stockCardLineItem.setId(stockCardLineItemId);
+    stockCardLineItem.setStockAdjustments(Collections.singletonList(physicalAdjustment));
+    return Collections.singletonList(stockCardLineItem);
+  }
+
+  private StockCardLineItemReason createStockCardLineItemReason() {
+    return StockCardLineItemReason.builder().reasonCategory(ADJUSTMENT).reasonType(CREDIT).name("heheh").build();
+  }
+
 
   private String genFullName(String productCode) {
     return "full name of " + productCode;
-  }
-
-  private String genDescription(String productCode) {
-    return "description of " + productCode;
   }
 }

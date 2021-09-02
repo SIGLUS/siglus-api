@@ -31,7 +31,7 @@ import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
-import org.siglus.siglusapi.service.android.StockCardSyncService;
+import org.siglus.siglusapi.service.android.StockCardSearchService;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -39,7 +39,7 @@ import org.siglus.siglusapi.service.android.StockCardSyncService;
 public class LotStockConsistentWithExistedValidator implements
     ConstraintValidator<LotStockConsistentWithExisted, List<StockCardCreateRequest>> {
 
-  private final StockCardSyncService service;
+  private final StockCardSearchService service;
 
   @Override
   public void initialize(LotStockConsistentWithExisted constraintAnnotation) {

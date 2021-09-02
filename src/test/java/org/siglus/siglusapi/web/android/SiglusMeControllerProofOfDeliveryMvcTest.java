@@ -70,7 +70,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
-import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.siglus.siglusapi.service.android.MeService;
 import org.siglus.siglusapi.service.android.mapper.LotMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.PodLotLineMapper;
 import org.siglus.siglusapi.service.android.mapper.PodLotLineMapperImpl;
@@ -111,7 +111,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   private PodLotLineMapper podLotLineMapper;
 
   @InjectMocks
-  private SiglusMeService service;
+  private MeService service;
   @Mock
   private SiglusProofOfDeliveryRepository podRepo;
   @Mock

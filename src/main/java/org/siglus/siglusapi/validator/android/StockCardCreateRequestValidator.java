@@ -30,7 +30,7 @@ import org.siglus.siglusapi.dto.android.InvalidProduct;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
-import org.siglus.siglusapi.service.android.StockCardSyncService;
+import org.siglus.siglusapi.service.android.StockCardCreateService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -41,22 +41,22 @@ public class StockCardCreateRequestValidator {
 
   private final Validator validator;
 
-  private final StockCardSyncService stockCardSyncService;
+  private final StockCardCreateService stockCardCreateService;
 
   public ValidatedStockCards validateStockCardCreateRequest(List<StockCardCreateRequest> requests) {
     ExecutableValidator forExecutables = validator.forExecutables();
     Method method = null;
     try {
-      method = StockCardSyncService.class.getDeclaredMethod("createStockCards", List.class);
+      method = StockCardCreateService.class.getDeclaredMethod("createStockCards", List.class);
     } catch (NoSuchMethodException e) {
       log.warn(e.getMessage());
     }
-    Set<ConstraintViolation<StockCardSyncService>> violations;
+    Set<ConstraintViolation<StockCardCreateService>> violations;
     List<InvalidProduct> invalidProducts = new ArrayList<>();
     List<StockCardCreateRequest> originRequest = new ArrayList<>(requests);
     do {
       violations = forExecutables.validateParameters(
-          stockCardSyncService, method, new List[]{originRequest}, PerformanceSequence.class);
+          stockCardCreateService, method, new List[]{originRequest}, PerformanceSequence.class);
       invalidProducts.addAll(getInvalidProducts(violations));
       originRequest.removeIf(
           r -> invalidProducts.stream().anyMatch(i -> i.getProductCode().equals(r.getProductCode())));
@@ -64,15 +64,15 @@ public class StockCardCreateRequestValidator {
     return ValidatedStockCards.builder().validStockCardRequests(originRequest).invalidProducts(invalidProducts).build();
   }
 
-  private List<InvalidProduct> getInvalidProducts(Set<ConstraintViolation<StockCardSyncService>> violations) {
+  private List<InvalidProduct> getInvalidProducts(Set<ConstraintViolation<StockCardCreateService>> violations) {
     return violations.stream().map(this::buildInvalidProductByViolation).collect(Collectors.toList());
   }
 
-  private InvalidProduct buildInvalidProductByViolation(ConstraintViolation<StockCardSyncService> violation) {
+  private InvalidProduct buildInvalidProductByViolation(ConstraintViolation<StockCardCreateService> violation) {
     String violationMessage = violation.getMessage();
     log.warn(violationMessage);
     return InvalidProduct.builder().productCode(
-        (String) ((ConstraintViolationImpl<StockCardSyncService>) violation).getExpressionVariables()
+        (String) ((ConstraintViolationImpl<StockCardCreateService>) violation).getExpressionVariables()
             .get("productCode"))
         .errorMessage(violationMessage)
         .build();

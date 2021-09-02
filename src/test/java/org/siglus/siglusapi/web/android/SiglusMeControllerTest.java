@@ -42,7 +42,7 @@ import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsRespons
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
-import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.siglus.siglusapi.service.android.MeService;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -52,7 +52,7 @@ public class SiglusMeControllerTest {
   private SiglusMeController controller;
 
   @Mock
-  private SiglusMeService service;
+  private MeService service;
 
   @Mock
   private ProductSyncResponse syncResponse;

@@ -47,10 +47,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {RegimentMapperImpl.class, RegimentCategoryMapperImpl.class})
-public class SiglusRegimenServiceTest {
+public class RegimenServiceTest {
 
   @InjectMocks
-  private SiglusRegimenService service;
+  private RegimenService service;
   @Mock
   private RegimenRepository repo;
   @Mock
@@ -136,6 +136,4 @@ public class SiglusRegimenServiceTest {
     assertEquals("category name 2", category2.getName());
     assertEquals(2, (int) category2.getDisplayOrder());
   }
-
-
 }

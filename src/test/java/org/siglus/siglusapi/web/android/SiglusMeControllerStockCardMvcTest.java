@@ -76,8 +76,8 @@ import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
-import org.siglus.siglusapi.service.android.SiglusMeService;
-import org.siglus.siglusapi.service.android.StockCardSyncService;
+import org.siglus.siglusapi.service.android.MeService;
+import org.siglus.siglusapi.service.android.StockCardCreateService;
 import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
@@ -96,7 +96,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   private MockMvc mockMvc;
 
   @InjectMocks
-  private SiglusMeService service;
+  private MeService service;
 
   @Mock
   private SiglusAuthenticationHelper authHelper;
@@ -127,7 +127,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   @InjectMocks
   private CreateStockCardContextHolder holder;
   @InjectMocks
-  private StockCardSyncService stockCardSyncService;
+  private StockCardCreateService stockCardCreateService;
 
   private final UUID facilityId = UUID.randomUUID();
   private final UUID facilityTypeId = UUID.randomUUID();
@@ -145,7 +145,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     mockSourceDestinations();
     mockReasons();
     ReflectionTestUtils.setField(service, "createStockCardContextHolder", holder);
-    ReflectionTestUtils.setField(service, "stockCardSyncService", stockCardSyncService);
+    ReflectionTestUtils.setField(service, "stockCardCreateService", stockCardCreateService);
     when(stockManagementRepository.getLatestProductMovements(any()))
         .thenReturn(new PeriodOfProductMovements(emptyList(), null));
     SiglusMeController controller = new SiglusMeController(service);

@@ -18,7 +18,7 @@ package org.siglus.siglusapi.web.android;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.android.response.RegimenResponse;
-import org.siglus.siglusapi.service.android.SiglusRegimenService;
+import org.siglus.siglusapi.service.android.RegimenService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SiglusRegimenController {
 
-  private final SiglusRegimenService service;
+  private final RegimenService service;
 
   @GetMapping
   public List<RegimenResponse> getRegimens() {

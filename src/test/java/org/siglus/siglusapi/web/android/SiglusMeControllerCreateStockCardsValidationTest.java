@@ -89,7 +89,8 @@ import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
-import org.siglus.siglusapi.service.android.StockCardSyncService;
+import org.siglus.siglusapi.service.android.StockCardCreateService;
+import org.siglus.siglusapi.service.android.StockCardSearchService;
 import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 
@@ -107,7 +108,10 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   private final UUID facilityTypeId = UUID.randomUUID();
 
   @InjectMocks
-  private StockCardSyncService stockCardSyncService;
+  private StockCardCreateService stockCardCreateService;
+
+  @InjectMocks
+  private StockCardSearchService stockCardSearchService;
 
   @Mock
   private SiglusOrderableService orderableService;
@@ -165,7 +169,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         .constraintValidatorFactory(new InnerConstraintValidatorFactory())
         .messageInterpolator(messageInterpolator)
         .buildValidatorFactory().getValidator().forExecutables();
-    method = StockCardSyncService.class.getDeclaredMethod("createStockCards", List.class);
+    method = StockCardCreateService.class.getDeclaredMethod("createStockCards", List.class);
     orderableService = mock(SiglusOrderableService.class);
     OrderableDto notKitProduct = mock(OrderableDto.class);
     OrderableDto kitProduct = mock(OrderableDto.class);
@@ -190,7 +194,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         EventTime.fromRequest(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:52:42.063Z")));
     when(stocksOnHand.findInventory(eq(ProductLotCode.of("08O05Y", "SME-LOTE-08O05Y-072021"))))
         .thenReturn(inventoryDetail);
-    when(stockManagementRepository.getStockOnHand(any())).thenReturn(stocksOnHand);
+    when(stockManagementRepository.getStockOnHand(any(), any())).thenReturn(stocksOnHand);
     MovementDetail movementDetail = new MovementDetail(-200, MovementType.ISSUE, "PUB_PHARMACY");
     ProductMovement movement0 = ProductMovement.builder()
         .productCode("08O05Y")
@@ -634,7 +638,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   private Map<String, List<String>> executeValidation(Object... params) {
     holder.initContext(mockFacilityDto());
     return forExecutables
-        .validateParameters(stockCardSyncService, method, params, PerformanceSequence.class)
+        .validateParameters(stockCardCreateService, method, params, PerformanceSequence.class)
         .stream()
         .collect(groupingBy(v -> v.getPropertyPath().toString(), mapping(ConstraintViolation::getMessage, toList())));
   }
@@ -648,10 +652,10 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         return (T) new KitProductEmptyLotsValidator(orderableService);
       }
       if (key == ProductMovementConsistentWithExistedValidator.class) {
-        return (T) new ProductMovementConsistentWithExistedValidator(stockCardSyncService);
+        return (T) new ProductMovementConsistentWithExistedValidator(stockCardSearchService);
       }
       if (key == LotStockConsistentWithExistedValidator.class) {
-        return (T) new LotStockConsistentWithExistedValidator(stockCardSyncService);
+        return (T) new LotStockConsistentWithExistedValidator(stockCardSearchService);
       }
       if (key == SupportReasonNameValidator.class) {
         return (T) new SupportReasonNameValidator(orderableService);

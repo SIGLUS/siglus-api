@@ -120,7 +120,7 @@ import org.springframework.util.LinkedMultiValueMap;
 @RequiredArgsConstructor
 @Slf4j
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
-public class SiglusMeService {
+public class MeService {
 
   static final String KEY_PROGRAM_CODE = "programCode";
   static final String TRADE_ITEM_ID = "tradeItemId";
@@ -151,9 +151,11 @@ public class SiglusMeService {
   private final SiglusOrderableReferenceDataService orderableDataService;
   private final RequisitionRequestBackupRepository requisitionRequestBackupRepository;
   private final StockCardRequestBackupRepository stockCardRequestBackupRepository;
-  private final StockCardSyncService stockCardSyncService;
   private final StockCardCreateRequestValidator stockCardCreateRequestValidator;
   private final CreateStockCardContextHolder createStockCardContextHolder;
+  private final StockCardDeleteService stockCardDeleteService;
+  private final StockCardCreateService stockCardCreateService;
+  private final StockCardSearchService stockCardSearchService;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -252,7 +254,7 @@ public class SiglusMeService {
         backupStockCardRequest(requests, createStockCardResponse.getDetails());
       }
       if (!CollectionUtils.isEmpty(validatedStockCards.getValidStockCardRequests())) {
-        stockCardSyncService.createStockCards(validatedStockCards.getValidStockCardRequests());
+        stockCardCreateService.createStockCards(validatedStockCards.getValidStockCardRequests());
       }
       return createStockCardResponse;
     } catch (Exception e) {
@@ -268,12 +270,12 @@ public class SiglusMeService {
   }
 
   public void deleteStockCardByProduct(List<StockCardDeleteRequest> stockCardDeleteRequests) {
-    stockCardSyncService.deleteStockCardByProduct(stockCardDeleteRequests);
+    stockCardDeleteService.deleteStockCardByProduct(stockCardDeleteRequests);
   }
 
   @ParametersAreNullableByDefault
-  public FacilityProductMovementsResponse getProductMovements(LocalDate since, LocalDate tillExclusive) {
-    return stockCardSyncService.getProductMovementsByTime(since, tillExclusive);
+  public FacilityProductMovementsResponse getProductMovements(LocalDate since, LocalDate till) {
+    return stockCardSearchService.getProductMovementsByTime(since, till);
   }
 
   public RequisitionResponse getRequisitionResponse(String startDate) {

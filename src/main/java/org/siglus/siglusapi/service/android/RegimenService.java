@@ -33,7 +33,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class SiglusRegimenService {
+public class RegimenService {
 
   private final RegimenRepository regimenRepository;
   private final RegimentMapper mapper;

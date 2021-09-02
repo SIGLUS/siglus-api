@@ -36,7 +36,7 @@ import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
-import org.siglus.siglusapi.service.android.SiglusMeService;
+import org.siglus.siglusapi.service.android.MeService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
@@ -57,7 +57,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SiglusMeController {
 
-  private final SiglusMeService service;
+  private final MeService service;
 
   @GetMapping("/facility")
   public FacilityResponse getFacility() {

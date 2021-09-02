@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service.android;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -96,6 +95,7 @@ import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
+import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
@@ -104,7 +104,6 @@ import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
-import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
@@ -131,10 +130,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {ProductMapperImpl.class, ProductChildMapperImpl.class})
 @SuppressWarnings("PMD.TooManyMethods")
-public class SiglusMeServiceTest {
+public class MeServiceTest {
 
   @InjectMocks
-  private SiglusMeService service;
+  private MeService service;
 
   @Mock
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
@@ -178,9 +177,6 @@ public class SiglusMeServiceTest {
   private SiglusStockCardSummariesService stockCardSummariesService;
 
   @Mock
-  private SiglusStockCardLineItemService stockCardLineItemService;
-
-  @Mock
   private AndroidHelper androidHelper;
 
   @Mock
@@ -213,8 +209,14 @@ public class SiglusMeServiceTest {
   @Captor
   private ArgumentCaptor<RequisitionRequestBackup> requestBackupArgumentCaptor;
 
+  @Mock
+  private StockCardDeleteService stockCardDeleteService;
+
   @InjectMocks
-  private StockCardSyncService stockCardSyncService;
+  private StockCardSearchService stockCardSearchService;
+
+  @InjectMocks
+  private StockCardCreateService stockCardCreateService;
 
   @Mock
   private CreateStockCardContextHolder createStockCardContextHolder;
@@ -259,7 +261,8 @@ public class SiglusMeServiceTest {
   private final UUID malariaTemplateId = UUID.fromString("3f2245ce-ee9f-11eb-ba79-acde48001122");
   private final UUID rapidtestTemplateId = UUID.fromString("2c10856e-eead-11eb-9718-acde48001122");
 
-  private final String nameStockCardSyncService = "stockCardSyncService";
+  private final String nameStockCardSearchService = "stockCardSearchService";
+  private final String nameStockCardCreateService = "stockCardCreateService";
 
   private final UUID tradeItem1 = UUID.randomUUID();
   private final UUID tradeItem2 = UUID.randomUUID();
@@ -275,7 +278,8 @@ public class SiglusMeServiceTest {
   @Before
   public void prepare() {
     ReflectionTestUtils.setField(service, "mapper", mapper);
-    ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncService);
+    ReflectionTestUtils.setField(service, nameStockCardSearchService, stockCardSearchService);
+    ReflectionTestUtils.setField(service, nameStockCardCreateService, stockCardCreateService);
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(user.getId()).thenReturn(userId);
@@ -461,15 +465,21 @@ public class SiglusMeServiceTest {
     assertEquals(requestCmms.get(0).getPeriodEnd(), mockInsertSuccessHfCmm().getPeriodEnd());
   }
 
+  public void shouldCallDeleteStockCardByProduct() {
+    // given
+    List<StockCardDeleteRequest> stockCardDeleteRequests = Collections.singletonList(new StockCardDeleteRequest());
+
+    // when
+    service.deleteStockCardByProduct(stockCardDeleteRequests);
+
+    // then
+    verify(stockCardDeleteService).deleteStockCardByProduct(stockCardDeleteRequests);
+  }
+
   @Test
   @Ignore
   public void shouldGetProductMovementResponsesByLot() {
     createSohValueByIsNolot(false);
-    Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemMap = new HashMap<>();
-    stockMovementItemMap.put(productId1, new ArrayList<>());
-    stockMovementItemMap.put(productId2, new ArrayList<>());
-    when(stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any(), any(), any()))
-        .thenReturn(stockMovementItemMap);
     FacilityProductMovementsResponse productMovementsResponse = service
         .getProductMovements(LocalDate.of(2021, 6, 30), LocalDate.of(2021, 7, 2));
     List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
@@ -484,11 +494,6 @@ public class SiglusMeServiceTest {
   @Ignore
   public void shouldGetProductMovementResponsesWhenNoLot() {
     createSohValueByIsNolot(true);
-    Map<UUID, List<SiglusStockMovementItemResponse>> stockMovementItemMap = new HashMap<>();
-    stockMovementItemMap.put(productId1, new ArrayList<>());
-    stockMovementItemMap.put(productId2, new ArrayList<>());
-    when(stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any(), any(), any()))
-        .thenReturn(stockMovementItemMap);
     FacilityProductMovementsResponse productMovementsResponse = service
         .getProductMovements(LocalDate.of(2021, 6, 30), LocalDate.of(2021, 7, 2));
     List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
@@ -504,8 +509,6 @@ public class SiglusMeServiceTest {
   @Ignore
   public void shouldGetProductMovementResponsesWhenNoMovement() {
     createSohValueByIsNolot(false);
-    when(stockCardLineItemService.getStockMovementByOrderableId(any(), any(), any(), any(), any(), any()))
-        .thenReturn(emptyMap());
     FacilityProductMovementsResponse productMovementsResponse = service
         .getProductMovements(LocalDate.of(2021, 6, 30), LocalDate.of(2021, 7, 2));
     List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
@@ -653,9 +656,9 @@ public class SiglusMeServiceTest {
     // given
     List<StockCardCreateRequest> stockCardCreateRequests = buildStockCardCreateRequests();
     when(stockCardRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
-    StockCardSyncService stockCardSyncServiceMock = mock(StockCardSyncService.class);
-    ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncServiceMock);
-    doThrow(new NullPointerException()).when(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+    StockCardCreateService stockCardCreateServiceMock = mock(StockCardCreateService.class);
+    ReflectionTestUtils.setField(service, nameStockCardCreateService, stockCardCreateServiceMock);
+    doThrow(new NullPointerException()).when(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
     when(stockCardCreateRequestValidator.validateStockCardCreateRequest(stockCardCreateRequests))
         .thenReturn(mock(ValidatedStockCards.class));
     try {
@@ -663,7 +666,7 @@ public class SiglusMeServiceTest {
       service.createStockCards(stockCardCreateRequests);
     } catch (Exception e) {
       // then
-      verify(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+      verify(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
       verify(stockCardRequestBackupRepository).save(stockCardRequestBackupArgumentCaptor.capture());
     }
   }
@@ -674,18 +677,18 @@ public class SiglusMeServiceTest {
     List<StockCardCreateRequest> stockCardCreateRequests = buildStockCardCreateRequests();
     StockCardRequestBackup backup = new StockCardRequestBackup();
     when(stockCardRequestBackupRepository.findOneByHash(anyString())).thenReturn(backup);
-    StockCardSyncService stockCardSyncServiceMock = mock(StockCardSyncService.class);
-    ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncServiceMock);
+    StockCardCreateService stockCardCreateServiceMock = mock(StockCardCreateService.class);
+    ReflectionTestUtils.setField(service, nameStockCardCreateService, stockCardCreateServiceMock);
     when(stockCardCreateRequestValidator.validateStockCardCreateRequest(stockCardCreateRequests))
         .thenReturn(mock(ValidatedStockCards.class));
     doThrow(new ConstraintViolationException(Collections.emptySet()))
-        .when(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+        .when(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
     try {
       // when
       service.createStockCards(stockCardCreateRequests);
     } catch (Exception e) {
       // then
-      verify(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+      verify(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
       verify(stockCardRequestBackupRepository, times(0)).save(backup);
     }
   }
@@ -694,10 +697,10 @@ public class SiglusMeServiceTest {
   public void shouldThrowExceptionWhenCreateStockCardRequestIsEmpty() {
     // given
     List<StockCardCreateRequest> stockCardCreateRequests = singletonList(new StockCardCreateRequest());
-    StockCardSyncService stockCardSyncServiceMock = mock(StockCardSyncService.class);
-    ReflectionTestUtils.setField(service, nameStockCardSyncService, stockCardSyncServiceMock);
+    StockCardCreateService stockCardCreateServiceMock = mock(StockCardCreateService.class);
+    ReflectionTestUtils.setField(service, nameStockCardCreateService, stockCardCreateServiceMock);
     doThrow(new ConstraintViolationException(Collections.emptySet()))
-        .when(stockCardSyncServiceMock).createStockCards(stockCardCreateRequests);
+        .when(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
     // when
     try {
       // when

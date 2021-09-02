@@ -27,7 +27,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.android.response.RegimenResponse;
-import org.siglus.siglusapi.service.android.SiglusRegimenService;
+import org.siglus.siglusapi.service.android.RegimenService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusRegimenControllerTest {
@@ -36,7 +36,7 @@ public class SiglusRegimenControllerTest {
   private SiglusRegimenController controller;
 
   @Mock
-  private SiglusRegimenService service;
+  private RegimenService service;
 
   @Mock
   private List<RegimenResponse> regimens;
