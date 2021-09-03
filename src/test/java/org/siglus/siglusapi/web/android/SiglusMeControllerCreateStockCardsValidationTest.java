@@ -80,7 +80,7 @@ import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
-import org.siglus.siglusapi.dto.android.validator.stockcard.FacilitySupportProductValidator;
+import org.siglus.siglusapi.dto.android.validator.stockcard.FacilityApprovedProductValidator;
 import org.siglus.siglusapi.dto.android.validator.stockcard.KitProductEmptyLotsValidator;
 import org.siglus.siglusapi.dto.android.validator.stockcard.LotStockConsistentWithExistedValidator;
 import org.siglus.siglusapi.dto.android.validator.stockcard.ProductMovementConsistentWithExistedValidator;
@@ -91,7 +91,7 @@ import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.StockCardCreateService;
 import org.siglus.siglusapi.service.android.StockCardSearchService;
-import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
+import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -135,7 +135,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   private SiglusApprovedProductReferenceDataService approvedProductDataService;
 
   @InjectMocks
-  private CreateStockCardContextHolder holder;
+  private StockCardCreateContextHolder holder;
 
   @Mock
   private SiglusValidReasonAssignmentService validReasonAssignmentService;
@@ -435,7 +435,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
 
     // then
     assertEquals(1, violations.size());
-    assertViolation("08A is not supported by the facility " + facilityId + ".",
+    assertViolation("08A is not approved by the facility " + facilityId + ".",
         "createStockCards.arg0[0]", violations);
   }
 
@@ -660,8 +660,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
       if (key == SupportReasonNameValidator.class) {
         return (T) new SupportReasonNameValidator(orderableService);
       }
-      if (key == FacilitySupportProductValidator.class) {
-        return (T) new FacilitySupportProductValidator(authHelper);
+      if (key == FacilityApprovedProductValidator.class) {
+        return (T) new FacilityApprovedProductValidator(authHelper);
       }
       return NewInstance.action(key, "ConstraintValidator").run();
     }

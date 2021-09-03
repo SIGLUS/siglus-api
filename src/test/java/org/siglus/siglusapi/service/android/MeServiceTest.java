@@ -113,7 +113,7 @@ import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
-import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
+import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 import org.siglus.siglusapi.service.android.mapper.ProductChildMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapperImpl;
@@ -219,7 +219,7 @@ public class MeServiceTest {
   private StockCardCreateService stockCardCreateService;
 
   @Mock
-  private CreateStockCardContextHolder createStockCardContextHolder;
+  private StockCardCreateContextHolder stockCardCreateContextHolder;
 
   @Mock
   private StockCardCreateRequestValidator stockCardCreateRequestValidator;
@@ -722,7 +722,7 @@ public class MeServiceTest {
     service.createStockCards(stockCardCreateRequests);
 
     // then
-    verify(createStockCardContextHolder, times(1)).initContext(any());
+    verify(stockCardCreateContextHolder, times(1)).initContext(any());
   }
 
   @Test

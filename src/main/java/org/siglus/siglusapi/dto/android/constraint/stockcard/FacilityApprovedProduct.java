@@ -26,15 +26,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
-import org.siglus.siglusapi.dto.android.validator.stockcard.FacilitySupportProductValidator;
+import org.siglus.siglusapi.dto.android.validator.stockcard.FacilityApprovedProductValidator;
 
 @Target({METHOD, FIELD, TYPE, PARAMETER})
 @Retention(RUNTIME)
 @Documented
-@Constraint(validatedBy = FacilitySupportProductValidator.class)
-public @interface FacilitySupportProduct {
+@Constraint(validatedBy = FacilityApprovedProductValidator.class)
+public @interface FacilityApprovedProduct {
 
-  String message() default "{org.siglus.siglusapi.dto.android.constraint.stockcard.FacilitySupportProduct.message}";
+  String message() default "{org.siglus.siglusapi.dto.android.constraint.stockcard.FacilityApprovedProduct.message}";
 
   Class<?>[] groups() default {};
 

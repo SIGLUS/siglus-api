@@ -22,7 +22,6 @@ import static java.util.stream.Collectors.toList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -78,7 +77,7 @@ import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.MeService;
 import org.siglus.siglusapi.service.android.StockCardCreateService;
-import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
+import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
@@ -125,7 +124,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   private AndroidHelper androidHelper;
 
   @InjectMocks
-  private CreateStockCardContextHolder holder;
+  private StockCardCreateContextHolder holder;
   @InjectMocks
   private StockCardCreateService stockCardCreateService;
 
@@ -144,7 +143,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     mockApprovedProducts();
     mockSourceDestinations();
     mockReasons();
-    ReflectionTestUtils.setField(service, "createStockCardContextHolder", holder);
+    ReflectionTestUtils.setField(service, "stockCardCreateContextHolder", holder);
     ReflectionTestUtils.setField(service, "stockCardCreateService", stockCardCreateService);
     when(stockManagementRepository.getLatestProductMovements(any()))
         .thenReturn(new PeriodOfProductMovements(emptyList(), null));
@@ -256,9 +255,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .map(this::mockReason)
         .flatMap(Collection::stream)
         .collect(toList());
-    when(validReasonAssignmentService
-        .getValidReasonsForAllProducts(eq(facilityTypeId), isNull(String.class), isNull(UUID.class)))
-        .thenReturn(reasons);
+    when(validReasonAssignmentService.getAllReasons(eq(facilityTypeId))).thenReturn(reasons);
   }
 
   private List<ValidReasonAssignmentDto> mockReason(String name) {

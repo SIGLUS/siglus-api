@@ -23,19 +23,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.constant.ValidatorConstants;
-import org.siglus.siglusapi.dto.android.constraint.stockcard.FacilitySupportProduct;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.FacilityApprovedProduct;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
-import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
+import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 
 @Slf4j
 @RequiredArgsConstructor
-public class FacilitySupportProductValidator implements
-    ConstraintValidator<FacilitySupportProduct, StockCardCreateRequest> {
+public class FacilityApprovedProductValidator implements
+    ConstraintValidator<FacilityApprovedProduct, StockCardCreateRequest> {
 
   private final SiglusAuthenticationHelper authHelper;
 
   @Override
-  public void initialize(FacilitySupportProduct constraintAnnotation) {
+  public void initialize(FacilityApprovedProduct constraintAnnotation) {
     // nothing to do
   }
 
@@ -45,6 +45,6 @@ public class FacilitySupportProductValidator implements
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable(ValidatorConstants.PRODUCT_CODE, value.getProductCode());
     actualContext.addExpressionVariable("facilityId", homeFacilityId);
-    return CreateStockCardContextHolder.getContext().isSupportByCurrentFacility(value.getProductCode());
+    return StockCardCreateContextHolder.getContext().isApprovedByCurrentFacility(value.getProductCode());
   }
 }

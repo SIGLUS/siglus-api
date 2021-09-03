@@ -29,7 +29,7 @@ import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
-import org.siglus.siglusapi.dto.android.constraint.stockcard.FacilitySupportProduct;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.FacilityApprovedProduct;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.KitProductEmptyLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithOwnLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductPositiveInitStockOnHand;
@@ -39,7 +39,7 @@ import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 @Data
 @ProductConsistentWithOwnLots
 @ProductPositiveInitStockOnHand
-@FacilitySupportProduct(groups = PerformanceGroup.class)
+@FacilityApprovedProduct(groups = PerformanceGroup.class)
 @SupportReasonName(groups = PerformanceGroup.class)
 @KitProductEmptyLots(groups = PerformanceGroup.class)
 public class StockCardCreateRequest implements StockCardAdjustment {

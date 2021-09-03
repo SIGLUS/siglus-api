@@ -17,7 +17,7 @@ package org.siglus.siglusapi.dto.android.enumeration;
 
 import java.util.UUID;
 import org.siglus.common.exception.NotFoundException;
-import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
+import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public enum MovementType {
@@ -36,7 +36,7 @@ public enum MovementType {
 
     @Override
     public UUID getInventoryReasonId(UUID programId, String reason) {
-      return CreateStockCardContextHolder.getContext().findReasonId(programId, reason)
+      return StockCardCreateContextHolder.getContext().findReasonId(programId, reason)
           .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reason));
     }
   },
@@ -50,7 +50,7 @@ public enum MovementType {
 
     @Override
     public UUID getSourceId(UUID programId, String source) {
-      return CreateStockCardContextHolder.getContext().findSourceId(programId, source)
+      return StockCardCreateContextHolder.getContext().findSourceId(programId, source)
           .orElseThrow(() -> new NotFoundException("No such source: " + source));
     }
 
@@ -65,7 +65,7 @@ public enum MovementType {
 
     @Override
     public UUID getDestinationId(UUID programId, String destination) {
-      return CreateStockCardContextHolder.getContext().findDestinationId(programId, destination)
+      return StockCardCreateContextHolder.getContext().findDestinationId(programId, destination)
           .orElseThrow(() -> new NotFoundException("No such destination: " + destination));
     }
 
@@ -80,7 +80,7 @@ public enum MovementType {
 
     @Override
     public UUID getAdjustmentReasonId(UUID programId, String reason) {
-      return CreateStockCardContextHolder.getContext().findReasonId(programId, reason)
+      return StockCardCreateContextHolder.getContext().findReasonId(programId, reason)
           .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reason));
     }
 
@@ -89,7 +89,7 @@ public enum MovementType {
   UNPACK_KIT {
     @Override
     public UUID getAdjustmentReasonId(UUID programId, String reason) {
-      return CreateStockCardContextHolder.getContext().findReasonId(programId, "UNPACK_KIT")
+      return StockCardCreateContextHolder.getContext().findReasonId(programId, "UNPACK_KIT")
           .orElseThrow(() -> new NotFoundException(NO_SUCH_REASON + reason));
     }
   };

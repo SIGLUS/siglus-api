@@ -40,13 +40,18 @@ public class SiglusValidReasonAssignmentService {
         .getValidReasons(programId, facilityType, reasonType, reason);
   }
 
-  public Collection<ValidReasonAssignmentDto> getValidReasonsForAllProducts(UUID facilityType,
+  public Collection<ValidReasonAssignmentDto> getValidReasonsForAllProducts(UUID facilityTypeId,
       String reasonType, UUID reason) {
     Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
         .findUserSupportedPrograms();
     return supportedVirtualPrograms.stream()
-        .map(supportedVirtualProgram -> getValidReasons(supportedVirtualProgram, facilityType,
+        .map(supportedVirtualProgram -> getValidReasons(supportedVirtualProgram, facilityTypeId,
             reasonType, reason))
         .flatMap(Collection::stream).collect(Collectors.toList());
   }
+
+  public Collection<ValidReasonAssignmentDto> getAllReasons(UUID facilityTypeId) {
+    return this.getValidReasonsForAllProducts(facilityTypeId, null, null);
+  }
+
 }

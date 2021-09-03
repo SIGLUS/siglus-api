@@ -99,7 +99,7 @@ import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
-import org.siglus.siglusapi.service.android.context.CreateStockCardContextHolder;
+import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 import org.siglus.siglusapi.service.android.mapper.PodLotLineMapper;
 import org.siglus.siglusapi.service.android.mapper.PodMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
@@ -152,7 +152,7 @@ public class MeService {
   private final RequisitionRequestBackupRepository requisitionRequestBackupRepository;
   private final StockCardRequestBackupRepository stockCardRequestBackupRepository;
   private final StockCardCreateRequestValidator stockCardCreateRequestValidator;
-  private final CreateStockCardContextHolder createStockCardContextHolder;
+  private final StockCardCreateContextHolder stockCardCreateContextHolder;
   private final StockCardDeleteService stockCardDeleteService;
   private final StockCardCreateService stockCardCreateService;
   private final StockCardSearchService stockCardSearchService;
@@ -246,7 +246,7 @@ public class MeService {
         .build();
     CreateStockCardResponse createStockCardResponse;
     FacilityDto facilityDto = getCurrentFacilityInfo();
-    createStockCardContextHolder.initContext(facilityDto);
+    stockCardCreateContextHolder.initContext(facilityDto);
     try {
       validatedStockCards = stockCardCreateRequestValidator.validateStockCardCreateRequest(requests);
       createStockCardResponse = CreateStockCardResponse.from(validatedStockCards);
@@ -265,7 +265,7 @@ public class MeService {
       }
       throw e;
     } finally {
-      CreateStockCardContextHolder.clearContext();
+      StockCardCreateContextHolder.clearContext();
     }
   }
 
