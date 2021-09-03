@@ -199,7 +199,7 @@ public class StockManagementRepository {
       where.append(' ').append("AND root.occurreddate <= ?").append(params.size()).append(' ');
       params.add(at);
     }
-    if (orderableIds.isEmpty()) {
+    if (!orderableIds.isEmpty()) {
       where.append(' ').append("AND sc.orderableid in ?").append(params.size()).append(' ');
       params.add(orderableIds);
     }
