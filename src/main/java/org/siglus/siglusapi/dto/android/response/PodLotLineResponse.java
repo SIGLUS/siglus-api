@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
@@ -24,6 +25,7 @@ public class PodLotLineResponse {
 
   private Integer shippedQuantity;
 
+  @NotNull
   private Integer acceptedQuantity;
 
   private String rejectedReason;

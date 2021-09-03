@@ -1,0 +1,56 @@
+/*
+ * This program is part of the OpenLMIS logistics management information system platform software.
+ * Copyright © 2017 VillageReach
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU Affero General Public License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Affero General Public License for more details. You should have received a copy of
+ * the GNU Affero General Public License along with this program. If not, see
+ * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
+ */
+
+package org.siglus.siglusapi.dto.android.request;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.time.LocalDate;
+import java.util.List;
+import javax.validation.constraints.NotNull;
+import lombok.Data;
+import org.hibernate.validator.constraints.NotBlank;
+import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.siglusapi.dto.android.response.OrderBasicResponse;
+import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
+import org.siglus.siglusapi.util.HashEncoder;
+
+@Data
+public class PodRequest {
+
+  private OrderBasicResponse order;
+
+  private LocalDate shippedDate;
+
+  @NotBlank
+  private String deliveredBy;
+
+  @NotBlank
+  private String receivedBy;
+
+  private String documentNo;
+
+  private String originNumber;
+
+  @NotNull
+  private LocalDate receivedDate;
+
+  private List<PodProductLineResponse> products;
+
+  @JsonIgnore
+  public String getSyncUpHash(UserDto user) {
+    return HashEncoder.hash(order.getRequisition().getProgramCode() + user.getId() + user.getHomeFacilityId()
+        + order.getCode() + order.getStatus());
+  }
+}

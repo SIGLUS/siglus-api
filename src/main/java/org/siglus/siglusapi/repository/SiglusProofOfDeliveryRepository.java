@@ -29,6 +29,7 @@ import javax.persistence.criteria.Predicate;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -74,4 +75,14 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
     });
   }
 
+  default ProofOfDelivery findByOrderCode(@Param("orderCode") String orderCode) {
+    return findOne(((root, query, cb) -> {
+      Path<Shipment> shipmentRoot = root.get("shipment");
+      Path<Order> orderRoot = shipmentRoot.get("order");
+      return cb.and(
+          cb.equal(orderRoot.get("orderCode"), orderCode),
+          cb.equal(root.get("status"), ProofOfDeliveryStatus.INITIATED)
+      );
+    }));
+  }
 }

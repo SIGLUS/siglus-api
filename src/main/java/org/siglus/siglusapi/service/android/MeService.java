@@ -77,6 +77,7 @@ import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
@@ -97,6 +98,7 @@ import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
+import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -158,6 +160,7 @@ public class MeService {
   private final StockCardDeleteService stockCardDeleteService;
   private final StockCardCreateService stockCardCreateService;
   private final StockCardSearchService stockCardSearchService;
+  private final ProofOfDeliveryConfirmService podConfirmService;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -341,6 +344,10 @@ public class MeService {
     return pods.stream()
         .map(pod -> toPodResponse(pod, allOrders, productCodesById, lotsById, reasonNamesById))
         .collect(toList());
+  }
+
+  public PodResponse confirmProofOfDelivery(PodRequest podRequest) {
+    return podConfirmService.confirmProofsOfDelivery(podRequest);
   }
 
   private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> allOrders,

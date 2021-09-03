@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
@@ -43,6 +44,7 @@ import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -122,6 +124,11 @@ public class SiglusMeController {
       @RequestParam(name = "shippedOnly", defaultValue = "false") boolean shippedOnly,
       @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate since) {
     return service.getProofsOfDelivery(since, shippedOnly);
+  }
+
+  @PatchMapping("/facility/pod")
+  public PodResponse confirmProofsOfDelivery(@RequestBody PodRequest podRequest) {
+    return service.confirmProofOfDelivery(podRequest);
   }
 
   @PostMapping("/app-info")
