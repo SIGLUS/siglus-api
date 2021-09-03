@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import static java.util.Collections.emptySet;
 import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
@@ -35,7 +36,13 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNullableByDefault;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.Lot;
@@ -43,7 +50,6 @@ import org.siglus.siglusapi.dto.android.LotMovement;
 import org.siglus.siglusapi.dto.android.MovementDetail;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
-import org.siglus.siglusapi.dto.android.ProductLotMovement;
 import org.siglus.siglusapi.dto.android.ProductLotStock;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovement.ProductMovementBuilder;
@@ -64,12 +70,25 @@ public class StockManagementRepository {
   private static final String LOT_ROOT = "referencedata.lots l";
 
   public PeriodOfProductMovements getLatestProductMovements(@Nonnull UUID facilityId) {
-    return getAllProductMovements(facilityId, null, null, null);
+    requireNonNull(facilityId);
+    return getAllProductMovements(facilityId, null, null, emptySet());
   }
 
   @ParametersAreNullableByDefault
-  public PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till,
-      Set<UUID> orderableIds) {
+  public PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till) {
+    requireNonNull(facilityId);
+    return getAllProductMovements(facilityId, since, till, emptySet());
+  }
+
+  public PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, @Nonnull Set<UUID> orderableIds) {
+    requireNonNull(facilityId);
+    requireNonNull(orderableIds);
+    return getAllProductMovements(facilityId, null, null, orderableIds);
+  }
+
+  @ParametersAreNullableByDefault
+  private PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till,
+      @Nonnull Set<UUID> orderableIds) {
     List<ProductLotMovement> allLotMovements = findAllLotMovements(facilityId, since, till, orderableIds);
     StocksOnHand stocksOnHand = getStockOnHand(facilityId, till, orderableIds);
     Map<String, Integer> productInventories = stocksOnHand.getProductInventories();
@@ -84,18 +103,18 @@ public class StockManagementRepository {
     return new PeriodOfProductMovements(productMovements, stocksOnHand);
   }
 
-  public StocksOnHand getStockOnHand(@Nonnull UUID facilityId, @Nullable Set<UUID> orderableIds) {
-    return getStockOnHand(facilityId, null, orderableIds);
+  public StocksOnHand getStockOnHand(@Nonnull UUID facilityId) {
+    return getStockOnHand(facilityId, null, emptySet());
   }
 
-  public StocksOnHand getStockOnHand(@Nonnull UUID facilityId, @Nullable LocalDate at,
-      @Nullable Set<UUID> orderableIds) {
+  @ParametersAreNullableByDefault
+  private StocksOnHand getStockOnHand(@Nonnull UUID facilityId, LocalDate at, @Nonnull Set<UUID> orderableIds) {
     return new StocksOnHand(findAllLotStocks(facilityId, at, orderableIds));
   }
 
   @ParametersAreNullableByDefault
   private List<ProductLotMovement> findAllLotMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till,
-      Set<UUID> orderableIds) {
+      @Nonnull Set<UUID> orderableIds) {
     requireNonNull(facilityId, "facilityId should not be null");
     List<Object> params = new ArrayList<>(2);
     String sql = generateMovementQuery(facilityId, since, till, params, orderableIds);
@@ -125,7 +144,8 @@ public class StockManagementRepository {
   }
 
   @ParametersAreNullableByDefault
-  private List<ProductLotStock> findAllLotStocks(@Nonnull UUID facilityId, LocalDate at, Set<UUID> orderableIds) {
+  private List<ProductLotStock> findAllLotStocks(@Nonnull UUID facilityId, LocalDate at,
+      @Nonnull Set<UUID> orderableIds) {
     requireNonNull(facilityId, "facilityId should not be null");
     String select = "SELECT DISTINCT ON (root.stockcardid) o.code AS productcode, l.lotcode, "
         + "root.stockonhand, root.occurreddate, li.extradata \\:\\: json ->> 'originEventTime' as recordedat, "
@@ -168,7 +188,7 @@ public class StockManagementRepository {
 
   @SuppressWarnings("PMD.ConsecutiveLiteralAppends")
   private static String generateWhere(@Nonnull UUID facilityId, @Nullable LocalDate since, @Nullable LocalDate at,
-      @Nonnull List<Object> params, @Nullable Set<UUID> orderableIds) {
+      @Nonnull List<Object> params, @Nonnull Set<UUID> orderableIds) {
     StringBuilder where = new StringBuilder("WHERE sc.facilityid = ?0 ");
     params.add(facilityId);
     if (since != null) {
@@ -179,7 +199,7 @@ public class StockManagementRepository {
       where.append(' ').append("AND root.occurreddate <= ?").append(params.size()).append(' ');
       params.add(at);
     }
-    if (orderableIds != null) {
+    if (orderableIds.isEmpty()) {
       where.append(' ').append("AND sc.orderableid in ?").append(params.size()).append(' ');
       params.add(orderableIds);
     }
@@ -187,7 +207,7 @@ public class StockManagementRepository {
   }
 
   private String generateMovementQuery(@Nonnull UUID facilityId, @Nullable LocalDate since, @Nullable LocalDate at,
-      @Nonnull List<Object> params, @Nullable Set<UUID> orderableIds) {
+      @Nonnull List<Object> params, @Nonnull Set<UUID> orderableIds) {
     String select = "SELECT o.code AS productcode, "
         + "l.lotcode, "
         + "root.occurreddate, "
@@ -289,6 +309,35 @@ public class StockManagementRepository {
         .stockQuantity(stockQuantity)
         .documentNumber(movement.getDocumentNumber())
         .build();
+  }
+
+  @EqualsAndHashCode
+  @ToString
+  @Getter
+  @Builder
+  @AllArgsConstructor(access = AccessLevel.PRIVATE)
+  private static class ProductLotMovement implements EventTimeContainer {
+
+    private final ProductLotCode code;
+
+    private final Lot lot;
+
+    private final EventTime eventTime;
+
+    private final MovementDetail movementDetail;
+
+    @Nullable
+    private final Integer requestedQuantity;
+
+    private final String signature;
+
+    @Nullable
+    private final String documentNumber;
+
+    public ProductMovementKey getProductMovementKey() {
+      return ProductMovementKey.of(code.getProductCode(), eventTime);
+    }
+
   }
 
 }

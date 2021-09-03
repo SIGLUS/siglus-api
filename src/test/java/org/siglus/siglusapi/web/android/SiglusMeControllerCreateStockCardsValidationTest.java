@@ -194,7 +194,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         EventTime.fromRequest(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:52:42.063Z")));
     when(stocksOnHand.findInventory(eq(ProductLotCode.of("08O05Y", "SME-LOTE-08O05Y-072021"))))
         .thenReturn(inventoryDetail);
-    when(stockManagementRepository.getStockOnHand(any(), any())).thenReturn(stocksOnHand);
+    when(stockManagementRepository.getStockOnHand(any())).thenReturn(stocksOnHand);
     MovementDetail movementDetail = new MovementDetail(-200, MovementType.ISSUE, "PUB_PHARMACY");
     ProductMovement movement0 = ProductMovement.builder()
         .productCode("08O05Y")

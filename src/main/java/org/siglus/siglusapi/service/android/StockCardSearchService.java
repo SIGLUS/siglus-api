@@ -49,20 +49,19 @@ public class StockCardSearchService {
       since = LocalDate.now().withDayOfYear(1);
     }
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, since, till, null);
+    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, since, till);
     return mapper.toResponses(period);
   }
 
   public FacilityProductMovementsResponse getProductMovementsByOrderables(Set<UUID> orderableIds) {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    PeriodOfProductMovements period = stockManagementRepository
-        .getAllProductMovements(facilityId, null, null, orderableIds);
+    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, orderableIds);
     return mapper.toResponses(period);
   }
 
   public StocksOnHand getLatestStockOnHand() {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    return stockManagementRepository.getStockOnHand(facilityId, null);
+    return stockManagementRepository.getStockOnHand(facilityId);
   }
 
   public List<ProductMovement> getLatestProductMovements() {

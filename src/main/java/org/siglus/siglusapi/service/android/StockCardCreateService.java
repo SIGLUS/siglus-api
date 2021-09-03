@@ -156,11 +156,12 @@ public class StockCardCreateService {
       String signature) {
     List<StockCardCreateRequest> requestMovement = requests.stream()
         .filter(request -> request.getLotEvents().isEmpty() == isProductMovement).collect(toList());
-    if (!requestMovement.isEmpty()) {
-      StockEventDto stockEvent = buildStockEventDto(facilityDto, signature, requestMovement, allApprovedProducts);
-      Map<UUID, UUID> programToStockEventIds = stockEventsService.createStockEventForNoDraftAllProducts(stockEvent);
-      dealWithIssue(requestMovement, programToStockEventIds, allApprovedProducts);
+    if (requestMovement.isEmpty()) {
+      return;
     }
+    StockEventDto stockEvent = buildStockEventDto(facilityDto, signature, requestMovement, allApprovedProducts);
+    Map<UUID, UUID> programToStockEventIds = stockEventsService.createStockEventForNoDraftAllProducts(stockEvent);
+    dealWithIssue(requestMovement, programToStockEventIds, allApprovedProducts);
   }
 
   private void dealWithIssue(List<StockCardCreateRequest> requests, Map<UUID, UUID> programToStockEventIds,
