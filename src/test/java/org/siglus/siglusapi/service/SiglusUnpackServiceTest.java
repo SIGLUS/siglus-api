@@ -22,9 +22,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
-import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_ADJUST;
-import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
-import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_ADJUST;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.common.domain.referencedata.Orderable.COMMODITY_TYPE;
 import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
 

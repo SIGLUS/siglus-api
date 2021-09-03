@@ -32,7 +32,7 @@ import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
-import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -68,7 +68,7 @@ public class SiglusOrderCloseSchedulerService {
   private ProcessingPeriodExtensionRepository periodExtensionRepository;
 
   @Autowired
-  private StockmanagementFacilityReferenceDataService facilityReferenceDataService;
+  private FacilityReferenceDataService facilityReferenceDataService;
 
   @Value("${time.zoneId}")
   private String timeZoneId;

@@ -51,9 +51,6 @@ import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
-import org.openlmis.stockmanagement.testutils.StockCardDataBuilder;
-import org.openlmis.stockmanagement.testutils.StockCardLineItemDataBuilder;
-import org.openlmis.stockmanagement.testutils.StockEventLineItemDtoDataBuilder;
 import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.OrderableChildDto;
@@ -67,6 +64,9 @@ import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
+import org.siglus.siglusapi.testutils.StockCardDataBuilder;
+import org.siglus.siglusapi.testutils.StockCardLineItemDataBuilder;
+import org.siglus.siglusapi.testutils.StockEventLineItemDtoDataBuilder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)

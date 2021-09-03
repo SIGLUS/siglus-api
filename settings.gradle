@@ -1,5 +1,4 @@
 rootProject.name = serviceName
-include 'stockmanagement'
 include 'requisition'
 include 'common'
 include 'fulfillment'

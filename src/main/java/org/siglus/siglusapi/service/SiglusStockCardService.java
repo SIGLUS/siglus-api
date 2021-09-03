@@ -40,7 +40,7 @@ import org.openlmis.stockmanagement.dto.StockCardLineItemDto;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
-import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
+import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SiglusDateHelper;
@@ -60,7 +60,7 @@ public class SiglusStockCardService {
   SiglusStockManagementService stockCardStockManagementService;
 
   @Autowired
-  private StockmanagementAuthenticationHelper authenticationHelper;
+  private AuthenticationHelper authenticationHelper;
 
   @Autowired
   private StockCardExtensionRepository stockCardExtensionRepository;
@@ -162,7 +162,9 @@ public class SiglusStockCardService {
       boolean byLot) {
     StockCardDto stockCardDto = stockCardDtos.get(0);
     OrderableDto orderableDto = stockCardDto.getOrderable();
-    orderableDto.setInKit(unpackService.orderablesInKit().contains(stockCardDto.getOrderableId()));
+    System.out.println(orderableDto.getClass());
+    orderableDto.getInKit();
+    orderableDto.setInKit(Boolean.valueOf(unpackService.orderablesInKit().contains(stockCardDto.getOrderableId())));
     orderableDto.setArchived(archiveProductService.isArchived(stockCardDto.getId()));
     StockCardDto resultStockCardDto = StockCardDto.builder()
         .id(stockCardDto.getId())

@@ -65,7 +65,6 @@ import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceD
 import org.openlmis.requisition.service.referencedata.RoleReferenceDataService;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
-import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.dto.referencedata.RoleAssignmentDto;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -516,7 +515,7 @@ public class SiglusNotificationService {
             cb.equal(root.get(STATUS), NotificationStatus.APPROVED),
             cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
         );
-      case StockmanagementPermissionService.STOCK_CARDS_VIEW:
+      case org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW:
         if (!canEditShipments) {
           return null;
         }

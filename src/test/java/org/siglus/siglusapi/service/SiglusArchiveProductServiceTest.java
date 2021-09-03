@@ -58,13 +58,13 @@ import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
-import org.openlmis.stockmanagement.testutils.StockCardDataBuilder;
 import org.siglus.common.domain.ArchivedProduct;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.testutils.StockCardDataBuilder;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)

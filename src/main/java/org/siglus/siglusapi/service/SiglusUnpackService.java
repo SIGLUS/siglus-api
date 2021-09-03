@@ -16,9 +16,9 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Sets.newHashSet;
-import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_ADJUST;
-import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
-import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_INVENTORIES_EDIT;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_ADJUST;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 
 import java.util.ArrayList;
 import java.util.Arrays;

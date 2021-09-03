@@ -36,7 +36,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.stockmanagement.service.StockmanagementAuthService;
 import org.siglus.common.service.AuthService;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -100,7 +99,7 @@ public class AuthServiceTest {
     // given
     when(authentication.isClientOnly()).thenReturn(true);
     final boolean obtainUserToken = true;
-    Map<String, String> body = ImmutableMap.of(StockmanagementAuthService.ACCESS_TOKEN, TOKEN);
+    Map<String, String> body = ImmutableMap.of(AuthService.ACCESS_TOKEN, TOKEN);
     when(response.getBody()).thenReturn(body);
     when(restTemplate.exchange(
         eq(AUTHORIZATION_URI), eq(HttpMethod.POST), any(HttpEntity.class), eq(Object.class)

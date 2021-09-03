@@ -40,7 +40,6 @@ import org.javers.spring.boot.sql.JaversSqlProperties;
 import org.javers.spring.jpa.TransactionalJaversBuilder;
 import org.openlmis.fulfillment.i18n.FulfillmentExposedMessageSourceImpl;
 import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
-import org.openlmis.stockmanagement.i18n.StockmanagementExposedMessageSourceImpl;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
@@ -79,7 +78,6 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @EntityScan(basePackages = {"org.siglus", "org.openlmis"})
 @EnableJpaRepositories(basePackages = {"org.siglus", "org.openlmis"})
 @PropertySource("classpath:application.properties")
-@PropertySource("classpath:stockmanagement-application.properties")
 @PropertySource("classpath:requisition-application.properties")
 @PropertySource("classpath:fulfillment-application.properties")
 @EnableAspectJAutoProxy
@@ -148,15 +146,6 @@ public class Application {
   @Bean
   public ExposedMessageSourceImpl messageSource() {
     ExposedMessageSourceImpl messageSource = new ExposedMessageSourceImpl();
-    messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
-    messageSource.setDefaultEncoding(UTF_8);
-    messageSource.setUseCodeAsDefaultMessage(true);
-    return messageSource;
-  }
-
-  @Bean
-  public StockmanagementExposedMessageSourceImpl stockmanagementMessageSource() {
-    StockmanagementExposedMessageSourceImpl messageSource = new StockmanagementExposedMessageSourceImpl();
     messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
     messageSource.setDefaultEncoding(UTF_8);
     messageSource.setUseCodeAsDefaultMessage(true);

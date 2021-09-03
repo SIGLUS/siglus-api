@@ -18,7 +18,7 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
-import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.NON_EMPTY_ONLY;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;

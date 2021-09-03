@@ -44,14 +44,14 @@ import org.openlmis.stockmanagement.dto.referencedata.FacilityDto;
 import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
-import org.openlmis.stockmanagement.testutils.CalculatedStockOnHandDataBuilder;
-import org.openlmis.stockmanagement.testutils.StockCardLineItemDataBuilder;
-import org.openlmis.stockmanagement.util.StockmanagementAuthenticationHelper;
+import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
+import org.siglus.siglusapi.testutils.CalculatedStockOnHandDataBuilder;
+import org.siglus.siglusapi.testutils.StockCardLineItemDataBuilder;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.springframework.beans.BeanUtils;
 
@@ -66,7 +66,7 @@ public class SiglusStockCardServiceTest {
   SiglusStockManagementService stockCardStockManagementService;
 
   @Mock
-  private StockmanagementAuthenticationHelper authenticationHelper;
+  private AuthenticationHelper authenticationHelper;
 
   @Mock
   private StockCardExtensionRepository stockCardExtensionRepository;

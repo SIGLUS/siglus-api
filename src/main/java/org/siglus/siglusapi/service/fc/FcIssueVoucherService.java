@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.service.fc;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;

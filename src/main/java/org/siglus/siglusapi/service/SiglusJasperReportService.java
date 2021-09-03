@@ -22,7 +22,7 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_GENERATE_REPOR
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_IO;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_JASPER_FILE_CREATION;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_REPORT_ID_NOT_FOUND;
-import static org.openlmis.stockmanagement.service.StockmanagementPermissionService.STOCK_CARDS_VIEW;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_NAME;
@@ -47,8 +47,8 @@ import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.referencedata.ProgramDto;
 import org.openlmis.stockmanagement.exception.JasperReportViewException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
+import org.openlmis.stockmanagement.service.PermissionService;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
-import org.openlmis.stockmanagement.service.StockmanagementPermissionService;
 import org.openlmis.stockmanagement.util.Message;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +80,7 @@ public class SiglusJasperReportService {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Autowired
-  private StockmanagementPermissionService permissionService;
+  private PermissionService permissionService;
 
   @Value("${dateFormat}")
   private String dateFormat;

@@ -17,8 +17,8 @@ package org.siglus.siglusapi.testutils;
 
 import java.time.LocalDate;
 import java.util.UUID;
-import org.openlmis.stockmanagement.testutils.DatesUtil;
 import org.siglus.common.domain.StockCardExtension;
+import org.siglus.siglusapi.testutils.DatesUtil;
 
 public class StockCardExtensionDataBuilder {
 

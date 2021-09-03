@@ -48,7 +48,7 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProcessingScheduleDto;
-import org.openlmis.stockmanagement.service.referencedata.StockmanagementFacilityReferenceDataService;
+import org.openlmis.stockmanagement.service.referencedata.FacilityReferenceDataService;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.OrderExternalRepository;
@@ -87,7 +87,7 @@ public class SiglusOrderCloseSchedulerServiceTest {
   private SiglusOrderCloseSchedulerService siglusOrderCloseSchedulerService;
 
   @Mock
-  private StockmanagementFacilityReferenceDataService facilityReferenceDataService;
+  private FacilityReferenceDataService facilityReferenceDataService;
 
   private final UUID facilityTypeId = UUID.randomUUID();
 
