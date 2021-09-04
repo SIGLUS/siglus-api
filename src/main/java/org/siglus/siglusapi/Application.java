@@ -152,6 +152,16 @@ public class Application {
     return messageSource;
   }
 
+  @Bean("stockmanagementMessageSource")
+  public org.openlmis.stockmanagement.i18n.ExposedMessageSourceImpl stockmanagementMessageSource() {
+    org.openlmis.stockmanagement.i18n.ExposedMessageSourceImpl messageSource
+        = new org.openlmis.stockmanagement.i18n.ExposedMessageSourceImpl();
+    messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
+    messageSource.setDefaultEncoding(UTF_8);
+    messageSource.setUseCodeAsDefaultMessage(true);
+    return messageSource;
+  }
+
   @Bean
   public RequisitionExposedMessageSourceImpl requisitionMessageSource() {
     RequisitionExposedMessageSourceImpl messageSource = new RequisitionExposedMessageSourceImpl();
