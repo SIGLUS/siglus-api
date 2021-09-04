@@ -23,11 +23,13 @@ import java.util.UUID;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.openlmis.requisition.service.RequestParameters;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 @Service
+@Primary
 public class FacilityReferenceDataService extends BaseReferenceDataService<FacilityDto> {
 
   @Override

@@ -21,9 +21,11 @@ import org.openlmis.requisition.dto.ResultDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.service.RequestParameters;
 import org.openlmis.requisition.service.ServiceResponse;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 
 @Service
+@Primary
 public class UserReferenceDataService extends BaseReferenceDataService<UserDto> {
 
   @Override

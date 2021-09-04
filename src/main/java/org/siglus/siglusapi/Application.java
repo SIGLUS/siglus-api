@@ -42,6 +42,7 @@ import org.openlmis.fulfillment.i18n.FulfillmentExposedMessageSourceImpl;
 import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
+import org.siglus.siglusapi.config.CustomBeanNameGenerator;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
 import org.siglus.siglusapi.validation.SiglusMessageInterpolator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.data.domain.AuditorAware;
@@ -74,7 +76,7 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @SpringBootApplication
 @EnableAsync
 @EnableJpaAuditing
-@ComponentScan(basePackages = {"org.siglus", "org.openlmis"})
+@ComponentScan(basePackages = {"org.siglus", "org.openlmis"}, nameGenerator = CustomBeanNameGenerator.class)
 @EntityScan(basePackages = {"org.siglus", "org.openlmis"})
 @EnableJpaRepositories(basePackages = {"org.siglus", "org.openlmis"})
 @PropertySource("classpath:application.properties")
@@ -152,7 +154,8 @@ public class Application {
     return messageSource;
   }
 
-  @Bean("stockmanagementMessageSource")
+  @Bean
+  @Primary
   public org.openlmis.stockmanagement.i18n.ExposedMessageSourceImpl stockmanagementMessageSource() {
     org.openlmis.stockmanagement.i18n.ExposedMessageSourceImpl messageSource
         = new org.openlmis.stockmanagement.i18n.ExposedMessageSourceImpl();

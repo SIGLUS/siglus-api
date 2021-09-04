@@ -86,11 +86,11 @@ public class SiglusStockManagementDraftService {
 
   @Transactional
   public void deleteStockManagementDraft(UUID id) {
-    StockManagementDraft drafts = stockManagementDraftRepository.findOne(id);
-    if (drafts != null) {
-      draftValidator.validateDraftUser(drafts);
-      log.info("delete stockmanagement draft: {}", drafts);
-      stockManagementDraftRepository.delete(drafts);
+    StockManagementDraft draft = stockManagementDraftRepository.findOne(id);
+    if (draft != null) {
+      draftValidator.validateDraftUser(draft);
+      log.info("delete stockmanagement draft: {}", id);
+      stockManagementDraftRepository.delete(draft);
     } else {
       throw new ResourceNotFoundException(
           new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND, id));
@@ -102,7 +102,7 @@ public class SiglusStockManagementDraftService {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByProgramIdAndUserIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getUserId(), true, dto.getType());
     if (!drafts.isEmpty()) {
-      log.info("delete stockmanagement draft: {}", drafts);
+      log.info("delete stockmanagement draft, programId: {}, userId: {}", dto.getProgramId(), dto.getUserId());
       stockManagementDraftRepository.delete(drafts);
     }
   }

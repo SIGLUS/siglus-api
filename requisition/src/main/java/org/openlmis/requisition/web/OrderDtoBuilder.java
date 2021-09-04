@@ -44,14 +44,12 @@ import org.openlmis.requisition.service.referencedata.OrderableReferenceDataServ
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OrderDtoBuilder {
 
   @Autowired
-  @Qualifier("facilityReferenceDataService")
   private FacilityReferenceDataService facilities;
 
   @Autowired
@@ -61,7 +59,6 @@ public class OrderDtoBuilder {
   private StatusMessageRepository statusMessageRepository;
 
   @Autowired
-  @Qualifier("programReferenceDataService")
   private ProgramReferenceDataService programs;
 
   @Autowired

@@ -162,9 +162,7 @@ public class SiglusStockCardService {
       boolean byLot) {
     StockCardDto stockCardDto = stockCardDtos.get(0);
     OrderableDto orderableDto = stockCardDto.getOrderable();
-    System.out.println(orderableDto.getClass());
-    orderableDto.getInKit();
-    orderableDto.setInKit(Boolean.valueOf(unpackService.orderablesInKit().contains(stockCardDto.getOrderableId())));
+    orderableDto.setInKit(unpackService.orderablesInKit().contains(stockCardDto.getOrderableId()));
     orderableDto.setArchived(archiveProductService.isArchived(stockCardDto.getId()));
     StockCardDto resultStockCardDto = StockCardDto.builder()
         .id(stockCardDto.getId())
