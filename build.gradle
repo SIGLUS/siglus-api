@@ -80,9 +80,6 @@ dependencies {
     compile 'com.alibaba:fastjson:1.2.76'
     compile 'org.zalando:logbook-spring-boot-starter:2.11.0'
 
-    compileTestJava.dependsOn tasks.getByPath(':requisition:testClasses')
-    testCompile project(':requisition').sourceSets.test.output
-
     testCompileOnly 'org.projectlombok:lombok:1.18.20'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
     testCompile "junit:junit"

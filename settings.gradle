@@ -1,5 +1,4 @@
 rootProject.name = serviceName
-include 'requisition'
 include 'common'
 include 'fulfillment'
 
