@@ -22,25 +22,27 @@ import java.util.UUID;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProcessingScheduleDto;
 import org.siglus.common.domain.ProcessingPeriodExtension;
+import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class ProcessingPeriodDtoDataBuilder {
+@SuppressWarnings("PMD.TooManyMethods")
+public class ProcessingPeriodDtoDataBuilder implements DtoDataBuilder<ProcessingPeriodDto> {
 
   private static int instanceNumber = 0;
 
-  private final UUID id;
-  private final String name;
-  private final LocalDate startDate;
-  private final LocalDate endDate;
-  private final LocalDate submitStartDate;
-  private final LocalDate submitEndDate;
-  private final LocalDate preStartDate;
-  private final LocalDate preEndDate;
-  private final LocalDate preSubmitStartDate;
-  private final LocalDate preSubmitEndDate;
-  private final ProcessingScheduleDto processingSchedule;
-  private final String description;
-  private final Integer durationInMonths;
-  private final Map<String, String> extraData;
+  private UUID id;
+  private String name;
+  private LocalDate startDate;
+  private LocalDate endDate;
+  private LocalDate submitStartDate;
+  private LocalDate submitEndDate;
+  private LocalDate preStartDate;
+  private LocalDate preEndDate;
+  private LocalDate preSubmitStartDate;
+  private LocalDate preSubmitEndDate;
+  private ProcessingScheduleDto processingSchedule;
+  private String description;
+  private Integer durationInMonths;
+  private Map<String, String> extraData;
 
   /**
    * Creates builder for creating new instance of {@link ProcessingPeriodDto}.
@@ -65,6 +67,47 @@ public class ProcessingPeriodDtoDataBuilder {
     durationInMonths = 1;
     extraData = new HashMap<>();
   }
+
+  public ProcessingPeriodDto buildAsDto() {
+    return new ProcessingPeriodDto(id, name, startDate, endDate, processingSchedule, description,
+        durationInMonths, extraData);
+  }
+
+  public ProcessingPeriodDtoDataBuilder withStartDate(LocalDate startDate) {
+    this.startDate = startDate;
+    return this;
+  }
+
+  public ProcessingPeriodDtoDataBuilder withEndDate(LocalDate endDate) {
+    this.endDate = endDate;
+    return this;
+  }
+
+  public ProcessingPeriodDtoDataBuilder withProcessingSchedule(ProcessingScheduleDto schedule) {
+    this.processingSchedule = schedule;
+    return this;
+  }
+
+  public ProcessingPeriodDtoDataBuilder withDurationInMonths(Integer durationInMonths) {
+    this.durationInMonths = durationInMonths;
+    return this;
+  }
+
+  public ProcessingPeriodDtoDataBuilder withId(UUID id) {
+    this.id = id;
+    return this;
+  }
+
+  public ProcessingPeriodDtoDataBuilder withName(String name) {
+    this.name = name;
+    return this;
+  }
+
+  public ProcessingPeriodDtoDataBuilder withDescription(String description) {
+    this.description = description;
+    return this;
+  }
+
 
   public ProcessingPeriodDto buildFullDto() {
     ProcessingPeriodDto dto = new ProcessingPeriodDto(id, name, startDate, endDate,

@@ -16,43 +16,49 @@
 package org.siglus.siglusapi.testutils;
 
 import java.util.UUID;
-import org.openlmis.requisition.dto.GeographicLevelDto;
-import org.openlmis.requisition.dto.GeographicZoneDto;
+import org.openlmis.requisition.dto.FacilityTypeDto;
 import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class GeographicZoneDtoDataBuilder implements DtoDataBuilder<GeographicZoneDto> {
-
-  private static int instanceNumber = 0;
+public class FacilityTypeDtoDataBuilder implements DtoDataBuilder<FacilityTypeDto> {
 
   private UUID id;
   private String code;
   private String name;
-  private GeographicLevelDto level;
-  private GeographicZoneDto parent;
+  private String description;
+  private Integer displayOrder;
+  private Boolean active;
 
   /**
-   * Creates builder for creating new instance of {@link GeographicZoneDto}.
+   * Builder for {@link FacilityTypeDto}.
    */
-  public GeographicZoneDtoDataBuilder() {
-    instanceNumber++;
-
+  public FacilityTypeDtoDataBuilder() {
     id = UUID.randomUUID();
-    code = "Z" + instanceNumber;
-    name = "zone " + instanceNumber;
-    level = new org.siglus.siglusapi.testutils.GeographicLevelDtoDataBuilder().buildAsDto();
-    parent = null;
+    code = "code";
+    name = "name";
+    description = "description";
+    displayOrder = 0;
+    active = false;
   }
 
-  /**
-   * Creates new instance of {@link GeographicZoneDto} with properties.
-   * @return created facility.
-   */
-  public GeographicZoneDto buildAsDto() {
-    return new GeographicZoneDto(id, code, name, level, parent);
+  @Override
+  public FacilityTypeDto buildAsDto() {
+    FacilityTypeDto dto = new FacilityTypeDto();
+    dto.setId(id);
+    dto.setCode(code);
+    dto.setName(name);
+    dto.setDescription(description);
+    dto.setDisplayOrder(displayOrder);
+    dto.setActive(active);
+    return dto;
   }
 
-  public GeographicZoneDtoDataBuilder withLevel(GeographicLevelDto level) {
-    this.level = level;
+  public FacilityTypeDtoDataBuilder withDisplayOrder(Integer displayOrder) {
+    this.displayOrder = displayOrder;
+    return this;
+  }
+
+  public FacilityTypeDtoDataBuilder withActive(Boolean active) {
+    this.active = active;
     return this;
   }
 }

@@ -16,35 +16,36 @@
 package org.siglus.siglusapi.testutils;
 
 import java.util.UUID;
-import org.openlmis.requisition.dto.GeographicLevelDto;
-import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
+import org.openlmis.requisition.domain.AvailableRequisitionColumn;
+import org.openlmis.requisition.domain.AvailableRequisitionColumnOption;
+import org.siglus.siglusapi.testutils.api.DataBuilder;
 
-public class GeographicLevelDtoDataBuilder implements DtoDataBuilder<GeographicLevelDto> {
-
-  private static int instanceNumber = 0;
-
+public class AvailableRequisitionColumnOptionDataBuilder implements
+    DataBuilder<AvailableRequisitionColumnOption> {
   private UUID id;
-  private String code;
-  private String name;
-  private Integer levelNumber;
+  private AvailableRequisitionColumn requisitionColumn;
+  private String optionName;
+  private String optionLabel;
 
   /**
-   * Creates builder for creating new instance of {@link GeographicLevelDto}.
+   * Builder for {@link AvailableRequisitionColumnOption}.
    */
-  public GeographicLevelDtoDataBuilder() {
-    instanceNumber++;
-
+  public AvailableRequisitionColumnOptionDataBuilder() {
     id = UUID.randomUUID();
-    code = "GL" + instanceNumber;
-    name = "geographic level " + instanceNumber;
-    levelNumber = 1;
+    requisitionColumn = null;
+    optionName = "option";
+    optionLabel = "Option";
   }
 
   /**
-   * Creates new instance of {@link GeographicLevelDto} with properties.
-   * @return created facility.
+   * Builds {@link AvailableRequisitionColumnOption} instance with test data.
    */
-  public GeographicLevelDto buildAsDto() {
-    return new GeographicLevelDto(id, code, name, levelNumber);
+  public AvailableRequisitionColumnOption build() {
+    AvailableRequisitionColumnOption option = new AvailableRequisitionColumnOption(
+        requisitionColumn, optionName, optionLabel
+    );
+    option.setId(id);
+
+    return option;
   }
 }

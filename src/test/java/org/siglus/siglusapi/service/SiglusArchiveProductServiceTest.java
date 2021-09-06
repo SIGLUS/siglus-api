@@ -48,7 +48,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
-import org.openlmis.requisition.domain.requisition.RequisitionLineItemDataBuilder;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.stockmanagement.domain.card.StockCard;
@@ -64,6 +63,7 @@ import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
 import org.siglus.siglusapi.testutils.StockCardDataBuilder;
 
 @SuppressWarnings("PMD.TooManyMethods")

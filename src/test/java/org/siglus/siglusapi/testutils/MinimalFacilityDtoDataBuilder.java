@@ -15,44 +15,37 @@
 
 package org.siglus.siglusapi.testutils;
 
-import java.util.UUID;
-import org.openlmis.requisition.dto.GeographicLevelDto;
+import org.openlmis.requisition.dto.FacilityTypeDto;
 import org.openlmis.requisition.dto.GeographicZoneDto;
+import org.openlmis.requisition.dto.MinimalFacilityDto;
 import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class GeographicZoneDtoDataBuilder implements DtoDataBuilder<GeographicZoneDto> {
-
-  private static int instanceNumber = 0;
-
-  private UUID id;
+public class MinimalFacilityDtoDataBuilder implements DtoDataBuilder<MinimalFacilityDto> {
   private String code;
   private String name;
-  private GeographicLevelDto level;
-  private GeographicZoneDto parent;
+  private Boolean active;
+  private GeographicZoneDto geographicZone;
+  private FacilityTypeDto type;
 
   /**
-   * Creates builder for creating new instance of {@link GeographicZoneDto}.
+   * Builder for {@link MinimalFacilityDto}.
    */
-  public GeographicZoneDtoDataBuilder() {
-    instanceNumber++;
-
-    id = UUID.randomUUID();
-    code = "Z" + instanceNumber;
-    name = "zone " + instanceNumber;
-    level = new org.siglus.siglusapi.testutils.GeographicLevelDtoDataBuilder().buildAsDto();
-    parent = null;
+  public MinimalFacilityDtoDataBuilder() {
+    code = "code";
+    name = "name";
+    active = true;
+    geographicZone = new GeographicZoneDtoDataBuilder().buildAsDto();
+    type = new FacilityTypeDtoDataBuilder().buildAsDto();
   }
 
-  /**
-   * Creates new instance of {@link GeographicZoneDto} with properties.
-   * @return created facility.
-   */
-  public GeographicZoneDto buildAsDto() {
-    return new GeographicZoneDto(id, code, name, level, parent);
-  }
-
-  public GeographicZoneDtoDataBuilder withLevel(GeographicLevelDto level) {
-    this.level = level;
-    return this;
+  @Override
+  public MinimalFacilityDto buildAsDto() {
+    MinimalFacilityDto dto = new MinimalFacilityDto();
+    dto.setCode(code);
+    dto.setName(name);
+    dto.setActive(active);
+    dto.setGeographicZone(geographicZone);
+    dto.setType(type);
+    return dto;
   }
 }

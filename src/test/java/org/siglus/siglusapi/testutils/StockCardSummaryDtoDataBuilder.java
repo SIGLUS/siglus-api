@@ -15,31 +15,34 @@
 
 package org.siglus.siglusapi.testutils;
 
-import java.time.LocalDate;
 import java.util.UUID;
-import org.siglus.common.domain.StockCardExtension;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.stockmanagement.StockCardSummaryDto;
+import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class StockCardExtensionDataBuilder {
+public class StockCardSummaryDtoDataBuilder implements DtoDataBuilder<StockCardSummaryDto> {
+  private UUID orderableId = UUID.randomUUID();
+  private int stockOnHand = 10;
 
-  private final UUID id = UUID.randomUUID();
-  private UUID stockCardId = UUID.randomUUID();
-  private final LocalDate createDate = DatesUtil.getBaseDate();
-
-  public StockCardExtensionDataBuilder() {
-  }
-
-  public StockCardExtensionDataBuilder withStockCardId(UUID stockCardId) {
-    this.stockCardId = stockCardId;
+  public StockCardSummaryDtoDataBuilder withOrderableId(UUID orderableId) {
+    this.orderableId = orderableId;
     return this;
   }
 
-  public StockCardExtensionDataBuilder withArchived(boolean archived) {
+  public StockCardSummaryDtoDataBuilder withStockOnHand(Integer stockOnHand) {
+    this.stockOnHand = stockOnHand;
     return this;
   }
 
-  public StockCardExtension build() {
-    StockCardExtension stockCardExtension = new StockCardExtension(stockCardId, createDate);
-    stockCardExtension.setId(id);
-    return stockCardExtension;
+  /**
+   * Creates new instance of {@link StockCardSummaryDto} based on passed data.
+   */
+  public StockCardSummaryDto buildAsDto() {
+    StockCardSummaryDto dto = new StockCardSummaryDto();
+    dto.setOrderable(new ObjectReferenceDto(orderableId));
+    dto.setStockOnHand(stockOnHand);
+
+    return dto;
   }
+
 }

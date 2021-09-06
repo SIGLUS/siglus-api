@@ -13,33 +13,8 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.testutils;
+package org.siglus.siglusapi.testutils.api;
 
-import java.time.LocalDate;
-import java.util.UUID;
-import org.siglus.common.domain.StockCardExtension;
-
-public class StockCardExtensionDataBuilder {
-
-  private final UUID id = UUID.randomUUID();
-  private UUID stockCardId = UUID.randomUUID();
-  private final LocalDate createDate = DatesUtil.getBaseDate();
-
-  public StockCardExtensionDataBuilder() {
-  }
-
-  public StockCardExtensionDataBuilder withStockCardId(UUID stockCardId) {
-    this.stockCardId = stockCardId;
-    return this;
-  }
-
-  public StockCardExtensionDataBuilder withArchived(boolean archived) {
-    return this;
-  }
-
-  public StockCardExtension build() {
-    StockCardExtension stockCardExtension = new StockCardExtension(stockCardId, createDate);
-    stockCardExtension.setId(id);
-    return stockCardExtension;
-  }
+public interface DataBuilder<T> {
+  T build();
 }

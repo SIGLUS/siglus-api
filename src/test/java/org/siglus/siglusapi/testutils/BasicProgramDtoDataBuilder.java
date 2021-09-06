@@ -16,43 +16,28 @@
 package org.siglus.siglusapi.testutils;
 
 import java.util.UUID;
-import org.openlmis.requisition.dto.GeographicLevelDto;
-import org.openlmis.requisition.dto.GeographicZoneDto;
+import org.openlmis.requisition.dto.BasicProgramDto;
 import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class GeographicZoneDtoDataBuilder implements DtoDataBuilder<GeographicZoneDto> {
-
-  private static int instanceNumber = 0;
-
+public class BasicProgramDtoDataBuilder implements DtoDataBuilder<BasicProgramDto> {
   private UUID id;
   private String code;
   private String name;
-  private GeographicLevelDto level;
-  private GeographicZoneDto parent;
 
   /**
-   * Creates builder for creating new instance of {@link GeographicZoneDto}.
+   * Builder for {@link BasicProgramDto}.
    */
-  public GeographicZoneDtoDataBuilder() {
-    instanceNumber++;
-
+  public BasicProgramDtoDataBuilder() {
     id = UUID.randomUUID();
-    code = "Z" + instanceNumber;
-    name = "zone " + instanceNumber;
-    level = new org.siglus.siglusapi.testutils.GeographicLevelDtoDataBuilder().buildAsDto();
-    parent = null;
+    code = "code";
+    name = "name";
   }
 
-  /**
-   * Creates new instance of {@link GeographicZoneDto} with properties.
-   * @return created facility.
-   */
-  public GeographicZoneDto buildAsDto() {
-    return new GeographicZoneDto(id, code, name, level, parent);
-  }
+  @Override
+  public BasicProgramDto buildAsDto() {
+    BasicProgramDto dto = new BasicProgramDto(code, name);
+    dto.setId(id);
 
-  public GeographicZoneDtoDataBuilder withLevel(GeographicLevelDto level) {
-    this.level = level;
-    return this;
+    return dto;
   }
 }

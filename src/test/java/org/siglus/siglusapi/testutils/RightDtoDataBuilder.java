@@ -15,31 +15,35 @@
 
 package org.siglus.siglusapi.testutils;
 
-import java.time.LocalDate;
-import java.util.UUID;
-import org.siglus.common.domain.StockCardExtension;
+import java.util.HashSet;
+import java.util.Set;
+import org.openlmis.requisition.dto.RightDto;
+import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class StockCardExtensionDataBuilder {
+public class RightDtoDataBuilder implements DtoDataBuilder<RightDto> {
 
-  private final UUID id = UUID.randomUUID();
-  private UUID stockCardId = UUID.randomUUID();
-  private final LocalDate createDate = DatesUtil.getBaseDate();
+  private String name;
+  private String type;
+  private String description;
+  private Set<RightDto> attachments;
 
-  public StockCardExtensionDataBuilder() {
+  /**
+   * Builder for {@link RightDto}.
+   */
+  public RightDtoDataBuilder() {
+    this.name = "name";
+    this.type = "type";
+    this.description = "description";
+    this.attachments = new HashSet<>();
   }
 
-  public StockCardExtensionDataBuilder withStockCardId(UUID stockCardId) {
-    this.stockCardId = stockCardId;
-    return this;
-  }
-
-  public StockCardExtensionDataBuilder withArchived(boolean archived) {
-    return this;
-  }
-
-  public StockCardExtension build() {
-    StockCardExtension stockCardExtension = new StockCardExtension(stockCardId, createDate);
-    stockCardExtension.setId(id);
-    return stockCardExtension;
+  @Override
+  public RightDto buildAsDto() {
+    RightDto dto = new RightDto();
+    dto.setName(name);
+    dto.setType(type);
+    dto.setDescription(description);
+    dto.setAttachments(attachments);
+    return dto;
   }
 }

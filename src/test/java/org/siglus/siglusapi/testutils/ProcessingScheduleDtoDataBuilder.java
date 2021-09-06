@@ -15,44 +15,35 @@
 
 package org.siglus.siglusapi.testutils;
 
+import java.time.ZonedDateTime;
 import java.util.UUID;
-import org.openlmis.requisition.dto.GeographicLevelDto;
-import org.openlmis.requisition.dto.GeographicZoneDto;
+import org.openlmis.requisition.dto.ProcessingScheduleDto;
 import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class GeographicZoneDtoDataBuilder implements DtoDataBuilder<GeographicZoneDto> {
+public class ProcessingScheduleDtoDataBuilder implements DtoDataBuilder<ProcessingScheduleDto> {
 
   private static int instanceNumber = 0;
 
   private UUID id;
   private String code;
+  private String description;
+  private ZonedDateTime modifiedDate;
   private String name;
-  private GeographicLevelDto level;
-  private GeographicZoneDto parent;
 
   /**
-   * Creates builder for creating new instance of {@link GeographicZoneDto}.
+   * Creates builder for creating new instance of {@link ProcessingScheduleDto}.
    */
-  public GeographicZoneDtoDataBuilder() {
+  public ProcessingScheduleDtoDataBuilder() {
     instanceNumber++;
 
     id = UUID.randomUUID();
-    code = "Z" + instanceNumber;
-    name = "zone " + instanceNumber;
-    level = new org.siglus.siglusapi.testutils.GeographicLevelDtoDataBuilder().buildAsDto();
-    parent = null;
+    code = "PS"  + instanceNumber;
+    description = "Processing Schedule " + instanceNumber;
+    modifiedDate = ZonedDateTime.now();
+    name = "Schedule" + instanceNumber;
   }
 
-  /**
-   * Creates new instance of {@link GeographicZoneDto} with properties.
-   * @return created facility.
-   */
-  public GeographicZoneDto buildAsDto() {
-    return new GeographicZoneDto(id, code, name, level, parent);
-  }
-
-  public GeographicZoneDtoDataBuilder withLevel(GeographicLevelDto level) {
-    this.level = level;
-    return this;
+  public ProcessingScheduleDto buildAsDto() {
+    return new ProcessingScheduleDto(id, code, description, modifiedDate, name);
   }
 }

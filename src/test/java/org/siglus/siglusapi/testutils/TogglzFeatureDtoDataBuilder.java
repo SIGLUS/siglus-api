@@ -15,31 +15,30 @@
 
 package org.siglus.siglusapi.testutils;
 
-import java.time.LocalDate;
-import java.util.UUID;
-import org.siglus.common.domain.StockCardExtension;
+import java.util.HashMap;
+import java.util.Map;
+import org.openlmis.requisition.dto.TogglzFeatureDto;
+import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class StockCardExtensionDataBuilder {
+public class TogglzFeatureDtoDataBuilder implements DtoDataBuilder<TogglzFeatureDto> {
 
-  private final UUID id = UUID.randomUUID();
-  private UUID stockCardId = UUID.randomUUID();
-  private final LocalDate createDate = DatesUtil.getBaseDate();
+  private String name;
+  private boolean enabled;
+  private String strategy;
+  private Map<String, String> params;
 
-  public StockCardExtensionDataBuilder() {
+  /**
+   * Builder for {@link TogglzFeatureDto}.
+   */
+  public TogglzFeatureDtoDataBuilder() {
+    name = "name";
+    enabled = false;
+    strategy = "strategy";
+    params = new HashMap<>();
   }
 
-  public StockCardExtensionDataBuilder withStockCardId(UUID stockCardId) {
-    this.stockCardId = stockCardId;
-    return this;
-  }
-
-  public StockCardExtensionDataBuilder withArchived(boolean archived) {
-    return this;
-  }
-
-  public StockCardExtension build() {
-    StockCardExtension stockCardExtension = new StockCardExtension(stockCardId, createDate);
-    stockCardExtension.setId(id);
-    return stockCardExtension;
+  @Override
+  public TogglzFeatureDto buildAsDto() {
+    return new TogglzFeatureDto(name, enabled, strategy, params);
   }
 }

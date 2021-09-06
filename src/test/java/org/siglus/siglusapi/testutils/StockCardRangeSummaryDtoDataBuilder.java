@@ -17,44 +17,57 @@ package org.siglus.siglusapi.testutils;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
-import org.openlmis.stockmanagement.web.stockcardrangesummary.StockCardRangeSummaryDto;
+import java.util.UUID;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.stockmanagement.StockCardRangeSummaryDto;
+import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class StockCardRangeSummaryDtoDataBuilder {
+public class StockCardRangeSummaryDtoDataBuilder implements
+    DtoDataBuilder<StockCardRangeSummaryDto> {
 
   private ObjectReferenceDto orderable;
-  private Long stockOutDays;
+  private Integer stockOutDays;
   private Map<String, Integer> tags;
+  private Integer amount;
 
   /**
    * Creates builder for creating new instance of {@link StockCardRangeSummaryDtoDataBuilder}.
    */
   public StockCardRangeSummaryDtoDataBuilder() {
-    orderable = new org.siglus.siglusapi.testutils.ObjectReferenceDtoDataBuilder().withPath("api/orderables").build();
-    stockOutDays = 0L;
+    orderable = new org.siglus.siglusapi.testutils.ObjectReferenceDtoDataBuilder().withPath("api/orderables")
+        .buildAsDto();
+    stockOutDays = 0;
     tags = new HashMap<>();
+    amount = 0;
   }
 
   /**
    * Creates new instance of {@link StockCardRangeSummaryDto} with properties.
+   *
    * @return created stock cards range summary
    */
-  public StockCardRangeSummaryDto build() {
-    return new StockCardRangeSummaryDto(orderable, stockOutDays, tags);
-  }
-
-  public StockCardRangeSummaryDtoDataBuilder withOrderable(ObjectReferenceDto orderable) {
-    this.orderable = orderable;
-    return this;
-  }
-
-  public StockCardRangeSummaryDtoDataBuilder withStockOutDays(Long stockOutDays) {
-    this.stockOutDays = stockOutDays;
-    return this;
+  public StockCardRangeSummaryDto buildAsDto() {
+    return new StockCardRangeSummaryDto(orderable, stockOutDays, tags, amount);
   }
 
   public StockCardRangeSummaryDtoDataBuilder withTags(Map<String, Integer> tags) {
     this.tags = tags;
+    return this;
+  }
+
+  public StockCardRangeSummaryDtoDataBuilder withStockOutDays(Integer stockOutDays) {
+    this.stockOutDays = stockOutDays;
+    return this;
+  }
+
+  /**
+   * Sets orderable reference object with given id.
+   */
+  public StockCardRangeSummaryDtoDataBuilder withOrderableId(UUID orderableId) {
+    this.orderable = new org.siglus.siglusapi.testutils.ObjectReferenceDtoDataBuilder()
+        .withPath("api/orderables")
+        .withId(orderableId)
+        .buildAsDto();
     return this;
   }
 }

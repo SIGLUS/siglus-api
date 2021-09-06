@@ -16,9 +16,10 @@
 package org.siglus.siglusapi.testutils;
 
 import java.util.UUID;
-import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
+import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class ObjectReferenceDtoDataBuilder {
+public class ObjectReferenceDtoDataBuilder implements DtoDataBuilder<ObjectReferenceDto> {
 
   private UUID id;
   private String serviceUrl;
@@ -34,11 +35,19 @@ public class ObjectReferenceDtoDataBuilder {
   }
 
   /**
+   * Creates new instance of {@link org.openlmis.stockmanagement.dto.ObjectReferenceDto} with properties.
+   * @return created object reference.
+   */
+  public org.openlmis.stockmanagement.dto.ObjectReferenceDto build() {
+    return new org.openlmis.stockmanagement.dto.ObjectReferenceDto(serviceUrl, path, id);
+  }
+
+  /**
    * Creates new instance of {@link ObjectReferenceDto} with properties.
    * @return created object reference.
    */
-  public ObjectReferenceDto build() {
-    return new ObjectReferenceDto(serviceUrl, path, id);
+  public ObjectReferenceDto buildAsDto() {
+    return new ObjectReferenceDto(id, serviceUrl, path);
   }
 
   public ObjectReferenceDtoDataBuilder withPath(String path) {

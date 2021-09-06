@@ -76,11 +76,9 @@ import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.requisition.domain.AvailableRequisitionColumnOption;
 import org.openlmis.requisition.domain.RequisitionTemplate;
-import org.openlmis.requisition.domain.RequisitionTemplateDataBuilder;
 import org.openlmis.requisition.domain.SourceType;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
-import org.openlmis.requisition.domain.requisition.RequisitionLineItemDataBuilder;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -130,9 +128,7 @@ import org.openlmis.requisition.service.referencedata.SupervisingUsersReferenceD
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
-import org.openlmis.requisition.testutils.IdealStockAmountDtoDataBuilder;
-import org.openlmis.requisition.testutils.StockCardRangeSummaryDtoDataBuilder;
-import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
+import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
@@ -162,6 +158,10 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.fc.FcIntegrationCmmCpService;
+import org.siglus.siglusapi.testutils.IdealStockAmountDtoDataBuilder;
+import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
+import org.siglus.siglusapi.testutils.RequisitionTemplateDataBuilder;
+import org.siglus.siglusapi.testutils.StockCardRangeSummaryDtoDataBuilder;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
@@ -210,7 +210,7 @@ public class SiglusRequisitionServiceTest {
   private RequisitionService requisitionService;
 
   @Mock
-  private RequisitionAuthenticationHelper authenticationHelper;
+  private AuthenticationHelper authenticationHelper;
 
   @Mock
   private SupervisoryNodeReferenceDataService supervisoryNodeService;

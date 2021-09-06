@@ -15,31 +15,35 @@
 
 package org.siglus.siglusapi.testutils;
 
-import java.time.LocalDate;
 import java.util.UUID;
-import org.siglus.common.domain.StockCardExtension;
+import org.openlmis.requisition.dto.ReasonDto;
+import org.openlmis.requisition.dto.ValidReasonDto;
+import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class StockCardExtensionDataBuilder {
+public class ValidReasonDtoDataBuilder implements DtoDataBuilder<ValidReasonDto> {
 
-  private final UUID id = UUID.randomUUID();
-  private UUID stockCardId = UUID.randomUUID();
-  private final LocalDate createDate = DatesUtil.getBaseDate();
+  private UUID programId;
+  private UUID facilityTypeId;
+  private ReasonDto reason;
+  private Boolean hidden;
 
-  public StockCardExtensionDataBuilder() {
+  /**
+   * Builder for {@link ValidReasonDto}.
+   */
+  public ValidReasonDtoDataBuilder() {
+    programId = UUID.randomUUID();
+    facilityTypeId = UUID.randomUUID();
+    reason = new org.siglus.siglusapi.testutils.ReasonDtoDataBuilder().buildAsDto();
+    hidden = false;
   }
 
-  public StockCardExtensionDataBuilder withStockCardId(UUID stockCardId) {
-    this.stockCardId = stockCardId;
-    return this;
-  }
-
-  public StockCardExtensionDataBuilder withArchived(boolean archived) {
-    return this;
-  }
-
-  public StockCardExtension build() {
-    StockCardExtension stockCardExtension = new StockCardExtension(stockCardId, createDate);
-    stockCardExtension.setId(id);
-    return stockCardExtension;
+  @Override
+  public ValidReasonDto buildAsDto() {
+    ValidReasonDto dto = new ValidReasonDto();
+    dto.setProgramId(programId);
+    dto.setFacilityTypeId(facilityTypeId);
+    dto.setReason(reason);
+    dto.setHidden(hidden);
+    return dto;
   }
 }

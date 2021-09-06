@@ -16,43 +16,30 @@
 package org.siglus.siglusapi.testutils;
 
 import java.util.UUID;
-import org.openlmis.requisition.dto.GeographicLevelDto;
-import org.openlmis.requisition.dto.GeographicZoneDto;
+import org.openlmis.requisition.dto.FacilityOperatorDto;
 import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class GeographicZoneDtoDataBuilder implements DtoDataBuilder<GeographicZoneDto> {
-
-  private static int instanceNumber = 0;
+public class FacilityOperatorDtoDataBuilder implements DtoDataBuilder<FacilityOperatorDto> {
 
   private UUID id;
   private String code;
   private String name;
-  private GeographicLevelDto level;
-  private GeographicZoneDto parent;
 
   /**
-   * Creates builder for creating new instance of {@link GeographicZoneDto}.
+   * Creates builder for creating new instance of {@link FacilityOperatorDto}.
    */
-  public GeographicZoneDtoDataBuilder() {
-    instanceNumber++;
-
-    id = UUID.randomUUID();
-    code = "Z" + instanceNumber;
-    name = "zone " + instanceNumber;
-    level = new org.siglus.siglusapi.testutils.GeographicLevelDtoDataBuilder().buildAsDto();
-    parent = null;
+  public FacilityOperatorDtoDataBuilder() {
+    this.id = UUID.randomUUID();
+    this.code = "operatorCode";
+    this.name = "operatorName";
   }
 
-  /**
-   * Creates new instance of {@link GeographicZoneDto} with properties.
-   * @return created facility.
-   */
-  public GeographicZoneDto buildAsDto() {
-    return new GeographicZoneDto(id, code, name, level, parent);
-  }
-
-  public GeographicZoneDtoDataBuilder withLevel(GeographicLevelDto level) {
-    this.level = level;
-    return this;
+  @Override
+  public FacilityOperatorDto buildAsDto() {
+    FacilityOperatorDto operator = new FacilityOperatorDto();
+    operator.setId(id);
+    operator.setCode(code);
+    operator.setName(name);
+    return operator;
   }
 }

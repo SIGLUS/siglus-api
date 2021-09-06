@@ -16,43 +16,37 @@
 package org.siglus.siglusapi.testutils;
 
 import java.util.UUID;
-import org.openlmis.requisition.dto.GeographicLevelDto;
-import org.openlmis.requisition.dto.GeographicZoneDto;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
+import org.openlmis.requisition.dto.RequisitionPeriodDto;
 import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class GeographicZoneDtoDataBuilder implements DtoDataBuilder<GeographicZoneDto> {
-
-  private static int instanceNumber = 0;
+public class RequisitionPeriodDtoDataBuilder
+    implements DtoDataBuilder<RequisitionPeriodDto> {
 
   private UUID id;
-  private String code;
-  private String name;
-  private GeographicLevelDto level;
-  private GeographicZoneDto parent;
+  private UUID requisitionId;
+  private RequisitionStatus requisitionStatus;
 
   /**
-   * Creates builder for creating new instance of {@link GeographicZoneDto}.
+   * Builder for {@link RequisitionPeriodDto}.
    */
-  public GeographicZoneDtoDataBuilder() {
-    instanceNumber++;
-
+  public RequisitionPeriodDtoDataBuilder() {
     id = UUID.randomUUID();
-    code = "Z" + instanceNumber;
-    name = "zone " + instanceNumber;
-    level = new org.siglus.siglusapi.testutils.GeographicLevelDtoDataBuilder().buildAsDto();
-    parent = null;
+    requisitionId = UUID.randomUUID();
+    requisitionStatus = RequisitionStatus.INITIATED;
   }
 
-  /**
-   * Creates new instance of {@link GeographicZoneDto} with properties.
-   * @return created facility.
-   */
-  public GeographicZoneDto buildAsDto() {
-    return new GeographicZoneDto(id, code, name, level, parent);
+  @Override
+  public RequisitionPeriodDto buildAsDto() {
+    RequisitionPeriodDto requisitionPeriodDto = new RequisitionPeriodDto();
+    requisitionPeriodDto.setId(id);
+    requisitionPeriodDto.setRequisitionId(requisitionId);
+    requisitionPeriodDto.setRequisitionStatus(requisitionStatus);
+    return requisitionPeriodDto;
   }
 
-  public GeographicZoneDtoDataBuilder withLevel(GeographicLevelDto level) {
-    this.level = level;
+  public RequisitionPeriodDtoDataBuilder withId(UUID id) {
+    this.id = id;
     return this;
   }
 }

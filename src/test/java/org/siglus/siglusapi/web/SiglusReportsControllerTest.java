@@ -40,7 +40,7 @@ import org.openlmis.requisition.exception.JasperReportViewException;
 import org.openlmis.requisition.repository.RequisitionRepository;
 import org.openlmis.requisition.service.JasperReportsViewService;
 import org.openlmis.requisition.service.PermissionService;
-import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
+import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionLineItemDraft;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
@@ -66,7 +66,7 @@ public class SiglusReportsControllerTest {
   private SiglusReportsController siglusReportsController;
 
   @Mock
-  private RequisitionAuthenticationHelper authenticationHelper;
+  private AuthenticationHelper authenticationHelper;
 
   @Mock
   private RequisitionDraftRepository draftRepository;

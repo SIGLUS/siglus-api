@@ -41,7 +41,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
-import org.openlmis.requisition.domain.requisition.RequisitionLineItemDataBuilder;
 import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionPeriodDto;
@@ -51,13 +50,14 @@ import org.openlmis.requisition.service.PeriodService;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.RequisitionService;
 import org.openlmis.requisition.service.referencedata.PermissionStrings;
-import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
+import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.stockmanagement.util.PageImplRepresentation;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.testutils.ProcessingPeriodDtoDataBuilder;
+import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
 import org.siglus.siglusapi.validator.SiglusProcessingPeriodValidator;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -79,7 +79,7 @@ public class SiglusProcessingPeriodServiceTest {
   private SiglusProcessingPeriodValidator siglusProcessingPeriodValidator;
 
   @Mock
-  private RequisitionAuthenticationHelper requisitionAuthenticationHelper;
+  private AuthenticationHelper authenticationHelper;
 
   @Mock
   private PermissionService permissionService;

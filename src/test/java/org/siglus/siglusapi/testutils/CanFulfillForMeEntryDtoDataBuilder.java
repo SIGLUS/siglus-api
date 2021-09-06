@@ -59,18 +59,18 @@ public class CanFulfillForMeEntryDtoDataBuilder {
                                                                 OrderableDto orderable) {
     return this
         .withStockOnHand(stockCard != null ? stockCard.getStockOnHand() : 0)
-        .withOrderable(new org.siglus.siglusapi.testutils.ObjectReferenceDtoDataBuilder()
+        .withOrderable(new ObjectReferenceDtoDataBuilder()
             .withPath("orderables")
             .withId(orderable.getId())
             .build())
         .withStockCard(stockCard != null
-            ? new org.siglus.siglusapi.testutils.ObjectReferenceDtoDataBuilder()
+            ? new ObjectReferenceDtoDataBuilder()
             .withPath("stockCards")
             .withId(stockCard.getId())
             .build()
             : null)
         .withLot(stockCard != null
-            ? new org.siglus.siglusapi.testutils.ObjectReferenceDtoDataBuilder()
+            ? new ObjectReferenceDtoDataBuilder()
             .withPath("lots")
             .withId(stockCard.getLotId())
             .build()

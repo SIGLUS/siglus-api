@@ -15,31 +15,28 @@
 
 package org.siglus.siglusapi.testutils;
 
-import java.time.LocalDate;
-import java.util.UUID;
-import org.siglus.common.domain.StockCardExtension;
+import java.util.HashSet;
+import java.util.Set;
+import org.openlmis.requisition.dto.RightDto;
+import org.openlmis.requisition.dto.RoleDto;
+import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class StockCardExtensionDataBuilder {
+public class RoleDtoDataBuilder implements DtoDataBuilder<RoleDto> {
+  private String name;
+  private String description;
+  private Set<RightDto> rights;
 
-  private final UUID id = UUID.randomUUID();
-  private UUID stockCardId = UUID.randomUUID();
-  private final LocalDate createDate = DatesUtil.getBaseDate();
-
-  public StockCardExtensionDataBuilder() {
+  /**
+   * Builder for {@link RoleDto}.
+   */
+  public RoleDtoDataBuilder() {
+    name = "name";
+    description = "description";
+    rights = new HashSet<>();
   }
 
-  public StockCardExtensionDataBuilder withStockCardId(UUID stockCardId) {
-    this.stockCardId = stockCardId;
-    return this;
-  }
-
-  public StockCardExtensionDataBuilder withArchived(boolean archived) {
-    return this;
-  }
-
-  public StockCardExtension build() {
-    StockCardExtension stockCardExtension = new StockCardExtension(stockCardId, createDate);
-    stockCardExtension.setId(id);
-    return stockCardExtension;
+  @Override
+  public RoleDto buildAsDto() {
+    return new RoleDto(name, description, rights);
   }
 }

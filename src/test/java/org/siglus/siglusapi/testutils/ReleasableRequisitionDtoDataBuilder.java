@@ -15,31 +15,37 @@
 
 package org.siglus.siglusapi.testutils;
 
-import java.time.LocalDate;
 import java.util.UUID;
-import org.siglus.common.domain.StockCardExtension;
+import org.openlmis.requisition.dto.ReleasableRequisitionDto;
+import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class StockCardExtensionDataBuilder {
+public class ReleasableRequisitionDtoDataBuilder implements
+    DtoDataBuilder<ReleasableRequisitionDto> {
 
-  private final UUID id = UUID.randomUUID();
-  private UUID stockCardId = UUID.randomUUID();
-  private final LocalDate createDate = DatesUtil.getBaseDate();
+  private UUID requisitionId;
+  private UUID supplyingDepotId;
 
-  public StockCardExtensionDataBuilder() {
+  /**
+   * Builder for {@link ReleasableRequisitionDto}.
+   */
+  public ReleasableRequisitionDtoDataBuilder() {
+    requisitionId = UUID.randomUUID();
+    supplyingDepotId = UUID.randomUUID();
   }
 
-  public StockCardExtensionDataBuilder withStockCardId(UUID stockCardId) {
-    this.stockCardId = stockCardId;
+
+  @Override
+  public ReleasableRequisitionDto buildAsDto() {
+    return new ReleasableRequisitionDto(requisitionId, supplyingDepotId);
+  }
+
+  public ReleasableRequisitionDtoDataBuilder withRequisitionId(UUID requisitionId) {
+    this.requisitionId = requisitionId;
     return this;
   }
 
-  public StockCardExtensionDataBuilder withArchived(boolean archived) {
+  public ReleasableRequisitionDtoDataBuilder withSupplyingDepotId(UUID supplyingDepotId) {
+    this.supplyingDepotId = supplyingDepotId;
     return this;
-  }
-
-  public StockCardExtension build() {
-    StockCardExtension stockCardExtension = new StockCardExtension(stockCardId, createDate);
-    stockCardExtension.setId(id);
-    return stockCardExtension;
   }
 }

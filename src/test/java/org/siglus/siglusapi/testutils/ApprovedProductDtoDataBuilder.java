@@ -15,24 +15,62 @@
 
 package org.siglus.siglusapi.testutils;
 
-import org.openlmis.stockmanagement.dto.referencedata.ApprovedProductDto;
-import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
+import java.time.ZonedDateTime;
+import java.util.UUID;
+import org.openlmis.requisition.dto.ApprovedProductDto;
+import org.openlmis.requisition.dto.MetadataDto;
+import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.dto.ProgramDto;
+import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class ApprovedProductDtoDataBuilder {
+public class ApprovedProductDtoDataBuilder implements DtoDataBuilder<ApprovedProductDto> {
+  private UUID id = UUID.randomUUID();
+  private Long versionNumber = 1L;
+  private ZonedDateTime lastUpdated = ZonedDateTime.now();
+  private OrderableDto orderable = new OrderableDtoDataBuilder().buildAsDto();
+  private ProgramDto program = new ProgramDtoDataBuilder().buildAsDto();
+  private Double maxPeriodsOfStock = 3.0;
+  private Double minPeriodsOfStock = 1.5;
+  private Double emergencyOrderPoint = 1.0;
 
-  private OrderableDto orderable;
+  public ApprovedProductDtoDataBuilder withOrderable(OrderableDto orderable) {
+    this.orderable = orderable;
+    return this;
+  }
 
-  public ApprovedProductDtoDataBuilder() {
-    orderable = new OrderableDtoDataBuilder().build();
+  public ApprovedProductDtoDataBuilder withProgram(ProgramDto program) {
+    this.program = program;
+    return this;
+  }
+
+  public ApprovedProductDtoDataBuilder withMaxPeriodsOfStock(double maxPeriodsOfStock) {
+    this.maxPeriodsOfStock = maxPeriodsOfStock;
+    return this;
+  }
+
+  public ApprovedProductDtoDataBuilder withId(UUID id) {
+    this.id = id;
+    return this;
+  }
+
+  public ApprovedProductDtoDataBuilder withVersionNumber(Long versionNumber) {
+    this.versionNumber = versionNumber;
+    return this;
   }
 
   /**
    * Creates new instance of {@link ApprovedProductDto} with properties.
    * @return created approved product dto
    */
-  public ApprovedProductDto build() {
-    ApprovedProductDto approvedProductDto = new ApprovedProductDto(orderable);
-    approvedProductDto.setId(orderable.getId());
-    return approvedProductDto;
+  public ApprovedProductDto buildAsDto() {
+    ApprovedProductDto dto = new ApprovedProductDto();
+    dto.setId(id);
+    dto.setMaxPeriodsOfStock(maxPeriodsOfStock);
+    dto.setMinPeriodsOfStock(minPeriodsOfStock);
+    dto.setEmergencyOrderPoint(emergencyOrderPoint);
+    dto.setOrderable(orderable);
+    dto.setProgram(program);
+    dto.setMeta(new MetadataDto(versionNumber, lastUpdated));
+    return dto;
   }
 }

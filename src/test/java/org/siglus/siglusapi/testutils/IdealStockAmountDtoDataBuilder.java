@@ -16,35 +16,31 @@
 package org.siglus.siglusapi.testutils;
 
 import java.util.UUID;
-import org.openlmis.requisition.dto.GeographicLevelDto;
+import org.openlmis.requisition.dto.IdealStockAmountDto;
+import org.openlmis.requisition.dto.ObjectReferenceDto;
 import org.siglus.siglusapi.testutils.api.DtoDataBuilder;
 
-public class GeographicLevelDtoDataBuilder implements DtoDataBuilder<GeographicLevelDto> {
+public class IdealStockAmountDtoDataBuilder implements DtoDataBuilder<IdealStockAmountDto> {
+  private UUID id = UUID.randomUUID();
+  private ObjectReferenceDto facility = new ObjectReferenceDto(UUID.randomUUID());
+  private ObjectReferenceDto commodityType = new ObjectReferenceDto(UUID.randomUUID());
+  private ObjectReferenceDto processingPeriod = new ObjectReferenceDto(UUID.randomUUID());
+  private Integer amount = 1000;
 
-  private static int instanceNumber = 0;
-
-  private UUID id;
-  private String code;
-  private String name;
-  private Integer levelNumber;
-
-  /**
-   * Creates builder for creating new instance of {@link GeographicLevelDto}.
-   */
-  public GeographicLevelDtoDataBuilder() {
-    instanceNumber++;
-
-    id = UUID.randomUUID();
-    code = "GL" + instanceNumber;
-    name = "geographic level " + instanceNumber;
-    levelNumber = 1;
+  public IdealStockAmountDtoDataBuilder withCommodityTypeId(UUID id) {
+    commodityType = new ObjectReferenceDto(id);
+    return this;
   }
 
   /**
-   * Creates new instance of {@link GeographicLevelDto} with properties.
-   * @return created facility.
+   * Create new instance of {@link IdealStockAmountDto}.
    */
-  public GeographicLevelDto buildAsDto() {
-    return new GeographicLevelDto(id, code, name, levelNumber);
+  public IdealStockAmountDto buildAsDto() {
+    IdealStockAmountDto dto = new IdealStockAmountDto(
+        facility, commodityType, processingPeriod, amount
+    );
+    dto.setId(id);
+
+    return dto;
   }
 }
