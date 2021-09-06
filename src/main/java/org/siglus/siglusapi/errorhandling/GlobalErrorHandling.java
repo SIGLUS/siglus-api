@@ -60,7 +60,7 @@ import org.zalando.problem.spring.web.advice.validation.Violation;
 @Slf4j
 @RequiredArgsConstructor
 @Order(Ordered.LOWEST_PRECEDENCE)
-public class SiglusGlobalErrorHandling implements ProblemHandling {
+public class GlobalErrorHandling implements ProblemHandling {
 
   private static final String MESSAGE_KEY = "messageKey";
   private static final String MESSAGE = "message";

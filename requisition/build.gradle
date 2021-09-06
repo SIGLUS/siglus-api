@@ -38,7 +38,7 @@ repositories {
 
 dependencies {
     compile project(":common")
-    compile 'org.openlmis:siglus-api-extension:1.22'
+    compile 'org.openlmis:siglus-api-extension:1.26'
     compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate4"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
     compile "net.sf.jasperreports:jasperreports:6.3.0"

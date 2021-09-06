@@ -46,9 +46,9 @@ import org.zalando.problem.ProblemModule;
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals"})
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {
-    ExceptionHandlerExceptionResolver.class, ObjectMapper.class, SiglusGlobalErrorHandling.class
+    ExceptionHandlerExceptionResolver.class, ObjectMapper.class, GlobalErrorHandling.class
 })
-public class SiglusGlobalErrorHandlingMvcTest {
+public class GlobalErrorHandlingMvcTest {
 
   static final String ERROR_MESSAGE = "error-message";
 

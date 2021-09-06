@@ -17,7 +17,7 @@ package org.siglus.siglusapi.errorhandling;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.siglus.siglusapi.errorhandling.SiglusGlobalErrorHandlingMvcTest.ERROR_MESSAGE;
+import static org.siglus.siglusapi.errorhandling.GlobalErrorHandlingMvcTest.ERROR_MESSAGE;
 
 import java.util.HashSet;
 import java.util.Set;

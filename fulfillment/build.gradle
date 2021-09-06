@@ -38,7 +38,7 @@ repositories {
 dependencies {
     compile project(":common")
     compile project(':requisition')
-    compile 'org.openlmis:siglus-api-extension:1.22'
+    compile 'org.openlmis:siglus-api-extension:1.26'
     compile "org.springframework.boot:spring-boot-starter-web"
     compile "org.springframework.boot:spring-boot-starter-data-jpa"
     compile "org.projectlombok:lombok:1.16.8"
