@@ -15,18 +15,38 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static java.util.stream.Collectors.toMap;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
+import org.openlmis.fulfillment.repository.ProofOfDeliveryRepository;
 import org.openlmis.fulfillment.service.FulfillmentPermissionService;
+import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
+import org.openlmis.stockmanagement.service.referencedata.StockmanagementLotReferenceDataService;
+import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
+import org.siglus.siglusapi.dto.android.response.ConfirmPodResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
+import org.siglus.siglusapi.repository.SiglusProofOfDeliveryLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
+import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,29 +59,64 @@ public class ProofOfDeliveryConfirmService {
   private final SiglusAuthenticationHelper authHelper;
   private final SiglusProofOfDeliveryRepository podRepository;
   private final FulfillmentPermissionService fulfillmentPermissionService;
+  private final SiglusOrderableService orderableService;
+  private final StockmanagementLotReferenceDataService lotService;
+  private final ProofOfDeliveryRepository proofOfDeliveryRepository;
+  private final SiglusProofOfDeliveryLineItemRepository podLineItemRepository;
+  private final SiglusValidReasonAssignmentService validReasonAssignmentService;
+  private final SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   @Transactional
-  public PodResponse confirmProofsOfDelivery(@Valid PodRequest podRequest) {
+  public ConfirmPodResponse confirmProofsOfDelivery(@Valid PodRequest podRequest) {
     UserDto user = authHelper.getCurrentUser();
+    FacilityDto homeFacility = facilityReferenceDataService.getFacilityById(user.getHomeFacilityId());
     String syncUpHash = podRequest.getSyncUpHash(user);
-    ProofOfDelivery pod = podRepository.findByOrderCode(podRequest.getOrder().getCode());
+    ProofOfDelivery pod = podRepository.findInitiatedPodByOrderNumber(podRequest.getOrder().getCode());
+    if (pod == null) {
+      return ConfirmPodResponse.builder()
+          .status(HttpStatus.NOT_FOUND.value())
+          .orderNumber(podRequest.getOrder().getCode())
+          .message(PodConstants.NOT_EXIST_MESSAGE)
+          .messageInPortuguese(PodConstants.NOT_EXIST_MESSAGE_PT)
+          .build();
+    }
     if (syncUpHashRepository.findOne(syncUpHash) != null) {
       log.info("skip confirm ProofsOfDelivery as syncUpHash: {} existed", syncUpHash);
-      return toPodResponse(pod);
+      return ConfirmPodResponse.builder()
+          .status(HttpStatus.OK.value())
+          .orderNumber(podRequest.getOrder().getCode())
+          .podResponse(new PodResponse())
+          .build();
     }
-    return toPodResponse(updatePod(pod, podRequest, syncUpHash));
+    fulfillmentPermissionService.canManagePod(pod);
+    updatePod(pod, podRequest, syncUpHash);
+    updatePodLineItems(pod, podRequest, homeFacility);
+    return ConfirmPodResponse.builder()
+        .status(HttpStatus.OK.value())
+        .orderNumber(podRequest.getOrder().getCode())
+        .podResponse(new PodResponse())
+        .build();
   }
 
-  private ProofOfDelivery updatePod(ProofOfDelivery toUpdate, PodRequest podRequest, String syncUpHash) {
-    fulfillmentPermissionService.canManagePod(toUpdate);
-    log.info("confirm android proofOfDelivery: {}", toUpdate);
-    ProofOfDelivery updatedPdo = podRepository.save(toUpdate);
+  private void updatePod(ProofOfDelivery toUpdatePod, PodRequest podRequest, String syncUpHash) {
+    log.info("confirm android proofOfDelivery: {}", toUpdatePod);
+    podRepository.updatePodById(podRequest.getDeliveredBy(), podRequest.getReceivedBy(), podRequest.getReceivedDate(),
+        ProofOfDeliveryStatus.CONFIRMED, toUpdatePod.getId());
     log.info("save ProofsOfDelivery syncUpHash: {}", syncUpHash);
     syncUpHashRepository.save(new SyncUpHash(syncUpHash));
-    return updatedPdo;
   }
 
-  private PodResponse toPodResponse(ProofOfDelivery proofOfDelivery) {
-    return new PodResponse();
+  private void updatePodLineItems(ProofOfDelivery toUpdatePod, PodRequest podRequest, FacilityDto homeFacility) {
+    Map<String, String> orderableCodeToTradeItemId = podRequest.getProducts().stream()
+        .map(o -> orderableService.getOrderableByCode(o.getCode()))
+        .collect(Collectors.toMap(OrderableDto::getProductCode, OrderableDto::getTradeItemIdentifier));
+    Map<UUID, String> reasonNamesById = validReasonAssignmentService
+        .getValidReasonsForAllProducts(homeFacility.getType().getId(), null, null).stream()
+        .collect(toMap(ValidReasonAssignmentDto::getId, r -> r.getReason().getName()));
+
+    List<ProofOfDeliveryLineItem> podLineItems = podLineItemRepository.findByProofOfDeliveryId(toUpdatePod.getId());
+    log.info("delete pod line items by pod id: {}", toUpdatePod.getId());
+    podLineItemRepository.delete(podLineItems);
+    // insert podLineItems
   }
 }

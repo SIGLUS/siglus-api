@@ -75,7 +75,7 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
     });
   }
 
-  default ProofOfDelivery findByOrderCode(@Param("orderCode") String orderCode) {
+  default ProofOfDelivery findInitiatedPodByOrderNumber(@Param("orderCode") String orderCode) {
     return findOne(((root, query, cb) -> {
       Path<Shipment> shipmentRoot = root.get("shipment");
       Path<Order> orderRoot = shipmentRoot.get("order");
@@ -85,4 +85,14 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       );
     }));
   }
+
+  @Query(value = "update fulfillment.proofs_of_delivery pod "
+      + "set pod.deliveredby = :deliveredby , pod.receivedby = :receivedby, pod.receiveddate = :receiveddate, "
+      + "pod.status = :status "
+      + "where pod.id = :id", nativeQuery = true)
+  void updatePodById(@Param("deliveredby") String deliveredBy,
+      @Param("receivedby") String receivedBy,
+      @Param("receiveddate") LocalDate receivedDate,
+      @Param("status") ProofOfDeliveryStatus status,
+      @Param("id") UUID proofOfDeliveryId);
 }

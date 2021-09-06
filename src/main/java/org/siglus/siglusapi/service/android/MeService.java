@@ -81,6 +81,7 @@ import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
+import org.siglus.siglusapi.dto.android.response.ConfirmPodResponse;
 import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
@@ -346,7 +347,7 @@ public class MeService {
         .collect(toList());
   }
 
-  public PodResponse confirmProofOfDelivery(PodRequest podRequest) {
+  public ConfirmPodResponse confirmProofOfDelivery(PodRequest podRequest) {
     return podConfirmService.confirmProofsOfDelivery(podRequest);
   }
 
