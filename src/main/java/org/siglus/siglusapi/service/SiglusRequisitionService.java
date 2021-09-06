@@ -109,8 +109,8 @@ import org.openlmis.requisition.service.referencedata.SupervisingUsersReferenceD
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.openlmis.requisition.service.stockmanagement.StockCardRangeSummaryStockManagementService;
 import org.openlmis.requisition.service.stockmanagement.StockOnHandRetrieverBuilderFactory;
+import org.openlmis.requisition.utils.AuthenticationHelper;
 import org.openlmis.requisition.utils.Message;
-import org.openlmis.requisition.utils.RequisitionAuthenticationHelper;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
@@ -216,7 +216,7 @@ public class SiglusRequisitionService {
   private RequisitionRepository requisitionRepository;
 
   @Autowired
-  RequisitionAuthenticationHelper authenticationHelper;
+  AuthenticationHelper authenticationHelper;
 
   @Autowired
   ApprovedProductReferenceDataService approvedProductReferenceDataService;

@@ -39,7 +39,6 @@ import org.javers.repository.sql.SqlRepositoryBuilder;
 import org.javers.spring.boot.sql.JaversSqlProperties;
 import org.javers.spring.jpa.TransactionalJaversBuilder;
 import org.openlmis.fulfillment.i18n.FulfillmentExposedMessageSourceImpl;
-import org.openlmis.requisition.i18n.RequisitionExposedMessageSourceImpl;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.config.CustomBeanNameGenerator;
@@ -166,8 +165,10 @@ public class Application {
   }
 
   @Bean
-  public RequisitionExposedMessageSourceImpl requisitionMessageSource() {
-    RequisitionExposedMessageSourceImpl messageSource = new RequisitionExposedMessageSourceImpl();
+  @Primary
+  public org.openlmis.requisition.i18n.ExposedMessageSourceImpl requisitionMessageSource() {
+    org.openlmis.requisition.i18n.ExposedMessageSourceImpl messageSource =
+        new org.openlmis.requisition.i18n.ExposedMessageSourceImpl();
     messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
     messageSource.setDefaultEncoding(UTF_8);
     messageSource.setUseCodeAsDefaultMessage(true);

@@ -37,8 +37,7 @@ repositories {
 
 // NOTE: do NOT use implementation, otherwise the SpringBoot won't pack the dependencies into the fat jar
 dependencies {
-    compile 'org.openlmis:siglus-api-extension:1.26'
-    compile project(':requisition')
+    compile 'org.openlmis:siglus-api-extension:1.33'
     compile project(':fulfillment')
 
     compile "org.springframework.boot:spring-boot-starter-web"
@@ -79,6 +78,7 @@ dependencies {
     compile 'org.zalando:problem-spring-web:0.23.0'
     compile 'com.alibaba:fastjson:1.2.76'
     compile 'org.zalando:logbook-spring-boot-starter:2.11.0'
+    compile 'org.javers:javers-spring-boot-starter-sql:3.11.6'
 
     testCompileOnly 'org.projectlombok:lombok:1.18.20'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
