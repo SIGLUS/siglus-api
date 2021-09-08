@@ -26,6 +26,7 @@ import java.time.YearMonth;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,6 +74,7 @@ import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
@@ -246,7 +248,9 @@ public class MeService {
         .build();
     CreateStockCardResponse createStockCardResponse;
     FacilityDto facilityDto = getCurrentFacilityInfo();
-    stockCardCreateContextHolder.initContext(facilityDto);
+    LocalDate earliest = requests.stream().map(StockCardCreateRequest::getEventTime).map(EventTime::getOccurredDate)
+        .min(Comparator.naturalOrder()).orElseThrow(IllegalStateException::new);
+    stockCardCreateContextHolder.initContext(facilityDto, earliest);
     try {
       validatedStockCards = stockCardCreateRequestValidator.validateStockCardCreateRequest(requests);
       createStockCardResponse = CreateStockCardResponse.from(validatedStockCards);

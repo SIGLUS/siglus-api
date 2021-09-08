@@ -22,10 +22,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import javax.annotation.Nonnull;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
@@ -37,6 +39,7 @@ import org.siglus.siglusapi.dto.android.constraint.stockcard.SupportReasonName;
 import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 
 @Data
+@NoArgsConstructor
 @ProductConsistentWithOwnLots
 @ProductPositiveInitStockOnHand
 @FacilityApprovedProduct(groups = PerformanceGroup.class)
@@ -76,6 +79,8 @@ public class StockCardCreateRequest implements StockCardAdjustment {
 
   @Valid
   @JsonProperty("lotEventList")
+  @NotNull
+  @Nonnull
   private List<StockCardLotEventRequest> lotEvents;
 
   @Override

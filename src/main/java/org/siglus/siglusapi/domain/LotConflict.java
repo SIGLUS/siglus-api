@@ -58,4 +58,13 @@ public class LotConflict extends BaseEntity {
     return conflict;
   }
 
+  public static LotConflict of(UUID facilityId, UUID existedLotId, String lotCode, LocalDate expirationDate) {
+    LotConflict conflict = new LotConflict();
+    conflict.facilityId = facilityId;
+    conflict.lotId = existedLotId;
+    conflict.lotCode = lotCode;
+    conflict.expirationDate = expirationDate;
+    return conflict;
+  }
+
 }

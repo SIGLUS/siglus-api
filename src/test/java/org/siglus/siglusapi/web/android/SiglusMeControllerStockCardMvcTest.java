@@ -20,7 +20,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -34,12 +33,14 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableMap;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 import org.junit.Before;
@@ -63,13 +64,18 @@ import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
-import org.siglus.siglusapi.domain.StockEventProductRequested;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
+import org.siglus.siglusapi.dto.android.ProductLotCode;
+import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
+import org.siglus.siglusapi.dto.android.db.PhysicalInventory;
+import org.siglus.siglusapi.dto.android.db.ProductLot;
+import org.siglus.siglusapi.dto.android.db.StockCard;
 import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
 import org.siglus.siglusapi.dto.android.enumeration.Destination;
 import org.siglus.siglusapi.dto.android.enumeration.Source;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
+import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
@@ -114,14 +120,17 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   @Mock
   private SiglusStockEventsService stockEventsService;
   @Mock
-  private StockEventProductRequestedRepository requestQuantityRepository;
-  @Mock
-  @SuppressWarnings("unused")
   private StockManagementRepository stockManagementRepository;
   @Mock
   private StockCardCreateRequestValidator stockCardCreateRequestValidator;
   @Mock
   private AndroidHelper androidHelper;
+  @Mock
+  @SuppressWarnings("unused")
+  private StockCardRequestBackupRepository stockCardRequestBackupRepository;
+  @Mock
+  @SuppressWarnings("unused")
+  private StockEventProductRequestedRepository requestQuantityRepository;
 
   @InjectMocks
   private StockCardCreateContextHolder holder;
@@ -145,8 +154,29 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     mockReasons();
     ReflectionTestUtils.setField(service, "stockCardCreateContextHolder", holder);
     ReflectionTestUtils.setField(service, "stockCardCreateService", stockCardCreateService);
-    when(stockManagementRepository.getLatestProductMovements(any()))
-        .thenReturn(new PeriodOfProductMovements(emptyList(), null));
+    StocksOnHand stocksOnHand = new StocksOnHand(emptyList());
+    when(stockManagementRepository.getAllProductMovements(any(), any(LocalDate.class)))
+        .thenReturn(new PeriodOfProductMovements(emptyList(), stocksOnHand));
+    when(stockManagementRepository.getStockOnHand(any())).thenReturn(stocksOnHand);
+    when(stockManagementRepository.ensureLot(any(), any(), any())).then(a -> {
+      String productCode = a.getArgumentAt(0, OrderableDto.class).getProductCode();
+      String lotCode = a.getArgumentAt(1, String.class);
+      LocalDate expirationDate = a.getArgumentAt(2, LocalDate.class);
+      ProductLotCode code = ProductLotCode.of(productCode, lotCode);
+      ProductLot productLot = new ProductLot(code, expirationDate);
+      productLot.setId(UUID.randomUUID());
+      return productLot;
+    });
+    when(stockManagementRepository.createStockCard(any())).then(a -> {
+      StockCard stockCard = a.getArgumentAt(0, StockCard.class);
+      stockCard.setId(UUID.randomUUID());
+      return stockCard;
+    });
+    when(stockManagementRepository.createPhysicalInventory(any())).then(a -> {
+      PhysicalInventory inventory = a.getArgumentAt(0, PhysicalInventory.class);
+      inventory.setId(UUID.randomUUID());
+      return inventory;
+    });
     SiglusMeController controller = new SiglusMeController(service);
     this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     mapper.registerModule(new JavaTimeModule());
@@ -175,8 +205,13 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     // then
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
-    verify(stockEventsService, times(13)).createStockEventForNoDraftAllProducts(any());
-    verify(requestQuantityRepository, times(2)).save(anyListOf(StockEventProductRequested.class));
+    verify(stockManagementRepository, times(3)).ensureLot(any(), any(), any());
+    verify(stockManagementRepository, times(12)).createStockCard(any());
+    verify(stockManagementRepository, times(9)).createStockEvent(any());
+    verify(stockManagementRepository, times(52)).createStockEventLine(any(), any(), any());
+    verify(stockManagementRepository, times(52)).createStockCardLine(any(), any(), any());
+    verify(stockManagementRepository, times(2)).createPhysicalInventory(any());
+    verify(stockManagementRepository, times(5)).createPhysicalInventoryLine(any(), any(), any());
   }
 
   @Test
@@ -196,14 +231,20 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     // then
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
-    verify(stockEventsService, times(1)).createStockEventForNoDraftAllProducts(any());
-    verify(requestQuantityRepository, times(1)).save(anyListOf(StockEventProductRequested.class));
+    verify(stockManagementRepository, times(1)).ensureLot(any(), any(), any());
+    verify(stockManagementRepository, times(1)).createStockCard(any());
+    verify(stockManagementRepository, times(1)).createStockEvent(any());
+    verify(stockManagementRepository, times(1)).createStockEventLine(any(), any(), any());
+    verify(stockManagementRepository, times(1)).createStockCardLine(any(), any(), any());
+    verify(stockManagementRepository, times(0)).createPhysicalInventory(any());
+    verify(stockManagementRepository, times(0)).createPhysicalInventoryLine(any(), any(), any());
   }
 
   private void mockHomeFacility() {
     UserDto user = new UserDto();
     user.setHomeFacilityId(facilityId);
     user.setId(userId);
+    when(authHelper.getCurrentUserId()).thenReturn(Optional.of(userId));
     when(authHelper.getCurrentUser()).thenReturn(user);
     FacilityDto facility = new FacilityDto();
     facility.setId(facilityId);
@@ -298,6 +339,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
     approvedProduct.setOrderable(orderable);
+    orderable.setId(UUID.randomUUID());
     orderable.setProductCode(productCode);
     orderable.setExtraData(new HashMap<>());
     ProgramOrderableDto program = new ProgramOrderableDto();

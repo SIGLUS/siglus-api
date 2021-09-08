@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto.android.validator.stockcard;
 
+import static org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder.getContext;
+
 import java.util.UUID;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
@@ -25,7 +27,6 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.constant.ValidatorConstants;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.FacilityApprovedProduct;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
-import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -41,10 +42,10 @@ public class FacilityApprovedProductValidator implements
 
   @Override
   public boolean isValid(StockCardCreateRequest value, ConstraintValidatorContext context) {
-    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    UUID homeFacilityId = getContext().getFacility().getId();
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable(ValidatorConstants.PRODUCT_CODE, value.getProductCode());
     actualContext.addExpressionVariable("facilityId", homeFacilityId);
-    return StockCardCreateContextHolder.getContext().isApprovedByCurrentFacility(value.getProductCode());
+    return getContext().isApprovedByCurrentFacility(value.getProductCode());
   }
 }

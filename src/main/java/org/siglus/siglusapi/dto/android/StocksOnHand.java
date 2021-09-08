@@ -15,15 +15,21 @@
 
 package org.siglus.siglusapi.dto.android;
 
+import static java.util.Comparator.naturalOrder;
+import static java.util.Comparator.nullsLast;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 import org.siglus.common.constant.KitConstants;
 
 public class StocksOnHand {
@@ -116,6 +122,18 @@ public class StocksOnHand {
 
   public Lot getLot(ProductLotCode productLotCode) {
     return lots.get(productLotCode);
+  }
+
+  public LocalDate getTheEarliestDate(@Nonnull LocalDate incoming) {
+    requireNonNull(incoming);
+    LocalDate fromKit = kitInventories.values().stream().map(InventoryDetail::getEventTime)
+        .map(EventTime::getOccurredDate).min(naturalOrder()).orElse(null);
+    LocalDate fromNoStock = noStockInventories.values().stream().map(InventoryDetail::getEventTime)
+        .map(EventTime::getOccurredDate).min(naturalOrder()).orElse(null);
+    LocalDate fromLot = lotInventories.values().stream().map(InventoryDetail::getEventTime)
+        .map(EventTime::getOccurredDate).min(naturalOrder()).orElse(null);
+    return Stream.of(fromKit, fromNoStock, fromLot, incoming).min(nullsLast(naturalOrder()))
+        .orElseThrow(IllegalStateException::new);
   }
 
 }

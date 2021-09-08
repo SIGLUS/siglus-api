@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.android.context;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -30,6 +31,9 @@ import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
+import org.siglus.siglusapi.dto.android.StocksOnHand;
+import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
@@ -46,6 +50,7 @@ public class StockCardCreateContextHolder {
   private final SupportedProgramsHelper programsHelper;
   private final ProgramReferenceDataService programDataService;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
+  private final StockManagementRepository stockManagementRepository;
 
   public static StockCardCreateContext getContext() {
     StockCardCreateContext context = HOLDER.get();
@@ -59,7 +64,11 @@ public class StockCardCreateContextHolder {
     HOLDER.remove();
   }
 
-  public void initContext(FacilityDto facility) {
+  public void initContext(FacilityDto facility, LocalDate earliest) {
+    StocksOnHand stockOnHand = stockManagementRepository.getStockOnHand(facility.getId());
+    earliest = stockOnHand.getTheEarliestDate(earliest);
+    PeriodOfProductMovements allProductMovements = stockManagementRepository
+        .getAllProductMovements(facility.getId(), earliest);
     UUID facilityTypeId = facility.getType().getId();
     Collection<ValidReasonAssignmentDto> reasons = reasonService.getAllReasons(facilityTypeId);
     Collection<ValidSourceDestinationDto> destinations = nodeService.findDestinationsForAllProducts(facility.getId());
@@ -70,7 +79,8 @@ public class StockCardCreateContextHolder {
         .map(program -> getProgramProducts(facility.getId(), program))
         .flatMap(Collection::stream)
         .collect(toList());
-    StockCardCreateContext context = new StockCardCreateContext(reasons, sources, destinations, products);
+    StockCardCreateContext context = new StockCardCreateContext(facility, reasons, sources, destinations, products,
+        allProductMovements);
     HOLDER.set(context);
   }
 

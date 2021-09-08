@@ -722,7 +722,7 @@ public class MeServiceTest {
     service.createStockCards(stockCardCreateRequests);
 
     // then
-    verify(stockCardCreateContextHolder, times(1)).initContext(any());
+    verify(stockCardCreateContextHolder, times(1)).initContext(any(), any());
   }
 
   @Test

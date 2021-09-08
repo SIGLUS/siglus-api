@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.service.android;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.ParametersAreNullableByDefault;
@@ -24,8 +23,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
-import org.siglus.siglusapi.dto.android.ProductMovement;
-import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
@@ -59,13 +56,4 @@ public class StockCardSearchService {
     return mapper.toResponses(period);
   }
 
-  public StocksOnHand getLatestStockOnHand() {
-    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    return stockManagementRepository.getStockOnHand(facilityId);
-  }
-
-  public List<ProductMovement> getLatestProductMovements() {
-    UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    return stockManagementRepository.getLatestProductMovements(facilityId).getProductMovements();
-  }
 }

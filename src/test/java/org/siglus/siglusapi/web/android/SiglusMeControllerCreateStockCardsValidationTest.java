@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web.android;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
@@ -83,7 +84,6 @@ import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.dto.android.validator.stockcard.FacilityApprovedProductValidator;
 import org.siglus.siglusapi.dto.android.validator.stockcard.KitProductEmptyLotsValidator;
 import org.siglus.siglusapi.dto.android.validator.stockcard.LotStockConsistentWithExistedValidator;
-import org.siglus.siglusapi.dto.android.validator.stockcard.ProductMovementConsistentWithExistedValidator;
 import org.siglus.siglusapi.dto.android.validator.stockcard.SupportReasonNameValidator;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -172,7 +172,9 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     method = StockCardCreateService.class.getDeclaredMethod("createStockCards", List.class);
     orderableService = mock(SiglusOrderableService.class);
     OrderableDto notKitProduct = mock(OrderableDto.class);
+    when(notKitProduct.getPrograms()).thenReturn(emptySet());
     OrderableDto kitProduct = mock(OrderableDto.class);
+    when(kitProduct.getPrograms()).thenReturn(emptySet());
     when(kitProduct.getIsKit()).thenReturn(true);
     when(orderableService.getOrderableByCode(any())).then(invocation -> {
       String productCode = invocation.getArgumentAt(0, String.class);
@@ -220,8 +222,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         .lotMovements(singletonList(newLotMovement(movementDetail, 200)))
         .stockQuantity(200)
         .build();
-    when(stockManagementRepository.getLatestProductMovements(any()))
-        .thenReturn(new PeriodOfProductMovements(asList(movement0, movement1, movement2), null));
+    when(stockManagementRepository.getAllProductMovements(any(), any(LocalDate.class)))
+        .thenReturn(new PeriodOfProductMovements(asList(movement0, movement1, movement2), stocksOnHand));
     mockFacilitySupportOrdrables();
   }
 
@@ -255,7 +257,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     Map<String, List<String>> violations = executeValidation(param);
 
     // then
-    assertEquals(6, violations.size());
+    assertEquals(7, violations.size());
     // could be empty when product is kit
     // assertViolation(MAY_NOT_BE_EMPTY,        "createStockCards.arg0[0].lotEvents", violations);
     assertViolation(MAY_NOT_BE_NULL, "createStockCards.arg0[0].occurredDate", violations);
@@ -264,6 +266,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     assertViolation(MAY_NOT_BE_NULL, "createStockCards.arg0[0].quantity", violations);
     assertViolation(MAY_NOT_BE_NULL, "createStockCards.arg0[0].stockOnHand", violations);
     assertViolation(MAY_NOT_BE_EMPTY, "createStockCards.arg0[0].type", violations);
+    assertViolation(MAY_NOT_BE_NULL, "createStockCards.arg0[0].lotEvents", violations);
   }
 
   @Test
@@ -636,7 +639,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   }
 
   private Map<String, List<String>> executeValidation(Object... params) {
-    holder.initContext(mockFacilityDto());
+    holder.initContext(mockFacilityDto(), LocalDate.MIN);
     return forExecutables
         .validateParameters(stockCardCreateService, method, params, PerformanceSequence.class)
         .stream()
@@ -650,9 +653,6 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
       if (key == KitProductEmptyLotsValidator.class) {
         return (T) new KitProductEmptyLotsValidator(orderableService);
-      }
-      if (key == ProductMovementConsistentWithExistedValidator.class) {
-        return (T) new ProductMovementConsistentWithExistedValidator(stockCardSearchService);
       }
       if (key == LotStockConsistentWithExistedValidator.class) {
         return (T) new LotStockConsistentWithExistedValidator(stockCardSearchService);
@@ -674,12 +674,11 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   }
 
   private void mockFacilitySupportOrdrables() {
-    List<ApprovedProductDto> approvedProductDtos = new ArrayList<>();
     org.openlmis.requisition.dto.OrderableDto orderableDto1 = new org.openlmis.requisition.dto.OrderableDto();
     orderableDto1.setProductCode("08O05Y");
+    orderableDto1.setPrograms(emptySet());
     ApprovedProductDto approvedProductDto1 = new ApprovedProductDto();
     approvedProductDto1.setOrderable(orderableDto1);
-    approvedProductDtos.add(approvedProductDto1);
     List<ApprovedProductDto> facilitySupportOrderables = new ArrayList<>();
     facilitySupportOrderables.add(approvedProductDto1);
 

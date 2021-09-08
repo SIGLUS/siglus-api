@@ -41,6 +41,7 @@
     "productCode": "08O05Y",
     "quantity": 0,
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -51,6 +52,7 @@
     "productCode": "08O05X",
     "quantity": 0,
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -61,6 +63,7 @@
     "productCode": "02A01",
     "quantity": 0,
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -71,6 +74,7 @@
     "productCode": "04B05",
     "quantity": 0,
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -81,6 +85,7 @@
     "productCode": "07A03",
     "quantity": 0,
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -91,6 +96,7 @@
     "productCode": "22A06",
     "quantity": 0,
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -101,6 +107,7 @@
     "productCode": "22A08",
     "quantity": 0,
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -111,6 +118,7 @@
     "productCode": "22A05",
     "quantity": 0,
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -121,6 +129,7 @@
     "productCode": "22A07",
     "quantity": 0,
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -188,6 +197,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -199,6 +209,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -210,6 +221,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -221,6 +233,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -232,6 +245,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -243,6 +257,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -254,6 +269,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -265,6 +281,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -276,6 +293,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -378,6 +396,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -389,6 +408,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -400,6 +420,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -411,6 +432,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -422,6 +444,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -433,6 +456,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -444,6 +468,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -455,6 +480,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -466,6 +492,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -520,6 +547,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -531,6 +559,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -542,6 +571,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -553,6 +583,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -564,6 +595,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -575,6 +607,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -586,6 +619,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -597,6 +631,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {
@@ -608,6 +643,7 @@
     "quantity": 0,
     "signature": "jing",
     "stockOnHand": 0,
+    "reasonName": "INVENTORY",
     "type": "PHYSICAL_INVENTORY"
   },
   {

@@ -13,28 +13,32 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android;
+package org.siglus.siglusapi.dto.android.db;
 
 import java.time.LocalDate;
-import javax.annotation.Nullable;
+import java.util.UUID;
 import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.dto.android.InventoryDetail;
 
-@Data
-public class Lot {
+@Getter
+@RequiredArgsConstructor(staticName = "of")
+public class CalculatedStockOnHand {
 
-  private final String code;
+  private final StockCard stockCard;
+  private final InventoryDetail inventoryDetail;
 
-  private final LocalDate expirationDate;
-
-  public Lot(String code, LocalDate expirationDate) {
-    this.code = code;
-    this.expirationDate = expirationDate;
+  public Key getKey() {
+    return new Key();
   }
 
-  public static Lot of(String code, @Nullable java.sql.Date expirationDate) {
-    if (code == null) {
-      return null;
-    }
-    return new Lot(code, expirationDate == null ? null : expirationDate.toLocalDate());
+  @Data
+  public class Key {
+
+    private UUID stockCardId = stockCard.getId();
+    private LocalDate occurredDate = inventoryDetail.getEventTime().getOccurredDate();
+
   }
+
 }

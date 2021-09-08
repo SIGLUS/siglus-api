@@ -20,10 +20,13 @@ import static java.util.Comparator.comparing;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,9 +45,14 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.ToString;
+import org.hibernate.jpa.TypedParameterValue;
+import org.hibernate.type.StandardBasicTypes;
+import org.openlmis.requisition.dto.OrderableDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
+import org.siglus.siglusapi.dto.android.InventoryDetail;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.LotMovement;
 import org.siglus.siglusapi.dto.android.MovementDetail;
@@ -55,13 +63,24 @@ import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovement.ProductMovementBuilder;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
-import org.springframework.stereotype.Service;
+import org.siglus.siglusapi.dto.android.db.CalculatedStockOnHand;
+import org.siglus.siglusapi.dto.android.db.PhysicalInventory;
+import org.siglus.siglusapi.dto.android.db.PhysicalInventoryLineDetail;
+import org.siglus.siglusapi.dto.android.db.ProductLot;
+import org.siglus.siglusapi.dto.android.db.StockCard;
+import org.siglus.siglusapi.dto.android.db.StockEvent;
+import org.siglus.siglusapi.dto.android.db.StockEventLineDetail;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
-@Service
+@Repository
 @RequiredArgsConstructor
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
 public class StockManagementRepository {
 
   private final EntityManager em;
+  private final ObjectMapper json;
+  private final JdbcTemplate jdbc;
 
   private static final String LEFT_JOIN = "LEFT JOIN ";
   private static final String STOCK_CARD_ROOT = "stockmanagement.stock_cards sc";
@@ -69,9 +88,10 @@ public class StockManagementRepository {
       "(select distinct on (id) * from referencedata.orderables order by id, versionnumber desc) o";
   private static final String LOT_ROOT = "referencedata.lots l";
 
-  public PeriodOfProductMovements getLatestProductMovements(@Nonnull UUID facilityId) {
+  @ParametersAreNullableByDefault
+  public PeriodOfProductMovements getAllProductMovements(@Nonnull UUID facilityId, LocalDate since) {
     requireNonNull(facilityId);
-    return getAllProductMovements(facilityId, null, null, emptySet());
+    return getAllProductMovements(facilityId, since, null, emptySet());
   }
 
   @ParametersAreNullableByDefault
@@ -101,6 +121,242 @@ public class StockManagementRepository {
         .sorted(EventTimeContainer.ASCENDING)
         .collect(toList());
     return new PeriodOfProductMovements(productMovements, stocksOnHand);
+  }
+
+  public ProductLot ensureLot(OrderableDto product, String lotCode, LocalDate expirationDate) {
+    String tradeItemId = product.getIdentifiers().get(TRADE_ITEM);
+    ProductLotCode code = ProductLotCode.of(product.getProductCode(), lotCode);
+    ProductLot productLot = new ProductLot(code, expirationDate);
+    String lotQuery = "SELECT id, expirationdate FROM referencedata.lots WHERE lotcode = ? AND tradeitemid = ?";
+    List<Map<String, Object>> resultList = jdbc.queryForList(lotQuery, lotCode, tradeItemId);
+    if (!resultList.isEmpty()) {
+      Map<String, Object> result = resultList.get(0);
+      LocalDate expirationDateInDb = ((java.sql.Date) result.get("expirationdate")).toLocalDate();
+      productLot = new ProductLot(code, expirationDateInDb);
+      productLot.setId((UUID) result.get("id"));
+      return productLot;
+    }
+    String lotCreate = "INSERT INTO referencedata.lots"
+        + "(id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, true) RETURNING CAST(id AS VARCHAR)";
+    Query insert = em.createNativeQuery(lotCreate);
+    insert.setParameter(1, lotCode);
+    insert.setParameter(2, expirationDate);
+    insert.setParameter(3, expirationDate);
+    insert.setParameter(4, tradeItemId);
+    productLot.setId(UUID.fromString((String) insert.getSingleResult()));
+    return productLot;
+  }
+
+  public StockEvent createStockEvent(StockEvent stockEvent) {
+    String sql = "INSERT INTO stockmanagement.stock_events"
+        + "(id, facilityid, programid, processeddate, signature, userid) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, ?5) RETURNING CAST(id AS VARCHAR)";
+    Query insert = em.createNativeQuery(sql);
+    insert.setParameter(1, stockEvent.getFacilityId());
+    insert.setParameter(2, stockEvent.getProgramId());
+    insert.setParameter(3, stockEvent.getProcessedAt());
+    insert.setParameter(4, stockEvent.getSignature());
+    insert.setParameter(5, wrap(stockEvent.getUserId()));
+    stockEvent.setId(UUID.fromString((String) insert.getSingleResult()));
+    return stockEvent;
+  }
+
+  public UUID createStockEventLine(StockEvent stockEvent, StockCard stockCard, StockEventLineDetail detail) {
+    String sql = "INSERT INTO stockmanagement.stock_event_line_items"
+        + "(id, stockeventid, orderableid, lotid, occurreddate, quantity, sourceid, destinationid, reasonid, "
+        + "extradata) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING CAST(id AS VARCHAR)";
+    Query insert = em.createNativeQuery(sql);
+    insert.setParameter(1, wrap(stockEvent.getId()));
+    insert.setParameter(2, wrap(stockCard.getProductId()));
+    insert.setParameter(3, wrap(stockCard.getLotId()));
+    insert.setParameter(4, detail.getEventTime().getOccurredDate());
+    insert.setParameter(5, Math.abs(detail.getQuantity()));
+    insert.setParameter(6, wrap(detail.getSourceId()));
+    insert.setParameter(7, wrap(detail.getDestinationId()));
+    insert.setParameter(8, wrap(detail.getReasonId()));
+    String extraData = generateExtraData(stockCard, detail);
+    insert.setParameter(9, extraData);
+    return UUID.fromString((String) insert.getSingleResult());
+  }
+
+  public StockCard getStockCard(StockCard stockCard) {
+    UUID lotId = stockCard.getLotId();
+    String sql;
+    if (lotId != null) {
+      sql = "SELECT CAST(id AS VARCHAR) FROM stockmanagement.stock_cards "
+          + "WHERE facilityid = ?1 "
+          + "AND programid = ?2 "
+          + "AND orderableid = ?3 "
+          + "AND lotid = ?4 ";
+    } else {
+      sql = "SELECT CAST(id AS VARCHAR) FROM stockmanagement.stock_cards "
+          + "WHERE facilityid = ?1 "
+          + "AND programid = ?2 "
+          + "AND orderableid = ?3 "
+          + "AND lotid IS NULL ";
+    }
+    Query query = em.createNativeQuery(sql);
+    query.setParameter(1, wrap(stockCard.getFacilityId()));
+    query.setParameter(2, wrap(stockCard.getProgramId()));
+    query.setParameter(3, wrap(stockCard.getProductId()));
+    if (lotId != null) {
+      query.setParameter(4, wrap(lotId));
+    }
+    @SuppressWarnings("unchecked")
+    List<String> list = query.getResultList();
+    if (list.isEmpty()) {
+      return null;
+    }
+    stockCard.setId(UUID.fromString(list.get(0)));
+    return stockCard;
+  }
+
+  public StockCard createStockCard(StockCard stockCard) {
+    String sql = "INSERT INTO stockmanagement.stock_cards"
+        + "(id, facilityid, programid, orderableid, lotid, origineventid) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, ?5) RETURNING CAST(id AS VARCHAR)";
+    Query insert = em.createNativeQuery(sql);
+    insert.setParameter(1, wrap(stockCard.getFacilityId()));
+    insert.setParameter(2, wrap(stockCard.getProgramId()));
+    insert.setParameter(3, wrap(stockCard.getProductId()));
+    insert.setParameter(4, wrap(stockCard.getLotId()));
+    insert.setParameter(5, wrap(stockCard.getEventId()));
+    stockCard.setId(UUID.fromString((String) insert.getSingleResult()));
+    return stockCard;
+  }
+
+  public UUID createStockCardLine(StockEvent stockEvent, StockCard stockCard, StockEventLineDetail detail) {
+    String sql = "INSERT INTO stockmanagement.stock_card_line_items"
+        + "(id, stockcardid, origineventid, occurreddate, processeddate, quantity, sourceid, destinationid, reasonid, "
+        + "userid, extradata, documentnumber, signature) "
+        + "VALUES (UUID_GENERATE_V4(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id";
+    LocalDate occurredDate = detail.getEventTime().getOccurredDate();
+    Timestamp recordedAt =
+        detail.getEventTime().getRecordedAt() == null ? null : Timestamp.from(detail.getEventTime().getRecordedAt());
+    String extraData = generateExtraData(stockCard, detail);
+    List<Map<String, Object>> resultList = jdbc
+        .queryForList(sql, stockCard.getId(), stockEvent.getId(), occurredDate, recordedAt,
+            Math.abs(detail.getQuantity()), detail.getSourceId(), detail.getDestinationId(), detail.getReasonId(),
+            stockEvent.getUserId(), extraData, detail.getDocumentNumber(), stockEvent.getSignature());
+    return (UUID) resultList.get(0).get("id");
+  }
+
+  public PhysicalInventory getPhysicalInventory(PhysicalInventory physicalInventory) {
+    String sql = "SELECT CAST(id AS VARCHAR) FROM stockmanagement.physical_inventories "
+        + "WHERE facilityid = ?1 "
+        + "AND programid = ?2 "
+        + "AND stockeventid = ?3 "
+        + "AND occurreddate = ?4 ";
+    Query query = em.createNativeQuery(sql);
+    query.setParameter(1, wrap(physicalInventory.getFacilityId()));
+    query.setParameter(2, wrap(physicalInventory.getProgramId()));
+    query.setParameter(3, wrap(physicalInventory.getEventId()));
+    query.setParameter(4, physicalInventory.getOccurredDate());
+    @SuppressWarnings("unchecked")
+    List<String> list = query.getResultList();
+    if (list.isEmpty()) {
+      return null;
+    }
+    physicalInventory.setId(UUID.fromString(list.get(0)));
+    return physicalInventory;
+  }
+
+  public PhysicalInventory createPhysicalInventory(PhysicalInventory physicalInventory) {
+    String sql = "INSERT INTO stockmanagement.physical_inventories"
+        + "(id, facilityid, programid, stockeventid, occurreddate, signature, isdraft) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, ?5, false) "
+        + "RETURNING CAST(id AS VARCHAR)";
+    Query insert = em.createNativeQuery(sql);
+    insert.setParameter(1, wrap(physicalInventory.getFacilityId()));
+    insert.setParameter(2, wrap(physicalInventory.getProgramId()));
+    insert.setParameter(3, wrap(physicalInventory.getEventId()));
+    insert.setParameter(4, physicalInventory.getOccurredDate());
+    insert.setParameter(5, physicalInventory.getSignature());
+    physicalInventory.setId(UUID.fromString((String) insert.getSingleResult()));
+    return physicalInventory;
+  }
+
+  public void createPhysicalInventoryLine(PhysicalInventoryLineDetail lineDetail, UUID eventLineId,
+      UUID stockCardLineId) {
+    String insertInventoryLineSql = "INSERT INTO stockmanagement.physical_inventory_line_items"
+        + "(id, orderableid, lotid, quantity, physicalinventoryid, previousstockonhandwhensubmitted) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, ?5) RETURNING CAST(id AS VARCHAR)";
+    Query insert = em.createNativeQuery(insertInventoryLineSql);
+    insert.setParameter(1, wrap(lineDetail.getProductId()));
+    insert.setParameter(2, wrap(lineDetail.getLotId()));
+    insert.setParameter(3, lineDetail.getAdjustment());
+    insert.setParameter(4, wrap(lineDetail.getPhysicalInventoryId()));
+    insert.setParameter(5, lineDetail.getInventoryBeforeAdjustment());
+    UUID inventoryLineId = UUID.fromString((String) insert.getSingleResult());
+    String insertAdjustmentSql = "INSERT INTO stockmanagement.physical_inventory_line_item_adjustments"
+        + "(id, quantity, reasonid, physicalinventorylineitemid) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3)";
+    Query adjustmentInsert = em.createNativeQuery(insertAdjustmentSql);
+    adjustmentInsert.setParameter(1, lineDetail.getAdjustment());
+    adjustmentInsert.setParameter(2, wrap(lineDetail.getReasonId()));
+    adjustmentInsert.setParameter(3, wrap(inventoryLineId));
+    adjustmentInsert.executeUpdate();
+    String insertAdjustmentSql2 = "INSERT INTO stockmanagement.physical_inventory_line_item_adjustments"
+        + "(id, quantity, reasonid, stockeventlineitemid) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3)";
+    Query adjustmentInsert2 = em.createNativeQuery(insertAdjustmentSql2);
+    adjustmentInsert2.setParameter(1, lineDetail.getAdjustment());
+    adjustmentInsert2.setParameter(2, wrap(lineDetail.getReasonId()));
+    adjustmentInsert2.setParameter(3, wrap(eventLineId));
+    adjustmentInsert2.executeUpdate();
+    String insertAdjustmentSql3 = "INSERT INTO stockmanagement.physical_inventory_line_item_adjustments"
+        + "(id, quantity, reasonid, stockcardlineitemid) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3)";
+    Query adjustmentInsert3 = em.createNativeQuery(insertAdjustmentSql3);
+    adjustmentInsert3.setParameter(1, lineDetail.getAdjustment());
+    adjustmentInsert3.setParameter(2, wrap(lineDetail.getReasonId()));
+    adjustmentInsert3.setParameter(3, wrap(stockCardLineId));
+    adjustmentInsert3.executeUpdate();
+  }
+
+  public void saveRequested(StockEvent stockEvent, UUID productId, Integer requested) {
+    String sql = "INSERT INTO siglusintegration.stock_event_product_requested"
+        + "(id, orderableid, stockeventid, requestedquantity) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3)";
+    Query insert = em.createNativeQuery(sql);
+    insert.setParameter(1, wrap(productId));
+    insert.setParameter(2, wrap(stockEvent.getId()));
+    insert.setParameter(3, requested);
+    insert.executeUpdate();
+  }
+
+  public void saveStockOnHand(CalculatedStockOnHand calculated) {
+    String sql = "INSERT INTO stockmanagement.calculated_stocks_on_hand"
+        + "(id, stockonhand, occurreddate, stockcardid, processeddate) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4)";
+    Query insert = em.createNativeQuery(sql);
+    InventoryDetail inventoryDetail = calculated.getInventoryDetail();
+    insert.setParameter(1, inventoryDetail.getStockQuantity());
+    insert.setParameter(2, inventoryDetail.getEventTime().getOccurredDate());
+    insert.setParameter(3, wrap(calculated.getStockCard().getId()));
+    insert.setParameter(4, inventoryDetail.getEventTime().getRecordedAt());
+    insert.executeUpdate();
+  }
+
+  @SneakyThrows
+  private String generateExtraData(StockCard stockCard, StockEventLineDetail detail) {
+    Map<String, String> extraData = new LinkedHashMap<>();
+    if (stockCard.getLotCode() != null) {
+      extraData.put("lotCode", stockCard.getLotCode());
+    }
+    if (stockCard.getExpirationDate() != null) {
+      extraData.put("expirationDate", stockCard.getExpirationDate().toString());
+    }
+    if (detail.getEventTime().getRecordedAt() != null) {
+      extraData.put("originEventTime", detail.getEventTime().getRecordedAt().toString());
+    }
+    return json.writeValueAsString(extraData);
+  }
+
+  private TypedParameterValue wrap(UUID id) {
+    return new TypedParameterValue(StandardBasicTypes.UUID_CHAR, id);
   }
 
   public StocksOnHand getStockOnHand(@Nonnull UUID facilityId) {

@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto.android.validator.stockcard;
 
+import static org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder.getContext;
+
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -50,7 +52,7 @@ public class LotStockConsistentWithExistedValidator implements
   public boolean isValid(List<StockCardCreateRequest> value, ConstraintValidatorContext context) {
     // this validator is supposed to running after the default group, so the value will not be null or empty
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
-    StocksOnHand stocksOnHand = service.getLatestStockOnHand();
+    StocksOnHand stocksOnHand = getContext().getAllProductMovements().getStocksOnHand();
     Set<ProductLotCode> verified = new HashSet<>();
     value.sort(EventTimeContainer.ASCENDING);
     for (StockCardCreateRequest request : value) {

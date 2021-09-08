@@ -41,7 +41,7 @@ import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementCons
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
-import org.siglus.siglusapi.service.android.StockCardSearchService;
+import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -61,8 +61,6 @@ public class ProductMovementConsistentWithExistedValidator implements
   private static final String INIT_INVENTORY = "initInventory";
   private static final String LOT_CODE = "lotCode";
 
-  private final StockCardSearchService service;
-
   @Override
   public void initialize(ProductMovementConsistentWithExisted constraintAnnotation) {
     // nothing to do
@@ -77,8 +75,8 @@ public class ProductMovementConsistentWithExistedValidator implements
     actualContext.addExpressionVariable(FAILED_BY_SAME_LOT, false);
     actualContext.addExpressionVariable(FAILED_BY_SAME_PRODUCT, false);
     actualContext.addExpressionVariable("failedByNew", false);
-    Map<String, List<ProductMovement>> existed = service.getLatestProductMovements().stream()
-        .collect(groupingBy(ProductMovement::getProductCode));
+    Map<String, List<ProductMovement>> existed = StockCardCreateContextHolder.getContext().getAllProductMovements()
+        .getProductMovements().stream().collect(groupingBy(ProductMovement::getProductCode));
     if (!validateToTheExisted(value, existed, actualContext)) {
       return false;
     }
