@@ -13,11 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto.android.request;
 
-import java.util.UUID;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.time.LocalDate;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface SiglusProofOfDeliveryLineItemRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class LotBasicRequest {
+
+  private String code;
+  private LocalDate expirationDate;
+
 }

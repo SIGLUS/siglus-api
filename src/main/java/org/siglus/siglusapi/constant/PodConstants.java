@@ -30,4 +30,8 @@ public class PodConstants {
   public static final String ERROR_MESSAGE_PT = "A sincronização falhou. Há um erro. "
       + "Entre em contato com o administrador.";
 
+  public static final String SQL_STRING_COLUMN_QUOTATION = "'";
+
+  public static final String SQL_STRING_COLUMN_COMMA = ",";
+
 }

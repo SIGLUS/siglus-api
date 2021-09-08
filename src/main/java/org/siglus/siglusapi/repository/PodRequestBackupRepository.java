@@ -16,8 +16,11 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
+import org.siglus.siglusapi.domain.ProofsOfDeliveryRequestBackup;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface SiglusProofOfDeliveryLineItemRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+public interface PodRequestBackupRepository extends JpaRepository<ProofsOfDeliveryRequestBackup, UUID> {
+
+  ProofsOfDeliveryRequestBackup findOneByHash(String hash);
+
 }

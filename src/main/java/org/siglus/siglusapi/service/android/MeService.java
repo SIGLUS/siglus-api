@@ -348,7 +348,12 @@ public class MeService {
   }
 
   public ConfirmPodResponse confirmProofOfDelivery(PodRequest podRequest) {
-    return podConfirmService.confirmProofsOfDelivery(podRequest);
+    try {
+      return podConfirmService.confirmProofsOfDelivery(podRequest);
+    } catch (Exception e) {
+      podConfirmService.backupPodRequest(podRequest, e.getMessage() + e.getCause(), authHelper.getCurrentUser());
+      throw e;
+    }
   }
 
   private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> allOrders,

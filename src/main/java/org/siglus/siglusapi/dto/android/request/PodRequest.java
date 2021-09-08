@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.dto.android.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import java.util.List;
 import javax.validation.constraints.NotNull;
@@ -29,9 +30,10 @@ import org.siglus.siglusapi.util.HashEncoder;
 @Data
 public class PodRequest {
 
-  private OrderBasicResponse order;
-
   private LocalDate shippedDate;
+
+  @NotNull
+  private LocalDate receivedDate;
 
   @NotBlank
   private String deliveredBy;
@@ -43,14 +45,17 @@ public class PodRequest {
 
   private String originNumber;
 
-  @NotNull
-  private LocalDate receivedDate;
+  private Boolean isLocal;
 
-  private List<PodProductLineResponse> products;
+  @JsonProperty("orderNumber")
+  private String orderCode;
+
+  private String programCode;
+
+  private List<PodProductLineRequest> products;
 
   @JsonIgnore
   public String getSyncUpHash(UserDto user) {
-    return HashEncoder.hash(order.getRequisition().getProgramCode() + user.getId() + user.getHomeFacilityId()
-        + order.getCode() + order.getStatus());
+    return HashEncoder.hash(programCode + user.getId() + user.getHomeFacilityId() + orderCode);
   }
 }

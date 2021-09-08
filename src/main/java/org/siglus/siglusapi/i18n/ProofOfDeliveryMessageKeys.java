@@ -13,11 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.i18n;
 
-import java.util.UUID;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.siglus.common.i18n.MessageKeys;
 
-public interface SiglusProofOfDeliveryLineItemRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+public class ProofOfDeliveryMessageKeys extends MessageKeys {
+
+  public static final String PROOFSOFDELIVERY_NOT_FOUND = ERROR_PREFIX
+      + "Sync failed. This order number does not exist. Please confirm whether this order number is correct.";
 }

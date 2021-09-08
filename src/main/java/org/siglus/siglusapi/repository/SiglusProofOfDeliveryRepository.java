@@ -35,6 +35,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -80,12 +81,12 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       Path<Shipment> shipmentRoot = root.get("shipment");
       Path<Order> orderRoot = shipmentRoot.get("order");
       return cb.and(
-          cb.equal(orderRoot.get("orderCode"), orderCode),
-          cb.equal(root.get("status"), ProofOfDeliveryStatus.INITIATED)
+          cb.equal(orderRoot.get("orderCode"), orderCode)
       );
     }));
   }
 
+  @Modifying
   @Query(value = "update fulfillment.proofs_of_delivery pod "
       + "set pod.deliveredby = :deliveredby , pod.receivedby = :receivedby, pod.receiveddate = :receiveddate, "
       + "pod.status = :status "
