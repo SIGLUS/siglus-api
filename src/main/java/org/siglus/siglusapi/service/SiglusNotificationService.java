@@ -39,10 +39,9 @@ import javax.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.fulfillment.service.FulfillmentPermissionService;
-import org.openlmis.fulfillment.service.FulfillmentProofOfDeliveryService;
 import org.openlmis.fulfillment.service.OrderSearchParams;
-import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
+import org.openlmis.fulfillment.service.ProofOfDeliveryService;
+import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.web.shipment.ShipmentDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
@@ -133,11 +132,11 @@ public class SiglusNotificationService {
 
   private final ExecutorService executor;
 
-  private final FulfillmentProofOfDeliveryService fulfillmentProofOfDeliveryService;
+  private final ProofOfDeliveryService proofOfDeliveryService;
 
   private final RequisitionController requisitionController;
 
-  private final FulfillmentPeriodReferenceDataService periodService;
+  private final PeriodReferenceDataService periodService;
 
   private final ProgramReferenceDataService programRefDataService;
 
@@ -394,7 +393,7 @@ public class SiglusNotificationService {
     List<RequisitionGroupDto> requisitionGroups = requisitionGroupService.findAll();
     boolean canEditShipments = permissionStrings.stream().anyMatch(
         rightAssignment ->
-            FulfillmentPermissionService.SHIPMENTS_EDIT.equals(rightAssignment.getRightName()));
+            org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT.equals(rightAssignment.getRightName()));
     return (root, query, cb) -> {
       List<Predicate> predicates = permissionStrings.stream()
           .map(right -> mapRightToPredicate(right, root, cb, currentUserFacilityId,
@@ -525,7 +524,7 @@ public class SiglusNotificationService {
             cb.equal(root.get(STATUS), NotificationStatus.ORDERED),
             cb.equal(root.get(FACILITY_ID), currentUserFacilityId)
         );
-      case FulfillmentPermissionService.PODS_MANAGE:
+      case org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE:
         return cb.and(
             cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
@@ -533,7 +532,7 @@ public class SiglusNotificationService {
             cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
             cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.TODO)
         );
-      case FulfillmentPermissionService.PODS_VIEW:
+      case org.openlmis.fulfillment.service.PermissionService.PODS_VIEW:
         return cb.and(
             cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(PROGRAM_ID), permissionString.getProgramId()),
@@ -541,7 +540,7 @@ public class SiglusNotificationService {
             cb.equal(root.get(FACILITY_ID), currentUserFacilityId),
             cb.equal(root.get(NOTIFICATION_TYPE), NotificationType.UPDATE)
         );
-      case FulfillmentPermissionService.SHIPMENTS_EDIT:
+      case org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT:
         return cb.and(
             cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
             cb.equal(root.get(STATUS), NotificationStatus.RECEIVED),

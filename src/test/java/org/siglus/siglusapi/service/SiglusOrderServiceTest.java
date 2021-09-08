@@ -50,8 +50,8 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.OrderSearchParams;
 import org.openlmis.fulfillment.service.OrderService;
 import org.openlmis.fulfillment.service.referencedata.FacilityDto;
-import org.openlmis.fulfillment.service.referencedata.FulfillmentOrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.OrderableDto;
+import org.openlmis.fulfillment.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.fulfillment.util.Pagination;
@@ -59,8 +59,8 @@ import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
-import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -131,7 +131,7 @@ public class SiglusOrderServiceTest {
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
 
   @Mock
-  private FulfillmentOrderableReferenceDataService fulfillmentOrderableReferenceDataService;
+  private OrderableReferenceDataService orderableReferenceDataService;
 
   @Mock
   private OrderLineItemExtensionRepository lineItemExtensionRepository;
@@ -140,7 +140,7 @@ public class SiglusOrderServiceTest {
   private OrderRepository orderRepository;
 
   @Mock
-  private FulfillmentOrderDtoBuilder fulfillmentOrderDtoBuilder;
+  private OrderDtoBuilder orderDtoBuilder;
 
   @Mock
   private OrderExternalRepository orderExternalRepository;

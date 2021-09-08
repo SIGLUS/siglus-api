@@ -52,8 +52,8 @@ import org.openlmis.fulfillment.web.OrderController;
 import org.openlmis.fulfillment.web.shipmentdraft.ShipmentDraftDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDto;
 import org.openlmis.fulfillment.web.util.BasicOrderDtoBuilder;
-import org.openlmis.fulfillment.web.util.FulfillmentOrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.openlmis.fulfillment.web.util.OrderDtoBuilder;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.fulfillment.web.util.OrderObjectReferenceDto;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -148,7 +148,7 @@ public class SiglusOrderService {
   private SiglusFilterAddProductForEmergencyService filterProductService;
 
   @Autowired
-  private FulfillmentOrderDtoBuilder orderDtoBuilder;
+  private OrderDtoBuilder orderDtoBuilder;
 
   @Value("${time.zoneId}")
   private String timeZoneId;

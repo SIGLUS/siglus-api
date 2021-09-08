@@ -47,7 +47,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.fulfillment.service.referencedata.FulfillmentPeriodReferenceDataService;
+import org.openlmis.fulfillment.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.util.Pagination;
@@ -128,7 +128,7 @@ public class SiglusNotificationServiceTest {
   private SiglusOrderService siglusOrderService;
 
   @Mock
-  private FulfillmentPeriodReferenceDataService periodService;
+  private PeriodReferenceDataService periodService;
 
   @Mock
   private RequisitionController requisitionController;

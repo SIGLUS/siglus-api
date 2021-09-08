@@ -38,7 +38,6 @@ import org.javers.repository.sql.JaversSqlRepository;
 import org.javers.repository.sql.SqlRepositoryBuilder;
 import org.javers.spring.boot.sql.JaversSqlProperties;
 import org.javers.spring.jpa.TransactionalJaversBuilder;
-import org.openlmis.fulfillment.i18n.FulfillmentExposedMessageSourceImpl;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.config.CustomBeanNameGenerator;
@@ -79,7 +78,6 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @EntityScan(basePackages = {"org.siglus", "org.openlmis"})
 @EnableJpaRepositories(basePackages = {"org.siglus", "org.openlmis"})
 @PropertySource("classpath:application.properties")
-@PropertySource("classpath:fulfillment-application.properties")
 @EnableAspectJAutoProxy
 @EnableScheduling
 @EnableRetry
@@ -175,8 +173,10 @@ public class Application {
   }
 
   @Bean
-  public FulfillmentExposedMessageSourceImpl fulfillmentMessageSource() {
-    FulfillmentExposedMessageSourceImpl messageSource = new FulfillmentExposedMessageSourceImpl();
+  @Primary
+  public org.openlmis.fulfillment.i18n.ExposedMessageSourceImpl fulfillmentMessageSource() {
+    org.openlmis.fulfillment.i18n.ExposedMessageSourceImpl messageSource =
+        new org.openlmis.fulfillment.i18n.ExposedMessageSourceImpl();
     messageSource.setBasenames(MESSAGE_SOURCE_BASE_NAME);
     messageSource.setDefaultEncoding(UTF_8);
     messageSource.setUseCodeAsDefaultMessage(true);
