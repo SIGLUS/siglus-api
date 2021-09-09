@@ -41,11 +41,15 @@ public class StockCardSearchService {
   private final ProductMovementMapper mapper;
 
   @ParametersAreNullableByDefault
-  public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since, LocalDate till) {
+  public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since, LocalDate tillExclusive) {
     if (since == null) {
       since = LocalDate.now().withDayOfYear(1);
     }
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
+    LocalDate till = null;
+    if (tillExclusive != null) {
+      till = tillExclusive.minusDays(1);
+    }
     PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, since, till);
     return mapper.toResponses(period);
   }

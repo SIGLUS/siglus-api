@@ -278,8 +278,8 @@ public class MeService {
   }
 
   @ParametersAreNullableByDefault
-  public FacilityProductMovementsResponse getProductMovements(LocalDate since, LocalDate till) {
-    return stockCardSearchService.getProductMovementsByTime(since, till);
+  public FacilityProductMovementsResponse getProductMovements(LocalDate since, LocalDate tillExclusive) {
+    return stockCardSearchService.getProductMovementsByTime(since, tillExclusive);
   }
 
   public RequisitionResponse getRequisitionResponse(String startDate) {
