@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.toList;
 import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -33,7 +34,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNullableByDefault;
@@ -54,14 +54,15 @@ import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
 import org.siglus.siglusapi.dto.android.Lot;
-import org.siglus.siglusapi.dto.android.LotMovement;
-import org.siglus.siglusapi.dto.android.MovementDetail;
+import org.siglus.siglusapi.dto.android.LotRawMovement;
+import org.siglus.siglusapi.dto.android.MovementRawDetail;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductLotStock;
 import org.siglus.siglusapi.dto.android.ProductMovement;
-import org.siglus.siglusapi.dto.android.ProductMovement.ProductMovementBuilder;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
+import org.siglus.siglusapi.dto.android.ProductRawMovement;
+import org.siglus.siglusapi.dto.android.ProductRawMovement.ProductRawMovementBuilder;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.db.CalculatedStockOnHand;
 import org.siglus.siglusapi.dto.android.db.PhysicalInventory;
@@ -71,6 +72,9 @@ import org.siglus.siglusapi.dto.android.db.StockCard;
 import org.siglus.siglusapi.dto.android.db.StockEvent;
 import org.siglus.siglusapi.dto.android.db.StockEventLineDetail;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.RowMapperResultSetExtractor;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -118,6 +122,7 @@ public class StockManagementRepository {
         .entrySet().stream()
         .sorted(Entry.comparingByKey(EventTimeContainer.DESCENDING))
         .map(e -> toProductMovement(e.getKey(), e.getValue(), productInventories, lotInventories))
+        .map(ProductRawMovement::toProductMovement)
         .sorted(EventTimeContainer.ASCENDING)
         .collect(toList());
     return new PeriodOfProductMovements(productMovements, stocksOnHand);
@@ -126,15 +131,11 @@ public class StockManagementRepository {
   public ProductLot ensureLot(OrderableDto product, String lotCode, LocalDate expirationDate) {
     String tradeItemId = product.getIdentifiers().get(TRADE_ITEM);
     ProductLotCode code = ProductLotCode.of(product.getProductCode(), lotCode);
-    ProductLot productLot = new ProductLot(code, expirationDate);
-    String lotQuery = "SELECT id, expirationdate FROM referencedata.lots WHERE lotcode = ? AND tradeitemid = ?";
-    List<Map<String, Object>> resultList = jdbc.queryForList(lotQuery, lotCode, tradeItemId);
-    if (!resultList.isEmpty()) {
-      Map<String, Object> result = resultList.get(0);
-      LocalDate expirationDateInDb = ((java.sql.Date) result.get("expirationdate")).toLocalDate();
-      productLot = new ProductLot(code, expirationDateInDb);
-      productLot.setId((UUID) result.get("id"));
-      return productLot;
+    String lotQuery = "SELECT id, lotcode, expirationdate FROM referencedata.lots "
+        + "WHERE lotcode = ? AND tradeitemid = ?";
+    ProductLot existed = jdbc.query(lotQuery, getProductLotExtractor(code), lotCode, tradeItemId);
+    if (existed != null) {
+      return existed;
     }
     String lotCreate = "INSERT INTO referencedata.lots"
         + "(id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
@@ -144,6 +145,7 @@ public class StockManagementRepository {
     insert.setParameter(2, expirationDate);
     insert.setParameter(3, expirationDate);
     insert.setParameter(4, tradeItemId);
+    ProductLot productLot = new ProductLot(code, expirationDate);
     productLot.setId(UUID.fromString((String) insert.getSingleResult()));
     return productLot;
   }
@@ -186,16 +188,10 @@ public class StockManagementRepository {
     String sql;
     if (lotId != null) {
       sql = "SELECT CAST(id AS VARCHAR) FROM stockmanagement.stock_cards "
-          + "WHERE facilityid = ?1 "
-          + "AND programid = ?2 "
-          + "AND orderableid = ?3 "
-          + "AND lotid = ?4 ";
+          + "WHERE facilityid = ?1 AND programid = ?2  AND orderableid = ?3 AND lotid = ?4 ";
     } else {
       sql = "SELECT CAST(id AS VARCHAR) FROM stockmanagement.stock_cards "
-          + "WHERE facilityid = ?1 "
-          + "AND programid = ?2 "
-          + "AND orderableid = ?3 "
-          + "AND lotid IS NULL ";
+          + "WHERE facilityid = ?1 AND programid = ?2  AND orderableid = ?3 AND lotid IS NULL ";
     }
     Query query = em.createNativeQuery(sql);
     query.setParameter(1, wrap(stockCard.getFacilityId()));
@@ -245,10 +241,7 @@ public class StockManagementRepository {
 
   public PhysicalInventory getPhysicalInventory(PhysicalInventory physicalInventory) {
     String sql = "SELECT CAST(id AS VARCHAR) FROM stockmanagement.physical_inventories "
-        + "WHERE facilityid = ?1 "
-        + "AND programid = ?2 "
-        + "AND stockeventid = ?3 "
-        + "AND occurreddate = ?4 ";
+        + "WHERE facilityid = ?1 AND programid = ?2 AND stockeventid = ?3 AND occurreddate = ?4 ";
     Query query = em.createNativeQuery(sql);
     query.setParameter(1, wrap(physicalInventory.getFacilityId()));
     query.setParameter(2, wrap(physicalInventory.getProgramId()));
@@ -377,25 +370,27 @@ public class StockManagementRepository {
     return executeQuery(sql, params, buildProductLotMovementFromResult());
   }
 
-  private Function<Object[], ProductLotMovement> buildProductLotMovementFromResult() {
-    return arr -> ProductLotMovement.builder()
-        .code(ProductLotCode.of((String) arr[0], (String) arr[1]))
-        .eventTime(EventTime.fromDatabase((java.sql.Date) arr[2], (String) arr[3], (Timestamp) arr[15]))
-        .movementDetail(MovementDetail.builder()
-            .unsignedAdjustment((Integer) arr[4])
-            .source((String) arr[5])
-            .destination((String) arr[6])
-            .adjustmentReason((String) arr[7])
-            .adjustmentReasonType((String) arr[8])
-            .inventoryReason((String) arr[9])
-            .inventoryReasonType((String) arr[10])
-            .unsignedInventoryAdjustment((Integer) arr[11])
-            .build()
-        )
-        .requestedQuantity((Integer) arr[12])
-        .signature((String) arr[13])
-        .documentNumber((String) arr[14])
-        .lot(Lot.of((String) arr[1], (java.sql.Date) arr[16]))
+  private ResultSetExtractor<ProductLot> getProductLotExtractor(ProductLotCode code) {
+    return rs -> {
+      if (!rs.next()) {
+        return null;
+      }
+      Lot lot = getLot(rs);
+      ProductLot existed = new ProductLot(code, lot.getExpirationDate());
+      existed.setId(rs.getObject("id", UUID.class));
+      return existed;
+    };
+  }
+
+  private RowMapper<ProductLotMovement> buildProductLotMovementFromResult() {
+    return (rs, i) -> ProductLotMovement.builder()
+        .code(getProductLotCode(rs))
+        .eventTime(getEventTime(rs))
+        .movementDetail(getMovementDetail(rs))
+        .requestedQuantity(getInt(rs, "requestedquantity"))
+        .signature(getString(rs, "signature"))
+        .documentNumber(getString(rs, "documentnumber"))
+        .lot(getLot(rs))
         .build();
   }
 
@@ -404,7 +399,7 @@ public class StockManagementRepository {
       @Nonnull Set<UUID> orderableIds) {
     requireNonNull(facilityId, "facilityId should not be null");
     String select = "SELECT DISTINCT ON (root.stockcardid) o.code AS productcode, l.lotcode, "
-        + "root.stockonhand, root.occurreddate, li.extradata \\:\\: json ->> 'originEventTime' as recordedat, "
+        + "root.stockonhand, root.occurreddate, li.extradata :: json ->> 'originEventTime' as recordedat, "
         + "li.processeddate, l.expirationdate ";
     String root = "stockmanagement.calculated_stocks_on_hand root";
     List<Object> params = new ArrayList<>(2);
@@ -420,43 +415,88 @@ public class StockManagementRepository {
         + where
         + orderBy;
     return executeQuery(sql, params,
-        (arr -> ProductLotStock.builder()
-            .code(ProductLotCode.of((String) arr[0], (String) arr[1]))
-            .stockQuantity((Integer) arr[2])
-            .eventTime(EventTime.fromDatabase((java.sql.Date) arr[3], (String) arr[4], (Timestamp) arr[5]))
-            .expirationDate((java.sql.Date) arr[6])
+        ((rs, i) -> ProductLotStock.builder()
+            .code(getProductLotCode(rs))
+            .stockQuantity(getInt(rs, "stockonhand"))
+            .eventTime(getEventTime(rs))
+            .expirationDate(getDate(rs, "expirationdate"))
             .build()
         )
     );
   }
 
-  private <T> List<T> executeQuery(String sql, List<Object> params, Function<Object[], T> transformer) {
-    Query nativeQuery = em.createNativeQuery(sql);
-    for (int i = 0, paramsSize = params.size(); i < paramsSize; i++) {
-      Object param = params.get(i);
-      nativeQuery.setParameter(i, param);
+  @SneakyThrows
+  private Integer getInt(ResultSet rs, String columnName) {
+    int value = rs.getInt(columnName);
+    if (rs.wasNull()) {
+      return null;
     }
-    // there is no type-safe way in Hibernate 5.0
-    @SuppressWarnings("unchecked")
-    List<T> resultList = ((List<Object[]>) nativeQuery.getResultList()).stream().map(transformer).collect(toList());
-    return resultList;
+    return value;
+  }
+
+  @SneakyThrows
+  private String getString(ResultSet rs, String columnName) {
+    return rs.getString(columnName);
+  }
+
+  @SneakyThrows
+  private java.sql.Date getDate(ResultSet rs, String columnName) {
+    return rs.getDate(columnName);
+  }
+
+  @SneakyThrows
+  private EventTime getEventTime(ResultSet rs) {
+    java.sql.Date occurredDate = getDate(rs, "occurreddate");
+    String recordedAtStr = getString(rs, "recordedat");
+    Timestamp processedAtTs = rs.getTimestamp("processeddate");
+    return EventTime.fromDatabase(occurredDate, recordedAtStr, processedAtTs);
+  }
+
+  @SneakyThrows
+  private MovementRawDetail getMovementDetail(ResultSet rs) {
+    return MovementRawDetail.builder()
+        .unsignedAdjustment(getInt(rs, "quantity"))
+        .sourceName(getString(rs, "srcname"))
+        .sourceFacilityName(getString(rs, "srcfacname"))
+        .destinationName(getString(rs, "destname"))
+        .destinationFacilityName(getString(rs, "destfacname"))
+        .adjustmentReason(getString(rs, "adjustreason"))
+        .adjustmentReasonType(getString(rs, "adjustreasontype"))
+        .inventoryReason(getString(rs, "inventoryReason"))
+        .inventoryReasonType(getString(rs, "inventoryReasontype"))
+        .unsignedInventoryAdjustment(getInt(rs, "inventoryadjustment"))
+        .build();
+  }
+
+  @SneakyThrows
+  private Lot getLot(ResultSet rs) {
+    return Lot.of(getString(rs, "lotcode"), getDate(rs, "expirationdate"));
+  }
+
+  private ProductLotCode getProductLotCode(ResultSet rs) {
+    return ProductLotCode.of(getString(rs, "productcode"), getString(rs, "lotcode"));
+  }
+
+  private <T> List<T> executeQuery(String sql, List<Object> params, RowMapper<T> transformer) {
+    return jdbc.query(sql, params.toArray(), new RowMapperResultSetExtractor<>(transformer));
   }
 
   @SuppressWarnings("PMD.ConsecutiveLiteralAppends")
   private static String generateWhere(@Nonnull UUID facilityId, @Nullable LocalDate since, @Nullable LocalDate at,
       @Nonnull List<Object> params, @Nonnull Set<UUID> orderableIds) {
-    StringBuilder where = new StringBuilder("WHERE sc.facilityid = ?0 ");
+    StringBuilder where = new StringBuilder(200);
+    where.append("WHERE sc.facilityid = ? ");
     params.add(facilityId);
     if (since != null) {
-      where.append(' ').append("AND root.occurreddate >= ?").append(params.size()).append(' ');
+      where.append(' ').append("AND root.occurreddate >= ? ");
       params.add(since);
     }
     if (at != null) {
-      where.append(' ').append("AND root.occurreddate <= ?").append(params.size()).append(' ');
+      where.append(' ').append("AND root.occurreddate <= ? ");
       params.add(at);
     }
     if (!orderableIds.isEmpty()) {
-      where.append(' ').append("AND sc.orderableid in ?").append(params.size()).append(' ');
+      where.append(' ').append("AND sc.orderableid in ? ");
       params.add(orderableIds);
     }
     return where.toString();
@@ -467,7 +507,7 @@ public class StockManagementRepository {
     String select = "SELECT o.code AS productcode, "
         + "l.lotcode, "
         + "root.occurreddate, "
-        + "root.extradata \\:\\: json ->> 'originEventTime' as recordedat, "
+        + "root.extradata :: json ->> 'originEventTime' as recordedat, "
         + "root.quantity, "
         + "srcorg.name AS srcname, "
         + "destorg.name AS destname, "
@@ -480,13 +520,17 @@ public class StockManagementRepository {
         + "root.signature, "
         + "root.documentnumber, "
         + "root.processeddate, "
-        + "l.expirationdate ";
+        + "l.expirationdate, "
+        + "srcfac.name AS srcfacname, "
+        + "destfac.name AS destfacname ";
     String root = "stockmanagement.stock_card_line_items root";
     String eventRoot = "stockmanagement.stock_events se";
     String srcNodeRoot = "stockmanagement.nodes srcnode";
     String srcOrgRoot = "stockmanagement.organizations srcorg";
+    String srcFacilityRoot = "referencedata.facilities srcfac";
     String destNodeRoot = "stockmanagement.nodes destnode";
     String destOrgRoot = "stockmanagement.organizations destorg";
+    String destFacilityRoot = "referencedata.facilities destfac";
     String reasonRoot = "stockmanagement.stock_card_line_item_reasons reason";
     String lineAdjRoot = "stockmanagement.physical_inventory_line_item_adjustments pilia";
     String adjustmentReasonRoot = "stockmanagement.stock_card_line_item_reasons adjstreason";
@@ -500,8 +544,10 @@ public class StockManagementRepository {
         + LEFT_JOIN + LOT_ROOT + " ON sc.lotid = l.id "
         + LEFT_JOIN + srcNodeRoot + " ON root.sourceid = srcnode.id "
         + LEFT_JOIN + srcOrgRoot + " ON srcnode.referenceid = srcorg.id "
+        + LEFT_JOIN + srcFacilityRoot + " ON srcnode.referenceid = srcfac.id "
         + LEFT_JOIN + destNodeRoot + " ON root.destinationid = destnode.id "
         + LEFT_JOIN + destOrgRoot + " ON destnode.referenceid = destorg.id "
+        + LEFT_JOIN + destFacilityRoot + " ON destnode.referenceid = destfac.id "
         + LEFT_JOIN + reasonRoot + " ON root.reasonid = reason.id "
         + LEFT_JOIN + lineAdjRoot + " ON pilia.stockcardlineitemid = root.id "
         + LEFT_JOIN + adjustmentReasonRoot + " ON pilia.reasonid = adjstreason.id "
@@ -510,9 +556,9 @@ public class StockManagementRepository {
         + where;
   }
 
-  private ProductMovement toProductMovement(ProductMovementKey key, List<ProductLotMovement> productLotMovements,
+  private ProductRawMovement toProductMovement(ProductMovementKey key, List<ProductLotMovement> productLotMovements,
       Map<String, Integer> productInventoryMap, Map<ProductLotCode, Integer> lotInventories) {
-    ProductMovementBuilder movementBuilder = ProductMovement.builder()
+    ProductRawMovementBuilder movementBuilder = ProductRawMovement.builder()
         .productCode(key.getProductCode())
         .eventTime(key.getEventTime());
     Integer requestedQuantity = productLotMovements.stream().findAny().map(ProductLotMovement::getRequestedQuantity)
@@ -521,7 +567,7 @@ public class StockManagementRepository {
     ProductLotMovement anyLot;
     if (productLotMovements.size() == 1 && !productLotMovements.get(0).getCode().isLot()) {
       ProductLotMovement theOnlyLot = productLotMovements.get(0);
-      MovementDetail movementDetail = theOnlyLot.getMovementDetail();
+      MovementRawDetail movementDetail = theOnlyLot.getMovementDetail();
       movementBuilder.movementDetail(movementDetail);
       Integer stockQuantity = productInventoryMap.get(key.getProductCode());
       movementBuilder.stockQuantity(stockQuantity);
@@ -529,14 +575,14 @@ public class StockManagementRepository {
       movementBuilder.documentNumber(theOnlyLot.getDocumentNumber());
       anyLot = theOnlyLot;
     } else if (productLotMovements.stream().allMatch(m -> m.getCode().isLot())) {
-      List<LotMovement> lotMovements = productLotMovements.stream()
+      List<LotRawMovement> lotMovements = productLotMovements.stream()
           .map(m -> toLotMovement(m, lotInventories))
           .sorted(comparing(m -> m.getLot().getCode()))
           .collect(toList());
       movementBuilder.lotMovements(lotMovements);
-      MovementDetail movementDetail = productLotMovements.stream()
+      MovementRawDetail movementDetail = productLotMovements.stream()
           .map(ProductLotMovement::getMovementDetail)
-          .reduce(MovementDetail::merge)
+          .reduce(MovementRawDetail::merge)
           .orElseThrow(IllegalStateException::new);
       Integer stockQuantity = productInventoryMap.get(key.getProductCode());
       movementBuilder.stockQuantity(stockQuantity);
@@ -555,11 +601,11 @@ public class StockManagementRepository {
     return movementBuilder.build();
   }
 
-  private LotMovement toLotMovement(ProductLotMovement movement, Map<ProductLotCode, Integer> lotInventories) {
-    MovementDetail movementDetail = movement.getMovementDetail();
+  private LotRawMovement toLotMovement(ProductLotMovement movement, Map<ProductLotCode, Integer> lotInventories) {
+    MovementRawDetail movementDetail = movement.getMovementDetail();
     Integer stockQuantity = lotInventories.get(movement.getCode());
     lotInventories.put(movement.getCode(), stockQuantity - movementDetail.getAdjustment());
-    return LotMovement.builder()
+    return LotRawMovement.builder()
         .lot(movement.getLot())
         .movementDetail(movementDetail)
         .stockQuantity(stockQuantity)
@@ -580,7 +626,7 @@ public class StockManagementRepository {
 
     private final EventTime eventTime;
 
-    private final MovementDetail movementDetail;
+    private final MovementRawDetail movementDetail;
 
     @Nullable
     private final Integer requestedQuantity;

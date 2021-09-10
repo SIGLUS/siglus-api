@@ -20,7 +20,6 @@ import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,8 +60,6 @@ public final class StockCardCreateContext {
   private final Map<String, OrderableDto> approvedProducts;
   @Getter
   private final PeriodOfProductMovements allProductMovements;
-  @Getter
-  private final Instant processedAt = Instant.now();
   private final Map<ProductLotCode, ProductLot> lots = new HashMap<>();
   private final Map<ProductLotCode, StockCard> stockCards = new HashMap<>();
   private final Map<PhysicalInventory.Key, PhysicalInventory> physicalInventories = new HashMap<>();

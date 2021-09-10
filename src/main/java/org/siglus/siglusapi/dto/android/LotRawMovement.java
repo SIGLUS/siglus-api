@@ -15,26 +15,32 @@
 
 package org.siglus.siglusapi.dto.android;
 
-import javax.annotation.Nullable;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 
 @EqualsAndHashCode
 @ToString
+@Builder
 @Getter
-public class MovementDetail {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class LotRawMovement {
 
-  private final Integer adjustment;
-  private final MovementType type;
-  @Nullable
-  private final String reason;
+  private final Lot lot;
+  private final MovementRawDetail movementDetail;
+  private final Integer stockQuantity;
+  private final String documentNumber;
 
-  public MovementDetail(Integer adjustment, MovementType type, @Nullable String reason) {
-    this.adjustment = adjustment;
-    this.type = type;
-    this.reason = reason;
+  public LotMovement toLotMovement() {
+    return LotMovement.builder()
+        .lot(lot)
+        .movementDetail(movementDetail.toMovementDetail())
+        .stockQuantity(stockQuantity)
+        .documentNumber(documentNumber)
+        .build();
   }
 
 }
