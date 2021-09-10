@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.domain;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Convert;
@@ -30,7 +29,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
-import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -41,14 +39,18 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "confirm_pod_request_backup", schema = "siglusintegration")
-public class ProofsOfDeliveryRequestBackup extends BaseEntity {
+@Table(name = "pod_request_backup", schema = "siglusintegration")
+public class PodRequestBackup extends BaseEntity {
 
   private String hash;
 
   private UUID facilityId;
 
   private UUID userId;
+
+  private String programCode;
+
+  private String orderCode;
 
   private String errorMessage;
 

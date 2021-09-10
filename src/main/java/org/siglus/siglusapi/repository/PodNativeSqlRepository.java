@@ -15,16 +15,25 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.siglusapi.dto.android.db.PodLineItem;
+import org.siglus.siglusapi.dto.android.db.ShipmentLineItem;
 import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
+import org.siglus.siglusapi.service.SiglusStockEventsService;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -32,46 +41,86 @@ import org.springframework.stereotype.Service;
 public class PodNativeSqlRepository {
 
   private final JdbcTemplate jdbcTemplate;
+  private final SiglusStockEventsService siglusStockEventsService;
 
-  public void insertPodAndShipmentLineItems(UUID podId, UUID shipmentId, List<PodProductLineRequest> podProducts,
-      Map<String, OrderableDto> orderableCodeToOrderable, Map<String, Map<String, UUID>> orderableCodeToLots,
+  public void insertPodAndShipmentLineItems(UUID podId, UUID shipmentId, UUID facilityId,
+      List<PodProductLineRequest> podProducts, Map<String, OrderableDto> orderableCodeToOrderable,
       Map<String, UUID> rejectReasonToId) {
-    StringBuilder insertPodLineItemsSql = new StringBuilder("insert into fulfillment.proof_of_delivery_line_items values ");
-    StringBuilder insertShipmentLineItemsSql = new StringBuilder("insert into fulfillment.shipment_line_items values ");
+    List<PodLineItem> podLineItems = new ArrayList<>();
+    List<ShipmentLineItem> shipmentLineItems = new ArrayList<>();
     for (PodProductLineRequest podProduct : podProducts) {
+      OrderableDto orderableDto = orderableCodeToOrderable.get(podProduct.getCode());
       for (PodLotLineRequest lot :podProduct.getLots()) {
-        insertPodLineItemsSql.append("(");
-        insertPodLineItemsSql.append("'").append(UUID.randomUUID()).append("',");
-        insertPodLineItemsSql.append("'").append(podId).append("',");
-        insertPodLineItemsSql.append("'").append(lot.getNotes()).append("',");
-        insertPodLineItemsSql.append(lot.getAcceptedQuantity()).append("',");
-        insertPodLineItemsSql.append(",");
-        insertPodLineItemsSql.append(",").append(orderableCodeToOrderable.get(podProduct.getCode()).getId()).append("',");
-        insertPodLineItemsSql.append(",").append(orderableCodeToLots.get(podProduct.getCode()).get(lot.getLot().getCode())).append("',");
-        insertPodLineItemsSql.append(",");
-        insertPodLineItemsSql.append(",").append("false").append(",");
-        insertPodLineItemsSql.append(",").append(rejectReasonToId.get(lot.getRejectedReason())).append(",");
-        insertPodLineItemsSql.append(orderableCodeToOrderable.get(podProduct.getCode()).getVersionNumber());
-        insertPodLineItemsSql.append("),");
-
-        insertShipmentLineItemsSql.append("(");
-        insertShipmentLineItemsSql.append("'").append(UUID.randomUUID()).append("',");
-        insertShipmentLineItemsSql.append(orderableCodeToOrderable.get(podProduct.getCode()).getId()).append("',");
-        insertShipmentLineItemsSql.append(orderableCodeToLots.get(podProduct.getCode()).get(lot.getLot().getCode())).append("',");
-        insertShipmentLineItemsSql.append(lot.getShippedQuantity()).append(",");
-        insertShipmentLineItemsSql.append("'").append(shipmentId).append(",");
-        insertShipmentLineItemsSql.append("'',");
-        insertShipmentLineItemsSql.append(orderableCodeToOrderable.get(podProduct.getCode()).getVersionNumber()).append(",");
-        insertShipmentLineItemsSql.append("),");
+        LotDto lotDto = siglusStockEventsService.createNewLotOrReturnExisted(
+            facilityId, orderableDto, lot.getLot().getCode(), lot.getLot().getExpirationDate());
+        podLineItems.add(PodLineItem
+            .of(podId, lot.getNotes(), lot.getAcceptedQuantity(),
+                lot.getShippedQuantity() - lot.getAcceptedQuantity(),
+                orderableDto.getId(), lotDto.getId(), null, false,
+                rejectReasonToId.get(lot.getRejectedReason()),
+                orderableDto.getVersionNumber()));
+        shipmentLineItems.add(ShipmentLineItem
+            .of(orderableDto.getId(), lotDto.getId(), lot.getShippedQuantity(), shipmentId, "",
+                orderableDto.getVersionNumber()));
       }
     }
-    insertPodLineItemsSql.replace(
-        insertPodLineItemsSql.lastIndexOf(",") - 1, insertPodLineItemsSql.lastIndexOf(","), ";");
-    insertShipmentLineItemsSql.replace(
-        insertShipmentLineItemsSql.lastIndexOf(",") -1, insertShipmentLineItemsSql.lastIndexOf(","), ";");
-    log.info("batch insert pod line items, pod id: {}", podId);
-    jdbcTemplate.execute(insertPodLineItemsSql.toString());
-    log.info("batch insert shipment line items, shipment id: {}", shipmentId);
-    jdbcTemplate.execute(insertShipmentLineItemsSql.toString());
+    if (!podLineItems.isEmpty()) {
+      log.info("insert podLineItems, pod id : {}", podId);
+      batchInsertPodLineItems(podLineItems);
+    }
+    if (!shipmentLineItems.isEmpty()) {
+      log.info("insert shipmentLineItems, shipment id {}", shipmentId);
+      batchInsertShipLineItems(shipmentLineItems);
+    }
+  }
+
+  public void batchInsertPodLineItems(List<PodLineItem> batchInsertList) {
+    jdbcTemplate.batchUpdate("insert into fulfillment.proof_of_delivery_line_items values "
+        + "(UUID_GENERATE_V4(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", new BatchPreparedStatementSetter() {
+          @Override
+          public void setValues(PreparedStatement ps, int i) throws SQLException {
+            PodLineItem podLineItem = batchInsertList.get(i);
+            ps.setObject(1, podLineItem.getProofOfDeliveryId());
+            ps.setString(2, podLineItem.getNotes());
+            ps.setInt(3, podLineItem.getQuantityAccepted());
+            ps.setInt(4, podLineItem.getQuantityRejected());
+            ps.setObject(5, podLineItem.getOrderableId());
+            ps.setObject(6, podLineItem.getLotId());
+            ps.setString(7, podLineItem.getVvmStatus());
+            ps.setBoolean(8, podLineItem.getUserVvm());
+            ps.setObject(9, podLineItem.getRejectionReasonId());
+            ps.setLong(10, podLineItem.getOrderableVersionNumber());
+          }
+
+          @Override
+          public int getBatchSize() {
+            return batchInsertList.size();
+          }
+        });
+  }
+
+  public void batchInsertShipLineItems(List<ShipmentLineItem> batchInsertList) {
+    jdbcTemplate.batchUpdate("insert into fulfillment.shipment_line_items "
+        + "values (UUID_GENERATE_V4(), ?, ?, ?, ?, ?, ?)", new BatchPreparedStatementSetter() {
+          @Override
+          public void setValues(PreparedStatement ps, int i) throws SQLException {
+            ShipmentLineItem shipmentLineItem = batchInsertList.get(i);
+            ps.setObject(1, shipmentLineItem.getOrderableId());
+            ps.setObject(2, shipmentLineItem.getLotId());
+            ps.setLong(3, shipmentLineItem.getQuantityShipped());
+            ps.setObject(4, shipmentLineItem.getShipmentId());
+            ps.setObject(5, wrap(shipmentLineItem.getExtraData()));
+            ps.setLong(6, shipmentLineItem.getOrderableVersionNumber());
+          }
+
+          @Override
+          public int getBatchSize() {
+            return batchInsertList.size();
+          }
+        });
+  }
+
+  private String wrap(String jsonString) {
+    return StringUtils.isEmpty(jsonString) ? null : jsonString;
   }
 }

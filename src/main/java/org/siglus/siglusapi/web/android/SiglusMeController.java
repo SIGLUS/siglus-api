@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
@@ -128,8 +129,8 @@ public class SiglusMeController {
   }
 
   @PatchMapping("/facility/pod")
-  public ConfirmPodResponse confirmProofsOfDelivery(@RequestBody PodRequest podRequest) {
-    return service.confirmProofOfDelivery(podRequest);
+  public ConfirmPodResponse confirmPod(@RequestBody @Valid PodRequest podRequest) {
+    return service.confirmPod(podRequest);
   }
 
   @PostMapping("/app-info")

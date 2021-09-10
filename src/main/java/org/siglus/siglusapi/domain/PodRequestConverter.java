@@ -22,21 +22,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import javax.persistence.AttributeConverter;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
-import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 
 @Slf4j
 public class PodRequestConverter implements AttributeConverter<PodRequest, String> {
 
-  private static final TypeReference<List<PodRequest>> TYPE_REF =
-      new TypeReference<List<PodRequest>>() {
-      };
+  private static final TypeReference<PodRequest> TYPE_REF =
+      new TypeReference<PodRequest>() {};
 
   private final ObjectMapper objectMapper;
 

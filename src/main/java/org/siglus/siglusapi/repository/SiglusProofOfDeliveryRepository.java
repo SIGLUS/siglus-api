@@ -29,7 +29,6 @@ import javax.persistence.criteria.Predicate;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
-import org.openlmis.fulfillment.domain.ProofOfDeliveryStatus;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -76,7 +75,7 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
     });
   }
 
-  default ProofOfDelivery findInitiatedPodByOrderNumber(@Param("orderCode") String orderCode) {
+  default ProofOfDelivery findInitiatedPodByOrderCode(@Param("orderCode") String orderCode) {
     return findOne(((root, query, cb) -> {
       Path<Shipment> shipmentRoot = root.get("shipment");
       Path<Order> orderRoot = shipmentRoot.get("order");
@@ -87,13 +86,13 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
   }
 
   @Modifying
-  @Query(value = "update fulfillment.proofs_of_delivery pod "
-      + "set pod.deliveredby = :deliveredby , pod.receivedby = :receivedby, pod.receiveddate = :receiveddate, "
-      + "pod.status = :status "
-      + "where pod.id = :id", nativeQuery = true)
+  @Query(value = "update fulfillment.proofs_of_delivery "
+      + "set deliveredby = :deliveredby, receivedby = :receivedby, receiveddate = :receiveddate, "
+      + "status = :status "
+      + "where id = :id", nativeQuery = true)
   void updatePodById(@Param("deliveredby") String deliveredBy,
       @Param("receivedby") String receivedBy,
       @Param("receiveddate") LocalDate receivedDate,
-      @Param("status") ProofOfDeliveryStatus status,
+      @Param("status") String status,
       @Param("id") UUID proofOfDeliveryId);
 }

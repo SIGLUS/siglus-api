@@ -46,4 +46,15 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
   List<StockCardLineItem> findByFacilityIdAndOrderableIdIn(
       @Param("facilityId") UUID facilityId,
       @Param("orderableIds") Set<UUID> orderableIds);
+
+  @Query(value = "select scli.* from stockmanagement.stock_card_line_items scli "
+      + "inner join stockmanagement.stock_cards sc "
+      + "on scli.stockcardid = sc.id "
+      + "where "
+      + "sc.facilityid = :facilityId "
+      + "and scli.sourceid is not null "
+      + "and sc.lotid in (:lotIds)", nativeQuery = true)
+  List<StockCardLineItem> findByFacilityIdAndLotIdIn(
+      @Param("facilityId") UUID facilityId,
+      @Param("lotIds") Set<UUID> lotIds);
 }

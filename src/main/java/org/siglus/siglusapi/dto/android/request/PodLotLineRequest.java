@@ -23,6 +23,7 @@ public class PodLotLineRequest {
 
   private LotBasicRequest lot;
 
+  @NotNull
   private Integer shippedQuantity;
 
   @NotNull

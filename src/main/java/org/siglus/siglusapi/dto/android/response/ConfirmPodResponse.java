@@ -36,5 +36,7 @@ public class ConfirmPodResponse {
 
   private String messageInPortuguese;
 
+  private String detail;
+
   private PodResponse podResponse;
 }

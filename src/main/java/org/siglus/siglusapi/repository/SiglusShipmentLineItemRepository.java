@@ -15,9 +15,18 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface SiglusShipmentLineItemRepository extends JpaRepository<ShipmentLineItem, UUID> {
+
+  @Modifying
+  @Query(value = "delete from fulfillment.shipment_line_items sli "
+      + "where sli.id in (:ids) ", nativeQuery = true)
+  void deleteShipmentLineItemByIdsIn(@Param("ids") Set<UUID> ids);
 }

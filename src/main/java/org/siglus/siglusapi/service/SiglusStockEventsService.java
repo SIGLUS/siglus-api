@@ -234,7 +234,8 @@ public class SiglusStockEventsService {
       // already done or nothing we can do since lot info is missing
       return;
     }
-    UUID lotId = createNewLotOrReturnExisted(facilityId, orderable, eventLineItem).getId();
+    UUID lotId = createNewLotOrReturnExisted(facilityId, orderable, eventLineItem.getLotCode(),
+        eventLineItem.getExpirationDate()).getId();
     eventLineItem.setLotId(lotId);
   }
 
@@ -244,14 +245,12 @@ public class SiglusStockEventsService {
     }
   }
 
-  private LotDto createNewLotOrReturnExisted(UUID facilityId, OrderableDto orderable,
-      StockEventLineItemDto eventLineItem) {
+  public LotDto createNewLotOrReturnExisted(UUID facilityId, OrderableDto orderable, String lotCode,
+      LocalDate expirationDate) {
     String tradeItemId = orderable.getTradeItemIdentifier();
     if (null == tradeItemId) {
       throw new ValidationMessageException(new Message(ERROR_TRADE_ITEM_IS_EMPTY));
     }
-    String lotCode = eventLineItem.getLotCode();
-    LocalDate expirationDate = eventLineItem.getExpirationDate();
     LotDto existedLot = findExistedLot(lotCode, tradeItemId);
     if (existedLot == null) {
       LotDto lotDto = new LotDto();
@@ -272,7 +271,8 @@ public class SiglusStockEventsService {
       log.info("conflict is already recorded");
       return existedLot;
     }
-    LotConflict newCreated = lotConflictRepository.save(LotConflict.of(facilityId, existedLot.getId(), eventLineItem));
+    LotConflict newCreated = lotConflictRepository.save(LotConflict.of(facilityId, existedLot.getId(), lotCode,
+        expirationDate));
     log.info("record conflict with id {}", newCreated.getId());
     return existedLot;
   }

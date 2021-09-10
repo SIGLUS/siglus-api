@@ -13,22 +13,24 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.request;
+package org.siglus.siglusapi.dto.android.db;
 
-import java.util.List;
-import javax.validation.Valid;
-import lombok.Data;
+import java.util.UUID;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
-@Data
-public class PodProductLineRequest {
+@Getter
+@RequiredArgsConstructor(staticName = "of")
+public class ShipmentLineItem {
 
-  private String code;
-
-  private Integer orderedQuantity;
-
-  private Integer partialFulfilledQuantity;
-
-  @Valid
-  private List<PodLotLineRequest> lots;
+  @Setter
+  private UUID id;
+  private final UUID orderableId;
+  private final UUID lotId;
+  private final Integer quantityShipped;
+  private final UUID shipmentId;
+  private final String extraData;
+  private final Long orderableVersionNumber;
 
 }

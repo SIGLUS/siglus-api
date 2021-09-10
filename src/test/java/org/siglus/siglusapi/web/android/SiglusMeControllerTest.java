@@ -37,6 +37,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
@@ -45,6 +46,7 @@ import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.service.android.MeService;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusMeControllerTest {
 
@@ -200,6 +202,30 @@ public class SiglusMeControllerTest {
     // then
     assertSame(requisitionResponse, this.requisitionResponse);
     verify(service).getRequisitionResponse("2021-06-01");
+  }
+
+  @Test
+  public void shouldCallServiceWhenConfirmPod() {
+    // given
+    PodRequest podRequest = new PodRequest();
+
+    // when
+    controller.confirmPod(podRequest);
+
+    // then
+    verify(service).confirmPod(podRequest);
+  }
+
+  @Test
+  public void shouldCallServiceWhenGetPod() {
+    // given
+    LocalDate since = LocalDate.of(2020, 12, 31);
+
+    // when
+    controller.getProofsOfDelivery(false, since);
+
+    // then
+    verify(service).getProofsOfDelivery(since, false);
   }
 
   private List<HfCmmDto> mockFacilityCmms() {

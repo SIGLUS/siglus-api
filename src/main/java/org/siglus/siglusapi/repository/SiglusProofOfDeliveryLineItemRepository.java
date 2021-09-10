@@ -15,9 +15,18 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface SiglusProofOfDeliveryLineItemRepository extends JpaRepository<ProofOfDeliveryLineItem, UUID> {
+
+  @Modifying
+  @Query(value = "delete from fulfillment.proof_of_delivery_line_items podli "
+      + "where podli.id in (:ids) ", nativeQuery = true)
+  void deletePodLineItemByIdsIn(@Param("ids") Set<UUID> ids);
 }

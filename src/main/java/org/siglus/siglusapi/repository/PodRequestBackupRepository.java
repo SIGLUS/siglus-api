@@ -16,11 +16,11 @@
 package org.siglus.siglusapi.repository;
 
 import java.util.UUID;
-import org.siglus.siglusapi.domain.ProofsOfDeliveryRequestBackup;
+import org.siglus.siglusapi.domain.PodRequestBackup;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface PodRequestBackupRepository extends JpaRepository<ProofsOfDeliveryRequestBackup, UUID> {
+public interface PodRequestBackupRepository extends JpaRepository<PodRequestBackup, UUID> {
 
-  ProofsOfDeliveryRequestBackup findOneByHash(String hash);
+  PodRequestBackup findOneByHash(String hash);
 
 }

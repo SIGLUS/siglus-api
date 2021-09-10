@@ -13,12 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.i18n;
+package org.siglus.siglusapi.dto.android.db;
 
-import org.siglus.common.i18n.MessageKeys;
+import java.util.UUID;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
-public class ProofOfDeliveryMessageKeys extends MessageKeys {
+@Getter
+@RequiredArgsConstructor(staticName = "of")
+public class PodLineItem {
 
-  public static final String PROOFSOFDELIVERY_NOT_FOUND = ERROR_PREFIX
-      + "Sync failed. This order number does not exist. Please confirm whether this order number is correct.";
+  @Setter
+  private UUID id;
+  private final UUID proofOfDeliveryId;
+  private final String notes;
+  private final Integer quantityAccepted;
+  private final Integer quantityRejected;
+  private final UUID orderableId;
+  private final UUID lotId;
+  private final String vvmStatus;
+  private final Boolean userVvm;
+  private final UUID rejectionReasonId;
+  private final Long orderableVersionNumber;
+
 }

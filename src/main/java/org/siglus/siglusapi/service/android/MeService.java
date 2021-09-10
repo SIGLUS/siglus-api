@@ -36,10 +36,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNullableByDefault;
+import javax.persistence.EntityManager;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Session;
 import org.openlmis.fulfillment.domain.BaseEntity;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
@@ -68,8 +70,10 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
+import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.domain.PodRequestBackup;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
@@ -94,12 +98,12 @@ import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
+import org.siglus.siglusapi.repository.PodRequestBackupRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
-import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -116,10 +120,12 @@ import org.siglus.siglusapi.util.HashEncoder;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -161,7 +167,10 @@ public class MeService {
   private final StockCardDeleteService stockCardDeleteService;
   private final StockCardCreateService stockCardCreateService;
   private final StockCardSearchService stockCardSearchService;
-  private final ProofOfDeliveryConfirmService podConfirmService;
+  private final PodConfirmService podConfirmService;
+  private final PodRequestBackupRepository podBackupRepository;
+  private final SiglusProofOfDeliveryRepository podRepository;
+  private final EntityManager entityManager;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -347,13 +356,47 @@ public class MeService {
         .collect(toList());
   }
 
-  public ConfirmPodResponse confirmProofOfDelivery(PodRequest podRequest) {
-    try {
-      return podConfirmService.confirmProofsOfDelivery(podRequest);
-    } catch (Exception e) {
-      podConfirmService.backupPodRequest(podRequest, e.getMessage() + e.getCause(), authHelper.getCurrentUser());
-      throw e;
+  public ConfirmPodResponse confirmPod(PodRequest podRequest) {
+    UserDto user = authHelper.getCurrentUser();
+    ProofOfDelivery toUpdate = podRepository.findInitiatedPodByOrderCode(podRequest.getOrderCode());
+    if (toUpdate == null) {
+      log.warn("Pod orderCode: {} not found:", podRequest.getOrderCode());
+      backupPodRequest(podRequest, PodConstants.ERROR_MESSAGE, user);
+      return ConfirmPodResponse.builder()
+          .status(HttpStatus.NOT_FOUND.value())
+          .orderNumber(podRequest.getOrderCode())
+          .message(PodConstants.NOT_EXIST_MESSAGE)
+          .messageInPortuguese(PodConstants.NOT_EXIST_MESSAGE_PT)
+          .build();
     }
+    if (!StringUtils.isEmpty(podRequest.getOriginNumber())) {
+      log.info("Pod orderCode: {} has originNumber {},backup request", podRequest.getOrderCode(),
+          podRequest.getOriginNumber());
+      backupPodRequest(podRequest, "", user);
+    }
+    try {
+      podConfirmService.confirmPod(podRequest, toUpdate, user);
+    } catch (Exception e) {
+      backupPodRequest(podRequest, e.getMessage() + e.getCause(), authHelper.getCurrentUser());
+      return ConfirmPodResponse.builder()
+          .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+          .orderNumber(podRequest.getOrderCode())
+          .message(PodConstants.ERROR_MESSAGE)
+          .messageInPortuguese(PodConstants.ERROR_MESSAGE_PT)
+          .detail(e.getMessage())
+          .build();
+    }
+    return ConfirmPodResponse.builder()
+        .status(HttpStatus.OK.value())
+        .orderNumber(podRequest.getOrderCode())
+        .podResponse(getPodByOrderCode(podRequest.getOrderCode()))
+        .build();
+  }
+
+  private PodResponse getPodByOrderCode(String orderCode) {
+    entityManager.unwrap(Session.class).clear();
+    List<PodResponse> podResponses = getProofsOfDelivery(null, false);
+    return podResponses.stream().filter(p -> p.getOrder().getCode().equals(orderCode)).findFirst().orElse(null);
   }
 
   private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> allOrders,
@@ -526,5 +569,25 @@ public class MeService {
         .build();
     log.info("backup stock card request, syncUpHash: {}", syncUpHash);
     stockCardRequestBackupRepository.save(backup);
+  }
+
+  public void backupPodRequest(PodRequest podRequest, String errorMessage, UserDto user) {
+    String syncUpHash = HashEncoder.hash(podRequest.getOrderCode() + user.getHomeFacilityId() + user.getId());
+    PodRequestBackup existedBackup = podBackupRepository.findOneByHash(syncUpHash);
+    if (existedBackup != null) {
+      log.info("skip backup pod request as syncUpHash: {} existed", syncUpHash);
+      return;
+    }
+    PodRequestBackup backup = PodRequestBackup.builder()
+        .hash(syncUpHash)
+        .facilityId(user.getHomeFacilityId())
+        .userId(user.getId())
+        .programCode(podRequest.getProgramCode())
+        .orderCode(podRequest.getOrderCode())
+        .errorMessage(errorMessage)
+        .requestBody(podRequest)
+        .build();
+    log.info("backup proofOfDelivery request, syncUpHash: {}", syncUpHash);
+    podBackupRepository.save(backup);
   }
 }

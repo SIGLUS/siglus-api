@@ -19,12 +19,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 import java.util.List;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
 import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.siglusapi.dto.android.response.OrderBasicResponse;
-import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.util.HashEncoder;
 
 @Data
@@ -52,6 +51,7 @@ public class PodRequest {
 
   private String programCode;
 
+  @Valid
   private List<PodProductLineRequest> products;
 
   @JsonIgnore
