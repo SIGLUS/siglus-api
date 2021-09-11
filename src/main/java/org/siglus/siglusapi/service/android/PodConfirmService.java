@@ -190,8 +190,9 @@ public class PodConfirmService {
         .filter(p -> orderableDto.getProductCode().equals(p.getCode()))
         .findFirst()
         .orElse(null);
+    Long orderQuantity = podProductLineRequest == null ? 0 : podProductLineRequest.getOrderedQuantity().longValue();
     OrderLineItem orderLineItem = new OrderLineItem(order, new VersionEntityReference(orderableDto.getId(),
-        orderableDto.getVersionNumber()), podProductLineRequest.getOrderedQuantity().longValue());
+        orderableDto.getVersionNumber()), orderQuantity);
     orderLineItem.setId(UUID.randomUUID());
     return orderLineItem;
   }

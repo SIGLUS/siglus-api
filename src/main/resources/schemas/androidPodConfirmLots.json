@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "pod lot line item request",
+  "title": "androidPodLotLineItemRequest",
+  "properties": {
+    "shippedQuantity": {
+      "type": "integer",
+      "title": "shippedQuantity"
+    },
+    "acceptedQuantity": {
+      "type": "integer",
+      "title": "acceptedQuantity"
+    },
+    "rejectedReason": {
+      "type": "string",
+      "title": "rejectedReason"
+    },
+    "notes": {
+      "type": "string",
+      "title": "notes"
+    },
+    "lot": {
+      "type": "object",
+      "title": "lots",
+      "$ref": "androidPodConfirmLot.json"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "pod confirm response",
+  "title": "androidPodConfirmResponse",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "title": "status"
+    },
+    "orderNumber": {
+      "type": "string",
+      "title": "orderNumber"
+    },
+    "message": {
+      "type": "string",
+      "title": "message"
+    },
+    "messageInPortuguese": {
+      "type": "string",
+      "title": "messageInPortuguese"
+    }
+  }
+}

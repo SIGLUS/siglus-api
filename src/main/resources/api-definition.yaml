@@ -136,6 +136,8 @@ schemas:
   - androidRequisitionRequest: !include schemas/androidRequisitionRequest.json
   - androidRequisitionResponse: !include schemas/androidRequisitionResponse.json
   - androidPodResponse: !include schemas/androidPodResponse.json
+  - androidPodConfirmRequest: !include schemas/androidPodConfirmRequest.json
+  - androidPodConfirmResponse: !include schemas/androidPodConfirmResponse.json
 
 resourceTypes:
   - collection:
@@ -2435,6 +2437,19 @@ traits:
                   body:
                     application/json:
                       schema: androidPodResponse
+
+          /pod:
+            patch:
+              is: [ secured ]
+              description: confirm pod.
+              body:
+                application/json:
+                  schema: androidPodConfirmRequest
+              responses:
+                200:
+                  body:
+                    application/json:
+                      schema: androidPodConfirmResponse
 
         /app-info:
           displayName: Process AppInfo
