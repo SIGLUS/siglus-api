@@ -52,9 +52,11 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
       + "on scli.stockcardid = sc.id "
       + "where "
       + "sc.facilityid = :facilityId "
+      + "and scli.documentnumber = :originOrderCode "
       + "and scli.sourceid is not null "
       + "and sc.lotid in (:lotIds)", nativeQuery = true)
   List<StockCardLineItem> findByFacilityIdAndLotIdIn(
       @Param("facilityId") UUID facilityId,
+      @Param("originOrderCode") String originOrderCode,
       @Param("lotIds") Set<UUID> lotIds);
 }
