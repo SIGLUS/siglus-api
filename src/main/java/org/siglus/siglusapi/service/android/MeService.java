@@ -90,6 +90,7 @@ import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
+import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
@@ -396,7 +397,14 @@ public class MeService {
   private PodResponse getPodByOrderCode(String orderCode) {
     entityManager.unwrap(Session.class).clear();
     List<PodResponse> podResponses = getProofsOfDelivery(null, false);
-    return podResponses.stream().filter(p -> p.getOrder().getCode().equals(orderCode)).findFirst().orElse(null);
+    PodResponse podResponse = podResponses.stream().filter(p -> p.getOrder().getCode().equals(orderCode)).findFirst()
+        .orElse(null);
+    if (podResponse != null) {
+      List<PodProductLineResponse> products = podResponse.getProducts().stream()
+          .filter(p -> !CollectionUtils.isEmpty(p.getLots())).collect(Collectors.toList());
+      podResponse.setProducts(products);
+    }
+    return podResponse;
   }
 
   private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> allOrders,

@@ -244,7 +244,7 @@ public class PodConfirmServiceTest {
         Collections.singleton(null));
     verify(stockCardLineItemRepository).save(stockCardLineItems);
     verify(dateHelper).getCurrentDateTimeWithSystemZone();
-    verify(orderLineItemRepository, times(1)).save(anyListOf(OrderLineItem.class));
+    verify(orderLineItemRepository).save(anyListOf(OrderLineItem.class));
     verify(orderRepository).save(any(Order.class));
   }
 
