@@ -59,7 +59,7 @@ public class FacilityTypeConstants {
   }
 
   public static Set<String> getVirtualFacilityTypes() {
-    return Stream.of(CENTRAL, AI).collect(Collectors.toSet());
+    return Stream.of(CENTRAL, AC).collect(Collectors.toSet());
   }
 
 }
