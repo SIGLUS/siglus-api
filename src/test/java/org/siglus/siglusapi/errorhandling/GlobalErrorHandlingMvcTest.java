@@ -161,10 +161,8 @@ public class GlobalErrorHandlingMvcTest {
         .andExpect(jsonPath("messageKey").value("siglusapi.error.validationFail"))
         .andExpect(jsonPath("message").value("siglusapi.error.validationFail"))
         .andExpect(jsonPath("messageInEnglish").value("siglusapi.error.validationFail"))
-        .andExpect(jsonPath("messageInPortuguese").value("siglusapi.error.validationFail in Portuguese"))
         .andExpect(jsonPath("fields[0].propertyPath").value("propertyPath"))
-        .andExpect(jsonPath("fields[0].messageInEnglish").value("text"))
-        .andExpect(jsonPath("fields[0].messageInPortuguese").value("text"));
+        .andExpect(jsonPath("fields[0].messageInEnglish").value("text"));
   }
 
 }

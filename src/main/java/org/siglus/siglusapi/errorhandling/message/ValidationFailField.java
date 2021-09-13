@@ -28,12 +28,9 @@ public class ValidationFailField {
 
   private final String messageInEnglish;
 
-  private final String messageInPortuguese;
-
   public ValidationFailField(Violation violation) {
     propertyPath = ofNullable(violation.getField()).map(Objects::toString).orElse(null);
     String[] messages = violation.getMessage().split("\\|");
     messageInEnglish = messages[0];
-    messageInPortuguese = messages[1];
   }
 }

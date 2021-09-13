@@ -39,6 +39,7 @@ import javax.annotation.ParametersAreNullableByDefault;
 import javax.persistence.EntityManager;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import javax.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
@@ -362,7 +363,7 @@ public class MeService {
     ProofOfDelivery toUpdate = podRepository.findInitiatedPodByOrderCode(podRequest.getOrderCode());
     if (toUpdate == null) {
       log.warn("Pod orderCode: {} not found:", podRequest.getOrderCode());
-      backupPodRequest(podRequest, PodConstants.ERROR_MESSAGE, user);
+      backupPodRequest(podRequest, PodConstants.NOT_EXIST_MESSAGE, user);
       return ConfirmPodResponse.builder()
           .status(HttpStatus.NOT_FOUND.value())
           .orderNumber(podRequest.getOrderCode())
@@ -378,7 +379,10 @@ public class MeService {
     try {
       podConfirmService.confirmPod(podRequest, toUpdate, user);
     } catch (Exception e) {
-      backupPodRequest(podRequest, e.getMessage() + e.getCause(), authHelper.getCurrentUser());
+      backupPodRequest(podRequest, PodConstants.ERROR_MESSAGE + e.getMessage(), authHelper.getCurrentUser());
+      if (e instanceof ValidationException) {
+        throw e;
+      }
       return ConfirmPodResponse.builder()
           .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
           .orderNumber(podRequest.getOrderCode())
