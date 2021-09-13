@@ -26,7 +26,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +74,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.RowMapperResultSetExtractor;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -85,6 +87,7 @@ public class StockManagementRepository {
   private final EntityManager em;
   private final ObjectMapper json;
   private final JdbcTemplate jdbc;
+  private final NamedParameterJdbcTemplate namedJdbc;
 
   private static final String LEFT_JOIN = "LEFT JOIN ";
   private static final String STOCK_CARD_ROOT = "stockmanagement.stock_cards sc";
@@ -365,9 +368,9 @@ public class StockManagementRepository {
   private List<ProductLotMovement> findAllLotMovements(@Nonnull UUID facilityId, LocalDate since, LocalDate till,
       @Nonnull Set<UUID> orderableIds) {
     requireNonNull(facilityId, "facilityId should not be null");
-    List<Object> params = new ArrayList<>(2);
-    String sql = generateMovementQuery(facilityId, since, till, params, orderableIds);
-    return executeQuery(sql, params, buildProductLotMovementFromResult());
+    MapSqlParameterSource parameters = new MapSqlParameterSource();
+    String sql = generateMovementQuery(facilityId, parameters, since, till, orderableIds);
+    return executeQuery(sql, parameters, buildProductLotMovementFromResult());
   }
 
   private ResultSetExtractor<ProductLot> getProductLotExtractor(ProductLotCode code) {
@@ -402,8 +405,8 @@ public class StockManagementRepository {
         + "root.stockonhand, root.occurreddate, li.extradata :: json ->> 'originEventTime' as recordedat, "
         + "li.processeddate, l.expirationdate ";
     String root = "stockmanagement.calculated_stocks_on_hand root";
-    List<Object> params = new ArrayList<>(2);
-    String where = generateWhere(facilityId, null, at, params, orderableIds);
+    MapSqlParameterSource parameters = new MapSqlParameterSource();
+    String where = generateWhere(facilityId, parameters, null, at, orderableIds);
     String orderBy = "ORDER BY root.stockcardid, root.occurreddate DESC, root.processeddate DESC, "
         + "li.occurreddate DESC, recordedat DESC";
     String sql = select + "FROM " + root + ' '
@@ -414,7 +417,7 @@ public class StockManagementRepository {
         + "li.stockcardid = sc.id AND li.occurreddate = root.occurreddate "
         + where
         + orderBy;
-    return executeQuery(sql, params,
+    return executeQuery(sql, parameters,
         ((rs, i) -> ProductLotStock.builder()
             .code(getProductLotCode(rs))
             .stockQuantity(getInt(rs, "stockonhand"))
@@ -477,33 +480,33 @@ public class StockManagementRepository {
     return ProductLotCode.of(getString(rs, "productcode"), getString(rs, "lotcode"));
   }
 
-  private <T> List<T> executeQuery(String sql, List<Object> params, RowMapper<T> transformer) {
-    return jdbc.query(sql, params.toArray(), new RowMapperResultSetExtractor<>(transformer));
+  private <T> List<T> executeQuery(String sql, SqlParameterSource parameters, RowMapper<T> transformer) {
+    return namedJdbc.query(sql, parameters, new RowMapperResultSetExtractor<>(transformer));
   }
 
   @SuppressWarnings("PMD.ConsecutiveLiteralAppends")
-  private static String generateWhere(@Nonnull UUID facilityId, @Nullable LocalDate since, @Nullable LocalDate at,
-      @Nonnull List<Object> params, @Nonnull Set<UUID> orderableIds) {
+  private static String generateWhere(@Nonnull UUID facilityId, @Nonnull MapSqlParameterSource parameters,
+      @Nullable LocalDate since, @Nullable LocalDate at, @Nonnull Set<UUID> orderableIds) {
     StringBuilder where = new StringBuilder(200);
-    where.append("WHERE sc.facilityid = ? ");
-    params.add(facilityId);
+    parameters.addValue("facilityId", facilityId);
+    where.append("WHERE sc.facilityid = :facilityId ");
     if (since != null) {
-      where.append(' ').append("AND root.occurreddate >= ? ");
-      params.add(since);
+      parameters.addValue("since", since);
+      where.append(' ').append("AND root.occurreddate >= :since ");
     }
     if (at != null) {
-      where.append(' ').append("AND root.occurreddate <= ? ");
-      params.add(at);
+      parameters.addValue("at", at);
+      where.append(' ').append("AND root.occurreddate <= :at ");
     }
     if (!orderableIds.isEmpty()) {
-      where.append(' ').append("AND sc.orderableid in ? ");
-      params.add(orderableIds);
+      parameters.addValue("orderableIds", orderableIds);
+      where.append(' ').append("AND sc.orderableid IN (:orderableIds) ");
     }
     return where.toString();
   }
 
-  private String generateMovementQuery(@Nonnull UUID facilityId, @Nullable LocalDate since, @Nullable LocalDate at,
-      @Nonnull List<Object> params, @Nonnull Set<UUID> orderableIds) {
+  private String generateMovementQuery(@Nonnull UUID facilityId, @Nonnull MapSqlParameterSource parameters,
+      @Nullable LocalDate since, @Nullable LocalDate at, @Nonnull Set<UUID> orderableIds) {
     String select = "SELECT o.code AS productcode, "
         + "l.lotcode, "
         + "root.occurreddate, "
@@ -535,7 +538,7 @@ public class StockManagementRepository {
     String lineAdjRoot = "stockmanagement.physical_inventory_line_item_adjustments pilia";
     String adjustmentReasonRoot = "stockmanagement.stock_card_line_item_reasons adjstreason";
     String requestedRoot = "siglusintegration.stock_event_product_requested requested";
-    String where = generateWhere(facilityId, since, at, params, orderableIds);
+    String where = generateWhere(facilityId, parameters, since, at, orderableIds);
     return select
         + "FROM " + root + ' '
         + LEFT_JOIN + STOCK_CARD_ROOT + " ON root.stockcardid = sc.id "
