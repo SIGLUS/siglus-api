@@ -86,12 +86,17 @@ import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
+import org.siglus.siglusapi.domain.PodRequestBackup;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.android.InvalidProduct;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
+import org.siglus.siglusapi.dto.android.request.LotBasicRequest;
+import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;
+import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
+import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
@@ -105,8 +110,10 @@ import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
+import org.siglus.siglusapi.repository.PodRequestBackupRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
+import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
@@ -224,6 +231,12 @@ public class MeServiceTest {
   @Mock
   private StockCardCreateRequestValidator stockCardCreateRequestValidator;
 
+  @Mock
+  private SiglusProofOfDeliveryRepository podRepository;
+
+  @Mock
+  private PodRequestBackupRepository podBackupRepository;
+
   @Autowired
   private ProductMapper mapper;
 
@@ -247,6 +260,8 @@ public class MeServiceTest {
   private ZonedDateTime oldTime;
   private Instant syncTime;
   private ZonedDateTime latestTime;
+
+  private UserDto user;
 
   private final UUID productId1 = UUID.randomUUID();
   private final UUID productId2 = UUID.randomUUID();
@@ -280,7 +295,7 @@ public class MeServiceTest {
     ReflectionTestUtils.setField(service, "mapper", mapper);
     ReflectionTestUtils.setField(service, nameStockCardSearchService, stockCardSearchService);
     ReflectionTestUtils.setField(service, nameStockCardCreateService, stockCardCreateService);
-    UserDto user = mock(UserDto.class);
+    user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(user.getId()).thenReturn(userId);
     when(authHelper.getCurrentUser()).thenReturn(user);
@@ -748,6 +763,22 @@ public class MeServiceTest {
     verify(stockCardRequestBackupRepository, times(1)).save(any(StockCardRequestBackup.class));
   }
 
+  @Test
+  public void shouldBackUpWhenOrderNumIsNotExist() {
+    //given
+    PodRequest podRequest = mockPodRequest();
+    when(podRepository.findInitiatedPodByOrderCode(podRequest.getOrderCode())).thenReturn(null);
+    String syncHash = "hashcode";
+    when(podBackupRepository.findOneByHash(syncHash)).thenReturn(null);
+
+    // when
+    service.confirmPod(podRequest);
+
+    // then
+    verify(podBackupRepository, times(1)).save(any(PodRequestBackup.class));
+
+  }
+
   private List<StockCardCreateRequest> buildStockCardCreateRequests() {
     StockCardLotEventRequest eventRequest = new StockCardLotEventRequest();
     eventRequest.setStockOnHand(100);
@@ -1158,5 +1189,31 @@ public class MeServiceTest {
     rnr.setExtraData(extraData);
     rnr.setProgramId(supportProgramId1);
     return Optional.of(rnr);
+  }
+
+  private PodRequest mockPodRequest() {
+    LotBasicRequest lot = new LotBasicRequest();
+    String lotCode = "lotCode";
+    lot.setCode(lotCode);
+    lot.setExpirationDate(LocalDate.now());
+    PodLotLineRequest podLotLineRequest = new PodLotLineRequest();
+    podLotLineRequest.setLot(lot);
+    String notes = "notes";
+    podLotLineRequest.setNotes(notes);
+    String rejectReason = "rejectReason";
+    podLotLineRequest.setRejectedReason(rejectReason);
+    List<PodLotLineRequest> podLots = Arrays.asList(podLotLineRequest);
+    PodProductLineRequest podProductLineRequest = new PodProductLineRequest();
+    String orderProductCode = "orderProductCode";
+    podProductLineRequest.setCode(orderProductCode);
+    podProductLineRequest.setOrderedQuantity(10);
+    podProductLineRequest.setPartialFulfilledQuantity(0);
+    podProductLineRequest.setLots(podLots);
+    List<PodProductLineRequest> products = Arrays.asList(podProductLineRequest);
+    PodRequest podRequest = new PodRequest();
+    String orderCode = "orderCode";
+    podRequest.setOrderCode(orderCode);
+    podRequest.setProducts(products);
+    return podRequest;
   }
 }

@@ -155,7 +155,7 @@ public class PodConfirmService {
         .flatMap(Collection::stream)
         .collect(Collectors.toSet());
     List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
-        .findByFacilityIdAndLotIdIn(facilityId, podRequest.getOriginNumber(),lotIds);
+        .findByFacilityIdAndLotIdIn(facilityId, podRequest.getOriginNumber(), lotIds);
     if (stockCardLineItems.isEmpty()) {
       return;
     }
