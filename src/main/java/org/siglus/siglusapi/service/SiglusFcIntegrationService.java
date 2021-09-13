@@ -17,12 +17,14 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
@@ -49,13 +52,16 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.domain.referencedata.SupervisoryNode;
 import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.common.dto.referencedata.FacilityTypeDto;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.domain.PodExtension;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
@@ -71,87 +77,59 @@ import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
+import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
+import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
+import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
+import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
+import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class SiglusFcIntegrationService {
 
-  @Autowired
-  private SupervisoryNodeRepository supervisoryNodeRepository;
-
-  @Autowired
-  private SiglusRequisitionRepository siglusRequisitionRepository;
-
-  @Autowired
-  private ProgramRealProgramRepository programRealProgramRepository;
-
-  @Autowired
-  private SiglusRequisitionExtensionService siglusRequisitionExtensionService;
-
-  @Autowired
-  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
-
-  @Autowired
-  private ProgramReferenceDataService programReferenceDataService;
-
-  @Autowired
-  private SiglusProcessingPeriodReferenceDataService processingPeriodReferenceDataService;
-
-  @Autowired
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
-
-  @Autowired
-  private ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
-
-  @Autowired
-  private RequisitionLineItemExtensionRepository lineItemExtensionRepository;
-
-  @Autowired
-  private RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
-
-  @Autowired
-  private SiglusUsageReportService siglusUsageReportService;
-
-  @Autowired
-  private SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
-
-  @Autowired
-  private SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
-
-  @Autowired
-  private SiglusLotReferenceDataService siglusLotReferenceDataService;
-
-  @Autowired
-  private StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
-
-  @Autowired
-  private OrderExternalRepository orderExternalRepository;
-
-  @Autowired
-  private SiglusDateHelper dateHelper;
-
-  @Autowired
-  private PodExtensionRepository podExtensionRepository;
+  private final SupervisoryNodeRepository supervisoryNodeRepository;
+  private final SiglusRequisitionRepository siglusRequisitionRepository;
+  private final ProgramRealProgramRepository programRealProgramRepository;
+  private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
+  private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+  private final ProgramReferenceDataService programReferenceDataService;
+  private final SiglusProcessingPeriodReferenceDataService processingPeriodReferenceDataService;
+  private final SiglusOrderableReferenceDataService orderableReferenceDataService;
+  private final ProgramOrderablesExtensionRepository programOrderablesExtensionRepository;
+  private final RequisitionLineItemExtensionRepository lineItemExtensionRepository;
+  private final RequisitionTemplateExtensionRepository requisitionTemplateExtensionRepository;
+  private final SiglusUsageReportService siglusUsageReportService;
+  private final SiglusRequisitionRequisitionService siglusRequisitionRequisitionService;
+  private final SiglusProofOfDeliveryRepository siglusProofOfDeliveryRepository;
+  private final SiglusLotReferenceDataService siglusLotReferenceDataService;
+  private final StockCardLineItemReasonRepository stockCardLineItemReasonRepository;
+  private final OrderExternalRepository orderExternalRepository;
+  private final SiglusDateHelper dateHelper;
+  private final PodExtensionRepository podExtensionRepository;
+  private final SiglusFacilityRepository facilityRepo;
+  private final SiglusFacilityTypeReferenceDataService facilityTypeDataService;
+  private final StockManagementRepository stockManagementRepository;
+  private final ProductMovementMapper productMovementMapper;
 
   @Value("${dpm.facilityTypeId}")
   private UUID dpmFacilityTypeId;
-
   @Value("${fc.facilityTypeId}")
   private UUID fcFacilityTypeId;
 
@@ -180,6 +158,21 @@ public class SiglusFcIntegrationService {
     requisitions.getContent().forEach(requisition -> fcRequisitionDtos.add(buildDto(requisition,
         fcSupervisoryNodeIds, realProgramIdToEntityMap)));
     return Pagination.getPage(fcRequisitionDtos, pageable, requisitions.getTotalElements());
+  }
+
+  public Page<FacilityStockMovementResponse> searchStockMovements(LocalDate since, Pageable pageable) {
+    List<UUID> excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
+        .map(FacilityTypeDto::getId).collect(toList());
+    return facilityRepo.findAllExcept(excludedTypeIds, pageable).map(f -> toResponse(f, since));
+  }
+
+  private FacilityStockMovementResponse toResponse(Facility facility, LocalDate since) {
+    FacilityStockMovementResponse response = new FacilityStockMovementResponse();
+    response.setCode(facility.getCode());
+    response.setName(facility.getName());
+    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facility.getId(), since);
+    response.setProductMovements(productMovementMapper.toResponses(period));
+    return response;
   }
 
   public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date, Pageable pageable) {
@@ -266,7 +259,7 @@ public class SiglusFcIntegrationService {
     List<FcProofOfDeliveryDto> pods = page.getContent()
         .stream()
         .map(pod -> buildProofOfDeliveryDto(pod, proofOfDeliverParameter))
-        .collect(Collectors.toList());
+        .collect(toList());
 
     return Pagination.getPage(pods, pageable, page.getTotalElements());
   }
@@ -287,7 +280,7 @@ public class SiglusFcIntegrationService {
             proofOfDeliverParameter.getOrderableIdToProgramMap(),
             proofOfDeliverParameter.getLotIdToLotMap(),
             proofOfDeliverParameter.getReasonIdToReasonMap()))
-        .collect(Collectors.toList());
+        .collect(toList());
 
     return FcProofOfDeliveryDto.builder()
         .orderNumber(pod.getShipment().getOrder().getOrderCode())
@@ -452,4 +445,10 @@ public class SiglusFcIntegrationService {
     fcLineItem.setAuthorizedQuantity(authorizedQuantityMap.get(lineItem.getId()));
     return fcLineItem;
   }
+
+  private List<FacilityTypeDto> findFacilityTypes(Collection<String> typeNames) {
+    return facilityTypeDataService.getPage(RequestParameters.init()).getContent().stream()
+        .filter(t -> typeNames.contains(t.getName())).collect(toList());
+  }
+
 }

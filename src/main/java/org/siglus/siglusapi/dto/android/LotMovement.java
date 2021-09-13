@@ -34,4 +34,8 @@ public class LotMovement {
   private final Integer stockQuantity;
   private final String documentNumber;
 
+  public boolean isLot() {
+    return lot != null;
+  }
+
 }

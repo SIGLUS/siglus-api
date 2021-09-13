@@ -52,7 +52,14 @@ public class FacilityTypeConstants {
 
   public static final String AC = "AC";
 
+  public static final String CENTRAL = "Central";
+
   public static Set<String> getIssueFilterFacilityTypes() {
     return Stream.of(DPM, DDM, AI).collect(Collectors.toSet());
   }
+
+  public static Set<String> getVirtualFacilityTypes() {
+    return Stream.of(CENTRAL, AI).collect(Collectors.toSet());
+  }
+
 }

@@ -51,13 +51,13 @@ public class StockCardSearchService {
       till = tillExclusive.minusDays(1);
     }
     PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, since, till);
-    return mapper.toResponses(period);
+    return mapper.toAndroidResponse(period);
   }
 
   public FacilityProductMovementsResponse getProductMovementsByOrderables(Set<UUID> orderableIds) {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, orderableIds);
-    return mapper.toResponses(period);
+    return mapper.toAndroidResponse(period);
   }
 
 }

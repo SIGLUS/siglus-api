@@ -15,11 +15,21 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
 import java.util.UUID;
 import org.siglus.common.domain.referencedata.Facility;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID> {
+public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>, JpaSpecificationExecutor<Facility> {
 
   Facility findFirstByTypeId(UUID typeId);
+
+  default Page<Facility> findAllExcept(Collection<UUID> facilityTypes, Pageable pageable) {
+    return findAll((root, query, cb) -> facilityTypes.isEmpty() ? null : root.get("typeId").in(facilityTypes).not(),
+        pageable);
+  }
+
 }

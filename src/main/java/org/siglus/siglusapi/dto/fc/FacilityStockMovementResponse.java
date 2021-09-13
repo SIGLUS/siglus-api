@@ -13,34 +13,17 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android;
+package org.siglus.siglusapi.dto.fc;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import java.util.List;
+import lombok.Data;
+import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 
-@EqualsAndHashCode
-@ToString
-@Builder
-@Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class LotRawMovement {
+@Data
+public class FacilityStockMovementResponse {
 
-  private final Lot lot;
-  private final MovementRawDetail movementDetail;
-  private final Integer stockQuantity;
-  private final String documentNumber;
-
-  public LotMovement toLotMovement() {
-    return LotMovement.builder()
-        .lot(lot)
-        .movementDetail(movementDetail.toMovementDetail())
-        .stockQuantity(stockQuantity)
-        .documentNumber(documentNumber)
-        .build();
-  }
+  private String code;
+  private String name;
+  private List<ProductMovementResponse> productMovements;
 
 }

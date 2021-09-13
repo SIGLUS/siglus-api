@@ -22,6 +22,7 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -29,6 +30,7 @@ import org.mapstruct.Named;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.LotMovement;
+import org.siglus.siglusapi.dto.android.MovementDetail;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductMovement;
@@ -44,14 +46,25 @@ import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
 public interface ProductMovementMapper {
 
-  default FacilityProductMovementsResponse toResponses(PeriodOfProductMovements period) {
+  default FacilityProductMovementsResponse toAndroidResponse(PeriodOfProductMovements period) {
     Map<String, List<ProductMovement>> movementsByProductCode = period.getProductMovements().stream()
         .collect(groupingBy(ProductMovement::getProductCode));
     StocksOnHand stocksOnHand = period.getStocksOnHand();
     List<ProductMovementResponse> responses = stocksOnHand.getAllProductCodes().stream()
-        .map(c -> toResponse(c, movementsByProductCode.getOrDefault(c, emptyList()), stocksOnHand))
+        .map(c -> toResponse(c, movementsByProductCode.getOrDefault(c, emptyList()), stocksOnHand,
+            m -> m.getType().getReason(m.getReason(), m.getAdjustment())))
         .collect(toList());
     return FacilityProductMovementsResponse.builder().productMovements(responses).build();
+  }
+
+  default List<ProductMovementResponse> toResponses(PeriodOfProductMovements period) {
+    Map<String, List<ProductMovement>> movementsByProductCode = period.getProductMovements().stream()
+        .collect(groupingBy(ProductMovement::getProductCode));
+    StocksOnHand stocksOnHand = period.getStocksOnHand();
+    return stocksOnHand.getAllProductCodes().stream()
+        .map(c -> toResponse(c, movementsByProductCode.getOrDefault(c, emptyList()), stocksOnHand,
+            MovementDetail::getReason))
+        .collect(toList());
   }
 
   @Mapping(target = "productCode", source = "productCode")
@@ -59,9 +72,10 @@ public interface ProductMovementMapper {
   @Mapping(target = "stockOnHand", source = "productCode", qualifiedByName = "getStockOnHand")
   @Mapping(target = "lotsOnHand", source = "productCode", qualifiedByName = "getLotsOnHand")
   ProductMovementResponse toResponse(String productCode, List<ProductMovement> productMovements,
-      @Context StocksOnHand stocksOnHand);
+      @Context StocksOnHand stocksOnHand, @Context Function<MovementDetail, String> reasonMapper);
 
   @Mapping(target = ".", source = "movementDetail")
+  @Mapping(target = "reason", source = "movementDetail", qualifiedByName = "getReason")
   @Mapping(target = "movementQuantity", source = "movementDetail.adjustment")
   @Mapping(target = "stockOnHand", source = "stockQuantity")
   @Mapping(target = "requested", source = "requestedQuantity")
@@ -69,14 +83,20 @@ public interface ProductMovementMapper {
   @Mapping(target = "processedDate", source = "eventTime.recordedAt")
   @Mapping(target = "serverProcessedDate", source = "eventTime.processedAt")
   @Mapping(target = "lotMovementItems", source = "lotMovements")
-  SiglusStockMovementItemResponse fromProductMovement(ProductMovement movement);
+  SiglusStockMovementItemResponse fromProductMovement(ProductMovement movement,
+      @Context Function<MovementDetail, String> reasonMapper);
 
   @Mapping(target = "quantity", source = "movementDetail.adjustment")
-  @Mapping(target = "reason", source = "movementDetail.reason")
+  @Mapping(target = "reason", source = "movementDetail", qualifiedByName = "getReason")
   @Mapping(target = "stockOnHand", source = "stockQuantity")
   @Mapping(target = "lotCode", source = "lot.code")
   @Mapping(target = "documentNumber", source = "documentNumber")
-  LotMovementItemResponse fromLotMovement(LotMovement movement);
+  LotMovementItemResponse fromLotMovement(LotMovement movement, @Context Function<MovementDetail, String> reasonMapper);
+
+  @Named("getReason")
+  default String getReason(MovementDetail movementDetail, @Context Function<MovementDetail, String> reasonMapper) {
+    return reasonMapper.apply(movementDetail);
+  }
 
   @Named("getStockOnHand")
   default Integer getStockOnHand(String productCode, @Context StocksOnHand stocksOnHand) {

@@ -49,19 +49,19 @@ import lombok.ToString;
 import org.hibernate.jpa.TypedParameterValue;
 import org.hibernate.type.StandardBasicTypes;
 import org.openlmis.requisition.dto.OrderableDto;
+import org.siglus.common.constant.KitConstants;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
 import org.siglus.siglusapi.dto.android.Lot;
-import org.siglus.siglusapi.dto.android.LotRawMovement;
-import org.siglus.siglusapi.dto.android.MovementRawDetail;
+import org.siglus.siglusapi.dto.android.LotMovement;
+import org.siglus.siglusapi.dto.android.MovementDetail;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductLotStock;
 import org.siglus.siglusapi.dto.android.ProductMovement;
+import org.siglus.siglusapi.dto.android.ProductMovement.ProductMovementBuilder;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
-import org.siglus.siglusapi.dto.android.ProductRawMovement;
-import org.siglus.siglusapi.dto.android.ProductRawMovement.ProductRawMovementBuilder;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.db.CalculatedStockOnHand;
 import org.siglus.siglusapi.dto.android.db.PhysicalInventory;
@@ -125,7 +125,6 @@ public class StockManagementRepository {
         .entrySet().stream()
         .sorted(Entry.comparingByKey(EventTimeContainer.DESCENDING))
         .map(e -> toProductMovement(e.getKey(), e.getValue(), productInventories, lotInventories))
-        .map(ProductRawMovement::toProductMovement)
         .sorted(EventTimeContainer.ASCENDING)
         .collect(toList());
     return new PeriodOfProductMovements(productMovements, stocksOnHand);
@@ -136,7 +135,7 @@ public class StockManagementRepository {
     ProductLotCode code = ProductLotCode.of(product.getProductCode(), lotCode);
     String lotQuery = "SELECT id, lotcode, expirationdate FROM referencedata.lots "
         + "WHERE lotcode = ? AND tradeitemid = ?";
-    ProductLot existed = jdbc.query(lotQuery, getProductLotExtractor(code), lotCode, tradeItemId);
+    ProductLot existed = jdbc.query(lotQuery, productLotExtractor(code), lotCode, tradeItemId);
     if (existed != null) {
       return existed;
     }
@@ -376,7 +375,7 @@ public class StockManagementRepository {
     return executeQuery(sql, parameters, buildProductLotMovementFromResult());
   }
 
-  private ResultSetExtractor<ProductLot> getProductLotExtractor(ProductLotCode code) {
+  private ResultSetExtractor<ProductLot> productLotExtractor(ProductLotCode code) {
     return rs -> {
       if (!rs.next()) {
         return null;
@@ -459,8 +458,8 @@ public class StockManagementRepository {
   }
 
   @SneakyThrows
-  private MovementRawDetail getMovementDetail(ResultSet rs) {
-    return MovementRawDetail.builder()
+  private MovementDetail getMovementDetail(ResultSet rs) {
+    return MovementDetail.builder()
         .unsignedAdjustment(getInt(rs, "quantity"))
         .sourceName(getString(rs, "srcname"))
         .sourceFacilityName(getString(rs, "srcfacname"))
@@ -562,33 +561,35 @@ public class StockManagementRepository {
         + where;
   }
 
-  private ProductRawMovement toProductMovement(ProductMovementKey key, List<ProductLotMovement> productLotMovements,
+  private ProductMovement toProductMovement(ProductMovementKey key, List<ProductLotMovement> productLotMovements,
       Map<String, Integer> productInventoryMap, Map<ProductLotCode, Integer> lotInventories) {
-    ProductRawMovementBuilder movementBuilder = ProductRawMovement.builder()
+    ProductMovementBuilder movementBuilder = ProductMovement.builder()
         .productCode(key.getProductCode())
         .eventTime(key.getEventTime());
     Integer requestedQuantity = productLotMovements.stream().findAny().map(ProductLotMovement::getRequestedQuantity)
         .orElse(null);
     movementBuilder.requestedQuantity(requestedQuantity);
     ProductLotMovement anyLot;
-    if (productLotMovements.size() == 1 && !productLotMovements.get(0).getCode().isLot()) {
+    if (isNoStock(productLotMovements)) {
       ProductLotMovement theOnlyLot = productLotMovements.get(0);
-      MovementRawDetail movementDetail = theOnlyLot.getMovementDetail();
+      MovementDetail movementDetail = theOnlyLot.getMovementDetail();
       movementBuilder.movementDetail(movementDetail);
       Integer stockQuantity = productInventoryMap.get(key.getProductCode());
       movementBuilder.stockQuantity(stockQuantity);
       productInventoryMap.put(key.getProductCode(), stockQuantity - movementDetail.getAdjustment());
       movementBuilder.documentNumber(theOnlyLot.getDocumentNumber());
       anyLot = theOnlyLot;
-    } else if (productLotMovements.stream().allMatch(m -> m.getCode().isLot())) {
-      List<LotRawMovement> lotMovements = productLotMovements.stream()
-          .map(m -> toLotMovement(m, lotInventories))
-          .sorted(comparing(m -> m.getLot().getCode()))
-          .collect(toList());
-      movementBuilder.lotMovements(lotMovements);
-      MovementRawDetail movementDetail = productLotMovements.stream()
+    } else if (isKit(key, productLotMovements) || productLotMovements.stream().allMatch(m -> m.getCode().isLot())) {
+      if (!isKit(key, productLotMovements)) {
+        List<LotMovement> lotMovements = productLotMovements.stream()
+            .map(m -> toLotMovement(m, lotInventories))
+            .sorted(comparing(m -> m.getLot().getCode()))
+            .collect(toList());
+        movementBuilder.lotMovements(lotMovements);
+      }
+      MovementDetail movementDetail = productLotMovements.stream()
           .map(ProductLotMovement::getMovementDetail)
-          .reduce(MovementRawDetail::merge)
+          .reduce(MovementDetail::merge)
           .orElseThrow(IllegalStateException::new);
       Integer stockQuantity = productInventoryMap.get(key.getProductCode());
       movementBuilder.stockQuantity(stockQuantity);
@@ -607,11 +608,20 @@ public class StockManagementRepository {
     return movementBuilder.build();
   }
 
-  private LotRawMovement toLotMovement(ProductLotMovement movement, Map<ProductLotCode, Integer> lotInventories) {
-    MovementRawDetail movementDetail = movement.getMovementDetail();
+  private boolean isKit(ProductMovementKey key, List<ProductLotMovement> productLotMovements) {
+    return KitConstants.isKit(key.getProductCode()) && productLotMovements.stream().allMatch(m -> !m.getCode().isLot());
+  }
+
+  private boolean isNoStock(List<ProductLotMovement> productLotMovements) {
+    return productLotMovements.size() == 1 && productLotMovements.get(0).getCode().isNoStock();
+  }
+
+
+  private LotMovement toLotMovement(ProductLotMovement movement, Map<ProductLotCode, Integer> lotInventories) {
+    MovementDetail movementDetail = movement.getMovementDetail();
     Integer stockQuantity = lotInventories.get(movement.getCode());
     lotInventories.put(movement.getCode(), stockQuantity - movementDetail.getAdjustment());
-    return LotRawMovement.builder()
+    return LotMovement.builder()
         .lot(movement.getLot())
         .movementDetail(movementDetail)
         .stockQuantity(stockQuantity)
@@ -632,7 +642,7 @@ public class StockManagementRepository {
 
     private final EventTime eventTime;
 
-    private final MovementRawDetail movementDetail;
+    private final MovementDetail movementDetail;
 
     @Nullable
     private final Integer requestedQuantity;
