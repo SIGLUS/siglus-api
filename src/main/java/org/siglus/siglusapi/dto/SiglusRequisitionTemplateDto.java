@@ -32,17 +32,17 @@ public class SiglusRequisitionTemplateDto extends RequisitionTemplateDto {
 
   private RequisitionTemplateExtensionDto extension;
 
-  private List<UsageTemplateSectionDto> kitUsage;
+  private transient List<UsageTemplateSectionDto> kitUsage;
 
-  private List<UsageTemplateSectionDto> patient;
+  private transient List<UsageTemplateSectionDto> patient;
 
-  private List<UsageTemplateSectionDto> regimen;
+  private transient List<UsageTemplateSectionDto> regimen;
 
-  private List<UsageTemplateSectionDto> consultationNumber;
+  private transient List<UsageTemplateSectionDto> consultationNumber;
 
-  private List<UsageTemplateSectionDto> testConsumption;
+  private transient List<UsageTemplateSectionDto> testConsumption;
 
-  private List<UsageTemplateSectionDto> usageInformation;
+  private transient List<UsageTemplateSectionDto> usageInformation;
 
   public static SiglusRequisitionTemplateDto from(RequisitionTemplateDto requisitionTemplateDto) {
     SiglusRequisitionTemplateDto dto = new SiglusRequisitionTemplateDto();

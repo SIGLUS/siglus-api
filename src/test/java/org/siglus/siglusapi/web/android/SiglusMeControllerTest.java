@@ -18,7 +18,6 @@ package org.siglus.siglusapi.web.android;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -167,7 +166,7 @@ public class SiglusMeControllerTest {
   @Test
   public void shouldCallServiceWhenGetFacilityStockCards() {
     // given
-    when(service.getProductMovements(eq(LocalDate.of(2021, 6, 30)), eq(LocalDate.of(2021, 7, 2))))
+    when(service.getProductMovements(LocalDate.of(2021, 6, 30), LocalDate.of(2021, 7, 2)))
         .thenReturn(facilityProductMovementsResponse);
 
     // when
@@ -176,7 +175,7 @@ public class SiglusMeControllerTest {
 
     // then
     assertSame(productMovementsResponse, this.facilityProductMovementsResponse);
-    verify(service).getProductMovements(eq(LocalDate.of(2021, 6, 30)), eq(LocalDate.of(2021, 7, 2)));
+    verify(service).getProductMovements(LocalDate.of(2021, 6, 30), LocalDate.of(2021, 7, 2));
   }
 
   @Test

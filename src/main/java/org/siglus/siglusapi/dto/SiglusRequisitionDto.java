@@ -38,19 +38,19 @@ public class SiglusRequisitionDto extends RequisitionV2Dto {
   private Boolean isFinalApproval;
   private Boolean isExternalApproval;
   private Boolean isApprovedByInternal;
-  private List<KitUsageLineItemDto> kitUsageLineItems = newArrayList();
-  private List<UsageInformationServiceDto> usageInformationLineItems = newArrayList();
-  private List<TestConsumptionServiceDto> testConsumptionLineItems = newArrayList();
+  private transient List<KitUsageLineItemDto> kitUsageLineItems = newArrayList();
+  private transient List<UsageInformationServiceDto> usageInformationLineItems = newArrayList();
+  private transient List<TestConsumptionServiceDto> testConsumptionLineItems = newArrayList();
   @Valid
   @NotNull
-  private List<PatientGroupDto> patientLineItems = Collections.emptyList();
+  private transient List<PatientGroupDto> patientLineItems = Collections.emptyList();
   @Valid
   @NotNull
-  private List<ConsultationNumberGroupDto> consultationNumberLineItems = Collections.emptyList();
-  private List<RegimenLineDto> regimenLineItems = newArrayList();
-  private List<RegimenSummaryLineDto> regimenSummaryLineItems = newArrayList();
-  private List<RegimenDto> customRegimens = newArrayList();
-  private SiglusUsageTemplateDto usageTemplate;
+  private transient List<ConsultationNumberGroupDto> consultationNumberLineItems = Collections.emptyList();
+  private transient List<RegimenLineDto> regimenLineItems = newArrayList();
+  private transient List<RegimenSummaryLineDto> regimenSummaryLineItems = newArrayList();
+  private transient List<RegimenDto> customRegimens = newArrayList();
+  private transient SiglusUsageTemplateDto usageTemplate;
   private String requisitionNumber;
 
   public static SiglusRequisitionDto from(RequisitionV2Dto v2Dto) {
