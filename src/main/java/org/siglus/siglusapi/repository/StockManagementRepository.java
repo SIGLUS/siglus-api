@@ -313,6 +313,9 @@ public class StockManagementRepository {
   }
 
   public void saveRequested(StockEvent stockEvent, UUID productId, Integer requested) {
+    if (requested == null) {
+      return;
+    }
     String sql = "INSERT INTO siglusintegration.stock_event_product_requested"
         + "(id, orderableid, stockeventid, requestedquantity) "
         + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3)";
