@@ -23,7 +23,6 @@ import java.time.LocalDate;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
