@@ -97,6 +97,7 @@ import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.errorhandling.exception.OrderNotFoundException;
+import org.siglus.siglusapi.errorhandling.exception.PodInternalErrorException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
@@ -367,14 +368,15 @@ public class MeService {
     if (!StringUtils.isEmpty(podRequest.getOriginNumber())) {
       log.info("Pod orderCode: {} has originNumber {},backup request", podRequest.getOrderCode(),
           podRequest.getOriginNumber());
-      backupPodRequest(podRequest, "", user);
+      backupPodRequest(podRequest, "replace the old order number " + podRequest.getOriginNumber()
+          + " successfully. ", user);
     }
     try {
       podConfirmService.confirmPod(podRequest, toUpdate, user);
       return getPodByOrderCode(podRequest.getOrderCode());
     } catch (Exception e) {
       backupPodRequest(podRequest, PodConstants.ERROR_MESSAGE + e.getMessage(), authHelper.getCurrentUser());
-      throw e;
+      throw new PodInternalErrorException(e, "siglusapi.pod.internal.error.excepotion", podRequest.getOrderCode());
     }
   }
 

@@ -15,13 +15,13 @@
 
 package org.siglus.siglusapi.errorhandling.exception;
 
-public class OrderNotFoundException extends PodException {
+public class PodInternalErrorException extends PodException {
 
-  public OrderNotFoundException(String messageKey, String... params) {
+  public PodInternalErrorException(String messageKey, String... params) {
     super(messageKey, params);
   }
 
-  public OrderNotFoundException(Throwable cause, String messageKey, String... params) {
+  public PodInternalErrorException(Throwable cause, String messageKey, String... params) {
     super(cause, messageKey, params);
   }
 }
