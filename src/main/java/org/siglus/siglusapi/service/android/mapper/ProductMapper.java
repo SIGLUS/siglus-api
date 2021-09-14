@@ -15,10 +15,12 @@
 
 package org.siglus.siglusapi.service.android.mapper;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.joda.money.Money;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -37,8 +39,9 @@ public interface ProductMapper {
   @Mapping(target = "isHiv", expression = "java(parseKey(domain, \"isHiv\", false))")
   @Mapping(target = "category", source = ".", qualifiedByName = "getCategory")
   @Mapping(target = "lastUpdated", source = ".", qualifiedByName = "getLastUpdated")
+  @Mapping(target = "pricePerPack", source = ".", qualifiedByName = "getPricePerPack")
   ProductResponse toResponse(OrderableDto domain, @Context Map<UUID, OrderableDto> allProducts,
-      @Context Map<UUID, String> programCodesByAdditionalProductId);
+      @Context Map<UUID, String> productIdToAdditionalProgramCode);
 
   @Named("getProgramCode")
   default String getProgramCode(OrderableDto domain) {
@@ -47,8 +50,8 @@ public interface ProductMapper {
 
   @Named("getAdditionalProgramCode")
   default String getAdditionalProgramCode(UUID productId,
-      @Context Map<UUID, String> programCodesByAdditionalProductId) {
-    return programCodesByAdditionalProductId.get(productId);
+      @Context Map<UUID, String> productIdToAdditionalProgramCode) {
+    return productIdToAdditionalProgramCode.get(productId);
   }
 
   default Boolean parseKey(OrderableDto orderable, String key, boolean defaultValue) {
@@ -68,6 +71,16 @@ public interface ProductMapper {
   @Named("getLastUpdated")
   default Instant getLastUpdated(OrderableDto domain) {
     return domain.getMeta().getLastUpdated().toInstant();
+  }
+
+  @Named("getPricePerPack")
+  default BigDecimal getPricePerPack(OrderableDto domain) {
+    Money pricePerPack = domain.getPrograms().stream().findFirst().orElseThrow(IllegalStateException::new)
+        .getPricePerPack();
+    if (pricePerPack == null) {
+      return null;
+    }
+    return pricePerPack.getAmount();
   }
 
 }

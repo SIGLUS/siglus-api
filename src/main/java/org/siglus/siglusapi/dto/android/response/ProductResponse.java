@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -40,5 +41,5 @@ public class ProductResponse {
   private Boolean isNos;
   private Boolean isHiv;
   private Instant lastUpdated;
-
+  private BigDecimal pricePerPack;
 }

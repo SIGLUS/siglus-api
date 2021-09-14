@@ -59,8 +59,7 @@ public class SiglusOrderableService {
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
     Page<OrderableDto> orderableDtoPage = orderableReferenceDataService.searchOrderables(searchParams, pageable);
-    Set<String> archivedProducts = archiveProductService
-        .searchArchivedProductsByFacilityId(facilityId);
+    Set<String> archivedProducts = archiveProductService.searchArchivedProductsByFacilityId(facilityId);
     orderableDtoPage.getContent().forEach(orderableDto -> orderableDto
         .setArchived(archivedProducts.contains(orderableDto.getId().toString())));
     return orderableDtoPage;

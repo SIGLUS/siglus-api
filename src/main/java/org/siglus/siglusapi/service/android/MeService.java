@@ -224,15 +224,15 @@ public class MeService {
     Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
 
-    Map<UUID, String> programCodesById = programsHelper.findUserSupportedPrograms().stream()
+    Map<UUID, String> programIdToCode = programsHelper.findUserSupportedPrograms().stream()
         .map(programDataService::findOne)
         .collect(toMap(ProgramDto::getId, BasicProgramDto::getCode));
 
-    Map<UUID, String> programCodesByAdditionalProductId = additionalProductRepo.findAll().stream()
+    Map<UUID, String> productIdToAdditionalProgramCode = additionalProductRepo.findAll().stream()
         .collect(
-            toMap(ProgramAdditionalOrderable::getAdditionalOrderableId, p -> programCodesById.get(p.getProgramId())));
+            toMap(ProgramAdditionalOrderable::getAdditionalOrderableId, p -> programIdToCode.get(p.getProgramId())));
 
-    List<OrderableDto> approvedProducts = programCodesById.keySet().stream()
+    List<OrderableDto> approvedProducts = programIdToCode.keySet().stream()
         .map(programDataService::findOne)
         .map(program -> getProgramProducts(homeFacilityId, program))
         .flatMap(Collection::stream)
@@ -244,7 +244,7 @@ public class MeService {
         .collect(toList());
     List<ProductResponse> filteredProducts = approvedProducts.stream()
         .filter(p -> filterByLastUpdated(p, lastSyncTime))
-        .map(orderable -> mapper.toResponse(orderable, allProducts, programCodesByAdditionalProductId))
+        .map(orderable -> mapper.toResponse(orderable, allProducts, productIdToAdditionalProgramCode))
         .collect(toList());
     syncResponse.setProducts(filteredProducts);
     filteredProducts.stream()
@@ -425,8 +425,7 @@ public class MeService {
         .collect(toList());
   }
 
-  private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId,
-      ProgramDto program) {
+  private List<org.openlmis.requisition.dto.OrderableDto> getProgramProducts(UUID homeFacilityId, ProgramDto program) {
     return approvedProductDataService
         .getApprovedProducts(homeFacilityId, program.getId(), emptyList()).stream()
         .map(ApprovedProductDto::getOrderable)
