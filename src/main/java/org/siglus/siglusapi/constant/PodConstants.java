@@ -19,6 +19,8 @@ public class PodConstants {
 
   private PodConstants() {}
 
+  public static final String ORDER_NUMBER = "orderNumber";
+
   public static final String NOT_EXIST_MESSAGE = "Sync failed. This order number does not exist."
       + " Please confirm whether this order number is correct.";
 
@@ -29,9 +31,4 @@ public class PodConstants {
 
   public static final String ERROR_MESSAGE_PT = "A sincronização falhou. Há um erro. "
       + "Entre em contato com o administrador.";
-
-  public static final String SQL_STRING_COLUMN_QUOTATION = "'";
-
-  public static final String SQL_STRING_COLUMN_COMMA = ",";
-
 }

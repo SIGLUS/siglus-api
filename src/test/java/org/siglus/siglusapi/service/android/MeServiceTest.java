@@ -108,6 +108,7 @@ import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
+import org.siglus.siglusapi.errorhandling.exception.OrderNotFoundException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
@@ -763,7 +764,7 @@ public class MeServiceTest {
     verify(stockCardRequestBackupRepository, times(1)).save(any(StockCardRequestBackup.class));
   }
 
-  @Test
+  @Test(expected = OrderNotFoundException.class)
   public void shouldBackUpWhenOrderNumIsNotExist() {
     //given
     PodRequest podRequest = mockPodRequest();

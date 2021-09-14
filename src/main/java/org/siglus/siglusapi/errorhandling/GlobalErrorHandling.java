@@ -19,6 +19,7 @@ import static java.util.stream.Collectors.toList;
 import static org.siglus.common.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
 import static org.zalando.problem.Problem.DEFAULT_TYPE;
 import static org.zalando.problem.Status.BAD_REQUEST;
+import static org.zalando.problem.Status.NOT_FOUND;
 
 import java.net.URI;
 import java.util.Collection;
@@ -34,6 +35,8 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.constant.DateFormatConstants;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
+import org.siglus.siglusapi.constant.PodConstants;
+import org.siglus.siglusapi.errorhandling.exception.OrderNotFoundException;
 import org.siglus.siglusapi.errorhandling.message.ValidationFailField;
 import org.siglus.siglusapi.i18n.ExposedMessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -116,6 +119,13 @@ public class GlobalErrorHandling implements ProblemHandling {
     return create(exception, problem, request);
   }
 
+  @ExceptionHandler
+  public ResponseEntity<Problem> handleNotFoundException(OrderNotFoundException exception, NativeWebRequest request) {
+    String messageKey = exception.asMessage().getKey();
+    ThrowableProblem problem = prepareWithNotFound(messageKey, exception, NOT_FOUND, DEFAULT_TYPE).build();
+    return create(exception, problem, request);
+  }
+
   @Override
   public void log(Throwable throwable, Problem problem, NativeWebRequest request, HttpStatus status) {
     if (throwable instanceof javax.validation.ConstraintViolationException) {
@@ -133,6 +143,16 @@ public class GlobalErrorHandling implements ProblemHandling {
         .with(MESSAGE, localizedMessage)
         .with(MESSAGE_IN_ENGLISH, messageInEnglish)
         .with(MESSAGE_IN_PORTUGUESE, messageInPortuguese);
+  }
+
+  public ProblemBuilder prepareWithNotFound(String messageKey, OrderNotFoundException exception, StatusType status,
+      URI type) {
+    String localizedMessage = getLocalizedMessage(messageKey, LocaleContextHolder.getLocale());
+    return prepare(exception, status, type)
+        .with(MESSAGE_KEY, messageKey)
+        .with(MESSAGE, localizedMessage)
+        .with(MESSAGE_IN_PORTUGUESE, PodConstants.NOT_EXIST_MESSAGE_PT)
+        .with(PodConstants.ORDER_NUMBER, exception.getParams());
   }
 
   private String getLocalizedMessage(String key, Locale locale) {

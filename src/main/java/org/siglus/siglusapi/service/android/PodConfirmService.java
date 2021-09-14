@@ -227,7 +227,7 @@ public class PodConfirmService {
   }
 
   private void deletePodLineItems(List<ProofOfDeliveryLineItem> podLineItems) {
-    if (StringUtils.isEmpty(podLineItems)) {
+    if (CollectionUtils.isEmpty(podLineItems)) {
       return;
     }
     Set<UUID> podLineItemIds = podLineItems.stream().map(ProofOfDeliveryLineItem::getId).collect(Collectors.toSet());
@@ -236,7 +236,7 @@ public class PodConfirmService {
   }
 
   private void deleteShipmentLineItems(List<ShipmentLineItem> shipmentLineItems) {
-    if (StringUtils.isEmpty(shipmentLineItems)) {
+    if (CollectionUtils.isEmpty(shipmentLineItems)) {
       return;
     }
     Set<UUID> shipmentLineItemIds = shipmentLineItems.stream().map(ShipmentLineItem::getId).collect(Collectors.toSet());

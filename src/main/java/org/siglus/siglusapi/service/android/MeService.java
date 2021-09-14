@@ -39,7 +39,6 @@ import javax.annotation.ParametersAreNullableByDefault;
 import javax.persistence.EntityManager;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
-import javax.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
@@ -86,7 +85,6 @@ import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
-import org.siglus.siglusapi.dto.android.response.ConfirmPodResponse;
 import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
@@ -98,6 +96,7 @@ import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
+import org.siglus.siglusapi.errorhandling.exception.OrderNotFoundException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
@@ -122,7 +121,6 @@ import org.siglus.siglusapi.util.HashEncoder;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -358,18 +356,13 @@ public class MeService {
         .collect(toList());
   }
 
-  public ConfirmPodResponse confirmPod(PodRequest podRequest) {
+  public PodResponse confirmPod(PodRequest podRequest) {
     UserDto user = authHelper.getCurrentUser();
     ProofOfDelivery toUpdate = podRepository.findInitiatedPodByOrderCode(podRequest.getOrderCode());
     if (toUpdate == null) {
       log.warn("Pod orderCode: {} not found:", podRequest.getOrderCode());
       backupPodRequest(podRequest, PodConstants.NOT_EXIST_MESSAGE, user);
-      return ConfirmPodResponse.builder()
-          .status(HttpStatus.NOT_FOUND.value())
-          .orderNumber(podRequest.getOrderCode())
-          .message(PodConstants.NOT_EXIST_MESSAGE)
-          .messageInPortuguese(PodConstants.NOT_EXIST_MESSAGE_PT)
-          .build();
+      throw new OrderNotFoundException("siglusapi.pod.order.notFoundByCode", podRequest.getOrderCode());
     }
     if (!StringUtils.isEmpty(podRequest.getOriginNumber())) {
       log.info("Pod orderCode: {} has originNumber {},backup request", podRequest.getOrderCode(),
@@ -378,24 +371,11 @@ public class MeService {
     }
     try {
       podConfirmService.confirmPod(podRequest, toUpdate, user);
+      return getPodByOrderCode(podRequest.getOrderCode());
     } catch (Exception e) {
       backupPodRequest(podRequest, PodConstants.ERROR_MESSAGE + e.getMessage(), authHelper.getCurrentUser());
-      if (e instanceof ValidationException) {
-        throw e;
-      }
-      return ConfirmPodResponse.builder()
-          .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-          .orderNumber(podRequest.getOrderCode())
-          .message(PodConstants.ERROR_MESSAGE)
-          .messageInPortuguese(PodConstants.ERROR_MESSAGE_PT)
-          .detail(e.getMessage())
-          .build();
+      throw e;
     }
-    return ConfirmPodResponse.builder()
-        .status(HttpStatus.OK.value())
-        .orderNumber(podRequest.getOrderCode())
-        .podResponse(getPodByOrderCode(podRequest.getOrderCode()))
-        .build();
   }
 
   private PodResponse getPodByOrderCode(String orderCode) {
