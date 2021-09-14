@@ -105,17 +105,6 @@ FROM
         LEFT JOIN
         referencedata.trade_items trade_item
           ON order_orderable_identifier.value::uuid = trade_item.id
-             OR EXISTS
-             (
-                 SELECT
-                   1
-                 FROM
-                   referencedata.trade_item_classifications trade_item_classification
-                 WHERE
-                   trade_item_classification.tradeitemid = trade_item.id
-                   AND trade_item_classification.classificationid = commodity_type.classificationid
-                   AND trade_item_classification.classificationsystem = commodity_type.classificationsystem
-             )
       WHERE
         NOT EXISTS
         (
