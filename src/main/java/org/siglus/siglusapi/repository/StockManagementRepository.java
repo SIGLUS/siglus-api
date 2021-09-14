@@ -100,7 +100,7 @@ public class StockManagementRepository {
   public PeriodOfProductMovements getAllProductMovementsForSync(@Nonnull UUID facilityId, @Nonnull LocalDate since) {
     requireNonNull(facilityId);
     ZoneId zoneId = ZoneId.systemDefault();
-    return getAllProductMovements(facilityId, since, null, emptySet(), since.atStartOfDay(zoneId).toInstant(),
+    return getAllProductMovements(facilityId, null, null, emptySet(), since.atStartOfDay(zoneId).toInstant(),
         LocalDate.now().atStartOfDay(zoneId).toInstant());
   }
 
