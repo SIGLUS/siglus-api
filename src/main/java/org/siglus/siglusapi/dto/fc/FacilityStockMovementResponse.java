@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.fc;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Data;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
@@ -22,7 +23,9 @@ import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 @Data
 public class FacilityStockMovementResponse {
 
+  @JsonProperty("facilityCode")
   private String code;
+  @JsonProperty("facilityName")
   private String name;
   private List<ProductMovementResponse> productMovements;
 

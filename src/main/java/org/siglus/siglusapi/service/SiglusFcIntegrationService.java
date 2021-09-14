@@ -170,7 +170,7 @@ public class SiglusFcIntegrationService {
     FacilityStockMovementResponse response = new FacilityStockMovementResponse();
     response.setCode(facility.getCode());
     response.setName(facility.getName());
-    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facility.getId(), since);
+    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovementsForSync(facility.getId(), since);
     response.setProductMovements(productMovementMapper.toResponses(period));
     return response;
   }
