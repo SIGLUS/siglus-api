@@ -47,6 +47,7 @@ public class PodRequest {
   private Boolean isLocal;
 
   @JsonProperty("orderNumber")
+  @NotBlank
   private String orderCode;
 
   private String programCode;

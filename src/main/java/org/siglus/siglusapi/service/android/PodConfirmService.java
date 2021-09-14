@@ -98,7 +98,7 @@ public class PodConfirmService {
   private final SiglusProgramService siglusProgramService;
 
   @Transactional
-  public void confirmPod(@Valid PodRequest podRequest, ProofOfDelivery toUpdate, UserDto user) {
+  public void confirmPod(PodRequest podRequest, ProofOfDelivery toUpdate, UserDto user) {
     String syncUpHash = podRequest.getSyncUpHash(user);
     if (syncUpHashRepository.findOne(syncUpHash) != null) {
       log.info("skip confirm ProofsOfDelivery as syncUpHash: {} existed", syncUpHash);
@@ -110,7 +110,8 @@ public class PodConfirmService {
     }
     fulfillmentPermissionService.canManagePod(toUpdate);
     if (!CollectionUtils.isEmpty(unSupportProductCodes(user.getHomeFacilityId(), podRequest))) {
-      throw new NotFoundException("contain unsupported products");
+      Set<String> unSupportProductCodes = unSupportProductCodes(user.getHomeFacilityId(), podRequest);
+      throw new NotFoundException("siglusapi.pod.unSupportProduct", unSupportProductCodes.toArray(new String[0]));
     }
     updatePod(toUpdate, podRequest, user);
   }

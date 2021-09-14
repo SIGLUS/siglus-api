@@ -369,7 +369,7 @@ public class MeService {
       log.info("Pod orderCode: {} has originNumber {},backup request", podRequest.getOrderCode(),
           podRequest.getOriginNumber());
       backupPodRequest(podRequest, "replace the old order number " + podRequest.getOriginNumber()
-          + " successfully. ", user);
+          + " successfully.", user);
     }
     try {
       podConfirmService.confirmPod(podRequest, toUpdate, user);

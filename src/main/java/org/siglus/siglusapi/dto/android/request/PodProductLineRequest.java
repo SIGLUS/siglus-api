@@ -18,10 +18,12 @@ package org.siglus.siglusapi.dto.android.request;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.Data;
+import org.hibernate.validator.constraints.NotBlank;
 
 @Data
 public class PodProductLineRequest {
 
+  @NotBlank
   private String code;
 
   private Integer orderedQuantity;
