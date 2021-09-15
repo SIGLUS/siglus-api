@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
@@ -82,7 +83,7 @@ public class SiglusMeController {
 
   @PostMapping("/facility/stockCards")
   @ResponseStatus(CREATED)
-  public CreateStockCardResponse createStockCards(@RequestBody List<StockCardCreateRequest> requests) {
+  public CreateStockCardResponse createStockCards(@RequestBody @Valid @NotEmpty List<StockCardCreateRequest> requests) {
     return service.createStockCards(requests);
   }
 

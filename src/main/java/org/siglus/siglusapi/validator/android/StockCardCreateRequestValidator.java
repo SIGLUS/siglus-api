@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.internal.engine.ConstraintViolationImpl;
 import org.siglus.siglusapi.dto.android.InvalidProduct;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
+import org.siglus.siglusapi.dto.android.group.SelfCheckGroup;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.service.android.StockCardCreateService;
@@ -56,7 +57,7 @@ public class StockCardCreateRequestValidator {
     List<StockCardCreateRequest> originRequest = new ArrayList<>(requests);
     do {
       violations = forExecutables.validateParameters(
-          stockCardCreateService, method, new List[]{originRequest}, PerformanceSequence.class);
+          stockCardCreateService, method, new List[]{originRequest}, SelfCheckGroup.class, PerformanceSequence.class);
       invalidProducts.addAll(getInvalidProducts(violations));
       originRequest.removeIf(
           r -> invalidProducts.stream().anyMatch(i -> i.getProductCode().equals(r.getProductCode())));

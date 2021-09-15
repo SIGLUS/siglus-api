@@ -79,6 +79,7 @@ import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
+import org.siglus.siglusapi.dto.android.group.SelfCheckGroup;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.dto.android.validator.stockcard.FacilityApprovedProductValidator;
@@ -311,7 +312,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     Map<String, List<String>> violations = executeValidation(param);
 
     // then
-    assertEquals(1, violations.size());
+    assertEquals(2, violations.size());
     assertViolation("Adjust quantity of [08S01Z] cannot be larger than SOH.",
         "createStockCards.arg0[0]", violations);
   }
@@ -326,7 +327,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     Map<String, List<String>> violations = executeValidation(param);
 
     // then
-    assertEquals(1, violations.size());
+    assertEquals(2, violations.size());
     assertViolation(
         "The stock card for 08S01Z on 2021-06-17(at 2021-06-17T14:20:56Z) is inconsistent with its lot events.",
         "createStockCards.arg0[0]", violations);
@@ -641,7 +642,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   private Map<String, List<String>> executeValidation(Object... params) {
     holder.initContext(mockFacilityDto(), LocalDate.MIN);
     return forExecutables
-        .validateParameters(stockCardCreateService, method, params, PerformanceSequence.class)
+        .validateParameters(stockCardCreateService, method, params, SelfCheckGroup.class, PerformanceSequence.class)
         .stream()
         .collect(groupingBy(v -> v.getPropertyPath().toString(), mapping(ConstraintViolation::getMessage, toList())));
   }

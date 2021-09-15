@@ -116,7 +116,7 @@ public class PodConfirmService {
   }
 
   private void updatePod(ProofOfDelivery toUpdatePod, PodRequest podRequest, UserDto user) {
-    log.info("confirm android proofOfDelivery: {}", toUpdatePod);
+    log.info("confirm android pod: {}", toUpdatePod);
     podRepository.updatePodById(podRequest.getDeliveredBy(), podRequest.getReceivedBy(), podRequest.getReceivedDate(),
         ProofOfDeliveryStatus.CONFIRMED.toString(), toUpdatePod.getId());
     deletePodLineItems(toUpdatePod.getLineItems());
