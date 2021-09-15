@@ -15,33 +15,16 @@
 
 package org.siglus.siglusapi.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import org.openlmis.requisition.dto.ProgramDto;
-import org.siglus.common.dto.referencedata.BaseDto;
-import org.siglus.siglusapi.dto.FacilityTypeDto;
-import org.siglus.common.dto.referencedata.MetadataDto;
-import org.siglus.common.dto.referencedata.OrderableDto;
+import java.io.Serializable;
+import java.util.UUID;
+import lombok.Data;
 
-@Getter
-@Setter
-@ToString(callSuper = true)
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public final class ApprovedProductDto extends BaseDto {
-
-  private OrderableDto orderable;
-  private ProgramDto program;
-  private FacilityTypeDto facilityType;
-  private Double maxPeriodsOfStock;
-  private Double minPeriodsOfStock;
-  private Double emergencyOrderPoint;
+@Data
+public class FacilityTypeDto implements Serializable {
+  private UUID id;
+  private String code;
+  private String name;
+  private String description;
+  private Integer displayOrder;
   private Boolean active;
-  private MetadataDto meta = new MetadataDto();
-
 }

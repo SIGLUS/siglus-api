@@ -61,7 +61,7 @@ import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
-import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.LotSearchParams;
 import org.siglus.common.dto.referencedata.UserDto;
@@ -256,7 +256,7 @@ public class FcIssueVoucherService {
   private FacilityDto getClientFacility(IssueVoucherDto issueVoucherDto) {
     String clientCode = issueVoucherDto.getClientCode();
     fcDataValidate.validateEmptyFacilityCode(clientCode);
-    List<org.siglus.common.dto.referencedata.FacilityDto> clientCodeList =
+    List<org.siglus.siglusapi.dto.FacilityDto> clientCodeList =
         siglusFacilityReferenceDataService.getFacilityByCode(clientCode).getContent();
     fcDataValidate.validateExistFacility(clientCodeList);
     return clientCodeList.get(0);
@@ -265,7 +265,7 @@ public class FcIssueVoucherService {
   private FacilityDto getWareHouseFacility(IssueVoucherDto issueVoucherDto) {
     String warehouseCode = issueVoucherDto.getWarehouseCode();
     fcDataValidate.validateEmptyFacilityCode(warehouseCode);
-    List<org.siglus.common.dto.referencedata.FacilityDto> facilityDtos =
+    List<org.siglus.siglusapi.dto.FacilityDto> facilityDtos =
         siglusFacilityReferenceDataService.getFacilityByCode(warehouseCode).getContent();
     fcDataValidate.validateExistFacility(facilityDtos);
     return facilityDtos.get(0);

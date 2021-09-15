@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.client;
 
+import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_DESTINATIONS;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_SOURCES;
 
@@ -46,7 +47,7 @@ public class ValidSourceDestinationStockManagementService extends
     return ValidSourceDestinationDto[].class;
   }
 
-  @Cacheable(value = SIGLUS_DESTINATIONS, keyGenerator = "org.siglus.siglusapi.config.CacheKeyGenerator")
+  @Cacheable(value = SIGLUS_DESTINATIONS, keyGenerator = CACHE_KEY_GENERATOR)
   public Collection<ValidSourceDestinationDto> getValidDestinations(UUID programId, UUID facilityId) {
     Map<String, Object> params = new HashMap<>();
     params.put("programId", programId);
@@ -58,7 +59,7 @@ public class ValidSourceDestinationStockManagementService extends
     postResult("validDestinations", assignment, getResultClass());
   }
 
-  @Cacheable(value = SIGLUS_SOURCES, keyGenerator = "org.siglus.siglusapi.config.CacheKeyGenerator")
+  @Cacheable(value = SIGLUS_SOURCES, keyGenerator = CACHE_KEY_GENERATOR)
   public Collection<ValidSourceDestinationDto> getValidSources(UUID programId, UUID facilityId) {
     Map<String, Object> params = new HashMap<>();
     params.put("programId", programId);

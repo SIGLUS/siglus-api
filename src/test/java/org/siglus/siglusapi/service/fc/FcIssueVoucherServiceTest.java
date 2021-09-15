@@ -65,7 +65,7 @@ import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.OrderExternal;
-import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.OrderExternalRepository;

@@ -40,7 +40,7 @@ import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.referencedata.Dispensable;
-import org.siglus.common.dto.referencedata.FacilityTypeDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.common.dto.referencedata.OrderableChildDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;

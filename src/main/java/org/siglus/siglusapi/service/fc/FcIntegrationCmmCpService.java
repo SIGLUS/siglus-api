@@ -37,7 +37,7 @@ import org.openlmis.requisition.dto.BaseRequisitionLineItemDto;
 import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.RequisitionLineItemV2Dto;
 import org.siglus.common.domain.referencedata.SupervisoryNode;
-import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.domain.CmmDomain;

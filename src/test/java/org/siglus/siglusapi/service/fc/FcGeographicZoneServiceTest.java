@@ -31,8 +31,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.common.dto.referencedata.GeographicLevelDto;
-import org.siglus.common.dto.referencedata.OpenLmisGeographicZoneDto;
+import org.siglus.siglusapi.dto.GeographicLevelDto;
+import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneDistrictDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneProvinceDto;
@@ -77,97 +77,97 @@ public class FcGeographicZoneServiceTest {
     List<GeographicLevelDto> levelDtos = Arrays.asList(level1, level2, level3);
     when(geographicLevelService.searchAllGeographicLevel()).thenReturn(levelDtos);
 
-    OpenLmisGeographicZoneDto national1 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto national1 = GeographicZoneDto.builder()
         .code("1")
         .name("description 1")
         .level(level1)
         .parent(null)
         .build();
-    OpenLmisGeographicZoneDto province11 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto province11 = GeographicZoneDto.builder()
         .code("11")
         .name("description 11")
         .level(level2)
         .parent(national1)
         .build();
-    OpenLmisGeographicZoneDto district111 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto district111 = GeographicZoneDto.builder()
         .code("111")
         .name("description 111")
         .level(level3)
         .parent(province11)
         .build();
-    OpenLmisGeographicZoneDto district112 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto district112 = GeographicZoneDto.builder()
         .code("112")
         .name("district 112")
         .level(level3)
         .parent(province11)
         .build();
-    OpenLmisGeographicZoneDto province12 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto province12 = GeographicZoneDto.builder()
         .code("12")
         .name("province 12")
         .level(level2)
         .parent(national1)
         .build();
-    OpenLmisGeographicZoneDto district121 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto district121 = GeographicZoneDto.builder()
         .code("121")
         .name("description 121")
         .level(level3)
         .parent(province12)
         .build();
-    OpenLmisGeographicZoneDto district122 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto district122 = GeographicZoneDto.builder()
         .code("122")
         .name("description 122")
         .level(level3)
         .parent(province12)
         .build();
-    OpenLmisGeographicZoneDto national2 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto national2 = GeographicZoneDto.builder()
         .code("2")
         .name("national 2")
         .level(level1)
         .parent(null)
         .build();
-    OpenLmisGeographicZoneDto province21 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto province21 = GeographicZoneDto.builder()
         .code("21")
         .name("description 21")
         .level(level2)
         .parent(national1)
         .build();
-    OpenLmisGeographicZoneDto district211 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto district211 = GeographicZoneDto.builder()
         .code("211")
         .name("description 211")
         .level(level3)
         .parent(province11)
         .build();
-    OpenLmisGeographicZoneDto district212 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto district212 = GeographicZoneDto.builder()
         .code("212")
         .name("description 212")
         .level(level3)
         .parent(province11)
         .build();
-    OpenLmisGeographicZoneDto province22 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto province22 = GeographicZoneDto.builder()
         .code("22")
         .name("description 22")
         .level(level2)
         .parent(national1)
         .build();
-    OpenLmisGeographicZoneDto district221 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto district221 = GeographicZoneDto.builder()
         .code("221")
         .name("description 221")
         .level(level3)
         .parent(province12)
         .build();
-    OpenLmisGeographicZoneDto district222 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto district222 = GeographicZoneDto.builder()
         .code("222")
         .name("description 222")
         .level(level3)
         .parent(province12)
         .build();
-    List<OpenLmisGeographicZoneDto> zoneDtos = Arrays.asList(
+    List<GeographicZoneDto> zoneDtos = Arrays.asList(
         national1, province11, district111, district112, province12, district121, national2
     );
     district112.setName("description 112");
     province12.setName("description 12");
     national2.setName("description 2");
-    List<OpenLmisGeographicZoneDto> allZoneDtos = Arrays.asList(
+    List<GeographicZoneDto> allZoneDtos = Arrays.asList(
         national1, province11, district111, district112, province12, district121, district122,
         national2, province21, district211, district212, province22, district221, district222
     );
@@ -194,7 +194,7 @@ public class FcGeographicZoneServiceTest {
 
     // then
     verify(geographicZoneService, times(7)).createGeographicZone(
-        any(OpenLmisGeographicZoneDto.class));
+        any(GeographicZoneDto.class));
     assertTrue(result);
   }
 
@@ -208,7 +208,7 @@ public class FcGeographicZoneServiceTest {
 
     // then
     verify(geographicZoneService, times(1)).createGeographicZone(
-        any(OpenLmisGeographicZoneDto.class));
+        any(GeographicZoneDto.class));
     assertTrue(result);
   }
 
@@ -222,7 +222,7 @@ public class FcGeographicZoneServiceTest {
 
     // then
     verify(geographicZoneService, times(4)).createGeographicZone(
-        any(OpenLmisGeographicZoneDto.class));
+        any(GeographicZoneDto.class));
     assertTrue(result);
   }
 
@@ -236,7 +236,7 @@ public class FcGeographicZoneServiceTest {
 
     // then
     verify(geographicZoneService, times(6)).createGeographicZone(
-        any(OpenLmisGeographicZoneDto.class));
+        any(GeographicZoneDto.class));
     assertTrue(result);
   }
 
@@ -249,7 +249,7 @@ public class FcGeographicZoneServiceTest {
 
     // then
     verify(geographicZoneService, times(3 * 2)).updateGeographicZone(
-        any(OpenLmisGeographicZoneDto.class));
+        any(GeographicZoneDto.class));
     assertTrue(result);
   }
 

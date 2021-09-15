@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.service.client;
 
 import java.util.List;
-import org.siglus.common.dto.referencedata.FacilityTypeDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.common.service.client.BaseReferenceDataService;
 import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.referencedata.Pagination;

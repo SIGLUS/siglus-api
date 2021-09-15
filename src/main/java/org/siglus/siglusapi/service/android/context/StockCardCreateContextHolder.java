@@ -29,7 +29,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.StocksOnHand;

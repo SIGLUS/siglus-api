@@ -23,16 +23,19 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.android.response.OrderBasicResponse;
 
 @Mapper(componentModel = "spring", uses = PodRequisitionMapper.class)
 public interface PodOrderMapper {
 
-  default OrderBasicResponse toResponse(UUID orderId, @Context Map<UUID, OrderDto> allOrders) {
+  default OrderBasicResponse toResponse(UUID orderId, @Context Map<UUID, OrderDto> orderIdToDto,
+      @Context Map<UUID, FacilityDto> facilityIdToDto) {
     if (orderId == null) {
       return null;
     }
-    return toOrderResponse(allOrders.get(orderId), allOrders);
+    return toOrderResponse(orderIdToDto.get(orderId), orderIdToDto, facilityIdToDto);
   }
 
   default long toEpochMilli(ZonedDateTime dateTime) {
@@ -43,11 +46,36 @@ public interface PodOrderMapper {
   @Mapping(target = "lastModifiedDate", source = "lastUpdatedDate")
   @Mapping(target = "supplyFacilityName", source = "supplyingFacility.name")
   @Mapping(target = "requisition", source = "id")
-  OrderBasicResponse toOrderResponse(OrderDto order, @Context Map<UUID, OrderDto> allOrders);
+  @Mapping(target = "supplyFacilityDistrict", source = "id", qualifiedByName = "toSupplyFacilityDistrict")
+  @Mapping(target = "supplyFacilityProvince", source = "id", qualifiedByName = "toSupplyFacilityProvince")
+  OrderBasicResponse toOrderResponse(OrderDto order, @Context Map<UUID, OrderDto> orderIdToDto,
+      @Context Map<UUID, FacilityDto> facilityIdToDto);
 
-  @Named("getAdditionalProgramCode")
-  default String getAdditionalProgramCode(UUID productId,
-      @Context Map<UUID, String> productIdToAdditionalProgramCode) {
-    return productIdToAdditionalProgramCode.get(productId);
+  @Named("toSupplyFacilityDistrict")
+  default String toSupplyFacilityDistrict(UUID orderId, @Context Map<UUID, OrderDto> orderIdToDto,
+      @Context Map<UUID, FacilityDto> facilityIdToDto) {
+    OrderDto orderDto = orderIdToDto.get(orderId);
+    if (orderDto == null) {
+      return null;
+    }
+    GeographicZoneDto geographicZone = facilityIdToDto.get(orderDto.getFacility().getId()).getGeographicZone();
+    if (geographicZone == null) {
+      return null;
+    }
+    return geographicZone.getName();
+  }
+
+  @Named("toSupplyFacilityProvince")
+  default String toSupplyFacilityProvince(UUID orderId, @Context Map<UUID, OrderDto> orderIdToDto,
+      @Context Map<UUID, FacilityDto> facilityIdToDto) {
+    OrderDto orderDto = orderIdToDto.get(orderId);
+    if (orderDto == null) {
+      return null;
+    }
+    GeographicZoneDto geographicZone = facilityIdToDto.get(orderDto.getFacility().getId()).getGeographicZone();
+    if (geographicZone == null || geographicZone.getParent() == null) {
+      return null;
+    }
+    return geographicZone.getParent().getName();
   }
 }

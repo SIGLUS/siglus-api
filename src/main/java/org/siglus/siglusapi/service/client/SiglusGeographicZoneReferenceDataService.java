@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.service.client;
 
 import java.util.List;
-import org.siglus.common.dto.referencedata.OpenLmisGeographicZoneDto;
+import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.referencedata.Pagination;
 import org.springframework.data.domain.PageRequest;
@@ -25,33 +25,33 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class SiglusGeographicZoneReferenceDataService extends
-    BaseReferenceDataService<OpenLmisGeographicZoneDto> {
+    BaseReferenceDataService<GeographicZoneDto> {
   @Override
   protected String getUrl() {
     return "/api/geographicZones/";
   }
 
   @Override
-  protected Class<OpenLmisGeographicZoneDto> getResultClass() {
-    return OpenLmisGeographicZoneDto.class;
+  protected Class<GeographicZoneDto> getResultClass() {
+    return GeographicZoneDto.class;
   }
 
   @Override
-  protected Class<OpenLmisGeographicZoneDto[]> getArrayResultClass() {
-    return OpenLmisGeographicZoneDto[].class;
+  protected Class<GeographicZoneDto[]> getArrayResultClass() {
+    return GeographicZoneDto[].class;
   }
 
-  public List<OpenLmisGeographicZoneDto> searchAllGeographicZones() {
+  public List<GeographicZoneDto> searchAllGeographicZones() {
     Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
         Pagination.NO_PAGINATION);
     return getPage(RequestParameters.init().setPage(noPagination)).getContent();
   }
 
-  public void updateGeographicZone(OpenLmisGeographicZoneDto dto) {
+  public void updateGeographicZone(GeographicZoneDto dto) {
     put(dto.getId().toString(), dto, Void.class, false);
   }
 
-  public void createGeographicZone(OpenLmisGeographicZoneDto dto) {
+  public void createGeographicZone(GeographicZoneDto dto) {
     postResult("", dto, Void.class);
   }
 

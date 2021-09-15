@@ -61,7 +61,7 @@ import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
-import org.siglus.common.dto.referencedata.FacilityTypeDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -360,8 +360,8 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     UserDto user = mock(UserDto.class);
     when(user.getHomeFacilityId()).thenReturn(homeFacilityId);
     when(authHelper.getCurrentUser()).thenReturn(user);
-    org.siglus.common.dto.referencedata.FacilityDto homeFacility =
-        new org.siglus.common.dto.referencedata.FacilityDto();
+    org.siglus.siglusapi.dto.FacilityDto homeFacility =
+        new org.siglus.siglusapi.dto.FacilityDto();
     homeFacility.setId(homeFacilityId);
     FacilityTypeDto facilityType = new FacilityTypeDto();
     facilityType.setId(UUID.randomUUID());

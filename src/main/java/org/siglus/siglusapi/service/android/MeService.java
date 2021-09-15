@@ -57,17 +57,13 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.BaseDto;
-import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
-import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
-import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.constant.PodConstants;
@@ -77,7 +73,9 @@ import org.siglus.siglusapi.domain.PodRequestBackup;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
@@ -115,10 +113,12 @@ import org.siglus.siglusapi.service.android.mapper.PodLotLineMapper;
 import org.siglus.siglusapi.service.android.mapper.PodMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.HashEncoder;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -328,7 +328,7 @@ public class MeService {
     } else {
       pods = podRepo.findAllByFacilitySince(homeFacilityId, since, OrderStatus.SHIPPED, OrderStatus.RECEIVED);
     }
-    Map<UUID, OrderDto> allOrders = pods.stream()
+    Map<UUID, OrderDto> orderIdToDto = pods.stream()
         .map(ProofOfDelivery::getShipment)
         .map(Shipment::getOrder)
         .map(BaseEntity::getId)
@@ -340,20 +340,25 @@ public class MeService {
         .map(ShipmentLineItem::getOrderable)
         .map(VersionEntityReference::getId)
         .collect(Collectors.toSet());
-    Map<UUID, String> productCodesById = orderableDataService.findByIds(productIds).stream()
+    Map<UUID, String> productIdToCode = orderableDataService.findByIds(productIds).stream()
         .collect(toMap(BaseDto::getId, OrderableDto::getProductCode));
     Collection<UUID> lotIds = pods.stream()
         .map(ProofOfDelivery::getShipment)
         .map(Shipment::getLineItems).flatMap(Collection::stream)
         .map(ShipmentLineItem::getLotId)
         .collect(Collectors.toSet());
-    Map<UUID, LotDto> lotsById = lotReferenceDataService.findByIds(lotIds).stream()
+    Map<UUID, LotDto> lotIdToDto = lotReferenceDataService.findByIds(lotIds).stream()
         .collect(toMap(BaseDto::getId, Function.identity()));
-    Map<UUID, String> reasonNamesById = validReasonAssignmentService
+    Map<UUID, String> reasonIdToName = validReasonAssignmentService
         .getValidReasonsForAllProducts(homeFacility.getType().getId(), null, null).stream()
         .collect(toMap(ValidReasonAssignmentDto::getId, r -> r.getReason().getName()));
+    Map<UUID, FacilityDto> facilityIdToDto = pods.stream()
+        .map(ProofOfDelivery::getShipment)
+        .map(Shipment::getOrder)
+        .map(order -> getFacilityInfo(order.getFacilityId()))
+        .collect(toMap(facilityDto -> facilityDto.getId(), Function.identity()));
     return pods.stream()
-        .map(pod -> toPodResponse(pod, allOrders, productCodesById, lotsById, reasonNamesById))
+        .map(pod -> toPodResponse(pod, orderIdToDto, productIdToCode, lotIdToDto, reasonIdToName, facilityIdToDto))
         .collect(toList());
   }
 
@@ -393,16 +398,17 @@ public class MeService {
     return podResponse;
   }
 
-  private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> allOrders,
-      Map<UUID, String> productCodesById, Map<UUID, LotDto> lotsById, Map<UUID, String> reasonNamesById) {
-    PodResponse podResponse = podMapper.toResponse(pod, allOrders);
+  private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> orderIdToDto,
+      Map<UUID, String> productIdToCode, Map<UUID, LotDto> lotIdToDto, Map<UUID, String> reasonIdToName,
+      Map<UUID, FacilityDto> facilityIdToDto) {
+    PodResponse podResponse = podMapper.toResponse(pod, orderIdToDto, facilityIdToDto);
     podResponse.getProducts().forEach(productLine -> {
       Map<UUID, ShipmentLineItem> shipmentLineMap = pod.getShipment().getLineItems().stream()
-          .filter(podLine -> productCodesById.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
+          .filter(podLine -> productIdToCode.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
           .collect(toMap(ShipmentLineItem::getLotId, Function.identity()));
       List<PodLotLineResponse> lotLines = pod.getLineItems().stream()
-          .filter(podLine -> productCodesById.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
-          .map(l -> podLotLineMapper.toLotResponse(l, shipmentLineMap.get(l.getLotId()), lotsById, reasonNamesById))
+          .filter(podLine -> productIdToCode.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
+          .map(l -> podLotLineMapper.toLotResponse(l, shipmentLineMap.get(l.getLotId()), lotIdToDto, reasonIdToName))
           .collect(toList());
       productLine.setLots(lotLines);
     });
@@ -466,12 +472,9 @@ public class MeService {
   }
 
   private void saveAndUpdateCmm(HfCmm toBeUpdatedHfCmm) {
-    HfCmm hfCmm = facilityCmmsRepository
-        .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(
-            toBeUpdatedHfCmm.getFacilityCode(),
-            toBeUpdatedHfCmm.getProductCode(),
-            toBeUpdatedHfCmm.getPeriodBegin(),
-            toBeUpdatedHfCmm.getPeriodEnd());
+    HfCmm hfCmm = facilityCmmsRepository.findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(
+        toBeUpdatedHfCmm.getFacilityCode(), toBeUpdatedHfCmm.getProductCode(),
+        toBeUpdatedHfCmm.getPeriodBegin(), toBeUpdatedHfCmm.getPeriodEnd());
     UUID cmmId = hfCmm == null ? UUID.randomUUID() : hfCmm.getId();
     toBeUpdatedHfCmm.setId(cmmId);
     log.info("save hf_cmm info , id: {}", cmmId);
@@ -479,8 +482,7 @@ public class MeService {
   }
 
   private FacilityDto getCurrentFacilityInfo() {
-    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    return facilityReferenceDataService.getFacilityById(homeFacilityId);
+    return getFacilityInfo(authHelper.getCurrentUser().getHomeFacilityId());
   }
 
   private FacilityDto getFacilityInfo(UUID facilityId) {

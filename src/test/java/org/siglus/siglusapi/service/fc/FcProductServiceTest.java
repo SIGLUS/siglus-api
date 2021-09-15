@@ -46,7 +46,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.common.dto.referencedata.FacilityTypeDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.dto.referencedata.TradeItemDto;

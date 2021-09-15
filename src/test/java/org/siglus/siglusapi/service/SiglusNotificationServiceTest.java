@@ -72,7 +72,7 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.requisition.service.referencedata.RequisitionGroupReferenceDataService;
 import org.openlmis.requisition.service.referencedata.UserReferenceDataService;
 import org.openlmis.requisition.web.RequisitionController;
-import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;

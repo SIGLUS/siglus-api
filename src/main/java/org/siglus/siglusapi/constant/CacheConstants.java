@@ -21,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class CacheConstants {
 
+  public static final String CACHE_KEY_GENERATOR = "org.siglus.siglusapi.config.CacheKeyGenerator";
+
   public static final String SIGLUS_DESTINATIONS = "siglus-destinations";
 
   public static final String SIGLUS_SOURCES = "siglus-sources";
@@ -36,5 +38,7 @@ public class CacheConstants {
   public static final String SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES = "siglus-approved-products-by-orderables";
 
   public static final String SIGLUS_ORDERABLES = "siglus-orderables";
+
+  public static final String SIGLUS_FACILITY = "siglus-facility";
 
 }

@@ -37,7 +37,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
-import org.siglus.common.dto.referencedata.FacilityTypeDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusStockCardLineItemReasons;

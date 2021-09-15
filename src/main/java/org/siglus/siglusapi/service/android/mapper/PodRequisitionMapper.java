@@ -21,16 +21,18 @@ import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.android.response.RequisitionBasicResponse;
 
 @Mapper(componentModel = "spring")
 public interface PodRequisitionMapper {
 
-  default RequisitionBasicResponse toResponse(UUID orderId, @Context Map<UUID, OrderDto> allOrders) {
+  default RequisitionBasicResponse toResponse(UUID orderId, @Context Map<UUID, OrderDto> orderIdToDto,
+      @Context Map<UUID, FacilityDto> facilityIdToDto) {
     if (orderId == null) {
       return null;
     }
-    return toRequisitionResponse(allOrders.get(orderId));
+    return toRequisitionResponse(orderIdToDto.get(orderId));
   }
 
   @Mapping(target = "number", source = "requisitionNumber")

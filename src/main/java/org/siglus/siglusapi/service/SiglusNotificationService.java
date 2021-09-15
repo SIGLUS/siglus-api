@@ -148,7 +148,7 @@ public class SiglusNotificationService {
         .map(notification -> {
           ProcessingPeriodDto processingPeriod = periodService
               .findOne(notification.getProcessingPeriodId());
-          org.siglus.common.dto.referencedata.FacilityDto facility =
+          org.siglus.siglusapi.dto.FacilityDto facility =
               facilityReferenceDataService.findOne(notification.getRequestingFacilityId());
           ProgramDto program = programRefDataService.findOne(notification.getProgramId());
           ZonedDateTime submitDate = null;

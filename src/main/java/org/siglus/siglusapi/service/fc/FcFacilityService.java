@@ -33,10 +33,10 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.common.dto.referencedata.FacilityDto;
-import org.siglus.common.dto.referencedata.FacilityTypeDto;
-import org.siglus.common.dto.referencedata.OpenLmisGeographicZoneDto;
-import org.siglus.common.dto.referencedata.SupportedProgramDto;
+import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
+import org.siglus.siglusapi.dto.GeographicZoneDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
@@ -77,7 +77,7 @@ public class FcFacilityService {
     Map<String, ProgramDto> codeToProgramMap = getCodeToProgramMap();
     Map<String, ProgramRealProgram> codeToRealProgramMap = getCodeToRealProgramMap();
     Map<String, FacilityDto> codeToFacilityMap = getCodeToFacilityDtoMap();
-    Map<String, OpenLmisGeographicZoneDto> codeToGeographicZoneDtoMap =
+    Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap =
         getCodeToGeographicZoneDtoMap();
     Map<String, FacilityTypeDto> codeToFacilityType = getCodeToFacilityTypeDtoMap();
     List<FcFacilityDto> createFacilities = new ArrayList<>();
@@ -119,9 +119,9 @@ public class FcFacilityService {
         BasicProgramDto::getCode);
   }
 
-  private Map<String, OpenLmisGeographicZoneDto> getCodeToGeographicZoneDtoMap() {
+  private Map<String, GeographicZoneDto> getCodeToGeographicZoneDtoMap() {
     return Maps.uniqueIndex(geographicZoneService.searchAllGeographicZones(),
-        OpenLmisGeographicZoneDto::getCode);
+        GeographicZoneDto::getCode);
   }
 
   private Map<String, FacilityTypeDto> getCodeToFacilityTypeDtoMap() {
@@ -130,7 +130,7 @@ public class FcFacilityService {
   }
 
   public boolean isValidateFcFacilityData(FcFacilityDto fcFacilityDto,
-      Map<String, OpenLmisGeographicZoneDto> codeToGeographicZoneDtoMap, Set<String> codes,
+      Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap, Set<String> codes,
       Map<String, FacilityTypeDto> codeToFacilityType) {
     if (!codeToGeographicZoneDtoMap.containsKey(fcFacilityDto.getDistrictCode())
         || !codeToFacilityType.containsKey(fcFacilityDto.getClientTypeCode())) {
@@ -206,7 +206,7 @@ public class FcFacilityService {
       Map<String, FacilityTypeDto> codeToFacilityType,
       Map<String, ProgramDto> codeToProgramMap,
       Map<String, ProgramRealProgram> codeToRealProgramMap,
-      Map<String, OpenLmisGeographicZoneDto> codeToGeographicZoneDtoMap) {
+      Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap) {
     List<FacilityDto> createdFacilities = newArrayList();
     needCreateFacilities.forEach(facilityDto -> {
       log.info("[FC] create new facility: {}", facilityDto);
@@ -220,7 +220,7 @@ public class FcFacilityService {
   }
 
   private FacilityDto getFacilityDto(FcFacilityDto fcFacilityDto,
-      Map<String, OpenLmisGeographicZoneDto> codeToGeographicZoneDtoMap,
+      Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap,
       Map<String, FacilityTypeDto> codeToFacilityType,
       List<SupportedProgramDto> supportedProgramDtos) {
     return FacilityDto.builder()
@@ -240,7 +240,7 @@ public class FcFacilityService {
       Map<String, FacilityTypeDto> codeToFacilityType,
       Map<String, ProgramDto> codeToProgramMap,
       Map<String, ProgramRealProgram> codeToRealProgramMap,
-      Map<String, OpenLmisGeographicZoneDto> codeToGeographicZoneDtoMap) {
+      Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap) {
     needUpdateFacilities.forEach(fcFacilityDto -> {
       FacilityDto needSaveFacility = codeToFacilityMap.get(fcFacilityDto.getCode());
       log.info("[FC] update existed facility: {} to new facility: {}", needSaveFacility,

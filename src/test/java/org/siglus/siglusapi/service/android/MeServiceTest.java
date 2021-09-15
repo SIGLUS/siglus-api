@@ -73,10 +73,10 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
-import org.siglus.common.dto.referencedata.SupportedProgramDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;

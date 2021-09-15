@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.domain.referencedata.Facility;
-import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.Message;
 import org.siglus.siglusapi.domain.RequisitionExtension;

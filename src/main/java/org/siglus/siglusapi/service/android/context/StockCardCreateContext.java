@@ -36,7 +36,7 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;

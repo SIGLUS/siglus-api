@@ -15,14 +15,18 @@
 
 package org.siglus.siglusapi.service.client;
 
+import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_FACILITY;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.siglus.common.dto.referencedata.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.common.service.client.BaseReferenceDataService;
 import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.referencedata.Pagination;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -71,6 +75,7 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
     return postResult("", dto, getResultClass());
   }
 
+  @Cacheable(value = SIGLUS_FACILITY, keyGenerator = CACHE_KEY_GENERATOR)
   public FacilityDto getFacilityById(UUID facilityId) {
     return findOne(facilityId);
   }

@@ -36,10 +36,10 @@ import org.mockito.Mock;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.siglus.common.dto.referencedata.FacilityDto;
-import org.siglus.common.dto.referencedata.FacilityTypeDto;
-import org.siglus.common.dto.referencedata.GeographicLevelDto;
-import org.siglus.common.dto.referencedata.OpenLmisGeographicZoneDto;
+import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
+import org.siglus.siglusapi.dto.GeographicLevelDto;
+import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.fc.FcAreaDto;
@@ -136,7 +136,7 @@ public class FcFacilityServiceTest {
     FacilityTypeDto typeDto = new FacilityTypeDto();
     typeDto.setCode("type2");
     originFacility.setType(typeDto);
-    OpenLmisGeographicZoneDto zoneDto = new OpenLmisGeographicZoneDto();
+    GeographicZoneDto zoneDto = new GeographicZoneDto();
     zoneDto.setCode("nationalGeographicZone");
     originFacility.setGeographicZone(zoneDto);
     when(facilityService.findOne(originFacility.getId())).thenReturn(originFacility);
@@ -194,7 +194,7 @@ public class FcFacilityServiceTest {
     return program;
   }
 
-  private List<OpenLmisGeographicZoneDto> getGeographicZones() {
+  private List<GeographicZoneDto> getGeographicZones() {
     GeographicLevelDto level1 = GeographicLevelDto.builder()
         .code("national")
         .name("National")
@@ -205,13 +205,13 @@ public class FcFacilityServiceTest {
         .name("Province")
         .levelNumber(2)
         .build();
-    OpenLmisGeographicZoneDto national1 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto national1 = GeographicZoneDto.builder()
         .code("nationalGeographicZone")
         .name("description 1")
         .level(level1)
         .parent(null)
         .build();
-    OpenLmisGeographicZoneDto province1 = OpenLmisGeographicZoneDto.builder()
+    GeographicZoneDto province1 = GeographicZoneDto.builder()
         .code("provinceGeographicZone")
         .name("description 11")
         .level(level2)
