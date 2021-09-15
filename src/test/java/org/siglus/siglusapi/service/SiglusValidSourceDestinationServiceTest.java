@@ -36,14 +36,14 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
+import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
-import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.siglusapi.util.SupportedProgramsHelper;
-import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusValidSourceDestinationServiceTest {

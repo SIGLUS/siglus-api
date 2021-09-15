@@ -36,15 +36,15 @@ import org.mockito.Mock;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
-import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.fc.FcAreaDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
 

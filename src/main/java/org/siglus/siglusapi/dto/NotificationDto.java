@@ -24,7 +24,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.domain.NotificationType;
 

@@ -18,8 +18,8 @@ package org.siglus.siglusapi.service.mapper;
 import java.time.ZonedDateTime;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.domain.Notification;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.NotificationDto;
 import org.springframework.stereotype.Component;
 

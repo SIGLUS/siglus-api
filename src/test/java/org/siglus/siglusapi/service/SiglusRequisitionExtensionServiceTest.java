@@ -30,10 +30,10 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.dto.FacilityDto;
-import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusRequisitionExtensionServiceTest {

@@ -23,7 +23,6 @@ import lombok.Setter;
 import lombok.ToString;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.siglus.common.dto.referencedata.BaseDto;
-import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 

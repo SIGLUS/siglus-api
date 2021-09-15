@@ -57,11 +57,10 @@ import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
 import org.powermock.api.mockito.PowerMockito;
+import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
-import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.android.request.LotBasicRequest;
 import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
@@ -77,6 +76,7 @@ import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class PodConfirmServiceTest {

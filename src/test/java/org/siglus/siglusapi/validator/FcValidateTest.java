@@ -22,9 +22,9 @@ import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.domain.referencedata.Facility;
-import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.siglusapi.domain.RequisitionExtension;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.service.fc.FcDataException;
 

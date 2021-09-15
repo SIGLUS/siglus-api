@@ -27,8 +27,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusValidReasonAssignmentServiceTest {

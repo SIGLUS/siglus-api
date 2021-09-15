@@ -26,10 +26,10 @@ import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.domain.Notification;
 import org.siglus.siglusapi.domain.NotificationStatus;
 import org.siglus.siglusapi.domain.NotificationType;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.NotificationDto;
 
 @RunWith(MockitoJUnitRunner.class)

@@ -16,10 +16,10 @@
 package org.siglus.siglusapi.service.client;
 
 import java.util.List;
-import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.common.service.client.BaseReferenceDataService;
 import org.siglus.common.util.RequestParameters;
 import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
