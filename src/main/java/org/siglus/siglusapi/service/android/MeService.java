@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -43,6 +44,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
 import org.openlmis.fulfillment.domain.BaseEntity;
+import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
@@ -328,7 +330,7 @@ public class MeService {
     } else {
       pods = podRepo.findAllByFacilitySince(homeFacilityId, since, OrderStatus.SHIPPED, OrderStatus.RECEIVED);
     }
-    Map<UUID, OrderDto> orderIdToDto = pods.stream()
+    Map<UUID, OrderDto> orderIdToOrder = pods.stream()
         .map(ProofOfDelivery::getShipment)
         .map(Shipment::getOrder)
         .map(BaseEntity::getId)
@@ -347,18 +349,20 @@ public class MeService {
         .map(Shipment::getLineItems).flatMap(Collection::stream)
         .map(ShipmentLineItem::getLotId)
         .collect(Collectors.toSet());
-    Map<UUID, LotDto> lotIdToDto = lotReferenceDataService.findByIds(lotIds).stream()
+    Map<UUID, LotDto> lotIdToLot = lotReferenceDataService.findByIds(lotIds).stream()
         .collect(toMap(BaseDto::getId, Function.identity()));
     Map<UUID, String> reasonIdToName = validReasonAssignmentService
         .getValidReasonsForAllProducts(homeFacility.getType().getId(), null, null).stream()
         .collect(toMap(ValidReasonAssignmentDto::getId, r -> r.getReason().getName()));
-    Map<UUID, FacilityDto> facilityIdToDto = pods.stream()
+    Map<UUID, FacilityDto> orderIdToFacility = pods.stream()
         .map(ProofOfDelivery::getShipment)
         .map(Shipment::getOrder)
-        .map(order -> getFacilityInfo(order.getFacilityId()))
-        .collect(toMap(facilityDto -> facilityDto.getId(), Function.identity()));
+        .collect(toMap(Order::getId, order -> getFacilityInfo(order.getFacilityId())));
+    Map<UUID, Requisition> orderIdToRequisition = orderIdToOrder.entrySet().stream()
+        .collect(toMap(Entry::getKey, e -> orderService.getRequisitionByOrder(e.getValue())));
     return pods.stream()
-        .map(pod -> toPodResponse(pod, orderIdToDto, productIdToCode, lotIdToDto, reasonIdToName, facilityIdToDto))
+        .map(pod -> toPodResponse(pod, orderIdToOrder, productIdToCode, lotIdToLot, reasonIdToName, orderIdToFacility,
+            orderIdToRequisition))
         .collect(toList());
   }
 
@@ -398,17 +402,17 @@ public class MeService {
     return podResponse;
   }
 
-  private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> orderIdToDto,
-      Map<UUID, String> productIdToCode, Map<UUID, LotDto> lotIdToDto, Map<UUID, String> reasonIdToName,
-      Map<UUID, FacilityDto> facilityIdToDto) {
-    PodResponse podResponse = podMapper.toResponse(pod, orderIdToDto, facilityIdToDto);
+  private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> orderIdToOrder,
+      Map<UUID, String> productIdToCode, Map<UUID, LotDto> lotIdToLot, Map<UUID, String> reasonIdToName,
+      Map<UUID, FacilityDto> orderIdToFacility, Map<UUID, Requisition> orderIdToRequisition) {
+    PodResponse podResponse = podMapper.toResponse(pod, orderIdToOrder, orderIdToFacility, orderIdToRequisition);
     podResponse.getProducts().forEach(productLine -> {
       Map<UUID, ShipmentLineItem> shipmentLineMap = pod.getShipment().getLineItems().stream()
           .filter(podLine -> productIdToCode.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
           .collect(toMap(ShipmentLineItem::getLotId, Function.identity()));
       List<PodLotLineResponse> lotLines = pod.getLineItems().stream()
           .filter(podLine -> productIdToCode.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
-          .map(l -> podLotLineMapper.toLotResponse(l, shipmentLineMap.get(l.getLotId()), lotIdToDto, reasonIdToName))
+          .map(l -> podLotLineMapper.toLotResponse(l, shipmentLineMap.get(l.getLotId()), lotIdToLot, reasonIdToName))
           .collect(toList());
       productLine.setLots(lotLines);
     });

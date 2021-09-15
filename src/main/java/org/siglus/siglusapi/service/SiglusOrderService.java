@@ -296,6 +296,12 @@ public class SiglusOrderService {
     return orderDto;
   }
 
+  public Requisition getRequisitionByOrder(OrderDto orderDto) {
+    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
+    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
+    return requisitionController.findRequisition(requisitionId, requisitionController.getProfiler("GET_ORDER"));
+  }
+
   private SiglusOrderDto extendOrderDto(OrderDto orderDto) {
     return doExtendOrderDto(orderDto, true);
   }
@@ -451,12 +457,6 @@ public class SiglusOrderService {
         .map(orderable -> new VersionObjectReferenceDto(
             orderable.getId(), serviceUrl, ORDERABLES, orderable.getVersionNumber())
         ).collect(Collectors.toSet());
-  }
-
-  private Requisition getRequisitionByOrder(OrderDto orderDto) {
-    OrderExternal external = orderExternalRepository.findOne(orderDto.getExternalId());
-    UUID requisitionId = external == null ? orderDto.getExternalId() : external.getRequisitionId();
-    return requisitionController.findRequisition(requisitionId, requisitionController.getProfiler("GET_ORDER"));
   }
 
   private Set<UUID> getEmergencyFilteredProducts(Requisition requisition) {

@@ -15,30 +15,61 @@
 
 package org.siglus.siglusapi.service.android.mapper;
 
+import static org.siglus.common.constant.ExtraDataConstants.CLIENT_SUBMITTED_TIME;
+
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.openlmis.fulfillment.web.util.OrderDto;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.android.response.RequisitionBasicResponse;
 
 @Mapper(componentModel = "spring")
 public interface PodRequisitionMapper {
 
-  default RequisitionBasicResponse toResponse(UUID orderId, @Context Map<UUID, OrderDto> orderIdToDto,
-      @Context Map<UUID, FacilityDto> facilityIdToDto) {
+  default RequisitionBasicResponse toResponse(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
+      @Context Map<UUID, FacilityDto> orderIdToFacility, @Context Map<UUID, Requisition> orderIdToRequisition) {
     if (orderId == null) {
       return null;
     }
-    return toRequisitionResponse(orderIdToDto.get(orderId));
+    return toRequisitionResponse(orderIdToOrder.get(orderId), orderIdToOrder, orderIdToFacility, orderIdToRequisition);
   }
 
   @Mapping(target = "number", source = "requisitionNumber")
   @Mapping(target = "isEmergency", source = "emergency")
   @Mapping(target = "programCode", source = "program.code")
+  @Mapping(target = "processedDate", source = "id", qualifiedByName = "toProcessedDate")
+  @Mapping(target = "serverProcessedDate", source = "id", qualifiedByName = "toServerProcessedDate")
   @Mapping(target = ".", source = "processingPeriod")
-  RequisitionBasicResponse toRequisitionResponse(OrderDto order);
+  RequisitionBasicResponse toRequisitionResponse(OrderDto order, @Context Map<UUID, OrderDto> orderIdToOrder,
+      @Context Map<UUID, FacilityDto> orderIdToFacility, @Context Map<UUID, Requisition> orderIdToRequisition);
 
+  @Named("toProcessedDate")
+  default Instant toProcessedDate(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
+      @Context Map<UUID, FacilityDto> orderIdToFacility, @Context Map<UUID, Requisition> orderIdToRequisition) {
+    Requisition requisition = orderIdToRequisition.get(orderId);
+    if (requisition == null) {
+      return null;
+    }
+    Object clientSubmittedTime = requisition.getExtraData().get(CLIENT_SUBMITTED_TIME);
+    if (clientSubmittedTime == null) {
+      return null;
+    }
+    return Instant.parse(String.valueOf(clientSubmittedTime));
+  }
+
+  @Named("toServerProcessedDate")
+  default Instant toServerProcessedDate(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
+      @Context Map<UUID, FacilityDto> orderIdToFacility, @Context Map<UUID, Requisition> orderIdToRequisition) {
+    Requisition requisition = orderIdToRequisition.get(orderId);
+    if (requisition == null) {
+      return null;
+    }
+   return Instant.from(requisition.getCreatedDate());
+  }
 }
