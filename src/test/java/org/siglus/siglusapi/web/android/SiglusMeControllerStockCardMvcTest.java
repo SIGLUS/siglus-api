@@ -60,8 +60,10 @@ import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.common.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
+import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
@@ -85,7 +87,6 @@ import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
-import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -158,16 +159,17 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     when(stockManagementRepository.getAllProductMovements(any(), any(LocalDate.class)))
         .thenReturn(new PeriodOfProductMovements(emptyList(), stocksOnHand));
     when(stockManagementRepository.getStockOnHand(any())).thenReturn(stocksOnHand);
-    when(stockManagementRepository.ensureLot(any(), any(), any())).then(a -> {
+    when(stockManagementRepository.createLot(any(), any())).then(a -> {
       String productCode = a.getArgumentAt(0, OrderableDto.class).getProductCode();
-      String lotCode = a.getArgumentAt(1, String.class);
-      LocalDate expirationDate = a.getArgumentAt(2, LocalDate.class);
+      Lot lot = a.getArgumentAt(1, Lot.class);
+      String lotCode = lot.getCode();
+      LocalDate expirationDate = lot.getExpirationDate();
       ProductLotCode code = ProductLotCode.of(productCode, lotCode);
       ProductLot productLot = new ProductLot(code, expirationDate);
       productLot.setId(UUID.randomUUID());
       return productLot;
     });
-    when(stockManagementRepository.createStockCard(any())).then(a -> {
+    when(stockManagementRepository.createStockCard(any(), any())).then(a -> {
       StockCard stockCard = a.getArgumentAt(0, StockCard.class);
       stockCard.setId(UUID.randomUUID());
       return stockCard;
@@ -205,8 +207,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     // then
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
-    verify(stockManagementRepository, times(3)).ensureLot(any(), any(), any());
-    verify(stockManagementRepository, times(12)).createStockCard(any());
+    verify(stockManagementRepository, times(3)).createLot(any(), any());
+    verify(stockManagementRepository, times(12)).createStockCard(any(), any());
     verify(stockManagementRepository, times(9)).createStockEvent(any());
     verify(stockManagementRepository, times(52)).createStockEventLine(any(), any(), any());
     verify(stockManagementRepository, times(52)).createStockCardLine(any(), any(), any());
@@ -231,8 +233,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     // then
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
-    verify(stockManagementRepository, times(1)).ensureLot(any(), any(), any());
-    verify(stockManagementRepository, times(1)).createStockCard(any());
+    verify(stockManagementRepository, times(1)).createLot(any(), any());
+    verify(stockManagementRepository, times(1)).createStockCard(any(), any());
     verify(stockManagementRepository, times(1)).createStockEvent(any());
     verify(stockManagementRepository, times(1)).createStockEventLine(any(), any(), any());
     verify(stockManagementRepository, times(1)).createStockCardLine(any(), any(), any());

@@ -168,6 +168,9 @@ public final class StockCardCreateContext {
     CalculatedStockOnHand existed = inventories.get(newOne.getKey());
     EventTime eventTime = newOne.getInventoryDetail().getEventTime();
     if (existed == null || existed.getInventoryDetail().getEventTime().compareTo(eventTime) < 0) {
+      if (existed != null && existed.getId() != null) {
+        newOne.setId(existed.getId());
+      }
       inventories.put(newOne.getKey(), newOne);
     }
   }

@@ -20,12 +20,15 @@ import java.util.UUID;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
 
 @Getter
 @RequiredArgsConstructor(staticName = "of")
 public class CalculatedStockOnHand {
 
+  @Setter
+  private UUID id;
   private final StockCard stockCard;
   private final InventoryDetail inventoryDetail;
 

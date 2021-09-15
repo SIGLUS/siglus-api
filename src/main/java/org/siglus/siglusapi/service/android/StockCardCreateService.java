@@ -17,17 +17,21 @@ package org.siglus.siglusapi.service.android;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.Comparator.naturalOrder;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static org.siglus.siglusapi.service.android.MeService.KEY_PROGRAM_CODE;
 import static org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder.getContext;
 
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +46,8 @@ import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
+import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted;
@@ -111,8 +117,10 @@ public class StockCardCreateService {
     profiler.start("filter");
     List<StockCardCreateRequest> filtered = requests.stream().filter(r -> !existed.contains(r.getProductMovementKey()))
         .collect(toList());
+    profiler.start("walk through");
+    walkThroughLots(filtered);
     Profiler nested = profiler.startNested("insert lines");
-    filtered.stream().map(this::walkThroughLots).collect(groupingBy(StockCardCreateRequest::getRecordedAt))
+    filtered.stream().collect(groupingBy(StockCardCreateRequest::getRecordedAt))
         .entrySet().stream()
         .sorted(Map.Entry.comparingByKey())
         .forEach(entry -> {
@@ -121,6 +129,7 @@ public class StockCardCreateService {
         });
     filtered.sort(EventTimeContainer.ASCENDING);
     profiler.start("insert stock on hand");
+    Instant stockOnHandProcessAt = Instant.now();
     for (StockCardCreateRequest request : filtered) {
       String productCode = request.getProductCode();
       EventTime eventTime = request.getEventTime();
@@ -133,31 +142,74 @@ public class StockCardCreateService {
         if (stockCard == null) {
           throw new IllegalStateException();
         }
-        InventoryDetail inventoryDetail = new InventoryDetail(adjustment.getStockOnHand(), eventTime);
+        InventoryDetail inventoryDetail = InventoryDetail.of(adjustment.getStockOnHand(), eventTime);
         CalculatedStockOnHand calculated = CalculatedStockOnHand.of(stockCard, inventoryDetail);
         getContext().addNewCalculatedStockOnHand(calculated);
       });
     }
-    getContext().getCalculatedStocksOnHand().forEach(stockManagementRepository::saveStockOnHand);
+    getContext().getCalculatedStocksOnHand().forEach(
+        calculated -> stockManagementRepository.saveStockOnHand(calculated, stockOnHandProcessAt));
     profiler.stop().log();
   }
 
-  private StockCardCreateRequest walkThroughLots(StockCardCreateRequest request) {
-    OrderableDto product = getContext().getProduct(request.getProductCode());
-    request.getLotEvents().forEach(
-        l -> {
-          String lotCode = l.getLotCode();
-          LocalDate expirationDate = l.getExpirationDate();
-          ProductLot cached = getContext().getLot(product.getProductCode(), lotCode);
+  private void walkThroughLots(List<StockCardCreateRequest> requests) {
+    Map<ProductLot, EventTime> earliestDateByLot = requests.stream().map(
+        r -> r.getLotEvents().stream().collect(toMap(l -> toProductLot(r, l), l -> r.getEventTime()))
+    ).reduce(new HashMap<>(), (m1, m2) -> {
+      m2.forEach((k, v) -> m1
+          .merge(k, v, (v1, v2) -> Stream.of(v1, v2).min(naturalOrder()).orElseThrow(IllegalStateException::new)));
+      return m1;
+    });
+    earliestDateByLot.forEach(
+        (productLot, earliestDate) -> {
+          Lot lot = productLot.getLot();
+          String productCode = productLot.getProductCode();
+          if (lot == null) {
+            UUID facilityId = getContext().getFacility().getId();
+            UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
+            UUID productId = getContext().getProductId(productCode);
+            StockCard stockCard = StockCard.ofNoLot(facilityId, programId, productId, productCode);
+            stockCard = stockManagementRepository.getStockCard(stockCard);
+            if (stockCard == null) {
+              return;
+            }
+            getContext().newStockCard(stockCard);
+            return;
+          }
+          String lotCode = lot.getCode();
+          LocalDate expirationDate = lot.getExpirationDate();
+          ProductLot cached = getContext().getLot(productCode, lotCode);
           if (cached == null) {
-            ProductLot existed = stockManagementRepository.ensureLot(product, lotCode, expirationDate);
+            OrderableDto product = getContext().getProduct(productCode);
+            ProductLot existed = stockManagementRepository.getLot(product, lot);
+            if (existed == null) {
+              ProductLot newCreated = stockManagementRepository.createLot(product, lot);
+              getContext().newLot(newCreated);
+              return;
+            } else {
+              UUID facilityId = getContext().getFacility().getId();
+              UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
+              UUID productId = getContext().getProductId(productCode);
+              StockCard stockCard =
+                  StockCard.of(facilityId, programId, productId, productCode, existed.getId(), lotCode, expirationDate);
+              stockCard = stockManagementRepository.getStockCard(stockCard);
+              if (stockCard != null) {
+                getContext().newStockCard(stockCard);
+                List<CalculatedStockOnHand> calculatedStockOnHand = stockManagementRepository
+                    .findCalculatedStockOnHand(stockCard, earliestDate);
+                calculatedStockOnHand.forEach(getContext()::addNewCalculatedStockOnHand);
+              }
+            }
             cached = existed;
             getContext().newLot(existed);
           }
           handleLotConflict(lotCode, expirationDate, cached);
         }
     );
-    return request;
+  }
+
+  private ProductLot toProductLot(StockCardCreateRequest r, StockCardLotEventRequest l) {
+    return new ProductLot(ProductLotCode.of(r.getProductCode(), l.getLotCode()), l.getExpirationDate());
   }
 
   private void handleLotConflict(String lotCode, LocalDate expirationDate, ProductLot cached) {
@@ -246,14 +298,8 @@ public class StockCardCreateService {
     UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
     UUID productId = getContext().getProductId(productCode);
     UUID lotId = getContext().getLotId(productCode, lotCode);
-    stockCard =
-        StockCard.of(facilityId, programId, productId, productCode, lotId, lotCode, expirationDate, stockEvent.getId());
-    StockCard existed = stockManagementRepository.getStockCard(stockCard);
-    if (existed != null) {
-      getContext().newStockCard(existed);
-      return existed;
-    }
-    stockCard = stockManagementRepository.createStockCard(stockCard);
+    stockCard = StockCard.of(facilityId, programId, productId, productCode, lotId, lotCode, expirationDate);
+    stockCard = stockManagementRepository.createStockCard(stockCard, stockEvent.getId());
     getContext().newStockCard(stockCard);
     return stockCard;
   }

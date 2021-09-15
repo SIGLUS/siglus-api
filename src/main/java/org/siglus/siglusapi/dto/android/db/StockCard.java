@@ -18,11 +18,9 @@ package org.siglus.siglusapi.dto.android.db;
 import java.time.LocalDate;
 import java.util.UUID;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @Getter
-@RequiredArgsConstructor(staticName = "of")
 public class StockCard {
 
   @Setter
@@ -34,6 +32,25 @@ public class StockCard {
   private final UUID lotId;
   private final String lotCode;
   private final LocalDate expirationDate;
-  private final UUID eventId;
+
+  private StockCard(UUID facilityId, UUID programId, UUID productId, String productCode, UUID lotId, String lotCode,
+      LocalDate expirationDate) {
+    this.facilityId = facilityId;
+    this.programId = programId;
+    this.productId = productId;
+    this.productCode = productCode;
+    this.lotId = lotId;
+    this.lotCode = lotCode;
+    this.expirationDate = expirationDate;
+  }
+
+  public static StockCard of(UUID facilityId, UUID programId, UUID productId, String productCode, UUID lotId,
+      String lotCode, LocalDate expirationDate) {
+    return new StockCard(facilityId, programId, productId, productCode, lotId, lotCode, expirationDate);
+  }
+
+  public static StockCard ofNoLot(UUID facilityId, UUID programId, UUID productId, String productCode) {
+    return new StockCard(facilityId, programId, productId, productCode, null, null, null);
+  }
 
 }

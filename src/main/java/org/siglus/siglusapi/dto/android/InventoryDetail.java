@@ -21,7 +21,7 @@ import lombok.ToString;
 
 @ToString
 @Getter
-@RequiredArgsConstructor
+@RequiredArgsConstructor(staticName = "of")
 public class InventoryDetail implements EventTimeContainer {
 
   public static final InventoryDetail NO_RECORD = new InventoryDetail(0, null);

@@ -193,7 +193,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         .stockOnHand(100).occurredDate(LocalDate.of(2021, 6, 15)).build();
     StocksOnHand stocksOnHand = mock(StocksOnHand.class);
     when(stocksOnHand.findInventory(any())).thenReturn(null);
-    InventoryDetail inventoryDetail = new InventoryDetail(200,
+    InventoryDetail inventoryDetail = InventoryDetail.of(200,
         EventTime.fromRequest(LocalDate.of(2021, 8, 6), Instant.parse("2021-08-06T08:52:42.063Z")));
     when(stocksOnHand.findInventory(eq(ProductLotCode.of("08O05Y", "SME-LOTE-08O05Y-072021"))))
         .thenReturn(inventoryDetail);

@@ -34,7 +34,7 @@ public class ProductLotStock {
   private static ProductLotStock of(ProductLotCode code, java.sql.Date expirationDate, Integer stockQuantity,
       EventTime eventTime) {
     Lot lot = Lot.of(code.getLotCode(), expirationDate);
-    return new ProductLotStock(code, lot, new InventoryDetail(stockQuantity, eventTime));
+    return new ProductLotStock(code, lot, InventoryDetail.of(stockQuantity, eventTime));
   }
 
 }

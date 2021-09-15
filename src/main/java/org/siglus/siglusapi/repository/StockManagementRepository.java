@@ -24,6 +24,7 @@ import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -140,28 +141,6 @@ public class StockManagementRepository {
     return new PeriodOfProductMovements(productMovements, stocksOnHand);
   }
 
-  public ProductLot ensureLot(OrderableDto product, String lotCode, LocalDate expirationDate) {
-    String tradeItemId = product.getIdentifiers().get(TRADE_ITEM);
-    ProductLotCode code = ProductLotCode.of(product.getProductCode(), lotCode);
-    String lotQuery = "SELECT id, lotcode, expirationdate FROM referencedata.lots "
-        + "WHERE lotcode = ? AND tradeitemid = ?";
-    ProductLot existed = jdbc.query(lotQuery, productLotExtractor(code), lotCode, tradeItemId);
-    if (existed != null) {
-      return existed;
-    }
-    String lotCreate = "INSERT INTO referencedata.lots"
-        + "(id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
-        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, true) RETURNING CAST(id AS VARCHAR)";
-    Query insert = em.createNativeQuery(lotCreate);
-    insert.setParameter(1, lotCode);
-    insert.setParameter(2, expirationDate);
-    insert.setParameter(3, expirationDate);
-    insert.setParameter(4, tradeItemId);
-    ProductLot productLot = new ProductLot(code, expirationDate);
-    productLot.setId(UUID.fromString((String) insert.getSingleResult()));
-    return productLot;
-  }
-
   public StockEvent createStockEvent(StockEvent stockEvent) {
     String sql = "INSERT INTO stockmanagement.stock_events"
         + "(id, facilityid, programid, processeddate, signature, userid) "
@@ -195,15 +174,42 @@ public class StockManagementRepository {
     return UUID.fromString((String) insert.getSingleResult());
   }
 
+  public ProductLot getLot(OrderableDto product, Lot lot) {
+    String lotCode = lot.getCode();
+    String tradeItemId = product.getIdentifiers().get(TRADE_ITEM);
+    ProductLotCode code = ProductLotCode.of(product.getProductCode(), lotCode);
+    String lotQuery = "SELECT id, lotcode, expirationdate FROM referencedata.lots "
+        + "WHERE lotcode = ? AND tradeitemid = ?";
+    return jdbc.query(lotQuery, productLotExtractor(code), lotCode, tradeItemId);
+  }
+
+  public ProductLot createLot(OrderableDto product, Lot lot) {
+    String tradeItemId = product.getIdentifiers().get(TRADE_ITEM);
+    String lotCode = lot.getCode();
+    ProductLotCode code = ProductLotCode.of(product.getProductCode(), lotCode);
+    String lotCreate = "INSERT INTO referencedata.lots"
+        + "(id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
+        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, true) RETURNING CAST(id AS VARCHAR)";
+    LocalDate expirationDate = lot.getExpirationDate();
+    Query insert = em.createNativeQuery(lotCreate);
+    insert.setParameter(1, lotCode);
+    insert.setParameter(2, expirationDate);
+    insert.setParameter(3, expirationDate);
+    insert.setParameter(4, tradeItemId);
+    ProductLot productLot = new ProductLot(code, expirationDate);
+    productLot.setId(UUID.fromString((String) insert.getSingleResult()));
+    return productLot;
+  }
+
   public StockCard getStockCard(StockCard stockCard) {
     UUID lotId = stockCard.getLotId();
     String sql;
     if (lotId != null) {
       sql = "SELECT CAST(id AS VARCHAR) FROM stockmanagement.stock_cards "
-          + "WHERE facilityid = ?1 AND programid = ?2  AND orderableid = ?3 AND lotid = ?4 ";
+          + "WHERE facilityid = ?1 AND programid = ?2 AND orderableid = ?3 AND lotid = ?4 ";
     } else {
       sql = "SELECT CAST(id AS VARCHAR) FROM stockmanagement.stock_cards "
-          + "WHERE facilityid = ?1 AND programid = ?2  AND orderableid = ?3 AND lotid IS NULL ";
+          + "WHERE facilityid = ?1 AND programid = ?2 AND orderableid = ?3 AND lotid IS NULL ";
     }
     Query query = em.createNativeQuery(sql);
     query.setParameter(1, wrap(stockCard.getFacilityId()));
@@ -221,7 +227,7 @@ public class StockManagementRepository {
     return stockCard;
   }
 
-  public StockCard createStockCard(StockCard stockCard) {
+  public StockCard createStockCard(StockCard stockCard, UUID stockEventId) {
     String sql = "INSERT INTO stockmanagement.stock_cards"
         + "(id, facilityid, programid, orderableid, lotid, origineventid) "
         + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, ?5) RETURNING CAST(id AS VARCHAR)";
@@ -230,7 +236,7 @@ public class StockManagementRepository {
     insert.setParameter(2, wrap(stockCard.getProgramId()));
     insert.setParameter(3, wrap(stockCard.getProductId()));
     insert.setParameter(4, wrap(stockCard.getLotId()));
-    insert.setParameter(5, wrap(stockCard.getEventId()));
+    insert.setParameter(5, wrap(stockEventId));
     stockCard.setId(UUID.fromString((String) insert.getSingleResult()));
     return stockCard;
   }
@@ -335,7 +341,21 @@ public class StockManagementRepository {
     insert.executeUpdate();
   }
 
-  public void saveStockOnHand(CalculatedStockOnHand calculated) {
+  public List<CalculatedStockOnHand> findCalculatedStockOnHand(StockCard stockCard, EventTime earliestDate) {
+    String sql = "SELECT id, stockonhand, occurreddate, processeddate FROM stockmanagement.calculated_stocks_on_hand "
+        + "WHERE stockcardid = ? AND occurreddate>= ?";
+    return jdbc
+        .query(sql, calculatedStockOnHandExtractor(stockCard), stockCard.getId(), earliestDate.getOccurredDate());
+  }
+
+  public void saveStockOnHand(CalculatedStockOnHand calculated, Instant stockOnHandProcessAt) {
+    Integer stockQuantity = calculated.getInventoryDetail().getStockQuantity();
+    if (calculated.getId() != null) {
+      jdbc.update("UPDATE stockmanagement.calculated_stocks_on_hand "
+              + "SET stockonhand = ?, processeddate = ? WHERE id = ?",
+          stockQuantity, Timestamp.from(stockOnHandProcessAt), calculated.getId());
+      return;
+    }
     String sql = "INSERT INTO stockmanagement.calculated_stocks_on_hand"
         + "(id, stockonhand, occurreddate, stockcardid, processeddate) "
         + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4)";
@@ -344,7 +364,7 @@ public class StockManagementRepository {
     insert.setParameter(1, inventoryDetail.getStockQuantity());
     insert.setParameter(2, inventoryDetail.getEventTime().getOccurredDate());
     insert.setParameter(3, wrap(calculated.getStockCard().getId()));
-    insert.setParameter(4, inventoryDetail.getEventTime().getRecordedAt());
+    insert.setParameter(4, stockOnHandProcessAt);
     insert.executeUpdate();
   }
 
@@ -391,22 +411,31 @@ public class StockManagementRepository {
       if (!rs.next()) {
         return null;
       }
-      Lot lot = getLot(rs);
+      Lot lot = readLot(rs);
       ProductLot existed = new ProductLot(code, lot.getExpirationDate());
-      existed.setId(rs.getObject("id", UUID.class));
+      existed.setId(readId(rs));
       return existed;
+    };
+  }
+
+  private RowMapper<CalculatedStockOnHand> calculatedStockOnHandExtractor(StockCard stockCard) {
+    return (rs, i) -> {
+      CalculatedStockOnHand stockOnHand = CalculatedStockOnHand
+          .of(stockCard, InventoryDetail.of(readAsInt(rs, "stockonhand"), readEventTime(rs)));
+      stockOnHand.setId(readId(rs));
+      return stockOnHand;
     };
   }
 
   private RowMapper<ProductLotMovement> buildProductLotMovementFromResult() {
     return (rs, i) -> ProductLotMovement.builder()
-        .code(getProductLotCode(rs))
-        .eventTime(getEventTime(rs))
-        .movementDetail(getMovementDetail(rs))
-        .requestedQuantity(getInt(rs, "requestedquantity"))
-        .signature(getString(rs, "signature"))
-        .documentNumber(getString(rs, "documentnumber"))
-        .lot(getLot(rs))
+        .code(readProductLotCode(rs))
+        .eventTime(readEventTime(rs))
+        .movementDetail(readMovementDetail(rs))
+        .requestedQuantity(readAsInt(rs, "requestedquantity"))
+        .signature(readAsString(rs, "signature"))
+        .documentNumber(readAsString(rs, "documentnumber"))
+        .lot(readLot(rs))
         .build();
   }
 
@@ -432,17 +461,22 @@ public class StockManagementRepository {
         + orderBy;
     return executeQuery(sql, parameters,
         ((rs, i) -> ProductLotStock.builder()
-            .code(getProductLotCode(rs))
-            .stockQuantity(getInt(rs, "stockonhand"))
-            .eventTime(getEventTime(rs))
-            .expirationDate(getDate(rs, "expirationdate"))
+            .code(readProductLotCode(rs))
+            .stockQuantity(readAsInt(rs, "stockonhand"))
+            .eventTime(readEventTime(rs))
+            .expirationDate(readAsDate(rs, "expirationdate"))
             .build()
         )
     );
   }
 
   @SneakyThrows
-  private Integer getInt(ResultSet rs, String columnName) {
+  private UUID readId(ResultSet rs) {
+    return rs.getObject("id", UUID.class);
+  }
+
+  @SneakyThrows
+  private Integer readAsInt(ResultSet rs, String columnName) {
     int value = rs.getInt(columnName);
     if (rs.wasNull()) {
       return null;
@@ -451,46 +485,53 @@ public class StockManagementRepository {
   }
 
   @SneakyThrows
-  private String getString(ResultSet rs, String columnName) {
-    return rs.getString(columnName);
+  private String readAsString(ResultSet rs, String columnName) {
+    ResultSetMetaData rsMetaData = rs.getMetaData();
+    int numberOfColumns = rsMetaData.getColumnCount();
+    for (int i = 1; i < numberOfColumns + 1; i++) {
+      if (columnName.equals(rsMetaData.getColumnName(i))) {
+        return rs.getString(columnName);
+      }
+    }
+    return null;
   }
 
   @SneakyThrows
-  private java.sql.Date getDate(ResultSet rs, String columnName) {
+  private java.sql.Date readAsDate(ResultSet rs, String columnName) {
     return rs.getDate(columnName);
   }
 
   @SneakyThrows
-  private EventTime getEventTime(ResultSet rs) {
-    java.sql.Date occurredDate = getDate(rs, "occurreddate");
-    String recordedAtStr = getString(rs, "recordedat");
+  private EventTime readEventTime(ResultSet rs) {
+    java.sql.Date occurredDate = readAsDate(rs, "occurreddate");
+    String recordedAtStr = readAsString(rs, "recordedat");
     Timestamp processedAtTs = rs.getTimestamp("processeddate");
     return EventTime.fromDatabase(occurredDate, recordedAtStr, processedAtTs);
   }
 
   @SneakyThrows
-  private MovementDetail getMovementDetail(ResultSet rs) {
+  private MovementDetail readMovementDetail(ResultSet rs) {
     return MovementDetail.builder()
-        .unsignedAdjustment(getInt(rs, "quantity"))
-        .sourceName(getString(rs, "srcname"))
-        .sourceFacilityName(getString(rs, "srcfacname"))
-        .destinationName(getString(rs, "destname"))
-        .destinationFacilityName(getString(rs, "destfacname"))
-        .adjustmentReason(getString(rs, "adjustreason"))
-        .adjustmentReasonType(getString(rs, "adjustreasontype"))
-        .inventoryReason(getString(rs, "inventoryReason"))
-        .inventoryReasonType(getString(rs, "inventoryReasontype"))
-        .unsignedInventoryAdjustment(getInt(rs, "inventoryadjustment"))
+        .unsignedAdjustment(readAsInt(rs, "quantity"))
+        .sourceName(readAsString(rs, "srcname"))
+        .sourceFacilityName(readAsString(rs, "srcfacname"))
+        .destinationName(readAsString(rs, "destname"))
+        .destinationFacilityName(readAsString(rs, "destfacname"))
+        .adjustmentReason(readAsString(rs, "adjustreason"))
+        .adjustmentReasonType(readAsString(rs, "adjustreasontype"))
+        .inventoryReason(readAsString(rs, "inventoryReason"))
+        .inventoryReasonType(readAsString(rs, "inventoryReasontype"))
+        .unsignedInventoryAdjustment(readAsInt(rs, "inventoryadjustment"))
         .build();
   }
 
   @SneakyThrows
-  private Lot getLot(ResultSet rs) {
-    return Lot.of(getString(rs, "lotcode"), getDate(rs, "expirationdate"));
+  private Lot readLot(ResultSet rs) {
+    return Lot.of(readAsString(rs, "lotcode"), readAsDate(rs, "expirationdate"));
   }
 
-  private ProductLotCode getProductLotCode(ResultSet rs) {
-    return ProductLotCode.of(getString(rs, "productcode"), getString(rs, "lotcode"));
+  private ProductLotCode readProductLotCode(ResultSet rs) {
+    return ProductLotCode.of(readAsString(rs, "productcode"), readAsString(rs, "lotcode"));
   }
 
   private <T> List<T> executeQuery(String sql, SqlParameterSource parameters, RowMapper<T> transformer) {

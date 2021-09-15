@@ -34,7 +34,11 @@ public class ProductLot {
 
   public ProductLot(ProductLotCode code, LocalDate expirationDate) {
     this.productCode = code.getProductCode();
-    this.lot = new Lot(code.getLotCode(), expirationDate);
+    if (code.isLot()) {
+      this.lot = new Lot(code.getLotCode(), expirationDate);
+    } else {
+      this.lot = null;
+    }
   }
 
 }
