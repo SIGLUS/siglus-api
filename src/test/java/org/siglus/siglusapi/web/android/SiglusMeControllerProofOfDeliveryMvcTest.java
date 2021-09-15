@@ -59,6 +59,7 @@ import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
 import org.openlmis.fulfillment.service.referencedata.ProgramDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
+import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.dto.referencedata.LotDto;
@@ -136,8 +137,11 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
 
   private final UUID homeFacilityId = UUID.randomUUID();
   private final UUID order1Id = UUID.randomUUID();
+  private final UUID order1FacilityId = UUID.randomUUID();
   private final UUID order2Id = UUID.randomUUID();
+  private final UUID order2FacilityId = UUID.randomUUID();
   private final UUID order3Id = UUID.randomUUID();
+  private final UUID order3FacilityId = UUID.randomUUID();
   private final UUID product1Id = UUID.randomUUID();
   private final UUID product2Id = UUID.randomUUID();
   private final UUID product1Lot1Id = UUID.randomUUID();
@@ -398,6 +402,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(shipment1Line1.getOrderable()).thenReturn(orderable1);
     when(shipment1.getLineItems()).thenReturn(singletonList(shipment1Line1));
     when(order1.getId()).thenReturn(order1Id);
+    when(order1.getFacilityId()).thenReturn(order1FacilityId);
     ProofOfDeliveryLineItem pod1Line1 = mock(ProofOfDeliveryLineItem.class);
     when(pod1Line1.getLotId()).thenReturn(product1Lot1Id);
     when(pod1Line1.getQuantityAccepted()).thenReturn(10);
@@ -425,6 +430,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(shipment2Line1.getOrderable()).thenReturn(orderable2);
     when(shipment2.getLineItems()).thenReturn(singletonList(shipment2Line1));
     when(order2.getId()).thenReturn(order2Id);
+    when(order2.getFacilityId()).thenReturn(order2FacilityId);
     ProofOfDeliveryLineItem pod2Line1 = mock(ProofOfDeliveryLineItem.class);
     when(pod2Line1.getLotId()).thenReturn(product2Lot1Id);
     when(pod2Line1.getQuantityAccepted()).thenReturn(20);
@@ -443,6 +449,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(shipment3.getOrder()).thenReturn(order3);
     when(shipment3.getShippedDate()).thenReturn(LocalDate.of(2020, 11, 2).atStartOfDay(ZoneId.systemDefault()));
     when(order3.getId()).thenReturn(order3Id);
+    when(order3.getFacilityId()).thenReturn(order3FacilityId);
     ShipmentLineItem shipment3Line1 = mock(ShipmentLineItem.class);
     when(shipment3Line1.getLotId()).thenReturn(product1Lot1Id);
     when(shipment3Line1.getQuantityShipped()).thenReturn(20L);
@@ -498,6 +505,9 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(order1Line1.getOrderedQuantity()).thenReturn(20L);
     when(order1Line1.getPartialFulfilledQuantity()).thenReturn(0L);
     when(orderService.searchOrderByIdWithoutProducts(order1Id)).thenReturn(new SiglusOrderDto(order1, emptySet()));
+    when(orderService.getRequisitionByOrder(order1)).thenReturn(new Requisition());
+    when(facilityReferenceDataService.getFacilityById(order1FacilityId))
+        .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }
 
   private void mockOrder2(FacilityDto supplyingFacility, OrderableDto product2) {
@@ -526,6 +536,9 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(order2Line1.getPartialFulfilledQuantity()).thenReturn(0L);
     when(order2Line1.getOrderable()).thenReturn(product2);
     when(orderService.searchOrderByIdWithoutProducts(order2Id)).thenReturn(new SiglusOrderDto(order2, emptySet()));
+    when(orderService.getRequisitionByOrder(order2)).thenReturn(new Requisition());
+    when(facilityReferenceDataService.getFacilityById(order2FacilityId))
+        .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }
 
   private void mockOrder3(FacilityDto supplyingFacility, OrderableDto product1) {
@@ -554,6 +567,9 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(order3Line1.getPartialFulfilledQuantity()).thenReturn(0L);
     when(order3Line1.getOrderable()).thenReturn(product1);
     when(orderService.searchOrderByIdWithoutProducts(order3Id)).thenReturn(new SiglusOrderDto(order3, emptySet()));
+    when(orderService.getRequisitionByOrder(order3)).thenReturn(new Requisition());
+    when(facilityReferenceDataService.getFacilityById(order3FacilityId))
+        .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }
 
   // it's stupid to rewrite the logical what we have already impement in the source.

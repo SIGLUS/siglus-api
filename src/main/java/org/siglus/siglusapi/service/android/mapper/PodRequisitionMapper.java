@@ -67,9 +67,9 @@ public interface PodRequisitionMapper {
   default Instant toServerProcessedDate(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
       @Context Map<UUID, FacilityDto> orderIdToFacility, @Context Map<UUID, Requisition> orderIdToRequisition) {
     Requisition requisition = orderIdToRequisition.get(orderId);
-    if (requisition == null) {
+    if (requisition == null || requisition.getCreatedDate() == null) {
       return null;
     }
-   return Instant.from(requisition.getCreatedDate());
+    return Instant.from(requisition.getCreatedDate());
   }
 }
