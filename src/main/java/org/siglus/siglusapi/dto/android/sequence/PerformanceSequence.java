@@ -18,8 +18,9 @@ package org.siglus.siglusapi.dto.android.sequence;
 import javax.validation.GroupSequence;
 import javax.validation.groups.Default;
 import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
+import org.siglus.siglusapi.dto.android.group.SelfCheckGroup;
 
-@GroupSequence({Default.class, PerformanceGroup.class})
+@GroupSequence({Default.class, SelfCheckGroup.class, PerformanceGroup.class})
 public interface PerformanceSequence {
 
 }

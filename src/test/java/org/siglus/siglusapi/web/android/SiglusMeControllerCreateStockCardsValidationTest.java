@@ -360,7 +360,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     Map<String, List<String>> violations = executeValidation(param);
 
     // then
-    assertEquals(1, violations.size());
+    assertEquals(4, violations.size());
     assertViolation("The product 08S01Z is not consistent by gap.",
         "createStockCards.arg0", violations);
   }
@@ -375,7 +375,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     Map<String, List<String>> violations = executeValidation(param);
 
     // then
-    assertEquals(1, violations.size());
+    assertEquals(5, violations.size());
     assertViolation("The product 08S01Z is not consistent on 2021-06-17(at 2021-06-17T13:20:56Z).",
         "createStockCards.arg0", violations);
   }
@@ -390,8 +390,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     Map<String, List<String>> violations = executeValidation(param);
 
     // then
-    assertEquals(1, violations.size());
-    assertViolation("SOH of SEM-LOTE-02A01-062021(08S01Z) is not consistent.",
+    assertEquals(4, violations.size());
+    assertViolation("SOH of SEM-LOTE-02A01-062021(08S01Z) is incorrect.",
         "createStockCards.arg0", violations);
   }
 
@@ -405,10 +405,10 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     Map<String, List<String>> violations = executeValidation(param);
 
     // then
-    assertEquals(1, violations.size());
+    assertEquals(5, violations.size());
 
     assertViolation(
-        "SOH of SEM-LOTE-02A01-062021(08S01Z) is not consistent.",
+        "SOH of SEM-LOTE-02A01-062021(08S01Z) is incorrect.",
         "createStockCards.arg0", violations);
   }
 
@@ -422,7 +422,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     Map<String, List<String>> violations = executeValidation(param);
 
     // then
-    assertEquals(1, violations.size());
+    assertEquals(5, violations.size());
     assertViolation("The product 08S01Z is not consistent "
             + "since it has less SOH than the sum its lots' on 2021-06-17(at 2021-06-17T14:20:56Z).",
         "createStockCards.arg0", violations);
