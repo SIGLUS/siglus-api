@@ -8,10 +8,10 @@ buildscript {
 
 plugins {
     id 'org.springframework.boot' version '1.5.21.RELEASE'
-    id "org.flywaydb.flyway" version "4.1.2"
-    id "org.sonarqube" version "2.7"
+    id 'org.flywaydb.flyway' version '4.1.2'
+    id 'org.sonarqube' version '2.7'
     id 'com.avast.gradle.docker-compose' version '0.8.10'
-    id "com.moowork.node" version "1.2.0"
+    id 'com.moowork.node' version '1.2.0'
 }
 
 apply plugin: 'java'
@@ -37,33 +37,33 @@ repositories {
 
 // NOTE: do NOT use implementation, otherwise the SpringBoot won't pack the dependencies into the fat jar
 dependencies {
-    compile 'org.openlmis:siglus-api-extension:1.68'
-    compile "org.springframework.boot:spring-boot-starter-web"
-    compile "org.springframework.boot:spring-boot-starter-data-rest"
-    compile "org.springframework.boot:spring-boot-starter-data-jpa"
-    compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile "org.springframework.boot:spring-boot-starter-security"
-    compile "org.springframework.security.oauth:spring-security-oauth2"
+    compile 'org.openlmis:siglus-api-extension:1.71'
+    compile 'org.springframework.boot:spring-boot-starter-web'
+    compile 'org.springframework.boot:spring-boot-starter-data-rest'
+    compile 'org.springframework.boot:spring-boot-starter-data-jpa'
+    compile 'org.springframework.boot:spring-boot-starter-actuator'
+    compile 'org.springframework.boot:spring-boot-starter-security'
+    compile 'org.springframework.security.oauth:spring-security-oauth2'
     compile 'org.springframework:spring-context-support'
     compile 'org.springframework.retry:spring-retry'
-    compile "org.springframework.integration:spring-integration-file"
+    compile 'org.springframework.integration:spring-integration-file'
     compile 'org.hibernate:hibernate-java8'
-    compile group: 'net.sf.ehcache', name: 'ehcache', version: '2.4.3'
-    compile group: 'org.hibernate', name: 'hibernate-ehcache', version: '5.0.12.Final'
+    compile 'net.sf.ehcache:ehcache:2.4.3'
+    compile 'org.hibernate:hibernate-ehcache:5.0.12.Final'
     compile 'org.flywaydb:flyway-core:4.1.2'
     compile 'org.springframework.boot:spring-boot-starter-data-redis:1.5.21.RELEASE'
     compile 'org.openlmis:openlmis-service-util:3.0.0'
     compile 'org.jadira.usertype:usertype.core:5.0.0.GA'
-    compile "org.postgresql:postgresql:42.0.0"
-    compile "com.google.guava:guava:18.0"
+    compile 'org.postgresql:postgresql:42.0.0'
+    compile 'com.google.guava:guava:18.0'
     compile 'org.webjars.npm:api-console:3.0.17'
     compile 'org.apache.commons:commons-lang3:3.6'
     compile 'org.apache.commons:commons-csv:1.4'
     compile 'org.apache.commons:commons-collections4:4.1'
     compile 'commons-io:commons-io:2.5'
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
-    compile "net.sf.jasperreports:jasperreports:6.3.0"
-    compile "org.slf4j:slf4j-ext:1.7.25"
+    compile 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    compile 'net.sf.jasperreports:jasperreports:6.3.0'
+    compile 'org.slf4j:slf4j-ext:1.7.25'
     compile 'org.openlmis:openlmis-service-util:3.1.0'
     compile 'org.apache.camel:camel-core:2.18.0'
     compile 'org.apache.poi:poi:3.13'
@@ -85,21 +85,21 @@ dependencies {
 
     testCompileOnly 'org.projectlombok:lombok:1.18.20'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
-    testCompile "junit:junit"
-    testCompile "org.mockito:mockito-core:1.10.19"
-    testCompile("com.github.tomakehurst:wiremock:1.58") {
-        exclude group: "org.mortbay.jetty", module: "jetty"
+    testCompile 'junit:junit'
+    testCompile 'org.mockito:mockito-core:1.10.19'
+    testCompile('com.github.tomakehurst:wiremock:1.58') {
+        exclude group: 'org.mortbay.jetty', module: 'jetty'
     }
-    testCompile "org.powermock:powermock-api-mockito:1.6.5"
-    testCompile "org.powermock:powermock-module-junit4:1.6.5"
-    testCompile "org.springframework.boot:spring-boot-starter-test"
+    testCompile 'org.powermock:powermock-api-mockito:1.6.5'
+    testCompile 'org.powermock:powermock-module-junit4:1.6.5'
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
     testCompile 'org.flywaydb.flyway-test-extensions:flyway-spring-test:4.1.0'
     testCompile 'org.springframework.security:spring-security-test'
-    testCompile "org.springframework:spring-test"
-    testCompile "com.jayway.restassured:rest-assured:2.7.0"
-    testCompile "guru.nidi.raml:raml-tester:0.8.9"
-    testCompile "nl.jqno.equalsverifier:equalsverifier:2.4"
-    testCompile "be.joengenduvel.java.verifiers:to-string:1.0.2"
+    testCompile 'org.springframework:spring-test'
+    testCompile 'com.jayway.restassured:rest-assured:2.7.0'
+    testCompile 'guru.nidi.raml:raml-tester:0.8.9'
+    testCompile 'nl.jqno.equalsverifier:equalsverifier:2.4'
+    testCompile 'be.joengenduvel.java.verifiers:to-string:1.0.2'
 }
 
 /*

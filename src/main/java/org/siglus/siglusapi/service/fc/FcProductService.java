@@ -19,9 +19,9 @@ import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
-import static org.siglus.common.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS;
-import static org.siglus.common.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
-import static org.siglus.common.constant.CacheConstants.SIGLUS_ORDERABLES;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_ORDERABLES;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 

@@ -24,6 +24,10 @@ public class OrderBasicResponse {
 
   private String supplyFacilityName;
 
+  private String supplyFacilityDistrict;
+
+  private String supplyFacilityProvince;
+
   private String status;
 
   private Long createdDate;

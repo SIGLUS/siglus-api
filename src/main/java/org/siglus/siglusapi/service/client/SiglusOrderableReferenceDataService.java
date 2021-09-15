@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.service.client;
 
-import static org.siglus.common.constant.CacheConstants.SIGLUS_ORDERABLES;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_ORDERABLES;
 
 import java.util.Collection;
 import java.util.Collections;

@@ -45,7 +45,7 @@ import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.Message;
-import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;

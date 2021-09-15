@@ -38,7 +38,7 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.domain.LotConflict;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;

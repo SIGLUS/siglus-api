@@ -66,7 +66,7 @@ import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.LotSearchParams;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.OrderExternalRepository;
-import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.service.client.SiglusUserReferenceDataService;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.domain.FcHandlerStatus;

@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
-import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

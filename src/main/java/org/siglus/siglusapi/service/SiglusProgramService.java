@@ -15,9 +15,9 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.siglus.common.constant.CacheConstants.SIGLUS_PROGRAM;
-import static org.siglus.common.constant.CacheConstants.SIGLUS_PROGRAMS;
-import static org.siglus.common.constant.CacheConstants.SIGLUS_PROGRAM_ID;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAMS;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_NAME;

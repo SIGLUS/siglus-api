@@ -60,7 +60,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.FacilityTypeDto;
 import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.android.request.LotBasicRequest;
 import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;

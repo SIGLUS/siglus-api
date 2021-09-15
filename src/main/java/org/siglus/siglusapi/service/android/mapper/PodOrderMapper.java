@@ -21,6 +21,7 @@ import java.util.UUID;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.siglus.siglusapi.dto.android.response.OrderBasicResponse;
 
@@ -44,4 +45,9 @@ public interface PodOrderMapper {
   @Mapping(target = "requisition", source = "id")
   OrderBasicResponse toOrderResponse(OrderDto order, @Context Map<UUID, OrderDto> allOrders);
 
+  @Named("getAdditionalProgramCode")
+  default String getAdditionalProgramCode(UUID productId,
+      @Context Map<UUID, String> productIdToAdditionalProgramCode) {
+    return productIdToAdditionalProgramCode.get(productId);
+  }
 }

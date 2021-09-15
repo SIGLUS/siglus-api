@@ -13,31 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.response;
+package org.siglus.siglusapi.constant;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import lombok.Data;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 
-@Data
-public class RequisitionBasicResponse {
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
+public class CacheConstants {
 
-  private String number;
+  public static final String SIGLUS_DESTINATIONS = "siglus-destinations";
 
-  private Boolean isEmergency;
+  public static final String SIGLUS_SOURCES = "siglus-sources";
 
-  private String programCode;
+  public static final String SIGLUS_PROGRAMS = "siglus-programs";
 
-  private LocalDate startDate;
+  public static final String SIGLUS_PROGRAM = "siglus-program";
 
-  private LocalDate endDate;
+  public static final String SIGLUS_PROGRAM_ID = "siglus-program-id";
 
-  private LocalDate actualStartDate;
+  public static final String SIGLUS_APPROVED_PRODUCTS = "siglus-approved-products";
 
-  private LocalDate actualEndDate;
+  public static final String SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES = "siglus-approved-products-by-orderables";
 
-  private Instant processedDate;
-
-  private Instant serverProcessedDate;
+  public static final String SIGLUS_ORDERABLES = "siglus-orderables";
 
 }

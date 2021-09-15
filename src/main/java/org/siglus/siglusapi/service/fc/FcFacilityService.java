@@ -37,7 +37,7 @@ import org.siglus.common.dto.referencedata.FacilityDto;
 import org.siglus.common.dto.referencedata.FacilityTypeDto;
 import org.siglus.common.dto.referencedata.OpenLmisGeographicZoneDto;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
-import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.fc.FcFacilityDto;

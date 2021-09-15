@@ -17,7 +17,7 @@ package org.siglus.siglusapi.service.client;
 
 import static java.util.stream.Collectors.groupingBy;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
-import static org.siglus.common.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
 
 import java.util.Collection;
 import java.util.Collections;

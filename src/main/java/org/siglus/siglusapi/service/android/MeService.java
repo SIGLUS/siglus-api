@@ -65,9 +65,9 @@ import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.dto.referencedata.SupportedProgramDto;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
-import org.siglus.common.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.common.util.SupportedProgramsHelper;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.constant.PodConstants;
@@ -483,6 +483,10 @@ public class MeService {
     return facilityReferenceDataService.getFacilityById(homeFacilityId);
   }
 
+  private FacilityDto getFacilityInfo(UUID facilityId) {
+    return facilityReferenceDataService.getFacilityById(facilityId);
+  }
+
   private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId, List<SupportedProgramDto> programs) {
     List<Requisition> requisitions = requisitionRepository
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(facilityId,
@@ -564,7 +568,7 @@ public class MeService {
     stockCardRequestBackupRepository.save(backup);
   }
 
-  public void backupPodRequest(PodRequest podRequest, String errorMessage, UserDto user) {
+  private void backupPodRequest(PodRequest podRequest, String errorMessage, UserDto user) {
     String syncUpHash = HashEncoder.hash(podRequest.getOrderCode() + user.getHomeFacilityId() + user.getId());
     PodRequestBackup existedBackup = podBackupRepository.findOneByHash(syncUpHash);
     if (existedBackup != null) {

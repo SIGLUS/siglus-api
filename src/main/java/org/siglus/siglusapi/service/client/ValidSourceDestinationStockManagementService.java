@@ -15,8 +15,8 @@
 
 package org.siglus.siglusapi.service.client;
 
-import static org.siglus.common.constant.CacheConstants.SIGLUS_DESTINATIONS;
-import static org.siglus.common.constant.CacheConstants.SIGLUS_SOURCES;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_DESTINATIONS;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_SOURCES;
 
 import java.util.Collection;
 import java.util.HashMap;
