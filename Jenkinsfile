@@ -16,13 +16,15 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                println "gradle: build"
                 sh '''
                     pwd && ls -l
                     npm install
                     ./gradlew clean build
                 '''
-                println "sonarqube: analysis"
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONARQUBE_TOKEN')]) {
                     sh '''
                         if [ "$GIT_BRANCH" = "master" ]; then
@@ -30,7 +32,10 @@ pipeline {
                         fi
                     '''
                 }
-                println "docker: push image"
+            }
+        }
+        stage('Push Image') {
+            steps {
                 withCredentials([usernamePassword(credentialsId: "docker-hub", usernameVariable: "USER", passwordVariable: "PASS")]) {
                     sh '''
                         set +x
