@@ -36,6 +36,7 @@ public class OrderNotFoundException extends RuntimeException {
     return new Message(MESSAGE_KEY, this.orderCode);
   }
 
+  @Override
   public String getMessage() {
     return this.asMessage().toString();
   }

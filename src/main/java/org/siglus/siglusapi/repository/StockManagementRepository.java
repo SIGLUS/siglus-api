@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.toList;
 import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
@@ -98,6 +99,9 @@ public class StockManagementRepository {
       "(select distinct on (id) * from referencedata.orderables order by id, versionnumber desc) o";
   private static final String LOT_ROOT = "referencedata.lots l";
 
+  private static final String INSERT_5_FIELDS =
+      "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, ?5) RETURNING CAST(id AS VARCHAR)";
+
   public PeriodOfProductMovements getAllProductMovementsForSync(@Nonnull UUID facilityId, @Nonnull LocalDate since) {
     requireNonNull(facilityId);
     ZoneId zoneId = ZoneId.systemDefault();
@@ -144,7 +148,7 @@ public class StockManagementRepository {
   public StockEvent createStockEvent(StockEvent stockEvent) {
     String sql = "INSERT INTO stockmanagement.stock_events"
         + "(id, facilityid, programid, processeddate, signature, userid) "
-        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, ?5) RETURNING CAST(id AS VARCHAR)";
+        + INSERT_5_FIELDS;
     Query insert = em.createNativeQuery(sql);
     insert.setParameter(1, stockEvent.getFacilityId());
     insert.setParameter(2, stockEvent.getProgramId());
@@ -230,7 +234,7 @@ public class StockManagementRepository {
   public StockCard createStockCard(StockCard stockCard, UUID stockEventId) {
     String sql = "INSERT INTO stockmanagement.stock_cards"
         + "(id, facilityid, programid, orderableid, lotid, origineventid) "
-        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, ?5) RETURNING CAST(id AS VARCHAR)";
+        + INSERT_5_FIELDS;
     Query insert = em.createNativeQuery(sql);
     insert.setParameter(1, wrap(stockCard.getFacilityId()));
     insert.setParameter(2, wrap(stockCard.getProgramId()));
@@ -247,8 +251,7 @@ public class StockManagementRepository {
         + "userid, extradata, documentnumber, signature) "
         + "VALUES (UUID_GENERATE_V4(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id";
     LocalDate occurredDate = detail.getEventTime().getOccurredDate();
-    Timestamp recordedAt =
-        detail.getEventTime().getRecordedAt() == null ? null : Timestamp.from(detail.getEventTime().getRecordedAt());
+    Timestamp recordedAt = Timestamp.from(stockEvent.getProcessedAt());
     String extraData = generateExtraData(stockCard, detail);
     List<Map<String, Object>> resultList = jdbc
         .queryForList(sql, stockCard.getId(), stockEvent.getId(), occurredDate, recordedAt,
@@ -293,7 +296,7 @@ public class StockManagementRepository {
       UUID stockCardLineId) {
     String insertInventoryLineSql = "INSERT INTO stockmanagement.physical_inventory_line_items"
         + "(id, orderableid, lotid, quantity, physicalinventoryid, previousstockonhandwhensubmitted) "
-        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4, ?5) RETURNING CAST(id AS VARCHAR)";
+        + INSERT_5_FIELDS;
     Query insert = em.createNativeQuery(insertInventoryLineSql);
     insert.setParameter(1, wrap(lineDetail.getProductId()));
     insert.setParameter(2, wrap(lineDetail.getLotId()));
@@ -301,30 +304,21 @@ public class StockManagementRepository {
     insert.setParameter(4, wrap(lineDetail.getPhysicalInventoryId()));
     insert.setParameter(5, lineDetail.getInventoryBeforeAdjustment());
     UUID inventoryLineId = UUID.fromString((String) insert.getSingleResult());
-    String insertAdjustmentSql = "INSERT INTO stockmanagement.physical_inventory_line_item_adjustments"
-        + "(id, quantity, reasonid, physicalinventorylineitemid) "
+    String insertAdjustmentSqlTemplate = "INSERT INTO stockmanagement.physical_inventory_line_item_adjustments"
+        + "(id, quantity, reasonid, %s) "
         + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3)";
-    Query adjustmentInsert = em.createNativeQuery(insertAdjustmentSql);
-    adjustmentInsert.setParameter(1, lineDetail.getAdjustment());
-    adjustmentInsert.setParameter(2, wrap(lineDetail.getReasonId()));
-    adjustmentInsert.setParameter(3, wrap(inventoryLineId));
-    adjustmentInsert.executeUpdate();
-    String insertAdjustmentSql2 = "INSERT INTO stockmanagement.physical_inventory_line_item_adjustments"
-        + "(id, quantity, reasonid, stockeventlineitemid) "
-        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3)";
-    Query adjustmentInsert2 = em.createNativeQuery(insertAdjustmentSql2);
-    adjustmentInsert2.setParameter(1, lineDetail.getAdjustment());
-    adjustmentInsert2.setParameter(2, wrap(lineDetail.getReasonId()));
-    adjustmentInsert2.setParameter(3, wrap(eventLineId));
-    adjustmentInsert2.executeUpdate();
-    String insertAdjustmentSql3 = "INSERT INTO stockmanagement.physical_inventory_line_item_adjustments"
-        + "(id, quantity, reasonid, stockcardlineitemid) "
-        + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3)";
-    Query adjustmentInsert3 = em.createNativeQuery(insertAdjustmentSql3);
-    adjustmentInsert3.setParameter(1, lineDetail.getAdjustment());
-    adjustmentInsert3.setParameter(2, wrap(lineDetail.getReasonId()));
-    adjustmentInsert3.setParameter(3, wrap(stockCardLineId));
-    adjustmentInsert3.executeUpdate();
+    ImmutableMap.of(
+        "physicalinventorylineitemid", inventoryLineId,
+        "stockeventlineitemid", eventLineId,
+        "stockcardlineitemid", stockCardLineId
+    ).forEach((k, v) -> {
+      String sql = String.format(insertAdjustmentSqlTemplate, k);
+      Query adjustmentInsert = em.createNativeQuery(sql);
+      adjustmentInsert.setParameter(1, lineDetail.getAdjustment());
+      adjustmentInsert.setParameter(2, wrap(lineDetail.getReasonId()));
+      adjustmentInsert.setParameter(3, wrap(v));
+      adjustmentInsert.executeUpdate();
+    });
   }
 
   public void saveRequested(StockEvent stockEvent, UUID productId, Integer requested) {
