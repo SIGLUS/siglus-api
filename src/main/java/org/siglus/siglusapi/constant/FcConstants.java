@@ -48,6 +48,8 @@ public class FcConstants {
   public static final String STATUS_ACTIVE = "Activo";
   public static final String DEFAULT_REGIMEN_CATEGORY_CODE = "DEFAULT";
 
+  public static final String DATE_FORMAT = "yyyyMMdd";
+
   public static List<String> getQueryByPeriodApiList() {
     return Arrays.asList(CMM_API, CP_API);
   }

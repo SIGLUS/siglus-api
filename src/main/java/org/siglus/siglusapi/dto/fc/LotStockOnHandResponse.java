@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class LotsOnHandResponse {
+public class LotStockOnHandResponse {
 
   private String lotCode;
   private LocalDate expirationDate;

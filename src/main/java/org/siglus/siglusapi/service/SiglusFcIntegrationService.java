@@ -84,7 +84,7 @@ import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
-import org.siglus.siglusapi.dto.fc.LotsOnHandResponse;
+import org.siglus.siglusapi.dto.fc.LotStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
@@ -110,6 +110,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusFcIntegrationService {
 
   private final SupervisoryNodeRepository supervisoryNodeRepository;
@@ -204,8 +205,8 @@ public class SiglusFcIntegrationService {
           LocalDate dateOfStock = lots.values().stream().map(InventoryDetail::getEventTime)
               .map(EventTime::getOccurredDate).max(naturalOrder()).orElse(null);
           productResponse.setDateOfStock(dateOfStock);
-          List<LotsOnHandResponse> lotsOnHandResponses = lots.entrySet().stream().map(e -> {
-                LotsOnHandResponse lot = new LotsOnHandResponse();
+          List<LotStockOnHandResponse> lotsOnHandResponses = lots.entrySet().stream().map(e -> {
+                LotStockOnHandResponse lot = new LotStockOnHandResponse();
                 lot.setLotCode(e.getKey().getLotCode());
                 lot.setExpirationDate(stockOnHand.getLot(e.getKey()).getExpirationDate());
                 lot.setStockOnHand(e.getValue().getStockQuantity());

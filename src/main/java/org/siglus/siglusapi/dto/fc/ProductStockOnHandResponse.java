@@ -32,6 +32,6 @@ public class ProductStockOnHandResponse {
   private String productName;
   private Integer stockOnHand;
   private LocalDate dateOfStock;
-  private List<LotsOnHandResponse> lots;
+  private List<LotStockOnHandResponse> lots;
 
 }

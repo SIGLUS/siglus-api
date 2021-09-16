@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto.android.validator.stockcard;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +39,7 @@ public class ProductConsistentWithOwnLotsValidator implements
     if (value == null
         || value.getStockOnHand() == null || value.getStockOnHand() < 0
         || value.getQuantity() == null
-        || value.getLotEvents() == null || value.getLotEvents().isEmpty()) {
+        || isEmpty(value.getLotEvents())) {
       return true;
     }
     if (value.getLotEvents().stream().allMatch(r -> r.getStockOnHand() == null && r.getQuantity() == null)) {

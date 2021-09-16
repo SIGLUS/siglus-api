@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.siglus.siglusapi.constant.FcConstants.DATE_FORMAT;
+
 import java.time.LocalDate;
 import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
@@ -43,7 +45,7 @@ public class SiglusFcIntegrationController {
 
   @GetMapping("/requisitions")
   public Page<FcRequisitionDto> searchRequisitions(
-      @DateTimeFormat(pattern = "yyyyMMdd") @RequestParam LocalDate date,
+      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
       Pageable pageable) {
     if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
@@ -53,7 +55,7 @@ public class SiglusFcIntegrationController {
 
   @GetMapping("/stockMovements")
   public Page<FacilityStockMovementResponse> searchStockMovements(
-      @DateTimeFormat(pattern = "yyyyMMdd") @RequestParam LocalDate date, Pageable pageable) {
+      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date, Pageable pageable) {
     if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
     }
@@ -62,7 +64,7 @@ public class SiglusFcIntegrationController {
 
   @GetMapping("/stockOnHand")
   public Page<FacilityStockOnHandResponse> searchStockOnHand(
-      @DateTimeFormat(pattern = "yyyyMMdd") @RequestParam LocalDate date, Pageable pageable) {
+      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date, Pageable pageable) {
     if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
     }
@@ -71,7 +73,7 @@ public class SiglusFcIntegrationController {
 
   @GetMapping("/pods")
   public Page<FcProofOfDeliveryDto> searchProofOfDelivery(
-      @DateTimeFormat(pattern = "yyyyMMdd") @RequestParam LocalDate date,
+      @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
       Pageable pageable) {
     if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
       pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);

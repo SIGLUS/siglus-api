@@ -124,7 +124,7 @@ public final class StockCardCreateContext {
   public void newLot(ProductLot lot) {
     ProductLotCode productLotCode = ProductLotCode.of(lot.getProductCode(), lot.getLot().getCode());
     if (lots.containsKey(productLotCode)) {
-      throw new IllegalStateException("Already existed!");
+      throw new IllegalStateException("Lot already existed!");
     }
     lots.put(productLotCode, lot);
   }
@@ -137,7 +137,7 @@ public final class StockCardCreateContext {
   public void newStockCard(StockCard stockCard) {
     ProductLotCode productLotCode = ProductLotCode.of(stockCard.getProductCode(), stockCard.getLotCode());
     if (stockCards.containsKey(productLotCode)) {
-      throw new IllegalStateException("Already existed!");
+      throw new IllegalStateException("Stock card already existed!");
     }
     stockCards.put(productLotCode, stockCard);
   }
@@ -151,7 +151,7 @@ public final class StockCardCreateContext {
   public void newPhysicalInventory(PhysicalInventory physicalInventory) {
     Key key = physicalInventory.getKey();
     if (physicalInventories.containsKey(key)) {
-      throw new IllegalStateException("Already existed!");
+      throw new IllegalStateException("Inventory already existed!");
     }
     physicalInventories.put(key, physicalInventory);
   }
