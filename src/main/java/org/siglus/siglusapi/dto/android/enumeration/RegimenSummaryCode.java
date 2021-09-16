@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.androidenum;
+package org.siglus.siglusapi.dto.android.enumeration;
 
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.KEY_REGIME_3LINES_1;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.KEY_REGIME_3LINES_2;

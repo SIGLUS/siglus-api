@@ -13,31 +13,29 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.androidenum;
+package org.siglus.siglusapi.validator;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_0;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.PROJECT_HIVDETERMINE;
-
-import java.util.Arrays;
-import lombok.Getter;
+import java.util.Locale;
+import javax.annotation.Nonnull;
+import javax.validation.MessageInterpolator;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-@Getter
-public enum TestProject {
-  HIVDETERMINE(PROJECT_HIVDETERMINE),
-  HIVUNIGOLD(NEW_COLUMN_0),
-  SYPHILLIS(NEW_COLUMN_1),
-  MALARIA(NEW_COLUMN_2);
+public class SiglusMessageInterpolator implements MessageInterpolator {
 
-  private final String value;
+  @Nonnull
+  private final MessageInterpolator targetInterpolator;
 
-  public static String findByValue(String value) {
-    return Arrays.stream(values())
-        .filter(e -> e.value.equals(value))
-        .map(Enum::name)
-        .findFirst().orElse(null);
+  @Override
+  public String interpolate(String message, Context context) {
+    String messageInEnglish = this.targetInterpolator.interpolate(message, context, Locale.ENGLISH);
+    return String.format("%s", messageInEnglish);
   }
+
+  @Override
+  public String interpolate(String message, Context context, Locale locale) {
+    return this.interpolate(message, context);
+  }
+
+
 }

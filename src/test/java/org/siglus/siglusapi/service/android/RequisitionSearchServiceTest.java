@@ -60,7 +60,7 @@ import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
-import org.siglus.siglusapi.dto.android.androidenum.TestOutcome;
+import org.siglus.siglusapi.dto.android.enumeration.TestOutcome;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemColumnRequest;
 import org.siglus.siglusapi.dto.android.request.PatientLineItemsRequest;
 import org.siglus.siglusapi.dto.android.request.RegimenLineItemRequest;

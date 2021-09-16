@@ -13,16 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.androidenum;
+package org.siglus.siglusapi.dto.android.enumeration;
 
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DT;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DT1;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DT2;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_2;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_0TO4_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_10TO14_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_5TO9_KEY;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_PATIENTS_ADULTS_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;
@@ -30,11 +28,10 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum NewSection0 {
-  PATIENTS_ADULTS_KEY(TABLE_PATIENTS_ADULTS_KEY, NEW_COLUMN),
-  PATIENTS_0TO4_KEY(TABLE_PATIENTS_0TO4_KEY, NEW_COLUMN_0),
-  PATIENTS_5TO9_KEY(TABLE_PATIENTS_5TO9_KEY, NEW_COLUMN_1),
-  PATIENTS_10TO14_KEY(TABLE_PATIENTS_10TO14_KEY, NEW_COLUMN_2);
+public enum NewSection3 {
+  DT2(DISPENSED_DT2, NEW_COLUMN),
+  DT1(DISPENSED_DT1, NEW_COLUMN_0),
+  DT(DISPENSED_DT, NEW_COLUMN_1);
 
   private final String key;
 
@@ -46,7 +43,7 @@ public enum NewSection0 {
     }
     return Arrays.stream(values())
         .filter(e -> e.value.equals(value))
-        .map(NewSection0::getKey)
+        .map(NewSection3::getKey)
         .findFirst().orElse(null);
   }
 
@@ -56,7 +53,7 @@ public enum NewSection0 {
     }
     return Arrays.stream(values())
         .filter(e -> e.key.equals(key))
-        .map(NewSection0::getValue)
+        .map(NewSection3::getValue)
         .findFirst().orElse(null);
   }
 }

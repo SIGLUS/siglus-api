@@ -42,7 +42,7 @@ import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.config.CustomBeanNameGenerator;
 import org.siglus.siglusapi.i18n.ExposedMessageSourceImpl;
-import org.siglus.siglusapi.validation.SiglusMessageInterpolator;
+import org.siglus.siglusapi.validator.SiglusMessageInterpolator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;

@@ -200,7 +200,8 @@ jacocoTestReport {
                     'org/siglus/siglusapi/i18n',
                     'org/siglus/siglusapi/service/client',
                     'org/siglus/siglusapi/domain',
-                    'org/siglus/siglusapi/repository'
+                    'org/siglus/siglusapi/repository',
+                    'org/siglus/siglusapi/config'
             ])
         })
     }
@@ -215,7 +216,8 @@ jacocoTestCoverageVerification {
                     'org/siglus/siglusapi/i18n',
                     'org/siglus/siglusapi/service/client',
                     'org/siglus/siglusapi/domain',
-                    'org/siglus/siglusapi/repository'
+                    'org/siglus/siglusapi/repository',
+                    'org/siglus/siglusapi/config'
             ])
         })
     }
@@ -237,7 +239,8 @@ sonarqube {
                 '**/org/siglus/siglusapi/i18n/**, ' +
                 '**/org/siglus/siglusapi/service/client/**, ' +
                 '**/org/siglus/siglusapi/domain/**, ' +
-                '**/org/siglus/siglusapi/repository/**'
+                '**/org/siglus/siglusapi/repository/**' +
+                '**/org/siglus/siglusapi/config/**'
     }
 }
 

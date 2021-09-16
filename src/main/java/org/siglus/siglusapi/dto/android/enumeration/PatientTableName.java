@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.androidenum;
+package org.siglus.siglusapi.dto.android.enumeration;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

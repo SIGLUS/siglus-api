@@ -34,7 +34,7 @@ import org.siglus.siglusapi.domain.RegimenSummaryLineItem;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.RegimenSummaryLineDto;
-import org.siglus.siglusapi.dto.android.androidenum.RegimenSummaryCode;
+import org.siglus.siglusapi.dto.android.enumeration.RegimenSummaryCode;
 import org.springframework.util.StringUtils;
 
 @Data

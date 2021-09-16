@@ -13,14 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.androidenum;
+package org.siglus.siglusapi.dto.android.enumeration;
 
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DT;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DT1;
-import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.DISPENSED_DT2;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_0;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_2;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.NEW_COLUMN_3;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_ALTERATION_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_MAINTENANCE_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_NEW_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_TRANSFERS_KEY;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineItems.TABLE_TRAV_LABEL_TRANSIT_KEY;
 
 import java.util.Arrays;
 import lombok.Getter;
@@ -28,10 +32,12 @@ import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Getter
-public enum NewSection3 {
-  DT2(DISPENSED_DT2, NEW_COLUMN),
-  DT1(DISPENSED_DT1, NEW_COLUMN_0),
-  DT(DISPENSED_DT, NEW_COLUMN_1);
+public enum PatientType {
+  TRAV_LABEL_NEW_KEY(TABLE_TRAV_LABEL_NEW_KEY, NEW_COLUMN),
+  TRAV_LABEL_MAINTENANCE_KEY(TABLE_TRAV_LABEL_MAINTENANCE_KEY, NEW_COLUMN_0),
+  TRAV_LABEL_TRANSIT_KEY(TABLE_TRAV_LABEL_TRANSIT_KEY, NEW_COLUMN_1),
+  TRAV_LABEL_TRANSFERS_KEY(TABLE_TRAV_LABEL_TRANSFERS_KEY, NEW_COLUMN_2),
+  TRAV_LABEL_ALTERATION_KEY(TABLE_TRAV_LABEL_ALTERATION_KEY, NEW_COLUMN_3);
 
   private final String key;
 
@@ -43,7 +49,7 @@ public enum NewSection3 {
     }
     return Arrays.stream(values())
         .filter(e -> e.value.equals(value))
-        .map(NewSection3::getKey)
+        .map(PatientType::getKey)
         .findFirst().orElse(null);
   }
 
@@ -53,7 +59,7 @@ public enum NewSection3 {
     }
     return Arrays.stream(values())
         .filter(e -> e.key.equals(key))
-        .map(NewSection3::getValue)
+        .map(PatientType::getValue)
         .findFirst().orElse(null);
   }
 }

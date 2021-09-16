@@ -13,8 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.group;
+package org.siglus.siglusapi.dto;
 
-public interface RequisitionActionGroup {
+import javax.validation.GroupSequence;
+import javax.validation.groups.Default;
+
+@GroupSequence({Default.class, RequisitionActionGroup.class})
+public interface RequisitionActionSequence {
 
 }

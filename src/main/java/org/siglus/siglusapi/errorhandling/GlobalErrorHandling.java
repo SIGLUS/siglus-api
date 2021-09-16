@@ -37,7 +37,6 @@ import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
 import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.errorhandling.exception.OrderNotFoundException;
-import org.siglus.siglusapi.errorhandling.message.ValidationFailField;
 import org.siglus.siglusapi.i18n.ExposedMessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.Ordered;

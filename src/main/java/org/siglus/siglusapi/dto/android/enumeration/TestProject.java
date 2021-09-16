@@ -13,29 +13,31 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.validation;
+package org.siglus.siglusapi.dto.android.enumeration;
 
-import java.util.Locale;
-import javax.annotation.Nonnull;
-import javax.validation.MessageInterpolator;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_0;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_1;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.NEW_COLUMN_2;
+import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.PROJECT_HIVDETERMINE;
+
+import java.util.Arrays;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class SiglusMessageInterpolator implements MessageInterpolator {
+@Getter
+public enum TestProject {
+  HIVDETERMINE(PROJECT_HIVDETERMINE),
+  HIVUNIGOLD(NEW_COLUMN_0),
+  SYPHILLIS(NEW_COLUMN_1),
+  MALARIA(NEW_COLUMN_2);
 
-  @Nonnull
-  private final MessageInterpolator targetInterpolator;
+  private final String value;
 
-  @Override
-  public String interpolate(String message, Context context) {
-    String messageInEnglish = this.targetInterpolator.interpolate(message, context, Locale.ENGLISH);
-    return String.format("%s", messageInEnglish);
+  public static String findByValue(String value) {
+    return Arrays.stream(values())
+        .filter(e -> e.value.equals(value))
+        .map(Enum::name)
+        .findFirst().orElse(null);
   }
-
-  @Override
-  public String interpolate(String message, Context context, Locale locale) {
-    return this.interpolate(message, context);
-  }
-
-
 }
