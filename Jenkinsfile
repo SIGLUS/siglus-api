@@ -161,9 +161,9 @@ def deploy(app_env) {
             sh '''
                 IMAGE_TAG=${BRANCH_NAME}-$(git rev-parse HEAD)
                 rm -f docker-compose.${APP_ENV}.yml .env settings.${APP_ENV}.env
-                wget https://raw.githubusercontent.com/SIGLUS/siglus-ref-distro/master/docker-compose.${APP_ENV}.yml
                 echo "OL_SIGLUSAPI_VERSION=${IMAGE_TAG}" > .env
                 cp $SETTING_ENV settings.${APP_ENV}.env
+                cp ../siglus-ref-distro_master/docker-compose.${APP_ENV}.yml ./
 
                 echo "deregister ${SERVICE_NAME} on ${APP_ENV} consul"
                 curl -s http://${CONSUL_HOST}/v1/health/service/${SERVICE_NAME} | jq -r '.[] | "curl -XPUT http://${CONSUL_HOST}/v1/agent/service/deregister/" + .Service.ID' > clear.sh
