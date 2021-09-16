@@ -64,7 +64,7 @@ class GlobalErrorHandlingTestController {
     Set<ConstraintViolation<?>> violations = new HashSet<>();
     ConstraintViolation<?> violation = mock(ConstraintViolation.class);
     violations.add(violation);
-    String messageText = "text|text";
+    String messageText = "text";
     when(violation.getMessage()).thenReturn(messageText);
     String propertyPathText = "propertyPath";
     Path mockedPath = mock(Path.class);

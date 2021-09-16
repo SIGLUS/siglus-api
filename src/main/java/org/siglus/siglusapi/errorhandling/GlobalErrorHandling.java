@@ -19,7 +19,6 @@ import static java.util.stream.Collectors.toList;
 import static org.siglus.common.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
 import static org.zalando.problem.Problem.DEFAULT_TYPE;
 import static org.zalando.problem.Status.BAD_REQUEST;
-import static org.zalando.problem.Status.INTERNAL_SERVER_ERROR;
 import static org.zalando.problem.Status.NOT_FOUND;
 
 import java.net.URI;
@@ -38,8 +37,6 @@ import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.i18n.MessageKeys;
 import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.errorhandling.exception.OrderNotFoundException;
-import org.siglus.siglusapi.errorhandling.exception.PodException;
-import org.siglus.siglusapi.errorhandling.exception.PodInternalErrorException;
 import org.siglus.siglusapi.errorhandling.message.ValidationFailField;
 import org.siglus.siglusapi.i18n.ExposedMessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -123,9 +120,11 @@ public class GlobalErrorHandling implements ProblemHandling {
   }
 
   @ExceptionHandler
-  public ResponseEntity<Problem> handlePodException(PodException exception, NativeWebRequest request) {
+  public ResponseEntity<Problem> handleOrderNotFoundException(OrderNotFoundException exception,
+      NativeWebRequest request) {
     String messageKey = exception.asMessage().getKey();
-    ThrowableProblem problem = prepareWithPodException(messageKey, exception, DEFAULT_TYPE).build();
+    ThrowableProblem problem = prepare(messageKey, exception, NOT_FOUND, DEFAULT_TYPE).with(PodConstants.ORDER_NUMBER,
+        exception.getOrderCode()).build();
     return create(exception, problem, request);
   }
 
@@ -146,25 +145,6 @@ public class GlobalErrorHandling implements ProblemHandling {
         .with(MESSAGE, localizedMessage)
         .with(MESSAGE_IN_ENGLISH, messageInEnglish)
         .with(MESSAGE_IN_PORTUGUESE, messageInPortuguese);
-  }
-
-  public ProblemBuilder prepareWithPodException(String messageKey, PodException exception, URI type) {
-    String localizedMessage = getLocalizedMessage(messageKey, LocaleContextHolder.getLocale());
-    String messageInPortuguese = "";
-    StatusType status = BAD_REQUEST;
-    if (exception instanceof OrderNotFoundException) {
-      messageInPortuguese = PodConstants.NOT_EXIST_MESSAGE_PT;
-      status = NOT_FOUND;
-    }
-    if (exception instanceof PodInternalErrorException) {
-      messageInPortuguese = PodConstants.ERROR_MESSAGE_PT;
-      status = INTERNAL_SERVER_ERROR;
-    }
-    return prepare(exception, status, type)
-        .with(MESSAGE_KEY, messageKey)
-        .with(MESSAGE, localizedMessage)
-        .with(MESSAGE_IN_PORTUGUESE, messageInPortuguese)
-        .with(PodConstants.ORDER_NUMBER, exception.getParams());
   }
 
   private String getLocalizedMessage(String key, Locale locale) {

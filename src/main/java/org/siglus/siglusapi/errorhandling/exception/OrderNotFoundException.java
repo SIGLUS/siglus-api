@@ -15,13 +15,36 @@
 
 package org.siglus.siglusapi.errorhandling.exception;
 
-public class OrderNotFoundException extends PodException {
+import org.openlmis.fulfillment.util.Message;
 
-  public OrderNotFoundException(String messageKey, String... params) {
-    super(messageKey, params);
+public class OrderNotFoundException extends RuntimeException {
+
+  private static final String MESSAGE_KEY = "siglusapi.pod.order.notFoundByCode";
+  private final String orderCode;
+
+  public OrderNotFoundException(String orderCode) {
+    super(MESSAGE_KEY);
+    this.orderCode = orderCode;
   }
 
-  public OrderNotFoundException(Throwable cause, String messageKey, String... params) {
-    super(cause, messageKey, params);
+  public OrderNotFoundException(Throwable cause, String orderCode) {
+    super(MESSAGE_KEY, cause);
+    this.orderCode = orderCode;
+  }
+
+  public Message asMessage() {
+    return new Message(MESSAGE_KEY, this.orderCode);
+  }
+
+  public String getMessage() {
+    return this.asMessage().toString();
+  }
+
+  public String getMessageKey() {
+    return MESSAGE_KEY;
+  }
+
+  public String getOrderCode() {
+    return this.orderCode;
   }
 }

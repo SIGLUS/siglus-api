@@ -160,9 +160,8 @@ public class GlobalErrorHandlingMvcTest {
     response.andExpect(status().isBadRequest())
         .andExpect(jsonPath("messageKey").value("siglusapi.error.validationFail"))
         .andExpect(jsonPath("message").value("siglusapi.error.validationFail"))
-        .andExpect(jsonPath("messageInEnglish").value("siglusapi.error.validationFail"))
         .andExpect(jsonPath("fields[0].propertyPath").value("propertyPath"))
-        .andExpect(jsonPath("fields[0].messageInEnglish").value("text"));
+        .andExpect(jsonPath("fields[0].message").value("text"));
   }
 
 }

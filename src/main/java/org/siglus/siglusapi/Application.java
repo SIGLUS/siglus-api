@@ -86,6 +86,7 @@ public class Application {
 
   private static final String[] MESSAGE_SOURCE_BASE_NAME = new String[]{
       "classpath:/messages/messages",
+      "classpath:/messages/messages_pt",
       "classpath:/messages/stockmanagement_messages_en",
       "classpath:/messages/requisition_messages_en",
       "classpath:/messages/fulfillment_messages_en"

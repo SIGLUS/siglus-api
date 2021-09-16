@@ -97,7 +97,6 @@ import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
 import org.siglus.siglusapi.errorhandling.exception.OrderNotFoundException;
-import org.siglus.siglusapi.errorhandling.exception.PodInternalErrorException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
@@ -372,7 +371,7 @@ public class MeService {
     if (toUpdate == null) {
       log.warn("Pod orderCode: {} not found:", podRequest.getOrderCode());
       backupPodRequest(podRequest, PodConstants.NOT_EXIST_MESSAGE, user);
-      throw new OrderNotFoundException("siglusapi.pod.order.notFoundByCode", podRequest.getOrderCode());
+      throw new OrderNotFoundException(podRequest.getOrderCode());
     }
     if (!StringUtils.isEmpty(podRequest.getOriginNumber())) {
       log.info("Pod orderCode: {} has originNumber {},backup request", podRequest.getOrderCode(),
@@ -385,7 +384,7 @@ public class MeService {
       return getPodByOrderCode(podRequest.getOrderCode());
     } catch (Exception e) {
       backupPodRequest(podRequest, PodConstants.ERROR_MESSAGE + e.getMessage(), authHelper.getCurrentUser());
-      throw new PodInternalErrorException(e, "siglusapi.pod.internal.error.excepotion", podRequest.getOrderCode());
+      throw e;
     }
   }
 

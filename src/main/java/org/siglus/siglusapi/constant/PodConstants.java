@@ -24,11 +24,5 @@ public class PodConstants {
   public static final String NOT_EXIST_MESSAGE = "Sync failed. This order number does not exist."
       + " Please confirm whether this order number is correct.";
 
-  public static final String NOT_EXIST_MESSAGE_PT = "A sincronização falhou. Este número de pedido não existe."
-      + " Confirme se este número de pedido está correto.";
-
   public static final String ERROR_MESSAGE = "Sync failed. There is an error. Please contact the administrator.";
-
-  public static final String ERROR_MESSAGE_PT = "A sincronização falhou. Há um erro. "
-      + "Entre em contato com o administrador.";
 }
