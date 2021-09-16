@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
+import static java.util.Comparator.naturalOrder;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -76,8 +77,15 @@ import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
+import org.siglus.siglusapi.dto.android.EventTime;
+import org.siglus.siglusapi.dto.android.InventoryDetail;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
+import org.siglus.siglusapi.dto.android.ProductLotCode;
+import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
+import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
+import org.siglus.siglusapi.dto.fc.LotsOnHandResponse;
+import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
@@ -163,15 +171,53 @@ public class SiglusFcIntegrationService {
   public Page<FacilityStockMovementResponse> searchStockMovements(LocalDate since, Pageable pageable) {
     List<UUID> excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
         .map(FacilityTypeDto::getId).collect(toList());
-    return facilityRepo.findAllExcept(excludedTypeIds, pageable).map(f -> toResponse(f, since));
+    return facilityRepo.findAllExcept(excludedTypeIds, pageable).map(f -> toMovementResponse(f, since));
   }
 
-  private FacilityStockMovementResponse toResponse(Facility facility, LocalDate since) {
+  public Page<FacilityStockOnHandResponse> searchStockOnHand(LocalDate at, Pageable pageable) {
+    List<UUID> excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
+        .map(FacilityTypeDto::getId).collect(toList());
+    return facilityRepo.findAllExcept(excludedTypeIds, pageable).map(f -> toStockOnHandResponse(f, at));
+  }
+
+  private FacilityStockMovementResponse toMovementResponse(Facility facility, LocalDate since) {
     FacilityStockMovementResponse response = new FacilityStockMovementResponse();
     response.setCode(facility.getCode());
     response.setName(facility.getName());
     PeriodOfProductMovements period = stockManagementRepository.getAllProductMovementsForSync(facility.getId(), since);
     response.setProductMovements(productMovementMapper.toResponses(period));
+    return response;
+  }
+
+  private FacilityStockOnHandResponse toStockOnHandResponse(Facility facility, LocalDate at) {
+    FacilityStockOnHandResponse response = new FacilityStockOnHandResponse();
+    response.setCode(facility.getCode());
+    response.setName(facility.getName());
+    StocksOnHand stockOnHand = stockManagementRepository.getStockOnHand(facility.getId(), at);
+    List<ProductStockOnHandResponse> products = stockOnHand.getAllProductCodes().stream()
+        .map(productCode -> {
+          ProductStockOnHandResponse productResponse = new ProductStockOnHandResponse();
+          productResponse.setProductCode(productCode);
+          productResponse.setProductName(stockOnHand.getProductName(productCode));
+          Map<ProductLotCode, InventoryDetail> lots = stockOnHand.getLotInventoriesByProduct(productCode);
+          productResponse.setStockOnHand(lots.values().stream().mapToInt(InventoryDetail::getStockQuantity).sum());
+          LocalDate dateOfStock = lots.values().stream().map(InventoryDetail::getEventTime)
+              .map(EventTime::getOccurredDate).max(naturalOrder()).orElse(null);
+          productResponse.setDateOfStock(dateOfStock);
+          List<LotsOnHandResponse> lotsOnHandResponses = lots.entrySet().stream().map(e -> {
+                LotsOnHandResponse lot = new LotsOnHandResponse();
+                lot.setLotCode(e.getKey().getLotCode());
+                lot.setExpirationDate(stockOnHand.getLot(e.getKey()).getExpirationDate());
+                lot.setStockOnHand(e.getValue().getStockQuantity());
+                lot.setDateOfStock(e.getValue().getEventTime().getOccurredDate());
+                return lot;
+              }
+          ).collect(toList());
+          productResponse.setLots(lotsOnHandResponses);
+          return productResponse;
+        })
+        .collect(toList());
+    response.setProducts(products);
     return response;
   }
 

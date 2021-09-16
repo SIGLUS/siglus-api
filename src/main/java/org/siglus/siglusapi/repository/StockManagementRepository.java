@@ -391,6 +391,10 @@ public class StockManagementRepository {
     return getStockOnHand(facilityId, null, emptySet(), null, null);
   }
 
+  public StocksOnHand getStockOnHand(@Nonnull UUID facilityId, @Nonnull LocalDate at) {
+    return getStockOnHand(facilityId, at, emptySet(), null, null);
+  }
+
   @ParametersAreNullableByDefault
   private StocksOnHand getStockOnHand(@Nonnull UUID facilityId, LocalDate at, @Nonnull Set<UUID> orderableIds,
       Instant syncSince, Instant syncTill) {
@@ -443,9 +447,10 @@ public class StockManagementRepository {
   private List<ProductLotStock> findAllLotStocks(@Nonnull UUID facilityId, LocalDate at,
       @Nonnull Set<UUID> orderableIds, Instant syncSince, Instant syncTill) {
     requireNonNull(facilityId, "facilityId should not be null");
-    String select = "SELECT DISTINCT ON (root.stockcardid) o.code AS productcode, l.lotcode, "
-        + "root.stockonhand, root.occurreddate, li.extradata :: json ->> 'originEventTime' as recordedat, "
-        + "li.processeddate, l.expirationdate ";
+    String select =
+        "SELECT DISTINCT ON (root.stockcardid) o.code AS productcode, o.fullproductname AS productname, l.lotcode, "
+            + "root.stockonhand, root.occurreddate, li.extradata :: json ->> 'originEventTime' as recordedat, "
+            + "li.processeddate, l.expirationdate ";
     String root = "stockmanagement.calculated_stocks_on_hand root";
     MapSqlParameterSource parameters = new MapSqlParameterSource();
     String where = generateWhere(facilityId, parameters, null, at, orderableIds, syncSince, syncTill);
@@ -462,6 +467,7 @@ public class StockManagementRepository {
     return executeQuery(sql, parameters,
         ((rs, i) -> ProductLotStock.builder()
             .code(readProductLotCode(rs))
+            .productName(readAsString(rs, "productname"))
             .stockQuantity(readAsInt(rs, "stockonhand"))
             .eventTime(readEventTime(rs))
             .expirationDate(readAsDate(rs, "expirationdate"))

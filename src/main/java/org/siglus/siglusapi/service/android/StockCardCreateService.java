@@ -153,14 +153,14 @@ public class StockCardCreateService {
   }
 
   private void walkThroughLots(List<StockCardCreateRequest> requests) {
-    Map<ProductLot, EventTime> earliestDateByLot = requests.stream().map(
+    Map<ProductLot, EventTime> lotToEarliestDate = requests.stream().map(
         r -> r.getLotEvents().stream().collect(toMap(l -> toProductLot(r, l), l -> r.getEventTime()))
     ).reduce(new HashMap<>(), (m1, m2) -> {
       m2.forEach((k, v) -> m1
           .merge(k, v, (v1, v2) -> Stream.of(v1, v2).min(naturalOrder()).orElseThrow(IllegalStateException::new)));
       return m1;
     });
-    earliestDateByLot.forEach(
+    lotToEarliestDate.forEach(
         (productLot, earliestDate) -> {
           Lot lot = productLot.getLot();
           String productCode = productLot.getProductCode();

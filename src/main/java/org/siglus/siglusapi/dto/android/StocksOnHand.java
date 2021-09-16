@@ -18,6 +18,8 @@ package org.siglus.siglusapi.dto.android;
 import static java.util.Comparator.naturalOrder;
 import static java.util.Comparator.nullsLast;
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.reducing;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -40,12 +42,17 @@ public class StocksOnHand {
   private final List<ProductLotCode> allLotCodes;
   private final List<String> allProductCodes;
   private final Map<ProductLotCode, Lot> lots;
+  private final Map<String, String> productCodeToName;
 
   public StocksOnHand(List<ProductLotStock> allLotStocks) {
     this.allLotCodes = allLotStocks.stream()
         .map(ProductLotStock::getCode)
         .filter(productLotCode -> !productLotCode.isNoStock())
         .collect(toList());
+    productCodeToName = allLotStocks.stream()
+        .collect(
+            groupingBy(s -> s.getCode().getProductCode(),
+                reducing(null, ProductLotStock::getProductName, (s1, s2) -> s2)));
     this.allProductCodes = allLotStocks.stream()
         .map(ProductLotStock::getCode)
         .map(ProductLotCode::getProductCode)
@@ -134,6 +141,10 @@ public class StocksOnHand {
         .map(EventTime::getOccurredDate).min(naturalOrder()).orElse(null);
     return Stream.of(fromKit, fromNoStock, fromLot, incoming).min(nullsLast(naturalOrder()))
         .orElseThrow(IllegalStateException::new);
+  }
+
+  public String getProductName(String productCode) {
+    return productCodeToName.get(productCode);
   }
 
 }

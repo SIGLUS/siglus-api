@@ -13,29 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android;
+package org.siglus.siglusapi.dto.fc;
 
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.ToString;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+import lombok.Data;
 
-@ToString
-@Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class ProductLotStock {
+@Data
+public class FacilityStockOnHandResponse {
 
-  private final ProductLotCode code;
-  private final String productName;
-  private final Lot lot;
-  private final InventoryDetail inventoryDetail;
-
-  @Builder
-  private static ProductLotStock of(ProductLotCode code, String productName, java.sql.Date expirationDate,
-      Integer stockQuantity, EventTime eventTime) {
-    Lot lot = Lot.of(code.getLotCode(), expirationDate);
-    return new ProductLotStock(code, productName, lot, InventoryDetail.of(stockQuantity, eventTime));
-  }
+  @JsonProperty("facilityCode")
+  private String code;
+  @JsonProperty("facilityName")
+  private String name;
+  private List<ProductStockOnHandResponse> products;
 
 }

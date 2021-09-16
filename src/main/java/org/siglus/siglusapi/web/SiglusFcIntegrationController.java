@@ -20,6 +20,7 @@ import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
+import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.service.SiglusFcIntegrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -57,6 +58,15 @@ public class SiglusFcIntegrationController {
       pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
     }
     return siglusFcIntegrationService.searchStockMovements(date, pageable);
+  }
+
+  @GetMapping("/stockOnHand")
+  public Page<FacilityStockOnHandResponse> searchStockOnHand(
+      @DateTimeFormat(pattern = "yyyyMMdd") @RequestParam LocalDate date, Pageable pageable) {
+    if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
+      pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
+    }
+    return siglusFcIntegrationService.searchStockOnHand(date, pageable);
   }
 
   @GetMapping("/pods")
