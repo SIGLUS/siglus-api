@@ -171,11 +171,11 @@ def deploy(app_env) {
 
                 echo "deploy ${SERVICE_NAME} on ${APP_ENV}"
                 if [ "${APP_ENV}" = "prod" ]; then
-                    eval $(docker-machine env manager)
+                    eval $(docker-machine env manager --shell=bash)
                     docker-machine ls
                     docker service update --force --image ${IMAGE_REPO}:${IMAGE_TAG} siglus_${SERVICE_NAME}
                 else
-                    eval $(docker-machine env ${APP_ENV})
+                    eval $(docker-machine env ${APP_ENV} --shell=bash)
                     docker-machine ls
                     docker-compose -f docker-compose.${APP_ENV}.yml -p siglus-ref-distro up --no-deps --force-recreate -d ${SERVICE_NAME}
                 fi
