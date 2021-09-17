@@ -81,7 +81,7 @@ public class StocksOnHand {
         iterator.remove();
         matchedLots.stream()
             .filter(s -> s.getInventoryDetail().getEventTime().compareTo(noStockTime) < 0)
-            .forEach(s -> lotInventories.put(s.getCode(), s.getInventoryDetail()));
+            .forEach(s -> lotInventories.put(s.getCode(), noStock.getInventoryDetail()));
       }
     }
 
