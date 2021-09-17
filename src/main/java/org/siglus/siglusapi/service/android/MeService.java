@@ -379,8 +379,10 @@ public class MeService {
       backupPodRequest(podRequest, "replace the old order number " + podRequest.getOriginNumber()
           + " successfully.", user);
     }
+    PodResponse podResponse = getProofsOfDelivery(null, true).stream()
+        .filter(p -> p.getOrder().getCode().equals(podRequest.getOrderCode())).findFirst().orElse(null);
     try {
-      podConfirmService.confirmPod(podRequest, toUpdate, user);
+      podConfirmService.confirmPod(podRequest, toUpdate, user, podResponse);
       return getPodByOrderCode(podRequest.getOrderCode());
     } catch (Exception e) {
       backupPodRequest(podRequest, PodConstants.ERROR_MESSAGE + e.getMessage(), authHelper.getCurrentUser());

@@ -59,13 +59,19 @@ import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataServic
 import org.powermock.api.mockito.PowerMockito;
 import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.domain.PodConfirmBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.android.request.LotBasicRequest;
 import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
+import org.siglus.siglusapi.dto.android.response.LotBasicResponse;
+import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
+import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
+import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
+import org.siglus.siglusapi.repository.PodConfirmBackupRepository;
 import org.siglus.siglusapi.repository.PodNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
@@ -79,6 +85,7 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("PMD.TooManyMethods")
 public class PodConfirmServiceTest {
 
   private UserDto user;
@@ -157,6 +164,9 @@ public class PodConfirmServiceTest {
   @Mock
   private PodNativeSqlRepository podNativeSqlRepository;
 
+  @Mock
+  private PodConfirmBackupRepository podConfirmBackupRepository;
+
   @Before
   public void prepare() {
     orderCode = "orderCode";
@@ -179,10 +189,11 @@ public class PodConfirmServiceTest {
     // given
     PodRequest podRequest = mockPodRequest();
     ProofOfDelivery toUpdate = mockPod(user, true);
+    PodResponse podResponse = mockPodResponse();
     when(syncUpHashRepository.findOne(syncUpHash)).thenReturn(null);
 
     // when
-    podConfirmService.confirmPod(podRequest, toUpdate, user);
+    podConfirmService.confirmPod(podRequest, toUpdate, user, podResponse);
   }
 
   @Test(expected = NotFoundException.class)
@@ -198,9 +209,10 @@ public class PodConfirmServiceTest {
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId, Collections.emptyList()))
         .thenReturn(Collections.singletonList(approvedProductDto));
     ProofOfDelivery toUpdate = mockPod(user, false);
+    PodResponse podResponse = mockPodResponse();
 
     // when
-    podConfirmService.confirmPod(podRequest, toUpdate, user);
+    podConfirmService.confirmPod(podRequest, toUpdate, user, podResponse);
 
     // then
     verify(fulfillmentPermissionService, times(1)).canManagePod(toUpdate);
@@ -231,14 +243,16 @@ public class PodConfirmServiceTest {
     when(validReasonAssignmentService.getValidReasonsForAllProducts(facilityTypeId, null, null))
         .thenReturn(buildReasonAsignment());
     ProofOfDelivery toUpdate = mockPod(user, false);
+    PodResponse podResponse = mockPodResponse();
 
     // when
-    podConfirmService.confirmPod(podRequest, toUpdate, user);
+    podConfirmService.confirmPod(podRequest, toUpdate, user, podResponse);
 
     // then
     verify(podRepository).updatePodById(podRequest.getDeliveredBy(),
         podRequest.getReceivedBy(), podRequest.getReceivedDate(), ProofOfDeliveryStatus.CONFIRMED.toString(),
         toUpdate.getId());
+    verify(podConfirmBackupRepository).save(any(PodConfirmBackup.class));
     verify(podLineItemRepository).deletePodLineItemByIdsIn(Collections.singleton(null));
     verify(shipmentLineItemRepository).deleteShipmentLineItemByIdsIn(
         Collections.singleton(null));
@@ -318,5 +332,20 @@ public class PodConfirmServiceTest {
     reasonAssignmentDto.setFacilityTypeId(facilityTypeId);
     reasonAssignmentDto.setReason(stockCardLineItemReason);
     return Collections.singletonList(reasonAssignmentDto);
+  }
+
+  private PodResponse mockPodResponse() {
+    LotBasicResponse lotBasic = new LotBasicResponse();
+    lotBasic.setCode(lotCode);
+    lotBasic.setExpirationDate(LocalDate.of(2021, 10, 10));
+    PodLotLineResponse podLotLine = new PodLotLineResponse();
+    podLotLine.setLot(lotBasic);
+    podLotLine.setShippedQuantity(100);
+    PodProductLineResponse podProductLine = new PodProductLineResponse();
+    podProductLine.setCode(orderProductCode);
+    podProductLine.setLots(Collections.singletonList(podLotLine));
+    PodResponse podResponse = new PodResponse();
+    podResponse.setProducts(Collections.singletonList(podProductLine));
+    return podResponse;
   }
 }

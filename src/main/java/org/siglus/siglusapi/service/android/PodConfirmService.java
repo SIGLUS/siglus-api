@@ -51,11 +51,15 @@ import org.openlmis.stockmanagement.dto.referencedata.LotDto;
 import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.siglusapi.domain.PodConfirmBackup;
 import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
+import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
+import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
+import org.siglus.siglusapi.repository.PodConfirmBackupRepository;
 import org.siglus.siglusapi.repository.PodNativeSqlRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
@@ -77,6 +81,7 @@ import org.springframework.validation.annotation.Validated;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@SuppressWarnings({"PMD.TooManyMethods"})
 public class PodConfirmService {
 
   private final SyncUpHashRepository syncUpHashRepository;
@@ -95,16 +100,17 @@ public class PodConfirmService {
   private final SiglusStockCardLineItemRepository stockCardLineItemRepository;
   private final SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
   private final SiglusProgramService siglusProgramService;
+  private final PodConfirmBackupRepository podConfirmBackupRepository;
 
   @Transactional
-  public void confirmPod(PodRequest podRequest, ProofOfDelivery toUpdate, UserDto user) {
+  public void confirmPod(PodRequest podRequest, ProofOfDelivery toUpdate, UserDto user, PodResponse podResponse) {
     String syncUpHash = podRequest.getSyncUpHash(user);
     if (syncUpHashRepository.findOne(syncUpHash) != null) {
-      log.info("skip confirm ProofsOfDelivery as syncUpHash: {} existed", syncUpHash);
+      log.info("skip confirm pod as syncUpHash: {} existed", syncUpHash);
       return;
     }
     if (toUpdate.isConfirmed()) {
-      log.warn("ProofsOfDelivery orderCode: {} has been confirmed:", podRequest.getOrderCode());
+      log.warn("pod orderCode: {} has been confirmed:", podRequest.getOrderCode());
       throw new ValidationException(PROOF_OF_DELIVERY_ALREADY_CONFIRMED);
     }
     fulfillmentPermissionService.canManagePod(toUpdate);
@@ -112,10 +118,11 @@ public class PodConfirmService {
       Set<String> unSupportProductCodes = unSupportProductCodes(user.getHomeFacilityId(), podRequest);
       throw new NotFoundException("siglusapi.pod.unSupportProduct", unSupportProductCodes.toArray(new String[0]));
     }
-    updatePod(toUpdate, podRequest, user);
+    updatePod(toUpdate, podRequest, user, podResponse);
   }
 
-  private void updatePod(ProofOfDelivery toUpdatePod, PodRequest podRequest, UserDto user) {
+  private void updatePod(ProofOfDelivery toUpdatePod, PodRequest podRequest, UserDto user, PodResponse existedPod) {
+    backUpIfNotMatchedExistedPod(user.getHomeFacilityId(), podRequest, existedPod);
     log.info("confirm android pod: {}", toUpdatePod);
     podRepository.updatePodById(podRequest.getDeliveredBy(), podRequest.getReceivedBy(), podRequest.getReceivedDate(),
         ProofOfDeliveryStatus.CONFIRMED.toString(), toUpdatePod.getId());
@@ -217,10 +224,10 @@ public class PodConfirmService {
     Order order = toUpdatePod.getShipment().getOrder();
     order.updateStatus(OrderStatus.RECEIVED, new UpdateDetails(user.getId(),
         dateHelper.getCurrentDateTimeWithSystemZone()));
-    log.info("update order status, order code: {}", order.getOrderCode());
+    log.info("update order status, orderCode: {}", order.getOrderCode());
     List<OrderLineItem> orderLineItems = buildToUpdateOrderLineItems(order, podRequest, requestOrderables);
     if (!CollectionUtils.isEmpty(orderLineItems)) {
-      log.info("update order lineItems, order code: {}", order.getOrderCode());
+      log.info("update order lineItems, orderCode: {}", order.getOrderCode());
       orderLineItemRepository.save(orderLineItems);
     }
     orderRepository.save(order);
@@ -242,5 +249,44 @@ public class PodConfirmService {
     Set<UUID> shipmentLineItemIds = shipmentLineItems.stream().map(ShipmentLineItem::getId).collect(Collectors.toSet());
     log.info("delete shipment line items by id: {}", shipmentLineItemIds);
     shipmentLineItemRepository.deleteShipmentLineItemByIdsIn(shipmentLineItemIds);
+  }
+
+  private void backUpIfNotMatchedExistedPod(UUID facilityId, PodRequest podRequest, PodResponse existedPod) {
+    if (!isMatchedExistedPod(podRequest, existedPod)) {
+      PodConfirmBackup podConfirmBackup = PodConfirmBackup.builder()
+          .orderNumber(podRequest.getOrderCode())
+          .facilityId(facilityId)
+          .newPod(podRequest)
+          .oldPod(existedPod)
+          .build();
+      log.info("backup not matched pod, orderCode: {}", podRequest.getOrderCode());
+      podConfirmBackupRepository.save(podConfirmBackup);
+    }
+  }
+
+  private boolean isMatchedExistedPod(PodRequest podRequest, PodResponse podResponse) {
+    Set<String> existedMatchKeys = podResponse.getProducts().stream()
+        .map(this::buildExistedMatchKeys)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toSet());
+    Set<String> requestMatchKeys = podRequest.getProducts().stream()
+        .map(this::buildRequestMatchKeys)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toSet());
+    return existedMatchKeys.size() == requestMatchKeys.size() && existedMatchKeys.containsAll(requestMatchKeys);
+  }
+
+  private Set<String> buildExistedMatchKeys(PodProductLineResponse podProductLineResponse) {
+    String productCode = podProductLineResponse.getCode();
+    return podProductLineResponse.getLots().stream()
+        .map(l -> productCode + l.getLot().getCode() + l.getShippedQuantity())
+        .collect(Collectors.toSet());
+  }
+
+  private Set<String> buildRequestMatchKeys(PodProductLineRequest podProductLineRequest) {
+    String productCode = podProductLineRequest.getCode();
+    return podProductLineRequest.getLots().stream()
+        .map(l -> productCode + l.getLot().getCode() + l.getShippedQuantity())
+        .collect(Collectors.toSet());
   }
 }
