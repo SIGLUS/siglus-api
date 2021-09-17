@@ -153,13 +153,7 @@ public class StockCardCreateService {
   }
 
   private void walkThroughLots(List<StockCardCreateRequest> requests) {
-    Map<ProductLot, EventTime> lotToEarliestDate = requests.stream().map(
-        r -> r.getLotEvents().stream().collect(toMap(l -> toProductLot(r, l), l -> r.getEventTime()))
-    ).reduce(new HashMap<>(), (m1, m2) -> {
-      m2.forEach((k, v) -> m1
-          .merge(k, v, (v1, v2) -> Stream.of(v1, v2).min(naturalOrder()).orElseThrow(IllegalStateException::new)));
-      return m1;
-    });
+    Map<ProductLot, EventTime> lotToEarliestDate = mapLotToEarliestDate(requests);
     lotToEarliestDate.forEach(
         (productLot, earliestDate) -> {
           Lot lot = productLot.getLot();
@@ -208,8 +202,31 @@ public class StockCardCreateService {
     );
   }
 
+  private Map<ProductLot, EventTime> mapLotToEarliestDate(List<StockCardCreateRequest> requests) {
+    return requests.stream()
+        .map(
+            r -> {
+              if (r.getLotEvents().isEmpty()) {
+                Map<ProductLot, EventTime> map = new HashMap<>();
+                map.put(toProductNoLot(r), r.getEventTime());
+                return map;
+              } else {
+                return r.getLotEvents().stream().collect(toMap(l -> toProductLot(r, l), l -> r.getEventTime()));
+              }
+            })
+        .reduce(new HashMap<>(), (m1, m2) -> {
+          m2.forEach((k, v) -> m1
+              .merge(k, v, (v1, v2) -> Stream.of(v1, v2).min(naturalOrder()).orElseThrow(IllegalStateException::new)));
+          return m1;
+        });
+  }
+
   private ProductLot toProductLot(StockCardCreateRequest r, StockCardLotEventRequest l) {
     return new ProductLot(ProductLotCode.of(r.getProductCode(), l.getLotCode()), l.getExpirationDate());
+  }
+
+  private ProductLot toProductNoLot(StockCardCreateRequest r) {
+    return new ProductLot(ProductLotCode.of(r.getProductCode(), null), null);
   }
 
   private void handleLotConflict(String lotCode, LocalDate expirationDate, ProductLot cached) {
