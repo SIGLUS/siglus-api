@@ -317,7 +317,12 @@ public class MeService {
     }
   }
 
-  public List<PodResponse> getProofsOfDelivery(@Nullable LocalDate since, boolean shippedOnly) {
+  public List<PodResponse> getProofsOfDeliveryWithFilter(@Nullable LocalDate since, boolean shippedOnly) {
+    List<PodResponse> podResponses = getProofsOfDelivery(since, shippedOnly);
+    return podResponses.stream().map(this::filterNoLotPod).collect(Collectors.toList());
+  }
+
+  private List<PodResponse> getProofsOfDelivery(@Nullable LocalDate since, boolean shippedOnly) {
     FacilityDto homeFacility = getCurrentFacilityInfo();
     UUID homeFacilityId = homeFacility.getId();
     if (since == null) {
@@ -593,5 +598,14 @@ public class MeService {
         .build();
     log.info("backup proofOfDelivery request, syncUpHash: {}", syncUpHash);
     podBackupRepository.save(backup);
+  }
+
+  private PodResponse filterNoLotPod(PodResponse podResponse) {
+    if (podResponse != null) {
+      List<PodProductLineResponse> products = podResponse.getProducts().stream()
+          .filter(p -> !CollectionUtils.isEmpty(p.getLots())).collect(Collectors.toList());
+      podResponse.setProducts(products);
+    }
+    return podResponse;
   }
 }

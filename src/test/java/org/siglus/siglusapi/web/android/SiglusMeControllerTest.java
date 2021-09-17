@@ -224,7 +224,7 @@ public class SiglusMeControllerTest {
     controller.getProofsOfDelivery(false, since);
 
     // then
-    verify(service).getProofsOfDelivery(since, false);
+    verify(service).getProofsOfDeliveryWithFilter(since, false);
   }
 
   private List<HfCmmDto> mockFacilityCmms() {

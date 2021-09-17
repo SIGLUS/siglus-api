@@ -125,7 +125,7 @@ public class SiglusMeController {
   public List<PodResponse> getProofsOfDelivery(
       @RequestParam(name = "shippedOnly", defaultValue = "false") boolean shippedOnly,
       @RequestParam(name = "startDate", required = false) @DateTimeFormat(iso = ISO.DATE) LocalDate since) {
-    return service.getProofsOfDelivery(since, shippedOnly);
+    return service.getProofsOfDeliveryWithFilter(since, shippedOnly);
   }
 
   @PatchMapping("/facility/pod")
