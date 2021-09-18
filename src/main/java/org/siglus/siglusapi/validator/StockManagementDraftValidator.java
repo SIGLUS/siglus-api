@@ -16,19 +16,10 @@
 package org.siglus.siglusapi.validator;
 
 import static org.aspectj.util.LangUtil.isEmpty;
-import static org.siglus.common.i18n.MessageKeys.ERROR_FACILITY_ID_MISSING;
-import static org.siglus.common.i18n.MessageKeys.ERROR_PROGRAM_ID_MISSING;
-import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH;
-import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
-import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_SHOULD_NULL;
-import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
-import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_LINE_ITEMS_MISSING;
-import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_DISABLED_VVM;
-import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_MISSING;
-import static org.siglus.common.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PROGRAM_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_SHOULD_NULL;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_LINE_ITEMS_MISSING;

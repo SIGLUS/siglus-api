@@ -16,8 +16,6 @@
 package org.siglus.siglusapi.service;
 
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
-import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
-import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
@@ -33,10 +31,10 @@ import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.Message;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
