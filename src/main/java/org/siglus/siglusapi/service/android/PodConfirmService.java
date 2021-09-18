@@ -279,14 +279,20 @@ public class PodConfirmService {
   private Set<String> buildExistedMatchKeys(PodProductLineResponse podProductLineResponse) {
     String productCode = podProductLineResponse.getCode();
     return podProductLineResponse.getLots().stream()
-        .map(l -> productCode + l.getLot().getCode() + l.getShippedQuantity())
+        .map(l -> {
+          String lotCode = l.getLot() == null ? "" : l.getLot().getCode();
+          return productCode + lotCode + l.getShippedQuantity();
+        })
         .collect(Collectors.toSet());
   }
 
   private Set<String> buildRequestMatchKeys(PodProductLineRequest podProductLineRequest) {
     String productCode = podProductLineRequest.getCode();
     return podProductLineRequest.getLots().stream()
-        .map(l -> productCode + l.getLot().getCode() + l.getShippedQuantity())
+        .map(l -> {
+          String lotCode = l.getLot() == null ? "" : l.getLot().getCode();
+          return productCode + lotCode + l.getShippedQuantity();
+        })
         .collect(Collectors.toSet());
   }
 }

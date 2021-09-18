@@ -50,17 +50,19 @@ public class PodNativeSqlRepository {
     List<ShipmentLineItem> shipmentLineItems = new ArrayList<>();
     for (PodProductLineRequest podProduct : podProducts) {
       OrderableDto orderableDto = orderableCodeToOrderable.get(podProduct.getCode());
-      for (PodLotLineRequest lot :podProduct.getLots()) {
-        LotDto lotDto = siglusStockEventsService.createNewLotOrReturnExisted(
-            facilityId, orderableDto, lot.getLot().getCode(), lot.getLot().getExpirationDate());
-        podLineItems.add(PodLineItem
-            .of(podId, lot.getNotes(), lot.getAcceptedQuantity(),
-                lot.getShippedQuantity() - lot.getAcceptedQuantity(),
+      for (PodLotLineRequest lotLineRequest :podProduct.getLots()) {
+        LotDto lotDto = new LotDto();
+        if (lotLineRequest.getLot() != null) {
+          lotDto = siglusStockEventsService.createNewLotOrReturnExisted(
+              facilityId, orderableDto, lotLineRequest.getLot().getCode(), lotLineRequest.getLot().getExpirationDate());
+        }
+        podLineItems.add(PodLineItem.of(podId, lotLineRequest.getNotes(), lotLineRequest.getAcceptedQuantity(),
+            lotLineRequest.getShippedQuantity() - lotLineRequest.getAcceptedQuantity(),
                 orderableDto.getId(), lotDto.getId(), null, false,
-                rejectReasonToId.get(lot.getRejectedReason()),
+                rejectReasonToId.get(lotLineRequest.getRejectedReason()),
                 orderableDto.getVersionNumber()));
         shipmentLineItems.add(ShipmentLineItem
-            .of(orderableDto.getId(), lotDto.getId(), lot.getShippedQuantity(), shipmentId, "",
+            .of(orderableDto.getId(), lotDto.getId(), lotLineRequest.getShippedQuantity(), shipmentId, "",
                 orderableDto.getVersionNumber()));
       }
     }
