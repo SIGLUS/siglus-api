@@ -159,52 +159,51 @@ public class StockCardCreateService {
           Lot lot = productLot.getLot();
           String productCode = productLot.getProductCode();
           if (lot == null) {
-            UUID facilityId = getContext().getFacility().getId();
-            UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
-            UUID productId = getContext().getProductId(productCode);
-            StockCard stockCard = StockCard.ofNoLot(facilityId, programId, productId, productCode);
-            if (getContext().getStockCard(productCode, null) != null) {
-              return;
-            }
-            stockCard = stockManagementRepository.getStockCard(stockCard);
-            if (stockCard == null) {
-              return;
-            }
-            getContext().newStockCard(stockCard);
+            ensureStockCard(productCode, null, null, earliestDate);
             return;
           }
           String lotCode = lot.getCode();
           LocalDate expirationDate = lot.getExpirationDate();
-          ProductLot cached = getContext().getLot(productCode, lotCode);
-          if (cached == null) {
+          ProductLot cachedLot = getContext().getLot(productCode, lotCode);
+          if (cachedLot == null) {
             OrderableDto product = getContext().getProduct(productCode);
-            ProductLot existed = stockManagementRepository.getLot(product, lot);
-            if (existed == null) {
+            ProductLot existedLot = stockManagementRepository.getLot(product, lot);
+            if (existedLot == null) {
               ProductLot newCreated = stockManagementRepository.createLot(product, lot);
               getContext().newLot(newCreated);
               return;
             } else {
-              UUID facilityId = getContext().getFacility().getId();
-              UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
-              UUID productId = getContext().getProductId(productCode);
-              StockCard stockCard =
-                  StockCard.of(facilityId, programId, productId, productCode, existed.getId(), lotCode, expirationDate);
-              if (getContext().getStockCard(productCode, lotCode) == null) {
-                stockCard = stockManagementRepository.getStockCard(stockCard);
-                if (stockCard != null) {
-                  getContext().newStockCard(stockCard);
-                  List<CalculatedStockOnHand> calculatedStockOnHand = stockManagementRepository
-                      .findCalculatedStockOnHand(stockCard, earliestDate);
-                  calculatedStockOnHand.forEach(getContext()::addNewCalculatedStockOnHand);
-                }
-              }
+              ensureStockCard(productCode, lot, existedLot.getId(), earliestDate);
             }
-            cached = existed;
-            getContext().newLot(existed);
+            cachedLot = existedLot;
+            getContext().newLot(existedLot);
           }
-          handleLotConflict(lotCode, expirationDate, cached);
+          handleLotConflict(lotCode, expirationDate, cachedLot);
         }
     );
+  }
+
+  private void ensureStockCard(String productCode, Lot lot, UUID lotId, EventTime earliestDate) {
+    UUID facilityId = getContext().getFacility().getId();
+    UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
+    UUID productId = getContext().getProductId(productCode);
+    String lotCode = lot == null ? null : lot.getCode();
+    StockCard stockCard;
+    if (lot == null) {
+      stockCard = StockCard.ofNoLot(facilityId, programId, productId, productCode);
+    } else {
+      stockCard = StockCard.of(facilityId, programId, productId, productCode, lotId, lotCode, lot.getExpirationDate());
+    }
+    if (getContext().getStockCard(productCode, lotCode) != null) {
+      return;
+    }
+    stockCard = stockManagementRepository.getStockCard(stockCard);
+    if (stockCard == null) {
+      return;
+    }
+    getContext().newStockCard(stockCard);
+    stockManagementRepository.findCalculatedStockOnHand(stockCard, earliestDate)
+        .forEach(getContext()::addNewCalculatedStockOnHand);
   }
 
   private Map<ProductLot, EventTime> mapLotToEarliestDate(List<StockCardCreateRequest> requests) {
