@@ -163,6 +163,9 @@ public class StockCardCreateService {
             UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
             UUID productId = getContext().getProductId(productCode);
             StockCard stockCard = StockCard.ofNoLot(facilityId, programId, productId, productCode);
+            if (getContext().getStockCard(productCode, null) != null) {
+              return;
+            }
             stockCard = stockManagementRepository.getStockCard(stockCard);
             if (stockCard == null) {
               return;
@@ -186,12 +189,14 @@ public class StockCardCreateService {
               UUID productId = getContext().getProductId(productCode);
               StockCard stockCard =
                   StockCard.of(facilityId, programId, productId, productCode, existed.getId(), lotCode, expirationDate);
-              stockCard = stockManagementRepository.getStockCard(stockCard);
-              if (stockCard != null) {
-                getContext().newStockCard(stockCard);
-                List<CalculatedStockOnHand> calculatedStockOnHand = stockManagementRepository
-                    .findCalculatedStockOnHand(stockCard, earliestDate);
-                calculatedStockOnHand.forEach(getContext()::addNewCalculatedStockOnHand);
+              if (getContext().getStockCard(productCode, lotCode) == null) {
+                stockCard = stockManagementRepository.getStockCard(stockCard);
+                if (stockCard != null) {
+                  getContext().newStockCard(stockCard);
+                  List<CalculatedStockOnHand> calculatedStockOnHand = stockManagementRepository
+                      .findCalculatedStockOnHand(stockCard, earliestDate);
+                  calculatedStockOnHand.forEach(getContext()::addNewCalculatedStockOnHand);
+                }
               }
             }
             cached = existed;
