@@ -46,7 +46,7 @@ public class SiglusStockManagementDraftController {
   public List<StockManagementDraftDto> searchDrafts(@RequestParam UUID program,
       @RequestParam UUID userId, @RequestParam String draftType,
       @RequestParam(required = false) Boolean isDraft) {
-    return stockManagementDraftService.findStockManagementDraft(program, userId, draftType, isDraft);
+    return stockManagementDraftService.findStockManagementDraft(program, draftType, isDraft);
   }
 
   @PostMapping

@@ -15,19 +15,27 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.dto.StockEventDto;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
+import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.util.Message;
+import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +54,15 @@ public class SiglusStockManagementDraftService {
 
   @Autowired
   StockManagementDraftValidator stockManagementDraftValidator;
+
+  @Autowired
+  private PermissionService permissionService;
+
+  @Autowired
+  private SupportedProgramsHelper supportedVirtualProgramsHelper;
+
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
 
   @Transactional
   public StockManagementDraftDto createNewDraft(StockManagementDraftDto dto) {
@@ -73,14 +90,14 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(savedDraft);
   }
 
-  public List<StockManagementDraftDto> findStockManagementDraft(UUID programId, UUID userId, String type,
-      Boolean isDraft) {
+  public List<StockManagementDraftDto> findStockManagementDraft(UUID programId, String type, Boolean isDraft) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     draftValidator.validateProgramId(programId);
-    draftValidator.validateUserId(userId);
+    draftValidator.validateFacilityId(facilityId);
     draftValidator.validateDraftType(type);
     draftValidator.validateIsDraft(isDraft);
     List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndUserIdAndIsDraftAndDraftType(programId, userId, isDraft, type);
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, type);
     return StockManagementDraftDto.from(drafts);
   }
 
@@ -88,7 +105,8 @@ public class SiglusStockManagementDraftService {
   public void deleteStockManagementDraft(UUID id) {
     StockManagementDraft draft = stockManagementDraftRepository.findOne(id);
     if (draft != null) {
-      draftValidator.validateDraftUser(draft);
+      UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+      checkPermission(facilityId);
       log.info("delete stockmanagement draft: {}", id);
       stockManagementDraftRepository.delete(draft);
     } else {
@@ -97,22 +115,34 @@ public class SiglusStockManagementDraftService {
     }
   }
 
-
   public void deleteStockManagementDraft(StockEventDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndUserIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getUserId(), true, dto.getType());
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(), true,
+            dto.getType());
     if (!drafts.isEmpty()) {
-      log.info("delete stockmanagement draft, programId: {}, userId: {}", dto.getProgramId(), dto.getUserId());
+      log.info("delete stockmanagement draft, programId: {}, facilityId: {}", dto.getProgramId(), dto.getFacilityId());
       stockManagementDraftRepository.delete(drafts);
     }
   }
 
+  private void checkPermission(UUID facility) {
+    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+        .findUserSupportedPrograms();
+    if (CollectionUtils.isEmpty(supportedVirtualPrograms)) {
+      throw new PermissionMessageException(
+          new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
+              ALL_PRODUCTS_PROGRAM_ID));
+    }
+    supportedVirtualPrograms.forEach(i -> permissionService.canAdjustStock(i, facility));
+  }
+
   private void checkIfDraftExists(StockManagementDraftDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndUserIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getUserId(), true, dto.getDraftType());
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(), true,
+            dto.getDraftType());
     if (!drafts.isEmpty()) {
       throw new ValidationMessageException(
-          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(), dto.getUserId()));
+          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(), dto.getFacilityId()));
     }
   }
 }

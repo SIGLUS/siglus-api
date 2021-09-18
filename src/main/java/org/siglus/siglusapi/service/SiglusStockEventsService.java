@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
+import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.common.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
@@ -32,6 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.stockmanagement.domain.BaseEntity;
 import org.openlmis.stockmanagement.domain.card.StockCard;
@@ -49,13 +51,13 @@ import org.siglus.common.domain.StockCardExtension;
 import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.LotSearchParams;
 import org.siglus.common.dto.referencedata.OrderableDto;
-import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.Message;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.domain.LotConflict;
+import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.repository.LotConflictRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -137,19 +139,6 @@ public class SiglusStockEventsService {
     return stockEventId;
   }
 
-  @Transactional
-  public Map<UUID, UUID> createStockEventForNoDraftAllProducts(StockEventDto eventDto) {
-    UserDto userDto = authenticationHelper.getCurrentUser();
-    if (eventDto.isPhysicalInventory()) {
-      PhysicalInventoryDto inventoryDto = PhysicalInventoryDto.builder()
-          .facilityId(userDto.getHomeFacilityId())
-          .isDraft(true)
-          .build();
-      siglusPhysicalInventoryService.createNewDraftForAllProductsDirectly(inventoryDto);
-    }
-    return createStockEventForAllPrograms(eventDto, userDto.getId());
-  }
-
   private Map<UUID, UUID> createStockEventForAllPrograms(StockEventDto eventDto, UUID userId) {
     eventDto.setUserId(userId);
     createAndFillLotId(eventDto);
@@ -163,10 +152,18 @@ public class SiglusStockEventsService {
               .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE))
           .flatMap(Collection::stream)
           .collect(Collectors.toList());
+      if (CollectionUtils.isEmpty(inventories)) {
+        throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
+      }
       stockEventDtos = inventories.stream()
           .map(StockEventDto::fromPhysicalInventoryDto)
           .collect(Collectors.toList());
     } else {
+      List<StockManagementDraftDto> stockManagementDraftDtos = stockManagementDraftService
+          .findStockManagementDraft(ALL_PRODUCTS_PROGRAM_ID, getType(eventDto), true);
+      if (CollectionUtils.isEmpty(stockManagementDraftDtos)) {
+        throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
+      }
       stockEventDtos = programIds.stream()
           .map(StockEventDto::fromProgramId)
           .collect(Collectors.toList());
@@ -188,7 +185,8 @@ public class SiglusStockEventsService {
       if (eventDto.isPhysicalInventory()) {
         siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
       } else if (!eventDto.hasReason(unpackReasonId)) {
-        setType(eventDto);
+        String type = getType(eventDto);
+        eventDto.setType(type);
         stockManagementDraftService.deleteStockManagementDraft(eventDto);
       }
     }
@@ -349,13 +347,13 @@ public class SiglusStockEventsService {
     stockCardLineItemRepository.save(stockCardLineItems);
   }
 
-  private void setType(StockEventDto eventDto) {
+  private String getType(StockEventDto eventDto) {
     if (eventDto.hasSource()) {
-      eventDto.setType("receive");
+      return "receive";
     } else if (eventDto.hasDestination()) {
-      eventDto.setType("issue");
+      return "issue";
     } else {
-      eventDto.setType("adjustment");
+      return "adjustment";
     }
   }
 

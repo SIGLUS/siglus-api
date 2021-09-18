@@ -25,10 +25,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
+import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
@@ -61,6 +63,7 @@ import org.siglus.common.repository.StockCardExtensionRepository;
 import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.constant.FieldConstants;
+import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
@@ -104,12 +107,6 @@ public class SiglusStockEventsServiceTest {
   private StockCardExtensionRepository stockCardExtensionRepository;
 
   @Mock
-  private StockCardLineItemRepository stockCardLineItemRepository;
-
-  @Mock
-  private StockEventsRepository stockEventsRepository;
-
-  @Mock
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Mock
@@ -117,6 +114,12 @@ public class SiglusStockEventsServiceTest {
 
   @Mock
   private SiglusArchiveProductService archiveProductService;
+
+  @Mock
+  private StockCardLineItemRepository stockCardLineItemRepository;
+
+  @Mock
+  private StockEventsRepository stockEventsRepository;
 
   @Mock
   private SiglusDateHelper dateHelper;
@@ -190,23 +193,6 @@ public class SiglusStockEventsServiceTest {
   }
 
   @Test
-  public void shouldCallCreateDraftWhenCreateStockEventForPhysicalInventoryNoDraft() {
-    // given
-    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2))
-        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().build();
-    when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(any(), any(), any()))
-        .thenReturn(newArrayList(physicalInventoryDto));
-
-    // when
-    siglusStockEventsService.createStockEventForNoDraftAllProducts(eventDto);
-
-    // then
-    verify(siglusPhysicalInventoryService).createNewDraftForAllProductsDirectly(any());
-  }
-
-
-  @Test
   public void shouldCallV3WhenCreateStockEventForAdjustment() {
     // given
     StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
@@ -215,6 +201,8 @@ public class SiglusStockEventsServiceTest {
     lineItemDto2.setOrderableId(orderableId2);
     StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2))
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+    when(stockManagementDraftService.findStockManagementDraft(any(), any(), any())).thenReturn(
+        Collections.singletonList(new StockManagementDraftDto()));
 
     // when
     siglusStockEventsService.createStockEvent(eventDto);
@@ -234,6 +222,8 @@ public class SiglusStockEventsServiceTest {
     StockCardLineItem stockCardLineItem = new StockCardLineItemDataBuilder().build();
     StockCard stockCard = new StockCardDataBuilder(new StockEvent()).withLineItem(stockCardLineItem).build();
     when(stockCardRepository.findByProgramIdAndFacilityId(any(), any())).thenReturn(newArrayList(stockCard));
+    when(stockManagementDraftService.findStockManagementDraft(any(), any(), any())).thenReturn(
+        Collections.singletonList(new StockManagementDraftDto()));
 
     // when
     siglusStockEventsService.createStockEvent(eventDto);
@@ -311,6 +301,43 @@ public class SiglusStockEventsServiceTest {
     // when
     siglusStockEventsService.createAndFillLotId(eventDto);
   }
+
+  @Test
+  public void shouldThrowExceptionWhenAdjustmentIsSubmitted() {
+    // then
+    exception.expect(ValidationMessageException.class);
+    exception.expectMessage(containsString("stockmanagement.error.physicalInventory.isSubmitted"));
+
+    // given
+    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2))
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+    when(siglusPhysicalInventoryService.getPhysicalInventoryDtosDirectly(any(), any(), any()))
+        .thenReturn(Collections.emptyList());
+
+    // when
+    siglusStockEventsService.createStockEvent(eventDto);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenPhysicalInventoryIsSubmitted() {
+    // then
+    exception.expect(ValidationMessageException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED));
+
+    // given
+    StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
+    lineItemDto1.setOrderableId(orderableId1);
+    StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder().buildForAdjustment();
+    lineItemDto2.setOrderableId(orderableId2);
+    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2))
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+    when(stockManagementDraftService.findStockManagementDraft(any(), any(), any()))
+        .thenReturn(Collections.emptyList());
+
+    // when
+    siglusStockEventsService.createStockEvent(eventDto);
+  }
+
 
   @Test
   public void shouldReturnExistedLotAndFillLotIdWhenFillLotId() {

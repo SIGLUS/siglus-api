@@ -32,7 +32,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,7 +76,6 @@ import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
-import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.MeService;
@@ -118,8 +116,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   private SiglusValidReasonAssignmentService validReasonAssignmentService;
   @Mock
   private SiglusValidSourceDestinationService siglusValidSourceDestinationService;
-  @Mock
-  private SiglusStockEventsService stockEventsService;
   @Mock
   private StockManagementRepository stockManagementRepository;
   @Mock
@@ -198,8 +194,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .characterEncoding("utf-8");
 
     when(stockCardCreateRequestValidator.validateStockCardCreateRequest(any())).thenReturn(mockHappyCreateRequest());
-    when(stockEventsService.createStockEventForNoDraftAllProducts(any()))
-        .thenReturn(ImmutableMap.of(UUID.randomUUID(), UUID.randomUUID()));
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());
@@ -224,8 +218,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .content(readFromFile("uats.json"))
         .characterEncoding("utf-8");
     when(stockCardCreateRequestValidator.validateStockCardCreateRequest(any())).thenReturn(mockUatsCreateRequest());
-    when(stockEventsService.createStockEventForNoDraftAllProducts(any()))
-        .thenReturn(ImmutableMap.of(UUID.randomUUID(), UUID.randomUUID()));
 
     // when
     ResultActions resultActions = mockMvc.perform(request).andDo(print());

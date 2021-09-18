@@ -44,7 +44,7 @@ public class SiglusStockManagementDraftControllerTest {
     boolean isDraft = nextBoolean();
     controller.searchDrafts(programId, userId, draftType, isDraft);
 
-    verify(service).findStockManagementDraft(programId, userId, draftType, isDraft);
+    verify(service).findStockManagementDraft(programId, draftType, isDraft);
   }
 
   @Test

@@ -23,9 +23,9 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 public interface StockManagementDraftRepository
     extends PagingAndSortingRepository<StockManagementDraft, UUID> {
 
-  List<StockManagementDraft> findByProgramIdAndUserIdAndIsDraftAndDraftType(
+  List<StockManagementDraft> findByProgramIdAndFacilityIdAndIsDraftAndDraftType(
       UUID programId,
-      UUID userId,
+      UUID facilityId,
       boolean isDraft,
       String draftType);
 

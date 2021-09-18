@@ -19,6 +19,7 @@ import static org.aspectj.util.LangUtil.isEmpty;
 import static org.siglus.common.i18n.MessageKeys.ERROR_FACILITY_ID_MISSING;
 import static org.siglus.common.i18n.MessageKeys.ERROR_PROGRAM_ID_MISSING;
 import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH;
+import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_SHOULD_NULL;
 import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_LINE_ITEMS_MISSING;
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Component;
 
 @Component("StockManagementDraftValidator")
 public class StockManagementDraftValidator {
+
   @Autowired
   private VvmValidator vvmValidator;
 
@@ -65,10 +67,11 @@ public class StockManagementDraftValidator {
       throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH);
     }
     StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(id);
-    if (foundDraft != null && !foundDraft.getIsDraft()) {
+    if (foundDraft == null) {
+      throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND);
+    } else if (Boolean.TRUE.equals(!foundDraft.getIsDraft())) {
       throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
     }
-
     List<StockManagementDraftLineItemDto> lineItems = draft.getLineItems();
     validateLineItems(lineItems);
     vvmValidator.validate(lineItems, ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_DISABLED_VVM, false);
