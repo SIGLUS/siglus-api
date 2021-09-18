@@ -83,6 +83,7 @@ public class SiglusPhysicalInventoryController {
   @PutMapping("/{id}")
   public PhysicalInventoryDto updatePhysicalInventory(@PathVariable UUID id, @RequestBody PhysicalInventoryDto dto) {
     if (ALL_PRODUCTS_UUID.equals(id)) {
+      siglusPhysicalInventoryService.checkDraftIsExist(dto.getFacilityId());
       return siglusPhysicalInventoryService.saveDraftForAllProducts(dto);
     }
     return siglusPhysicalInventoryService.saveDraft(dto, id);

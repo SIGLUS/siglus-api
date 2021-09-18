@@ -125,6 +125,17 @@ public class SiglusPhysicalInventoryService {
     return null;
   }
 
+  public void checkDraftIsExist(UUID facilityId) {
+    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper.findUserSupportedPrograms();
+    List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream()
+        .map(programId -> getPhysicalInventoryDtosDirectly(programId, facilityId, Boolean.TRUE))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    if (CollectionUtils.isEmpty(inventories)) {
+      throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
+    }
+  }
+
   public void deletePhysicalInventory(UUID id) {
     physicalInventoryStockManagementService.deletePhysicalInventory(id);
   }
