@@ -59,15 +59,11 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.BaseDto;
-import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
-import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
-import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
-import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
+import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.HfCmm;
@@ -76,8 +72,11 @@ import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
@@ -96,7 +95,7 @@ import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
-import org.siglus.siglusapi.errorhandling.exception.OrderNotFoundException;
+import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
@@ -119,6 +118,7 @@ import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.HashEncoder;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
 import org.springframework.data.domain.PageRequest;
@@ -466,7 +466,7 @@ public class MeService {
 
   private List<OrderableDto> getAllProducts(UUID homeFacilityId) {
     QueryOrderableSearchParams params = new QueryOrderableSearchParams(new LinkedMultiValueMap<>());
-    Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, Pagination.NO_PAGINATION);
+    Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, PaginationConstants.NO_PAGINATION);
     return orderableService.searchOrderables(params, pageable, homeFacilityId).getContent();
   }
 

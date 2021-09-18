@@ -36,18 +36,18 @@ import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLi
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItemAdjustment;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
-import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.exception.NotFoundException;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardDeletedBackup;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemAdjustmentRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardDeletedBackupRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

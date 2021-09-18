@@ -17,8 +17,8 @@ package org.siglus.siglusapi.web;
 
 import java.util.Set;
 import java.util.UUID;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

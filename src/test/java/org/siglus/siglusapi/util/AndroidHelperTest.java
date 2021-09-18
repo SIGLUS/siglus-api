@@ -27,9 +27,8 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.FacilityExtension;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 
 @RunWith(MockitoJUnitRunner.class)

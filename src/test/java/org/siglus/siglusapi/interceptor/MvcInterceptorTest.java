@@ -29,7 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.siglus.common.exception.ValidationMessageException;
-import org.siglus.common.i18n.MessageKeys;
+import org.siglus.siglusapi.i18n.MessageKeys;
 
 public class MvcInterceptorTest {
 

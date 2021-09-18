@@ -25,12 +25,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
+import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
-import org.siglus.common.dto.referencedata.QueryOrderableSearchParams;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
-import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
+import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,8 +73,8 @@ public class SiglusOrderableService {
 
   public Page<OrderableDto> additionalToAdd(UUID programId, QueryOrderableSearchParams searchParams,
       Pageable pageable) {
-    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
-        Pagination.NO_PAGINATION, pageable.getSort());
+    Pageable noPagination = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
+        PaginationConstants.NO_PAGINATION, pageable.getSort());
     List<OrderableDto> orderableDtos = orderableReferenceDataService.searchOrderables(searchParams, noPagination)
         .getContent();
     Set<UUID> additionalOrderableIds = programAdditionalOrderableRepository
@@ -108,7 +109,7 @@ public class SiglusOrderableService {
   }
 
   public OrderableDto getOrderableByCode(String productCode) {
-    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, Pagination.NO_PAGINATION);
+    Pageable noPagination = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, PaginationConstants.NO_PAGINATION);
     MultiValueMap<String, Object> queryParams = new LinkedMultiValueMap<>();
     queryParams.set(CODE, productCode);
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);

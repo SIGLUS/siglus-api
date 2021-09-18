@@ -42,7 +42,7 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.domain.sourcedestination.SourceDestinationAssignment;
 import org.openlmis.stockmanagement.repository.NodeRepository;
-import org.siglus.common.util.RequestParameters;
+import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;

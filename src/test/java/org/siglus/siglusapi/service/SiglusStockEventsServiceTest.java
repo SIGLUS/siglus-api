@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import static org.siglus.common.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.common.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 
 import com.google.common.collect.ImmutableMap;
 import java.time.LocalDate;
@@ -53,16 +54,14 @@ import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
-import org.siglus.common.domain.StockCardExtension;
-import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.OrderableChildDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
-import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
-import org.siglus.common.repository.StockCardExtensionRepository;
-import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.constant.FieldConstants;
+import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
@@ -70,6 +69,8 @@ import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
 import org.siglus.siglusapi.testutils.StockCardDataBuilder;
 import org.siglus.siglusapi.testutils.StockCardLineItemDataBuilder;
 import org.siglus.siglusapi.testutils.StockEventLineItemDtoDataBuilder;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)

@@ -13,39 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.errorhandling.exception;
+package org.siglus.siglusapi.exception;
 
-import org.openlmis.fulfillment.util.Message;
+import org.siglus.common.exception.BaseMessageException;
+import org.siglus.common.util.Message;
 
-public class OrderNotFoundException extends RuntimeException {
+public class AuthenticationException extends BaseMessageException {
 
-  private static final String MESSAGE_KEY = "siglusapi.pod.order.notFoundByCode";
-  private final String orderCode;
-
-  public OrderNotFoundException(String orderCode) {
-    super(MESSAGE_KEY);
-    this.orderCode = orderCode;
+  public AuthenticationException(Message message) {
+    super(message);
   }
 
-  public OrderNotFoundException(Throwable cause, String orderCode) {
-    super(MESSAGE_KEY, cause);
-    this.orderCode = orderCode;
-  }
-
-  public Message asMessage() {
-    return new Message(MESSAGE_KEY, this.orderCode);
-  }
-
-  @Override
-  public String getMessage() {
-    return this.asMessage().toString();
-  }
-
-  public String getMessageKey() {
-    return MESSAGE_KEY;
-  }
-
-  public String getOrderCode() {
-    return this.orderCode;
-  }
 }

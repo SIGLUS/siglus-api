@@ -25,9 +25,9 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.data.domain.Pageable;
 import org.springframework.util.MultiValueMap;
 

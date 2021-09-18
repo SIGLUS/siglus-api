@@ -23,7 +23,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
-import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.util.HashEncoder;
 
 @Data

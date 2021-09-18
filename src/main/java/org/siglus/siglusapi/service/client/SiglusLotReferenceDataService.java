@@ -19,11 +19,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import org.siglus.common.dto.referencedata.LotDto;
-import org.siglus.common.dto.referencedata.LotSearchParams;
-import org.siglus.common.service.client.BaseReferenceDataService;
-import org.siglus.common.util.RequestParameters;
+import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.constant.FieldConstants;
+import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.LotSearchParams;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 

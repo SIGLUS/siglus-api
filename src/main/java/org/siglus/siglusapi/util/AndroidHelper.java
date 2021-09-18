@@ -17,7 +17,6 @@ package org.siglus.siglusapi.util;
 
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.springframework.stereotype.Component;

@@ -47,6 +47,7 @@ import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.service.referencedata.PermissionStrings.Handler;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.service.CalculatedStockOnHandService;
+import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.Dispensable;
 import org.siglus.common.domain.referencedata.Orderable;
@@ -54,16 +55,15 @@ import org.siglus.common.domain.referencedata.OrderableChild;
 import org.siglus.common.domain.referencedata.OrderableDisplayCategory;
 import org.siglus.common.domain.referencedata.Program;
 import org.siglus.common.domain.referencedata.ProgramOrderable;
-import org.siglus.common.dto.referencedata.LotDto;
-import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.OrderableKitRepository;
-import org.siglus.common.repository.OrderableRepository;
-import org.siglus.common.util.SiglusAuthenticationHelper;
-import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.OrderableInKitDto;
 import org.siglus.siglusapi.dto.SiglusOrdeableKitDto;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.data.domain.Page;
 
 @RunWith(MockitoJUnitRunner.class)

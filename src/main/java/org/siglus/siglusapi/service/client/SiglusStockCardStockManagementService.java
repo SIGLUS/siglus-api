@@ -17,10 +17,10 @@ package org.siglus.siglusapi.service.client;
 
 import java.util.Collections;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
+import org.openlmis.stockmanagement.util.RequestParameters;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.repository.ProgramOrderableRepository;
-import org.siglus.common.util.RequestParameters;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

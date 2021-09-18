@@ -16,8 +16,8 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toSet;
-import static org.siglus.common.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
-import static org.siglus.common.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUB_ORDER_LINE_ITEM;
+import static org.siglus.siglusapi.i18n.MessageKeys.SHIPMENT_ORDER_STATUS_INVALID;
 
 import java.util.ArrayList;
 import java.util.List;

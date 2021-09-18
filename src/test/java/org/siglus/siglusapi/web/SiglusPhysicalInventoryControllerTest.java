@@ -27,9 +27,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
-import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")

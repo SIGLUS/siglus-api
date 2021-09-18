@@ -39,10 +39,10 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.domain.FcIntegrationResult;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.repository.FcIntegrationResultRepository;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)

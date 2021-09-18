@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.dto.android.enumeration;
 
 import java.util.UUID;
-import org.siglus.common.exception.NotFoundException;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})

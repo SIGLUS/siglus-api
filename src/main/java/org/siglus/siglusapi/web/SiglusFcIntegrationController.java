@@ -18,7 +18,7 @@ package org.siglus.siglusapi.web;
 import static org.siglus.siglusapi.constant.FcConstants.DATE_FORMAT;
 
 import java.time.LocalDate;
-import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
@@ -47,8 +47,8 @@ public class SiglusFcIntegrationController {
   public Page<FcRequisitionDto> searchRequisitions(
       @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
       Pageable pageable) {
-    if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
-      pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
+    if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
+      pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
     return siglusFcIntegrationService.searchRequisitions(date, pageable);
   }
@@ -56,8 +56,8 @@ public class SiglusFcIntegrationController {
   @GetMapping("/stockMovements")
   public Page<FacilityStockMovementResponse> searchStockMovements(
       @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date, Pageable pageable) {
-    if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
-      pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
+    if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
+      pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
     return siglusFcIntegrationService.searchStockMovements(date, pageable);
   }
@@ -65,8 +65,8 @@ public class SiglusFcIntegrationController {
   @GetMapping("/stockOnHand")
   public Page<FacilityStockOnHandResponse> searchStockOnHand(
       @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date, Pageable pageable) {
-    if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
-      pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
+    if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
+      pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
     return siglusFcIntegrationService.searchStockOnHand(date, pageable);
   }
@@ -75,8 +75,8 @@ public class SiglusFcIntegrationController {
   public Page<FcProofOfDeliveryDto> searchProofOfDelivery(
       @DateTimeFormat(pattern = DATE_FORMAT) @RequestParam LocalDate date,
       Pageable pageable) {
-    if (Pagination.NO_PAGINATION == pageable.getPageSize()) {
-      pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20);
+    if (PaginationConstants.NO_PAGINATION == pageable.getPageSize()) {
+      pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20);
     }
     return siglusFcIntegrationService.searchProofOfDelivery(date, pageable);
   }

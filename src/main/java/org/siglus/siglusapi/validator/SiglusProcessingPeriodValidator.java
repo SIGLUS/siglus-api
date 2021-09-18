@@ -15,9 +15,9 @@
 
 package org.siglus.siglusapi.validator;
 
-import static org.siglus.common.i18n.MessageKeys.ERROR_SUBMIT_END_DATE_BEFORE_SUBMIT_START_DATE;
-import static org.siglus.common.i18n.MessageKeys.ERROR_SUBMIT_START_DATE_BEFORE_START_DATE;
-import static org.siglus.common.i18n.MessageKeys.ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUBMIT_END_DATE_BEFORE_SUBMIT_START_DATE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUBMIT_START_DATE_BEFORE_START_DATE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_SUBMIT_START_DATE_IS_BEFORE_LAST_SUBMIT_END_DATE;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -25,8 +25,8 @@ import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
-import org.siglus.common.repository.ProcessingPeriodRepository;
-import org.siglus.common.repository.ProcessingScheduleRepository;
+import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
+import org.siglus.siglusapi.repository.ProcessingScheduleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

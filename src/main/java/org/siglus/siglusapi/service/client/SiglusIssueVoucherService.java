@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.client;
 
-import org.siglus.common.service.client.BaseReferenceDataService;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.springframework.stereotype.Service;
 

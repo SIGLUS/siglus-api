@@ -28,7 +28,7 @@ import org.openlmis.requisition.dto.BasicRequisitionDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.repository.custom.RequisitionSearchParams;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
-import org.siglus.common.util.RequestParameters;
+import org.openlmis.stockmanagement.util.RequestParameters;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpMethod;

@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.i18n;
 
-import org.siglus.common.i18n.MessageKeys;
-
 public abstract class OrderableMessageKeys extends MessageKeys {
   private static final String ORDERABLE = "orderable";
   private static final String ORDERABLE_ERROR = join(ERROR_PREFIX, ORDERABLE);

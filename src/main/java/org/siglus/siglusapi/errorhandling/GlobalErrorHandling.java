@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.errorhandling;
 
 import static java.util.stream.Collectors.toList;
-import static org.siglus.common.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
 import static org.zalando.problem.Problem.DEFAULT_TYPE;
 import static org.zalando.problem.Status.BAD_REQUEST;
 import static org.zalando.problem.Status.NOT_FOUND;
@@ -34,10 +34,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.constant.DateFormatConstants;
 import org.siglus.common.exception.ValidationMessageException;
-import org.siglus.common.i18n.MessageKeys;
 import org.siglus.siglusapi.constant.PodConstants;
-import org.siglus.siglusapi.errorhandling.exception.OrderNotFoundException;
+import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.i18n.ExposedMessageSource;
+import org.siglus.siglusapi.i18n.MessageKeys;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;

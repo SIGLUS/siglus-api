@@ -23,10 +23,10 @@ import javax.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.constant.ValidatorConstants;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.FacilityApprovedProduct;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @Slf4j
 @RequiredArgsConstructor

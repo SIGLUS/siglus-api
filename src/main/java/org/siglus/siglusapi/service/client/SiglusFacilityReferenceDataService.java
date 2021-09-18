@@ -22,9 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.siglus.common.service.client.BaseReferenceDataService;
-import org.siglus.common.util.RequestParameters;
-import org.siglus.common.util.referencedata.Pagination;
+import org.openlmis.stockmanagement.util.RequestParameters;
+import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -59,8 +58,8 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
   }
 
   public Page<FacilityDto> getFacilityByCode(String code) {
-    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
-        Pagination.NO_PAGINATION);
+    Pageable noPagination = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
+        PaginationConstants.NO_PAGINATION);
     Map<String, String> requestBody = new HashMap<>();
     requestBody.put(FACILITY_CODE, code);
     return getPage("search", RequestParameters.init().setPage(noPagination),

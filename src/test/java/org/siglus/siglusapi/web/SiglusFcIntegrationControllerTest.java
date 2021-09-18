@@ -23,7 +23,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.service.SiglusFcIntegrationService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,8 +37,8 @@ public class SiglusFcIntegrationControllerTest {
   @Mock
   private SiglusFcIntegrationService siglusFcIntegrationService;
 
-  private Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
-      Pagination.NO_PAGINATION);
+  private Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
+      PaginationConstants.NO_PAGINATION);
 
   private final LocalDate date = LocalDate.of(2020, 2, 21);
 
@@ -49,7 +49,7 @@ public class SiglusFcIntegrationControllerTest {
 
     // then
     verify(siglusFcIntegrationService).searchRequisitions(date,
-        new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, 20));
+        new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, 20));
   }
 
   @Test

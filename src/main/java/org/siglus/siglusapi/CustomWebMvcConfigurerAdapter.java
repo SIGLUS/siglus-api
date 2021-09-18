@@ -15,8 +15,10 @@
 
 package org.siglus.siglusapi;
 
+import static org.siglus.siglusapi.constant.PaginationConstants.DEFAULT_PAGE_NUMBER;
+import static org.siglus.siglusapi.constant.PaginationConstants.NO_PAGINATION;
+
 import java.util.List;
-import org.siglus.common.util.referencedata.Pagination;
 import org.siglus.siglusapi.interceptor.MvcInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -59,7 +61,7 @@ public class CustomWebMvcConfigurerAdapter extends WebMvcConfigurerAdapter {
     PageableHandlerMethodArgumentResolver resolver = new PageableHandlerMethodArgumentResolver();
     resolver.setMaxPageSize(Integer.MAX_VALUE);
     resolver.setFallbackPageable(
-        new PageRequest(Pagination.DEFAULT_PAGE_NUMBER, Pagination.NO_PAGINATION));
+        new PageRequest(DEFAULT_PAGE_NUMBER, NO_PAGINATION));
 
     argumentResolvers.add(resolver);
     super.addArgumentResolvers(argumentResolvers);

@@ -16,8 +16,8 @@
 package org.siglus.siglusapi.service.client;
 
 import java.util.List;
-import org.siglus.common.util.RequestParameters;
-import org.siglus.common.util.referencedata.Pagination;
+import org.openlmis.stockmanagement.util.RequestParameters;
+import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,8 +42,8 @@ public class SiglusGeographicZoneReferenceDataService extends
   }
 
   public List<GeographicZoneDto> searchAllGeographicZones() {
-    Pageable noPagination = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
-        Pagination.NO_PAGINATION);
+    Pageable noPagination = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
+        PaginationConstants.NO_PAGINATION);
     return getPage(RequestParameters.init().setPage(noPagination)).getContent();
   }
 

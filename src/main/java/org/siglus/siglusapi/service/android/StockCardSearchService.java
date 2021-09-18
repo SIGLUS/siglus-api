@@ -21,11 +21,11 @@ import java.util.UUID;
 import javax.annotation.ParametersAreNullableByDefault;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.i18n;
 
-import org.siglus.common.i18n.MessageKeys;
-
 public class SimamMessageKeys extends MessageKeys {
 
   private static final String SIMAM = "simam";

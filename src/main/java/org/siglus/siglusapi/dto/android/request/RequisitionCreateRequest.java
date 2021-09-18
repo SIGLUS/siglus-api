@@ -28,7 +28,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.NotBlank;
 import org.hibernate.validator.constraints.NotEmpty;
-import org.siglus.common.dto.referencedata.UserDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidDataSection;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidEndDate;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;

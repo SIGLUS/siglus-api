@@ -23,7 +23,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
-import org.siglus.common.dto.referencedata.LotDto;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
 
 @Mapper(componentModel = "spring", uses = LotMapper.class)

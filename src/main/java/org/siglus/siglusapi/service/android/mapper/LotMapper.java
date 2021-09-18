@@ -20,7 +20,7 @@ import java.util.UUID;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.siglus.common.dto.referencedata.LotDto;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.android.response.LotBasicResponse;
 
 @Mapper(componentModel = "spring")

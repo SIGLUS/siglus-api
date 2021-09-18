@@ -18,7 +18,7 @@ package org.siglus.siglusapi.service.client;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.fulfillment.web.util.ProofOfDeliveryDto;
-import org.siglus.common.util.RequestParameters;
+import org.openlmis.stockmanagement.util.RequestParameters;
 import org.springframework.stereotype.Service;
 
 @Service

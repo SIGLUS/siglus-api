@@ -49,7 +49,6 @@ import org.openlmis.requisition.service.referencedata.FacilityReferenceDataServi
 import org.openlmis.requisition.service.referencedata.OrderableReferenceDataService;
 import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
-import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.domain.RegimenLineItem;
 import org.siglus.siglusapi.domain.TestConsumptionLineItem;
 import org.siglus.siglusapi.domain.UsageInformationLineItem;
@@ -68,6 +67,7 @@ import org.siglus.siglusapi.testutils.ProcessingPeriodDtoDataBuilder;
 import org.siglus.siglusapi.testutils.ProgramDtoDataBuilder;
 import org.siglus.siglusapi.util.ExcelHandler;
 import org.siglus.siglusapi.util.S3FileHandler;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.siglus.siglusapi.util.SingleListSheetExcelHandler;
 
 @RunWith(MockitoJUnitRunner.class)

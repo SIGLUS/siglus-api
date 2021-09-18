@@ -59,20 +59,20 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
-import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.repository.ProcessingPeriodRepository;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.SyncUpHash;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidStartDateValidator;
+import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.android.RequisitionCreateService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})

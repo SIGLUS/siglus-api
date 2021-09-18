@@ -21,7 +21,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.siglus.common.dto.referencedata.BaseDto;
 import org.siglus.common.dto.referencedata.DispensableDto;
-import org.siglus.common.dto.referencedata.LotDto;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

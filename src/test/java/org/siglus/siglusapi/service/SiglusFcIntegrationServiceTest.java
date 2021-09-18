@@ -52,16 +52,15 @@ import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
+import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.domain.referencedata.SupervisoryNode;
-import org.siglus.common.dto.referencedata.LotDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
-import org.siglus.common.util.SiglusDateHelper;
-import org.siglus.common.util.referencedata.Pagination;
+import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.RegimenLineItem;
@@ -71,6 +70,7 @@ import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryProductDto;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
+import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
@@ -89,6 +89,7 @@ import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -248,8 +249,8 @@ public class SiglusFcIntegrationServiceTest {
 
   private final LocalDate receivedDate = LocalDate.of(2020, 9, 1);
 
-  private final Pageable pageable = new PageRequest(Pagination.DEFAULT_PAGE_NUMBER,
-      Pagination.NO_PAGINATION);
+  private final Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
+      PaginationConstants.NO_PAGINATION);
 
   @Before
   public void prepare() {

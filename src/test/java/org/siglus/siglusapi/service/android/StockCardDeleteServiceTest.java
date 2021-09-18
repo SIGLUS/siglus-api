@@ -57,10 +57,9 @@ import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.siglus.common.dto.referencedata.LotDto;
-import org.siglus.common.dto.referencedata.UserDto;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardDeletedBackup;
+import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
@@ -74,6 +73,7 @@ import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.testutils.CanFulfillForMeEntryDtoDataBuilder;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)

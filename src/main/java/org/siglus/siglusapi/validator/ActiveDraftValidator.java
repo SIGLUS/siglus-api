@@ -15,21 +15,21 @@
 
 package org.siglus.siglusapi.validator;
 
-import static org.siglus.common.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
-import static org.siglus.common.i18n.MessageKeys.ERROR_EVENT_FACILITY_INVALID;
-import static org.siglus.common.i18n.MessageKeys.ERROR_IS_DRAFT_MISSING;
-import static org.siglus.common.i18n.MessageKeys.ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR;
-import static org.siglus.common.i18n.MessageKeys.ERROR_NOT_EXPECTED_USER_DRAFT;
-import static org.siglus.common.i18n.MessageKeys.ERROR_PROGRAM_MISSING;
-import static org.siglus.common.i18n.MessageKeys.ERROR_USER_ID_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EVENT_FACILITY_INVALID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IS_DRAFT_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_USER_DRAFT;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PROGRAM_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 
 import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.UUID;
-import org.siglus.common.dto.referencedata.UserDto;
 import org.siglus.common.exception.ValidationMessageException;
-import org.siglus.common.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

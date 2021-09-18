@@ -39,10 +39,10 @@ import static org.siglus.siglusapi.constant.FcConstants.getQueryByPeriodApiList;
 
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.common.util.SiglusDateHelper;
 import org.siglus.siglusapi.domain.FcIntegrationResult;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.repository.FcIntegrationResultRepository;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

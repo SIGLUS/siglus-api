@@ -15,8 +15,7 @@
 
 package org.siglus.siglusapi.service.client;
 
-import org.siglus.common.dto.referencedata.TradeItemDto;
-import org.siglus.common.service.client.BaseReferenceDataService;
+import org.siglus.siglusapi.dto.TradeItemDto;
 import org.springframework.stereotype.Service;
 
 @Service

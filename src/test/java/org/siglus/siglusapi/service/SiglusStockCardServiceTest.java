@@ -45,14 +45,14 @@ import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.dto.referencedata.UserDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
-import org.siglus.common.domain.StockCardExtension;
-import org.siglus.common.repository.StockCardExtensionRepository;
-import org.siglus.common.util.SiglusDateHelper;
+import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
 import org.siglus.siglusapi.testutils.CalculatedStockOnHandDataBuilder;
 import org.siglus.siglusapi.testutils.StockCardLineItemDataBuilder;
 import org.siglus.siglusapi.util.AndroidHelper;
+import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.beans.BeanUtils;
 
 @SuppressWarnings("PMD.TooManyMethods")
