@@ -52,7 +52,7 @@ public class PodConfirmBackup extends BaseEntity {
   private PodResponse oldPod;
 
   @Column(name = "newpod", columnDefinition = "jsonb")
-  @Convert(converter = PodConfirmRequestConverter.class)
+  @Convert(converter = PodRequestConverter.class)
   private PodRequest newPod;
 
   @CreatedDate

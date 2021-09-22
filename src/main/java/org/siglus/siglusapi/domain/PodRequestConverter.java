@@ -53,7 +53,7 @@ public class PodRequestConverter implements AttributeConverter<PodRequest, Strin
     try {
       return objectMapper.writeValueAsString(request);
     } catch (JsonProcessingException ex) {
-      log.error("Can't convert stock card request list to database column", ex);
+      log.error("Can't convert pod request to database column", ex);
       return null;
     }
   }
@@ -67,7 +67,7 @@ public class PodRequestConverter implements AttributeConverter<PodRequest, Strin
     try {
       return objectMapper.readValue(requestAsString, TYPE_REF);
     } catch (IOException ex) {
-      log.error("Can't convert string to stock card request list", ex);
+      log.error("Can't convert string to pod request list", ex);
       return new PodRequest();
     }
   }
