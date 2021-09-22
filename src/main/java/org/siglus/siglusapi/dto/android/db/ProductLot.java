@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.dto.android.db;
 
 import java.time.LocalDate;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,4 +42,23 @@ public class ProductLot {
     }
   }
 
+  @Override
+  public boolean equals(Object other) {
+    if (!(other instanceof ProductLot)) {
+      return false;
+    }
+    ProductLot productLot = (ProductLot) other;
+    if (productLot.getLot() == null || productLot.getLot().getCode() == null
+        || productLot.getLot().getExpirationDate() == null) {
+      return productCode.equals(productLot.getProductCode());
+    }
+    return Objects.equals(productCode, productLot.getProductCode())
+        && Objects.equals(lot.getCode(), productLot.getLot().getCode())
+        && Objects.equals(lot.getExpirationDate(), productLot.getLot().getExpirationDate());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(productCode, lot);
+  }
 }
