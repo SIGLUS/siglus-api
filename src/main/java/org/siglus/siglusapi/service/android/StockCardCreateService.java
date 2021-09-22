@@ -240,8 +240,8 @@ public class StockCardCreateService {
     }
     log.info("the date of lot {} is different: [in-request: {}, in-db: {}]", lotCode, expirationDate,
         cached.getLot().getExpirationDate());
-    LotConflict exitedConflict = lotConflictRepository.findOneByFacilityIdAndLotCodeAndExpirationDate(facilityId,
-        cached.getLot().getCode(), cached.getLot().getExpirationDate());
+    LotConflict exitedConflict = lotConflictRepository.findOneByFacilityIdAndLotIdAndLotCodeAndExpirationDate(
+        facilityId, cached.getId(), cached.getLot().getCode(), cached.getLot().getExpirationDate());
     if (exitedConflict != null) {
       log.info("conflict is already recorded");
       return;

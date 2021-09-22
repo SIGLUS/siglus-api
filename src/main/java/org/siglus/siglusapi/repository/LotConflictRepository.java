@@ -22,5 +22,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LotConflictRepository extends JpaRepository<LotConflict, UUID> {
 
-  LotConflict findOneByFacilityIdAndLotCodeAndExpirationDate(UUID facilityId, String lotCode, LocalDate expirationDate);
+  LotConflict findOneByFacilityIdAndLotIdAndLotCodeAndExpirationDate(UUID facilityId, UUID lotId, String lotCode,
+      LocalDate expirationDate);
 }
