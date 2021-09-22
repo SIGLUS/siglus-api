@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.UUID;
 import org.openlmis.stockmanagement.validators.VvmValidator;
 import org.siglus.common.exception.ValidationMessageException;
+import org.siglus.common.util.Message;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
@@ -68,7 +69,7 @@ public class StockManagementDraftValidator {
     }
     StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(id);
     if (foundDraft == null) {
-      throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND);
+      throw new ValidationMessageException(new Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND) + id.toString());
     } else if (Boolean.TRUE.equals(!foundDraft.getIsDraft())) {
       throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
     }

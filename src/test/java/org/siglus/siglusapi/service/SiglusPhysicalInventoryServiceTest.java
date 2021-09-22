@@ -57,11 +57,14 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
+import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
@@ -434,5 +437,21 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // then
     assertEquals(LocalDate.of(2020, 6, 13), physicalInventoryDto.getOccurredDate());
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenCheckDraftIsExistIfDraftExisted() {
+    // then
+    exception.expect(ValidationMessageException.class);
+    exception.expectMessage(containsString("stockmanagement.error.physicalInventory.isSubmitted"));
+
+    // given
+    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
+        .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
+    when(inventoryController.searchPhysicalInventory(any(), any(), any()))
+        .thenReturn(new ResponseEntity(Collections.emptyList(), HttpStatus.OK));
+
+    // when
+    siglusPhysicalInventoryService.checkDraftIsExist(facilityId);
   }
 }

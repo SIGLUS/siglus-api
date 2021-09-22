@@ -115,12 +115,15 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldCallSaveDraftForAllProductsWhenUpdateIfIdIsAllProducts() {
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(ALL_PRODUCTS_UUID)
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .id(ALL_PRODUCTS_UUID)
+        .facilityId(facilityId)
         .build();
 
     siglusPhysicalInventoryController.updatePhysicalInventory(ALL_PRODUCTS_UUID,
         physicalInventoryDto);
 
+    verify(siglusPhysicalInventoryService).checkDraftIsExist(physicalInventoryDto.getFacilityId());
     verify(siglusPhysicalInventoryService).saveDraftForAllProducts(physicalInventoryDto);
   }
 
