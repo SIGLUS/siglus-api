@@ -264,7 +264,8 @@ public class SiglusStockEventsService {
     }
     log.info("the date of lot {} is different: [in-request: {}, in-db: {}]", lotCode, expirationDate,
         existedLot.getExpirationDate());
-    LotConflict conflict = lotConflictRepository.findLotConflictByFacilityIdAndLotId(facilityId, existedLot.getId());
+    LotConflict conflict = lotConflictRepository.findOneByFacilityIdAndLotCodeAndExpirationDate(facilityId,
+        existedLot.getLotCode(), existedLot.getExpirationDate());
     if (conflict != null) {
       log.info("conflict is already recorded");
       return existedLot;

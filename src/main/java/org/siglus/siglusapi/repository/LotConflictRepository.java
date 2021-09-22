@@ -15,11 +15,12 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.time.LocalDate;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.LotConflict;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LotConflictRepository extends JpaRepository<LotConflict, UUID> {
 
-  LotConflict findLotConflictByFacilityIdAndLotId(UUID facilityId, UUID lotId);
+  LotConflict findOneByFacilityIdAndLotCodeAndExpirationDate(UUID facilityId, String lotCode, LocalDate expirationDate);
 }

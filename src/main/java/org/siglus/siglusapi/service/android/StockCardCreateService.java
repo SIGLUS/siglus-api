@@ -94,7 +94,7 @@ public class StockCardCreateService {
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final AndroidHelper androidHelper;
   private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-  private final LotConflictRepository lotConflictRepo;
+  private final LotConflictRepository lotConflictRepository;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -240,13 +240,14 @@ public class StockCardCreateService {
     }
     log.info("the date of lot {} is different: [in-request: {}, in-db: {}]", lotCode, expirationDate,
         cached.getLot().getExpirationDate());
-    LotConflict exitedConflict = lotConflictRepo.findLotConflictByFacilityIdAndLotId(facilityId, cached.getId());
+    LotConflict exitedConflict = lotConflictRepository.findOneByFacilityIdAndLotCodeAndExpirationDate(facilityId,
+        cached.getLot().getCode(), cached.getLot().getExpirationDate());
     if (exitedConflict != null) {
       log.info("conflict is already recorded");
       return;
     }
     LotConflict lotConflict = LotConflict.of(facilityId, cached.getId(), lotCode, expirationDate);
-    lotConflict = lotConflictRepo.save(lotConflict);
+    lotConflict = lotConflictRepository.save(lotConflict);
     log.info("record conflict with id {}", lotConflict.getId());
   }
 
