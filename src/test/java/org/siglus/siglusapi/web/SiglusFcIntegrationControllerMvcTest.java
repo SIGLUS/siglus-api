@@ -16,6 +16,9 @@
 package org.siglus.siglusapi.web;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -28,9 +31,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
 import org.junit.Before;
@@ -40,9 +46,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.siglusapi.dto.android.EventTime;
+import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.dto.android.LotMovement;
+import org.siglus.siglusapi.dto.android.MovementDetail;
+import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductLotStock;
+import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
+import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.repository.SiglusFacilityRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusFcIntegrationService;
@@ -51,6 +63,7 @@ import org.siglus.siglusapi.service.android.mapper.ProductMovementMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.mapper.LotOnHandMapper;
 import org.siglus.siglusapi.service.mapper.LotOnHandMapperImpl;
+import org.siglus.siglusapi.web.android.FileBasedTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
@@ -68,7 +81,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = {MappingJackson2HttpMessageConverter.class, PageableHandlerMethodArgumentResolver.class,
     ObjectMapper.class, ProductMovementMapperImpl.class, LotOnHandMapperImpl.class})
-public class SiglusFcIntegrationControllerMvcTest {
+public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
 
   private MockMvc mockMvc;
 
@@ -111,7 +124,7 @@ public class SiglusFcIntegrationControllerMvcTest {
         .setMessageConverters(jackson2HttpMessageConverter)
         .setCustomArgumentResolvers(pageableHandlerMethodArgumentResolver)
         .build();
-    when(facilityTypeDataService.getPage(any())).thenReturn(new PageImpl<>(Collections.emptyList()));
+    when(facilityTypeDataService.getPage(any())).thenReturn(new PageImpl<>(emptyList()));
     Facility facility1 = new Facility();
     facility1.setId(facility1Id);
     facility1.setCode("F1");
@@ -123,10 +136,31 @@ public class SiglusFcIntegrationControllerMvcTest {
     when(facilityRepo.findAllExcept(any(), any())).thenReturn(new PageImpl<>(asList(facility1, facility2)));
     when(stockManagementRepository.getStockOnHand(eq(facility1Id), any())).thenReturn(mockStocksOnHand1());
     when(stockManagementRepository.getStockOnHand(eq(facility2Id), any())).thenReturn(mockStocksOnHand2());
+    PeriodOfProductMovements period1 = new PeriodOfProductMovements(mockProductMovements1(), mockStocksOnHand1());
+    when(stockManagementRepository.getAllProductMovementsForSync(eq(facility1Id), any())).thenReturn(period1);
+    PeriodOfProductMovements period2 = new PeriodOfProductMovements(emptyList(), mockStocksOnHand2());
+    when(stockManagementRepository.getAllProductMovementsForSync(eq(facility2Id), any())).thenReturn(period2);
   }
 
   @Test
-  public void shouldReturnAllWhenGetPodsGivenNoParams() throws Exception {
+  public void shouldReturnAllWhenGetStockMovements() throws Exception {
+    // given
+    RequestBuilder request = get("/api/siglusapi/integration/stockMovements?date=20210101")
+        .contentType(MediaType.APPLICATION_JSON)
+        .characterEncoding("utf-8");
+
+    // when
+    ResultActions resultActions = mockMvc.perform(request).andDo(print());
+
+    // then
+    String target = readFromFile("stockMovements.json");
+    String response = resultActions.andReturn().getResponse().getContentAsString();
+    boolean equals = objectMapper.readValue(target, Map.class).equals(objectMapper.readValue(response, Map.class));
+    assertTrue(equals);
+  }
+
+  @Test
+  public void shouldReturnAllWhenGetSohGivenDate() throws Exception {
     // given
     RequestBuilder request = get("/api/siglusapi/integration/stockOnHand?date=20210101")
         .contentType(MediaType.APPLICATION_JSON)
@@ -197,7 +231,44 @@ public class SiglusFcIntegrationControllerMvcTest {
   }
 
   private StocksOnHand mockStocksOnHand2() {
-    return new StocksOnHand(Collections.emptyList());
+    return new StocksOnHand(emptyList());
+  }
+
+  private List<ProductMovement> mockProductMovements1() {
+    LotMovement movement1Lot1 = LotMovement.builder()
+        .stockQuantity(10)
+        .movementDetail(new MovementDetail(10, MovementType.ISSUE, "MATERNITY"))
+        .lot(Lot.of("lot1", java.sql.Date.valueOf("2023-12-31")))
+        .build();
+    ProductMovement movement1 = ProductMovement.builder()
+        .productCode("test")
+        .stockQuantity(10)
+        .eventTime(EventTime
+            .fromDatabase(Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+        .movementDetail(new MovementDetail(10, MovementType.ISSUE, "MATERNITY"))
+        .lotMovements(singletonList(movement1Lot1))
+        .build();
+    LotMovement movement2Lot1 = LotMovement.builder()
+        .stockQuantity(10)
+        .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "DISTRICT_DDM"))
+        .lot(Lot.of("lot1", java.sql.Date.valueOf("2023-12-31")))
+        .build();
+    ProductMovement movement2 = ProductMovement.builder()
+        .productCode("test")
+        .stockQuantity(10)
+        .eventTime(EventTime
+            .fromDatabase(Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+        .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "DISTRICT_DDM"))
+        .lotMovements(singletonList(movement2Lot1))
+        .build();
+    ProductMovement movement3 = ProductMovement.builder()
+        .productCode("26A01")
+        .stockQuantity(10)
+        .eventTime(EventTime
+            .fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+        .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "DISTRICT_DDM"))
+        .build();
+    return asList(movement1, movement2, movement3);
   }
 
 }
