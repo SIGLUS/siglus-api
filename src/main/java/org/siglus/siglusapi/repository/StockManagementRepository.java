@@ -519,8 +519,8 @@ public class StockManagementRepository {
         .destinationFacilityName(readAsString(rs, "destfacname"))
         .adjustmentReason(readAsString(rs, "adjustreason"))
         .adjustmentReasonType(readAsString(rs, "adjustreasontype"))
-        .inventoryReason(readAsString(rs, "inventoryReason"))
-        .inventoryReasonType(readAsString(rs, "inventoryReasontype"))
+        .inventoryReason(readAsString(rs, "inventoryreason"))
+        .inventoryReasonType(readAsString(rs, "inventoryreasontype"))
         .unsignedInventoryAdjustment(readAsInt(rs, "inventoryadjustment"))
         .build();
   }
