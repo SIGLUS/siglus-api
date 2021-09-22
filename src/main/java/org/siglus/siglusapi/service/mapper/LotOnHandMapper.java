@@ -13,18 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.android.mapper;
+package org.siglus.siglusapi.service.mapper;
 
+import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
+import static java.util.Comparator.nullsLast;
 import static java.util.stream.Collectors.toList;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+import org.siglus.common.constant.KitConstants;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
 import org.siglus.siglusapi.dto.android.Lot;
@@ -69,8 +73,12 @@ public interface LotOnHandMapper {
 
   @Named("getLotResponses")
   default List<LotStockOnHandResponse> getLotResponses(String productCode, @Context StocksOnHand stocksOnHand) {
+    if (KitConstants.isKit(productCode)) {
+      return Collections.emptyList();
+    }
     Map<ProductLotCode, InventoryDetail> lots = stocksOnHand.getLotInventoriesByProduct(productCode);
-    return lots.entrySet().stream().map(e -> toLotResponse(e.getKey(), e.getValue(), stocksOnHand)).collect(toList());
+    return lots.entrySet().stream().sorted(comparing(e -> e.getKey().getLotCode(), nullsLast(naturalOrder())))
+        .map(e -> toLotResponse(e.getKey(), e.getValue(), stocksOnHand)).collect(toList());
   }
 
   @Mapping(target = "lotCode", source = "code.lotCode")

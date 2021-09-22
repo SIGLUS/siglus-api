@@ -18,13 +18,13 @@ package org.siglus.siglusapi.web;
 import static org.siglus.siglusapi.constant.FcConstants.DATE_FORMAT;
 
 import java.time.LocalDate;
+import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.FcProofOfDeliveryDto;
 import org.siglus.siglusapi.dto.FcRequisitionDto;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.service.SiglusFcIntegrationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -38,10 +38,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Validated
 @RequestMapping("/api/siglusapi/integration")
+@RequiredArgsConstructor
 public class SiglusFcIntegrationController {
 
-  @Autowired
-  private SiglusFcIntegrationService siglusFcIntegrationService;
+  private final SiglusFcIntegrationService siglusFcIntegrationService;
 
   @GetMapping("/requisitions")
   public Page<FcRequisitionDto> searchRequisitions(
