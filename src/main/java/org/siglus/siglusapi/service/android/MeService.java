@@ -61,6 +61,7 @@ import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.BaseDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
 import org.siglus.siglusapi.constant.PaginationConstants;
@@ -71,6 +72,7 @@ import org.siglus.siglusapi.domain.PodRequestBackup;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
+import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
@@ -104,6 +106,7 @@ import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
+import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
@@ -173,6 +176,7 @@ public class MeService {
   private final PodRequestBackupRepository podBackupRepository;
   private final SiglusProofOfDeliveryRepository podRepository;
   private final EntityManager entityManager;
+  private final SyncUpHashRepository syncUpHashRepository;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -257,6 +261,15 @@ public class MeService {
   }
 
   public CreateStockCardResponse createStockCards(List<StockCardCreateRequest> requests) {
+    UserDto user = authHelper.getCurrentUser();
+    StringBuilder hashStringBuilder = new StringBuilder(user.getId().toString() + user.getHomeFacilityId().toString());
+    requests.forEach(r -> hashStringBuilder.append(r.getSyncUpProperties()));
+    String syncUpHash = HashEncoder.hash(hashStringBuilder.toString());
+    boolean alreadySynced = syncUpHashRepository.findOne(syncUpHash) != null;
+    if (alreadySynced) {
+      log.info("skip create stockCards as syncUpHash: {} existed", syncUpHash);
+      throw new ValidationMessageException("siglusapi.stockManagement.duplicated.requests");
+    }
     ValidatedStockCards validatedStockCards = ValidatedStockCards.builder()
         .validStockCardRequests(requests)
         .invalidProducts(Collections.emptyList())
@@ -270,15 +283,17 @@ public class MeService {
       validatedStockCards = stockCardCreateRequestValidator.validateStockCardCreateRequest(requests);
       createStockCardResponse = CreateStockCardResponse.from(validatedStockCards);
       if (!CollectionUtils.isEmpty(validatedStockCards.getInvalidProducts())) {
-        backupStockCardRequest(requests, createStockCardResponse.getDetails());
+        backupStockCardRequest(requests, createStockCardResponse.getDetails(), user, syncUpHash);
       }
       if (!CollectionUtils.isEmpty(validatedStockCards.getValidStockCardRequests())) {
         stockCardCreateService.createStockCards(validatedStockCards.getValidStockCardRequests());
+        log.info("save create stockCards syncUpHash: {}", syncUpHash);
+        syncUpHashRepository.save(new SyncUpHash(syncUpHash));
       }
       return createStockCardResponse;
     } catch (Exception e) {
       try {
-        backupStockCardRequest(validatedStockCards.getValidStockCardRequests(), e.getMessage());
+        backupStockCardRequest(validatedStockCards.getValidStockCardRequests(), e.getMessage(), user, syncUpHash);
       } catch (NullPointerException backupError) {
         log.warn("backup stock card request error", backupError);
       }
@@ -559,11 +574,8 @@ public class MeService {
     requisitionRequestBackupRepository.save(backup);
   }
 
-  private void backupStockCardRequest(List<StockCardCreateRequest> stockCardCreateRequests, String errorMessage) {
-    UserDto user = authHelper.getCurrentUser();
-    StringBuilder hashStringBuilder = new StringBuilder(user.getId().toString() + user.getHomeFacilityId().toString());
-    stockCardCreateRequests.forEach(r -> hashStringBuilder.append(r.getSyncUpProperties()));
-    String syncUpHash = HashEncoder.hash(hashStringBuilder.toString());
+  private void backupStockCardRequest(List<StockCardCreateRequest> stockCardCreateRequests, String errorMessage,
+      UserDto user, String syncUpHash) {
     StockCardRequestBackup existedBackup = stockCardRequestBackupRepository.findOneByHash(syncUpHash);
     if (existedBackup != null) {
       log.info("skip backup stock card request as syncUpHash: {} existed", syncUpHash);

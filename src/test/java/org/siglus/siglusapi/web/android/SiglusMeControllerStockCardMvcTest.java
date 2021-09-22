@@ -57,6 +57,7 @@ import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
+import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.UserDto;
@@ -75,6 +76,7 @@ import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
+import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.MeService;
@@ -128,6 +130,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   @Mock
   @SuppressWarnings("unused")
   private StockEventProductRequestedRepository requestQuantityRepository;
+  @Mock
+  private SyncUpHashRepository syncUpHashRepository;
 
   @InjectMocks
   private StockCardCreateContextHolder holder;
@@ -193,6 +197,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .content(readFromFile("happy.json"))
         .characterEncoding("utf-8");
 
+    when(syncUpHashRepository.findOne(any(String.class))).thenReturn(null);
     when(stockCardCreateRequestValidator.validateStockCardCreateRequest(any())).thenReturn(mockHappyCreateRequest());
 
     // when
@@ -208,6 +213,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     verify(stockManagementRepository, times(52)).createStockCardLine(any(), any(), any());
     verify(stockManagementRepository, times(2)).createPhysicalInventory(any());
     verify(stockManagementRepository, times(5)).createPhysicalInventoryLine(any(), any(), any());
+    verify(syncUpHashRepository, times(1)).save(any(SyncUpHash.class));
   }
 
   @Test
