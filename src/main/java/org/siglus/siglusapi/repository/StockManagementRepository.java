@@ -343,7 +343,8 @@ public class StockManagementRepository {
   }
 
   public void saveStockOnHand(CalculatedStockOnHand calculated, Instant stockOnHandProcessAt) {
-    Integer stockQuantity = calculated.getInventoryDetail().getStockQuantity();
+    InventoryDetail inventoryDetail = calculated.getInventoryDetail();
+    Integer stockQuantity = Math.abs(inventoryDetail.getStockQuantity());
     if (calculated.getId() != null) {
       jdbc.update("UPDATE stockmanagement.calculated_stocks_on_hand "
               + "SET stockonhand = ?, processeddate = ? WHERE id = ?",
@@ -354,8 +355,7 @@ public class StockManagementRepository {
         + "(id, stockonhand, occurreddate, stockcardid, processeddate) "
         + "VALUES (UUID_GENERATE_V4(), ?1, ?2, ?3, ?4)";
     Query insert = em.createNativeQuery(sql);
-    InventoryDetail inventoryDetail = calculated.getInventoryDetail();
-    insert.setParameter(1, inventoryDetail.getStockQuantity());
+    insert.setParameter(1, stockQuantity);
     insert.setParameter(2, inventoryDetail.getEventTime().getOccurredDate());
     insert.setParameter(3, wrap(calculated.getStockCard().getId()));
     insert.setParameter(4, stockOnHandProcessAt);
