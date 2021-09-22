@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
-import static java.util.Comparator.naturalOrder;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -76,14 +75,10 @@ import org.siglus.siglusapi.dto.RegimenLineDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.UsageTemplateColumnDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
-import org.siglus.siglusapi.dto.android.EventTime;
-import org.siglus.siglusapi.dto.android.InventoryDetail;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
-import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
-import org.siglus.siglusapi.dto.fc.LotStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
@@ -94,6 +89,7 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
+import org.siglus.siglusapi.service.android.mapper.LotOnHandMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
@@ -136,6 +132,7 @@ public class SiglusFcIntegrationService {
   private final SiglusFacilityTypeReferenceDataService facilityTypeDataService;
   private final StockManagementRepository stockManagementRepository;
   private final ProductMovementMapper productMovementMapper;
+  private final LotOnHandMapper lotOnHandMapper;
 
   @Value("${dpm.facilityTypeId}")
   private UUID dpmFacilityTypeId;
@@ -194,30 +191,8 @@ public class SiglusFcIntegrationService {
     FacilityStockOnHandResponse response = new FacilityStockOnHandResponse();
     response.setCode(facility.getCode());
     response.setName(facility.getName());
-    StocksOnHand stockOnHand = stockManagementRepository.getStockOnHand(facility.getId(), at);
-    List<ProductStockOnHandResponse> products = stockOnHand.getAllProductCodes().stream()
-        .map(productCode -> {
-          ProductStockOnHandResponse productResponse = new ProductStockOnHandResponse();
-          productResponse.setProductCode(productCode);
-          productResponse.setProductName(stockOnHand.getProductName(productCode));
-          Map<ProductLotCode, InventoryDetail> lots = stockOnHand.getLotInventoriesByProduct(productCode);
-          productResponse.setStockOnHand(lots.values().stream().mapToInt(InventoryDetail::getStockQuantity).sum());
-          LocalDate dateOfStock = lots.values().stream().map(InventoryDetail::getEventTime)
-              .map(EventTime::getOccurredDate).max(naturalOrder()).orElse(null);
-          productResponse.setDateOfStock(dateOfStock);
-          List<LotStockOnHandResponse> lotsOnHandResponses = lots.entrySet().stream().map(e -> {
-                LotStockOnHandResponse lot = new LotStockOnHandResponse();
-                lot.setLotCode(e.getKey().getLotCode());
-                lot.setExpirationDate(stockOnHand.getLot(e.getKey()).getExpirationDate());
-                lot.setStockOnHand(e.getValue().getStockQuantity());
-                lot.setDateOfStock(e.getValue().getEventTime().getOccurredDate());
-                return lot;
-              }
-          ).collect(toList());
-          productResponse.setLots(lotsOnHandResponses);
-          return productResponse;
-        })
-        .collect(toList());
+    StocksOnHand stocksOnHand = stockManagementRepository.getStockOnHand(facility.getId(), at);
+    List<ProductStockOnHandResponse> products = lotOnHandMapper.toResponses(stocksOnHand);
     response.setProducts(products);
     return response;
   }
