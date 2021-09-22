@@ -21,8 +21,10 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 
+@Slf4j
 @ToString
 @Getter
 public class MovementDetail {
@@ -65,6 +67,7 @@ public class MovementDetail {
         reason = adjustmentReason;
       }
     } else if (inventoryReason != null) {
+      log.debug("inventoryReason {} {}", inventoryReason, inventoryReasonType);
       movementType = MovementType.PHYSICAL_INVENTORY;
       adjustment = getDirection(inventoryReasonType) * unsignedInventoryAdjustment;
       reason = inventoryReason;
