@@ -52,6 +52,7 @@ import org.siglus.siglusapi.dto.android.ProductMovementKey;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithAllLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementConsistentWithExisted;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.RequestValidEventTime;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByLot;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByProduct;
 import org.siglus.siglusapi.dto.android.db.CalculatedStockOnHand;
@@ -106,7 +107,7 @@ public class StockCardCreateService {
       @ProductConsistentWithAllLots(groups = SelfCheckGroup.class)
       @LotStockConsistentWithExisted(groups = PerformanceGroup.class)
       @ProductMovementConsistentWithExisted(groups = PerformanceGroup.class)
-          List<StockCardCreateRequest> requests) {
+          List<@RequestValidEventTime StockCardCreateRequest> requests) {
     Profiler profiler = new Profiler("createStockCards");
     profiler.setLogger(log);
     FacilityDto facility = getContext().getFacility();
