@@ -15,8 +15,10 @@
 
 package org.siglus.siglusapi.dto.android;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -39,6 +41,8 @@ public class ProductMovement implements EventTimeContainer {
   private final Integer stockQuantity;
   private final String signature;
   private final String documentNumber;
+  @Nullable
+  private final Instant processedAt;
   @Default
   private final List<LotMovement> lotMovements = Collections.emptyList();
 

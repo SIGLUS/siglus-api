@@ -73,7 +73,6 @@ import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
-import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
@@ -83,7 +82,6 @@ import org.siglus.siglusapi.domain.PodRequestBackup;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
-import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
@@ -113,7 +111,6 @@ import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
-import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
@@ -237,9 +234,6 @@ public class MeServiceTest {
 
   @Mock
   private PodRequestBackupRepository podBackupRepository;
-
-  @Mock
-  private SyncUpHashRepository syncUpHashRepository;
 
   @Autowired
   private ProductMapper mapper;
@@ -645,16 +639,6 @@ public class MeServiceTest {
       verify(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
       verify(stockCardRequestBackupRepository).save(stockCardRequestBackupArgumentCaptor.capture());
     }
-  }
-
-  @Test(expected = ValidationMessageException.class)
-  public void shouldThrowExceptionWhenDuplicateCreateStockCardsRequests() {
-    // given
-    List<StockCardCreateRequest> stockCardCreateRequests = buildStockCardCreateRequests();
-    when(syncUpHashRepository.findOne(any(String.class))).thenReturn(new SyncUpHash("hashCode"));
-
-    // when
-    service.createStockCards(stockCardCreateRequests);
   }
 
   @Test

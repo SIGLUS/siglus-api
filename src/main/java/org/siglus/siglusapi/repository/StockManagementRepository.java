@@ -434,6 +434,7 @@ public class StockManagementRepository {
         .signature(readAsString(rs, "signature"))
         .documentNumber(readAsString(rs, "documentnumber"))
         .lot(readLot(rs))
+        .processedAt(rs.getTimestamp("processeddate").toInstant())
         .build();
   }
 
@@ -505,8 +506,7 @@ public class StockManagementRepository {
   private EventTime readEventTime(ResultSet rs) {
     java.sql.Date occurredDate = readAsDate(rs, "occurreddate");
     String recordedAtStr = readAsString(rs, "recordedat");
-    Timestamp processedAtTs = rs.getTimestamp("processeddate");
-    return EventTime.fromDatabase(occurredDate, recordedAtStr, processedAtTs);
+    return EventTime.fromDatabase(occurredDate, recordedAtStr);
   }
 
   @SneakyThrows
@@ -631,6 +631,9 @@ public class StockManagementRepository {
     Integer requestedQuantity = productLotMovements.stream().findAny().map(ProductLotMovement::getRequestedQuantity)
         .orElse(null);
     movementBuilder.requestedQuantity(requestedQuantity);
+    Instant processedDate = productLotMovements.stream().findAny().map(ProductLotMovement::getProcessedAt)
+        .orElse(null);
+    movementBuilder.processedAt(processedDate);
     ProductLotMovement anyLot;
     if (isNoStock(productLotMovements)) {
       ProductLotMovement theOnlyLot = productLotMovements.get(0);
@@ -703,6 +706,9 @@ public class StockManagementRepository {
     private final Lot lot;
 
     private final EventTime eventTime;
+
+    @Nullable
+    private final Instant processedAt;
 
     private final MovementDetail movementDetail;
 

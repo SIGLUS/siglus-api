@@ -81,7 +81,7 @@ public interface ProductMovementMapper {
   @Mapping(target = "requested", source = "requestedQuantity")
   @Mapping(target = "occurredDate", source = "eventTime.occurredDate")
   @Mapping(target = "processedDate", source = "eventTime.recordedAt")
-  @Mapping(target = "serverProcessedDate", source = "eventTime.processedAt")
+  @Mapping(target = "serverProcessedDate", source = "processedAt")
   @Mapping(target = "lotMovementItems", source = "lotMovements")
   SiglusStockMovementItemResponse fromProductMovement(ProductMovement movement,
       @Context Function<MovementDetail, String> reasonMapper);

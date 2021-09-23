@@ -64,7 +64,6 @@ import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.domain.sourcedestination.Node;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
-import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.UserDto;
@@ -89,7 +88,6 @@ import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.repository.StockEventProductRequestedRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
-import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.MeService;
@@ -162,8 +160,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   @Mock
   @SuppressWarnings("unused")
   private StockEventProductRequestedRepository requestQuantityRepository;
-  @Mock
-  private SyncUpHashRepository syncUpHashRepository;
 
   @InjectMocks
   private StockCardCreateContextHolder holder;
@@ -238,7 +234,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .contentType(MediaType.APPLICATION_JSON)
         .characterEncoding("utf-8");
 
-    when(syncUpHashRepository.findOne(any(String.class))).thenReturn(null);
     when(stockCardCreateRequestValidator.validateStockCardCreateRequest(any())).thenReturn(mockHappyCreateRequest());
     when(stockManagementRepository.getAllProductMovements(any(), any(), any())).thenReturn(mockPeriod());
 
@@ -261,7 +256,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .content(readFromFile("happy.json"))
         .characterEncoding("utf-8");
 
-    when(syncUpHashRepository.findOne(any(String.class))).thenReturn(null);
     when(stockCardCreateRequestValidator.validateStockCardCreateRequest(any())).thenReturn(mockHappyCreateRequest());
 
     // when
@@ -277,7 +271,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     verify(stockManagementRepository, times(52)).createStockCardLine(any(), any(), any());
     verify(stockManagementRepository, times(2)).createPhysicalInventory(any());
     verify(stockManagementRepository, times(5)).createPhysicalInventoryLine(any(), any(), any());
-    verify(syncUpHashRepository, times(1)).save(any(SyncUpHash.class));
   }
 
   @Test
@@ -472,7 +465,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .productCode("test")
         .stockQuantity(10)
         .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", serverProcessTime))
+            .fromDatabase(Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z"))
+        .processedAt(serverProcessTime.toInstant())
         .movementDetail(new MovementDetail(10, MovementType.ISSUE, "Maternidade"))
         .lotMovements(singletonList(movement1Lot1))
         .build();
@@ -485,7 +479,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .productCode("test")
         .stockQuantity(10)
         .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z", serverProcessTime))
+            .fromDatabase(Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z"))
+        .processedAt(serverProcessTime.toInstant())
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "District(DDM)"))
         .lotMovements(singletonList(movement2Lot1))
         .build();
@@ -493,7 +488,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .productCode("26A01")
         .stockQuantity(10)
         .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z", serverProcessTime))
+            .fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z"))
+        .processedAt(serverProcessTime.toInstant())
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "District(DDM)"))
         .build();
     return asList(movement1, movement2, movement3);

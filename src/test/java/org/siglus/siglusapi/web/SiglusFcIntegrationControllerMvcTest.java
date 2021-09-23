@@ -244,9 +244,10 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
         .productCode("test")
         .stockQuantity(10)
         .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+            .fromDatabase(Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z"))
         .movementDetail(new MovementDetail(10, MovementType.ISSUE, "MATERNITY"))
         .lotMovements(singletonList(movement1Lot1))
+        .processedAt(Timestamp.valueOf("2021-11-01 01:23:45").toInstant())
         .build();
     LotMovement movement2Lot1 = LotMovement.builder()
         .stockQuantity(10)
@@ -257,16 +258,18 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
         .productCode("test")
         .stockQuantity(10)
         .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+            .fromDatabase(Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z"))
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "DISTRICT_DDM"))
         .lotMovements(singletonList(movement2Lot1))
+        .processedAt(Timestamp.valueOf("2021-11-01 01:23:45").toInstant())
         .build();
     ProductMovement movement3 = ProductMovement.builder()
         .productCode("26A01")
         .stockQuantity(10)
         .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+            .fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z"))
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "DISTRICT_DDM"))
+        .processedAt(Timestamp.valueOf("2021-11-01 01:23:45").toInstant())
         .build();
     return asList(movement1, movement2, movement3);
   }
