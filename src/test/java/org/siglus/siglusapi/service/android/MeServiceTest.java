@@ -250,8 +250,6 @@ public class MeServiceTest {
 
   private final LocalDate periodEnd = LocalDate.of(2021, 5, 20);
 
-  private final Instant now = Instant.now();
-
   private final UUID facilityId = UUID.randomUUID();
   private final UUID userId = UUID.randomUUID();
 
@@ -1058,7 +1056,6 @@ public class MeServiceTest {
         .productCode(productCode)
         .periodBegin(periodBegin)
         .periodEnd(periodEnd)
-        .lastUpdated(Instant.now())
         .build();
     existFacilityCmm.setId(hfCmmId);
     return existFacilityCmm;
@@ -1071,7 +1068,6 @@ public class MeServiceTest {
         .productCode(productCode)
         .periodBegin(periodBegin)
         .periodEnd(periodEnd)
-        .lastUpdated(Instant.now())
         .build();
     hfCmm.setId(hfCmmId);
     return hfCmm;
@@ -1084,7 +1080,6 @@ public class MeServiceTest {
         .productCode(productCode)
         .periodBegin(periodBegin)
         .periodEnd(periodEnd)
-        .lastUpdated(now)
         .build();
     hfCmm.setId(hfCmmId);
     return hfCmm;

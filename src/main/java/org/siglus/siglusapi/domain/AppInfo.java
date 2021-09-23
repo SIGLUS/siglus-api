@@ -15,8 +15,9 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +25,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
@@ -31,6 +34,7 @@ import org.siglus.common.domain.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "app_info", schema = "siglusintegration")
 public class AppInfo extends BaseEntity {
 
@@ -48,5 +52,6 @@ public class AppInfo extends BaseEntity {
 
   private String username;
 
-  private Instant lastUpdated;
+  @LastModifiedDate
+  private ZonedDateTime lastUpdated;
 }

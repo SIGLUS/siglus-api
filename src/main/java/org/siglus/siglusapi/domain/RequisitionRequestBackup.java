@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -58,7 +57,7 @@ public class RequisitionRequestBackup extends BaseEntity {
 
   private Boolean emergency;
 
-  private Instant clientSubmittedTime;
+  private ZonedDateTime clientSubmittedTime;
 
   private String errorMessage;
 

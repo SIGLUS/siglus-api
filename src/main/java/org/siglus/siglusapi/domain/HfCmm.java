@@ -15,9 +15,10 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,6 +26,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
@@ -32,6 +35,7 @@ import org.siglus.common.domain.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "hf_cmms", schema = "siglusintegration")
 public class HfCmm extends BaseEntity {
 
@@ -45,5 +49,6 @@ public class HfCmm extends BaseEntity {
 
   private Double cmm;
 
-  private Instant lastUpdated;
+  @LastModifiedDate
+  private ZonedDateTime lastUpdated;
 }

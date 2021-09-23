@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.android.mapper;
 
-import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.UUID;
 import org.mapstruct.Context;
@@ -37,10 +36,6 @@ public interface PodOrderMapper {
       return null;
     }
     return toOrderResponse(orderIdToOrder.get(orderId), orderIdToOrder, orderIdToFacility, orderIdToRequisition);
-  }
-
-  default long toEpochMilli(ZonedDateTime dateTime) {
-    return dateTime.toInstant().toEpochMilli();
   }
 
   @Mapping(target = "code", source = "orderCode")

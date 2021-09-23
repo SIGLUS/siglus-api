@@ -23,6 +23,7 @@ import static org.siglus.common.constant.ExtraDataConstants.ACTUAL_END_DATE;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -200,7 +201,6 @@ public class MeService {
         .findByFacilityCodeAndUniqueId(appInfo.getFacilityCode(), appInfo.getUniqueId());
     UUID appInfoId = existAppInfo != null ? existAppInfo.getId() : UUID.randomUUID();
     appInfo.setId(appInfoId);
-    appInfo.setLastUpdated(Instant.now());
     log.info("process app-info , id: {}", appInfoId);
     appInfoRepository.save(appInfo);
   }
@@ -477,7 +477,6 @@ public class MeService {
         .periodEnd(hfCmmDto.getPeriodEnd())
         .periodBegin(hfCmmDto.getPeriodBegin())
         .productCode(hfCmmDto.getProductCode())
-        .lastUpdated(Instant.now())
         .build();
   }
 
@@ -551,7 +550,7 @@ public class MeService {
         .actualEndDate(request.getActualEndDate())
         .emergency(request.getEmergency())
         .programCode(request.getProgramCode())
-        .clientSubmittedTime(request.getClientSubmittedTime())
+        .clientSubmittedTime(request.getClientSubmittedTime().atZone(ZoneId.systemDefault()))
         .errorMessage(errorMessage)
         .requestBody(request)
         .build();

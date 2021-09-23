@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.response;
 
+import java.time.ZonedDateTime;
 import lombok.Data;
 
 @Data
@@ -30,9 +31,9 @@ public class OrderBasicResponse {
 
   private String status;
 
-  private Long createdDate;
+  private ZonedDateTime createdDate;
 
-  private Long lastModifiedDate;
+  private ZonedDateTime lastModifiedDate;
 
   private RequisitionBasicResponse requisition;
 
