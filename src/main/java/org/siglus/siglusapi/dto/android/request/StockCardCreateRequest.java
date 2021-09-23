@@ -35,6 +35,7 @@ import org.siglus.siglusapi.dto.android.constraint.stockcard.FacilityApprovedPro
 import org.siglus.siglusapi.dto.android.constraint.stockcard.KitProductEmptyLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithOwnLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductPositiveInitStockOnHand;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.RequestValidEventTime;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.SupportReasonName;
 import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 import org.siglus.siglusapi.dto.android.group.SelfCheckGroup;
@@ -46,6 +47,7 @@ import org.siglus.siglusapi.dto.android.group.SelfCheckGroup;
 @FacilityApprovedProduct(groups = PerformanceGroup.class)
 @SupportReasonName(groups = PerformanceGroup.class)
 @KitProductEmptyLots(groups = PerformanceGroup.class)
+@RequestValidEventTime
 public class StockCardCreateRequest implements StockCardAdjustment {
 
   @NotBlank

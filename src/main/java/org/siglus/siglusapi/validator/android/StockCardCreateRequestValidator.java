@@ -71,10 +71,8 @@ public class StockCardCreateRequestValidator {
   private InvalidProduct buildInvalidProductByViolation(ConstraintViolation<StockCardCreateService> violation) {
     String violationMessage = violation.getMessage();
     log.warn(violationMessage);
-    return InvalidProduct.builder().productCode(
-        (String) ((ConstraintViolationImpl<StockCardCreateService>) violation).getExpressionVariables()
-            .get("productCode"))
-        .errorMessage(violationMessage)
-        .build();
+    String productCode = (String) violation.unwrap(ConstraintViolationImpl.class).getExpressionVariables()
+        .get("productCode");
+    return InvalidProduct.builder().productCode(productCode).errorMessage(violationMessage).build();
   }
 }

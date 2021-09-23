@@ -628,6 +628,21 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     assertEquals(0, violations.size());
   }
 
+  @Test
+  public void shouldReturnViolationWhenValidateCreateStockCardsGivenInTheFuture()
+      throws IOException {
+    // given
+    Object param = parseParam("inTheFuture.json");
+
+    // when
+    Map<String, List<String>> violations = executeValidation(param);
+
+    // then
+    assertEquals(1, violations.size());
+    assertViolation("The movement date of 08O05Y cannot exceed current server time.",
+        "createStockCards.arg0[0]", violations);
+  }
+
   private void assertViolation(String message, String key, Map<String, List<String>> violations) {
     assertTrue(violations.containsKey(key));
     assertNotNull(violations.get(key));
