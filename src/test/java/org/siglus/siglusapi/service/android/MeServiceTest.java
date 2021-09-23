@@ -58,7 +58,6 @@ import java.util.Set;
 import java.util.UUID;
 import javax.validation.ConstraintViolationException;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -100,10 +99,8 @@ import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
-import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.FacilityResponse;
 import org.siglus.siglusapi.dto.android.response.ProductChildResponse;
-import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.dto.android.response.ProductResponse;
 import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
@@ -496,49 +493,6 @@ public class MeServiceTest {
 
     // then
     verify(stockCardDeleteService).deleteStockCardByProduct(stockCardDeleteRequests);
-  }
-
-  @Test
-  @Ignore
-  public void shouldGetProductMovementResponsesByLot() {
-    createSohValueByIsNolot(false);
-    FacilityProductMovementsResponse productMovementsResponse = service
-        .getProductMovements(LocalDate.of(2021, 6, 30), LocalDate.of(2021, 7, 2));
-    List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
-    ProductMovementResponse response = productMovementsResponseList.stream()
-        .filter(i -> i.getProductCode().equals(productCode1))
-        .findFirst().orElse(new ProductMovementResponse());
-
-    assertEquals(30, response.getStockOnHand().intValue());
-  }
-
-  @Test
-  @Ignore
-  public void shouldGetProductMovementResponsesWhenNoLot() {
-    createSohValueByIsNolot(true);
-    FacilityProductMovementsResponse productMovementsResponse = service
-        .getProductMovements(LocalDate.of(2021, 6, 30), LocalDate.of(2021, 7, 2));
-    List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
-    ProductMovementResponse response = productMovementsResponseList.stream()
-        .filter(i -> i.getProductCode().equals(productCode1))
-        .findFirst().orElse(new ProductMovementResponse());
-
-    assertEquals(emptyList(), response.getStockMovementItems());
-    assertEquals(30, response.getStockOnHand().intValue());
-  }
-
-  @Test
-  @Ignore
-  public void shouldGetProductMovementResponsesWhenNoMovement() {
-    createSohValueByIsNolot(false);
-    FacilityProductMovementsResponse productMovementsResponse = service
-        .getProductMovements(LocalDate.of(2021, 6, 30), LocalDate.of(2021, 7, 2));
-    List<ProductMovementResponse> productMovementsResponseList = productMovementsResponse.getProductMovements();
-    ProductMovementResponse response = productMovementsResponseList.stream()
-        .filter(i -> i.getProductCode().equals(productCode1))
-        .findFirst().orElse(new ProductMovementResponse());
-
-    assertEquals(30, response.getStockOnHand().intValue());
   }
 
   @Test

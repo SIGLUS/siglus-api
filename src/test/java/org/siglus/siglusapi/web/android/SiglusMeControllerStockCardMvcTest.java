@@ -18,12 +18,15 @@ package org.siglus.siglusapi.web.android;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,7 +34,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +46,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -47,7 +55,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -61,9 +68,14 @@ import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.dto.android.LotMovement;
+import org.siglus.siglusapi.dto.android.MovementDetail;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
+import org.siglus.siglusapi.dto.android.ProductLotStock;
+import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.db.PhysicalInventory;
@@ -71,6 +83,7 @@ import org.siglus.siglusapi.dto.android.db.ProductLot;
 import org.siglus.siglusapi.dto.android.db.StockCard;
 import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
 import org.siglus.siglusapi.dto.android.enumeration.Destination;
+import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.enumeration.Source;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
@@ -81,28 +94,47 @@ import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.android.MeService;
 import org.siglus.siglusapi.service.android.StockCardCreateService;
+import org.siglus.siglusapi.service.android.StockCardSearchService;
 import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
+import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
+import org.siglus.siglusapi.service.android.mapper.ProductMovementMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.RequestBuilder;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@SuppressWarnings("PMD.TooManyMethods")
-@RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = {MappingJackson2HttpMessageConverter.class, PageableHandlerMethodArgumentResolver.class,
+    ObjectMapper.class, ProductMovementMapperImpl.class})
 public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
 
   private MockMvc mockMvc;
 
+  @Autowired
+  private ObjectMapper objectMapper;
+  @Autowired
+  private MappingJackson2HttpMessageConverter jackson2HttpMessageConverter;
+  @Autowired
+  private ProductMovementMapper productMovementMapper;
+
   @InjectMocks
   private MeService service;
+  @InjectMocks
+  private StockCardSearchService stockCardSearchService;
 
   @Mock
   private SiglusAuthenticationHelper authHelper;
@@ -153,6 +185,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     mockApprovedProducts();
     mockSourceDestinations();
     mockReasons();
+    ReflectionTestUtils.setField(stockCardSearchService, "mapper", productMovementMapper);
+    ReflectionTestUtils.setField(service, "stockCardSearchService", stockCardSearchService);
     ReflectionTestUtils.setField(service, "stockCardCreateContextHolder", holder);
     ReflectionTestUtils.setField(service, "stockCardCreateService", stockCardCreateService);
     StocksOnHand stocksOnHand = new StocksOnHand(emptyList());
@@ -179,14 +213,44 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
       inventory.setId(UUID.randomUUID());
       return inventory;
     });
+    objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
+    objectMapper.registerModule(new JavaTimeModule());
+    jackson2HttpMessageConverter.setObjectMapper(objectMapper);
     SiglusMeController controller = new SiglusMeController(service);
-    this.mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+    this.mockMvc = MockMvcBuilders
+        .standaloneSetup(controller)
+        .setMessageConverters(jackson2HttpMessageConverter)
+        .build();
     mapper.registerModule(new JavaTimeModule());
     mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     mapper.configure(DeserializationFeature.READ_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
     stockCardCreateRequestListType = mapper.getTypeFactory()
         .constructCollectionType(List.class, StockCardCreateRequest.class);
     when(androidHelper.isAndroid()).thenReturn(false);
+  }
+
+  @Test
+  public void shouldReturnOkWhenGetStockCards() throws Exception {
+    // given
+    RequestBuilder request = get(
+        "/api/siglusapi/android/me/facility/stockCards?startTime=2021-01-01&endTime=2021-01-31")
+        .contentType(MediaType.APPLICATION_JSON)
+        .characterEncoding("utf-8");
+
+    when(syncUpHashRepository.findOne(any(String.class))).thenReturn(null);
+    when(stockCardCreateRequestValidator.validateStockCardCreateRequest(any())).thenReturn(mockHappyCreateRequest());
+    when(stockManagementRepository.getAllProductMovements(any(), any(), any())).thenReturn(mockPeriod());
+
+    // when
+    ResultActions resultActions = mockMvc.perform(request).andDo(print());
+
+    // then
+    resultActions.andExpect(status().isOk());
+    String target = readFromFile("get.json");
+    String response = resultActions.andReturn().getResponse().getContentAsString();
+    boolean equals = objectMapper.readValue(target, Map.class).equals(objectMapper.readValue(response, Map.class));
+    assertTrue(equals);
   }
 
   @Test
@@ -361,4 +425,77 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     return ValidatedStockCards.builder().validStockCardRequests(uatsRequests).invalidProducts(new ArrayList<>())
         .build();
   }
+
+  private PeriodOfProductMovements mockPeriod() {
+    return new PeriodOfProductMovements(mockProductMovements1(), mockStocksOnHand1());
+  }
+
+  private StocksOnHand mockStocksOnHand1() {
+    ProductLotStock lot1 = ProductLotStock.builder()
+        .code(ProductLotCode.of("test", "lot1"))
+        .productName("Test")
+        .stockQuantity(10)
+        .eventTime(EventTime.fromRequest(LocalDate.of(2021, 10, 1), Instant.now()))
+        .expirationDate(java.sql.Date.valueOf(LocalDate.of(2023, 12, 31)))
+        .build();
+    ProductLotStock lot2 = ProductLotStock.builder()
+        .code(ProductLotCode.of("test", "lot2"))
+        .productName("Test")
+        .stockQuantity(9)
+        .eventTime(EventTime.fromRequest(LocalDate.of(2021, 9, 15), Instant.now()))
+        .expirationDate(java.sql.Date.valueOf(LocalDate.of(2023, 12, 31)))
+        .build();
+    ProductLotStock lot3 = ProductLotStock.builder()
+        .code(ProductLotCode.of("test", "lot3"))
+        .productName("Test")
+        .stockQuantity(8)
+        .eventTime(EventTime.fromRequest(LocalDate.of(2021, 8, 31), Instant.now()))
+        .expirationDate(java.sql.Date.valueOf(LocalDate.of(2023, 12, 31)))
+        .build();
+    ProductLotStock kitLot = ProductLotStock.builder()
+        .code(ProductLotCode.of("26A01", null))
+        .productName("Some kit")
+        .stockQuantity(10)
+        .eventTime(EventTime.fromRequest(LocalDate.of(2021, 10, 31), Instant.now()))
+        .build();
+    return new StocksOnHand(asList(lot1, lot2, lot3, kitLot));
+  }
+
+  private List<ProductMovement> mockProductMovements1() {
+    LotMovement movement1Lot1 = LotMovement.builder()
+        .stockQuantity(10)
+        .movementDetail(new MovementDetail(10, MovementType.ISSUE, "Maternidade"))
+        .lot(Lot.of("lot1", java.sql.Date.valueOf("2023-12-31")))
+        .build();
+    ProductMovement movement1 = ProductMovement.builder()
+        .productCode("test")
+        .stockQuantity(10)
+        .eventTime(EventTime
+            .fromDatabase(Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+        .movementDetail(new MovementDetail(10, MovementType.ISSUE, "Maternidade"))
+        .lotMovements(singletonList(movement1Lot1))
+        .build();
+    LotMovement movement2Lot1 = LotMovement.builder()
+        .stockQuantity(10)
+        .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "District(DDM)"))
+        .lot(Lot.of("lot1", java.sql.Date.valueOf("2023-12-31")))
+        .build();
+    ProductMovement movement2 = ProductMovement.builder()
+        .productCode("test")
+        .stockQuantity(10)
+        .eventTime(EventTime
+            .fromDatabase(Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+        .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "District(DDM)"))
+        .lotMovements(singletonList(movement2Lot1))
+        .build();
+    ProductMovement movement3 = ProductMovement.builder()
+        .productCode("26A01")
+        .stockQuantity(10)
+        .eventTime(EventTime
+            .fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+        .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "District(DDM)"))
+        .build();
+    return asList(movement1, movement2, movement3);
+  }
+
 }
