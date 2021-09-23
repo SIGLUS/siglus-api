@@ -467,11 +467,12 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .movementDetail(new MovementDetail(10, MovementType.ISSUE, "Maternidade"))
         .lot(Lot.of("lot1", java.sql.Date.valueOf("2023-12-31")))
         .build();
+    Timestamp serverProcessTime = new Timestamp(1635701025000L);
     ProductMovement movement1 = ProductMovement.builder()
         .productCode("test")
         .stockQuantity(10)
         .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+            .fromDatabase(Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", serverProcessTime))
         .movementDetail(new MovementDetail(10, MovementType.ISSUE, "Maternidade"))
         .lotMovements(singletonList(movement1Lot1))
         .build();
@@ -484,7 +485,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .productCode("test")
         .stockQuantity(10)
         .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+            .fromDatabase(Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z", serverProcessTime))
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "District(DDM)"))
         .lotMovements(singletonList(movement2Lot1))
         .build();
@@ -492,7 +493,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
         .productCode("26A01")
         .stockQuantity(10)
         .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z", Timestamp.valueOf("2021-11-01 01:23:45")))
+            .fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z", serverProcessTime))
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "District(DDM)"))
         .build();
     return asList(movement1, movement2, movement3);
