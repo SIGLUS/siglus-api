@@ -47,7 +47,7 @@ public final class SearchParams implements Serializable {
   private static final String SORT = "sort";
   private static final String ACCESS_TOKEN = "access_token";
 
-  private MultiValueMap<String, Object> params;
+  private transient MultiValueMap<String, Object> params;
 
   /**
    * Constructs new SearchParams object from {@code MultiValueMap}.

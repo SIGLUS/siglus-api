@@ -112,7 +112,7 @@ public abstract class MessageKeys {
 
   public static final String ERROR_VALIDATION_FAIL = "siglusapi.error.validationFail";
 
-  public static final String SERVICE_ERROR = join(SERVICE_PREFIX, "error");
+  public static final String SERVICE_ERROR = join(SERVICE_PREFIX, ERROR);
   public static final String FORMAT = "format";
   public static final String UUID = "uuid";
   public static final String DATE = "date";

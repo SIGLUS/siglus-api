@@ -44,7 +44,7 @@ public final class ProcessingPeriodSearchParams {
   private static final List<String> ALL_PARAMETERS =
       asList(PROGRAM_ID, FACILITY_ID, PROCESSING_SCHEDULE_ID, START_DATE, END_DATE, ID);
 
-  private SearchParams queryParams;
+  private final SearchParams queryParams;
 
   /**
    * Wraps map of query params into an object.

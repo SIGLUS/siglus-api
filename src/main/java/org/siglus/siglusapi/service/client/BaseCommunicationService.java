@@ -336,6 +336,7 @@ public abstract class BaseCommunicationService<T> {
     }
   }
 
+  @SuppressWarnings("java:S3740")
   protected <K, V> Map<K, V> getMap(String resourceUrl, RequestParameters parameters,
                                     Class<K> keyType, Class<V> valueType) {
     String url = getServiceUrl() + getUrl() + StringUtils.defaultIfBlank(resourceUrl, "");
