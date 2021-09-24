@@ -2384,16 +2384,16 @@ traits:
                     schema: facilityResponse
 
           /cmms:
-            displayName: update facility cmms info
-            put:
+            displayName: create facility cmms info
+            post:
               is: [ secured ]
-              description: update facility cmms info
+              description: create facility cmms info
               body:
                 application/json:
                   schema: hfCmmsDtos
               responses:
                 204:
-                  description: Full update facility cmms of current facility
+                  description: Full create facility cmms of current facility
 
           /products:
             displayName: Products of the current facility

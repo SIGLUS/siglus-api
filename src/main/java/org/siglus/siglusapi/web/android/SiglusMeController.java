@@ -104,7 +104,7 @@ public class SiglusMeController {
     service.deleteStockCardByProduct(requests);
   }
 
-  @PutMapping(value = "/facility/cmms")
+  @PostMapping("/facility/cmms")
   @ResponseStatus(NO_CONTENT)
   public void updateCmmsForFacility(@RequestBody List<HfCmmDto> hfCmmDtos) {
     service.processHfCmms(hfCmmDtos);
