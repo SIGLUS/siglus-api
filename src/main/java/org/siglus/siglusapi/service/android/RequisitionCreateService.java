@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toMap;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
 import static org.openlmis.requisition.web.ResourceNames.PROCESSING_PERIODS;
 import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
@@ -69,7 +71,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
@@ -293,14 +294,15 @@ public class RequisitionCreateService {
     if (CollectionUtils.isEmpty(requisition.getRequisitionLineItems())) {
       return;
     }
+    log.info("requisition line size: {}", requisition.getRequisitionLineItems().size());
+    log.info("requisition request product count: {}", requisitionRequest.getProducts().size());
+    Map<UUID, RequisitionLineItemRequest> productIdToLineItems = requisitionRequest.getProducts().stream().collect(
+        toMap(product -> siglusOrderableService.getOrderableByCode(product.getProductCode()).getId(), identity()));
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
       extension.setRequisitionLineItemId(requisitionLineItem.getId());
-      RequisitionLineItemRequest requisitionProduct = requisitionRequest.getProducts().stream()
-          .filter(product -> siglusOrderableService.getOrderableByCode(product.getProductCode()).getId()
-              .equals(requisitionLineItem.getOrderable().getId()))
-          .findFirst()
-          .orElse(new RequisitionLineItemRequest());
+      RequisitionLineItemRequest requisitionProduct = productIdToLineItems
+          .getOrDefault(requisitionLineItem.getOrderable().getId(), new RequisitionLineItemRequest());
       extension.setAuthorizedQuantity(requisitionProduct.getAuthorizedQuantity());
       extension.setExpirationDate(requisitionProduct.getExpirationDate());
       log.info("save requisition line item extensions: {}", extension);
@@ -404,7 +406,7 @@ public class RequisitionCreateService {
       return;
     }
     Map<String, PatientGroupDto> patientNameToPatientGroupDto = requisitionDto.getPatientLineItems().stream()
-        .collect(Collectors.toMap(PatientGroupDto::getName, Function.identity()));
+        .collect(toMap(PatientGroupDto::getName, identity()));
     List<PatientLineItemsRequest> patientLineItemsRequests = request.getPatientLineItems();
     splitTableDispensedPatientData(patientLineItemsRequests);
     patientLineItemsRequests.forEach(patientRequest ->
@@ -520,7 +522,7 @@ public class RequisitionCreateService {
     }
     Map<String, RegimenSummaryLineDto> regimenNameToRegimenSummaryLineDto = requisitionDto.getRegimenSummaryLineItems()
         .stream()
-        .collect(Collectors.toMap(RegimenSummaryLineDto::getName, Function.identity()));
+        .collect(toMap(RegimenSummaryLineDto::getName, identity()));
 
     request.getRegimenSummaryLineItems().forEach(
         summaryRequest -> buildRegimenSummaryPatientsAndCommunity(
@@ -554,7 +556,7 @@ public class RequisitionCreateService {
     }
     Map<String, Map<String, TestConsumptionProjectDto>> serviceToTestProjectDto = requisitionDto
         .getTestConsumptionLineItems().stream()
-        .collect(Collectors.toMap(TestConsumptionServiceDto::getService, TestConsumptionServiceDto::getProjects));
+        .collect(toMap(TestConsumptionServiceDto::getService, TestConsumptionServiceDto::getProjects));
     request.getTestConsumptionLineItems().forEach(item -> buildTestOutcomeValue(item, serviceToTestProjectDto));
   }
 
@@ -586,9 +588,9 @@ public class RequisitionCreateService {
       return;
     }
     Map<String, RegimenDto> regimenCodeToRegimenDto = regimenDtosByProgramId.stream()
-        .collect(Collectors.toMap(RegimenDto::getCode, Function.identity()));
+        .collect(toMap(RegimenDto::getCode, identity()));
     Map<UUID, RegimenDto> regimenIdToRegimenDto = regimenDtosByProgramId.stream()
-        .collect(Collectors.toMap(RegimenDto::getId, Function.identity()));
+        .collect(toMap(RegimenDto::getId, identity()));
     List<RegimenLineItem> regimenLineItems = buildRegimenPatientsAndCommunity(request.getRegimenLineItems(),
         regimenCodeToRegimenDto);
     requisitionDto.setRegimenLineItems(RegimenLineDto.from(regimenLineItems, regimenIdToRegimenDto));
