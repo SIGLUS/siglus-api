@@ -628,12 +628,6 @@ public class StockManagementRepository {
     ProductMovementBuilder movementBuilder = ProductMovement.builder()
         .productCode(key.getProductCode())
         .eventTime(key.getEventTime());
-    Integer requestedQuantity = productLotMovements.stream().findAny().map(ProductLotMovement::getRequestedQuantity)
-        .orElse(null);
-    movementBuilder.requestedQuantity(requestedQuantity);
-    Instant processedDate = productLotMovements.stream().findAny().map(ProductLotMovement::getProcessedAt)
-        .orElse(null);
-    movementBuilder.processedAt(processedDate);
     ProductLotMovement anyLot;
     if (isNoStock(productLotMovements)) {
       ProductLotMovement theOnlyLot = productLotMovements.get(0);
@@ -669,6 +663,8 @@ public class StockManagementRepository {
     } else {
       throw new IllegalStateException("dirty data");
     }
+    movementBuilder.requestedQuantity(anyLot.getRequestedQuantity());
+    movementBuilder.processedAt(anyLot.getProcessedAt());
     movementBuilder.signature(anyLot.getSignature());
     return movementBuilder.build();
   }
