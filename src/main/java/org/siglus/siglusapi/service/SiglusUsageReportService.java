@@ -60,6 +60,7 @@ import org.siglus.siglusapi.dto.SiglusUsageTemplateDto;
 import org.siglus.siglusapi.dto.UsageTemplateSectionDto;
 import org.siglus.siglusapi.repository.KitUsageLineItemRepository;
 import org.siglus.siglusapi.repository.UsageTemplateColumnSectionRepository;
+import org.slf4j.profiler.Profiler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -192,15 +193,23 @@ public class SiglusUsageReportService {
       SiglusRequisitionDto siglusRequisitionDto) {
     if (isEnableKit(requisitionV2Dto, templateColumnSections)) {
       log.info("get all kit products");
+      Profiler profiler = new Profiler("getAllKits");
+      profiler.setLogger(log);
+      profiler.start("get kit products");
       List<Orderable> kitProducts = getKitProducts(requisitionV2Dto);
+      profiler.start("get kit stock card range summary");
       List<StockCardRangeSummaryDto> stockCardRangeSummaryDtos = stockCardRangeSummaryDtos(templateColumnSections,
           requisitionV2Dto, kitProducts);
+      profiler.start("get kit lines");
       List<KitUsageLineItem> kitUsageLineItems = getKitUsageLineItems(requisitionV2Dto,
           templateColumnSections, kitProducts, stockCardRangeSummaryDtos);
       log.info("save all kit line item: {}", kitUsageLineItems);
+      profiler.start("save kit lines");
       List<KitUsageLineItem> kitUsageLineUpdate = kitUsageRepository.save(kitUsageLineItems);
+      profiler.start("get kit lines from saved");
       List<KitUsageLineItemDto> kitDtos = getKitUsageLineItemDtos(kitUsageLineUpdate);
       siglusRequisitionDto.setKitUsageLineItems(kitDtos);
+      profiler.stop().log();
     }
   }
 

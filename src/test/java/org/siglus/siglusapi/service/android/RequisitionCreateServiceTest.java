@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -107,9 +108,11 @@ import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
+import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.web.android.FileBasedTest;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.PageImpl;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
@@ -129,6 +132,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @Mock
   private SiglusOrderableService siglusOrderableService;
+
+  @Mock
+  private SiglusOrderableReferenceDataService orderableDataService;
 
   @Mock
   private SiglusAuthenticationHelper authHelper;
@@ -247,7 +253,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(authHelper.getCurrentUser()).thenReturn(user);
     ApprovedProductDto productDto = createApprovedProductDto(orderableId);
     when(requisitionService.getApproveProduct(facilityId, programId, false))
-        .thenReturn(new ApproveProductsAggregator(Collections.singletonList(productDto), programId));
+        .thenReturn(new ApproveProductsAggregator(singletonList(productDto), programId));
     RequisitionTemplate template = new RequisitionTemplate();
     template.setId(templateId);
     when(requisitionTemplateService.findTemplateById(templateId)).thenReturn(template);
@@ -255,6 +261,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
     when(siglusOrderableService.getOrderableByCode("02A01")).thenReturn(orderableDto);
+    when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
     supervisoryNodeDto.setId(supervisoryNodeId);
     when(supervisoryNodeService.findSupervisoryNode(programId, facilityId)).thenReturn(supervisoryNodeDto);
@@ -390,7 +397,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     mlTemplate.setId(malariaTemplateId);
     ApprovedProductDto productDto = createApprovedProductDto(mlOrderableId);
     when(requisitionService.getApproveProduct(facilityId, malariaProgramId, true))
-        .thenReturn(new ApproveProductsAggregator(Collections.singletonList(productDto), malariaProgramId));
+        .thenReturn(new ApproveProductsAggregator(singletonList(productDto), malariaProgramId));
     when(requisitionTemplateService.findTemplateById(malariaTemplateId)).thenReturn(mlTemplate);
     when(siglusProgramService.getProgramIdByCode("ML")).thenReturn(malariaProgramId);
     when(requisitionRepository.save(requisitionArgumentCaptor.capture()))
@@ -420,7 +427,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     mmiaTemplate.setId(mmiaTemplateId);
     ApprovedProductDto productDto = createApprovedProductDto(mmiaOrderableId);
     when(requisitionService.getApproveProduct(facilityId, mmiaProgramId, false))
-        .thenReturn(new ApproveProductsAggregator(Collections.singletonList(productDto), mmiaProgramId));
+        .thenReturn(new ApproveProductsAggregator(singletonList(productDto), mmiaProgramId));
     when(requisitionTemplateService.findTemplateById(mmiaTemplateId)).thenReturn(mmiaTemplate);
     when(siglusProgramService.getProgramIdByCode("T")).thenReturn(mmiaProgramId);
     when(requisitionRepository.save(requisitionArgumentCaptor.capture()))
@@ -470,7 +477,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     trTemplate.setId(rapidtestTemplateId);
     ApprovedProductDto productDto = createApprovedProductDto(rapidTestOrderableId);
     when(requisitionService.getApproveProduct(facilityId, rapidTestProgramId, false))
-        .thenReturn(new ApproveProductsAggregator(Collections.singletonList(productDto), rapidTestProgramId));
+        .thenReturn(new ApproveProductsAggregator(singletonList(productDto), rapidTestProgramId));
     when(requisitionTemplateService.findTemplateById(rapidtestTemplateId)).thenReturn(trTemplate);
     when(siglusProgramService.getProgramIdByCode("TR")).thenReturn(rapidTestProgramId);
     when(requisitionRepository.save(requisitionArgumentCaptor.capture()))
@@ -575,7 +582,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .requestedQuantity(28)
         .authorizedQuantity(30)
         .build();
-    return Collections.singletonList(product);
+    return singletonList(product);
   }
 
   private List<RequisitionSignatureRequest> buildSignatures() {
@@ -615,7 +622,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     VersionEntityReference orderable = new VersionEntityReference();
     orderable.setId(orderableId);
     requisitionLineItem.setOrderable(orderable);
-    requisition.setRequisitionLineItems(Collections.singletonList(requisitionLineItem));
+    requisition.setRequisitionLineItems(singletonList(requisitionLineItem));
     requisition.setTemplate(template);
     return requisition;
   }
@@ -633,7 +640,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     consultationNumberColumnDtoMap.put("consultationNumber", new ConsultationNumberColumnDto(UUID.randomUUID(), 20));
     consultationNumberGroupDto.setColumns(consultationNumberColumnDtoMap);
     SiglusRequisitionDto requisitionDto = new SiglusRequisitionDto();
-    requisitionDto.setConsultationNumberLineItems(Collections.singletonList(consultationNumberGroupDto));
+    requisitionDto.setConsultationNumberLineItems(singletonList(consultationNumberGroupDto));
     return requisitionDto;
   }
 
