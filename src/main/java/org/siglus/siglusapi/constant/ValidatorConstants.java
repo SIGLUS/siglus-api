@@ -19,10 +19,14 @@ public class ValidatorConstants {
 
   private ValidatorConstants() {}
 
-  public static final String MESSAGE_SYNC = "Sync [";
-
-  public static final String MESSAGE_SYNC_PT = "Erro na sincronização do produto [";
+  public static final String MESSAGE_DETAIL_START = "Sync [";
 
   public static final String PRODUCT_CODE = "productCode";
+
+  public static final String MESSAGE_DETAIL_END = "] error.";
+
+  public static final String MESSAGE_DETAIL_LINE_END = "\n";
+
+  public static final String MESSAGE_DETAIL_COMMA = ",";
 
 }

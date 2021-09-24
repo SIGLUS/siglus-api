@@ -38,38 +38,27 @@ public class CreateStockCardResponse {
 
   private Integer status;
 
-  private String message;
-
-  private String messageInPortuguese;
-
   private String details;
 
   private List<String> errorProductCodes;
 
   public static CreateStockCardResponse from(ValidatedStockCards validatedStockCards) {
-    StringBuilder message = new StringBuilder(ValidatorConstants.MESSAGE_SYNC);
-    StringBuilder messageInPortuguese = new StringBuilder(ValidatorConstants.MESSAGE_SYNC_PT);
-    String messageInvalidCodes = "";
-    String allInvalidCodes = "";
-    String errorMessages = "";
+    StringBuilder details = new StringBuilder();
     Set<String> invalidProductCodes = new HashSet<>();
     if (!CollectionUtils.isEmpty(validatedStockCards.getInvalidProducts())) {
       invalidProductCodes = validatedStockCards.getInvalidProducts().stream()
           .map(InvalidProduct::getProductCode).collect(Collectors.toSet());
-      messageInvalidCodes = invalidProductCodes.stream().limit(3).collect(Collectors.joining(","));
-      allInvalidCodes = invalidProductCodes.stream().collect(Collectors.joining(","));
-      errorMessages = validatedStockCards.getInvalidProducts().stream().map(InvalidProduct::getErrorMessage)
-          .collect(Collectors.joining("\n"));
+      String allInvalidCodes = String.join(ValidatorConstants.MESSAGE_DETAIL_COMMA, invalidProductCodes);
+      String errorMessages = validatedStockCards.getInvalidProducts().stream().map(InvalidProduct::getErrorMessage)
+          .collect(Collectors.joining(ValidatorConstants.MESSAGE_DETAIL_LINE_END));
+      details.append(ValidatorConstants.MESSAGE_DETAIL_START).append(allInvalidCodes)
+          .append(ValidatorConstants.MESSAGE_DETAIL_END)
+          .append(errorMessages);
     }
-    StringBuilder details = new StringBuilder(ValidatorConstants.MESSAGE_SYNC);
-    message.append(messageInvalidCodes).append("] error.");
-    messageInPortuguese.append(messageInvalidCodes).append("].");
-    details.append(allInvalidCodes).append("] error.\n").append(errorMessages);
     return CreateStockCardResponse.builder()
-        .message(message.toString())
-        .messageInPortuguese(messageInPortuguese.toString())
         .errorProductCodes(new ArrayList<>(invalidProductCodes))
-        .details(details.toString()).status(HttpStatus.CREATED.value())
+        .details(details.toString())
+        .status(HttpStatus.CREATED.value())
         .build();
   }
 
