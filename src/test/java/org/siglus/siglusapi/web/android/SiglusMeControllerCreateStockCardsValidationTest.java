@@ -640,7 +640,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     // then
     assertEquals(1, violations.size());
     assertViolation("The movement date of 08O05Y cannot exceed current server time.",
-        "createStockCards.arg0[0].<collection element>", violations);
+        "createStockCards.arg0[0]", violations);
   }
 
   private void assertViolation(String message, String key, Map<String, List<String>> violations) {

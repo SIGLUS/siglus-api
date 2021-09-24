@@ -52,7 +52,6 @@ import org.siglus.siglusapi.dto.android.ProductMovementKey;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithAllLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementConsistentWithExisted;
-import org.siglus.siglusapi.dto.android.constraint.stockcard.RequestValidEventTime;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByLot;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByProduct;
 import org.siglus.siglusapi.dto.android.db.CalculatedStockOnHand;
@@ -107,7 +106,7 @@ public class StockCardCreateService {
       @ProductConsistentWithAllLots(groups = SelfCheckGroup.class)
       @LotStockConsistentWithExisted(groups = PerformanceGroup.class)
       @ProductMovementConsistentWithExisted(groups = PerformanceGroup.class)
-          List<@RequestValidEventTime StockCardCreateRequest> requests) {
+          List<StockCardCreateRequest> requests) {
     Profiler profiler = new Profiler("createStockCards");
     profiler.setLogger(log);
     FacilityDto facility = getContext().getFacility();
@@ -160,7 +159,7 @@ public class StockCardCreateService {
           Lot lot = productLot.getLot();
           String productCode = productLot.getProductCode();
           if (lot == null) {
-            ensureStockCard(productCode, null, null, earliestDate);
+            loadStockCardToContext(productCode, null, null, earliestDate);
             return;
           }
           String lotCode = lot.getCode();
@@ -174,7 +173,7 @@ public class StockCardCreateService {
               getContext().newLot(newCreated);
               return;
             } else {
-              ensureStockCard(productCode, lot, existedLot.getId(), earliestDate);
+              loadStockCardToContext(productCode, lot, existedLot.getId(), earliestDate);
             }
             cachedLot = existedLot;
             getContext().newLot(existedLot);
@@ -184,7 +183,7 @@ public class StockCardCreateService {
     );
   }
 
-  private void ensureStockCard(String productCode, Lot lot, UUID lotId, EventTime earliestDate) {
+  private void loadStockCardToContext(String productCode, Lot lot, UUID lotId, EventTime earliestDate) {
     UUID facilityId = getContext().getFacility().getId();
     UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
     UUID productId = getContext().getProductId(productCode);

@@ -35,12 +35,14 @@ import org.siglus.siglusapi.dto.android.constraint.stockcard.FacilityApprovedPro
 import org.siglus.siglusapi.dto.android.constraint.stockcard.KitProductEmptyLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithOwnLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductPositiveInitStockOnHand;
+import org.siglus.siglusapi.dto.android.constraint.stockcard.RequestValidEventTime;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.SupportReasonName;
 import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 import org.siglus.siglusapi.dto.android.group.SelfCheckGroup;
 
 @Data
 @NoArgsConstructor
+@RequestValidEventTime(groups = SelfCheckGroup.class)
 @ProductConsistentWithOwnLots(groups = SelfCheckGroup.class)
 @ProductPositiveInitStockOnHand(groups = SelfCheckGroup.class)
 @FacilityApprovedProduct(groups = PerformanceGroup.class)
