@@ -59,7 +59,7 @@ public class SiglusStockManagementDraftService {
   private PermissionService permissionService;
 
   @Autowired
-  private SupportedProgramsHelper supportedVirtualProgramsHelper;
+  private SupportedProgramsHelper supportedProgramsHelper;
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
@@ -126,14 +126,14 @@ public class SiglusStockManagementDraftService {
   }
 
   private void checkPermission(UUID facility) {
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+    Set<UUID> supportedPrograms = supportedProgramsHelper
         .findUserSupportedPrograms();
-    if (CollectionUtils.isEmpty(supportedVirtualPrograms)) {
+    if (CollectionUtils.isEmpty(supportedPrograms)) {
       throw new PermissionMessageException(
           new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
               ALL_PRODUCTS_PROGRAM_ID));
     }
-    supportedVirtualPrograms.forEach(i -> permissionService.canAdjustStock(i, facility));
+    supportedPrograms.forEach(i -> permissionService.canAdjustStock(i, facility));
   }
 
   private void checkIfDraftExists(StockManagementDraftDto dto) {

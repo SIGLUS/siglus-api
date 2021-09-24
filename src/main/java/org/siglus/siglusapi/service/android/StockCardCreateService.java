@@ -231,7 +231,7 @@ public class StockCardCreateService {
   }
 
   private ProductLot toProductNoLot(StockCardCreateRequest r) {
-    return new ProductLot(ProductLotCode.of(r.getProductCode(), null), null);
+    return new ProductLot(ProductLotCode.of(r.getProductCode(), null));
   }
 
   private void handleLotConflict(String lotCode, LocalDate expirationDate, ProductLot cached) {

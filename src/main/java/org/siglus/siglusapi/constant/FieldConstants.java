@@ -70,4 +70,10 @@ public class FieldConstants {
 
   public static final String DELETE = "delete";
 
+  public static final String RECEIVE = "receive";
+
+  public static final String ISSUE = "issue";
+
+  public static final String ADJUSTMENT = "adjustment";
+
 }

@@ -58,7 +58,7 @@ public class SiglusValidSourceDestinationServiceTest {
   private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
 
   @Mock
-  private SupportedProgramsHelper supportedVirtualProgramsHelper;
+  private SupportedProgramsHelper supportedProgramsHelper;
 
   @Mock
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
@@ -102,7 +102,7 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @Test
   public void shouldCallGetValidDestinationsMultipleTimesWhenFindDestinationsForAllProducts() {
-    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findUserSupportedPrograms())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
     siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId);
@@ -120,7 +120,7 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @Test
   public void shouldCallGetValidSourcesMultipleTimesWhenFindSourcesForAllProducts() {
-    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findUserSupportedPrograms())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
     siglusValidSourceDestinationService.findSourcesForAllProducts(facilityId);
@@ -165,7 +165,7 @@ public class SiglusValidSourceDestinationServiceTest {
     Set<UUID> programIds = new HashSet<>();
     programIds.add(programId);
     programIds.add(programId2);
-    when(supportedVirtualProgramsHelper.findUserSupportedPrograms()).thenReturn(programIds);
+    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(programIds);
 
     when(facilityReferenceDataService.findOne(facilityId))
         .thenReturn(buildFacilityDtoByFaclityIdAndTypeCode(facilityId, FacilityTypeConstants.CS));

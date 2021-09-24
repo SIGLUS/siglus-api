@@ -40,7 +40,7 @@ public class SiglusValidReasonAssignmentServiceTest {
   private ValidReasonAssignmentStockManagementService validReasonAssignmentStockManagementService;
 
   @Mock
-  private SupportedProgramsHelper supportedVirtualProgramsHelper;
+  private SupportedProgramsHelper supportedProgramsHelper;
 
   private final UUID programId = UUID.randomUUID();
 
@@ -60,7 +60,7 @@ public class SiglusValidReasonAssignmentServiceTest {
 
   @Test
   public void shouldCallGetValidReasonsMultipleTimesWhenGetValidReasonsForAllProducts() {
-    when(supportedVirtualProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findUserSupportedPrograms())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
     siglusValidReasonAssignmentService

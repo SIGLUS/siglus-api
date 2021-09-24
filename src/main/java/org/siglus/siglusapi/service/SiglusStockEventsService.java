@@ -17,6 +17,9 @@ package org.siglus.siglusapi.service;
 
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang.StringUtils.isBlank;
+import static org.siglus.siglusapi.constant.FieldConstants.ADJUSTMENT;
+import static org.siglus.siglusapi.constant.FieldConstants.ISSUE;
+import static org.siglus.siglusapi.constant.FieldConstants.RECEIVE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
@@ -350,11 +353,11 @@ public class SiglusStockEventsService {
 
   private String getType(StockEventDto eventDto) {
     if (eventDto.hasSource()) {
-      return "receive";
+      return RECEIVE;
     } else if (eventDto.hasDestination()) {
-      return "issue";
+      return ISSUE;
     } else {
-      return "adjustment";
+      return ADJUSTMENT;
     }
   }
 

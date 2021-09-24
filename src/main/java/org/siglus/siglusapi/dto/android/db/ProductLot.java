@@ -42,6 +42,11 @@ public class ProductLot {
     }
   }
 
+  public ProductLot(ProductLotCode code) {
+    this.productCode = code.getProductCode();
+    this.lot = null;
+  }
+
   @Override
   public boolean equals(Object other) {
     if (!(other instanceof ProductLot)) {

@@ -75,7 +75,7 @@ public class SiglusPhysicalInventoryService {
   private PhysicalInventoryService physicalInventoryService;
 
   @Autowired
-  private SupportedProgramsHelper supportedVirtualProgramsHelper;
+  private SupportedProgramsHelper supportedProgramsHelper;
 
   @Autowired
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
@@ -126,8 +126,8 @@ public class SiglusPhysicalInventoryService {
   }
 
   public void checkDraftIsExist(UUID facilityId) {
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper.findUserSupportedPrograms();
-    List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream()
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findUserSupportedPrograms();
+    List<PhysicalInventoryDto> inventories = supportedPrograms.stream()
         .map(programId -> getPhysicalInventoryDtosDirectly(programId, facilityId, Boolean.TRUE))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
@@ -182,14 +182,14 @@ public class SiglusPhysicalInventoryService {
       Boolean isDraft,
       boolean canInitialInventory) {
     try {
-      Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+      Set<UUID> supportedPrograms = supportedProgramsHelper
           .findUserSupportedPrograms();
-      if (CollectionUtils.isEmpty(supportedVirtualPrograms)) {
+      if (CollectionUtils.isEmpty(supportedPrograms)) {
         throw new PermissionMessageException(
             new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
                 ALL_PRODUCTS_PROGRAM_ID));
       }
-      List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
+      List<PhysicalInventoryDto> inventories = supportedPrograms.stream().map(
           supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facilityId,
               isDraft)).flatMap(Collection::stream).collect(Collectors.toList());
 
@@ -202,7 +202,7 @@ public class SiglusPhysicalInventoryService {
         PhysicalInventoryDto resultInventory = getResultInventory(inventories, extensions);
         return Collections.singletonList(resultInventory);
       }
-      PhysicalInventoryDto dto = createInitialInventoryDraftForAllProducts(supportedVirtualPrograms,
+      PhysicalInventoryDto dto = createInitialInventoryDraftForAllProducts(supportedPrograms,
           facilityId, canInitialInventory);
       if (dto != null) {
         inventories.add(dto);
@@ -215,9 +215,9 @@ public class SiglusPhysicalInventoryService {
   }
 
   private PhysicalInventoryDto doCreateNewDraftForAllProducts(PhysicalInventoryDto dto, boolean directly) {
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+    Set<UUID> supportedPrograms = supportedProgramsHelper
         .findUserSupportedPrograms();
-    List<PhysicalInventoryDto> inventories = supportedVirtualPrograms.stream().map(
+    List<PhysicalInventoryDto> inventories = supportedPrograms.stream().map(
         supportedVirtualProgram -> {
           dto.setProgramId(supportedVirtualProgram);
           if (directly) {
@@ -233,9 +233,9 @@ public class SiglusPhysicalInventoryService {
   }
 
   private void doDeletePhysicalInventoryForAllProducts(UUID facilityId, boolean directly) {
-    Set<UUID> supportedVirtualPrograms = supportedVirtualProgramsHelper
+    Set<UUID> supportedPrograms = supportedProgramsHelper
         .findUserSupportedPrograms();
-    List<UUID> ids = supportedVirtualPrograms.stream().map(
+    List<UUID> ids = supportedPrograms.stream().map(
         supportedVirtualProgram -> physicalInventoriesRepository
             .findIdByProgramIdAndFacilityIdAndIsDraft(supportedVirtualProgram, facilityId,
                 Boolean.TRUE))
@@ -315,10 +315,10 @@ public class SiglusPhysicalInventoryService {
 
 
   private PhysicalInventoryDto createInitialInventoryDraftForAllProducts(
-      Set<UUID> supportedVirtualPrograms, UUID facilityId, boolean canInitialInventory) {
+      Set<UUID> supportedPrograms, UUID facilityId, boolean canInitialInventory) {
     if (canInitialInventory(facilityId).isCanInitialInventory()) {
       List<PhysicalInventoryLineItemDto> physicalInventoryLineItemDtos =
-          buildInitialInventoryLineItemDtos(supportedVirtualPrograms, facilityId);
+          buildInitialInventoryLineItemDtos(supportedPrograms, facilityId);
       PhysicalInventoryDto dto = PhysicalInventoryDto.builder()
           .facilityId(facilityId)
           .programId(ALL_PRODUCTS_PROGRAM_ID)

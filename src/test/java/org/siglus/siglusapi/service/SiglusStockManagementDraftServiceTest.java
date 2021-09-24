@@ -74,7 +74,7 @@ public class SiglusStockManagementDraftServiceTest {
   private StockManagementDraftValidator stockManagementDraftValidator;
 
   @Mock
-  private SupportedProgramsHelper supportedVirtualProgramsHelper;
+  private SupportedProgramsHelper supportedProgramsHelper;
 
   @Mock
   private PermissionService permissionService;
@@ -160,7 +160,7 @@ public class SiglusStockManagementDraftServiceTest {
     // given
     StockManagementDraft draft = StockManagementDraft.builder().build();
     when(stockManagementDraftRepository.findOne(id)).thenReturn(draft);
-    when(supportedVirtualProgramsHelper.findUserSupportedPrograms()).thenReturn(null);
+    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(null);
 
     // when
     siglusStockManagementDraftService.deleteStockManagementDraft(id);
@@ -171,9 +171,9 @@ public class SiglusStockManagementDraftServiceTest {
     // given
     StockManagementDraft draft = StockManagementDraft.builder().build();
     when(stockManagementDraftRepository.findOne(id)).thenReturn(draft);
-    Set<UUID> supportedVirtualPrograms = new HashSet<>();
-    supportedVirtualPrograms.add(UUID.randomUUID());
-    when(supportedVirtualProgramsHelper.findUserSupportedPrograms()).thenReturn(supportedVirtualPrograms);
+    Set<UUID> supportedPrograms = new HashSet<>();
+    supportedPrograms.add(UUID.randomUUID());
+    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(supportedPrograms);
 
     // when
     siglusStockManagementDraftService.deleteStockManagementDraft(id);
