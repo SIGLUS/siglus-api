@@ -101,10 +101,12 @@ import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDa
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
+import org.siglus.common.dto.referencedata.BaseDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
+import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
 import org.siglus.siglusapi.domain.RegimenLineItem;
@@ -115,6 +117,7 @@ import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
+import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.RegimenColumnDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
@@ -150,10 +153,14 @@ import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
+import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.validation.annotation.Validated;
 
 @Service
@@ -169,6 +176,7 @@ public class RequisitionCreateService {
   private final RequisitionTemplateService requisitionTemplateService;
   private final SiglusProgramService siglusProgramService;
   private final SiglusOrderableService siglusOrderableService;
+  private final SiglusOrderableReferenceDataService orderableDataService;
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
   private final SupervisoryNodeReferenceDataService supervisoryNodeService;
   private final SiglusUsageReportService siglusUsageReportService;
@@ -296,8 +304,11 @@ public class RequisitionCreateService {
     }
     log.info("requisition line size: {}", requisition.getRequisitionLineItems().size());
     log.info("requisition request product count: {}", requisitionRequest.getProducts().size());
-    Map<UUID, RequisitionLineItemRequest> productIdToLineItems = requisitionRequest.getProducts().stream().collect(
-        toMap(product -> siglusOrderableService.getOrderableByCode(product.getProductCode()).getId(), identity()));
+    // since this api is cached, so load all data is even faster than for-each and load single
+    Map<String, UUID> productCodeToIds =
+        getAllProducts().stream().collect(toMap(OrderableDto::getProductCode, BaseDto::getId));
+    Map<UUID, RequisitionLineItemRequest> productIdToLineItems = requisitionRequest.getProducts().stream()
+        .collect(toMap(product -> productCodeToIds.get(product.getProductCode()), identity()));
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
       extension.setRequisitionLineItemId(requisitionLineItem.getId());
@@ -308,6 +319,12 @@ public class RequisitionCreateService {
       log.info("save requisition line item extensions: {}", extension);
       requisitionLineItemExtensionRepository.save(extension);
     });
+  }
+
+  private List<OrderableDto> getAllProducts() {
+    QueryOrderableSearchParams params = new QueryOrderableSearchParams(new LinkedMultiValueMap<>());
+    Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, PaginationConstants.NO_PAGINATION);
+    return orderableDataService.searchOrderables(params, pageable).getContent();
   }
 
   private void buildRequisitionExtraData(Requisition requisition, RequisitionCreateRequest requisitionRequest) {
