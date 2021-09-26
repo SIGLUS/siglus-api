@@ -71,6 +71,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.persistence.EntityNotFoundException;
@@ -155,6 +156,7 @@ import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.slf4j.profiler.Profiler;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -209,59 +211,97 @@ public class RequisitionCreateService {
   }
 
   private Requisition initiateRequisition(RequisitionCreateRequest request, UserDto user) {
+    log.info("prepare android requisition: {}", request);
+    Profiler profiler = new Profiler("initiateRequisition");
+    profiler.setLogger(log);
     String programCode = request.getProgramCode();
+    profiler.start("get program");
     UUID programId = siglusProgramService.getProgramIdByCode(programCode);
+    profiler.start("get user facility");
     UUID homeFacilityId = user.getHomeFacilityId();
+    profiler.start("check permission: init req");
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
+    Profiler newReqProfiler = profiler.startNested("new req");
+    newReqProfiler.start("build req");
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
+    newReqProfiler.start("get template");
     newRequisition.setTemplate(getRequisitionTemplate(programCode));
     newRequisition.setStatus(RequisitionStatus.INITIATED);
+    newReqProfiler.start("get period");
     newRequisition.setProcessingPeriodId(getPeriodId(request));
     newRequisition.setNumberOfMonthsInPeriod(1);
     newRequisition.setDraftStatusMessage(request.getComments());
     newRequisition.setReportOnly(ProgramConstants.MALARIA_PROGRAM_CODE.equals(programCode));
+    newReqProfiler.start("build status change for init");
     buildStatusChanges(newRequisition, user.getId());
+    newReqProfiler.start("build approved product");
     buildRequisitionApprovedProduct(newRequisition, homeFacilityId, programId);
+    newReqProfiler.start("build extra data");
     buildRequisitionExtraData(newRequisition, request);
+    newReqProfiler.start("build line items");
     buildRequisitionLineItems(newRequisition, request);
-    log.info("initiate android requisition: {}", newRequisition);
-    Requisition requisition = requisitionRepository.save(newRequisition);
-    buildRequisitionExtension(requisition, request);
-    buildRequisitionLineItemsExtension(requisition, request);
-    buildRequisitionUsageSections(requisition, request, programId);
+    profiler.start("save req and flush");
+    Requisition requisition = requisitionRepository.saveAndFlush(newRequisition);
+    profiler.start("build req extension");
+    buildRequisitionExtension(requisition, request, profiler.startNested("build req extension"));
+    buildRequisitionLineItemsExtension(requisition, request, profiler.startNested("build line extensions"));
+    buildRequisitionUsageSections(requisition, request, programId, profiler.startNested("build usage sections"));
+    profiler.stop().log();
     return requisition;
   }
 
   private Requisition submitRequisition(Requisition requisition, UUID authorId) {
+    Profiler profiler = new Profiler("submitRequisition");
+    profiler.setLogger(log);
+    profiler.start("check permission: submit req");
     checkPermission(() -> permissionService.canSubmitRequisition(requisition));
     requisition.setModifiedDate(ZonedDateTime.now());
     requisition.setStatus(RequisitionStatus.SUBMITTED);
+    profiler.start("build status change for submit");
     buildStatusChanges(requisition, authorId);
     log.info("submit android requisition: {}", requisition);
-    return requisitionRepository.save(requisition);
+    profiler.start("save and flush for submit");
+    Requisition saved = requisitionRepository.saveAndFlush(requisition);
+    profiler.stop().log();
+    return saved;
   }
 
   private Requisition authorizeRequisition(Requisition requisition, UUID authorId) {
+    Profiler profiler = new Profiler("authorizeRequisition");
+    profiler.setLogger(log);
+    profiler.start("check permission: authorize req");
     checkPermission(() -> permissionService.canAuthorizeRequisition(requisition));
+    profiler.start("find supervisory node");
     UUID supervisoryNodeId = supervisoryNodeService.findSupervisoryNode(
         requisition.getProgramId(), requisition.getFacilityId()).getId();
     requisition.setSupervisoryNodeId(supervisoryNodeId);
     requisition.setModifiedDate(ZonedDateTime.now());
     requisition.setStatus(RequisitionStatus.AUTHORIZED);
+    profiler.start("build status change for auth");
     buildStatusChanges(requisition, authorId);
     log.info("authorize android requisition: {}", requisition);
-    return requisitionRepository.save(requisition);
+    profiler.start("save and flush for auth");
+    Requisition saved = requisitionRepository.saveAndFlush(requisition);
+    profiler.stop().log();
+    return saved;
   }
 
   private void internalApproveRequisition(Requisition requisition, UUID authorId) {
+    Profiler profiler = new Profiler("internalApproveRequisition");
+    profiler.setLogger(log);
+    profiler.start("check permission: int-approve req");
     checkPermission(() -> permissionService.canApproveRequisition(requisition));
+    profiler.start("find supervisory node");
     SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeService.findOne(requisition.getSupervisoryNodeId());
     requisition.setSupervisoryNodeId(supervisoryNodeDto.getParentNodeId());
     requisition.setModifiedDate(ZonedDateTime.now());
     requisition.setStatus(RequisitionStatus.IN_APPROVAL);
+    profiler.start("build status change for int-approve");
     buildStatusChanges(requisition, authorId);
     log.info("internal-approve android requisition: {}", requisition);
+    profiler.start("save and flush for int-approve");
     requisitionRepository.save(requisition);
+    profiler.stop().log();
   }
 
   private void checkPermission(Supplier<ValidationResult> supplier) {
@@ -288,20 +328,22 @@ public class RequisitionCreateService {
     return requisitionTemplate;
   }
 
-  private void buildRequisitionExtension(Requisition requisition, RequisitionCreateRequest request) {
+  private void buildRequisitionExtension(Requisition requisition, RequisitionCreateRequest request, Profiler profiler) {
+    profiler.start("build extension");
     RequisitionExtension requisitionExtension = siglusRequisitionExtensionService
         .buildRequisitionExtension(requisition.getId(), requisition.getEmergency(), requisition.getFacilityId());
     requisitionExtension.setIsApprovedByInternal(true);
     requisitionExtension.setActualStartDate(request.getActualStartDate());
-    log.info("save requisition extension: {}", requisitionExtension);
-    requisitionExtensionRepository.save(requisitionExtension);
+    profiler.start("save and flush");
+    requisitionExtensionRepository.saveAndFlush(requisitionExtension);
   }
 
   private void buildRequisitionLineItemsExtension(Requisition requisition,
-      RequisitionCreateRequest requisitionRequest) {
+      RequisitionCreateRequest requisitionRequest, Profiler profiler) {
     if (CollectionUtils.isEmpty(requisition.getRequisitionLineItems())) {
       return;
     }
+    profiler.start("load all products");
     log.info("requisition line size: {}", requisition.getRequisitionLineItems().size());
     log.info("requisition request product count: {}", requisitionRequest.getProducts().size());
     // since this api is cached, so load all data is even faster than for-each and load single
@@ -309,6 +351,7 @@ public class RequisitionCreateService {
         getAllProducts().stream().collect(toMap(OrderableDto::getProductCode, BaseDto::getId));
     Map<UUID, RequisitionLineItemRequest> productIdToLineItems = requisitionRequest.getProducts().stream()
         .collect(toMap(product -> productCodeToIds.get(product.getProductCode()), identity()));
+    profiler.start("mapping line items");
     requisition.getRequisitionLineItems().forEach(requisitionLineItem -> {
       RequisitionLineItemExtension extension = new RequisitionLineItemExtension();
       extension.setRequisitionLineItemId(requisitionLineItem.getId());
@@ -316,9 +359,10 @@ public class RequisitionCreateService {
           .getOrDefault(requisitionLineItem.getOrderable().getId(), new RequisitionLineItemRequest());
       extension.setAuthorizedQuantity(requisitionProduct.getAuthorizedQuantity());
       extension.setExpirationDate(requisitionProduct.getExpirationDate());
-      log.info("save requisition line item extensions: {}", extension);
       requisitionLineItemExtensionRepository.save(extension);
     });
+    profiler.start("flush");
+    requisitionLineItemExtensionRepository.flush();
   }
 
   private List<OrderableDto> getAllProducts() {
@@ -360,30 +404,29 @@ public class RequisitionCreateService {
     if (CollectionUtils.isEmpty(requisitionRequest.getProducts())) {
       return;
     }
+    Map<UUID, VersionEntityReference> productIdToApproveds = requisition.getAvailableProducts().stream().collect(
+        toMap(product -> product.getOrderable().getId(), ApprovedProductReference::getFacilityTypeApprovedProduct)
+    );
+    // since this api is cached, so load all data is even faster than for-each and load single
+    Map<String, OrderableDto> productCodeToOrderables =
+        getAllProducts().stream().collect(toMap(OrderableDto::getProductCode, Function.identity()));
     List<RequisitionLineItem> requisitionLineItems = new ArrayList<>();
     for (RequisitionLineItemRequest product : requisitionRequest.getProducts()) {
-      OrderableDto orderableDto = siglusOrderableService.getOrderableByCode(product.getProductCode());
-      RequisitionLineItem requisitionLineItem = new RequisitionLineItem();
-      requisitionLineItem.setRequisition(requisition);
-      requisitionLineItem.setOrderable(new VersionEntityReference(orderableDto.getId(),
-          orderableDto.getVersionNumber()));
-      requisitionLineItem.setBeginningBalance(product.getBeginningBalance());
-      requisitionLineItem.setTotalLossesAndAdjustments(product.getTotalLossesAndAdjustments());
-      requisitionLineItem.setTotalReceivedQuantity(product.getTotalReceivedQuantity());
-      requisitionLineItem.setTotalConsumedQuantity(product.getTotalConsumedQuantity());
-      requisitionLineItem.setStockOnHand(product.getStockOnHand());
-      requisitionLineItem.setRequestedQuantity(product.getRequestedQuantity());
-      VersionEntityReference approvedProduct = requisition.getAvailableProducts().stream()
-          .filter(approvedProductReference -> approvedProductReference.getOrderable().getId()
-              .equals(requisitionLineItem.getOrderable().getId()))
-          .findFirst()
-          .orElseThrow(NullPointerException::new)
-          .getFacilityTypeApprovedProduct();
-      requisitionLineItem.setFacilityTypeApprovedProduct(
-          new VersionEntityReference(approvedProduct.getId(), approvedProduct.getVersionNumber()));
+      OrderableDto orderableDto = productCodeToOrderables.get(product.getProductCode());
+      RequisitionLineItem lineItem = new RequisitionLineItem();
+      lineItem.setRequisition(requisition);
+      lineItem.setOrderable(new VersionEntityReference(orderableDto.getId(), orderableDto.getVersionNumber()));
+      lineItem.setBeginningBalance(product.getBeginningBalance());
+      lineItem.setTotalLossesAndAdjustments(product.getTotalLossesAndAdjustments());
+      lineItem.setTotalReceivedQuantity(product.getTotalReceivedQuantity());
+      lineItem.setTotalConsumedQuantity(product.getTotalConsumedQuantity());
+      lineItem.setStockOnHand(product.getStockOnHand());
+      lineItem.setRequestedQuantity(product.getRequestedQuantity());
+      VersionEntityReference approvedProduct = productIdToApproveds.get(lineItem.getOrderable().getId());
+      lineItem.setFacilityTypeApprovedProduct(approvedProduct);
       boolean isKit = ALL_KITS.contains(product.getProductCode());
-      requisitionLineItem.setSkipped(isKit);
-      requisitionLineItems.add(requisitionLineItem);
+      lineItem.setSkipped(isKit);
+      requisitionLineItems.add(lineItem);
     }
     requisition.setRequisitionLineItems(requisitionLineItems);
   }
@@ -398,7 +441,8 @@ public class RequisitionCreateService {
   }
 
   private void buildRequisitionUsageSections(Requisition requisition, RequisitionCreateRequest request,
-      UUID programId) {
+      UUID programId, Profiler profiler) {
+    profiler.start("new instance");
     RequisitionV2Dto dto = new RequisitionV2Dto();
     requisition.export(dto);
     BasicRequisitionTemplateDto templateDto = BasicRequisitionTemplateDto.newInstance(requisition.getTemplate());
@@ -407,14 +451,23 @@ public class RequisitionCreateService {
     dto.setProcessingPeriod(new ObjectReferenceDto(requisition.getProcessingPeriodId(), "", PROCESSING_PERIODS));
     dto.setProgram(new ObjectReferenceDto(requisition.getProgramId(), "", PROGRAMS));
     buildAvailableProducts(dto, requisition);
+    profiler.start("init usage report");
     SiglusRequisitionDto requisitionDto = siglusUsageReportService.initiateUsageReport(dto);
+    profiler.start("buildConsultationNumber");
     buildConsultationNumber(requisitionDto, request);
+    profiler.start("buildRequisitionKitUsage");
     buildRequisitionKitUsage(requisitionDto, request);
+    profiler.start("updateRegimenLineItems");
     updateRegimenLineItems(requisitionDto, programId, request);
+    profiler.start("updateRegimenSummaryLineItems");
     updateRegimenSummaryLineItems(requisitionDto, request);
+    profiler.start("updatePatientLineItems");
     updatePatientLineItems(requisitionDto, request);
+    profiler.start("updateUsageInformationLineItems");
     updateUsageInformationLineItems(requisitionDto, request);
+    profiler.start("updateTestConsumptionLineItems");
     updateTestConsumptionLineItems(requisitionDto, request);
+    profiler.start("save usage report");
     siglusUsageReportService.saveUsageReport(requisitionDto, dto);
   }
 

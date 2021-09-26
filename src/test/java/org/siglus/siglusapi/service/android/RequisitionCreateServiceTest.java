@@ -260,6 +260,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(siglusProgramService.getProgramIdByCode("VC")).thenReturn(programId);
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
+    orderableDto.setProductCode("02A01");
     when(siglusOrderableService.getOrderableByCode("02A01")).thenReturn(orderableDto);
     when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
@@ -272,14 +273,14 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .thenReturn(buildRequisitionTemplateExtension());
     when(processingPeriodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, YearMonth.of(2021, 6)))
         .thenReturn(buildProcessingPeriod());
-    when(requisitionRepository.save(requisitionArgumentCaptor.capture()))
+    when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
         .thenReturn(buildRequisition(template));
     when(siglusUsageReportService.initiateUsageReport(requisitionV2DtoArgumentCaptor.capture()))
         .thenReturn(buildSiglusRequisitionDto());
     RequisitionExtension requisitionExtension = new RequisitionExtension();
     when(siglusRequisitionExtensionService.buildRequisitionExtension(requisitionId, false, facilityId))
         .thenReturn(requisitionExtension);
-    when(requisitionExtensionRepository.save(requisitionExtensionArgumentCaptor.capture()))
+    when(requisitionExtensionRepository.saveAndFlush(requisitionExtensionArgumentCaptor.capture()))
         .thenReturn(requisitionExtension);
     when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
   }
@@ -353,7 +354,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     service.createRequisition(buildRequisitionCreateRequest());
 
     // then
-    verify(requisitionRepository, times(4)).save(requisitionArgumentCaptor.capture());
+    verify(requisitionRepository, times(1)).save(requisitionArgumentCaptor.capture());
+    verify(requisitionRepository, times(3)).saveAndFlush(requisitionArgumentCaptor.capture());
     verify(siglusRequisitionExtensionService).buildRequisitionExtension(requisitionId, false, facilityId);
     verify(siglusUsageReportService).initiateUsageReport(any());
     verify(siglusUsageReportService).saveUsageReport(any(), any());
@@ -375,12 +377,13 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     service.createRequisition(buildRequisitionCreateRequest());
 
     // then
-    verify(requisitionRepository, times(0)).save(requisitionArgumentCaptor.capture());
+    verify(requisitionRepository, times(0)).saveAndFlush(requisitionArgumentCaptor.capture());
     verify(siglusRequisitionExtensionService, times(0)).buildRequisitionExtension(requisitionId, false, facilityId);
     verify(siglusUsageReportService, times(0)).initiateUsageReport(any());
     verify(siglusUsageReportService, times(0)).saveUsageReport(any(), any());
-    verify(requisitionLineItemExtensionRepository, times(0)).save(requisitionLineItemExtensionArgumentCaptor.capture());
-    verify(syncUpHashRepository, times(0)).save(syncUpHashArgumentCaptor.capture());
+    verify(requisitionLineItemExtensionRepository, times(0))
+        .saveAndFlush(requisitionLineItemExtensionArgumentCaptor.capture());
+    verify(syncUpHashRepository, times(0)).saveAndFlush(syncUpHashArgumentCaptor.capture());
   }
 
   @Test
@@ -400,9 +403,11 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), malariaProgramId));
     when(requisitionTemplateService.findTemplateById(malariaTemplateId)).thenReturn(mlTemplate);
     when(siglusProgramService.getProgramIdByCode("ML")).thenReturn(malariaProgramId);
-    when(requisitionRepository.save(requisitionArgumentCaptor.capture()))
+    when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
         .thenReturn(buildMlRequisition(mlTemplate));
     when(siglusOrderableService.getOrderableByCode("08O05")).thenReturn(buildOrderableDto());
+    when(orderableDataService.searchOrderables(any(), any()))
+        .thenReturn(new PageImpl<>(singletonList(buildOrderableDto())));
 
     // when
     service.createRequisition(buildMlRequisitionCreateRequest());
@@ -430,11 +435,13 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), mmiaProgramId));
     when(requisitionTemplateService.findTemplateById(mmiaTemplateId)).thenReturn(mmiaTemplate);
     when(siglusProgramService.getProgramIdByCode("T")).thenReturn(mmiaProgramId);
-    when(requisitionRepository.save(requisitionArgumentCaptor.capture()))
+    when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
         .thenReturn(buildMmiaRequisition(mmiaTemplate));
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(mmiaOrderableId);
+    orderableDto.setProductCode("08S01ZW");
     when(siglusOrderableService.getOrderableByCode("08S01ZW")).thenReturn(orderableDto);
+    when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
     when(regimenRepository.findAllByProgramIdAndActiveTrue(any())).thenReturn(buildRegimenDto());
     when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildMmiaSiglusRequisitionDto());
 
@@ -480,11 +487,13 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), rapidTestProgramId));
     when(requisitionTemplateService.findTemplateById(rapidtestTemplateId)).thenReturn(trTemplate);
     when(siglusProgramService.getProgramIdByCode("TR")).thenReturn(rapidTestProgramId);
-    when(requisitionRepository.save(requisitionArgumentCaptor.capture()))
+    when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
         .thenReturn(buildMmiaRequisition(trTemplate));
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(rapidTestOrderableId);
+    orderableDto.setProductCode("08A07");
     when(siglusOrderableService.getOrderableByCode("08A07")).thenReturn(orderableDto);
+    when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
     when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildRapidTestSiglusRequisitionDto());
 
     // when
