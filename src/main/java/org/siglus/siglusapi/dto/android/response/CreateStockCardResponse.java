@@ -48,12 +48,10 @@ public class CreateStockCardResponse {
     if (!CollectionUtils.isEmpty(validatedStockCards.getInvalidProducts())) {
       invalidProductCodes = validatedStockCards.getInvalidProducts().stream()
           .map(InvalidProduct::getProductCode).collect(Collectors.toSet());
-      String allInvalidCodes = String.join(ValidatorConstants.MESSAGE_DETAIL_COMMA, invalidProductCodes);
+      String allInvalidCodes = String.join(",", invalidProductCodes);
       String errorMessages = validatedStockCards.getInvalidProducts().stream().map(InvalidProduct::getErrorMessage)
-          .collect(Collectors.joining(ValidatorConstants.MESSAGE_DETAIL_LINE_END));
-      details.append(ValidatorConstants.MESSAGE_DETAIL_START).append(allInvalidCodes)
-          .append(ValidatorConstants.MESSAGE_DETAIL_END)
-          .append(errorMessages);
+          .collect(Collectors.joining("\n"));
+      details.append("Sync [").append(allInvalidCodes).append("] error.").append(errorMessages);
     }
     return CreateStockCardResponse.builder()
         .errorProductCodes(new ArrayList<>(invalidProductCodes))
