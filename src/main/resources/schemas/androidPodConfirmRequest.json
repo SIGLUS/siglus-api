@@ -45,8 +45,8 @@
       "title": "products",
       "items": {
         "type": "object",
-        "title": "androidPodConfirmRequest",
-        "$ref": "androidPodConfirmRequest.json"
+        "title": "androidPodConfirmLineItemRequest",
+        "$ref": "androidPodConfirmLineItemRequest.json"
       }
     }
   }
