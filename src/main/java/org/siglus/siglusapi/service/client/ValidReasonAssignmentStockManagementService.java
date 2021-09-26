@@ -15,18 +15,21 @@
 
 package org.siglus.siglusapi.service.client;
 
+import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_REASONS;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.siglusapi.constant.FieldConstants;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ValidReasonAssignmentStockManagementService extends
-    BaseStockManagementService<ValidReasonAssignmentDto> {
+public class ValidReasonAssignmentStockManagementService extends BaseStockManagementService<ValidReasonAssignmentDto> {
 
   @Override
   protected String getUrl() {
@@ -43,8 +46,9 @@ public class ValidReasonAssignmentStockManagementService extends
     return ValidReasonAssignmentDto[].class;
   }
 
-  public Collection<ValidReasonAssignmentDto> getValidReasons(UUID programId, UUID facilityType,
-      String reasonType, UUID reason) {
+  @Cacheable(value = SIGLUS_REASONS, keyGenerator = CACHE_KEY_GENERATOR)
+  public Collection<ValidReasonAssignmentDto> getValidReasons(UUID programId, UUID facilityType, String reasonType,
+      UUID reason) {
     Map<String, Object> params = new HashMap<>();
     params.put(FieldConstants.PROGRAM, programId);
     params.put(FieldConstants.FACILITY_TYPE, facilityType);
@@ -54,7 +58,7 @@ public class ValidReasonAssignmentStockManagementService extends
   }
 
   @Async
-  public ValidReasonAssignmentDto assignReason(ValidReasonAssignmentDto dto) {
-    return postResult("", dto, getResultClass());
+  public void assignReason(ValidReasonAssignmentDto dto) {
+    postResult("", dto, getResultClass());
   }
 }

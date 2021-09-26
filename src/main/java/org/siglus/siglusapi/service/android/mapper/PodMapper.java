@@ -27,7 +27,6 @@ import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
-import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 
 @Mapper(componentModel = "spring", uses = {PodOrderMapper.class, PodProductLineMapper.class})
@@ -42,7 +41,7 @@ public interface PodMapper {
   @Mapping(target = "shippedDate", source = "shipment.shippedDate")
   @Mapping(target = "documentNo", source = "shipment", qualifiedByName = "toDocumentNo")
   PodResponse toResponse(ProofOfDelivery pod, @Context Map<UUID, OrderDto> orderIdToOrder,
-      @Context Map<UUID, FacilityDto> orderIdToFacility, @Context Map<UUID, Requisition> orderIdToRequisition);
+      @Context Map<UUID, Requisition> orderIdToRequisition);
 
   @Named("toDocumentNo")
   default String toDocumentNo(Shipment domain) {

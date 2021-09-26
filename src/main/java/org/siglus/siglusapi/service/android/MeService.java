@@ -45,7 +45,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
 import org.openlmis.fulfillment.domain.BaseEntity;
-import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
@@ -380,14 +379,10 @@ public class MeService {
     Map<UUID, String> reasonIdToName = validReasonAssignmentService
         .getValidReasonsForAllProducts(homeFacility.getType().getId(), null, null).stream()
         .collect(toMap(ValidReasonAssignmentDto::getId, r -> r.getReason().getName()));
-    Map<UUID, FacilityDto> orderIdToFacility = pods.stream()
-        .map(ProofOfDelivery::getShipment)
-        .map(Shipment::getOrder)
-        .collect(toMap(Order::getId, order -> getFacilityInfo(order.getFacilityId())));
     Map<UUID, Requisition> orderIdToRequisition = orderIdToOrder.entrySet().stream()
         .collect(toMap(Entry::getKey, e -> orderService.getRequisitionByOrder(e.getValue())));
     return pods.stream()
-        .map(pod -> toPodResponse(pod, orderIdToOrder, productIdToCode, lotIdToLot, reasonIdToName, orderIdToFacility,
+        .map(pod -> toPodResponse(pod, orderIdToOrder, productIdToCode, lotIdToLot, reasonIdToName,
             orderIdToRequisition))
         .collect(toList());
   }
@@ -432,8 +427,8 @@ public class MeService {
 
   private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> orderIdToOrder,
       Map<UUID, String> productIdToCode, Map<UUID, LotDto> lotIdToLot, Map<UUID, String> reasonIdToName,
-      Map<UUID, FacilityDto> orderIdToFacility, Map<UUID, Requisition> orderIdToRequisition) {
-    PodResponse podResponse = podMapper.toResponse(pod, orderIdToOrder, orderIdToFacility, orderIdToRequisition);
+      Map<UUID, Requisition> orderIdToRequisition) {
+    PodResponse podResponse = podMapper.toResponse(pod, orderIdToOrder, orderIdToRequisition);
     podResponse.getProducts().forEach(productLine -> {
       Map<UUID, ShipmentLineItem> shipmentLineMap = pod.getShipment().getLineItems().stream()
           .filter(podLine -> productIdToCode.get(podLine.getOrderable().getId()).equals(productLine.getCode()))

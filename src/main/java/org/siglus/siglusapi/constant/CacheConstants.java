@@ -27,6 +27,8 @@ public class CacheConstants {
 
   public static final String SIGLUS_SOURCES = "siglus-sources";
 
+  public static final String SIGLUS_REASONS = "siglus-reasons";
+
   public static final String SIGLUS_PROGRAMS = "siglus-programs";
 
   public static final String SIGLUS_PROGRAM = "siglus-program";

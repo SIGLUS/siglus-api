@@ -21,21 +21,21 @@ import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
+import org.openlmis.fulfillment.service.referencedata.FacilityDto;
+import org.openlmis.fulfillment.service.referencedata.GeographicZoneDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
-import org.siglus.siglusapi.dto.FacilityDto;
-import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.android.response.OrderBasicResponse;
 
 @Mapper(componentModel = "spring", uses = PodRequisitionMapper.class)
 public interface PodOrderMapper {
 
   default OrderBasicResponse toResponse(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
-      @Context Map<UUID, FacilityDto> orderIdToFacility, @Context Map<UUID, Requisition> orderIdToRequisition) {
+      @Context Map<UUID, Requisition> orderIdToRequisition) {
     if (orderId == null) {
       return null;
     }
-    return toOrderResponse(orderIdToOrder.get(orderId), orderIdToOrder, orderIdToFacility, orderIdToRequisition);
+    return toOrderResponse(orderIdToOrder.get(orderId), orderIdToOrder, orderIdToRequisition);
   }
 
   @Mapping(target = "code", source = "orderCode")
@@ -44,13 +44,14 @@ public interface PodOrderMapper {
   @Mapping(target = "requisition", source = "id")
   @Mapping(target = "supplyFacilityDistrict", source = "id", qualifiedByName = "toSupplyFacilityDistrict")
   @Mapping(target = "supplyFacilityProvince", source = "id", qualifiedByName = "toSupplyFacilityProvince")
+  @Mapping(target = "supplyFacilityType", source = "id", qualifiedByName = "toSupplyFacilityType")
   OrderBasicResponse toOrderResponse(OrderDto order, @Context Map<UUID, OrderDto> orderIdToOrder,
-      @Context Map<UUID, FacilityDto> orderIdToFacility, @Context Map<UUID, Requisition> orderIdToRequisition);
+      @Context Map<UUID, Requisition> orderIdToRequisition);
 
   @Named("toSupplyFacilityDistrict")
   default String toSupplyFacilityDistrict(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
-      @Context Map<UUID, FacilityDto> orderIdToFacility, @Context Map<UUID, Requisition> orderIdToRequisition) {
-    GeographicZoneDto geographicZone = orderIdToFacility.get(orderId).getGeographicZone();
+      @Context Map<UUID, Requisition> orderIdToRequisition) {
+    GeographicZoneDto geographicZone = orderIdToOrder.get(orderId).getFacility().getGeographicZone();
     if (geographicZone == null) {
       return null;
     }
@@ -59,11 +60,21 @@ public interface PodOrderMapper {
 
   @Named("toSupplyFacilityProvince")
   default String toSupplyFacilityProvince(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
-      @Context Map<UUID, FacilityDto> orderIdToFacility, @Context Map<UUID, Requisition> orderIdToRequisition) {
-    GeographicZoneDto geographicZone = orderIdToFacility.get(orderId).getGeographicZone();
+      @Context Map<UUID, Requisition> orderIdToRequisition) {
+    GeographicZoneDto geographicZone = orderIdToOrder.get(orderId).getFacility().getGeographicZone();
     if (geographicZone == null || geographicZone.getParent() == null) {
       return null;
     }
     return geographicZone.getParent().getName();
+  }
+
+  @Named("toSupplyFacilityType")
+  default String toSupplyFacilityType(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
+      @Context Map<UUID, Requisition> orderIdToRequisition) {
+    FacilityDto supplyingFacility = orderIdToOrder.get(orderId).getSupplyingFacility();
+    if (supplyingFacility == null || supplyingFacility.getType() == null) {
+      return null;
+    }
+    return supplyingFacility.getType().getCode();
   }
 }

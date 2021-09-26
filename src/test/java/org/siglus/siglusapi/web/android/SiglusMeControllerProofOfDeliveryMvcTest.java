@@ -482,6 +482,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   private void mockOrder1(FacilityDto supplyingFacility, OrderableDto product1) {
     OrderDto order1 = mock(OrderDto.class);
     when(order1.getId()).thenReturn(order1Id);
+    when(order1.getFacility()).thenReturn(new FacilityDto());
     when(order1.getOrderCode()).thenReturn("ORDER-AS20JF");
     when(order1.getCreatedDate()).thenReturn(LocalDate.of(2020, 9, 2).atStartOfDay(ZoneId.systemDefault()));
     when(order1.getLastUpdatedDate())
@@ -513,6 +514,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   private void mockOrder2(FacilityDto supplyingFacility, OrderableDto product2) {
     OrderDto order2 = mock(OrderDto.class);
     when(order2.getId()).thenReturn(order2Id);
+    when(order2.getFacility()).thenReturn(new FacilityDto());
     when(order2.getOrderCode()).thenReturn("ORDER-AS21JF");
     when(order2.getCreatedDate()).thenReturn(LocalDate.of(2020, 10, 2).atStartOfDay(ZoneId.systemDefault()));
     when(order2.getLastUpdatedDate())
@@ -544,6 +546,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   private void mockOrder3(FacilityDto supplyingFacility, OrderableDto product1) {
     OrderDto order3 = mock(OrderDto.class);
     when(order3.getId()).thenReturn(order3Id);
+    when(order3.getFacility()).thenReturn(new FacilityDto());
     when(order3.getOrderCode()).thenReturn("ORDER-AS22JF");
     when(order3.getCreatedDate()).thenReturn(LocalDate.of(2020, 11, 2).atStartOfDay(ZoneId.systemDefault()));
     when(order3.getLastUpdatedDate())

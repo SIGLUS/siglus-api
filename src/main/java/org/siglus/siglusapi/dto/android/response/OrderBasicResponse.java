@@ -29,6 +29,8 @@ public class OrderBasicResponse {
 
   private String supplyFacilityProvince;
 
+  private String supplyFacilityType;
+
   private String status;
 
   private ZonedDateTime createdDate;

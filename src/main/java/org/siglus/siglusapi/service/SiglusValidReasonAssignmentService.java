@@ -36,17 +36,14 @@ public class SiglusValidReasonAssignmentService {
 
   public Collection<ValidReasonAssignmentDto> getValidReasons(UUID programId, UUID facilityType,
       String reasonType, UUID reason) {
-    return validReasonAssignmentStockManagementService
-        .getValidReasons(programId, facilityType, reasonType, reason);
+    return validReasonAssignmentStockManagementService.getValidReasons(programId, facilityType, reasonType, reason);
   }
 
-  public Collection<ValidReasonAssignmentDto> getValidReasonsForAllProducts(UUID facilityTypeId,
-      String reasonType, UUID reason) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper
-        .findUserSupportedPrograms();
+  public Collection<ValidReasonAssignmentDto> getValidReasonsForAllProducts(UUID facilityTypeId, String reasonType,
+      UUID reason) {
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findUserSupportedPrograms();
     return supportedPrograms.stream()
-        .map(supportedVirtualProgram -> getValidReasons(supportedVirtualProgram, facilityTypeId,
-            reasonType, reason))
+        .map(supportedVirtualProgram -> getValidReasons(supportedVirtualProgram, facilityTypeId, reasonType, reason))
         .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
