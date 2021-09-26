@@ -24,7 +24,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.constant.ValidatorConstants;
 import org.siglus.siglusapi.dto.android.InvalidProduct;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.springframework.http.HttpStatus;
