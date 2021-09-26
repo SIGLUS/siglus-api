@@ -81,6 +81,7 @@ import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
+import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.LotDto;
@@ -88,6 +89,7 @@ import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.InvalidProduct;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
+import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.LotBasicRequest;
 import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;
@@ -108,6 +110,7 @@ import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
+import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
@@ -212,6 +215,9 @@ public class MeServiceTest {
   private ArgumentCaptor<HfCmm> hfCmmArgumentCaptor;
 
   @Captor
+  private ArgumentCaptor<ResyncInfo> resyncInfoArgumentCaptor;
+
+  @Captor
   private ArgumentCaptor<RequisitionRequestBackup> requestBackupArgumentCaptor;
 
   @Mock
@@ -234,6 +240,9 @@ public class MeServiceTest {
 
   @Mock
   private PodRequestBackupRepository podBackupRepository;
+
+  @Mock
+  private ResyncInfoRepository resyncInfoRepository;
 
   @Autowired
   private ProductMapper mapper;
@@ -476,6 +485,31 @@ public class MeServiceTest {
     assertEquals(requestCmms.get(0).getPeriodEnd(), mockInsertSuccessHfCmm().getPeriodEnd());
   }
 
+  @Test
+  public void shouldCallProcessResyncInfo() {
+    // given
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    userDto.setId(userId);
+    when(authHelper.getCurrentUser()).thenReturn(userDto);
+    FacilityDto facilityDto = new FacilityDto();
+    facilityDto.setId(facilityId);
+    facilityDto.setName("facilityName");
+    when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(facilityDto);
+    AndroidHeader header = mock(AndroidHeader.class);
+
+    // when
+    service.processResyncInfo(header);
+
+    // then
+    verify(resyncInfoRepository, times(1)).save(any(ResyncInfo.class));
+    verify(resyncInfoRepository).save(resyncInfoArgumentCaptor.capture());
+    ResyncInfo resyncInfo = resyncInfoArgumentCaptor.getValue();
+    assertEquals(resyncInfo.getFacilityId(), facilityId);
+    assertEquals(resyncInfo.getUserId(), userId);
+  }
+
+  @Test
   public void shouldCallDeleteStockCardByProduct() {
     // given
     List<StockCardDeleteRequest> stockCardDeleteRequests = Collections.singletonList(new StockCardDeleteRequest());

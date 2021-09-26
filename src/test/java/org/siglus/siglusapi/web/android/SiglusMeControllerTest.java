@@ -34,7 +34,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
@@ -126,14 +128,7 @@ public class SiglusMeControllerTest {
   @Test
   public void shouldCallServiceWhenProcessAppInfo() {
     // given
-    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/siglusapi/android/me/app-info");
-    request.addHeader("UserName", "CS_Moine_Role1");
-    request.addHeader("FacilityCode", "01080904");
-    request.addHeader("FacilityName", "Centro de Saude de Chiunze");
-    request.addHeader("UniqueId", "ac36c07a09f2fdca");
-    request.addHeader("DeviceInfo", "OS: 9 Model: google Android SDK built for x86versionCode:87.1");
-    request.addHeader("VersionCode", "87");
-    request.addHeader("AndroidSDKVersion", "28");
+    MockHttpServletRequest request = mockRequestHeader("POST", "/api/siglusapi/android/me/app-info");
     doNothing().when(service).processAppInfo(any(AppInfo.class));
 
     // when
@@ -143,6 +138,27 @@ public class SiglusMeControllerTest {
     verify(service).processAppInfo(any(AppInfo.class));
     ArgumentCaptor<AppInfo> argument = ArgumentCaptor.forClass(AppInfo.class);
     verify(service).processAppInfo(argument.capture());
+    assertEquals("CS_Moine_Role1", argument.getValue().getUsername());
+    assertEquals("01080904", argument.getValue().getFacilityCode());
+    assertEquals("ac36c07a09f2fdca", argument.getValue().getUniqueId());
+    assertEquals("87", argument.getValue().getVersionCode());
+    assertEquals("28", argument.getValue().getAndroidSdkVersion());
+  }
+
+  @Test
+  public void shouldCallServiceWhenProcessResyncInfo() {
+    // given
+    MockHttpServletRequest request = mockRequestHeader("POST", "/api/siglusapi/android/me/resync-info");
+    AndroidHeader header = AndroidConstants.getAndroidHeader(request);
+    doNothing().when(service).processResyncInfo(header);
+
+    // when
+    controller.processResyncInfo(request);
+
+    // then
+    verify(service).processResyncInfo(header);
+    ArgumentCaptor<AndroidHeader> argument = ArgumentCaptor.forClass(AndroidHeader.class);
+    verify(service).processResyncInfo(argument.capture());
     assertEquals("CS_Moine_Role1", argument.getValue().getUsername());
     assertEquals("01080904", argument.getValue().getFacilityCode());
     assertEquals("ac36c07a09f2fdca", argument.getValue().getUniqueId());
@@ -236,5 +252,17 @@ public class SiglusMeControllerTest {
         .periodEnd(LocalDate.of(2021, 5, 20))
         .build());
     return list;
+  }
+
+  private MockHttpServletRequest mockRequestHeader(String method, String requestUri) {
+    MockHttpServletRequest request = new MockHttpServletRequest(method, requestUri);
+    request.addHeader("UserName", "CS_Moine_Role1");
+    request.addHeader("FacilityCode", "01080904");
+    request.addHeader("FacilityName", "Centro de Saude de Chiunze");
+    request.addHeader("UniqueId", "ac36c07a09f2fdca");
+    request.addHeader("DeviceInfo", "OS: 9 Model: google Android SDK built for x86versionCode:87.1");
+    request.addHeader("VersionCode", "87");
+    request.addHeader("AndroidSDKVersion", "28");
+    return request;
   }
 }

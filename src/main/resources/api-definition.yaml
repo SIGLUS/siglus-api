@@ -2549,15 +2549,73 @@ traits:
               VersionCode:
                 displayName: VersionCode
                 description: VersionCode.
-                type: integer
+                type: string
                 required: false
                 repeat: false
               AndroidSDKVersion:
                 displayName: AndroidSDKVersion
-                description: AndroidSDKVersion
-                type: integer
+                description: AndroidSDKVersion.
+                type: string
                 required: false
                 repeat: false
             responses:
               204:
                 description: Full update current AppInfo
+
+        /resync-info:
+          displayName: Process resyncInfo
+          post:
+            is: [ secured ]
+            description: save resyncInfo when user resync
+            headers:
+              Authorization:
+                displayName: Authorization
+                description: OAuth2 authorization token header. Takes the form of 'Bearer <token> '.
+                type: string
+                required: true
+                repeat: false
+              UserName:
+                displayName: UserName
+                description: Current username.
+                type: string
+                required: false
+                repeat: false
+              FacilityCode:
+                displayName: FacilityCode
+                description: Current facility code.
+                type: string
+                required: false
+                repeat: false
+              FacilityName:
+                displayName: FacilityName
+                description: Facility name.
+                type: string
+                required: false
+                repeat: false
+              UniqueId:
+                displayName: UniqueId
+                description: device uniqueId.
+                type: string
+                required: false
+                repeat: false
+              DeviceInfo:
+                displayName: DeviceInfo
+                description: DeviceInfo.
+                type: string
+                required: false
+                repeat: false
+              VersionCode:
+                displayName: VersionCode
+                description: VersionCode.
+                type: string
+                required: false
+                repeat: false
+              AndroidSDKVersion:
+                displayName: AndroidSDKVersion
+                description: AndroidSDKVersion.
+                type: string
+                required: false
+                repeat: false
+            responses:
+              204:
+                description: Save current user ResyncInfo

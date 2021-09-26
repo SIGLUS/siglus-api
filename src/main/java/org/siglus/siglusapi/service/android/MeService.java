@@ -71,6 +71,7 @@ import org.siglus.siglusapi.domain.HfCmm;
 import org.siglus.siglusapi.domain.PodRequestBackup;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionRequestBackup;
+import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.LotDto;
@@ -80,6 +81,7 @@ import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
+import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
@@ -102,6 +104,7 @@ import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
+import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
@@ -174,6 +177,7 @@ public class MeService {
   private final PodRequestBackupRepository podBackupRepository;
   private final SiglusProofOfDeliveryRepository podRepository;
   private final EntityManager entityManager;
+  private final ResyncInfoRepository resyncInfoRepository;
 
   public FacilityResponse getCurrentFacility() {
     FacilityDto facilityDto = getCurrentFacilityInfo();
@@ -208,6 +212,24 @@ public class MeService {
   @Transactional
   public void processHfCmms(List<HfCmmDto> hfCmmDtos) {
     hfCmmDtos.stream().map(this::buildCmm).forEach(this::saveAndUpdateCmm);
+  }
+
+  @Transactional
+  public void processResyncInfo(AndroidHeader androidHeader) {
+    UserDto user = authHelper.getCurrentUser();
+    FacilityDto facilityDto = getFacilityInfo(user.getHomeFacilityId());
+    ResyncInfo resyncInfo = ResyncInfo.builder()
+        .facilityId(user.getHomeFacilityId())
+        .facilityName(facilityDto.getName())
+        .uniqueId(androidHeader.getUniqueId())
+        .deviceInfo(androidHeader.getDeviceInfo())
+        .versionCode(androidHeader.getVersionCode())
+        .androidSdkVersion(androidHeader.getAndroidSdkVersion())
+        .userId(user.getId())
+        .username(androidHeader.getUsername())
+        .build();
+    log.info("process resync-info , id: {}", resyncInfo);
+    resyncInfoRepository.save(resyncInfo);
   }
 
   @Transactional

@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.android.request.AndroidHeader;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
@@ -140,4 +141,10 @@ public class SiglusMeController {
     service.processAppInfo(appInfo);
   }
 
+  @PostMapping("/resync-info")
+  @ResponseStatus(NO_CONTENT)
+  public void processResyncInfo(HttpServletRequest httpServletRequest) {
+    AndroidHeader header = AndroidConstants.getAndroidHeader(httpServletRequest);
+    service.processResyncInfo(header);
+  }
 }
