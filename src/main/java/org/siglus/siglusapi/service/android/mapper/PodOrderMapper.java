@@ -56,7 +56,7 @@ public interface PodOrderMapper {
   @Named("toSupplyFacilityDistrict")
   default String toSupplyFacilityDistrict(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
       @Context Map<UUID, Requisition> orderIdToRequisition) {
-    GeographicZoneDto geographicZone = orderIdToOrder.get(orderId).getFacility().getGeographicZone();
+    GeographicZoneDto geographicZone = orderIdToOrder.get(orderId).getSupplyingFacility().getGeographicZone();
     if (geographicZone == null) {
       return null;
     }
@@ -66,7 +66,7 @@ public interface PodOrderMapper {
   @Named("toSupplyFacilityProvince")
   default String toSupplyFacilityProvince(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
       @Context Map<UUID, Requisition> orderIdToRequisition) {
-    GeographicZoneDto geographicZone = orderIdToOrder.get(orderId).getFacility().getGeographicZone();
+    GeographicZoneDto geographicZone = orderIdToOrder.get(orderId).getSupplyingFacility().getGeographicZone();
     if (geographicZone == null || geographicZone.getParent() == null) {
       return null;
     }
