@@ -71,6 +71,7 @@ import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -101,6 +102,7 @@ public class PodConfirmService {
   private final SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
   private final SiglusProgramService siglusProgramService;
   private final PodConfirmBackupRepository podConfirmBackupRepository;
+  private final SupportedProgramsHelper supportedProgramsHelper;
 
   @Transactional
   public void confirmPod(PodRequest podRequest, ProofOfDelivery toUpdate, UserDto user, PodResponse podResponse) {
@@ -114,10 +116,7 @@ public class PodConfirmService {
       throw new ValidationException(PROOF_OF_DELIVERY_ALREADY_CONFIRMED);
     }
     fulfillmentPermissionService.canManagePod(toUpdate);
-    if (!CollectionUtils.isEmpty(unSupportProductCodes(user.getHomeFacilityId(), podRequest))) {
-      Set<String> unSupportProductCodes = unSupportProductCodes(user.getHomeFacilityId(), podRequest);
-      throw new NotFoundException("siglusapi.pod.unSupportProduct", unSupportProductCodes.toArray(new String[0]));
-    }
+    checkSupportedProducts(user.getHomeFacilityId(), podRequest);
     updatePod(toUpdate, podRequest, user, podResponse);
   }
 
@@ -206,15 +205,46 @@ public class PodConfirmService {
     return orderLineItem;
   }
 
-  private Set<String> unSupportProductCodes(UUID facilityId, PodRequest podRequest) {
-    UUID programId = siglusProgramService.getProgramIdByCode(podRequest.getProgramCode());
-    Set<String> approvedProductCodes = approvedProductReferenceDataService.getApprovedProducts(
-        facilityId, programId, emptyList())
-        .stream()
-        .map(p -> p.getOrderable().getProductCode())
-        .collect(Collectors.toSet());
-    return podRequest.getProducts().stream()
+  private void checkSupportedProducts(UUID homefacility, PodRequest podRequest) {
+    Set<UUID> supportedProgramIds = supportedProgramsHelper.findUserSupportedPrograms();
+    Map<UUID, Set<String>> programIdToProductCodes = supportedProgramIds.stream()
+        .collect(toMap(Function.identity(),
+            supportProgramId -> approvedProductReferenceDataService.getApprovedProducts(homefacility, supportProgramId,
+                    emptyList()).stream()
+                .map(product -> product.getOrderable().getProductCode())
+                .collect(Collectors.toSet())));
+    Set<String> podProductCodes = podRequest.getProducts().stream()
         .map(PodProductLineRequest::getCode)
+        .collect(Collectors.toSet());
+    Set<String> unsupportedByFacilityProductCodes = getUnsupportedProductsByFacility(programIdToProductCodes,
+        podProductCodes);
+    if (!CollectionUtils.isEmpty(unsupportedByFacilityProductCodes)) {
+      throw new NotFoundException("siglusapi.pod.unsupportProductByFacility",
+          unsupportedByFacilityProductCodes.toArray(new String[0]));
+    }
+    Set<String> unsupportedByProgramProductCodes = getUnsupportedProductsByProgram(podRequest.getProgramCode(),
+        programIdToProductCodes, podProductCodes);
+    if (!CollectionUtils.isEmpty(unsupportedByProgramProductCodes)) {
+      throw new NotFoundException("siglusapi.pod.unsupportProductByProgram",
+          unsupportedByProgramProductCodes.toArray(new String[0]));
+    }
+  }
+
+  private Set<String> getUnsupportedProductsByFacility(Map<UUID, Set<String>> programIdToProductCodes,
+      Set<String> podProductCodes) {
+    Set<String> approvedProductCodes = programIdToProductCodes.values().stream()
+        .flatMap(Collection::stream)
+        .collect(Collectors.toSet());
+    return podProductCodes.stream()
+        .filter(podProductCode -> !approvedProductCodes.contains(podProductCode))
+        .collect(Collectors.toSet());
+  }
+
+  private Set<String> getUnsupportedProductsByProgram(String programCode,
+      Map<UUID, Set<String>> programIdToProductCodes, Set<String> podProductCodes) {
+    UUID programId = siglusProgramService.getProgramIdByCode(programCode);
+    Set<String> approvedProductCodes = programIdToProductCodes.get(programId);
+    return podProductCodes.stream()
         .filter(code -> !approvedProductCodes.contains(code))
         .collect(Collectors.toSet());
   }

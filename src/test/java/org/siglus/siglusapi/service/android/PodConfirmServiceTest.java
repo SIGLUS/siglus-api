@@ -26,7 +26,9 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -83,6 +85,7 @@ import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
@@ -167,6 +170,9 @@ public class PodConfirmServiceTest {
   @Mock
   private PodConfirmBackupRepository podConfirmBackupRepository;
 
+  @Mock
+  private SupportedProgramsHelper supportedProgramsHelper;
+
   @Before
   public void prepare() {
     orderCode = "orderCode";
@@ -235,6 +241,9 @@ public class PodConfirmServiceTest {
         new org.siglus.common.dto.referencedata.OrderableDto();
     orderableDto1.setProductCode(orderProductCode);
     orderableDto1.setTradeItemIdentifier(tradeItemId);
+    Set<UUID> programIds = new HashSet<>();
+    programIds.add(programId);
+    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(programIds);
     when(orderableService.getOrderableByCode(orderProductCode)).thenReturn(orderableDto1);
     when(lotService.getAllLotsOf(tradeItemId)).thenReturn(buildLotDto());
     when(stockCardLineItemRepository.findByFacilityIdAndLotIdIn(
