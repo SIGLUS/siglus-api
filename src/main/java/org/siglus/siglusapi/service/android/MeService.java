@@ -124,6 +124,7 @@ import org.siglus.siglusapi.util.HashEncoder;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.android.StockCardCreateRequestValidator;
+import org.slf4j.profiler.Profiler;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -278,6 +279,9 @@ public class MeService {
   }
 
   public CreateStockCardResponse createStockCards(List<StockCardCreateRequest> requests) {
+    Profiler profiler = new Profiler("create stock cards");
+    profiler.setLogger(log);
+    profiler.start("prepare data");
     ValidatedStockCards validatedStockCards = ValidatedStockCards.builder()
         .validStockCardRequests(requests)
         .invalidProducts(Collections.emptyList())
@@ -286,16 +290,22 @@ public class MeService {
     FacilityDto facilityDto = getCurrentFacilityInfo();
     LocalDate earliest = requests.stream().map(StockCardCreateRequest::getEventTime).map(EventTime::getOccurredDate)
         .min(Comparator.naturalOrder()).orElseThrow(IllegalStateException::new);
+    profiler.start("init context");
     stockCardCreateContextHolder.initContext(facilityDto, earliest);
+    profiler.start("validate data");
     try {
       validatedStockCards = stockCardCreateRequestValidator.validateStockCardCreateRequest(requests);
+      profiler.start("backup request");
       createStockCardResponse = CreateStockCardResponse.from(validatedStockCards);
       if (!CollectionUtils.isEmpty(validatedStockCards.getInvalidProducts())) {
         backupStockCardRequest(requests, createStockCardResponse.getDetails());
       }
+      Profiler createCardsProfiler = profiler.startNested("create cards");
+      createCardsProfiler.start("invoking createStockCards");
       if (!CollectionUtils.isEmpty(validatedStockCards.getValidStockCardRequests())) {
-        stockCardCreateService.createStockCards(validatedStockCards.getValidStockCardRequests());
+        stockCardCreateService.createStockCards(validatedStockCards.getValidStockCardRequests(), createCardsProfiler);
       }
+      profiler.start("clear context");
       return createStockCardResponse;
     } catch (Exception e) {
       try {
@@ -306,6 +316,7 @@ public class MeService {
       throw e;
     } finally {
       StockCardCreateContextHolder.clearContext();
+      profiler.stop().log();
     }
   }
 

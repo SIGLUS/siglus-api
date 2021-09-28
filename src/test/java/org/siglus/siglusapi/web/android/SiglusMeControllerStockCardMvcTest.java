@@ -19,13 +19,15 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
+import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
+import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -36,6 +38,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.collect.ImmutableMap;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -53,6 +56,7 @@ import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -77,9 +81,6 @@ import org.siglus.siglusapi.dto.android.ProductLotStock;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
-import org.siglus.siglusapi.dto.android.db.PhysicalInventory;
-import org.siglus.siglusapi.dto.android.db.ProductLot;
-import org.siglus.siglusapi.dto.android.db.StockCard;
 import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
 import org.siglus.siglusapi.dto.android.enumeration.Destination;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
@@ -166,11 +167,11 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   @InjectMocks
   private StockCardCreateService stockCardCreateService;
 
-  private final UUID facilityId = UUID.randomUUID();
-  private final UUID facilityTypeId = UUID.randomUUID();
-  private final UUID programId1 = UUID.randomUUID();
-  private final UUID programId2 = UUID.randomUUID();
-  private final UUID userId = UUID.randomUUID();
+  private final UUID facilityId = randomUUID();
+  private final UUID facilityTypeId = randomUUID();
+  private final UUID programId1 = randomUUID();
+  private final UUID programId2 = randomUUID();
+  private final UUID userId = randomUUID();
   private final ObjectMapper mapper = new ObjectMapper();
   private JavaType stockCardCreateRequestListType;
 
@@ -189,26 +190,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     when(stockManagementRepository.getAllProductMovements(any(), any(LocalDate.class)))
         .thenReturn(new PeriodOfProductMovements(emptyList(), stocksOnHand));
     when(stockManagementRepository.getStockOnHand(any())).thenReturn(stocksOnHand);
-    when(stockManagementRepository.createLot(any(), any())).then(a -> {
-      String productCode = a.getArgumentAt(0, OrderableDto.class).getProductCode();
-      Lot lot = a.getArgumentAt(1, Lot.class);
-      String lotCode = lot.getCode();
-      LocalDate expirationDate = lot.getExpirationDate();
-      ProductLotCode code = ProductLotCode.of(productCode, lotCode);
-      ProductLot productLot = new ProductLot(code, expirationDate);
-      productLot.setId(UUID.randomUUID());
-      return productLot;
-    });
-    when(stockManagementRepository.createStockCard(any(), any())).then(a -> {
-      StockCard stockCard = a.getArgumentAt(0, StockCard.class);
-      stockCard.setId(UUID.randomUUID());
-      return stockCard;
-    });
-    when(stockManagementRepository.createPhysicalInventory(any())).then(a -> {
-      PhysicalInventory inventory = a.getArgumentAt(0, PhysicalInventory.class);
-      inventory.setId(UUID.randomUUID());
-      return inventory;
-    });
     objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
     objectMapper.configure(SerializationFeature.WRITE_DATE_TIMESTAMPS_AS_NANOSECONDS, false);
     objectMapper.registerModule(new JavaTimeModule());
@@ -248,6 +229,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     assertTrue(equals);
   }
 
+  @SuppressWarnings({"rawTypes", "unchecked"})
   @Test
   public void shouldReturnCreatedWhenSaveStockCardsGivenHappyRequest() throws Exception {
     // given
@@ -264,13 +246,28 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     // then
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
-    verify(stockManagementRepository, times(3)).createLot(any(), any());
-    verify(stockManagementRepository, times(12)).createStockCard(any(), any());
-    verify(stockManagementRepository, times(9)).createStockEvent(any());
-    verify(stockManagementRepository, times(52)).createStockEventLine(any(), any(), any());
-    verify(stockManagementRepository, times(52)).createStockCardLine(any(), any(), any());
-    verify(stockManagementRepository, times(2)).createPhysicalInventory(any());
-    verify(stockManagementRepository, times(5)).createPhysicalInventoryLine(any(), any(), any());
+    ArgumentCaptor<List> listParamCaptor = ArgumentCaptor.forClass(List.class);
+    verify(stockManagementRepository).batchCreateLots(listParamCaptor.capture());
+    assertEquals(3, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateEvents(listParamCaptor.capture());
+    assertEquals(9, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateStockCards(listParamCaptor.capture());
+    assertEquals(12, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateRequestedQuantities(listParamCaptor.capture());
+    assertEquals(2, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateEventLines(listParamCaptor.capture());
+    assertEquals(52, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateLines(listParamCaptor.capture());
+    assertEquals(52, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateInventories(listParamCaptor.capture());
+    assertEquals(3, listParamCaptor.getValue().size());
+    listParamCaptor.getValue().forEach(System.out::println);
+    verify(stockManagementRepository).batchCreateInventoryLines(listParamCaptor.capture());
+    assertEquals(5, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateInventoryLineAdjustments(listParamCaptor.capture());
+    assertEquals(15, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchSaveStocksOnHand(listParamCaptor.capture());
+    assertEquals(25, listParamCaptor.getValue().size());
   }
 
   @Test
@@ -288,13 +285,13 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     // then
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
-    verify(stockManagementRepository, times(1)).createLot(any(), any());
-    verify(stockManagementRepository, times(1)).createStockCard(any(), any());
-    verify(stockManagementRepository, times(1)).createStockEvent(any());
-    verify(stockManagementRepository, times(1)).createStockEventLine(any(), any(), any());
-    verify(stockManagementRepository, times(1)).createStockCardLine(any(), any(), any());
-    verify(stockManagementRepository, times(0)).createPhysicalInventory(any());
-    verify(stockManagementRepository, times(0)).createPhysicalInventoryLine(any(), any(), any());
+    verify(stockManagementRepository).batchCreateLots(any());
+    verify(stockManagementRepository).batchCreateStockCards(any());
+    verify(stockManagementRepository).batchCreateEvents(any());
+    verify(stockManagementRepository).batchCreateEventLines(any());
+    verify(stockManagementRepository).batchCreateLines(any());
+    verify(stockManagementRepository).batchCreateInventories(any());
+    verify(stockManagementRepository).batchCreateInventoryLines(any());
   }
 
   private void mockHomeFacility() {
@@ -360,10 +357,10 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     return Stream.of(programId1, programId2)
         .map(programId -> {
           ValidReasonAssignmentDto dto = new ValidReasonAssignmentDto();
-          dto.setId(UUID.randomUUID());
+          dto.setId(randomUUID());
           dto.setProgramId(programId);
           StockCardLineItemReason reason = new StockCardLineItemReason();
-          reason.setId(UUID.randomUUID());
+          reason.setId(randomUUID());
           reason.setName(name);
           dto.setReason(reason);
           return dto;
@@ -375,9 +372,9 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     return Stream.of(programId1, programId2)
         .map(programId -> {
           ValidSourceDestinationDto dto = new ValidSourceDestinationDto();
-          dto.setId(UUID.randomUUID());
+          dto.setId(randomUUID());
           Node node = new Node();
-          node.setId(UUID.randomUUID());
+          node.setId(randomUUID());
           dto.setNode(node);
           dto.setProgramId(programId);
           dto.setName(name);
@@ -396,12 +393,13 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     OrderableDto orderable = new OrderableDto();
     approvedProduct.setOrderable(orderable);
-    orderable.setId(UUID.randomUUID());
+    orderable.setId(randomUUID());
     orderable.setProductCode(productCode);
     orderable.setExtraData(new HashMap<>());
     ProgramOrderableDto program = new ProgramOrderableDto();
     program.setProgramId(programId);
     orderable.setPrograms(singleton(program));
+    orderable.setIdentifiers(ImmutableMap.of(TRADE_ITEM, randomUUID().toString()));
     return approvedProduct;
   }
 
@@ -458,7 +456,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     LotMovement movement1Lot1 = LotMovement.builder()
         .stockQuantity(10)
         .movementDetail(new MovementDetail(10, MovementType.ISSUE, "Maternidade"))
-        .lot(Lot.of("lot1", java.sql.Date.valueOf("2023-12-31")))
+        .lot(Lot.fromDatabase("lot1", java.sql.Date.valueOf("2023-12-31")))
         .build();
     Timestamp serverProcessTime = new Timestamp(1635701025000L);
     ProductMovement movement1 = ProductMovement.builder()
@@ -473,7 +471,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     LotMovement movement2Lot1 = LotMovement.builder()
         .stockQuantity(10)
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "District(DDM)"))
-        .lot(Lot.of("lot1", java.sql.Date.valueOf("2023-12-31")))
+        .lot(Lot.fromDatabase("lot1", java.sql.Date.valueOf("2023-12-31")))
         .build();
     ProductMovement movement2 = ProductMovement.builder()
         .productCode("test")

@@ -15,55 +15,50 @@
 
 package org.siglus.siglusapi.dto.android.db;
 
+import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
+
 import java.time.LocalDate;
-import java.util.Objects;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
+import org.openlmis.requisition.dto.OrderableDto;
 import org.siglus.siglusapi.dto.android.Lot;
-import org.siglus.siglusapi.dto.android.ProductLotCode;
 
 @Getter
+@RequiredArgsConstructor
 public class ProductLot {
 
-  @Setter
-  private UUID id;
-
+  private final UUID id;
   private final String productCode;
-
+  private final UUID tradeItemId;
   private final Lot lot;
 
-  public ProductLot(ProductLotCode code, LocalDate expirationDate) {
-    this.productCode = code.getProductCode();
-    if (code.isLot()) {
-      this.lot = new Lot(code.getLotCode(), expirationDate);
-    } else {
-      this.lot = null;
-    }
+  public static ProductLot noLot(String productCode) {
+    return new ProductLot(null, productCode, null, null);
   }
 
-  public ProductLot(ProductLotCode code) {
-    this.productCode = code.getProductCode();
-    this.lot = null;
+  public static ProductLot fromDatabase(UUID id, String productCode, UUID tradeItemId, Lot lot) {
+    return new ProductLot(id, productCode, tradeItemId, lot);
   }
 
-  @Override
-  public boolean equals(Object other) {
-    if (!(other instanceof ProductLot)) {
-      return false;
-    }
-    ProductLot productLot = (ProductLot) other;
-    if (productLot.getLot() == null || productLot.getLot().getCode() == null
-        || productLot.getLot().getExpirationDate() == null) {
-      return productCode.equals(productLot.getProductCode());
-    }
-    return Objects.equals(productCode, productLot.getProductCode())
-        && Objects.equals(lot.getCode(), productLot.getLot().getCode())
-        && Objects.equals(lot.getExpirationDate(), productLot.getLot().getExpirationDate());
+  public static ProductLot of(OrderableDto product, Lot lot) {
+    String tradeItemId = product.getIdentifiers().get(TRADE_ITEM);
+    return new ProductLot(UUID.randomUUID(), product.getProductCode(), UUID.fromString(tradeItemId), lot);
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(productCode, lot);
+  @Nullable
+  public String getLotCode() {
+    return lot == null ? null : lot.getCode();
   }
+
+  @Nullable
+  public LocalDate getExpirationDate() {
+    return lot == null ? null : lot.getExpirationDate();
+  }
+
+  public boolean isLot() {
+    return lot != null;
+  }
+
 }

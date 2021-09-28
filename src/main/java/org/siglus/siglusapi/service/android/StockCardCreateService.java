@@ -26,6 +26,7 @@ import static org.siglus.siglusapi.service.android.context.StockCardCreateContex
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +42,6 @@ import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.siglusapi.domain.LotConflict;
-import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
@@ -55,12 +55,16 @@ import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementCons
 import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByLot;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.StockOnHandConsistentWithQuantityByProduct;
 import org.siglus.siglusapi.dto.android.db.CalculatedStockOnHand;
+import org.siglus.siglusapi.dto.android.db.LineItemDetail;
 import org.siglus.siglusapi.dto.android.db.PhysicalInventory;
-import org.siglus.siglusapi.dto.android.db.PhysicalInventoryLineDetail;
+import org.siglus.siglusapi.dto.android.db.PhysicalInventoryLine;
+import org.siglus.siglusapi.dto.android.db.PhysicalInventoryLineAdjustment;
 import org.siglus.siglusapi.dto.android.db.ProductLot;
+import org.siglus.siglusapi.dto.android.db.RequestedQuantity;
 import org.siglus.siglusapi.dto.android.db.StockCard;
+import org.siglus.siglusapi.dto.android.db.StockCardLineItem;
 import org.siglus.siglusapi.dto.android.db.StockEvent;
-import org.siglus.siglusapi.dto.android.db.StockEventLineDetail;
+import org.siglus.siglusapi.dto.android.db.StockEventLineItem;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
 import org.siglus.siglusapi.dto.android.group.SelfCheckGroup;
@@ -70,9 +74,7 @@ import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.repository.LotConflictRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
-import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
-import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
@@ -83,17 +85,14 @@ import org.springframework.validation.annotation.Validated;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Validated
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.AvoidDuplicateLiterals"})
 public class StockCardCreateService {
 
   private final SiglusAuthenticationHelper authHelper;
   private final SupportedProgramsHelper programsHelper;
   private final ProgramReferenceDataService programDataService;
-  private final StockManagementRepository stockManagementRepository;
+  private final StockManagementRepository repo;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
-  private final AndroidHelper androidHelper;
-  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
   private final LotConflictRepository lotConflictRepository;
 
   @Transactional
@@ -106,131 +105,109 @@ public class StockCardCreateService {
       @ProductConsistentWithAllLots(groups = SelfCheckGroup.class)
       @LotStockConsistentWithExisted(groups = PerformanceGroup.class)
       @ProductMovementConsistentWithExisted(groups = PerformanceGroup.class)
-          List<StockCardCreateRequest> requests) {
-    Profiler profiler = new Profiler("createStockCards");
+          List<StockCardCreateRequest> requests,
+      Profiler profiler
+  ) {
     profiler.setLogger(log);
-    FacilityDto facility = getContext().getFacility();
-    deletePhysicalInventoryDraftForAndroidUser(facility.getId());
-    profiler.start("load");
-    List<ProductMovementKey> existed = getContext().getAllProductMovements().getProductMovements().stream()
-        .map(ProductMovement::getProductMovementKey).collect(toList());
-    profiler.start("filter");
-    List<StockCardCreateRequest> filtered = requests.stream().filter(r -> !existed.contains(r.getProductMovementKey()))
-        .collect(toList());
-    profiler.start("walk through");
-    walkThroughLots(filtered);
-    Profiler nested = profiler.startNested("insert lines");
+    profiler.start("load & filter");
+    List<StockCardCreateRequest> filtered = filterOutExisted(requests);
+    profiler.start("walk through lots");
+    StockCardNativeCreateContext context = new StockCardNativeCreateContext();
+    walkThroughLots(filtered, context);
     filtered.stream().collect(groupingBy(StockCardCreateRequest::getRecordedAt))
         .entrySet().stream()
-        .sorted(Map.Entry.comparingByKey())
-        .forEach(entry -> {
-          nested.start("insert " + entry.getKey());
-          createEvents(entry.getValue());
-        });
+        .sorted(Map.Entry.comparingByKey()).forEach(entry -> createEvents(entry.getValue(), context));
     filtered.sort(EventTimeContainer.ASCENDING);
-    profiler.start("insert stock on hand");
-    Instant stockOnHandProcessAt = Instant.now();
-    for (StockCardCreateRequest request : filtered) {
-      String productCode = request.getProductCode();
-      EventTime eventTime = request.getEventTime();
-      toAdjustments(request).forEach(adjustment -> {
-        String lotCode = null;
-        if (adjustment instanceof StockCardLotEventRequest) {
-          lotCode = ((StockCardLotEventRequest) adjustment).getLotCode();
-        }
-        StockCard stockCard = getContext().getStockCard(productCode, lotCode);
-        if (stockCard == null) {
-          throw new IllegalStateException();
-        }
-        InventoryDetail inventoryDetail = InventoryDetail.of(adjustment.getStockOnHand(), eventTime);
-        CalculatedStockOnHand calculated = CalculatedStockOnHand.of(stockCard, inventoryDetail);
-        getContext().addNewCalculatedStockOnHand(calculated);
-      });
-    }
-    getContext().getCalculatedStocksOnHand().forEach(
-        calculated -> stockManagementRepository.saveStockOnHand(calculated, stockOnHandProcessAt));
-    profiler.stop().log();
+    populateCalculatedStockOnHand(filtered);
+    Profiler insertDataProfiler = profiler.startNested("insert data");
+    insertData(context, insertDataProfiler);
+    profiler.start("end createStockCards");
   }
 
-  private void walkThroughLots(List<StockCardCreateRequest> requests) {
-    Map<ProductLot, EventTime> lotToEarliestDate = mapLotToEarliestDate(requests);
+  private List<StockCardCreateRequest> filterOutExisted(List<StockCardCreateRequest> requests) {
+    List<ProductMovementKey> existed = getContext().getAllProductMovements().getProductMovements().stream()
+        .map(ProductMovement::getProductMovementKey).collect(toList());
+    return requests.stream().filter(r -> !existed.contains(r.getProductMovementKey()))
+        .collect(toList());
+  }
+
+  private Map<ProductLotCode, LocalDate> getExpirationDatesFromRequest(List<StockCardCreateRequest> requests) {
+    return requests.stream()
+        .filter(request -> !request.getLotEvents().isEmpty())
+        .map(request -> request.getLotEvents().stream()
+            .collect(toMap(l -> ProductLotCode.of(request.getProductCode(), l.getLotCode()),
+                StockCardLotEventRequest::getExpirationDate)))
+        .reduce(new HashMap<>(), (m1, m2) -> {
+          m2.forEach((k, v) -> m1.merge(k, v, (v1, v2) -> v1));
+          return m1;
+        });
+  }
+
+  private void walkThroughLots(List<StockCardCreateRequest> requests, StockCardNativeCreateContext context) {
+    Map<ProductLotCode, LocalDate> codeToExpirationDates = getExpirationDatesFromRequest(requests);
+    Map<ProductLotCode, EventTime> lotToEarliestDate = mapLotToEarliestDate(requests);
     lotToEarliestDate.forEach(
-        (productLot, earliestDate) -> {
-          Lot lot = productLot.getLot();
-          String productCode = productLot.getProductCode();
-          if (lot == null) {
-            loadStockCardToContext(productCode, null, null, earliestDate);
+        (productLotCode, earliestDate) -> {
+          String productCode = productLotCode.getProductCode();
+          if (!productLotCode.isLot()) {
+            loadStockCardToContext(ProductLot.noLot(productCode), earliestDate);
             return;
           }
-          String lotCode = lot.getCode();
-          LocalDate expirationDate = lot.getExpirationDate();
+          String lotCode = productLotCode.getLotCode();
+          LocalDate expirationDate = codeToExpirationDates.get(productLotCode);
+          Lot lot = Lot.of(lotCode, expirationDate);
           ProductLot cachedLot = getContext().getLot(productCode, lotCode);
-          if (cachedLot == null) {
-            OrderableDto product = getContext().getProduct(productCode);
-            ProductLot existedLot = stockManagementRepository.getLot(product, lot);
-            if (existedLot == null) {
-              ProductLot newCreated = stockManagementRepository.createLot(product, lot);
-              getContext().newLot(newCreated);
-              return;
-            } else {
-              loadStockCardToContext(productCode, lot, existedLot.getId(), earliestDate);
-            }
-            cachedLot = existedLot;
-            getContext().newLot(existedLot);
+          if (cachedLot != null) {
+            return;
           }
-          handleLotConflict(lotCode, expirationDate, cachedLot);
+          OrderableDto product = getContext().getProduct(productCode);
+          ProductLot existedLot = repo.getLot(product, lot);
+          if (existedLot == null) {
+            ProductLot newLot = ProductLot.of(product, lot);
+            context.lots.add(newLot);
+            getContext().newLot(newLot);
+            return;
+          }
+          loadStockCardToContext(existedLot, earliestDate);
+          getContext().newLot(existedLot);
+          handleLotConflict(lotCode, expirationDate, existedLot);
         }
     );
   }
 
-  private void loadStockCardToContext(String productCode, Lot lot, UUID lotId, EventTime earliestDate) {
-    UUID facilityId = getContext().getFacility().getId();
-    UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
-    UUID productId = getContext().getProductId(productCode);
-    String lotCode = lot == null ? null : lot.getCode();
-    StockCard stockCard;
-    if (lot == null) {
-      stockCard = StockCard.ofNoLot(facilityId, programId, productId, productCode);
-    } else {
-      stockCard = StockCard.of(facilityId, programId, productId, productCode, lotId, lotCode, lot.getExpirationDate());
-    }
-    if (getContext().getStockCard(productCode, lotCode) != null) {
+  private void loadStockCardToContext(ProductLot productLot, EventTime earliestDate) {
+    if (getContext().getStockCard(productLot.getProductCode(), productLot.getLotCode()) != null) {
       return;
     }
-    stockCard = stockManagementRepository.getStockCard(stockCard);
+    UUID facilityId = getContext().getFacility().getId();
+    String productCode = productLot.getProductCode();
+    UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
+    UUID productId = getContext().getProductId(productCode);
+    StockCard stockCard = repo.getStockCard(facilityId, programId, productId, productLot);
     if (stockCard == null) {
       return;
     }
     getContext().newStockCard(stockCard);
-    stockManagementRepository.findCalculatedStockOnHand(stockCard, earliestDate)
-        .forEach(getContext()::addNewCalculatedStockOnHand);
+    repo.findCalculatedStockOnHand(stockCard, earliestDate).forEach(getContext()::addNewCalculatedStockOnHand);
   }
 
-  private Map<ProductLot, EventTime> mapLotToEarliestDate(List<StockCardCreateRequest> requests) {
+  private Map<ProductLotCode, EventTime> mapLotToEarliestDate(List<StockCardCreateRequest> requests) {
     return requests.stream()
         .map(
             r -> {
               if (r.getLotEvents().isEmpty()) {
-                Map<ProductLot, EventTime> map = new HashMap<>();
-                map.put(toProductNoLot(r), r.getEventTime());
+                Map<ProductLotCode, EventTime> map = new HashMap<>();
+                map.put(ProductLotCode.noLot(r.getProductCode()), r.getEventTime());
                 return map;
-              } else {
-                return r.getLotEvents().stream().collect(toMap(l -> toProductLot(r, l), l -> r.getEventTime()));
               }
+              return r.getLotEvents().stream()
+                  .collect(toMap(l -> ProductLotCode.of(r.getProductCode(), l.getLotCode()), l -> r.getEventTime()));
             })
         .reduce(new HashMap<>(), (m1, m2) -> {
           m2.forEach((k, v) -> m1
               .merge(k, v, (v1, v2) -> Stream.of(v1, v2).min(naturalOrder()).orElseThrow(IllegalStateException::new)));
           return m1;
         });
-  }
-
-  private ProductLot toProductLot(StockCardCreateRequest r, StockCardLotEventRequest l) {
-    return new ProductLot(ProductLotCode.of(r.getProductCode(), l.getLotCode()), l.getExpirationDate());
-  }
-
-  private ProductLot toProductNoLot(StockCardCreateRequest r) {
-    return new ProductLot(ProductLotCode.of(r.getProductCode(), null));
   }
 
   private void handleLotConflict(String lotCode, LocalDate expirationDate, ProductLot cached) {
@@ -260,7 +237,7 @@ public class StockCardCreateService {
         .collect(toList());
   }
 
-  private void createEvents(List<StockCardCreateRequest> requests) {
+  private void createEvents(List<StockCardCreateRequest> requests, StockCardNativeCreateContext context) {
     String signature = requests.stream().filter(r -> r.getSignature() != null)
         .findFirst().map(StockCardCreateRequest::getSignature).orElse(null);
     UUID facilityId = getContext().getFacility().getId();
@@ -270,30 +247,38 @@ public class StockCardCreateService {
         .collect(groupingBy(r -> getContext().getProgramId(r.getProductCode()).orElseThrow(IllegalStateException::new)))
         .forEach((programId, r) -> {
           StockEvent stockEvent = StockEvent.of(facilityId, programId, processedAt, signature, userId);
-          stockManagementRepository.createStockEvent(stockEvent);
-          createEvent(stockEvent, r);
+          System.out.println(stockEvent.getId() + " " + requests);
+          context.stockEvents.add(stockEvent);
+          createEvent(stockEvent, r, context);
         });
   }
 
-  private void createEvent(StockEvent stockEvent, List<StockCardCreateRequest> requests) {
+  private void createEvent(StockEvent stockEvent, List<StockCardCreateRequest> requests,
+      StockCardNativeCreateContext context) {
     requests.stream()
-        .forEach(r -> {
-          MovementType type = MovementType.valueOf(r.getType());
+        .forEach(request -> {
+          MovementType type = MovementType.valueOf(request.getType());
           if (type == MovementType.ISSUE) {
-            UUID productId = getContext().getProductId(r.getProductCode());
-            stockManagementRepository.saveRequested(stockEvent, productId, r.getRequested());
+            OrderableDto product = getContext().getProduct(request.getProductCode());
+            context.requestedQuantities.add(RequestedQuantity.of(stockEvent, product, request.getRequested()));
           }
-          toAdjustments(r).forEach(a -> {
-            StockCard stockCard = getStockCard(r.getProductCode(), a, stockEvent);
-            StockEventLineDetail lineDetail = StockEventLineDetail.of(r.getProductCode(), type, a);
-            UUID eventLineId = stockManagementRepository.createStockEventLine(stockEvent, stockCard, lineDetail);
-            UUID stockCardLineId = stockManagementRepository.createStockCardLine(stockEvent, stockCard, lineDetail);
-            if (type == MovementType.PHYSICAL_INVENTORY && !"INVENTORY".equals(a.getReasonName())) {
-              PhysicalInventory physicalInventory = getPhysicalInventory(r.getOccurredDate(), stockEvent);
-              PhysicalInventoryLineDetail inventoryLineDetail = PhysicalInventoryLineDetail
-                  .of(physicalInventory, stockCard, type, a);
-              stockManagementRepository.createPhysicalInventoryLine(inventoryLineDetail, eventLineId, stockCardLineId);
+          toAdjustments(request).forEach(adjustment -> {
+            StockCard stockCard = getStockCard(request.getProductCode(), adjustment, stockEvent, context);
+            LineItemDetail lineDetail = LineItemDetail.of(stockEvent, stockCard, type, adjustment);
+            StockEventLineItem eventLine = StockEventLineItem.of(lineDetail);
+            context.eventLineItems.add(eventLine);
+            StockCardLineItem stockCardLine = StockCardLineItem.of(lineDetail);
+            context.stockCardLineItems.add(stockCardLine);
+            UUID eventLineId = eventLine.getId();
+            UUID stockCardLineId = stockCardLine.getId();
+            if (type != MovementType.PHYSICAL_INVENTORY || "INVENTORY".equals(adjustment.getReasonName())) {
+              return;
             }
+            PhysicalInventory inventory = getPhysicalInventory(request.getOccurredDate(), stockEvent, context);
+            PhysicalInventoryLine inventoryLine = PhysicalInventoryLine.of(inventory, stockCard, type, adjustment);
+            context.inventoryLines.add(inventoryLine);
+            context.inventoryLineAdjustments
+                .addAll(PhysicalInventoryLineAdjustment.of(inventoryLine, eventLineId, stockCardLineId));
           });
         });
   }
@@ -305,12 +290,11 @@ public class StockCardCreateService {
     return request.getLotEvents();
   }
 
-  private StockCard getStockCard(String productCode, StockCardAdjustment adjustment, StockEvent stockEvent) {
+  private StockCard getStockCard(String productCode, StockCardAdjustment adjustment, StockEvent stockEvent,
+      StockCardNativeCreateContext context) {
     String lotCode = null;
-    LocalDate expirationDate = null;
     if (adjustment instanceof StockCardLotEventRequest) {
       lotCode = ((StockCardLotEventRequest) adjustment).getLotCode();
-      expirationDate = ((StockCardLotEventRequest) adjustment).getExpirationDate();
     }
     StockCard stockCard = getContext().getStockCard(productCode, lotCode);
     if (stockCard != null) {
@@ -319,34 +303,28 @@ public class StockCardCreateService {
     UUID facilityId = getContext().getFacility().getId();
     UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
     UUID productId = getContext().getProductId(productCode);
-    UUID lotId = getContext().getLotId(productCode, lotCode);
-    stockCard = StockCard.of(facilityId, programId, productId, productCode, lotId, lotCode, expirationDate);
-    stockCard = stockManagementRepository.createStockCard(stockCard, stockEvent.getId());
+    ProductLot productLot = getContext().getLot(productCode, lotCode);
+    stockCard = StockCard.of(facilityId, programId, productId, productLot, stockEvent);
+    context.stockCards.add(stockCard);
     getContext().newStockCard(stockCard);
     return stockCard;
   }
 
-  private PhysicalInventory getPhysicalInventory(LocalDate occurredDate, StockEvent stockEvent) {
+  private PhysicalInventory getPhysicalInventory(LocalDate occurredDate, StockEvent stockEvent,
+      StockCardNativeCreateContext context) {
     UUID facilityId = getContext().getFacility().getId();
     UUID programId = stockEvent.getProgramId();
     PhysicalInventory physicalInventory = getContext().getPhysicalInventory(stockEvent, occurredDate);
     if (physicalInventory != null) {
       return physicalInventory;
     }
-    physicalInventory =
-        PhysicalInventory.of(facilityId, programId, stockEvent.getId(), occurredDate, stockEvent.getSignature());
-    PhysicalInventory existed = stockManagementRepository.getPhysicalInventory(physicalInventory);
-    if (existed != null) {
-      getContext().newPhysicalInventory(existed);
-      return existed;
-    }
-    physicalInventory = stockManagementRepository.createPhysicalInventory(physicalInventory);
+    physicalInventory = PhysicalInventory.of(facilityId, programId, occurredDate, stockEvent);
+    context.physicalInventories.add(physicalInventory);
     getContext().newPhysicalInventory(physicalInventory);
     return physicalInventory;
   }
 
-  private List<OrderableDto> getProgramProducts(UUID homeFacilityId,
-      ProgramDto program) {
+  private List<OrderableDto> getProgramProducts(UUID homeFacilityId, ProgramDto program) {
     return approvedProductDataService
         .getApprovedProducts(homeFacilityId, program.getId(), emptyList()).stream()
         .map(ApprovedProductDto::getOrderable)
@@ -357,10 +335,62 @@ public class StockCardCreateService {
         .collect(toList());
   }
 
-  private void deletePhysicalInventoryDraftForAndroidUser(UUID facilityId) {
-    if (androidHelper.isAndroid()) {
-      siglusPhysicalInventoryService.deletePhysicalInventoryForAllProducts(facilityId);
+  private void populateCalculatedStockOnHand(List<StockCardCreateRequest> filtered) {
+    for (StockCardCreateRequest request : filtered) {
+      String productCode = request.getProductCode();
+      EventTime eventTime = request.getEventTime();
+      toAdjustments(request).forEach(adjustment -> {
+        String lotCode = null;
+        if (adjustment instanceof StockCardLotEventRequest) {
+          lotCode = ((StockCardLotEventRequest) adjustment).getLotCode();
+        }
+        StockCard stockCard = getContext().getStockCard(productCode, lotCode);
+        if (stockCard == null) {
+          throw new IllegalStateException();
+        }
+        InventoryDetail inventoryDetail = InventoryDetail.of(adjustment.getStockOnHand(), eventTime);
+        CalculatedStockOnHand calculated = CalculatedStockOnHand.of(stockCard, inventoryDetail);
+        getContext().addNewCalculatedStockOnHand(calculated);
+      });
     }
+  }
+
+  private void insertData(StockCardNativeCreateContext context, Profiler profiler) {
+    profiler.setLogger(log);
+    profiler.start("insert lots: " + context.lots.size());
+    repo.batchCreateLots(context.lots);
+    profiler.start("insert stockEvents: " + context.stockEvents.size());
+    repo.batchCreateEvents(context.stockEvents);
+    profiler.start("insert stockCards: " + context.stockCards.size());
+    repo.batchCreateStockCards(context.stockCards);
+    profiler.start("insert requestedQuantities: " + context.requestedQuantities.size());
+    repo.batchCreateRequestedQuantities(context.requestedQuantities);
+    profiler.start("insert eventLineItems: " + context.eventLineItems.size());
+    repo.batchCreateEventLines(context.eventLineItems);
+    profiler.start("insert stockCardLineItems: " + context.stockCardLineItems.size());
+    repo.batchCreateLines(context.stockCardLineItems);
+    profiler.start("insert physicalInventories: " + context.physicalInventories.size());
+    repo.batchCreateInventories(context.physicalInventories);
+    profiler.start("insert inventoryLines: " + context.inventoryLines.size());
+    repo.batchCreateInventoryLines(context.inventoryLines);
+    profiler.start("insert inventoryLineAdjustments: " + context.inventoryLineAdjustments.size());
+    repo.batchCreateInventoryLineAdjustments(context.inventoryLineAdjustments);
+    profiler.start("insert stock on hand: " + getContext().getCalculatedStocksOnHand().size());
+    repo.batchSaveStocksOnHand(getContext().getCalculatedStocksOnHand());
+  }
+
+  private static class StockCardNativeCreateContext {
+
+    private final List<ProductLot> lots = new ArrayList<>();
+    private final List<StockEvent> stockEvents = new ArrayList<>();
+    private final List<StockCard> stockCards = new ArrayList<>();
+    private final List<RequestedQuantity> requestedQuantities = new ArrayList<>();
+    private final List<StockEventLineItem> eventLineItems = new ArrayList<>();
+    private final List<StockCardLineItem> stockCardLineItems = new ArrayList<>();
+    private final List<PhysicalInventory> physicalInventories = new ArrayList<>();
+    private final List<PhysicalInventoryLine> inventoryLines = new ArrayList<>();
+    private final List<PhysicalInventoryLineAdjustment> inventoryLineAdjustments = new ArrayList<>();
+
   }
 
 }

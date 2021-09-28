@@ -238,7 +238,7 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
     LotMovement movement1Lot1 = LotMovement.builder()
         .stockQuantity(10)
         .movementDetail(new MovementDetail(10, MovementType.ISSUE, "MATERNITY"))
-        .lot(Lot.of("lot1", java.sql.Date.valueOf("2023-12-31")))
+        .lot(Lot.fromDatabase("lot1", java.sql.Date.valueOf("2023-12-31")))
         .build();
     ProductMovement movement1 = ProductMovement.builder()
         .productCode("test")
@@ -252,7 +252,7 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
     LotMovement movement2Lot1 = LotMovement.builder()
         .stockQuantity(10)
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "DISTRICT_DDM"))
-        .lot(Lot.of("lot1", java.sql.Date.valueOf("2023-12-31")))
+        .lot(Lot.fromDatabase("lot1", java.sql.Date.valueOf("2023-12-31")))
         .build();
     ProductMovement movement2 = ProductMovement.builder()
         .productCode("test")

@@ -94,6 +94,7 @@ import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
+import org.slf4j.profiler.Profiler;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods", "unused"})
@@ -170,7 +171,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
         .constraintValidatorFactory(new InnerConstraintValidatorFactory())
         .messageInterpolator(messageInterpolator)
         .buildValidatorFactory().getValidator().forExecutables();
-    method = StockCardCreateService.class.getDeclaredMethod("createStockCards", List.class);
+    method = StockCardCreateService.class.getDeclaredMethod("createStockCards", List.class, Profiler.class);
     orderableService = mock(SiglusOrderableService.class);
     OrderableDto notKitProduct = mock(OrderableDto.class);
     when(notKitProduct.getPrograms()).thenReturn(emptySet());
@@ -229,7 +230,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   }
 
   private LotMovement newLotMovement(MovementDetail movementDetail, Integer stockQuantity) {
-    return LotMovement.builder().lot(Lot.of("SME-LOTE-08O05Y-072021", java.sql.Date.valueOf("2021-07-31")))
+    return LotMovement.builder().lot(Lot.fromDatabase("SME-LOTE-08O05Y-072021", java.sql.Date.valueOf("2021-07-31")))
         .stockQuantity(stockQuantity).movementDetail(movementDetail).build();
   }
 
@@ -657,8 +658,8 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
   private Map<String, List<String>> executeValidation(Object... params) {
     holder.initContext(mockFacilityDto(), LocalDate.MIN);
     return forExecutables
-        .validateParameters(stockCardCreateService, method, params, SelfCheckGroup.class, PerformanceSequence.class)
-        .stream()
+        .validateParameters(stockCardCreateService, method, new Object[]{params[0], null}, SelfCheckGroup.class,
+            PerformanceSequence.class).stream()
         .collect(groupingBy(v -> v.getPropertyPath().toString(), mapping(ConstraintViolation::getMessage, toList())));
   }
 

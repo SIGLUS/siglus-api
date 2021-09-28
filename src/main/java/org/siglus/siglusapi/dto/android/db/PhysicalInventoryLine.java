@@ -15,47 +15,32 @@
 
 package org.siglus.siglusapi.dto.android.db;
 
-import java.sql.Date;
-import java.time.LocalDate;
 import java.util.UUID;
 import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
+import org.siglus.siglusapi.dto.android.enumeration.MovementType;
+import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 
-@ToString
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class PhysicalInventory {
+public class PhysicalInventoryLine {
 
-  private final UUID id = UUID.randomUUID();
-  private final UUID facilityId;
-  private final UUID programId;
-  private final UUID eventId;
-  private final LocalDate occurredDate;
-  private final String signature;
+  private final UUID id;
+  private final UUID physicalInventoryId;
+  private final UUID productId;
+  private final UUID lotId;
+  private final UUID reasonId;
+  private final Integer adjustment;
+  private final Integer inventoryBeforeAdjustment;
 
-  public static PhysicalInventory of(UUID facilityId, UUID programId, LocalDate occurredDate, StockEvent stockEvent) {
-    return new PhysicalInventory(facilityId, programId, stockEvent.getId(), occurredDate, stockEvent.getSignature());
-  }
-
-  public Key getKey() {
-    return new Key();
-  }
-
-  public java.sql.Date getOccurredDateForSql() {
-    return Date.valueOf(occurredDate);
-  }
-
-  @EqualsAndHashCode
-  public class Key {
-
-    private final UUID facilityId = PhysicalInventory.this.facilityId;
-    private final UUID programId = PhysicalInventory.this.programId;
-    private final UUID eventId = PhysicalInventory.this.eventId;
-    private final LocalDate occurredDate = PhysicalInventory.this.occurredDate;
-
+  public static PhysicalInventoryLine of(PhysicalInventory physicalInventory, StockCard stockCard,
+      MovementType type, StockCardAdjustment request) {
+    UUID reasonId = type.getInventoryReasonId(stockCard.getProgramId(), request.getReasonName());
+    Integer adjustment = Math.abs(request.getQuantity());
+    Integer inventoryBeforeAdjustment = request.getStockOnHand() - request.getQuantity();
+    return new PhysicalInventoryLine(UUID.randomUUID(), physicalInventory.getId(), stockCard.getProductId(),
+        stockCard.getLotId(), reasonId, adjustment, inventoryBeforeAdjustment);
   }
 
 }

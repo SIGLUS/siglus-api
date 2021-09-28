@@ -28,6 +28,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -660,7 +661,8 @@ public class MeServiceTest {
     when(stockCardRequestBackupRepository.findOneByHash(anyString())).thenReturn(null);
     StockCardCreateService stockCardCreateServiceMock = mock(StockCardCreateService.class);
     ReflectionTestUtils.setField(service, nameStockCardCreateService, stockCardCreateServiceMock);
-    doThrow(new NullPointerException()).when(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
+    doThrow(new NullPointerException()).when(stockCardCreateServiceMock)
+        .createStockCards(eq(stockCardCreateRequests), any());
     when(stockCardCreateRequestValidator.validateStockCardCreateRequest(stockCardCreateRequests))
         .thenReturn(mock(ValidatedStockCards.class));
     try {
@@ -668,7 +670,7 @@ public class MeServiceTest {
       service.createStockCards(stockCardCreateRequests);
     } catch (Exception e) {
       // then
-      verify(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
+      verify(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests, any());
       verify(stockCardRequestBackupRepository).save(stockCardRequestBackupArgumentCaptor.capture());
     }
   }
@@ -684,13 +686,13 @@ public class MeServiceTest {
     when(stockCardCreateRequestValidator.validateStockCardCreateRequest(stockCardCreateRequests))
         .thenReturn(mock(ValidatedStockCards.class));
     doThrow(new ConstraintViolationException(Collections.emptySet()))
-        .when(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
+        .when(stockCardCreateServiceMock).createStockCards(eq(stockCardCreateRequests), any());
     try {
       // when
       service.createStockCards(stockCardCreateRequests);
     } catch (Exception e) {
       // then
-      verify(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
+      verify(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests, any());
       verify(stockCardRequestBackupRepository, times(0)).save(backup);
     }
   }
@@ -702,7 +704,7 @@ public class MeServiceTest {
     StockCardCreateService stockCardCreateServiceMock = mock(StockCardCreateService.class);
     ReflectionTestUtils.setField(service, nameStockCardCreateService, stockCardCreateServiceMock);
     doThrow(new ConstraintViolationException(Collections.emptySet()))
-        .when(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests);
+        .when(stockCardCreateServiceMock).createStockCards(eq(stockCardCreateRequests), any());
     // when
     try {
       // when

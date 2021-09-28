@@ -15,8 +15,10 @@
 
 package org.siglus.siglusapi.dto.android.db;
 
-import static org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder.getContext;
-
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +28,10 @@ import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 
 @Getter
 @RequiredArgsConstructor(staticName = "of")
-public class StockEventLineDetail {
+public class LineItemDetail {
 
+  private final StockEvent stockEvent;
+  private final StockCard stockCard;
   private final EventTime eventTime;
   private final Integer quantity;
   private final UUID sourceId;
@@ -35,21 +39,52 @@ public class StockEventLineDetail {
   private final UUID reasonId;
   private final String documentNumber;
 
-  public static StockEventLineDetail of(String productCode, MovementType type, StockCardAdjustment request) {
+  public static LineItemDetail of(StockEvent stockEvent, StockCard stockCard, MovementType type,
+      StockCardAdjustment request) {
     Integer quantity;
     if (type == MovementType.PHYSICAL_INVENTORY) {
       quantity = request.getStockOnHand();
     } else {
-      quantity = request.getQuantity();
+      quantity = Math.abs(request.getQuantity());
     }
-    UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);
+    UUID programId = stockCard.getProgramId();
     String reason = request.getReasonName();
     UUID sourceId = type.getSourceId(programId, reason);
     UUID destinationId = type.getDestinationId(programId, reason);
     UUID reasonId = type.getAdjustmentReasonId(programId, reason);
     String documentationNo = request.getDocumentationNo();
-    return new StockEventLineDetail(request.getEventTime(), quantity, sourceId, destinationId, reasonId,
-        documentationNo);
+    return new LineItemDetail(stockEvent, stockCard, request.getEventTime(), quantity, sourceId, destinationId,
+        reasonId, documentationNo);
+  }
+
+  public java.sql.Date getOccurredDate() {
+    return Date.valueOf(eventTime.getOccurredDate());
+  }
+
+  public Timestamp getServerProcessAt() {
+    return Timestamp.from(stockEvent.getProcessedAt());
+  }
+
+  public String getSignature() {
+    return stockEvent.getSignature();
+  }
+
+  public UUID getUserId() {
+    return stockEvent.getUserId();
+  }
+
+  public Map<String, String> getExtraData() {
+    Map<String, String> extraData = new LinkedHashMap<>();
+    if (stockCard.getLotCode() != null) {
+      extraData.put("lotCode", stockCard.getLotCode());
+    }
+    if (stockCard.getExpirationDate() != null) {
+      extraData.put("expirationDate", stockCard.getExpirationDate().toString());
+    }
+    if (eventTime.getRecordedAt() != null) {
+      extraData.put("originEventTime", eventTime.getRecordedAt().toString());
+    }
+    return extraData;
   }
 
 }

@@ -31,6 +31,7 @@ import org.siglus.siglusapi.dto.android.ValidatedStockCards;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.service.android.StockCardCreateService;
+import org.slf4j.profiler.Profiler;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
@@ -47,7 +48,7 @@ public class StockCardCreateRequestValidator {
     ExecutableValidator forExecutables = validator.forExecutables();
     Method method = null;
     try {
-      method = StockCardCreateService.class.getDeclaredMethod("createStockCards", List.class);
+      method = StockCardCreateService.class.getDeclaredMethod("createStockCards", List.class, Profiler.class);
     } catch (NoSuchMethodException e) {
       log.warn(e.getMessage());
     }
@@ -56,7 +57,7 @@ public class StockCardCreateRequestValidator {
     List<StockCardCreateRequest> originRequest = new ArrayList<>(requests);
     do {
       violations = forExecutables.validateParameters(
-          stockCardCreateService, method, new List[]{originRequest}, PerformanceSequence.class);
+          stockCardCreateService, method, new List[]{originRequest, null}, PerformanceSequence.class);
       invalidProducts.addAll(getInvalidProducts(violations));
       originRequest.removeIf(
           r -> invalidProducts.stream().anyMatch(i -> i.getProductCode().equals(r.getProductCode())));

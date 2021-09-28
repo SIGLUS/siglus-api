@@ -15,47 +15,23 @@
 
 package org.siglus.siglusapi.dto.android.db;
 
-import java.sql.Date;
-import java.time.LocalDate;
 import java.util.UUID;
 import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
+import org.openlmis.requisition.dto.OrderableDto;
 
-@ToString
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class PhysicalInventory {
+public class RequestedQuantity {
 
-  private final UUID id = UUID.randomUUID();
-  private final UUID facilityId;
-  private final UUID programId;
-  private final UUID eventId;
-  private final LocalDate occurredDate;
-  private final String signature;
+  private final UUID id;
+  private final UUID stockEventId;
+  private final UUID productId;
+  private final Integer requested;
 
-  public static PhysicalInventory of(UUID facilityId, UUID programId, LocalDate occurredDate, StockEvent stockEvent) {
-    return new PhysicalInventory(facilityId, programId, stockEvent.getId(), occurredDate, stockEvent.getSignature());
-  }
-
-  public Key getKey() {
-    return new Key();
-  }
-
-  public java.sql.Date getOccurredDateForSql() {
-    return Date.valueOf(occurredDate);
-  }
-
-  @EqualsAndHashCode
-  public class Key {
-
-    private final UUID facilityId = PhysicalInventory.this.facilityId;
-    private final UUID programId = PhysicalInventory.this.programId;
-    private final UUID eventId = PhysicalInventory.this.eventId;
-    private final LocalDate occurredDate = PhysicalInventory.this.occurredDate;
-
+  public static RequestedQuantity of(StockEvent stockEvent, OrderableDto product, Integer requested) {
+    return new RequestedQuantity(UUID.randomUUID(), stockEvent.getId(), product.getId(), requested);
   }
 
 }

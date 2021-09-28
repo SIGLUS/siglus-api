@@ -67,7 +67,6 @@ public class MovementDetail {
         reason = adjustmentReason;
       }
     } else if (inventoryReason != null) {
-      log.debug("inventoryReason {} {}", inventoryReason, inventoryReasonType);
       movementType = MovementType.PHYSICAL_INVENTORY;
       adjustment = getDirection(inventoryReasonType) * unsignedInventoryAdjustment;
       reason = inventoryReason;

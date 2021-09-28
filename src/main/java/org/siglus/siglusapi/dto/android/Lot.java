@@ -16,25 +16,31 @@
 package org.siglus.siglusapi.dto.android;
 
 import java.time.LocalDate;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @Data
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class Lot {
 
   private final String code;
 
   private final LocalDate expirationDate;
 
-  public Lot(String code, LocalDate expirationDate) {
-    this.code = code;
-    this.expirationDate = expirationDate;
+  @Nonnull
+  public static Lot of(String code, @Nullable LocalDate expirationDate) {
+    return new Lot(code, expirationDate);
   }
 
-  public static Lot of(String code, @Nullable java.sql.Date expirationDate) {
+  @Nullable
+  public static Lot fromDatabase(String code, @Nullable java.sql.Date expirationDate) {
     if (code == null) {
       return null;
     }
     return new Lot(code, expirationDate == null ? null : expirationDate.toLocalDate());
   }
+
 }

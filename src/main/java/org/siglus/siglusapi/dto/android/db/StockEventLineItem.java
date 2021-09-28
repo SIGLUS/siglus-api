@@ -15,29 +15,15 @@
 
 package org.siglus.siglusapi.dto.android.db;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor(staticName = "fromDatabase")
-public class StockEvent {
+@RequiredArgsConstructor(staticName = "of")
+public class StockEventLineItem {
 
-  private final UUID id;
-  private final UUID facilityId;
-  private final UUID programId;
-  private final Instant processedAt;
-  private final String signature;
-  private final UUID userId;
-
-  public static StockEvent of(UUID facilityId, UUID programId, Instant processedAt, String signature, UUID userId) {
-    return new StockEvent(UUID.randomUUID(), facilityId, programId, processedAt, signature, userId);
-  }
-
-  public Timestamp getServerProcessedAt() {
-    return Timestamp.from(processedAt);
-  }
+  private final UUID id = UUID.randomUUID();
+  private final LineItemDetail lineDetail;
 
 }

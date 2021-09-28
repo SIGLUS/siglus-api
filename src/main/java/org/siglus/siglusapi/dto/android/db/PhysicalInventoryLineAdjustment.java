@@ -15,33 +15,33 @@
 
 package org.siglus.siglusapi.dto.android.db;
 
+import static java.util.Arrays.asList;
+
+import java.util.List;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.dto.android.enumeration.MovementType;
-import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class PhysicalInventoryLineDetail {
+public class PhysicalInventoryLineAdjustment {
 
-  private final UUID physicalInventoryId;
-  private final UUID productId;
-  private final UUID lotId;
+  private final UUID id;
   private final UUID reasonId;
   private final Integer adjustment;
-  private final Integer inventoryBeforeAdjustment;
+  private final UUID inventoryLineId;
+  private final UUID eventLineId;
+  private final UUID stockCardLineId;
 
-  public static PhysicalInventoryLineDetail of(PhysicalInventory physicalInventory, StockCard stockCard,
-      MovementType type, StockCardAdjustment request) {
-    Integer adjustment = request.getQuantity();
-    Integer inventoryBeforeAdjustment = request.getStockOnHand() - adjustment;
-    UUID programId = stockCard.getProgramId();
-    String reason = request.getReasonName();
-    UUID reasonId = type.getInventoryReasonId(programId, reason);
-    return new PhysicalInventoryLineDetail(physicalInventory.getId(), stockCard.getProductId(), stockCard.getLotId(),
-        reasonId, adjustment, inventoryBeforeAdjustment);
+  public static List<PhysicalInventoryLineAdjustment> of(PhysicalInventoryLine inventoryLine, UUID eventLineId,
+      UUID stockCardLineId) {
+    PhysicalInventoryLineAdjustment adjustmentForInventory = new PhysicalInventoryLineAdjustment(UUID.randomUUID(),
+        inventoryLine.getReasonId(), inventoryLine.getAdjustment(), inventoryLine.getId(), null, null);
+    PhysicalInventoryLineAdjustment adjustmentForEvent = new PhysicalInventoryLineAdjustment(UUID.randomUUID(),
+        inventoryLine.getReasonId(), inventoryLine.getAdjustment(), null, eventLineId, null);
+    PhysicalInventoryLineAdjustment adjustmentForLine = new PhysicalInventoryLineAdjustment(UUID.randomUUID(),
+        inventoryLine.getReasonId(), inventoryLine.getAdjustment(), null, null, stockCardLineId);
+    return asList(adjustmentForInventory, adjustmentForEvent, adjustmentForLine);
   }
-
 }

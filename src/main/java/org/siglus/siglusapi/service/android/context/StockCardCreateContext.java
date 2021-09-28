@@ -110,6 +110,9 @@ public final class StockCardCreateContext {
   }
 
   public ProductLot getLot(String productCode, String lotCode) {
+    if (lotCode == null) {
+      return ProductLot.noLot(productCode);
+    }
     ProductLotCode productLotCode = ProductLotCode.of(productCode, lotCode);
     return lots.get(productLotCode);
   }
@@ -144,7 +147,7 @@ public final class StockCardCreateContext {
 
   public PhysicalInventory getPhysicalInventory(StockEvent stockEvent, LocalDate occurredDate) {
     PhysicalInventory physicalInventory = PhysicalInventory
-        .of(stockEvent.getFacilityId(), stockEvent.getProgramId(), stockEvent.getId(), occurredDate, null);
+        .of(stockEvent.getFacilityId(), stockEvent.getProgramId(), occurredDate, stockEvent);
     return physicalInventories.get(physicalInventory.getKey());
   }
 

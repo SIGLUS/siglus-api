@@ -17,14 +17,15 @@ package org.siglus.siglusapi.dto.android.db;
 
 import java.time.LocalDate;
 import java.util.UUID;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class StockCard {
 
-  @Setter
-  private UUID id;
+  private final UUID id;
   private final UUID facilityId;
   private final UUID programId;
   private final UUID productId;
@@ -32,25 +33,25 @@ public class StockCard {
   private final UUID lotId;
   private final String lotCode;
   private final LocalDate expirationDate;
+  private final UUID stockEventId;
 
-  private StockCard(UUID facilityId, UUID programId, UUID productId, String productCode, UUID lotId, String lotCode,
-      LocalDate expirationDate) {
-    this.facilityId = facilityId;
-    this.programId = programId;
-    this.productId = productId;
-    this.productCode = productCode;
-    this.lotId = lotId;
-    this.lotCode = lotCode;
-    this.expirationDate = expirationDate;
+  public static StockCard querySample(UUID facilityId, UUID programId, UUID productId, ProductLot productLot) {
+    LocalDate expirationDate = productLot.getLot() == null ? null : productLot.getLot().getExpirationDate();
+    return new StockCard(null, facilityId, programId, productId, productLot.getProductCode(),
+        productLot.getId(), productLot.getLotCode(), expirationDate, null);
   }
 
-  public static StockCard of(UUID facilityId, UUID programId, UUID productId, String productCode, UUID lotId,
-      String lotCode, LocalDate expirationDate) {
-    return new StockCard(facilityId, programId, productId, productCode, lotId, lotCode, expirationDate);
+  public static StockCard of(UUID facilityId, UUID programId, UUID productId, ProductLot productLot,
+      StockEvent stockEvent) {
+    LocalDate expirationDate = productLot.getLot() == null ? null : productLot.getLot().getExpirationDate();
+    return new StockCard(UUID.randomUUID(), facilityId, programId, productId, productLot.getProductCode(),
+        productLot.getId(), productLot.getLotCode(), expirationDate, stockEvent.getId());
   }
 
-  public static StockCard ofNoLot(UUID facilityId, UUID programId, UUID productId, String productCode) {
-    return new StockCard(facilityId, programId, productId, productCode, null, null, null);
+  public static StockCard fromDatabase(UUID id, StockCard querySample) {
+    return new StockCard(id, querySample.facilityId, querySample.programId, querySample.productId,
+        querySample.productCode, querySample.lotId, querySample.lotCode, querySample.expirationDate,
+        querySample.stockEventId);
   }
 
 }
