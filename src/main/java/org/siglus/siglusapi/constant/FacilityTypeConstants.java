@@ -54,7 +54,7 @@ public class FacilityTypeConstants {
 
   public static final String CENTRAL = "Central";
 
-  public static Set<String> getIssueFilterFacilityTypes() {
+  public static Set<String> getAndroidOriginMovementTypes() {
     return Stream.of(DPM, DDM, AI).collect(Collectors.toSet());
   }
 

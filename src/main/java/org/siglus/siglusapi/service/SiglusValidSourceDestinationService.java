@@ -103,7 +103,7 @@ public class SiglusValidSourceDestinationService {
   }
 
   private boolean isFilterFacility(UUID facilityId) {
-    return FacilityTypeConstants.getIssueFilterFacilityTypes()
+    return FacilityTypeConstants.getAndroidOriginMovementTypes()
         .contains(facilityReferenceDataService.findOne(facilityId).getType().getCode());
   }
 

@@ -15,6 +15,11 @@
 
 package org.siglus.siglusapi.service.android.mapper;
 
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.DDM;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.DPM;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.getAndroidOriginMovementTypes;
+import static org.siglus.siglusapi.constant.ProgramConstants.VIA_PROGRAM_CODE;
+
 import java.util.Map;
 import java.util.UUID;
 import org.mapstruct.Context;
@@ -71,10 +76,18 @@ public interface PodOrderMapper {
   @Named("toSupplyFacilityType")
   default String toSupplyFacilityType(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
       @Context Map<UUID, Requisition> orderIdToRequisition) {
-    FacilityDto supplyingFacility = orderIdToOrder.get(orderId).getSupplyingFacility();
+    OrderDto orderDto = orderIdToOrder.get(orderId);
+    FacilityDto supplyingFacility = orderDto.getSupplyingFacility();
     if (supplyingFacility == null || supplyingFacility.getType() == null) {
       return null;
     }
-    return supplyingFacility.getType().getCode();
+    String facilityType = supplyingFacility.getType().getCode();
+    String programCode = orderDto.getProgram().getCode();
+    if (getAndroidOriginMovementTypes().contains(facilityType)) {
+      return facilityType;
+    } else if (VIA_PROGRAM_CODE.equals(programCode)) {
+      return DDM;
+    }
+    return DPM;
   }
 }
