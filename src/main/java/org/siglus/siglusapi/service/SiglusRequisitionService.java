@@ -84,6 +84,7 @@ import org.openlmis.requisition.dto.RightDto;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.openlmis.requisition.dto.RoleDto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
+import org.openlmis.requisition.dto.SupportedProgramDto;
 import org.openlmis.requisition.dto.UserDto;
 import org.openlmis.requisition.dto.VersionIdentityDto;
 import org.openlmis.requisition.dto.VersionObjectReferenceDto;
@@ -145,6 +146,7 @@ import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
 import org.siglus.siglusapi.service.fc.FcIntegrationCmmCpService;
 import org.siglus.siglusapi.util.OperatePermissionService;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -283,6 +285,9 @@ public class SiglusRequisitionService {
 
   @Autowired
   private SiglusFilterAddProductForEmergencyService filterProductService;
+
+  @Autowired
+  private SupportedProgramsHelper supportedProgramsHelper;
 
   @Value("${service.url}")
   private String serviceUrl;
@@ -539,6 +544,15 @@ public class SiglusRequisitionService {
 
   public List<FacilityDto> searchFacilitiesForApproval() {
     RightDto right = rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE);
+    return getFacilitiesByRigth(right, PermissionService.REQUISITION_APPROVE);
+  }
+
+  public List<FacilityDto> searchFacilitiesForView() {
+    RightDto right = rightReferenceDataService.findRight(PermissionService.REQUISITION_VIEW);
+    return getFacilitiesByRigth(right, PermissionService.REQUISITION_VIEW);
+  }
+
+  private List<FacilityDto> getFacilitiesByRigth(RightDto right, String rightType) {
     List<RoleDto> roleDtos = roleReferenceDataService.search(right.getId());
     Set<UUID> roleIds = roleDtos.stream().map(RoleDto::getId).collect(toSet());
     UserDto userDto = authenticationHelper.getCurrentUser();
@@ -576,7 +590,11 @@ public class SiglusRequisitionService {
         .flatMap(supervisoryNodeDto ->
             getAllFacilityDtos(homeId, supervisoryNodeDto, requisitionGroupDtoMap, facilityDtoMap, nodeDtoMap).stream())
         .collect(toSet());
-    return convertToList(facilityDtos, facilityDtoMap.get(homeId));
+    if (PermissionService.REQUISITION_VIEW.equals(rightType)) {
+      return addProgramsAndConvertToList(facilityDtos, facilityDtoMap.get(homeId));
+    } else {
+      return convertToList(facilityDtos, facilityDtoMap.get(homeId));
+    }
   }
 
   // move homeFacility to first position
@@ -589,6 +607,26 @@ public class SiglusRequisitionService {
     List<FacilityDto> sorted = sortFacility(set);
     list.addAll(sorted);
     return list;
+  }
+
+  private List<FacilityDto> addProgramsAndConvertToList(Set<FacilityDto> set, FacilityDto homeFacility) {
+    set.remove(homeFacility);
+    List<SupportedProgramDto> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedPrograms().stream()
+        .map(this::copySupportedProgramDto)
+        .collect(Collectors.toList());
+    homeFacility.setSupportedPrograms(supportedPrograms);
+    List<FacilityDto> list = new ArrayList<>();
+    list.add(homeFacility);
+    List<FacilityDto> sorted = sortFacility(set);
+    list.addAll(sorted);
+    return list;
+  }
+
+  private SupportedProgramDto copySupportedProgramDto(
+      org.siglus.siglusapi.dto.SupportedProgramDto fromSupportedProgramDto) {
+    SupportedProgramDto toSupportedProgramDto = new SupportedProgramDto();
+    BeanUtils.copyProperties(fromSupportedProgramDto, toSupportedProgramDto);
+    return toSupportedProgramDto;
   }
 
   private List<FacilityDto> sortFacility(Set<FacilityDto> set) {

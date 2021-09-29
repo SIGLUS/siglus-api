@@ -130,11 +130,9 @@ public class SiglusRequisitionController {
 
   /**
    * why we redo this api? for bug card #228, change dependency:
-   * {@linkplain org.openlmis.requisition.domain.requisition.Requisition#reject(Map, UUID)}  method}
-   * requisition.reject->updateConsumptions(products)->
-   * {@linkplain
-   * org.openlmis.requisition.domain.requisition.Requisition#filterLineItems(Boolean, Boolean, Map)}
-   * method}
+   * {@linkplain org.openlmis.requisition.domain.requisition.Requisition#reject(Map,
+   * UUID)}  method} requisition.reject->updateConsumptions(products)-> {@linkplain
+   * org.openlmis.requisition.domain.requisition.Requisition#filterLineItems(Boolean, Boolean, Map)} method}
    * getNonSkippedFullSupplyRequisitionLineItems->filterLineItems
    */
   @PutMapping("/{id}/reject")
@@ -174,6 +172,11 @@ public class SiglusRequisitionController {
   @GetMapping("/facilitiesForApproval")
   public List<FacilityDto> getFacilitiesForApproval() {
     return siglusRequisitionService.searchFacilitiesForApproval();
+  }
+
+  @GetMapping("/facilitiesForView")
+  public List<FacilityDto> getFacilitiesForView() {
+    return siglusRequisitionService.searchFacilitiesForView();
   }
 
 }
