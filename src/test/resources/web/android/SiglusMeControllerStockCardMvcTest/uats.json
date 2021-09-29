@@ -17,6 +17,7 @@
     "quantity": -20,
     "signature": "pnn",
     "stockOnHand": 0,
+    "requested": 10,
     "type": "ISSUE"
   }
 ]

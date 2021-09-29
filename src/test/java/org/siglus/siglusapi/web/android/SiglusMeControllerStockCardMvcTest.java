@@ -81,6 +81,12 @@ import org.siglus.siglusapi.dto.android.ProductLotStock;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.ValidatedStockCards;
+import org.siglus.siglusapi.dto.android.db.CalculatedStockOnHand;
+import org.siglus.siglusapi.dto.android.db.PhysicalInventoryLine;
+import org.siglus.siglusapi.dto.android.db.PhysicalInventoryLineAdjustment;
+import org.siglus.siglusapi.dto.android.db.RequestedQuantity;
+import org.siglus.siglusapi.dto.android.db.StockCardLineItem;
+import org.siglus.siglusapi.dto.android.db.StockEventLineItem;
 import org.siglus.siglusapi.dto.android.enumeration.AdjustmentReason;
 import org.siglus.siglusapi.dto.android.enumeration.Destination;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
@@ -255,21 +261,33 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     assertEquals(12, listParamCaptor.getValue().size());
     verify(stockManagementRepository).batchCreateRequestedQuantities(listParamCaptor.capture());
     assertEquals(2, listParamCaptor.getValue().size());
+    List<RequestedQuantity> requestedQuantities = listParamCaptor.getValue();
+    assertTrue(requestedQuantities.stream().allMatch(l -> l.getRequested() >= 0));
     verify(stockManagementRepository).batchCreateEventLines(listParamCaptor.capture());
     assertEquals(52, listParamCaptor.getValue().size());
+    List<StockEventLineItem> eventLineItems = listParamCaptor.getValue();
+    assertTrue(eventLineItems.stream().allMatch(l -> l.getLineDetail().getQuantity() >= 0));
     verify(stockManagementRepository).batchCreateLines(listParamCaptor.capture());
     assertEquals(52, listParamCaptor.getValue().size());
+    List<StockCardLineItem> lineItems = listParamCaptor.getValue();
+    assertTrue(lineItems.stream().allMatch(l -> l.getLineDetail().getQuantity() >= 0));
     verify(stockManagementRepository).batchCreateInventories(listParamCaptor.capture());
     assertEquals(3, listParamCaptor.getValue().size());
-    listParamCaptor.getValue().forEach(System.out::println);
     verify(stockManagementRepository).batchCreateInventoryLines(listParamCaptor.capture());
     assertEquals(5, listParamCaptor.getValue().size());
+    List<PhysicalInventoryLine> inventoryLines = listParamCaptor.getValue();
+    assertTrue(inventoryLines.stream().allMatch(l -> l.getAdjustment() >= 0 && l.getInventoryBeforeAdjustment() >= 0));
     verify(stockManagementRepository).batchCreateInventoryLineAdjustments(listParamCaptor.capture());
     assertEquals(15, listParamCaptor.getValue().size());
+    List<PhysicalInventoryLineAdjustment> lineAdjustments = listParamCaptor.getValue();
+    assertTrue(lineAdjustments.stream().allMatch(l -> l.getAdjustment() >= 0));
     verify(stockManagementRepository).batchSaveStocksOnHand(listParamCaptor.capture());
     assertEquals(25, listParamCaptor.getValue().size());
+    List<CalculatedStockOnHand> sohList = listParamCaptor.getValue();
+    assertTrue(sohList.stream().allMatch(l -> l.getInventoryDetail().getStockQuantity() >= 0));
   }
 
+  @SuppressWarnings({"rawTypes", "unchecked"})
   @Test
   public void shouldReturnCreatedWhenSaveStockCardsGivenUatsRequest() throws Exception {
     // given
@@ -285,13 +303,39 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     // then
     resultActions.andExpect(status().isCreated());
     // TODO a little further?
-    verify(stockManagementRepository).batchCreateLots(any());
-    verify(stockManagementRepository).batchCreateStockCards(any());
-    verify(stockManagementRepository).batchCreateEvents(any());
-    verify(stockManagementRepository).batchCreateEventLines(any());
-    verify(stockManagementRepository).batchCreateLines(any());
-    verify(stockManagementRepository).batchCreateInventories(any());
-    verify(stockManagementRepository).batchCreateInventoryLines(any());
+    ArgumentCaptor<List> listParamCaptor = ArgumentCaptor.forClass(List.class);
+    verify(stockManagementRepository).batchCreateLots(listParamCaptor.capture());
+    assertEquals(1, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateEvents(listParamCaptor.capture());
+    assertEquals(1, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateStockCards(listParamCaptor.capture());
+    assertEquals(1, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateRequestedQuantities(listParamCaptor.capture());
+    assertEquals(1, listParamCaptor.getValue().size());
+    List<RequestedQuantity> requestedQuantities = listParamCaptor.getValue();
+    assertTrue(requestedQuantities.stream().allMatch(l -> l.getRequested() >= 0));
+    verify(stockManagementRepository).batchCreateEventLines(listParamCaptor.capture());
+    assertEquals(1, listParamCaptor.getValue().size());
+    List<StockEventLineItem> eventLineItems = listParamCaptor.getValue();
+    assertTrue(eventLineItems.stream().allMatch(l -> l.getLineDetail().getQuantity() >= 0));
+    verify(stockManagementRepository).batchCreateLines(listParamCaptor.capture());
+    assertEquals(1, listParamCaptor.getValue().size());
+    List<StockCardLineItem> lineItems = listParamCaptor.getValue();
+    assertTrue(lineItems.stream().allMatch(l -> l.getLineDetail().getQuantity() >= 0));
+    verify(stockManagementRepository).batchCreateInventories(listParamCaptor.capture());
+    assertEquals(0, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateInventoryLines(listParamCaptor.capture());
+    assertEquals(0, listParamCaptor.getValue().size());
+    List<PhysicalInventoryLine> inventoryLines = listParamCaptor.getValue();
+    assertTrue(inventoryLines.stream().allMatch(l -> l.getAdjustment() >= 0 && l.getInventoryBeforeAdjustment() >= 0));
+    verify(stockManagementRepository).batchCreateInventoryLineAdjustments(listParamCaptor.capture());
+    assertEquals(0, listParamCaptor.getValue().size());
+    List<PhysicalInventoryLineAdjustment> lineAdjustments = listParamCaptor.getValue();
+    assertTrue(lineAdjustments.stream().allMatch(l -> l.getAdjustment() >= 0));
+    verify(stockManagementRepository).batchSaveStocksOnHand(listParamCaptor.capture());
+    assertEquals(1, listParamCaptor.getValue().size());
+    List<CalculatedStockOnHand> sohList = listParamCaptor.getValue();
+    assertTrue(sohList.stream().allMatch(l -> l.getInventoryDetail().getStockQuantity() >= 0));
   }
 
   private void mockHomeFacility() {

@@ -247,7 +247,6 @@ public class StockCardCreateService {
         .collect(groupingBy(r -> getContext().getProgramId(r.getProductCode()).orElseThrow(IllegalStateException::new)))
         .forEach((programId, r) -> {
           StockEvent stockEvent = StockEvent.of(facilityId, programId, processedAt, signature, userId);
-          System.out.println(stockEvent.getId() + " " + requests);
           context.stockEvents.add(stockEvent);
           createEvent(stockEvent, r, context);
         });
