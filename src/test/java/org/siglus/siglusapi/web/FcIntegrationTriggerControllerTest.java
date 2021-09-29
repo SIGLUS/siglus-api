@@ -23,12 +23,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.service.fc.FcScheduleService;
+import org.siglus.siglusapi.web.fc.TriggerController;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcIntegrationTriggerControllerTest {
 
   @InjectMocks
-  private FcIntegrationTriggerController fcIntegrationTriggerController;
+  private TriggerController fcIntegrationTriggerController;
 
   @Mock
   private FcScheduleService fcScheduleService;

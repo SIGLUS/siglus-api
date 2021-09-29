@@ -18,8 +18,10 @@ package org.siglus.siglusapi.config;
 import java.util.Collections;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.support.NoOpCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.core.RedisTemplate;
 
@@ -28,8 +30,15 @@ import org.springframework.data.redis.core.RedisTemplate;
 public class RedisCacheConfig {
 
   @Bean
+  @Profile("!local")
   public CacheManager cacheManager(RedisTemplate<Object, Object> redisTemplate) {
     return new RedisCacheManager(redisTemplate, Collections.emptyList(), true);
+  }
+
+  @Bean
+  @Profile("local")
+  public CacheManager getNoOpCacheManager() {
+    return new NoOpCacheManager();
   }
 
 }

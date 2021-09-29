@@ -2176,129 +2176,130 @@ traits:
               application/json:
                 schema: fcPodPage
 
-    /issueVouchers:
-      displayName: update issueVouchers
-      post:
-        is: [ secured ]
-        description: update issueVouchers from fc.
-        responses:
-          201:
-            description: issueVouchers update.
-            headers:
-              Keep-Alive:
-            body:
-              application/json:
-                schema: issueVoucher
-          400:
-            body:
-              application/json:
-                schema: localizedMessage
-          401:
-            body:
-              application/json:
-          403:
-            headers:
-              Keep-Alive:
-            body:
-              application/json:
-                schema: localizedMessage
+    /fc:
+      /issueVouchers:
+        displayName: update issueVouchers
+        post:
+          is: [ secured ]
+          description: update issueVouchers from fc.
+          responses:
+            201:
+              description: issueVouchers update.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: issueVoucher
+            400:
+              body:
+                application/json:
+                  schema: localizedMessage
+            401:
+              body:
+                application/json:
+            403:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
 
-    /receiptPlans:
-      displayName: update issueVouchers
-      post:
-        is: [ secured ]
-        description: update issueVouchers from fc.
-        responses:
-          201:
-            description: issueVouchers update.
-            headers:
-              Keep-Alive:
-            body:
-              application/json:
-                schema: issueVoucher
-          400:
-            body:
-              application/json:
-                schema: localizedMessage
-          401:
-            body:
-              application/json:
-          403:
-            headers:
-              Keep-Alive:
-            body:
-              application/json:
-                schema: localizedMessage
+      /receiptPlans:
+        displayName: update issueVouchers
+        post:
+          is: [ secured ]
+          description: update issueVouchers from fc.
+          responses:
+            201:
+              description: issueVouchers update.
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: issueVoucher
+            400:
+              body:
+                application/json:
+                  schema: localizedMessage
+            401:
+              body:
+                application/json:
+            403:
+              headers:
+                Keep-Alive:
+              body:
+                application/json:
+                  schema: localizedMessage
 
-    /cmms:
-      displayName: Cmms From Fc
-      post:
-        is: [ secured ]
-        description: Fetch cmms from fc.
-        responses:
-          200:
+      /cmms:
+        displayName: cmms From Fc
+        post:
+          is: [ secured ]
+          description: Fetch cmms from fc.
+          responses:
+            200:
 
-    /fcFacility:
-      displayName: fcFacility From Fc
-      post:
-        is: [ secured ]
-        description: Fetch fcFacility from fc.
-        responses:
-          200:
+      /facilities:
+        displayName: facilities From Fc
+        post:
+          is: [ secured ]
+          description: Fetch fcFacility from fc.
+          responses:
+            200:
 
-    /fcFacilityType:
-      displayName: fcFacilityType From Fc
-      post:
-        is: [ secured ]
-        description: Fetch fcFacilityType from fc.
-        responses:
-          200:
+      /facilityTypes:
+        displayName: facilityTypes From Fc
+        post:
+          is: [ secured ]
+          description: Fetch fcFacilityType from fc.
+          responses:
+            200:
 
-    /cps:
-      displayName: Cps From Fc
-      post:
-        is: [ secured ]
-        description: Fetch cps from fc.
-        responses:
-          200:
+      /cps:
+        displayName: cps From Fc
+        post:
+          is: [ secured ]
+          description: Fetch cps from fc.
+          responses:
+            200:
 
-    /fcProducts:
-      displayName: Products From Fc
-      post:
-        is: [ secured ]
-        description: Fetch products from fc.
-        queryParameters:
-          date:
-            displayName: date
-            type: string
-            required: true
-            repeat: false
-        responses:
-          200:
+      /products:
+        displayName: Products From Fc
+        post:
+          is: [ secured ]
+          description: Fetch products from fc.
+          queryParameters:
+            date:
+              displayName: date
+              type: string
+              required: true
+              repeat: false
+          responses:
+            200:
 
-    /fcPrograms:
-      displayName: Programs From Fc
-      post:
-        is: [ secured ]
-        description: Fetch cps from fc.
-        responses:
-          200:
+      /programs:
+        displayName: Programs From Fc
+        post:
+          is: [ secured ]
+          description: Fetch cps from fc.
+          responses:
+            200:
 
-    /regimens:
-      displayName: Regimens From Fc
-      post:
-        is: [ secured ]
-        description: Fetch regimens from fc.
-        responses:
-          200:
+      /regimens:
+        displayName: Regimens From Fc
+        post:
+          is: [ secured ]
+          description: Fetch regimens from fc.
+          responses:
+            200:
 
-    /fcGeographicZones:
-      displayName: Sync GeographicZones From Fc
-      post:
-        is: [ secured ]
-        description: Sync GeographicZones From Fc
-        responses:
-          200:
+      /geographicZones:
+        displayName: Sync GeographicZones From Fc
+        post:
+          is: [ secured ]
+          description: Sync GeographicZones From Fc
+          responses:
+            200:
 
     /programadditionalorderables:
       displayName: Program Additional Orderable Product

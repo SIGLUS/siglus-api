@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web;
+package org.siglus.siglusapi.web.fc;
 
 import org.siglus.siglusapi.service.fc.FcScheduleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/siglusapi")
-public class FcIntegrationTriggerController {
+@RequestMapping("/api/siglusapi/fc")
+public class TriggerController {
 
   public static final String DATE = "date";
 
@@ -59,7 +59,7 @@ public class FcIntegrationTriggerController {
     }
   }
 
-  @PostMapping("/fcPrograms")
+  @PostMapping("/programs")
   public void syncProgramFromFc(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
       fcScheduleService.syncProgramFromFc();
@@ -68,7 +68,7 @@ public class FcIntegrationTriggerController {
     }
   }
 
-  @PostMapping("/fcProducts")
+  @PostMapping("/products")
   public void syncProductFromFc(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
       fcScheduleService.syncProductFromFc();
@@ -77,7 +77,7 @@ public class FcIntegrationTriggerController {
     }
   }
 
-  @PostMapping("/fcFacility")
+  @PostMapping("/facilities")
   public void syncFacilityFromFc(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
       fcScheduleService.syncFacilityFromFc();
@@ -86,7 +86,7 @@ public class FcIntegrationTriggerController {
     }
   }
 
-  @PostMapping("/fcFacilityType")
+  @PostMapping("/facilityTypes")
   public void syncFacilityTypeFromFc(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
       fcScheduleService.syncFacilityTypeFromFc();
@@ -113,7 +113,7 @@ public class FcIntegrationTriggerController {
     }
   }
 
-  @PostMapping("/fcGeographicZones")
+  @PostMapping("/geographicZones")
   public void syncGeographicZoneFromFc(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
       fcScheduleService.syncGeographicZoneFromFc();

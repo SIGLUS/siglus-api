@@ -21,7 +21,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FcIntegrationResultRepository extends JpaRepository<FcIntegrationResult, UUID> {
 
-  FcIntegrationResult findTopByJobAndFinalSuccessOrderByEndDateDesc(String job,
-      Boolean finalSuccess);
+  FcIntegrationResult findTopByJobAndFinalSuccessOrderByEndDateDesc(String job, Boolean finalSuccess);
 
 }

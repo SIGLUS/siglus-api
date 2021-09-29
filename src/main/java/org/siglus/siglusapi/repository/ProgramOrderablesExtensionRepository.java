@@ -20,11 +20,18 @@ import java.util.Set;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public interface ProgramOrderablesExtensionRepository extends
-    JpaRepository<ProgramOrderablesExtension, UUID> {
+public interface ProgramOrderablesExtensionRepository extends JpaRepository<ProgramOrderablesExtension, UUID> {
 
   List<ProgramOrderablesExtension> findAllByOrderableId(UUID orderableId);
 
   List<ProgramOrderablesExtension> findAllByOrderableIdIn(Set<UUID> orderableIds);
+
+  @Modifying
+  @Query(value = "delete from siglusintegration.program_orderables_extension where orderableid = :orderableId",
+      nativeQuery = true)
+  void deleteByOrderableId(@Param("orderableId") UUID orderableId);
 }
