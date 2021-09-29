@@ -27,14 +27,11 @@ import org.siglus.siglusapi.constant.ValidatorConstants;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.SupportReasonName;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
-import org.siglus.siglusapi.service.SiglusOrderableService;
 
 @Slf4j
 @RequiredArgsConstructor
 public class SupportReasonNameValidator implements
     ConstraintValidator<SupportReasonName, StockCardCreateRequest> {
-
-  private final SiglusOrderableService siglusOrderableService;
 
   @Override
   public void initialize(SupportReasonName constraintAnnotation) {

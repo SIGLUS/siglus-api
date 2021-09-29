@@ -293,7 +293,8 @@ public class ProductMovementConsistentWithExistedValidator implements
     if ("INVENTORY".equals(movementDetailFromExisted.getReason())) {
       return true;
     }
-    return Objects.equals(movementDetailFromRequest.getReason(), movementDetailFromExisted.getReason());
+    return Objects.equals(movementDetailFromRequest.getReason(), movementDetailFromExisted.getType()
+        .getReason(movementDetailFromExisted.getReason(), movementDetailFromExisted.getAdjustment()));
   }
 
   private boolean validateNewProduct(StockCardCreateRequest newProduct,

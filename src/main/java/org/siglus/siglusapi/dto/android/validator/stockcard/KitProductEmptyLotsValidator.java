@@ -16,23 +16,22 @@
 package org.siglus.siglusapi.dto.android.validator.stockcard;
 
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder.getContext;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
-import org.siglus.common.dto.referencedata.OrderableDto;
+import org.openlmis.requisition.dto.OrderableDto;
+import org.siglus.common.constant.KitConstants;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.KitProductEmptyLots;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
-import org.siglus.siglusapi.service.SiglusOrderableService;
 
 @Slf4j
 @RequiredArgsConstructor
 public class KitProductEmptyLotsValidator implements
     ConstraintValidator<KitProductEmptyLots, StockCardCreateRequest> {
-
-  private final SiglusOrderableService orderableService;
 
   @Override
   public void initialize(KitProductEmptyLots constraintAnnotation) {
@@ -42,10 +41,10 @@ public class KitProductEmptyLotsValidator implements
   @Override
   public boolean isValid(StockCardCreateRequest value, ConstraintValidatorContext context) {
     // this validator is supposed to running after the default group, so the value will not be null or empty
-    OrderableDto product = orderableService.getOrderableByCode(value.getProductCode());
+    OrderableDto product = getContext().getProduct(value.getProductCode());
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable("productCode", value.getProductCode());
-    if (product == null || !product.getIsKit()) {
+    if (product == null || !KitConstants.isKit(value.getProductCode())) {
       return true;
     }
     actualContext.addExpressionVariable("existed", "true");

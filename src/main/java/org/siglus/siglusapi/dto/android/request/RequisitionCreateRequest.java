@@ -32,7 +32,7 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidDataSection;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidEndDate;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
-import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
+import org.siglus.siglusapi.dto.android.group.DatabaseCheckGroup;
 import org.siglus.siglusapi.util.HashEncoder;
 
 @Data
@@ -40,7 +40,7 @@ import org.siglus.siglusapi.util.HashEncoder;
 @NoArgsConstructor
 @AllArgsConstructor
 @RequisitionValidDataSection
-@RequisitionValidStartDate(groups = {PerformanceGroup.class})
+@RequisitionValidStartDate(groups = {DatabaseCheckGroup.class})
 @RequisitionValidEndDate
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequisitionCreateRequest {

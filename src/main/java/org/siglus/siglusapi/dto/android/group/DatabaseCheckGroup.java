@@ -15,6 +15,6 @@
 
 package org.siglus.siglusapi.dto.android.group;
 
-public interface PerformanceGroup {
+public interface DatabaseCheckGroup {
 
 }

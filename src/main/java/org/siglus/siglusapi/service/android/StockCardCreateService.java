@@ -66,7 +66,7 @@ import org.siglus.siglusapi.dto.android.db.StockCardLineItem;
 import org.siglus.siglusapi.dto.android.db.StockEvent;
 import org.siglus.siglusapi.dto.android.db.StockEventLineItem;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
-import org.siglus.siglusapi.dto.android.group.PerformanceGroup;
+import org.siglus.siglusapi.dto.android.group.DatabaseCheckGroup;
 import org.siglus.siglusapi.dto.android.group.SelfCheckGroup;
 import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
@@ -103,8 +103,8 @@ public class StockCardCreateService {
       @StockOnHandConsistentWithQuantityByProduct(groups = SelfCheckGroup.class)
       @StockOnHandConsistentWithQuantityByLot(groups = SelfCheckGroup.class)
       @ProductConsistentWithAllLots(groups = SelfCheckGroup.class)
-      @LotStockConsistentWithExisted(groups = PerformanceGroup.class)
-      @ProductMovementConsistentWithExisted(groups = PerformanceGroup.class)
+      @LotStockConsistentWithExisted(groups = DatabaseCheckGroup.class)
+      @ProductMovementConsistentWithExisted(groups = DatabaseCheckGroup.class)
           List<StockCardCreateRequest> requests,
       Profiler profiler
   ) {
