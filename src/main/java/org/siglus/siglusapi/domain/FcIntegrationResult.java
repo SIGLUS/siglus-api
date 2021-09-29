@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -40,17 +40,13 @@ public class FcIntegrationResult extends BaseEntity {
 
   private String endDate;
 
-  private Date finishTime;
+  private String nextStartDate;
+
+  private ZonedDateTime finishTime;
 
   private Integer totalObjectsFromFc;
 
-  private Boolean callFcSuccess;
-
-  private Integer callFcCostTimeInSeconds;
-
   private Boolean finalSuccess;
-
-  private Integer totalCostTimeInSeconds;
 
   private String errorMessage;
 

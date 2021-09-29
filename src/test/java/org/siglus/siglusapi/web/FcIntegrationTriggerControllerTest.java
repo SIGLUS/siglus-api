@@ -40,10 +40,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200907";
 
     // when
-    fcIntegrationTriggerController.syncCmmFromFc(date);
+    fcIntegrationTriggerController.syncCmms(date);
 
     // then
-    verify(fcScheduleService).syncCmmFromFc(date);
+    verify(fcScheduleService).syncCmms(date);
   }
 
   @Test
@@ -52,10 +52,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200908";
 
     // when
-    fcIntegrationTriggerController.syncCpFromFc(date);
+    fcIntegrationTriggerController.syncCps(date);
 
     // then
-    verify(fcScheduleService).syncCpFromFc(date);
+    verify(fcScheduleService).syncCps(date);
   }
 
   @Test
@@ -64,10 +64,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200910";
 
     // when
-    fcIntegrationTriggerController.syncProductFromFc(date);
+    fcIntegrationTriggerController.syncProducts(date);
 
     // then
-    verify(fcScheduleService).syncProductFromFc(date);
+    verify(fcScheduleService).syncProducts(date);
   }
 
   @Test
@@ -76,10 +76,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200910";
 
     // when
-    fcIntegrationTriggerController.syncReceiptPlanFromFc(date);
+    fcIntegrationTriggerController.syncReceiptPlans(date);
 
     // then
-    verify(fcScheduleService).syncReceiptPlanFromFc(date);
+    verify(fcScheduleService).syncReceiptPlans(date);
   }
 
   @Test
@@ -88,10 +88,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200101";
 
     // when
-    fcIntegrationTriggerController.syncProgramFromFc(date);
+    fcIntegrationTriggerController.syncPrograms(date);
 
     // then
-    verify(fcScheduleService).syncProgramFromFc(date);
+    verify(fcScheduleService).syncPrograms(date);
   }
 
   @Test
@@ -100,10 +100,10 @@ public class FcIntegrationTriggerControllerTest {
     String date = "20200101";
 
     // when
-    fcIntegrationTriggerController.syncRegimenFromFc(date);
+    fcIntegrationTriggerController.syncRegimens(date);
 
     // then
-    verify(fcScheduleService).syncRegimenFromFc(date);
+    verify(fcScheduleService).syncRegimens(date);
   }
 
 }

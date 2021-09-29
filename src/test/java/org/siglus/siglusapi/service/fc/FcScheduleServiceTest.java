@@ -126,7 +126,7 @@ public class FcScheduleServiceTest {
     when(fcReceiptPlanService.processReceiptPlans(any())).thenReturn(true);
 
     // when
-    fcScheduleService.syncReceiptPlanFromFc(DATE);
+    fcScheduleService.syncReceiptPlans(DATE);
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
@@ -142,7 +142,7 @@ public class FcScheduleServiceTest {
     when(fcIntegrationResultService.getLatestSuccessDate(GEOGRAPHIC_ZONE_API)).thenReturn(DATE);
 
     // when
-    fcScheduleService.syncGeographicZoneFromFc();
+    fcScheduleService.syncGeographicZones();
 
     // then
     verify(fcGeographicZoneService).processGeographicZones(any());
@@ -158,7 +158,7 @@ public class FcScheduleServiceTest {
     when(fcIntegrationResultService.getLatestSuccessDate(FACILITY_API)).thenReturn(DATE);
 
     // when
-    fcScheduleService.syncFacilityFromFc();
+    fcScheduleService.syncFacilities();
 
     // then
     verify(facilityService).processFacility(any());
@@ -174,7 +174,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
 
     // when
-    fcScheduleService.syncIssueVoucherFromFc();
+    fcScheduleService.syncIssueVouchers();
 
     // then
     verify(issueVoucherService).updateIssueVoucher(anyString());
@@ -188,7 +188,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
 
     // when
-    fcScheduleService.syncIssueVoucherFromFc("20000101");
+    fcScheduleService.syncIssueVouchers("20000101");
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
@@ -205,7 +205,7 @@ public class FcScheduleServiceTest {
     when(fcProductService.processProductData(any())).thenReturn(true);
 
     // when
-    fcScheduleService.syncProductFromFc();
+    fcScheduleService.syncProducts();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
@@ -222,13 +222,13 @@ public class FcScheduleServiceTest {
     when(dateHelper.getCurrentMonthStr()).thenReturn(PERIOD);
 
     // when
-    fcScheduleService.syncCmmFromFc();
+    fcScheduleService.syncCmms();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CMM_API, resultCaptor.getValue().getApi());
-    assertEquals(PERIOD, resultCaptor.getValue().getDate());
+    assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
   }
 
   @Test
@@ -240,13 +240,13 @@ public class FcScheduleServiceTest {
     when(dateHelper.getCurrentMonthStr()).thenReturn(NEXT_PERIOD);
 
     // when
-    fcScheduleService.syncCmmFromFc();
+    fcScheduleService.syncCmms();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CMM_API, resultCaptor.getValue().getApi());
-    assertEquals(NEXT_PERIOD, resultCaptor.getValue().getDate());
+    assertEquals(NEXT_PERIOD, resultCaptor.getValue().getStartDate());
   }
 
   @Test
@@ -258,13 +258,13 @@ public class FcScheduleServiceTest {
     when(dateHelper.getCurrentMonthStr()).thenReturn(PERIOD);
 
     // when
-    fcScheduleService.syncCpFromFc();
+    fcScheduleService.syncCps();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CP_API, resultCaptor.getValue().getApi());
-    assertEquals(PERIOD, resultCaptor.getValue().getDate());
+    assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
   }
 
   @Test
@@ -276,13 +276,13 @@ public class FcScheduleServiceTest {
     when(dateHelper.getCurrentMonthStr()).thenReturn(NEXT_PERIOD);
 
     // when
-    fcScheduleService.syncCpFromFc();
+    fcScheduleService.syncCps();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CP_API, resultCaptor.getValue().getApi());
-    assertEquals(NEXT_PERIOD, resultCaptor.getValue().getDate());
+    assertEquals(NEXT_PERIOD, resultCaptor.getValue().getStartDate());
   }
 
   @Test
@@ -294,7 +294,7 @@ public class FcScheduleServiceTest {
     when(fcProgramService.processPrograms(any())).thenReturn(true);
 
     // when
-    fcScheduleService.syncProgramFromFc();
+    fcScheduleService.syncPrograms();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
@@ -313,7 +313,7 @@ public class FcScheduleServiceTest {
     when(fcRegimenService.processRegimens(any())).thenReturn(true);
 
     // when
-    fcScheduleService.syncRegimenFromFc();
+    fcScheduleService.syncRegimens();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
@@ -332,7 +332,7 @@ public class FcScheduleServiceTest {
     when(fcFacilityTypeService.processFacilityTypes(any())).thenReturn(true);
 
     // when
-    fcScheduleService.syncFacilityTypeFromFc();
+    fcScheduleService.syncFacilityTypes();
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
@@ -348,7 +348,7 @@ public class FcScheduleServiceTest {
     when(fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API)).thenReturn(DATE);
 
     // when
-    fcScheduleService.syncReceiptPlanFromFc();
+    fcScheduleService.syncReceiptPlans();
 
     // then
     ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
@@ -362,7 +362,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getPageInfoDto()).thenReturn(null);
 
     // when
-    fcScheduleService.fetchDataFromFc(ISSUE_VOUCHER_API, DATE);
+    fcScheduleService.fetchData(ISSUE_VOUCHER_API, DATE);
 
     // then
     verify(fcIntegrationResultService).recordCallFcFailed(anyString(), anyString());

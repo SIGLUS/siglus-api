@@ -33,92 +33,92 @@ public class TriggerController {
   private FcScheduleService fcScheduleService;
 
   @PostMapping("/cmms")
-  public void syncCmmFromFc(@RequestParam(value = DATE, required = false) String date) {
+  public void syncCmms(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
-      fcScheduleService.syncCmmFromFc();
+      fcScheduleService.syncCmms();
     } else {
-      fcScheduleService.syncCmmFromFc(date);
+      fcScheduleService.syncCmms(date);
     }
   }
 
   @PostMapping("/cps")
-  public void syncCpFromFc(@RequestParam(value = DATE, required = false) String date) {
+  public void syncCps(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
-      fcScheduleService.syncCpFromFc();
+      fcScheduleService.syncCps();
     } else {
-      fcScheduleService.syncCpFromFc(date);
+      fcScheduleService.syncCps(date);
     }
   }
 
   @PostMapping("/receiptPlans")
-  public void syncReceiptPlanFromFc(@RequestParam(value = DATE, required = false) String date) {
+  public void syncReceiptPlans(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
-      fcScheduleService.syncReceiptPlanFromFc();
+      fcScheduleService.syncReceiptPlans();
     } else {
-      fcScheduleService.syncReceiptPlanFromFc(date);
+      fcScheduleService.syncReceiptPlans(date);
     }
   }
 
   @PostMapping("/programs")
-  public void syncProgramFromFc(@RequestParam(value = DATE, required = false) String date) {
+  public void syncPrograms(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
-      fcScheduleService.syncProgramFromFc();
+      fcScheduleService.syncPrograms();
     } else {
-      fcScheduleService.syncProgramFromFc(date);
+      fcScheduleService.syncPrograms(date);
     }
   }
 
   @PostMapping("/products")
-  public void syncProductFromFc(@RequestParam(value = DATE, required = false) String date) {
+  public void syncProducts(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
-      fcScheduleService.syncProductFromFc();
+      fcScheduleService.syncProducts();
     } else {
-      fcScheduleService.syncProductFromFc(date);
+      fcScheduleService.syncProducts(date);
     }
   }
 
   @PostMapping("/facilities")
-  public void syncFacilityFromFc(@RequestParam(value = DATE, required = false) String date) {
+  public void syncFacilities(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
-      fcScheduleService.syncFacilityFromFc();
+      fcScheduleService.syncFacilities();
     } else {
-      fcScheduleService.syncFacilityFromFc(date);
+      fcScheduleService.syncFacilities(date);
     }
   }
 
   @PostMapping("/facilityTypes")
-  public void syncFacilityTypeFromFc(@RequestParam(value = DATE, required = false) String date) {
+  public void syncFacilityTypes(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
-      fcScheduleService.syncFacilityTypeFromFc();
+      fcScheduleService.syncFacilityTypes();
     } else {
-      fcScheduleService.syncFacilityTypeFromFc(date);
+      fcScheduleService.syncFacilityTypes(date);
     }
   }
 
   @PostMapping("/issueVouchers")
-  public void syncIssueVoucherFromFc(@RequestParam(value = DATE, required = false) String date) {
+  public void syncIssueVouchers(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
-      fcScheduleService.syncIssueVoucherFromFc();
+      fcScheduleService.syncIssueVouchers();
     } else {
-      fcScheduleService.syncIssueVoucherFromFc(date);
+      fcScheduleService.syncIssueVouchers(date);
     }
   }
 
   @PostMapping("/regimens")
-  public void syncRegimenFromFc(@RequestParam(value = DATE, required = false) String date) {
+  public void syncRegimens(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
-      fcScheduleService.syncRegimenFromFc();
+      fcScheduleService.syncRegimens();
     } else {
-      fcScheduleService.syncRegimenFromFc(date);
+      fcScheduleService.syncRegimens(date);
     }
   }
 
   @PostMapping("/geographicZones")
-  public void syncGeographicZoneFromFc(@RequestParam(value = DATE, required = false) String date) {
+  public void syncGeographicZones(@RequestParam(value = DATE, required = false) String date) {
     if (StringUtils.isEmpty(date)) {
-      fcScheduleService.syncGeographicZoneFromFc();
+      fcScheduleService.syncGeographicZones();
     } else {
-      fcScheduleService.syncGeographicZoneFromFc(date);
+      fcScheduleService.syncGeographicZones(date);
     }
   }
 

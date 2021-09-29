@@ -28,17 +28,13 @@ public class FcIntegrationResultDto {
 
   private String api;
 
-  private String date;
+  private String startDate;
+
+  private String nextStartDate;
 
   private Integer totalObjectsFromFc;
 
-  private Boolean callFcSuccess;
-
-  private Integer callFcCostTimeInSeconds;
-
   private Boolean finalSuccess;
-
-  private Integer totalCostTimeInSeconds;
 
   private String errorMessage;
 

@@ -129,11 +129,12 @@ public class FcProductService {
         }
       });
       clearProductCaches();
-      log.info("[FC product] process product data create: {}, update: {}, same: {}",
-          createCounter.get(), updateCounter.get(), sameCounter.get());
       return true;
     } catch (Exception e) {
-      throw new IllegalStateException(e);
+      return false;
+    } finally {
+      log.info("[FC product] process product data create: {}, update: {}, same: {}",
+          createCounter.get(), updateCounter.get(), sameCounter.get());
     }
   }
 

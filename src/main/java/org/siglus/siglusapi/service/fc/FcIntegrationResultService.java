@@ -37,7 +37,7 @@ import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.getQueryByPeriodApiList;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.FcIntegrationResult;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
@@ -82,30 +82,23 @@ public class FcIntegrationResultService {
   public void recordCallFcFailed(String api, String date) {
     FcIntegrationResultDto result = FcIntegrationResultDto.builder()
         .api(api)
-        .date(date)
-        .callFcSuccess(false)
-        .totalObjectsFromFc(null)
-        .callFcCostTimeInSeconds(null)
-        .finalSuccess(null)
-        .totalCostTimeInSeconds(null)
+        .startDate(date)
         .build();
     recordFcIntegrationResult(result);
   }
 
   public void recordFcIntegrationResult(FcIntegrationResultDto resultDto) {
     String api = resultDto.getApi();
-    String endDate = getQueryByPeriodApiList().contains(api) ? resultDto.getDate() : dateHelper.getTodayDateStr();
+    String endDate = getQueryByPeriodApiList().contains(api) ? resultDto.getStartDate() : dateHelper.getTodayDateStr();
     FcIntegrationResult result = FcIntegrationResult.builder()
         .job(getJobName(api))
-        .startDate(resultDto.getDate())
+        .startDate(resultDto.getStartDate())
         .endDate(endDate)
-        .finishTime(new Date())
+        .nextStartDate(resultDto.getNextStartDate())
+        .finishTime(ZonedDateTime.now())
         .totalObjectsFromFc(resultDto.getTotalObjectsFromFc())
-        .callFcSuccess(resultDto.getCallFcSuccess())
-        .callFcCostTimeInSeconds(resultDto.getCallFcCostTimeInSeconds())
         .finalSuccess(resultDto.getFinalSuccess())
         .errorMessage(resultDto.getErrorMessage())
-        .totalCostTimeInSeconds(resultDto.getTotalCostTimeInSeconds())
         .build();
     log.info("save fc_integration_results: {}", result);
     fcIntegrationResultRepository.save(result);

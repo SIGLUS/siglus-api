@@ -152,8 +152,7 @@ public class SiglusFcIntegrationService {
     Page<Requisition> requisitions;
     String today = dateHelper.getTodayDateStr();
     if (fcSupervisoryNodeIds.isEmpty()) {
-      requisitions = siglusRequisitionRepository.searchForFc(date, today, dpmSupervisoryNodeIds,
-          pageable);
+      requisitions = siglusRequisitionRepository.searchForFc(date, today, dpmSupervisoryNodeIds, pageable);
     } else {
       requisitions = siglusRequisitionRepository.searchForFc(date, today, dpmSupervisoryNodeIds,
           fcSupervisoryNodeIds, pageable);
