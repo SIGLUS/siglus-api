@@ -36,6 +36,7 @@ import org.siglus.common.constant.DateFormatConstants;
 import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.exception.OrderNotFoundException;
+import org.siglus.siglusapi.exception.ProductNotSupportException;
 import org.siglus.siglusapi.i18n.ExposedMessageSource;
 import org.siglus.siglusapi.i18n.MessageKeys;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -124,6 +125,19 @@ public class GlobalErrorHandling implements ProblemHandling {
     String messageKey = exception.asMessage().getKey();
     ThrowableProblem problem = prepare(messageKey, exception, NOT_FOUND, DEFAULT_TYPE).with(PodConstants.ORDER_NUMBER,
         exception.getOrderCode()).build();
+    return create(exception, problem, request);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<Problem> handleProductNotSupportException(ProductNotSupportException exception,
+      NativeWebRequest request) {
+    String messageKey = exception.asMessage().getKey();
+    String localizedMessage = getLocalizedMessage(messageKey, LocaleContextHolder.getLocale());
+    ThrowableProblem problem = prepare(exception, NOT_FOUND, DEFAULT_TYPE)
+        .with(MESSAGE_KEY, messageKey)
+        .with(MESSAGE, localizedMessage)
+        .with("productCodes", exception.getProductCodes())
+        .build();
     return create(exception, problem, request);
   }
 

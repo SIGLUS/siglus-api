@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -108,8 +109,10 @@ import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
+import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.web.android.FileBasedTest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageImpl;
@@ -175,6 +178,12 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   @Mock
   private SyncUpHashRepository syncUpHashRepository;
 
+  @Mock
+  private SupportedProgramsHelper supportedProgramsHelper;
+
+  @Mock
+  private SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
+
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
@@ -233,6 +242,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   private final String consumo = "consumo";
   private final String positive = "positive";
   private final String unjustified = "unjustified";
+  private final String vcProductCode = "02A01";
+  private final String mlProductCode = "08O05";
 
   @Before
   public void prepare() {
@@ -260,8 +271,8 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(siglusProgramService.getProgramIdByCode("VC")).thenReturn(programId);
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
-    orderableDto.setProductCode("02A01");
-    when(siglusOrderableService.getOrderableByCode("02A01")).thenReturn(orderableDto);
+    orderableDto.setProductCode(vcProductCode);
+    when(siglusOrderableService.getOrderableByCode(vcProductCode)).thenReturn(orderableDto);
     when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
     supervisoryNodeDto.setId(supervisoryNodeId);
@@ -283,6 +294,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(requisitionExtensionRepository.saveAndFlush(requisitionExtensionArgumentCaptor.capture()))
         .thenReturn(requisitionExtension);
     when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
+    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(programId));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId, emptyList()))
+        .thenReturn(Collections.singletonList(mockApprovedProduct(vcProductCode)));
   }
 
   @Test(expected = PermissionMessageException.class)
@@ -405,9 +419,12 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(siglusProgramService.getProgramIdByCode("ML")).thenReturn(malariaProgramId);
     when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
         .thenReturn(buildMlRequisition(mlTemplate));
-    when(siglusOrderableService.getOrderableByCode("08O05")).thenReturn(buildOrderableDto());
+    when(siglusOrderableService.getOrderableByCode(mlProductCode)).thenReturn(buildOrderableDto());
     when(orderableDataService.searchOrderables(any(), any()))
         .thenReturn(new PageImpl<>(singletonList(buildOrderableDto())));
+    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(malariaProgramId));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, malariaProgramId, emptyList()))
+        .thenReturn(Collections.singletonList(mockApprovedProduct(mlProductCode)));
 
     // when
     service.createRequisition(buildMlRequisitionCreateRequest());
@@ -444,6 +461,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
     when(regimenRepository.findAllByProgramIdAndActiveTrue(any())).thenReturn(buildRegimenDto());
     when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildMmiaSiglusRequisitionDto());
+    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(mmiaProgramId));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, mmiaProgramId, emptyList()))
+        .thenReturn(Collections.singletonList(mockApprovedProduct("08S01ZW")));
 
     // when
     service.createRequisition(parseParam("buildMmiaRequisitionCreateRequest.json"));
@@ -495,6 +515,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(siglusOrderableService.getOrderableByCode("08A07")).thenReturn(orderableDto);
     when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
     when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildRapidTestSiglusRequisitionDto());
+    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(rapidTestProgramId));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, rapidTestProgramId, emptyList()))
+        .thenReturn(Collections.singletonList(mockApprovedProduct("08A07")));
 
     // when
     service.createRequisition(parseParam("buildRapidTestRequisitionCreateRequest.json"));
@@ -583,7 +606,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   private List<RequisitionLineItemRequest> buildProducts() {
     RequisitionLineItemRequest product = RequisitionLineItemRequest.builder()
-        .productCode("02A01")
+        .productCode(vcProductCode)
         .beginningBalance(200)
         .totalReceivedQuantity(20)
         .totalConsumedQuantity(14)
@@ -890,13 +913,13 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   private List<UsageInformationLineItemRequest> buildUsageInfoLineItemRequest() {
     UsageInformationLineItemRequest usageInfo1 = UsageInformationLineItemRequest.builder()
-        .productCode("08O05")
+        .productCode(mlProductCode)
         .information("existentStock")
         .hf(1)
         .chw(2)
         .build();
     UsageInformationLineItemRequest usageInfo2 = UsageInformationLineItemRequest.builder()
-        .productCode("08O05")
+        .productCode(mlProductCode)
         .information("treatmentsAttended")
         .hf(3)
         .chw(4)
@@ -955,6 +978,16 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
   private RequisitionCreateRequest parseParam(String fileName) throws IOException {
     String json = readFromFile(fileName);
     return objectMapper.readValue(json, RequisitionCreateRequest.class);
+  }
+
+  private ApprovedProductDto mockApprovedProduct(String productCode) {
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
+    approvedProductDto.setId(UUID.randomUUID());
+    org.openlmis.requisition.dto.OrderableDto orderableDto = new org.openlmis.requisition.dto.OrderableDto();
+    orderableDto.setId(UUID.randomUUID());
+    orderableDto.setProductCode(productCode);
+    approvedProductDto.setOrderable(orderableDto);
+    return approvedProductDto;
   }
 
 }

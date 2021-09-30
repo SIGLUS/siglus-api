@@ -42,7 +42,6 @@ import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.PermissionService;
 import org.openlmis.fulfillment.util.DateHelper;
-import org.openlmis.fulfillment.web.NotFoundException;
 import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
@@ -58,6 +57,7 @@ import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
+import org.siglus.siglusapi.exception.ProductNotSupportException;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.PodConfirmBackupRepository;
 import org.siglus.siglusapi.repository.PodNativeSqlRepository;
@@ -219,13 +219,13 @@ public class PodConfirmService {
     Set<String> unsupportedByFacilityProductCodes = getUnsupportedProductsByFacility(programIdToProductCodes,
         podProductCodes);
     if (!CollectionUtils.isEmpty(unsupportedByFacilityProductCodes)) {
-      throw new NotFoundException("siglusapi.pod.unsupportProductByFacility",
+      throw new ProductNotSupportException("siglusapi.pod.unsupportProductByFacility",
           unsupportedByFacilityProductCodes.toArray(new String[0]));
     }
     Set<String> unsupportedByProgramProductCodes = getUnsupportedProductsByProgram(podRequest.getProgramCode(),
         programIdToProductCodes, podProductCodes);
     if (!CollectionUtils.isEmpty(unsupportedByProgramProductCodes)) {
-      throw new NotFoundException("siglusapi.pod.unsupportProductByProgram",
+      throw new ProductNotSupportException("siglusapi.pod.unsupportProductByProgram",
           unsupportedByProgramProductCodes.toArray(new String[0]));
     }
   }

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
@@ -145,6 +146,7 @@ import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.exception.ProductNotSupportException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -154,8 +156,10 @@ import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
+import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -190,6 +194,8 @@ public class RequisitionCreateService {
   private final RequisitionExtensionRepository requisitionExtensionRepository;
   private final RegimenRepository regimenRepository;
   private final SyncUpHashRepository syncUpHashRepository;
+  private final SupportedProgramsHelper supportedProgramsHelper;
+  private final SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -221,6 +227,8 @@ public class RequisitionCreateService {
     UUID homeFacilityId = user.getHomeFacilityId();
     profiler.start("check permission: init req");
     checkPermission(() -> permissionService.canInitRequisition(programId, homeFacilityId));
+    profiler.start("check supported products");
+    checkSupportedProducts(homeFacilityId, programId, request);
     Profiler newReqProfiler = profiler.startNested("new req");
     newReqProfiler.start("build req");
     Requisition newRequisition = RequisitionBuilder.newRequisition(homeFacilityId, programId, request.getEmergency());
@@ -306,6 +314,54 @@ public class RequisitionCreateService {
 
   private void checkPermission(Supplier<ValidationResult> supplier) {
     supplier.get().throwExceptionIfHasErrors();
+  }
+
+  private void checkSupportedProducts(UUID homefacility, UUID programId, RequisitionCreateRequest request) {
+    Map<UUID, Set<String>> programIdToProductCodes = supportedProgramsHelper.findUserSupportedPrograms().stream()
+        .collect(toMap(Function.identity(),
+            supportProgramId -> approvedProductReferenceDataService.getApprovedProducts(homefacility, supportProgramId,
+                    emptyList()).stream()
+                .map(product -> product.getOrderable().getProductCode())
+                .collect(Collectors.toSet())));
+    Set<String> requisitionProductCodes = new HashSet<>();
+    if (!CollectionUtils.isEmpty(request.getProducts())) {
+      requisitionProductCodes = request.getProducts().stream().map(RequisitionLineItemRequest::getProductCode)
+          .collect(Collectors.toSet());
+    } else if (!CollectionUtils.isEmpty(request.getUsageInformationLineItems())) {
+      requisitionProductCodes = request.getUsageInformationLineItems().stream()
+          .map(UsageInformationLineItemRequest::getProductCode)
+          .collect(Collectors.toSet());
+    }
+    Set<String> facilityUnsupportedProductCodes = getUnsupportedProductsByFacility(programIdToProductCodes,
+        requisitionProductCodes);
+    if (!CollectionUtils.isEmpty(facilityUnsupportedProductCodes)) {
+      throw new ProductNotSupportException("siglusapi.requisition.unsupportProductByFacility",
+          facilityUnsupportedProductCodes.toArray(new String[0]));
+    }
+    Set<String> programUnsupportedProductCodes = getUnsupportedProductsByProgram(programId,
+        programIdToProductCodes, requisitionProductCodes);
+    if (!CollectionUtils.isEmpty(programUnsupportedProductCodes)) {
+      throw new ProductNotSupportException("siglusapi.requisition.unsupportProductByProgram",
+          programUnsupportedProductCodes.toArray(new String[0]));
+    }
+  }
+
+  private Set<String> getUnsupportedProductsByFacility(Map<UUID, Set<String>> programIdToProductCodes,
+      Set<String> podProductCodes) {
+    Set<String> approvedProductCodes = programIdToProductCodes.values().stream()
+        .flatMap(Collection::stream)
+        .collect(Collectors.toSet());
+    return podProductCodes.stream()
+        .filter(podProductCode -> !approvedProductCodes.contains(podProductCode))
+        .collect(Collectors.toSet());
+  }
+
+  private Set<String> getUnsupportedProductsByProgram(UUID programId,
+      Map<UUID, Set<String>> programIdToProductCodes, Set<String> podProductCodes) {
+    Set<String> approvedProductCodes = programIdToProductCodes.get(programId);
+    return podProductCodes.stream()
+        .filter(code -> !approvedProductCodes.contains(code))
+        .collect(Collectors.toSet());
   }
 
   private void buildStatusChanges(Requisition requisition, UUID authorId) {
