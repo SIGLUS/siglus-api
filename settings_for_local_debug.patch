@@ -1,11 +1,40 @@
+Index: src/main/resources/application.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>ISO-8859-1
+===================================================================
+diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
+--- a/src/main/resources/application.properties	(revision 91f98d09706529b87c54782adce542cb6ef2204d)
++++ b/src/main/resources/application.properties	(date 1633684339102)
+@@ -8,9 +8,9 @@
+ spring.data.rest.base-path=/api
+ spring.data.rest.maxPageSize=2147483647
+ 
+-spring.datasource.url=${DATABASE_URL}?stringtype=unspecified
+-spring.datasource.username=${POSTGRES_USER}
+-spring.datasource.password=${POSTGRES_PASSWORD}
++spring.datasource.url=${DATABASE_URL:jdbc:postgresql://localhost:5432/open_lmis}?stringtype=unspecified
++spring.datasource.username=${POSTGRES_USER:postgres}
++spring.datasource.password=${POSTGRES_PASSWORD:p@ssw0rd}
+ spring.datasource.driver-class-name=org.postgresql.Driver
+ 
+ spring.datasource.tomcat.max-active=${DB_MAX_ACTIVE:20}
+@@ -120,3 +120,7 @@
+ logging.level.org.zalando.logbook=TRACE
+ logbook.format.style=curl
+ logbook.include[0]=**/api/siglusapi/**
++
++BASE_URL=http://localhost
++REDIS_URL=localhost
++server.port: 8090
 Index: consul/config.json
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/consul/config.json b/consul/config.json
---- a/consul/config.json	(revision 00dc871146096a40ea3b458431fe2b21910d3689)
-+++ b/consul/config.json	(date 1628561425582)
+--- a/consul/config.json	(revision 91f98d09706529b87c54782adce542cb6ef2204d)
++++ b/consul/config.json	(date 1633684339057)
 @@ -1,7 +1,7 @@
  {
    "service": {
@@ -21,8 +50,8 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
 diff --git a/consul/registration.js b/consul/registration.js
---- a/consul/registration.js	(revision 00dc871146096a40ea3b458431fe2b21910d3689)
-+++ b/consul/registration.js	(date 1628561425597)
+--- a/consul/registration.js	(revision 91f98d09706529b87c54782adce542cb6ef2204d)
++++ b/consul/registration.js	(date 1633684339087)
 @@ -385,7 +385,7 @@
      return false;
    }
@@ -32,32 +61,3 @@ diff --git a/consul/registration.js b/consul/registration.js
    var consulPort = process.env.CONSUL_PORT || '8500';
  
    if (!awaitConsul(consulHost, consulPort)) {
-Index: src/main/resources/application.properties
-IDEA additional info:
-Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
-<+>ISO-8859-1
-===================================================================
-diff --git a/src/main/resources/application.properties b/src/main/resources/application.properties
---- a/src/main/resources/application.properties	(revision 00dc871146096a40ea3b458431fe2b21910d3689)
-+++ b/src/main/resources/application.properties	(date 1628561425609)
-@@ -8,9 +8,9 @@
- spring.data.rest.base-path=/api
- spring.data.rest.maxPageSize=2147483647
- 
--spring.datasource.url=${DATABASE_URL}?stringtype=unspecified
--spring.datasource.username=${POSTGRES_USER}
--spring.datasource.password=${POSTGRES_PASSWORD}
-+spring.datasource.url=${DATABASE_URL:jdbc:postgresql://localhost:5432/open_lmis}?stringtype=unspecified
-+spring.datasource.username=${POSTGRES_USER:postgres}
-+spring.datasource.password=${POSTGRES_PASSWORD:p@ssw0rd}
- spring.datasource.driver-class-name=org.postgresql.Driver
- 
- spring.datasource.tomcat.max-active=${DB_MAX_ACTIVE:20}
-@@ -121,3 +121,7 @@
- logging.level.org.zalando.logbook=TRACE
- logbook.format.style=curl
- logbook.include[0]=**/api/siglusapi/**
-+
-+BASE_URL=http://localhost
-+REDIS_URL=localhost
-+server.port: 8090
