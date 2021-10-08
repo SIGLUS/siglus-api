@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import java.time.ZonedDateTime;
@@ -73,12 +74,12 @@ public class FcProgramService implements ProcessDataService {
       });
       programRealProgramRepository.save(programsToUpdate);
     } catch (Exception e) {
-      log.error("[FC program] sync data error", e);
+      log.error("[FC program] process data error", e);
       finalSuccess = false;
     }
     log.info("[FC program] process data create: {}, update: {}, same: {}",
         createCounter.get(), updateCounter.get(), sameCounter.get());
-    return buildResult(programs, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
+    return buildResult(PROGRAM_API, programs, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
         updateCounter.get());
   }
 

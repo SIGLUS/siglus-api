@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import java.time.ZonedDateTime;
@@ -74,10 +75,11 @@ public class FcCmmService implements ProcessDataService {
         cmmRepository.save(cmm);
       });
     } catch (Exception e) {
-      log.error("[FC cmm] sync data error", e);
+      log.error("[FC cmm] process data error", e);
       finalSuccess = false;
     }
     log.info("[FC cmm] process data create: {}, update: {}, same: {}", createCounter.get(), updateCounter.get(), 0);
-    return buildResult(cmms, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(), updateCounter.get());
+    return buildResult(CMM_API, cmms, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
+        updateCounter.get());
   }
 }

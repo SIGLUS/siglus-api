@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.fc;
 
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW;
+import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
@@ -163,7 +164,8 @@ public class FcIssueVoucherService implements ProcessDataService {
     }
     log.info("[FC issueVoucher] process data create: {}, update: {}, same: {}",
         createCounter, 0, issueVouchers.size() - createCounter);
-    return buildResult(issueVouchers, startDate, previousLastUpdatedAt, finalSuccess, createCounter, 0);
+    return buildResult(ISSUE_VOUCHER_API, issueVouchers, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
+        0);
   }
 
   public List<String> getIssueVoucherErrors() {

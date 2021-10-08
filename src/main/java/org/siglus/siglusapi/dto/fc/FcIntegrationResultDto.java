@@ -48,7 +48,7 @@ public class FcIntegrationResultDto {
 
   private String errorMessage;
 
-  public static FcIntegrationResultDto buildResult(List<? extends ResponseBaseDto> result, String startDate,
+  public static FcIntegrationResultDto buildResult(String api, List<? extends ResponseBaseDto> result, String startDate,
       ZonedDateTime previousLastUpdatedAt, boolean finalSuccess, int createCounter, int updateCounter) {
     ZonedDateTime lastUpdatedAt;
     if (result.isEmpty() || !finalSuccess) {
@@ -60,7 +60,7 @@ public class FcIntegrationResultDto {
           .getLastUpdatedAt();
     }
     return FcIntegrationResultDto.builder()
-        .api(PRODUCT_API)
+        .api(api)
         .startDate(startDate)
         .lastUpdatedAt(lastUpdatedAt)
         .totalObjects(result.size())

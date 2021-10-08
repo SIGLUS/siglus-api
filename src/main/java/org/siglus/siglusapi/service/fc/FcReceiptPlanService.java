@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.fc;
 import static java.util.Collections.emptyList;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.APPROVED;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SKIPPED;
+import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
@@ -121,7 +122,7 @@ public class FcReceiptPlanService implements ProcessDataService {
     }
     log.info("[FC receiptPlan] process data create: {}, update: {}, same: {}",
         createCounter, 0, receiptPlans.size() - createCounter);
-    return buildResult(receiptPlans, startDate, previousLastUpdatedAt, finalSuccess, createCounter, 0);
+    return buildResult(RECEIPT_PLAN_API, receiptPlans, startDate, previousLastUpdatedAt, finalSuccess, createCounter, 0);
   }
 
   private void updateRequisition(ReceiptPlanDto receiptPlanDto, UserDto userDto) {

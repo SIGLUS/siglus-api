@@ -61,7 +61,7 @@ public class FcIntegrationResultService {
       return;
     }
     String api = resultDto.getApi();
-    String endDate = getCmmAndCpApis().contains(api) ? resultDto.getStartDate() : dateHelper.getTodayDateStr();
+    String endDate = getCmmAndCpApis().contains(api) ? dateHelper.getCurrentMonthStr() : dateHelper.getTodayDateStr();
     FcIntegrationResult result = FcIntegrationResult.builder()
         .api(api)
         .startDate(resultDto.getStartDate())

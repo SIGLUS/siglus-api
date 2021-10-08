@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import java.time.ZonedDateTime;
@@ -83,12 +84,13 @@ public class FcGeographicZoneService implements ProcessDataService {
       createCounter = needCreateZones.size();
       updateCounter = needUpdateZones.size();
     } catch (Exception e) {
-      log.error("[FC geographicZone] sync data error", e);
+      log.error("[FC geographicZone] process data error", e);
       finalSuccess = false;
     }
     log.info("[FC geographicZone] process data create: {}, update: {}, same: {}",
         createCounter, updateCounter, zones.size() - createCounter - updateCounter);
-    return buildResult(zones, startDate, previousLastUpdatedAt, finalSuccess, createCounter, updateCounter);
+    return buildResult(GEOGRAPHIC_ZONE_API, zones, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
+        updateCounter);
   }
 
   private List<? extends ResponseBaseDto> filterInactiveZones(List<? extends ResponseBaseDto> zones) {

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import com.google.common.collect.Maps;
@@ -84,7 +85,9 @@ public class FcFacilityService implements ProcessDataService {
       facilities.forEach(item -> {
         FcFacilityDto facility = (FcFacilityDto) item;
         Set<String> codes = getFacilitySupportedProgramCode(facility, codeToRealProgramMap);
-        validateFcFacilityData(facility, codeToGeographicZoneDtoMap, codes, codeToFacilityType);
+        if (!isValid(facility, codeToGeographicZoneDtoMap, codes, codeToFacilityType)) {
+          return;
+        }
         if (codeToFacilityMap.containsKey(facility.getCode())) {
           FacilityDto originDto = codeToFacilityMap.get(facility.getCode());
           if (isDifferentFacilityDto(facility, codes, originDto)) {
@@ -101,12 +104,13 @@ public class FcFacilityService implements ProcessDataService {
       createCounter = createFacilities.size();
       updateCounter = updateFacilities.size();
     } catch (Exception e) {
-      log.error("[FC facility] sync data error", e);
+      log.error("[FC facility] process data error", e);
       finalSuccess = false;
     }
     log.info("[FC facility] process data create: {}, update: {}, same: {}",
         createCounter, updateCounter, facilities.size() - createCounter - updateCounter);
-    return buildResult(facilities, startDate, previousLastUpdatedAt, finalSuccess, createCounter, updateCounter);
+    return buildResult(FACILITY_API, facilities, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
+        updateCounter);
   }
 
   private Map<String, FacilityDto> getCodeToFacilityDtoMap() {
@@ -129,18 +133,19 @@ public class FcFacilityService implements ProcessDataService {
     return Maps.uniqueIndex(facilityTypeService.searchAllFacilityTypes(), FacilityTypeDto::getCode);
   }
 
-  public void validateFcFacilityData(FcFacilityDto fcFacilityDto,
+  public boolean isValid(FcFacilityDto fcFacilityDto,
       Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap, Set<String> codes,
       Map<String, FacilityTypeDto> codeToFacilityType) {
     if (!codeToGeographicZoneDtoMap.containsKey(fcFacilityDto.getDistrictCode())
         || !codeToFacilityType.containsKey(fcFacilityDto.getClientTypeCode())) {
       log.info("[FC facility] geographic zone or facility type not exist in our system: {}", fcFacilityDto);
-      throw new IllegalArgumentException();
+      return false;
     }
     if (CollectionUtils.isEmpty(codes)) {
-      log.info("[FC facility] program code not existed: {}", fcFacilityDto);
-      throw new IllegalArgumentException();
+      log.info("[FC facility] program code is empty: {}", fcFacilityDto);
+      return false;
     }
+    return true;
   }
 
   private Set<String> getFacilitySupportedProgramCode(FcFacilityDto fcFacilityDto,

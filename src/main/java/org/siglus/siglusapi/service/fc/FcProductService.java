@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_ORDERABLES;
+import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
@@ -143,7 +144,7 @@ public class FcProductService implements ProcessDataService {
     clearProductCaches();
     log.info("[FC product] process data create: {}, update: {}, same: {}",
         createCounter.get(), updateCounter.get(), sameCounter.get());
-    return buildResult(products, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
+    return buildResult(PRODUCT_API, products, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
         updateCounter.get());
   }
 

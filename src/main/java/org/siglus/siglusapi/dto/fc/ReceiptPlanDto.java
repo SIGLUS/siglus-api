@@ -22,12 +22,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
+@EqualsAndHashCode(of = "receiptPlanNumber", callSuper = false)
+@ToString(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@EqualsAndHashCode(of = "receiptPlanNumber", callSuper = false)
 public class ReceiptPlanDto extends ResponseBaseDto {
 
   private ZonedDateTime date;

@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import java.time.ZonedDateTime;
@@ -87,7 +88,8 @@ public class FcFacilityTypeService implements ProcessDataService {
     }
     log.info("[FC product] process product data create: {}, update: {}, same: {}",
         createCounter, updateCounter, facilityTypes.size() - createCounter - updateCounter);
-    return buildResult(facilityTypes, startDate, previousLastUpdatedAt, finalSuccess, createCounter, updateCounter);
+    return buildResult(FACILITY_TYPE_API, facilityTypes, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
+        updateCounter);
   }
 
   private Map<String, FacilityTypeDto> getCodeToFacilityType() {

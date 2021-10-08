@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.fc;
 
 import static org.siglus.siglusapi.constant.FcConstants.DEFAULT_REGIMEN_CATEGORY_CODE;
+import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import java.time.ZonedDateTime;
@@ -111,12 +112,12 @@ public class FcRegimenService implements ProcessDataService {
       });
       regimenRepository.save(regimensToUpdate);
     } catch (Exception e) {
-      log.error("[FC regimen] sync data error", e);
+      log.error("[FC regimen] process data error", e);
       finalSuccess = false;
     }
     log.info("[FC regimen] process data create: {}, update: {}, same: {}",
         createCounter.get(), updateCounter.get(), sameCounter.get());
-    return buildResult(regimens, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
+    return buildResult(REGIMEN_API, regimens, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
         updateCounter.get());
   }
 
