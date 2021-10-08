@@ -308,6 +308,40 @@ public class FcScheduleServiceTest {
   }
 
   @Test
+  public void shouldDeleteRedisKeyWhenFetchCmmsScheduleFromFcError() {
+    // given
+    when(fcIntegrationResultService.getLastUpdatedAt(RECEIPT_PLAN_API)).thenReturn(LAST_UPDATED_AT);
+    doThrow(new RuntimeException()).when(fcIntegrationResultService).getLastUpdatedAt(anyString());
+
+    // when
+    fcScheduleService.syncCmmsScheduler();
+
+    // then
+    verify(redisTemplate).delete(anyString());
+  }
+
+  @Test
+  public void shouldDeleteRedisKeyWhenFetchCmmsScheduleFromFcSuccess() {
+    // given
+    when(callFcService.getCmms()).thenReturn(Collections.singletonList(new CmmDto()));
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(fcIntegrationResultService.getLastUpdatedAt(CMM_API)).thenReturn(LAST_UPDATED_AT);
+    when(fcCmmService.processData(any(), any(), any())).thenReturn(
+        FcIntegrationResultDto.builder().api(CMM_API).startDate(PERIOD).build());
+
+    // when
+    fcScheduleService.syncCmmsScheduler();
+
+    // then
+    verify(callFcService).fetchData(anyString(), anyString());
+    verify(fcCmmService).processData(any(), any(), any());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(CMM_API, resultCaptor.getValue().getApi());
+    assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
+    verify(redisTemplate).delete(anyString());
+  }
+
+  @Test
   public void shouldFetchCpsFromFcWithCurrentPeriod() {
     // given
     when(callFcService.getCps()).thenReturn(Collections.singletonList(new CpDto()));
@@ -345,6 +379,40 @@ public class FcScheduleServiceTest {
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CP_API, resultCaptor.getValue().getApi());
     assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
+  }
+
+  @Test
+  public void shouldDeleteRedisKeyWhenFetchCmpScheduleFromFcError() {
+    // given
+    when(fcIntegrationResultService.getLastUpdatedAt(RECEIPT_PLAN_API)).thenReturn(LAST_UPDATED_AT);
+    doThrow(new RuntimeException()).when(fcIntegrationResultService).getLastUpdatedAt(anyString());
+
+    // when
+    fcScheduleService.syncCpsScheduler();
+
+    // then
+    verify(redisTemplate).delete(anyString());
+  }
+
+  @Test
+  public void shouldDeleteRedisKeyWhenFetchCmpScheduleFromFcSuccess() {
+    // given
+    when(callFcService.getCps()).thenReturn(Collections.singletonList(new CpDto()));
+    when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
+    when(fcIntegrationResultService.getLastUpdatedAt(CP_API)).thenReturn(LAST_UPDATED_AT);
+    when(fcCpService.processData(any(), any(), any())).thenReturn(
+        FcIntegrationResultDto.builder().api(CP_API).startDate(PERIOD).build());
+
+    // when
+    fcScheduleService.syncCpsScheduler();
+
+    // then
+    verify(callFcService).fetchData(anyString(), anyString());
+    verify(fcCpService).processData(any(), any(), any());
+    verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
+    assertEquals(CP_API, resultCaptor.getValue().getApi());
+    assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
+    verify(redisTemplate).delete(anyString());
   }
 
   @Test

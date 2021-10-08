@@ -58,7 +58,7 @@ public class FcScheduleService {
   private static final String TIME_ZONE_ID = "${time.zoneId}";
   private static final String SYNCHRONIZING = "SYNCHRONIZING";
   private static final int DELAY = 1000;
-  private static final int TIMEOUT = 2;
+  private static final int TIMEOUT = 1;
 
   @Value("${fc.domain}")
   private String fcDomain;
@@ -82,6 +82,46 @@ public class FcScheduleService {
   private final FcFacilityService fcFacilityService;
   private final StringRedisTemplate redisTemplate;
 
+
+  @Scheduled(cron = "${fc.cmm.cron}", zone = TIME_ZONE_ID)
+  @Transactional
+  public void syncCmmsScheduler() {
+    String redisKey = "syncCmms";
+    try {
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+        syncCmms("");
+        Thread.sleep(DELAY);
+        redisTemplate.delete(redisKey);
+      } else {
+        log.info("[FC cmm] cmm is synchronizing by another thread.");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
+  @Transactional
+  public void syncCpsScheduler() {
+    String redisKey = "syncCps";
+    try {
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+        syncCps("");
+        Thread.sleep(DELAY);
+        redisTemplate.delete(redisKey);
+      } else {
+        log.info("[FC cp] cp is synchronizing by another thread.");
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage());
+      redisTemplate.delete(redisKey);
+      Thread.currentThread().interrupt();
+    }
+  }
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   @Transactional
