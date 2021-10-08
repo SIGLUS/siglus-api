@@ -23,7 +23,7 @@ public class SiglusReceiptPlanService extends BaseReferenceDataService<ReceiptPl
 
   @Override
   protected String getUrl() {
-    return "/api/siglusapi/receiptPlans";
+    return "/api/siglusapi/fc/receiptPlans";
   }
 
   @Override

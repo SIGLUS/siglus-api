@@ -15,18 +15,19 @@
 
 package org.siglus.siglusapi.dto.fc;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProductInfoDto {
+public class ProductInfoDto extends ResponseBaseDto {
 
   private String fnm;
 
@@ -36,8 +37,6 @@ public class ProductInfoDto {
 
   private String status;
 
-  private ZonedDateTime lastUpdatedAt;
-
   private List<AreaDto> areas;
 
   private String categoryCode;
@@ -45,4 +44,5 @@ public class ProductInfoDto {
   private boolean isKit;
 
   private List<ProductKitDto> productsKits;
+
 }

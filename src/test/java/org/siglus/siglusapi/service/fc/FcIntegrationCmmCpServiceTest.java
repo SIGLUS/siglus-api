@@ -18,18 +18,13 @@ package org.siglus.siglusapi.service.fc;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -46,8 +41,6 @@ import org.siglus.siglusapi.domain.CmmDomain;
 import org.siglus.siglusapi.domain.CpDomain;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
-import org.siglus.siglusapi.dto.fc.CmmDto;
-import org.siglus.siglusapi.dto.fc.CpDto;
 import org.siglus.siglusapi.repository.CmmRepository;
 import org.siglus.siglusapi.repository.CpRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -60,16 +53,10 @@ import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataSe
 public class FcIntegrationCmmCpServiceTest {
 
   @InjectMocks
-  private FcIntegrationCmmCpService fcIntegrationCmmCpService;
-
-  @Captor
-  private ArgumentCaptor<CmmDomain> cmmArgumentCaptor;
+  private FcCmmCpService fcCmmCpService;
 
   @Mock
   private CmmRepository cmmRepository;
-
-  @Captor
-  private ArgumentCaptor<CpDomain> cpArgumentCaptor;
 
   @Mock
   private CpRepository cpRepository;
@@ -91,145 +78,13 @@ public class FcIntegrationCmmCpServiceTest {
 
   private final String facilityCode = "facilityCode";
   private final String productCode = "productCode";
-  private final String period = "M5";
-  private final int year = 2020;
-  private final String queryDate = "05-2020";
   private final UUID orderableId = UUID.randomUUID();
   private final UUID facilityId = UUID.randomUUID();
   private final UUID processingPeriodId = UUID.randomUUID();
   private final UUID supervisoryNodeId = UUID.randomUUID();
   private final UUID lineItemId = UUID.randomUUID();
-  private final UUID cmmId = UUID.randomUUID();
-  private final UUID cpId = UUID.randomUUID();
   private final LocalDate periodEndDate = LocalDate.parse("2020-05-31");
 
-  @Test
-  public void shouldReturnFalseGivenEmptyFcResult() {
-
-    // when
-    boolean result = fcIntegrationCmmCpService.processCps(Collections.emptyList(), queryDate);
-
-    // then
-    assertFalse(result);
-  }
-
-  @Test
-  public void shouldAddCpData() {
-    // given
-    CpDto dto = CpDto.builder()
-        .clientCode(facilityCode)
-        .productFnm(productCode)
-        .period(period)
-        .year(year)
-        .build();
-
-    // when
-    fcIntegrationCmmCpService.processCps(newArrayList(dto), queryDate);
-
-    // then
-    verify(cpRepository).findCpByFacilityCodeAndProductCodeAndQueryDate(facilityCode, productCode,
-        queryDate);
-    verify(cpRepository).save(any(CpDomain.class));
-  }
-
-  @Test
-  public void shouldUpdateCpData() {
-    // given
-    CpDto dto = CpDto.builder()
-        .clientCode(facilityCode)
-        .productFnm(productCode)
-        .period(period)
-        .year(year)
-        .build();
-    CpDomain existCp = new CpDomain();
-    existCp.setId(cpId);
-    when(cpRepository.findCpByFacilityCodeAndProductCodeAndQueryDate(facilityCode, productCode,
-        queryDate)).thenReturn(existCp);
-
-    // when
-    fcIntegrationCmmCpService.processCps(newArrayList(dto), queryDate);
-
-    // then
-    verify(cpRepository).save(cpArgumentCaptor.capture());
-    assertEquals(cpId, cpArgumentCaptor.getValue().getId());
-  }
-
-  @Test
-  public void shouldReturnFalseIfCatchExceptionWhenDealCpData() {
-    // given
-    CpDto dto = CpDto.builder()
-        .clientCode(facilityCode)
-        .productFnm(productCode)
-        .period(period)
-        .year(year)
-        .build();
-    when(cpRepository.save(any(CpDomain.class))).thenThrow(new RuntimeException());
-
-    // when
-    boolean result = fcIntegrationCmmCpService.processCps(newArrayList(dto), queryDate);
-
-    // then
-    assertFalse(result);
-  }
-
-  @Test
-  public void shouldAddCmmData() {
-    // given
-    CmmDto dto = CmmDto.builder()
-        .clientCode(facilityCode)
-        .productFnm(productCode)
-        .period(period)
-        .year(year)
-        .build();
-
-    // when
-    fcIntegrationCmmCpService.processCmms(newArrayList(dto), queryDate);
-
-    // then
-    verify(cmmRepository)
-        .findCmmByFacilityCodeAndProductCodeAndQueryDate(facilityCode, productCode, queryDate);
-    verify(cmmRepository).save(any(CmmDomain.class));
-  }
-
-  @Test
-  public void shouldUpdateCmmData() {
-    // given
-    CmmDto dto = CmmDto.builder()
-        .clientCode(facilityCode)
-        .productFnm(productCode)
-        .period(period)
-        .year(year)
-        .build();
-    CmmDomain existCmm = new CmmDomain();
-    existCmm.setId(cmmId);
-    when(cmmRepository.findCmmByFacilityCodeAndProductCodeAndQueryDate(facilityCode,
-        productCode, queryDate)).thenReturn(existCmm);
-
-    // when
-    fcIntegrationCmmCpService.processCmms(newArrayList(dto), queryDate);
-
-    // then
-    verify(cmmRepository).save(cmmArgumentCaptor.capture());
-    assertEquals(cmmId, cmmArgumentCaptor.getValue().getId());
-  }
-
-  @Test
-  public void shouldReturnFalseIfCatchExceptionWhenDealCmmData() {
-    // given
-    CmmDto dto = CmmDto.builder()
-        .clientCode(facilityCode)
-        .productFnm(productCode)
-        .period(period)
-        .year(year)
-        .build();
-    when(cmmRepository.save(any(CmmDomain.class))).thenThrow(new RuntimeException());
-
-    // when
-    boolean result = fcIntegrationCmmCpService.processCmms(newArrayList(dto), queryDate);
-
-    // then
-    assertFalse(result);
-  }
 
   @Test
   public void shouldInitiateSuggestedQuantityByCmm() {
@@ -265,7 +120,7 @@ public class FcIntegrationCmmCpServiceTest {
         .thenReturn(newArrayList(cmm));
 
     // when
-    fcIntegrationCmmCpService.initiateSuggestedQuantityByCmm(
+    fcCmmCpService.initiateSuggestedQuantityByCmm(
         siglusRequisitionDto.getLineItems(), siglusRequisitionDto.getFacilityId(),
         siglusRequisitionDto.getProcessingPeriodId());
 
@@ -325,7 +180,7 @@ public class FcIntegrationCmmCpServiceTest {
         .thenReturn(newArrayList(requisition1, requisition2));
 
     // when
-    fcIntegrationCmmCpService.initiateSuggestedQuantityByCp(
+    fcCmmCpService.initiateSuggestedQuantityByCp(
         siglusRequisitionDto.getLineItems(), siglusRequisitionDto.getFacilityId(),
         siglusRequisitionDto.getProcessingPeriodId(), siglusRequisitionDto.getProgramId());
 

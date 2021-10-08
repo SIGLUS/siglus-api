@@ -18,13 +18,14 @@ package org.siglus.siglusapi.service.fc;
 import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.util.stream.Collectors.toSet;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_ORDERABLES;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
+import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,7 +52,9 @@ import org.siglus.siglusapi.dto.ApprovedProductDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.siglus.siglusapi.dto.TradeItemDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
+import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
@@ -69,7 +72,8 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class FcProductService {
+@SuppressWarnings("PMD.TooManyMethods")
+public class FcProductService implements ProcessDataService {
 
   private final SiglusOrderableService orderableService;
   private final SiglusOrderableReferenceDataService orderableReferenceDataService;
@@ -93,34 +97,38 @@ public class FcProductService {
 
   private Set<String> basicProductCodes;
 
-  public boolean processProductData(List<ProductInfoDto> products) {
-    if (isEmpty(products)) {
-      return false;
+  @Override
+  public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> products, String startDate,
+      ZonedDateTime previousLastUpdatedAt) {
+    log.info("[FC product] synced count: {}", products.size());
+    if (products.isEmpty()) {
+      return null;
     }
+    boolean finalSuccess = true;
     AtomicInteger createCounter = new AtomicInteger();
     AtomicInteger updateCounter = new AtomicInteger();
     AtomicInteger sameCounter = new AtomicInteger();
     try {
       fetchAndCacheMasterData();
       Map<String, ProductInfoDto> productCodeToProduct = newHashMap();
-      products.forEach(product -> {
+      products.forEach(item -> {
+        ProductInfoDto product = (ProductInfoDto) item;
         trimProductCode(product);
         ProductInfoDto productInMap = productCodeToProduct.get(product.getFnm());
         if (null == productInMap || FcUtil.isActive(product.getStatus())) {
           productCodeToProduct.put(product.getFnm(), product);
         }
       });
-      log.info("[FC product] sync product count: {}", productCodeToProduct.values().size());
       productCodeToProduct.values().forEach(current -> {
         OrderableDto existed = orderableService.getOrderableByCode(current.getFnm());
         if (existed == null) {
-          log.info("[FC product] create product: {}", current);
+          log.info("[FC product] create: {}", current);
           OrderableDto orderableDto = createOrderable(current);
           createFtap(orderableDto);
           createProgramOrderablesExtension(current, orderableDto.getId());
           createCounter.getAndIncrement();
         } else if (isDifferentOrderable(existed, current)) {
-          log.info("[FC product] update product, existed: {}, current: {}", existed, current);
+          log.info("[FC product] update, existed: {}, current: {}", existed, current);
           OrderableDto orderableDto = updateOrderable(existed, current);
           createProgramOrderablesExtension(current, orderableDto.getId());
           updateCounter.getAndIncrement();
@@ -128,14 +136,15 @@ public class FcProductService {
           sameCounter.getAndIncrement();
         }
       });
-      clearProductCaches();
-      return true;
     } catch (Exception e) {
-      return false;
-    } finally {
-      log.info("[FC product] process product data create: {}, update: {}, same: {}",
-          createCounter.get(), updateCounter.get(), sameCounter.get());
+      log.error("[FC product] process data error", e);
+      finalSuccess = false;
     }
+    clearProductCaches();
+    log.info("[FC product] process data create: {}, update: {}, same: {}",
+        createCounter.get(), updateCounter.get(), sameCounter.get());
+    return buildResult(products, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
+        updateCounter.get());
   }
 
   private void trimProductCode(ProductInfoDto product) {

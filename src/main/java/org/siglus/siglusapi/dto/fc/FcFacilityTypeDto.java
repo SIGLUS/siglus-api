@@ -15,17 +15,18 @@
 
 package org.siglus.siglusapi.dto.fc;
 
-import java.time.ZonedDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class FcFacilityTypeDto {
+public class FcFacilityTypeDto extends ResponseBaseDto {
 
   private String code;
 
@@ -33,5 +34,4 @@ public class FcFacilityTypeDto {
 
   private String status;
 
-  private ZonedDateTime lastUpdatedAt;
 }

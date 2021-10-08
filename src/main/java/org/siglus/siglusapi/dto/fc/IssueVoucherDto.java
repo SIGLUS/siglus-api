@@ -20,13 +20,15 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class IssueVoucherDto {
+public class IssueVoucherDto extends ResponseBaseDto {
 
   private String requisitionNumber;
 
@@ -37,8 +39,6 @@ public class IssueVoucherDto {
   private String clientName;
 
   private String sourceOfSupplyOrder;
-
-  private ZonedDateTime lastUpdatedAt;
 
   private String clientCode;
 

@@ -17,6 +17,7 @@ package org.siglus.siglusapi.domain;
 
 import java.time.ZonedDateTime;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,6 +25,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -31,20 +34,26 @@ import org.siglus.common.domain.BaseEntity;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "fc_integration_results", schema = "siglusintegration")
 public class FcIntegrationResult extends BaseEntity {
 
-  private String job;
+  private String api;
 
   private String startDate;
 
   private String endDate;
 
-  private String nextStartDate;
+  private ZonedDateTime lastUpdatedAt;
 
-  private ZonedDateTime finishTime;
+  @LastModifiedDate
+  private ZonedDateTime processDate;
 
-  private Integer totalObjectsFromFc;
+  private Integer totalObjects;
+
+  private Integer createdObjects;
+
+  private Integer updatedObjects;
 
   private Boolean finalSuccess;
 

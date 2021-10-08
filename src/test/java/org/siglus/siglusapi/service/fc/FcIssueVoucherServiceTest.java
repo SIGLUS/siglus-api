@@ -15,17 +15,19 @@
 
 package org.siglus.siglusapi.service.fc;
 
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
+import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -72,6 +74,7 @@ import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.IssueVoucherDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
@@ -174,34 +177,26 @@ public class FcIssueVoucherServiceTest {
   private ArgumentCaptor<List<OrderDto>> orderListCaptor;
 
   private UserDto userDto;
-  private FacilityDto facilityDto;
   private final UUID programId = UUID.randomUUID();
   private final IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
 
   @Before
   public void prepare() {
     when(requisitionService.convertToOrder(any(), any())).thenReturn(Collections.emptyList());
-    ReflectionTestUtils.setField(service, "timeZoneId", "UTC");
-    ReflectionTestUtils.setField(service, "receiveReason",
-        "44814bc4-df64-11e9-9e7e-4c32759554d9");
+    ReflectionTestUtils.setField(service, "receiveReason", "44814bc4-df64-11e9-9e7e-4c32759554d9");
     when(stockEventsService.createStockEventForOneProgram(any(), any())).thenReturn(UUID.randomUUID());
-    facilityDto = new FacilityDto();
+    FacilityDto facilityDto = new FacilityDto();
     facilityDto.setId(UUID.randomUUID());
-    when(siglusFacilityReferenceDataService
-        .getFacilityByCode(getIssueVoucherDto().getWarehouseCode()))
-        .thenReturn(Pagination
-            .getPage(Arrays.asList(facilityDto), new PageRequest(0, 10), 0));
+    when(siglusFacilityReferenceDataService.getFacilityByCode(getIssueVoucherDto().getWarehouseCode()))
+        .thenReturn(Pagination.getPage(Collections.singletonList(facilityDto), new PageRequest(0, 10), 0));
     userDto = new UserDto();
     userDto.setId(UUID.randomUUID());
     userDto.setHomeFacilityId(facilityDto.getId());
-    when(userReferenceDataService
-        .getUserInfo(facilityDto.getId()))
-        .thenReturn(Pagination
-            .getPage(Arrays.asList(userDto), new PageRequest(0, 10), 0));
+    when(userReferenceDataService.getUserInfo(facilityDto.getId()))
+        .thenReturn(Pagination.getPage(Collections.singletonList(userDto), new PageRequest(0, 10), 0));
     IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
-    when(podExtensionRepository
-        .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
-            issueVoucherDto.getIssueVoucherNumber())).thenReturn(null);
+    when(podExtensionRepository.findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
+        issueVoucherDto.getIssueVoucherNumber())).thenReturn(null);
     ValidSourceDestinationDto sourceDestinationDto = new ValidSourceDestinationDto();
     sourceDestinationDto.setId(UUID.randomUUID());
     sourceDestinationDto.setName("FC Integration");
@@ -209,17 +204,17 @@ public class FcIssueVoucherServiceTest {
     node.setId(UUID.randomUUID());
     sourceDestinationDto.setNode(node);
     when(sourceDestinationService.getValidSources(programId,
-        facilityDto.getId())).thenReturn(Arrays.asList(sourceDestinationDto));
+        facilityDto.getId())).thenReturn(Collections.singletonList(sourceDestinationDto));
   }
 
   @Test
   public void shouldReturnFalseGivenEmptyFcResult() {
 
     // when
-    boolean result = service.processIssueVouchers(Collections.emptyList());
+    FcIntegrationResultDto result = service.processData(emptyList(), START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertFalse(result);
+    assertNull(result);
   }
 
   @Test
@@ -227,17 +222,15 @@ public class FcIssueVoucherServiceTest {
     // given
     IssueVoucherDto issueVoucherDto = getIssueVoucherDto();
     PodExtension extension = new PodExtension();
-    when(podExtensionRepository
-        .findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
-            issueVoucherDto.getIssueVoucherNumber())).thenReturn(extension);
+    when(podExtensionRepository.findByClientCodeAndIssueVoucherNumber(issueVoucherDto.getClientCode(),
+        issueVoucherDto.getIssueVoucherNumber())).thenReturn(extension);
 
     // when
-    boolean isSuccess = service.processIssueVouchers(Collections.singletonList(issueVoucherDto));
+    FcIntegrationResultDto result = service.processData(emptyList(), START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertTrue(isSuccess);
-    verify(requisitionExtensionRepository, times(0))
-        .findByRequisitionNumber(issueVoucherDto.getRequisitionNumber());
+    assertNull(result);
+    verify(requisitionExtensionRepository, times(0)).findByRequisitionNumber(issueVoucherDto.getRequisitionNumber());
   }
 
   @Test
@@ -256,11 +249,13 @@ public class FcIssueVoucherServiceTest {
         .thenReturn(requisitionV2Dto);
 
     // when
-    boolean isSuccess = service.processIssueVouchers(Arrays.asList(issueVoucherDto));
+    FcIntegrationResultDto result = service.processData(Collections.singletonList(issueVoucherDto), START_DATE,
+        LAST_UPDATED_AT);
 
     // then
-    assertFalse(isSuccess);
-    assertEquals(1, service.getStatusErrorIssueVoucherNumber().size());
+    assertNotNull(result);
+    assertEquals(false, result.getFinalSuccess());
+    assertEquals(1, service.getIssueVoucherErrors().size());
   }
 
   @Test
@@ -288,7 +283,7 @@ public class FcIssueVoucherServiceTest {
     Order canFulfillOrder = new Order();
     canFulfillOrder.setId(UUID.randomUUID());
     canFulfillOrder.setOrderLineItems(new ArrayList<>());
-    when(orderRepository.findCanFulfillOrderByExternalIdIn(Arrays.asList(
+    when(orderRepository.findCanFulfillOrderByExternalIdIn(Collections.singletonList(
         orderExternal.getId()))).thenReturn(null);
     Order order = new Order();
     order.setId(UUID.randomUUID());
@@ -303,7 +298,7 @@ public class FcIssueVoucherServiceTest {
     BasicOrderDto basicOrderDto = new BasicOrderDto();
     basicOrderDto.setId(order.getId());
     when(siglusOrderService.createSubOrder(any(), any())).thenReturn(
-        Arrays.asList(basicOrderDto));
+        Collections.singletonList(basicOrderDto));
     StockCardSummaryV2Dto summaryV2Dto = new StockCardSummaryV2Dto();
     summaryV2Dto.setOrderable(
         new org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto(
@@ -334,15 +329,16 @@ public class FcIssueVoucherServiceTest {
     when(siglusShipmentService.createSubOrderAndShipment(shipmentCaptor.capture()))
         .thenReturn(shipmentDto);
     LotDto lotDto = getLotDto(lotId);
-    when(lotReferenceDataService.getLots(any())).thenReturn(Arrays.asList(lotDto));
+    when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(lotDto));
 
     // when
-    boolean isSuccess = service.processIssueVouchers(Arrays.asList(issueVoucherDto));
+    FcIntegrationResultDto result = service.processData(Collections.singletonList(issueVoucherDto), START_DATE,
+        LAST_UPDATED_AT);
 
     // then
     ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
     assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
-    assertTrue(isSuccess);
+    assertNotNull(result);
   }
 
   @Test
@@ -370,7 +366,7 @@ public class FcIssueVoucherServiceTest {
     Order canFulfillOrder = new Order();
     canFulfillOrder.setId(UUID.randomUUID());
     canFulfillOrder.setOrderLineItems(new ArrayList<>());
-    when(orderRepository.findCanFulfillOrderByExternalIdIn(Arrays.asList(
+    when(orderRepository.findCanFulfillOrderByExternalIdIn(Collections.singletonList(
         orderExternal.getId()))).thenReturn(canFulfillOrder);
     Order order = new Order();
     order.setId(UUID.randomUUID());
@@ -417,12 +413,13 @@ public class FcIssueVoucherServiceTest {
     when(lotReferenceDataService.getLots(any())).thenReturn(Collections.singletonList(lotDto));
 
     // when
-    boolean isSuccess = service.processIssueVouchers(Collections.singletonList(issueVoucherDto));
+    FcIntegrationResultDto result = service.processData(Collections.singletonList(issueVoucherDto), START_DATE,
+        LAST_UPDATED_AT);
 
     // then
     ShipmentDto shipmentDto1 = shipmentCaptor.getValue();
     assertEquals(Long.valueOf(2), shipmentDto1.getLineItems().get(0).getQuantityShipped());
-    assertTrue(isSuccess);
+    assertNotNull(result);
   }
 
   @Test
@@ -493,10 +490,11 @@ public class FcIssueVoucherServiceTest {
     when(orderDtoBuilder.build(any(), any())).thenReturn(orderRequisitionDto);
 
     // when
-    boolean isSuccess = service.processIssueVouchers(Arrays.asList(issueVoucherDto));
+    FcIntegrationResultDto result = service.processData(Collections.singletonList(issueVoucherDto), START_DATE,
+        LAST_UPDATED_AT);
 
     // then
-    assertEquals(true, isSuccess);
+    assertNotNull(result);
     verify(simulateUser).simulateUserAuth(any());
     verify(orderFulfillmentService).create(orderListCaptor.capture());
     verify(requisitionStatusProcessor).statusChange(requisitionCaptor.capture(), any());
@@ -513,10 +511,11 @@ public class FcIssueVoucherServiceTest {
     issueVoucherDto.setRequisitionNumber("");
 
     // when
-    boolean isSuccess = service.processIssueVouchers(Collections.singletonList(issueVoucherDto));
+    FcIntegrationResultDto result = service.processData(Collections.singletonList(issueVoucherDto), START_DATE,
+        LAST_UPDATED_AT);
 
     // then
-    assertEquals(true, isSuccess);
+    assertNotNull(result);
 
   }
 

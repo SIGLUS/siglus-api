@@ -15,26 +15,25 @@
 
 package org.siglus.siglusapi.dto.fc;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class FcGeographicZoneNationalDto {
+public class FcGeographicZoneNationalDto extends ResponseBaseDto {
 
   private String code;
 
   private String description;
 
   private String status;
-
-  private ZonedDateTime lastUpdatedAt;
 
   private List<FcGeographicZoneProvinceDto> provinces;
 }

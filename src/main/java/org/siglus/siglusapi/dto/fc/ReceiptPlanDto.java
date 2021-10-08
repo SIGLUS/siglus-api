@@ -27,8 +27,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@EqualsAndHashCode(of = "receiptPlanNumber")
-public class ReceiptPlanDto {
+@EqualsAndHashCode(of = "receiptPlanNumber", callSuper = false)
+public class ReceiptPlanDto extends ResponseBaseDto {
 
   private ZonedDateTime date;
 
@@ -39,8 +39,6 @@ public class ReceiptPlanDto {
   private String requisitionNumber;
 
   private String clientName;
-
-  private ZonedDateTime lastUpdatedAt;
 
   private String clientCode;
 

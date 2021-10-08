@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -138,11 +140,11 @@ public class SiglusValidSourceDestinationServiceTest {
         .collect(Collectors.toList());
 
     // then
-    assertEquals(true, destinationNameList.contains(destinationName));
-    assertEquals(true, destinationNameList.contains(destinationName2));
-    assertEquals(true, destinationNameList.contains(destinationName3));
-    assertEquals(true, destinationNameList.contains(destinationNameFalseNotContain));
-    assertEquals(false, destinationNameList.contains(destinationNameTrueNotContain));
+    assertTrue(destinationNameList.contains(destinationName));
+    assertTrue(destinationNameList.contains(destinationName2));
+    assertTrue(destinationNameList.contains(destinationName3));
+    assertTrue(destinationNameList.contains(destinationNameFalseNotContain));
+    assertFalse(destinationNameList.contains(destinationNameTrueNotContain));
   }
 
   @Test

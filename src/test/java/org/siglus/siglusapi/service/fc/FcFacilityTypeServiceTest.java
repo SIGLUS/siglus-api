@@ -16,12 +16,17 @@
 package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
+import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
+import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -39,12 +44,18 @@ import org.openlmis.stockmanagement.dto.StockCardLineItemReasonDto;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityTypeDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusStockCardLineItemReasons;
 import org.siglus.siglusapi.service.client.ValidReasonAssignmentStockManagementService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FcFacilityTypeServiceTest {
+
+  public static final String TEST_1 = "test1";
+  public static final String TEST_2 = "test2";
+  public static final String TEST_3 = "test3";
+  public static final String TEST_4 = "test4";
 
   @InjectMocks
   private FcFacilityTypeService fcFacilityTypeService;
@@ -80,42 +91,62 @@ public class FcFacilityTypeServiceTest {
     StockCardLineItemReasonDto lineItemReasonDto = new StockCardLineItemReasonDto();
     lineItemReasonDto.setId(reasonId);
     when(programRefDataService.findAll()).thenReturn(Collections.singletonList(programDto));
-    when(siglusStockCardLineItemReasons.findAll()).thenReturn(
-        Collections.singletonList(lineItemReasonDto));
+    when(siglusStockCardLineItemReasons.findAll()).thenReturn(Collections.singletonList(lineItemReasonDto));
   }
 
   @Test
   public void shouldReturnFalseGivenEmptyFcResult() {
 
     // when
-    boolean result = fcFacilityTypeService.processFacilityTypes(Collections.emptyList());
+    FcIntegrationResultDto result = fcFacilityTypeService.processData(emptyList(), START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertFalse(result);
+    assertNull(result);
+  }
+
+  @Test
+  public void shouldFinalSuccessFalseWhenSaveFacilityTypeFailed() {
+    // given
+    FacilityTypeDto typeDto1 = mockFacilityTypeDto(TEST_1, TEST_1);
+    FacilityTypeDto typeDto2 = mockFacilityTypeDto(TEST_2, TEST_2);
+    FacilityTypeDto typeDto3 = mockFacilityTypeDto(TEST_3, TEST_3);
+    when(facilityTypeService.searchAllFacilityTypes()).thenReturn(newArrayList(typeDto1, typeDto2, typeDto3));
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setId(UUID.randomUUID());
+    FcFacilityTypeDto typeDto4 = mockFcFacilityTypeDto(TEST_2, "test23", true);
+    FcFacilityTypeDto typeDto5 = mockFcFacilityTypeDto(TEST_4, TEST_4, true);
+    when(facilityTypeService.createFacilityType(any(FacilityTypeDto.class))).thenThrow(new RuntimeException());
+
+    // when
+    FcIntegrationResultDto result = fcFacilityTypeService.processData(newArrayList(typeDto4, typeDto5),
+        START_DATE, LAST_UPDATED_AT);
+
+    // then
+    assertNotNull(result);
+    assertFalse(result.getFinalSuccess());
   }
 
   @Test
   public void shouldSaveAndUpdateFacilityType() {
     // given
-    FacilityTypeDto typeDto1 = mockFacilityTypeDto("test1", "test1", true);
-    FacilityTypeDto typeDto2 = mockFacilityTypeDto("test2", "test2", true);
-    FacilityTypeDto typeDto3 = mockFacilityTypeDto("test3", "test3", true);
-    when(facilityTypeService.searchAllFacilityTypes())
-        .thenReturn(newArrayList(typeDto1, typeDto2, typeDto3));
+    FacilityTypeDto typeDto1 = mockFacilityTypeDto(TEST_1, TEST_1);
+    FacilityTypeDto typeDto2 = mockFacilityTypeDto(TEST_2, TEST_2);
+    FacilityTypeDto typeDto3 = mockFacilityTypeDto(TEST_3, TEST_3);
+    when(facilityTypeService.searchAllFacilityTypes()).thenReturn(newArrayList(typeDto1, typeDto2, typeDto3));
     FacilityTypeDto typeDto = new FacilityTypeDto();
     typeDto.setId(UUID.randomUUID());
     when(facilityTypeService.createFacilityType(any())).thenReturn(typeDto);
-    FcFacilityTypeDto typeDto4 = mockFcFacilityTypeDto("test2", "test23", true);
-    FcFacilityTypeDto typeDto5 = mockFcFacilityTypeDto("test4", "test4", true);
+    FcFacilityTypeDto typeDto4 = mockFcFacilityTypeDto(TEST_2, "test23", true);
+    FcFacilityTypeDto typeDto5 = mockFcFacilityTypeDto(TEST_4, TEST_4, true);
 
     // when
-    fcFacilityTypeService.processFacilityTypes(newArrayList(typeDto4, typeDto5));
+    fcFacilityTypeService.processData(newArrayList(typeDto4, typeDto5), START_DATE, LAST_UPDATED_AT);
 
     // then
     verify(facilityTypeService).createFacilityType(addFacilityType.capture());
     verify(facilityTypeService).saveFacilityType(updateFacilityType.capture());
     verify(assignmentService).assignReason(reasonArgumentCaptor.capture());
-    assertEquals("test4", addFacilityType.getValue().getName());
+    assertEquals(TEST_4, addFacilityType.getValue().getName());
     assertEquals("test23", updateFacilityType.getValue().getName());
     assertEquals(programId, reasonArgumentCaptor.getValue().getProgramId());
     assertEquals(reasonId, reasonArgumentCaptor.getValue().getReason().getId());
@@ -124,27 +155,26 @@ public class FcFacilityTypeServiceTest {
   @Test
   public void shouldUpdateFacilityType() {
     // given
-    FacilityTypeDto typeDto2 = mockFacilityTypeDto("test6", "test8", true);
+    FacilityTypeDto typeDto2 = mockFacilityTypeDto("test6", "test8");
     FcFacilityTypeDto typeDto4 = mockFcFacilityTypeDto("test6", "test8", false);
     when(facilityTypeService.searchAllFacilityTypes())
         .thenReturn(newArrayList(typeDto2));
 
     // when
-    fcFacilityTypeService.processFacilityTypes(
-        newArrayList(typeDto4));
+    fcFacilityTypeService.processData(newArrayList(typeDto4), START_DATE, LAST_UPDATED_AT);
 
     // then
     verify(facilityTypeService).saveFacilityType(updateFacilityType.capture());
-    assertEquals(false, updateFacilityType.getValue().getActive());
+    assertFalse(updateFacilityType.getValue().getActive());
 
   }
 
-  private FacilityTypeDto mockFacilityTypeDto(String code, String name, boolean active) {
+  private FacilityTypeDto mockFacilityTypeDto(String code, String name) {
     FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
     facilityTypeDto.setId(UUID.randomUUID());
     facilityTypeDto.setCode(code);
     facilityTypeDto.setName(name);
-    facilityTypeDto.setActive(active);
+    facilityTypeDto.setActive(true);
     return facilityTypeDto;
   }
 
@@ -153,6 +183,7 @@ public class FcFacilityTypeServiceTest {
     facilityTypeDto.setCode(code);
     facilityTypeDto.setDescription(name);
     facilityTypeDto.setStatus(active ? STATUS_ACTIVE : "inActivo");
+    facilityTypeDto.setLastUpdatedAt(LAST_UPDATED_AT);
     return facilityTypeDto;
   }
 

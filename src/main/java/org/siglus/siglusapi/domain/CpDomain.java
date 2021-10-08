@@ -28,6 +28,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.fc.CpDto;
+import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.springframework.beans.BeanUtils;
 
 @Entity
@@ -65,10 +66,11 @@ public class CpDomain extends BaseEntity {
 
   private ZonedDateTime lastUpdatedAt;
 
-  public static List<CpDomain> from(List<CpDto> dtos) {
+  public static List<CpDomain> from(List<? extends ResponseBaseDto>  dtos) {
     List<CpDomain> cps = newArrayList();
-    dtos.forEach(dto -> {
+    dtos.forEach(item -> {
       CpDomain cp = new CpDomain();
+      CpDto dto = (CpDto) item;
       BeanUtils.copyProperties(dto, cp);
       cp.setFacilityCode(dto.getClientCode());
       cp.setFacilityName(dto.getClientDescription());

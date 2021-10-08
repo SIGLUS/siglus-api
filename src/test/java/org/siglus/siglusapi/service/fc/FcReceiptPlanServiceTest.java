@@ -20,6 +20,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doCallRealMethod;
@@ -27,6 +29,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SKIPPED;
+import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
+import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -57,6 +61,7 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.siglus.siglusapi.repository.ReceiptPlanRepository;
@@ -114,8 +119,6 @@ public class FcReceiptPlanServiceTest {
 
   private final String requisitionNumber = "requisitionNumber";
 
-  private final ZonedDateTime lastUpdatedAt = ZonedDateTime.now();
-
   private final String fnmCode = "productCode";
 
   private final List<ReceiptPlanDto> receiptPlanDtos = new ArrayList<>();
@@ -148,7 +151,6 @@ public class FcReceiptPlanServiceTest {
         .clientCode(clientCode)
         .clientName(clientName)
         .date(date)
-        .lastUpdatedAt(lastUpdatedAt)
         .products(productDtos)
         .build();
 
@@ -163,10 +165,10 @@ public class FcReceiptPlanServiceTest {
   public void shouldReturnFalseGivenEmptyReceiptPlan() {
 
     // when
-    boolean result = fcReceiptPlanService.processReceiptPlans(emptyList());
+    FcIntegrationResultDto result = fcReceiptPlanService.processData(emptyList(), START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertFalse(result);
+    assertNull(result);
   }
 
   @Test
@@ -177,20 +179,18 @@ public class FcReceiptPlanServiceTest {
     UUID userId = UUID.randomUUID();
     userDto.setId(userId);
     List<UserDto> userDtoList = newArrayList(userDto);
-    when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
-        .thenReturn(newArrayList(receiptPlan));
+    when(receiptPlanRepository.findByReceiptPlanNumberIn(any())).thenReturn(newArrayList(receiptPlan));
     when(siglusFacilityRepository.findFirstByTypeId(any())).thenReturn(facility);
-    when(userReferenceDataService.getUserInfo(any()))
-        .thenReturn(page);
+    when(userReferenceDataService.getUserInfo(any())).thenReturn(page);
     when(page.getContent()).thenReturn(userDtoList);
-    when(requisitionExtensionRepository.findByRequisitionNumber(any()))
-        .thenThrow(new RuntimeException());
+    when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenThrow(new RuntimeException());
 
     // when
-    boolean result = fcReceiptPlanService.processReceiptPlans(receiptPlanDtos);
+    FcIntegrationResultDto result = fcReceiptPlanService.processData(receiptPlanDtos, START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertFalse(result);
+    assertNotNull(result);
+    assertFalse(result.getFinalSuccess());
   }
 
   @Test
@@ -201,21 +201,20 @@ public class FcReceiptPlanServiceTest {
     UUID userId = UUID.randomUUID();
     userDto.setId(userId);
     List<UserDto> userDtoList = newArrayList(userDto);
-    when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
-        .thenReturn(newArrayList(receiptPlan));
+    when(receiptPlanRepository.findByReceiptPlanNumberIn(any())).thenReturn(newArrayList(receiptPlan));
     when(siglusFacilityRepository.findFirstByTypeId(any())).thenReturn(facility);
-    when(userReferenceDataService.getUserInfo(any()))
-        .thenReturn(page);
+    when(userReferenceDataService.getUserInfo(any())).thenReturn(page);
     when(page.getContent()).thenReturn(userDtoList);
     receiptPlanDto.setRequisitionNumber(null);
     List<ReceiptPlanDto> inValidReceiptPlan = newArrayList(receiptPlanDto);
     doCallRealMethod().when(fcDataValidate).validateEmptyRequisitionNumber(any());
 
     // when
-    boolean result = fcReceiptPlanService.processReceiptPlans(inValidReceiptPlan);
+    FcIntegrationResultDto result = fcReceiptPlanService.processData(inValidReceiptPlan, START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertTrue(result);
+    assertNotNull(result);
+    assertFalse(result.getFinalSuccess());
   }
 
   @Test
@@ -246,58 +245,46 @@ public class FcReceiptPlanServiceTest {
     SiglusRequisitionDto requisitionDto = mock(SiglusRequisitionDto.class);
     when(requisitionDto.getTemplate()).thenReturn(template);
 
-    SiglusRequisitionLineItemDto lineItem = new SiglusRequisitionLineItemDto(requisitionLineItem,
-        null);
+    SiglusRequisitionLineItemDto lineItem = new SiglusRequisitionLineItemDto(requisitionLineItem, null);
     List<SiglusRequisitionLineItemDto> lineItems = newArrayList(lineItem);
-    when(siglusRequisitionService.createRequisitionLineItem(any(), any()))
-        .thenReturn(lineItems);
-    when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
-        .thenReturn(emptyList());
+    when(siglusRequisitionService.createRequisitionLineItem(any(), any())).thenReturn(lineItems);
+    when(receiptPlanRepository.findByReceiptPlanNumberIn(any())).thenReturn(emptyList());
     Facility facility = new Facility();
     when(siglusFacilityRepository.findFirstByTypeId(any())).thenReturn(facility);
-    when(userReferenceDataService.getUserInfo(any()))
-        .thenReturn(page);
+    when(userReferenceDataService.getUserInfo(any())).thenReturn(page);
     List<UserDto> userDtoList = newArrayList(userDto);
     when(page.getContent()).thenReturn(userDtoList);
     RequisitionExtension requisitionExtension = RequisitionExtension.builder()
         .requisitionId(requisitionId)
         .requisitionNumber(121).build();
-    when(requisitionExtensionRepository.findByRequisitionNumber(any()))
-        .thenReturn(requisitionExtension);
-    when(siglusRequisitionService.searchRequisition(any()))
-        .thenReturn(requisitionDto);
-    when(operatePermissionService.isEditable(any()))
-        .thenReturn(true);
+    when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(requisitionExtension);
+    when(siglusRequisitionService.searchRequisition(any())).thenReturn(requisitionDto);
+    when(operatePermissionService.isEditable(any())).thenReturn(true);
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setProductCode(fnmCode);
     orderableDto.setId(orderableId);
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     approvedProduct.setOrderable(orderableDto);
-    when(approvedProductService.getApprovedProducts(any(), any(), any()))
-        .thenReturn(singletonList(approvedProduct));
+    when(approvedProductService.getApprovedProducts(any(), any(), any())).thenReturn(singletonList(approvedProduct));
     Requisition requisition = new Requisition();
-    when(requisitionRepository.findOne(requisitionId))
-        .thenReturn(requisition);
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     StatusChange statusChange = new StatusChange();
-    when(siglusStatusChangeRepository.findByRequisitionIdAndStatus(any(), any()))
-        .thenReturn(statusChange);
+    when(siglusStatusChangeRepository.findByRequisitionIdAndStatus(any(), any())).thenReturn(statusChange);
 
     // when
-    boolean result = fcReceiptPlanService.processReceiptPlans(receiptPlanDtos);
+    FcIntegrationResultDto result = fcReceiptPlanService.processData(receiptPlanDtos, START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertTrue(result);
+    assertNotNull(result);
+    assertTrue(result.getFinalSuccess());
     verify(receiptPlanRepository).save(any(ReceiptPlan.class));
-    ArgumentCaptor<UUID> captorUserId =
-        ArgumentCaptor.forClass(UUID.class);
+    ArgumentCaptor<UUID> captorUserId = ArgumentCaptor.forClass(UUID.class);
     verify(siglusSimulateUserAuthHelper).simulateUserAuth(captorUserId.capture());
     assertEquals(userId, captorUserId.getValue());
-    ArgumentCaptor<String> captor =
-        ArgumentCaptor.forClass(String.class);
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
     verify(fcDataValidate).validateEmptyRequisitionNumber(captor.capture());
     assertEquals(requisitionNumber, captor.getValue());
-    ArgumentCaptor<RequisitionExtension> captorExtension =
-        ArgumentCaptor.forClass(RequisitionExtension.class);
+    ArgumentCaptor<RequisitionExtension> captorExtension = ArgumentCaptor.forClass(RequisitionExtension.class);
     verify(fcDataValidate).validateExistRequisitionNumber(captorExtension.capture());
     assertEquals(requisitionExtension, captorExtension.getValue());
   }
@@ -328,46 +315,36 @@ public class FcReceiptPlanServiceTest {
 
     SiglusRequisitionDto requisitionDto = mock(SiglusRequisitionDto.class);
     when(requisitionDto.getTemplate()).thenReturn(template);
-    when(receiptPlanRepository.findByReceiptPlanNumberIn(any()))
-        .thenReturn(newArrayList(receiptPlan));
+    when(receiptPlanRepository.findByReceiptPlanNumberIn(any())).thenReturn(newArrayList(receiptPlan));
     Facility facility = new Facility();
     when(siglusFacilityRepository.findFirstByTypeId(any())).thenReturn(facility);
-    when(userReferenceDataService.getUserInfo(any()))
-        .thenReturn(page);
+    when(userReferenceDataService.getUserInfo(any())).thenReturn(page);
     List<UserDto> userDtoList = newArrayList(userDto);
     when(page.getContent()).thenReturn(userDtoList);
     RequisitionExtension requisitionExtension = RequisitionExtension.builder()
         .requisitionId(requisitionId)
         .requisitionNumber(121).build();
-    when(requisitionExtensionRepository.findByRequisitionNumber(any()))
-        .thenReturn(requisitionExtension);
-    when(siglusRequisitionService.searchRequisition(any()))
-        .thenReturn(requisitionDto);
-    when(operatePermissionService.isEditable(any()))
-        .thenReturn(true);
+    when(requisitionExtensionRepository.findByRequisitionNumber(any())).thenReturn(requisitionExtension);
+    when(siglusRequisitionService.searchRequisition(any())).thenReturn(requisitionDto);
+    when(operatePermissionService.isEditable(any())).thenReturn(true);
     OrderableDto orderableDto = new OrderableDto();
     ApprovedProductDto approvedProduct = new ApprovedProductDto();
     approvedProduct.setOrderable(orderableDto);
-    when(approvedProductService.getApprovedProducts(any(), any(), any()))
-        .thenReturn(singletonList(approvedProduct));
-    SiglusRequisitionLineItemDto lineItem = new SiglusRequisitionLineItemDto(requisitionLineItem,
-        null);
+    when(approvedProductService.getApprovedProducts(any(), any(), any())).thenReturn(singletonList(approvedProduct));
+    SiglusRequisitionLineItemDto lineItem = new SiglusRequisitionLineItemDto(requisitionLineItem, null);
     List<SiglusRequisitionLineItemDto> lineItems = newArrayList(lineItem);
-    when(siglusRequisitionService.createRequisitionLineItem(any(), any()))
-        .thenReturn(lineItems);
+    when(siglusRequisitionService.createRequisitionLineItem(any(), any())).thenReturn(lineItems);
     Requisition requisition = new Requisition();
-    when(requisitionRepository.findOne(requisitionId))
-        .thenReturn(requisition);
+    when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     StatusChange statusChange = new StatusChange();
-    when(siglusStatusChangeRepository.findByRequisitionIdAndStatus(any(), any()))
-        .thenReturn(statusChange);
+    when(siglusStatusChangeRepository.findByRequisitionIdAndStatus(any(), any())).thenReturn(statusChange);
 
     // when
-    boolean result = fcReceiptPlanService.processReceiptPlans(receiptPlanDtos);
+    FcIntegrationResultDto result = fcReceiptPlanService.processData(receiptPlanDtos, START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertTrue(result);
-
+    assertNotNull(result);
+    assertFalse(result.getFinalSuccess());
   }
 
 }

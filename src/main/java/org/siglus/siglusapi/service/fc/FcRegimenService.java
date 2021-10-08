@@ -15,9 +15,10 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.constant.FcConstants.DEFAULT_REGIMEN_CATEGORY_CODE;
+import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,109 +27,112 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenCategory;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.RegimenDto;
+import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RegimenCategoryRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class FcRegimenService {
-
-  @Autowired
-  private RegimenRepository regimenRepository;
-
-  @Autowired
-  private ProgramRealProgramRepository programRealProgramRepository;
-
-  @Autowired
-  private ProgramReferenceDataService programRefDataService;
-
-  @Autowired
-  private RegimenCategoryRepository regimenCategoryRepository;
+@RequiredArgsConstructor
+public class FcRegimenService implements ProcessDataService {
 
   private int maxRegimenCategoryDisplayOrder;
 
-  public boolean processRegimens(List<RegimenDto> dtos) {
-    if (isEmpty(dtos)) {
-      return false;
+  private RegimenRepository regimenRepository;
+  private ProgramRealProgramRepository programRealProgramRepository;
+  private ProgramReferenceDataService programRefDataService;
+  private RegimenCategoryRepository regimenCategoryRepository;
+  private FcIntegrationResultService fcIntegrationResultService;
+
+  @Override
+  public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> regimens, String startDate,
+      ZonedDateTime previousLastUpdatedAt) {
+    log.info("[FC regimen] sync count: {}", regimens.size());
+    if (regimens.isEmpty()) {
+      return null;
     }
+    boolean finalSuccess = true;
+    AtomicInteger createCounter = new AtomicInteger();
+    AtomicInteger updateCounter = new AtomicInteger();
+    AtomicInteger sameCounter = new AtomicInteger();
     try {
-      Map<String, ProgramRealProgram> codeToProgramMap = programRealProgramRepository.findAll()
-          .stream()
-          .collect(Collectors.toMap(ProgramRealProgram::getRealProgramCode, Function.identity()));
-      Map<String, UUID> codeToProgramIdMap = programRefDataService.findAll()
-          .stream()
-          .collect(Collectors.toMap(ProgramDto::getCode, ProgramDto::getId));
+      Map<String, ProgramRealProgram> realProgramCodeToProgram = programRealProgramRepository.findAll()
+          .stream().collect(Collectors.toMap(ProgramRealProgram::getRealProgramCode, Function.identity()));
+      Map<String, UUID> programCodeToId = programRefDataService.findAll()
+          .stream().collect(Collectors.toMap(ProgramDto::getCode, ProgramDto::getId));
       List<Regimen> allRegimens = regimenRepository.findAll();
-      Map<String, Regimen> codeToRegimenMap = allRegimens
+      Map<String, Regimen> regimenCodeToRegimen = allRegimens
           .stream().collect(Collectors.toMap(Regimen::getCode, Function.identity()));
       AtomicInteger maxRegimenDisplayOrder = new AtomicInteger(allRegimens.stream()
           .mapToInt(Regimen::getDisplayOrder).max().orElse(0));
       List<RegimenCategory> allCategories = regimenCategoryRepository.findAll();
-      Map<String, RegimenCategory> codeToCategoryMap = allCategories.stream()
+      Map<String, RegimenCategory> regimenCategoryCodeToCategory = allCategories.stream()
           .collect(Collectors.toMap(RegimenCategory::getCode, Function.identity()));
       maxRegimenCategoryDisplayOrder = allCategories.stream()
           .mapToInt(RegimenCategory::getDisplayOrder).max().orElse(0);
-
       Set<Regimen> regimensToUpdate = new HashSet<>();
-      dtos.stream()
-          .filter(RegimenDto::isActive)
-          .forEach(dto -> {
-            ProgramRealProgram realProgram = codeToProgramMap.get(dto.getAreaCode());
-            if (realProgram == null) {
-              log.error("[FC] unknown real program code: {}", dto.getAreaCode());
-              return;
-            }
-            UUID realProgramId = realProgram.getId();
-            UUID dtoProgramId = codeToProgramIdMap.get(realProgram.getProgramCode());
-            if (dtoProgramId == null) {
-              log.error("[FC] unknown program code: {}", dto.getAreaCode());
-              return;
-            }
-            Regimen regimen = codeToRegimenMap.get(dto.getCode());
-            if (regimen != null) {
-              if (isDifferent(regimen, dto, realProgram.getId())) {
-                regimensToUpdate.add(merge(regimen, dto, realProgramId, dtoProgramId,
-                    codeToCategoryMap));
-              }
-              return;
-            }
-
-            regimensToUpdate.add(Regimen.from(dto, realProgramId, dtoProgramId,
-                getRegimenCategory(dto, codeToCategoryMap),
-                maxRegimenDisplayOrder.incrementAndGet()));
-          });
-      log.info("[FC] update regimens: {}", regimensToUpdate);
+      regimens.forEach(item -> {
+        RegimenDto current = (RegimenDto) item;
+        ProgramRealProgram realProgram = realProgramCodeToProgram.get(current.getAreaCode());
+        if (realProgram == null) {
+          log.error("[FC regimen] unknown real program code: {}", current.getAreaCode());
+          return;
+        }
+        UUID realProgramId = realProgram.getId();
+        UUID programId = programCodeToId.get(realProgram.getProgramCode());
+        if (programId == null) {
+          log.error("[FC regimen] unknown program code: {}", current.getAreaCode());
+          return;
+        }
+        Regimen existed = regimenCodeToRegimen.get(current.getCode());
+        if (existed == null) {
+          log.info("[FC regimen] create regimen: {}", current);
+          regimensToUpdate.add(Regimen.from(current, realProgramId, programId,
+              getRegimenCategory(current, regimenCategoryCodeToCategory), maxRegimenDisplayOrder.incrementAndGet()));
+          createCounter.getAndIncrement();
+        } else if (isDifferent(existed, current, realProgram.getId())) {
+          log.info("[FC regimen] update regimen, existed: {}, current: {}", existed, current);
+          regimensToUpdate.add(merge(existed, current, realProgramId, programId, regimenCategoryCodeToCategory));
+          updateCounter.getAndIncrement();
+        } else {
+          sameCounter.getAndIncrement();
+        }
+      });
       regimenRepository.save(regimensToUpdate);
-      log.info("[FC] save fc regimen successfully, size: {}", dtos.size());
-      return true;
     } catch (Exception e) {
-      log.error("[FC] process fc regimen data error", e);
-      return false;
+      log.error("[FC regimen] sync data error", e);
+      finalSuccess = false;
     }
+    log.info("[FC regimen] process data create: {}, update: {}, same: {}",
+        createCounter.get(), updateCounter.get(), sameCounter.get());
+    return buildResult(regimens, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
+        updateCounter.get());
   }
 
-  private boolean isDifferent(Regimen regimen, RegimenDto dto, UUID realProgramId) {
-    return !regimen.getName().equals(dto.getDescription())
-        || !regimen.getRealProgramId().equals(realProgramId) || !isCategoryEquivalent(regimen, dto);
+  private boolean isDifferent(Regimen existed, RegimenDto current, UUID realProgramId) {
+    return !existed.getName().equals(current.getDescription())
+        || !existed.getRealProgramId().equals(realProgramId)
+        || !isCategoryEquivalent(existed, current);
   }
 
-  private Regimen merge(Regimen regimen, RegimenDto dto, UUID realProgramId, UUID dtoProgramId,
+  private Regimen merge(Regimen existed, RegimenDto current, UUID realProgramId, UUID programId,
       Map<String, RegimenCategory> codeToCategoryMap) {
-    regimen.setName(dto.getDescription());
-    regimen.setRealProgramId(realProgramId);
-    regimen.setProgramId(dtoProgramId);
-    regimen.setRegimenCategory(getRegimenCategory(dto, codeToCategoryMap));
-    return regimen;
+    existed.setName(current.getDescription());
+    existed.setRealProgramId(realProgramId);
+    existed.setProgramId(programId);
+    existed.setRegimenCategory(getRegimenCategory(current, codeToCategoryMap));
+    return existed;
   }
 
   private RegimenCategory getRegimenCategory(RegimenDto dto,

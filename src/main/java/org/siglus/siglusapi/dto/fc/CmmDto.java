@@ -19,13 +19,15 @@ import java.time.ZonedDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CmmDto {
+public class CmmDto extends ResponseBaseDto {
 
   private ZonedDateTime date;
 
@@ -42,8 +44,6 @@ public class CmmDto {
   private String programCode;
 
   private Integer max;
-
-  private ZonedDateTime lastUpdatedAt;
 
   private String clientCode;
 

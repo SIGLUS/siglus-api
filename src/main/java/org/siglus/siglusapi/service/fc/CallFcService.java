@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.fc.CmmDto;
@@ -45,7 +46,6 @@ import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
 import org.siglus.siglusapi.dto.fc.RegimenDto;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.annotation.Backoff;
@@ -59,6 +59,7 @@ import org.springframework.web.client.RestTemplate;
 @Getter
 @Setter
 @SuppressWarnings("PMD.CyclomaticComplexity")
+@RequiredArgsConstructor
 public class CallFcService {
 
   private List<IssueVoucherDto> issueVouchers = new ArrayList<>();
@@ -74,8 +75,7 @@ public class CallFcService {
   private PageInfoDto pageInfoDto = new PageInfoDto();
   private static final Map<String, Class> apiToClassMap = new HashMap<>();
 
-  @Autowired
-  RestTemplate remoteRestTemplate;
+  private final RestTemplate remoteRestTemplate;
 
   static {
     apiToClassMap.put(ISSUE_VOUCHER_API, IssueVoucherDto[].class);

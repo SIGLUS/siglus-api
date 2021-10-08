@@ -15,6 +15,12 @@
 
 package org.siglus.siglusapi.dto.fc;
 
+import static java.util.Comparator.comparing;
+import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import javax.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,12 +36,38 @@ public class FcIntegrationResultDto {
 
   private String startDate;
 
-  private String nextStartDate;
+  private ZonedDateTime lastUpdatedAt;
 
-  private Integer totalObjectsFromFc;
+  private Integer totalObjects;
+
+  private Integer createdObjects;
+
+  private Integer updatedObjects;
 
   private Boolean finalSuccess;
 
   private String errorMessage;
+
+  public static FcIntegrationResultDto buildResult(List<? extends ResponseBaseDto> result, String startDate,
+      ZonedDateTime previousLastUpdatedAt, boolean finalSuccess, int createCounter, int updateCounter) {
+    ZonedDateTime lastUpdatedAt;
+    if (result.isEmpty() || !finalSuccess) {
+      lastUpdatedAt = previousLastUpdatedAt;
+    } else {
+      lastUpdatedAt = result.stream()
+          .max(comparing(ResponseBaseDto::getLastUpdatedAt))
+          .orElseThrow(EntityNotFoundException::new)
+          .getLastUpdatedAt();
+    }
+    return FcIntegrationResultDto.builder()
+        .api(PRODUCT_API)
+        .startDate(startDate)
+        .lastUpdatedAt(lastUpdatedAt)
+        .totalObjects(result.size())
+        .createdObjects(createCounter)
+        .updatedObjects(updateCounter)
+        .finalSuccess(finalSuccess)
+        .build();
+  }
 
 }

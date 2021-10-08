@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service.fc;
 import static com.google.common.collect.Maps.newHashMap;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -29,6 +28,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
@@ -41,8 +41,6 @@ import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.siglusapi.domain.CmmDomain;
 import org.siglus.siglusapi.domain.CpDomain;
 import org.siglus.siglusapi.dto.FacilityDto;
-import org.siglus.siglusapi.dto.fc.CmmDto;
-import org.siglus.siglusapi.dto.fc.CpDto;
 import org.siglus.siglusapi.repository.CmmRepository;
 import org.siglus.siglusapi.repository.CpRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
@@ -50,83 +48,22 @@ import org.siglus.siglusapi.repository.SupervisoryNodeRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class FcIntegrationCmmCpService {
+@RequiredArgsConstructor
+public class FcCmmCpService {
 
   public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-  @Autowired
-  private CmmRepository cmmRepository;
-
-  @Autowired
-  private CpRepository cpRepository;
-
-  @Autowired
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
-
-  @Autowired
-  private SiglusFacilityReferenceDataService facilityReferenceDataService;
-
-  @Autowired
-  private SiglusProcessingPeriodReferenceDataService processingPeriodReferenceDataService;
-
-  @Autowired
-  private SupervisoryNodeRepository supervisoryNodeRepository;
-
-  @Autowired
-  private SiglusRequisitionRepository siglusRequisitionRepository;
-
-  public boolean processCmms(List<CmmDto> dtos, String queryDate) {
-    if (isEmpty(dtos)) {
-      return false;
-    }
-    try {
-      List<CmmDomain> cmms = CmmDomain.from(dtos);
-      cmms.forEach(cmm -> {
-        CmmDomain existCmm = cmmRepository
-            .findCmmByFacilityCodeAndProductCodeAndQueryDate(cmm.getFacilityCode(),
-                cmm.getProductCode(), queryDate);
-        if (null != existCmm) {
-          cmm.setId(existCmm.getId());
-        }
-        cmm.setQueryDate(queryDate);
-        cmmRepository.save(cmm);
-      });
-      log.info("save cmm successfully, size: {}", cmms.size());
-      return true;
-    } catch (Exception e) {
-      log.error("process cmm data error", e);
-      return false;
-    }
-  }
-
-  public boolean processCps(List<CpDto> dtos, String queryDate) {
-    if (isEmpty(dtos)) {
-      return false;
-    }
-    try {
-      List<CpDomain> cps = CpDomain.from(dtos);
-      cps.forEach(cp -> {
-        CpDomain existCp = cpRepository
-            .findCpByFacilityCodeAndProductCodeAndQueryDate(cp.getFacilityCode(),
-                cp.getProductCode(), queryDate);
-        if (null != existCp) {
-          cp.setId(existCp.getId());
-        }
-        cp.setQueryDate(queryDate);
-        cpRepository.save(cp);
-      });
-      log.info("save cp successfully, size: {}", cps.size());
-      return true;
-    } catch (Exception e) {
-      log.error("process cp data error", e);
-      return false;
-    }
-  }
+  private final CmmRepository cmmRepository;
+  private final CpRepository cpRepository;
+  private final SiglusOrderableReferenceDataService orderableReferenceDataService;
+  private final SiglusFacilityReferenceDataService facilityReferenceDataService;
+  private final SiglusProcessingPeriodReferenceDataService processingPeriodReferenceDataService;
+  private final SupervisoryNodeRepository supervisoryNodeRepository;
+  private final SiglusRequisitionRepository siglusRequisitionRepository;
 
   public void initiateSuggestedQuantityByCmm(List<BaseRequisitionLineItemDto> lineItems,
       UUID facilityId, UUID processingPeriodId) {
@@ -134,10 +71,8 @@ public class FcIntegrationCmmCpService {
       return;
     }
     Map<UUID, String> orderableIdCodeMap = getOrderableIdCodeMap(lineItems);
-    FacilityDto requestingFacility = facilityReferenceDataService
-        .findOne(facilityId);
-    ProcessingPeriodDto processingPeriodDto = processingPeriodReferenceDataService
-        .findOne(processingPeriodId);
+    FacilityDto requestingFacility = facilityReferenceDataService.findOne(facilityId);
+    ProcessingPeriodDto processingPeriodDto = processingPeriodReferenceDataService.findOne(processingPeriodId);
     LocalDate endDate = processingPeriodDto.getEndDate();
     Map<String, CmmDomain> productCodeCmmMap = cmmRepository
         .findAllByFacilityCodeAndProductCodeInAndQueryDate(requestingFacility.getCode(),

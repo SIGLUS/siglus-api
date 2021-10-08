@@ -18,14 +18,16 @@ package org.siglus.siglusapi.dto.fc;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.siglusapi.util.FcUtil;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class RegimenDto {
+public class RegimenDto extends ResponseBaseDto {
 
   private String code;
 

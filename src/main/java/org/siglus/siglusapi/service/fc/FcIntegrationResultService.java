@@ -16,119 +16,66 @@
 package org.siglus.siglusapi.service.fc;
 
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
-import static org.siglus.siglusapi.constant.FcConstants.CMM_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
-import static org.siglus.siglusapi.constant.FcConstants.CP_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_API;
-import static org.siglus.siglusapi.constant.FcConstants.FACILITY_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
-import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
-import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
-import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
-import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
-import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
-import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_JOB;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
-import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_JOB;
-import static org.siglus.siglusapi.constant.FcConstants.getQueryByPeriodApiList;
+import static org.siglus.siglusapi.constant.FcConstants.getCmmAndCpApis;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.FcIntegrationResult;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.repository.FcIntegrationResultRepository;
 import org.siglus.siglusapi.util.SiglusDateHelper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 @SuppressWarnings("PMD.CyclomaticComplexity")
 public class FcIntegrationResultService {
 
-  @Value("${fc.startDate}")
-  private String defaultStartDate;
+  private final FcIntegrationResultRepository fcIntegrationResultRepository;
+  private final CallFcService callFcService;
+  private final SiglusDateHelper dateHelper;
 
-  @Value("${fc.startPeriod}")
-  private String defaultStartPeriod;
-
-  @Autowired
-  private FcIntegrationResultRepository fcIntegrationResultRepository;
-
-  @Autowired
-  private CallFcService callFcService;
-
-  @Autowired
-  private SiglusDateHelper dateHelper;
-
-  public String getLatestSuccessDate(String api) {
+  public ZonedDateTime getLastUpdatedAt(String api) {
     FcIntegrationResult result = fcIntegrationResultRepository
-        .findTopByJobAndFinalSuccessOrderByEndDateDesc(getJobName(api), true);
+        .findTopByApiAndFinalSuccessOrderByLastUpdatedAtDesc(api, true);
     if (result == null) {
-      if (getQueryByPeriodApiList().contains(api)) {
-        return defaultStartPeriod;
-      }
-      return defaultStartDate;
+      return ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
     }
-    return result.getEndDate();
-  }
-
-  public void recordCallFcFailed(String api, String date) {
-    FcIntegrationResultDto result = FcIntegrationResultDto.builder()
-        .api(api)
-        .startDate(date)
-        .build();
-    recordFcIntegrationResult(result);
+    return result.getLastUpdatedAt();
   }
 
   public void recordFcIntegrationResult(FcIntegrationResultDto resultDto) {
+    if (resultDto == null) {
+      return;
+    }
     String api = resultDto.getApi();
-    String endDate = getQueryByPeriodApiList().contains(api) ? resultDto.getStartDate() : dateHelper.getTodayDateStr();
+    String endDate = getCmmAndCpApis().contains(api) ? resultDto.getStartDate() : dateHelper.getTodayDateStr();
     FcIntegrationResult result = FcIntegrationResult.builder()
-        .job(getJobName(api))
+        .api(api)
         .startDate(resultDto.getStartDate())
         .endDate(endDate)
-        .nextStartDate(resultDto.getNextStartDate())
-        .finishTime(ZonedDateTime.now())
-        .totalObjectsFromFc(resultDto.getTotalObjectsFromFc())
+        .lastUpdatedAt(resultDto.getLastUpdatedAt())
+        .totalObjects(resultDto.getTotalObjects())
+        .createdObjects(resultDto.getCreatedObjects())
+        .updatedObjects(resultDto.getUpdatedObjects())
         .finalSuccess(resultDto.getFinalSuccess())
         .errorMessage(resultDto.getErrorMessage())
         .build();
     log.info("save fc_integration_results: {}", result);
     fcIntegrationResultRepository.save(result);
     clearFcData(api);
-  }
-
-  private String getJobName(String api) {
-    String jobName = null;
-    if (RECEIPT_PLAN_API.equals(api)) {
-      jobName = RECEIPT_PLAN_JOB;
-    } else if (ISSUE_VOUCHER_API.equals(api)) {
-      jobName = ISSUE_VOUCHER_JOB;
-    } else if (CMM_API.equals(api)) {
-      jobName = CMM_JOB;
-    } else if (CP_API.equals(api)) {
-      jobName = CP_JOB;
-    } else if (PROGRAM_API.equals(api)) {
-      jobName = PROGRAM_JOB;
-    } else if (PRODUCT_API.equals(api)) {
-      jobName = PRODUCT_JOB;
-    } else if (FACILITY_API.equals(api)) {
-      jobName = FACILITY_JOB;
-    } else if (FACILITY_TYPE_API.equals(api)) {
-      jobName = FACILITY_TYPE_JOB;
-    } else if (REGIMEN_API.equals(api)) {
-      jobName = REGIMEN_JOB;
-    } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
-      jobName = GEOGRAPHIC_ZONE_JOB;
-    }
-    return jobName;
   }
 
   private void clearFcData(String api) {

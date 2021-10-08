@@ -15,14 +15,16 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static java.util.Collections.emptyList;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
+import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
@@ -36,6 +38,7 @@ import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneDistrictDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneProvinceDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.service.client.SiglusGeographicLevelReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
 
@@ -179,10 +182,10 @@ public class FcGeographicZoneServiceTest {
     // given
 
     // when
-    boolean result = fcGeographicZoneService.processGeographicZones(new ArrayList<>());
+    FcIntegrationResultDto result = fcGeographicZoneService.processData(emptyList(), START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertFalse(result);
+    assertNull(result);
   }
 
   @Test
@@ -190,12 +193,11 @@ public class FcGeographicZoneServiceTest {
     // given
 
     // when
-    boolean result = fcGeographicZoneService.processGeographicZones(fcDtos);
+    FcIntegrationResultDto result = fcGeographicZoneService.processData(fcDtos, START_DATE, LAST_UPDATED_AT);
 
     // then
-    verify(geographicZoneService, times(7)).createGeographicZone(
-        any(GeographicZoneDto.class));
-    assertTrue(result);
+    verify(geographicZoneService, times(7)).createGeographicZone(any(GeographicZoneDto.class));
+    assertNotNull(result);
   }
 
   @Test
@@ -204,12 +206,11 @@ public class FcGeographicZoneServiceTest {
     fcDtos.get(1).setStatus("Inactivo");
 
     // when
-    boolean result = fcGeographicZoneService.processGeographicZones(fcDtos);
+    FcIntegrationResultDto result = fcGeographicZoneService.processData(fcDtos, START_DATE, LAST_UPDATED_AT);
 
     // then
-    verify(geographicZoneService, times(1)).createGeographicZone(
-        any(GeographicZoneDto.class));
-    assertTrue(result);
+    verify(geographicZoneService, times(1)).createGeographicZone(any(GeographicZoneDto.class));
+    assertNotNull(result);
   }
 
   @Test
@@ -218,12 +219,11 @@ public class FcGeographicZoneServiceTest {
     fcDtos.get(1).getProvinces().get(1).setStatus("Inactivo");
 
     // when
-    boolean result = fcGeographicZoneService.processGeographicZones(fcDtos);
+    FcIntegrationResultDto result = fcGeographicZoneService.processData(fcDtos, START_DATE, LAST_UPDATED_AT);
 
     // then
-    verify(geographicZoneService, times(4)).createGeographicZone(
-        any(GeographicZoneDto.class));
-    assertTrue(result);
+    verify(geographicZoneService, times(4)).createGeographicZone(any(GeographicZoneDto.class));
+    assertNotNull(result);
   }
 
   @Test
@@ -232,12 +232,11 @@ public class FcGeographicZoneServiceTest {
     fcDtos.get(1).getProvinces().get(1).getDistricts().get(1).setStatus("Inactivo");
 
     // when
-    boolean result = fcGeographicZoneService.processGeographicZones(fcDtos);
+    FcIntegrationResultDto result = fcGeographicZoneService.processData(fcDtos, START_DATE, LAST_UPDATED_AT);
 
     // then
-    verify(geographicZoneService, times(6)).createGeographicZone(
-        any(GeographicZoneDto.class));
-    assertTrue(result);
+    verify(geographicZoneService, times(6)).createGeographicZone(any(GeographicZoneDto.class));
+    assertNotNull(result);
   }
 
   @Test
@@ -245,12 +244,11 @@ public class FcGeographicZoneServiceTest {
     // given
 
     // when
-    boolean result = fcGeographicZoneService.processGeographicZones(fcDtos);
+    FcIntegrationResultDto result = fcGeographicZoneService.processData(fcDtos, START_DATE, LAST_UPDATED_AT);
 
     // then
-    verify(geographicZoneService, times(3 * 2)).updateGeographicZone(
-        any(GeographicZoneDto.class));
-    assertTrue(result);
+    verify(geographicZoneService, times(3 * 2)).updateGeographicZone(any(GeographicZoneDto.class));
+    assertNotNull(result);
   }
 
   private void prepareFcGeographicZoneNationalDtos() {

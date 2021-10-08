@@ -13,10 +13,14 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.dto.fc;
 
-public enum FcHandlerStatus {
-  SUCCESS,
-  CALL_API_ERROR,
-  DATA_ERROR
+import java.time.ZonedDateTime;
+import lombok.Data;
+
+@Data
+public class ResponseBaseDto {
+
+  private ZonedDateTime lastUpdatedAt;
+
 }

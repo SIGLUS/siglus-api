@@ -15,73 +15,93 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
+import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.util.FcUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class FcProgramService {
+@RequiredArgsConstructor
+public class FcProgramService implements ProcessDataService {
 
-  @Autowired
-  private ProgramRealProgramRepository programRealProgramRepository;
+  private final ProgramRealProgramRepository programRealProgramRepository;
 
-  public boolean processPrograms(List<ProgramDto> dtos) {
-    if (isEmpty(dtos)) {
-      return false;
+  @Override
+  public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> programs, String startDate,
+      ZonedDateTime previousLastUpdatedAt) {
+    log.info("[FC program] sync count: {}", programs.size());
+    if (programs.isEmpty()) {
+      return null;
     }
+    boolean finalSuccess = true;
+    AtomicInteger createCounter = new AtomicInteger();
+    AtomicInteger updateCounter = new AtomicInteger();
+    AtomicInteger sameCounter = new AtomicInteger();
     try {
-      Map<String, ProgramRealProgram> programMap = programRealProgramRepository.findAll()
+      Map<String, ProgramRealProgram> programCodeToProgram = programRealProgramRepository.findAll()
           .stream().collect(Collectors.toMap(ProgramRealProgram::getRealProgramCode, p -> p));
-
       Set<ProgramRealProgram> programsToUpdate = new HashSet<>();
-      dtos.forEach(dto -> {
-        ProgramRealProgram program = programMap.get(dto.getCode());
-        if (program != null) {
-          ProgramRealProgram updateProgram = compareAndUpdateProgramData(program, dto);
-          if (updateProgram != null) {
-            programsToUpdate.add(updateProgram);
-          }
-          return;
+      programs.forEach(item -> {
+        ProgramDto current = (ProgramDto) item;
+        ProgramRealProgram existed = programCodeToProgram.get(current.getCode());
+        if (existed == null) {
+          log.info("[FC program] create: {}", current);
+          programsToUpdate.add(ProgramRealProgram.from(current));
+          createCounter.getAndIncrement();
+        } else if (isDifferent(existed, current)) {
+          log.info("[FC program] update, existed: {}, current: {}", existed, current);
+          programsToUpdate.add(getUpdateProgram(existed, current));
+          updateCounter.getAndIncrement();
+        } else {
+          sameCounter.getAndIncrement();
         }
-        programsToUpdate.add(ProgramRealProgram.from(dto));
       });
-      log.info("[FC] update programs: {}", programsToUpdate);
       programRealProgramRepository.save(programsToUpdate);
-      log.info("[FC] save fc program successfully, size: {}", dtos.size());
-      return true;
     } catch (Exception e) {
-      log.error("[FC] process fc program data error", e);
-      return false;
+      log.error("[FC program] sync data error", e);
+      finalSuccess = false;
     }
+    log.info("[FC program] process data create: {}, update: {}, same: {}",
+        createCounter.get(), updateCounter.get(), sameCounter.get());
+    return buildResult(programs, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
+        updateCounter.get());
   }
 
-  private ProgramRealProgram compareAndUpdateProgramData(ProgramRealProgram program,
-      ProgramDto dto) {
-    boolean isEqual = true;
+  private boolean isDifferent(ProgramRealProgram existed, ProgramDto current) {
+    if (!existed.getRealProgramName().equals(current.getDescription())) {
+      log.info("[FC program] name different, existed: {}, current: {}", existed.getRealProgramName(),
+          current.getDescription());
+      return true;
+    }
+    if (!existed.getActive().equals(FcUtil.isActive(current.getStatus()))) {
+      existed.setActive(FcUtil.isActive(current.getStatus()));
+      log.info("[FC program] status different, existed: {}, current: {}", existed.getActive(), current.getStatus());
+      return true;
+    }
+    return false;
+  }
+
+  private ProgramRealProgram getUpdateProgram(ProgramRealProgram program, ProgramDto dto) {
     if (!program.getRealProgramName().equals(dto.getDescription())) {
       program.setRealProgramName(dto.getDescription());
-      isEqual = false;
     }
-
     if (!program.getActive().equals(FcUtil.isActive(dto.getStatus()))) {
       program.setActive(FcUtil.isActive(dto.getStatus()));
-      isEqual = false;
-    }
-
-    if (isEqual) {
-      return null;
     }
     return program;
   }

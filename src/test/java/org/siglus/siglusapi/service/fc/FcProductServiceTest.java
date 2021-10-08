@@ -31,6 +31,8 @@ import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_ORDERABLES;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
+import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
+import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -196,6 +198,7 @@ public class FcProductServiceTest {
   }
 
   @Test
+  @SuppressWarnings("java:S5961")
   public void shouldCreateOrderable() {
     // given
     TradeItemDto tradeItemDto = new TradeItemDto();
@@ -229,7 +232,7 @@ public class FcProductServiceTest {
         .build();
 
     // when
-    fcProductService.processProductData(newArrayList(product));
+    fcProductService.processData(newArrayList(product), START_DATE, LAST_UPDATED_AT);
 
     // then
     verify(orderableReferenceDataService).create(orderableCaptor.capture());
@@ -296,7 +299,7 @@ public class FcProductServiceTest {
         .build();
 
     // when
-    fcProductService.processProductData(newArrayList(product));
+    fcProductService.processData(newArrayList(product), START_DATE, LAST_UPDATED_AT);
 
     // then
     verify(orderableReferenceDataService).update(orderableCaptor.capture());
@@ -347,7 +350,7 @@ public class FcProductServiceTest {
         .build();
 
     // when
-    fcProductService.processProductData(newArrayList(product));
+    fcProductService.processData(newArrayList(product), START_DATE, LAST_UPDATED_AT);
 
     // then
     verify(cache1, times(0)).clear();

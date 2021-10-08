@@ -13,42 +13,18 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.fc;
+package org.siglus.siglusapi.service.fc;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class CpDto extends ResponseBaseDto {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class FcVariables {
 
-  private ZonedDateTime date;
+  public static final String START_DATE = "20000101";
 
-  private String period;
-
-  private String programDescription;
-
-  private Integer cp;
-
-  private Integer year;
-
-  private String clientDescription;
-
-  private String programCode;
-
-  private Integer max;
-
-  private String clientCode;
-
-  private String productFnm;
-
-  private String productDescription;
+  public static final ZonedDateTime LAST_UPDATED_AT = ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
 
 }

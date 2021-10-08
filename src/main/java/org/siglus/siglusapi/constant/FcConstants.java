@@ -17,22 +17,11 @@ package org.siglus.siglusapi.constant;
 
 import java.util.Arrays;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FcConstants {
-
-  private FcConstants() {
-  }
-
-  public static final String CMM_JOB = "CMM";
-  public static final String CP_JOB = "CP";
-  public static final String RECEIPT_PLAN_JOB = "RECEIPT_PLAN";
-  public static final String ISSUE_VOUCHER_JOB = "ISSUE_VOUCHER";
-  public static final String PROGRAM_JOB = "PROGRAM";
-  public static final String PRODUCT_JOB = "PRODUCT";
-  public static final String REGIMEN_JOB = "REGIMEN";
-  public static final String FACILITY_JOB = "FACILITY";
-  public static final String FACILITY_TYPE_JOB = "FACILITY_TYPE";
-  public static final String GEOGRAPHIC_ZONE_JOB = "GEOGRAPHIC_ZONE";
 
   public static final String CMM_API = "/cmm/cmms";
   public static final String CP_API = "/cp/cps";
@@ -49,8 +38,9 @@ public class FcConstants {
   public static final String DEFAULT_REGIMEN_CATEGORY_CODE = "DEFAULT";
 
   public static final String DATE_FORMAT = "yyyyMMdd";
+  public static final String MONTH_FORMAT = "MM-yyyy";
 
-  public static List<String> getQueryByPeriodApiList() {
+  public static List<String> getCmmAndCpApis() {
     return Arrays.asList(CMM_API, CP_API);
   }
 

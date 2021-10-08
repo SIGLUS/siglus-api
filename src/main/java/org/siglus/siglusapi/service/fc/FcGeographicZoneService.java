@@ -15,77 +15,91 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneDistrictDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneNationalDto;
 import org.siglus.siglusapi.dto.fc.FcGeographicZoneProvinceDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
+import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.service.client.SiglusGeographicLevelReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
 import org.siglus.siglusapi.util.FcUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
-public class FcGeographicZoneService {
+@RequiredArgsConstructor
+public class FcGeographicZoneService implements ProcessDataService {
 
   private static final String LEVEL_NATIONAL = "national";
   private static final String LEVEL_PROVINCE = "province";
   private static final String LEVEL_DISTRICT = "district";
 
-  @Autowired
-  private SiglusGeographicZoneReferenceDataService geographicZoneService;
+  private final SiglusGeographicZoneReferenceDataService geographicZoneService;
+  private final SiglusGeographicLevelReferenceDataService geographicLevelService;
 
-  @Autowired
-  private SiglusGeographicLevelReferenceDataService geographicLevelService;
-
-  @Transactional
-  public boolean processGeographicZones(List<FcGeographicZoneNationalDto> fcDtos) {
-    List<FcGeographicZoneNationalDto> dtos = filterInactiveZones(fcDtos);
-    if (isEmpty(dtos)) {
-      return false;
+  @Override
+  public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> zones, String startDate,
+      ZonedDateTime previousLastUpdatedAt) {
+    log.info("[FC geographicZone] sync count: {}", zones.size());
+    if (zones.isEmpty()) {
+      return null;
     }
-    Map<String, GeographicLevelDto> levelDtoMap = getLevelDtoMap();
-    Map<String, GeographicZoneDto> geographicZoneMaps = getGeographicZoneDtoMap();
-    List<GeographicZoneDto> fcGeographicZones = getOpenLmisGeographicZones(dtos,
-        levelDtoMap);
-    List<GeographicZoneDto> needCreateZones = new ArrayList<>();
-    List<GeographicZoneDto> needUpdateZones = new ArrayList<>();
-    fcGeographicZones.forEach(fcZone -> {
-      if (!geographicZoneMaps.containsKey(fcZone.getCode())) {
-        needCreateZones.add(fcZone);
-      } else {
-        GeographicZoneDto originZone = geographicZoneMaps.get(fcZone.getCode());
-        if (!fcZone.getName().equals(originZone.getName())
-            || !fcZone.getLevel().equals(originZone.getLevel())
-            || isDifferentParentZone(fcZone, originZone)) {
-          needUpdateZones.add(fcZone);
+    boolean finalSuccess = true;
+    int createCounter = 0;
+    int updateCounter = 0;
+    try {
+      List<? extends ResponseBaseDto> activeZones = filterInactiveZones(zones);
+      Map<String, GeographicLevelDto> levelDtoMap = getLevelDtoMap();
+      Map<String, GeographicZoneDto> geographicZoneMaps = getGeographicZoneDtoMap();
+      List<GeographicZoneDto> fcGeographicZones = getGeographicZones(activeZones, levelDtoMap);
+      List<GeographicZoneDto> needCreateZones = new ArrayList<>();
+      List<GeographicZoneDto> needUpdateZones = new ArrayList<>();
+      fcGeographicZones.forEach(fcZone -> {
+        if (!geographicZoneMaps.containsKey(fcZone.getCode())) {
+          needCreateZones.add(fcZone);
+        } else {
+          GeographicZoneDto originZone = geographicZoneMaps.get(fcZone.getCode());
+          if (!fcZone.getName().equals(originZone.getName())
+              || !fcZone.getLevel().equals(originZone.getLevel())
+              || isDifferentParentZone(fcZone, originZone)) {
+            needUpdateZones.add(fcZone);
+          }
         }
-      }
-    });
-    createGeographicZones(needCreateZones, fcDtos);
-    updateGeographicZones(needUpdateZones, geographicZoneMaps);
-    log.info("[FC] created new {} geographic zones, updated {} geographic zones",
-        needCreateZones.size(), needUpdateZones.size());
-    return true;
+      });
+      createGeographicZones(needCreateZones, zones, startDate, previousLastUpdatedAt);
+      updateGeographicZones(needUpdateZones, geographicZoneMaps);
+      createCounter = needCreateZones.size();
+      updateCounter = needUpdateZones.size();
+    } catch (Exception e) {
+      log.error("[FC geographicZone] sync data error", e);
+      finalSuccess = false;
+    }
+    log.info("[FC geographicZone] process data create: {}, update: {}, same: {}",
+        createCounter, updateCounter, zones.size() - createCounter - updateCounter);
+    return buildResult(zones, startDate, previousLastUpdatedAt, finalSuccess, createCounter, updateCounter);
   }
 
-  private List<FcGeographicZoneNationalDto> filterInactiveZones(
-      List<FcGeographicZoneNationalDto> fcDtos) {
-    List<FcGeographicZoneNationalDto> nationals = fcDtos.stream()
-        .filter(national -> FcUtil.isActive(national.getStatus()))
+  private List<? extends ResponseBaseDto> filterInactiveZones(List<? extends ResponseBaseDto> zones) {
+    List<? extends ResponseBaseDto> nationals = zones.stream()
+        .filter(item -> {
+          FcGeographicZoneNationalDto national = (FcGeographicZoneNationalDto) item;
+          return FcUtil.isActive(national.getStatus());
+        })
         .collect(Collectors.toList());
-    nationals.forEach(national -> {
+    nationals.forEach(item -> {
+      FcGeographicZoneNationalDto national = (FcGeographicZoneNationalDto) item;
       List<FcGeographicZoneProvinceDto> provinces = national.getProvinces().stream()
           .filter(province -> FcUtil.isActive(province.getStatus()))
           .collect(Collectors.toList());
@@ -114,10 +128,11 @@ public class FcGeographicZoneService {
         || !fcZone.getParent().getCode().equals(originZone.getParent().getCode());
   }
 
-  private List<GeographicZoneDto> getOpenLmisGeographicZones(
-      List<FcGeographicZoneNationalDto> dtos, Map<String, GeographicLevelDto> levelDtoMap) {
+  private List<GeographicZoneDto> getGeographicZones(List<? extends ResponseBaseDto> zones,
+      Map<String, GeographicLevelDto> levelDtoMap) {
     List<GeographicZoneDto> fcGeographicZones = new ArrayList<>();
-    dtos.forEach(nationalDto -> {
+    zones.forEach(item -> {
+      FcGeographicZoneNationalDto nationalDto = (FcGeographicZoneNationalDto) item;
       GeographicZoneDto national = getGeographicZoneSimpleDto(levelDtoMap,
           nationalDto.getCode(), nationalDto.getDescription(), LEVEL_NATIONAL, null);
       fcGeographicZones.add(national);
@@ -147,7 +162,7 @@ public class FcGeographicZoneService {
   }
 
   private void createGeographicZones(List<GeographicZoneDto> needCreateZones,
-      List<FcGeographicZoneNationalDto> fcDtos) {
+      List<? extends ResponseBaseDto> fcDtos, String startDate, ZonedDateTime previousLastUpdatedAt) {
     if (needCreateZones.isEmpty()) {
       return;
     }
@@ -155,10 +170,10 @@ public class FcGeographicZoneService {
       if (zone.getParent() != null) {
         zone.setParent(null);
       }
-      log.info("[FC] create new geographic zone: {}", zone);
+      log.info("[FC geographicZone] create new: {}", zone);
       geographicZoneService.createGeographicZone(zone);
     });
-    processGeographicZones(fcDtos);
+    processData(fcDtos, startDate, previousLastUpdatedAt);
   }
 
   private void updateGeographicZones(List<GeographicZoneDto> needUpdateZones,

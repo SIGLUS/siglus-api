@@ -18,10 +18,13 @@ package org.siglus.siglusapi.service.fc;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
+import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
 import java.util.Collections;
 import java.util.Set;
@@ -34,6 +37,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProgramDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 
@@ -61,10 +65,10 @@ public class FcProgramServiceTest {
   public void shouldReturnFalseGivenEmptyFcResult() {
 
     // when
-    boolean result = fcProgramService.processPrograms(Collections.emptyList());
+    FcIntegrationResultDto result = fcProgramService.processData(Collections.emptyList(), START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertFalse(result);
+    assertNull(result);
   }
 
   @Test
@@ -74,20 +78,23 @@ public class FcProgramServiceTest {
         .thenReturn(newArrayList(
             mockProgram(programId1, programCode1, programName1, true),
             mockProgram(programId2, programCode2, "toUpdate", false)));
-
-    // when
+    String programStatus1 = "Activo";
     String programStatus3 = "Activo";
     String programName3 = "programName3";
     String programStatus2 = "Inactivo";
-    String programStatus1 = "Activo";
     String programName2 = "programName2";
-    fcProgramService.processPrograms(newArrayList(
+
+    // when
+    FcIntegrationResultDto result = fcProgramService.processData(newArrayList(
         mockProgramDto(programCode1, programName1, programStatus1),
         mockProgramDto(programCode2, programName2, programStatus2),
         mockProgramDto(programCode3, programName3, programStatus3)
-    ));
+    ), START_DATE, LAST_UPDATED_AT);
 
     // then
+    assertEquals(Integer.valueOf(1), result.getCreatedObjects());
+    assertEquals(Integer.valueOf(1), result.getUpdatedObjects());
+    assertEquals(Integer.valueOf(3), result.getTotalObjects());
     verify(programRealProgramRepository).save(programsArgumentCaptor.capture());
     Set<ProgramRealProgram> saved = programsArgumentCaptor.getValue();
     assertEquals(2, saved.size());
@@ -113,12 +120,12 @@ public class FcProgramServiceTest {
     when(programRealProgramRepository.findAll()).thenThrow(new RuntimeException());
 
     // when
-    boolean result = fcProgramService.processPrograms(newArrayList(
-        mockProgramDto(programCode1, programName1, "Active")
-    ));
+    FcIntegrationResultDto result = fcProgramService.processData(
+        newArrayList(mockProgramDto(programCode1, programName1, "Active")), START_DATE, LAST_UPDATED_AT);
 
     // then
-    assertFalse(result);
+    assertNotNull(result);
+    assertFalse(result.getFinalSuccess());
   }
 
   private ProgramDto mockProgramDto(String code, String name, String status) {
@@ -127,6 +134,7 @@ public class FcProgramServiceTest {
         .code(code)
         .description(name)
         .status(status)
+        .lastUpdatedAt(LAST_UPDATED_AT)
         .build();
   }
 

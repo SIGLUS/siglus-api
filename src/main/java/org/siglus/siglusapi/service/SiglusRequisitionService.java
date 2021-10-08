@@ -144,7 +144,7 @@ import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.siglus.siglusapi.service.fc.FcIntegrationCmmCpService;
+import org.siglus.siglusapi.service.fc.FcCmmCpService;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
@@ -281,7 +281,7 @@ public class SiglusRequisitionService {
   private RequisitionExtensionRepository requisitionExtensionRepository;
 
   @Autowired
-  private FcIntegrationCmmCpService fcIntegrationCmmCpService;
+  private FcCmmCpService fcCmmCpService;
 
   @Autowired
   private SiglusFilterAddProductForEmergencyService filterProductService;
@@ -1324,9 +1324,9 @@ public class SiglusRequisitionService {
       return;
     }
     if ("cp".equals(column.getOption().getOptionName())) {
-      fcIntegrationCmmCpService.initiateSuggestedQuantityByCp(lineItems, facilityId, processingPeriodId, programId);
+      fcCmmCpService.initiateSuggestedQuantityByCp(lineItems, facilityId, processingPeriodId, programId);
     } else if ("cmm".equals(column.getOption().getOptionName())) {
-      fcIntegrationCmmCpService.initiateSuggestedQuantityByCmm(lineItems, facilityId, processingPeriodId);
+      fcCmmCpService.initiateSuggestedQuantityByCmm(lineItems, facilityId, processingPeriodId);
     }
   }
 

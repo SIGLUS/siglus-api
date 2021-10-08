@@ -13,42 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.fc;
+package org.siglus.siglusapi.service.fc;
 
 import java.time.ZonedDateTime;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import java.util.List;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
+import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class CpDto extends ResponseBaseDto {
+public interface ProcessDataService {
 
-  private ZonedDateTime date;
-
-  private String period;
-
-  private String programDescription;
-
-  private Integer cp;
-
-  private Integer year;
-
-  private String clientDescription;
-
-  private String programCode;
-
-  private Integer max;
-
-  private String clientCode;
-
-  private String productFnm;
-
-  private String productDescription;
+  FcIntegrationResultDto processData(List<? extends ResponseBaseDto> data, String startDate,
+      ZonedDateTime previousLastUpdatedAt);
 
 }

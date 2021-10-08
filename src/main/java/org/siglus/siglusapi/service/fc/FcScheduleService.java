@@ -16,32 +16,33 @@
 package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static java.util.Comparator.comparing;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
+import static org.siglus.siglusapi.constant.FcConstants.DATE_FORMAT;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_API;
 import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
 import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.MONTH_FORMAT;
 import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
 import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
+import static org.siglus.siglusapi.constant.FcConstants.getCmmAndCpApis;
 
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
-import org.siglus.siglusapi.dto.fc.ProductInfoDto;
+import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.service.client.SiglusIssueVoucherService;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
-import org.siglus.siglusapi.util.SiglusDateHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -67,101 +68,34 @@ public class FcScheduleService {
 
   private final CallFcService callFcService;
   private final FcIntegrationResultService fcIntegrationResultService;
-  private final FcIntegrationCmmCpService fcIntegrationCmmCpService;
+  private final FcCmmService fcCmmService;
+  private final FcCpService fcCpService;
   private final FcIssueVoucherService fcIssueVoucherService;
   private final FcReceiptPlanService fcReceiptPlanService;
   private final SiglusReceiptPlanService siglusReceiptPlanService;
-  private final SiglusDateHelper dateHelper;
   private final FcProgramService fcProgramService;
   private final FcProductService fcProductService;
-  private final FcFacilityTypeService facilityTypeService;
+  private final FcFacilityTypeService fcFacilityTypeService;
   private final SiglusIssueVoucherService issueVoucherService;
   private final FcRegimenService fcRegimenService;
   private final FcGeographicZoneService fcGeographicZoneService;
-  private final FcFacilityService facilityService;
+  private final FcFacilityService fcFacilityService;
   private final StringRedisTemplate redisTemplate;
 
-  @Scheduled(cron = "${fc.facility.cron}", zone = TIME_ZONE_ID)
-  @Transactional
-  public void syncFacilities() {
-    String redisKey = "syncFacilities";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        String date = fcIntegrationResultService.getLatestSuccessDate(FACILITY_API);
-        syncFacilities(date);
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("syncFacilities is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
-  }
-
-  public void syncFacilities(String date) {
-    log.info("schedule start syncFacilities");
-    fetchData(FACILITY_API, date);
-    Boolean finalSuccess = facilityService.processFacility(callFcService.getFacilities());
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(FACILITY_API)
-        .startDate(date)
-        .totalObjectsFromFc(callFcService.getFacilities().size())
-        .finalSuccess(finalSuccess)
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
-  }
-
-  @Scheduled(cron = "${fc.geographiczone.cron}", zone = TIME_ZONE_ID)
-  @Transactional
-  public void syncGeographicZones() {
-    String redisKey = "syncGeographicZones";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        String date = fcIntegrationResultService.getLatestSuccessDate(GEOGRAPHIC_ZONE_API);
-        syncGeographicZones(date);
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("syncGeographicZones is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
-  }
-
-  @Transactional
-  public void syncGeographicZones(String date) {
-    log.info("schedule start syncGeographicZones");
-    fetchData(GEOGRAPHIC_ZONE_API, date);
-    Boolean finalSuccess = fcGeographicZoneService.processGeographicZones(callFcService.getGeographicZones());
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(GEOGRAPHIC_ZONE_API)
-        .startDate(date)
-        .totalObjectsFromFc(callFcService.getGeographicZones().size())
-        .finalSuccess(finalSuccess)
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
-  }
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
-  public void syncReceiptPlans() {
+  @Transactional
+  public void syncReceiptPlansScheduler() {
     String redisKey = "syncReceiptPlans";
     try {
       if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
         redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        String date = fcIntegrationResultService.getLatestSuccessDate(RECEIPT_PLAN_API);
-        siglusReceiptPlanService.processingReceiptPlans(date);
+        ZonedDateTime lastUpdatedAt = fcIntegrationResultService.getLastUpdatedAt(RECEIPT_PLAN_API);
+        siglusReceiptPlanService.processingReceiptPlans(lastUpdatedAt.format(getFormatter(RECEIPT_PLAN_API)));
         Thread.sleep(DELAY);
         redisTemplate.delete(redisKey);
       } else {
-        log.info("syncReceiptPlans is synchronizing by another thread.");
+        log.info("[FC receiptPlan] receiptPlans is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
@@ -170,33 +104,20 @@ public class FcScheduleService {
     }
   }
 
-  @Transactional
-  public void syncReceiptPlans(String date) {
-    log.info("schedule start syncReceiptPlans");
-    fetchData(RECEIPT_PLAN_API, date);
-    Boolean finalSuccess = fcReceiptPlanService.processReceiptPlans(callFcService.getReceiptPlans());
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(RECEIPT_PLAN_API)
-        .startDate(date)
-        .totalObjectsFromFc(callFcService.getReceiptPlans().size())
-        .finalSuccess(finalSuccess)
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
-  }
 
   @Scheduled(cron = "${fc.issuevoucher.cron}", zone = TIME_ZONE_ID)
   @Transactional
-  public void syncIssueVouchers() {
+  public void syncIssueVouchersScheduler() {
     String redisKey = "syncIssueVouchers";
     try {
       if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
         redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        String date = fcIntegrationResultService.getLatestSuccessDate(ISSUE_VOUCHER_API);
-        issueVoucherService.updateIssueVoucher(date);
+        ZonedDateTime lastUpdatedAt = fcIntegrationResultService.getLastUpdatedAt(ISSUE_VOUCHER_API);
+        issueVoucherService.updateIssueVoucher(lastUpdatedAt.format(getFormatter(ISSUE_VOUCHER_API)));
         Thread.sleep(DELAY);
         redisTemplate.delete(redisKey);
       } else {
-        log.info("syncIssueVouchers is synchronizing by another thread.");
+        log.info("[FC issueVoucher] issueVouchers is synchronizing by another thread.");
       }
     } catch (Exception e) {
       log.error(e.getMessage());
@@ -204,235 +125,119 @@ public class FcScheduleService {
       Thread.currentThread().interrupt();
     }
   }
-
-  @Transactional
-  public void syncIssueVouchers(String date) {
-    log.info("schedule start syncIssueVouchers");
-    fetchData(ISSUE_VOUCHER_API, date);
-    Boolean finalSuccess = fcIssueVoucherService.processIssueVouchers(callFcService.getIssueVouchers());
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(ISSUE_VOUCHER_API)
-        .startDate(date)
-        .totalObjectsFromFc(callFcService.getIssueVouchers().size())
-        .finalSuccess(finalSuccess)
-        .errorMessage(String.join(";", fcIssueVoucherService.getStatusErrorIssueVoucherNumber()))
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
-  }
-
-  @Scheduled(cron = "${fc.cmm.cron}", zone = TIME_ZONE_ID)
-  @Transactional
-  public void syncCmms() {
-    String redisKey = "syncCmms";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        syncCmms(getStartDateForPeriodCall(fcIntegrationResultService.getLatestSuccessDate(CMM_API)));
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("syncCmms is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
-  }
-
+  
   @Transactional
   public void syncCmms(String date) {
-    log.info("schedule start syncCmms");
-    fetchData(CMM_API, date);
-    boolean finalSuccess = fcIntegrationCmmCpService.processCmms(callFcService.getCmms(), date);
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(CMM_API)
-        .startDate(date)
-        .totalObjectsFromFc(callFcService.getCmms().size())
-        .finalSuccess(finalSuccess)
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
-  }
-
-  @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
-  @Transactional
-  public void syncCps() {
-    String redisKey = "syncCps";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        syncCps(getStartDateForPeriodCall(fcIntegrationResultService.getLatestSuccessDate(CP_API)));
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("syncCps is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
+    log.info("[FC cmm] start sync");
+    process(CMM_API, date);
   }
 
   @Transactional
   public void syncCps(String date) {
-    log.info("schedule start syncCps");
-    fetchData(CP_API, date);
-    boolean finalSuccess = fcIntegrationCmmCpService.processCps(callFcService.getCps(), date);
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(CP_API)
-        .startDate(date)
-        .totalObjectsFromFc(callFcService.getCps().size())
-        .finalSuccess(finalSuccess)
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+    log.info("[FC cp] start sync");
+    process(CP_API, date);
   }
 
-  @Scheduled(cron = "${fc.program.cron}", zone = TIME_ZONE_ID)
   @Transactional
-  public void syncPrograms() {
-    String redisKey = "syncPrograms";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        syncPrograms(fcIntegrationResultService.getLatestSuccessDate(PROGRAM_API));
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("syncPrograms is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
+  public void syncReceiptPlans(String date) {
+    log.info("[FC receiptPlan] start sync");
+    process(RECEIPT_PLAN_API, date);
+  }
+
+  @Transactional
+  public void syncIssueVouchers(String date) {
+    log.info("[FC issueVoucher] start sync");
+    process(ISSUE_VOUCHER_API, date);
+  }
+
+  @Transactional
+  public void syncFacilities(String date) {
+    log.info("[FC facility] start sync");
+    process(FACILITY_API, date);
+  }
+
+  @Transactional
+  public void syncGeographicZones(String date) {
+    log.info("[FC facility] start sync");
+    process(GEOGRAPHIC_ZONE_API, date);
   }
 
   @Transactional
   public void syncPrograms(String date) {
-    log.info("schedule start syncPrograms");
-    fetchData(PROGRAM_API, date);
-    boolean finalSuccess = fcProgramService.processPrograms(callFcService.getPrograms());
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(PROGRAM_API)
-        .startDate(date)
-        .totalObjectsFromFc(callFcService.getPrograms().size())
-        .finalSuccess(finalSuccess)
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
-  }
-
-  @Scheduled(cron = "${fc.product.cron}", zone = TIME_ZONE_ID)
-  @Transactional
-  public void syncProducts() {
-    String redisKey = "syncProducts";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        syncProducts(fcIntegrationResultService.getLatestSuccessDate(PRODUCT_API));
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("syncProducts is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
+    log.info("[FC program] start sync");
+    process(PROGRAM_API, date);
   }
 
   @Transactional
   public void syncProducts(String date) {
-    log.info("schedule start syncProducts");
-    fetchData(PRODUCT_API, date);
-    List<ProductInfoDto> products = callFcService.getProducts();
-    String nextStartDate;
-    if (products.isEmpty()) {
-      nextStartDate = date;
-    } else {
-      ZonedDateTime lastUpdatedAt = products.stream()
-          .max(comparing(ProductInfoDto::getLastUpdatedAt))
-          .orElseThrow(EntityNotFoundException::new)
-          .getLastUpdatedAt();
-      nextStartDate = lastUpdatedAt.minusDays(1).format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-    }
-    boolean finalSuccess = fcProductService.processProductData(products);
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(PRODUCT_API)
-        .startDate(date)
-        .nextStartDate(nextStartDate)
-        .totalObjectsFromFc(products.size())
-        .finalSuccess(finalSuccess)
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
-  }
-
-  @Scheduled(cron = "${fc.regimen.cron}", zone = TIME_ZONE_ID)
-  @Transactional
-  public void syncRegimens() {
-    String redisKey = "syncRegimens";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        syncRegimens(fcIntegrationResultService.getLatestSuccessDate(REGIMEN_API));
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("syncRegimens is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
+    log.info("[FC product] start sync");
+    process(PRODUCT_API, date);
   }
 
   @Transactional
   public void syncRegimens(String date) {
-    log.info("schedule start syncRegimens");
-    fetchData(REGIMEN_API, date);
-    boolean finalSuccess = fcRegimenService.processRegimens(callFcService.getRegimens());
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(REGIMEN_API)
-        .startDate(date)
-        .totalObjectsFromFc(callFcService.getRegimens().size())
-        .finalSuccess(finalSuccess)
-        .build();
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
-  }
-
-  @Scheduled(cron = "${fc.facilitytype.cron}", zone = TIME_ZONE_ID)
-  @Transactional
-  public void syncFacilityTypes() {
-    String redisKey = "syncFacilityTypes";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        syncFacilityTypes(fcIntegrationResultService.getLatestSuccessDate(FACILITY_TYPE_API));
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("syncFacilityTypes is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
+    log.info("[FC regimen] start sync");
+    process(REGIMEN_API, date);
   }
 
   @Transactional
   public void syncFacilityTypes(String date) {
-    log.info("schedule start syncFacilityTypes");
-    fetchData(FACILITY_TYPE_API, date);
-    boolean finalSuccess = facilityTypeService.processFacilityTypes(callFcService.getFacilityTypes());
-    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(FACILITY_TYPE_API)
-        .startDate(date)
-        .totalObjectsFromFc(callFcService.getFacilityTypes().size())
-        .finalSuccess(finalSuccess)
-        .build();
+    log.info("[FC facilityType] start sync");
+    process(FACILITY_TYPE_API, date);
+  }
+
+  private void process(String api, String date) {
+    ZonedDateTime lastUpdatedAt = fcIntegrationResultService.getLastUpdatedAt(api);
+    if (StringUtils.isEmpty(date)) {
+      date = lastUpdatedAt.format(getFormatter(api));
+    }
+    fetchData(api, date);
+    processAndRecordResult(api, date, lastUpdatedAt);
+  }
+
+  private DateTimeFormatter getFormatter(String api) {
+    return DateTimeFormatter.ofPattern(getCmmAndCpApis().contains(api) ? MONTH_FORMAT : DATE_FORMAT);
+  }
+
+  private void processAndRecordResult(String api, String date, ZonedDateTime lastUpdatedAt) {
+    List<? extends ResponseBaseDto> result = Collections.emptyList();
+    ProcessDataService processDataService = null;
+    if (PRODUCT_API.equals(api)) {
+      result = callFcService.getProducts();
+      processDataService = fcProductService;
+    } else if (REGIMEN_API.equals(api)) {
+      result = callFcService.getRegimens();
+      processDataService = fcRegimenService;
+    } else if (FACILITY_TYPE_API.equals(api)) {
+      result = callFcService.getFacilityTypes();
+      processDataService = fcFacilityTypeService;
+    } else if (PROGRAM_API.equals(api)) {
+      result = callFcService.getPrograms();
+      processDataService = fcProgramService;
+    } else if (FACILITY_API.equals(api)) {
+      result = callFcService.getFacilities();
+      processDataService = fcFacilityService;
+    } else if (GEOGRAPHIC_ZONE_API.equals(api)) {
+      result = callFcService.getGeographicZones();
+      processDataService = fcGeographicZoneService;
+    } else if (CMM_API.equals(api)) {
+      result = callFcService.getCmms();
+      processDataService = fcCmmService;
+    } else if (CP_API.equals(api)) {
+      result = callFcService.getCps();
+      processDataService = fcCpService;
+    } else if (RECEIPT_PLAN_API.equals(api)) {
+      result = callFcService.getReceiptPlans();
+      processDataService = fcReceiptPlanService;
+    } else if (ISSUE_VOUCHER_API.equals(api)) {
+      result = callFcService.getIssueVouchers();
+      processDataService = fcIssueVoucherService;
+    }
+    if (result.isEmpty() || processDataService == null) {
+      log.info("no new data for {}", api);
+      return;
+    }
+    FcIntegrationResultDto resultDto = processDataService.processData(result, date, lastUpdatedAt);
     fcIntegrationResultService.recordFcIntegrationResult(resultDto);
   }
 
@@ -444,7 +249,7 @@ public class FcScheduleService {
       }
       log.info("[FC] fetch {} finish, total size: {}", api, getTotalSize(api));
     } catch (Exception e) {
-      fcIntegrationResultService.recordCallFcFailed(api, date);
+      log.error("[FC] fetch api {} failed", api);
       throw e;
     }
   }
@@ -508,15 +313,6 @@ public class FcScheduleService {
       callFcService.setProducts(newArrayList());
     }
     callFcService.setPageInfoDto(new PageInfoDto());
-  }
-
-  private String getStartDateForPeriodCall(String date) {
-    if (date.equals(dateHelper.getCurrentMonthStr())) {
-      return date;
-    }
-    String[] splitDate = date.split("-");
-    LocalDate lastEndDate = LocalDate.of(Integer.parseInt(splitDate[1]), Integer.parseInt(splitDate[0]), 1);
-    return lastEndDate.plusMonths(1).format(DateTimeFormatter.ofPattern("MM-yyyy"));
   }
 
 }

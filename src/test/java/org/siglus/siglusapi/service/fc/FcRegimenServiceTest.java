@@ -17,11 +17,12 @@ package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
+import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
+import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
 import java.util.Collections;
 import java.util.Set;
@@ -38,6 +39,7 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenCategory;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.RegimenDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RegimenCategoryRepository;
@@ -82,10 +84,11 @@ public class FcRegimenServiceTest {
   public void shouldReturnFalseGivenEmptyFcResult() {
 
     // when
-    boolean result = fcRegimenService.processRegimens(Collections.emptyList());
+    FcIntegrationResultDto result = fcRegimenService.processData(Collections.emptyList(), START_DATE,
+        LAST_UPDATED_AT);
 
     // then
-    assertFalse(result);
+    assertNull(result);
   }
 
   @Test
@@ -100,8 +103,8 @@ public class FcRegimenServiceTest {
         .thenReturn(newArrayList(mockCategory(categoryId2)));
 
     // when
-    fcRegimenService.processRegimens(newArrayList(mockRegimenDto1(), mockRegimenDto2(),
-        mockRegimenDto3()));
+    fcRegimenService.processData(newArrayList(mockRegimenDto1(), mockRegimenDto2(), mockRegimenDto3()), START_DATE,
+        LAST_UPDATED_AT);
 
     // then
     verify(regimenRepository).save(regimensArgumentCaptor.capture());
@@ -124,7 +127,7 @@ public class FcRegimenServiceTest {
   }
 
   private RegimenDto mockRegimenDto1() {
-    return RegimenDto
+    RegimenDto build = RegimenDto
         .builder()
         .code(code1)
         .description(description1)
@@ -133,12 +136,14 @@ public class FcRegimenServiceTest {
         .categoryDescription(categoryDescription1)
         .status(STATUS_ACTIVE)
         .build();
+    build.setLastUpdatedAt(LAST_UPDATED_AT);
+    return build;
   }
 
   private RegimenDto mockRegimenDto2() {
     String code2 = "TBMDRKm-Lfx-Eto-PAS-E-Z";
     String description2 = "TB MDR Km-Lfx-Eto-PAS-E-Z";
-    return RegimenDto
+    RegimenDto build = RegimenDto
         .builder()
         .code(code2)
         .description(description2)
@@ -147,10 +152,12 @@ public class FcRegimenServiceTest {
         .categoryDescription(PAEDIATRICS)
         .status(STATUS_ACTIVE)
         .build();
+    build.setLastUpdatedAt(LAST_UPDATED_AT);
+    return build;
   }
 
   private RegimenDto mockRegimenDto3() {
-    return RegimenDto
+    RegimenDto build = RegimenDto
         .builder()
         .code(code3)
         .description(description3)
@@ -158,6 +165,8 @@ public class FcRegimenServiceTest {
         .categoryCode(null)
         .status(STATUS_ACTIVE)
         .build();
+    build.setLastUpdatedAt(LAST_UPDATED_AT);
+    return build;
   }
 
   private ProgramRealProgram mockProgramRealProgram1() {

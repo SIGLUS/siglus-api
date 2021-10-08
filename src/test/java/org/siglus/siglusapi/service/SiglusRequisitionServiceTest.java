@@ -157,7 +157,7 @@ import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusNotificationNotificationService;
 import org.siglus.siglusapi.service.client.SiglusRequisitionRequisitionService;
-import org.siglus.siglusapi.service.fc.FcIntegrationCmmCpService;
+import org.siglus.siglusapi.service.fc.FcCmmCpService;
 import org.siglus.siglusapi.testutils.IdealStockAmountDtoDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionTemplateDataBuilder;
@@ -320,7 +320,7 @@ public class SiglusRequisitionServiceTest {
   private SiglusApprovedProductReferenceDataService siglusApprovedReferenceDataService;
 
   @Mock
-  private FcIntegrationCmmCpService fcIntegrationCmmCpService;
+  private FcCmmCpService fcCmmCpService;
 
   @Mock
   private OrderService orderService;

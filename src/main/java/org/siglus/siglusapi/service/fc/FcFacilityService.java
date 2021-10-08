@@ -16,11 +16,12 @@
 package org.siglus.siglusapi.service.fc;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.dto.BasicProgramDto;
@@ -40,69 +42,71 @@ import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
+import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataService;
 import org.siglus.siglusapi.util.FcUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
-public class FcFacilityService {
+@RequiredArgsConstructor
+public class FcFacilityService implements ProcessDataService {
 
-  @Autowired
-  private SiglusFacilityReferenceDataService facilityService;
+  private final SiglusFacilityReferenceDataService facilityService;
+  private final SiglusGeographicZoneReferenceDataService geographicZoneService;
+  private final ProgramReferenceDataService programReferenceDataService;
+  private final SiglusFacilityTypeReferenceDataService facilityTypeService;
+  private final FcSourceDestinationService fcSourceDestinationService;
+  private final ProgramRealProgramRepository programRealProgramRepository;
 
-  @Autowired
-  private SiglusGeographicZoneReferenceDataService geographicZoneService;
-
-  @Autowired
-  private ProgramReferenceDataService programReferenceDataService;
-
-  @Autowired
-  private ProgramRealProgramRepository programRealProgramRepository;
-
-  @Autowired
-  private SiglusFacilityTypeReferenceDataService facilityTypeService;
-
-  @Autowired
-  private FcSourceDestinationService fcSourceDestinationService;
-
-  public boolean processFacility(List<FcFacilityDto> dtos) {
-    if (isEmpty(dtos)) {
-      return false;
+  @Override
+  public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> facilities, String startDate,
+      ZonedDateTime previousLastUpdatedAt) {
+    log.info("[FC facility] sync count: {}", facilities.size());
+    if (facilities.isEmpty()) {
+      return null;
     }
-    Map<String, ProgramDto> codeToProgramMap = getCodeToProgramMap();
-    Map<String, ProgramRealProgram> codeToRealProgramMap = getCodeToRealProgramMap();
-    Map<String, FacilityDto> codeToFacilityMap = getCodeToFacilityDtoMap();
-    Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap =
-        getCodeToGeographicZoneDtoMap();
-    Map<String, FacilityTypeDto> codeToFacilityType = getCodeToFacilityTypeDtoMap();
-    List<FcFacilityDto> createFacilities = new ArrayList<>();
-    List<FcFacilityDto> updateFacilities = new ArrayList<>();
-    dtos.forEach(dto -> {
-      Set<String> codes = getFacilitySupportedProgramCode(dto, codeToRealProgramMap);
-      if (isValidateFcFacilityData(dto, codeToGeographicZoneDtoMap, codes,
-          codeToFacilityType)) {
-        if (codeToFacilityMap.containsKey(dto.getCode())) {
-          FacilityDto originDto = codeToFacilityMap.get(dto.getCode());
-          if (isDifferentFacilityDto(dto, codes, originDto)) {
-            updateFacilities.add(dto);
+    boolean finalSuccess = true;
+    int createCounter = 0;
+    int updateCounter = 0;
+    try {
+      Map<String, ProgramDto> codeToProgramMap = getCodeToProgramMap();
+      Map<String, ProgramRealProgram> codeToRealProgramMap = getCodeToRealProgramMap();
+      Map<String, FacilityDto> codeToFacilityMap = getCodeToFacilityDtoMap();
+      Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap = getCodeToGeographicZoneDtoMap();
+      Map<String, FacilityTypeDto> codeToFacilityType = getCodeToFacilityTypeDtoMap();
+      List<FcFacilityDto> createFacilities = new ArrayList<>();
+      List<FcFacilityDto> updateFacilities = new ArrayList<>();
+      facilities.forEach(item -> {
+        FcFacilityDto facility = (FcFacilityDto) item;
+        Set<String> codes = getFacilitySupportedProgramCode(facility, codeToRealProgramMap);
+        validateFcFacilityData(facility, codeToGeographicZoneDtoMap, codes, codeToFacilityType);
+        if (codeToFacilityMap.containsKey(facility.getCode())) {
+          FacilityDto originDto = codeToFacilityMap.get(facility.getCode());
+          if (isDifferentFacilityDto(facility, codes, originDto)) {
+            updateFacilities.add(facility);
           }
         } else {
-          createFacilities.add(dto);
+          createFacilities.add(facility);
         }
-      }
-    });
-    createFacilityDto(createFacilities, codeToFacilityType, codeToProgramMap,
-        codeToRealProgramMap, codeToGeographicZoneDtoMap);
-    updateFacilityDto(updateFacilities, codeToFacilityMap, codeToFacilityType,
-        codeToProgramMap, codeToRealProgramMap, codeToGeographicZoneDtoMap);
-    log.info("[FC] created new {} facilities, updated {} facilities", createFacilities.size(),
-        updateFacilities.size());
-    return true;
+      });
+      createFacilities(createFacilities, codeToFacilityType, codeToProgramMap, codeToRealProgramMap,
+          codeToGeographicZoneDtoMap);
+      updateFacilities(updateFacilities, codeToFacilityMap, codeToFacilityType, codeToProgramMap, codeToRealProgramMap,
+          codeToGeographicZoneDtoMap);
+      createCounter = createFacilities.size();
+      updateCounter = updateFacilities.size();
+    } catch (Exception e) {
+      log.error("[FC facility] sync data error", e);
+      finalSuccess = false;
+    }
+    log.info("[FC facility] process data create: {}, update: {}, same: {}",
+        createCounter, updateCounter, facilities.size() - createCounter - updateCounter);
+    return buildResult(facilities, startDate, previousLastUpdatedAt, finalSuccess, createCounter, updateCounter);
   }
 
   private Map<String, FacilityDto> getCodeToFacilityDtoMap() {
@@ -110,54 +114,49 @@ public class FcFacilityService {
   }
 
   private Map<String, ProgramRealProgram> getCodeToRealProgramMap() {
-    return Maps.uniqueIndex(programRealProgramRepository.findAll(),
-        ProgramRealProgram::getRealProgramCode);
+    return Maps.uniqueIndex(programRealProgramRepository.findAll(), ProgramRealProgram::getRealProgramCode);
   }
 
   private Map<String, ProgramDto> getCodeToProgramMap() {
-    return Maps.uniqueIndex(programReferenceDataService.findAll(),
-        BasicProgramDto::getCode);
+    return Maps.uniqueIndex(programReferenceDataService.findAll(), BasicProgramDto::getCode);
   }
 
   private Map<String, GeographicZoneDto> getCodeToGeographicZoneDtoMap() {
-    return Maps.uniqueIndex(geographicZoneService.searchAllGeographicZones(),
-        GeographicZoneDto::getCode);
+    return Maps.uniqueIndex(geographicZoneService.searchAllGeographicZones(), GeographicZoneDto::getCode);
   }
 
   private Map<String, FacilityTypeDto> getCodeToFacilityTypeDtoMap() {
-    return Maps.uniqueIndex(facilityTypeService.searchAllFacilityTypes(),
-        FacilityTypeDto::getCode);
+    return Maps.uniqueIndex(facilityTypeService.searchAllFacilityTypes(), FacilityTypeDto::getCode);
   }
 
-  public boolean isValidateFcFacilityData(FcFacilityDto fcFacilityDto,
+  public void validateFcFacilityData(FcFacilityDto fcFacilityDto,
       Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap, Set<String> codes,
       Map<String, FacilityTypeDto> codeToFacilityType) {
     if (!codeToGeographicZoneDtoMap.containsKey(fcFacilityDto.getDistrictCode())
         || !codeToFacilityType.containsKey(fcFacilityDto.getClientTypeCode())) {
-      log.info("[FC] geographic zone or facility type not exist in our system: {}",
-          fcFacilityDto);
-      return false;
+      log.info("[FC facility] geographic zone or facility type not exist in our system: {}", fcFacilityDto);
+      throw new IllegalArgumentException();
     }
     if (CollectionUtils.isEmpty(codes)) {
-      log.info("[FC] program code not existed: {}", fcFacilityDto);
-      return false;
+      log.info("[FC facility] program code not existed: {}", fcFacilityDto);
+      throw new IllegalArgumentException();
     }
-    return true;
   }
 
   private Set<String> getFacilitySupportedProgramCode(FcFacilityDto fcFacilityDto,
       Map<String, ProgramRealProgram> codeToRealProgramMap) {
     Set<String> codes = fcFacilityDto.getAreas()
-        .stream().map(fcAreaDto -> {
+        .stream()
+        .map(fcAreaDto -> {
           String code = fcAreaDto.getAreaCode();
           if (code.equalsIgnoreCase(ProgramConstants.MALARIA_PROGRAM_CODE)) {
             return code;
           }
-          return codeToRealProgramMap.containsKey(code) ? codeToRealProgramMap.get(code)
-              .getProgramCode() : null;
-        }).filter(Objects::nonNull)
+          return codeToRealProgramMap.containsKey(code) ? codeToRealProgramMap.get(code).getProgramCode() : null;
+        })
+        .filter(Objects::nonNull)
         .collect(Collectors.toSet());
-    if (codes.contains(ProgramConstants.MALARIA_PROGRAM_CODE) && !codes.contains(ProgramConstants.VIA_PROGRAM_CODE)) {
+    if (codes.contains(ProgramConstants.MALARIA_PROGRAM_CODE)) {
       codes.add(ProgramConstants.VIA_PROGRAM_CODE);
     }
     return codes;
@@ -168,12 +167,11 @@ public class FcFacilityService {
       Map<String, ProgramRealProgram> codeToRealProgramMap) {
     return getFacilitySupportedProgramCode(fcFacilityDto, codeToRealProgramMap)
         .stream()
-        .map(code -> getSupportedProgramDto(codeToProgramMap, code)
-        ).collect(Collectors.toList());
+        .map(code -> getSupportedProgramDto(codeToProgramMap, code))
+        .collect(Collectors.toList());
   }
 
-  private SupportedProgramDto getSupportedProgramDto(Map<String, ProgramDto> codeToProgramMap,
-      String code) {
+  private SupportedProgramDto getSupportedProgramDto(Map<String, ProgramDto> codeToProgramMap, String code) {
     ProgramDto originProgramDto = codeToProgramMap.get(code);
     SupportedProgramDto programDto = new SupportedProgramDto();
     programDto.setCode(originProgramDto.getCode());
@@ -186,8 +184,7 @@ public class FcFacilityService {
     return programDto;
   }
 
-  private boolean isDifferentFacilityDto(FcFacilityDto fcFacilityDto, Set<String> codes,
-      FacilityDto originDto) {
+  private boolean isDifferentFacilityDto(FcFacilityDto fcFacilityDto, Set<String> codes, FacilityDto originDto) {
     FacilityDto origin = facilityService.findOne(originDto.getId());
     originDto.setSupportedPrograms(origin.getSupportedPrograms());
     originDto.setDescription(origin.getDescription());
@@ -202,14 +199,14 @@ public class FcFacilityService {
         && Sets.difference(codes, originCodes).isEmpty());
   }
 
-  private void createFacilityDto(List<FcFacilityDto> needCreateFacilities,
+  private void createFacilities(List<FcFacilityDto> needCreateFacilities,
       Map<String, FacilityTypeDto> codeToFacilityType,
       Map<String, ProgramDto> codeToProgramMap,
       Map<String, ProgramRealProgram> codeToRealProgramMap,
       Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap) {
     List<FacilityDto> createdFacilities = newArrayList();
     needCreateFacilities.forEach(facilityDto -> {
-      log.info("[FC] create new facility: {}", facilityDto);
+      log.info("[FC facility] create: {}", facilityDto);
       List<SupportedProgramDto> supportedProgramDtos = getSupportedProgramDtos(facilityDto,
           codeToProgramMap, codeToRealProgramMap);
       FacilityDto createdFacility = facilityService.createFacility(getFacilityDto(facilityDto,
@@ -235,27 +232,25 @@ public class FcFacilityService {
         .build();
   }
 
-  private void updateFacilityDto(List<FcFacilityDto> needUpdateFacilities,
+  private void updateFacilities(List<FcFacilityDto> needUpdateFacilities,
       Map<String, FacilityDto> codeToFacilityMap,
       Map<String, FacilityTypeDto> codeToFacilityType,
       Map<String, ProgramDto> codeToProgramMap,
       Map<String, ProgramRealProgram> codeToRealProgramMap,
       Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap) {
-    needUpdateFacilities.forEach(fcFacilityDto -> {
-      FacilityDto needSaveFacility = codeToFacilityMap.get(fcFacilityDto.getCode());
-      log.info("[FC] update existed facility: {} to new facility: {}", needSaveFacility,
-          fcFacilityDto);
-      List<SupportedProgramDto> supportedProgramDtos = getUpdateProgramDto(fcFacilityDto,
-          needSaveFacility, codeToRealProgramMap, codeToProgramMap);
-      needSaveFacility.setName(fcFacilityDto.getName());
-      needSaveFacility.setDescription(fcFacilityDto.getDescription());
-      needSaveFacility.setActive(FcUtil.isActive(fcFacilityDto.getStatus()));
-      needSaveFacility.setEnabled(FcUtil.isActive(fcFacilityDto.getStatus()));
-      needSaveFacility.setType(codeToFacilityType.get(fcFacilityDto.getClientTypeCode()));
-      needSaveFacility.setGeographicZone(
-          codeToGeographicZoneDtoMap.get(fcFacilityDto.getDistrictCode()));
-      needSaveFacility.setSupportedPrograms(supportedProgramDtos);
-      facilityService.saveFacility(needSaveFacility);
+    needUpdateFacilities.forEach(current -> {
+      FacilityDto existed = codeToFacilityMap.get(current.getCode());
+      log.info("[FC facility] update, existed: {}, current: {}", existed, current);
+      List<SupportedProgramDto> supportedProgramDtos = getUpdateProgramDto(current,
+          existed, codeToRealProgramMap, codeToProgramMap);
+      existed.setName(current.getName());
+      existed.setDescription(current.getDescription());
+      existed.setActive(FcUtil.isActive(current.getStatus()));
+      existed.setEnabled(FcUtil.isActive(current.getStatus()));
+      existed.setType(codeToFacilityType.get(current.getClientTypeCode()));
+      existed.setGeographicZone(codeToGeographicZoneDtoMap.get(current.getDistrictCode()));
+      existed.setSupportedPrograms(supportedProgramDtos);
+      facilityService.saveFacility(existed);
     });
   }
 
