@@ -21,7 +21,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
@@ -95,7 +97,7 @@ public class FcFacilityServiceTest {
   }
 
   @Test
-  public void shouldFinalSuccessFalseWhenValidateFacilityFailed() {
+  public void shouldIgnoreFacilityWhenValidateFacilityFailed() {
     // given
     ProgramDto programDto = getProgramDto();
     when(programReferenceDataService.findAll()).thenReturn(Collections.singletonList(programDto));
@@ -111,7 +113,8 @@ public class FcFacilityServiceTest {
 
     // then
     assertNotNull(result);
-    assertFalse(result.getFinalSuccess());
+    assertTrue(result.getFinalSuccess());
+    verify(facilityService, times(0)).createFacility(any());
   }
 
   @Test

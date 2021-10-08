@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.dto.fc;
 
 import static java.util.Comparator.comparing;
-import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 
 import java.time.ZonedDateTime;
 import java.util.List;

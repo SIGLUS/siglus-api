@@ -136,9 +136,12 @@ public class FcFacilityService implements ProcessDataService {
   public boolean isValid(FcFacilityDto fcFacilityDto,
       Map<String, GeographicZoneDto> codeToGeographicZoneDtoMap, Set<String> codes,
       Map<String, FacilityTypeDto> codeToFacilityType) {
-    if (!codeToGeographicZoneDtoMap.containsKey(fcFacilityDto.getDistrictCode())
-        || !codeToFacilityType.containsKey(fcFacilityDto.getClientTypeCode())) {
-      log.info("[FC facility] geographic zone or facility type not exist in our system: {}", fcFacilityDto);
+    if (!codeToGeographicZoneDtoMap.containsKey(fcFacilityDto.getDistrictCode())) {
+      log.info("[FC facility] geographic zone not exist in db: {}", fcFacilityDto);
+      return false;
+    }
+    if (!codeToFacilityType.containsKey(fcFacilityDto.getClientTypeCode())) {
+      log.info("[FC facility] facility type not exist in db: {}", fcFacilityDto);
       return false;
     }
     if (CollectionUtils.isEmpty(codes)) {

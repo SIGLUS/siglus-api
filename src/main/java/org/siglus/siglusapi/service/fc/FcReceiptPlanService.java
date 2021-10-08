@@ -122,7 +122,8 @@ public class FcReceiptPlanService implements ProcessDataService {
     }
     log.info("[FC receiptPlan] process data create: {}, update: {}, same: {}",
         createCounter, 0, receiptPlans.size() - createCounter);
-    return buildResult(RECEIPT_PLAN_API, receiptPlans, startDate, previousLastUpdatedAt, finalSuccess, createCounter, 0);
+    return buildResult(RECEIPT_PLAN_API, receiptPlans, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
+        0);
   }
 
   private void updateRequisition(ReceiptPlanDto receiptPlanDto, UserDto userDto) {
