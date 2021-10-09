@@ -28,8 +28,10 @@ public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>,
   Facility findFirstByTypeId(UUID typeId);
 
   default Page<Facility> findAllExcept(Collection<UUID> facilityTypes, Pageable pageable) {
-    return findAll((root, query, cb) -> facilityTypes.isEmpty() ? null : root.get("typeId").in(facilityTypes).not(),
-        pageable);
+    return findAll((root, query, cb) -> {
+      query.orderBy(cb.asc(root.get("code")));
+      return facilityTypes.isEmpty() ? null : root.get("typeId").in(facilityTypes).not();
+    }, pageable);
   }
 
 }
