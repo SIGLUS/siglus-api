@@ -50,11 +50,11 @@ public class FcRegimenService implements ProcessDataService {
 
   private int maxRegimenCategoryDisplayOrder;
 
-  private RegimenRepository regimenRepository;
-  private ProgramRealProgramRepository programRealProgramRepository;
-  private ProgramReferenceDataService programRefDataService;
-  private RegimenCategoryRepository regimenCategoryRepository;
-  private FcIntegrationResultService fcIntegrationResultService;
+  private final RegimenRepository regimenRepository;
+  private final ProgramRealProgramRepository programRealProgramRepository;
+  private final ProgramReferenceDataService programRefDataService;
+  private final RegimenCategoryRepository regimenCategoryRepository;
+  private final FcIntegrationResultService fcIntegrationResultService;
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> regimens, String startDate,

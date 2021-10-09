@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
@@ -48,24 +49,17 @@ import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityTypeReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @SuppressWarnings({"PMD.TooManyMethods"})
 @Service
+@RequiredArgsConstructor
 public class FcSourceDestinationService {
 
-  @Autowired
-  private NodeRepository nodeRepository;
-
-  @Autowired
-  private SiglusFacilityTypeReferenceDataService facilityTypeReferenceDataService;
-
-  @Autowired
-  private ProgramReferenceDataService programReferenceDataService;
-
-  @Autowired
-  private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
+  private final NodeRepository nodeRepository;
+  private final SiglusFacilityTypeReferenceDataService facilityTypeReferenceDataService;
+  private final ProgramReferenceDataService programReferenceDataService;
+  private final ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
 
   private UUID arvProgramId;
 

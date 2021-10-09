@@ -16,7 +16,10 @@
 package org.siglus.siglusapi.web.fc;
 
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.service.fc.FcScheduleService;
+import org.siglus.siglusapi.validator.FcQueryDate;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,38 +28,39 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/siglusapi/fc")
 @RequiredArgsConstructor
+@Validated
 public class TriggerController {
 
   private static final String DATE = "date";
   private final FcScheduleService fcScheduleService;
 
   @PostMapping("/cmms")
-  public void syncCmms(@RequestParam(value = DATE, required = false) String date) {
+  public void syncCmms(@NotEmpty @FcQueryDate @RequestParam(DATE) String date) {
     fcScheduleService.syncCmms(date);
   }
 
   @PostMapping("/cps")
-  public void syncCps(@RequestParam(value = DATE, required = false) String date) {
+  public void syncCps(@NotEmpty @FcQueryDate @RequestParam(DATE) String date) {
     fcScheduleService.syncCps(date);
   }
 
   @PostMapping("/receiptPlans")
-  public void syncReceiptPlans(@RequestParam(value = DATE, required = false) String date) {
+  public void syncReceiptPlans(@FcQueryDate @RequestParam(value = DATE, required = false) String date) {
     fcScheduleService.syncReceiptPlans(date);
   }
 
   @PostMapping("/issueVouchers")
-  public void syncIssueVouchers(@RequestParam(value = DATE, required = false) String date) {
+  public void syncIssueVouchers(@FcQueryDate @RequestParam(value = DATE, required = false) String date) {
     fcScheduleService.syncIssueVouchers(date);
   }
 
   @PostMapping("/programs")
-  public void syncPrograms(@RequestParam(value = DATE, required = false) String date) {
+  public void syncPrograms(@FcQueryDate @RequestParam(value = DATE, required = false) String date) {
     fcScheduleService.syncPrograms(date);
   }
 
   @PostMapping("/products")
-  public void syncProducts(@RequestParam(value = DATE, required = false) String date) {
+  public void syncProducts(@FcQueryDate @RequestParam(value = DATE, required = false) String date) {
     fcScheduleService.syncProducts(date);
   }
 
@@ -66,17 +70,17 @@ public class TriggerController {
   }
 
   @PostMapping("/facilityTypes")
-  public void syncFacilityTypes(@RequestParam(value = DATE, required = false) String date) {
+  public void syncFacilityTypes(@FcQueryDate @RequestParam(value = DATE, required = false) String date) {
     fcScheduleService.syncFacilityTypes(date);
   }
 
   @PostMapping("/regimens")
-  public void syncRegimens(@RequestParam(value = DATE, required = false) String date) {
+  public void syncRegimens(@FcQueryDate @RequestParam(value = DATE, required = false) String date) {
     fcScheduleService.syncRegimens(date);
   }
 
   @PostMapping("/geographicZones")
-  public void syncGeographicZones(@RequestParam(value = DATE, required = false) String date) {
+  public void syncGeographicZones(@FcQueryDate @RequestParam(value = DATE, required = false) String date) {
     fcScheduleService.syncGeographicZones(date);
   }
 

@@ -65,10 +65,10 @@ public class FcCpService implements ProcessDataService {
       CpDomain.from(cps).forEach(cp -> {
         CpDomain existCp = cpRepository
             .findCpByFacilityCodeAndProductCodeAndQueryDate(cp.getFacilityCode(), cp.getProductCode(), startDate);
-        if (null != existCp) {
-          cp.setId(existCp.getId());
+        if (null == existCp) {
           createCounter.getAndIncrement();
         } else {
+          cp.setId(existCp.getId());
           updateCounter.getAndIncrement();
         }
         cp.setQueryDate(startDate);

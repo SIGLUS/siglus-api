@@ -65,10 +65,10 @@ public class FcCmmService implements ProcessDataService {
       CmmDomain.from(cmms).forEach(cmm -> {
         CmmDomain existCmm = cmmRepository.findCmmByFacilityCodeAndProductCodeAndQueryDate(cmm.getFacilityCode(),
             cmm.getProductCode(), startDate);
-        if (existCmm != null) {
-          cmm.setId(existCmm.getId());
+        if (existCmm == null) {
           createCounter.getAndIncrement();
         } else {
+          cmm.setId(existCmm.getId());
           updateCounter.getAndIncrement();
         }
         cmm.setQueryDate(startDate);

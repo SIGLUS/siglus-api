@@ -30,6 +30,7 @@ import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
 import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 import static org.siglus.siglusapi.constant.FcConstants.getCmmAndCpApis;
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -230,6 +231,9 @@ public class FcScheduleService {
     ZonedDateTime lastUpdatedAt = fcIntegrationResultService.getLastUpdatedAt(api);
     if (StringUtils.isEmpty(date)) {
       date = lastUpdatedAt.format(getFormatter(api));
+    } else if (getCmmAndCpApis().contains(api)) {
+      LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern(DATE_FORMAT));
+      date = localDate.format(getFormatter(api));
     }
     fetchData(api, date);
     processAndRecordResult(api, date, lastUpdatedAt);
