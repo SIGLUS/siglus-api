@@ -143,7 +143,7 @@ public class StockManagementRepository {
         .collect(groupingBy(ProductLotMovement::getProductMovementKey))
         .entrySet().stream()
         .sorted(Entry.comparingByKey(EventTimeContainer.DESCENDING))
-        .map(e -> toProductMovement(e.getKey(), e.getValue(), productInventories, lotInventories))
+        .map(e -> toProductMovement(e.getKey(), e.getValue(), productInventories, lotInventories, facilityId))
         .sorted(EventTimeContainer.ASCENDING)
         .collect(toList());
     return new PeriodOfProductMovements(productMovements, stocksOnHand);
@@ -547,7 +547,7 @@ public class StockManagementRepository {
   }
 
   private ProductMovement toProductMovement(ProductMovementKey key, List<ProductLotMovement> productLotMovements,
-      Map<String, Integer> productInventoryMap, Map<ProductLotCode, Integer> lotInventories) {
+      Map<String, Integer> productInventoryMap, Map<ProductLotCode, Integer> lotInventories, UUID facilityId) {
     ProductMovementBuilder movementBuilder = ProductMovement.builder()
         .productCode(key.getProductCode())
         .eventTime(key.getEventTime());
@@ -571,7 +571,7 @@ public class StockManagementRepository {
       }
       MovementDetail movementDetail = productLotMovements.stream()
           .map(ProductLotMovement::getMovementDetail)
-          .reduce(MovementDetail::merge)
+          .reduce((m1, m2) -> m1.merge(m2, facilityId))
           .orElseThrow(IllegalStateException::new);
       Integer stockQuantity = productInventoryMap.get(key.getProductCode());
       movementBuilder.stockQuantity(stockQuantity);
@@ -584,7 +584,8 @@ public class StockManagementRepository {
         movementBuilder.documentNumber(documentNumber);
       }
     } else {
-      throw new IllegalStateException("dirty data");
+      String msg = String.format("dirty data[%s@%s %s]", key.getProductCode(), facilityId, key.getEventTime());
+      throw new IllegalStateException(msg);
     }
     movementBuilder.requestedQuantity(anyLot.getRequestedQuantity());
     movementBuilder.processedAt(anyLot.getProcessedAt());

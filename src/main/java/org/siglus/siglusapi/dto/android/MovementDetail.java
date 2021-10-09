@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.dto.android;
 
 import java.util.Objects;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -78,9 +79,10 @@ public class MovementDetail {
     return new MovementDetail(adjustment, movementType, reason);
   }
 
-  public MovementDetail merge(MovementDetail movementDetail) {
+  public MovementDetail merge(MovementDetail movementDetail, UUID facilityId) {
     if (type != movementDetail.getType()) {
-      throw new IllegalStateException("Can't merge different types");
+      String msg = String.format("Can't merge different types[@%s, %s->%s]", facilityId, type, movementDetail.type);
+      throw new IllegalStateException(msg);
     }
     int mergedAdjustment = adjustment + movementDetail.getAdjustment();
     boolean sameReason = Objects.equals(this.reason, movementDetail.getReason());

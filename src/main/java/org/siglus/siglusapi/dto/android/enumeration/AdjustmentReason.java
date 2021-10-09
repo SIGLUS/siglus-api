@@ -40,9 +40,7 @@ public enum AdjustmentReason {
   private final String name;
 
   public static Optional<AdjustmentReason> findByName(String name) {
-    return Arrays.stream(values())
-        .filter(e -> e.name.equals(name))
-        .findFirst();
+    return Arrays.stream(values()).filter(e -> e.name.equals(name)).findFirst();
   }
 
 }
