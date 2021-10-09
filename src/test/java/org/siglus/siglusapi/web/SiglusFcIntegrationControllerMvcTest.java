@@ -240,14 +240,14 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
         .movementDetail(new MovementDetail(10, MovementType.ISSUE, "MATERNITY"))
         .lot(Lot.fromDatabase("lot1", java.sql.Date.valueOf("2023-12-31")))
         .build();
+    Timestamp serverProccessAt = Timestamp.valueOf("2021-11-01 01:23:45");
     ProductMovement movement1 = ProductMovement.builder()
         .productCode("test")
         .stockQuantity(10)
-        .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z"))
+        .eventTime(EventTime.fromDatabase(Date.valueOf("2021-10-01"), "2021-09-15T01:23:45Z", serverProccessAt))
         .movementDetail(new MovementDetail(10, MovementType.ISSUE, "MATERNITY"))
         .lotMovements(singletonList(movement1Lot1))
-        .processedAt(Timestamp.valueOf("2021-11-01 01:23:45").toInstant())
+        .processedAt(serverProccessAt.toInstant())
         .build();
     LotMovement movement2Lot1 = LotMovement.builder()
         .stockQuantity(10)
@@ -257,19 +257,17 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
     ProductMovement movement2 = ProductMovement.builder()
         .productCode("test")
         .stockQuantity(10)
-        .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z"))
+        .eventTime(EventTime.fromDatabase(Date.valueOf("2021-10-01"), "2021-10-01T01:23:45Z", serverProccessAt))
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "DISTRICT_DDM"))
         .lotMovements(singletonList(movement2Lot1))
-        .processedAt(Timestamp.valueOf("2021-11-01 01:23:45").toInstant())
+        .processedAt(serverProccessAt.toInstant())
         .build();
     ProductMovement movement3 = ProductMovement.builder()
         .productCode("26A01")
         .stockQuantity(10)
-        .eventTime(EventTime
-            .fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z"))
+        .eventTime(EventTime.fromDatabase(Date.valueOf("2021-10-31"), "2021-11-01T01:23:45Z", serverProccessAt))
         .movementDetail(new MovementDetail(10, MovementType.RECEIVE, "DISTRICT_DDM"))
-        .processedAt(Timestamp.valueOf("2021-11-01 01:23:45").toInstant())
+        .processedAt(serverProccessAt.toInstant())
         .build();
     return asList(movement1, movement2, movement3);
   }

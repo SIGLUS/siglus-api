@@ -19,6 +19,8 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.naturalOrder;
 import static java.util.Comparator.nullsFirst;
 
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -47,10 +49,12 @@ public class EventTime implements Comparable<EventTime> {
     return new EventTime(occurredDate, recordedAt);
   }
 
-  public static EventTime fromDatabase(java.sql.Date occurredDate, @Nullable String recordedAtStr) {
-    Instant recordedAt = null;
+  public static EventTime fromDatabase(Date occurredDate, @Nullable String recordedAtStr, Timestamp processedAtTs) {
+    Instant recordedAt;
     if (recordedAtStr != null) {
       recordedAt = Instant.parse(recordedAtStr);
+    } else {
+      recordedAt = processedAtTs.toInstant();
     }
     return new EventTime(occurredDate.toLocalDate(), recordedAt);
   }

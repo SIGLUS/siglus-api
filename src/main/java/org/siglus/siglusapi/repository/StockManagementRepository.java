@@ -429,7 +429,8 @@ public class StockManagementRepository {
   private EventTime readEventTime(ResultSet rs) {
     java.sql.Date occurredDate = readAsDate(rs, "occurreddate");
     String recordedAtStr = readAsString(rs, "recordedat");
-    return EventTime.fromDatabase(occurredDate, recordedAtStr);
+    Timestamp processedAtTs = rs.getTimestamp("processeddate");
+    return EventTime.fromDatabase(occurredDate, recordedAtStr, processedAtTs);
   }
 
   @SneakyThrows
