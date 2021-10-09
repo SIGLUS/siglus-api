@@ -66,7 +66,7 @@ import org.springframework.data.redis.core.ValueOperations;
 public class FcScheduleServiceTest {
 
   public static final String DATE = "20000101";
-  public static final String PERIOD = "08-2020";
+  public static final String MONTH = "01-2020";
 
   @InjectMocks
   private FcScheduleService fcScheduleService;
@@ -274,17 +274,17 @@ public class FcScheduleServiceTest {
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLastUpdatedAt(CMM_API)).thenReturn(LAST_UPDATED_AT);
     when(fcCmmService.processData(any(), any(), any())).thenReturn(
-        FcIntegrationResultDto.builder().api(CMM_API).startDate(PERIOD).build());
+        FcIntegrationResultDto.builder().api(CMM_API).startDate(MONTH).build());
 
     // when
-    fcScheduleService.syncCmms(PERIOD);
+    fcScheduleService.syncCmms(DATE);
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
     verify(fcCmmService).processData(any(), any(), any());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CMM_API, resultCaptor.getValue().getApi());
-    assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
+    assertEquals(MONTH, resultCaptor.getValue().getStartDate());
   }
 
   @Test
@@ -294,17 +294,17 @@ public class FcScheduleServiceTest {
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLastUpdatedAt(CMM_API)).thenReturn(LAST_UPDATED_AT);
     when(fcCmmService.processData(any(), any(), any())).thenReturn(
-        FcIntegrationResultDto.builder().api(CMM_API).startDate(PERIOD).build());
+        FcIntegrationResultDto.builder().api(CMM_API).startDate(MONTH).build());
 
     // when
-    fcScheduleService.syncCmms(PERIOD);
+    fcScheduleService.syncCmms(DATE);
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
     verify(fcCmmService).processData(any(), any(), any());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CMM_API, resultCaptor.getValue().getApi());
-    assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
+    assertEquals(MONTH, resultCaptor.getValue().getStartDate());
   }
 
   @Test
@@ -327,7 +327,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLastUpdatedAt(CMM_API)).thenReturn(LAST_UPDATED_AT);
     when(fcCmmService.processData(any(), any(), any())).thenReturn(
-        FcIntegrationResultDto.builder().api(CMM_API).startDate(PERIOD).build());
+        FcIntegrationResultDto.builder().api(CMM_API).startDate(MONTH).build());
 
     // when
     fcScheduleService.syncCmmsScheduler();
@@ -337,7 +337,7 @@ public class FcScheduleServiceTest {
     verify(fcCmmService).processData(any(), any(), any());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CMM_API, resultCaptor.getValue().getApi());
-    assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
+    assertEquals(MONTH, resultCaptor.getValue().getStartDate());
     verify(redisTemplate).delete(anyString());
   }
 
@@ -348,17 +348,17 @@ public class FcScheduleServiceTest {
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLastUpdatedAt(CP_API)).thenReturn(LAST_UPDATED_AT);
     when(fcCpService.processData(any(), any(), any())).thenReturn(
-        FcIntegrationResultDto.builder().api(CP_API).startDate(PERIOD).build());
+        FcIntegrationResultDto.builder().api(CP_API).startDate(MONTH).build());
 
     // when
-    fcScheduleService.syncCps(PERIOD);
+    fcScheduleService.syncCps(DATE);
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
     verify(fcCpService).processData(any(), any(), any());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CP_API, resultCaptor.getValue().getApi());
-    assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
+    assertEquals(MONTH, resultCaptor.getValue().getStartDate());
   }
 
   @Test
@@ -368,17 +368,17 @@ public class FcScheduleServiceTest {
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLastUpdatedAt(CP_API)).thenReturn(LAST_UPDATED_AT);
     when(fcCpService.processData(any(), any(), any())).thenReturn(
-        FcIntegrationResultDto.builder().api(CP_API).startDate(PERIOD).build());
+        FcIntegrationResultDto.builder().api(CP_API).startDate(MONTH).build());
 
     // when
-    fcScheduleService.syncCps(PERIOD);
+    fcScheduleService.syncCps(DATE);
 
     // then
     verify(callFcService).fetchData(anyString(), anyString());
     verify(fcCpService).processData(any(), any(), any());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CP_API, resultCaptor.getValue().getApi());
-    assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
+    assertEquals(MONTH, resultCaptor.getValue().getStartDate());
   }
 
   @Test
@@ -401,7 +401,7 @@ public class FcScheduleServiceTest {
     when(callFcService.getPageInfoDto()).thenReturn(new PageInfoDto());
     when(fcIntegrationResultService.getLastUpdatedAt(CP_API)).thenReturn(LAST_UPDATED_AT);
     when(fcCpService.processData(any(), any(), any())).thenReturn(
-        FcIntegrationResultDto.builder().api(CP_API).startDate(PERIOD).build());
+        FcIntegrationResultDto.builder().api(CP_API).startDate(MONTH).build());
 
     // when
     fcScheduleService.syncCpsScheduler();
@@ -411,7 +411,7 @@ public class FcScheduleServiceTest {
     verify(fcCpService).processData(any(), any(), any());
     verify(fcIntegrationResultService).recordFcIntegrationResult(resultCaptor.capture());
     assertEquals(CP_API, resultCaptor.getValue().getApi());
-    assertEquals(PERIOD, resultCaptor.getValue().getStartDate());
+    assertEquals(MONTH, resultCaptor.getValue().getStartDate());
     verify(redisTemplate).delete(anyString());
   }
 

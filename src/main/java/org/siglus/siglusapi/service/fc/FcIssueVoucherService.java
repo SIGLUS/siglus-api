@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openlmis.fulfillment.domain.Order;
 import org.openlmis.fulfillment.domain.OrderLineItem;
 import org.openlmis.fulfillment.domain.VersionEntityReference;
@@ -146,7 +147,11 @@ public class FcIssueVoucherService implements ProcessDataService {
     int createCounter = 0;
     try {
       issueVoucherErrors.clear();
-      for (Object item : issueVouchers) {
+      List<? extends ResponseBaseDto> issueVoucherList = issueVouchers.stream()
+          .distinct()
+          .filter(this::isRequisitionNumberExisted)
+          .collect(Collectors.toList());
+      for (Object item : issueVoucherList) {
         IssueVoucherDto issueVoucherDto = (IssueVoucherDto) item;
         PodExtension podExtension = podExtensionRepository.findByClientCodeAndIssueVoucherNumber(
             issueVoucherDto.getClientCode(), issueVoucherDto.getIssueVoucherNumber());
@@ -168,13 +173,21 @@ public class FcIssueVoucherService implements ProcessDataService {
         0);
   }
 
+  private boolean isRequisitionNumberExisted(ResponseBaseDto receiptPlanDto) {
+    IssueVoucherDto receiptPlan = (IssueVoucherDto) receiptPlanDto;
+    String requisitionNumber = receiptPlan.getRequisitionNumber();
+    return !StringUtils.isEmpty(requisitionNumber)
+        && requisitionExtensionRepository.findByRequisitionNumber(requisitionNumber) != null;
+  }
+
   public List<String> getIssueVoucherErrors() {
     return this.issueVoucherErrors;
   }
 
   private void createIssueVoucher(IssueVoucherDto issueVoucherDto) {
     try {
-      RequisitionExtension extension = getRequisitionExtension(issueVoucherDto.getRequisitionNumber());
+      RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionNumber(
+          issueVoucherDto.getRequisitionNumber());
       FacilityDto supplyFacility = getWareHouseFacility(issueVoucherDto);
       UserDto userDto = getWareHouseUserInfo(supplyFacility);
       getClientFacility(issueVoucherDto);
@@ -208,13 +221,6 @@ public class FcIssueVoucherService implements ProcessDataService {
       log.error("[FC] issue voucher: {}, exception: {}", issueVoucherDto, e);
       throw e;
     }
-  }
-
-  private RequisitionExtension getRequisitionExtension(String requisitionNumber) {
-    fcDataValidate.validateEmptyRequisitionNumber(requisitionNumber);
-    RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionNumber(requisitionNumber);
-    fcDataValidate.validateExistRequisitionNumber(extension);
-    return extension;
   }
 
   private void getClientFacility(IssueVoucherDto issueVoucherDto) {

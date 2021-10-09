@@ -21,7 +21,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.common.util.Message;
-import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
@@ -31,21 +30,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component("FcValidate")
 public class FcValidate {
-
-  public static final String DATA_ERROR = "dataError";
-
-  public void validateEmptyRequisitionNumber(String requisitionNumber) {
-    if (requisitionNumber == null || requisitionNumber.isEmpty()) {
-      throw new FcDataException(new Message("requisitionNumber should be not empty"));
-    }
-  }
-
-  public void validateExistRequisitionNumber(RequisitionExtension extension) {
-    if (extension == null || extension.getRequisitionNumber() == null) {
-      throw new FcDataException(
-          new Message("requisitionNumber not exist in our database"));
-    }
-  }
 
   public void validateEmptyFacilityCode(String code) {
     if (code == null || code.isEmpty()) {

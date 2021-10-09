@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.domain.requisition.StatusChange;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -97,7 +98,9 @@ public class FcReceiptPlanService implements ProcessDataService {
     int createCounter = 0;
     try {
       receiptPlanErrors.clear();
-      List<? extends ResponseBaseDto> receiptPlanDtoList = receiptPlans.stream().distinct()
+      List<? extends ResponseBaseDto> receiptPlanDtoList = receiptPlans.stream()
+          .distinct()
+          .filter(this::isRequisitionNumberExisted)
           .collect(Collectors.toList());
       List<? extends ResponseBaseDto> needCreateReceiptPlans = getNeedCreateReceiptPlans(receiptPlanDtoList);
       createCounter = needCreateReceiptPlans.size();
@@ -126,9 +129,17 @@ public class FcReceiptPlanService implements ProcessDataService {
         0);
   }
 
+  private boolean isRequisitionNumberExisted(ResponseBaseDto receiptPlanDto) {
+    ReceiptPlanDto receiptPlan = (ReceiptPlanDto) receiptPlanDto;
+    String requisitionNumber = receiptPlan.getRequisitionNumber();
+    return !StringUtils.isEmpty(requisitionNumber)
+        && requisitionExtensionRepository.findByRequisitionNumber(requisitionNumber) != null;
+  }
+
   private void updateRequisition(ReceiptPlanDto receiptPlanDto, UserDto userDto) {
     try {
-      RequisitionExtension extension = getRequisitionExtension(receiptPlanDto.getRequisitionNumber());
+      RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionNumber(
+          receiptPlanDto.getRequisitionNumber());
       UUID requisitionId = extension.getRequisitionId();
       SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisition(requisitionId);
       if (operatePermissionService.isEditable(requisitionDto)) {
@@ -158,13 +169,6 @@ public class FcReceiptPlanService implements ProcessDataService {
       log.error("[FC] receipt plan: {}, exception: {}", receiptPlanDto, e);
       throw e;
     }
-  }
-
-  private RequisitionExtension getRequisitionExtension(String requisitionNumber) {
-    fcDataValidate.validateEmptyRequisitionNumber(requisitionNumber);
-    RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionNumber(requisitionNumber);
-    fcDataValidate.validateExistRequisitionNumber(extension);
-    return extension;
   }
 
   private UserDto getFcUserInfo() {

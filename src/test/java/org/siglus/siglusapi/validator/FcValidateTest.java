@@ -22,7 +22,6 @@ import org.mockito.InjectMocks;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.common.domain.referencedata.Facility;
-import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
@@ -34,49 +33,6 @@ public class FcValidateTest {
 
   @InjectMocks
   private FcValidate validate;
-
-  @Test(expected = FcDataException.class)
-  public void shouldThrowValidationMessageExceptionWhenRequisitionNumberNull() {
-    // then
-    validate.validateEmptyRequisitionNumber(null);
-  }
-
-  @Test(expected = FcDataException.class)
-  public void shouldThrowValidationMessageExceptionWhenRequisitionNumberEmpty() {
-    // then
-    validate.validateEmptyRequisitionNumber("");
-  }
-
-  @Test
-  public void shouldThrowValidationMessageExceptionWhenRequisitionNumberExist() {
-    // then
-    validate.validateEmptyRequisitionNumber("RNR-NO010906120000192");
-  }
-
-  @Test(expected = FcDataException.class)
-  public void shouldThrowValidationMessageExceptionWhenRequisitionNumberNotExist() {
-    // then
-    validate.validateExistRequisitionNumber(null);
-  }
-
-  @Test(expected = FcDataException.class)
-  public void shouldThrowValidationMessageExceptionWhenRequisitionExtensionExistButNumberNull() {
-    // given
-    RequisitionExtension extension = new RequisitionExtension();
-
-    // then
-    validate.validateExistRequisitionNumber(extension);
-  }
-
-  @Test
-  public void shouldThrowValidationMessageExceptionWhenRequisitionExtensionExist() {
-    // given
-    RequisitionExtension extension = new RequisitionExtension();
-    extension.setRequisitionNumber(Integer.valueOf(13));
-
-    // then
-    validate.validateExistRequisitionNumber(extension);
-  }
 
   @Test(expected = FcDataException.class)
   public void shouldThrowValidationMessageExceptionWhenFacilityCodeNull() {

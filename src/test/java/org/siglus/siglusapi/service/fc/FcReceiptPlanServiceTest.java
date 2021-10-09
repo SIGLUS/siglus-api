@@ -24,8 +24,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SKIPPED;
@@ -159,6 +160,8 @@ public class FcReceiptPlanServiceTest {
         .build();
 
     receiptPlanDtos.add(receiptPlanDto);
+    doNothing().when(fcDataValidate).validateFacility(any());
+    doNothing().when(fcDataValidate).validateExistUser(any());
   }
 
   @Test
@@ -194,7 +197,7 @@ public class FcReceiptPlanServiceTest {
   }
 
   @Test
-  public void shouldReturnFalseIfCatchFcDataExceptionWhenReceiptPlan() {
+  public void shouldNotSaveReceiptPlanIfCRequisitionNumberNotExisted() {
     // given
     Facility facility = new Facility();
     UserDto userDto = new UserDto();
@@ -207,14 +210,14 @@ public class FcReceiptPlanServiceTest {
     when(page.getContent()).thenReturn(userDtoList);
     receiptPlanDto.setRequisitionNumber(null);
     List<ReceiptPlanDto> inValidReceiptPlan = newArrayList(receiptPlanDto);
-    doCallRealMethod().when(fcDataValidate).validateEmptyRequisitionNumber(any());
 
     // when
     FcIntegrationResultDto result = fcReceiptPlanService.processData(inValidReceiptPlan, START_DATE, LAST_UPDATED_AT);
 
     // then
     assertNotNull(result);
-    assertFalse(result.getFinalSuccess());
+    assertTrue(result.getFinalSuccess());
+    verify(receiptPlanRepository, times(0)).save(any(ReceiptPlan.class));
   }
 
   @Test
@@ -281,12 +284,6 @@ public class FcReceiptPlanServiceTest {
     ArgumentCaptor<UUID> captorUserId = ArgumentCaptor.forClass(UUID.class);
     verify(siglusSimulateUserAuthHelper).simulateUserAuth(captorUserId.capture());
     assertEquals(userId, captorUserId.getValue());
-    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-    verify(fcDataValidate).validateEmptyRequisitionNumber(captor.capture());
-    assertEquals(requisitionNumber, captor.getValue());
-    ArgumentCaptor<RequisitionExtension> captorExtension = ArgumentCaptor.forClass(RequisitionExtension.class);
-    verify(fcDataValidate).validateExistRequisitionNumber(captorExtension.capture());
-    assertEquals(requisitionExtension, captorExtension.getValue());
   }
 
   @Test
