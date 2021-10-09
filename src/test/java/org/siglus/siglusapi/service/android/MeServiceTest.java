@@ -28,6 +28,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
@@ -40,6 +41,7 @@ import static org.siglus.common.constant.ExtraDataConstants.IS_SAVED;
 import static org.siglus.common.constant.ExtraDataConstants.SIGNATURE;
 import static org.siglus.siglusapi.constant.FieldConstants.TRADE_ITEM;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.Duration;
@@ -57,7 +59,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import javax.persistence.EntityManager;
 import javax.validation.ConstraintViolationException;
+import org.hibernate.Session;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -65,11 +69,23 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.openlmis.fulfillment.domain.Order;
+import org.openlmis.fulfillment.domain.OrderStatus;
+import org.openlmis.fulfillment.domain.ProofOfDelivery;
+import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
+import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.fulfillment.domain.ShipmentLineItem;
+import org.openlmis.fulfillment.domain.VersionEntityReference;
+import org.openlmis.fulfillment.service.referencedata.ProcessingPeriodDto;
+import org.openlmis.fulfillment.web.util.OrderDto;
+import org.openlmis.fulfillment.web.util.OrderLineItemDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
+import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.openlmis.stockmanagement.dto.referencedata.VersionObjectReferenceDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
@@ -85,7 +101,9 @@ import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.InvalidProduct;
@@ -116,15 +134,26 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
+import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
+import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
+import org.siglus.siglusapi.service.android.mapper.LotMapperImpl;
+import org.siglus.siglusapi.service.android.mapper.PodLotLineMapper;
+import org.siglus.siglusapi.service.android.mapper.PodLotLineMapperImpl;
+import org.siglus.siglusapi.service.android.mapper.PodMapper;
+import org.siglus.siglusapi.service.android.mapper.PodMapperImpl;
+import org.siglus.siglusapi.service.android.mapper.PodOrderMapperImpl;
+import org.siglus.siglusapi.service.android.mapper.PodProductLineMapperImpl;
+import org.siglus.siglusapi.service.android.mapper.PodRequisitionMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.ProductChildMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.testutils.CanFulfillForMeEntryDtoDataBuilder;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -137,7 +166,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {ProductMapperImpl.class, ProductChildMapperImpl.class})
+@ContextConfiguration(classes = {ProductMapperImpl.class, ProductChildMapperImpl.class, PodMapperImpl.class,
+    ObjectMapper.class, PodOrderMapperImpl.class, PodRequisitionMapperImpl.class, PodProductLineMapperImpl.class,
+    PodLotLineMapperImpl.class, LotMapperImpl.class})
 @SuppressWarnings("PMD.TooManyMethods")
 public class MeServiceTest {
 
@@ -245,8 +276,29 @@ public class MeServiceTest {
   @Mock
   private ResyncInfoRepository resyncInfoRepository;
 
+  @Mock
+  private PodConfirmService podConfirmService;
+
+  @Mock
+  private SiglusValidReasonAssignmentService validReasonAssignmentService;
+
+  @Mock
+  private SiglusOrderService orderService;
+
+  @Mock
+  private SiglusOrderableReferenceDataService siglusOrderableDataService;
+
+  @Mock
+  private EntityManager entityManager;
+
   @Autowired
   private ProductMapper mapper;
+
+  @Autowired
+  private PodMapper podMapper;
+
+  @Autowired
+  private PodLotLineMapper podLotLineMapper;
 
   private final UUID appInfoId = UUID.randomUUID();
 
@@ -296,9 +348,19 @@ public class MeServiceTest {
   private final UUID supportProgramId1 = UUID.randomUUID();
   private final UUID supportProgramId2 = UUID.randomUUID();
 
+  private final UUID order1Id = UUID.randomUUID();
+  private final UUID order1FacilityId = UUID.randomUUID();
+  private final UUID product1Id = UUID.randomUUID();
+  private final UUID product1Lot1Id = UUID.randomUUID();
+  private final UUID product2Lot1Id = UUID.randomUUID();
+  private final UUID reasonId = UUID.randomUUID();
+  private final String orderCode = "ORDER-AS20JF";
+
   @Before
   public void prepare() {
     ReflectionTestUtils.setField(service, "mapper", mapper);
+    ReflectionTestUtils.setField(service, "podMapper", podMapper);
+    ReflectionTestUtils.setField(service, "podLotLineMapper", podLotLineMapper);
     ReflectionTestUtils.setField(service, nameStockCardSearchService, stockCardSearchService);
     ReflectionTestUtils.setField(service, nameStockCardCreateService, stockCardCreateService);
     user = mock(UserDto.class);
@@ -768,6 +830,28 @@ public class MeServiceTest {
 
   }
 
+  @Test
+  public void shouldCallConfirmPodWhenOrderNumIsExist() {
+    // given
+    PodRequest podRequest = mockPodRequest();
+    when(podRepository.findInitiatedPodByOrderCode(podRequest.getOrderCode())).thenReturn(mock(ProofOfDelivery.class));
+    org.hibernate.Session session = mock(Session.class);
+    when(entityManager.unwrap(Session.class)).thenReturn(session);
+    mockAuth();
+    mockExistedPod();
+    mockOrders();
+    mockProducts();
+    mockLots();
+    mockReasons();
+
+    // when
+    service.confirmPod(podRequest);
+
+    // then
+    verify(podConfirmService, times(1)).confirmPod(any(), any(), any(), any());
+
+  }
+
   private List<StockCardCreateRequest> buildStockCardCreateRequests() {
     StockCardLotEventRequest eventRequest = new StockCardLotEventRequest();
     eventRequest.setStockOnHand(100);
@@ -1197,9 +1281,133 @@ public class MeServiceTest {
     podProductLineRequest.setLots(podLots);
     List<PodProductLineRequest> products = Arrays.asList(podProductLineRequest);
     PodRequest podRequest = new PodRequest();
-    String orderCode = "orderCode";
     podRequest.setOrderCode(orderCode);
     podRequest.setProducts(products);
+    podRequest.setOriginNumber("ORDER-AS10JF");
     return podRequest;
+  }
+
+  private void mockExistedPod() {
+    VersionEntityReference orderable1 = mock(VersionEntityReference.class);
+    when(orderable1.getId()).thenReturn(product1Id);
+
+    ProofOfDelivery pod1 = mockPod1(orderable1);
+
+    when(podRepository.findAllByFacilitySince(any(), any(), anyVararg())).thenReturn(singletonList(pod1));
+  }
+
+  private ProofOfDelivery mockPod1(VersionEntityReference orderable1) {
+    ProofOfDelivery pod1 = mock(ProofOfDelivery.class);
+    when(pod1.getReceivedDate()).thenReturn(LocalDate.of(2020, 10, 1));
+    when(pod1.getDeliveredBy()).thenReturn("qla");
+    when(pod1.getReceivedBy()).thenReturn("zjj");
+    Shipment shipment1 = mock(Shipment.class);
+    when(pod1.getShipment()).thenReturn(shipment1);
+    when(shipment1.getShippedDate()).thenReturn(LocalDate.of(2020, 9, 2).atStartOfDay(ZoneId.systemDefault()));
+    Order order1 = mock(Order.class);
+    when(shipment1.getOrder()).thenReturn(order1);
+    ShipmentLineItem shipment1Line1 = mock(ShipmentLineItem.class);
+    when(shipment1Line1.getLotId()).thenReturn(product1Lot1Id);
+    when(shipment1Line1.getQuantityShipped()).thenReturn(20L);
+    when(shipment1Line1.getOrderable()).thenReturn(orderable1);
+    when(shipment1.getLineItems()).thenReturn(singletonList(shipment1Line1));
+    when(order1.getId()).thenReturn(order1Id);
+    when(order1.getFacilityId()).thenReturn(facilityId);
+    ProofOfDeliveryLineItem pod1Line1 = mock(ProofOfDeliveryLineItem.class);
+    when(pod1Line1.getLotId()).thenReturn(product1Lot1Id);
+    when(pod1Line1.getQuantityAccepted()).thenReturn(10);
+    when(pod1Line1.getQuantityRejected()).thenReturn(10);
+    when(pod1Line1.getRejectionReasonId()).thenReturn(reasonId);
+    when(pod1Line1.getNotes()).thenReturn("123");
+    when(pod1Line1.getOrderable()).thenReturn(orderable1);
+    when(pod1.getLineItems()).thenReturn(singletonList(pod1Line1));
+    return pod1;
+  }
+
+  private void mockAuth() {
+    UserDto user = mock(UserDto.class);
+    when(user.getHomeFacilityId()).thenReturn(facilityId);
+    when(authHelper.getCurrentUser()).thenReturn(user);
+    org.siglus.siglusapi.dto.FacilityDto homeFacility =
+        new org.siglus.siglusapi.dto.FacilityDto();
+    homeFacility.setId(facilityId);
+    FacilityTypeDto facilityType = new FacilityTypeDto();
+    facilityType.setId(UUID.randomUUID());
+    homeFacility.setType(facilityType);
+    when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(homeFacility);
+  }
+
+  private void mockOrders() {
+    org.openlmis.fulfillment.service.referencedata.FacilityDto supplyingFacility = mock(
+        org.openlmis.fulfillment.service.referencedata.FacilityDto.class);
+    when(supplyingFacility.getName()).thenReturn("Centro de Saude de ntopa");
+    org.openlmis.fulfillment.service.referencedata.OrderableDto product1 = mock(
+        org.openlmis.fulfillment.service.referencedata.OrderableDto.class);
+    when(product1.getId()).thenReturn(product1Id);
+    when(product1.getProductCode()).thenReturn("22A01");
+    mockOrder1(supplyingFacility, product1);
+  }
+
+  private void mockOrder1(org.openlmis.fulfillment.service.referencedata.FacilityDto supplyingFacility,
+      org.openlmis.fulfillment.service.referencedata.OrderableDto product1) {
+    OrderDto order1 = mock(OrderDto.class);
+    when(order1.getId()).thenReturn(order1Id);
+    when(order1.getOrderCode()).thenReturn(orderCode);
+    when(order1.getCreatedDate()).thenReturn(LocalDate.of(2020, 9, 2).atStartOfDay(ZoneId.systemDefault()));
+    when(order1.getLastUpdatedDate())
+        .thenReturn(LocalDate.of(2020, 9, 2).atTime(10, 15).atZone(ZoneId.systemDefault()));
+    when(order1.getStatus()).thenReturn(OrderStatus.RECEIVED);
+    when(order1.getRequisitionNumber()).thenReturn("RNR-NO01050119-0");
+    when(order1.getEmergency()).thenReturn(false);
+    when(order1.getSupplyingFacility()).thenReturn(supplyingFacility);
+    ProcessingPeriodDto order1Period = new ProcessingPeriodDto();
+    order1Period.setStartDate(LocalDate.of(2020, 7, 21));
+    order1Period.setEndDate(LocalDate.of(2020, 8, 20));
+    when(order1.getActualStartDate()).thenReturn(LocalDate.of(2020, 7, 22));
+    when(order1.getActualEndDate()).thenReturn(LocalDate.of(2020, 8, 25));
+    when(order1.getProcessingPeriod()).thenReturn(order1Period);
+    org.openlmis.fulfillment.service.referencedata.ProgramDto order1Program = mock(
+        org.openlmis.fulfillment.service.referencedata.ProgramDto.class);
+    when(order1Program.getCode()).thenReturn("VC");
+    when(order1.getProgram()).thenReturn(order1Program);
+    OrderLineItemDto order1Line1 = mock(OrderLineItemDto.class);
+    when(order1.orderLineItems()).thenReturn(singletonList(order1Line1));
+    when(order1Line1.getOrderable()).thenReturn(product1);
+    when(order1Line1.getOrderedQuantity()).thenReturn(20L);
+    when(order1Line1.getPartialFulfilledQuantity()).thenReturn(0L);
+    when(orderService.searchOrderByIdWithoutProducts(order1Id)).thenReturn(new SiglusOrderDto(order1, emptySet()));
+    when(orderService.getRequisitionByOrder(order1)).thenReturn(new Requisition());
+    when(facilityReferenceDataService.getFacilityById(order1FacilityId))
+        .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
+  }
+
+  private void mockLots() {
+    LotDto product1Lot1 = mock(LotDto.class);
+    when(product1Lot1.getId()).thenReturn(product1Lot1Id);
+    when(product1Lot1.getLotCode()).thenReturn("SME-LOTE-22A01-062023");
+    when(product1Lot1.getExpirationDate()).thenReturn(LocalDate.of(2023, 6, 30));
+    LotDto product2Lot1 = mock(LotDto.class);
+    when(product2Lot1.getId()).thenReturn(product2Lot1Id);
+    when(product2Lot1.getLotCode()).thenReturn("SME-LOTE-22B01-062023");
+    when(product2Lot1.getExpirationDate()).thenReturn(LocalDate.of(2023, 6, 30));
+    when(lotReferenceDataService.findByIds(any())).thenReturn(asList(product1Lot1, product2Lot1));
+  }
+
+  private void mockReasons() {
+    ValidReasonAssignmentDto reason1 = mock(ValidReasonAssignmentDto.class);
+    when(reason1.getId()).thenReturn(reasonId);
+    StockCardLineItemReason reason = mock(StockCardLineItemReason.class);
+    when(reason.getName()).thenReturn("reject");
+    when(reason1.getReason()).thenReturn(reason);
+    when(validReasonAssignmentService.getValidReasonsForAllProducts(any(), any(), any()))
+        .thenReturn(Collections.singleton(reason1));
+  }
+
+  private void mockProducts() {
+    org.siglus.common.dto.referencedata.OrderableDto product1 =
+        mock(org.siglus.common.dto.referencedata.OrderableDto.class);
+    when(product1.getId()).thenReturn(product1Id);
+    when(product1.getProductCode()).thenReturn("22A01");
+    when(siglusOrderableDataService.findByIds(any())).thenReturn(Collections.singletonList(product1));
   }
 }
