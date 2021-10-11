@@ -23,7 +23,7 @@ public class SiglusIssueVoucherService extends BaseReferenceDataService<IssueVou
 
   @Override
   protected String getUrl() {
-    return "/api/siglusapi/issueVouchers";
+    return "/api/siglusapi/fc/issueVouchers";
   }
 
   @Override
@@ -35,7 +35,6 @@ public class SiglusIssueVoucherService extends BaseReferenceDataService<IssueVou
   protected Class<IssueVoucherDto[]> getArrayResultClass() {
     return IssueVoucherDto[].class;
   }
-
 
   public void updateIssueVoucher(String date) {
     postResult("?date=" + date, null, Void.class, false);
