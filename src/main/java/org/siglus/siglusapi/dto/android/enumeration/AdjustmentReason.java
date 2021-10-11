@@ -23,17 +23,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Getter
 public enum AdjustmentReason {
-  CUSTOMER_RETURN("Devoluções de clientes (US e Enfermarias Dependentes)"),
-  DAMAGED("Danificado na Chegada"),
-  DONATION("Doação para o Deposito"),
-  EXPIRED_RETURN_FROM_CUSTOMER("Devoluções de Expirados (US e Enfermarias de Dependentes)"),
-  EXPIRED_RETURN_TO_SUPPLIER("Devolvidos ao Fornecedor por terem Expirados em Quarentena"),
-  INVENTORY_NEGATIVE("Correção do Inventário, no caso de excesso de stock (stock é superior ao existente na ficha)"),
-  INVENTORY_POSITIVE("Correção do Inventário, no caso de stock em falta (stock é inferior ao existente na ficha)"),
-  LOANS_DEPOSIT("Emprestimo Enviado pela US"),
-  LOANS_RECEIVED("Emprestimo Recebido pela US"),
-  PROD_DEFECTIVE("Produto com defeito, movido para quarentena"),
-  RETURN_FROM_QUARANTINE("Devoluções da Quarentena"),
+  CUSTOMER_RETURN("Devolução dos clientes (US e Depósitos Beneficiários)"),
+  DAMAGED("Danificado no depósito"),
+  DONATION("Doações ao Depósito"),
+  EXPIRED_RETURN_FROM_CUSTOMER("Devolução de expirados (US e Depósitos Beneficiários)"),
+  EXPIRED_RETURN_TO_SUPPLIER("Devolução de expirados quarentena (ou depósito fornecedor)"),
+  INVENTORY_NEGATIVE("Correcção de inventário, no caso do stock em falta  (stock é inferior ao existente na ficha de stock) "),
+  INVENTORY_POSITIVE("Correcção de inventário, no caso do stock em excesso (stock é superior ao existente na ficha de stock) "),
+  LOANS_DEPOSIT("Empréstimos (para todos níveis) que dão saída do depósito"),
+  LOANS_RECEIVED("Empréstimos (de todos os níveis) que dão entrada no depósito"),
+  PROD_DEFECTIVE("Saída para quarentena, no caso de problemas relativos a qualidade "),
+  RETURN_FROM_QUARANTINE("Retorno da quarentena, no caso de se confirmar a qualidade do produto"),
   RETURN_TO_DDM("Devolução para o DDM"),
   UNPACK_KIT("Unpack Kit");
 
