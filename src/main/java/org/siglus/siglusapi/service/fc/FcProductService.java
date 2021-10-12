@@ -117,7 +117,8 @@ public class FcProductService implements ProcessDataService {
       products.forEach(item -> {
         ProductInfoDto product = (ProductInfoDto) item;
         trimProductCode(product);
-        if (product.getAreas() == null || product.getAreas().isEmpty()) {
+        boolean isAreaEmpty = product.getAreas() == null || product.getAreas().isEmpty();
+        if (FcUtil.isActive(product.getStatus()) && isAreaEmpty) {
           log.warn("[FC product] areas is empty: {}", product);
           return;
         }
