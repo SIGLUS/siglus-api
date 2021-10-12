@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.util;
 
-import static java.util.Optional.ofNullable;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
 
 import java.util.Collection;
