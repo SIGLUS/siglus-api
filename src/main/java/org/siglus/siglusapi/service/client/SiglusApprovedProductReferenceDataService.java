@@ -15,13 +15,13 @@
 
 package org.siglus.siglusapi.service.client;
 
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.groupingBy;
 import static org.apache.commons.collections.CollectionUtils.isEmpty;
 import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -75,10 +75,15 @@ public class SiglusApprovedProductReferenceDataService extends
     }
   }
 
+  @Cacheable(value = SIGLUS_APPROVED_PRODUCTS_BY_ORDERABLES, keyGenerator = CACHE_KEY_GENERATOR)
+  public List<ApprovedProductDto> getApprovedProducts(UUID facilityId, UUID programId) {
+    return getApprovedProducts(facilityId, programId, emptyList());
+  }
+
   /**
-   * Retrieves all facility approved products fromGroups the reference data service, based on the
-   * provided facility and full supply flag. It can be optionally filtered by the program ID. The
-   * result is wrapped to a separate class to improve the performance
+   * Retrieves all facility approved products fromGroups the reference data service, based on the provided facility and
+   * full supply flag. It can be optionally filtered by the program ID. The result is wrapped to a separate class to
+   * improve the performance
    *
    * @param facilityId id of the facility
    * @param programId  id of the program
@@ -97,11 +102,11 @@ public class SiglusApprovedProductReferenceDataService extends
 
       return getPage(facilityId + "/approvedProducts", params).getContent();
     }
-    return Collections.emptyList();
+    return emptyList();
   }
 
-  private List<ApprovedProductDto> getAdditionalApprovedProducts(UUID facilityId,
-      UUID programId, Collection<ProgramAdditionalOrderable> orderables) {
+  private List<ApprovedProductDto> getAdditionalApprovedProducts(UUID facilityId, UUID programId,
+      Collection<ProgramAdditionalOrderable> orderables) {
     RequestParameters params = RequestParameters.init();
 
     params.set("programId", programId);
@@ -116,7 +121,7 @@ public class SiglusApprovedProductReferenceDataService extends
 
       return getPage(facilityId + "/approvedProducts", params).getContent();
     }
-    return Collections.emptyList();
+    return emptyList();
   }
 
 }

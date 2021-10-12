@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.android;
 
-import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
@@ -102,6 +101,8 @@ import org.openlmis.requisition.service.referencedata.ApproveProductsAggregator;
 import org.openlmis.requisition.service.referencedata.SupervisoryNodeReferenceDataService;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.common.domain.RequisitionTemplateExtension;
+import org.siglus.common.domain.referencedata.Code;
+import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.dto.referencedata.BaseDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
@@ -153,6 +154,7 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
@@ -195,7 +197,8 @@ public class RequisitionCreateService {
   private final RegimenRepository regimenRepository;
   private final SyncUpHashRepository syncUpHashRepository;
   private final SupportedProgramsHelper supportedProgramsHelper;
-  private final SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
+  private final SiglusApprovedProductReferenceDataService approvedProductDataService;
+  private final SiglusProgramAdditionalOrderableService additionalOrderableService;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -316,13 +319,14 @@ public class RequisitionCreateService {
     supplier.get().throwExceptionIfHasErrors();
   }
 
-  private void checkSupportedProducts(UUID homefacility, UUID programId, RequisitionCreateRequest request) {
+  private void checkSupportedProducts(UUID facilityId, UUID programId, RequisitionCreateRequest request) {
     Map<UUID, Set<String>> programIdToProductCodes = supportedProgramsHelper.findUserSupportedPrograms().stream()
-        .collect(toMap(Function.identity(),
-            supportProgramId -> approvedProductReferenceDataService.getApprovedProducts(homefacility, supportProgramId,
-                    emptyList()).stream()
-                .map(product -> product.getOrderable().getProductCode())
-                .collect(Collectors.toSet())));
+        .collect(
+            toMap(Function.identity(),
+                supportProgramId -> approvedProductDataService.getApprovedProducts(facilityId, supportProgramId)
+                    .stream().map(product -> product.getOrderable().getProductCode()).collect(Collectors.toSet())
+            )
+        );
     Set<String> requisitionProductCodes = new HashSet<>();
     if (!CollectionUtils.isEmpty(request.getProducts())) {
       requisitionProductCodes = request.getProducts().stream().map(RequisitionLineItemRequest::getProductCode)
@@ -356,11 +360,17 @@ public class RequisitionCreateService {
         .collect(Collectors.toSet());
   }
 
-  private Set<String> getUnsupportedProductsByProgram(UUID programId,
-      Map<UUID, Set<String>> programIdToProductCodes, Set<String> podProductCodes) {
+  private Set<String> getUnsupportedProductsByProgram(UUID programId, Map<UUID, Set<String>> programIdToProductCodes,
+      Set<String> podProductCodes) {
     Set<String> approvedProductCodes = programIdToProductCodes.get(programId);
-    return podProductCodes.stream()
+    Set<String> filtered = podProductCodes.stream()
         .filter(code -> !approvedProductCodes.contains(code))
+        .collect(Collectors.toSet());
+
+    Set<String> additionalProductCodes = additionalOrderableService.searchAdditionalOrderables(programId).stream()
+        .map(ProgramAdditionalOrderableDto::getProductCode).map(Code::toString).collect(Collectors.toSet());
+    return filtered.stream()
+        .filter(code -> !additionalProductCodes.contains(code))
         .collect(Collectors.toSet());
   }
 

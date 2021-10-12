@@ -106,6 +106,7 @@ import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusOrderableService;
+import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
@@ -183,6 +184,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @Mock
   private SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
+
+  @Mock
+  private SiglusProgramAdditionalOrderableService additionalOrderableService;
 
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
@@ -295,8 +299,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
         .thenReturn(requisitionExtension);
     when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
     when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(programId));
-    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId, emptyList()))
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId))
         .thenReturn(Collections.singletonList(mockApprovedProduct(vcProductCode)));
+    when(additionalOrderableService.searchAdditionalOrderables(any())).thenReturn(emptyList());
   }
 
   @Test(expected = PermissionMessageException.class)
@@ -423,7 +428,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(orderableDataService.searchOrderables(any(), any()))
         .thenReturn(new PageImpl<>(singletonList(buildOrderableDto())));
     when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(malariaProgramId));
-    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, malariaProgramId, emptyList()))
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, malariaProgramId))
         .thenReturn(Collections.singletonList(mockApprovedProduct(mlProductCode)));
 
     // when
@@ -462,7 +467,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(regimenRepository.findAllByProgramIdAndActiveTrue(any())).thenReturn(buildRegimenDto());
     when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildMmiaSiglusRequisitionDto());
     when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(mmiaProgramId));
-    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, mmiaProgramId, emptyList()))
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, mmiaProgramId))
         .thenReturn(Collections.singletonList(mockApprovedProduct("08S01ZW")));
 
     // when
@@ -516,7 +521,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
     when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildRapidTestSiglusRequisitionDto());
     when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(rapidTestProgramId));
-    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, rapidTestProgramId, emptyList()))
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, rapidTestProgramId))
         .thenReturn(Collections.singletonList(mockApprovedProduct("08A07")));
 
     // when

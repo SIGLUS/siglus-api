@@ -18,12 +18,14 @@ package org.siglus.siglusapi.service;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.defaultIfBlank;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
+import org.siglus.siglusapi.constant.PaginationConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +38,10 @@ public class SiglusProgramAdditionalOrderableService {
 
   @Autowired
   private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
+
+  public Collection<ProgramAdditionalOrderableDto> searchAdditionalOrderables(UUID programId) {
+    return searchAdditionalOrderables(programId, null, null, null, PaginationConstants.UNPAGED).getContent();
+  }
 
   public Page<ProgramAdditionalOrderableDto> searchAdditionalOrderables(UUID programId, String code,
       String name, UUID orderableOriginProgramId, Pageable pageable) {
