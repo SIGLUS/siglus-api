@@ -34,6 +34,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -344,7 +345,7 @@ public class RequisitionSearchService {
       return Collections.emptyMap();
     }
     return hfUsageDtos.getOrderables().entrySet().stream()
-        .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().getValue()));
+        .collect(HashMap::new, (m, e) -> m.put(e.getKey(), e.getValue().getValue()), HashMap::putAll);
   }
 
   private UsageInformationLineItemRequest convertUsageInformationRequest(Integer hf, Integer chw, String information,
