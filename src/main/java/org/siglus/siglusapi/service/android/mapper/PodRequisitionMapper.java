@@ -57,7 +57,7 @@ public interface PodRequisitionMapper {
     }
     Object clientSubmittedTime = requisition.getExtraData().get(CLIENT_SUBMITTED_TIME);
     if (clientSubmittedTime == null) {
-      return null;
+      return requisition.getCreatedDate().toInstant();
     }
     return Instant.parse(String.valueOf(clientSubmittedTime));
   }

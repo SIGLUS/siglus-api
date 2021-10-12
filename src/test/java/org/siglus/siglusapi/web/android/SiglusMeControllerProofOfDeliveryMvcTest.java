@@ -36,6 +36,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -506,7 +507,10 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(order1Line1.getOrderedQuantity()).thenReturn(20L);
     when(order1Line1.getPartialFulfilledQuantity()).thenReturn(0L);
     when(orderService.searchOrderByIdWithoutProducts(order1Id)).thenReturn(new SiglusOrderDto(order1, emptySet()));
-    when(orderService.getRequisitionByOrder(order1)).thenReturn(new Requisition());
+    Requisition requisition1 = new Requisition();
+    requisition1.setCreatedDate(ZonedDateTime.now());
+    requisition1.setModifiedDate(ZonedDateTime.now());
+    when(orderService.getRequisitionByOrder(order1)).thenReturn(requisition1);
     when(facilityReferenceDataService.getFacilityById(order1FacilityId))
         .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }
@@ -538,7 +542,10 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(order2Line1.getPartialFulfilledQuantity()).thenReturn(0L);
     when(order2Line1.getOrderable()).thenReturn(product2);
     when(orderService.searchOrderByIdWithoutProducts(order2Id)).thenReturn(new SiglusOrderDto(order2, emptySet()));
-    when(orderService.getRequisitionByOrder(order2)).thenReturn(new Requisition());
+    Requisition requisition2 = new Requisition();
+    requisition2.setCreatedDate(ZonedDateTime.now());
+    requisition2.setModifiedDate(ZonedDateTime.now());
+    when(orderService.getRequisitionByOrder(order2)).thenReturn(requisition2);
     when(facilityReferenceDataService.getFacilityById(order2FacilityId))
         .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }
@@ -570,7 +577,10 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(order3Line1.getPartialFulfilledQuantity()).thenReturn(0L);
     when(order3Line1.getOrderable()).thenReturn(product1);
     when(orderService.searchOrderByIdWithoutProducts(order3Id)).thenReturn(new SiglusOrderDto(order3, emptySet()));
-    when(orderService.getRequisitionByOrder(order3)).thenReturn(new Requisition());
+    Requisition requisition3 = new Requisition();
+    requisition3.setCreatedDate(ZonedDateTime.now());
+    requisition3.setModifiedDate(ZonedDateTime.now());
+    when(orderService.getRequisitionByOrder(order3)).thenReturn(requisition3);
     when(facilityReferenceDataService.getFacilityById(order3FacilityId))
         .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }

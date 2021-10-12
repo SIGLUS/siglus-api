@@ -848,7 +848,7 @@ public class MeServiceTest {
     service.confirmPod(podRequest);
 
     // then
-    verify(podConfirmService, times(1)).confirmPod(any(), any(), any(), any());
+    verify(podConfirmService).confirmPod(any(), any(), any(), any());
 
   }
 
@@ -1376,7 +1376,10 @@ public class MeServiceTest {
     when(order1Line1.getOrderedQuantity()).thenReturn(20L);
     when(order1Line1.getPartialFulfilledQuantity()).thenReturn(0L);
     when(orderService.searchOrderByIdWithoutProducts(order1Id)).thenReturn(new SiglusOrderDto(order1, emptySet()));
-    when(orderService.getRequisitionByOrder(order1)).thenReturn(new Requisition());
+    Requisition requisition = new Requisition();
+    requisition.setCreatedDate(ZonedDateTime.now());
+    requisition.setModifiedDate(ZonedDateTime.now());
+    when(orderService.getRequisitionByOrder(order1)).thenReturn(requisition);
     when(facilityReferenceDataService.getFacilityById(order1FacilityId))
         .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }
