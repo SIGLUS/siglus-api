@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.siglus.common.util.Message;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.AuthenticationException;
@@ -37,13 +38,16 @@ public class SiglusAuthenticationHelper {
   private final SiglusUserReferenceDataService userService;
 
   public Optional<UUID> getCurrentUserId() {
-    return ofNullable((UUID) SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+    Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    if (principal == null || StringUtils.equalsIgnoreCase(principal.toString(), "trusted-client")) {
+      return Optional.empty();
+    }
+    return Optional.of((UUID) principal);
   }
 
   public UserDto getCurrentUser() {
     Optional<UUID> currentUserId = getCurrentUserId();
-    return currentUserId.map(userService::findOne)
-        .orElseThrow(() -> authenticateFail(currentUserId.orElse(null)));
+    return currentUserId.map(userService::findOne).orElseThrow(() -> authenticateFail(currentUserId.orElse(null)));
   }
 
   public Collection<PermissionString> getCurrentUserPermissionStrings() {
