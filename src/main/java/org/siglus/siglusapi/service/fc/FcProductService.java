@@ -27,6 +27,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +47,7 @@ import org.siglus.common.domain.referencedata.Dispensable;
 import org.siglus.common.dto.referencedata.OrderableChildDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
+import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.BasicProductCode;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
@@ -115,6 +117,10 @@ public class FcProductService implements ProcessDataService {
       products.forEach(item -> {
         ProductInfoDto product = (ProductInfoDto) item;
         trimProductCode(product);
+        if (product.getAreas() == null || product.getAreas().isEmpty()) {
+          log.warn("[FC product] areas is empty: {}", product);
+          return;
+        }
         ProductInfoDto productInMap = productCodeToProduct.get(product.getFnm());
         if (null == productInMap || FcUtil.isActive(product.getStatus())) {
           productCodeToProduct.put(product.getFnm(), product);
@@ -128,7 +134,7 @@ public class FcProductService implements ProcessDataService {
           createFtap(orderableDto);
           createProgramOrderablesExtension(current, orderableDto.getId());
           createCounter.getAndIncrement();
-        } else if (isDifferentOrderable(existed, current)) {
+        } else if (isDifferent(existed, current)) {
           log.info("[FC product] update, existed: {}, current: {}", existed, current);
           OrderableDto orderableDto = updateOrderable(existed, current);
           createProgramOrderablesExtension(current, orderableDto.getId());
@@ -150,7 +156,7 @@ public class FcProductService implements ProcessDataService {
 
   private void trimProductCode(ProductInfoDto product) {
     if (product.getFnm().contains(" ")) {
-      log.warn("product code has space: {}", product.getFnm());
+      log.warn("[FC product] product code has space: {}", product.getFnm());
       product.setFnm(product.getFnm().trim());
     }
   }
@@ -211,8 +217,7 @@ public class FcProductService implements ProcessDataService {
     newOrderable.setExtraData(extraData);
     newOrderable.setTradeItemIdentifier(createTradeItem());
     if (FcUtil.isActive(product.getStatus())) {
-      Set<ProgramOrderableDto> programOrderableDtos = buildProgramOrderableDtos(product);
-      newOrderable.setPrograms(programOrderableDtos);
+      newOrderable.setPrograms(buildProgramOrderableDtos(product));
     } else {
       newOrderable.setPrograms(newHashSet());
     }
@@ -234,8 +239,7 @@ public class FcProductService implements ProcessDataService {
     }
     existed.setExtraData(extraData);
     if (FcUtil.isActive(current.getStatus())) {
-      Set<ProgramOrderableDto> programOrderableDtos = buildProgramOrderableDtos(current);
-      existed.setPrograms(programOrderableDtos);
+      existed.setPrograms(buildProgramOrderableDtos(current));
     } else {
       existed.setPrograms(newHashSet());
     }
@@ -261,33 +265,34 @@ public class FcProductService implements ProcessDataService {
   }
 
   private Set<ProgramOrderableDto> buildProgramOrderableDtos(ProductInfoDto product) {
-    Set<ProgramOrderableDto> programOrderableDtos = newHashSet();
-    product.getAreas().forEach(areaDto -> {
-      ProgramOrderableDto programDto = new ProgramOrderableDto();
-      String programCode = realProgramCodeToEntityMap.get(areaDto.getAreaCode()).getProgramCode();
-      programDto.setProgramId(programCodeToIdMap.get(programCode));
-      programDto.setActive(FcUtil.isActive(areaDto.getStatus()));
-      programDto.setFullSupply(true);
-      OrderableDisplayCategoryDto categoryDto = categoryCodeToEntityMap.get(product.getCategoryCode());
-      if (null == categoryDto) {
-        categoryDto = categoryCodeToEntityMap.get("DEFAULT");
-      }
-      programDto.setOrderableDisplayCategoryId(categoryDto.getId());
-      programDto.setOrderableCategoryDisplayName(categoryDto.getDisplayName());
-      programDto.setOrderableCategoryDisplayOrder(categoryDto.getDisplayOrder());
-      programOrderableDtos.add(programDto);
-    });
-    Map<UUID, ProgramOrderableDto> programIdToEntityMap = newHashMap();
-    programOrderableDtos.forEach(programOrderable -> {
-      ProgramOrderableDto programOrderableInMap = programIdToEntityMap.get(programOrderable.getProgramId());
-      if (null == programOrderableInMap || programOrderable.isActive()) {
-        programIdToEntityMap.put(programOrderable.getProgramId(), programOrderable);
-      }
-    });
-    return newHashSet(programIdToEntityMap.values());
+    Set<String> programCodes = product.getAreas()
+        .stream()
+        .filter(areaDto -> FcUtil.isActive(areaDto.getStatus()))
+        .map(areaDto -> realProgramCodeToEntityMap.get(areaDto.getAreaCode()).getProgramCode())
+        .collect(Collectors.toSet());
+    String programCode;
+    if (programCodes.contains(ProgramConstants.RAPIDTEST_PROGRAM_CODE)) {
+      programCode = ProgramConstants.RAPIDTEST_PROGRAM_CODE;
+    } else if (programCodes.contains(ProgramConstants.TARV_PROGRAM_CODE)) {
+      programCode = ProgramConstants.TARV_PROGRAM_CODE;
+    } else {
+      programCode = ProgramConstants.VIA_PROGRAM_CODE;
+    }
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    programOrderableDto.setProgramId(programCodeToIdMap.get(programCode));
+    programOrderableDto.setActive(true);
+    programOrderableDto.setFullSupply(true);
+    OrderableDisplayCategoryDto categoryDto = categoryCodeToEntityMap.get(product.getCategoryCode());
+    if (null == categoryDto) {
+      categoryDto = categoryCodeToEntityMap.get("DEFAULT");
+    }
+    programOrderableDto.setOrderableDisplayCategoryId(categoryDto.getId());
+    programOrderableDto.setOrderableCategoryDisplayName(categoryDto.getDisplayName());
+    programOrderableDto.setOrderableCategoryDisplayOrder(categoryDto.getDisplayOrder());
+    return Collections.singleton(programOrderableDto);
   }
 
-  private boolean isDifferentOrderable(OrderableDto existed, ProductInfoDto current) {
+  private boolean isDifferent(OrderableDto existed, ProductInfoDto current) {
     if (!StringUtils.equals(existed.getDescription(), current.getDescription())) {
       log.info("[FC product] description different, existed: {}, current: {}", existed.getDescription(),
           current.getDescription());
