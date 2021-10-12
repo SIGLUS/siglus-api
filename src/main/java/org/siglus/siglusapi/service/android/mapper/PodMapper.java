@@ -25,6 +25,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
+import org.openlmis.fulfillment.service.referencedata.UserDto;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
@@ -32,23 +33,37 @@ import org.siglus.siglusapi.dto.android.response.PodResponse;
 @Mapper(componentModel = "spring", uses = {PodOrderMapper.class, PodProductLineMapper.class})
 public interface PodMapper {
 
+  String SHIPMENT_ORDER_ID = "shipment.order.id";
+
   default LocalDate toLocalDate(ZonedDateTime dateTime) {
     return dateTime.toLocalDate();
   }
 
-  @Mapping(target = "order", source = "shipment.order.id")
-  @Mapping(target = "products", source = "shipment.order.id")
+  @Mapping(target = "order", source = SHIPMENT_ORDER_ID)
+  @Mapping(target = "products", source = SHIPMENT_ORDER_ID)
   @Mapping(target = "shippedDate", source = "shipment.shippedDate")
   @Mapping(target = "documentNo", source = "shipment", qualifiedByName = "toDocumentNo")
+  @Mapping(target = "preparedBy", source = SHIPMENT_ORDER_ID, qualifiedByName = "toPreparedBy")
+  @Mapping(target = "conferredBy", source = SHIPMENT_ORDER_ID, qualifiedByName = "toPreparedBy")
   PodResponse toResponse(ProofOfDelivery pod, @Context Map<UUID, OrderDto> orderIdToOrder,
       @Context Map<UUID, Requisition> orderIdToRequisition);
 
   @Named("toDocumentNo")
-  default String toDocumentNo(Shipment domain) {
-    if (domain.getExtraData() == null) {
+  default String toDocumentNo(Shipment shipment) {
+    if (shipment.getExtraData() == null) {
       return null;
     }
-    return domain.getExtraData().get("documentNo");
+    return shipment.getExtraData().get("documentNo");
+  }
+
+  @Named("toPreparedBy")
+  default String toPreparedBy(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder) {
+    OrderDto orderDto = orderIdToOrder.get(orderId);
+    UserDto createdUser = orderDto.getCreatedBy();
+    if (createdUser == null) {
+      return null;
+    }
+    return createdUser.getUsername();
   }
 
 }

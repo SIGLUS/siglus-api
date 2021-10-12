@@ -30,6 +30,10 @@ public class PodResponse {
 
   private String receivedBy;
 
+  private String preparedBy;
+
+  private String conferredBy;
+
   private String documentNo;
 
   private LocalDate receivedDate;
