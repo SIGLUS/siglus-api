@@ -345,7 +345,7 @@ public class RequisitionCreateService {
     Set<String> programUnsupportedProductCodes = getUnsupportedProductsByProgram(programId,
         programIdToProductCodes, requisitionProductCodes);
     if (!isEmpty(programUnsupportedProductCodes)) {
-      throw UnsupportedProductsException.byProgram(facilityUnsupportedProductCodes.toArray(new String[0]));
+      throw UnsupportedProductsException.byProgram(programUnsupportedProductCodes.toArray(new String[0]));
     }
   }
 

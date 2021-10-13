@@ -219,14 +219,12 @@ public class PodConfirmService {
     Set<String> unsupportedByFacilityProductCodes = getUnsupportedProductsByFacility(programIdToProductCodes,
         podProductCodes);
     if (!CollectionUtils.isEmpty(unsupportedByFacilityProductCodes)) {
-      throw new UnsupportedProductsException("siglusapi.pod.unsupportedProductByFacility",
-          unsupportedByFacilityProductCodes.toArray(new String[0]));
+      throw UnsupportedProductsException.byFacility(unsupportedByFacilityProductCodes.toArray(new String[0]));
     }
     Set<String> unsupportedByProgramProductCodes = getUnsupportedProductsByProgram(podRequest.getProgramCode(),
         programIdToProductCodes, podProductCodes);
     if (!CollectionUtils.isEmpty(unsupportedByProgramProductCodes)) {
-      throw new UnsupportedProductsException("siglusapi.pod.unsupportedProductByProgram",
-          unsupportedByProgramProductCodes.toArray(new String[0]));
+      throw UnsupportedProductsException.byProgram(unsupportedByProgramProductCodes.toArray(new String[0]));
     }
   }
 
