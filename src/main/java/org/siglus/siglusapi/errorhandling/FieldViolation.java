@@ -19,17 +19,30 @@ import static java.util.Optional.ofNullable;
 
 import java.util.Objects;
 import lombok.Getter;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.zalando.problem.spring.web.advice.validation.Violation;
 
 @Getter
-public class ValidationFailField {
+public class FieldViolation {
 
   private final String propertyPath;
 
+  @JsonIgnore
+  private final String messageTemplate;
+
   private final String message;
 
-  public ValidationFailField(Violation violation) {
+  private final String messageInEnglish;
+
+  private final String messageInPortuguese;
+
+  public FieldViolation(Violation violation) {
     propertyPath = ofNullable(violation.getField()).map(Objects::toString).orElse(null);
-    message = violation.getMessage();
+    String[] messages = violation.getMessage().split("\\|");
+    messageTemplate = messages[0];
+    message = messages[1];
+    messageInEnglish = messages[2];
+    messageInPortuguese = messages[3];
   }
+
 }

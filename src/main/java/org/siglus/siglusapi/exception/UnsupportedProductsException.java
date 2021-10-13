@@ -15,39 +15,27 @@
 
 package org.siglus.siglusapi.exception;
 
-import org.openlmis.fulfillment.util.Message;
+import lombok.Getter;
+import org.siglus.siglusapi.dto.Message;
 
-public class ProductNotSupportException extends RuntimeException {
+// it's ok that the class hierarchy this deep
+@SuppressWarnings("java:S110")
+public class UnsupportedProductsException extends AndroidApiException {
 
-  private final String messageKey;
+  @Getter
   private final String[] productCodes;
 
-  public ProductNotSupportException(String messageKey, String... productCodes) {
-    super(messageKey);
-    this.messageKey = messageKey;
+  public UnsupportedProductsException(String messageKey, String... productCodes) {
+    super(new Message(messageKey, String.join(",", productCodes)));
     this.productCodes = productCodes;
   }
 
-  public ProductNotSupportException(Throwable cause, String messageKey, String...productCodes) {
-    super(messageKey, cause);
-    this.messageKey = messageKey;
-    this.productCodes = productCodes;
+  public static UnsupportedProductsException byFacility(String... productCodes) {
+    return new UnsupportedProductsException("siglusapi.error.android.sync.unsupportedProduct", productCodes);
   }
 
-  public Message asMessage() {
-    return new Message(this.messageKey, (Object[]) this.productCodes);
+  public static UnsupportedProductsException byProgram(String... productCodes) {
+    return new UnsupportedProductsException("siglusapi.error.android.sync.unsupportedProduct", productCodes);
   }
 
-  @Override
-  public String getMessage() {
-    return this.asMessage().toString();
-  }
-
-  public String getMessageKey() {
-    return this.messageKey;
-  }
-
-  public String[] getProductCodes() {
-    return this.productCodes;
-  }
 }

@@ -34,7 +34,6 @@ public class PodRequest {
   @NotNull
   private LocalDate receivedDate;
 
-  @NotBlank
   private String deliveredBy;
 
   @NotBlank

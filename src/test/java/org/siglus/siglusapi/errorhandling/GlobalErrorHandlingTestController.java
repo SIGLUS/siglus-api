@@ -24,7 +24,7 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.Path;
 import org.hibernate.exception.ConstraintViolationException;
-import org.siglus.common.exception.ValidationMessageException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -51,7 +51,7 @@ class GlobalErrorHandlingTestController {
   public void dataIntegrityWithNonExistedKeyCause() {
     String constraintName = "not_existed";
     ConstraintViolationException constraintViolation = new ConstraintViolationException(null, null, constraintName);
-    throw new DataIntegrityViolationException(null, constraintViolation);
+    throw new DataIntegrityViolationException("error: not_existed", constraintViolation);
   }
 
   @GetMapping("/data-integrity-without-cause")
@@ -64,7 +64,7 @@ class GlobalErrorHandlingTestController {
     Set<ConstraintViolation<?>> violations = new HashSet<>();
     ConstraintViolation<?> violation = mock(ConstraintViolation.class);
     violations.add(violation);
-    String messageText = "text";
+    String messageText = "text|text|text|text";
     when(violation.getMessage()).thenReturn(messageText);
     String propertyPathText = "propertyPath";
     Path mockedPath = mock(Path.class);

@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.android;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 import static org.openlmis.requisition.web.ResourceNames.ORDERABLES;
 import static org.openlmis.requisition.web.ResourceNames.PROCESSING_PERIODS;
 import static org.openlmis.requisition.web.ResourceNames.PROGRAMS;
@@ -56,6 +57,7 @@ import static org.siglus.siglusapi.constant.UsageSectionConstants.PatientLineIte
 import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_COMMUNITY;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.RegimenLineItems.COLUMN_NAME_PATIENT;
 import static org.siglus.siglusapi.constant.UsageSectionConstants.TestConsumptionLineItems.SERVICE_APES;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.time.YearMonth;
 import java.time.ZonedDateTime;
@@ -147,7 +149,7 @@ import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.exception.ProductNotSupportException;
+import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
@@ -167,7 +169,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.validation.annotation.Validated;
 
@@ -324,29 +325,27 @@ public class RequisitionCreateService {
         .collect(
             toMap(Function.identity(),
                 supportProgramId -> approvedProductDataService.getApprovedProducts(facilityId, supportProgramId)
-                    .stream().map(product -> product.getOrderable().getProductCode()).collect(Collectors.toSet())
+                    .stream().map(product -> product.getOrderable().getProductCode()).collect(toSet())
             )
         );
     Set<String> requisitionProductCodes = new HashSet<>();
-    if (!CollectionUtils.isEmpty(request.getProducts())) {
+    if (!isEmpty(request.getProducts())) {
       requisitionProductCodes = request.getProducts().stream().map(RequisitionLineItemRequest::getProductCode)
-          .collect(Collectors.toSet());
-    } else if (!CollectionUtils.isEmpty(request.getUsageInformationLineItems())) {
+          .collect(toSet());
+    } else if (!isEmpty(request.getUsageInformationLineItems())) {
       requisitionProductCodes = request.getUsageInformationLineItems().stream()
           .map(UsageInformationLineItemRequest::getProductCode)
-          .collect(Collectors.toSet());
+          .collect(toSet());
     }
     Set<String> facilityUnsupportedProductCodes = getUnsupportedProductsByFacility(programIdToProductCodes,
         requisitionProductCodes);
-    if (!CollectionUtils.isEmpty(facilityUnsupportedProductCodes)) {
-      throw new ProductNotSupportException("siglusapi.requisition.unsupportProductByFacility",
-          facilityUnsupportedProductCodes.toArray(new String[0]));
+    if (!isEmpty(facilityUnsupportedProductCodes)) {
+      throw UnsupportedProductsException.byFacility(facilityUnsupportedProductCodes.toArray(new String[0]));
     }
     Set<String> programUnsupportedProductCodes = getUnsupportedProductsByProgram(programId,
         programIdToProductCodes, requisitionProductCodes);
-    if (!CollectionUtils.isEmpty(programUnsupportedProductCodes)) {
-      throw new ProductNotSupportException("siglusapi.requisition.unsupportProductByProgram",
-          programUnsupportedProductCodes.toArray(new String[0]));
+    if (!isEmpty(programUnsupportedProductCodes)) {
+      throw UnsupportedProductsException.byProgram(facilityUnsupportedProductCodes.toArray(new String[0]));
     }
   }
 
@@ -354,10 +353,10 @@ public class RequisitionCreateService {
       Set<String> podProductCodes) {
     Set<String> approvedProductCodes = programIdToProductCodes.values().stream()
         .flatMap(Collection::stream)
-        .collect(Collectors.toSet());
+        .collect(toSet());
     return podProductCodes.stream()
         .filter(podProductCode -> !approvedProductCodes.contains(podProductCode))
-        .collect(Collectors.toSet());
+        .collect(toSet());
   }
 
   private Set<String> getUnsupportedProductsByProgram(UUID programId, Map<UUID, Set<String>> programIdToProductCodes,
@@ -365,13 +364,13 @@ public class RequisitionCreateService {
     Set<String> approvedProductCodes = programIdToProductCodes.get(programId);
     Set<String> filtered = podProductCodes.stream()
         .filter(code -> !approvedProductCodes.contains(code))
-        .collect(Collectors.toSet());
+        .collect(toSet());
 
     Set<String> additionalProductCodes = additionalOrderableService.searchAdditionalOrderables(programId).stream()
-        .map(ProgramAdditionalOrderableDto::getProductCode).map(Code::toString).collect(Collectors.toSet());
+        .map(ProgramAdditionalOrderableDto::getProductCode).map(Code::toString).collect(toSet());
     return filtered.stream()
         .filter(code -> !additionalProductCodes.contains(code))
-        .collect(Collectors.toSet());
+        .collect(toSet());
   }
 
   private void buildStatusChanges(Requisition requisition, UUID authorId) {
@@ -406,7 +405,7 @@ public class RequisitionCreateService {
 
   private void buildRequisitionLineItemsExtension(Requisition requisition,
       RequisitionCreateRequest requisitionRequest, Profiler profiler) {
-    if (CollectionUtils.isEmpty(requisition.getRequisitionLineItems())) {
+    if (isEmpty(requisition.getRequisitionLineItems())) {
       return;
     }
     profiler.start("load all products");
@@ -467,7 +466,7 @@ public class RequisitionCreateService {
   }
 
   private void buildRequisitionLineItems(Requisition requisition, RequisitionCreateRequest requisitionRequest) {
-    if (CollectionUtils.isEmpty(requisitionRequest.getProducts())) {
+    if (isEmpty(requisitionRequest.getProducts())) {
       return;
     }
     Map<UUID, VersionEntityReference> productIdToApproveds = requisition.getAvailableProducts().stream().collect(
@@ -538,7 +537,7 @@ public class RequisitionCreateService {
   }
 
   private void updatePatientLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
-    if (CollectionUtils.isEmpty(request.getPatientLineItems())) {
+    if (isEmpty(request.getPatientLineItems())) {
       return;
     }
     Map<String, PatientGroupDto> patientNameToPatientGroupDto = requisitionDto.getPatientLineItems().stream()
@@ -653,7 +652,7 @@ public class RequisitionCreateService {
   }
 
   private void updateRegimenSummaryLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
-    if (CollectionUtils.isEmpty(request.getRegimenSummaryLineItems())) {
+    if (isEmpty(request.getRegimenSummaryLineItems())) {
       return;
     }
     Map<String, RegimenSummaryLineDto> regimenNameToRegimenSummaryLineDto = requisitionDto.getRegimenSummaryLineItems()
@@ -687,7 +686,7 @@ public class RequisitionCreateService {
   }
 
   private void updateTestConsumptionLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
-    if (CollectionUtils.isEmpty(request.getTestConsumptionLineItems())) {
+    if (isEmpty(request.getTestConsumptionLineItems())) {
       return;
     }
     Map<String, Map<String, TestConsumptionProjectDto>> serviceToTestProjectDto = requisitionDto
@@ -715,12 +714,12 @@ public class RequisitionCreateService {
 
   private void updateRegimenLineItems(SiglusRequisitionDto requisitionDto, UUID programId,
       RequisitionCreateRequest request) {
-    if (CollectionUtils.isEmpty(request.getRegimenLineItems())) {
+    if (isEmpty(request.getRegimenLineItems())) {
       return;
     }
     List<RegimenDto> regimenDtosByProgramId = regimenRepository.findAllByProgramIdAndActiveTrue(programId).stream()
         .map(RegimenDto::from).collect(Collectors.toList());
-    if (CollectionUtils.isEmpty(regimenDtosByProgramId)) {
+    if (isEmpty(regimenDtosByProgramId)) {
       return;
     }
     Map<String, RegimenDto> regimenCodeToRegimenDto = regimenDtosByProgramId.stream()
@@ -786,7 +785,7 @@ public class RequisitionCreateService {
   }
 
   private void buildRequisitionKitUsage(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
-    if (CollectionUtils.isEmpty(request.getProducts())) {
+    if (isEmpty(request.getProducts())) {
       return;
     }
     int kitReceivedChw = request.getProducts().stream()
@@ -817,7 +816,7 @@ public class RequisitionCreateService {
   }
 
   private void updateUsageInformationLineItems(SiglusRequisitionDto requisitionDto, RequisitionCreateRequest request) {
-    if (CollectionUtils.isEmpty(request.getUsageInformationLineItems())) {
+    if (isEmpty(request.getUsageInformationLineItems())) {
       return;
     }
     List<UsageInformationLineItemRequest> usageInformationLineItemRequests = request.getUsageInformationLineItems();

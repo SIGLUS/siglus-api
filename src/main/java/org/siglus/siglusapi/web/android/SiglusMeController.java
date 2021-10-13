@@ -112,7 +112,7 @@ public class SiglusMeController {
 
   @PostMapping("/facility/requisitions")
   @ResponseStatus(CREATED)
-  public void createRequisition(@RequestBody RequisitionCreateRequest request) {
+  public void createRequisition(@RequestBody @Valid RequisitionCreateRequest request) {
     service.createRequisition(request);
   }
 

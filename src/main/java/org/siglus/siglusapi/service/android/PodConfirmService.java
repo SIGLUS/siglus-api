@@ -57,7 +57,7 @@ import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
-import org.siglus.siglusapi.exception.ProductNotSupportException;
+import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.PodConfirmBackupRepository;
 import org.siglus.siglusapi.repository.PodNativeSqlRepository;
@@ -219,13 +219,13 @@ public class PodConfirmService {
     Set<String> unsupportedByFacilityProductCodes = getUnsupportedProductsByFacility(programIdToProductCodes,
         podProductCodes);
     if (!CollectionUtils.isEmpty(unsupportedByFacilityProductCodes)) {
-      throw new ProductNotSupportException("siglusapi.pod.unsupportProductByFacility",
+      throw new UnsupportedProductsException("siglusapi.pod.unsupportedProductByFacility",
           unsupportedByFacilityProductCodes.toArray(new String[0]));
     }
     Set<String> unsupportedByProgramProductCodes = getUnsupportedProductsByProgram(podRequest.getProgramCode(),
         programIdToProductCodes, podProductCodes);
     if (!CollectionUtils.isEmpty(unsupportedByProgramProductCodes)) {
-      throw new ProductNotSupportException("siglusapi.pod.unsupportProductByProgram",
+      throw new UnsupportedProductsException("siglusapi.pod.unsupportedProductByProgram",
           unsupportedByProgramProductCodes.toArray(new String[0]));
     }
   }

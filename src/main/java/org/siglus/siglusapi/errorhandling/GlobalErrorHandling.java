@@ -19,13 +19,15 @@ import static java.util.stream.Collectors.toList;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_VALIDATION_FAIL;
 import static org.zalando.problem.Problem.DEFAULT_TYPE;
 import static org.zalando.problem.Status.BAD_REQUEST;
-import static org.zalando.problem.Status.NOT_FOUND;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.ParametersAreNonnullByDefault;
 import javax.validation.ValidationException;
@@ -33,14 +35,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.constant.DateFormatConstants;
-import org.siglus.common.exception.ValidationMessageException;
 import org.siglus.siglusapi.constant.PodConstants;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.AndroidApiException;
+import org.siglus.siglusapi.exception.BaseMessageException;
 import org.siglus.siglusapi.exception.OrderNotFoundException;
-import org.siglus.siglusapi.exception.ProductNotSupportException;
+import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.i18n.ExposedMessageSource;
 import org.siglus.siglusapi.i18n.MessageKeys;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -62,29 +65,25 @@ import org.zalando.problem.spring.web.advice.validation.Violation;
 @ParametersAreNonnullByDefault
 @Slf4j
 @RequiredArgsConstructor
-@Order(Ordered.LOWEST_PRECEDENCE)
+@Order
 public class GlobalErrorHandling implements ProblemHandling {
 
+  private static final URI CONSTRAINT_VIOLATION_TYPE = URI.create("/errors/constraint-violation");
   private static final String MESSAGE_KEY = "messageKey";
   private static final String MESSAGE = "message";
   private static final String MESSAGE_IN_ENGLISH = "messageInEnglish";
   private static final String MESSAGE_IN_PORTUGUESE = "messageInPortuguese";
   private static final Map<String, String> CONSTRAINT_MAP = new ConcurrentHashMap<>();
+  private static final Set<String> ANDROID_VIOLATIONS;
 
   static {
     CONSTRAINT_MAP.put("unq_programid_additionalorderableid", MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
+    HashSet<String> androidViolations = new HashSet<>();
+    androidViolations.add("{org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate.message}");
+    ANDROID_VIOLATIONS = Collections.unmodifiableSet(androidViolations);
   }
-
-  private static final URI CONSTRAINT_VIOLATION_TYPE = URI.create("/errors/constraint-violation");
 
   private final ExposedMessageSource messageSource;
-
-  @ExceptionHandler
-  public ResponseEntity<Problem> handleGenericError(ValidationMessageException exception, NativeWebRequest request) {
-    String messageKey = exception.asMessage().getKey();
-    ThrowableProblem problem = prepare(messageKey, exception, BAD_REQUEST, DEFAULT_TYPE).build();
-    return create(exception, problem, request);
-  }
 
   @ExceptionHandler
   public ResponseEntity<Problem> handleDataIntegrityViolation(DataIntegrityViolationException exception,
@@ -105,10 +104,13 @@ public class GlobalErrorHandling implements ProblemHandling {
   public ResponseEntity<Problem> newConstraintViolationProblem(Throwable throwable, Collection<Violation> violations,
       NativeWebRequest request) {
     StatusType status = defaultConstraintViolationStatus();
-    List<ValidationFailField> fields = violations.stream().map(ValidationFailField::new).collect(toList());
-    ThrowableProblem problem = prepare(ERROR_VALIDATION_FAIL, throwable, status, CONSTRAINT_VIOLATION_TYPE)
-        .with("fields", fields)
-        .build();
+    List<FieldViolation> fields = violations.stream().map(FieldViolation::new).collect(toList());
+    ThrowableProblem problem = fields.stream()
+        .filter(fieldViolation -> ANDROID_VIOLATIONS.contains(fieldViolation.getMessageTemplate()))
+        .map(androidViolation -> prepare(new LocalizedMessage(androidViolation), throwable, BAD_REQUEST, DEFAULT_TYPE))
+        .findAny().orElseGet(
+            () -> prepare(ERROR_VALIDATION_FAIL, throwable, status, CONSTRAINT_VIOLATION_TYPE).with("fields", fields)
+        ).build();
     return create(throwable, problem, request);
   }
 
@@ -119,23 +121,26 @@ public class GlobalErrorHandling implements ProblemHandling {
     return create(exception, problem, request);
   }
 
+  // --- Start: Handle siglus exception ---
   @ExceptionHandler
-  public ResponseEntity<Problem> handleOrderNotFoundException(OrderNotFoundException exception,
-      NativeWebRequest request) {
-    String messageKey = exception.asMessage().getKey();
-    ThrowableProblem problem = prepare(messageKey, exception, NOT_FOUND, DEFAULT_TYPE).with(PodConstants.ORDER_NUMBER,
-        exception.getOrderCode()).build();
+  public ResponseEntity<Problem> handleBaseMessageException(BaseMessageException exception, NativeWebRequest request) {
+    ThrowableProblem problem = prepare(exception).build();
     return create(exception, problem, request);
   }
 
   @ExceptionHandler
-  public ResponseEntity<Problem> handleProductNotSupportException(ProductNotSupportException exception,
+  public ResponseEntity<Problem> handleOrderNotFoundException(OrderNotFoundException exception,
       NativeWebRequest request) {
-    String messageKey = exception.asMessage().getKey();
-    String localizedMessage = getLocalizedMessage(messageKey, LocaleContextHolder.getLocale());
-    ThrowableProblem problem = prepare(exception, NOT_FOUND, DEFAULT_TYPE)
-        .with(MESSAGE_KEY, messageKey)
-        .with(MESSAGE, localizedMessage)
+    ThrowableProblem problem = prepare(exception)
+        .with(PodConstants.ORDER_NUMBER, exception.getOrderCode())
+        .build();
+    return create(exception, problem, request);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<Problem> handleUnsupportedProductsException(UnsupportedProductsException exception,
+      NativeWebRequest request) {
+    ThrowableProblem problem = prepare(exception)
         .with("productCodes", exception.getProductCodes())
         .build();
     return create(exception, problem, request);
@@ -150,18 +155,58 @@ public class GlobalErrorHandling implements ProblemHandling {
   }
 
   public ProblemBuilder prepare(String messageKey, Throwable throwable, StatusType status, URI type) {
-    String localizedMessage = getLocalizedMessage(messageKey, LocaleContextHolder.getLocale());
-    String messageInEnglish = getLocalizedMessage(messageKey, Locale.ENGLISH);
-    String messageInPortuguese = getLocalizedMessage(messageKey, DateFormatConstants.PORTUGAL);
-    return prepare(throwable, status, type)
-        .with(MESSAGE_KEY, messageKey)
-        .with(MESSAGE, localizedMessage)
-        .with(MESSAGE_IN_ENGLISH, messageInEnglish)
-        .with(MESSAGE_IN_PORTUGUESE, messageInPortuguese);
+    LocalizedMessage localizedMessage = new LocalizedMessage(messageKey, messageSource);
+    return prepare(localizedMessage, throwable, status, type);
   }
 
-  private String getLocalizedMessage(String key, Locale locale) {
-    return messageSource.getMessage(key, null, locale);
+  private ProblemBuilder prepare(BaseMessageException throwable) {
+    Message message = throwable.asMessage();
+    LocalizedMessage localizedMessage = new LocalizedMessage(message, messageSource);
+    return prepare(localizedMessage, throwable, BAD_REQUEST, Problem.DEFAULT_TYPE);
+  }
+
+  private ProblemBuilder prepare(LocalizedMessage localizedMessage, Throwable throwable, StatusType status, URI type) {
+    ProblemBuilder problemBuilder = ProblemHandling.super.prepare(throwable, status, type)
+        .with(MESSAGE_KEY, localizedMessage.messageKey)
+        .with(MESSAGE, localizedMessage.message)
+        .with(MESSAGE_IN_ENGLISH, localizedMessage.messageInEnglish)
+        .with(MESSAGE_IN_PORTUGUESE, localizedMessage.messageInPortuguese);
+    if (throwable instanceof AndroidApiException) {
+      problemBuilder.with("isAndroid", true);
+    }
+    return problemBuilder;
+  }
+
+  @RequiredArgsConstructor
+  private static class LocalizedMessage {
+
+    final String messageKey;
+    final String message;
+    final String messageInEnglish;
+    final String messageInPortuguese;
+
+    LocalizedMessage(FieldViolation violation) {
+      messageKey = violation.getMessageTemplate();
+      message = violation.getMessage();
+      messageInEnglish = violation.getMessageInEnglish();
+      messageInPortuguese = violation.getMessageInPortuguese();
+    }
+
+    LocalizedMessage(Message message, ExposedMessageSource messageSource) {
+      messageKey = message.getKey();
+      this.message = getLocalizedMessage(message, LocaleContextHolder.getLocale(), messageSource);
+      messageInEnglish = getLocalizedMessage(message, Locale.ENGLISH, messageSource);
+      messageInPortuguese = getLocalizedMessage(message, DateFormatConstants.PORTUGAL, messageSource);
+    }
+
+    LocalizedMessage(String messageKey, ExposedMessageSource messageSource) {
+      this(new Message(messageKey), messageSource);
+    }
+
+    private String getLocalizedMessage(Message message, Locale locale, ExposedMessageSource messageSource) {
+      return messageSource.getMessage(message.getKey(), message.getParams(), locale);
+    }
+
   }
 
 }

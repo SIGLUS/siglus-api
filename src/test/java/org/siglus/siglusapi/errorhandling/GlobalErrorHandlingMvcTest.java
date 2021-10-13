@@ -121,15 +121,12 @@ public class GlobalErrorHandlingMvcTest {
     ResultActions response = mockMvc.perform(request).andDo(print());
 
     // when
+    String text = "error: not_existed; nested exception is org.hibernate.exception.ConstraintViolationException";
     response.andExpect(status().isBadRequest())
-        .andExpect(
-            jsonPath("messageKey").value("nested exception is org.hibernate.exception.ConstraintViolationException"))
-        .andExpect(
-            jsonPath("message").value("nested exception is org.hibernate.exception.ConstraintViolationException"))
-        .andExpect(jsonPath("messageInEnglish")
-            .value("nested exception is org.hibernate.exception.ConstraintViolationException"))
-        .andExpect(jsonPath("messageInPortuguese")
-            .value("nested exception is org.hibernate.exception.ConstraintViolationException in Portuguese"));
+        .andExpect(jsonPath("messageKey").value(text))
+        .andExpect(jsonPath("message").value(text))
+        .andExpect(jsonPath("messageInEnglish").value(text))
+        .andExpect(jsonPath("messageInPortuguese").value(text + " in Portuguese"));
   }
 
   @Test
@@ -161,7 +158,9 @@ public class GlobalErrorHandlingMvcTest {
         .andExpect(jsonPath("messageKey").value("siglusapi.error.validationFail"))
         .andExpect(jsonPath("message").value("siglusapi.error.validationFail"))
         .andExpect(jsonPath("fields[0].propertyPath").value("propertyPath"))
-        .andExpect(jsonPath("fields[0].message").value("text"));
+        .andExpect(jsonPath("fields[0].message").value("text"))
+        .andExpect(jsonPath("fields[0].messageInEnglish").value("text"))
+        .andExpect(jsonPath("fields[0].messageInPortuguese").value("text"));
   }
 
 }

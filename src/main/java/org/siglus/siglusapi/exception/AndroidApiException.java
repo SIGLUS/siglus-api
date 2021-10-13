@@ -15,21 +15,12 @@
 
 package org.siglus.siglusapi.exception;
 
-import lombok.Getter;
 import org.siglus.siglusapi.dto.Message;
 
-// it's ok that the class hierarchy this deep
-@SuppressWarnings("java:S110")
-public class OrderNotFoundException extends AndroidApiException {
+public abstract class AndroidApiException extends BaseMessageException {
 
-  private static final String MESSAGE_KEY = "siglusapi.error.android.sync.orderNotFound";
-
-  @Getter
-  private final String orderCode;
-
-  public OrderNotFoundException(String orderCode) {
-    super(new Message(MESSAGE_KEY, orderCode));
-    this.orderCode = orderCode;
+  protected AndroidApiException(Message message) {
+    super(message);
   }
 
 }

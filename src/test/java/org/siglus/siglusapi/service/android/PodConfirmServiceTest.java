@@ -70,7 +70,7 @@ import org.siglus.siglusapi.dto.android.response.LotBasicResponse;
 import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
-import org.siglus.siglusapi.exception.ProductNotSupportException;
+import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.PodConfirmBackupRepository;
 import org.siglus.siglusapi.repository.PodNativeSqlRepository;
@@ -202,7 +202,7 @@ public class PodConfirmServiceTest {
     podConfirmService.confirmPod(podRequest, toUpdate, user, podResponse);
   }
 
-  @Test(expected = ProductNotSupportException.class)
+  @Test(expected = UnsupportedProductsException.class)
   public void shouldThrowNotFoundExceptionWhenContainsUnsupportedProduct() {
     // given
     PodRequest podRequest = mockPodRequest();

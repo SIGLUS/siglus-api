@@ -64,6 +64,7 @@ public class SiglusProgramService {
         .filter(programDto -> programDto.getCode().equals(code))
         .findFirst()
         .orElseThrow(() -> new ValidationMessageException("invalid program code"));
+    // FIXME PROGRAM_CONFIG_ERROR
     return program.getId();
   }
 
