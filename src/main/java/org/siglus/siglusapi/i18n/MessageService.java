@@ -15,19 +15,18 @@
 
 package org.siglus.siglusapi.i18n;
 
-import org.siglus.common.util.Message;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class MessageService {
 
-  @Autowired
-  private ExposedMessageSource messageSource;
+  private final ExposedMessageSource messageSource;
 
-  public Message.LocalizedMessage localize(Message message) {
-    return message.localMessage(messageSource, LocaleContextHolder.getLocale());
+  public String localize(String messageKey, Object... params) {
+    return messageSource.getMessage(messageKey, params, LocaleContextHolder.getLocale());
   }
 
 }

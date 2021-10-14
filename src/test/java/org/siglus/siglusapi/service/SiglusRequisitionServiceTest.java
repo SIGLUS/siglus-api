@@ -28,8 +28,9 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyCollection;
+import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,12 +49,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -137,7 +136,6 @@ import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
-import org.siglus.common.util.Message;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
@@ -165,7 +163,6 @@ import org.siglus.siglusapi.testutils.StockCardRangeSummaryDtoDataBuilder;
 import org.siglus.siglusapi.util.OperatePermissionService;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
-import org.springframework.context.MessageSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -309,9 +306,6 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private SiglusNotificationNotificationService siglusNotificationNotificationService;
-
-  @Mock
-  private MessageSource messageSource;
 
   @Mock
   private RegimenDataProcessor regimenDataProcessor;
@@ -610,8 +604,8 @@ public class SiglusRequisitionServiceTest {
     when(proofOfDeliveryService.get(any())).thenReturn(new ProofOfDeliveryDto());
     when(idealStockAmountReferenceDataService.search(facilityId, processingPeriodId))
         .thenReturn(createIdealStockAmountDtoList());
-    when(siglusApprovedReferenceDataService.getApprovedProducts(any(), any(),
-        anyCollection(), anyBoolean()))
+    when(
+        siglusApprovedReferenceDataService.getApprovedProducts(any(), any(), anyCollectionOf(UUID.class), anyBoolean()))
         .thenReturn(getApprovedProductList());
     when(requisitionService.validateCanApproveRequisition(any(), any()))
         .thenReturn(new ValidationResult());
@@ -765,7 +759,7 @@ public class SiglusRequisitionServiceTest {
     when(siglusUsageReportService.searchUsageReport(any(RequisitionV2Dto.class)))
         .thenAnswer(i -> convert((RequisitionV2Dto) i.getArguments()[0]));
     when(siglusRequisitionRequisitionService.getPreviousEmergencyRequisition(any()))
-        .thenReturn(Arrays.asList(new RequisitionV2Dto()));
+        .thenReturn(singletonList(new RequisitionV2Dto()));
 
     // when
     SiglusRequisitionDto requisition = siglusRequisitionService.searchRequisition(requisitionId);
@@ -938,7 +932,7 @@ public class SiglusRequisitionServiceTest {
         .thenReturn(mockBasicRequisitionDto);
     RequisitionLineItemV2Dto lineItem = new RequisitionLineItemV2Dto();
     lineItem.setId(requisitionLineItemId);
-    siglusRequisitionDto.setRequisitionLineItems(Arrays.asList(lineItem));
+    siglusRequisitionDto.setRequisitionLineItems(singletonList(lineItem));
     when(siglusRequisitionRequisitionService.searchRequisition(requisitionId))
         .thenReturn(siglusRequisitionDto);
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
@@ -961,12 +955,7 @@ public class SiglusRequisitionServiceTest {
     when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
         .thenReturn(right);
     when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
-    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
-      Message message = invocation.getArgumentAt(0, Message.class);
-      return message.localMessage(messageSource, Locale.ENGLISH);
-    });
-    when(messageSource.getMessage(any(), any(), any()))
-        .thenReturn(MESSAGE);
+    when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
         .thenReturn(siglusRequisitionDto);
 
@@ -1046,11 +1035,7 @@ public class SiglusRequisitionServiceTest {
     right.setId(rightId);
     when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE)).thenReturn(right);
     when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
-    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
-      Message message = invocation.getArgumentAt(0, Message.class);
-      return message.localMessage(messageSource, Locale.ENGLISH);
-    });
-    when(messageSource.getMessage(any(), any(), any())).thenReturn(MESSAGE);
+    when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any())).thenReturn(siglusRequisitionDto);
 
     // when
@@ -1097,11 +1082,7 @@ public class SiglusRequisitionServiceTest {
     right.setId(rightId);
     when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE)).thenReturn(right);
     when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
-    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
-      Message message = invocation.getArgumentAt(0, Message.class);
-      return message.localMessage(messageSource, Locale.ENGLISH);
-    });
-    when(messageSource.getMessage(any(), any(), any())).thenReturn(MESSAGE);
+    when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any())).thenReturn(siglusRequisitionDto);
     when(regimenDataProcessor.getRegimenDtoMap()).thenReturn(mockRegimenMap());
 
@@ -1333,12 +1314,7 @@ public class SiglusRequisitionServiceTest {
     when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
         .thenReturn(right);
     when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
-    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
-      Message message = invocation.getArgumentAt(0, Message.class);
-      return message.localMessage(messageSource, Locale.ENGLISH);
-    });
-    when(messageSource.getMessage(any(), any(), any()))
-        .thenReturn(MESSAGE);
+    when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
         .thenReturn(siglusRequisitionDto);
 
@@ -1391,12 +1367,7 @@ public class SiglusRequisitionServiceTest {
     when(rightReferenceDataService.findRight(PermissionService.REQUISITION_APPROVE))
         .thenReturn(right);
     when(programReferenceDataService.findOne(programId)).thenReturn(programDto);
-    when(messageService.localize(any(Message.class))).thenAnswer(invocation -> {
-      Message message = invocation.getArgumentAt(0, Message.class);
-      return message.localMessage(messageSource, Locale.ENGLISH);
-    });
-    when(messageSource.getMessage(any(), any(), any()))
-        .thenReturn(MESSAGE);
+    when(messageService.localize(any(), anyVararg())).thenReturn(MESSAGE);
     when(siglusUsageReportService.saveUsageReportWithValidation(any(), any()))
         .thenReturn(siglusRequisitionDto);
 

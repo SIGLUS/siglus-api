@@ -26,8 +26,7 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.siglus.common.exception.ValidationMessageException;
-import org.siglus.common.util.Message;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.springframework.util.MultiValueMap;
 
 @EqualsAndHashCode

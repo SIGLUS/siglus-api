@@ -32,8 +32,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.collections4.MapUtils;
 import org.openlmis.stockmanagement.util.UuidUtil;
-import org.siglus.common.exception.ValidationMessageException;
-import org.siglus.common.util.Message;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 

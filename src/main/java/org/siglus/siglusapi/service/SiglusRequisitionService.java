@@ -502,10 +502,8 @@ public class SiglusRequisitionService {
     siglusUsageReportService.setUsageTemplateDto(siglusRequisitionDto.getTemplate().getId(), siglusRequisitionDto);
     List<EmailAttachmentDto> emailAttachments = requisitionSimamEmailService
         .prepareEmailAttachmentsForSimam(siglusRequisitionDto, program);
-    String subject = messageService.localize(new org.siglus.common.util.Message(REQUISITION_EMAIL_SUBJECT,
-        siglusRequisitionDto.getId().toString())).getMessage();
-    String emailContent = messageService.localize(new org.siglus.common.util.Message(REQUISITION_EMAIL_CONTENT_PRE
-        + program.getCode().toLowerCase())).getMessage();
+    String subject = messageService.localize(REQUISITION_EMAIL_SUBJECT, siglusRequisitionDto.getId().toString());
+    String emailContent = messageService.localize(REQUISITION_EMAIL_CONTENT_PRE + program.getCode().toLowerCase());
     approvers.forEach(approve -> {
       log.info("send simam email to user {}", approve.getUsername());
       Map<String, MessageSimamDto> messages = new HashMap<>();

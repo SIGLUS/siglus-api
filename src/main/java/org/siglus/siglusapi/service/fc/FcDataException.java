@@ -15,8 +15,8 @@
 
 package org.siglus.siglusapi.service.fc;
 
-import org.siglus.common.exception.BaseMessageException;
-import org.siglus.common.util.Message;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.BaseMessageException;
 
 public class FcDataException extends BaseMessageException {
 

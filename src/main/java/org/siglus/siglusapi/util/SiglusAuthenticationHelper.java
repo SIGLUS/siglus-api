@@ -23,7 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.siglus.common.util.Message;
+import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;

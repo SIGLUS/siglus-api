@@ -29,7 +29,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.common.exception.ValidationMessageException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;

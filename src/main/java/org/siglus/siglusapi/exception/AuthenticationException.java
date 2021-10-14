@@ -15,8 +15,7 @@
 
 package org.siglus.siglusapi.exception;
 
-import org.siglus.common.exception.BaseMessageException;
-import org.siglus.common.util.Message;
+import org.siglus.siglusapi.dto.Message;
 
 public class AuthenticationException extends BaseMessageException {
 

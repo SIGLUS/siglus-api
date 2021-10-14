@@ -16,8 +16,8 @@
 package org.siglus.siglusapi.util;
 
 import java.util.UUID;
-import org.siglus.common.exception.ValidationMessageException;
-import org.siglus.common.util.Message;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -36,8 +36,7 @@ public final class FormatHelper {
       return UUID.fromString(id);
     } catch (IllegalArgumentException ex) {
       throw new ValidationMessageException(ex,
-          new Message("UUID {0} parameter has wrong format for field {1}",
-              id, fieldName));
+          new Message("UUID {0} parameter has wrong format for field {1}", id, fieldName));
     }
   }
 

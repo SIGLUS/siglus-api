@@ -22,22 +22,18 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.siglus.common.util.Message.createFromMessageKeyStr;
+import static org.siglus.siglusapi.dto.Message.createFromMessageKeyStr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.siglus.common.util.Message;
-import org.siglus.common.util.Message.LocalizedMessage;
-import org.springframework.context.MessageSource;
-import org.springframework.context.NoSuchMessageException;
+import org.siglus.siglusapi.dto.Message;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(Message.class)
@@ -52,57 +48,6 @@ public class MessageTest {
   @Test(expected = IllegalArgumentException.class)
   public void messageShouldRequireNonEmptyKey() {
     new Message(" ");
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void localMessageShouldRequireNonEmptyMessage() {
-    MessageSource messageSource = mock(MessageSource.class);
-    Locale locale = Locale.getDefault();
-    Message message = new Message("hi");
-
-    when(messageSource.getMessage("hi", new Object[]{"arg1"}, locale)).thenReturn("");
-
-    message.localMessage(messageSource, locale);
-  }
-
-  @Test(expected = NullPointerException.class)
-  public void shouldThrowNullPointerExceptionWhenNotGetMessage() {
-    MessageSource messageSource = mock(MessageSource.class);
-    Locale locale = Locale.getDefault();
-    Message message = new Message("hi");
-
-    when(messageSource.getMessage("hi", new Object[]{}, locale)).thenReturn(null);
-
-    message.localMessage(messageSource, locale);
-  }
-
-  @Test
-  public void shouldReturnMessageWhenGetLocalMessageShouldReturnMessage() {
-    MessageSource messageSource = mock(MessageSource.class);
-    Locale locale = Locale.getDefault();
-    Message message = new Message("hi", "arg1");
-
-    when(messageSource.getMessage("hi", new Object[]{"arg1"}, locale)).thenReturn("hello");
-
-    LocalizedMessage localizedMessage = message.localMessage(messageSource, locale);
-    assertEquals("hello", localizedMessage.getMessage());
-    assertEquals("hi: hello", localizedMessage.toString());
-  }
-
-  @Test(expected = NoSuchMessageException.class)
-  public void humanStringShouldThrowExceptionIfKeyNotFound() {
-    MessageSource messageSource = mock(MessageSource.class);
-    Locale locale = Locale.getDefault();
-
-    String key = "foo.bar";
-    String p1 = "some";
-    String p2 = "stuff";
-    Message message = new Message("foo.bar", "some", "stuff");
-
-    when(messageSource.getMessage(key, new Object[]{p1, p2}, locale))
-        .thenThrow(NoSuchMessageException.class);
-
-    message.localMessage(messageSource, locale);
   }
 
   @Test

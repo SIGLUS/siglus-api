@@ -15,8 +15,6 @@
 
 package org.siglus.siglusapi.exception;
 
-import org.siglus.common.exception.BaseMessageException;
-
 /**
  * Exception for indicating that an entity explicitly asked for wasn't found.  This should result
  * in a NOT FOUND api response.
