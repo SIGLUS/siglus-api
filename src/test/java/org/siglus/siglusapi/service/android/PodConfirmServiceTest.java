@@ -51,7 +51,6 @@ import org.openlmis.fulfillment.domain.naming.VvmStatus;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.PermissionService;
 import org.openlmis.fulfillment.util.DateHelper;
-import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
@@ -198,7 +197,7 @@ public class PodConfirmServiceTest {
     when(siglusProgramService.getProgramByCode(programCode)).thenReturn(Optional.of(program));
   }
 
-  @Test(expected = ValidationException.class)
+  @Test
   public void shouldThrowValidationExceptionWhenPodIsConfirmed() {
     // given
     ProofOfDelivery toUpdate = mockPod(user, true);
@@ -207,6 +206,9 @@ public class PodConfirmServiceTest {
 
     // when
     podConfirmService.confirmPod(mockPodRequest(), toUpdate, user, podResponse);
+
+    // then
+    verify(fulfillmentPermissionService, times(0)).getPermissionStrings(any());
   }
 
   @Test(expected = UnsupportedProductsException.class)

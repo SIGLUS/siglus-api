@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service.android;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toMap;
-import static org.openlmis.fulfillment.i18n.MessageKeys.PROOF_OF_DELIVERY_ALREADY_CONFIRMED;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,7 +41,6 @@ import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.PermissionService;
 import org.openlmis.fulfillment.util.DateHelper;
-import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
@@ -115,7 +113,7 @@ public class PodConfirmService {
     }
     if (toUpdate.isConfirmed()) {
       log.warn("pod orderCode: {} has been confirmed:", podRequest.getOrderCode());
-      throw new ValidationException(PROOF_OF_DELIVERY_ALREADY_CONFIRMED);
+      return;
     }
     fulfillmentPermissionService.canManagePod(toUpdate);
     checkSupportedProducts(user.getHomeFacilityId(), podRequest);
