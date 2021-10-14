@@ -52,18 +52,4 @@ public class ValidationMessageException extends BaseMessageException {
     super(message, cause);
   }
 
-  /**
-   * Create a new validation exception with the given message and cause. Message is constructed from message key and
-   * message parameters.
-   *
-   * @param cause             the exception.
-   * @param messageKey        the message key for new Message.
-   * @param messageParameters the parameters for Message.
-   * @deprecated since the GlobalErrorHandling won't use the message params to format the message when localizing
-   */
-  @Deprecated
-  public ValidationMessageException(
-      Throwable cause, String messageKey, Object... messageParameters) {
-    super(new Message(messageKey, messageParameters), cause);
-  }
 }

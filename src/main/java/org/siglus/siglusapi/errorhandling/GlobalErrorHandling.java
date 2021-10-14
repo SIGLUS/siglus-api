@@ -107,7 +107,8 @@ public class GlobalErrorHandling implements ProblemHandling {
     List<FieldViolation> fields = violations.stream().map(FieldViolation::new).collect(toList());
     ThrowableProblem problem = fields.stream()
         .filter(fieldViolation -> ANDROID_VIOLATIONS.contains(fieldViolation.getMessageTemplate()))
-        .map(androidViolation -> prepare(new LocalizedMessage(androidViolation), throwable, BAD_REQUEST, DEFAULT_TYPE))
+        .map(androidViolation -> prepare(new LocalizedMessage(androidViolation), throwable, BAD_REQUEST, DEFAULT_TYPE)
+            .with("isAndroid", true))
         .findAny().orElseGet(
             () -> prepare(ERROR_VALIDATION_FAIL, throwable, status, CONSTRAINT_VIOLATION_TYPE).with("fields", fields)
         ).build();

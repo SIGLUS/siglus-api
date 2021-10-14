@@ -137,6 +137,7 @@ public class FcIssueVoucherService implements ProcessDataService {
 
   private final List<String> issueVoucherErrors = new ArrayList<>();
 
+  @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> issueVouchers, String startDate,
       ZonedDateTime previousLastUpdatedAt) {
     log.info("[FC issueVoucher] sync count: {}", issueVouchers.size());
@@ -151,7 +152,7 @@ public class FcIssueVoucherService implements ProcessDataService {
           .distinct()
           .filter(this::isRequisitionNumberExisted)
           .collect(Collectors.toList());
-      for (Object item : issueVoucherList) {
+      for (ResponseBaseDto item : issueVoucherList) {
         IssueVoucherDto issueVoucherDto = (IssueVoucherDto) item;
         PodExtension podExtension = podExtensionRepository.findByClientCodeAndIssueVoucherNumber(
             issueVoucherDto.getClientCode(), issueVoucherDto.getIssueVoucherNumber());
