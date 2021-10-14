@@ -29,12 +29,12 @@ public enum AdjustmentReason {
   EXPIRED_RETURN_FROM_CUSTOMER("Devolução de expirados (US e Depósitos Beneficiários)"),
   EXPIRED_RETURN_TO_SUPPLIER("Devolução de expirados quarentena (ou depósito fornecedor)"),
   INVENTORY_NEGATIVE(
-      "Correcção de inventário, no caso do stock em falta  (stock é inferior ao existente na ficha de stock) "),
+      "Correcção de inventário, no caso do stock em falta (stock é inferior ao existente na ficha de stock)"),
   INVENTORY_POSITIVE(
-      "Correcção de inventário, no caso do stock em excesso (stock é superior ao existente na ficha de stock) "),
+      "Correcção de inventário, no caso do stock em excesso (stock é superior ao existente na ficha de stock)"),
   LOANS_DEPOSIT("Empréstimos (para todos níveis) que dão saída do depósito"),
   LOANS_RECEIVED("Empréstimos (de todos os níveis) que dão entrada no depósito"),
-  PROD_DEFECTIVE("Saída para quarentena, no caso de problemas relativos a qualidade "),
+  PROD_DEFECTIVE("Saída para quarentena, no caso de problemas relativos a qualidade"),
   RETURN_FROM_QUARANTINE("Retorno da quarentena, no caso de se confirmar a qualidade do produto"),
   RETURN_TO_DDM("Devolução para o DDM"),
   UNPACK_KIT("Unpack Kit");
