@@ -20,22 +20,14 @@ import org.siglus.siglusapi.dto.Message;
 
 // it's ok that the class hierarchy this deep
 @SuppressWarnings("java:S110")
-public class UnsupportedProductsException extends AndroidApiException {
+public class InvalidProgramCodeException extends AndroidApiException {
 
   @Getter
-  private final String[] productCodes;
+  private final String programCode;
 
-  private UnsupportedProductsException(String messageKey, String... productCodes) {
-    super(new Message(messageKey, String.join(",", productCodes)));
-    this.productCodes = productCodes;
-  }
-
-  public static UnsupportedProductsException byFacility(String... productCodes) {
-    return new UnsupportedProductsException("siglusapi.error.android.sync.unsupportedProduct", productCodes);
-  }
-
-  public static UnsupportedProductsException byProgram(String... productCodes) {
-    return new UnsupportedProductsException("siglusapi.error.android.sync.unsupportedProduct", productCodes);
+  public InvalidProgramCodeException(String programCode) {
+    super(new Message("siglusapi.error.android.sync.invalid.programCode", programCode));
+    this.programCode = programCode;
   }
 
 }

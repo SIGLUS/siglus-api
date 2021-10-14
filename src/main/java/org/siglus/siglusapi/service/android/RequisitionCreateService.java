@@ -147,6 +147,7 @@ import org.siglus.siglusapi.dto.android.request.RequisitionSignatureRequest;
 import org.siglus.siglusapi.dto.android.request.TestConsumptionLineItemRequest;
 import org.siglus.siglusapi.dto.android.request.UsageInformationLineItemRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
+import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
@@ -226,7 +227,8 @@ public class RequisitionCreateService {
     profiler.setLogger(log);
     String programCode = request.getProgramCode();
     profiler.start("get program");
-    UUID programId = siglusProgramService.getProgramIdByCode(programCode);
+    UUID programId = siglusProgramService.getProgramByCode(programCode).map(org.openlmis.requisition.dto.BaseDto::getId)
+        .orElseThrow(() -> new InvalidProgramCodeException(programCode));
     profiler.start("get user facility");
     UUID homeFacilityId = user.getHomeFacilityId();
     profiler.start("check permission: init req");

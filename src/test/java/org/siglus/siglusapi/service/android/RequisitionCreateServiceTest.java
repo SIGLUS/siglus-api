@@ -53,6 +53,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.domain.RequisitionTemplate;
 import org.openlmis.requisition.domain.requisition.ApprovedProductReference;
@@ -61,6 +62,7 @@ import org.openlmis.requisition.domain.requisition.RequisitionLineItem;
 import org.openlmis.requisition.domain.requisition.VersionEntityReference;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.MetadataDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.dto.ProgramOrderableDto;
 import org.openlmis.requisition.dto.RequisitionV2Dto;
 import org.openlmis.requisition.dto.SupervisoryNodeDto;
@@ -272,7 +274,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     RequisitionTemplate template = new RequisitionTemplate();
     template.setId(templateId);
     when(requisitionTemplateService.findTemplateById(templateId)).thenReturn(template);
-    when(siglusProgramService.getProgramIdByCode("VC")).thenReturn(programId);
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
     orderableDto.setProductCode(vcProductCode);
@@ -302,6 +303,19 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId))
         .thenReturn(Collections.singletonList(mockApprovedProduct(vcProductCode)));
     when(additionalOrderableService.searchAdditionalOrderables(any())).thenReturn(emptyList());
+
+    ProgramDto program = Mockito.mock(ProgramDto.class);
+    when(program.getId()).thenReturn(programId);
+    when(siglusProgramService.getProgramByCode("VC")).thenReturn(Optional.of(program));
+    ProgramDto malariaProgram = Mockito.mock(ProgramDto.class);
+    when(malariaProgram.getId()).thenReturn(malariaProgramId);
+    when(siglusProgramService.getProgramByCode("ML")).thenReturn(Optional.of(malariaProgram));
+    ProgramDto mmiaProgram = Mockito.mock(ProgramDto.class);
+    when(mmiaProgram.getId()).thenReturn(mmiaProgramId);
+    when(siglusProgramService.getProgramByCode("T")).thenReturn(Optional.of(mmiaProgram));
+    ProgramDto rapidTestProgram = Mockito.mock(ProgramDto.class);
+    when(rapidTestProgram.getId()).thenReturn(rapidTestProgramId);
+    when(siglusProgramService.getProgramByCode("TR")).thenReturn(Optional.of(rapidTestProgram));
   }
 
   @Test(expected = PermissionMessageException.class)
@@ -421,7 +435,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(requisitionService.getApproveProduct(facilityId, malariaProgramId, true))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), malariaProgramId));
     when(requisitionTemplateService.findTemplateById(malariaTemplateId)).thenReturn(mlTemplate);
-    when(siglusProgramService.getProgramIdByCode("ML")).thenReturn(malariaProgramId);
     when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
         .thenReturn(buildMlRequisition(mlTemplate));
     when(siglusOrderableService.getOrderableByCode(mlProductCode)).thenReturn(buildOrderableDto());
@@ -456,7 +469,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(requisitionService.getApproveProduct(facilityId, mmiaProgramId, false))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), mmiaProgramId));
     when(requisitionTemplateService.findTemplateById(mmiaTemplateId)).thenReturn(mmiaTemplate);
-    when(siglusProgramService.getProgramIdByCode("T")).thenReturn(mmiaProgramId);
     when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
         .thenReturn(buildMmiaRequisition(mmiaTemplate));
     OrderableDto orderableDto = new OrderableDto();
@@ -511,7 +523,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(requisitionService.getApproveProduct(facilityId, rapidTestProgramId, false))
         .thenReturn(new ApproveProductsAggregator(singletonList(productDto), rapidTestProgramId));
     when(requisitionTemplateService.findTemplateById(rapidtestTemplateId)).thenReturn(trTemplate);
-    when(siglusProgramService.getProgramIdByCode("TR")).thenReturn(rapidTestProgramId);
     when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
         .thenReturn(buildMmiaRequisition(trTemplate));
     OrderableDto orderableDto = new OrderableDto();

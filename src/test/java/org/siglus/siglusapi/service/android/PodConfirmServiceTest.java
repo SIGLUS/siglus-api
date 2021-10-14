@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service.android;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
@@ -52,6 +54,7 @@ import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.fulfillment.web.ValidationException;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
+import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
@@ -173,6 +176,8 @@ public class PodConfirmServiceTest {
   @Mock
   private SupportedProgramsHelper supportedProgramsHelper;
 
+  private final String programCode = "anyCode";
+
   @Before
   public void prepare() {
     orderCode = "orderCode";
@@ -188,26 +193,26 @@ public class PodConfirmServiceTest {
     when(user.getId()).thenReturn(userId);
     when(authHelper.getCurrentUser()).thenReturn(user);
     stockCardLineItems = buildStockCardLineItems();
+    ProgramDto program = mock(ProgramDto.class);
+    when(program.getId()).thenReturn(programId);
+    when(siglusProgramService.getProgramByCode(programCode)).thenReturn(Optional.of(program));
   }
 
   @Test(expected = ValidationException.class)
   public void shouldThrowValidationExceptionWhenPodIsConfirmed() {
     // given
-    PodRequest podRequest = mockPodRequest();
     ProofOfDelivery toUpdate = mockPod(user, true);
     PodResponse podResponse = mockPodResponse();
     when(syncUpHashRepository.findOne(syncUpHash)).thenReturn(null);
 
     // when
-    podConfirmService.confirmPod(podRequest, toUpdate, user, podResponse);
+    podConfirmService.confirmPod(mockPodRequest(), toUpdate, user, podResponse);
   }
 
   @Test(expected = UnsupportedProductsException.class)
   public void shouldThrowNotFoundExceptionWhenContainsUnsupportedProduct() {
     // given
-    PodRequest podRequest = mockPodRequest();
     when(syncUpHashRepository.findOne(syncUpHash)).thenReturn(null);
-    when(siglusProgramService.getProgramIdByCode(podRequest.getProgramCode())).thenReturn(programId);
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setProductCode("02A01");
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
@@ -218,7 +223,7 @@ public class PodConfirmServiceTest {
     PodResponse podResponse = mockPodResponse();
 
     // when
-    podConfirmService.confirmPod(podRequest, toUpdate, user, podResponse);
+    podConfirmService.confirmPod(mockPodRequest(), toUpdate, user, podResponse);
 
     // then
     verify(fulfillmentPermissionService, times(1)).canManagePod(toUpdate);
@@ -230,7 +235,6 @@ public class PodConfirmServiceTest {
     PodRequest podRequest = mockPodRequest();
     podRequest.setOriginNumber(originNumber);
     when(syncUpHashRepository.findOne(syncUpHash)).thenReturn(null);
-    when(siglusProgramService.getProgramIdByCode(podRequest.getProgramCode())).thenReturn(programId);
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setProductCode(orderProductCode);
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
@@ -289,6 +293,7 @@ public class PodConfirmServiceTest {
     PodRequest podRequest = new PodRequest();
     podRequest.setOrderCode(orderCode);
     podRequest.setProducts(products);
+    podRequest.setProgramCode(programCode);
     return podRequest;
   }
 

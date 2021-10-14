@@ -43,6 +43,7 @@ import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.PermissionService;
 import org.openlmis.fulfillment.util.DateHelper;
 import org.openlmis.fulfillment.web.ValidationException;
+import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
@@ -57,6 +58,7 @@ import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
+import org.siglus.siglusapi.exception.InvalidProgramCodeException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.PodConfirmBackupRepository;
@@ -240,7 +242,8 @@ public class PodConfirmService {
 
   private Set<String> getUnsupportedProductsByProgram(String programCode,
       Map<UUID, Set<String>> programIdToProductCodes, Set<String> podProductCodes) {
-    UUID programId = siglusProgramService.getProgramIdByCode(programCode);
+    UUID programId = siglusProgramService.getProgramByCode(programCode).map(BaseDto::getId)
+        .orElseThrow(() -> new InvalidProgramCodeException(programCode));
     Set<String> approvedProductCodes = programIdToProductCodes.get(programId);
     return podProductCodes.stream()
         .filter(code -> !approvedProductCodes.contains(code))

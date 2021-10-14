@@ -18,27 +18,27 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.constant.CacheConstants.CACHE_KEY_GENERATOR;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM;
 import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAMS;
-import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_ID;
+import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_PROGRAM_BY_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_CODE;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_NAME;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class SiglusProgramService {
 
-  @Autowired
-  private ProgramReferenceDataService programRefDataService;
+  private final ProgramReferenceDataService programRefDataService;
 
   @Cacheable(value = SIGLUS_PROGRAMS, keyGenerator = CACHE_KEY_GENERATOR)
   public List<ProgramDto> getPrograms(String code) {
@@ -58,14 +58,9 @@ public class SiglusProgramService {
     return programRefDataService.findOne(programId);
   }
 
-  @Cacheable(value = SIGLUS_PROGRAM_ID, keyGenerator = CACHE_KEY_GENERATOR)
-  public UUID getProgramIdByCode(String code) {
-    ProgramDto program = programRefDataService.findAll().stream()
-        .filter(programDto -> programDto.getCode().equals(code))
-        .findFirst()
-        .orElseThrow(() -> new ValidationMessageException("invalid program code"));
-    // FIXME PROGRAM_CONFIG_ERROR
-    return program.getId();
+  @Cacheable(value = SIGLUS_PROGRAM_BY_CODE, keyGenerator = CACHE_KEY_GENERATOR)
+  public Optional<ProgramDto> getProgramByCode(String code) {
+    return programRefDataService.findAll().stream().filter(programDto -> programDto.getCode().equals(code)).findAny();
   }
 
   private ProgramDto getAllProgramDto() {
