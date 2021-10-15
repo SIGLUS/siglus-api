@@ -41,6 +41,7 @@ import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.repository.OrderRepository;
 import org.openlmis.fulfillment.service.PermissionService;
 import org.openlmis.fulfillment.util.DateHelper;
+import org.openlmis.fulfillment.web.MissingPermissionException;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
@@ -57,6 +58,7 @@ import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.exception.InvalidProgramCodeException;
+import org.siglus.siglusapi.exception.NoPermissionException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.PodConfirmBackupRepository;
@@ -105,6 +107,7 @@ public class PodConfirmService {
   private final SupportedProgramsHelper supportedProgramsHelper;
 
   @Transactional
+  @SuppressWarnings("PMD.PreserveStackTrace")
   public void confirmPod(PodRequest podRequest, ProofOfDelivery toUpdate, UserDto user, PodResponse podResponse) {
     String syncUpHash = podRequest.getSyncUpHash(user);
     if (syncUpHashRepository.findOne(syncUpHash) != null) {
@@ -115,7 +118,11 @@ public class PodConfirmService {
       log.warn("pod orderCode: {} has been confirmed:", podRequest.getOrderCode());
       return;
     }
-    fulfillmentPermissionService.canManagePod(toUpdate);
+    try {
+      fulfillmentPermissionService.canManagePod(toUpdate);
+    } catch (MissingPermissionException e) {
+      throw new NoPermissionException();
+    }
     checkSupportedProducts(user.getHomeFacilityId(), podRequest);
     updatePod(toUpdate, podRequest, user, podResponse);
   }

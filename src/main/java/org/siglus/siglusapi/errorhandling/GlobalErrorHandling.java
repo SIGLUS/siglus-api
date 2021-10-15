@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -50,11 +51,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.zalando.problem.Problem;
 import org.zalando.problem.ProblemBuilder;
+import org.zalando.problem.Status;
 import org.zalando.problem.StatusType;
 import org.zalando.problem.ThrowableProblem;
+import org.zalando.problem.spring.web.advice.HttpStatusAdapter;
 import org.zalando.problem.spring.web.advice.ProblemHandling;
 import org.zalando.problem.spring.web.advice.validation.Violation;
 
@@ -162,8 +166,12 @@ public class GlobalErrorHandling implements ProblemHandling {
 
   private ProblemBuilder prepare(BaseMessageException throwable) {
     Message message = throwable.asMessage();
+    StatusType status = Optional.ofNullable(resolveResponseStatus(throwable))
+        .map(ResponseStatus::code)
+        .<StatusType>map(HttpStatusAdapter::new)
+        .orElse(Status.BAD_REQUEST);
     LocalizedMessage localizedMessage = new LocalizedMessage(message, messageSource);
-    return prepare(localizedMessage, throwable, BAD_REQUEST, Problem.DEFAULT_TYPE);
+    return prepare(localizedMessage, throwable, status, Problem.DEFAULT_TYPE);
   }
 
   private ProblemBuilder prepare(LocalizedMessage localizedMessage, Throwable throwable, StatusType status, URI type) {

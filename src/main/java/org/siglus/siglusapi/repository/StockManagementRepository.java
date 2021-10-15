@@ -265,6 +265,7 @@ public class StockManagementRepository {
   }
 
   public List<CalculatedStockOnHand> findCalculatedStockOnHand(StockCard stockCard, EventTime earliestDate) {
+    // FIXME
     String sql = "SELECT id, stockonhand, occurreddate, processeddate FROM stockmanagement.calculated_stocks_on_hand "
         + "WHERE stockcardid = ? AND occurreddate>= ?";
     return jdbc

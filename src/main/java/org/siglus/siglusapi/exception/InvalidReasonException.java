@@ -15,16 +15,19 @@
 
 package org.siglus.siglusapi.exception;
 
+import lombok.Getter;
 import org.siglus.siglusapi.dto.Message;
 
-public abstract class AndroidApiException extends BaseMessageException {
+// it's ok that the class hierarchy this deep
+@SuppressWarnings("java:S110")
+public class InvalidReasonException extends AndroidApiException {
 
-  protected AndroidApiException(Message message) {
-    super(message);
-  }
+  @Getter
+  private final String reason;
 
-  protected AndroidApiException(Message message, Throwable cause) {
-    super(message, cause);
+  public InvalidReasonException(String reason) {
+    super(new Message("siglusapi.error.android.sync.invalid.reason", reason));
+    this.reason = reason;
   }
 
 }

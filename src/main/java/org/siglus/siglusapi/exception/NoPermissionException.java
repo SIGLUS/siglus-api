@@ -16,15 +16,16 @@
 package org.siglus.siglusapi.exception;
 
 import org.siglus.siglusapi.dto.Message;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-public abstract class AndroidApiException extends BaseMessageException {
+// it's ok that the class hierarchy this deep
+@SuppressWarnings("java:S110")
+@ResponseStatus(HttpStatus.FORBIDDEN)
+public class NoPermissionException extends AndroidApiException {
 
-  protected AndroidApiException(Message message) {
-    super(message);
-  }
-
-  protected AndroidApiException(Message message, Throwable cause) {
-    super(message, cause);
+  public NoPermissionException() {
+    super(new Message("siglusapi.error.android.sync.forbidden"));
   }
 
 }

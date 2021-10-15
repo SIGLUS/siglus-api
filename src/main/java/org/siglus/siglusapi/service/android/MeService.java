@@ -97,6 +97,7 @@ import org.siglus.siglusapi.dto.android.response.ProductSyncResponse;
 import org.siglus.siglusapi.dto.android.response.ProgramResponse;
 import org.siglus.siglusapi.dto.android.response.ReportTypeResponse;
 import org.siglus.siglusapi.dto.android.response.RequisitionResponse;
+import org.siglus.siglusapi.exception.NoPermissionException;
 import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
@@ -336,6 +337,7 @@ public class MeService {
         .getRequisitionResponseByFacilityIdAndDate(facilityId, startDate, orderableIdToCode);
   }
 
+  @SuppressWarnings("PMD.PreserveStackTrace")
   public void createRequisition(RequisitionCreateRequest request) {
     try {
       requisitionCreateService.createRequisition(request);
@@ -344,6 +346,9 @@ public class MeService {
         backupRequisitionRequest(request, e);
       } catch (NullPointerException backupError) {
         log.warn("backup requisition request error", backupError);
+      }
+      if (e instanceof org.openlmis.requisition.web.PermissionMessageException) {
+        throw new NoPermissionException();
       }
       throw e;
     }
