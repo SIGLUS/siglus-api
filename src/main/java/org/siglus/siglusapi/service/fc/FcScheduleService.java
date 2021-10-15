@@ -91,7 +91,7 @@ public class FcScheduleService {
     try {
       if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
         redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        syncCmms("");
+        syncCmms(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
         Thread.sleep(DELAY);
         redisTemplate.delete(redisKey);
       } else {
@@ -111,7 +111,7 @@ public class FcScheduleService {
     try {
       if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
         redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        syncCps("");
+        syncCps(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
         Thread.sleep(DELAY);
         redisTemplate.delete(redisKey);
       } else {
