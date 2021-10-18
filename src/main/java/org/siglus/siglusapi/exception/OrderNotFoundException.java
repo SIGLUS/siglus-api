@@ -30,4 +30,9 @@ public class OrderNotFoundException extends BaseMessageException {
     this.orderCode = orderCode;
   }
 
+  @Override
+  public boolean isAndroidException() {
+    return true;
+  }
+
 }

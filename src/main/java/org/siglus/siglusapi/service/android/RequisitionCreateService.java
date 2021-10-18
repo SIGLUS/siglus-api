@@ -228,7 +228,7 @@ public class RequisitionCreateService {
     String programCode = request.getProgramCode();
     profiler.start("get program");
     UUID programId = siglusProgramService.getProgramByCode(programCode).map(org.openlmis.requisition.dto.BaseDto::getId)
-        .orElseThrow(() -> InvalidProgramCodeException.asAndroidException(programCode));
+        .orElseThrow(() -> InvalidProgramCodeException.requisition(programCode));
     profiler.start("get user facility");
     UUID homeFacilityId = user.getHomeFacilityId();
     profiler.start("check permission: init req");

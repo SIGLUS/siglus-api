@@ -24,18 +24,19 @@ public class InvalidProgramCodeException extends BaseMessageException {
   private final String programCode;
   private final boolean isAndroidException;
 
-  private InvalidProgramCodeException(String programCode, boolean isAndroidException) {
-    super(new Message("siglusapi.error.android.sync.invalid.programCode", programCode));
+  private InvalidProgramCodeException(String messageKey, String programCode, boolean isAndroidException) {
+    super(new Message(messageKey, programCode));
     this.programCode = programCode;
     this.isAndroidException = isAndroidException;
   }
 
-  public static InvalidProgramCodeException asNormalException(String programCode) {
-    return new InvalidProgramCodeException(programCode, false);
+  public static InvalidProgramCodeException general(String programCode) {
+    return new InvalidProgramCodeException("siglusapi.error.android.sync.invalid.programCode", programCode, false);
   }
 
-  public static InvalidProgramCodeException asAndroidException(String programCode) {
-    return new InvalidProgramCodeException(programCode, true);
+  public static InvalidProgramCodeException requisition(String programCode) {
+    return new InvalidProgramCodeException("siglusapi.error.android.sync.invalid.programCode.requisition", programCode,
+        true);
   }
 
   @Override

@@ -24,17 +24,17 @@ public class NoPermissionException extends BaseMessageException {
 
   private final boolean isAndroidException;
 
-  private NoPermissionException(boolean isAndroidException) {
-    super(new Message("siglusapi.error.android.sync.forbidden"));
+  private NoPermissionException(String messageKey, boolean isAndroidException) {
+    super(new Message(messageKey));
     this.isAndroidException = isAndroidException;
   }
 
-  public static NoPermissionException asNormalException() {
-    return new NoPermissionException(false);
+  public static NoPermissionException general() {
+    return new NoPermissionException("siglusapi.error.android.sync.forbidden", false);
   }
 
-  public static NoPermissionException asAndroidException() {
-    return new NoPermissionException(true);
+  public static NoPermissionException requisition() {
+    return new NoPermissionException("siglusapi.error.android.sync.forbidden.requisition", true);
   }
 
   @Override

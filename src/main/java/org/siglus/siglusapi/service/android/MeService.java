@@ -348,7 +348,8 @@ public class MeService {
         log.warn("backup requisition request error", backupError);
       }
       if (e instanceof org.openlmis.requisition.web.PermissionMessageException) {
-        throw NoPermissionException.asAndroidException();
+        log.warn("forbidden!", e);
+        throw NoPermissionException.requisition();
       }
       throw e;
     }

@@ -121,7 +121,8 @@ public class PodConfirmService {
     try {
       fulfillmentPermissionService.canManagePod(toUpdate);
     } catch (MissingPermissionException e) {
-      throw NoPermissionException.asNormalException();
+      log.warn("forbidden!", e);
+      throw NoPermissionException.general();
     }
     checkSupportedProducts(user.getHomeFacilityId(), podRequest);
     updatePod(toUpdate, podRequest, user, podResponse);
@@ -248,7 +249,7 @@ public class PodConfirmService {
   private Set<String> getUnsupportedProductsByProgram(String programCode,
       Map<UUID, Set<String>> programIdToProductCodes, Set<String> podProductCodes) {
     UUID programId = siglusProgramService.getProgramByCode(programCode).map(BaseDto::getId)
-        .orElseThrow(() -> InvalidProgramCodeException.asNormalException(programCode));
+        .orElseThrow(() -> InvalidProgramCodeException.general(programCode));
     Set<String> approvedProductCodes = programIdToProductCodes.get(programId);
     return podProductCodes.stream()
         .filter(code -> !approvedProductCodes.contains(code))
