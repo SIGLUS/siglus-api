@@ -18,9 +18,7 @@ package org.siglus.siglusapi.exception;
 import lombok.Getter;
 import org.siglus.siglusapi.dto.Message;
 
-// it's ok that the class hierarchy this deep
-@SuppressWarnings("java:S110")
-public class InvalidReasonException extends AndroidApiException {
+public class InvalidReasonException extends BaseMessageException {
 
   @Getter
   private final String reason;

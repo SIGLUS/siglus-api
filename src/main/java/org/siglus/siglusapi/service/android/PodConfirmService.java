@@ -121,7 +121,7 @@ public class PodConfirmService {
     try {
       fulfillmentPermissionService.canManagePod(toUpdate);
     } catch (MissingPermissionException e) {
-      throw new NoPermissionException();
+      throw NoPermissionException.asNormalException();
     }
     checkSupportedProducts(user.getHomeFacilityId(), podRequest);
     updatePod(toUpdate, podRequest, user, podResponse);
@@ -226,12 +226,12 @@ public class PodConfirmService {
     Set<String> unsupportedByFacilityProductCodes = getUnsupportedProductsByFacility(programIdToProductCodes,
         podProductCodes);
     if (!CollectionUtils.isEmpty(unsupportedByFacilityProductCodes)) {
-      throw UnsupportedProductsException.byFacility(unsupportedByFacilityProductCodes.toArray(new String[0]));
+      throw UnsupportedProductsException.asNormalException(unsupportedByFacilityProductCodes.toArray(new String[0]));
     }
     Set<String> unsupportedByProgramProductCodes = getUnsupportedProductsByProgram(podRequest.getProgramCode(),
         programIdToProductCodes, podProductCodes);
     if (!CollectionUtils.isEmpty(unsupportedByProgramProductCodes)) {
-      throw UnsupportedProductsException.byProgram(unsupportedByProgramProductCodes.toArray(new String[0]));
+      throw UnsupportedProductsException.asNormalException(unsupportedByProgramProductCodes.toArray(new String[0]));
     }
   }
 
@@ -248,7 +248,7 @@ public class PodConfirmService {
   private Set<String> getUnsupportedProductsByProgram(String programCode,
       Map<UUID, Set<String>> programIdToProductCodes, Set<String> podProductCodes) {
     UUID programId = siglusProgramService.getProgramByCode(programCode).map(BaseDto::getId)
-        .orElseThrow(() -> new InvalidProgramCodeException(programCode));
+        .orElseThrow(() -> InvalidProgramCodeException.asNormalException(programCode));
     Set<String> approvedProductCodes = programIdToProductCodes.get(programId);
     return podProductCodes.stream()
         .filter(code -> !approvedProductCodes.contains(code))

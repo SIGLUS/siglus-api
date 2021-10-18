@@ -46,7 +46,7 @@ import org.siglus.siglusapi.util.HashEncoder;
 public class RequisitionCreateRequest {
 
   @NotBlank
-  @Pattern(regexp = "(ML)|(TR)|(T)|(VC)", message = "The program code is invalid.")
+  @Pattern(regexp = "(ML)|(TR)|(T)|(VC)", message = "{siglusapi.error.android.sync.invalid.programCode}")
   private String programCode;
 
   @NotNull

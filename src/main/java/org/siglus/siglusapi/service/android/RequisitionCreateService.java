@@ -228,7 +228,7 @@ public class RequisitionCreateService {
     String programCode = request.getProgramCode();
     profiler.start("get program");
     UUID programId = siglusProgramService.getProgramByCode(programCode).map(org.openlmis.requisition.dto.BaseDto::getId)
-        .orElseThrow(() -> new InvalidProgramCodeException(programCode));
+        .orElseThrow(() -> InvalidProgramCodeException.asAndroidException(programCode));
     profiler.start("get user facility");
     UUID homeFacilityId = user.getHomeFacilityId();
     profiler.start("check permission: init req");
@@ -342,12 +342,12 @@ public class RequisitionCreateService {
     Set<String> facilityUnsupportedProductCodes = getUnsupportedProductsByFacility(programIdToProductCodes,
         requisitionProductCodes);
     if (!isEmpty(facilityUnsupportedProductCodes)) {
-      throw UnsupportedProductsException.byFacility(facilityUnsupportedProductCodes.toArray(new String[0]));
+      throw UnsupportedProductsException.asAndroidException(facilityUnsupportedProductCodes.toArray(new String[0]));
     }
     Set<String> programUnsupportedProductCodes = getUnsupportedProductsByProgram(programId,
         programIdToProductCodes, requisitionProductCodes);
     if (!isEmpty(programUnsupportedProductCodes)) {
-      throw UnsupportedProductsException.byProgram(programUnsupportedProductCodes.toArray(new String[0]));
+      throw UnsupportedProductsException.asAndroidException(programUnsupportedProductCodes.toArray(new String[0]));
     }
   }
 

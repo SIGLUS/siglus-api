@@ -18,16 +18,29 @@ package org.siglus.siglusapi.exception;
 import lombok.Getter;
 import org.siglus.siglusapi.dto.Message;
 
-// it's ok that the class hierarchy this deep
-@SuppressWarnings("java:S110")
-public class InvalidProgramCodeException extends AndroidApiException {
+public class InvalidProgramCodeException extends BaseMessageException {
 
   @Getter
   private final String programCode;
+  private final boolean isAndroidException;
 
-  public InvalidProgramCodeException(String programCode) {
+  private InvalidProgramCodeException(String programCode, boolean isAndroidException) {
     super(new Message("siglusapi.error.android.sync.invalid.programCode", programCode));
     this.programCode = programCode;
+    this.isAndroidException = isAndroidException;
+  }
+
+  public static InvalidProgramCodeException asNormalException(String programCode) {
+    return new InvalidProgramCodeException(programCode, false);
+  }
+
+  public static InvalidProgramCodeException asAndroidException(String programCode) {
+    return new InvalidProgramCodeException(programCode, true);
+  }
+
+  @Override
+  public boolean isAndroidException() {
+    return isAndroidException;
   }
 
 }

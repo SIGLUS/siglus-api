@@ -18,24 +18,29 @@ package org.siglus.siglusapi.exception;
 import lombok.Getter;
 import org.siglus.siglusapi.dto.Message;
 
-// it's ok that the class hierarchy this deep
-@SuppressWarnings("java:S110")
-public class UnsupportedProductsException extends AndroidApiException {
+public class UnsupportedProductsException extends BaseMessageException {
 
   @Getter
   private final String[] productCodes;
+  private final boolean isAndroidException;
 
-  private UnsupportedProductsException(String messageKey, String... productCodes) {
-    super(new Message(messageKey, String.join(",", productCodes)));
+  private UnsupportedProductsException(String[] productCodes, boolean isAndroidException) {
+    super(new Message("siglusapi.error.android.sync.unsupportedProduct", String.join(",", productCodes)));
     this.productCodes = productCodes;
+    this.isAndroidException = isAndroidException;
   }
 
-  public static UnsupportedProductsException byFacility(String... productCodes) {
-    return new UnsupportedProductsException("siglusapi.error.android.sync.unsupportedProduct", productCodes);
+  public static UnsupportedProductsException asNormalException(String... productCodes) {
+    return new UnsupportedProductsException(productCodes, false);
   }
 
-  public static UnsupportedProductsException byProgram(String... productCodes) {
-    return new UnsupportedProductsException("siglusapi.error.android.sync.unsupportedProduct", productCodes);
+  public static UnsupportedProductsException asAndroidException(String... productCodes) {
+    return new UnsupportedProductsException(productCodes, true);
+  }
+
+  @Override
+  public boolean isAndroidException() {
+    return isAndroidException;
   }
 
 }

@@ -46,4 +46,8 @@ public abstract class BaseMessageException extends RuntimeException {
     return this.message.toString();
   }
 
+  public boolean isAndroidException() {
+    return false;
+  }
+
 }

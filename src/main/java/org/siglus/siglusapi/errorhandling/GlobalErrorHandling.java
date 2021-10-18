@@ -38,7 +38,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.siglus.common.constant.DateFormatConstants;
 import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.dto.Message;
-import org.siglus.siglusapi.exception.AndroidApiException;
 import org.siglus.siglusapi.exception.BaseMessageException;
 import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
@@ -84,6 +83,7 @@ public class GlobalErrorHandling implements ProblemHandling {
     CONSTRAINT_MAP.put("unq_programid_additionalorderableid", MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
     HashSet<String> androidViolations = new HashSet<>();
     androidViolations.add("{org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate.message}");
+    androidViolations.add("{siglusapi.error.android.sync.invalid.programCode}");
     ANDROID_VIOLATIONS = Collections.unmodifiableSet(androidViolations);
   }
 
@@ -180,8 +180,8 @@ public class GlobalErrorHandling implements ProblemHandling {
         .with(MESSAGE, localizedMessage.message)
         .with(MESSAGE_IN_ENGLISH, localizedMessage.messageInEnglish)
         .with(MESSAGE_IN_PORTUGUESE, localizedMessage.messageInPortuguese);
-    if (throwable instanceof AndroidApiException) {
-      problemBuilder.with("isAndroid", true);
+    if (throwable instanceof BaseMessageException) {
+      problemBuilder.with("isAndroid", ((BaseMessageException) throwable).isAndroidException());
     }
     return problemBuilder;
   }

@@ -19,13 +19,27 @@ import org.siglus.siglusapi.dto.Message;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-// it's ok that the class hierarchy this deep
-@SuppressWarnings("java:S110")
 @ResponseStatus(HttpStatus.FORBIDDEN)
-public class NoPermissionException extends AndroidApiException {
+public class NoPermissionException extends BaseMessageException {
 
-  public NoPermissionException() {
+  private final boolean isAndroidException;
+
+  private NoPermissionException(boolean isAndroidException) {
     super(new Message("siglusapi.error.android.sync.forbidden"));
+    this.isAndroidException = isAndroidException;
+  }
+
+  public static NoPermissionException asNormalException() {
+    return new NoPermissionException(false);
+  }
+
+  public static NoPermissionException asAndroidException() {
+    return new NoPermissionException(true);
+  }
+
+  @Override
+  public boolean isAndroidException() {
+    return isAndroidException;
   }
 
 }
