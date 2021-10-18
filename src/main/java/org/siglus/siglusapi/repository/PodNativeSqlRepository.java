@@ -29,6 +29,7 @@ import org.siglus.siglusapi.dto.android.db.PodLineItem;
 import org.siglus.siglusapi.dto.android.db.ShipmentLineItem;
 import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
+import org.siglus.siglusapi.exception.InvalidReasonException;
 import org.siglus.siglusapi.service.SiglusStockEventsService;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -56,11 +57,13 @@ public class PodNativeSqlRepository {
           lotDto = siglusStockEventsService.createNewLotOrReturnExisted(
               facilityId, orderableDto, lotLineRequest.getLot().getCode(), lotLineRequest.getLot().getExpirationDate());
         }
+        UUID reasonId = rejectReasonToId.get(lotLineRequest.getRejectedReason());
+        if (reasonId == null) {
+          throw new InvalidReasonException(lotLineRequest.getRejectedReason());
+        }
         podLineItems.add(PodLineItem.of(podId, lotLineRequest.getNotes(), lotLineRequest.getAcceptedQuantity(),
-            lotLineRequest.getShippedQuantity() - lotLineRequest.getAcceptedQuantity(),
-                orderableDto.getId(), lotDto.getId(), null, false,
-                rejectReasonToId.get(lotLineRequest.getRejectedReason()),
-                orderableDto.getVersionNumber()));
+            lotLineRequest.getShippedQuantity() - lotLineRequest.getAcceptedQuantity(), orderableDto.getId(),
+            lotDto.getId(), null, false, reasonId, orderableDto.getVersionNumber()));
         shipmentLineItems.add(ShipmentLineItem
             .of(orderableDto.getId(), lotDto.getId(), lotLineRequest.getShippedQuantity(), shipmentId, "",
                 orderableDto.getVersionNumber()));
