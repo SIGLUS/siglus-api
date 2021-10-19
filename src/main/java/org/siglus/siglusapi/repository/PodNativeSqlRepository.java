@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.repository;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -58,7 +60,7 @@ public class PodNativeSqlRepository {
               facilityId, orderableDto, lotLineRequest.getLot().getCode(), lotLineRequest.getLot().getExpirationDate());
         }
         UUID reasonId = rejectReasonToId.get(lotLineRequest.getRejectedReason());
-        if (reasonId == null) {
+        if (isNotBlank(lotLineRequest.getRejectedReason()) && reasonId == null) {
           throw new InvalidReasonException(lotLineRequest.getRejectedReason());
         }
         podLineItems.add(PodLineItem.of(podId, lotLineRequest.getNotes(), lotLineRequest.getAcceptedQuantity(),

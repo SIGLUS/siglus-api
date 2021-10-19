@@ -265,7 +265,6 @@ public class StockManagementRepository {
   }
 
   public List<CalculatedStockOnHand> findCalculatedStockOnHand(StockCard stockCard, EventTime earliestDate) {
-    // FIXME
     String sql = "SELECT DISTINCT ON (root.id) root.id, stockonhand, "
         + "l.extradata :: json ->> 'originEventTime' as recordedat, root.occurreddate, root.processeddate "
         + "FROM stockmanagement.calculated_stocks_on_hand root "
