@@ -266,8 +266,14 @@ public class StockManagementRepository {
 
   public List<CalculatedStockOnHand> findCalculatedStockOnHand(StockCard stockCard, EventTime earliestDate) {
     // FIXME
-    String sql = "SELECT id, stockonhand, occurreddate, processeddate FROM stockmanagement.calculated_stocks_on_hand "
-        + "WHERE stockcardid = ? AND occurreddate>= ?";
+    String sql = "SELECT DISTINCT ON (root.id) root.id, stockonhand, "
+        + "l.extradata :: json ->> 'originEventTime' as recordedat, root.occurreddate, root.processeddate "
+        + "FROM stockmanagement.calculated_stocks_on_hand root "
+        + "LEFT JOIN stockmanagement.stock_card_line_items l "
+        + "ON root.stockcardid = l.stockcardid AND root.occurreddate = l.occurreddate "
+        + "WHERE l.stockcardid = ? "
+        + "AND l.occurreddate = ? "
+        + "ORDER BY root.id, l.processeddate DESC";
     return jdbc
         .query(sql, calculatedStockOnHandExtractor(stockCard), stockCard.getId(), earliestDate.getOccurredDate());
   }
