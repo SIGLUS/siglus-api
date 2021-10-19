@@ -24,6 +24,7 @@ import org.mapstruct.Named;
 import org.openlmis.fulfillment.domain.ProofOfDeliveryLineItem;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
 import org.siglus.siglusapi.dto.LotDto;
+import org.siglus.siglusapi.dto.android.enumeration.RejectionReason;
 import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
 
 @Mapper(componentModel = "spring", uses = LotMapper.class)
@@ -39,7 +40,7 @@ public interface PodLotLineMapper {
 
   @Named("toReason")
   default String toReason(UUID reasonId, @Context Map<UUID, String> allReasons) {
-    return allReasons.get(reasonId);
+    return RejectionReason.findByName(allReasons.get(reasonId)).map(Enum::name).orElse(null);
   }
 
   @Mapping(target = "lot", source = "lotId")

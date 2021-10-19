@@ -206,7 +206,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         .andExpect(jsonPath("[0].products[0].lots[0].lot.expirationDate").value("2023-06-30"))
         .andExpect(jsonPath("[0].products[0].lots[0].shippedQuantity").value(20))
         .andExpect(jsonPath("[0].products[0].lots[0].acceptedQuantity").value(10))
-        .andExpect(jsonPath("[0].products[0].lots[0].rejectedReason").value("reject"))
+        .andExpect(jsonPath("[0].products[0].lots[0].rejectedReason").value("DAMAGED"))
         .andExpect(jsonPath("[0].products[0].lots[0].notes").value("123"))
         .andExpect(jsonPath("[1].shippedDate").value("2020-10-02"))
         .andExpect(jsonPath("[1].receivedDate").value("2020-11-01"))
@@ -347,18 +347,19 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   }
 
   private void mockReasons() {
-    ValidReasonAssignmentDto reason1 = mock(ValidReasonAssignmentDto.class);
+    ValidReasonAssignmentDto reasonAssigment1 = mock(ValidReasonAssignmentDto.class);
+    when(reasonAssigment1.getId()).thenReturn(UUID.randomUUID());
+    StockCardLineItemReason reason1 = mock(StockCardLineItemReason.class);
+    when(reason1.getName()).thenReturn("Danificado/quebrado/derramado");
     when(reason1.getId()).thenReturn(reasonId);
-    StockCardLineItemReason reason = mock(StockCardLineItemReason.class);
-    when(reason.getName()).thenReturn("reject");
-    when(reason1.getReason()).thenReturn(reason);
-    ValidReasonAssignmentDto reason2 = mock(ValidReasonAssignmentDto.class);
+    when(reasonAssigment1.getReason()).thenReturn(reason1);
+    ValidReasonAssignmentDto reasonAssigment2 = mock(ValidReasonAssignmentDto.class);
+    when(reasonAssigment2.getId()).thenReturn(UUID.randomUUID());
+    StockCardLineItemReason reason2 = mock(StockCardLineItemReason.class);
     when(reason2.getId()).thenReturn(UUID.randomUUID());
-    StockCardLineItemReason mockReason = mock(StockCardLineItemReason.class);
-    when(mockReason.getName()).thenReturn("nothing");
-    when(reason2.getReason()).thenReturn(mockReason);
-    when(validReasonAssignmentService.getValidReasonsForAllProducts(any(), any(), any()))
-        .thenReturn(asList(reason1, reason2));
+    when(reason2.getName()).thenReturn("nothing");
+    when(reasonAssigment2.getReason()).thenReturn(reason2);
+    when(validReasonAssignmentService.getAllReasons(any())).thenReturn(asList(reasonAssigment1, reasonAssigment2));
   }
 
   private void mockAuth() {

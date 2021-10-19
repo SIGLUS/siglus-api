@@ -56,6 +56,7 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.BaseDto;
@@ -393,9 +394,11 @@ public class MeService {
         .collect(Collectors.toSet());
     Map<UUID, LotDto> lotIdToLot = lotReferenceDataService.findByIds(lotIds).stream()
         .collect(toMap(BaseDto::getId, Function.identity()));
-    Map<UUID, String> reasonIdToName = validReasonAssignmentService
-        .getValidReasonsForAllProducts(homeFacility.getType().getId(), null, null).stream()
-        .collect(toMap(ValidReasonAssignmentDto::getId, r -> r.getReason().getName()));
+    Map<UUID, String> reasonIdToName =
+        validReasonAssignmentService.getAllReasons(homeFacility.getType().getId()).stream()
+            .map(ValidReasonAssignmentDto::getReason)
+            .distinct()
+            .collect(toMap(org.openlmis.stockmanagement.domain.BaseEntity::getId, StockCardLineItemReason::getName));
     Map<UUID, Requisition> orderIdToRequisition = orderIdToOrder.entrySet().stream()
         .collect(toMap(Entry::getKey, e -> orderService.getRequisitionByOrder(e.getValue())));
     return pods.stream()

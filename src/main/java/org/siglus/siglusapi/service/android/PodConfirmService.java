@@ -147,8 +147,7 @@ public class PodConfirmService {
     updateStockCardLineItems(user.getHomeFacilityId(), podRequest, orderableCodeToLots);
     updateOrder(toUpdatePod, user, podRequest, requestOrderables);
     FacilityDto homeFacility = facilityReferenceDataService.getFacilityById(user.getHomeFacilityId());
-    Map<String, UUID> reasonNameToId = validReasonAssignmentService
-        .getValidReasonsForAllProducts(homeFacility.getType().getId(), null, null)
+    Map<String, UUID> reasonNameToId = validReasonAssignmentService.getAllReasons(homeFacility.getType().getId())
         .stream()
         .map(ValidReasonAssignmentDto::getReason)
         .distinct()
