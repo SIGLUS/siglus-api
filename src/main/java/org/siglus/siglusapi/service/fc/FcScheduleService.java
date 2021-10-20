@@ -88,61 +88,24 @@ public class FcScheduleService {
   @Transactional
   public void syncCmmsScheduler() {
     String redisKey = "syncCmms";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        syncCmms(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("[FC cmm] cmm is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
+    processTask(redisKey, () -> syncCmms(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT))));
   }
 
   @Scheduled(cron = "${fc.cp.cron}", zone = TIME_ZONE_ID)
   @Transactional
   public void syncCpsScheduler() {
     String redisKey = "syncCps";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        syncCps(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("[FC cp] cp is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
+    processTask(redisKey, () -> syncCps(LocalDate.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT))));
   }
 
   @Scheduled(cron = "${fc.receiptplan.cron}", zone = TIME_ZONE_ID)
   @Transactional
   public void syncReceiptPlansScheduler() {
     String redisKey = "syncReceiptPlans";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        ZonedDateTime lastUpdatedAt = fcIntegrationResultService.getLastUpdatedAt(RECEIPT_PLAN_API);
-        siglusReceiptPlanService.processingReceiptPlans(lastUpdatedAt.format(getFormatter(RECEIPT_PLAN_API)));
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("[FC receiptPlan] receiptPlans is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
+    processTask(redisKey, () -> {
+      ZonedDateTime lastUpdatedAt = fcIntegrationResultService.getLastUpdatedAt(RECEIPT_PLAN_API);
+      siglusReceiptPlanService.processingReceiptPlans(lastUpdatedAt.format(getFormatter(RECEIPT_PLAN_API)));
+    });
   }
 
 
@@ -150,21 +113,10 @@ public class FcScheduleService {
   @Transactional
   public void syncIssueVouchersScheduler() {
     String redisKey = "syncIssueVouchers";
-    try {
-      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
-        redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
-        ZonedDateTime lastUpdatedAt = fcIntegrationResultService.getLastUpdatedAt(ISSUE_VOUCHER_API);
-        issueVoucherService.updateIssueVoucher(lastUpdatedAt.format(getFormatter(ISSUE_VOUCHER_API)));
-        Thread.sleep(DELAY);
-        redisTemplate.delete(redisKey);
-      } else {
-        log.info("[FC issueVoucher] issueVouchers is synchronizing by another thread.");
-      }
-    } catch (Exception e) {
-      log.error(e.getMessage());
-      redisTemplate.delete(redisKey);
-      Thread.currentThread().interrupt();
-    }
+    processTask(redisKey, () -> {
+      ZonedDateTime lastUpdatedAt = fcIntegrationResultService.getLastUpdatedAt(ISSUE_VOUCHER_API);
+      issueVoucherService.updateIssueVoucher(lastUpdatedAt.format(getFormatter(ISSUE_VOUCHER_API)));
+    });
   }
   
   @Transactional
@@ -225,6 +177,25 @@ public class FcScheduleService {
   public void syncFacilityTypes(String date) {
     log.info("[FC facilityType] start sync");
     process(FACILITY_TYPE_API, date);
+  }
+
+  private void processTask(String redisKey, Runnable task) {
+    try {
+      if (Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, SYNCHRONIZING))) {
+        try {
+          redisTemplate.opsForValue().set(redisKey, SYNCHRONIZING, TIMEOUT, TimeUnit.HOURS);
+          task.run();
+          Thread.sleep(DELAY);
+        } finally {
+          redisTemplate.delete(redisKey);
+        }
+      } else {
+        log.info("[FC {}] {} is synchronizing by another thread.", redisKey, redisKey);
+      }
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+      Thread.currentThread().interrupt();
+    }
   }
 
   private void process(String api, String date) {

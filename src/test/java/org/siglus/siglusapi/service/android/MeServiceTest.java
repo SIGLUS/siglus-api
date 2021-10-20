@@ -732,7 +732,7 @@ public class MeServiceTest {
       service.createStockCards(stockCardCreateRequests);
     } catch (Exception e) {
       // then
-      verify(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests, any());
+      verify(stockCardCreateServiceMock).createStockCards(eq(stockCardCreateRequests), any());
       verify(stockCardRequestBackupRepository).save(stockCardRequestBackupArgumentCaptor.capture());
     }
   }
@@ -754,7 +754,7 @@ public class MeServiceTest {
       service.createStockCards(stockCardCreateRequests);
     } catch (Exception e) {
       // then
-      verify(stockCardCreateServiceMock).createStockCards(stockCardCreateRequests, any());
+      verify(stockCardCreateServiceMock).createStockCards(eq(stockCardCreateRequests), any());
       verify(stockCardRequestBackupRepository, times(0)).save(backup);
     }
   }
