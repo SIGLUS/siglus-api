@@ -428,6 +428,11 @@ public class StockManagementRepository {
   }
 
   @SneakyThrows
+  private boolean readIsInitInventory(ResultSet rs) {
+    return rs.getBoolean("isinitinventory");
+  }
+
+  @SneakyThrows
   private EventTime readEventTime(ResultSet rs) {
     java.sql.Date occurredDate = readAsDate(rs, "occurreddate");
     String recordedAtStr = readAsString(rs, "recordedat");
@@ -448,6 +453,7 @@ public class StockManagementRepository {
         .inventoryReason(readAsString(rs, "inventoryreason"))
         .inventoryReasonType(readAsString(rs, "inventoryreasontype"))
         .unsignedInventoryAdjustment(readAsInt(rs, "inventoryadjustment"))
+        .isInitInventory(readIsInitInventory(rs))
         .build();
   }
 
@@ -506,6 +512,7 @@ public class StockManagementRepository {
         + "l.lotcode, "
         + "root.occurreddate, "
         + "root.extradata :: json ->> 'originEventTime' as recordedat, "
+        + "COALESCE(root.extradata :: json ->> 'isInitInventory', 'false') as isinitinventory, "
         + "root.quantity, "
         + "srcorg.name AS srcname, "
         + "destorg.name AS destname, "

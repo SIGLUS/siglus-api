@@ -25,6 +25,9 @@ public enum MovementType {
   PHYSICAL_INVENTORY() {
     @Override
     public String getReason(String reasonName, Integer adjustment) {
+      if (INVENTORY.equals(reasonName)) {
+        return INVENTORY;
+      }
       if (adjustment < 0) {
         return INVENTORY_NEGATIVE;
       } else if (adjustment > 0) {

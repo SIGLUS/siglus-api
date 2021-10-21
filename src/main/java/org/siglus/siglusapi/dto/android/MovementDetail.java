@@ -45,38 +45,25 @@ public class MovementDetail {
   @Builder(access = AccessLevel.PUBLIC)
   private static MovementDetail of(Integer unsignedAdjustment, String sourceName, String sourceFacilityName,
       String destinationName, String destinationFacilityName, String adjustmentReason, String adjustmentReasonType,
-      Integer unsignedInventoryAdjustment, String inventoryReason, String inventoryReasonType) {
-    MovementType movementType;
-    Integer adjustment;
-    String reason;
+      Integer unsignedInventoryAdjustment, String inventoryReason, String inventoryReasonType,
+      boolean isInitInventory) {
     if (sourceName != null || sourceFacilityName != null) {
-      movementType = MovementType.RECEIVE;
-      adjustment = unsignedAdjustment;
-      reason = sourceName != null ? sourceName : sourceFacilityName;
+      return receive(unsignedAdjustment, sourceName != null ? sourceName : sourceFacilityName);
     } else if (destinationName != null || destinationFacilityName != null) {
-      movementType = MovementType.ISSUE;
-      adjustment = -unsignedAdjustment;
-      reason = destinationName != null ? destinationName : destinationFacilityName;
+      return issue(-unsignedAdjustment, destinationName != null ? destinationName : destinationFacilityName);
     } else if (adjustmentReason != null) {
-      if ("Unpack Kit".equals(adjustmentReason)) {
-        movementType = MovementType.UNPACK_KIT;
-        adjustment = -unsignedAdjustment;
-        reason = null;
-      } else {
-        movementType = MovementType.ADJUSTMENT;
-        adjustment = getDirection(adjustmentReasonType) * unsignedAdjustment;
-        reason = adjustmentReason;
-      }
+      return adjustment(unsignedAdjustment, adjustmentReason, adjustmentReasonType);
     } else if (inventoryReason != null) {
-      movementType = MovementType.PHYSICAL_INVENTORY;
-      adjustment = getDirection(inventoryReasonType) * unsignedInventoryAdjustment;
-      reason = inventoryReason;
+      return inventory(getDirection(inventoryReasonType) * unsignedInventoryAdjustment, inventoryReason);
     } else {
-      movementType = MovementType.PHYSICAL_INVENTORY;
-      adjustment = 0;
-      reason = "INVENTORY";
+      int adjustment;
+      if (isInitInventory) {
+        adjustment = unsignedAdjustment;
+      } else {
+        adjustment = 0;
+      }
+      return inventory(adjustment, "INVENTORY");
     }
-    return new MovementDetail(adjustment, movementType, reason);
   }
 
   public MovementDetail merge(MovementDetail movementDetail, UUID facilityId) {
@@ -90,11 +77,29 @@ public class MovementDetail {
     return new MovementDetail(mergedAdjustment, type, mergedReason);
   }
 
-  private String mergeReason(MovementDetail movementDetail, int mergedAdjustment) {
-    if (mergedAdjustment < 0 && movementDetail.getAdjustment() < 0) {
-      return movementDetail.reason;
+  private static MovementDetail receive(Integer adjustment, String reason) {
+    return new MovementDetail(adjustment, MovementType.RECEIVE, reason);
+  }
+
+  private static MovementDetail issue(Integer adjustment, String reason) {
+    return new MovementDetail(adjustment, MovementType.ISSUE, reason);
+  }
+
+  private static MovementDetail adjustment(int unsignedAdjustment, String reason, String reasonType) {
+    MovementType movementType = MovementType.ADJUSTMENT;
+    int adjustment;
+    if ("Unpack Kit".equals(reason)) {
+      movementType = MovementType.UNPACK_KIT;
+      adjustment = -unsignedAdjustment;
+      reason = null;
+    } else {
+      adjustment = getDirection(reasonType) * unsignedAdjustment;
     }
-    return reason;
+    return new MovementDetail(adjustment, movementType, reason);
+  }
+
+  private static MovementDetail inventory(int adjustment, String reason) {
+    return new MovementDetail(adjustment, MovementType.PHYSICAL_INVENTORY, reason);
   }
 
   private static Integer getDirection(String type) {
@@ -103,6 +108,13 @@ public class MovementDetail {
     } else {
       return 1;
     }
+  }
+
+  private String mergeReason(MovementDetail movementDetail, int mergedAdjustment) {
+    if (mergedAdjustment < 0 && movementDetail.getAdjustment() < 0) {
+      return movementDetail.reason;
+    }
+    return reason;
   }
 
 }

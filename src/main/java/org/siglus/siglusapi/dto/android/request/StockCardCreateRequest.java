@@ -80,6 +80,8 @@ public class StockCardCreateRequest implements StockCardAdjustment {
 
   private String signature;
 
+  private Boolean isInitInventory;
+
   @Valid
   @JsonProperty("lotEventList")
   @NotNull
@@ -101,4 +103,9 @@ public class StockCardCreateRequest implements StockCardAdjustment {
   public String getSyncUpProperties() {
     return recordedAt.toString() + productCode + stockOnHand + quantity + type;
   }
+
+  public boolean isInitInventory() {
+    return isInitInventory != null && isInitInventory;
+  }
+
 }

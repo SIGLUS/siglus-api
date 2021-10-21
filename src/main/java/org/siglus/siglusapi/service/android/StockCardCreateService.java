@@ -263,7 +263,8 @@ public class StockCardCreateService {
           }
           toAdjustments(request).forEach(adjustment -> {
             StockCard stockCard = getStockCard(request.getProductCode(), adjustment, stockEvent, context);
-            LineItemDetail lineDetail = LineItemDetail.of(stockEvent, stockCard, type, adjustment);
+            LineItemDetail lineDetail = LineItemDetail
+                .of(stockEvent, stockCard, type, adjustment, request.isInitInventory());
             StockEventLineItem eventLine = StockEventLineItem.of(lineDetail);
             context.eventLineItems.add(eventLine);
             StockCardLineItem stockCardLine = StockCardLineItem.of(lineDetail);

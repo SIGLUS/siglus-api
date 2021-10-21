@@ -38,9 +38,10 @@ public class LineItemDetail {
   private final UUID destinationId;
   private final UUID reasonId;
   private final String documentNumber;
+  private final boolean isInitInventory;
 
   public static LineItemDetail of(StockEvent stockEvent, StockCard stockCard, MovementType type,
-      StockCardAdjustment request) {
+      StockCardAdjustment request, boolean isInit) {
     Integer quantity;
     if (type == MovementType.PHYSICAL_INVENTORY) {
       quantity = request.getStockOnHand();
@@ -54,7 +55,7 @@ public class LineItemDetail {
     UUID reasonId = type.getAdjustmentReasonId(programId, reason);
     String documentationNo = request.getDocumentationNo();
     return new LineItemDetail(stockEvent, stockCard, request.getEventTime(), quantity, sourceId, destinationId,
-        reasonId, documentationNo);
+        reasonId, documentationNo, isInit);
   }
 
   public java.sql.Date getOccurredDate() {
@@ -83,6 +84,9 @@ public class LineItemDetail {
     }
     if (eventTime.getRecordedAt() != null) {
       extraData.put("originEventTime", eventTime.getRecordedAt().toString());
+    }
+    if (isInitInventory) {
+      extraData.put("isInitInventory", "true");
     }
     return extraData;
   }
