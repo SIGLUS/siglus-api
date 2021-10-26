@@ -17,9 +17,10 @@ package org.siglus.siglusapi.service.android.context;
 
 import java.util.HashMap;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-@RequiredArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ContextHolder {
 
   private static final ThreadLocal<Map<Class<?>, Context>> HOLDER = new ThreadLocal<>();

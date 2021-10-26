@@ -155,7 +155,6 @@ public class MeService {
   private final AppInfoRepository appInfoRepository;
   private final ProductMapper mapper;
   private final FacilityCmmsRepository facilityCmmsRepository;
-  //  private final SiglusLotReferenceDataService lotReferenceDataService;
   private final LotNativeRepository lotNativeRepository;
   private final LotConflictService lotConflictService;
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
