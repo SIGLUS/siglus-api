@@ -129,7 +129,7 @@ public class SiglusPhysicalInventoryServiceTest {
     // given
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
     when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto))
         .thenReturn(physicalInventoryDto);
@@ -146,7 +146,7 @@ public class SiglusPhysicalInventoryServiceTest {
     // given
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
     when(inventoryController.createEmptyPhysicalInventory(physicalInventoryDto))
         .thenReturn(physicalInventoryDto);
@@ -198,7 +198,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldCallV3MultipleTimesWhenDeletePhysicalInventoryForAllProducts() {
     // given
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programIdOne,
         facilityId, true))
@@ -218,7 +218,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldCallV3MultipleTimesWhenDeletePhysicalInventoryForAllProductsDirectly() {
     // given
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programIdOne,
         facilityId, true))
@@ -247,7 +247,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldCallV3MultipleTimesWhenGetPhysicalInventoryForAllProducts() {
     // given
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
         true))
@@ -319,7 +319,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldGetExtensionTextWhenGetPhysicalInventoryForAllProducts() {
     // given
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne));
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
         .lotId(null)
@@ -371,7 +371,7 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldCreateInitialInventoryDraftForAllProductsWhenInitialInventory() {
     // given
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(programIdOne));
     Map<String, String> extraData = newHashMap();
     extraData.put(IS_BASIC, "true");
@@ -446,7 +446,7 @@ public class SiglusPhysicalInventoryServiceTest {
     exception.expectMessage(containsString("stockmanagement.error.physicalInventory.isSubmitted"));
 
     // given
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
     when(inventoryController.searchPhysicalInventory(any(), any(), any()))
         .thenReturn(new ResponseEntity(Collections.emptyList(), HttpStatus.OK));

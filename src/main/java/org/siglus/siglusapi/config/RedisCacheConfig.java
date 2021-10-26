@@ -30,13 +30,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 public class RedisCacheConfig {
 
   @Bean
-  @Profile("!local")
+  @Profile("!no-cache")
   public CacheManager cacheManager(RedisTemplate<Object, Object> redisTemplate) {
     return new RedisCacheManager(redisTemplate, Collections.emptyList(), true);
   }
 
   @Bean
-  @Profile("local")
+  @Profile("no-cache")
   public CacheManager getNoOpCacheManager() {
     return new NoOpCacheManager();
   }

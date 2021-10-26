@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.dto.android.ProductLotCode;
 
 @Getter
 @RequiredArgsConstructor
@@ -47,6 +48,10 @@ public class ProductLot {
     return new ProductLot(UUID.randomUUID(), product.getProductCode(), UUID.fromString(tradeItemId), lot);
   }
 
+  public static ProductLot of(String productCode, UUID tradeItemId, Lot lot) {
+    return new ProductLot(UUID.randomUUID(), productCode, tradeItemId, lot);
+  }
+
   @Nullable
   public String getLotCode() {
     return lot == null ? null : lot.getCode();
@@ -59,6 +64,13 @@ public class ProductLot {
 
   public boolean isLot() {
     return lot != null;
+  }
+
+  public ProductLotCode toProductLotCode() {
+    if (isLot()) {
+      return ProductLotCode.of(productCode, lot.getCode());
+    }
+    return ProductLotCode.noLot(productCode);
   }
 
 }

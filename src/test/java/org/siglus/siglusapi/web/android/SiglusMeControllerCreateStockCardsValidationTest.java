@@ -695,7 +695,7 @@ public class SiglusMeControllerCreateStockCardsValidationTest extends FileBasedT
     facilitySupportOrderables.add(approvedProductDto1);
     facilitySupportOrderables.add(approvedProductDto2);
 
-    when(programsHelper.findUserSupportedPrograms())
+    when(programsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Stream.of(supportProgramId).collect(Collectors.toSet()));
     when(programDataService.findOne(supportProgramId)).thenReturn(buildSupportProgramDto());
     when(approvedProductDataService.getApprovedProducts(facilityId, supportProgramId, emptyList()))

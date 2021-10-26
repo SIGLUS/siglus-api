@@ -84,6 +84,7 @@ public class UserDtoDataBuilder implements DtoDataBuilder<UserDto> {
   /**
    * Creates new instance of {@link UserDto}.
    */
+  @Override
   public UserDto buildAsDto() {
     UserDto user = new UserDto(
         username, firstName, lastName, email, verified, homeFacilityId, roleAssignments,

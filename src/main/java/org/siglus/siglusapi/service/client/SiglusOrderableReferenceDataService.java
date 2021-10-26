@@ -33,8 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 @Service
-public class SiglusOrderableReferenceDataService
-    extends BaseReferenceDataService<OrderableDto> {
+public class SiglusOrderableReferenceDataService extends BaseReferenceDataService<OrderableDto> {
 
   @Override
   protected String getUrl() {

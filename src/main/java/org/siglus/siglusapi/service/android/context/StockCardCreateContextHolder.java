@@ -74,7 +74,7 @@ public class StockCardCreateContextHolder {
     Collection<ValidSourceDestinationDto> destinations = nodeService.findDestinationsForAllProducts(facility.getId());
     Collection<ValidSourceDestinationDto> sources = nodeService.findSourcesForAllProducts(facility.getId());
 
-    List<OrderableDto> products = programsHelper.findUserSupportedPrograms().stream()
+    List<OrderableDto> products = programsHelper.findHomeFacilitySupportedProgramIds().stream()
         .map(programDataService::findOne)
         .map(program -> getProgramProducts(facility.getId(), program))
         .flatMap(Collection::stream)

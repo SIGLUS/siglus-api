@@ -20,34 +20,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class SupportedProgramsHelper {
 
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
+  private final SiglusAuthenticationHelper authenticationHelper;
+  private final SiglusDateHelper dateHelper;
+  private final SiglusFacilityReferenceDataService facilityReferenceDataService;
 
-  @Autowired
-  private SiglusDateHelper dateHelper;
-
-  @Autowired
-  private SiglusFacilityReferenceDataService facilityReferenceDataService;
-
-  public Set<UUID> findUserSupportedPrograms() {
-    FacilityDto homeFacility = getFacilityDto();
-    return homeFacility.getSupportedPrograms()
-        .stream()
-        .filter(supportedProgramDto -> {
-          LocalDate supportStartDate = supportedProgramDto.getSupportStartDate();
-          return supportedProgramDto.isProgramActive()
-              && supportedProgramDto.isSupportActive()
-              && supportStartDate.isBefore(dateHelper.getCurrentDate());
-        })
+  public Set<UUID> findHomeFacilitySupportedProgramIds() {
+    return findHomeFacilitySupportedPrograms().stream()
         .map(SupportedProgramDto::getId)
         .collect(Collectors.toSet());
   }
@@ -69,4 +57,5 @@ public class SupportedProgramsHelper {
     UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     return facilityReferenceDataService.findOne(homeFacilityId);
   }
+
 }

@@ -110,7 +110,6 @@ import org.siglus.common.dto.referencedata.BaseDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
-import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.constant.UsageSectionConstants.UsageInformationLineItems;
 import org.siglus.siglusapi.domain.RegimenLineItem;
@@ -121,7 +120,6 @@ import org.siglus.siglusapi.domain.UsageInformationLineItem;
 import org.siglus.siglusapi.dto.ExtraDataSignatureDto;
 import org.siglus.siglusapi.dto.PatientColumnDto;
 import org.siglus.siglusapi.dto.PatientGroupDto;
-import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.RegimenColumnDto;
 import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.RegimenLineDto;
@@ -162,15 +160,11 @@ import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.validation.annotation.Validated;
 
 @Service
@@ -186,7 +180,6 @@ public class RequisitionCreateService {
   private final RequisitionTemplateService requisitionTemplateService;
   private final SiglusProgramService siglusProgramService;
   private final SiglusOrderableService siglusOrderableService;
-  private final SiglusOrderableReferenceDataService orderableDataService;
   private final SiglusRequisitionExtensionService siglusRequisitionExtensionService;
   private final SupervisoryNodeReferenceDataService supervisoryNodeService;
   private final SiglusUsageReportService siglusUsageReportService;
@@ -323,7 +316,8 @@ public class RequisitionCreateService {
   }
 
   private void checkSupportedProducts(UUID facilityId, UUID programId, RequisitionCreateRequest request) {
-    Map<UUID, Set<String>> programIdToProductCodes = supportedProgramsHelper.findUserSupportedPrograms().stream()
+    Map<UUID, Set<String>> programIdToProductCodes = supportedProgramsHelper.findHomeFacilitySupportedProgramIds()
+        .stream()
         .collect(
             toMap(Function.identity(),
                 supportProgramId -> approvedProductDataService.getApprovedProducts(facilityId, supportProgramId)
@@ -433,9 +427,7 @@ public class RequisitionCreateService {
   }
 
   private List<OrderableDto> getAllProducts() {
-    QueryOrderableSearchParams params = new QueryOrderableSearchParams(new LinkedMultiValueMap<>());
-    Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, PaginationConstants.NO_PAGINATION);
-    return orderableDataService.searchOrderables(params, pageable).getContent();
+    return siglusOrderableService.getAllProducts();
   }
 
   private void buildRequisitionExtraData(Requisition requisition, RequisitionCreateRequest requisitionRequest) {

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import org.openlmis.fulfillment.domain.Order;
@@ -59,7 +60,7 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
       Pageable pageable);
 
   default List<ProofOfDelivery> findAllByFacilitySince(UUID facilityId, @Nonnull LocalDate since,
-      OrderStatus... statuses) {
+      @Nullable String orderCode, OrderStatus... statuses) {
     return findAll((root, query, cb) -> {
       Path<Shipment> shipmentRoot = root.get("shipment");
       Path<Order> orderRoot = shipmentRoot.get("order");
@@ -68,6 +69,9 @@ public interface SiglusProofOfDeliveryRepository extends JpaRepository<ProofOfDe
           cb.greaterThanOrEqualTo(shipmentRoot.get("shipDetails").get("date"), sinceTime),
           cb.equal(orderRoot.get("requestingFacilityId"), facilityId)
       );
+      if (orderCode != null) {
+        byFacilityAndDate = cb.and(byFacilityAndDate, cb.equal(orderRoot.get("orderCode"), orderCode));
+      }
       if (statuses.length == 0) {
         return byFacilityAndDate;
       }

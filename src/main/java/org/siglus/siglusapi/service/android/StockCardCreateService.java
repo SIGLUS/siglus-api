@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.android;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Comparator.naturalOrder;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -41,7 +42,6 @@ import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.siglusapi.domain.LotConflict;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.EventTimeContainer;
 import org.siglus.siglusapi.dto.android.InventoryDetail;
@@ -72,8 +72,8 @@ import org.siglus.siglusapi.dto.android.request.StockCardAdjustment;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardLotEventRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
-import org.siglus.siglusapi.repository.LotConflictRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
+import org.siglus.siglusapi.service.LotConflictService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
@@ -93,7 +93,7 @@ public class StockCardCreateService {
   private final ProgramReferenceDataService programDataService;
   private final StockManagementRepository repo;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
-  private final LotConflictRepository lotConflictRepository;
+  private final LotConflictService lotConflictService;
 
   @Transactional
   @Validated(PerformanceSequence.class)
@@ -170,7 +170,9 @@ public class StockCardCreateService {
           }
           loadStockCardToContext(existedLot, earliestDate);
           getContext().newLot(existedLot);
-          handleLotConflict(lotCode, expirationDate, existedLot);
+          UUID facilityId = getContext().getFacility().getId();
+          lotConflictService.handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate,
+              requireNonNull(existedLot.getExpirationDate()));
         }
     );
   }
@@ -210,27 +212,9 @@ public class StockCardCreateService {
         });
   }
 
-  private void handleLotConflict(String lotCode, LocalDate expirationDate, ProductLot cached) {
-    UUID facilityId = getContext().getFacility().getId();
-    if (cached.getLot().getExpirationDate().equals(expirationDate)) {
-      return;
-    }
-    log.info("the date of lot {} is different: [in-request: {}, in-db: {}]", lotCode, expirationDate,
-        cached.getLot().getExpirationDate());
-    LotConflict exitedConflict = lotConflictRepository.findOneByFacilityIdAndLotIdAndLotCodeAndExpirationDate(
-        facilityId, cached.getId(), cached.getLot().getCode(), cached.getLot().getExpirationDate());
-    if (exitedConflict != null) {
-      log.info("conflict is already recorded");
-      return;
-    }
-    LotConflict lotConflict = LotConflict.of(facilityId, cached.getId(), lotCode, expirationDate);
-    lotConflict = lotConflictRepository.save(lotConflict);
-    log.info("record conflict with id {}", lotConflict.getId());
-  }
-
   public List<OrderableDto> getAllApprovedProducts() {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    return programsHelper.findUserSupportedPrograms().stream()
+    return programsHelper.findHomeFacilitySupportedProgramIds().stream()
         .map(programDataService::findOne)
         .map(program -> getProgramProducts(homeFacilityId, program))
         .flatMap(Collection::stream)

@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,71 +52,42 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.repository.StockEventsRepository;
 import org.openlmis.stockmanagement.service.StockEventProcessor;
 import org.siglus.common.dto.referencedata.OrderableDto;
-import org.siglus.siglusapi.domain.LotConflict;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.LotSearchParams;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
-import org.siglus.siglusapi.repository.LotConflictRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.service.client.StockEventsStockManagementService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class SiglusStockEventsService {
 
-  @Autowired
-  private StockEventsStockManagementService stockEventsStockManagementService;
-
-  @Autowired
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
-
-  @Autowired
-  private SiglusLotReferenceDataService lotReferenceDataService;
-
-  @Autowired
-  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
-
-  @Autowired
-  private SiglusStockManagementDraftService stockManagementDraftService;
-
-  @Autowired
-  private StockCardRepository stockCardRepository;
-
-  @Autowired
-  private StockCardExtensionRepository stockCardExtensionRepository;
-
-  @Autowired
-  private StockCardLineItemRepository stockCardLineItemRepository;
-
-  @Autowired
-  private StockEventsRepository stockEventsRepository;
-
-  @Autowired
-  private StockEventProcessor stockEventProcessor;
-
-  @Autowired
-  private SiglusArchiveProductService archiveProductService;
-
-  @Autowired
-  private SiglusDateHelper dateHelper;
-
-  @Autowired
-  private LotConflictRepository lotConflictRepository;
-
-  @Autowired
-  private SiglusAuthenticationHelper authenticationHelper;
+  private final StockEventsStockManagementService stockEventsStockManagementService;
+  private final SiglusOrderableReferenceDataService orderableReferenceDataService;
+  private final SiglusLotReferenceDataService lotReferenceDataService;
+  private final SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  private final SiglusStockManagementDraftService stockManagementDraftService;
+  private final StockCardRepository stockCardRepository;
+  private final StockCardExtensionRepository stockCardExtensionRepository;
+  private final StockCardLineItemRepository stockCardLineItemRepository;
+  private final StockEventsRepository stockEventsRepository;
+  private final StockEventProcessor stockEventProcessor;
+  private final SiglusArchiveProductService archiveProductService;
+  private final SiglusDateHelper dateHelper;
+  private final LotConflictService lotConflictService;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   @Value("${stockmanagement.kit.unpack.reasonId}")
   private UUID unpackReasonId;
@@ -262,20 +234,8 @@ public class SiglusStockEventsService {
       lotDto.setLotCode(lotCode);
       return lotReferenceDataService.saveLot(lotDto);
     }
-    if (existedLot.getExpirationDate().isEqual(expirationDate)) {
-      return existedLot;
-    }
-    log.info("the date of lot {} is different: [in-request: {}, in-db: {}]", lotCode, expirationDate,
-        existedLot.getExpirationDate());
-    LotConflict conflict = lotConflictRepository.findOneByFacilityIdAndLotIdAndLotCodeAndExpirationDate(facilityId,
-        existedLot.getId(), existedLot.getLotCode(), existedLot.getExpirationDate());
-    if (conflict != null) {
-      log.info("conflict is already recorded");
-      return existedLot;
-    }
-    LotConflict newCreated = lotConflictRepository.save(LotConflict.of(facilityId, existedLot.getId(), lotCode,
-        expirationDate));
-    log.info("record conflict with id {}", newCreated.getId());
+    lotConflictService
+        .handleLotConflict(facilityId, lotCode, existedLot.getId(), expirationDate, existedLot.getExpirationDate());
     return existedLot;
   }
 

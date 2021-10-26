@@ -56,7 +56,7 @@ public class SiglusValidSourceDestinationService {
 
   public Collection<ValidSourceDestinationDto> findSourcesForAllProducts(UUID facilityId) {
     Set<UUID> supportedPrograms = supportedProgramsHelper
-        .findUserSupportedPrograms();
+        .findHomeFacilitySupportedProgramIds();
     return supportedPrograms.stream()
         .map(supportedProgram -> findSources(supportedProgram, facilityId))
         .flatMap(Collection::stream).collect(Collectors.toList());
@@ -71,7 +71,7 @@ public class SiglusValidSourceDestinationService {
   }
 
   public Collection<ValidSourceDestinationDto> findDestinationsForAllProducts(UUID facilityId) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper.findUserSupportedPrograms();
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToGroupMembersDto(facilityId, supportedPrograms);
     boolean isFilterFacility = isFilterFacility(facilityId);
     return supportedPrograms.stream()

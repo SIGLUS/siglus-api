@@ -126,7 +126,7 @@ public class SiglusPhysicalInventoryService {
   }
 
   public void checkDraftIsExist(UUID facilityId) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper.findUserSupportedPrograms();
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     List<PhysicalInventoryDto> inventories = supportedPrograms.stream()
         .map(programId -> getPhysicalInventoryDtosDirectly(programId, facilityId, Boolean.TRUE))
         .flatMap(Collection::stream)
@@ -183,7 +183,7 @@ public class SiglusPhysicalInventoryService {
       boolean canInitialInventory) {
     try {
       Set<UUID> supportedPrograms = supportedProgramsHelper
-          .findUserSupportedPrograms();
+          .findHomeFacilitySupportedProgramIds();
       if (CollectionUtils.isEmpty(supportedPrograms)) {
         throw new PermissionMessageException(
             new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,
@@ -216,7 +216,7 @@ public class SiglusPhysicalInventoryService {
 
   private PhysicalInventoryDto doCreateNewDraftForAllProducts(PhysicalInventoryDto dto, boolean directly) {
     Set<UUID> supportedPrograms = supportedProgramsHelper
-        .findUserSupportedPrograms();
+        .findHomeFacilitySupportedProgramIds();
     List<PhysicalInventoryDto> inventories = supportedPrograms.stream().map(
         supportedVirtualProgram -> {
           dto.setProgramId(supportedVirtualProgram);
@@ -234,7 +234,7 @@ public class SiglusPhysicalInventoryService {
 
   private void doDeletePhysicalInventoryForAllProducts(UUID facilityId, boolean directly) {
     Set<UUID> supportedPrograms = supportedProgramsHelper
-        .findUserSupportedPrograms();
+        .findHomeFacilitySupportedProgramIds();
     List<UUID> ids = supportedPrograms.stream().map(
         supportedVirtualProgram -> physicalInventoriesRepository
             .findIdByProgramIdAndFacilityIdAndIsDraft(supportedVirtualProgram, facilityId,

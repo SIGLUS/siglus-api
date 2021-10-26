@@ -353,7 +353,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
   }
 
   private void mockPrograms() {
-    when(programsHelper.findUserSupportedPrograms()).thenReturn(new HashSet<>(asList(programId1, programId2)));
+    when(programsHelper.findHomeFacilitySupportedProgramIds())
+        .thenReturn(new HashSet<>(asList(programId1, programId2)));
     ProgramDto program1 = new ProgramDto();
     program1.setId(programId1);
     program1.setCode("program 1");

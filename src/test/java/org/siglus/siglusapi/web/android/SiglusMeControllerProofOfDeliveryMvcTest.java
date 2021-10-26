@@ -18,7 +18,9 @@ package org.siglus.siglusapi.web.android;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singletonList;
+import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyVararg;
 import static org.mockito.Mockito.verify;
@@ -64,13 +66,20 @@ import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
-import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.dto.android.db.ProductLot;
+import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
+import org.siglus.siglusapi.service.LotConflictService;
 import org.siglus.siglusapi.service.SiglusOrderService;
+import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.android.MeService;
+import org.siglus.siglusapi.service.android.context.ContextHolder;
+import org.siglus.siglusapi.service.android.context.LotContext;
+import org.siglus.siglusapi.service.android.context.ProductContext;
 import org.siglus.siglusapi.service.android.mapper.LotMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.PodLotLineMapper;
 import org.siglus.siglusapi.service.android.mapper.PodLotLineMapperImpl;
@@ -80,7 +89,6 @@ import org.siglus.siglusapi.service.android.mapper.PodOrderMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.PodProductLineMapperImpl;
 import org.siglus.siglusapi.service.android.mapper.PodRequisitionMapperImpl;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -125,7 +133,9 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   @Mock
   private SiglusOrderableReferenceDataService orderableDataService;
   @Mock
-  private SiglusLotReferenceDataService lotReferenceDataService;
+  private SiglusOrderableService orderableService;
+  @Mock
+  private LotNativeRepository lotNativeRepository;
   @Mock
   private SiglusValidReasonAssignmentService validReasonAssignmentService;
 
@@ -134,20 +144,22 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
   @Captor
   private ArgumentCaptor<LocalDate> sinceCaptor;
   @Captor
+  private ArgumentCaptor<String> orderCodeCaptor;
+  @Captor
   private ArgumentCaptor<OrderStatus> statuesCaptor;
 
-  private final UUID homeFacilityId = UUID.randomUUID();
-  private final UUID order1Id = UUID.randomUUID();
-  private final UUID order1FacilityId = UUID.randomUUID();
-  private final UUID order2Id = UUID.randomUUID();
-  private final UUID order2FacilityId = UUID.randomUUID();
-  private final UUID order3Id = UUID.randomUUID();
-  private final UUID order3FacilityId = UUID.randomUUID();
-  private final UUID product1Id = UUID.randomUUID();
-  private final UUID product2Id = UUID.randomUUID();
-  private final UUID product1Lot1Id = UUID.randomUUID();
-  private final UUID product2Lot1Id = UUID.randomUUID();
-  private final UUID reasonId = UUID.randomUUID();
+  private final UUID homeFacilityId = randomUUID();
+  private final UUID order1Id = randomUUID();
+  private final UUID order1FacilityId = randomUUID();
+  private final UUID order2Id = randomUUID();
+  private final UUID order2FacilityId = randomUUID();
+  private final UUID order3Id = randomUUID();
+  private final UUID order3FacilityId = randomUUID();
+  private final UUID product1Id = randomUUID();
+  private final UUID product2Id = randomUUID();
+  private final UUID product1Lot1Id = randomUUID();
+  private final UUID product2Lot1Id = randomUUID();
+  private final UUID reasonId = randomUUID();
 
   @Before
   public void setup() throws JsonProcessingException {
@@ -272,9 +284,12 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
 
     // then
     resultActions.andExpect(status().isOk());
-    verify(podRepo).findAllByFacilitySince(facilityIdCaptor.capture(), sinceCaptor.capture(), statuesCaptor.capture());
+    verify(podRepo).findAllByFacilitySince(facilityIdCaptor.capture(), sinceCaptor.capture(), orderCodeCaptor.capture(),
+        statuesCaptor.capture());
     assertEquals(homeFacilityId, facilityIdCaptor.getValue());
     assertEquals(LocalDate.of(2020, 9, 11), sinceCaptor.getValue());
+    String orderCode = orderCodeCaptor.getValue();
+    assertNull(orderCode);
     List<OrderStatus> statuses = statuesCaptor.getAllValues();
     assertEquals(1, statuses.size());
     assertEquals(OrderStatus.SHIPPED, statuses.get(0));
@@ -292,9 +307,12 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
 
     // then
     resultActions.andExpect(status().isOk());
-    verify(podRepo).findAllByFacilitySince(facilityIdCaptor.capture(), sinceCaptor.capture(), statuesCaptor.capture());
+    verify(podRepo).findAllByFacilitySince(facilityIdCaptor.capture(), sinceCaptor.capture(), orderCodeCaptor.capture(),
+        statuesCaptor.capture());
     assertEquals(homeFacilityId, facilityIdCaptor.getValue());
     assertEquals(LocalDate.of(2020, 9, 11), sinceCaptor.getValue());
+    String orderCode = orderCodeCaptor.getValue();
+    assertNull(orderCode);
     List<OrderStatus> statuses = statuesCaptor.getAllValues();
     assertEquals(2, statuses.size());
     assertEquals(OrderStatus.SHIPPED, statuses.get(0));
@@ -314,9 +332,12 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
 
     // then
     resultActions.andExpect(status().isOk());
-    verify(podRepo).findAllByFacilitySince(facilityIdCaptor.capture(), sinceCaptor.capture(), statuesCaptor.capture());
+    verify(podRepo).findAllByFacilitySince(facilityIdCaptor.capture(), sinceCaptor.capture(), orderCodeCaptor.capture(),
+        statuesCaptor.capture());
     assertEquals(homeFacilityId, facilityIdCaptor.getValue());
     assertEquals(getLastYear(), sinceCaptor.getValue());
+    String orderCode = orderCodeCaptor.getValue();
+    assertNull(orderCode);
     List<OrderStatus> statuses = statuesCaptor.getAllValues();
     assertEquals(1, statuses.size());
     assertEquals(OrderStatus.SHIPPED, statuses.get(0));
@@ -332,31 +353,33 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     when(product2.getId()).thenReturn(product2Id);
     when(product2.getProductCode()).thenReturn("22B01");
     when(orderableDataService.findByIds(any())).thenReturn(asList(product1, product2));
+    when(orderableService.getAllProducts()).thenReturn(asList(product1, product2));
+    ContextHolder.attachContext(ProductContext.init(orderableService));
   }
 
   private void mockLots() {
-    LotDto product1Lot1 = mock(LotDto.class);
-    when(product1Lot1.getId()).thenReturn(product1Lot1Id);
-    when(product1Lot1.getLotCode()).thenReturn("SME-LOTE-22A01-062023");
-    when(product1Lot1.getExpirationDate()).thenReturn(LocalDate.of(2023, 6, 30));
-    LotDto product2Lot1 = mock(LotDto.class);
-    when(product2Lot1.getId()).thenReturn(product2Lot1Id);
-    when(product2Lot1.getLotCode()).thenReturn("SME-LOTE-22B01-062023");
-    when(product2Lot1.getExpirationDate()).thenReturn(LocalDate.of(2023, 6, 30));
-    when(lotReferenceDataService.findByIds(any())).thenReturn(asList(product1Lot1, product2Lot1));
+    ProductLot product1Lot1 = ProductLot.fromDatabase(
+        product1Lot1Id, "22A01", randomUUID(), Lot.of("SME-LOTE-22A01-062023", LocalDate.of(2023, 6, 30))
+    );
+    when(lotNativeRepository.findById(product1Lot1Id)).thenReturn(product1Lot1);
+    ProductLot product2Lot1 = ProductLot.fromDatabase(
+        product2Lot1Id, "22B01", randomUUID(), Lot.of("SME-LOTE-22B01-062023", LocalDate.of(2023, 6, 30))
+    );
+    when(lotNativeRepository.findById(product2Lot1Id)).thenReturn(product2Lot1);
+    ContextHolder.attachContext(LotContext.init(homeFacilityId, lotNativeRepository, mock(LotConflictService.class)));
   }
 
   private void mockReasons() {
     ValidReasonAssignmentDto reasonAssigment1 = mock(ValidReasonAssignmentDto.class);
-    when(reasonAssigment1.getId()).thenReturn(UUID.randomUUID());
+    when(reasonAssigment1.getId()).thenReturn(randomUUID());
     StockCardLineItemReason reason1 = mock(StockCardLineItemReason.class);
     when(reason1.getName()).thenReturn("Danificado/quebrado/derramado");
     when(reason1.getId()).thenReturn(reasonId);
     when(reasonAssigment1.getReason()).thenReturn(reason1);
     ValidReasonAssignmentDto reasonAssigment2 = mock(ValidReasonAssignmentDto.class);
-    when(reasonAssigment2.getId()).thenReturn(UUID.randomUUID());
+    when(reasonAssigment2.getId()).thenReturn(randomUUID());
     StockCardLineItemReason reason2 = mock(StockCardLineItemReason.class);
-    when(reason2.getId()).thenReturn(UUID.randomUUID());
+    when(reason2.getId()).thenReturn(randomUUID());
     when(reason2.getName()).thenReturn("nothing");
     when(reasonAssigment2.getReason()).thenReturn(reason2);
     when(validReasonAssignmentService.getAllReasons(any())).thenReturn(asList(reasonAssigment1, reasonAssigment2));
@@ -370,7 +393,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
         new org.siglus.siglusapi.dto.FacilityDto();
     homeFacility.setId(homeFacilityId);
     FacilityTypeDto facilityType = new FacilityTypeDto();
-    facilityType.setId(UUID.randomUUID());
+    facilityType.setId(randomUUID());
     homeFacility.setType(facilityType);
     when(facilityReferenceDataService.getFacilityById(homeFacilityId)).thenReturn(homeFacility);
   }
@@ -385,7 +408,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     ProofOfDelivery pod2 = mockPod2(orderable2);
     ProofOfDelivery pod3 = mockPod3(orderable1);
 
-    when(podRepo.findAllByFacilitySince(any(), any(), anyVararg())).thenReturn(asList(pod1, pod2, pod3));
+    when(podRepo.findAllByFacilitySince(any(), any(), any(), anyVararg())).thenReturn(asList(pod1, pod2, pod3));
   }
 
   private ProofOfDelivery mockPod1(VersionEntityReference orderable1) {

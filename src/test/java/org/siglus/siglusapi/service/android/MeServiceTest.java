@@ -385,7 +385,7 @@ public class MeServiceTest {
     when(program2.getId()).thenReturn(programId2);
     when(program2.getCode()).thenReturn("code 2");
     when(programDataService.findOne(programId2)).thenReturn(program2);
-    when(programsHelper.findUserSupportedPrograms()).thenReturn(ImmutableSet.of(programId1, programId2));
+    when(programsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(ImmutableSet.of(programId1, programId2));
     when(orderableDataService.searchOrderables(any(), any(), any()))
         .thenReturn(new PageImpl<>(asList(mockOrderable1(), mockOrderable2(), mockOrderable3())));
     when(approvedProductService.getApprovedProducts(facilityId, programId1, emptyList()))
@@ -848,7 +848,7 @@ public class MeServiceTest {
     service.confirmPod(podRequest);
 
     // then
-    verify(podConfirmService).confirmPod(any(), any(), any(), any());
+    verify(podConfirmService).confirmPod(any(), any(), any());
 
   }
 

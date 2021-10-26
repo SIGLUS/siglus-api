@@ -41,7 +41,7 @@ public class SiglusValidReasonAssignmentService {
 
   public Collection<ValidReasonAssignmentDto> getValidReasonsForAllProducts(UUID facilityTypeId, String reasonType,
       UUID reason) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper.findUserSupportedPrograms();
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
     return supportedPrograms.stream()
         .map(supportedVirtualProgram -> getValidReasons(supportedVirtualProgram, facilityTypeId, reasonType, reason))
         .flatMap(Collection::stream).collect(Collectors.toList());

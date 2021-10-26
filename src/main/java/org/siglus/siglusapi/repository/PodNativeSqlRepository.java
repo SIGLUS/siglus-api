@@ -26,14 +26,15 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.common.dto.referencedata.OrderableDto;
-import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.android.db.PodLineItem;
 import org.siglus.siglusapi.dto.android.db.ShipmentLineItem;
 import org.siglus.siglusapi.dto.android.enumeration.RejectionReason;
 import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
 import org.siglus.siglusapi.exception.InvalidReasonException;
-import org.siglus.siglusapi.service.SiglusStockEventsService;
+import org.siglus.siglusapi.service.android.context.ContextHolder;
+import org.siglus.siglusapi.service.android.context.LotContext;
+import org.siglus.siglusapi.service.android.context.ProductContext;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -45,20 +46,19 @@ import org.springframework.util.StringUtils;
 public class PodNativeSqlRepository {
 
   private final JdbcTemplate jdbcTemplate;
-  private final SiglusStockEventsService siglusStockEventsService;
 
-  public void insertPodAndShipmentLineItems(UUID podId, UUID shipmentId, UUID facilityId,
-      List<PodProductLineRequest> podProducts, Map<String, OrderableDto> orderableCodeToOrderable,
+  public void insertPodAndShipmentLineItems(UUID podId, UUID shipmentId, List<PodProductLineRequest> podProducts,
       Map<String, UUID> rejectReasonToId) {
+    ProductContext productContext = ContextHolder.getContext(ProductContext.class);
+    LotContext lotContext = ContextHolder.getContext(LotContext.class);
     List<PodLineItem> podLineItems = new ArrayList<>();
     List<ShipmentLineItem> shipmentLineItems = new ArrayList<>();
     for (PodProductLineRequest podProduct : podProducts) {
-      OrderableDto orderableDto = orderableCodeToOrderable.get(podProduct.getCode());
-      for (PodLotLineRequest lotLineRequest :podProduct.getLots()) {
-        LotDto lotDto = new LotDto();
+      OrderableDto orderableDto = productContext.getProduct(podProduct.getCode());
+      for (PodLotLineRequest lotLineRequest : podProduct.getLots()) {
+        UUID lotId = null;
         if (lotLineRequest.getLot() != null) {
-          lotDto = siglusStockEventsService.createNewLotOrReturnExisted(
-              facilityId, orderableDto, lotLineRequest.getLot().getCode(), lotLineRequest.getLot().getExpirationDate());
+          lotId = lotContext.getLot(orderableDto.getProductCode(), lotLineRequest.getLot().getCode()).getId();
         }
         UUID reasonId = null;
         if (isNotBlank(lotLineRequest.getRejectedReason())) {
@@ -70,9 +70,9 @@ public class PodNativeSqlRepository {
         }
         podLineItems.add(PodLineItem.of(podId, lotLineRequest.getNotes(), lotLineRequest.getAcceptedQuantity(),
             lotLineRequest.getShippedQuantity() - lotLineRequest.getAcceptedQuantity(), orderableDto.getId(),
-            lotDto.getId(), null, false, reasonId, orderableDto.getVersionNumber()));
+            lotId, null, false, reasonId, orderableDto.getVersionNumber()));
         shipmentLineItems.add(ShipmentLineItem
-            .of(orderableDto.getId(), lotDto.getId(), lotLineRequest.getShippedQuantity(), shipmentId, "",
+            .of(orderableDto.getId(), lotId, lotLineRequest.getShippedQuantity(), shipmentId, "",
                 orderableDto.getVersionNumber()));
       }
     }

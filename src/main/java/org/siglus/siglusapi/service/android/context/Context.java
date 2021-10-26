@@ -13,26 +13,8 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.android.mapper;
+package org.siglus.siglusapi.service.android.context;
 
-import java.util.UUID;
-import org.mapstruct.Mapper;
-import org.siglus.siglusapi.dto.android.Lot;
-import org.siglus.siglusapi.dto.android.response.LotBasicResponse;
-import org.siglus.siglusapi.service.android.context.ContextHolder;
-import org.siglus.siglusapi.service.android.context.LotContext;
-
-@Mapper(componentModel = "spring")
-public interface LotMapper {
-
-  default LotBasicResponse toResponse(UUID lotId) {
-    if (lotId == null) {
-      return null;
-    }
-    LotContext lotContext = ContextHolder.getContext(LotContext.class);
-    return toLotResponse(lotContext.get(lotId).getLot());
-  }
-
-  LotBasicResponse toLotResponse(Lot lot);
+public interface Context {
 
 }

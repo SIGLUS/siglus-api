@@ -60,7 +60,7 @@ public class SiglusValidReasonAssignmentServiceTest {
 
   @Test
   public void shouldCallGetValidReasonsMultipleTimesWhenGetValidReasonsForAllProducts() {
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
     siglusValidReasonAssignmentService

@@ -127,7 +127,7 @@ public class SiglusStockManagementDraftService {
 
   private void checkPermission(UUID facility) {
     Set<UUID> supportedPrograms = supportedProgramsHelper
-        .findUserSupportedPrograms();
+        .findHomeFacilitySupportedProgramIds();
     if (CollectionUtils.isEmpty(supportedPrograms)) {
       throw new PermissionMessageException(
           new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED,

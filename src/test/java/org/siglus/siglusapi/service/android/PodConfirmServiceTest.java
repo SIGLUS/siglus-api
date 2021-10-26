@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.android;
 
+import static java.util.Collections.singletonList;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Mockito.mock;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.when;
 
+import com.google.common.collect.ImmutableList;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Collection;
@@ -32,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,13 +60,14 @@ import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
-import org.openlmis.stockmanagement.dto.referencedata.LotDto;
-import org.openlmis.stockmanagement.service.referencedata.LotReferenceDataService;
 import org.powermock.api.mockito.PowerMockito;
 import org.siglus.siglusapi.domain.PodConfirmBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.dto.android.db.ProductLot;
 import org.siglus.siglusapi.dto.android.request.LotBasicRequest;
 import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
@@ -73,6 +77,7 @@ import org.siglus.siglusapi.dto.android.response.PodLotLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 import org.siglus.siglusapi.dto.android.response.PodResponse;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
+import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.OrderLineItemRepository;
 import org.siglus.siglusapi.repository.PodConfirmBackupRepository;
 import org.siglus.siglusapi.repository.PodNativeSqlRepository;
@@ -81,9 +86,14 @@ import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusShipmentLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SyncUpHashRepository;
+import org.siglus.siglusapi.service.LotConflictService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
+import org.siglus.siglusapi.service.android.context.ContextHolder;
+import org.siglus.siglusapi.service.android.context.CurrentUserContext;
+import org.siglus.siglusapi.service.android.context.LotContext;
+import org.siglus.siglusapi.service.android.context.ProductContext;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -98,7 +108,7 @@ public class PodConfirmServiceTest {
   private String lotCode;
   private String notes;
   private String rejectReason;
-  private String orderProductCode;
+  private String productCode;
   private String originNumber;
   private List<StockCardLineItem> stockCardLineItems;
   private Long orderableVersionNum;
@@ -145,7 +155,7 @@ public class PodConfirmServiceTest {
   private SiglusOrderableService orderableService;
 
   @Mock
-  private LotReferenceDataService lotService;
+  private LotNativeRepository lotNativeRepository;
 
   @Mock
   private SiglusStockCardLineItemRepository stockCardLineItemRepository;
@@ -183,7 +193,7 @@ public class PodConfirmServiceTest {
     lotCode = "lotCode";
     notes = "notes";
     rejectReason = "issue";
-    orderProductCode = "26A01";
+    productCode = "26A01";
     originNumber = "orderCodeOrigin";
     orderableVersionNum = 1L;
     quantityShipped = 10L;
@@ -191,10 +201,18 @@ public class PodConfirmServiceTest {
     when(user.getHomeFacilityId()).thenReturn(facilityId);
     when(user.getId()).thenReturn(userId);
     when(authHelper.getCurrentUser()).thenReturn(user);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(buildFacilityDto());
+    CurrentUserContext currentUserContext = CurrentUserContext.init(authHelper, facilityReferenceDataService);
+    ContextHolder.attachContext(currentUserContext);
     stockCardLineItems = buildStockCardLineItems();
     ProgramDto program = mock(ProgramDto.class);
     when(program.getId()).thenReturn(programId);
     when(siglusProgramService.getProgramByCode(programCode)).thenReturn(Optional.of(program));
+  }
+
+  @After
+  public void destroy() {
+    ContextHolder.clearContext();
   }
 
   @Test
@@ -205,7 +223,7 @@ public class PodConfirmServiceTest {
     when(syncUpHashRepository.findOne(syncUpHash)).thenReturn(null);
 
     // when
-    podConfirmService.confirmPod(mockPodRequest(), toUpdate, user, podResponse);
+    podConfirmService.confirmPod(mockPodRequest(), toUpdate, podResponse);
 
     // then
     verify(fulfillmentPermissionService, times(0)).getPermissionStrings(any());
@@ -219,13 +237,14 @@ public class PodConfirmServiceTest {
     orderableDto.setProductCode("02A01");
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
     approvedProductDto.setOrderable(orderableDto);
-    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId, Collections.emptyList()))
-        .thenReturn(Collections.singletonList(approvedProductDto));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId))
+        .thenReturn(singletonList(approvedProductDto));
     ProofOfDelivery toUpdate = mockPod(user, false);
     PodResponse podResponse = mockPodResponse();
+    ContextHolder.attachContext(ProductContext.init(orderableService));
 
     // when
-    podConfirmService.confirmPod(mockPodRequest(), toUpdate, user, podResponse);
+    podConfirmService.confirmPod(mockPodRequest(), toUpdate, podResponse);
 
     // then
     verify(fulfillmentPermissionService, times(1)).canManagePod(toUpdate);
@@ -238,30 +257,32 @@ public class PodConfirmServiceTest {
     podRequest.setOriginNumber(originNumber);
     when(syncUpHashRepository.findOne(syncUpHash)).thenReturn(null);
     OrderableDto orderableDto = new OrderableDto();
-    orderableDto.setProductCode(orderProductCode);
+    orderableDto.setProductCode(productCode);
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
     approvedProductDto.setOrderable(orderableDto);
-    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId, Collections.emptyList()))
-        .thenReturn(Collections.singletonList(approvedProductDto));
+    when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId))
+        .thenReturn(ImmutableList.of(approvedProductDto));
     org.siglus.common.dto.referencedata.OrderableDto orderableDto1 =
         new org.siglus.common.dto.referencedata.OrderableDto();
-    orderableDto1.setProductCode(orderProductCode);
+    orderableDto1.setProductCode(productCode);
     orderableDto1.setTradeItemIdentifier(tradeItemId);
     Set<UUID> programIds = new HashSet<>();
     programIds.add(programId);
-    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(programIds);
-    when(orderableService.getOrderableByCode(orderProductCode)).thenReturn(orderableDto1);
-    when(lotService.getAllLotsOf(tradeItemId)).thenReturn(buildLotDto());
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(programIds);
+    when(orderableService.getAllProducts()).thenReturn(singletonList(orderableDto1));
+    ContextHolder.attachContext(ProductContext.init(orderableService));
+    when(lotNativeRepository.findOne(productCode, tradeItemId, lotCode)).thenReturn(buildLot());
+    LotContext lotContext = LotContext.init(facilityId, lotNativeRepository, mock(LotConflictService.class));
+    ContextHolder.attachContext(lotContext);
     when(stockCardLineItemRepository.findByFacilityIdAndLotIdIn(
         facilityId, originNumber, Collections.singleton(orderLotId))).thenReturn(stockCardLineItems);
-    when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(buildFacilityDto());
     when(validReasonAssignmentService.getValidReasonsForAllProducts(facilityTypeId, null, null))
         .thenReturn(buildReasonAsignment());
     ProofOfDelivery toUpdate = mockPod(user, false);
     PodResponse podResponse = mockPodResponse();
 
     // when
-    podConfirmService.confirmPod(podRequest, toUpdate, user, podResponse);
+    podConfirmService.confirmPod(podRequest, toUpdate, podResponse);
 
     // then
     verify(podRepository).updatePodById(podRequest.getDeliveredBy(),
@@ -285,13 +306,13 @@ public class PodConfirmServiceTest {
     podLotLineRequest.setLot(lot);
     podLotLineRequest.setNotes(notes);
     podLotLineRequest.setRejectedReason(rejectReason);
-    List<PodLotLineRequest> podLots = Collections.singletonList(podLotLineRequest);
+    List<PodLotLineRequest> podLots = singletonList(podLotLineRequest);
     PodProductLineRequest podProductLineRequest = new PodProductLineRequest();
-    podProductLineRequest.setCode(orderProductCode);
+    podProductLineRequest.setCode(productCode);
     podProductLineRequest.setOrderedQuantity(10);
     podProductLineRequest.setPartialFulfilledQuantity(0);
     podProductLineRequest.setLots(podLots);
-    List<PodProductLineRequest> products = Collections.singletonList(podProductLineRequest);
+    List<PodProductLineRequest> products = singletonList(podProductLineRequest);
     PodRequest podRequest = new PodRequest();
     podRequest.setOrderCode(orderCode);
     podRequest.setProducts(products);
@@ -305,12 +326,12 @@ public class PodConfirmServiceTest {
     String notes = "notes";
     ShipmentLineItem shipmentLineItem = new ShipmentLineItem(
         new VersionEntityReference(orderOrderableId, orderableVersionNum), quantityShipped, new HashMap<>());
-    List<ShipmentLineItem> shipmentLineItems = Collections.singletonList(shipmentLineItem);
+    List<ShipmentLineItem> shipmentLineItems = singletonList(shipmentLineItem);
     Shipment shipment = new Shipment(order, shipDetails, notes, shipmentLineItems, new HashMap<>());
     ProofOfDeliveryLineItem podLineItem = new ProofOfDeliveryLineItem(
         new VersionEntityReference(orderOrderableId, orderableVersionNum), orderLotId, 10,
         VvmStatus.STAGE_1, 0, UUID.randomUUID(), notes);
-    List<ProofOfDeliveryLineItem> lineItems = Collections.singletonList(podLineItem);
+    List<ProofOfDeliveryLineItem> lineItems = singletonList(podLineItem);
     ProofOfDelivery proofOfDelivery;
     if (isConfirm) {
       proofOfDelivery = new ProofOfDelivery(
@@ -322,22 +343,28 @@ public class PodConfirmServiceTest {
     return proofOfDelivery;
   }
 
-  private List<LotDto> buildLotDto() {
-    LotDto lotDto = LotDto.builder().lotCode(lotCode).id(orderLotId).build();
-    return Collections.singletonList(lotDto);
+  private ProductLot buildLot() {
+    return ProductLot.fromDatabase(orderLotId, productCode, tradeItemId, Lot.of(lotCode, LocalDate.MAX));
   }
 
   private List<StockCardLineItem> buildStockCardLineItems() {
     StockCardLineItem stockCardLineItem = new StockCardLineItem();
     stockCardLineItem.setId(stockLineItemId);
     stockCardLineItem.setDocumentNumber(orderCode);
-    return Collections.singletonList(stockCardLineItem);
+    return singletonList(stockCardLineItem);
   }
 
   private FacilityDto buildFacilityDto() {
     FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
     facilityTypeDto.setId(facilityTypeId);
-    return FacilityDto.builder().id(facilityId).type(facilityTypeDto).build();
+    SupportedProgramDto supportedProgram = new SupportedProgramDto();
+    supportedProgram.setId(programId);
+    supportedProgram.setCode(programCode);
+    supportedProgram.setProgramActive(true);
+    supportedProgram.setSupportActive(true);
+    supportedProgram.setSupportStartDate(LocalDate.MIN);
+    return FacilityDto.builder().id(facilityId).type(facilityTypeDto).supportedPrograms(singletonList(supportedProgram))
+        .build();
   }
 
   private Collection<ValidReasonAssignmentDto> buildReasonAsignment() {
@@ -347,7 +374,7 @@ public class PodConfirmServiceTest {
     ValidReasonAssignmentDto reasonAssignmentDto = new ValidReasonAssignmentDto();
     reasonAssignmentDto.setFacilityTypeId(facilityTypeId);
     reasonAssignmentDto.setReason(stockCardLineItemReason);
-    return Collections.singletonList(reasonAssignmentDto);
+    return singletonList(reasonAssignmentDto);
   }
 
   private PodResponse mockPodResponse() {
@@ -358,10 +385,10 @@ public class PodConfirmServiceTest {
     podLotLine.setLot(lotBasic);
     podLotLine.setShippedQuantity(100);
     PodProductLineResponse podProductLine = new PodProductLineResponse();
-    podProductLine.setCode(orderProductCode);
-    podProductLine.setLots(Collections.singletonList(podLotLine));
+    podProductLine.setCode(productCode);
+    podProductLine.setLots(singletonList(podLotLine));
     PodResponse podResponse = new PodResponse();
-    podResponse.setProducts(Collections.singletonList(podProductLine));
+    podResponse.setProducts(singletonList(podProductLine));
     return podResponse;
   }
 }

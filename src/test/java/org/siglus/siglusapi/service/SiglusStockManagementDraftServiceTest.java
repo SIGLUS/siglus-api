@@ -160,7 +160,7 @@ public class SiglusStockManagementDraftServiceTest {
     // given
     StockManagementDraft draft = StockManagementDraft.builder().build();
     when(stockManagementDraftRepository.findOne(id)).thenReturn(draft);
-    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(null);
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(null);
 
     // when
     siglusStockManagementDraftService.deleteStockManagementDraft(id);
@@ -173,7 +173,7 @@ public class SiglusStockManagementDraftServiceTest {
     when(stockManagementDraftRepository.findOne(id)).thenReturn(draft);
     Set<UUID> supportedPrograms = new HashSet<>();
     supportedPrograms.add(UUID.randomUUID());
-    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(supportedPrograms);
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(supportedPrograms);
 
     // when
     siglusStockManagementDraftService.deleteStockManagementDraft(id);

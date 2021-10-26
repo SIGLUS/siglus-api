@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
@@ -34,7 +35,6 @@ import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -43,19 +43,13 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @Service
+@RequiredArgsConstructor
 public class SiglusOrderableService {
 
-  @Autowired
-  private SiglusOrderableReferenceDataService orderableReferenceDataService;
-
-  @Autowired
-  private SiglusArchiveProductService archiveProductService;
-
-  @Autowired
-  private SiglusOrderableRepository siglusOrderableRepository;
-
-  @Autowired
-  private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
+  private final SiglusOrderableReferenceDataService orderableReferenceDataService;
+  private final SiglusArchiveProductService archiveProductService;
+  private final SiglusOrderableRepository siglusOrderableRepository;
+  private final ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
@@ -113,12 +107,16 @@ public class SiglusOrderableService {
     MultiValueMap<String, Object> queryParams = new LinkedMultiValueMap<>();
     queryParams.set(CODE, productCode);
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
-    List<OrderableDto> orderableDtos = orderableReferenceDataService.searchOrderables(searchParams, noPagination)
-        .getContent();
-    return orderableDtos.stream()
+    return orderableReferenceDataService.searchOrderables(searchParams, noPagination).getContent().stream()
         .filter(orderableDto -> productCode.equals(orderableDto.getProductCode()))
         .findFirst()
         .orElse(null);
+  }
+
+  public List<OrderableDto> getAllProducts() {
+    QueryOrderableSearchParams params = new QueryOrderableSearchParams(new LinkedMultiValueMap<>());
+    Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, PaginationConstants.NO_PAGINATION);
+    return orderableReferenceDataService.searchOrderables(params, pageable).getContent();
   }
 
 }

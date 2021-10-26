@@ -104,7 +104,7 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @Test
   public void shouldCallGetValidDestinationsMultipleTimesWhenFindDestinationsForAllProducts() {
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
     siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId);
@@ -122,7 +122,7 @@ public class SiglusValidSourceDestinationServiceTest {
 
   @Test
   public void shouldCallGetValidSourcesMultipleTimesWhenFindSourcesForAllProducts() {
-    when(supportedProgramsHelper.findUserSupportedPrograms())
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
         .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
 
     siglusValidSourceDestinationService.findSourcesForAllProducts(facilityId);
@@ -167,7 +167,7 @@ public class SiglusValidSourceDestinationServiceTest {
     Set<UUID> programIds = new HashSet<>();
     programIds.add(programId);
     programIds.add(programId2);
-    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(programIds);
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(programIds);
 
     when(facilityReferenceDataService.findOne(facilityId))
         .thenReturn(buildFacilityDtoByFaclityIdAndTypeCode(facilityId, FacilityTypeConstants.CS));

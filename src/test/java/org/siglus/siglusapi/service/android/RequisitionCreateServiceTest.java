@@ -113,12 +113,10 @@ import org.siglus.siglusapi.service.SiglusProgramService;
 import org.siglus.siglusapi.service.SiglusRequisitionExtensionService;
 import org.siglus.siglusapi.service.SiglusUsageReportService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.web.android.FileBasedTest;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.domain.PageImpl;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
@@ -138,9 +136,6 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
 
   @Mock
   private SiglusOrderableService siglusOrderableService;
-
-  @Mock
-  private SiglusOrderableReferenceDataService orderableDataService;
 
   @Mock
   private SiglusAuthenticationHelper authHelper;
@@ -278,7 +273,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     orderableDto.setId(orderableId);
     orderableDto.setProductCode(vcProductCode);
     when(siglusOrderableService.getOrderableByCode(vcProductCode)).thenReturn(orderableDto);
-    when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
+    when(siglusOrderableService.getAllProducts()).thenReturn(singletonList(orderableDto));
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
     supervisoryNodeDto.setId(supervisoryNodeId);
     when(supervisoryNodeService.findSupervisoryNode(programId, facilityId)).thenReturn(supervisoryNodeDto);
@@ -299,7 +294,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(requisitionExtensionRepository.saveAndFlush(requisitionExtensionArgumentCaptor.capture()))
         .thenReturn(requisitionExtension);
     when(syncUpHashRepository.findOne(anyString())).thenReturn(null);
-    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(programId));
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(Collections.singleton(programId));
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, programId))
         .thenReturn(Collections.singletonList(mockApprovedProduct(vcProductCode)));
     when(additionalOrderableService.searchAdditionalOrderables(any())).thenReturn(emptyList());
@@ -438,9 +433,9 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(requisitionRepository.saveAndFlush(requisitionArgumentCaptor.capture()))
         .thenReturn(buildMlRequisition(mlTemplate));
     when(siglusOrderableService.getOrderableByCode(mlProductCode)).thenReturn(buildOrderableDto());
-    when(orderableDataService.searchOrderables(any(), any()))
-        .thenReturn(new PageImpl<>(singletonList(buildOrderableDto())));
-    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(malariaProgramId));
+    when(siglusOrderableService.getAllProducts()).thenReturn(singletonList(buildOrderableDto()));
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
+        .thenReturn(Collections.singleton(malariaProgramId));
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, malariaProgramId))
         .thenReturn(Collections.singletonList(mockApprovedProduct(mlProductCode)));
 
@@ -475,10 +470,11 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     orderableDto.setId(mmiaOrderableId);
     orderableDto.setProductCode("08S01ZW");
     when(siglusOrderableService.getOrderableByCode("08S01ZW")).thenReturn(orderableDto);
-    when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
+    when(siglusOrderableService.getAllProducts()).thenReturn(singletonList(orderableDto));
     when(regimenRepository.findAllByProgramIdAndActiveTrue(any())).thenReturn(buildRegimenDto());
     when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildMmiaSiglusRequisitionDto());
-    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(mmiaProgramId));
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
+        .thenReturn(Collections.singleton(mmiaProgramId));
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, mmiaProgramId))
         .thenReturn(Collections.singletonList(mockApprovedProduct("08S01ZW")));
 
@@ -529,9 +525,10 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     orderableDto.setId(rapidTestOrderableId);
     orderableDto.setProductCode("08A07");
     when(siglusOrderableService.getOrderableByCode("08A07")).thenReturn(orderableDto);
-    when(orderableDataService.searchOrderables(any(), any())).thenReturn(new PageImpl<>(singletonList(orderableDto)));
+    when(siglusOrderableService.getAllProducts()).thenReturn(singletonList(orderableDto));
     when(siglusUsageReportService.initiateUsageReport(any())).thenReturn(buildRapidTestSiglusRequisitionDto());
-    when(supportedProgramsHelper.findUserSupportedPrograms()).thenReturn(Collections.singleton(rapidTestProgramId));
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
+        .thenReturn(Collections.singleton(rapidTestProgramId));
     when(approvedProductReferenceDataService.getApprovedProducts(facilityId, rapidTestProgramId))
         .thenReturn(Collections.singletonList(mockApprovedProduct("08A07")));
 

@@ -49,7 +49,6 @@ import org.openlmis.fulfillment.domain.OrderStatus;
 import org.openlmis.fulfillment.domain.ProofOfDelivery;
 import org.openlmis.fulfillment.domain.Shipment;
 import org.openlmis.fulfillment.domain.ShipmentLineItem;
-import org.openlmis.fulfillment.domain.VersionEntityReference;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.requisition.domain.requisition.Requisition;
 import org.openlmis.requisition.dto.ApprovedProductDto;
@@ -59,7 +58,6 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.dto.ValidReasonAssignmentDto;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
-import org.siglus.common.dto.referencedata.BaseDto;
 import org.siglus.common.dto.referencedata.MetadataDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
@@ -74,7 +72,6 @@ import org.siglus.siglusapi.domain.RequisitionRequestBackup;
 import org.siglus.siglusapi.domain.ResyncInfo;
 import org.siglus.siglusapi.domain.StockCardRequestBackup;
 import org.siglus.siglusapi.dto.FacilityDto;
-import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.dto.SiglusOrderDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
@@ -102,6 +99,7 @@ import org.siglus.siglusapi.exception.NoPermissionException;
 import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityCmmsRepository;
+import org.siglus.siglusapi.repository.LotNativeRepository;
 import org.siglus.siglusapi.repository.PodRequestBackupRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionRequestBackupRepository;
@@ -109,18 +107,21 @@ import org.siglus.siglusapi.repository.ResyncInfoRepository;
 import org.siglus.siglusapi.repository.SiglusProofOfDeliveryRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
 import org.siglus.siglusapi.repository.StockCardRequestBackupRepository;
+import org.siglus.siglusapi.service.LotConflictService;
 import org.siglus.siglusapi.service.SiglusArchiveProductService;
 import org.siglus.siglusapi.service.SiglusOrderService;
 import org.siglus.siglusapi.service.SiglusOrderableService;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
+import org.siglus.siglusapi.service.android.context.ContextHolder;
+import org.siglus.siglusapi.service.android.context.CurrentUserContext;
+import org.siglus.siglusapi.service.android.context.LotContext;
+import org.siglus.siglusapi.service.android.context.ProductContext;
 import org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder;
 import org.siglus.siglusapi.service.android.mapper.PodLotLineMapper;
 import org.siglus.siglusapi.service.android.mapper.PodMapper;
 import org.siglus.siglusapi.service.android.mapper.ProductMapper;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.HashEncoder;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -142,7 +143,6 @@ import org.springframework.util.StringUtils;
 public class MeService {
 
   static final String KEY_PROGRAM_CODE = "programCode";
-  static final String TRADE_ITEM_ID = "tradeItemId";
 
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
   private final SiglusArchiveProductService siglusArchiveProductService;
@@ -155,7 +155,9 @@ public class MeService {
   private final AppInfoRepository appInfoRepository;
   private final ProductMapper mapper;
   private final FacilityCmmsRepository facilityCmmsRepository;
-  private final SiglusLotReferenceDataService lotReferenceDataService;
+  //  private final SiglusLotReferenceDataService lotReferenceDataService;
+  private final LotNativeRepository lotNativeRepository;
+  private final LotConflictService lotConflictService;
   private final SiglusValidReasonAssignmentService validReasonAssignmentService;
   private final AndroidHelper androidHelper;
   private final ReportTypeRepository reportTypeRepository;
@@ -167,7 +169,6 @@ public class MeService {
   private final SiglusOrderService orderService;
   private final PodMapper podMapper;
   private final PodLotLineMapper podLotLineMapper;
-  private final SiglusOrderableReferenceDataService orderableDataService;
   private final RequisitionRequestBackupRepository requisitionRequestBackupRepository;
   private final StockCardRequestBackupRepository stockCardRequestBackupRepository;
   private final StockCardCreateRequestValidator stockCardCreateRequestValidator;
@@ -249,7 +250,7 @@ public class MeService {
     Map<UUID, OrderableDto> allProducts = getAllProducts(homeFacilityId).stream()
         .collect(toMap(OrderableDto::getId, Function.identity()));
 
-    Map<UUID, String> programIdToCode = programsHelper.findUserSupportedPrograms().stream()
+    Map<UUID, String> programIdToCode = programsHelper.findHomeFacilitySupportedProgramIds().stream()
         .map(programDataService::findOne)
         .collect(toMap(ProgramDto::getId, BasicProgramDto::getCode));
 
@@ -357,11 +358,11 @@ public class MeService {
   }
 
   public List<PodResponse> getProofsOfDeliveryWithFilter(@Nullable LocalDate since, boolean shippedOnly) {
-    List<PodResponse> podResponses = getProofsOfDelivery(since, shippedOnly);
+    List<PodResponse> podResponses = getProofsOfDelivery(since, shippedOnly, null);
     return podResponses.stream().map(this::filterNoLotPod).collect(Collectors.toList());
   }
 
-  private List<PodResponse> getProofsOfDelivery(@Nullable LocalDate since, boolean shippedOnly) {
+  private List<PodResponse> getProofsOfDelivery(@Nullable LocalDate since, boolean shippedOnly, String orderCode) {
     FacilityDto homeFacility = getCurrentFacilityInfo();
     UUID homeFacilityId = homeFacility.getId();
     if (since == null) {
@@ -369,9 +370,10 @@ public class MeService {
     }
     List<ProofOfDelivery> pods;
     if (shippedOnly) {
-      pods = podRepo.findAllByFacilitySince(homeFacilityId, since, OrderStatus.SHIPPED);
+      pods = podRepo.findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.SHIPPED);
     } else {
-      pods = podRepo.findAllByFacilitySince(homeFacilityId, since, OrderStatus.SHIPPED, OrderStatus.RECEIVED);
+      pods = podRepo
+          .findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.SHIPPED, OrderStatus.RECEIVED);
     }
     Map<UUID, OrderDto> orderIdToOrder = pods.stream()
         .map(ProofOfDelivery::getShipment)
@@ -379,21 +381,6 @@ public class MeService {
         .map(BaseEntity::getId)
         .map(orderService::searchOrderByIdWithoutProducts)
         .collect(toMap(o -> o.getOrder().getId(), SiglusOrderDto::getOrder));
-    Collection<UUID> productIds = pods.stream()
-        .map(ProofOfDelivery::getShipment)
-        .map(Shipment::getLineItems).flatMap(Collection::stream)
-        .map(ShipmentLineItem::getOrderable)
-        .map(VersionEntityReference::getId)
-        .collect(Collectors.toSet());
-    Map<UUID, String> productIdToCode = orderableDataService.findByIds(productIds).stream()
-        .collect(toMap(BaseDto::getId, OrderableDto::getProductCode));
-    Collection<UUID> lotIds = pods.stream()
-        .map(ProofOfDelivery::getShipment)
-        .map(Shipment::getLineItems).flatMap(Collection::stream)
-        .map(ShipmentLineItem::getLotId)
-        .collect(Collectors.toSet());
-    Map<UUID, LotDto> lotIdToLot = lotReferenceDataService.findByIds(lotIds).stream()
-        .collect(toMap(BaseDto::getId, Function.identity()));
     Map<UUID, String> reasonIdToName =
         validReasonAssignmentService.getAllReasons(homeFacility.getType().getId()).stream()
             .map(ValidReasonAssignmentDto::getReason)
@@ -402,40 +389,56 @@ public class MeService {
     Map<UUID, Requisition> orderIdToRequisition = orderIdToOrder.entrySet().stream()
         .collect(toMap(Entry::getKey, e -> orderService.getRequisitionByOrder(e.getValue())));
     return pods.stream()
-        .map(pod -> toPodResponse(pod, orderIdToOrder, productIdToCode, lotIdToLot, reasonIdToName,
-            orderIdToRequisition))
+        .map(pod -> toPodResponse(pod, orderIdToOrder, reasonIdToName, orderIdToRequisition))
         .collect(toList());
   }
 
   public PodResponse confirmPod(PodRequest podRequest) {
-    UserDto user = authHelper.getCurrentUser();
-    ProofOfDelivery toUpdate = podRepository.findInitiatedPodByOrderCode(podRequest.getOrderCode());
-    if (toUpdate == null) {
-      log.warn("Pod orderCode: {} not found:", podRequest.getOrderCode());
-      backupPodRequest(podRequest, PodConstants.NOT_EXIST_MESSAGE, user);
-      throw new OrderNotFoundException(podRequest.getOrderCode());
-    }
-    if (!StringUtils.isEmpty(podRequest.getOriginNumber())) {
-      log.info("Pod orderCode: {} has originNumber {},backup request", podRequest.getOrderCode(),
-          podRequest.getOriginNumber());
-      backupPodRequest(podRequest, "replace the old order number " + podRequest.getOriginNumber()
-          + " successfully.", user);
-    }
-    PodResponse podResponse = getProofsOfDelivery(null, true).stream()
-        .filter(p -> p.getOrder().getCode().equals(podRequest.getOrderCode())).findFirst().orElse(null);
+    Profiler profiler = new Profiler("confirmPod");
+    profiler.setLogger(log);
     try {
-      podConfirmService.confirmPod(podRequest, toUpdate, user, podResponse);
-      return getPodByOrderCode(podRequest.getOrderCode());
-    } catch (Exception e) {
-      backupPodRequest(podRequest, PodConstants.ERROR_MESSAGE + e.getMessage(), authHelper.getCurrentUser());
-      throw e;
+      CurrentUserContext currentUserContext = CurrentUserContext.init(authHelper, facilityReferenceDataService);
+      ContextHolder.attachContext(currentUserContext);
+      ContextHolder.attachContext(ProductContext.init(orderableService));
+      UserDto user = currentUserContext.getCurrentUser();
+      UUID homeFacilityId = user.getHomeFacilityId();
+      ContextHolder.attachContext(LotContext.init(homeFacilityId, lotNativeRepository, lotConflictService));
+      profiler.start("get current user");
+      profiler.start("get initiated pod");
+      ProofOfDelivery toUpdate = podRepository.findInitiatedPodByOrderCode(podRequest.getOrderCode());
+      if (toUpdate == null) {
+        log.warn("Pod orderCode: {} not found:", podRequest.getOrderCode());
+        backupPodRequest(podRequest, PodConstants.NOT_EXIST_MESSAGE, user);
+        throw new OrderNotFoundException(podRequest.getOrderCode());
+      }
+      profiler.start("back up");
+      if (!StringUtils.isEmpty(podRequest.getOriginNumber())) {
+        log.info("Pod orderCode: {} has originNumber {},backup request", podRequest.getOrderCode(),
+            podRequest.getOriginNumber());
+        backupPodRequest(podRequest, "replace the old order number " + podRequest.getOriginNumber()
+            + " successfully.", user);
+      }
+      profiler.start("get pod");
+      PodResponse podResponse = getProofsOfDelivery(null, true, podRequest.getOrderCode()).stream()
+          .filter(p -> p.getOrder().getCode().equals(podRequest.getOrderCode())).findFirst().orElse(null);
+      profiler.start("confirm");
+      try {
+        podConfirmService.confirmPod(podRequest, toUpdate, podResponse);
+        profiler.start("get response");
+        return getPodByOrderCode(podRequest.getOrderCode());
+      } catch (Exception e) {
+        backupPodRequest(podRequest, PodConstants.ERROR_MESSAGE + e.getMessage(), authHelper.getCurrentUser());
+        throw e;
+      }
+    } finally {
+      profiler.stop().log();
+      ContextHolder.clearContext();
     }
   }
 
   private PodResponse getPodByOrderCode(String orderCode) {
     entityManager.unwrap(Session.class).clear();
-    List<PodResponse> podResponses = getProofsOfDelivery(null, false);
-    PodResponse podResponse = podResponses.stream().filter(p -> p.getOrder().getCode().equals(orderCode)).findFirst()
+    PodResponse podResponse = getProofsOfDelivery(null, false, orderCode).stream().findFirst()
         .orElse(null);
     if (podResponse != null) {
       List<PodProductLineResponse> products = podResponse.getProducts().stream()
@@ -446,16 +449,18 @@ public class MeService {
   }
 
   private PodResponse toPodResponse(ProofOfDelivery pod, Map<UUID, OrderDto> orderIdToOrder,
-      Map<UUID, String> productIdToCode, Map<UUID, LotDto> lotIdToLot, Map<UUID, String> reasonIdToName,
-      Map<UUID, Requisition> orderIdToRequisition) {
+      Map<UUID, String> reasonIdToName, Map<UUID, Requisition> orderIdToRequisition) {
     PodResponse podResponse = podMapper.toResponse(pod, orderIdToOrder, orderIdToRequisition);
     podResponse.getProducts().forEach(productLine -> {
+      ProductContext productContext = ContextHolder.getContext(ProductContext.class);
       Map<UUID, ShipmentLineItem> shipmentLineMap = pod.getShipment().getLineItems().stream()
-          .filter(podLine -> productIdToCode.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
+          .filter(podLine ->
+              productContext.getProduct(podLine.getOrderable().getId()).getProductCode().equals(productLine.getCode()))
           .collect(toMap(ShipmentLineItem::getLotId, Function.identity()));
       List<PodLotLineResponse> lotLines = pod.getLineItems().stream()
-          .filter(podLine -> productIdToCode.get(podLine.getOrderable().getId()).equals(productLine.getCode()))
-          .map(l -> podLotLineMapper.toLotResponse(l, shipmentLineMap.get(l.getLotId()), lotIdToLot, reasonIdToName))
+          .filter(podLine ->
+              productContext.getProduct(podLine.getOrderable().getId()).getProductCode().equals(productLine.getCode()))
+          .map(l -> podLotLineMapper.toLotResponse(l, shipmentLineMap.get(l.getLotId()), reasonIdToName))
           .collect(toList());
       productLine.setLots(lotLines);
     });
@@ -471,7 +476,7 @@ public class MeService {
   private List<org.openlmis.requisition.dto.OrderableDto> getAllApprovedProducts() {
     UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
     return programsHelper
-        .findUserSupportedPrograms().stream()
+        .findHomeFacilitySupportedProgramIds().stream()
         .map(programDataService::findOne)
         .map(program -> getProgramProducts(homeFacilityId, program))
         .flatMap(Collection::stream)
@@ -570,7 +575,7 @@ public class MeService {
       log.info("skip backup requisition request as syncUpHash: {} existed", syncUpHash);
       return;
     }
-    String errorMessage = "";
+    String errorMessage;
     if (e instanceof javax.validation.ConstraintViolationException) {
       StringBuilder messageString = new StringBuilder();
       Set<ConstraintViolation<?>> constraintViolations = (((ConstraintViolationException) e).getConstraintViolations());

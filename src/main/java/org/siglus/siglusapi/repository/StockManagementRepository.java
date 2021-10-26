@@ -26,11 +26,11 @@ import static org.siglus.common.domain.referencedata.Orderable.TRADE_ITEM;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -90,7 +90,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 @RequiredArgsConstructor
 @SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.TooManyMethods"})
-public class StockManagementRepository {
+public class StockManagementRepository extends BaseNativeRepository {
 
   private final EntityManager em;
   private final ObjectMapper json;
@@ -310,7 +310,8 @@ public class StockManagementRepository {
     }
   }
 
-  private SqlParameterSource[] toParams(List<?> entities) {
+  @Override
+  protected SqlParameterSource[] toParams(Collection<?> entities) {
     return entities.stream().map(e -> new ToJsonBeanPropertySqlParameterSource(e, json))
         .toArray(SqlParameterSource[]::new);
   }
@@ -390,41 +391,6 @@ public class StockManagementRepository {
             .build()
         )
     );
-  }
-
-  private UUID readId(ResultSet rs) {
-    return readUuid(rs, "id");
-  }
-
-  @SneakyThrows
-  private UUID readUuid(ResultSet rs, String columnName) {
-    return rs.getObject(columnName, UUID.class);
-  }
-
-  @SneakyThrows
-  private Integer readAsInt(ResultSet rs, String columnName) {
-    int value = rs.getInt(columnName);
-    if (rs.wasNull()) {
-      return null;
-    }
-    return value;
-  }
-
-  @SneakyThrows
-  private String readAsString(ResultSet rs, String columnName) {
-    ResultSetMetaData rsMetaData = rs.getMetaData();
-    int numberOfColumns = rsMetaData.getColumnCount();
-    for (int i = 1; i < numberOfColumns + 1; i++) {
-      if (columnName.equals(rsMetaData.getColumnName(i))) {
-        return rs.getString(columnName);
-      }
-    }
-    return null;
-  }
-
-  @SneakyThrows
-  private java.sql.Date readAsDate(ResultSet rs, String columnName) {
-    return rs.getDate(columnName);
   }
 
   @SneakyThrows
