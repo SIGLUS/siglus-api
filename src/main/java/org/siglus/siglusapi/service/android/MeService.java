@@ -357,17 +357,26 @@ public class MeService {
   }
 
   public List<PodResponse> getProofsOfDeliveryWithFilter(@Nullable LocalDate since, boolean shippedOnly) {
-    List<PodResponse> podResponses = getProofsOfDelivery(since, shippedOnly, null);
-    return podResponses.stream().map(this::filterNoLotPod).collect(Collectors.toList());
+    try {
+      CurrentUserContext currentUserContext = CurrentUserContext.init(authHelper, facilityReferenceDataService);
+      ContextHolder.attachContext(currentUserContext);
+      ContextHolder.attachContext(ProductContext.init(orderableService));
+      ContextHolder.attachContext(
+          LotContext.init(currentUserContext.getHomeFacility().getId(), lotNativeRepository, lotConflictService));
+      List<PodResponse> podResponses = getProofsOfDelivery(since, shippedOnly, null);
+      return podResponses.stream().map(this::filterNoLotPod).collect(Collectors.toList());
+    } finally {
+      ContextHolder.clearContext();
+    }
   }
 
   private List<PodResponse> getProofsOfDelivery(@Nullable LocalDate since, boolean shippedOnly, String orderCode) {
-    FacilityDto homeFacility = getCurrentFacilityInfo();
-    UUID homeFacilityId = homeFacility.getId();
     if (since == null) {
       since = YearMonth.now().minusMonths(13L).atDay(1);
     }
     List<ProofOfDelivery> pods;
+    FacilityDto homeFacility = ContextHolder.getContext(CurrentUserContext.class).getHomeFacility();
+    UUID homeFacilityId = homeFacility.getId();
     if (shippedOnly) {
       pods = podRepo.findAllByFacilitySince(homeFacilityId, since, orderCode, OrderStatus.SHIPPED);
     } else {

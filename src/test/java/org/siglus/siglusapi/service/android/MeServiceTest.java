@@ -1334,7 +1334,7 @@ public class MeServiceTest {
     FacilityTypeDto facilityType = new FacilityTypeDto();
     facilityType.setId(UUID.randomUUID());
     homeFacility.setType(facilityType);
-    when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(homeFacility);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(homeFacility);
   }
 
   private void mockOrders() {

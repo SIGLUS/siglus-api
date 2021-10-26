@@ -395,7 +395,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     FacilityTypeDto facilityType = new FacilityTypeDto();
     facilityType.setId(randomUUID());
     homeFacility.setType(facilityType);
-    when(facilityReferenceDataService.getFacilityById(homeFacilityId)).thenReturn(homeFacility);
+    when(facilityReferenceDataService.findOne(homeFacilityId)).thenReturn(homeFacility);
   }
 
   private void mockPods() {
