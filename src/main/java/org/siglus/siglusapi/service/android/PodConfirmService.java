@@ -152,7 +152,10 @@ public class PodConfirmService {
     LotContext lotContext = ContextHolder.getContext(LotContext.class);
     lotContext.preload(podRequest.getProducts(), PodProductLineRequest::getCode,
         p -> UUID.fromString(productContext.getProduct(p.getCode()).getTradeItemIdentifier()),
-        p -> p.getLots().stream().map(this::convertLotFromRequest).collect(toList()));
+        p -> p.getLots().stream()
+            .filter(l -> l.getLot() != null)
+            .map(this::convertLotFromRequest)
+            .collect(toList()));
     profiler.start("update stock lines");
     List<OrderableDto> requestOrderables = podRequest.getProducts()
         .stream().map(o -> productContext.getProduct(o.getCode())).collect(toList());
@@ -181,13 +184,13 @@ public class PodConfirmService {
     return Lot.of(lotBasicRequest.getCode(), lotBasicRequest.getExpirationDate());
   }
 
-  private void updateStockCardLineItems(UUID facilityId, PodRequest podRequest,
-      LotContext lotContext) {
+  private void updateStockCardLineItems(UUID facilityId, PodRequest podRequest, LotContext lotContext) {
     if (StringUtils.isEmpty(podRequest.getOriginNumber())) {
       return;
     }
     Set<UUID> lotIds = podRequest.getProducts().stream()
         .map(p -> p.getLots().stream()
+            .filter(l -> l.getLot() != null && l.getLot().getCode() != null)
             .map(l -> lotContext.getLot(p.getCode(), l.getLot().getCode()).getId())
             .collect(toSet()))
         .flatMap(Collection::stream)
