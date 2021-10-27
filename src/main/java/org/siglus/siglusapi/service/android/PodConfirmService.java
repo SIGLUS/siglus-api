@@ -51,6 +51,9 @@ import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.android.Lot;
+import org.siglus.siglusapi.dto.android.request.LotBasicRequest;
+import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
@@ -68,6 +71,7 @@ import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.android.context.ContextHolder;
 import org.siglus.siglusapi.service.android.context.CurrentUserContext;
+import org.siglus.siglusapi.service.android.context.LotContext;
 import org.siglus.siglusapi.service.android.context.ProductContext;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.slf4j.profiler.Profiler;
@@ -144,6 +148,14 @@ public class PodConfirmService {
     deleteShipmentLineItems(toUpdatePod.getShipment().getLineItems());
     profiler.start("load products");
     ProductContext productContext = ContextHolder.getContext(ProductContext.class);
+    profiler.start("load lots");
+    LotContext lotContext = ContextHolder.getContext(LotContext.class);
+    lotContext.preload(podRequest.getProducts(), PodProductLineRequest::getCode,
+        p -> UUID.fromString(productContext.getProduct(p.getCode()).getTradeItemIdentifier()),
+        p -> p.getLots().stream()
+            .filter(l -> l.getLot() != null)
+            .map(this::convertLotFromRequest)
+            .collect(toList()));
     profiler.start("update stock lines");
     List<OrderableDto> requestOrderables = podRequest.getProducts()
         .stream().map(o -> productContext.getProduct(o.getCode())).collect(toList());
@@ -165,6 +177,11 @@ public class PodConfirmService {
     profiler.start("save hash");
     syncUpHashRepository.save(new SyncUpHash(podRequest.getSyncUpHash(user)));
     profiler.stop().log();
+  }
+
+  private Lot convertLotFromRequest(PodLotLineRequest lotLine) {
+    LotBasicRequest lotBasicRequest = lotLine.getLot();
+    return Lot.of(lotBasicRequest.getCode(), lotBasicRequest.getExpirationDate());
   }
 
   private void updateStockCardLineItems(UUID facilityId, PodRequest podRequest) {
