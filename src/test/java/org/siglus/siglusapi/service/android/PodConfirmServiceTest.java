@@ -274,8 +274,8 @@ public class PodConfirmServiceTest {
     when(lotNativeRepository.findOne(productCode, tradeItemId, lotCode)).thenReturn(buildLot());
     LotContext lotContext = LotContext.init(facilityId, lotNativeRepository, mock(LotConflictService.class));
     ContextHolder.attachContext(lotContext);
-    when(stockCardLineItemRepository.findByFacilityIdAndLotIdIn(
-        facilityId, originNumber, Collections.singleton(orderLotId))).thenReturn(stockCardLineItems);
+    when(stockCardLineItemRepository.findByFacilityIdAndLotIdIn(facilityId, originNumber)).thenReturn(
+        stockCardLineItems);
     when(validReasonAssignmentService.getValidReasonsForAllProducts(facilityTypeId, null, null))
         .thenReturn(buildReasonAsignment());
     ProofOfDelivery toUpdate = mockPod(user, false);

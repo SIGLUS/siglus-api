@@ -51,9 +51,6 @@ import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.UserDto;
-import org.siglus.siglusapi.dto.android.Lot;
-import org.siglus.siglusapi.dto.android.request.LotBasicRequest;
-import org.siglus.siglusapi.dto.android.request.PodLotLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodProductLineRequest;
 import org.siglus.siglusapi.dto.android.request.PodRequest;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
@@ -71,7 +68,6 @@ import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.android.context.ContextHolder;
 import org.siglus.siglusapi.service.android.context.CurrentUserContext;
-import org.siglus.siglusapi.service.android.context.LotContext;
 import org.siglus.siglusapi.service.android.context.ProductContext;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.slf4j.profiler.Profiler;
@@ -148,18 +144,10 @@ public class PodConfirmService {
     deleteShipmentLineItems(toUpdatePod.getShipment().getLineItems());
     profiler.start("load products");
     ProductContext productContext = ContextHolder.getContext(ProductContext.class);
-    profiler.start("load lots");
-    LotContext lotContext = ContextHolder.getContext(LotContext.class);
-    lotContext.preload(podRequest.getProducts(), PodProductLineRequest::getCode,
-        p -> UUID.fromString(productContext.getProduct(p.getCode()).getTradeItemIdentifier()),
-        p -> p.getLots().stream()
-            .filter(l -> l.getLot() != null)
-            .map(this::convertLotFromRequest)
-            .collect(toList()));
     profiler.start("update stock lines");
     List<OrderableDto> requestOrderables = podRequest.getProducts()
         .stream().map(o -> productContext.getProduct(o.getCode())).collect(toList());
-    updateStockCardLineItems(user.getHomeFacilityId(), podRequest, lotContext);
+    updateStockCardLineItems(user.getHomeFacilityId(), podRequest);
     profiler.start("update order");
     updateOrder(toUpdatePod, user, podRequest, requestOrderables);
     profiler.start("get home facility");
@@ -179,24 +167,12 @@ public class PodConfirmService {
     profiler.stop().log();
   }
 
-  private Lot convertLotFromRequest(PodLotLineRequest lotLine) {
-    LotBasicRequest lotBasicRequest = lotLine.getLot();
-    return Lot.of(lotBasicRequest.getCode(), lotBasicRequest.getExpirationDate());
-  }
-
-  private void updateStockCardLineItems(UUID facilityId, PodRequest podRequest, LotContext lotContext) {
+  private void updateStockCardLineItems(UUID facilityId, PodRequest podRequest) {
     if (StringUtils.isEmpty(podRequest.getOriginNumber())) {
       return;
     }
-    Set<UUID> lotIds = podRequest.getProducts().stream()
-        .map(p -> p.getLots().stream()
-            .filter(l -> l.getLot() != null && l.getLot().getCode() != null)
-            .map(l -> lotContext.getLot(p.getCode(), l.getLot().getCode()).getId())
-            .collect(toSet()))
-        .flatMap(Collection::stream)
-        .collect(toSet());
     List<StockCardLineItem> stockCardLineItems = stockCardLineItemRepository
-        .findByFacilityIdAndLotIdIn(facilityId, podRequest.getOriginNumber(), lotIds);
+        .findByFacilityIdAndLotIdIn(facilityId, podRequest.getOriginNumber());
     if (stockCardLineItems.isEmpty()) {
       return;
     }
