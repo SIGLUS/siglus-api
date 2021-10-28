@@ -734,7 +734,7 @@ public class RequisitionCreateService {
     regimenLineItemRequests.forEach(itemRequest -> {
       RegimenDto regimenDto = regimenCodeToRegimenDto.get(itemRequest.getCode());
       if (regimenDto == null) {
-        throw new NotFoundException("regimenDto not found");
+        throw new NotFoundException("regimenDto not found,error code is :" + itemRequest.getCode());
       }
       int patientTotal = totalMap.get(COLUMN_NAME_PATIENT);
       RegimenLineItem patientRegimenLineItem = RegimenLineItem.builder()
