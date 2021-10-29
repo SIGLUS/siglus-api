@@ -90,6 +90,7 @@ public interface ProductMovementMapper {
   @Mapping(target = "reason", source = "movementDetail", qualifiedByName = "getReason")
   @Mapping(target = "stockOnHand", source = "stockQuantity")
   @Mapping(target = "lotCode", source = "lot.code")
+  @Mapping(target = "expirationDate", source = "lot.expirationDate")
   @Mapping(target = "documentNumber", source = "documentNumber")
   LotMovementItemResponse fromLotMovement(LotMovement movement, @Context Function<MovementDetail, String> reasonMapper);
 

@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.dto.android.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,6 +34,8 @@ public class LotMovementItemResponse {
   private String reason;
 
   private String lotCode;
+
+  private LocalDate expirationDate;
 
   private Integer quantity;
 

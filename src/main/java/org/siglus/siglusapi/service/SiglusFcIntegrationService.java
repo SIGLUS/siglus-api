@@ -49,6 +49,7 @@ import org.openlmis.stockmanagement.domain.reason.StockCardLineItemReason;
 import org.openlmis.stockmanagement.repository.StockCardLineItemReasonRepository;
 import org.openlmis.stockmanagement.util.RequestParameters;
 import org.openlmis.stockmanagement.web.Pagination;
+import org.siglus.common.constant.KitConstants;
 import org.siglus.common.domain.OrderExternal;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.domain.referencedata.Facility;
@@ -197,15 +198,16 @@ public class SiglusFcIntegrationService {
     response.setCode(facility.getCode());
     response.setName(facility.getName());
     StocksOnHand stocksOnHand = stockManagementRepository.getStockOnHand(facility.getId(), at);
-    List<ProductStockOnHandResponse> products = lotOnHandMapper.toResponses(stocksOnHand);
+    List<ProductStockOnHandResponse> products = lotOnHandMapper.toResponses(stocksOnHand).stream()
+        .filter(resp -> !resp.getLots().isEmpty() || KitConstants.isKit(resp.getProductCode()))
+        .collect(toList());
     response.setProducts(products);
     return response;
   }
 
   public Page<FcProofOfDeliveryDto> searchProofOfDelivery(LocalDate date, Pageable pageable) {
     List<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.findAll();
-    Set<UUID> dpmRequestingFacilityIds = facilityDtos
-        .stream()
+    Set<UUID> dpmRequestingFacilityIds = facilityDtos.stream()
         .filter(facilityDto -> DPM.equals(facilityDto.getType().getCode()))
         .map(FacilityDto::getId)
         .collect(toSet());

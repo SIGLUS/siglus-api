@@ -21,6 +21,7 @@
                 {
                   "reason": "MATERNITY",
                   "lotCode": "lot1",
+                  "expirationDate": "2023-12-31",
                   "quantity": 10,
                   "stockOnHand": 10
                 }
@@ -41,6 +42,7 @@
                 {
                   "reason": "DISTRICT_DDM",
                   "lotCode": "lot1",
+                  "expirationDate": "2023-12-31",
                   "quantity": 10,
                   "stockOnHand": 10
                 }
