@@ -80,6 +80,7 @@ import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.fc.FacilityStockMovementResponse;
 import org.siglus.siglusapi.dto.fc.FacilityStockOnHandResponse;
 import org.siglus.siglusapi.dto.fc.ProductStockOnHandResponse;
+import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.PodExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
@@ -129,6 +130,7 @@ public class SiglusFcIntegrationService {
   private final SiglusDateHelper dateHelper;
   private final PodExtensionRepository podExtensionRepository;
   private final SiglusFacilityRepository facilityRepo;
+  private final FacilityNativeRepository facilityNativeRepository;
   private final SiglusFacilityTypeReferenceDataService facilityTypeDataService;
   private final StockManagementRepository stockManagementRepository;
   private final ProductMovementMapper productMovementMapper;
@@ -168,16 +170,19 @@ public class SiglusFcIntegrationService {
   public Page<FacilityStockMovementResponse> searchStockMovements(LocalDate since, Pageable pageable) {
     List<UUID> excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
         .map(FacilityTypeDto::getId).collect(toList());
-    return facilityRepo.findAllExcept(excludedTypeIds, pageable).map(f -> toMovementResponse(f, since));
+    return facilityNativeRepository.findAllForStockMovements(excludedTypeIds, since, pageable)
+        .map(f -> toMovementResponse(f, since));
   }
 
   public Page<FacilityStockOnHandResponse> searchStockOnHand(LocalDate at, Pageable pageable) {
     List<UUID> excludedTypeIds = findFacilityTypes(FacilityTypeConstants.getVirtualFacilityTypes()).stream()
         .map(FacilityTypeDto::getId).collect(toList());
-    return facilityRepo.findAllExcept(excludedTypeIds, pageable).map(f -> toStockOnHandResponse(f, at));
+    return facilityNativeRepository.findAllForStockOnHand(excludedTypeIds, at, pageable)
+        .map(f -> toStockOnHandResponse(f, at));
   }
 
-  private FacilityStockMovementResponse toMovementResponse(Facility facility, LocalDate since) {
+  private FacilityStockMovementResponse toMovementResponse(org.siglus.siglusapi.dto.android.db.Facility facility,
+      LocalDate since) {
     FacilityStockMovementResponse response = new FacilityStockMovementResponse();
     response.setCode(facility.getCode());
     response.setName(facility.getName());
@@ -186,7 +191,8 @@ public class SiglusFcIntegrationService {
     return response;
   }
 
-  private FacilityStockOnHandResponse toStockOnHandResponse(Facility facility, LocalDate at) {
+  private FacilityStockOnHandResponse toStockOnHandResponse(org.siglus.siglusapi.dto.android.db.Facility facility,
+      LocalDate at) {
     FacilityStockOnHandResponse response = new FacilityStockOnHandResponse();
     response.setCode(facility.getCode());
     response.setName(facility.getName());
@@ -469,7 +475,7 @@ public class SiglusFcIntegrationService {
 
   private List<FacilityTypeDto> findFacilityTypes(Collection<String> typeNames) {
     return facilityTypeDataService.getPage(RequestParameters.init()).getContent().stream()
-        .filter(t -> typeNames.contains(t.getName())).collect(toList());
+        .filter(t -> typeNames.contains(t.getCode())).collect(toList());
   }
 
 }

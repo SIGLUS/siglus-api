@@ -13,15 +13,20 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto.android.db;
 
 import java.util.UUID;
-import org.siglus.common.domain.referencedata.Facility;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-public interface SiglusFacilityRepository extends JpaRepository<Facility, UUID>, JpaSpecificationExecutor<Facility> {
+@Getter
+@RequiredArgsConstructor
+public class Facility {
 
-  Facility findFirstByTypeId(UUID typeId);
+  private final UUID id;
+  private final String code;
+  private final String name;
+  private final String description;
+  private final Boolean active;
 
 }

@@ -54,6 +54,15 @@ public abstract class BaseNativeRepository {
   }
 
   @SneakyThrows
+  protected Boolean readAsBoolean(ResultSet rs, String columnName) {
+    boolean ret = rs.getBoolean(columnName);
+    if (rs.wasNull()) {
+      return null;
+    }
+    return ret;
+  }
+
+  @SneakyThrows
   protected Integer readAsInt(ResultSet rs, String columnName) {
     int value = rs.getInt(columnName);
     if (rs.wasNull()) {

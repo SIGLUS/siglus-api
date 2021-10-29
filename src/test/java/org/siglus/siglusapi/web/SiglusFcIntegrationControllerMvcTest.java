@@ -44,7 +44,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.siglusapi.dto.android.EventTime;
 import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.LotMovement;
@@ -54,8 +53,9 @@ import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductLotStock;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
+import org.siglus.siglusapi.dto.android.db.Facility;
 import org.siglus.siglusapi.dto.android.enumeration.MovementType;
-import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusFcIntegrationService;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
@@ -102,7 +102,7 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
   @Mock
   private SiglusFacilityTypeReferenceDataService facilityTypeDataService;
   @Mock
-  private SiglusFacilityRepository facilityRepo;
+  private FacilityNativeRepository facilityRepo;
   @Mock
   private StockManagementRepository stockManagementRepository;
 
@@ -125,15 +125,12 @@ public class SiglusFcIntegrationControllerMvcTest extends FileBasedTest {
         .setCustomArgumentResolvers(pageableHandlerMethodArgumentResolver)
         .build();
     when(facilityTypeDataService.getPage(any())).thenReturn(new PageImpl<>(emptyList()));
-    Facility facility1 = new Facility();
-    facility1.setId(facility1Id);
-    facility1.setCode("F1");
-    facility1.setName("Facility 1");
-    Facility facility2 = new Facility();
-    facility2.setId(facility2Id);
-    facility2.setCode("F2");
-    facility2.setName("Facility 2");
-    when(facilityRepo.findAllExcept(any(), any())).thenReturn(new PageImpl<>(asList(facility1, facility2)));
+    Facility facility1 = new Facility(facility1Id, "F1", "Facility 1", null, true);
+    Facility facility2 = new Facility(facility2Id, "F2", "Facility 2", null, true);
+    when(facilityRepo.findAllForStockMovements(any(), any(), any()))
+        .thenReturn(new PageImpl<>(asList(facility1, facility2)));
+    when(facilityRepo.findAllForStockOnHand(any(), any(), any()))
+        .thenReturn(new PageImpl<>(asList(facility1, facility2)));
     when(stockManagementRepository.getStockOnHand(eq(facility1Id), any())).thenReturn(mockStocksOnHand1());
     when(stockManagementRepository.getStockOnHand(eq(facility2Id), any())).thenReturn(mockStocksOnHand2());
     PeriodOfProductMovements period1 = new PeriodOfProductMovements(mockProductMovements1(), mockStocksOnHand1());
