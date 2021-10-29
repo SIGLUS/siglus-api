@@ -49,8 +49,7 @@ public interface PodRequisitionMapper {
       @Context Map<UUID, Requisition> orderIdToRequisition);
 
   @Named("toProcessedDate")
-  default Instant toProcessedDate(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
-      @Context Map<UUID, Requisition> orderIdToRequisition) {
+  default Instant toProcessedDate(UUID orderId, @Context Map<UUID, Requisition> orderIdToRequisition) {
     Requisition requisition = orderIdToRequisition.get(orderId);
     if (requisition == null) {
       return null;
@@ -63,8 +62,7 @@ public interface PodRequisitionMapper {
   }
 
   @Named("toServerProcessedDate")
-  default Instant toServerProcessedDate(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
-      @Context Map<UUID, Requisition> orderIdToRequisition) {
+  default Instant toServerProcessedDate(UUID orderId, @Context Map<UUID, Requisition> orderIdToRequisition) {
     Requisition requisition = orderIdToRequisition.get(orderId);
     if (requisition == null || requisition.getCreatedDate() == null) {
       return null;

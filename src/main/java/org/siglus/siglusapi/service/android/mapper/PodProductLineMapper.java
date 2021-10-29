@@ -26,7 +26,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.openlmis.fulfillment.web.util.OrderDto;
 import org.openlmis.fulfillment.web.util.OrderLineItemDto;
-import org.openlmis.requisition.domain.requisition.Requisition;
 import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 
 @Mapper(componentModel = "spring")
@@ -37,8 +36,7 @@ public interface PodProductLineMapper {
   @Mapping(target = "lots", ignore = true)
   PodProductLineResponse toResponse(OrderLineItemDto orderLine);
 
-  default List<PodProductLineResponse> toResponses(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,
-      @Context Map<UUID, Requisition> orderIdToRequisition) {
+  default List<PodProductLineResponse> toResponses(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder) {
     if (orderId == null || orderIdToOrder.get(orderId) == null) {
       return Collections.emptyList();
     }
