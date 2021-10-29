@@ -17,6 +17,7 @@ package org.siglus.siglusapi.dto.fc;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -28,6 +29,7 @@ public class PageInfoDto {
 
   private Integer totalObjects;
 
+  @Default
   private Integer totalPages = 1;
 
   private Integer pageNumber;

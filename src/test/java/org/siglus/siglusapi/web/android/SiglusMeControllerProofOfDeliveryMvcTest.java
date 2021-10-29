@@ -535,7 +535,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     requisition1.setCreatedDate(ZonedDateTime.now());
     requisition1.setModifiedDate(ZonedDateTime.now());
     when(orderService.getRequisitionByOrder(order1)).thenReturn(requisition1);
-    when(facilityReferenceDataService.getFacilityById(order1FacilityId))
+    when(facilityReferenceDataService.findOne(order1FacilityId))
         .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }
 
@@ -570,7 +570,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     requisition2.setCreatedDate(ZonedDateTime.now());
     requisition2.setModifiedDate(ZonedDateTime.now());
     when(orderService.getRequisitionByOrder(order2)).thenReturn(requisition2);
-    when(facilityReferenceDataService.getFacilityById(order2FacilityId))
+    when(facilityReferenceDataService.findOne(order2FacilityId))
         .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }
 
@@ -605,7 +605,7 @@ public class SiglusMeControllerProofOfDeliveryMvcTest extends FileBasedTest {
     requisition3.setCreatedDate(ZonedDateTime.now());
     requisition3.setModifiedDate(ZonedDateTime.now());
     when(orderService.getRequisitionByOrder(order3)).thenReturn(requisition3);
-    when(facilityReferenceDataService.getFacilityById(order3FacilityId))
+    when(facilityReferenceDataService.findOne(order3FacilityId))
         .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }
 

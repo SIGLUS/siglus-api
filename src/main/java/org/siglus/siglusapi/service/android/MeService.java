@@ -545,7 +545,7 @@ public class MeService {
   }
 
   private FacilityDto getFacilityInfo(UUID facilityId) {
-    return facilityReferenceDataService.getFacilityById(facilityId);
+    return facilityReferenceDataService.findOne(facilityId);
   }
 
   private List<ReportTypeResponse> findSupportReportTypes(UUID facilityId, List<SupportedProgramDto> programs) {

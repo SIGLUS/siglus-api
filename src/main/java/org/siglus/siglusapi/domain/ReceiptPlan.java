@@ -26,6 +26,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -60,6 +61,7 @@ public class ReceiptPlan extends BaseEntity {
       fetch = FetchType.LAZY,
       orphanRemoval = true)
   @DiffIgnore
+  @Default
   private List<ReceiptPlanLineItem> lineItems = Collections.emptyList();
 
   public static ReceiptPlan from(ReceiptPlanDto receiptPlanDto) {

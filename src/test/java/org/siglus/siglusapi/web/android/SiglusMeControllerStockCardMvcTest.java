@@ -349,7 +349,7 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     FacilityTypeDto facilityType = new FacilityTypeDto();
     facilityType.setId(facilityTypeId);
     facility.setType(facilityType);
-    when(facilityReferenceDataService.getFacilityById(eq(facilityId))).thenReturn(facility);
+    when(facilityReferenceDataService.findOne(eq(facilityId))).thenReturn(facility);
   }
 
   private void mockPrograms() {

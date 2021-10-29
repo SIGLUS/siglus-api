@@ -44,7 +44,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     Notification notification = findOne(
         (root, query, cb) -> cb.and(
             cb.equal(root.get("refId"), refId),
-            root.<NotificationStatus>get("status").in(statuses),
+            root.<NotificationStatus>get("status").in((Object[]) statuses),
             cb.equal(root.get("processed"), false),
             cb.equal(root.get("type"), NotificationType.TODO)
         )

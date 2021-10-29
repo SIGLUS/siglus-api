@@ -33,6 +33,8 @@ import org.siglus.siglusapi.dto.android.response.PodProductLineResponse;
 public interface PodProductLineMapper {
 
   @Mapping(target = "code", source = "orderable.productCode")
+  // set manually in MeService#toPodResponse
+  @Mapping(target = "lots", ignore = true)
   PodProductLineResponse toResponse(OrderLineItemDto orderLine);
 
   default List<PodProductLineResponse> toResponses(UUID orderId, @Context Map<UUID, OrderDto> orderIdToOrder,

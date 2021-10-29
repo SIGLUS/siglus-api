@@ -74,8 +74,10 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
     return postResult("", dto, getResultClass());
   }
 
+  @Override
   @Cacheable(value = SIGLUS_FACILITY, keyGenerator = CACHE_KEY_GENERATOR)
-  public FacilityDto getFacilityById(UUID facilityId) {
+  public FacilityDto findOne(UUID facilityId) {
     return findOne(facilityId);
   }
+
 }

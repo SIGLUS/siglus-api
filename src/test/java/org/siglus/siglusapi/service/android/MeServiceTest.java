@@ -414,7 +414,7 @@ public class MeServiceTest {
     facilityDto.setCode("facilityCode");
     facilityDto.setName("facilityName");
     facilityDto.setSupportedPrograms(programDtos);
-    when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(facilityDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
 
     // when
     FacilityResponse response = service.getCurrentFacility();
@@ -432,7 +432,7 @@ public class MeServiceTest {
     facilityDto.setName("facilityName");
     facilityDto.setSupportedPrograms(getSupportedPrograms());
     List<ReportType> reportTypes = new ArrayList<>(asList(mockReportType1(), mockReportType2()));
-    when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(facilityDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     when(reportTypeRepository.findByFacilityId(facilityId))
         .thenReturn(reportTypes);
     List<Requisition> requisitions = mockProgramRnr().map(Collections::singletonList).orElse(emptyList());
@@ -497,7 +497,7 @@ public class MeServiceTest {
     List<HfCmmDto> requestCmms = mockRequestHfCmms();
     FacilityDto facilityDto = mock(FacilityDto.class);
     facilityDto.setCode(facilityCode);
-    when(facilityReferenceDataService.getFacilityById(any(UUID.class))).thenReturn(facilityDto);
+    when(facilityReferenceDataService.findOne(any(UUID.class))).thenReturn(facilityDto);
     when(facilityCmmsRepository
         .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(facilityDto.getCode(),
             requestCmms.get(0).getProductCode(), requestCmms.get(0).getPeriodBegin(),
@@ -524,7 +524,7 @@ public class MeServiceTest {
     List<HfCmmDto> requestCmms = mockRequestHfCmms();
     FacilityDto facilityDto = mock(FacilityDto.class);
     facilityDto.setCode(facilityCode);
-    when(facilityReferenceDataService.getFacilityById(any(UUID.class))).thenReturn(facilityDto);
+    when(facilityReferenceDataService.findOne(any(UUID.class))).thenReturn(facilityDto);
     when(facilityCmmsRepository
         .findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(facilityDto.getCode(),
             requestCmms.get(0).getProductCode(), requestCmms.get(0).getPeriodBegin(),
@@ -558,7 +558,7 @@ public class MeServiceTest {
     FacilityDto facilityDto = new FacilityDto();
     facilityDto.setId(facilityId);
     facilityDto.setName("facilityName");
-    when(facilityReferenceDataService.getFacilityById(facilityId)).thenReturn(facilityDto);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
     AndroidHeader header = mock(AndroidHeader.class);
 
     // when
@@ -1380,7 +1380,7 @@ public class MeServiceTest {
     requisition.setCreatedDate(ZonedDateTime.now());
     requisition.setModifiedDate(ZonedDateTime.now());
     when(orderService.getRequisitionByOrder(order1)).thenReturn(requisition);
-    when(facilityReferenceDataService.getFacilityById(order1FacilityId))
+    when(facilityReferenceDataService.findOne(order1FacilityId))
         .thenReturn(new org.siglus.siglusapi.dto.FacilityDto());
   }
 

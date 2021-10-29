@@ -104,7 +104,7 @@ public interface ProductMovementMapper {
   }
 
 
-  @Named("findOne")
+  @Named("getLot")
   default LotBasicResponse getLot(ProductLotCode productLotCode, @Context StocksOnHand stocksOnHand) {
     Lot lot = stocksOnHand.getLot(productLotCode);
     if (lot == null) {
@@ -123,7 +123,7 @@ public interface ProductMovementMapper {
         .collect(toList());
   }
 
-  @Mapping(target = "lot", source = "productLotCode", qualifiedByName = "findOne")
+  @Mapping(target = "lot", source = "productLotCode", qualifiedByName = "getLot")
   @Mapping(target = "quantityOnHand", source = "inventoryDetail.stockQuantity")
   @Mapping(target = "effectiveDate", source = "inventoryDetail.eventTime.occurredDate")
   LotsOnHandResponse toLotOnHand(ProductLotCode productLotCode, InventoryDetail inventoryDetail,
