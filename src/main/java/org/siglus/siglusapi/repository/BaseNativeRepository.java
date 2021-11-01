@@ -19,6 +19,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.Collection;
 import java.util.UUID;
+import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -53,7 +54,10 @@ public abstract class BaseNativeRepository {
     return null;
   }
 
+  @Nullable
   @SneakyThrows
+  // have to return null value
+  @SuppressWarnings("java:S2447")
   protected Boolean readAsBoolean(ResultSet rs, String columnName) {
     boolean ret = rs.getBoolean(columnName);
     if (rs.wasNull()) {
