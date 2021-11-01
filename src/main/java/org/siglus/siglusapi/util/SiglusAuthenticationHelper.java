@@ -49,7 +49,6 @@ public class SiglusAuthenticationHelper {
     return currentUserId.map(userService::findOne).orElseThrow(() -> authenticateFail(currentUserId.orElse(null)));
   }
 
-  // TODO why don't call UserDto#getRoleAssignments
   public Collection<PermissionString> getCurrentUserPermissionStrings() {
     return userService
         .getPermissionStrings(getCurrentUserId().orElseThrow(() -> authenticateFail(null)))
