@@ -80,9 +80,9 @@ public class FacilityNativeRepository extends BaseNativeRepository {
       from += "AND cal.occurreddate <= :at ";
     }
     if (!countQuery) {
-      from += "ORDER BY f.code ";
+      from += "ORDER BY f.code LIMIT " + pageable.getPageSize() + " OFFSET " + pageable.getOffset();
     }
-    return from + "LIMIT " + pageable.getPageSize() + " OFFSET " + pageable.getOffset();
+    return from;
   }
 
   private RowMapper<Facility> facilityExtractor() {
