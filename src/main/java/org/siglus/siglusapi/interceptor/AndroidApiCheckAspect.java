@@ -29,7 +29,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class AndroidUserCheckAspect {
+public class AndroidApiCheckAspect {
 
   private final AndroidHelper androidHelper;
 
@@ -41,7 +41,7 @@ public class AndroidUserCheckAspect {
   @Before("androidApi()")
   public void before() {
     if (!androidHelper.isAndroid()) {
-      throw new PermissionMessageException(new Message("siglusapi.error.notAndroid"));
+      throw new PermissionMessageException(new Message("siglusapi.error.notAndroidUser"));
     }
   }
 
