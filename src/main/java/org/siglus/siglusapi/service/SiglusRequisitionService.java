@@ -165,6 +165,9 @@ public class SiglusRequisitionService {
 
   public static final String SIMAM = "simam";
 
+  public static final String ROLE_ADMIN_ID = "a439c5de-b8aa-11e6-80f5-76304dec7eb7";
+
+
   @Autowired
   private RequisitionV2Controller requisitionV2Controller;
 
@@ -573,6 +576,14 @@ public class SiglusRequisitionService {
             .stream()
             .collect(toMap(FacilityDto::getId, facilityDto -> facilityDto));
 
+    if (PermissionService.REQUISITION_VIEW.equals(rightType)) {
+      Set<UUID> roleAssignmentIds = userDto.getRoleAssignments().stream()
+          .map(RoleAssignmentDto::getRoleId).collect(Collectors.toSet());
+      if (roleAssignmentIds.contains(UUID.fromString(ROLE_ADMIN_ID))) {
+        return Collections.emptyList();
+      }
+    }
+
     Set<SupervisoryNodeDto> supervisoryNodeDtos = userDto.getRoleAssignments()
         .stream()
         .filter(roleAssignment -> roleIds.contains(roleAssignment.getRoleId()))
@@ -586,7 +597,8 @@ public class SiglusRequisitionService {
     Set<FacilityDto> facilityDtos = supervisoryNodeDtos
         .stream()
         .flatMap(supervisoryNodeDto ->
-            getAllFacilityDtos(homeId, supervisoryNodeDto, requisitionGroupDtoMap, facilityDtoMap, nodeDtoMap).stream())
+            getAllFacilityDtos(homeId, supervisoryNodeDto, requisitionGroupDtoMap, facilityDtoMap, nodeDtoMap,
+                rightType).stream())
         .collect(toSet());
     if (PermissionService.REQUISITION_VIEW.equals(rightType)) {
       return addProgramsAndConvertToList(facilityDtos, facilityDtoMap.get(homeId));
@@ -634,9 +646,8 @@ public class SiglusRequisitionService {
   }
 
   // check if internal only && not final approve
-  private boolean isInternalApproveOnly(UUID userHomeFacilityId,
-      SupervisoryNodeDto supervisoryNodeDto,
-      Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap) {
+  private boolean isInternalApproveOnly(UUID userHomeFacilityId, String rightType,
+      SupervisoryNodeDto supervisoryNodeDto, Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap) {
     UUID requisitionGroupId = supervisoryNodeDto.getRequisitionGroupId();
     if (requisitionGroupId == null) {
       return false;
@@ -646,8 +657,12 @@ public class SiglusRequisitionService {
         .stream()
         .map(FacilityDto::getId)
         .collect(toSet());
-
-    return idsToApprove.contains(userHomeFacilityId) && supervisoryNodeDto.getParentNode() != null;
+    boolean isisInternalApproveOnly =
+        idsToApprove.contains(userHomeFacilityId) && supervisoryNodeDto.getParentNode() != null;
+    if (!isisInternalApproveOnly && PermissionService.REQUISITION_VIEW.equals(rightType)) {
+      isisInternalApproveOnly = (userHomeFacilityId != supervisoryNodeDto.getFacility().getId());
+    }
+    return isisInternalApproveOnly;
   }
 
   // get all facilities of this supervisoryNode
@@ -655,8 +670,9 @@ public class SiglusRequisitionService {
       SupervisoryNodeDto supervisoryNodeDto,
       Map<UUID, RequisitionGroupDto> requisitionGroupDtoMap,
       Map<UUID, FacilityDto> facilityDtoMap,
-      Map<UUID, SupervisoryNodeDto> nodeDtoMap) {
-    if (isInternalApproveOnly(userHomeFacilityId, supervisoryNodeDto, requisitionGroupDtoMap)) {
+      Map<UUID, SupervisoryNodeDto> nodeDtoMap,
+      String rightType) {
+    if (isInternalApproveOnly(userHomeFacilityId, rightType, supervisoryNodeDto, requisitionGroupDtoMap)) {
       return Sets.newHashSet(facilityDtoMap.get(userHomeFacilityId));
     }
     return getFacilityDtosByOwnAndChildSupervisoryNode(supervisoryNodeDto, requisitionGroupDtoMap, nodeDtoMap);

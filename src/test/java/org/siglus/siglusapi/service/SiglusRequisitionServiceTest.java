@@ -1303,7 +1303,7 @@ public class SiglusRequisitionServiceTest {
     siglusRequisitionDto.setStatus(AUTHORIZED);
     when(requisitionRepository.findOne(requisitionId)).thenReturn(requisition);
     when(requisitionV2Controller.updateRequisition(any(UUID.class), any(SiglusRequisitionDto.class),
-            any(HttpServletRequest.class), any(HttpServletResponse.class)))
+        any(HttpServletRequest.class), any(HttpServletResponse.class)))
         .thenReturn(requisitionV2Dto);
     SupervisoryNodeDto supervisoryNodeDto = new SupervisoryNodeDto();
     supervisoryNodeDto.setId(supervisoryNodeId);
