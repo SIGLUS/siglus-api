@@ -127,12 +127,14 @@ public class FcRegimenService implements ProcessDataService {
         || !isCategoryEquivalent(existed, current);
   }
 
+  @SuppressWarnings("java:S125")
   private Regimen merge(Regimen existed, RegimenDto current, UUID realProgramId, UUID programId,
       Map<String, RegimenCategory> codeToCategoryMap) {
     existed.setName(current.getDescription());
     existed.setRealProgramId(realProgramId);
     existed.setProgramId(programId);
-    existed.setRegimenCategory(getRegimenCategory(current, codeToCategoryMap));
+    // do not update regimen category as FC don't provide the value, we fill the value by script
+    // existed.setRegimenCategory(getRegimenCategory(current, codeToCategoryMap));
     return existed;
   }
 

@@ -19,10 +19,11 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
 
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
+import org.javers.common.collections.Sets;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.AuthenticationException;
@@ -38,7 +39,8 @@ public class SiglusAuthenticationHelper {
 
   public Optional<UUID> getCurrentUserId() {
     Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-    if (principal == null || StringUtils.equalsIgnoreCase(principal.toString(), "trusted-client")) {
+    Set<String> trustedClients = Sets.asSet("trusted-client", "fc-client");
+    if (principal == null || trustedClients.contains(principal.toString())) {
       return Optional.empty();
     }
     return Optional.of((UUID) principal);
