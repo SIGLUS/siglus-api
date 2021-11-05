@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.dto.android.validator.stockcard;
 
+import static org.siglus.siglusapi.constant.FieldConstants.INVENTORY;
 import static org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder.getContext;
 
 import java.util.UUID;
@@ -51,7 +52,7 @@ public class SupportReasonNameValidator implements
       if (value.getType().equals(MovementType.PHYSICAL_INVENTORY.name())) {
         value.getLotEvents()
             .forEach(l -> {
-              if ("INVENTORY".equalsIgnoreCase(l.getReasonName())) {
+              if (INVENTORY.equalsIgnoreCase(l.getReasonName())) {
                 return;
               }
               MovementType.PHYSICAL_INVENTORY.getInventoryReasonId(programId, l.getReasonName());

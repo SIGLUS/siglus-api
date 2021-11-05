@@ -165,8 +165,8 @@ public class SiglusRequisitionService {
 
   public static final String SIMAM = "simam";
 
-  public static final String ROLE_ADMIN_ID = "a439c5de-b8aa-11e6-80f5-76304dec7eb7";
-
+  @Value("${role.admin.id}")
+  private UUID roleAdminId;
 
   @Autowired
   private RequisitionV2Controller requisitionV2Controller;
@@ -579,7 +579,7 @@ public class SiglusRequisitionService {
     if (PermissionService.REQUISITION_VIEW.equals(rightType)) {
       Set<UUID> roleAssignmentIds = userDto.getRoleAssignments().stream()
           .map(RoleAssignmentDto::getRoleId).collect(Collectors.toSet());
-      if (roleAssignmentIds.contains(UUID.fromString(ROLE_ADMIN_ID))) {
+      if (roleAssignmentIds.contains(roleAdminId)) {
         return Collections.emptyList();
       }
     }

@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.dto.android;
 
+import static org.siglus.siglusapi.constant.FieldConstants.INVENTORY;
+
 import java.util.Objects;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -62,7 +64,7 @@ public class MovementDetail {
       } else {
         adjustment = 0;
       }
-      return inventory(adjustment, "INVENTORY");
+      return inventory(adjustment, INVENTORY);
     }
   }
 

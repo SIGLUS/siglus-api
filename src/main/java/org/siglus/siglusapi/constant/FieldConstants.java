@@ -76,4 +76,8 @@ public class FieldConstants {
 
   public static final String ADJUSTMENT = "adjustment";
 
+  public static final String INVENTORY = "INVENTORY";
+
+  public static final String PHYSICAL_INVENTORY = "PHYSICAL_INVENTORY";
+
 }

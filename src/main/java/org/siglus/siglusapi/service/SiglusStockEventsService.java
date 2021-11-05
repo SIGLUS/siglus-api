@@ -134,10 +134,12 @@ public class SiglusStockEventsService {
           .map(StockEventDto::fromPhysicalInventoryDto)
           .collect(Collectors.toList());
     } else {
-      List<StockManagementDraftDto> stockManagementDraftDtos = stockManagementDraftService
-          .findStockManagementDraft(ALL_PRODUCTS_PROGRAM_ID, getType(eventDto), true);
-      if (CollectionUtils.isEmpty(stockManagementDraftDtos)) {
-        throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
+      if (isNotUnpack(eventDto)) {
+        List<StockManagementDraftDto> stockManagementDraftDtos = stockManagementDraftService
+            .findStockManagementDraft(ALL_PRODUCTS_PROGRAM_ID, getDraftType(eventDto), true);
+        if (CollectionUtils.isEmpty(stockManagementDraftDtos)) {
+          throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
+        }
       }
       stockEventDtos = programIds.stream()
           .map(StockEventDto::fromProgramId)
@@ -159,8 +161,8 @@ public class SiglusStockEventsService {
     if (!programIdToEventId.isEmpty()) {
       if (eventDto.isPhysicalInventory()) {
         siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
-      } else if (!eventDto.hasReason(unpackReasonId)) {
-        String type = getType(eventDto);
+      } else if (isNotUnpack(eventDto)) {
+        String type = getDraftType(eventDto);
         eventDto.setType(type);
         stockManagementDraftService.deleteStockManagementDraft(eventDto);
       }
@@ -311,7 +313,11 @@ public class SiglusStockEventsService {
     stockCardLineItemRepository.save(stockCardLineItems);
   }
 
-  private String getType(StockEventDto eventDto) {
+  private boolean isNotUnpack(StockEventDto eventDto) {
+    return !eventDto.hasReason(unpackReasonId);
+  }
+
+  private String getDraftType(StockEventDto eventDto) {
     if (eventDto.hasSource()) {
       return RECEIVE;
     } else if (eventDto.hasDestination()) {

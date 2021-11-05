@@ -22,6 +22,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static org.siglus.siglusapi.constant.FieldConstants.INVENTORY;
 import static org.siglus.siglusapi.service.android.MeService.KEY_PROGRAM_CODE;
 import static org.siglus.siglusapi.service.android.context.StockCardCreateContextHolder.getContext;
 
@@ -246,7 +247,7 @@ public class StockCardCreateService {
             context.requestedQuantities.add(RequestedQuantity.of(stockEvent, product, request.getRequested()));
           }
           toAdjustments(request).forEach(adjustment -> {
-            StockCard stockCard = getStockCard(request.getProductCode(), adjustment, stockEvent, context);
+            StockCard stockCard = getStockCard(request, adjustment, stockEvent, context);
             LineItemDetail lineDetail = LineItemDetail
                 .of(stockEvent, stockCard, type, adjustment, request.isInitInventory());
             StockEventLineItem eventLine = StockEventLineItem.of(lineDetail);
@@ -255,7 +256,7 @@ public class StockCardCreateService {
             context.stockCardLineItems.add(stockCardLine);
             UUID eventLineId = eventLine.getId();
             UUID stockCardLineId = stockCardLine.getId();
-            if (type != MovementType.PHYSICAL_INVENTORY || "INVENTORY".equals(adjustment.getReasonName())) {
+            if (type != MovementType.PHYSICAL_INVENTORY || INVENTORY.equals(adjustment.getReasonName())) {
               return;
             }
             PhysicalInventory inventory = getPhysicalInventory(request.getOccurredDate(), stockEvent, context);
@@ -274,15 +275,23 @@ public class StockCardCreateService {
     return request.getLotEvents();
   }
 
-  private StockCard getStockCard(String productCode, StockCardAdjustment adjustment, StockEvent stockEvent,
+  private StockCard getStockCard(StockCardCreateRequest request, StockCardAdjustment adjustment, StockEvent stockEvent,
       StockCardNativeCreateContext context) {
     String lotCode = null;
+    String productCode = request.getProductCode();
     if (adjustment instanceof StockCardLotEventRequest) {
       lotCode = ((StockCardLotEventRequest) adjustment).getLotCode();
     }
     StockCard stockCard = getContext().getStockCard(productCode, lotCode);
     if (stockCard != null) {
       return stockCard;
+    }
+    String reasonName = request.getReasonName();
+    if (!request.getLotEvents().isEmpty()) {
+      reasonName = request.getLotEvents().get(0).getReasonName();
+    }
+    if ((INVENTORY.equals(reasonName)) && request.getQuantity().equals(request.getStockOnHand())) {
+      request.setIsInitInventory(true);
     }
     UUID facilityId = getContext().getFacility().getId();
     UUID programId = getContext().getProgramId(productCode).orElseThrow(IllegalStateException::new);

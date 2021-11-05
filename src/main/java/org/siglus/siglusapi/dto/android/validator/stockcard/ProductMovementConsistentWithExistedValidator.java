@@ -19,6 +19,7 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.minBy;
 import static java.util.stream.Collectors.toList;
+import static org.siglus.siglusapi.constant.FieldConstants.INVENTORY;
 
 import java.util.List;
 import java.util.Map;
@@ -290,7 +291,7 @@ public class ProductMovementConsistentWithExistedValidator implements
     if (movementDetailFromRequest.getReason() == null) {
       return true;
     }
-    if ("INVENTORY".equals(movementDetailFromExisted.getReason())) {
+    if (INVENTORY.equals(movementDetailFromExisted.getReason())) {
       return true;
     }
     return Objects.equals(movementDetailFromRequest.getReason(), movementDetailFromExisted.getType()

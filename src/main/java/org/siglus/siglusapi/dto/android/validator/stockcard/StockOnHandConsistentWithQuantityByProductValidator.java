@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.dto.android.validator.stockcard;
 
 import static java.util.stream.Collectors.groupingBy;
+import static org.siglus.siglusapi.constant.FieldConstants.INVENTORY;
+import static org.siglus.siglusapi.constant.FieldConstants.PHYSICAL_INVENTORY;
 
 import java.util.List;
 import javax.validation.ConstraintValidatorContext;
@@ -48,7 +50,7 @@ public class StockOnHandConsistentWithQuantityByProductValidator extends
         .filter(r -> r.getStockOnHand() != null)
         .filter(r -> r.getQuantity() != null)
         .filter(r -> r.getStockOnHand() >= 0)
-        .filter(r -> !("PHYSICAL_INVENTORY".equals(r.getType()) && "INVENTORY".equals(r.getReasonName())))
+        .filter(r -> !(PHYSICAL_INVENTORY.equals(r.getType()) && INVENTORY.equals(r.getReasonName())))
         .sorted(EventTimeContainer.ASCENDING)
         .collect(groupingBy(StockCardCreateRequest::getProductCode)).entrySet().stream()
         .allMatch(e -> checkConsistentByGroup(e.getKey(), e.getValue(), context));

@@ -141,6 +141,8 @@ public class SiglusStockEventsServiceTest {
   private final StockEventLineItemDto lineItemDto1 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
   private final StockEventLineItemDto lineItemDto2 = new StockEventLineItemDtoDataBuilder().buildForPhysicalInventory();
 
+  private final UUID unpackReasonId = UUID.randomUUID();
+
   @Before
   public void prepare() {
     userDto = new UserDto();
@@ -159,7 +161,7 @@ public class SiglusStockEventsServiceTest {
     lineItemDto1.setExtraData(getExtraData());
     lineItemDto2.setOrderableId(orderableId2);
     lineItemDto2.setExtraData(getExtraData());
-    ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", UUID.randomUUID());
+    ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", unpackReasonId);
   }
 
   @Test
@@ -336,6 +338,46 @@ public class SiglusStockEventsServiceTest {
 
     // when
     siglusStockEventsService.createStockEvent(eventDto);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenIssueIsSubmitted() {
+    // then
+    exception.expect(ValidationMessageException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED));
+
+    // given
+    StockEventLineItemDto lineItemDtoIssue = new StockEventLineItemDtoDataBuilder().build();
+    lineItemDtoIssue.setOrderableId(orderableId1);
+    lineItemDtoIssue.setReasonId(null);
+    lineItemDtoIssue.setSourceId(null);
+
+    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDtoIssue))
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+    when(stockManagementDraftService.findStockManagementDraft(any(), any(), any()))
+        .thenReturn(Collections.emptyList());
+
+    // when
+    siglusStockEventsService.createStockEvent(eventDto);
+  }
+
+  @Test
+  public void shouldCallStockEventApiWhenUnpackKitEvent() {
+    // given
+    StockEventLineItemDto lineItemDtoUnpackKit = new StockEventLineItemDtoDataBuilder().build();
+    lineItemDtoUnpackKit.setDestinationId(null);
+    lineItemDtoUnpackKit.setSourceId(null);
+    lineItemDtoUnpackKit.setReasonId(unpackReasonId);
+    lineItemDtoUnpackKit.setOrderableId(orderableId1);
+    lineItemDtoUnpackKit.setExtraData(getExtraData());
+
+    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDtoUnpackKit))
+        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
+
+    // when
+    siglusStockEventsService.createStockEvent(eventDto);
+    // then
+    verify(stockManagementDraftService, times(0)).findStockManagementDraft(any(), any(), any());
   }
 
 
