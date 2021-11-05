@@ -15,9 +15,9 @@
 
 package org.siglus.siglusapi.util;
 
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.domain.FacilityExtension;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.springframework.stereotype.Component;
 
@@ -29,8 +29,12 @@ public class AndroidHelper {
   private final FacilityExtensionRepository facilityExtensionRepository;
 
   public boolean isAndroid() {
-    UUID homeFacilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(homeFacilityId);
+    UserDto currentUser = authHelper.getCurrentUser();
+    if (currentUser == null) {
+      // trusted-client
+      return false;
+    }
+    FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(currentUser.getHomeFacilityId());
     if (facilityExtension == null) {
       return false;
     }

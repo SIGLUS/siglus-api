@@ -48,6 +48,9 @@ public class SiglusAuthenticationHelper {
 
   public UserDto getCurrentUser() {
     Optional<UUID> currentUserId = getCurrentUserId();
+    if (Optional.empty().equals(currentUserId)) {
+      return null;
+    }
     return currentUserId.map(userService::findOne).orElseThrow(() -> authenticateFail(currentUserId.orElse(null)));
   }
 
