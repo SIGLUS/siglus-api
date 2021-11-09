@@ -64,6 +64,7 @@ import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
+import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemAdjustmentRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
@@ -121,6 +122,9 @@ public class StockCardDeleteServiceTest {
   @Mock
   private SiglusStockCardRepository siglusStockCardRepository;
 
+  @Mock
+  private FacilityCmmsRepository facilityCmmsRepository;
+
   @Captor
   private ArgumentCaptor<List<StockCardDeletedBackup>> stockCardDeletedBackupsArgumentCaptor;
 
@@ -171,7 +175,6 @@ public class StockCardDeleteServiceTest {
     ProductMovementResponse productResponse2 = ProductMovementResponse.builder().productCode(productCode2).build();
     facilityResponse.setProductMovements(Arrays.<ProductMovementResponse>asList(productResponse1, productResponse2));
     when(stockCardSearchService.getProductMovementsByOrderables(any())).thenReturn(facilityResponse);
-
   }
 
   @Test
@@ -201,6 +204,7 @@ public class StockCardDeleteServiceTest {
     verify(calculatedStockOnHandRepository).deleteByFacilityIdAndOrderableIds(any(), any());
     verify(stockCardLineItemRepository).delete(stockCardLineItems);
     verify(siglusStockCardRepository).deleteStockCardsByFacilityIdAndOrderableIdIn(any(), any());
+    verify(facilityCmmsRepository).deleteHfCmmsByFacilityIdAndProductCode(any(), any());
   }
 
   private List<StockCardDeleteRequest> createStockCardDeleteRequests() {

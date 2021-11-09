@@ -42,6 +42,7 @@ import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
 import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.repository.FacilityCmmsRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemAdjustmentRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
@@ -76,6 +77,8 @@ public class StockCardDeleteService {
   private final PhysicalInventoryLineItemAdjustmentRepository physicalInventoryLineItemAdjustmentRepository;
 
   private final StockCardDeletedBackupRepository stockCardDeletedBackupRepository;
+
+  private final FacilityCmmsRepository facilityCmmsRepository;
 
   @Transactional
   public void deleteStockCardByProduct(@Valid @NotEmpty List<StockCardDeleteRequest> stockCardDeleteRequests) {
@@ -140,6 +143,8 @@ public class StockCardDeleteService {
     if (!physicalInventories.isEmpty()) {
       stockCardLineItemRepository.delete(stockCardLineItems);
     }
+    log.info("delete hfCmms by facilityId : {}, orderableIds: {}", facilityId, orderableIds);
+    facilityCmmsRepository.deleteHfCmmsByFacilityIdAndProductCode(facilityId, orderableIds);
     log.info("delete calculated stockOnHand by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
     siglusStockCardRepository.deleteStockCardsByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
   }
