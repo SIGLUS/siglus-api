@@ -137,6 +137,7 @@ import org.siglus.common.repository.OrderExternalRepository;
 import org.siglus.common.repository.OrderableKitRepository;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
+import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.RequisitionDraft;
 import org.siglus.siglusapi.domain.RequisitionExtension;
@@ -149,6 +150,7 @@ import org.siglus.siglusapi.dto.RegimenDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.i18n.MessageService;
+import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -426,6 +428,9 @@ public class SiglusRequisitionServiceTest {
 
   @Mock
   private OrderExternalRepository orderExternalRepository;
+
+  @Mock
+  private FacilityExtensionRepository facilityExtensionRepository;
 
   @Before
   public void prepare() {
@@ -1000,6 +1005,20 @@ public class SiglusRequisitionServiceTest {
     assertEquals(false, lineItemCaptor.getSkipped());
     assertNull(lineItemCaptor.getApprovedQuantity());
     verify(notificationService).postReject(dto);
+  }
+
+  @Test(expected = org.openlmis.stockmanagement.exception.PermissionMessageException.class)
+  public void shouldThrowExceptionWhenRejectRequisitionByAndroidFacility() {
+    // given
+    UUID requisitionId = UUID.randomUUID();
+    HttpServletRequest request = new MockHttpServletRequest();
+    HttpServletResponse response = new MockHttpServletResponse();
+    FacilityExtension facilityExtension = new FacilityExtension();
+    facilityExtension.setIsAndroid(true);
+    when(facilityExtensionRepository.findByFacilityId(facilityId)).thenReturn(facilityExtension);
+
+    // when
+    siglusRequisitionService.rejectRequisition(requisitionId, request, response);
   }
 
   @Test
