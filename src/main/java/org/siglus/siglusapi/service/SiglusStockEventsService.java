@@ -181,7 +181,7 @@ public class SiglusStockEventsService {
       OrderableDto orderable = orderableDtos.get(orderableId);
       if (orderable.getIsKit()) {
         validateLotMustBeNull(eventLineItem);
-        return;
+        continue;
       }
       UUID facilityId = getFacilityId(eventDto);
       fillLotIdIfNull(facilityId, orderable, eventLineItem);
