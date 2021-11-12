@@ -36,6 +36,7 @@ import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLi
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventoryLineItemAdjustment;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
+import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.siglusapi.domain.StockCardDeletedBackup;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.StockCardDeleteRequest;
@@ -80,6 +81,8 @@ public class StockCardDeleteService {
 
   private final FacilityCmmsRepository facilityCmmsRepository;
 
+  private final ArchivedProductRepository archivedProductRepository;
+
   @Transactional
   public void deleteStockCardByProduct(@Valid @NotEmpty List<StockCardDeleteRequest> stockCardDeleteRequests) {
     List<org.openlmis.requisition.dto.OrderableDto> orderableDtos = stockCardCreateService.getAllApprovedProducts();
@@ -102,7 +105,7 @@ public class StockCardDeleteService {
         .collect(Collectors.toList());
     log.info("save stock card deleted backup info: {}", stockCardDeletedBackups);
     stockCardDeletedBackupRepository.save(stockCardDeletedBackups);
-    deleteStockCardMovement(userDto.getHomeFacilityId(), orderableIds);
+    deleteStockCardMovements(userDto.getHomeFacilityId(), orderableIds);
   }
 
   private Map<String, UUID> orderableCodeToIdMap(
@@ -112,7 +115,7 @@ public class StockCardDeleteService {
             OrderableDto::getId));
   }
 
-  private void deleteStockCardMovement(UUID facilityId, Set<UUID> orderableIds) {
+  private void deleteStockCardMovements(UUID facilityId, Set<UUID> orderableIds) {
     List<PhysicalInventory> physicalInventories = physicalInventoriesRepository
         .findByFacilityIdAndOrderableIds(facilityId, orderableIds);
     List<PhysicalInventoryLineItem> physicalInventoryLineItems = getPhysicalInventoryLineItems(physicalInventories);
@@ -123,7 +126,7 @@ public class StockCardDeleteService {
     List<PhysicalInventoryLineItemAdjustment> stockCardAdjustments = getStockCardLineItemAdjustments(
         stockCardLineItems);
     if (!phycicalAdjustments.isEmpty()) {
-      log.info("delete phycical inventory line item adjustments: {}", phycicalAdjustments);
+      log.info("delete physical inventory line item adjustments: {}", phycicalAdjustments);
       physicalInventoryLineItemAdjustmentRepository.delete(phycicalAdjustments);
     }
     if (!stockCardAdjustments.isEmpty()) {
@@ -131,22 +134,25 @@ public class StockCardDeleteService {
       physicalInventoryLineItemAdjustmentRepository.delete(stockCardAdjustments);
     }
     if (!physicalInventoryLineItems.isEmpty()) {
-      log.info("delete phycical inventory line item: {}", logPhysicalInventoryLineItems(physicalInventoryLineItems));
+      log.info("delete physical inventory line items: {}", logPhysicalInventoryLineItems(physicalInventoryLineItems));
       physicalInventoryLineItemRepository.delete(physicalInventoryLineItems);
     }
     if (!physicalInventories.isEmpty()) {
-      log.info("delete phycical inventory: {}", logPhysicalInventories(physicalInventories));
+      log.info("delete physical inventories: {}", logPhysicalInventories(physicalInventories));
       physicalInventoriesRepository.delete(physicalInventories);
     }
-    log.info("delete calculated stockOnHand by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
+    log.info("delete calculatedStockOnHand by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
     calculatedStockOnHandRepository.deleteByFacilityIdAndOrderableIds(facilityId, orderableIds);
-    if (!physicalInventories.isEmpty()) {
+    if (!stockCardLineItems.isEmpty()) {
+      log.info("delete stock card line items by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
       stockCardLineItemRepository.delete(stockCardLineItems);
     }
-    log.info("delete hfCmms by facilityId : {}, orderableIds: {}", facilityId, orderableIds);
+    log.info("delete hfCmms by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
     facilityCmmsRepository.deleteHfCmmsByFacilityIdAndProductCode(facilityId, orderableIds);
     log.info("delete calculated stockOnHand by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
     siglusStockCardRepository.deleteStockCardsByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
+    log.info("delete archived products by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
+    archivedProductRepository.deleteArchivedProductsByFacilityIdAndOrderableIds(facilityId, orderableIds);
   }
 
   private String logPhysicalInventoryLineItems(List<PhysicalInventoryLineItem> physicalInventoryLineItems) {

@@ -57,6 +57,7 @@ import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
+import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.siglusapi.domain.StockCardDeletedBackup;
 import org.siglus.siglusapi.dto.LotDto;
 import org.siglus.siglusapi.dto.UserDto;
@@ -124,6 +125,9 @@ public class StockCardDeleteServiceTest {
 
   @Mock
   private FacilityCmmsRepository facilityCmmsRepository;
+
+  @Mock
+  private ArchivedProductRepository archivedProductRepository;
 
   @Captor
   private ArgumentCaptor<List<StockCardDeletedBackup>> stockCardDeletedBackupsArgumentCaptor;
@@ -205,6 +209,7 @@ public class StockCardDeleteServiceTest {
     verify(stockCardLineItemRepository).delete(stockCardLineItems);
     verify(siglusStockCardRepository).deleteStockCardsByFacilityIdAndOrderableIdIn(any(), any());
     verify(facilityCmmsRepository).deleteHfCmmsByFacilityIdAndProductCode(any(), any());
+    verify(archivedProductRepository).deleteArchivedProductsByFacilityIdAndOrderableIds(any(), any());
   }
 
   private List<StockCardDeleteRequest> createStockCardDeleteRequests() {
