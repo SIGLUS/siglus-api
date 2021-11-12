@@ -483,7 +483,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     // given
     mockFacilityId(restartedFacilityId);
     Object param = parseParam("actualStartDateAfterLastActualEnd.json");
-    when(syncUpHashRepository.findOne(anyString())).thenReturn(new SyncUpHash("hash-code"));
+    when(syncUpHashRepository.findOne(anyString())).thenReturn(new SyncUpHash());
 
     // when
     Map<String, String> violations = executeValidation(param);

@@ -399,7 +399,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     when(permissionService.canSubmitRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canAuthorizeRequisition(any(Requisition.class))).thenReturn(success);
     when(permissionService.canApproveRequisition(any(Requisition.class))).thenReturn(success);
-    when(syncUpHashRepository.findOne(anyString())).thenReturn(new SyncUpHash("hash-code"));
+    when(syncUpHashRepository.findOne(anyString())).thenReturn(new SyncUpHash());
 
     // when
     service.createRequisition(buildRequisitionCreateRequest());

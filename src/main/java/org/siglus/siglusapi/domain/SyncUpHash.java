@@ -15,19 +15,36 @@
 
 package org.siglus.siglusapi.domain;
 
+import java.time.ZonedDateTime;
+import java.util.UUID;
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
+@Builder
 @Table(name = "sync_up_hashes", schema = "siglusintegration")
 public class SyncUpHash {
   @Id
   private String hash;
+
+  private String type;
+
+  private UUID referenceId;
+
+  @CreatedDate
+  @Column(updatable = false)
+  private ZonedDateTime createdDate;
 }

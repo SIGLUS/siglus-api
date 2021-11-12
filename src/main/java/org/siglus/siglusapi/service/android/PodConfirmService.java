@@ -175,7 +175,12 @@ public class PodConfirmService {
         podRequest.getProducts(), reasonNameToId);
     log.info("save pod syncUpHash: {}", podRequest.getSyncUpHash(user));
     profiler.start("save hash");
-    syncUpHashRepository.save(new SyncUpHash(podRequest.getSyncUpHash(user)));
+    SyncUpHash syncUpHashDomain = SyncUpHash.builder()
+        .hash(podRequest.getSyncUpHash(user))
+        .type("POD")
+        .referenceId(toUpdatePod.getId())
+        .build();
+    syncUpHashRepository.save(syncUpHashDomain);
     profiler.stop().log();
   }
 

@@ -204,14 +204,18 @@ public class RequisitionCreateService {
       log.info("skip create requisition as syncUpHash: {} existed", syncUpHash);
       return;
     }
-
     UUID authorId = user.getId();
     Requisition requisition = initiateRequisition(request, user);
     requisition = submitRequisition(requisition, authorId);
     requisition = authorizeRequisition(requisition, authorId);
     internalApproveRequisition(requisition, authorId);
     log.info("save requisition syncUpHash: {}", syncUpHash);
-    syncUpHashRepository.save(new SyncUpHash(syncUpHash));
+    SyncUpHash syncUpHashDomain = SyncUpHash.builder()
+        .hash(syncUpHash)
+        .type("Requisition")
+        .referenceId(requisition.getId())
+        .build();
+    syncUpHashRepository.save(syncUpHashDomain);
   }
 
   private Requisition initiateRequisition(RequisitionCreateRequest request, UserDto user) {
