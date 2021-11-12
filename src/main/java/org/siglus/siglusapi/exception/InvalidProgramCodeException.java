@@ -31,12 +31,14 @@ public class InvalidProgramCodeException extends BaseMessageException {
   }
 
   public static InvalidProgramCodeException general(String programCode) {
-    return new InvalidProgramCodeException("siglusapi.error.android.sync.invalid.programCode", programCode, false);
+    return new InvalidProgramCodeException(
+        "org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest.programCode", programCode, false);
   }
 
   public static InvalidProgramCodeException requisition(String programCode) {
-    return new InvalidProgramCodeException("siglusapi.error.android.sync.invalid.programCode.requisition", programCode,
-        true);
+    return new InvalidProgramCodeException(
+        "org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest.programCode", programCode,
+        false);
   }
 
   @Override

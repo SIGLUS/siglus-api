@@ -31,6 +31,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidDataSection;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidEndDate;
+import org.siglus.siglusapi.dto.android.constraint.RequisitionValidReStartDate;
 import org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate;
 import org.siglus.siglusapi.dto.android.group.DatabaseCheckGroup;
 import org.siglus.siglusapi.util.HashEncoder;
@@ -40,13 +41,15 @@ import org.siglus.siglusapi.util.HashEncoder;
 @NoArgsConstructor
 @AllArgsConstructor
 @RequisitionValidDataSection
+@RequisitionValidReStartDate(groups = {DatabaseCheckGroup.class})
 @RequisitionValidStartDate(groups = {DatabaseCheckGroup.class})
 @RequisitionValidEndDate
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RequisitionCreateRequest {
 
   @NotBlank
-  @Pattern(regexp = "(ML)|(TR)|(T)|(VC)", message = "{siglusapi.error.android.sync.invalid.programCode}")
+  @Pattern(regexp = "(ML)|(TR)|(T)|(VC)",
+      message = "{org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest.programCode}")
   private String programCode;
 
   @NotNull

@@ -15,6 +15,9 @@
 
 package org.siglus.siglusapi.dto.android.validator;
 
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.AUTHORIZED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.INITIATED;
+import static org.openlmis.requisition.domain.requisition.RequisitionStatus.SUBMITTED;
 import static org.siglus.siglusapi.constant.AndroidConstants.SCHEDULE_CODE;
 
 import java.time.LocalDate;
@@ -27,6 +30,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.constraintvalidation.HibernateConstraintValidatorContext;
 import org.openlmis.requisition.domain.requisition.Requisition;
+import org.openlmis.requisition.domain.requisition.RequisitionStatus;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.siglusapi.config.AndroidTemplateConfigProperties;
@@ -37,7 +41,6 @@ import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
-import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @RequiredArgsConstructor
@@ -51,7 +54,10 @@ public class RequisitionValidStartDateValidator implements
   private final ReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
   private final ProcessingPeriodRepository periodRepository;
-  private final SyncUpHashRepository syncUpHashRepository;
+
+  private static final String IS_SUBMITTED_PERIOD_INVALID = "isSubmittedPeriodInvalid";
+  private static final String IS_PREVIOUS_REQUISITION_FAILED = "isPreviousRequisitionFailed";
+  private static final String IS_CONFIGURE_PERIOD_INVALID = "isConfigurePeriodInvalid";
 
   @Override
   public void initialize(RequisitionValidStartDate constraintAnnotation) {
@@ -62,24 +68,18 @@ public class RequisitionValidStartDateValidator implements
   public boolean isValid(RequisitionCreateRequest value, ConstraintValidatorContext context) {
     // this validator is supposed to running after the default group, so the value will not be null or empty
     UserDto user = authHelper.getCurrentUser();
-    boolean alreadySynced = syncUpHashRepository.findOne(value.getSyncUpHash(user)) != null;
-    if (alreadySynced || Boolean.TRUE.equals(value.getEmergency())) {
-      return true;
-    }
     String programCode = value.getProgramCode();
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
-    actualContext.addExpressionVariable("startDate", value.getActualStartDate());
-    actualContext.addExpressionVariable("failedByReportRestartDate", false);
-    actualContext.addExpressionVariable("failedByPeriod", false);
+    actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, false);
+    actualContext.addExpressionVariable(IS_PREVIOUS_REQUISITION_FAILED, false);
+    actualContext.addExpressionVariable(IS_CONFIGURE_PERIOD_INVALID, false);
     UUID homeFacilityId = user.getHomeFacilityId();
     LocalDate reportRestartDate = reportTypeRepository
         .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(homeFacilityId, programCode)
         .map(ReportType::getStartDate)
         .orElseThrow(() -> new EntityNotFoundException("Report type not found"));
     if (reportRestartDate.isAfter(value.getActualStartDate())) {
-      actualContext.addExpressionVariable("failedByReportRestartDate", true);
-      actualContext.addExpressionVariable("reportRestartDate", reportRestartDate);
-      return false;
+      return true;
     }
     Requisition lastRequisition = requisitionRepository
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(homeFacilityId,
@@ -91,29 +91,35 @@ public class RequisitionValidStartDateValidator implements
     if (lastRequisition == null || lastRequisition.getActualEndDate().isBefore(reportRestartDate)) {
       return true;
     }
+    if (judgeRequisitionStatus(lastRequisition.getStatus())) {
+      actualContext.addExpressionVariable(IS_PREVIOUS_REQUISITION_FAILED, true);
+      return false;
+    }
     LocalDate oneYearAgo = YearMonth.now().minusMonths(13L).atDay(1);
     LocalDate lastEndDate = lastRequisition.getActualEndDate();
     if (lastEndDate.isBefore(oneYearAgo) && value.getActualStartDate().isAfter(lastEndDate)) {
       return true;
     }
-    if (!lastEndDate.equals(value.getActualStartDate())) {
-      actualContext.addExpressionVariable("lastActualEnd", lastEndDate);
-      return false;
-    }
     ProcessingPeriod lastPeriod = periodRepository.findOne(lastRequisition.getProcessingPeriodId());
     ProcessingPeriod period = getPeriod(value);
-    if (!lastPeriod.getEndDate().equals(period.getStartDate().minusDays(1))) {
-      actualContext.addExpressionVariable("failedByPeriod", true);
-      actualContext.addExpressionVariable("periodName", period.getName());
-      actualContext.addExpressionVariable("lastPeriodName", lastPeriod.getName());
+    if (period == null) {
+      actualContext.addExpressionVariable(IS_CONFIGURE_PERIOD_INVALID, true);
+      return false;
+    }
+    if (!lastEndDate.equals(value.getActualStartDate())
+        || !lastPeriod.getEndDate().equals(period.getStartDate().minusDays(1))) {
+      actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, true);
       return false;
     }
     return true;
   }
 
+  private boolean judgeRequisitionStatus(RequisitionStatus status) {
+    return status == INITIATED || status == SUBMITTED || status == AUTHORIZED;
+  }
+
   private ProcessingPeriod getPeriod(RequisitionCreateRequest request) {
     YearMonth month = request.getActualStartDate().query(YearMonth::from);
-    return periodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, month)
-        .orElseThrow(EntityNotFoundException::new);
+    return periodRepository.findPeriodByCodeAndMonth(SCHEDULE_CODE, month).orElse(null);
   }
 }

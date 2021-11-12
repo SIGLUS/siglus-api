@@ -35,7 +35,7 @@ public class UnsupportedProductsException extends BaseMessageException {
   }
 
   public static UnsupportedProductsException asAndroidException(String... productCodes) {
-    return new UnsupportedProductsException(productCodes, true);
+    return new UnsupportedProductsException(productCodes, false);
   }
 
   @Override
