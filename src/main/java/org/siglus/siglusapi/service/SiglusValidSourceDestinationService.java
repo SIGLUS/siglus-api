@@ -47,38 +47,38 @@ public class SiglusValidSourceDestinationService {
   public Collection<ValidSourceDestinationDto> findSources(UUID programId, UUID facilityId) {
     Set<UUID> programIds = new HashSet<>();
     programIds.add(programId);
-    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToSupervisoryFacilities(facilityId, programIds);
-    return filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(programId),
-        findSourcesDtos(programId, facilityId), isHighLevelFacility(facilityId));
+    Map<UUID, List<UUID>> programIdToSupervisoryFacilities = mapProgramIdToSupervisoryFacilities(facilityId,
+        programIds);
+    return filterFacilityByRequisitionGroup(programIdToSupervisoryFacilities.get(programId),
+        findSourcesDtos(programId, facilityId), facilityId, true);
   }
 
   public Collection<ValidSourceDestinationDto> findSourcesForAllProducts(UUID facilityId) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
-    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToSupervisoryFacilities(facilityId,
+    Map<UUID, List<UUID>> programIdToSupervisoryFacilities = mapProgramIdToSupervisoryFacilities(facilityId,
         supportedPrograms);
-    boolean isHighLevelFacility = isHighLevelFacility(facilityId);
     return supportedPrograms.stream()
-        .map(supportedProgram -> filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(supportedProgram),
-            findSourcesDtos(supportedProgram, facilityId), isHighLevelFacility))
+        .map(
+            supportedProgram -> filterFacilityByRequisitionGroup(programIdToSupervisoryFacilities.get(supportedProgram),
+                findSourcesDtos(supportedProgram, facilityId), facilityId, true))
         .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
   public Collection<ValidSourceDestinationDto> findDestinations(UUID programId, UUID facilityId) {
     Set<UUID> programIds = new HashSet<>();
     programIds.add(programId);
-    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToMemberFacilities(facilityId, programIds);
-    return filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(programId),
-        findDestinationDtos(programId, facilityId), isHighLevelFacility(facilityId));
+    Map<UUID, List<UUID>> programIdToMemberFacilities = mapProgramIdToMemberFacilities(facilityId, programIds);
+    return filterFacilityByRequisitionGroup(programIdToMemberFacilities.get(programId),
+        findDestinationDtos(programId, facilityId), facilityId, false);
   }
 
   public Collection<ValidSourceDestinationDto> findDestinationsForAllProducts(UUID facilityId) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
-    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToMemberFacilities(facilityId, supportedPrograms);
-    boolean isHighLevelFacility = isHighLevelFacility(facilityId);
+    Map<UUID, List<UUID>> programIdToMemberFacilities = mapProgramIdToMemberFacilities(facilityId, supportedPrograms);
     return supportedPrograms.stream()
         .map(supportedProgram ->
-            filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(supportedProgram),
-                findDestinationDtos(supportedProgram, facilityId), isHighLevelFacility))
+            filterFacilityByRequisitionGroup(programIdToMemberFacilities.get(supportedProgram),
+                findDestinationDtos(supportedProgram, facilityId), facilityId, false))
         .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
@@ -90,16 +90,17 @@ public class SiglusValidSourceDestinationService {
     return validSourceDestinationStockManagementService.getValidDestinations(programId, facilityId);
   }
 
-  private Collection<ValidSourceDestinationDto> filterFacilityByRequisitionGroup(List<UUID> facilityIds,
-      Collection<ValidSourceDestinationDto> validSourceDestinationDtos, boolean isHighLevelFacility) {
+  private Collection<ValidSourceDestinationDto> filterFacilityByRequisitionGroup(List<UUID> groupFacilityIds,
+      Collection<ValidSourceDestinationDto> validSourceDestinationDtos, UUID facilityId, boolean isReceive) {
     Collection<ValidSourceDestinationDto> filterSourceDestinations = new ArrayList<>();
     validSourceDestinationDtos.forEach(
         dto -> {
-          boolean isFacilityNode = facilityIds != null && facilityIds.contains(dto.getNode().getReferenceId());
+          boolean isFacilityNode =
+              groupFacilityIds != null && groupFacilityIds.contains(dto.getNode().getReferenceId());
           boolean isCommonNode = !dto.getNode().isRefDataFacility();
           boolean isValidNode = isFacilityNode || isCommonNode;
-          boolean isNotHighLevelFacilityWithCommonNode = !(isHighLevelFacility && isCommonNode);
-          if (isValidNode && isNotHighLevelFacilityWithCommonNode) {
+          boolean isTopLevelFacilityReceiveEvent = isReceive && isTopLevelFacility(facilityId);
+          if (isTopLevelFacilityReceiveEvent || isValidNode) {
             filterSourceDestinations.add(dto);
           }
         }
@@ -107,8 +108,8 @@ public class SiglusValidSourceDestinationService {
     return filterSourceDestinations;
   }
 
-  private boolean isHighLevelFacility(UUID facilityId) {
-    return FacilityTypeConstants.getAndroidOriginMovementTypes()
+  private boolean isTopLevelFacility(UUID facilityId) {
+    return FacilityTypeConstants.getTopLevelTypes()
         .contains(facilityReferenceDataService.findOne(facilityId).getType().getCode());
   }
 

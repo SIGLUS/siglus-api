@@ -160,7 +160,7 @@ public class SiglusValidSourceDestinationServiceTest {
         .collect(Collectors.toList());
 
     // then
-    assertFalse(destinationNameList.contains(destinationName));
+    assertTrue(destinationNameList.contains(destinationName));
   }
 
   private void createDestinationData() {
