@@ -41,6 +41,7 @@ import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.SiglusRequisitionRepository;
+import org.siglus.siglusapi.repository.SyncUpHashRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @RequiredArgsConstructor
@@ -54,6 +55,7 @@ public class RequisitionValidStartDateValidator implements
   private final ReportTypeRepository reportTypeRepository;
   private final SiglusRequisitionRepository requisitionRepository;
   private final ProcessingPeriodRepository periodRepository;
+  private final SyncUpHashRepository syncUpHashRepository;
 
   private static final String IS_SUBMITTED_PERIOD_INVALID = "isSubmittedPeriodInvalid";
   private static final String IS_PREVIOUS_REQUISITION_FAILED = "isPreviousRequisitionFailed";
@@ -68,18 +70,27 @@ public class RequisitionValidStartDateValidator implements
   public boolean isValid(RequisitionCreateRequest value, ConstraintValidatorContext context) {
     // this validator is supposed to running after the default group, so the value will not be null or empty
     UserDto user = authHelper.getCurrentUser();
-    String programCode = value.getProgramCode();
     HibernateConstraintValidatorContext actualContext = context.unwrap(HibernateConstraintValidatorContext.class);
     actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, false);
     actualContext.addExpressionVariable(IS_PREVIOUS_REQUISITION_FAILED, false);
     actualContext.addExpressionVariable(IS_CONFIGURE_PERIOD_INVALID, false);
     UUID homeFacilityId = user.getHomeFacilityId();
+    boolean alreadySynced = syncUpHashRepository.findOne(value.getSyncUpHash(user)) != null;
+    if (alreadySynced || Boolean.TRUE.equals(value.getEmergency())) {
+      return true;
+    }
+    String programCode = value.getProgramCode();
     LocalDate reportRestartDate = reportTypeRepository
         .findOneByFacilityIdAndProgramCodeAndActiveIsTrue(homeFacilityId, programCode)
         .map(ReportType::getStartDate)
         .orElseThrow(() -> new EntityNotFoundException("Report type not found"));
     if (reportRestartDate.isAfter(value.getActualStartDate())) {
       return true;
+    }
+    ProcessingPeriod period = getPeriod(value);
+    if (period == null) {
+      actualContext.addExpressionVariable(IS_CONFIGURE_PERIOD_INVALID, true);
+      return false;
     }
     Requisition lastRequisition = requisitionRepository
         .findLatestRequisitionsByFacilityIdAndAndroidTemplateId(homeFacilityId,
@@ -88,7 +99,7 @@ public class RequisitionValidStartDateValidator implements
         .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
         .findFirst()
         .orElse(null);
-    if (lastRequisition == null || lastRequisition.getActualEndDate().isBefore(reportRestartDate)) {
+    if (judgeIsFirstRequisition(lastRequisition, reportRestartDate)) {
       return true;
     }
     if (judgeRequisitionStatus(lastRequisition.getStatus())) {
@@ -101,17 +112,29 @@ public class RequisitionValidStartDateValidator implements
       return true;
     }
     ProcessingPeriod lastPeriod = periodRepository.findOne(lastRequisition.getProcessingPeriodId());
-    ProcessingPeriod period = getPeriod(value);
-    if (period == null) {
-      actualContext.addExpressionVariable(IS_CONFIGURE_PERIOD_INVALID, true);
-      return false;
-    }
-    if (!lastEndDate.equals(value.getActualStartDate())
-        || !lastPeriod.getEndDate().equals(period.getStartDate().minusDays(1))) {
+    if (judgeIsNotConsecutive(lastEndDate, value.getActualStartDate(), lastPeriod, period)) {
       actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, true);
       return false;
     }
     return true;
+  }
+
+  private boolean judgeIsNotConsecutive(LocalDate lastEndDate, LocalDate submitActualStartDate,
+      ProcessingPeriod lastPeriod, ProcessingPeriod submitPeriod) {
+    return !judgeIsConsecutiveActualDate(lastEndDate, submitActualStartDate)
+        || !judgeIsConsecutivePeriod(lastPeriod, submitPeriod);
+  }
+
+  private boolean judgeIsConsecutivePeriod(ProcessingPeriod lastPeriod, ProcessingPeriod submitPeriod) {
+    return lastPeriod.getEndDate().equals(submitPeriod.getStartDate().minusDays(1));
+  }
+
+  private boolean judgeIsConsecutiveActualDate(LocalDate lastEndDate, LocalDate submitActualStartDate) {
+    return lastEndDate.equals(submitActualStartDate);
+  }
+
+  private boolean judgeIsFirstRequisition(Requisition lastRequisition, LocalDate reportRestartDate) {
+    return lastRequisition == null || lastRequisition.getActualEndDate().isBefore(reportRestartDate);
   }
 
   private boolean judgeRequisitionStatus(RequisitionStatus status) {

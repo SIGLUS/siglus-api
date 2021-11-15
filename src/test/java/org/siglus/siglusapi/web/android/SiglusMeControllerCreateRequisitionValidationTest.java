@@ -165,6 +165,10 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(periodForJul08.getName()).thenReturn("Aug 07-2008");
     when(periodForJul08.getStartDate()).thenReturn(LocalDate.of(2008, 7, 21));
     when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2008, 7)))).thenReturn(Optional.of(periodForJul08));
+    ProcessingPeriod periodForMarch = mock(ProcessingPeriod.class);
+    when(periodForMarch.getName()).thenReturn("Mar 03-2021");
+    when(periodForMarch.getStartDate()).thenReturn(LocalDate.of(2021, 3, 21));
+    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 3)))).thenReturn(Optional.of(periodForMarch));
 
     req1 = mock(Requisition.class);
     when(req1.getProgramId()).thenReturn(program1Id);
@@ -567,7 +571,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     public <T extends ConstraintValidator<?, ?>> T getInstance(Class<T> key) {
       if (key == RequisitionValidStartDateValidator.class) {
         return (T) new RequisitionValidStartDateValidator(androidTemplateConfigProperties, authHelper,
-            programDataService, reportTypeRepo, requisitionRepo, periodRepo);
+            programDataService, reportTypeRepo, requisitionRepo, periodRepo, syncUpHashRepository);
       } else if (key == RequisitionValidReStartDateValidator.class) {
         return (T) new RequisitionValidReStartDateValidator(authHelper, reportTypeRepo, syncUpHashRepository);
       }
