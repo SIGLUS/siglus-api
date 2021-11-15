@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -25,6 +24,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Sets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -151,7 +151,7 @@ public class SiglusValidSourceDestinationServiceTest {
   public void shouldNotGetDestinationInOrganizationWhenFacilityTypeInIssueFilterTypes() {
     // given
     when(facilityReferenceDataService.findOne(facilityId))
-        .thenReturn(buildFacilityDtoByFaclityIdAndTypeCode(facilityId, FacilityTypeConstants.DPM));
+        .thenReturn(buildFacilityDtoByFacilityIdAndTypeCode(facilityId, FacilityTypeConstants.DPM));
 
     // when
     List<String> destinationNameList = siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId)
@@ -160,7 +160,7 @@ public class SiglusValidSourceDestinationServiceTest {
         .collect(Collectors.toList());
 
     // then
-    assertEquals(false, destinationNameList.contains(destinationName));
+    assertFalse(destinationNameList.contains(destinationName));
   }
 
   private void createDestinationData() {
@@ -170,7 +170,7 @@ public class SiglusValidSourceDestinationServiceTest {
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(programIds);
 
     when(facilityReferenceDataService.findOne(facilityId))
-        .thenReturn(buildFacilityDtoByFaclityIdAndTypeCode(facilityId, FacilityTypeConstants.CS));
+        .thenReturn(buildFacilityDtoByFacilityIdAndTypeCode(facilityId, FacilityTypeConstants.CS));
 
     RequisitionGroupMembersDto reqProgramIdFacilityId = RequisitionGroupMembersDto.builder()
         .programId(programId).facilityId(facilityId).build();
@@ -178,7 +178,7 @@ public class SiglusValidSourceDestinationServiceTest {
         .programId(programId).facilityId(facilityId2).build();
     RequisitionGroupMembersDto reqProgramId2FacilityId3 = RequisitionGroupMembersDto.builder()
         .programId(programId2).facilityId(facilityId3).build();
-    when(requisitionGroupMembersRepository.searchByFacilityIdAndProgramAndRequisitionGroup(any(), any())).thenReturn(
+    when(requisitionGroupMembersRepository.findChildrenFacilityByRequisitionGroup(any(), any())).thenReturn(
         Arrays.asList(reqProgramIdFacilityId, reqProgramIdFacilityId2, reqProgramId2FacilityId3));
 
     ValidSourceDestinationDto desProgramNodeFalseContain = new ValidSourceDestinationDto();
@@ -224,10 +224,10 @@ public class SiglusValidSourceDestinationServiceTest {
         .thenReturn(Arrays.asList(desProgramNodeFalseContain, desProgramNodeFalseNotContain, desProgramNodeTrueContain,
             desProgramNodeTrueNotContain));
     when(validSourceDestinationStockManagementService.getValidDestinations(programId2, facilityId))
-        .thenReturn(Arrays.asList(desProgram2NodeTrueContain));
+        .thenReturn(Collections.singletonList(desProgram2NodeTrueContain));
   }
 
-  private FacilityDto buildFacilityDtoByFaclityIdAndTypeCode(UUID facilityId, String facilityTypeCode) {
+  private FacilityDto buildFacilityDtoByFacilityIdAndTypeCode(UUID facilityId, String facilityTypeCode) {
     FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
     facilityTypeDto.setCode(facilityTypeCode);
     return FacilityDto.builder().id(facilityId).type(facilityTypeDto).build();

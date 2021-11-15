@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
@@ -32,53 +33,57 @@ import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class SiglusValidSourceDestinationService {
 
-  @Autowired
-  private ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
-
-  @Autowired
-  private RequisitionGroupMembersRepository requisitionGroupMembersRepository;
-
-  @Autowired
-  private SupportedProgramsHelper supportedProgramsHelper;
-
-  @Autowired
-  private SiglusFacilityReferenceDataService facilityReferenceDataService;
+  private final ValidSourceDestinationStockManagementService validSourceDestinationStockManagementService;
+  private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
+  private final SupportedProgramsHelper supportedProgramsHelper;
+  private final SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   public Collection<ValidSourceDestinationDto> findSources(UUID programId, UUID facilityId) {
-    return validSourceDestinationStockManagementService.getValidSources(programId, facilityId);
+    Set<UUID> programIds = new HashSet<>();
+    programIds.add(programId);
+    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToSupervisoryFacilities(facilityId, programIds);
+    return filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(programId),
+        findSourcesDtos(programId, facilityId), isHighLevelFacility(facilityId));
   }
 
   public Collection<ValidSourceDestinationDto> findSourcesForAllProducts(UUID facilityId) {
-    Set<UUID> supportedPrograms = supportedProgramsHelper
-        .findHomeFacilitySupportedProgramIds();
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToSupervisoryFacilities(facilityId,
+        supportedPrograms);
+    boolean isHighLevelFacility = isHighLevelFacility(facilityId);
     return supportedPrograms.stream()
-        .map(supportedProgram -> findSources(supportedProgram, facilityId))
+        .map(supportedProgram -> filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(supportedProgram),
+            findSourcesDtos(supportedProgram, facilityId), isHighLevelFacility))
         .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
   public Collection<ValidSourceDestinationDto> findDestinations(UUID programId, UUID facilityId) {
     Set<UUID> programIds = new HashSet<>();
     programIds.add(programId);
-    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToGroupMembersDto(facilityId, programIds);
+    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToMemberFacilities(facilityId, programIds);
     return filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(programId),
-        findDestinationDtos(programId, facilityId), isFilterFacility(facilityId));
+        findDestinationDtos(programId, facilityId), isHighLevelFacility(facilityId));
   }
 
   public Collection<ValidSourceDestinationDto> findDestinationsForAllProducts(UUID facilityId) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
-    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToGroupMembersDto(facilityId, supportedPrograms);
-    boolean isFilterFacility = isFilterFacility(facilityId);
+    Map<UUID, List<UUID>> programIdToGroupMembersDto = mapProgramIdToMemberFacilities(facilityId, supportedPrograms);
+    boolean isHighLevelFacility = isHighLevelFacility(facilityId);
     return supportedPrograms.stream()
         .map(supportedProgram ->
             filterFacilityByRequisitionGroup(programIdToGroupMembersDto.get(supportedProgram),
-                findDestinationDtos(supportedProgram, facilityId), isFilterFacility))
+                findDestinationDtos(supportedProgram, facilityId), isHighLevelFacility))
         .flatMap(Collection::stream).collect(Collectors.toList());
+  }
+
+  private Collection<ValidSourceDestinationDto> findSourcesDtos(UUID programId, UUID facilityId) {
+    return validSourceDestinationStockManagementService.getValidSources(programId, facilityId);
   }
 
   private Collection<ValidSourceDestinationDto> findDestinationDtos(UUID programId, UUID facilityId) {
@@ -86,31 +91,40 @@ public class SiglusValidSourceDestinationService {
   }
 
   private Collection<ValidSourceDestinationDto> filterFacilityByRequisitionGroup(List<UUID> facilityIds,
-      Collection<ValidSourceDestinationDto> validSourceDestinationDtos, boolean isFilterFacility) {
-    Collection<ValidSourceDestinationDto> destinationDtosAfterFilter = new ArrayList<>();
+      Collection<ValidSourceDestinationDto> validSourceDestinationDtos, boolean isHighLevelFacility) {
+    Collection<ValidSourceDestinationDto> filterSourceDestinations = new ArrayList<>();
     validSourceDestinationDtos.forEach(
         dto -> {
-          boolean isCommonDestination = !dto.getNode().isRefDataFacility();
-          boolean isDestinationFromFacilityName =
-              facilityIds != null && facilityIds.contains(dto.getNode().getReferenceId());
-          boolean isIgnoreDestinationFromFacilityType = isFilterFacility && isCommonDestination;
-          if ((isCommonDestination || isDestinationFromFacilityName) && !isIgnoreDestinationFromFacilityType) {
-            destinationDtosAfterFilter.add(dto);
+          boolean isFacilityNode = facilityIds != null && facilityIds.contains(dto.getNode().getReferenceId());
+          boolean isCommonNode = !dto.getNode().isRefDataFacility();
+          boolean isValidNode = isFacilityNode || isCommonNode;
+          boolean isNotHighLevelFacilityWithCommonNode = !(isHighLevelFacility && isCommonNode);
+          if (isValidNode && isNotHighLevelFacilityWithCommonNode) {
+            filterSourceDestinations.add(dto);
           }
         }
     );
-    return destinationDtosAfterFilter;
+    return filterSourceDestinations;
   }
 
-  private boolean isFilterFacility(UUID facilityId) {
+  private boolean isHighLevelFacility(UUID facilityId) {
     return FacilityTypeConstants.getAndroidOriginMovementTypes()
         .contains(facilityReferenceDataService.findOne(facilityId).getType().getCode());
   }
 
-  private Map<UUID, List<UUID>> mapProgramIdToGroupMembersDto(UUID facilityId,
-      Set<UUID> supportedPrograms) {
-    List<RequisitionGroupMembersDto> requisitionGroupMembersList = requisitionGroupMembersRepository
-        .searchByFacilityIdAndProgramAndRequisitionGroup(facilityId, supportedPrograms);
+  private Map<UUID, List<UUID>> mapProgramIdToMemberFacilities(UUID facilityId, Set<UUID> supportedPrograms) {
+    List<RequisitionGroupMembersDto> childrenFacilities = requisitionGroupMembersRepository
+        .findChildrenFacilityByRequisitionGroup(facilityId, supportedPrograms);
+    return convertListToMap(childrenFacilities);
+  }
+
+  private Map<UUID, List<UUID>> mapProgramIdToSupervisoryFacilities(UUID facilityId, Set<UUID> supportedPrograms) {
+    List<RequisitionGroupMembersDto> parentFacilities = requisitionGroupMembersRepository
+        .findParentFacilityByRequisitionGroup(facilityId, supportedPrograms);
+    return convertListToMap(parentFacilities);
+  }
+
+  private Map<UUID, List<UUID>> convertListToMap(List<RequisitionGroupMembersDto> requisitionGroupMembersList) {
     if (requisitionGroupMembersList.isEmpty()) {
       return Collections.emptyMap();
     }

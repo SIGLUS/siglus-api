@@ -26,7 +26,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface RequisitionGroupMembersRepository extends JpaRepository<RequisitionGroupMembers, UUID> {
 
-  @Query(name = "RequisitionGroupMembers.findRequisitonIdFacilityId", nativeQuery = true)
-  List<RequisitionGroupMembersDto> searchByFacilityIdAndProgramAndRequisitionGroup(@Param("facilityId") UUID facilityId,
+  @Query(name = "RequisitionGroupMembers.findChildrenFacility", nativeQuery = true)
+  List<RequisitionGroupMembersDto> findChildrenFacilityByRequisitionGroup(@Param("facilityId") UUID facilityId,
+      @Param("programIds") Set<UUID> programIds);
+
+  @Query(name = "RequisitionGroupMembers.findParentFacility", nativeQuery = true)
+  List<RequisitionGroupMembersDto> findParentFacilityByRequisitionGroup(@Param("facilityId") UUID facilityId,
       @Param("programIds") Set<UUID> programIds);
 }
