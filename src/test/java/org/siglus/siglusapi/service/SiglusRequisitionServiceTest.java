@@ -163,6 +163,7 @@ import org.siglus.siglusapi.testutils.RequisitionLineItemDataBuilder;
 import org.siglus.siglusapi.testutils.RequisitionTemplateDataBuilder;
 import org.siglus.siglusapi.testutils.StockCardRangeSummaryDtoDataBuilder;
 import org.siglus.siglusapi.util.OperatePermissionService;
+import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.slf4j.profiler.Profiler;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -170,6 +171,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -327,12 +329,17 @@ public class SiglusRequisitionServiceTest {
   @Mock
   private SiglusFilterAddProductForEmergencyService filterProductService;
 
+  @Mock
+  private SupportedProgramsHelper supportedProgramsHelper;
+
   @Captor
   private ArgumentCaptor<Requisition> requisitionArgumentCaptor;
 
   private final UUID facilityId = UUID.randomUUID();
 
   private final UUID facilityId2 = UUID.randomUUID();
+
+  private final UUID snFacilityId = UUID.randomUUID();
 
   private final UUID userFacilityId = UUID.randomUUID();
 
@@ -417,6 +424,8 @@ public class SiglusRequisitionServiceTest {
 
   private final UUID roleId = UUID.randomUUID();
 
+  private final UUID adminRoleId = UUID.randomUUID();
+
   private final UUID orderId = UUID.randomUUID();
 
   @Mock
@@ -434,6 +443,7 @@ public class SiglusRequisitionServiceTest {
 
   @Before
   public void prepare() {
+    ReflectionTestUtils.setField(siglusRequisitionService, "roleAdminId", adminRoleId);
     siglusRequisitionDto = new SiglusRequisitionDto();
     BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
     when(siglusUsageReportService.searchUsageReport(any())).thenReturn(siglusRequisitionDto);
@@ -460,6 +470,7 @@ public class SiglusRequisitionServiceTest {
     org.siglus.common.dto.referencedata.OrderableDto orderableDto =
         new org.siglus.common.dto.referencedata.OrderableDto();
     when(siglusOrderableService.getOrderableByCode(any())).thenReturn(orderableDto);
+    when(supportedProgramsHelper.findHomeFacilitySupportedPrograms()).thenReturn(newArrayList());
   }
 
   @Test
@@ -1219,6 +1230,41 @@ public class SiglusRequisitionServiceTest {
     assertEquals(response.get(1).getId(), facilityId);
   }
 
+
+  @Test
+  public void shouldGetFacilitiesForInternalAndExternalView() {
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_VIEW))
+        .thenReturn(mockRightDto());
+    when(roleReferenceDataService.search(rightId)).thenReturn(mockViewRoleDto());
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockInternalAndExternalUserDto());
+    when(supervisoryNodeReferenceDataService.findAllSupervisoryNodes())
+        .thenReturn(mockAllSupervisoryNodeForInternalAndExternal());
+    when(requisitionGroupReferenceDataService.findAll()).thenReturn(mockAllRequisitionGroup());
+    when(facilityReferenceDataService.findAll()).thenReturn(mockAllFacilityDto());
+
+    List<FacilityDto> response = siglusRequisitionService.searchFacilitiesForView();
+
+    assertEquals(2, response.size());
+    assertEquals(response.get(0).getId(), userFacilityId);
+    assertEquals(response.get(1).getId(), facilityId);
+  }
+
+  @Test
+  public void shouldGetEmptyFacilityForViewWhenRoleIsAdmin() {
+    when(rightReferenceDataService.findRight(PermissionService.REQUISITION_VIEW))
+        .thenReturn(mockRightDto());
+    when(roleReferenceDataService.search(rightId)).thenReturn(mockViewRoleDto());
+    when(authenticationHelper.getCurrentUser()).thenReturn(mockAdminUserDto());
+    when(supervisoryNodeReferenceDataService.findAllSupervisoryNodes())
+        .thenReturn(mockAllSupervisoryNodeForInternalAndExternal());
+    when(requisitionGroupReferenceDataService.findAll()).thenReturn(mockAllRequisitionGroup());
+    when(facilityReferenceDataService.findAll()).thenReturn(mockAllFacilityDto());
+
+    List<FacilityDto> response = siglusRequisitionService.searchFacilitiesForView();
+
+    assertEquals(0, response.size());
+  }
+
   private SiglusRequisitionDto convert(RequisitionV2Dto requisitionV2Dto) {
     return SiglusRequisitionDto.from(requisitionV2Dto);
   }
@@ -1414,12 +1460,37 @@ public class SiglusRequisitionServiceTest {
     return rightDto;
   }
 
+  private RightDto mockViewRightDto() {
+    RightDto rightDto = new RightDto();
+    rightDto.setId(rightId);
+    rightDto.setName(PermissionService.REQUISITION_VIEW);
+    return rightDto;
+  }
+
   private List<RoleDto> mockRoleDto() {
     RoleDto roleDto = new RoleDto();
     roleDto.setId(roleId);
     roleDto.setName("Requisition Approver");
     roleDto.setRights(Sets.newHashSet(mockRightDto()));
     return Lists.newArrayList(roleDto);
+  }
+
+  private List<RoleDto> mockViewRoleDto() {
+    RoleDto roleDto = new RoleDto();
+    roleDto.setId(roleId);
+    roleDto.setName("Requisition View");
+    roleDto.setRights(Sets.newHashSet(mockViewRightDto()));
+    return Lists.newArrayList(roleDto);
+  }
+
+  private UserDto mockAdminUserDto() {
+    UserDto userDto = new UserDto();
+    userDto.setId(userId);
+    userDto.setHomeFacilityId(userFacilityId);
+    RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+    roleAssignmentDto.setRoleId(adminRoleId);
+    userDto.setRoleAssignments(Sets.newHashSet(roleAssignmentDto));
+    return userDto;
   }
 
   private UserDto mockInternalUserDto() {
@@ -1493,6 +1564,9 @@ public class SiglusRequisitionServiceTest {
     supervisoryNodeDto.setId(id);
     supervisoryNodeDto.setRequisitionGroup(new ObjectReferenceDto(groupId));
     supervisoryNodeDto.setChildNodes(Collections.emptySet());
+    ObjectReferenceDto facility = new ObjectReferenceDto();
+    facility.setId(userFacilityId);
+    supervisoryNodeDto.setFacility(facility);
     return supervisoryNodeDto;
   }
 
@@ -1514,6 +1588,9 @@ public class SiglusRequisitionServiceTest {
     supervisoryNodeDto.setId(id);
     supervisoryNodeDto.setRequisitionGroup(new ObjectReferenceDto(requisitionGroupId));
     supervisoryNodeDto.setParentNode(new ObjectReferenceDto());
+    ObjectReferenceDto facility = new ObjectReferenceDto();
+    facility.setId(snFacilityId);
+    supervisoryNodeDto.setFacility(facility);
     SupervisoryNodeDto child = new SupervisoryNodeDto();
     child.setId(childId);
     child.setRequisitionGroup(new ObjectReferenceDto(childRequisitionGroupId));
