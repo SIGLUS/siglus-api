@@ -171,7 +171,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -443,7 +442,6 @@ public class SiglusRequisitionServiceTest {
 
   @Before
   public void prepare() {
-    ReflectionTestUtils.setField(siglusRequisitionService, "roleAdminId", adminRoleId);
     siglusRequisitionDto = new SiglusRequisitionDto();
     BeanUtils.copyProperties(requisitionV2Dto, siglusRequisitionDto);
     when(siglusUsageReportService.searchUsageReport(any())).thenReturn(siglusRequisitionDto);
@@ -1486,7 +1484,6 @@ public class SiglusRequisitionServiceTest {
   private UserDto mockAdminUserDto() {
     UserDto userDto = new UserDto();
     userDto.setId(userId);
-    userDto.setHomeFacilityId(userFacilityId);
     RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
     roleAssignmentDto.setRoleId(adminRoleId);
     userDto.setRoleAssignments(Sets.newHashSet(roleAssignmentDto));

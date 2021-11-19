@@ -99,10 +99,10 @@ public class RequisitionValidStartDateValidator implements
         .filter(req -> programCode.equals(programDataService.findOne(req.getProgramId()).getCode()))
         .findFirst()
         .orElse(null);
-    if (judgeIsFirstRequisition(lastRequisition, reportRestartDate)) {
+    if (isFirstRequisition(lastRequisition, reportRestartDate)) {
       return true;
     }
-    if (judgeRequisitionStatus(lastRequisition.getStatus())) {
+    if (isRequisitionStatusBeforeInApproval(lastRequisition.getStatus())) {
       actualContext.addExpressionVariable(IS_PREVIOUS_REQUISITION_FAILED, true);
       return false;
     }
@@ -112,32 +112,32 @@ public class RequisitionValidStartDateValidator implements
       return true;
     }
     ProcessingPeriod lastPeriod = periodRepository.findOne(lastRequisition.getProcessingPeriodId());
-    if (judgeIsNotConsecutive(lastEndDate, value.getActualStartDate(), lastPeriod, period)) {
+    if (isNotConsecutive(lastEndDate, value.getActualStartDate(), lastPeriod, period)) {
       actualContext.addExpressionVariable(IS_SUBMITTED_PERIOD_INVALID, true);
       return false;
     }
     return true;
   }
 
-  private boolean judgeIsNotConsecutive(LocalDate lastEndDate, LocalDate submitActualStartDate,
+  private boolean isNotConsecutive(LocalDate lastEndDate, LocalDate submitActualStartDate,
       ProcessingPeriod lastPeriod, ProcessingPeriod submitPeriod) {
-    return !judgeIsConsecutiveActualDate(lastEndDate, submitActualStartDate)
-        || !judgeIsConsecutivePeriod(lastPeriod, submitPeriod);
+    return !isConsecutiveActualDate(lastEndDate, submitActualStartDate)
+        || !isConsecutivePeriod(lastPeriod, submitPeriod);
   }
 
-  private boolean judgeIsConsecutivePeriod(ProcessingPeriod lastPeriod, ProcessingPeriod submitPeriod) {
+  private boolean isConsecutivePeriod(ProcessingPeriod lastPeriod, ProcessingPeriod submitPeriod) {
     return lastPeriod.getEndDate().equals(submitPeriod.getStartDate().minusDays(1));
   }
 
-  private boolean judgeIsConsecutiveActualDate(LocalDate lastEndDate, LocalDate submitActualStartDate) {
+  private boolean isConsecutiveActualDate(LocalDate lastEndDate, LocalDate submitActualStartDate) {
     return lastEndDate.equals(submitActualStartDate);
   }
 
-  private boolean judgeIsFirstRequisition(Requisition lastRequisition, LocalDate reportRestartDate) {
+  private boolean isFirstRequisition(Requisition lastRequisition, LocalDate reportRestartDate) {
     return lastRequisition == null || lastRequisition.getActualEndDate().isBefore(reportRestartDate);
   }
 
-  private boolean judgeRequisitionStatus(RequisitionStatus status) {
+  private boolean isRequisitionStatusBeforeInApproval(RequisitionStatus status) {
     return status == INITIATED || status == SUBMITTED || status == AUTHORIZED;
   }
 

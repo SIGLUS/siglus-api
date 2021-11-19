@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.util;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -42,6 +43,9 @@ public class SupportedProgramsHelper {
 
   public List<SupportedProgramDto> findHomeFacilitySupportedPrograms() {
     FacilityDto homeFacility = getFacilityDto();
+    if (homeFacility == null) {
+      return Collections.emptyList();
+    }
     return homeFacility.getSupportedPrograms()
         .stream()
         .filter(supportedProgramDto -> {
@@ -55,7 +59,7 @@ public class SupportedProgramsHelper {
 
   private FacilityDto getFacilityDto() {
     UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    return facilityReferenceDataService.findOne(homeFacilityId);
+    return homeFacilityId == null ? null : facilityReferenceDataService.findOne(homeFacilityId);
   }
 
 }

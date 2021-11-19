@@ -37,8 +37,7 @@ public class InvalidProgramCodeException extends BaseMessageException {
 
   public static InvalidProgramCodeException requisition(String programCode) {
     return new InvalidProgramCodeException(
-        "org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest.programCode", programCode,
-        false);
+        "org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest.programCode", programCode, false);
   }
 
   @Override
