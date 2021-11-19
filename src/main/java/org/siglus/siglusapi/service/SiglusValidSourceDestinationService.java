@@ -32,6 +32,7 @@ import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 import org.siglus.siglusapi.repository.RequisitionGroupMembersRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.service.client.ValidSourceDestinationStockManagementService;
+import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +44,7 @@ public class SiglusValidSourceDestinationService {
   private final RequisitionGroupMembersRepository requisitionGroupMembersRepository;
   private final SupportedProgramsHelper supportedProgramsHelper;
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
+  private final AndroidHelper androidHelper;
 
   public Collection<ValidSourceDestinationDto> findSources(UUID programId, UUID facilityId) {
     Set<UUID> programIds = new HashSet<>();
@@ -95,12 +97,8 @@ public class SiglusValidSourceDestinationService {
     Collection<ValidSourceDestinationDto> filterSourceDestinations = new ArrayList<>();
     validSourceDestinationDtos.forEach(
         dto -> {
-          boolean isFacilityNode =
-              groupFacilityIds != null && groupFacilityIds.contains(dto.getNode().getReferenceId());
-          boolean isCommonNode = !dto.getNode().isRefDataFacility();
-          boolean isValidNode = isFacilityNode || isCommonNode;
-          boolean isTopLevelFacilityReceiveEvent = isReceive && isTopLevelFacility(facilityId);
-          if (isTopLevelFacilityReceiveEvent || isValidNode) {
+          if (isShowFacilityNode(groupFacilityIds, dto) || isShowCommonNode(dto, isReceive)
+              || isShowWarehouseNode(facilityId, isReceive)) {
             filterSourceDestinations.add(dto);
           }
         }
@@ -108,9 +106,22 @@ public class SiglusValidSourceDestinationService {
     return filterSourceDestinations;
   }
 
-  private boolean isTopLevelFacility(UUID facilityId) {
-    return FacilityTypeConstants.getTopLevelTypes()
+  private boolean isShowFacilityNode(List<UUID> groupFacilityIds, ValidSourceDestinationDto dto) {
+    return groupFacilityIds != null && groupFacilityIds.contains(dto.getNode().getReferenceId());
+  }
+
+  private boolean isShowCommonNode(ValidSourceDestinationDto dto, boolean isReceive) {
+    boolean isCommonNode = !dto.getNode().isRefDataFacility();
+    if (isReceive) {
+      return isCommonNode && androidHelper.isAndroid();
+    }
+    return isCommonNode;
+  }
+
+  private boolean isShowWarehouseNode(UUID facilityId, boolean isReceive) {
+    boolean isTopLevelFacility = FacilityTypeConstants.getTopLevelTypes()
         .contains(facilityReferenceDataService.findOne(facilityId).getType().getCode());
+    return isReceive && isTopLevelFacility;
   }
 
   private Map<UUID, List<UUID>> mapProgramIdToMemberFacilities(UUID facilityId, Set<UUID> supportedPrograms) {
