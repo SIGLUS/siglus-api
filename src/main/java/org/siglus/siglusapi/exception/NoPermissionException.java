@@ -34,7 +34,7 @@ public class NoPermissionException extends BaseMessageException {
   }
 
   public static NoPermissionException requisition() {
-    return new NoPermissionException("siglusapi.error.android.sync.forbidden.requisition", true);
+    return new NoPermissionException("siglusapi.error.android.sync.forbidden.requisition", false);
   }
 
   @Override

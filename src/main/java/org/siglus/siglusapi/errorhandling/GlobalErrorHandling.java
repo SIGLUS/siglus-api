@@ -78,12 +78,16 @@ public class GlobalErrorHandling implements ProblemHandling {
   private static final String MESSAGE_IN_PORTUGUESE = "messageInPortuguese";
   private static final Map<String, String> CONSTRAINT_MAP = new ConcurrentHashMap<>();
   private static final Set<String> ANDROID_VIOLATIONS;
+  private static final String CONSTRAINT_REQUISITIONVALIDSTARTDATE_MESSAGE =
+      "{org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate.message}";
+  private static final String REQUEST_REQUISITIONCREATEREQUEST_PROGRAMCODE =
+      "{org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest.programCode}";
 
   static {
     CONSTRAINT_MAP.put("unq_programid_additionalorderableid", MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
     HashSet<String> androidViolations = new HashSet<>();
-    androidViolations.add("{org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate.message}");
-    androidViolations.add("{siglusapi.error.android.sync.invalid.programCode}");
+    androidViolations.add(CONSTRAINT_REQUISITIONVALIDSTARTDATE_MESSAGE);
+    androidViolations.add(REQUEST_REQUISITIONCREATEREQUEST_PROGRAMCODE);
     ANDROID_VIOLATIONS = Collections.unmodifiableSet(androidViolations);
   }
 
@@ -112,7 +116,7 @@ public class GlobalErrorHandling implements ProblemHandling {
     ThrowableProblem problem = fields.stream()
         .filter(fieldViolation -> ANDROID_VIOLATIONS.contains(fieldViolation.getMessageTemplate()))
         .map(androidViolation -> prepare(new LocalizedMessage(androidViolation), throwable, BAD_REQUEST, DEFAULT_TYPE)
-            .with("isAndroid", true))
+            .with("isAndroid", isAndroid(androidViolation.getMessageTemplate())))
         .findAny().orElseGet(
             () -> prepare(ERROR_VALIDATION_FAIL, throwable, status, CONSTRAINT_VIOLATION_TYPE).with("fields", fields)
         ).build();
@@ -184,6 +188,10 @@ public class GlobalErrorHandling implements ProblemHandling {
       problemBuilder.with("isAndroid", ((BaseMessageException) throwable).isAndroidException());
     }
     return problemBuilder;
+  }
+
+  private boolean isAndroid(String messageTemplate) {
+    return CONSTRAINT_REQUISITIONVALIDSTARTDATE_MESSAGE.equals(messageTemplate);
   }
 
   @RequiredArgsConstructor

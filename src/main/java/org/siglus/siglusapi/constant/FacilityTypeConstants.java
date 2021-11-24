@@ -58,6 +58,10 @@ public class FacilityTypeConstants {
     return Stream.of(DPM, DDM, AI).collect(Collectors.toSet());
   }
 
+  public static Set<String> getTopLevelTypes() {
+    return Stream.of(DPM, AI, HC).collect(Collectors.toSet());
+  }
+
   public static Set<String> getVirtualFacilityTypes() {
     return Stream.of(CENTRAL, AC).collect(Collectors.toSet());
   }

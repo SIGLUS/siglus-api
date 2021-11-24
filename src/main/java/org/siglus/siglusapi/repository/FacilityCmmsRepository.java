@@ -19,9 +19,23 @@ import java.time.LocalDate;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.HfCmm;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface FacilityCmmsRepository extends JpaRepository<HfCmm, UUID> {
 
   HfCmm findByFacilityCodeAndProductCodeAndPeriodBeginAndPeriodEnd(String facilityCode,
-        String productCode, LocalDate periodBegin, LocalDate periodEnd);
+      String productCode, LocalDate periodBegin, LocalDate periodEnd);
+
+  @Modifying
+  @Query(value = "delete from siglusintegration.hf_cmms "
+      + "where id in ( "
+      + "select hf_cmm.id from siglusintegration.hf_cmms hf_cmm "
+      + "left join referencedata.facilities facilitie on facilitie.code = hf_cmm.facilitycode "
+      + "left join referencedata.orderables orderable on orderable.code = hf_cmm.productcode "
+      + "where facilitie.id = :facilityId and orderable.id in (:orderableIds) "
+      + ")", nativeQuery = true)
+  void deleteHfCmmsByFacilityIdAndProductCode(@Param("facilityId") UUID facilityId,
+      @Param("orderableIds") Iterable<UUID> orderableIds);
 }

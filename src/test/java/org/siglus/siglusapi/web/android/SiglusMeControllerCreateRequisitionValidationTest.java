@@ -65,6 +65,7 @@ import org.siglus.siglusapi.domain.SyncUpHash;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest;
 import org.siglus.siglusapi.dto.android.sequence.PerformanceSequence;
+import org.siglus.siglusapi.dto.android.validator.RequisitionValidReStartDateValidator;
 import org.siglus.siglusapi.dto.android.validator.RequisitionValidStartDateValidator;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ReportTypeRepository;
@@ -117,6 +118,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
   // facility with some requisitions but before report restart date
   private final UUID restartedFacilityId = UUID.randomUUID();
 
+  private final UUID program1Id = UUID.randomUUID();
+
   @Before
   public void setup() throws NoSuchMethodException {
     Locale.setDefault(Locale.ENGLISH);
@@ -137,7 +140,6 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     ProgramDto otherProgram = mock(ProgramDto.class);
     when(programDataService.findOne(any())).thenReturn(otherProgram);
-    UUID program1Id = UUID.randomUUID();
     ProgramDto program1 = mock(ProgramDto.class);
     when(program1.getCode()).thenReturn("VC");
     when(programDataService.findOne(program1Id)).thenReturn(program1);
@@ -159,10 +161,14 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     when(periodForJun.getName()).thenReturn("Jun 21-2021");
     when(periodForJun.getStartDate()).thenReturn(LocalDate.of(2021, 6, 21));
     when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 6)))).thenReturn(Optional.of(periodForJun));
-    ProcessingPeriod periodForJul = mock(ProcessingPeriod.class);
-    when(periodForJul.getName()).thenReturn("Jul 21-2021");
-    when(periodForJul.getStartDate()).thenReturn(LocalDate.of(2021, 7, 21));
-    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 7)))).thenReturn(Optional.of(periodForJul));
+    ProcessingPeriod periodForJul08 = mock(ProcessingPeriod.class);
+    when(periodForJul08.getName()).thenReturn("Aug 07-2008");
+    when(periodForJul08.getStartDate()).thenReturn(LocalDate.of(2008, 7, 21));
+    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2008, 7)))).thenReturn(Optional.of(periodForJul08));
+    ProcessingPeriod periodForMarch = mock(ProcessingPeriod.class);
+    when(periodForMarch.getName()).thenReturn("Mar 03-2021");
+    when(periodForMarch.getStartDate()).thenReturn(LocalDate.of(2021, 3, 21));
+    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 3)))).thenReturn(Optional.of(periodForMarch));
 
     req1 = mock(Requisition.class);
     when(req1.getProgramId()).thenReturn(program1Id);
@@ -238,7 +244,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The start date 2021-02-17 should be after the report restart date 2021-03-01.",
+    assertEquals(
+        "The start date 2021-02-17 should be after the report restart date 2021-03-01.",
         violations.get("createRequisition.arg0"));
 
   }
@@ -273,7 +280,9 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The start date 2021-06-17 should be equal to last actual end 2021-06-20.",
+    assertEquals(
+        "Sync failed. There is a gap between current period and the submission date of previous period. "
+            + "Please contact the administrator.",
         violations.get("createRequisition.arg0"));
   }
 
@@ -289,7 +298,9 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The start date 2021-06-25 should be equal to last actual end 2021-06-20.",
+    assertEquals(
+        "Sync failed. There is a gap between current period and the submission date of previous period. "
+            + "Please contact the administrator.",
         violations.get("createRequisition.arg0"));
   }
 
@@ -329,7 +340,9 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The start date 2008-07-25 should be equal to last actual end 2013-06-20.",
+    assertEquals(
+        "Sync failed. There is a gap between current period and the submission date of previous period. "
+            + "Please contact the administrator.",
         violations.get("createRequisition.arg0"));
   }
 
@@ -374,7 +387,9 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The period Apr 21-2021 should be right after last period May 21-2021.",
+    assertEquals(
+        "Sync failed. There is a gap between current period and the submission date of previous period. "
+            + "Please contact the administrator.",
         violations.get("createRequisition.arg0"));
   }
 
@@ -391,13 +406,19 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The period May 21-2021 should be right after last period May 21-2021.",
+    assertEquals(
+        "Sync failed. There is a gap between current period and the submission date of previous period. "
+            + "Please contact the administrator.",
         violations.get("createRequisition.arg0"));
   }
 
   @Test
   public void shouldReturnViolationWhenValidateCreateRequisitionGivenPeriodJul() throws Exception {
     // given
+    ProcessingPeriod periodForJul = mock(ProcessingPeriod.class);
+    when(periodForJul.getName()).thenReturn("Jul 21-2021");
+    when(periodForJul.getStartDate()).thenReturn(LocalDate.of(2021, 7, 21));
+    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 7)))).thenReturn(Optional.of(periodForJul));
     when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 7, 20));
     mockFacilityId(facilityId);
     Object param = parseParam("periodJul.json");
@@ -407,7 +428,27 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
 
     // then
     assertEquals(1, violations.size());
-    assertEquals("The period Jul 21-2021 should be right after last period May 21-2021.",
+    assertEquals(
+        "Sync failed. There is a gap between current period and the submission date of previous period. "
+            + "Please contact the administrator.",
+        violations.get("createRequisition.arg0"));
+  }
+
+  @Test
+  public void shouldReturnViolationWhenValidateCreateRequisitionGivenPeriodNull() throws Exception {
+    // given
+    when(periodRepo.findPeriodByCodeAndMonth(any(), eq(YearMonth.of(2021, 7)))).thenReturn(Optional.ofNullable(null));
+    when(req1.getActualEndDate()).thenReturn(LocalDate.of(2021, 7, 20));
+    mockFacilityId(facilityId);
+    Object param = parseParam("periodJul.json");
+
+    // when
+    Map<String, String> violations = executeValidation(param);
+
+    // then
+    assertEquals(1, violations.size());
+    assertEquals(
+        "Sync failed. The period you are submitting does not match the period in schedule.",
         violations.get("createRequisition.arg0"));
   }
 
@@ -483,7 +524,7 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
     // given
     mockFacilityId(restartedFacilityId);
     Object param = parseParam("actualStartDateAfterLastActualEnd.json");
-    when(syncUpHashRepository.findOne(anyString())).thenReturn(new SyncUpHash("hash-code"));
+    when(syncUpHashRepository.findOne(anyString())).thenReturn(new SyncUpHash());
 
     // when
     Map<String, String> violations = executeValidation(param);
@@ -531,6 +572,8 @@ public class SiglusMeControllerCreateRequisitionValidationTest extends FileBased
       if (key == RequisitionValidStartDateValidator.class) {
         return (T) new RequisitionValidStartDateValidator(androidTemplateConfigProperties, authHelper,
             programDataService, reportTypeRepo, requisitionRepo, periodRepo, syncUpHashRepository);
+      } else if (key == RequisitionValidReStartDateValidator.class) {
+        return (T) new RequisitionValidReStartDateValidator(authHelper, reportTypeRepo, syncUpHashRepository);
       }
       return NewInstance.action(key, "ConstraintValidator").run();
     }

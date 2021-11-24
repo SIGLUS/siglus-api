@@ -115,11 +115,13 @@ import org.openlmis.requisition.utils.Message;
 import org.openlmis.requisition.web.QueryRequisitionSearchParams;
 import org.openlmis.requisition.web.RequisitionController;
 import org.openlmis.requisition.web.RequisitionV2Controller;
+import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.siglus.common.domain.RequisitionTemplateExtension;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
 import org.siglus.common.repository.RequisitionTemplateExtensionRepository;
 import org.siglus.common.util.SimulateAuthenticationHelper;
 import org.siglus.siglusapi.domain.ConsultationNumberLineItemDraft;
+import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.domain.KitUsageLineItemDraft;
 import org.siglus.siglusapi.domain.PatientLineItemDraft;
 import org.siglus.siglusapi.domain.RegimenLineItemDraft;
@@ -138,6 +140,7 @@ import org.siglus.siglusapi.dto.simam.MessageSimamDto;
 import org.siglus.siglusapi.dto.simam.NotificationSimamDto;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.i18n.MessageService;
+import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionDraftRepository;
 import org.siglus.siglusapi.repository.RequisitionExtensionRepository;
 import org.siglus.siglusapi.repository.RequisitionLineItemExtensionRepository;
@@ -164,9 +167,6 @@ import org.springframework.util.MultiValueMap;
 public class SiglusRequisitionService {
 
   public static final String SIMAM = "simam";
-
-  @Value("${role.admin.id}")
-  private UUID roleAdminId;
 
   @Autowired
   private RequisitionV2Controller requisitionV2Controller;
@@ -282,6 +282,9 @@ public class SiglusRequisitionService {
 
   @Autowired
   private RequisitionExtensionRepository requisitionExtensionRepository;
+
+  @Autowired
+  private FacilityExtensionRepository facilityExtensionRepository;
 
   @Autowired
   private FcCmmCpService fcCmmCpService;
@@ -409,19 +412,11 @@ public class SiglusRequisitionService {
   @Transactional
   public BasicRequisitionDto rejectRequisition(UUID requisitionId, HttpServletRequest request,
       HttpServletResponse response) {
+    verifyIsAndroidFacilityRequisition(requisitionId);
     BasicRequisitionDto dto = requisitionController.rejectRequisition(requisitionId, request, response);
     revertRequisition(requisitionId);
     notificationService.postReject(dto);
     return dto;
-  }
-
-  private void notifySimamWhenAuthorize(SiglusRequisitionDto siglusRequisitionDto, UUID facilityId, UUID programId) {
-    SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService
-        .findSupervisoryNode(programId, facilityId);
-    Collection<UserDto> approvers = getApprovers(supervisoryNodeDto.getId(), programId);
-    if (approvers.stream().noneMatch(approver -> facilityId.equals(approver.getHomeFacilityId()))) {
-      notifySimam(siglusRequisitionDto, approvers);
-    }
   }
 
   @Transactional
@@ -445,6 +440,27 @@ public class SiglusRequisitionService {
     }
     requisitionExtensionRepository.save(requisitionExtension);
     return basicRequisitionDto;
+  }
+
+  private void verifyIsAndroidFacilityRequisition(UUID requisitionId) {
+    Profiler profiler = requisitionController.getProfiler("GET_REQUISITION", requisitionId);
+    Requisition requisition = requisitionController.findRequisition(requisitionId, profiler);
+    if (requisition != null) {
+      FacilityExtension facilityExtension = facilityExtensionRepository.findByFacilityId(requisition.getFacilityId());
+      if (facilityExtension != null && facilityExtension.getIsAndroid()) {
+        throw new PermissionMessageException(
+            new org.openlmis.stockmanagement.util.Message("siglusapi.error.noPermission.reject.android.requisition"));
+      }
+    }
+  }
+
+  private void notifySimamWhenAuthorize(SiglusRequisitionDto siglusRequisitionDto, UUID facilityId, UUID programId) {
+    SupervisoryNodeDto supervisoryNodeDto = supervisoryNodeReferenceDataService
+        .findSupervisoryNode(programId, facilityId);
+    Collection<UserDto> approvers = getApprovers(supervisoryNodeDto.getId(), programId);
+    if (approvers.stream().noneMatch(approver -> facilityId.equals(approver.getHomeFacilityId()))) {
+      notifySimam(siglusRequisitionDto, approvers);
+    }
   }
 
   private void setApprovedByInternal(UUID requisitionId, SiglusRequisitionDto siglusRequisitionDto) {
@@ -576,14 +592,6 @@ public class SiglusRequisitionService {
             .stream()
             .collect(toMap(FacilityDto::getId, facilityDto -> facilityDto));
 
-    if (PermissionService.REQUISITION_VIEW.equals(rightType)) {
-      Set<UUID> roleAssignmentIds = userDto.getRoleAssignments().stream()
-          .map(RoleAssignmentDto::getRoleId).collect(Collectors.toSet());
-      if (roleAssignmentIds.contains(roleAdminId)) {
-        return Collections.emptyList();
-      }
-    }
-
     Set<SupervisoryNodeDto> supervisoryNodeDtos = userDto.getRoleAssignments()
         .stream()
         .filter(roleAssignment -> roleIds.contains(roleAssignment.getRoleId()))
@@ -624,9 +632,11 @@ public class SiglusRequisitionService {
     List<SupportedProgramDto> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedPrograms().stream()
         .map(this::copySupportedProgramDto)
         .collect(Collectors.toList());
-    homeFacility.setSupportedPrograms(supportedPrograms);
     List<FacilityDto> list = new ArrayList<>();
-    list.add(homeFacility);
+    if (homeFacility != null) {
+      homeFacility.setSupportedPrograms(supportedPrograms);
+      list.add(homeFacility);
+    }
     List<FacilityDto> sorted = sortFacility(set);
     list.addAll(sorted);
     return list;
@@ -657,12 +667,12 @@ public class SiglusRequisitionService {
         .stream()
         .map(FacilityDto::getId)
         .collect(toSet());
-    boolean isisInternalApproveOnly =
+    boolean isInternalApproveOnly =
         idsToApprove.contains(userHomeFacilityId) && supervisoryNodeDto.getParentNode() != null;
-    if (!isisInternalApproveOnly && PermissionService.REQUISITION_VIEW.equals(rightType)) {
-      isisInternalApproveOnly = (userHomeFacilityId != supervisoryNodeDto.getFacility().getId());
+    if (!isInternalApproveOnly && PermissionService.REQUISITION_VIEW.equals(rightType)) {
+      isInternalApproveOnly = (userHomeFacilityId != supervisoryNodeDto.getFacility().getId());
     }
-    return isisInternalApproveOnly;
+    return isInternalApproveOnly;
   }
 
   // get all facilities of this supervisoryNode

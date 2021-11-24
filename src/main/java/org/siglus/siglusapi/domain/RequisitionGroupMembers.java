@@ -43,18 +43,23 @@ import org.siglus.siglusapi.dto.RequisitionGroupMembersDto;
 @IdClass(RequisitionGroupMembersPrimaryKey.class)
 @Table(name = "requisition_group_members", schema = "referencedata")
 @NamedNativeQueries({
-    @NamedNativeQuery(name = "RequisitionGroupMembers.findRequisitonIdFacilityId",
-        query = "select rgm.requisitiongroupid requisitionGroupId,rgm.facilityid facilityId,"
-            + "rgps.programid programId "
+    @NamedNativeQuery(name = "RequisitionGroupMembers.findChildrenFacility",
+        query = "select rgm.requisitiongroupid requisitionGroupId, rgm.facilityid facilityId, rgps.programid programId "
             + "from referencedata.requisition_group_members rgm "
-            + "inner join "
-            + "referencedata.requisition_groups rg on rgm.requisitiongroupid = rg.id "
-            + "inner join "
-            + "referencedata.requisition_group_program_schedules rgps on rg.id = rgps.requisitiongroupid "
-            + "inner join "
-            + "referencedata.supervisory_nodes sn on sn.id=rg.supervisorynodeid "
+            + "join referencedata.requisition_groups rg on rgm.requisitiongroupid = rg.id "
+            + "join referencedata.requisition_group_program_schedules rgps on rg.id = rgps.requisitiongroupid "
+            + "join referencedata.supervisory_nodes sn on sn.id=rg.supervisorynodeid "
             + "where sn.facilityid = :facilityId "
             + "and sn.parentid is not null "
+            + "and rgps.programid in :programIds",
+        resultSetMapping = "RequisitionGroupMembers.RequisitionGroupMembersDto"),
+    @NamedNativeQuery(name = "RequisitionGroupMembers.findParentFacility",
+        query = "select rgm.requisitiongroupid requisitionGroupId, sn.facilityid facilityId, rgps.programid programId "
+            + "from referencedata.requisition_group_members rgm "
+            + "join referencedata.requisition_groups rg on rgm.requisitiongroupid = rg.id "
+            + "join referencedata.requisition_group_program_schedules rgps on rg.id = rgps.requisitiongroupid "
+            + "join referencedata.supervisory_nodes sn on sn.id=rg.supervisorynodeid "
+            + "where rgm.facilityid = :facilityId "
             + "and rgps.programid in :programIds",
         resultSetMapping = "RequisitionGroupMembers.RequisitionGroupMembersDto")
 })

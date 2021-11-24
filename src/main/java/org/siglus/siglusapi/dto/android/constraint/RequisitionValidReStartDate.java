@@ -13,38 +13,28 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.dto.android.constraint;
 
-import java.time.ZonedDateTime;
-import java.util.UUID;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Entity
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@EntityListeners(AuditingEntityListener.class)
-@Builder
-@Table(name = "sync_up_hashes", schema = "siglusintegration")
-public class SyncUpHash {
-  @Id
-  private String hash;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import javax.validation.Constraint;
+import javax.validation.Payload;
+import org.siglus.siglusapi.dto.android.validator.RequisitionValidReStartDateValidator;
 
-  private String type;
+@Target(TYPE)
+@Retention(RUNTIME)
+@Documented
+@Constraint(validatedBy = {RequisitionValidReStartDateValidator.class})
+public @interface RequisitionValidReStartDate {
 
-  private UUID referenceId;
+  String message() default "{org.siglus.siglusapi.dto.android.constraint.RequisitionValidReStartDate.message}";
 
-  @CreatedDate
-  @Column(updatable = false)
-  private ZonedDateTime createdDate;
+  Class<?>[] groups() default {};
+
+  Class<? extends Payload>[] payload() default {};
+
 }
