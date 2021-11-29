@@ -4,11 +4,6 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '50'))
         timestamps ()
     }
-    parameters {
-        string(name: 'DEPLOY_INTEG', defaultValue: 'YES')
-        string(name: 'DEPLOY_UAT', defaultValue: 'YES')
-        string(name: 'DEPLOY_PROD', defaultValue: 'YES')
-    }
     environment {
         IMAGE_REPO = "siglusdevops/siglusapi"
         SERVICE_NAME = "siglusapi"
@@ -63,97 +58,12 @@ pipeline {
                 deploy "qa"
             }
         }
-        stage('Approval of deploy to Integ') {
-            when {
-                branch 'master'
-            }
-            steps {
-                script {
-                    try {
-                        timeout (time: 5, unit: "MINUTES") {
-                            input message: "Do you want to proceed for Integ deployment?"
-                        }
-                    }
-                    catch (error) {
-                        if ("${error}".startsWith('org.jenkinsci.plugins.workflow.steps.FlowInterruptedException')) {
-                            currentBuild.result = "SUCCESS" // Build was aborted
-                        }
-                        env.DEPLOY_INTEG = 'NO'
-                    }
-                }
-            }
-        }
-        stage('Deploy To Integ') {
-            when {
-                allOf{
-                    branch 'master'
-                    environment name: 'DEPLOY_INTEG', value: 'YES'
-                }
-            }
-            steps {
-                deploy "integ"
-            }
-        }
-        stage('Approval of deploy to UAT') {
-            when {
-                branch 'release'
-            }
-            steps {
-                script {
-                    try {
-                        timeout (time: 5, unit: "MINUTES") {
-                            input message: "Do you want to proceed for UAT deployment?"
-                        }
-                    }
-                    catch (error) {
-                        if ("${error}".startsWith('org.jenkinsci.plugins.workflow.steps.FlowInterruptedException')) {
-                            currentBuild.result = "SUCCESS" // Build was aborted
-                        }
-                        env.DEPLOY_UAT = 'NO'
-                    }
-                }
-            }
-        }
         stage('Deploy To UAT') {
             when {
-                allOf{
-                    branch 'release'
-                    environment name: 'DEPLOY_UAT', value: 'YES'
-                }
+                branch 'release'
             }
             steps {
                 deploy "uat"
-            }
-        }
-        stage('Approval of deploy to Production') {
-            when {
-                branch 'release'
-            }
-            steps {
-                script {
-                    try {
-                        timeout (time: 5, unit: "MINUTES") {
-                            input message: "Do you want to proceed for Production deployment?"
-                        }
-                    }
-                    catch (error) {
-                        if ("${error}".startsWith('org.jenkinsci.plugins.workflow.steps.FlowInterruptedException')) {
-                            currentBuild.result = "SUCCESS" // Build was aborted
-                        }
-                        env.DEPLOY_PROD = 'NO'
-                    }
-                }
-            }
-        }
-        stage('Deploy To Production') {
-            when {
-                allOf{
-                    branch 'release'
-                    environment name: 'DEPLOY_PROD', value: 'YES'
-                }
-            }
-            steps {
-                deploy "prod"
             }
         }
     }
