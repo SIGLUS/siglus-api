@@ -58,10 +58,13 @@ import org.openlmis.stockmanagement.service.PermissionService;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
+import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -105,6 +108,9 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Mock
   private PhysicalInventoryController inventoryController;
+
+  @Mock
+  private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -380,6 +386,12 @@ public class SiglusPhysicalInventoryServiceTest {
     orderableDto.setExtraData(extraData);
     ApprovedProductDto approvedProductDto = new ApprovedProductDto();
     approvedProductDto.setOrderable(orderableDto);
+    FacilityDto facilityDto = new FacilityDto();
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setCode("DDM");
+    facilityDto.setType(typeDto);
+    when(facilityReferenceDataService.findOne(facilityId))
+        .thenReturn(facilityDto);
     when(approvedProductReferenceDataService
         .getApprovedProducts(facilityId, programIdOne, emptyList()))
         .thenReturn(Collections.singletonList(approvedProductDto));
