@@ -49,6 +49,14 @@ public class FcIntegrationResultDto {
 
   public static FcIntegrationResultDto buildResult(String api, List<? extends ResponseBaseDto> result, String startDate,
       ZonedDateTime previousLastUpdatedAt, boolean finalSuccess, int createCounter, int updateCounter) {
+
+    return FcIntegrationResultDto
+        .buildResult(api, result, startDate, previousLastUpdatedAt, finalSuccess, createCounter, updateCounter, null);
+  }
+
+  public static FcIntegrationResultDto buildResult(String api, List<? extends ResponseBaseDto> result, String startDate,
+      ZonedDateTime previousLastUpdatedAt, boolean finalSuccess, int createCounter, int updateCounter,
+      String errorMessage) {
     ZonedDateTime lastUpdatedAt;
     if (result.isEmpty() || !finalSuccess) {
       lastUpdatedAt = previousLastUpdatedAt;
@@ -58,7 +66,7 @@ public class FcIntegrationResultDto {
           .orElseThrow(EntityNotFoundException::new)
           .getLastUpdatedAt();
     }
-    return FcIntegrationResultDto.builder()
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
         .api(api)
         .startDate(startDate)
         .lastUpdatedAt(lastUpdatedAt)
@@ -67,6 +75,10 @@ public class FcIntegrationResultDto {
         .updatedObjects(updateCounter)
         .finalSuccess(finalSuccess)
         .build();
+    if (errorMessage != null) {
+      resultDto.setErrorMessage(errorMessage);
+    }
+    return resultDto;
   }
 
 }
