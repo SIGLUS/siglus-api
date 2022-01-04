@@ -96,6 +96,8 @@ public class FcReceiptPlanService implements ProcessDataService {
     }
     boolean finalSuccess = true;
     int createCounter = 0;
+    int ignoreCounter = 0;
+    int duplicatedCounter = 0;
     try {
       receiptPlanErrors.clear();
       List<? extends ResponseBaseDto> receiptPlanDtoList = receiptPlans.stream()
@@ -119,14 +121,18 @@ public class FcReceiptPlanService implements ProcessDataService {
       if (!CollectionUtils.isEmpty(receiptPlanErrors)) {
         finalSuccess = false;
       }
+      ignoreCounter = receiptPlans.size() - receiptPlanDtoList.size();
+      duplicatedCounter = receiptPlanDtoList.size() - needCreateReceiptPlans.size();
     } catch (Exception e) {
       log.error("[FC receiptPlan] process data error", e);
       finalSuccess = false;
     }
     log.info("[FC receiptPlan] process data create: {}, update: {}, same: {}",
         createCounter, 0, receiptPlans.size() - createCounter);
+    String errorMessage = String.format("fc integration not exist our system count: %d and duplicated count %d",
+            ignoreCounter, duplicatedCounter);
     return buildResult(RECEIPT_PLAN_API, receiptPlans, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
-        0);
+        0, errorMessage);
   }
 
   private boolean isRequisitionNumberExisted(ResponseBaseDto receiptPlanDto) {

@@ -17,6 +17,8 @@ package org.siglus.siglusapi.service;
 
 import static java.util.Collections.emptyList;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.AC;
+import static org.siglus.siglusapi.constant.FacilityTypeConstants.CENTRAL;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
@@ -24,6 +26,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -44,12 +47,14 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -82,6 +87,9 @@ public class SiglusPhysicalInventoryService {
 
   @Autowired
   private PhysicalInventoryController inventoryController;
+
+  @Autowired
+  private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   public PhysicalInventoryDto createNewDraft(PhysicalInventoryDto dto) {
     return physicalInventoryStockManagementService.createEmptyPhysicalInventory(dto);
@@ -385,6 +393,11 @@ public class SiglusPhysicalInventoryService {
   }
 
   public InitialInventoryFieldDto canInitialInventory(UUID facility) {
+    FacilityDto homeFacility = facilityReferenceDataService.findOne(facility);
+    String code = homeFacility.getType().getCode();
+    if (code != null && Arrays.asList(AC, CENTRAL).contains(code)) {
+      return new InitialInventoryFieldDto(false);
+    }
     int stockCardCount = stockCardRepository.countByFacilityId(facility);
     return new InitialInventoryFieldDto(0 == stockCardCount);
   }
