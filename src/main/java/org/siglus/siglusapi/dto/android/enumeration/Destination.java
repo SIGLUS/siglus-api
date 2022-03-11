@@ -32,7 +32,8 @@ public enum Destination {
   PAV("PAV"),
   PNCTL("PNCTL"),
   PUB_PHARMACY("Farmácia"),
-  UATS("UATS");
+  UATS("UATS"),
+  APE("APE");
 
   private final String name;
 
