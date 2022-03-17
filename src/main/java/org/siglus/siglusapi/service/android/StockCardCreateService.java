@@ -50,6 +50,7 @@ import org.siglus.siglusapi.dto.android.Lot;
 import org.siglus.siglusapi.dto.android.ProductLotCode;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
+import org.siglus.siglusapi.dto.android.StockCardExtensionDto;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.LotStockConsistentWithExisted;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductConsistentWithAllLots;
 import org.siglus.siglusapi.dto.android.constraint.stockcard.ProductMovementConsistentWithExisted;
@@ -300,6 +301,9 @@ public class StockCardCreateService {
     stockCard = StockCard.of(facilityId, programId, productId, productLot, stockEvent);
     context.stockCards.add(stockCard);
     getContext().newStockCard(stockCard);
+    StockCardExtensionDto stockCardExtensionDto = StockCardExtensionDto
+        .of(stockCard.getId(), request.getOccurredDate());
+    context.stockCardExtensionDtos.add(stockCardExtensionDto);
     return stockCard;
   }
 
@@ -370,6 +374,8 @@ public class StockCardCreateService {
     repo.batchCreateInventoryLineAdjustments(context.inventoryLineAdjustments);
     profiler.start("insert stock on hand: " + getContext().getCalculatedStocksOnHand().size());
     repo.batchSaveStocksOnHand(getContext().getCalculatedStocksOnHand());
+    profiler.start("insert stockCardExtension: " + context.stockCardExtensionDtos.size());
+    repo.batchCreateStockCardExtensions(context.stockCardExtensionDtos);
   }
 
   private static class StockCardNativeCreateContext {
@@ -383,7 +389,7 @@ public class StockCardCreateService {
     private final List<PhysicalInventory> physicalInventories = new ArrayList<>();
     private final List<PhysicalInventoryLine> inventoryLines = new ArrayList<>();
     private final List<PhysicalInventoryLineAdjustment> inventoryLineAdjustments = new ArrayList<>();
-
+    private final List<StockCardExtensionDto> stockCardExtensionDtos = new ArrayList<>();
   }
 
 }

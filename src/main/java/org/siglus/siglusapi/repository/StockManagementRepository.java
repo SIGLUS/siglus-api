@@ -66,6 +66,7 @@ import org.siglus.siglusapi.dto.android.ProductLotStock;
 import org.siglus.siglusapi.dto.android.ProductMovement;
 import org.siglus.siglusapi.dto.android.ProductMovement.ProductMovementBuilder;
 import org.siglus.siglusapi.dto.android.ProductMovementKey;
+import org.siglus.siglusapi.dto.android.StockCardExtensionDto;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
 import org.siglus.siglusapi.dto.android.db.CalculatedStockOnHand;
 import org.siglus.siglusapi.dto.android.db.PhysicalInventory;
@@ -177,6 +178,13 @@ public class StockManagementRepository extends BaseNativeRepository {
         + "(id, facilityid, programid, orderableid, lotid, origineventid) "
         + "VALUES (:id, :facilityId, :programId, :productId, :lotId, :stockEventId)";
     namedJdbc.batchUpdate(sql, toParams(stockCards));
+  }
+
+  public void batchCreateStockCardExtensions(List<StockCardExtensionDto> stockCardExtensionDtos) {
+    String sql = "INSERT INTO siglusintegration.stock_card_extension"
+        + "(id, stockcardid, createdate) "
+        + "VALUES (:id, :stockCardId, :createDate)";
+    namedJdbc.batchUpdate(sql, toParams(stockCardExtensionDtos));
   }
 
   public void batchCreateRequestedQuantities(List<RequestedQuantity> requestedQuantities) {

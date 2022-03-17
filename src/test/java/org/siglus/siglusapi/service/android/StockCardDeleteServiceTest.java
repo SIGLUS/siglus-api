@@ -71,6 +71,7 @@ import org.siglus.siglusapi.repository.PhysicalInventoryLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardDeletedBackupRepository;
+import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusLotReferenceDataService;
@@ -122,6 +123,9 @@ public class StockCardDeleteServiceTest {
 
   @Mock
   private SiglusStockCardRepository siglusStockCardRepository;
+
+  @Mock
+  private StockCardExtensionRepository stockCardExtensionRepository;
 
   @Mock
   private FacilityCmmsRepository facilityCmmsRepository;
@@ -208,6 +212,7 @@ public class StockCardDeleteServiceTest {
     verify(calculatedStockOnHandRepository).deleteByFacilityIdAndOrderableIds(any(), any());
     verify(stockCardLineItemRepository).delete(stockCardLineItems);
     verify(siglusStockCardRepository).deleteStockCardsByFacilityIdAndOrderableIdIn(any(), any());
+    verify(stockCardExtensionRepository).deleteStockCardExtensionByFacilityIdAndOrderableIds(any(), any());
     verify(facilityCmmsRepository).deleteHfCmmsByFacilityIdAndProductCode(any(), any());
     verify(archivedProductRepository).deleteArchivedProductsByFacilityIdAndOrderableIds(any(), any());
   }

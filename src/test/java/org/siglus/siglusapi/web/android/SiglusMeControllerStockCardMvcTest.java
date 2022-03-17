@@ -259,6 +259,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     assertEquals(9, listParamCaptor.getValue().size());
     verify(stockManagementRepository).batchCreateStockCards(listParamCaptor.capture());
     assertEquals(12, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateStockCardExtensions(listParamCaptor.capture());
+    assertEquals(12, listParamCaptor.getValue().size());
     verify(stockManagementRepository).batchCreateRequestedQuantities(listParamCaptor.capture());
     assertEquals(2, listParamCaptor.getValue().size());
     List<RequestedQuantity> requestedQuantities = listParamCaptor.getValue();
@@ -303,6 +305,8 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     verify(stockManagementRepository).batchCreateEvents(listParamCaptor.capture());
     assertEquals(1, listParamCaptor.getValue().size());
     verify(stockManagementRepository).batchCreateStockCards(listParamCaptor.capture());
+    assertEquals(1, listParamCaptor.getValue().size());
+    verify(stockManagementRepository).batchCreateStockCardExtensions(listParamCaptor.capture());
     assertEquals(1, listParamCaptor.getValue().size());
     verify(stockManagementRepository).batchCreateRequestedQuantities(listParamCaptor.capture());
     assertEquals(1, listParamCaptor.getValue().size());
