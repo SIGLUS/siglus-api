@@ -29,6 +29,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
+import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
@@ -47,14 +48,14 @@ import org.springframework.util.MultiValueMap;
 public class SiglusOrderableService {
 
   private final SiglusOrderableReferenceDataService orderableReferenceDataService;
-  private final SiglusArchiveProductService archiveProductService;
   private final SiglusOrderableRepository siglusOrderableRepository;
   private final ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
+  private final ArchivedProductRepository archivedProductRepository;
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
     Page<OrderableDto> orderableDtoPage = orderableReferenceDataService.searchOrderables(searchParams, pageable);
-    Set<String> archivedProducts = archiveProductService.searchArchivedProductsByFacilityId(facilityId);
+    Set<String> archivedProducts = archivedProductRepository.findArchivedProductsByFacilityId(facilityId);
     orderableDtoPage.getContent().forEach(orderableDto -> orderableDto
         .setArchived(archivedProducts.contains(orderableDto.getId().toString())));
     return orderableDtoPage;

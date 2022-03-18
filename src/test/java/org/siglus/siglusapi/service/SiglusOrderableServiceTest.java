@@ -39,6 +39,7 @@ import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
+import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
@@ -58,7 +59,7 @@ public class SiglusOrderableServiceTest {
   private SiglusOrderableReferenceDataService orderableReferenceDataService;
 
   @Mock
-  private SiglusArchiveProductService archiveProductService;
+  private ArchivedProductRepository archivedProductRepository;
 
   @Mock
   private SiglusOrderableRepository siglusOrderableRepository;
@@ -92,7 +93,7 @@ public class SiglusOrderableServiceTest {
 
   @Test
   public void shouldReturnDataWithArchivedFalseWhenSearchOrderables() {
-    when(archiveProductService.searchArchivedProductsByFacilityId(facilityId))
+    when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
         .thenReturn(newHashSet());
 
     Page<OrderableDto> orderableDtoPage = siglusOrderableService
@@ -104,7 +105,7 @@ public class SiglusOrderableServiceTest {
 
   @Test
   public void shouldReturnDataWithArchivedTrueWhenSearchOrderables() {
-    when(archiveProductService.searchArchivedProductsByFacilityId(facilityId))
+    when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
         .thenReturn(newHashSet(orderableId.toString()));
 
     Page<OrderableDto> orderableDtoPage = siglusOrderableService

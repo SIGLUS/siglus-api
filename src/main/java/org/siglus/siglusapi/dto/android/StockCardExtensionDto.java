@@ -13,27 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.android.enumeration;
+package org.siglus.siglusapi.dto.android;
 
-import java.util.Arrays;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
 @Getter
-public enum RejectionReason {
-  DAMAGED("Danificado/quebrado/derramado"),
-  INSUFFICIENT("Recebido a menos"),
-  EXPIRED("Fora do prazo de validade"),
-  UNEATABLE("Impróprio para o consumo");
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+public class StockCardExtensionDto {
 
-  private final String name;
+  private final UUID id;
+  private final UUID stockCardId;
+  private final LocalDate createDate;
 
-  public static Optional<RejectionReason> findByName(String name) {
-    return Arrays.stream(values())
-        .filter(e -> e.name.equals(name))
-        .findFirst();
+  public static StockCardExtensionDto of(UUID stockCardId, LocalDate createDate) {
+    return new StockCardExtensionDto(UUID.randomUUID(), stockCardId, createDate);
   }
-
 }

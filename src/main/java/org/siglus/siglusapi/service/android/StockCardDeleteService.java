@@ -49,6 +49,7 @@ import org.siglus.siglusapi.repository.PhysicalInventoryLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardDeletedBackupRepository;
+import org.siglus.siglusapi.repository.StockCardExtensionRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,6 +83,8 @@ public class StockCardDeleteService {
   private final FacilityCmmsRepository facilityCmmsRepository;
 
   private final ArchivedProductRepository archivedProductRepository;
+
+  private final StockCardExtensionRepository stockCardExtensionRepository;
 
   @Transactional
   public void deleteStockCardByProduct(@Valid @NotEmpty List<StockCardDeleteRequest> stockCardDeleteRequests) {
@@ -153,6 +156,8 @@ public class StockCardDeleteService {
     siglusStockCardRepository.deleteStockCardsByFacilityIdAndOrderableIdIn(facilityId, orderableIds);
     log.info("delete archived products by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
     archivedProductRepository.deleteArchivedProductsByFacilityIdAndOrderableIds(facilityId, orderableIds);
+    log.info("delete stock card extension by facilityId: {}, orderableIds: {}", facilityId, orderableIds);
+    stockCardExtensionRepository.deleteStockCardExtensionByFacilityIdAndOrderableIds(facilityId, orderableIds);
   }
 
   private String logPhysicalInventoryLineItems(List<PhysicalInventoryLineItem> physicalInventoryLineItems) {

@@ -20,11 +20,23 @@ import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.StockCardExtension;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface StockCardExtensionRepository extends JpaRepository<StockCardExtension, UUID> {
 
   StockCardExtension findByStockCardId(UUID stockCardId);
 
   List<StockCardExtension> findByStockCardIdIn(Collection<UUID> stockCardIds);
+
+  @Modifying
+  @Query(value = "delete from siglusintegration.stock_card_extension "
+      + "where stockcardid in ( "
+      + "select sc.id from stockmanagement.stock_cards sc "
+      + "where sc.facilityid = :facilityId and sc.orderableid in (:orderableIds) "
+      + ")", nativeQuery = true)
+  void deleteStockCardExtensionByFacilityIdAndOrderableIds(@Param("facilityId") UUID facilityId,
+      @Param("orderableIds") Iterable<UUID> orderableIds);
 
 }
