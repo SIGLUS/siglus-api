@@ -31,6 +31,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -116,9 +117,16 @@ public class StockCardCreateService {
     profiler.start("walk through lots");
     StockCardNativeCreateContext context = new StockCardNativeCreateContext();
     walkThroughLots(filtered, context);
+    Map<Instant, List<StockCardCreateRequest>> mapRecordedAtToRequest = new LinkedHashMap<>();
     filtered.stream().collect(groupingBy(StockCardCreateRequest::getRecordedAt))
         .entrySet().stream()
-        .sorted(Map.Entry.comparingByKey()).forEach(entry -> createEvents(entry.getValue(), context));
+        .sorted(Map.Entry.comparingByKey())
+        .forEachOrdered(e -> mapRecordedAtToRequest.put(e.getKey(), e.getValue()));
+    Instant processedAt = Instant.now();
+    for (Map.Entry<Instant, List<StockCardCreateRequest>> entry : mapRecordedAtToRequest.entrySet()) {
+      processedAt = processedAt.plusMillis(1L);
+      createEvents(entry.getValue(), context, processedAt);
+    }
     filtered.sort(EventTimeContainer.ASCENDING);
     populateCalculatedStockOnHand(filtered);
     Profiler insertDataProfiler = profiler.startNested("insert data");
@@ -223,11 +231,11 @@ public class StockCardCreateService {
         .collect(toList());
   }
 
-  private void createEvents(List<StockCardCreateRequest> requests, StockCardNativeCreateContext context) {
+  private void createEvents(List<StockCardCreateRequest> requests, StockCardNativeCreateContext context,
+      Instant processedAt) {
     String signature = requests.stream().filter(r -> r.getSignature() != null)
         .findFirst().map(StockCardCreateRequest::getSignature).orElse(null);
     UUID facilityId = getContext().getFacility().getId();
-    Instant processedAt = Instant.now();
     UUID userId = authHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
     requests.stream()
         .collect(groupingBy(r -> getContext().getProgramId(r.getProductCode()).orElseThrow(IllegalStateException::new)))
