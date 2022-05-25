@@ -9,4 +9,4 @@ CREATE TABLE siglusintegration.metabase_config (
     dashboardname character varying(255)
 );
 
-CREATE UNIQUE INDEX metabase_config_dashboardid_key ON siglusintegration.metabase_config(dashboardid);
+CREATE UNIQUE INDEX ON siglusintegration.metabase_config(dashboardid);
