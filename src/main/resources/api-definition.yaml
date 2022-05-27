@@ -849,6 +849,23 @@ traits:
               application/json:
                 schema: physicalInventory
 
+
+    /dashboard:
+      get:
+        is: [ secured ]
+        description: If this facility doesn't have any stock movements before , then can initital inventory
+        queryParameters:
+          dashboardName:
+            required: true
+            description: dashboard name
+            repeat: false
+            type: string
+        responses:
+          200:
+            body:
+              application/json:
+
+
     /stockCardSummaries:
       get:
         is: [ secured, paginated ]
