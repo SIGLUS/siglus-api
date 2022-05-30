@@ -47,6 +47,7 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
@@ -131,8 +132,8 @@ public class FcReceiptPlanService implements ProcessDataService {
         createCounter, 0, receiptPlans.size() - createCounter);
     String errorMessage = String.format("fc integration not exist our system count: %d and duplicated count %d",
             ignoreCounter, duplicatedCounter);
-    return buildResult(RECEIPT_PLAN_API, receiptPlans, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
-        0, errorMessage);
+    return buildResult(
+        new FcIntegrationResultBuildDto(RECEIPT_PLAN_API, receiptPlans, startDate, previousLastUpdatedAt, finalSuccess, createCounter, 0, errorMessage));
   }
 
   private boolean isRequisitionNumberExisted(ResponseBaseDto receiptPlanDto) {

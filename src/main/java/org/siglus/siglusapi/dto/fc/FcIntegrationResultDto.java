@@ -51,32 +51,30 @@ public class FcIntegrationResultDto {
       ZonedDateTime previousLastUpdatedAt, boolean finalSuccess, int createCounter, int updateCounter) {
 
     return FcIntegrationResultDto
-        .buildResult(api, result, startDate, previousLastUpdatedAt, finalSuccess, createCounter, updateCounter, null);
+        .buildResult(new FcIntegrationResultBuildDto(api, result, startDate, previousLastUpdatedAt, finalSuccess, createCounter, updateCounter, null));
   }
 
-  public static FcIntegrationResultDto buildResult(String api, List<? extends ResponseBaseDto> result, String startDate,
-      ZonedDateTime previousLastUpdatedAt, boolean finalSuccess, int createCounter, int updateCounter,
-      String errorMessage) {
+  public static FcIntegrationResultDto buildResult(FcIntegrationResultBuildDto fcIntegrationBuildWrapper) {
     ZonedDateTime lastUpdatedAt;
-    if (result.isEmpty() || !finalSuccess) {
-      lastUpdatedAt = previousLastUpdatedAt;
+    if (fcIntegrationBuildWrapper.getResult().isEmpty() || !fcIntegrationBuildWrapper.isFinalSuccess()) {
+      lastUpdatedAt = fcIntegrationBuildWrapper.getPreviousLastUpdatedAt();
     } else {
-      lastUpdatedAt = result.stream()
+      lastUpdatedAt = fcIntegrationBuildWrapper.getResult().stream()
           .max(comparing(ResponseBaseDto::getLastUpdatedAt))
           .orElseThrow(EntityNotFoundException::new)
           .getLastUpdatedAt();
     }
     FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
-        .api(api)
-        .startDate(startDate)
+        .api(fcIntegrationBuildWrapper.getApi())
+        .startDate(fcIntegrationBuildWrapper.getStartDate())
         .lastUpdatedAt(lastUpdatedAt)
-        .totalObjects(result.size())
-        .createdObjects(createCounter)
-        .updatedObjects(updateCounter)
-        .finalSuccess(finalSuccess)
+        .totalObjects(fcIntegrationBuildWrapper.getResult().size())
+        .createdObjects(fcIntegrationBuildWrapper.getCreateCounter())
+        .updatedObjects(fcIntegrationBuildWrapper.getUpdateCounter())
+        .finalSuccess(fcIntegrationBuildWrapper.isFinalSuccess())
         .build();
-    if (errorMessage != null) {
-      resultDto.setErrorMessage(errorMessage);
+    if (fcIntegrationBuildWrapper.getErrorMessage() != null) {
+      resultDto.setErrorMessage(fcIntegrationBuildWrapper.getErrorMessage());
     }
     return resultDto;
   }
