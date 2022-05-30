@@ -140,6 +140,7 @@ schemas:
   - androidPodResponse: !include schemas/androidPodResponse.json
   - androidPodConfirmRequest: !include schemas/androidPodConfirmRequest.json
   - androidPodConfirmResponse: !include schemas/androidPodConfirmResponse.json
+  - metabaseDashboardUrlResponse: !include schemas/metabaseUrlDto.json
 
 resourceTypes:
   - collection:
@@ -853,7 +854,7 @@ traits:
     /dashboard:
       get:
         is: [ secured ]
-        description: If this facility doesn't have any stock movements before , then can initital inventory
+        description: Get Metabase Dashboard Url according user power
         queryParameters:
           dashboardName:
             required: true
@@ -864,6 +865,7 @@ traits:
           200:
             body:
               application/json:
+                schema: metabaseDashboardUrlResponse
 
 
     /stockCardSummaries:
