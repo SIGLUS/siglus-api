@@ -23,6 +23,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MetabaseDashboardRepository extends
     JpaRepository<MetaBaseConfig, UUID> {
 
-  Optional<MetaBaseConfig> findByDashboardNameAndLevel(String dashboardName, String level);
+  Optional<MetaBaseConfig> findByDashboardName(String dashboardName);
 
 }
