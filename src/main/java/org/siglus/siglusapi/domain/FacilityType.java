@@ -26,16 +26,16 @@ public enum FacilityType {
   CS("CS", FacilityLevel.SITE),
   DDM("DDM", FacilityLevel.DISTRICT),
   DPM("DPM", FacilityLevel.PROVINCE),
-  CENTRAL("CENTRAL", FacilityLevel.NATIONAL);
+  Central("Central", FacilityLevel.NATIONAL);
 
 
-  private final String type;
+  private final String facilityType;
   private final FacilityLevel facilityLevel;
 
 
   public static Optional<FacilityType> findLevelByTypeCode(String type) {
     return Arrays.stream(values())
-        .filter(e -> e.type.equals(type))
+        .filter(e -> e.facilityType.equals(type))
         .findFirst();
   }
 

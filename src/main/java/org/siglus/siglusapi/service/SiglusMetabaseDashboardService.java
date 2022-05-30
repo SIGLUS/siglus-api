@@ -75,7 +75,8 @@ public class SiglusMetabaseDashboardService {
         .setClaims(payloadMap)
         .signWith(SignatureAlgorithm.HS256, Base64.getEncoder()
             .encodeToString(metabaseSecretKey.getBytes()))
-        .setExpiration(new Date(LocalDateTime.now().plusHours(12).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()))
+        .setExpiration(
+            Date.from(LocalDateTime.now().plusHours(12).atZone(ZoneId.systemDefault()).toInstant()))
         .compact();
     return new MetabaseUrlDto(
         masterSiteUrl + "/embed/dashboard/" + jwtToken
@@ -127,19 +128,21 @@ public class SiglusMetabaseDashboardService {
     }
     GeographicZoneDto geographicZone = facility.getGeographicZone();
     HashMap<String, String> geographicZoneCodeMap = new HashMap<>();
-    getAllMappingRelationShipBetweenLevelAndCodeByRecursion(geographicZone, geographicZoneCodeMap);
+    geographicZoneCodeMap = getAllMappingRelationShipBetweenLevelAndCodeByRecursion(geographicZone,
+        geographicZoneCodeMap);
 
     return Optional.ofNullable(geographicZoneCodeMap.get(level)).orElseThrow(
         () -> new IllegalArgumentException("there is no mapping levelCode to the level" + level));
   }
 
-  private void getAllMappingRelationShipBetweenLevelAndCodeByRecursion(
+  private HashMap<String, String> getAllMappingRelationShipBetweenLevelAndCodeByRecursion(
       GeographicZoneDto geographicZone, HashMap<String, String> geographicZoneCodeMap) {
     if (geographicZone != null) {
       geographicZoneCodeMap.put(geographicZone.getLevel().getCode(), geographicZone.getCode());
       getAllMappingRelationShipBetweenLevelAndCodeByRecursion(geographicZone.getParent(),
           geographicZoneCodeMap);
     }
+    return geographicZoneCodeMap;
   }
 
   public String getRequestParamByLevel(String level, FacilityDto facility) {
