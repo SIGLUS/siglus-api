@@ -136,21 +136,20 @@ public class SiglusMetabaseDashboardServiceTest {
   @Test
   public void shouldReturnDashboardIdWhenThereIsCorrespondingDataInDatabase() {
     //when
-    when(metabaseDashboardRepository.findByDashboardNameAndLevel(dashboardName, level)).thenReturn(
+    when(metabaseDashboardRepository.findByDashboardName(dashboardName)).thenReturn(
         Optional.ofNullable(MetaBaseConfig.builder().dashboardId(5).build()));
     //then
-    Integer reponseDashboardId = siglusMetabaseDashboardService.getDashboardIdByLevelAndDashboardName(
-        level, dashboardName);
+    Integer reponseDashboardId = siglusMetabaseDashboardService.getDashboardIdByDashboardName(
+        dashboardName);
     assertEquals(reponseDashboardId, Integer.valueOf(5));
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldThrowIllegalArgumentExceptionWhenThereIsNotCorrespondingDataInDatabase() {
     //when
-    when(metabaseDashboardRepository.findByDashboardNameAndLevel(dashboardName, level)).thenReturn(
+    when(metabaseDashboardRepository.findByDashboardName(dashboardName)).thenReturn(
         Optional.empty());
-    siglusMetabaseDashboardService.getDashboardIdByLevelAndDashboardName(
-        level, dashboardName);
+    siglusMetabaseDashboardService.getDashboardIdByDashboardName(dashboardName);
   }
 
   @Test

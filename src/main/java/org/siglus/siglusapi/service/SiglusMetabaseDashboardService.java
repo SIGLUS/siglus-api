@@ -79,7 +79,9 @@ public class SiglusMetabaseDashboardService {
             Date.from(LocalDateTime.now().plusHours(12).atZone(ZoneId.systemDefault()).toInstant()))
         .compact();
     return new MetabaseUrlDto(
-        masterSiteUrl + "/embed/dashboard/" + jwtToken + "#bordered=false&titled=true");
+        masterSiteUrl + "/embed/dashboard/" + jwtToken
+            + "#bordered=false&titled=true"
+            + "&hide_parameters=facility_code,province_code,district_code");
   }
 
   public String getPayloadByDashboardName(String dashboardName) {
@@ -91,7 +93,7 @@ public class SiglusMetabaseDashboardService {
 
     String level = getLevelByTypeCode(facility.getType().getCode());
 
-    Integer dashboardId = getDashboardIdByLevelAndDashboardName(level, dashboardName);
+    Integer dashboardId = getDashboardIdByDashboardName(dashboardName);
 
     String requestParam = getRequestParamByLevel(level, facility);
 
@@ -105,11 +107,10 @@ public class SiglusMetabaseDashboardService {
             "there is no mapping Level to the TypeCode: " + typeCode));
   }
 
-  public Integer getDashboardIdByLevelAndDashboardName(String level, String dashboardName) {
-    return metabaseDashboardRepository.findByDashboardNameAndLevel(dashboardName,
-        level).orElseThrow(() -> new IllegalArgumentException(
-        "there is no mapping dashboard to the level : " + level
-            + " and dashboard name" + dashboardName)).getDashboardId();
+  public Integer getDashboardIdByDashboardName(String dashboardName) {
+    return metabaseDashboardRepository.findByDashboardName(dashboardName)
+        .orElseThrow(() -> new IllegalArgumentException(
+        "there is no mapping dashboard to dashaboard name : " + dashboardName)).getDashboardId();
   }
 
   public String getRequestParamKeyByLevel(String level) {
