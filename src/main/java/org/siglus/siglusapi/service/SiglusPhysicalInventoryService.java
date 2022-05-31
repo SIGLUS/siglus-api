@@ -406,7 +406,7 @@ public class SiglusPhysicalInventoryService {
       String startDate,
       String endDate) {
     List<PhysicalInventory> physicalInventories = physicalInventoriesRepository
-        .findByFacilityIdAndStartDateAndEndDate(facility, startDate, endDate);
+        .findByFacilityIdAndStartDateAndEndDate(programId ,facility, startDate, endDate);
     return physicalInventories.stream()
         .map(physicalInventory -> physicalInventory.getOccurredDate().toString())
         .collect(Collectors.toSet());
