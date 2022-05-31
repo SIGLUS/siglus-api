@@ -2,10 +2,9 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-CREATE TABLE siglusintegration.metabase_config (
-    id uuid PRIMARY KEY,
-    dashboardid integer UNIQUE,
-    dashboardname character varying(255)
+CREATE TABLE siglusintegration.facility_supplier_level
+(
+    id             uuid PRIMARY KEY,
+    facilitytypecode text not null,
+    level          text
 );
-
-CREATE UNIQUE INDEX ON siglusintegration.metabase_config(dashboardid);
