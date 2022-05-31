@@ -2,10 +2,15 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-CREATE TABLE siglusintegration.metabase_config (
-    id uuid PRIMARY KEY,
-    dashboardid integer UNIQUE,
-    dashboardname character varying(255)
-);
 
-CREATE UNIQUE INDEX ON siglusintegration.metabase_config(dashboardid);
+CREATE SCHEMA IF NOT EXISTS dashboard;
+
+CREATE MATERIALIZED VIEW vw_facility_supplier AS
+SELECT fs.facilitycode,
+       fs.facilityname,
+       fs.districtfacilitycode,
+       fs.districtfacilityname,
+       fs.provincefacilitycode,
+       fs.provincefacilityname
+FROM refresh_facility_supplier() fs
+    WITH NO DATA;;
