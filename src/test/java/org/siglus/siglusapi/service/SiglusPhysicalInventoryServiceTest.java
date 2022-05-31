@@ -420,8 +420,8 @@ public class SiglusPhysicalInventoryServiceTest {
     physicalInventory2.setOccurredDate(LocalDate.of(2020, 6, 13));
     PhysicalInventory physicalInventory3 = new PhysicalInventory();
     physicalInventory3.setOccurredDate(LocalDate.of(2020, 6, 10));
-    when(physicalInventoriesRepository.findByFacilityIdAndStartDateAndEndDate(facilityId, startDate,
-        endDate))
+    when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndStartDateAndEndDate(programId,
+        facilityId, startDate, endDate))
         .thenReturn(newArrayList(physicalInventory1, physicalInventory2, physicalInventory3));
 
     // when
