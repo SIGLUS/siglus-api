@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.web;
 
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,12 +38,12 @@ public class SiglusMetabaseDashboardControllerTest {
 
   @Test
   public void shouldCallServiceWhenGetDashboardAdddress() {
-    //given
-    when(service.getMetabaseDashboardAddressByDashboardName("")).thenReturn(new MetabaseUrlDto(""));
-    //when
-    controller.getMetabaseDashboardAddressByDashboardName("");
-    //then
-    verify(service).getMetabaseDashboardAddressByDashboardName("");
+    // given
+    when(service.getMetabaseDashboardAddressByDashboardName(anyString())).thenReturn(new MetabaseUrlDto(""));
+    // when
+    controller.getMetabaseDashboardAddressByDashboardName(anyString());
+    // then
+    verify(service).getMetabaseDashboardAddressByDashboardName(anyString());
   }
 
 }

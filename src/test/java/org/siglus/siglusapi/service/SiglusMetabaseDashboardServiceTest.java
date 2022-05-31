@@ -71,14 +71,14 @@ public class SiglusMetabaseDashboardServiceTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldThrowIllegalArgumentExceptionWhenThereIsNoMappingLevelCodeToLevel() {
-    //when
+    // when
     siglusMetabaseDashboardService.getCorrespondindGeographicCodeByLevel(
         FacilityLevel.DISTRICT.getFacilityLevelName(), emptyFacilityDto);
   }
 
   @Test
   public void shouldReturnCorrespondingGeographicCodeWhenThereIsMappingLevelCodeToLevel() {
-    //when
+    // when
     String correspondindGeographicCodeByLevel = siglusMetabaseDashboardService.getCorrespondindGeographicCodeByLevel(
         FacilityLevel.DISTRICT.getFacilityLevelName(), testFacilityDto);
     // then
@@ -88,65 +88,65 @@ public class SiglusMetabaseDashboardServiceTest {
 
   @Test
   public void shouldReturnRightParamWhenThereIsMappingParamByLevel() {
-    //when
+    // when
     String requestParamKey = siglusMetabaseDashboardService.getRequestParamKeyByLevel(
         level);
-    //then
-    assertEquals(requestParamKey, FacilityType.DDM.getFacilityLevel().getMetabaseRequestParamKey());
+    // then
+    assertEquals(FacilityType.DDM.getFacilityLevel().getMetabaseRequestParamKey(), requestParamKey);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldThrowIllegalArgumentExceptionWhenThereIsNotMappingParamByLevel() {
-    //given
+    // given
     String level = "testLevel";
-    //when
+    // when
     siglusMetabaseDashboardService.getRequestParamKeyByLevel(level);
   }
 
   @Test
   public void shouldReturnEmptyFormatBodyWhenLevelIsNational() {
-    //given
+    // given
     String level = FacilityLevel.NATIONAL.getFacilityLevelName();
-    //when
+    // when
     String requestParam = siglusMetabaseDashboardService.getRequestParamByLevel(level,
         emptyFacilityDto);
-    //then
-    assertEquals(requestParam, "");
+    // then
+    assertEquals("", requestParam);
   }
 
   @Test
   public void shouldReturnRightFormatBodyWhenLevelAndFacilityDtoIsMapping() {
-    //when
+    // when
     String requestParam = siglusMetabaseDashboardService.getRequestParamByLevel(level,
         testFacilityDto);
-    //then
-    assertEquals(requestParam,
+    // then
+    assertEquals(
         "\"" + FacilityType.DDM.getFacilityLevel().getMetabaseRequestParamKey() + "\": \""
-            + testFacilityDto.getGeographicZone().getCode() + "\"");
+            + testFacilityDto.getGeographicZone().getCode() + "\"", requestParam);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldThrowIllegalArgumentExceptionWhenLevelAndFacilityDtoIsNotMapping() {
-    //given
+    // given
     level = "testLevel";
-    //when
+    // when
     siglusMetabaseDashboardService.getRequestParamByLevel(level, testFacilityDto);
   }
 
   @Test
   public void shouldReturnDashboardIdWhenThereIsCorrespondingDataInDatabase() {
-    //when
+    // when
     when(metabaseDashboardRepository.findByDashboardName(dashboardName)).thenReturn(
         Optional.ofNullable(MetaBaseConfig.builder().dashboardId(5).build()));
-    //then
+    // then
     Integer reponseDashboardId = siglusMetabaseDashboardService.getDashboardIdByDashboardName(
         dashboardName);
-    assertEquals(reponseDashboardId, Integer.valueOf(5));
+    assertEquals(Integer.valueOf(5), reponseDashboardId);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldThrowIllegalArgumentExceptionWhenThereIsNotCorrespondingDataInDatabase() {
-    //when
+    // when
     when(metabaseDashboardRepository.findByDashboardName(dashboardName)).thenReturn(
         Optional.empty());
     siglusMetabaseDashboardService.getDashboardIdByDashboardName(dashboardName);
@@ -154,17 +154,17 @@ public class SiglusMetabaseDashboardServiceTest {
 
   @Test
   public void shouldReturnLevelWhenThereIsCorrespondingLevelByTypeCode() {
-    //when
+    // when
     String level = siglusMetabaseDashboardService.getLevelByTypeCode(typeCode);
-    //then
-    assertEquals(level, "site");
+    // then
+    assertEquals("site", level);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void shouldReturnLevelWhenThereIsNotCorrespondingLevelByTypeCode() {
-    //given
+    // given
     String typeCpde = "CSTEST";
-    //when
+    // when
     siglusMetabaseDashboardService.getLevelByTypeCode(typeCpde);
   }
 
