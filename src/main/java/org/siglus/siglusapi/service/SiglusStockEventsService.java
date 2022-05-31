@@ -20,7 +20,6 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.siglus.siglusapi.constant.FieldConstants.ADJUSTMENT;
 import static org.siglus.siglusapi.constant.FieldConstants.ISSUE;
 import static org.siglus.siglusapi.constant.FieldConstants.RECEIVE;
-import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
@@ -95,14 +94,11 @@ public class SiglusStockEventsService {
   @Transactional
   public UUID createStockEvent(StockEventDto eventDto) {
     UUID userId = getUserId(eventDto);
-    if (ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId())) {
-      Map<UUID, UUID> programIdToEventId = createStockEventForAllPrograms(eventDto, userId);
-      if (!programIdToEventId.isEmpty()) {
-        return programIdToEventId.values().stream().findFirst().orElse(null);
-      }
-      return null;
+    Map<UUID, UUID> programIdToEventId = createStockEventForAllPrograms(eventDto, userId);
+    if (!programIdToEventId.isEmpty()) {
+      return programIdToEventId.values().stream().findFirst().orElse(null);
     }
-    return createStockEventForOneProgram(eventDto, userId);
+    return null;
   }
 
   @Transactional
@@ -135,11 +131,14 @@ public class SiglusStockEventsService {
           .collect(Collectors.toList());
     } else {
       if (isNotUnpack(eventDto)) {
-        List<StockManagementDraftDto> stockManagementDraftDtos = stockManagementDraftService
-            .findStockManagementDraft(ALL_PRODUCTS_PROGRAM_ID, getDraftType(eventDto), true);
-        if (CollectionUtils.isEmpty(stockManagementDraftDtos)) {
-          throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
-        }
+        List<List<StockManagementDraftDto>> stockManagementDraftDtoList = programIds.stream().map(
+            id -> stockManagementDraftService.findStockManagementDraft(id, getDraftType(eventDto), true))
+            .collect(Collectors.toList());
+        stockManagementDraftDtoList.forEach(stockManagementDraftDto -> {
+          if (CollectionUtils.isEmpty(stockManagementDraftDto)) {
+            throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
+          }
+        });
       }
       stockEventDtos = programIds.stream()
           .map(StockEventDto::fromProgramId)
@@ -160,7 +159,9 @@ public class SiglusStockEventsService {
     });
     if (!programIdToEventId.isEmpty()) {
       if (eventDto.isPhysicalInventory()) {
-        siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
+        programIds.forEach(id ->
+            siglusPhysicalInventoryService
+                .deletePhysicalInventoryForProductInOneProgramDirectly(eventDto.getFacilityId(), id));
       } else if (isNotUnpack(eventDto)) {
         String type = getDraftType(eventDto);
         eventDto.setType(type);

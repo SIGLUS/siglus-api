@@ -152,6 +152,14 @@ public class SiglusPhysicalInventoryService {
     inventoryController.deletePhysicalInventory(id);
   }
 
+  public void deletePhysicalInventoryForProductInOneProgram(UUID facilityId, UUID programId) {
+    doDeletePhysicalInventoryForProductInOneProgram(facilityId, programId, false);
+  }
+
+  public void deletePhysicalInventoryForProductInOneProgramDirectly(UUID facilityId, UUID programId) {
+    doDeletePhysicalInventoryForProductInOneProgram(facilityId, programId, true);
+  }
+
   public void deletePhysicalInventoryForAllProducts(UUID facilityId) {
     doDeletePhysicalInventoryForAllProducts(facilityId, false);
   }
@@ -238,6 +246,24 @@ public class SiglusPhysicalInventoryService {
       return getResultInventory(inventories, emptyList());
     }
     return null;
+  }
+
+  private void doDeletePhysicalInventoryForProductInOneProgram(UUID facilityId, UUID programId, boolean directly) {
+
+    String physicalInventoryId = physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
+        programId, facilityId, Boolean.TRUE);
+    if (physicalInventoryId == null) {
+      return;
+    }
+    List<UUID> physicalInventoryIdList = new ArrayList<>(
+        Collections.singleton(UUID.fromString(physicalInventoryId)))
+        .stream().filter(Objects::nonNull).collect(Collectors.toList());
+    if (directly) {
+      physicalInventoryIdList.forEach(this::deletePhysicalInventoryDirectly);
+    } else {
+      physicalInventoryIdList.forEach(this::deletePhysicalInventory);
+    }
+    lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(physicalInventoryIdList);
   }
 
   private void doDeletePhysicalInventoryForAllProducts(UUID facilityId, boolean directly) {

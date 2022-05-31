@@ -46,7 +46,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.openlmis.stockmanagement.domain.card.StockCardLineItem;
 import org.openlmis.stockmanagement.domain.event.StockEvent;
-import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.StockEventLineItemDto;
 import org.openlmis.stockmanagement.repository.StockCardLineItemRepository;
@@ -120,7 +119,6 @@ public class SiglusStockEventsServiceTest {
 
   @Mock
   private StockEventsRepository stockEventsRepository;
-
   @Mock
   private SiglusDateHelper dateHelper;
 
@@ -162,36 +160,6 @@ public class SiglusStockEventsServiceTest {
     lineItemDto2.setOrderableId(orderableId2);
     lineItemDto2.setExtraData(getExtraData());
     ReflectionTestUtils.setField(siglusStockEventsService, "unpackReasonId", unpackReasonId);
-  }
-
-  @Test
-  public void shouldCallV3StockEventApiWhenCreateStockEventForSpecificProgram() {
-    // given
-    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2))
-        .programId(UUID.randomUUID()).build();
-
-    // when
-    siglusStockEventsService.createStockEvent(eventDto);
-
-    // then
-    verify(stockEventsStockManagementService, times(1)).createStockEvent(any());
-    verify(archiveProductService, times(1)).activateProducts(any(), any());
-  }
-
-  @Test
-  public void shouldCallStockEventProcessorWhenCreateStockEventForPhysicalInventory() {
-    // given
-    StockEventDto eventDto = StockEventDto.builder().lineItems(newArrayList(lineItemDto1, lineItemDto2))
-        .programId(ALL_PRODUCTS_PROGRAM_ID).build();
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().build();
-    when(siglusPhysicalInventoryService.getPhysicalInventoryDtosDirectly(any(), any(), any()))
-        .thenReturn(newArrayList(physicalInventoryDto));
-
-    // when
-    siglusStockEventsService.createStockEvent(eventDto);
-
-    // then
-    verify(stockEventProcessor, times(2)).process(any());
   }
 
   @Test

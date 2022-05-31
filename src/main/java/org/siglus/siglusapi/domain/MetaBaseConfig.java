@@ -32,8 +32,6 @@ import org.siglus.common.domain.BaseEntity;
 @Table(name = "metabase_config", schema = "siglusintegration")
 public class MetaBaseConfig extends BaseEntity {
 
-  @Column(name = "level")
-  private String level;
   @Column(name = "dashboardid")
   private Integer dashboardId;
   @Column(name = "dashboardname")
