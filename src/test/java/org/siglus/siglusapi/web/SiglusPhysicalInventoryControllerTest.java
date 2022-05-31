@@ -156,9 +156,9 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldCallFindPhysicalInventoryDatesWhenSearchPhysicalInventoryDates() {
-    siglusPhysicalInventoryController.searchPhysicalInventoryDates(facilityId, startDate, endDate);
+    siglusPhysicalInventoryController.searchPhysicalInventoryDates(programId, facilityId, startDate, endDate);
 
-    verify(siglusPhysicalInventoryService).findPhysicalInventoryDates(facilityId, startDate,
+    verify(siglusPhysicalInventoryService).findPhysicalInventoryDates(programId, facilityId, startDate,
         endDate);
   }
 

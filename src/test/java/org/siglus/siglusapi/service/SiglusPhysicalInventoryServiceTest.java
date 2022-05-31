@@ -114,6 +114,8 @@ public class SiglusPhysicalInventoryServiceTest {
 
   private final UUID facilityId = UUID.randomUUID();
 
+  private final UUID programId = UUID.randomUUID();
+
   private final UUID orderableId = UUID.randomUUID();
 
   private final UUID programIdOne = UUID.randomUUID();
@@ -424,7 +426,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     Set<String> occurredDates = siglusPhysicalInventoryService.findPhysicalInventoryDates(
-        facilityId, startDate, endDate);
+        programId, facilityId, startDate, endDate);
 
     // then
     assertEquals(2, occurredDates.size());

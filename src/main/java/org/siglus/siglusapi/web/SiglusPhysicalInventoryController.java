@@ -102,10 +102,11 @@ public class SiglusPhysicalInventoryController {
 
   @GetMapping("/dates")
   public Set<String> searchPhysicalInventoryDates(
+      @RequestParam UUID programId,
       @RequestParam UUID facilityId,
       @RequestParam String startDate,
       @RequestParam String endDate) {
-    return siglusPhysicalInventoryService.findPhysicalInventoryDates(facilityId,
+    return siglusPhysicalInventoryService.findPhysicalInventoryDates(programId, facilityId,
         startDate,
         endDate);
   }

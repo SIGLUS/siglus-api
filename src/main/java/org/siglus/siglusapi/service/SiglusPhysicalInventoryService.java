@@ -402,7 +402,7 @@ public class SiglusPhysicalInventoryService {
     return new InitialInventoryFieldDto(0 == stockCardCount);
   }
 
-  public Set<String> findPhysicalInventoryDates(UUID facility,
+  public Set<String> findPhysicalInventoryDates(UUID programId, UUID facility,
       String startDate,
       String endDate) {
     List<PhysicalInventory> physicalInventories = physicalInventoriesRepository
