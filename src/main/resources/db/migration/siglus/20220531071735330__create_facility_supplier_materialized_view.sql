@@ -5,7 +5,7 @@
 
 CREATE SCHEMA IF NOT EXISTS dashboard;
 
-CREATE MATERIALIZED VIEW vw_facility_supplier AS
+CREATE MATERIALIZED VIEW dashboard.vw_facility_supplier AS
 SELECT fs.facilitycode,
        fs.facilityname,
        fs.districtfacilitycode,
