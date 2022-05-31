@@ -47,6 +47,7 @@ import org.siglus.siglusapi.domain.RequisitionExtension;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionLineItemDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductDto;
 import org.siglus.siglusapi.dto.fc.ReceiptPlanDto;
@@ -88,7 +89,8 @@ public class FcReceiptPlanService implements ProcessDataService {
 
   private final List<String> receiptPlanErrors = new ArrayList<>();
 
-  public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> receiptPlans, String startDate,
+  public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> receiptPlans,
+      String startDate,
       ZonedDateTime previousLastUpdatedAt) {
     log.info("[FC receiptPlan] sync count: {}", receiptPlans.size());
     if (receiptPlans.isEmpty()) {
@@ -104,7 +106,8 @@ public class FcReceiptPlanService implements ProcessDataService {
           .distinct()
           .filter(this::isRequisitionNumberExisted)
           .collect(Collectors.toList());
-      List<? extends ResponseBaseDto> needCreateReceiptPlans = getNeedCreateReceiptPlans(receiptPlanDtoList);
+      List<? extends ResponseBaseDto> needCreateReceiptPlans = getNeedCreateReceiptPlans(
+          receiptPlanDtoList);
       createCounter = needCreateReceiptPlans.size();
       if (!isEmpty(needCreateReceiptPlans)) {
         needCreateReceiptPlans.forEach(receiptPlanDto -> {
@@ -129,10 +132,12 @@ public class FcReceiptPlanService implements ProcessDataService {
     }
     log.info("[FC receiptPlan] process data create: {}, update: {}, same: {}",
         createCounter, 0, receiptPlans.size() - createCounter);
-    String errorMessage = String.format("fc integration not exist our system count: %d and duplicated count %d",
-            ignoreCounter, duplicatedCounter);
-    return buildResult(RECEIPT_PLAN_API, receiptPlans, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
-        0, errorMessage);
+    String errorMessage = String.format(
+        "fc integration not exist our system count: %d and duplicated count %d",
+        ignoreCounter, duplicatedCounter);
+    return buildResult(
+        new FcIntegrationResultBuildDto(RECEIPT_PLAN_API, receiptPlans, startDate,
+            previousLastUpdatedAt, finalSuccess, createCounter, 0, errorMessage));
   }
 
   private boolean isRequisitionNumberExisted(ResponseBaseDto receiptPlanDto) {
@@ -147,7 +152,8 @@ public class FcReceiptPlanService implements ProcessDataService {
       RequisitionExtension extension = requisitionExtensionRepository.findByRequisitionNumber(
           receiptPlanDto.getRequisitionNumber());
       UUID requisitionId = extension.getRequisitionId();
-      SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisition(requisitionId);
+      SiglusRequisitionDto requisitionDto = siglusRequisitionService.searchRequisition(
+          requisitionId);
       if (operatePermissionService.isEditable(requisitionDto)) {
         List<RequisitionLineItemV2Dto> requisitionLineItems =
             requisitionDto
@@ -155,19 +161,22 @@ public class FcReceiptPlanService implements ProcessDataService {
                 .stream()
                 .map(RequisitionLineItemV2Dto.class::cast)
                 .collect(Collectors.toList());
-        Map<String, OrderableDto> approveProductDtos = getApprovedProductsMap(userDto, requisitionDto);
+        Map<String, OrderableDto> approveProductDtos = getApprovedProductsMap(userDto,
+            requisitionDto);
         List<ProductDto> productDtos = getExistProducts(receiptPlanDto, approveProductDtos);
         boolean displaySkipped = requisitionDto.getTemplate().getColumnsMap()
             .get(SKIPPED.toString().toLowerCase()).getIsDisplayed();
         List<RequisitionLineItemV2Dto> lineItems = updateRequisitionLineItems(
             requisitionLineItems, productDtos, approveProductDtos, requisitionId, displaySkipped);
         requisitionDto.setRequisitionLineItems(lineItems);
-        siglusRequisitionService.updateRequisition(requisitionId, requisitionDto, request, response);
+        siglusRequisitionService.updateRequisition(requisitionId, requisitionDto, request,
+            response);
         siglusRequisitionService.approveRequisition(requisitionId, request, response);
         updateRequisitionChangeDate(requisitionId, receiptPlanDto);
         log.info("[FC] update receipt plan {}", receiptPlanDto);
       } else {
-        receiptPlanErrors.add("requisition is not editable: " + receiptPlanDto.getReceiptPlanNumber());
+        receiptPlanErrors.add(
+            "requisition is not editable: " + receiptPlanDto.getReceiptPlanNumber());
       }
     } catch (FcDataException e) {
       receiptPlanErrors.add(e.getMessage() + ": " + receiptPlanDto.getReceiptPlanNumber());
@@ -193,7 +202,8 @@ public class FcReceiptPlanService implements ProcessDataService {
         .collect(Collectors.toMap(OrderableDto::getProductCode, orderableDto -> orderableDto));
   }
 
-  private List<ProductDto> getExistProducts(ReceiptPlanDto receiptPlanDto, Map<String, OrderableDto> approvedProducts) {
+  private List<ProductDto> getExistProducts(ReceiptPlanDto receiptPlanDto,
+      Map<String, OrderableDto> approvedProducts) {
     List<ProductDto> receiptPlanProducts = receiptPlanDto.getProducts();
     List<ProductDto> findProducts = receiptPlanProducts.stream()
         .filter(productDto -> approvedProducts.containsKey(productDto.getFnmCode()))
@@ -215,9 +225,11 @@ public class FcReceiptPlanService implements ProcessDataService {
       Map<String, OrderableDto> orderableDtoMap, UUID requisitionId, boolean displaySkipped) {
     List<UUID> addedOrderableIds = new ArrayList<>();
     List<RequisitionLineItemV2Dto> approvedLineItems = new ArrayList<>();
-    updateExistLineItems(requisitionLineItems, existProductDtos, orderableDtoMap, addedOrderableIds, approvedLineItems);
+    updateExistLineItems(requisitionLineItems, existProductDtos, orderableDtoMap, addedOrderableIds,
+        approvedLineItems);
     updateSkippedLineItems(requisitionLineItems, displaySkipped, approvedLineItems);
-    addNewLineItems(existProductDtos, orderableDtoMap, requisitionId, addedOrderableIds, approvedLineItems);
+    addNewLineItems(existProductDtos, orderableDtoMap, requisitionId, addedOrderableIds,
+        approvedLineItems);
     return approvedLineItems;
   }
 
@@ -232,7 +244,8 @@ public class FcReceiptPlanService implements ProcessDataService {
         ProductDto productDto = existProductDtos
             .stream()
             .filter(
-                product -> orderableDtoMap.get(product.getFnmCode()).getId().equals(lineItem.getOrderable().getId()))
+                product -> orderableDtoMap.get(product.getFnmCode()).getId()
+                    .equals(lineItem.getOrderable().getId()))
             .findFirst()
             .orElse(null);
         if (null != productDto) {
@@ -269,7 +282,8 @@ public class FcReceiptPlanService implements ProcessDataService {
       RequisitionLineItemV2Dto requisitionLineItem = requisitionLineItems
           .stream()
           .filter(
-              lineItem -> lineItem.getOrderable().getId().equals(orderableDtoMap.get(productDto.getFnmCode()).getId()))
+              lineItem -> lineItem.getOrderable().getId()
+                  .equals(orderableDtoMap.get(productDto.getFnmCode()).getId()))
           .findFirst()
           .orElse(null);
       if (null == requisitionLineItem) {
@@ -282,7 +296,8 @@ public class FcReceiptPlanService implements ProcessDataService {
     requisitionLineItems.removeAll(approvedLineItems);
   }
 
-  private List<? extends ResponseBaseDto> getNeedCreateReceiptPlans(List<? extends ResponseBaseDto> receiptPlanDtos) {
+  private List<? extends ResponseBaseDto> getNeedCreateReceiptPlans(
+      List<? extends ResponseBaseDto> receiptPlanDtos) {
     List<String> receiptNumbers = receiptPlanDtos.stream()
         .map(ReceiptPlanDto.class::cast)
         .map(ReceiptPlanDto::getReceiptPlanNumber).collect(Collectors.toList());
@@ -292,7 +307,8 @@ public class FcReceiptPlanService implements ProcessDataService {
         .collect(Collectors.toList());
     return receiptPlanDtos.stream()
         .map(ReceiptPlanDto.class::cast)
-        .filter(receiptPlanDto -> !existReceiptNumbers.contains(receiptPlanDto.getReceiptPlanNumber()))
+        .filter(
+            receiptPlanDto -> !existReceiptNumbers.contains(receiptPlanDto.getReceiptPlanNumber()))
         .collect(Collectors.toList());
   }
 
@@ -301,7 +317,8 @@ public class FcReceiptPlanService implements ProcessDataService {
     requisition.setModifiedDate(receiptPlanDto.getLastUpdatedAt());
     log.info("[FC] update requisition: {}", requisition);
     requisitionRepository.save(requisition);
-    StatusChange statusChange = siglusStatusChangeRepository.findByRequisitionIdAndStatus(requisitionId,
+    StatusChange statusChange = siglusStatusChangeRepository.findByRequisitionIdAndStatus(
+        requisitionId,
         APPROVED.toString());
     statusChange.setCreatedDate(receiptPlanDto.getDate());
   }

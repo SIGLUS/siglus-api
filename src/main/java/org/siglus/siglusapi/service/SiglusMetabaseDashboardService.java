@@ -76,7 +76,7 @@ public class SiglusMetabaseDashboardService {
         .signWith(SignatureAlgorithm.HS256, Base64.getEncoder()
             .encodeToString(metabaseSecretKey.getBytes()))
         .setExpiration(
-            Date.from(LocalDateTime.now().plusHours(12).atZone(ZoneId.systemDefault()).toInstant()))
+            new Date(LocalDateTime.now().plusHours(12).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()))
         .compact();
     return new MetabaseUrlDto(
         masterSiteUrl + "/embed/dashboard/" + jwtToken
@@ -110,12 +110,12 @@ public class SiglusMetabaseDashboardService {
   public Integer getDashboardIdByDashboardName(String dashboardName) {
     return metabaseDashboardRepository.findByDashboardName(dashboardName)
         .orElseThrow(() -> new IllegalArgumentException(
-        "there is no mapping dashboard to dashaboard name : " + dashboardName)).getDashboardId();
+            "there is no mapping dashboard to dashaboard name : " + dashboardName)).getDashboardId();
   }
 
   public String getRequestParamKeyByLevel(String level) {
-    return FacilityType.findMetabaseRequestParamKeyByLevel(level).map(
-        e -> e.getFacilityLevel().getMetabaseRequestParamKey())
+    return FacilityType.findMetabaseRequestParamKeyByLevel(level)
+        .map(e -> e.getFacilityLevel().getMetabaseRequestParamKey())
         .orElseThrow(
             () -> new IllegalArgumentException(
                 "there is no mapping MetabaseRequestParamKey to the level: " + level));
@@ -128,21 +128,19 @@ public class SiglusMetabaseDashboardService {
     }
     GeographicZoneDto geographicZone = facility.getGeographicZone();
     HashMap<String, String> geographicZoneCodeMap = new HashMap<>();
-    geographicZoneCodeMap = getAllMappingRelationShipBetweenLevelAndCodeByRecursion(geographicZone,
-        geographicZoneCodeMap);
+    getAllMappingRelationShipBetweenLevelAndCodeByRecursion(geographicZone, geographicZoneCodeMap);
 
     return Optional.ofNullable(geographicZoneCodeMap.get(level)).orElseThrow(
         () -> new IllegalArgumentException("there is no mapping levelCode to the level" + level));
   }
 
-  private HashMap<String, String> getAllMappingRelationShipBetweenLevelAndCodeByRecursion(
+  private void getAllMappingRelationShipBetweenLevelAndCodeByRecursion(
       GeographicZoneDto geographicZone, HashMap<String, String> geographicZoneCodeMap) {
     if (geographicZone != null) {
       geographicZoneCodeMap.put(geographicZone.getLevel().getCode(), geographicZone.getCode());
       getAllMappingRelationShipBetweenLevelAndCodeByRecursion(geographicZone.getParent(),
           geographicZoneCodeMap);
     }
-    return geographicZoneCodeMap;
   }
 
   public String getRequestParamByLevel(String level, FacilityDto facility) {

@@ -54,7 +54,7 @@ public class SiglusMetabaseDashboardServiceTest {
   public void prepare() {
     level = FacilityLevel.DISTRICT.getFacilityLevelName();
     dashboardName = "system_version_report";
-    typeCode = FacilityType.CS.getFacilityType();
+    typeCode = FacilityType.CS.getType();
     emptyFacilityDto = FacilityDto.builder().build();
 
     GeographicLevelDto province = GeographicLevelDto.builder().code("province").build();
