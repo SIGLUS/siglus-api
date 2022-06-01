@@ -3,18 +3,21 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 CREATE VIEW dashboard.vw_system_version AS
-SELECT row_number() OVER (ORDER BY a.facilitycode) AS number, pgz.code AS provincecode,
-       pgz.name AS  provincename,
-       gz.code  AS  districtcode,
-       gz.name  AS  districtname,
+SELECT row_number()    OVER (ORDER BY a.facilitycode) AS number, pgz.code AS provincecode,
+       pgz.name     AS provincename,
+       gz.code      AS districtcode,
+       gz.name      AS districtname,
+       ftm.category AS facilitytype,
        vfs.districtfacilitycode,
        vfs.provincefacilitycode,
        a.facilitycode,
-       f.name   AS  facilityname,
+       f.name       AS facilityname,
        a.versioncode,
        a.username
 FROM siglusintegration.app_info a
          JOIN referencedata.facilities f ON f.code = a.facilitycode::text
-     LEFT JOIN dashboard.vw_facility_supplier vfs on vfs.facilitycode = f.code
+     LEFT JOIN referencedata.facility_types ft on ft.id = f.typeid
+     LEFT JOIN siglusintegration.facility_type_mapping ftm on ftm.facilitytypecode = ft.code
+     LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = f.code
      LEFT JOIN referencedata.geographic_zones gz ON gz.id = f.geographiczoneid
      LEFT JOIN referencedata.geographic_zones pgz ON gz.parentid = pgz.id;
