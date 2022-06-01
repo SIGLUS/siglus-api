@@ -16,23 +16,30 @@
 package org.siglus.siglusapi.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.siglus.siglusapi.domain.FacilityLevel;
-import org.siglus.siglusapi.domain.FacilityType;
+import org.openlmis.requisition.dto.RoleAssignmentDto;
+import org.siglus.siglusapi.domain.FacilitySuppierLevel;
 import org.siglus.siglusapi.domain.MetaBaseConfig;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
-import org.siglus.siglusapi.dto.GeographicLevelDto;
-import org.siglus.siglusapi.dto.GeographicZoneDto;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.repository.FacilitySupplierLevelRepository;
 import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
@@ -44,128 +51,99 @@ public class SiglusMetabaseDashboardServiceTest {
   @Mock
   private MetabaseDashboardRepository metabaseDashboardRepository;
 
-  private FacilityDto emptyFacilityDto;
-  private FacilityDto testFacilityDto;
-  private String level;
-  private String dashboardName;
-  private String typeCode;
+  @Mock
+  private SiglusAuthenticationHelper authenticationHelper;
+
+  @Mock
+  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
+
+  @Mock
+  private FacilitySupplierLevelRepository facilitySupplierLevelRepository;
+
+  private final UserDto uesrDto = new UserDto();
+
+  private final Set<RoleAssignmentDto> roleAssignmentDtos = new HashSet<>();
+
+  private final RoleAssignmentDto roleAssignmentDto = new RoleAssignmentDto();
+
+  private final FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
+
+  private final String payloadTemplate = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
 
   @Before
-  public void prepare() {
-    level = FacilityLevel.DISTRICT.getFacilityLevelName();
-    dashboardName = "system_version_report";
-    typeCode = FacilityType.CS.getType();
-    emptyFacilityDto = FacilityDto.builder().build();
-
-    GeographicLevelDto province = GeographicLevelDto.builder().code("province").build();
-    GeographicZoneDto partProvinceZoneDto = GeographicZoneDto.builder().code("01").level(province)
-        .build();
-
-    GeographicLevelDto district = GeographicLevelDto.builder().code("district").build();
-    GeographicZoneDto geographicZoneDto = GeographicZoneDto.builder().code("0101").level(district)
-        .parent(partProvinceZoneDto).build();
-    FacilityTypeDto type = new FacilityTypeDto();
-    type.setCode(typeCode);
-    testFacilityDto = FacilityDto.builder().type(type).geographicZone(geographicZoneDto).build();
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void shouldThrowIllegalArgumentExceptionWhenThereIsNoMappingLevelCodeToLevel() {
-    // when
-    siglusMetabaseDashboardService.getCorrespondindGeographicCodeByLevel(
-        FacilityLevel.DISTRICT.getFacilityLevelName(), emptyFacilityDto);
+  public void setUp() {
+    roleAssignmentDto.setRoleId(UUID.randomUUID());
+    roleAssignmentDtos.add(roleAssignmentDto);
+    uesrDto.setRoleAssignments(roleAssignmentDtos);
   }
 
   @Test
-  public void shouldReturnCorrespondingGeographicCodeWhenThereIsMappingLevelCodeToLevel() {
-    // when
-    String correspondindGeographicCodeByLevel = siglusMetabaseDashboardService.getCorrespondindGeographicCodeByLevel(
-        FacilityLevel.DISTRICT.getFacilityLevelName(), testFacilityDto);
-    // then
-    assertEquals(testFacilityDto.getGeographicZone().getCode(), correspondindGeographicCodeByLevel);
-
-  }
-
-  @Test
-  public void shouldReturnRightParamWhenThereIsMappingParamByLevel() {
-    // when
-    String requestParamKey = siglusMetabaseDashboardService.getRequestParamKeyByLevel(
-        level);
-    // then
-    assertEquals(FacilityType.DDM.getFacilityLevel().getMetabaseRequestParamKey(), requestParamKey);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void shouldThrowIllegalArgumentExceptionWhenThereIsNotMappingParamByLevel() {
+  public void shouldReturnEmptyParamsInPayload() {
     // given
-    String level = "testLevel";
+    String roleAdminId = "a439c5de-b8aa-11e6-80f5-76304dec7eb7";
+    roleAssignmentDto.setRoleId(UUID.fromString(roleAdminId));
+    roleAssignmentDtos.add(roleAssignmentDto);
+    uesrDto.setRoleAssignments(roleAssignmentDtos);
+
+    when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
+        Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
     // when
-    siglusMetabaseDashboardService.getRequestParamKeyByLevel(level);
+    String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
+    // then
+    assertEquals(String.format(payloadTemplate, 1, ""), payload);
   }
 
   @Test
-  public void shouldReturnEmptyFormatBodyWhenLevelIsNational() {
+  public void shouldReturnProvinceParamsInPayload() {
     // given
-    String level = FacilityLevel.NATIONAL.getFacilityLevelName();
+    when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
+        Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
+    facilityTypeDto.setCode("DPM");
+    when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
+        .type(facilityTypeDto).code("10000").build());
+    when(facilitySupplierLevelRepository.findByFacilityTypeCode(
+        anyString())).thenReturn(Optional.of(FacilitySuppierLevel.builder().level("PROVINCE").build()));
     // when
-    String requestParam = siglusMetabaseDashboardService.getRequestParamByLevel(level,
-        emptyFacilityDto);
+    String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
     // then
-    assertEquals("", requestParam);
+    assertEquals(String.format(payloadTemplate, 1, "\"province_facility_code\": \"10000\""), payload);
   }
 
   @Test
-  public void shouldReturnRightFormatBodyWhenLevelAndFacilityDtoIsMapping() {
-    // when
-    String requestParam = siglusMetabaseDashboardService.getRequestParamByLevel(level,
-        testFacilityDto);
-    // then
-    assertEquals(
-        "\"" + FacilityType.DDM.getFacilityLevel().getMetabaseRequestParamKey() + "\": \""
-            + testFacilityDto.getGeographicZone().getCode() + "\"", requestParam);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void shouldThrowIllegalArgumentExceptionWhenLevelAndFacilityDtoIsNotMapping() {
+  public void shouldReturnDistrictParamsInPayload() {
     // given
-    level = "testLevel";
+    when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
+        Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
+    facilityTypeDto.setCode("DDM");
+    when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
+        .type(facilityTypeDto).code("10000").build());
+    when(facilitySupplierLevelRepository.findByFacilityTypeCode(
+        anyString())).thenReturn(Optional.of(FacilitySuppierLevel.builder().level("DISTRICT").build()));
     // when
-    siglusMetabaseDashboardService.getRequestParamByLevel(level, testFacilityDto);
+    String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
+    // then
+    assertEquals(String.format(payloadTemplate, 1, "\"district_facility_code\": \"10000\""), payload);
   }
+
 
   @Test
-  public void shouldReturnDashboardIdWhenThereIsCorrespondingDataInDatabase() {
-    // when
-    when(metabaseDashboardRepository.findByDashboardName(dashboardName)).thenReturn(
-        Optional.ofNullable(MetaBaseConfig.builder().dashboardId(5).build()));
-    // then
-    Integer reponseDashboardId = siglusMetabaseDashboardService.getDashboardIdByDashboardName(
-        dashboardName);
-    assertEquals(Integer.valueOf(5), reponseDashboardId);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void shouldThrowIllegalArgumentExceptionWhenThereIsNotCorrespondingDataInDatabase() {
-    // when
-    when(metabaseDashboardRepository.findByDashboardName(dashboardName)).thenReturn(
-        Optional.empty());
-    siglusMetabaseDashboardService.getDashboardIdByDashboardName(dashboardName);
-  }
-
-  @Test
-  public void shouldReturnLevelWhenThereIsCorrespondingLevelByTypeCode() {
-    // when
-    String level = siglusMetabaseDashboardService.getLevelByTypeCode(typeCode);
-    // then
-    assertEquals("site", level);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void shouldReturnLevelWhenThereIsNotCorrespondingLevelByTypeCode() {
+  public void shouldReturnFacilityParamsInPayload() {
     // given
-    String typeCpde = "CSTEST";
+    when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
+        Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
+    facilityTypeDto.setCode("CS");
+    when(siglusFacilityReferenceDataService.findOne((UUID) any())).thenReturn(FacilityDto.builder()
+        .type(facilityTypeDto).code("10000").build());
+    when(facilitySupplierLevelRepository.findByFacilityTypeCode(
+        anyString())).thenReturn(Optional.empty());
     // when
-    siglusMetabaseDashboardService.getLevelByTypeCode(typeCpde);
+    String payload = siglusMetabaseDashboardService.getPayloadByDashboardName(anyString());
+    // then
+    assertEquals(String.format(payloadTemplate, 1, "\"facility_code\": \"10000\""), payload);
   }
 
 }

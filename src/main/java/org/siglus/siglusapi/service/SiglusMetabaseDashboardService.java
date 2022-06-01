@@ -23,16 +23,19 @@ import java.sql.Date;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.siglus.siglusapi.domain.FacilityLevel;
-import org.siglus.siglusapi.domain.FacilityType;
+import org.siglus.siglusapi.domain.FacilitySuppierLevel;
 import org.siglus.siglusapi.dto.FacilityDto;
-import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.MetabaseUrlDto;
+import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.repository.FacilitySupplierLevelRepository;
 import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -44,6 +47,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class SiglusMetabaseDashboardService {
 
+  @Autowired
+  FacilitySupplierLevelRepository facilitySupplierLevelRepository;
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
   @Autowired
@@ -57,13 +62,16 @@ public class SiglusMetabaseDashboardService {
   @Value("${metabase.site.url}")
   private String masterSiteUrl;
 
+  private final String roleAdminId = "a439c5de-b8aa-11e6-80f5-76304dec7eb7";
+
   public MetabaseUrlDto getMetabaseDashboardAddressByDashboardName(String dashboardName) {
 
     String payload = getPayloadByDashboardName(dashboardName);
+    System.out.println("payload ============ " + payload);
     return getMetabaseUrlDtoBypayload(payload);
   }
 
-  public MetabaseUrlDto getMetabaseUrlDtoBypayload(String payload) {
+  private MetabaseUrlDto getMetabaseUrlDtoBypayload(String payload) {
     Map<String, Object> payloadMap = null;
     try {
       payloadMap = new ObjectMapper().readValue(payload, Map.class);
@@ -81,76 +89,53 @@ public class SiglusMetabaseDashboardService {
     return new MetabaseUrlDto(
         masterSiteUrl + "/embed/dashboard/" + jwtToken
             + "#bordered=false&titled=true"
-            + "&hide_parameters=facility_code,province_code,district_code");
+            + "&hide_parameters=facility_code,district_facility_code,province_facility_code");
   }
 
   public String getPayloadByDashboardName(String dashboardName) {
 
     String payloadTemplate = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
 
-    UUID homeFacilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    FacilityDto facility = siglusFacilityReferenceDataService.findOne(homeFacilityId);
-
-    String level = getLevelByTypeCode(facility.getType().getCode());
-
     Integer dashboardId = getDashboardIdByDashboardName(dashboardName);
 
-    String requestParam = getRequestParamByLevel(level, facility);
+    UserDto userDto = authenticationHelper.getCurrentUser();
+    Boolean adminAccount = isAdmin(userDto);
+    if (adminAccount) {
+      return String.format(payloadTemplate, dashboardId, "");
+    }
+    FacilityDto facility = siglusFacilityReferenceDataService.findOne(userDto.getHomeFacilityId());
+
+    String requestParam = getRequestParamByFacility(facility);
 
     return String.format(payloadTemplate, dashboardId, requestParam);
   }
 
-  public String getLevelByTypeCode(String typeCode) {
-    return FacilityType.findLevelByTypeCode(typeCode)
-        .map(e -> e.getFacilityLevel().getFacilityLevelName())
-        .orElseThrow(() -> new IllegalArgumentException(
-            "there is no mapping Level to the TypeCode: " + typeCode));
+  private Boolean isAdmin(UserDto userDto) {
+    Set<UUID> roleAssignmentIds = userDto.getRoleAssignments().stream()
+        .map(RoleAssignmentDto::getRoleId).collect(Collectors.toSet());
+    return roleAssignmentIds.contains(UUID.fromString(roleAdminId));
   }
 
-  public Integer getDashboardIdByDashboardName(String dashboardName) {
+  private String getLevelByTypeCode(String typeCode) {
+    Optional<FacilitySuppierLevel> facilityTypeCodeOptional = facilitySupplierLevelRepository.findByFacilityTypeCode(
+        typeCode);
+    if (facilityTypeCodeOptional.isPresent()) {
+      return facilityTypeCodeOptional.get().getLevel();
+    }
+    return FacilityLevel.SITE.getFacilityLevelName();
+  }
+
+  private Integer getDashboardIdByDashboardName(String dashboardName) {
     return metabaseDashboardRepository.findByDashboardName(dashboardName)
         .orElseThrow(() -> new IllegalArgumentException(
             "there is no mapping dashboard to dashaboard name : " + dashboardName)).getDashboardId();
   }
 
-  public String getRequestParamKeyByLevel(String level) {
-    return FacilityType.findMetabaseRequestParamKeyByLevel(level)
-        .map(e -> e.getFacilityLevel().getMetabaseRequestParamKey())
-        .orElseThrow(
-            () -> new IllegalArgumentException(
-                "there is no mapping MetabaseRequestParamKey to the level: " + level));
-
-  }
-
-  public String getCorrespondindGeographicCodeByLevel(String level, FacilityDto facility) {
-    if (level.equals(FacilityLevel.SITE.getFacilityLevelName())) {
-      return facility.getCode();
-    }
-    GeographicZoneDto geographicZone = facility.getGeographicZone();
-    HashMap<String, String> geographicZoneCodeMap = new HashMap<>();
-    getAllMappingRelationShipBetweenLevelAndCodeByRecursion(geographicZone, geographicZoneCodeMap);
-
-    return Optional.ofNullable(geographicZoneCodeMap.get(level)).orElseThrow(
-        () -> new IllegalArgumentException("there is no mapping levelCode to the level" + level));
-  }
-
-  private void getAllMappingRelationShipBetweenLevelAndCodeByRecursion(
-      GeographicZoneDto geographicZone, HashMap<String, String> geographicZoneCodeMap) {
-    if (geographicZone != null) {
-      geographicZoneCodeMap.put(geographicZone.getLevel().getCode(), geographicZone.getCode());
-      getAllMappingRelationShipBetweenLevelAndCodeByRecursion(geographicZone.getParent(),
-          geographicZoneCodeMap);
-    }
-  }
-
-  public String getRequestParamByLevel(String level, FacilityDto facility) {
-    if (level.equals(FacilityLevel.NATIONAL.getFacilityLevelName())) {
-      return "";
-    }
+  private String getRequestParamByFacility(FacilityDto facility) {
     String templateParam = "\"%s\": \"%s\"";
-    String paramKey = getRequestParamKeyByLevel(level);
-    String geographicCode = getCorrespondindGeographicCodeByLevel(level, facility);
-    return String.format(templateParam, paramKey, geographicCode);
+    String level = getLevelByTypeCode(facility.getType().getCode());
+    String paramKey = FacilityLevel.findMetabaseRequestParamKeyByLevel(level);
+    return String.format(templateParam, paramKey, facility.getCode());
   }
 
 

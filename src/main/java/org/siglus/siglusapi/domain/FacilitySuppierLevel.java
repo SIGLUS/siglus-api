@@ -15,23 +15,27 @@
 
 package org.siglus.siglusapi.domain;
 
-import java.util.Arrays;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
-@RequiredArgsConstructor
-@Getter
-public enum FacilityLevel {
-  SITE("SITE", "facility_code"),
-  DISTRICT("DISTRICT", "district_facility_code"),
-  PROVINCE("PROVINCE", "province_facility_code");
-  private final String facilityLevelName;
-  private final String metabaseRequestParamKey;
+@EqualsAndHashCode(callSuper = true)
+@Entity
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "facility_supplier_level", schema = "siglusintegration")
+public class FacilitySuppierLevel extends BaseEntity {
 
-  public static String findMetabaseRequestParamKeyByLevel(String level) {
-    return Arrays.stream(values())
-        .filter(e -> e.facilityLevelName.equals(level))
-        .findFirst().orElse(SITE).getMetabaseRequestParamKey();
-  }
-
+  @Column(name = "facilitytypecode")
+  private String facilityTypeCode;
+  @Column(name = "level")
+  private String level;
 }

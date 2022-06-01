@@ -13,36 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.repository;
 
-import java.util.Arrays;
 import java.util.Optional;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.FacilitySuppierLevel;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@RequiredArgsConstructor
-@Getter
-public enum FacilityType {
-  CS("CS", FacilityLevel.SITE),
-  DDM("DDM", FacilityLevel.DISTRICT),
-  DPM("DPM", FacilityLevel.PROVINCE),
-  CENTRAL("Central", FacilityLevel.NATIONAL);
+public interface FacilitySupplierLevelRepository extends
+    JpaRepository<FacilitySuppierLevel, UUID> {
 
-
-  private final String type;
-  private final FacilityLevel facilityLevel;
-
-
-  public static Optional<FacilityType> findLevelByTypeCode(String type) {
-    return Arrays.stream(values())
-        .filter(e -> e.type.equals(type))
-        .findFirst();
-  }
-
-  public static Optional<FacilityType> findMetabaseRequestParamKeyByLevel(String level) {
-    return Arrays.stream(values())
-        .filter(e -> e.facilityLevel.getFacilityLevelName().equals(level))
-        .findFirst();
-  }
+  Optional<FacilitySuppierLevel> findByFacilityTypeCode(String facilityTypeCode);
 
 }
