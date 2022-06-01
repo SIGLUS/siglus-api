@@ -94,7 +94,7 @@ public class SiglusStockEventsService {
   @Transactional
   public UUID createStockEvent(StockEventDto eventDto) {
     UUID userId = getUserId(eventDto);
-    Map<UUID, UUID> programIdToEventId = createStockEventForAllPrograms(eventDto, userId);
+    Map<UUID, UUID> programIdToEventId = createStockEventForPrograms(eventDto, userId);
     if (!programIdToEventId.isEmpty()) {
       return programIdToEventId.values().stream().findFirst().orElse(null);
     }
@@ -110,7 +110,7 @@ public class SiglusStockEventsService {
     return stockEventId;
   }
 
-  private Map<UUID, UUID> createStockEventForAllPrograms(StockEventDto eventDto, UUID userId) {
+  private Map<UUID, UUID> createStockEventForPrograms(StockEventDto eventDto, UUID userId) {
     eventDto.setUserId(userId);
     createAndFillLotId(eventDto);
     Set<UUID> programIds = eventDto.getLineItems().stream()

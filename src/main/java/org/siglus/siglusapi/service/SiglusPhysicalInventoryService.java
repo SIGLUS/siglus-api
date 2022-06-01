@@ -249,7 +249,10 @@ public class SiglusPhysicalInventoryService {
   }
 
   private void doDeletePhysicalInventoryForProductInOneProgram(UUID facilityId, UUID programId, boolean directly) {
+    doDeletePhysicalInventoryCore(facilityId, programId, directly);
+  }
 
+  private void doDeletePhysicalInventoryCore(UUID facilityId, UUID programId, boolean directly) {
     String physicalInventoryId = physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
         programId, facilityId, Boolean.TRUE);
     if (physicalInventoryId == null) {
@@ -269,19 +272,7 @@ public class SiglusPhysicalInventoryService {
   private void doDeletePhysicalInventoryForAllProducts(UUID facilityId, boolean directly) {
     Set<UUID> supportedPrograms = supportedProgramsHelper
         .findHomeFacilitySupportedProgramIds();
-    List<UUID> ids = supportedPrograms.stream().map(
-        supportedVirtualProgram -> physicalInventoriesRepository
-            .findIdByProgramIdAndFacilityIdAndIsDraft(supportedVirtualProgram, facilityId,
-                Boolean.TRUE))
-        .filter(Objects::nonNull)
-        .map(UUID::fromString)
-        .collect(Collectors.toList());
-    if (directly) {
-      ids.forEach(this::deletePhysicalInventoryDirectly);
-    } else {
-      ids.forEach(this::deletePhysicalInventory);
-    }
-    lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(ids);
+    supportedPrograms.forEach(programId -> doDeletePhysicalInventoryCore(facilityId, programId, directly));
   }
 
   private List<PhysicalInventoryLineItemsExtension> updateExtension(
