@@ -20,4 +20,5 @@ FROM siglusintegration.app_info a
      LEFT JOIN siglusintegration.facility_type_mapping ftm on ftm.facilitytypecode = ft.code
      LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = f.code
      LEFT JOIN referencedata.geographic_zones gz ON gz.id = f.geographiczoneid
-     LEFT JOIN referencedata.geographic_zones pgz ON gz.parentid = pgz.id;
+     LEFT JOIN referencedata.geographic_zones pgz ON gz.parentid = pgz.id
+where ftm.category is not null;
