@@ -204,6 +204,36 @@ public class SiglusPhysicalInventoryServiceTest {
   }
 
   @Test
+  public void shouldCallV3OneTimesWhenDeletePhysicalInventoryProductInOneProgramDirectly() {
+    // given
+    when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programIdOne,
+        facilityId, true))
+        .thenReturn(inventoryOne.toString());
+
+    // when
+    siglusPhysicalInventoryService.deletePhysicalInventoryForProductInOneProgramDirectly(facilityId, programIdOne);
+
+    // then
+    verify(inventoryController, times(1)).deletePhysicalInventory(any());
+    verify(lineItemsExtensionRepository, times(1)).deleteByPhysicalInventoryIdIn(any());
+  }
+
+  @Test
+  public void shouldCallV3OneTimesWhenDeletePhysicalInventoryProductInOneProgram() {
+    // given
+    when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programIdOne,
+        facilityId, true))
+        .thenReturn(inventoryOne.toString());
+
+    // when
+    siglusPhysicalInventoryService.deletePhysicalInventoryForProductInOneProgram(facilityId, programIdOne);
+
+    // then
+    verify(physicalInventoryStockManagementService, times(1)).deletePhysicalInventory(any());
+    verify(lineItemsExtensionRepository, times(1)).deleteByPhysicalInventoryIdIn(any());
+  }
+
+  @Test
   public void shouldCallV3MultipleTimesWhenDeletePhysicalInventoryForAllProducts() {
     // given
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
@@ -220,7 +250,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // then
     verify(physicalInventoryStockManagementService, times(2)).deletePhysicalInventory(any());
-    verify(lineItemsExtensionRepository, times(1)).deleteByPhysicalInventoryIdIn(any());
+    verify(lineItemsExtensionRepository, times(2)).deleteByPhysicalInventoryIdIn(any());
   }
 
   @Test
@@ -240,7 +270,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // then
     verify(inventoryController, times(2)).deletePhysicalInventory(any());
-    verify(lineItemsExtensionRepository, times(1)).deleteByPhysicalInventoryIdIn(any());
+    verify(lineItemsExtensionRepository, times(2)).deleteByPhysicalInventoryIdIn(any());
   }
 
   @Test
