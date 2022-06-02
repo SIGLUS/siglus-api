@@ -58,7 +58,7 @@ public class SiglusPhysicalInventoryController {
       return siglusPhysicalInventoryService
           .getPhysicalInventoryDtosForAllProducts(facility, isDraft, canInitialInventory);
     }
-    return siglusPhysicalInventoryService.getPhysicalInventoryDtos(program, facility, isDraft);
+    return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsInOneProgram(program, facility, isDraft);
   }
 
   @GetMapping("/{id}")
@@ -86,7 +86,7 @@ public class SiglusPhysicalInventoryController {
       siglusPhysicalInventoryService.checkDraftIsExist(dto.getFacilityId());
       return siglusPhysicalInventoryService.saveDraftForAllProducts(dto);
     }
-    return siglusPhysicalInventoryService.saveDraft(dto, id);
+    return siglusPhysicalInventoryService.saveDraftForProductsInOneProgram(dto);
   }
 
   @DeleteMapping("/{id}")

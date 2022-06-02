@@ -72,7 +72,8 @@ public class SiglusPhysicalInventoryControllerTest {
     siglusPhysicalInventoryController.searchPhysicalInventories(programId, facilityId, isDraft,
         canInitialInventory);
 
-    verify(siglusPhysicalInventoryService).getPhysicalInventoryDtos(programId, facilityId, isDraft);
+    verify(siglusPhysicalInventoryService)
+        .getPhysicalInventoryDtosForProductsInOneProgram(programId, facilityId, isDraft);
   }
 
   @Test
@@ -133,7 +134,7 @@ public class SiglusPhysicalInventoryControllerTest {
 
     siglusPhysicalInventoryController.updatePhysicalInventory(id, physicalInventoryDto);
 
-    verify(siglusPhysicalInventoryService).saveDraft(physicalInventoryDto, id);
+    verify(siglusPhysicalInventoryService).saveDraftForProductsInOneProgram(physicalInventoryDto);
   }
 
   @Test

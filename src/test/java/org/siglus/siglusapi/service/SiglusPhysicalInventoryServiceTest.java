@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +35,7 @@ import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -201,6 +203,49 @@ public class SiglusPhysicalInventoryServiceTest {
     // then
     verify(physicalInventoryStockManagementService, times(2))
         .savePhysicalInventory(any(), any());
+  }
+
+  @Test
+  public void shouldSplicingDataWhenSaveDraftForProductsInOneProgram() {
+    PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
+        .orderableId(orderableId)
+        .programId(programIdOne)
+        .build();
+    UUID orderableIdTwo = UUID.randomUUID();
+    PhysicalInventoryLineItemDto lineItemDtoTwo = PhysicalInventoryLineItemDto.builder()
+        .orderableId(orderableIdTwo)
+        .programId(programIdOne)
+        .reasonFreeText("freeText")
+        .build();
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .programId(ALL_PRODUCTS_PROGRAM_ID)
+        .facilityId(facilityId)
+        .lineItems(newArrayList(lineItemDtoOne, lineItemDtoTwo))
+        .build();
+    when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
+        true))
+        .thenReturn(newArrayList(PhysicalInventoryDto.builder()
+            .programId(programIdOne)
+            .facilityId(facilityId)
+            .build()
+        ));
+    PhysicalInventoryLineItemsExtension extensionOne = PhysicalInventoryLineItemsExtension.builder()
+        .orderableId(orderableId)
+        .build();
+    PhysicalInventoryLineItemsExtension extensionTwo = PhysicalInventoryLineItemsExtension.builder()
+        .orderableId(orderableIdTwo)
+        .reasonFreeText("freeText")
+        .build();
+    when(lineItemsExtensionRepository.save(Arrays.asList(extensionOne, extensionTwo)))
+        .thenReturn(Arrays.asList(extensionOne, extensionTwo));
+
+    // when
+    PhysicalInventoryDto dto = siglusPhysicalInventoryService
+        .saveDraftForAllProducts(physicalInventoryDto);
+
+    // then
+    assertNull(dto.getLineItems().get(0).getReasonFreeText());
+    assertEquals("freeText", dto.getLineItems().get(1).getReasonFreeText());
   }
 
   @Test
@@ -394,6 +439,28 @@ public class SiglusPhysicalInventoryServiceTest {
     // then
     assertEquals("extension", dto.getLineItems().get(0).getReasonFreeText());
     assertNull(dto.getLineItems().get(1).getReasonFreeText());
+  }
+
+  @Test
+  public void shouldSplicingDataWhenGetPhysicalInventoryDtosForProductsInOneProgramAndThereIsMappingInventories() {
+    // given
+    List<PhysicalInventoryLineItemDto> physicalInventoryLineItemDtos = Collections.singletonList(
+        PhysicalInventoryLineItemDto.builder().build());
+    List<PhysicalInventoryDto> inventories = Collections.singletonList(
+        PhysicalInventoryDto.builder().id(id).lineItems(physicalInventoryLineItemDtos).build());
+    List<PhysicalInventoryLineItemsExtension> extensions = Collections.singletonList(
+        PhysicalInventoryLineItemsExtension.builder().reasonFreeText("hello world").build());
+    doNothing().when(physicalInventoryService).checkPermission(programId, facilityId);
+    when(physicalInventoryStockManagementService.searchPhysicalInventory(programId, facilityId, true))
+        .thenReturn(inventories);
+    when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(any())).thenReturn(extensions);
+
+    // when
+    List<PhysicalInventoryDto> resultInventory = siglusPhysicalInventoryService
+        .getPhysicalInventoryDtosForProductsInOneProgram(programId, facilityId, true);
+
+    // then
+    assertEquals("hello world", resultInventory.get(0).getLineItems().get(0).getReasonFreeText());
   }
 
   @Test
