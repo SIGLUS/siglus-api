@@ -62,12 +62,11 @@ public class SiglusMetabaseDashboardService {
   @Value("${metabase.site.url}")
   private String masterSiteUrl;
 
-  private final String roleAdminId = "a439c5de-b8aa-11e6-80f5-76304dec7eb7";
+  private static final String roleAdminId = "a439c5de-b8aa-11e6-80f5-76304dec7eb7";
 
   public MetabaseUrlDto getMetabaseDashboardAddressByDashboardName(String dashboardName) {
 
     String payload = getPayloadByDashboardName(dashboardName);
-    System.out.println("payload ============ " + payload);
     return getMetabaseUrlDtoBypayload(payload);
   }
 
@@ -100,7 +99,7 @@ public class SiglusMetabaseDashboardService {
 
     UserDto userDto = authenticationHelper.getCurrentUser();
     Boolean adminAccount = isAdmin(userDto);
-    if (adminAccount) {
+    if (Boolean.TRUE.equals(adminAccount)) {
       return String.format(payloadTemplate, dashboardId, "");
     }
     FacilityDto facility = siglusFacilityReferenceDataService.findOne(userDto.getHomeFacilityId());
