@@ -246,7 +246,16 @@ traits:
 /api:
 
   /siglusapi:
-
+    /data-migration/stock-cards/{facilityId}:
+      displayName: Submit stock cards for a specific facility
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
     /programs:
       displayName: Program
       get:
