@@ -41,12 +41,13 @@ import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
+
 @SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
-public class SiglusMetabaseDashboardServiceTest {
+public class MetabaseDashboardServiceTest {
 
   @InjectMocks
-  private SiglusMetabaseDashboardService siglusMetabaseDashboardService;
+  private MetabaseDashboardService siglusMetabaseDashboardService;
 
   @Mock
   private MetabaseDashboardRepository metabaseDashboardRepository;
@@ -70,6 +71,7 @@ public class SiglusMetabaseDashboardServiceTest {
 
   private final String payloadTemplate = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
 
+
   @Before
   public void setUp() {
     roleAssignmentDto.setRoleId(UUID.randomUUID());
@@ -78,14 +80,10 @@ public class SiglusMetabaseDashboardServiceTest {
   }
 
   @Test
-  public void shouldReturnEmptyParamsInPayload() {
+  public void shouldReturnEmptyParamsInPayloadWhenAccountRoleIsAdmin() {
     // given
-    String roleAdminId = "a439c5de-b8aa-11e6-80f5-76304dec7eb7";
-    roleAssignmentDto.setRoleId(UUID.fromString(roleAdminId));
-    roleAssignmentDtos.add(roleAssignmentDto);
-    uesrDto.setRoleAssignments(roleAssignmentDtos);
-
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(true);
     when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
         Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
     // when
@@ -95,9 +93,10 @@ public class SiglusMetabaseDashboardServiceTest {
   }
 
   @Test
-  public void shouldReturnProvinceParamsInPayload() {
+  public void shouldReturnProvinceParamsInPayloadWhenAccountRoleIsDpm() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
     when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
         Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
     facilityTypeDto.setCode("DPM");
@@ -112,9 +111,10 @@ public class SiglusMetabaseDashboardServiceTest {
   }
 
   @Test
-  public void shouldReturnDistrictParamsInPayload() {
+  public void shouldReturnDistrictParamsInPayloadWhenAccountRoleIsDdm() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
     when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
         Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
     facilityTypeDto.setCode("DDM");
@@ -130,9 +130,10 @@ public class SiglusMetabaseDashboardServiceTest {
 
 
   @Test
-  public void shouldReturnFacilityParamsInPayload() {
+  public void shouldReturnFacilityParamsInPayloadWhenAccountRoleIsOthers() {
     // given
     when(authenticationHelper.getCurrentUser()).thenReturn(uesrDto);
+    when(authenticationHelper.isTheCurrentUserAdmin()).thenReturn(false);
     when(metabaseDashboardRepository.findByDashboardName(any())).thenReturn(
         Optional.of(MetaBaseConfig.builder().dashboardId(1).build()));
     facilityTypeDto.setCode("CS");

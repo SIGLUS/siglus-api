@@ -25,7 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.MetabaseUrlDto;
-import org.siglus.siglusapi.service.SiglusMetabaseDashboardService;
+import org.siglus.siglusapi.service.MetabaseDashboardService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusMetabaseDashboardControllerTest {
@@ -34,7 +34,7 @@ public class SiglusMetabaseDashboardControllerTest {
   private SiglusMetabaseDashboardController controller;
 
   @Mock
-  private SiglusMetabaseDashboardService service;
+  private MetabaseDashboardService service;
 
   @Test
   public void shouldCallServiceWhenGetDashboardAdddress() {

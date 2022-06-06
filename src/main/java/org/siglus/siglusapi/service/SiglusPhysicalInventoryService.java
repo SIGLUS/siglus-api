@@ -215,13 +215,13 @@ public class SiglusPhysicalInventoryService {
     if (CollectionUtils.isNotEmpty(inventories)) {
       List<UUID> updatePhysicalInventoryIds =
           inventories.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
-      log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
+      log.info("find physical inventory extension in one program: {}", updatePhysicalInventoryIds);
       List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
           .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
       PhysicalInventoryDto resultInventory = getResultInventory(inventories, extensions);
       return Collections.singletonList(resultInventory);
     }
-    return null;
+    return Collections.emptyList();
   }
 
   public List<PhysicalInventoryDto> getPhysicalInventoryDtosForAllProducts(

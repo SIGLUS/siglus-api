@@ -16,7 +16,7 @@
 package org.siglus.siglusapi.web;
 
 import org.siglus.siglusapi.dto.MetabaseUrlDto;
-import org.siglus.siglusapi.service.SiglusMetabaseDashboardService;
+import org.siglus.siglusapi.service.MetabaseDashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SiglusMetabaseDashboardController {
 
   @Autowired
-  SiglusMetabaseDashboardService siglusMetabaseDashboardService;
+  MetabaseDashboardService siglusMetabaseDashboardService;
 
   @GetMapping
   public MetabaseUrlDto getMetabaseDashboardAddressByDashboardName(@RequestParam String dashboardName) {

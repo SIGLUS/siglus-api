@@ -25,16 +25,11 @@ import java.time.ZoneId;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.siglus.siglusapi.domain.FacilityLevel;
 import org.siglus.siglusapi.domain.FacilitySuppierLevel;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.MetabaseUrlDto;
-import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.FacilitySupplierLevelRepository;
 import org.siglus.siglusapi.repository.MetabaseDashboardRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -45,7 +40,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class SiglusMetabaseDashboardService {
+public class MetabaseDashboardService {
 
   @Autowired
   FacilitySupplierLevelRepository facilitySupplierLevelRepository;
@@ -62,7 +57,12 @@ public class SiglusMetabaseDashboardService {
   @Value("${metabase.site.url}")
   private String masterSiteUrl;
 
-  private static final String roleAdminId = "a439c5de-b8aa-11e6-80f5-76304dec7eb7";
+  @Value("${metabase.token.expired.time}")
+  private Integer metabaseTokenExpiredTime;
+
+  public static final String paramTemplate = "\"%s\": \"%s\"";
+
+  public static final String payloadTemplate = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
 
   public MetabaseUrlDto getMetabaseDashboardAddressByDashboardName(String dashboardName) {
 
@@ -83,7 +83,8 @@ public class SiglusMetabaseDashboardService {
         .signWith(SignatureAlgorithm.HS256, Base64.getEncoder()
             .encodeToString(metabaseSecretKey.getBytes()))
         .setExpiration(
-            new Date(LocalDateTime.now().plusHours(12).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()))
+            new Date(LocalDateTime.now().plusHours(metabaseTokenExpiredTime).atZone(ZoneId.systemDefault()).toInstant()
+                .toEpochMilli()))
         .compact();
     return new MetabaseUrlDto(
         masterSiteUrl + "/embed/dashboard/" + jwtToken
@@ -93,26 +94,16 @@ public class SiglusMetabaseDashboardService {
 
   public String getPayloadByDashboardName(String dashboardName) {
 
-    String payloadTemplate = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
-
     Integer dashboardId = getDashboardIdByDashboardName(dashboardName);
-
-    UserDto userDto = authenticationHelper.getCurrentUser();
-    Boolean adminAccount = isAdmin(userDto);
-    if (Boolean.TRUE.equals(adminAccount)) {
+    if (authenticationHelper.isTheCurrentUserAdmin()) {
       return String.format(payloadTemplate, dashboardId, "");
     }
-    FacilityDto facility = siglusFacilityReferenceDataService.findOne(userDto.getHomeFacilityId());
+    FacilityDto facility = siglusFacilityReferenceDataService
+        .findOne(authenticationHelper.getCurrentUser().getHomeFacilityId());
 
     String requestParam = getRequestParamByFacility(facility);
 
     return String.format(payloadTemplate, dashboardId, requestParam);
-  }
-
-  private Boolean isAdmin(UserDto userDto) {
-    Set<UUID> roleAssignmentIds = userDto.getRoleAssignments().stream()
-        .map(RoleAssignmentDto::getRoleId).collect(Collectors.toSet());
-    return roleAssignmentIds.contains(UUID.fromString(roleAdminId));
   }
 
   private String getLevelByTypeCode(String typeCode) {
@@ -131,10 +122,9 @@ public class SiglusMetabaseDashboardService {
   }
 
   private String getRequestParamByFacility(FacilityDto facility) {
-    String templateParam = "\"%s\": \"%s\"";
     String level = getLevelByTypeCode(facility.getType().getCode());
     String paramKey = FacilityLevel.findMetabaseRequestParamKeyByLevel(level);
-    return String.format(templateParam, paramKey, facility.getCode());
+    return String.format(paramTemplate, paramKey, facility.getCode());
   }
 
 

@@ -24,16 +24,21 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.javers.common.collections.Sets;
+import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class SiglusAuthenticationHelper {
+
+  @Value("${role.admin.id}")
+  private String roleAdminId;
 
   private final SiglusUserReferenceDataService userService;
 
@@ -52,6 +57,12 @@ public class SiglusAuthenticationHelper {
       return null;
     }
     return currentUserId.map(userService::findOne).orElseThrow(() -> authenticateFail(currentUserId.orElse(null)));
+  }
+
+  public boolean isTheCurrentUserAdmin() {
+    Set<UUID> roleAssignmentIds = getCurrentUser().getRoleAssignments().stream()
+        .map(RoleAssignmentDto::getRoleId).collect(Collectors.toSet());
+    return roleAssignmentIds.contains(UUID.fromString(roleAdminId));
   }
 
   public Collection<PermissionString> getCurrentUserPermissionStrings() {
