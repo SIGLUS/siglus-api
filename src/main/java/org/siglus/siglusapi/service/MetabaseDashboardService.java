@@ -60,9 +60,9 @@ public class MetabaseDashboardService {
   @Value("${metabase.token.expired.time}")
   private Integer metabaseTokenExpiredTime;
 
-  public static final String paramTemplate = "\"%s\": \"%s\"";
+  public static final String PARAM_TEMPLATE = "\"%s\": \"%s\"";
 
-  public static final String payloadTemplate = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
+  public static final String PAYLOAD_TEMPLATE = "{\"resource\": {\"dashboard\": %d},\"params\": {%s}}";
 
   public MetabaseUrlDto getMetabaseDashboardAddressByDashboardName(String dashboardName) {
 
@@ -96,14 +96,14 @@ public class MetabaseDashboardService {
 
     Integer dashboardId = getDashboardIdByDashboardName(dashboardName);
     if (authenticationHelper.isTheCurrentUserAdmin()) {
-      return String.format(payloadTemplate, dashboardId, "");
+      return String.format(PAYLOAD_TEMPLATE, dashboardId, "");
     }
     FacilityDto facility = siglusFacilityReferenceDataService
         .findOne(authenticationHelper.getCurrentUser().getHomeFacilityId());
 
     String requestParam = getRequestParamByFacility(facility);
 
-    return String.format(payloadTemplate, dashboardId, requestParam);
+    return String.format(PAYLOAD_TEMPLATE, dashboardId, requestParam);
   }
 
   private String getLevelByTypeCode(String typeCode) {
@@ -124,7 +124,7 @@ public class MetabaseDashboardService {
   private String getRequestParamByFacility(FacilityDto facility) {
     String level = getLevelByTypeCode(facility.getType().getCode());
     String paramKey = FacilityLevel.findMetabaseRequestParamKeyByLevel(level);
-    return String.format(paramTemplate, paramKey, facility.getCode());
+    return String.format(PARAM_TEMPLATE, paramKey, facility.getCode());
   }
 
 

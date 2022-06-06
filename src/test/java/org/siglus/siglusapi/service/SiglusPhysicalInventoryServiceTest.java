@@ -218,7 +218,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .reasonFreeText("freeText")
         .build();
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
-        .programId(ALL_PRODUCTS_PROGRAM_ID)
+        .programId(programIdOne)
         .facilityId(facilityId)
         .lineItems(newArrayList(lineItemDtoOne, lineItemDtoTwo))
         .build();
@@ -241,7 +241,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     PhysicalInventoryDto dto = siglusPhysicalInventoryService
-        .saveDraftForAllProducts(physicalInventoryDto);
+        .saveDraftForProductsInOneProgram(physicalInventoryDto);
 
     // then
     assertNull(dto.getLineItems().get(0).getReasonFreeText());
