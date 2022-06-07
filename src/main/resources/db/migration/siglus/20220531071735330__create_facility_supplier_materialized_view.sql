@@ -4,8 +4,6 @@
 
 CREATE SCHEMA IF NOT EXISTS dashboard;
 
-DROP MATERIALIZED VIEW IF EXISTS dashboard.vw_facility_supplier;
-
 CREATE MATERIALIZED VIEW dashboard.vw_facility_supplier AS
 SELECT uuid_in(md5(random()::text || now()::text)::cstring) AS uuid,
        fs.facilitycode,

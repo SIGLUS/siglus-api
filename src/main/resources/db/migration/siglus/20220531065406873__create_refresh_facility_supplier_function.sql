@@ -2,8 +2,6 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-DROP function IF EXISTS refresh_facility_supplier();
-
 create function refresh_facility_supplier() returns SETOF facility_supplier
     language plpgsql
 as
