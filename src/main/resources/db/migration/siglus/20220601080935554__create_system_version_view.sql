@@ -2,12 +2,15 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
+DROP VIEW IF EXISTS dashboard.vw_system_version;
+
 CREATE VIEW dashboard.vw_system_version AS
 SELECT row_number()    OVER (ORDER BY a.facilitycode) AS number, pgz.code AS provincecode,
        pgz.name     AS provincename,
        gz.code      AS districtcode,
        gz.name      AS districtname,
-       ftm.category AS facilitytype,
+       ft.code AS facilitytype,
+       ftm.category AS facilitymergetype,
        vfs.districtfacilitycode,
        vfs.provincefacilitycode,
        a.facilitycode,

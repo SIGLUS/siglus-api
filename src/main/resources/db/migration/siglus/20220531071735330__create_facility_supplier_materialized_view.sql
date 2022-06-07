@@ -2,15 +2,18 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-
 CREATE SCHEMA IF NOT EXISTS dashboard;
 
+DROP MATERIALIZED VIEW IF EXISTS dashboard.vw_facility_supplier;
+
 CREATE MATERIALIZED VIEW dashboard.vw_facility_supplier AS
-SELECT fs.facilitycode,
+SELECT uuid_in(md5(random()::text || now()::text)::cstring) AS uuid,
+       fs.facilitycode,
        fs.facilityname,
        fs.districtfacilitycode,
        fs.districtfacilityname,
        fs.provincefacilitycode,
        fs.provincefacilityname
-FROM refresh_facility_supplier() fs
-    WITH NO DATA;;
+FROM refresh_facility_supplier() fs;
+
+CREATE UNIQUE INDEX idx_vw_facility_supplier ON dashboard.vw_facility_supplier(uuid uuid_ops);
