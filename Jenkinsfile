@@ -56,7 +56,6 @@ pipeline {
             }
             steps {
                 deploy "dev"
-                input "Deploy to QA?"
             }
         }
         stage('Deploy To QA') {
@@ -64,6 +63,7 @@ pipeline {
                 branch 'master'
             }
             steps {
+                input "Deploy to QA?"
                 deploy "qa"
             }
         }
