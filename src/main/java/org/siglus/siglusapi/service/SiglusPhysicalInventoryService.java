@@ -413,31 +413,10 @@ public class SiglusPhysicalInventoryService {
 
   private PhysicalInventoryDto getResultInventory(List<PhysicalInventoryDto> inventories,
       List<PhysicalInventoryLineItemsExtension> extensions) {
-    return PhysicalInventoryDto.builder()
-        .id(inventories.get(0).getId())
-        .programId(inventories.get(0).getProgramId())
-        .facilityId(inventories.get(0).getFacilityId())
-        .occurredDate(inventories.get(0).getOccurredDate())
-        .signature(inventories.get(0).getSignature())
-        .documentNumber(inventories.get(0).getDocumentNumber())
-        .isStarter(inventories.get(0).getIsStarter())
-        .isDraft(inventories.get(0).getIsDraft())
-        .lineItems(inventories.stream()
-            .map(inventory -> {
-              Optional<List<PhysicalInventoryLineItemDto>> optionalList = Optional
-                  .ofNullable(inventory.getLineItems());
-              optionalList
-                  .ifPresent(physicalInventoryLineItemDtos -> physicalInventoryLineItemDtos.forEach(
-                      physicalInventoryLineItemDto -> {
-                        physicalInventoryLineItemDto.setProgramId(inventory.getProgramId());
-                        physicalInventoryLineItemDto.setReasonFreeText(
-                            getFreeTextByExtension(extensions, physicalInventoryLineItemDto));
-                      }));
-              return optionalList.orElse(new ArrayList<>());
-            })
-            .flatMap(Collection::stream)
-            .collect(Collectors.toList()))
-        .build();
+    PhysicalInventoryDto resultInventory = getResultInventoryForAllProducts(inventories, extensions);
+    resultInventory.setId(inventories.get(0).getId());
+    resultInventory.setProgramId(inventories.get(0).getProgramId());
+    return resultInventory;
   }
 
   private PhysicalInventoryDto getResultInventoryForAllProducts(List<PhysicalInventoryDto> inventories,
