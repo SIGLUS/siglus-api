@@ -1,21 +1,25 @@
+-- WHEN COMMITTING OR REVIEWING THIS FILE: Make sure that the timestamp in the file name (that serves as a version) is the latest timestamp, and that no new migration have been added in the meanwhile.
+-- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
+-- Migrations should NOT BE EDITED. Add a new migration to apply changes.
+
+drop view if exists dashboard.vw_system_update_report;
 create view dashboard.vw_system_update_report as
 select
-    fac.code as FacilityCode,
-    fac.name as FacilityName,
+    fac.code as facilitycode,
+    fac.name as facilityname,
     ftm.category as facilitymergetype,
     ftm.facilitytypecode as facilitytype,
-    gz.code as ProvinceCode,
-    gz.name as ProvinceName,
-    gz_dist.code as DistrictCode,
-    gz_dist."name" as DistrictName ,
+    gz.code as provincecode,
+    gz.name as Provincename,
+    gz_dist.code as districtcode,
+    gz_dist."name" as districtname ,
     vfs.districtfacilitycode,
     vfs.provincefacilitycode,
     r.latestupdatetime,
-    ai.username,
     CASE
-        WHEN r.latestupdatetime >= (now() - '1 day'::interval) THEN 'last update in the last 24 hours'
-        WHEN r.latestupdatetime < (now() - '1 day'::interval) AND r.latestupdatetime >= (now() + '3 day'::interval) THEN 'last update in the last 3 days'
-        WHEN r.latestupdatetime < (now() - '3 day'::interval) THEN 'last update more than 3 days ago'
+        WHEN r.latestupdatetime >= (now() - '1 day'::interval) THEN 'Actualizaram nas últimas 24 horas'
+        WHEN r.latestupdatetime < (now() - '1 day'::interval) AND r.latestupdatetime >= (now() - '3 day'::interval) THEN 'Actualizaram nos últimos 3 dias'
+        WHEN r.latestupdatetime < (now() - '3 day'::interval) THEN 'Actualizaram a mais de 3 dias'
         ELSE 'null'
         END AS updateStatus
 from
@@ -41,6 +45,4 @@ from
             ft.id = fac.typeid
         left join siglusintegration.facility_type_mapping ftm on
             ftm.facilitytypecode = ft.code
-        left join siglusintegration.app_info ai on
-            ai.facilitycode=fac.code
 where ftm.category is not null;
