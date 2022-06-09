@@ -20,6 +20,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.siglus.siglusapi.constant.FieldConstants.ADJUSTMENT;
 import static org.siglus.siglusapi.constant.FieldConstants.ISSUE;
 import static org.siglus.siglusapi.constant.FieldConstants.RECEIVE;
+import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_TRADE_ITEM_IS_EMPTY;
@@ -131,14 +132,11 @@ public class SiglusStockEventsService {
           .collect(Collectors.toList());
     } else {
       if (isNotUnpack(eventDto)) {
-        List<List<StockManagementDraftDto>> stockManagementDraftDtoList = programIds.stream().map(
-            id -> stockManagementDraftService.findStockManagementDraft(id, getDraftType(eventDto), true))
-            .collect(Collectors.toList());
-        stockManagementDraftDtoList.forEach(stockManagementDraftDto -> {
-          if (CollectionUtils.isEmpty(stockManagementDraftDto)) {
-            throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
-          }
-        });
+        List<StockManagementDraftDto> stockManagementDraftDtos = stockManagementDraftService
+            .findStockManagementDraft(ALL_PRODUCTS_PROGRAM_ID, getDraftType(eventDto), true);
+        if (CollectionUtils.isEmpty(stockManagementDraftDtos)) {
+          throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
+        }
       }
       stockEventDtos = programIds.stream()
           .map(StockEventDto::fromProgramId)
