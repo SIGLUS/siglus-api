@@ -50,6 +50,15 @@ pipeline {
                 }
             }
         }
+        stage('Deploy To dev') {
+            when {
+                branch 'master'
+            }
+            steps {
+                deploy "dev"
+                input "Deploy to QA?"
+            }
+        }
         stage('Deploy To QA') {
             when {
                 branch 'master'
