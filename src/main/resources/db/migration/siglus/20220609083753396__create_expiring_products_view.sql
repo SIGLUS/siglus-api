@@ -22,10 +22,10 @@ SELECT pgz.name                                                         AS provi
        ftm.category                                                     AS facilitymergetype,
        (CASE
             WHEN hfcmms.cmm IS NULL OR hfcmms.cmm <= 0 THEN 0
-            ELSE ROUND(hfcmms.cmm, 2) END)                              AS cmm,
+            ELSE ROUND(hfcmms.cmm::numeric, 2) END)                              AS cmm,
        (CASE
             WHEN hfcmms.cmm IS NULL OR hfcmms.cmm <= 0 THEN 0
-            ELSE ROUND(scoh.stockonhand / ROUND(hfcmms.cmm, 2), 1) END) AS mos,
+            ELSE ROUND(scoh.stockonhand / ROUND(hfcmms.cmm::numeric, 2), 1) END) AS mos,
        vfs.districtfacilitycode,
        vfs.provincefacilitycode,
        (CASE
