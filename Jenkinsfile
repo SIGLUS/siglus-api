@@ -4,6 +4,9 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr: '50'))
         timestamps ()
     }
+    parameters {
+        string(name: 'DEPLOY_QA', defaultValue: 'YES')
+    }
     environment {
         IMAGE_REPO = "siglusdevops/siglusapi"
         SERVICE_NAME = "siglusapi"
@@ -58,12 +61,34 @@ pipeline {
                 deploy "dev"
             }
         }
-        stage('Deploy To QA') {
+        stage('Approval of deploy to QA') {
             when {
                 branch 'master'
             }
             steps {
-                input "Deploy to QA?"
+                script {
+                    try {
+                        timeout (time: 5, unit: "MINUTES") {
+                            input message: "Do you want to proceed for QA deployment?"
+                        }
+                    }
+                    catch (error) {
+                        if ("${error}".startsWith('org.jenkinsci.plugins.workflow.steps.FlowInterruptedException')) {
+                            currentBuild.result = "SUCCESS" // Build was aborted
+                        }
+                        env.DEPLOY_QA = 'NO'
+                    }
+                }
+            }
+        }
+        stage('Deploy To QA') {
+            when {
+                allOf {
+                    branch 'master'
+                    environment name: 'DEPLOY_QA', value: 'YES'
+                }
+            }
+            steps {
                 deploy "qa"
             }
         }
