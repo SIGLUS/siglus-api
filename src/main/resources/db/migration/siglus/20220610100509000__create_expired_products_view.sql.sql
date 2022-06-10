@@ -2,32 +2,35 @@
 -- Adding migrations out of order may cause this migration to never execute or behave in an unexpected way.
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
-CREATE VIEW dashboard.vw_expiring_and_expired_products
+CREATE VIEW dashboard.vw_expired_products
             (provincename, districtname, facilitycode, facilityname, lotnumber, expirydate, productcode, proudctname,
-             stockonhand, price, facilitytype, facilitymergetype, cmm, districtfacilitycode, provincefacilitycode,
-             expireinonemonth, hasexpiredformorethanonemonth)
+             stockonhand, totalprice, facilitytype, facilitymergetype, cmm, mos, districtfacilitycode,
+             provincefacilitycode,
+             hasexpiredformorethanonemonth)
 as
-SELECT pgz.name          AS provincename,
-       gz.name           AS districtname,
-       f.code            AS facilitycode,
-       f.name            AS facilityname,
-       l.lotcode         AS lotnumber,
-       l.expirationdate  AS expirydate,
-       o.code            AS productcode,
-       o.fullproductname AS proudctname,
+SELECT pgz.name                                                         AS provincename,
+       gz.name                                                          AS districtname,
+       f.code                                                           AS facilitycode,
+       f.name                                                           AS facilityname,
+       l.lotcode                                                        AS lotnumber,
+       l.expirationdate                                                 AS expirydate,
+       o.code                                                           AS productcode,
+       o.fullproductname                                                AS proudctname,
        scoh.stockonhand,
-       po.priceperpack   AS price,
-       ft.code           AS facilitytype,
-       ftm.category      AS facilitymergetype,
-       hfcmms.cmm,
+       po.priceperpack * scoh.stockonhand                               AS totalprice,
+       ft.code                                                          AS facilitytype,
+       ftm.category                                                     AS facilitymergetype,
+       (CASE
+            WHEN hfcmms.cmm IS NULL OR hfcmms.cmm <= 0 THEN 0
+            ELSE ROUND(hfcmms.cmm::numeric, 2) END)                              AS cmm,
+       (CASE
+            WHEN hfcmms.cmm IS NULL OR hfcmms.cmm <= 0 THEN 0
+            ELSE ROUND(scoh.stockonhand / ROUND(hfcmms.cmm::numeric, 2), 1) END) AS mos,
        vfs.districtfacilitycode,
        vfs.provincefacilitycode,
        (CASE
-            WHEN l.expirationdate BETWEEN current_date AND current_date + INTERVAL '30 day' THEN 1
-            ELSE 0 END)  AS expireinonemonth,
-       (CASE
             WHEN l.expirationdate < current_date - INTERVAL '30 day' THEN 1
-            ELSE 0 END)  AS hasexpiredformorethanonemonth
+            ELSE 0 END)                                                 AS hasexpiredformorethanonemonth
 FROM referencedata.facilities f
          LEFT JOIN stockmanagement.stock_cards sc ON f.id = sc.facilityid
          LEFT JOIN referencedata.facility_types ft ON ft.id = f.typeid
@@ -75,4 +78,4 @@ FROM referencedata.facilities f
                                         AND hfcmms1.facilitycode = hfcmms2.facilitycode
                                         AND hfcmms1.periodend < hfcmms2.periodend))) hfcmms
                    ON hfcmms.productcode = o.code AND hfcmms.facilitycode = f.code
-WHERE l.expirationdate <= current_date + INTERVAL '180 day';
+WHERE l.expirationdate < current_date;
