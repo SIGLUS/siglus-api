@@ -77,3 +77,13 @@ docker run --rm -v $PWD:/target hawkeyesec/scanner-cli:latest
 npm install -g raml-cop 
 ./gradlew checkApiIsRaml
 ```
+
+### SQL convention
+We are using [sqlfluff](https://github.com/sqlfluff/sqlfluff) as linter of SQL.
+```
+pip install sqlfluff
+# verify format of sql
+sqlfluff lint --dialect postgres /path/to/my/sqlfile.sql
+# fix sql file
+sqlfluff fix --dialect postgres /path/to/my/sqlfile.sql
+```
