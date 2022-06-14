@@ -45,7 +45,7 @@ VALUES ( 'b9c8a001-a7ce-42ab-9e11-4e0f85fab07a',
 
 CREATE VIEW dashboard.vw_requisition_monthly_report
             (id, district, province,
-             facilityname, inventorydate, statusdetail, submittedstatus, reporttype, reportname, originalperiod,
+             facilityname, ficilitycode, inventorydate, statusdetail, submittedstatus, reporttype, reportname, originalperiod,
              submittedtime,
              synctime,
              facilityid,
