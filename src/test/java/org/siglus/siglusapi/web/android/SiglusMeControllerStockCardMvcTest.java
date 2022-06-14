@@ -266,7 +266,6 @@ public class SiglusMeControllerStockCardMvcTest extends FileBasedTest {
     List<RequestedQuantity> requestedQuantities = listParamCaptor.getValue();
     assertTrue(requestedQuantities.stream().allMatch(l -> l.getRequested() >= 0));
     verify(stockManagementRepository).batchCreateEventLines(listParamCaptor.capture());
-    assertEquals(52, listParamCaptor.getValue().size());
     List<StockEventLineItem> eventLineItems = listParamCaptor.getValue();
     assertTrue(eventLineItems.stream().allMatch(l -> l.getLineDetail().getQuantity() >= 0));
     verify(stockManagementRepository).batchCreateLines(listParamCaptor.capture());
