@@ -49,7 +49,7 @@ CREATE VIEW dashboard.vw_requisition_monthly_report
              submittedtime,
              synctime,
              facilityid,
-             facilitytype, districtfacilitycode,
+             facilitytype, facilitymergetype, districtfacilitycode,
              provincefacilitycode,
              submitteduser)
 AS
@@ -115,6 +115,7 @@ SELECT r.id                                       id,
        -- extra info
        r.facilityid                               FacilityId,
        ft.code                                    FacilityType,
+       ftm.category                                FacilityMergeType,
        vfs.districtfacilitycode,
        vfs.provincefacilitycode,
        u.username                                 SubmittedUser
@@ -134,6 +135,7 @@ FROM requisition.requisitions r
          LEFT JOIN referencedata.facilities rf ON r.facilityid = rf.id
          LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = rf.code
          LEFT JOIN referencedata.facility_types ft ON rf.typeid = ft.id
+         LEFT JOIN siglusintegration.facility_type_mapping ftm on ftm.facilitytypecode = ft.code
          LEFT JOIN (SELECT DISTINCT FIRST_VALUE(sc.authorid)
                                     OVER (PARTITION BY sc.requisitionid ORDER BY sc.createddate DESC) lastauthorid,
                                     sc.requisitionid
