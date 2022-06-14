@@ -109,8 +109,8 @@ SELECT r.id                                       id,
                                                   OriginalPeriod,
        (CASE
             WHEN r.extradata::json ->> 'clientSubmittedTime' IS NOT NULL
-                THEN CAST(r.extradata::json ->> 'clientSubmittedTime' AS date)
-            ELSE CAST(r.createddate AS date) END) SubmittedTime,
+                THEN CAST(r.extradata::json ->> 'clientSubmittedTime' AS timestamp WITH TIME ZONE)
+            ELSE CAST(r.createddate AS timestamp WITH TIME ZONE) END) SubmittedTime,
        r.createddate                              SyncTime,
        -- extra info
        r.facilityid                               FacilityId,
