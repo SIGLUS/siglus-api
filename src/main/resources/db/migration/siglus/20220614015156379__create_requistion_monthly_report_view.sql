@@ -51,19 +51,23 @@ CREATE VIEW dashboard.vw_requisition_monthly_report
              facilityid,
              facilitytype, facilitymergetype, districtfacilitycode,
              provincefacilitycode,
-             submitteduser)
+             submitteduser,        clientSubmittedTime,  requisitionCreateddate , statusLastcreateddate
+)
 AS
 SELECT r.id                                       id,
-       fz.District                                District,
-       fz.Province                                Province,
-       fz.name                                    ficilityName,
-       rf.code                                    ficilityCode,
-       r.extradata::json ->> 'actualEndDate'      InventoryDate,
-       r.status                                   StatusDetail,
+       fz.District                                district,
+       fz.Province                                province,
+       fz.name                                    ficilityname,
+       rf.code                                    ficilitycode,
+       r.extradata::json ->> 'actualEndDate'      inventorydate,
+       r.status                                   statusdetail,
        (CASE
-            WHEN r.status IN ('INITIATED', 'SUBMITTED', 'AUTHORIZED') THEN 'Not submitted'
+            WHEN r.status IN ('INITIATED', 'SUBMITTED', 'AUTHORIZED', 'REJECTED') THEN 'Not submitted'
             WHEN r.status IN ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') THEN (SELECT (CASE
-                                                                                                                 WHEN (s.createddate BETWEEN p.startdate AND p.enddate)
+                                                                                                                 WHEN ((CASE
+                                                                                                                            WHEN r.extradata::json ->> 'clientSubmittedTime' IS NOT NULL
+                                                                                                                                THEN CAST(r.extradata::json ->> 'clientSubmittedTime' AS timestamp WITH TIME ZONE)
+                                                                                                                            ELSE scfc.lastcreateddate  END) BETWEEN p.startdate AND p.enddate)
                                                                                                                      THEN 'On time'
                                                                                                                  ELSE 'Late' END
                                                                                                                 )
@@ -72,12 +76,12 @@ SELECT r.id                                       id,
                                                                                                               LEFT JOIN referencedata.processing_periods p ON rr.processingperiodid = p.id
                                                                                                      WHERE s.status = 'SUBMITTED'
                                                                                                        AND rr.id = r.id) END
-           )                                      SubmittedStatus,
+           )                                      submittedstatus,
        (CASE
             WHEN r.emergency IS TRUE THEN 'Emergency'
             ELSE 'Regular'
-           END)                                   ReportType,
-       pnm.requisitionname                        ReportName,
+           END)                                   reporttype,
+       pnm.requisitionname                        reportname,
        CONCAT(TO_CHAR(pp.startdate, 'DD'), ' ', (CASE TO_CHAR(pp.startdate, 'MM')
                                                      WHEN '01' THEN 'Jan'
                                                      WHEN '02' THEN 'Fev'
@@ -105,19 +109,25 @@ SELECT r.id                                       id,
                    WHEN '10' THEN 'Out'
                    WHEN '11' THEN 'Nov'
                    WHEN '12' THEN 'Dez' END), ' ', TO_CHAR(pp.enddate, 'YYYY'))
-                                                  OriginalPeriod,
+                                                  originalperiod,
        (CASE
             WHEN r.extradata::json ->> 'clientSubmittedTime' IS NOT NULL
                 THEN CAST(r.extradata::json ->> 'clientSubmittedTime' AS timestamp WITH TIME ZONE)
-            ELSE CAST(r.createddate AS timestamp WITH TIME ZONE) END) SubmittedTime,
-       r.createddate                              SyncTime,
+            ELSE scfc.lastcreateddate  END) submittedtime,
+       (CASE
+            WHEN r.extradata::json ->> 'clientSubmittedTime' IS NOT NULL
+                THEN r.createddate
+            ELSE scfc.lastcreateddate END)  synctime,
        -- extra info
-       r.facilityid                               FacilityId,
-       ft.code                                    FacilityType,
-       ftm.category                                FacilityMergeType,
+       r.facilityid                               facilityid,
+       ft.code                                    facilitytype,
+       ftm.category                               facilitymergetype,
        vfs.districtfacilitycode,
        vfs.provincefacilitycode,
-       u.username                                 SubmittedUser
+       u.username                                 submitteduser,
+       r.extradata::json ->> 'clientSubmittedTime' clientsubmittedtime,
+       r.createddate                               requisitioncreateddate,
+       scfc.lastcreateddate                        statuslastcreateddate
 FROM requisition.requisitions r
          LEFT JOIN
      (SELECT f.id, f.name, zz.District District, zz.Province Province
@@ -135,10 +145,15 @@ FROM requisition.requisitions r
          LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = rf.code
          LEFT JOIN referencedata.facility_types ft ON rf.typeid = ft.id
          LEFT JOIN siglusintegration.facility_type_mapping ftm on ftm.facilitytypecode = ft.code
+         LEFT JOIN (SELECT DISTINCT FIRST_VALUE(sc.createddate)
+                                    OVER (PARTITION BY sc.requisitionid ORDER BY sc.createddate DESC) lastcreateddate,
+                                    sc.requisitionid
+                    FROM requisition.status_changes sc
+                    WHERE status = 'IN_APPROVAL') scfc ON r.id = scfc.requisitionid
          LEFT JOIN (SELECT DISTINCT FIRST_VALUE(sc.authorid)
                                     OVER (PARTITION BY sc.requisitionid ORDER BY sc.createddate DESC) lastauthorid,
                                     sc.requisitionid
                     FROM requisition.status_changes sc
-                    WHERE status = 'SUBMITTED') scf ON r.id = scf.requisitionid
-         LEFT JOIN referencedata.users u ON scf.lastauthorid = u.id;
+                    WHERE status = 'SUBMITTED') scfa ON r.id = scfa.requisitionid
+         LEFT JOIN referencedata.users u ON scfa.lastauthorid = u.id
 
