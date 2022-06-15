@@ -75,7 +75,6 @@ SELECT r.id                                       id,
            )                                      SubmittedStatus,
        (CASE
             WHEN r.emergency IS TRUE THEN 'Emergency'
-            WHEN r.emergency IS TRUE THEN 'Regular'
             ELSE 'Regular'
            END)                                   ReportType,
        pnm.requisitionname                        ReportName,
