@@ -106,13 +106,16 @@ SELECT r.id                                       id,
                    WHEN '12' THEN 'Dez' END), ' ', TO_CHAR(pp.enddate, 'YYYY'))
                                                   originalperiod,
        (CASE
-            WHEN r.extradata::json ->> 'clientSubmittedTime' IS NOT NULL
-                THEN CAST(r.extradata::json ->> 'clientSubmittedTime' AS timestamp WITH TIME ZONE)
-            ELSE scfc.lastcreateddate  END) submittedtime,
+            WHEN r.status IN ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') THEN (CASE
+                                                                                                         WHEN r.extradata::json ->> 'clientSubmittedTime' IS NOT NULL
+                                                                                                             THEN CAST(r.extradata::json ->> 'clientSubmittedTime' AS TIMESTAMP WITH TIME ZONE)
+                                                                                                         ELSE scfc.lastcreateddate END) END) submittedtime,
        (CASE
-            WHEN r.extradata::json ->> 'clientSubmittedTime' IS NOT NULL
-                THEN r.createddate
-            ELSE scfc.lastcreateddate END)  synctime,
+            WHEN r.status IN ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') THEN (CASE
+                                                                                                         WHEN r.extradata::json ->> 'clientSubmittedTime' IS NOT NULL
+                                                                                                             THEN r.createddate
+                                                                                                         ELSE scfc.lastcreateddate END) END) synctime,
+
        -- extra info
        r.facilityid                                facilityid,
        ft.code                                     facilitytype,
