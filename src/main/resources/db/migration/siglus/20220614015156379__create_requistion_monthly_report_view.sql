@@ -45,9 +45,9 @@ VALUES ( 'b9c8a001-a7ce-42ab-9e11-4e0f85fab07a',
 
 CREATE VIEW dashboard.vw_requisition_monthly_report
             (id, district, province, facilityname, ficilitycode, inventorydate, statusdetail, submittedstatus,
-             reporttype, reportname, originalperiod,
-             submittedtime, synctime, facilityid, facilitytype, facilitymergetype, districtfacilitycode,
-             provincefacilitycode, submitteduser, clientSubmittedTime, requisitionCreateddate, statusLastcreateddate)
+             reporttype, reportname, originalperiod, submittedtime, synctime, facilityid, facilitytype,
+             facilitymergetype, districtfacilitycode, provincefacilitycode, submitteduser, clientSubmittedTime,
+             requisitionCreateddate, statusLastcreateddate, submitstartdate, submitenddate)
 AS
 SELECT r.id                                       id,
        fz.District                                district,
@@ -61,14 +61,14 @@ SELECT r.id                                       id,
             WHEN r.status IN ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') THEN (SELECT (CASE
                                                                                                                  WHEN ((CASE
                                                                                                                             WHEN r.extradata::json ->> 'clientSubmittedTime' IS NOT NULL
-                                                                                                                                THEN CAST(r.extradata::json ->> 'clientSubmittedTime' AS timestamp WITH TIME ZONE)
-                                                                                                                            ELSE scfc.lastcreateddate END) BETWEEN p.startdate AND p.enddate)
+                                                                                                                                THEN CAST(r.extradata::json ->> 'clientSubmittedTime' AS date)
+                                                                                                                            ELSE CAST(scfc.lastcreateddate AS date) END) BETWEEN p.submitstartdate AND p.submitenddate)
                                                                                                                      THEN 'On time'
                                                                                                                  ELSE 'Late' END
                                                                                                                 )
                                                                                                      FROM requisition.requisitions rr
                                                                                                               LEFT JOIN requisition.status_changes s ON rr.id = s.requisitionid
-                                                                                                              LEFT JOIN referencedata.processing_periods p ON rr.processingperiodid = p.id
+                                                                                                              LEFT JOIN siglusintegration.processing_period_extension  p ON rr.processingperiodid = p.processingperiodid
                                                                                                      WHERE s.status = 'SUBMITTED'
                                                                                                        AND rr.id = r.id) END
            )                                      submittedstatus,
@@ -77,7 +77,7 @@ SELECT r.id                                       id,
             ELSE 'Regular'
            END)                                   reporttype,
        pnm.requisitionname                        reportname,
-       CONCAT(TO_CHAR(pp.startdate, 'DD'), ' ', (CASE TO_CHAR(pp.startdate, 'MM')
+       CONCAT(TO_CHAR(ppe.submitstartdate, 'DD'), ' ', (CASE TO_CHAR(ppe.submitstartdate, 'MM')
                                                      WHEN '01' THEN 'Jan'
                                                      WHEN '02' THEN 'Fev'
                                                      WHEN '03' THEN 'Mar'
@@ -90,8 +90,8 @@ SELECT r.id                                       id,
                                                      WHEN '10' THEN 'Out'
                                                      WHEN '11' THEN 'Nov'
                                                      WHEN '12' THEN 'Dez' END), ' ',
-              TO_CHAR(pp.startdate, 'YYYY'), ' - ', TO_CHAR(pp.enddate, 'DD'), ' ',
-              (CASE TO_CHAR(pp.enddate, 'MM')
+              TO_CHAR(ppe.submitstartdate, 'YYYY'), ' - ', TO_CHAR(ppe.submitenddate, 'DD'), ' ',
+              (CASE TO_CHAR(ppe.submitenddate, 'MM')
                    WHEN '01' THEN 'Jan'
                    WHEN '02' THEN 'Fev'
                    WHEN '03' THEN 'Mar'
@@ -103,7 +103,7 @@ SELECT r.id                                       id,
                    WHEN '09' THEN 'Set'
                    WHEN '10' THEN 'Out'
                    WHEN '11' THEN 'Nov'
-                   WHEN '12' THEN 'Dez' END), ' ', TO_CHAR(pp.enddate, 'YYYY'))
+                   WHEN '12' THEN 'Dez' END), ' ', TO_CHAR(ppe.submitenddate, 'YYYY'))
                                                   originalperiod,
        (CASE
             WHEN r.status IN ('IN_APPROVAL', 'APPROVED', 'RELEASED', 'RELEASED_WITHOUT_ORDER') THEN (CASE
@@ -125,7 +125,9 @@ SELECT r.id                                       id,
        u.username                                  submitteduser,
        r.extradata::json ->> 'clientSubmittedTime' clientsubmittedtime,
        r.createddate                               requisitioncreateddate,
-       scfc.lastcreateddate                        statuslastcreateddate
+       scfc.lastcreateddate                        statuslastcreateddate,
+       ppe.submitstartdate,
+       ppe.submitenddate
 FROM requisition.requisitions r
          LEFT JOIN
      (SELECT f.id, f.name, zz.District District, zz.Province Province
@@ -138,7 +140,7 @@ FROM requisition.requisitions r
      ON r.facilityid = fz.id
          LEFT JOIN referencedata.programs p ON r.programid = p.id
          LEFT JOIN siglusintegration.program_requisition_name_mapping pnm ON pnm.programid = p.id
-         LEFT JOIN referencedata.processing_periods pp ON r.processingperiodid = pp.id
+         LEFT JOIN siglusintegration.processing_period_extension ppe ON r.processingperiodid = ppe.processingperiodid
          LEFT JOIN referencedata.facilities rf ON r.facilityid = rf.id
          LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = rf.code
          LEFT JOIN referencedata.facility_types ft ON rf.typeid = ft.id
