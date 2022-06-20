@@ -539,12 +539,12 @@ public class SiglusPhysicalInventoryServiceTest {
     PhysicalInventory physicalInventory2 = new PhysicalInventory();
     physicalInventory2.setOccurredDate(LocalDate.of(2020, 6, 13));
     when(physicalInventoriesRepository
-        .findTopByFacilityIdAndIsDraftOrderByOccurredDateDesc(facilityId, false))
+        .findTopByProgramIdAndFacilityIdAndIsDraftOrderByOccurredDateDesc(programId, facilityId, false))
         .thenReturn(physicalInventory2);
 
     // when
     PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService
-        .findLatestPhysicalInventory(facilityId);
+        .findLatestPhysicalInventory(facilityId, programId);
 
     // then
     assertEquals(LocalDate.of(2020, 6, 13), physicalInventoryDto.getOccurredDate());

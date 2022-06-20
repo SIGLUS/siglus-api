@@ -113,7 +113,7 @@ public class SiglusPhysicalInventoryController {
 
   @GetMapping("/latest")
   public PhysicalInventoryDto searchLatestPhysicalInventoryOccurDate(
-      @RequestParam UUID facilityId) {
-    return siglusPhysicalInventoryService.findLatestPhysicalInventory(facilityId);
+      @RequestParam UUID facilityId, @RequestParam UUID programId) {
+    return siglusPhysicalInventoryService.findLatestPhysicalInventory(facilityId, programId);
   }
 }

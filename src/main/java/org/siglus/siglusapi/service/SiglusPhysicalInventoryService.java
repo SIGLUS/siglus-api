@@ -469,9 +469,9 @@ public class SiglusPhysicalInventoryService {
         .collect(Collectors.toSet());
   }
 
-  public PhysicalInventoryDto findLatestPhysicalInventory(UUID facilityId) {
+  public PhysicalInventoryDto findLatestPhysicalInventory(UUID facilityId, UUID programId) {
     PhysicalInventory latest = physicalInventoriesRepository
-        .findTopByFacilityIdAndIsDraftOrderByOccurredDateDesc(facilityId, false);
+        .findTopByProgramIdAndFacilityIdAndIsDraftOrderByOccurredDateDesc(programId, facilityId, false);
     if (latest == null) {
       return null;
     }

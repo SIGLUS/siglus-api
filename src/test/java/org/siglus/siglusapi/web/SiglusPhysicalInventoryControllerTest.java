@@ -165,8 +165,8 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldCallFindLatestPhysicalInventoryWhenSearchLatestPhysicalInventoryOccurDate() {
-    siglusPhysicalInventoryController.searchLatestPhysicalInventoryOccurDate(facilityId);
+    siglusPhysicalInventoryController.searchLatestPhysicalInventoryOccurDate(facilityId, programId);
 
-    verify(siglusPhysicalInventoryService).findLatestPhysicalInventory(facilityId);
+    verify(siglusPhysicalInventoryService).findLatestPhysicalInventory(facilityId, programId);
   }
 }
