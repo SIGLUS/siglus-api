@@ -47,8 +47,7 @@ public class StockCardSearchService {
   private static final String UNPACK_KIT_TYPE = "UNPACK_KIT";
 
   @ParametersAreNullableByDefault
-  public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since,
-      LocalDate tillExclusive) {
+  public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since, LocalDate tillExclusive) {
     if (since == null) {
       since = LocalDate.now().withDayOfYear(1);
     }
@@ -57,15 +56,13 @@ public class StockCardSearchService {
     if (tillExclusive != null) {
       till = tillExclusive.minusDays(1);
     }
-    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId,
-        since, till);
+    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, since, till);
     return mapper.toAndroidResponse(period);
   }
 
   public FacilityProductMovementsResponse getProductMovementsByOrderables(Set<UUID> orderableIds) {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId,
-        orderableIds);
+    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, orderableIds);
     return mapper.toAndroidResponse(period);
   }
 
