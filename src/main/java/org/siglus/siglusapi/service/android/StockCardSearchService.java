@@ -44,6 +44,8 @@ public class StockCardSearchService {
 
   private final ProductMovementMapper mapper;
 
+  private static final String UNPACK_KIT_TYPE = "UNPACK_KIT";
+
   @ParametersAreNullableByDefault
   public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since,
       LocalDate tillExclusive) {
@@ -75,15 +77,25 @@ public class StockCardSearchService {
     if (productMovementResponses.isEmpty()) {
       return null;
     }
-    return productMovementResponses.stream().map(productMovementResponse -> {
-      List<SiglusStockMovementItemResponse> stockMovementItems =
-          productMovementResponse.getStockMovementItems();
-      productMovementResponse.setStockMovementItems(stockMovementItems.stream().map(items -> {
-        items.setLotMovementItems(null);
-        return items;
-      }).collect(Collectors.toList()));
-      productMovementResponse.setLotsOnHand(null);
-      return productMovementResponse;
-    }).collect(Collectors.toList());
+    return simplifyStockMovementResponse(productMovementResponses);
+  }
+
+  private List<ProductMovementResponse> simplifyStockMovementResponse(
+      List<ProductMovementResponse> productMovementResponses) {
+    List<ProductMovementResponse> responses = productMovementResponses.stream()
+        .map(productMovementResponse -> {
+          List<SiglusStockMovementItemResponse> stockMovementItems =
+              productMovementResponse.getStockMovementItems();
+          productMovementResponse.setStockMovementItems(stockMovementItems.stream().map(items -> {
+            items.setLotMovementItems(null);
+            if (items.getType().equals(UNPACK_KIT_TYPE)) {
+              items.setReason(UNPACK_KIT_TYPE);
+            }
+            return items;
+          }).collect(Collectors.toList()));
+          productMovementResponse.setLotsOnHand(null);
+          return productMovementResponse;
+        }).collect(Collectors.toList());
+    return responses;
   }
 }
