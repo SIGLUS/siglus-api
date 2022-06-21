@@ -19,10 +19,12 @@ import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byOccurre
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byProcessedDate;
 import static org.siglus.siglusapi.dto.StockCardLineItemDtoComparators.byReasonPriority;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,8 +44,10 @@ import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
+import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
+import org.siglus.siglusapi.service.android.StockCardSearchService;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
@@ -79,6 +83,9 @@ public class SiglusStockCardService {
 
   @Autowired
   private SiglusDateHelper dateHelper;
+
+  @Autowired
+  private StockCardSearchService stockCardSearchService;
 
   public StockCardDto findStockCardByOrderable(UUID orderableId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -232,5 +239,15 @@ public class SiglusStockCardService {
         .stockAdjustments(new ArrayList<>())
         .reason(resonDto)
         .build();
+  }
+
+  public List<ProductMovementResponse> getProductMovements(String facilityId, String orderableId,
+      LocalDate startTime, LocalDate endTime) {
+    HashSet<UUID> orderableIdsSet = new HashSet<>();
+    orderableIdsSet.add(UUID.fromString(orderableId));
+    List<ProductMovementResponse> productMovements =
+        stockCardSearchService.getProductMovementsByOrderablesAndFacility(
+        orderableIdsSet, UUID.fromString(facilityId), startTime, endTime);
+    return productMovements;
   }
 }

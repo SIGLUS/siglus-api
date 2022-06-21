@@ -16,13 +16,17 @@
 package org.siglus.siglusapi.service.android;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.annotation.ParametersAreNullableByDefault;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
+import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
+import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -41,7 +45,8 @@ public class StockCardSearchService {
   private final ProductMovementMapper mapper;
 
   @ParametersAreNullableByDefault
-  public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since, LocalDate tillExclusive) {
+  public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since,
+      LocalDate tillExclusive) {
     if (since == null) {
       since = LocalDate.now().withDayOfYear(1);
     }
@@ -50,14 +55,35 @@ public class StockCardSearchService {
     if (tillExclusive != null) {
       till = tillExclusive.minusDays(1);
     }
-    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, since, till);
+    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId,
+        since, till);
     return mapper.toAndroidResponse(period);
   }
 
   public FacilityProductMovementsResponse getProductMovementsByOrderables(Set<UUID> orderableIds) {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
-    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, orderableIds);
+    PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId,
+        orderableIds);
     return mapper.toAndroidResponse(period);
   }
 
+  public List<ProductMovementResponse> getProductMovementsByOrderablesAndFacility(
+      Set<UUID> orderableIds, UUID facilityId, LocalDate since, LocalDate till) {
+    PeriodOfProductMovements productMovements =
+        stockManagementRepository.getAllProductMovements(facilityId, orderableIds, since, till);
+    List<ProductMovementResponse> productMovementResponses = mapper.toResponses(productMovements);
+    if (productMovementResponses.isEmpty()) {
+      return null;
+    }
+    return productMovementResponses.stream().map(productMovementResponse -> {
+      List<SiglusStockMovementItemResponse> stockMovementItems =
+          productMovementResponse.getStockMovementItems();
+      productMovementResponse.setStockMovementItems(stockMovementItems.stream().map(items -> {
+        items.setLotMovementItems(null);
+        return items;
+      }).collect(Collectors.toList()));
+      productMovementResponse.setLotsOnHand(null);
+      return productMovementResponse;
+    }).collect(Collectors.toList());
+  }
 }
