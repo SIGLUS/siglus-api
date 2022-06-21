@@ -17,6 +17,7 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
+import java.util.Collections;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -41,9 +42,9 @@ public class SiglusStockCardSummariesControllerTest {
   public void shouldCallServiceAndBuilderWhenSearchStockCardSummaries() {
     MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
-    controller.searchStockCardSummaries(parameters, pageable);
+    controller.searchStockCardSummaries(parameters, Collections.emptyList(), pageable);
 
-    verify(service).searchStockCardSummaryV2Dtos(parameters, pageable);
+    verify(service).searchStockCardSummaryV2Dtos(parameters, Collections.emptyList(), pageable);
   }
 
 }

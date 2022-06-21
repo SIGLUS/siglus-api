@@ -27,6 +27,8 @@ import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +38,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
+import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
@@ -44,6 +47,7 @@ import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.repository.ProgramOrderableRepository;
+import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.service.client.SiglusStockCardStockManagementService;
 import org.siglus.siglusapi.util.FormatHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -56,7 +60,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @Service
-@SuppressWarnings({"PMD.PreserveStackTrace"})
+@SuppressWarnings({"PMD"})
 public class SiglusStockCardSummariesService {
 
   private static final String PROGRAM_ID = "programId";
@@ -85,8 +89,14 @@ public class SiglusStockCardSummariesService {
   @Autowired
   private ProgramOrderableRepository programOrderableRepository;
 
+  @Autowired
+  private OrderableRepository orderableRepository;
+
+  @Autowired
+  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
-      MultiValueMap<String, String> parameters, Pageable pageable) {
+      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable) {
     UUID userId = authenticationHelper.getCurrentUser().getId();
     Set<String> archivedProducts = null;
     if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)) || Boolean
@@ -118,7 +128,37 @@ public class SiglusStockCardSummariesService {
               summaries.getStockCardsForFulfillOrderables(),
               summaries.getOrderableFulfillMap(),
               v2SearchParams.isNonEmptyOnly());
+
+          List<StockCardSummaryV2Dto> finalDtos = new LinkedList<>();
+          if (subDraftIds != null && !subDraftIds.isEmpty()) {
+            for (UUID subDraftId : subDraftIds) {
+              if (subDraftId != null) {
+                //根据subDraftId找到所有orderablesId
+                List<PhysicalInventoryLineItemDto> subDraftLineItems = siglusPhysicalInventoryService
+                    .getSubPhysicalInventoryDtoBysubDraftId(
+                        Collections.singletonList(subDraftId)).getLineItems();
+                //通过orderablesId筛选返回的数量
+                finalDtos.addAll(dtos.stream().filter(dto -> {
+                  return subDraftLineItems.stream().anyMatch(
+                      lineItem -> String.valueOf(lineItem.getOrderableId())
+                          .equals(String.valueOf(dto.getOrderable().getId())));
+                }).collect(Collectors.toList()));
+              }
+            }
+            finalDtos.sort(new Comparator<StockCardSummaryV2Dto>() {
+              @Override
+              public int compare(StockCardSummaryV2Dto o1, StockCardSummaryV2Dto o2) {
+                return String.valueOf(
+                        orderableRepository.findLatestById(o1.getOrderable().getId()).get().getProductCode())
+                    .compareTo(
+                        String.valueOf(
+                            orderableRepository.findLatestById(o2.getOrderable().getId()).get().getProductCode()));
+              }
+            });
+            return Pagination.getPage(finalDtos, pageable);
+          }
           return Pagination.getPage(dtos, pageable);
+
         }
         return Pagination.getPage(Collections.emptyList(), pageable);
       }
@@ -158,7 +198,7 @@ public class SiglusStockCardSummariesService {
     valueMap.set(NON_EMPTY_ONLY, Boolean.TRUE.toString());
     valueMap.set(FACILITY_ID, authenticationHelper.getCurrentUser().getHomeFacilityId().toString());
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
-    return findSiglusStockCard(valueMap, pageable).getContent();
+    return findSiglusStockCard(valueMap, null, pageable).getContent();
   }
 
   private void getSummaries(MultiValueMap<String, String> parameters, Set<String> archivedProducts,
@@ -216,15 +256,15 @@ public class SiglusStockCardSummariesService {
       return summaries;
     }
     return summaries.stream().filter(summaryV2Dto ->
-        orderableIds.contains(summaryV2Dto.getOrderable().getId()))
+            orderableIds.contains(summaryV2Dto.getOrderable().getId()))
         .collect(Collectors.toList());
   }
 
   public Page<StockCardSummaryV2Dto> searchStockCardSummaryV2Dtos(
-      MultiValueMap<String, String> parameters, Pageable pageable) {
+      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable) {
     try {
       // reason: support all program && archive
-      return findSiglusStockCard(parameters, pageable);
+      return findSiglusStockCard(parameters, subDraftIds, pageable);
 
     } catch (PermissionMessageException e) {
       if (parameters.getFirst(RIGHT_NAME).equals(STOCK_INVENTORIES_EDIT)) {

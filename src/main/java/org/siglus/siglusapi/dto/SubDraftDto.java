@@ -13,28 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
-import java.util.Collection;
+import java.io.Serializable;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.transaction.annotation.Transactional;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface PhysicalInventoryLineItemsExtensionRepository extends
-    JpaRepository<PhysicalInventoryLineItemsExtension, UUID> {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class SubDraftDto implements Serializable {
 
-  List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryIdIn(Collection<UUID> ids);
-
-  List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryId(UUID id);
-
-  Optional<PhysicalInventoryLineItemsExtension> findFirstBySubDraftId(UUID subDraftId);
-
-
-
-  @Transactional
-  void deleteByPhysicalInventoryIdIn(Collection<UUID> ids);
+  private int groupNum;
+  private String saver;
+  private String status;
+  private List<UUID> subDraftId;
 
 }

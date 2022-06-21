@@ -13,28 +13,35 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.domain;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.transaction.annotation.Transactional;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.siglus.common.domain.BaseEntity;
 
-public interface PhysicalInventoryLineItemsExtensionRepository extends
-    JpaRepository<PhysicalInventoryLineItemsExtension, UUID> {
+@Entity
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "physical_inventory_sub_draft", schema = "siglusintegration")
+public class PhysicalInventorySubDraft extends BaseEntity {
 
-  List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryIdIn(Collection<UUID> ids);
-
-  List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryId(UUID id);
-
-  Optional<PhysicalInventoryLineItemsExtension> findFirstBySubDraftId(UUID subDraftId);
-
-
-
-  @Transactional
-  void deleteByPhysicalInventoryIdIn(Collection<UUID> ids);
+  @Column(name = "num")
+  private Integer num;
+  @Column(name = "status")
+  private String status;
+  @Column(name = "operatorid")
+  private UUID operatorId;
+  @Column(name = "mergeuserid")
+  private UUID mergeUserId;
+  @Column(name = "physicalinventoryid")
+  private UUID physicalInventoryId;
 
 }

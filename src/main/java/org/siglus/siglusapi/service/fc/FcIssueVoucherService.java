@@ -590,7 +590,7 @@ public class FcIssueVoucherService implements ProcessDataService {
     parameters.set(RIGHT_NAME, STOCK_CARDS_VIEW);
     productIds.forEach(productId -> parameters.add(ORDERABLE_ID, productId.toString()));
     Pageable page = new PageRequest(DEFAULT_PAGE_NUMBER, Integer.MAX_VALUE);
-    return stockCardSummariesService.findSiglusStockCard(parameters, page).getContent();
+    return stockCardSummariesService.findSiglusStockCard(parameters, null, page).getContent();
   }
 
   private void convertRequisitionToOrder(RequisitionV2Dto v2Dto, FacilityDto supplyFacility,

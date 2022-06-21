@@ -41,4 +41,8 @@ public class PhysicalInventoryLineItemsExtension extends BaseEntity {
   private UUID physicalInventoryId;
 
   private String reasonFreeText;
+
+  private Integer isInitial;
+
+  private UUID subDraftId;
 }

@@ -17,24 +17,14 @@ package org.siglus.siglusapi.repository;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
+import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.transaction.annotation.Transactional;
 
-public interface PhysicalInventoryLineItemsExtensionRepository extends
-    JpaRepository<PhysicalInventoryLineItemsExtension, UUID> {
+public interface PhysicalInventorySubDraftRepository extends
+    JpaRepository<PhysicalInventorySubDraft, UUID> {
 
-  List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryIdIn(Collection<UUID> ids);
+  List<PhysicalInventorySubDraft> findByPhysicalInventoryId(UUID physicalInventoryId);
 
-  List<PhysicalInventoryLineItemsExtension> findByPhysicalInventoryId(UUID id);
-
-  Optional<PhysicalInventoryLineItemsExtension> findFirstBySubDraftId(UUID subDraftId);
-
-
-
-  @Transactional
-  void deleteByPhysicalInventoryIdIn(Collection<UUID> ids);
-
+  List<PhysicalInventorySubDraft> findByPhysicalInventoryIdIn(Collection<UUID> ids);
 }

@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.web;
 
+import java.util.List;
+import java.util.UUID;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.service.SiglusStockCardSummariesService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +39,11 @@ public class SiglusStockCardSummariesController {
   @GetMapping
   public Page<StockCardSummaryV2Dto> searchStockCardSummaries(
       @RequestParam MultiValueMap<String, String> parameters,
+      @RequestParam(required = false) List<UUID> subDraftIds,
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
 
     return stockCardSummariesSiglusService
-        .searchStockCardSummaryV2Dtos(parameters, pageable);
+        .searchStockCardSummaryV2Dtos(parameters, subDraftIds, pageable);
   }
 
 }

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
+import org.siglus.siglusapi.dto.SubDraftDto;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,14 +71,37 @@ public class SiglusPhysicalInventoryController {
     return siglusPhysicalInventoryService.getPhysicalInventory(id);
   }
 
+  @GetMapping("/draftList")
+  public List<SubDraftDto> searchSubDraftListInOneProgram(@RequestParam UUID program,
+      @RequestParam UUID facility,
+      @RequestParam(required = false) Boolean isDraft) {
+    if (ALL_PRODUCTS_UUID.equals(program)) {
+      return siglusPhysicalInventoryService.getSubDraftListForAllProduct(program, facility, isDraft);
+    }
+    return siglusPhysicalInventoryService.getSubDraftListInOneProgram(program, facility, isDraft);
+  }
+
+  @GetMapping("/subDraft")
+  public PhysicalInventoryDto searchSubDraftInOneProgram(@RequestParam List<UUID> subDraftIds) {
+    return siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBysubDraftId(subDraftIds);
+  }
+
+  @PutMapping("/subDraft")
+  public void splitPhysicalInventory(@RequestBody PhysicalInventoryDto dto, @RequestParam Integer splitNum) {
+    siglusPhysicalInventoryService.splitPhysicalInventory(dto, splitNum);
+  }
+
   @PostMapping
   @ResponseStatus(CREATED)
   public PhysicalInventoryDto createEmptyPhysicalInventory(
-      @RequestBody PhysicalInventoryDto dto) {
+      @RequestBody PhysicalInventoryDto dto, @RequestParam(required = false) Integer splitNum)
+      throws InterruptedException {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
       return siglusPhysicalInventoryService.createNewDraftForAllProducts(dto);
     }
-    return siglusPhysicalInventoryService.createNewDraft(dto);
+    PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.createNewDraft(dto);
+    // todo:准备好该用户在该program下的product转为lineItem 填充入刚建好的physical inventory里
+    return physicalInventoryDto;
   }
 
   @PutMapping("/{id}")

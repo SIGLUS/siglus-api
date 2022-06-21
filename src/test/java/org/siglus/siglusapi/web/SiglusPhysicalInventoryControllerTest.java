@@ -95,21 +95,21 @@ public class SiglusPhysicalInventoryControllerTest {
   }
 
   @Test
-  public void shouldCallCreateForAllProductsWhenCreateIfProgramIsAllProducts() {
+  public void shouldCallCreateForAllProductsWhenCreateIfProgramIsAllProducts() throws InterruptedException {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
 
-    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto);
+    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2);
 
     verify(siglusPhysicalInventoryService).createNewDraftForAllProducts(physicalInventoryDto);
   }
 
   @Test
-  public void shouldCallCreateNewDraftWhenCreateIfProgramIsNotAllProducts() {
+  public void shouldCallCreateNewDraftWhenCreateIfProgramIsNotAllProducts() throws InterruptedException {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().programId(programId)
         .build();
 
-    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto);
+    siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2);
 
     verify(siglusPhysicalInventoryService).createNewDraft(physicalInventoryDto);
   }

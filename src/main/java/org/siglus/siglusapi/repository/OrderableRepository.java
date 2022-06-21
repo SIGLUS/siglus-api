@@ -20,6 +20,7 @@ import static org.siglus.common.repository.RepositoryConstants.ORDER_BY_PAGEABLE
 import static org.siglus.common.repository.RepositoryConstants.SELECT_ORDERABLE;
 import static org.siglus.common.repository.RepositoryConstants.WHERE_LATEST_ORDERABLE;
 
+import java.util.Optional;
 import java.util.UUID;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.domain.referencedata.VersionIdentity;
@@ -46,5 +47,13 @@ public interface OrderableRepository extends JpaRepository<Orderable, VersionIde
       + ORDER_BY_PAGEABLE
   )
   Page<Orderable> findAllLatestByIds(@Param("ids") Iterable<UUID> ids, Pageable pageable);
+
+  @Query(value = SELECT_ORDERABLE
+      + FROM_ORDERABLES_CLAUSE
+      + WHERE_LATEST_ORDERABLE
+      + " AND o.identity.id = :id"
+  )
+  Optional<Orderable> findLatestById(@Param("id") UUID id);
+
 
 }

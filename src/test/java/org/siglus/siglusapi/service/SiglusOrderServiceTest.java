@@ -209,7 +209,7 @@ public class SiglusOrderServiceTest {
     when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(createArchivedProducts());
     when(siglusStockCardSummariesService
-        .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
+        .searchStockCardSummaryV2Dtos(any(), any(), any())).thenReturn(createSummaryPage());
     OrderLineItemExtension extension = OrderLineItemExtension.builder()
         .orderLineItemId(lineItemId)
         .skipped(true)
@@ -252,7 +252,7 @@ public class SiglusOrderServiceTest {
     when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(Collections.emptySet());
     when(siglusStockCardSummariesService
-        .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
+        .searchStockCardSummaryV2Dtos(any(), any(), any())).thenReturn(createSummaryPage());
     OrderLineItemExtension extension = OrderLineItemExtension.builder()
         .orderLineItemId(lineItemId)
         .skipped(true)
@@ -300,7 +300,7 @@ public class SiglusOrderServiceTest {
     when(siglusArchiveProductService.searchArchivedProductsByFacilityId(any()))
         .thenReturn(Collections.emptySet());
     when(siglusStockCardSummariesService
-        .searchStockCardSummaryV2Dtos(any(), any())).thenReturn(createSummaryPage());
+        .searchStockCardSummaryV2Dtos(any(), any(), any())).thenReturn(createSummaryPage());
     OrderLineItemExtension extension = OrderLineItemExtension.builder()
         .orderLineItemId(lineItemId)
         .skipped(true)
