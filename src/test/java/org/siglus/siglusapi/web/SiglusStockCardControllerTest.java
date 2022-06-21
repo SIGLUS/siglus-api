@@ -122,7 +122,7 @@ public class SiglusStockCardControllerTest {
   }
 
   @Test
-  public void shouleGetStockMovementByFacilityIdAndOrderableId() {
+  public void shouldGetStockMovementByFacilityIdAndOrderableId() {
     when(service.getProductMovements(facilityId, orderableId, null, null))
             .thenReturn(new LinkedList<ProductMovementResponse>());
     ResponseEntity<List<ProductMovementResponse>> responseEntity =
