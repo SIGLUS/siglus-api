@@ -46,6 +46,8 @@ public class StockCardSearchService {
 
   private static final String UNPACK_KIT_TYPE = "UNPACK_KIT";
 
+  private static final String ISSUE_TYPE = "ISSUE";
+
   @ParametersAreNullableByDefault
   public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since, LocalDate tillExclusive) {
     if (since == null) {
@@ -86,6 +88,7 @@ public class StockCardSearchService {
           productMovementResponse.setStockMovementItems(stockMovementItems.stream().map(items -> {
             items.setLotMovementItems(null);
             if (items.getType().equals(UNPACK_KIT_TYPE)) {
+              items.setType(ISSUE_TYPE);
               items.setReason(UNPACK_KIT_TYPE);
             }
             return items;
