@@ -131,10 +131,11 @@ public class SiglusStockCardSummariesService {
         }
       }
     }
-    return Pagination.getPage(sortAndFilterBySubDraftIds(summaryV2Dtos,subDraftIds), pageable);
+    return Pagination.getPage(sortAndFilterBySubDraftIds(summaryV2Dtos, subDraftIds), pageable);
   }
 
-  private List<StockCardSummaryV2Dto> sortAndFilterBySubDraftIds(List<StockCardSummaryV2Dto> summaryV2Dtos, List<UUID> subDraftIds) {
+  private List<StockCardSummaryV2Dto> sortAndFilterBySubDraftIds(List<StockCardSummaryV2Dto> summaryV2Dtos,
+      List<UUID> subDraftIds) {
     if (CollectionUtils.isNotEmpty(subDraftIds)) {
       List<StockCardSummaryV2Dto> finalDtos = new LinkedList<>();
       for (UUID subDraftId : subDraftIds) {
@@ -148,7 +149,8 @@ public class SiglusStockCardSummariesService {
         }
       }
       finalDtos.sort(Comparator.comparing(o -> String.valueOf(
-          orderableRepository.findLatestById(o.getOrderable().getId()).orElseThrow(IllegalArgumentException::new).getProductCode())));
+          orderableRepository.findLatestById(o.getOrderable().getId()).orElseThrow(IllegalArgumentException::new)
+              .getProductCode())));
       return finalDtos;
     }
     return summaryV2Dtos;
