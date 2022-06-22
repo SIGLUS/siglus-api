@@ -72,17 +72,17 @@ public class SiglusPhysicalInventoryController {
   }
 
   @GetMapping("/draftList")
-  public List<SubDraftDto> searchSubDraftListInOneProgram(@RequestParam UUID program,
+  public List<SubDraftDto> searchSubDraftList(@RequestParam UUID program,
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft) {
     if (ALL_PRODUCTS_UUID.equals(program)) {
-      return siglusPhysicalInventoryService.getSubDraftListForAllProduct(program, facility, isDraft);
+      return siglusPhysicalInventoryService.getSubDraftListForAllProduct();
     }
     return siglusPhysicalInventoryService.getSubDraftListInOneProgram(program, facility, isDraft);
   }
 
   @GetMapping("/subDraft")
-  public PhysicalInventoryDto searchSubDraftInOneProgram(@RequestParam List<UUID> subDraftIds) {
+  public PhysicalInventoryDto searchSubDraftPhysicalInventory(@RequestParam List<UUID> subDraftIds) {
     return siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBysubDraftId(subDraftIds);
   }
 

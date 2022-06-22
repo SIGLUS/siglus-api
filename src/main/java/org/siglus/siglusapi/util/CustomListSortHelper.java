@@ -13,26 +13,30 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.util;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class SubDraftDto implements Serializable {
+public class CustomListSortHelper {
 
-  private int groupNum;
-  private String saver;
-  private PhysicalInventorySubDraftEnum status;
-  private List<UUID> subDraftId;
+  public static <T> List<List<T>> averageAssign(List<T> source, int n) {
+    List<List<T>> result = new ArrayList<List<T>>();
+    int remaider = source.size() % n;
+    int number = source.size() / n;
+    int offset = 0;
+    for (int i = 0; i < n; i++) {
+      List<T> value = null;
+      if (remaider > 0) {
+        value = source.subList(i * number + offset, (i + 1) * number + offset + 1);
+        remaider--;
+        offset++;
+      } else {
+        value = source.subList(i * number + offset, (i + 1) * number + offset);
+      }
+      result.add(value);
+    }
+    return result;
+  }
 
 }

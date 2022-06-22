@@ -24,6 +24,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 
 @Entity
 @Data
@@ -36,7 +37,7 @@ public class PhysicalInventorySubDraft extends BaseEntity {
   @Column(name = "num")
   private Integer num;
   @Column(name = "status")
-  private String status;
+  private PhysicalInventorySubDraftEnum status;
   @Column(name = "operatorid")
   private UUID operatorId;
   @Column(name = "mergeuserid")

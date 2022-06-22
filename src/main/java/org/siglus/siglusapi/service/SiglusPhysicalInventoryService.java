@@ -50,12 +50,14 @@ import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
 import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
+import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.SubDraftDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
@@ -63,6 +65,7 @@ import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -105,16 +108,16 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
 
-
   public PhysicalInventoryDto getSubPhysicalInventoryDtoBysubDraftId(List<UUID> subDraftIds) {
-
-    List<PhysicalInventoryLineItemDto> finalSubPhysialInventoryLineItemDtoLists = new LinkedList<>();
-    //根据subDraftId找到physicalInventoryDto
+    List<PhysicalInventoryLineItemDto> allSubPhysicalInventoryLineItemDtoList = new LinkedList<>();
     subDraftIds.forEach(subDraftId -> {
-      UUID physicalInventoryId = lineItemsExtensionRepository.findFirstBySubDraftId(subDraftId)
-          .orElseThrow(IllegalArgumentException::new).getPhysicalInventoryId();
+      Optional<PhysicalInventoryLineItemsExtension> subDraftExtension = lineItemsExtensionRepository
+          .findFirstBySubDraftId(subDraftId);
+      if (!subDraftExtension.isPresent()) {
+        return;
+      }
+      UUID physicalInventoryId = subDraftExtension.get().getPhysicalInventoryId();
       PhysicalInventoryDto physicalInventoryDto = getPhysicalInventory(physicalInventoryId);
-      //根据subDraftId 筛选LineItem留下部分。
       List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
           .findByPhysicalInventoryId(physicalInventoryId);
 
@@ -123,67 +126,62 @@ public class SiglusPhysicalInventoryService {
             PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
             return extension.getSubDraftId().equals(subDraftId);
           }).collect(Collectors.toList());
-
-      subPhysialInventoryLineItemDtoLists.forEach(lineItem -> finalSubPhysialInventoryLineItemDtoLists.add(lineItem));
-
+      allSubPhysicalInventoryLineItemDtoList.addAll(subPhysialInventoryLineItemDtoLists);
     });
 
-    List<PhysicalInventoryLineItemDto> sortedLineItemLists = finalSubPhysialInventoryLineItemDtoLists.stream()
-        .sorted(Comparator.comparing(
+    List<PhysicalInventoryLineItemDto> sortedSubPhysialInventoryLineItemList = allSubPhysicalInventoryLineItemDtoList
+        .stream().sorted(Comparator.comparing(
             o -> String.valueOf(
                 orderableRepository.findLatestById(o.getOrderableId()).orElseThrow(IllegalArgumentException::new)
                     .getProductCode()))).collect(Collectors.toList());
-
-    return PhysicalInventoryDto.builder().lineItems(sortedLineItemLists).build();
+    return PhysicalInventoryDto.builder().lineItems(sortedSubPhysialInventoryLineItemList).build();
   }
-
 
   public void createEmptySubDraft(Integer spiltNum, PhysicalInventoryDto physicalInventoryDto) {
 
     if (physicalInventoryDto.getId().equals(ALL_PRODUCTS_PROGRAM_ID)) {
-
-      //对每个program先建草稿，
-
       Set<UUID> supportedPrograms = supportedProgramsHelper
           .findHomeFacilitySupportedProgramIds();
       supportedPrograms.forEach(programId -> {
         UUID physicalInventoryId = UUID.fromString(physicalInventoriesRepository
             .findIdByProgramIdAndFacilityIdAndIsDraft(
                 programId, physicalInventoryDto.getFacilityId(), physicalInventoryDto.getIsDraft()));
+        if (!physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryId).isEmpty()) {
+          throw new IllegalArgumentException("Has already begun the physical inventory program : " + programId);
+        }
         for (int i = 1; i <= spiltNum; i++) {
           physicalInventorySubDraftRepository.save(
               PhysicalInventorySubDraft.builder().physicalInventoryId(physicalInventoryId)
-                  .num(i).status("not yet start")
+                  .num(i).status(PhysicalInventorySubDraftEnum.NOT_YET_STARTED)
                   .build());
         }
       });
     } else {
+      UUID physicalInventoryDtoId = physicalInventoryDto.getId();
+      if (!physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryDtoId).isEmpty()) {
+        throw new IllegalArgumentException(
+            "Has already begun the physical inventory program : " + physicalInventoryDto.getProgramId());
+      }
       for (int i = 1; i <= spiltNum; i++) {
         physicalInventorySubDraftRepository.save(
-            PhysicalInventorySubDraft.builder().physicalInventoryId(physicalInventoryDto.getId()).num(i)
-                .status("not yet start")
+            PhysicalInventorySubDraft.builder().physicalInventoryId(physicalInventoryDtoId).num(i)
+                .status(PhysicalInventorySubDraftEnum.NOT_YET_STARTED)
                 .build());
       }
     }
   }
 
-  public List<SubDraftDto> getSubDraftListForAllProduct(UUID program, UUID facility,
-      Boolean isDraft) {
-    //直接获取subDraft所有内容
+  public List<SubDraftDto> getSubDraftListForAllProduct() {
     List<PhysicalInventorySubDraft> subDraftList = physicalInventorySubDraftRepository.findAll();
     List<SubDraftDto> subDraftDtos = new LinkedList<>();
-    //根据num聚合
+    // Aggregation based on num
     Map<Integer, List<PhysicalInventorySubDraft>> groupSubDraftDtoMap = subDraftList.stream()
         .collect(Collectors.groupingBy(PhysicalInventorySubDraft::getNum));
-    List<UUID> subdraftIds = new LinkedList<>();
     groupSubDraftDtoMap.forEach((groupNum, subDraftDtoList) -> {
-      subdraftIds.clear();
-      subDraftDtoList.forEach(subDraft -> {
-        subdraftIds.add(subDraft.getId());
-      });
-
       subDraftDtos.add(
-          SubDraftDto.builder().groupNum(groupNum).status(subDraftDtoList.get(0).getStatus()).subDraftId(subdraftIds)
+          SubDraftDto.builder().groupNum(groupNum).status(subDraftDtoList.get(0).getStatus())
+              .subDraftId(subDraftDtoList.stream()
+                  .map(BaseEntity::getId).collect(Collectors.toList()))
               .build());
     });
     return subDraftDtos;
@@ -192,41 +190,24 @@ public class SiglusPhysicalInventoryService {
 
   public List<SubDraftDto> getSubDraftListInOneProgram(UUID program, UUID facility,
       Boolean isDraft) {
-    // 找到physical inventory id
-    UUID physicalInventoryId = getPhysicalInventoryDtos(program, facility, isDraft).get(0).getId();
-
-    List<PhysicalInventorySubDraft> physicalInventorySubDrafts = physicalInventorySubDraftRepository
-        .findByPhysicalInventoryId(
-        physicalInventoryId);
-    // todo：通过saverid找savername 填充
-    List<SubDraftDto> subDraftDtos = new LinkedList<>();
-    physicalInventorySubDrafts.forEach(subDraft -> {
-      subDraftDtos.add(
-          SubDraftDto.builder().groupNum(subDraft.getNum()).status(subDraft.getStatus())
-              .subDraftId(Collections.singletonList(subDraft.getId()))
-              .build());
-    });
-    return subDraftDtos;
-  }
-
-
-  public static <T> List<List<T>> averageAssign(List<T> source, int n) {
-    List<List<T>> result = new ArrayList<List<T>>();
-    int remaider = source.size() % n;  //(先计算出余数)
-    int number = source.size() / n;  //然后是商
-    int offset = 0; //偏移量
-    for (int i = 0; i < n; i++) {
-      List<T> value = null;
-      if (remaider > 0) {
-        value = source.subList(i * number + offset, (i + 1) * number + offset + 1);
-        remaider--;
-        offset++;
-      } else {
-        value = source.subList(i * number + offset, (i + 1) * number + offset);
-      }
-      result.add(value);
+    List<PhysicalInventoryDto> physicalInventoryDtos = getPhysicalInventoryDtos(program, facility, isDraft);
+    if (CollectionUtils.isNotEmpty(physicalInventoryDtos)) {
+      UUID physicalInventoryId = physicalInventoryDtos.get(0).getId();
+      List<PhysicalInventorySubDraft> physicalInventorySubDrafts = physicalInventorySubDraftRepository
+          .findByPhysicalInventoryId(
+              physicalInventoryId);
+      // todo：通过saverid找savername 填充
+      List<SubDraftDto> subDraftDtos = new LinkedList<>();
+      physicalInventorySubDrafts.forEach(subDraft -> {
+        subDraftDtos.add(
+            SubDraftDto.builder().groupNum(subDraft.getNum()).status(subDraft.getStatus())
+                .subDraftId(Collections.singletonList(subDraft.getId()))
+                .build());
+      });
+      return subDraftDtos;
     }
-    return result;
+    return Collections.emptyList();
+
   }
 
   private List<List<PhysicalInventoryLineItemDto>> groupByProductCode(List<PhysicalInventoryLineItemDto> lineItemDtos) {
@@ -246,7 +227,6 @@ public class SiglusPhysicalInventoryService {
 
 
   public void splitPhysicalInventory(PhysicalInventoryDto dto, Integer splitNum) {
-    //todo : 检查是否已经建过了sub Draft了
     createEmptySubDraft(splitNum, dto);
     spiltLineItem(dto, splitNum);
   }
@@ -257,9 +237,7 @@ public class SiglusPhysicalInventoryService {
       return;
     }
     List<UUID> updatePhysicalInventoryIds = null;
-    // 从physical_inventory_sub_draft获取到建好的x个sub_draft_id
     List<PhysicalInventorySubDraft> subDraftList = null;
-    //获取所有lineItemID
     if (physicalInventory.getId().equals(ALL_PRODUCTS_PROGRAM_ID)) {
       Set<UUID> supportedPrograms = supportedProgramsHelper
           .findHomeFacilitySupportedProgramIds();
@@ -267,25 +245,21 @@ public class SiglusPhysicalInventoryService {
               UUID.fromString(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(
                   programId, physicalInventory.getFacilityId(), physicalInventory.getIsDraft())))
           .collect(Collectors.toList());
-      subDraftList = physicalInventorySubDraftRepository.findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
+      subDraftList = physicalInventorySubDraftRepository.findAll();
     } else {
       updatePhysicalInventoryIds = Collections.singletonList(physicalInventory.getId());
       subDraftList = physicalInventorySubDraftRepository.findByPhysicalInventoryId(
           physicalInventory.getId());
-
     }
 
-    //获取ID对应的extension集合
     List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
         .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
-
     List<PhysicalInventoryLineItemsExtension> updateExtensions = new ArrayList<>();
     AtomicInteger groupNum = new AtomicInteger();
-
-    //按照orderables 聚合,同时按照product排序
+    // Aggregate by product and sort by product
     List<List<PhysicalInventoryLineItemDto>> lists = groupByProductCode(physicalInventory.getLineItems());
-    //分组
-    List<List<List<PhysicalInventoryLineItemDto>>> groupList = averageAssign(lists, splitNum);
+    // Grouping
+    List<List<List<PhysicalInventoryLineItemDto>>> groupList = CustomListSortHelper.averageAssign(lists, splitNum);
 
     List<PhysicalInventorySubDraft> finalSubDraftList = subDraftList;
     groupList.forEach(productList -> {
@@ -303,12 +277,11 @@ public class SiglusPhysicalInventoryService {
                 .build();
           }
           extension.setIsInitial(0);
-          //设置sub_draft_id
           PhysicalInventoryLineItemsExtension finalExtension = extension;
           extension.setSubDraftId(
               finalSubDraftList.stream().filter(subDraft -> subDraft.getNum() == groupNum.get()
                       && subDraft.getPhysicalInventoryId().equals(finalExtension.getPhysicalInventoryId()))
-                      .findFirst().orElseThrow(NullPointerException::new).getId());
+                  .findFirst().orElseThrow(NullPointerException::new).getId());
           updateExtensions.add(extension);
         });
       });
