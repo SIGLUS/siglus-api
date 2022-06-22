@@ -35,8 +35,10 @@ import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Rule;
@@ -565,4 +567,22 @@ public class SiglusPhysicalInventoryServiceTest {
     // when
     siglusPhysicalInventoryService.checkDraftIsExist(facilityId);
   }
+
+  @Test
+  public void shouldGetEmptyPhysicalInventoryLineItemWhenThereIsNotLineItemRelatedToTheSubDraftIds() {
+    // given
+    List<UUID> subDraftIds = new LinkedList<>();
+    UUID subDraftId = UUID.randomUUID();
+    subDraftIds.add(subDraftId);
+    when(lineItemsExtensionRepository.findFirstBySubDraftId(
+        subDraftId)).thenReturn(Optional.empty());
+
+    // when
+    PhysicalInventoryDto subPhysicalInventory = siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBysubDraftId(
+        subDraftIds);
+
+    // then
+    assertTrue(subPhysicalInventory.getLineItems().isEmpty());
+  }
+
 }
