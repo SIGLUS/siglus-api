@@ -123,47 +123,35 @@ public class SiglusStockCardSummariesService {
         // revert below code after V3 upgraded
         if (programOrderableRepository.countByProgramId(v2SearchParams.getProgramId()) > 0) {
           StockCardSummaries summaries = stockCardSummariesService.findStockCards(v2SearchParams);
-          List<StockCardSummaryV2Dto> dtos = stockCardSummariesV2DtoBuilder.build(
+          summaryV2Dtos = stockCardSummariesV2DtoBuilder.build(
               summaries.getPageOfApprovedProducts(),
               summaries.getStockCardsForFulfillOrderables(),
               summaries.getOrderableFulfillMap(),
               v2SearchParams.isNonEmptyOnly());
-
-          List<StockCardSummaryV2Dto> finalDtos = new LinkedList<>();
-          if (subDraftIds != null && !subDraftIds.isEmpty()) {
-            for (UUID subDraftId : subDraftIds) {
-              if (subDraftId != null) {
-                //根据subDraftId找到所有orderablesId
-                List<PhysicalInventoryLineItemDto> subDraftLineItems = siglusPhysicalInventoryService
-                    .getSubPhysicalInventoryDtoBysubDraftId(
-                        Collections.singletonList(subDraftId)).getLineItems();
-                //通过orderablesId筛选返回的数量
-                finalDtos.addAll(dtos.stream().filter(dto -> {
-                  return subDraftLineItems.stream().anyMatch(
-                      lineItem -> String.valueOf(lineItem.getOrderableId())
-                          .equals(String.valueOf(dto.getOrderable().getId())));
-                }).collect(Collectors.toList()));
-              }
-            }
-            finalDtos.sort(new Comparator<StockCardSummaryV2Dto>() {
-              @Override
-              public int compare(StockCardSummaryV2Dto o1, StockCardSummaryV2Dto o2) {
-                return String.valueOf(
-                        orderableRepository.findLatestById(o1.getOrderable().getId()).get().getProductCode())
-                    .compareTo(
-                        String.valueOf(
-                            orderableRepository.findLatestById(o2.getOrderable().getId()).get().getProductCode()));
-              }
-            });
-            return Pagination.getPage(finalDtos, pageable);
-          }
-          return Pagination.getPage(dtos, pageable);
-
         }
-        return Pagination.getPage(Collections.emptyList(), pageable);
       }
     }
-    return Pagination.getPage(summaryV2Dtos, pageable);
+    return Pagination.getPage(sortAndFilterBySubDraftIds(summaryV2Dtos,subDraftIds), pageable);
+  }
+
+  private List<StockCardSummaryV2Dto> sortAndFilterBySubDraftIds(List<StockCardSummaryV2Dto> summaryV2Dtos, List<UUID> subDraftIds) {
+    if (CollectionUtils.isNotEmpty(subDraftIds)) {
+      List<StockCardSummaryV2Dto> finalDtos = new LinkedList<>();
+      for (UUID subDraftId : subDraftIds) {
+        if (subDraftId != null) {
+          List<PhysicalInventoryLineItemDto> subDraftLineItems = siglusPhysicalInventoryService
+              .getSubPhysicalInventoryDtoBysubDraftId(
+                  Collections.singletonList(subDraftId)).getLineItems();
+          finalDtos.addAll(summaryV2Dtos.stream().filter(dto -> subDraftLineItems.stream().anyMatch(
+              lineItem -> String.valueOf(lineItem.getOrderableId())
+                  .equals(String.valueOf(dto.getOrderable().getId())))).collect(Collectors.toList()));
+        }
+      }
+      finalDtos.sort(Comparator.comparing(o -> String.valueOf(
+          orderableRepository.findLatestById(o.getOrderable().getId()).orElseThrow(IllegalArgumentException::new).getProductCode())));
+      return finalDtos;
+    }
+    return summaryV2Dtos;
   }
 
   public Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName,
