@@ -35,10 +35,8 @@ import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Rule;
@@ -61,17 +59,26 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
+import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
+import org.siglus.siglusapi.dto.SubDraftDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
@@ -116,6 +123,12 @@ public class SiglusPhysicalInventoryServiceTest {
   @Mock
   private SiglusFacilityReferenceDataService facilityReferenceDataService;
 
+  @Mock
+  private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
+
+  @Mock
+  private SiglusStockCardSummariesService siglusStockCardSummariesService;
+
   private final UUID facilityId = UUID.randomUUID();
 
   private final UUID programId = UUID.randomUUID();
@@ -131,6 +144,12 @@ public class SiglusPhysicalInventoryServiceTest {
   private final UUID inventoryTwo = UUID.randomUUID();
 
   private final UUID id = UUID.randomUUID();
+
+  private final UUID physicalInventoryId = UUID.randomUUID();
+
+  private final UUID subDraftIdOne = UUID.randomUUID();
+
+  private final UUID subDraftIdTwo = UUID.randomUUID();
 
   private final String startDate = "startDate";
 
@@ -569,20 +588,56 @@ public class SiglusPhysicalInventoryServiceTest {
   }
 
   @Test
-  public void shouldGetEmptyPhysicalInventoryLineItemWhenThereIsNotLineItemRelatedToTheSubDraftIds() {
+  public void shouldGetSubDraftListInOneProgramWhenSubDraftExists() {
     // given
-    List<UUID> subDraftIds = new LinkedList<>();
-    UUID subDraftId = UUID.randomUUID();
-    subDraftIds.add(subDraftId);
-    when(lineItemsExtensionRepository.findFirstBySubDraftId(
-        subDraftId)).thenReturn(Optional.empty());
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(id).build();
+    PhysicalInventorySubDraft physicalInventorySubDraft = PhysicalInventorySubDraft
+        .builder()
+        .num(1)
+        .status(PhysicalInventorySubDraftEnum.NOT_YET_STARTED)
+        .build();
+    physicalInventorySubDraft.setId(subDraftIdOne);
+    List<SubDraftDto> expectedSubDraftDtoList = Collections.singletonList(
+        SubDraftDto.builder().groupNum(1).status(PhysicalInventorySubDraftEnum.NOT_YET_STARTED)
+            .subDraftId(Collections.singletonList(subDraftIdOne)).build());
+    when(physicalInventoryStockManagementService
+        .searchPhysicalInventory(programId, facilityId, true))
+        .thenReturn(Collections.singletonList(physicalInventoryDto));
+    when(physicalInventorySubDraftRepository
+        .findByPhysicalInventoryId(
+            id)).thenReturn(Collections.singletonList(physicalInventorySubDraft));
+    // when
+    List<SubDraftDto> subDraftListInOneProgram = siglusPhysicalInventoryService.getSubDraftListInOneProgram(programId,
+        facilityId, true);
+    // then
+    assertEquals(expectedSubDraftDtoList, subDraftListInOneProgram);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenThereIsSubDraftAlready() {
+    // then
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage(containsString("Has already begun the physical inventory program"));
+
+    // given
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryId)
+        .programId(programId).facilityId(facilityId).lineItems(Collections.emptyList()).build();
+    MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+    parameters.set("facilityId", String.valueOf(physicalInventoryDto.getFacilityId()));
+    parameters.set("programId", String.valueOf(physicalInventoryDto.getProgramId()));
+    parameters.set("rightName", "STOCK_INVENTORIES_EDIT");
+    List<StockCardSummaryV2Dto> summaryV2Dtos = Collections.emptyList();
+    when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto))
+        .thenReturn(physicalInventoryDto);
+    when(siglusStockCardSummariesService.findSiglusStockCard(
+        parameters, Collections.emptyList(), new PageRequest(0, Integer.MAX_VALUE)))
+        .thenReturn(new PageImpl<>(summaryV2Dtos, new PageRequest(0, Integer.MAX_VALUE), 0));
+    when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryId))
+        .thenReturn(Collections.singletonList(PhysicalInventorySubDraft.builder().build()));
 
     // when
-    PhysicalInventoryDto subPhysicalInventory = siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBysubDraftId(
-        subDraftIds);
+    siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 3);
 
-    // then
-    assertTrue(subPhysicalInventory.getLineItems().isEmpty());
   }
 
 }

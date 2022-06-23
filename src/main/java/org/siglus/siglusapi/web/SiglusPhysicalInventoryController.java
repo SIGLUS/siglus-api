@@ -86,22 +86,14 @@ public class SiglusPhysicalInventoryController {
     return siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBysubDraftId(subDraftIds);
   }
 
-  @PutMapping("/subDraft")
-  public void splitPhysicalInventory(@RequestBody PhysicalInventoryDto dto, @RequestParam Integer splitNum) {
-    siglusPhysicalInventoryService.splitPhysicalInventory(dto, splitNum);
-  }
-
   @PostMapping
   @ResponseStatus(CREATED)
   public PhysicalInventoryDto createEmptyPhysicalInventory(
-      @RequestBody PhysicalInventoryDto dto, @RequestParam(required = false) Integer splitNum)
-      throws InterruptedException {
+      @RequestBody PhysicalInventoryDto dto, @RequestParam Integer splitNum) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
-      return siglusPhysicalInventoryService.createNewDraftForAllProducts(dto);
+      return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum);
     }
-    PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.createNewDraft(dto);
-    // todo:准备好该用户在该program下的product转为lineItem 填充入刚建好的physical inventory里
-    return physicalInventoryDto;
+    return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum);
   }
 
   @PutMapping("/{id}")

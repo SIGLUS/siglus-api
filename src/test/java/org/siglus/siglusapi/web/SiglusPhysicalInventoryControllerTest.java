@@ -101,7 +101,7 @@ public class SiglusPhysicalInventoryControllerTest {
 
     siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2);
 
-    verify(siglusPhysicalInventoryService).createNewDraftForAllProducts(physicalInventoryDto);
+    verify(siglusPhysicalInventoryService).createAndSplitNewDraftForAllProduct(physicalInventoryDto, 2);
   }
 
   @Test
@@ -111,7 +111,7 @@ public class SiglusPhysicalInventoryControllerTest {
 
     siglusPhysicalInventoryController.createEmptyPhysicalInventory(physicalInventoryDto, 2);
 
-    verify(siglusPhysicalInventoryService).createNewDraft(physicalInventoryDto);
+    verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 2);
   }
 
   @Test
