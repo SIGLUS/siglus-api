@@ -614,7 +614,7 @@ public class SiglusPhysicalInventoryServiceTest {
   }
 
   @Test
-  public void shouldThrowExceptionWhenThereIsSubDraftAlready() {
+  public void shouldThrowExceptionWhenThereIsSubDraftExistAlready() {
     // then
     exception.expect(IllegalArgumentException.class);
     exception.expectMessage(containsString("Has already begun the physical inventory program"));
@@ -637,7 +637,27 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 3);
+  }
 
+  @Test
+  public void shouldThrowExceptionWhenThereIsDraftExistAlready() {
+    // then
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage(containsString("there is not draft exists for program"));
+    // given
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryId)
+        .programId(ALL_PRODUCTS_PROGRAM_ID).facilityId(facilityId).lineItems(Collections.emptyList()).build();
+    when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto))
+        .thenReturn(physicalInventoryDto);
+    when(supportedProgramsHelper
+        .findHomeFacilitySupportedProgramIds()).thenReturn(Collections.singleton(ALL_PRODUCTS_PROGRAM_ID));
+    doNothing().when(physicalInventoryService).checkPermission(ALL_PRODUCTS_PROGRAM_ID, facilityId);
+    when(physicalInventoryStockManagementService
+        .searchPhysicalInventory(ALL_PRODUCTS_PROGRAM_ID, facilityId, true))
+        .thenReturn(Collections.emptyList());
+
+    // when
+    siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(physicalInventoryDto, 3);
   }
 
 }
