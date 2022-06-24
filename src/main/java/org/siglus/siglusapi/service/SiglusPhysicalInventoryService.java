@@ -121,24 +121,32 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private AuthenticationHelper authenticationHelper;
 
-  private UUID getPhysicalInventoryIdBySubDraftId(UUID subDraftId) {
+  private PhysicalInventoryDto getPhysicalInventoryBySubDraftId(UUID subDraftId) {
     Optional<PhysicalInventoryLineItemsExtension> subDraftExtension = lineItemsExtensionRepository
         .findFirstBySubDraftId(subDraftId);
-    return subDraftExtension.orElseThrow(IllegalArgumentException::new).getPhysicalInventoryId();
+    if (subDraftExtension.isPresent()) {
+      UUID programId = getPhysicalInventory(subDraftExtension.get().getPhysicalInventoryId()).getProgramId();
+      UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+      return getPhysicalInventoryDtosForProductsInOneProgram(
+          programId, facilityId, true).get(0);
+    }
+    return null;
   }
 
   public PhysicalInventoryDto getSubPhysicalInventoryDtoBysubDraftId(List<UUID> subDraftIds) {
     List<PhysicalInventoryLineItemDto> allSubPhysicalInventoryLineItemDtoList = new LinkedList<>();
     UUID programId = subDraftIds.size() > 1
         ? ALL_PRODUCTS_PROGRAM_ID
-        : getPhysicalInventory(getPhysicalInventoryIdBySubDraftId(subDraftIds.get(0))).getProgramId();
+        : getPhysicalInventoryBySubDraftId(subDraftIds.get(0)).getProgramId();
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+
     subDraftIds.forEach(subDraftId -> {
-      UUID physicalInventoryId = getPhysicalInventoryIdBySubDraftId(subDraftId);
-      PhysicalInventoryDto physicalInventoryDto = getPhysicalInventoryDtosForProductsInOneProgram(
-          programId, facilityId, true).get(0);
+      PhysicalInventoryDto physicalInventoryDto = getPhysicalInventoryBySubDraftId(subDraftId);
+      if (physicalInventoryDto == null) {
+        return;
+      }
       List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
-          .findByPhysicalInventoryId(physicalInventoryId);
+          .findByPhysicalInventoryId(physicalInventoryDto.getId());
       List<PhysicalInventoryLineItemDto> subPhysicalInventoryLineItemDtoLists = physicalInventoryDto.getLineItems()
           .stream().filter(lineItem -> {
             PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
@@ -146,7 +154,6 @@ public class SiglusPhysicalInventoryService {
           }).collect(Collectors.toList());
       allSubPhysicalInventoryLineItemDtoList.addAll(subPhysicalInventoryLineItemDtoLists);
     });
-
     List<PhysicalInventoryLineItemDto> sortedSubPhysialInventoryLineItemList = allSubPhysicalInventoryLineItemDtoList
         .stream().sorted(Comparator.comparing(
             o -> String.valueOf(
