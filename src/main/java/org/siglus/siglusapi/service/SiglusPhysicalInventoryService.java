@@ -56,6 +56,7 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2D
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
+import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
 import org.siglus.siglusapi.dto.Message;
@@ -201,7 +202,7 @@ public class SiglusPhysicalInventoryService {
     }
   }
 
-  public List<SubDraftDto> getSubDraftListForAllProduct() {
+  public DraftListDto getSubDraftListForAllProduct() {
     List<PhysicalInventorySubDraft> subDraftList = physicalInventorySubDraftRepository.findAll();
     List<SubDraftDto> subDraftDtos = new LinkedList<>();
     // Aggregation based on num
@@ -214,11 +215,15 @@ public class SiglusPhysicalInventoryService {
                   .map(BaseEntity::getId).collect(Collectors.toList()))
               .build());
     });
-    return subDraftDtos;
+    return DraftListDto
+        .builder()
+        .physicalInventoryId(ALL_PRODUCTS_UUID)
+        .subDrafts(subDraftDtos)
+        .build();
   }
 
 
-  public List<SubDraftDto> getSubDraftListInOneProgram(UUID program, UUID facility,
+  public DraftListDto getSubDraftListInOneProgram(UUID program, UUID facility,
       Boolean isDraft) {
     List<PhysicalInventoryDto> physicalInventoryDtos = getPhysicalInventoryDtos(program, facility, isDraft);
     if (CollectionUtils.isNotEmpty(physicalInventoryDtos)) {
@@ -234,10 +239,13 @@ public class SiglusPhysicalInventoryService {
                 .subDraftId(Collections.singletonList(subDraft.getId()))
                 .build());
       });
-      return subDraftDtos;
+      return DraftListDto
+          .builder()
+          .subDrafts(subDraftDtos)
+          .physicalInventoryId(physicalInventoryDtos.get(0).getId())
+          .build();
     }
-    return Collections.emptyList();
-
+    return DraftListDto.builder().build();
   }
 
   private List<List<PhysicalInventoryLineItemDto>> groupByProductCode(List<PhysicalInventoryLineItemDto> lineItemDtos) {

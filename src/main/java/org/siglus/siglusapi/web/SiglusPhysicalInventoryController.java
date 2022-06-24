@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
-import org.siglus.siglusapi.dto.SubDraftDto;
+import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +72,7 @@ public class SiglusPhysicalInventoryController {
   }
 
   @GetMapping("/draftList")
-  public List<SubDraftDto> searchSubDraftList(@RequestParam UUID program,
+  public DraftListDto searchSubDraftList(@RequestParam UUID program,
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft) {
     if (ALL_PRODUCTS_UUID.equals(program)) {

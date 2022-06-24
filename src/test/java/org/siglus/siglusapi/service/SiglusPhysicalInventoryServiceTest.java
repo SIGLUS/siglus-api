@@ -62,6 +62,7 @@ import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
+import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
@@ -600,6 +601,11 @@ public class SiglusPhysicalInventoryServiceTest {
     List<SubDraftDto> expectedSubDraftDtoList = Collections.singletonList(
         SubDraftDto.builder().groupNum(1).status(PhysicalInventorySubDraftEnum.NOT_YET_STARTED)
             .subDraftId(Collections.singletonList(subDraftIdOne)).build());
+    DraftListDto expectedDraftList = DraftListDto
+        .builder()
+        .physicalInventoryId(id)
+        .subDrafts(expectedSubDraftDtoList)
+        .build();
     when(physicalInventoryStockManagementService
         .searchPhysicalInventory(programId, facilityId, true))
         .thenReturn(Collections.singletonList(physicalInventoryDto));
@@ -607,10 +613,10 @@ public class SiglusPhysicalInventoryServiceTest {
         .findByPhysicalInventoryId(
             id)).thenReturn(Collections.singletonList(physicalInventorySubDraft));
     // when
-    List<SubDraftDto> subDraftListInOneProgram = siglusPhysicalInventoryService.getSubDraftListInOneProgram(programId,
+    DraftListDto subDraftListInOneProgram = siglusPhysicalInventoryService.getSubDraftListInOneProgram(programId,
         facilityId, true);
     // then
-    assertEquals(expectedSubDraftDtoList, subDraftListInOneProgram);
+    assertEquals(expectedDraftList, subDraftListInOneProgram);
   }
 
   @Test
