@@ -473,6 +473,8 @@ public class SiglusPhysicalInventoryService {
 
   public void deletePhysicalInventory(UUID id) {
     physicalInventoryStockManagementService.deletePhysicalInventory(id);
+    physicalInventorySubDraftRepository.deletePhysicalInventorySubDraftsByPhysicalInventoryId(id);
+    // todo： delete the Corresponding lineItemExtension
   }
 
   public void deletePhysicalInventoryDirectly(UUID id) {
