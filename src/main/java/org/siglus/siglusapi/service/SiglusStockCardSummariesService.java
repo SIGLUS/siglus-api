@@ -27,8 +27,6 @@ import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -38,7 +36,6 @@ import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
-import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
@@ -47,7 +44,10 @@ import org.openlmis.stockmanagement.util.Message;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummariesV2DtoBuilder;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.repository.ProgramOrderableRepository;
-import org.siglus.siglusapi.repository.OrderableRepository;
+import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
+import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
+import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
+import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusStockCardStockManagementService;
 import org.siglus.siglusapi.util.FormatHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -90,10 +90,10 @@ public class SiglusStockCardSummariesService {
   private ProgramOrderableRepository programOrderableRepository;
 
   @Autowired
-  private OrderableRepository orderableRepository;
+  private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
 
   @Autowired
-  private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
+  private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
       MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable) {
@@ -131,29 +131,46 @@ public class SiglusStockCardSummariesService {
         }
       }
     }
-    return Pagination.getPage(sortAndFilterBySubDraftIds(summaryV2Dtos, subDraftIds), pageable);
+    if (CollectionUtils.isNotEmpty(subDraftIds)) {
+      summaryV2Dtos = filterBySubDraftIds(summaryV2Dtos, subDraftIds);
+    }
+    return Pagination.getPage(summaryV2Dtos, pageable);
   }
 
-  private List<StockCardSummaryV2Dto> sortAndFilterBySubDraftIds(List<StockCardSummaryV2Dto> summaryV2Dtos,
+  private List<StockCardSummaryV2Dto> filterBySubDraftIds(List<StockCardSummaryV2Dto> summaryV2Dtos,
       List<UUID> subDraftIds) {
-    if (CollectionUtils.isNotEmpty(subDraftIds)) {
-      List<StockCardSummaryV2Dto> finalDtos = new LinkedList<>();
-      for (UUID subDraftId : subDraftIds) {
-        if (subDraftId != null) {
-          List<PhysicalInventoryLineItemDto> subDraftLineItems = siglusPhysicalInventoryService
-              .getSubPhysicalInventoryDtoBysubDraftId(
-                  Collections.singletonList(subDraftId)).getLineItems();
-          finalDtos.addAll(summaryV2Dtos.stream().filter(dto -> subDraftLineItems.stream().anyMatch(
-              lineItem -> String.valueOf(lineItem.getOrderableId())
-                  .equals(String.valueOf(dto.getOrderable().getId())))).collect(Collectors.toList()));
-        }
-      }
-      finalDtos.sort(Comparator.comparing(o -> String.valueOf(
-          orderableRepository.findLatestById(o.getOrderable().getId()).orElseThrow(IllegalArgumentException::new)
-              .getProductCode())));
-      return finalDtos;
+    List<PhysicalInventoryLineItemsExtension> orderables = filterLineItemsExtensionBySubDraftIds(subDraftIds);
+
+    Set<UUID> orderableIds = orderables.stream().map(PhysicalInventoryLineItemsExtension::getOrderableId)
+        .collect(Collectors.toSet());
+
+    return summaryV2Dtos.stream().filter(item -> !orderableIds.contains(item.getOrderable().getId()))
+        .collect(Collectors.toList());
+  }
+
+  public List<PhysicalInventoryLineItemsExtension> filterLineItemsExtensionBySubDraftIds(List<UUID> subDraftIds) {
+    List<PhysicalInventoryLineItemsExtension> lineItemsExtensions = new ArrayList<>();
+    for (UUID subDraftId : subDraftIds) {
+      lineItemsExtensions.addAll(filterExistLineItemsExtensionBySubDraftId(subDraftId));
     }
-    return summaryV2Dtos;
+    return lineItemsExtensions;
+  }
+
+  public List<PhysicalInventoryLineItemsExtension> filterExistLineItemsExtensionBySubDraftId(UUID subDraftId) {
+    if (subDraftId == null) {
+      return Collections.emptyList();
+    }
+    PhysicalInventorySubDraft subDraft = physicalInventorySubDraftRepository.findOne(subDraftId);
+    List<PhysicalInventorySubDraft> physicalInventoryList =
+        physicalInventorySubDraftRepository.findByPhysicalInventoryId(subDraft.getPhysicalInventoryId());
+    List<UUID> subDraftUuids = physicalInventoryList.stream().map(PhysicalInventorySubDraft::getId)
+        .collect(Collectors.toList());
+    List<PhysicalInventoryLineItemsExtension> physicalInventoryLineItemsExtensions =
+        lineItemsExtensionRepository.findByPhysicalInventoryIdIn(subDraftUuids);
+    return physicalInventoryLineItemsExtensions.stream()
+        // exclude current searching subDraftId
+        .filter(item -> !item.getSubDraftId().equals(subDraftId))
+        .collect(Collectors.toList());
   }
 
   public Set<UUID> getProgramIds(UUID programId, UUID userId, String rightName,

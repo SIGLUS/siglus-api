@@ -21,6 +21,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 
 import java.util.UUID;
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -29,6 +30,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
+import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -42,6 +44,9 @@ public class SiglusPhysicalInventoryControllerTest {
   private SiglusPhysicalInventoryService siglusPhysicalInventoryService;
 
   @Mock
+  private SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
+
+  @Mock
   private SiglusAuthenticationHelper authenticationHelper;
 
   private final UUID programId = UUID.randomUUID();
@@ -49,6 +54,8 @@ public class SiglusPhysicalInventoryControllerTest {
   private final UUID facilityId = UUID.randomUUID();
 
   private final UUID id = UUID.randomUUID();
+
+  private final UUID subDraftId = UUID.randomUUID();
 
   private final Boolean isDraft = true;
 
@@ -189,6 +196,24 @@ public class SiglusPhysicalInventoryControllerTest {
     siglusPhysicalInventoryController.searchSubDraftList(programId, facilityId, isDraft);
 
     verify(siglusPhysicalInventoryService).getSubDraftListInOneProgram(programId, facilityId, isDraft);
+  }
+
+
+  @Test
+  public void shouldCallDeleteSubDraftsBySubDraftIdsWhenDeleteSubDrafts() {
+    siglusPhysicalInventoryController.deleteSubDrafts(Lists.newArrayList(subDraftId));
+
+    verify(siglusPhysicalInventorySubDraftService).deleteSubDrafts(Lists.newArrayList(subDraftId));
+  }
+
+  @Test
+  public void shouldCallUpdateSubDraftsBySubDraftIdsWhenUpdateSubDrafts() {
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(subDraftId).build();
+
+    siglusPhysicalInventoryController.updateSubDrafts(Lists.newArrayList(subDraftId), physicalInventoryDto);
+
+    verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(Lists.newArrayList(subDraftId),
+        physicalInventoryDto);
   }
 
 

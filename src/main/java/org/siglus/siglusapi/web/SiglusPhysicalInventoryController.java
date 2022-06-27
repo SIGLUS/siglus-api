@@ -26,6 +26,7 @@ import java.util.UUID;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
+import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/physicalInventories")
+@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusPhysicalInventoryController {
 
   @Autowired
@@ -48,6 +50,8 @@ public class SiglusPhysicalInventoryController {
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
+  @Autowired
+  private SiglusPhysicalInventorySubDraftService siglusPhysicalInventorySubDraftService;
 
   @GetMapping
   public List<PhysicalInventoryDto> searchPhysicalInventories(
@@ -84,6 +88,17 @@ public class SiglusPhysicalInventoryController {
   @GetMapping("/subDraft")
   public PhysicalInventoryDto searchSubDraftPhysicalInventory(@RequestParam List<UUID> subDraftIds) {
     return siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBysubDraftId(subDraftIds);
+  }
+
+  @DeleteMapping("/subDraft")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteSubDrafts(@RequestParam List<UUID> subDraftIds) {
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
+  }
+
+  @PutMapping("/subDraft")
+  public void updateSubDrafts(@RequestParam List<UUID> subDraftIds, @RequestBody PhysicalInventoryDto dto) {
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, dto);
   }
 
   @PostMapping
