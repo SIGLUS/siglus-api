@@ -87,7 +87,7 @@ public class SiglusPhysicalInventoryController {
 
   @GetMapping("/subDraft")
   public PhysicalInventoryDto searchSubDraftPhysicalInventory(@RequestParam List<UUID> subDraftIds) {
-    return siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBysubDraftId(subDraftIds);
+    return siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBySubDraftId(subDraftIds);
   }
 
   @DeleteMapping("/subDraft")

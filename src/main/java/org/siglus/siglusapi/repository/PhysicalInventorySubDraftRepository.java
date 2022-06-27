@@ -26,6 +26,8 @@ public interface PhysicalInventorySubDraftRepository extends
 
   List<PhysicalInventorySubDraft> findByPhysicalInventoryId(UUID physicalInventoryId);
 
+  PhysicalInventorySubDraft findFirstById(UUID subDraftId);
+
   @Transactional
   void deletePhysicalInventorySubDraftsByPhysicalInventoryId(UUID physicalInventoryId);
 }
