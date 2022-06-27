@@ -141,7 +141,7 @@ public class SiglusStockCardSummariesService {
       for (UUID subDraftId : subDraftIds) {
         if (subDraftId != null) {
           List<PhysicalInventoryLineItemDto> subDraftLineItems = siglusPhysicalInventoryService
-              .getSubPhysicalInventoryDtoBysubDraftId(
+              .getSubPhysicalInventoryDtoBySubDraftId(
                   Collections.singletonList(subDraftId)).getLineItems();
           finalDtos.addAll(summaryV2Dtos.stream().filter(dto -> subDraftLineItems.stream().anyMatch(
               lineItem -> String.valueOf(lineItem.getOrderableId())

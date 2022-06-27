@@ -42,7 +42,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.fulfillment.util.AuthenticationHelper;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
@@ -119,28 +118,16 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
 
-  @Autowired
-  private AuthenticationHelper authenticationHelper;
 
   private PhysicalInventoryDto getPhysicalInventoryBySubDraftId(UUID subDraftId) {
-    Optional<PhysicalInventoryLineItemsExtension> subDraftExtension = lineItemsExtensionRepository
-        .findFirstBySubDraftId(subDraftId);
-    if (subDraftExtension.isPresent()) {
-      UUID programId = getPhysicalInventory(subDraftExtension.get().getPhysicalInventoryId()).getProgramId();
-      UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-      return getPhysicalInventoryDtosForProductsInOneProgram(
-          programId, facilityId, true).get(0);
-    }
-    return null;
+    PhysicalInventorySubDraft subDraft = physicalInventorySubDraftRepository.findFirstById(subDraftId);
+    PhysicalInventoryDto physicalInventory = getPhysicalInventory(subDraft.getPhysicalInventoryId());
+    return getPhysicalInventoryDtosForProductsInOneProgram(
+        physicalInventory.getProgramId(), physicalInventory.getFacilityId(), true).get(0);
   }
 
-  public PhysicalInventoryDto getSubPhysicalInventoryDtoBysubDraftId(List<UUID> subDraftIds) {
+  public PhysicalInventoryDto getSubPhysicalInventoryDtoBySubDraftId(List<UUID> subDraftIds) {
     List<PhysicalInventoryLineItemDto> allSubPhysicalInventoryLineItemDtoList = new LinkedList<>();
-    UUID programId = subDraftIds.size() > 1
-        ? ALL_PRODUCTS_PROGRAM_ID
-        : getPhysicalInventoryBySubDraftId(subDraftIds.get(0)).getProgramId();
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-
     subDraftIds.forEach(subDraftId -> {
       PhysicalInventoryDto physicalInventoryDto = getPhysicalInventoryBySubDraftId(subDraftId);
       if (physicalInventoryDto == null) {
@@ -160,12 +147,17 @@ public class SiglusPhysicalInventoryService {
             o -> String.valueOf(
                 orderableRepository.findLatestById(o.getOrderableId()).orElseThrow(IllegalArgumentException::new)
                     .getProductCode()))).collect(Collectors.toList());
-
-    return PhysicalInventoryDto.builder()
-        .lineItems(sortedSubPhysialInventoryLineItemList)
-        .facilityId(facilityId)
-        .programId(programId)
-        .build();
+    PhysicalInventoryDto physicalInventory = getPhysicalInventoryBySubDraftId(subDraftIds.get(0));
+    UUID programId = subDraftIds.size() > 1
+        ? ALL_PRODUCTS_PROGRAM_ID
+        : physicalInventory.getProgramId();
+    UUID physicalInventoryId = subDraftIds.size() > 1
+        ? ALL_PRODUCTS_UUID
+        : physicalInventory.getId();
+    physicalInventory.setId(physicalInventoryId);
+    physicalInventory.setLineItems(sortedSubPhysialInventoryLineItemList);
+    physicalInventory.setProgramId(programId);
+    return physicalInventory;
   }
 
   private void createEmptySubDraft(Integer spiltNum, PhysicalInventoryDto physicalInventoryDto) {
@@ -474,7 +466,6 @@ public class SiglusPhysicalInventoryService {
   public void deletePhysicalInventory(UUID id) {
     physicalInventoryStockManagementService.deletePhysicalInventory(id);
     physicalInventorySubDraftRepository.deletePhysicalInventorySubDraftsByPhysicalInventoryId(id);
-    // todo： delete the Corresponding lineItemExtension
   }
 
   public void deletePhysicalInventoryDirectly(UUID id) {
