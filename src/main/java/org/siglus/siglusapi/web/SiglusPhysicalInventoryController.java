@@ -25,6 +25,7 @@ import com.alibaba.fastjson.JSON;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.Message;
@@ -44,6 +45,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/siglusapi/physicalInventories")
 @SuppressWarnings("PMD.TooManyMethods")
@@ -97,7 +99,11 @@ public class SiglusPhysicalInventoryController {
   @DeleteMapping("/subDraft")
   @ResponseStatus(NO_CONTENT)
   public void deleteSubDrafts(@RequestParam List<UUID> subDraftIds) {
-    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
+    try {
+      siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+    }
   }
 
   @PostMapping("/subDraft/submit")

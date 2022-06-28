@@ -216,5 +216,12 @@ public class SiglusPhysicalInventoryControllerTest {
         physicalInventoryDto);
   }
 
+  @Test
+  public void shouldCallSubmitSubDraftsBySubDraftIdsWhenSubmitSubDrafts() {
+    siglusPhysicalInventoryController.submitSubDrafts(Lists.newArrayList(subDraftId));
+
+    verify(siglusPhysicalInventorySubDraftService).submitSubDrafts(Lists.newArrayList(subDraftId));
+  }
+
 
 }
