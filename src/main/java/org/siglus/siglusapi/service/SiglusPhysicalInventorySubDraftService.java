@@ -237,10 +237,18 @@ public class SiglusPhysicalInventorySubDraftService {
   }
 
   private String getUniqueKey(PhysicalInventoryLineItemDto item) {
+    if (item.getLotId() == null) {
+      log.info("PhysicalInventoryLineItemDto=" + JSON.toJSONString(item));
+      return item.getOrderableId().toString();
+    }
     return item.getOrderableId().toString() + "&" + item.getLotId().toString();
   }
 
   private String getUniqueKey(CanFulfillForMeEntryDto item) {
+    if (item.getLot() == null || item.getLot().getId() == null) {
+      log.info("CanFulfillForMeEntryDto=" + JSON.toJSONString(item));
+      return item.getOrderable().getId().toString();
+    }
     return item.getOrderable().getId().toString() + "&" + item.getLot().getId().toString();
   }
 
