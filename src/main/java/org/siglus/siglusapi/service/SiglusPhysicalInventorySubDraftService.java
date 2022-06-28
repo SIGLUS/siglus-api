@@ -106,10 +106,12 @@ public class SiglusPhysicalInventorySubDraftService {
   private void doDelete(List<PhysicalInventorySubDraft> subDrafts, List<UUID> subDraftIds) {
     List<UUID> physicalInventoryIds = subDrafts.stream().map(PhysicalInventorySubDraft::getPhysicalInventoryId)
         .collect(Collectors.toList());
-    List<StockCardSummaryV2Dto> init = siglusStockCardSummariesService.findAllProgramStockSummaries();
+    List<StockCardSummaryV2Dto> stockSummaries = siglusStockCardSummariesService.findAllProgramStockSummaries();
     Set<CanFulfillForMeEntryDto> canFulfillForMeEntryDtos = new HashSet<>();
-    for (StockCardSummaryV2Dto stockCardSummaryV2Dto : init) {
-      canFulfillForMeEntryDtos.addAll(stockCardSummaryV2Dto.getCanFulfillForMe());
+    for (StockCardSummaryV2Dto stockCardSummaryV2Dto : stockSummaries) {
+      if (CollectionUtils.isNotEmpty(stockCardSummaryV2Dto.getCanFulfillForMe())) {
+        canFulfillForMeEntryDtos.addAll(stockCardSummaryV2Dto.getCanFulfillForMe());
+      }
     }
     Map<String, CanFulfillForMeEntryDto> canFulfillForMeEntryDtoMap = canFulfillForMeEntryDtos.stream()
         .collect(Collectors.toMap(this::getUniqueKey, Function.identity()));
@@ -193,10 +195,10 @@ public class SiglusPhysicalInventorySubDraftService {
         = lineItemsExtensionRepository.findByPhysicalInventoryIdIn(physicalInventoryIds);
     List<ProductSubDraftConflictDto> result = new ArrayList<>();
     for (PhysicalInventoryLineItemDto lineItem : dto.getLineItems()) {
-      String uniqueKey = getUniqueKey(lineItem);
+      String orderableUniqueKey = lineItem.getOrderableId().toString();
       Optional<PhysicalInventoryLineItemsExtension> oldLineItem = physicalInventories.stream()
-          .filter(item -> getUniqueKey(item).equals(uniqueKey)).findFirst();
-      // 存在且不是当前填写的draft
+          .filter(item -> item.getOrderableId().toString().equals(orderableUniqueKey)).findFirst();
+      // exist old line item and not current operating drafts
       if (oldLineItem.isPresent() && !subDraftIds.contains(oldLineItem.get().getSubDraftId())) {
 
         ProductSubDraftConflictDto build = ProductSubDraftConflictDto.builder()
@@ -235,10 +237,6 @@ public class SiglusPhysicalInventorySubDraftService {
   }
 
   private String getUniqueKey(PhysicalInventoryLineItemDto item) {
-    return item.getOrderableId().toString() + "&" + item.getLotId().toString();
-  }
-
-  private String getUniqueKey(PhysicalInventoryLineItemsExtension item) {
     return item.getOrderableId().toString() + "&" + item.getLotId().toString();
   }
 

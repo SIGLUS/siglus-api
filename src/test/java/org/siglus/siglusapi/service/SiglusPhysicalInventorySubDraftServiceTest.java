@@ -24,7 +24,9 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB
 
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
 import org.junit.Rule;
@@ -36,6 +38,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.repository.PhysicalInventoriesRepository;
@@ -43,6 +46,8 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
@@ -303,6 +308,20 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
             .build()
     );
     when(lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryId)).thenReturn(physicalInventories);
+    StockCardSummaryV2Dto stockCardSummaryV2Dto = new StockCardSummaryV2Dto();
+    ObjectReferenceDto objectReferenceDto = new ObjectReferenceDto("urlxx", "resxx", orderableId);
+    ObjectReferenceDto lot = new ObjectReferenceDto("urlxx", "resxx", lotId);
+    stockCardSummaryV2Dto.setOrderable(objectReferenceDto);
+    Set<CanFulfillForMeEntryDto> canFulfillForMe = new HashSet<>();
+    CanFulfillForMeEntryDto canFulfillForMeEntryDto = new CanFulfillForMeEntryDto();
+    canFulfillForMeEntryDto.setOrderable(objectReferenceDto);
+    canFulfillForMeEntryDto.setLot(lot);
+    canFulfillForMe.add(canFulfillForMeEntryDto);
+    stockCardSummaryV2Dto.setCanFulfillForMe(canFulfillForMe);
+    List<StockCardSummaryV2Dto> stockSummaries = new ArrayList<>();
+    stockSummaries.add(stockCardSummaryV2Dto);
+
+    when(siglusStockCardSummariesService.findAllProgramStockSummaries()).thenReturn(stockSummaries);
 
     // when
     siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
