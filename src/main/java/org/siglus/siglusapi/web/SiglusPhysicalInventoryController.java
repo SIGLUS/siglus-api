@@ -17,14 +17,18 @@ package org.siglus.siglusapi.web;
 
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB_DRAFT;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
+import com.alibaba.fastjson.JSON;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -99,6 +103,19 @@ public class SiglusPhysicalInventoryController {
   @PutMapping("/subDraft")
   public void updateSubDrafts(@RequestParam List<UUID> subDraftIds, @RequestBody PhysicalInventoryDto dto) {
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, dto);
+  }
+
+  @GetMapping("/test")
+  public void testCode() {
+    throw new ValidationMessageException(new Message(ERROR_INVENTORY_CONFLICT_SUB_DRAFT, JSON.toJSONString("[\n"
+        + "  {\n"
+        + "    \"conflictWith\": \"Draft 1\",\n"
+        + "    \"conflictWithSubDraftId\": \"e91eb33f-d470-4438-948b-44cfec5e2ab5\",\n"
+        + "    \"orderableId\": \"af085fe6-ab2a-442c-ac9d-8b850c8f5d66\",\n"
+        + "    \"productCode\": \"08D01i\",\n"
+        + "    \"productName\": \"Amikacina sulfato; (500mg/2ml); Inj - each\"\n"
+        + "  }\n"
+        + "]")));
   }
 
   @PostMapping
