@@ -130,6 +130,7 @@ public class SiglusPhysicalInventorySubDraftService {
         }
       }
 
+      // TODO: check physicalInventory's programId exists ( 6/28/22 by kourengang)
       PhysicalInventoryDto physicalInventory = siglusPhysicalInventoryService.getPhysicalInventory(physicalInventoryId);
 
       Iterator<PhysicalInventoryLineItemDto> iterator = physicalInventory.getLineItems().iterator();

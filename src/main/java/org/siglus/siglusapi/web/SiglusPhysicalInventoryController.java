@@ -103,7 +103,7 @@ public class SiglusPhysicalInventoryController {
     siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
   }
 
-  @PostMapping("/subDraft/submit")
+  @PostMapping("/subDraftSubmit")
   @ResponseStatus(NO_CONTENT)
   public void submitSubDrafts(@RequestBody List<UUID> subDraftIds) {
     siglusPhysicalInventorySubDraftService.submitSubDrafts(subDraftIds);
