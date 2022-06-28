@@ -28,6 +28,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
+import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
@@ -208,12 +209,11 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldCallUpdateSubDraftsBySubDraftIdsWhenUpdateSubDrafts() {
-    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(subDraftId).build();
+    PhysicalInventorySubDraftDto physicalInventoryDto = new PhysicalInventorySubDraftDto();
 
-    siglusPhysicalInventoryController.updateSubDrafts(Lists.newArrayList(subDraftId), physicalInventoryDto);
+    siglusPhysicalInventoryController.updateSubDrafts(physicalInventoryDto);
 
-    verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(Lists.newArrayList(subDraftId),
-        physicalInventoryDto);
+    verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(null, physicalInventoryDto);
   }
 
   @Test

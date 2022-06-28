@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
@@ -50,6 +51,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @SuppressWarnings({"PMD"})
 public class SiglusPhysicalInventorySubDraftService {
 
@@ -70,27 +72,35 @@ public class SiglusPhysicalInventorySubDraftService {
 
   @Transactional
   public void deleteSubDrafts(List<UUID> subDraftIds) {
-    List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(subDraftIds);
-    if (CollectionUtils.isEmpty(subDrafts)) {
-      return;
+    log.info("deleteSubDrafts, subDraftIds=" + subDraftIds);
+    try {
+      List<PhysicalInventorySubDraft> physicalInventorySubDrafts = updateSubDraftsStatus(subDraftIds,
+          PhysicalInventorySubDraftEnum.NOT_YET_STARTED);
+
+      doDelete(physicalInventorySubDrafts, subDraftIds);
+    } catch (Exception e) {
+      log.error(e.getMessage(), e);
+      throw e;
     }
-
-    subDrafts.forEach(item -> item.setStatus(PhysicalInventorySubDraftEnum.NOT_YET_STARTED));
-
-    physicalInventorySubDraftRepository.save(subDrafts);
-
-    doDelete(subDrafts, subDraftIds);
   }
 
   public void submitSubDrafts(List<UUID> subDraftIds) {
+    updateSubDraftsStatus(subDraftIds, PhysicalInventorySubDraftEnum.SUBMITTED);
+  }
+
+  private List<PhysicalInventorySubDraft> updateSubDraftsStatus(List<UUID> subDraftIds,
+      PhysicalInventorySubDraftEnum subDraftStatus) {
+    log.info("updateSubDraftsStatus, subDraftIds=" + subDraftIds);
     List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(subDraftIds);
     if (CollectionUtils.isEmpty(subDrafts)) {
-      return;
+      return new ArrayList<>();
     }
 
-    subDrafts.forEach(item -> item.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED));
+    subDrafts.forEach(item -> item.setStatus(subDraftStatus));
 
     physicalInventorySubDraftRepository.save(subDrafts);
+
+    return subDrafts;
   }
 
   private void doDelete(List<PhysicalInventorySubDraft> subDrafts, List<UUID> subDraftIds) {
@@ -142,6 +152,8 @@ public class SiglusPhysicalInventorySubDraftService {
   }
 
   public void updateSubDrafts(List<UUID> subDraftIds, PhysicalInventoryDto dto) {
+    updateSubDraftsStatus(subDraftIds, PhysicalInventorySubDraftEnum.DRAFT);
+
     List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(subDraftIds);
 
     List<UUID> physicalInventoryIds = subDrafts.stream().map(PhysicalInventorySubDraft::getPhysicalInventoryId)

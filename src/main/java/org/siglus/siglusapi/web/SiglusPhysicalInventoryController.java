@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
@@ -98,23 +99,19 @@ public class SiglusPhysicalInventoryController {
 
   @DeleteMapping("/subDraft")
   @ResponseStatus(NO_CONTENT)
-  public void deleteSubDrafts(@RequestParam List<UUID> subDraftIds) {
-    try {
-      siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
-    } catch (Exception e) {
-      log.error(e.getMessage(), e);
-    }
+  public void deleteSubDrafts(@RequestBody List<UUID> subDraftIds) {
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
   }
 
   @PostMapping("/subDraft/submit")
   @ResponseStatus(NO_CONTENT)
-  public void submitSubDrafts(@RequestParam List<UUID> subDraftIds) {
+  public void submitSubDrafts(@RequestBody List<UUID> subDraftIds) {
     siglusPhysicalInventorySubDraftService.submitSubDrafts(subDraftIds);
   }
 
   @PutMapping("/subDraft")
-  public void updateSubDrafts(@RequestParam List<UUID> subDraftIds, @RequestBody PhysicalInventoryDto dto) {
-    siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, dto);
+  public void updateSubDrafts(@RequestBody PhysicalInventorySubDraftDto dto) {
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto);
   }
 
   @GetMapping("/test")

@@ -156,7 +156,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
     // when
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto);
-    verify(physicalInventorySubDraftRepository).findAll(any(List.class));
+    verify(physicalInventorySubDraftRepository, times(2)).findAll(any(List.class));
   }
 
   @Test
