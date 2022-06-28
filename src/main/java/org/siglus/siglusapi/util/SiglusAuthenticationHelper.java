@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.javers.common.collections.Sets;
+import org.openlmis.requisition.dto.DetailedRoleAssignmentDto;
 import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.UserDto;
@@ -39,6 +40,16 @@ public class SiglusAuthenticationHelper {
 
   @Value("${role.admin.id}")
   private String roleAdminId;
+  @Value("${role.role2.warehouse.manager}")
+  private String role2WareHouseManager;
+  @Value("${role.role2.warehouse.manager.ddmdpmonly}")
+  private String role2WareHouseManagerDdmDpmOnly;
+  @Value("${role.role2.warehouse.manager.ddmdpmonly.sn}")
+  private String role2WareHouseManagerDdmDpmOnlySn;
+  @Value("${role.role3.director}")
+  private String role3Director;
+  @Value("${role.role3.director.sn}")
+  private String role3DirectorSn;
 
   private final SiglusUserReferenceDataService userService;
 
@@ -57,6 +68,26 @@ public class SiglusAuthenticationHelper {
       return null;
     }
     return currentUserId.map(userService::findOne).orElseThrow(() -> authenticateFail(currentUserId.orElse(null)));
+  }
+
+  public Collection<DetailedRoleAssignmentDto> getUserRightsAndRoles() {
+    Optional<UUID> currentUserId = getCurrentUserId();
+    if (Optional.empty().equals(currentUserId)) {
+      return null;
+    }
+    return userService.getUserRightsAndRoles(getCurrentUserId().orElseThrow(() -> authenticateFail(null)));
+  }
+
+  public boolean isTheCurrentUserRole2OrRole3() {
+    Collection<DetailedRoleAssignmentDto> userRightsAndRoles = getUserRightsAndRoles();
+    return userRightsAndRoles.stream().anyMatch(e -> {
+      String roleId = e.getRole().getId().toString();
+      return roleId.equals(role2WareHouseManager)
+          || roleId.equals(role2WareHouseManagerDdmDpmOnly)
+          || roleId.equals(role2WareHouseManagerDdmDpmOnlySn)
+          || roleId.equals(role3Director)
+          || roleId.equals(role3DirectorSn);
+    });
   }
 
   public boolean isTheCurrentUserAdmin() {

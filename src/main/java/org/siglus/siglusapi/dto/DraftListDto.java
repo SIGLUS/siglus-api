@@ -31,4 +31,5 @@ public class DraftListDto implements Serializable {
 
   private UUID physicalInventoryId;
   private List<SubDraftDto> subDrafts;
+  private boolean mergePermission;
 }

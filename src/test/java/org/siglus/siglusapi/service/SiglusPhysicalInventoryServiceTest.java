@@ -73,6 +73,7 @@ import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -129,6 +130,9 @@ public class SiglusPhysicalInventoryServiceTest {
 
   @Mock
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
+
+  @Mock
+  private SiglusAuthenticationHelper authenticationHelper;
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -601,17 +605,18 @@ public class SiglusPhysicalInventoryServiceTest {
     List<SubDraftDto> expectedSubDraftDtoList = Collections.singletonList(
         SubDraftDto.builder().groupNum(1).status(PhysicalInventorySubDraftEnum.NOT_YET_STARTED)
             .subDraftId(Collections.singletonList(subDraftIdOne)).build());
-    DraftListDto expectedDraftList = DraftListDto
-        .builder()
-        .physicalInventoryId(id)
-        .subDrafts(expectedSubDraftDtoList)
-        .build();
     when(physicalInventoryStockManagementService
         .searchPhysicalInventory(programId, facilityId, true))
         .thenReturn(Collections.singletonList(physicalInventoryDto));
+    DraftListDto expectedDraftList = DraftListDto.builder()
+        .physicalInventoryId(id)
+        .subDrafts(expectedSubDraftDtoList)
+        .build();
     when(physicalInventorySubDraftRepository
         .findByPhysicalInventoryId(
             id)).thenReturn(Collections.singletonList(physicalInventorySubDraft));
+    when(authenticationHelper
+        .isTheCurrentUserRole2OrRole3()).thenReturn(false);
     // when
     DraftListDto subDraftListInOneProgram = siglusPhysicalInventoryService.getSubDraftListForOneProgram(programId,
         facilityId, true);

@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.openlmis.requisition.dto.DetailedRoleAssignmentDto;
 import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.UserDto;
@@ -56,6 +57,16 @@ public class SiglusUserReferenceDataService extends BaseReferenceDataService<Use
    */
   public Collection<String> getPermissionStrings(UUID userId) {
     return findAll(userId + "/permissionStrings", String[].class);
+  }
+
+  /**
+   * Get user's right and roles (a collection of right and roles of user).
+   *
+   * @param userId id of user
+   * @return a collection of user right and roles
+   */
+  public Collection<DetailedRoleAssignmentDto> getUserRightsAndRoles(UUID userId) {
+    return findAll(userId + "/roleAssignments", DetailedRoleAssignmentDto[].class);
   }
 
   public Page<UserDto> getUserInfo(UUID homeFacilityId) {

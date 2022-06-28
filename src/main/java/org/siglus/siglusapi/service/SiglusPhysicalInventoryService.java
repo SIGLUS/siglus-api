@@ -71,6 +71,7 @@ import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementServi
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.CustomListSortHelper;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -120,6 +121,8 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
 
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
 
   private PhysicalInventoryDto getPhysicalInventoryBySubDraftId(UUID subDraftId) {
     PhysicalInventorySubDraft subDraft = physicalInventorySubDraftRepository.findFirstById(subDraftId);
@@ -214,6 +217,7 @@ public class SiglusPhysicalInventoryService {
         .builder()
         .physicalInventoryId(ALL_PRODUCTS_UUID)
         .subDrafts(convertSubDraftToSubDraftDto(subDraftList))
+        .mergePermission(authenticationHelper.isTheCurrentUserRole2OrRole3())
         .build();
   }
 
@@ -249,6 +253,7 @@ public class SiglusPhysicalInventoryService {
           .builder()
           .subDrafts(convertSubDraftToSubDraftDto(physicalInventorySubDraftList))
           .physicalInventoryId(physicalInventoryId)
+          .mergePermission(authenticationHelper.isTheCurrentUserRole2OrRole3())
           .build();
     }
     return DraftListDto.builder().build();
