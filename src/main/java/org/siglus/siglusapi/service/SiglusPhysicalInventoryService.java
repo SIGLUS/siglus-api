@@ -128,7 +128,7 @@ public class SiglusPhysicalInventoryService {
         physicalInventory.getProgramId(), physicalInventory.getFacilityId(), true).get(0);
   }
 
-  public PhysicalInventoryDto getSubPhysicalInventoryDtoBySubDraftId(List<UUID> subDraftIds) {
+  private List<PhysicalInventoryLineItemDto> getSubPhysicalInventoryLineItemListBySubDraftIds(List<UUID> subDraftIds) {
     List<PhysicalInventoryLineItemDto> allSubPhysicalInventoryLineItemDtoList = new LinkedList<>();
     subDraftIds.forEach(subDraftId -> {
       PhysicalInventoryDto physicalInventoryDto = getPhysicalInventoryBySubDraftId(subDraftId);
@@ -144,7 +144,16 @@ public class SiglusPhysicalInventoryService {
           }).collect(Collectors.toList());
       allSubPhysicalInventoryLineItemDtoList.addAll(subPhysicalInventoryLineItemDtoLists);
     });
-    List<PhysicalInventoryLineItemDto> sortedSubPhysialInventoryLineItemList = allSubPhysicalInventoryLineItemDtoList
+    return allSubPhysicalInventoryLineItemDtoList;
+  }
+
+  public PhysicalInventoryDto getSubPhysicalInventoryDtoBySubDraftId(List<UUID> subDraftIds) {
+    if (CollectionUtils.isEmpty(subDraftIds)) {
+      throw new IllegalArgumentException("empty subDraftIds");
+    }
+    List<PhysicalInventoryLineItemDto> subPhysicalInventoryLineItemDtoList =
+        getSubPhysicalInventoryLineItemListBySubDraftIds(subDraftIds);
+    List<PhysicalInventoryLineItemDto> sortedSubPhysicalInventoryLineItemList = subPhysicalInventoryLineItemDtoList
         .stream().sorted(Comparator.comparing(
             o -> String.valueOf(
                 orderableRepository.findLatestById(o.getOrderableId()).orElseThrow(IllegalArgumentException::new)
@@ -157,7 +166,7 @@ public class SiglusPhysicalInventoryService {
         ? ALL_PRODUCTS_UUID
         : physicalInventory.getId();
     physicalInventory.setId(physicalInventoryId);
-    physicalInventory.setLineItems(sortedSubPhysialInventoryLineItemList);
+    physicalInventory.setLineItems(sortedSubPhysicalInventoryLineItemList);
     physicalInventory.setProgramId(programId);
     return physicalInventory;
   }
@@ -198,45 +207,48 @@ public class SiglusPhysicalInventoryService {
 
   public DraftListDto getSubDraftListForAllProduct() {
     List<PhysicalInventorySubDraft> subDraftList = physicalInventorySubDraftRepository.findAll();
-    List<SubDraftDto> subDraftDtos = new LinkedList<>();
-    // Aggregation based on num
-    Map<Integer, List<PhysicalInventorySubDraft>> groupSubDraftDtoMap = subDraftList.stream()
-        .collect(Collectors.groupingBy(PhysicalInventorySubDraft::getNum));
-    groupSubDraftDtoMap.forEach((groupNum, subDraftDtoList) -> {
-      subDraftDtos.add(
-          SubDraftDto.builder().groupNum(groupNum).status(subDraftDtoList.get(0).getStatus())
-              .subDraftId(subDraftDtoList.stream()
-                  .map(BaseEntity::getId).collect(Collectors.toList()))
-              .build());
-    });
+    if (CollectionUtils.isEmpty(subDraftList)) {
+      throw new IllegalArgumentException("there is no subDraft for any record");
+    }
     return DraftListDto
         .builder()
         .physicalInventoryId(ALL_PRODUCTS_UUID)
-        .subDrafts(subDraftDtos)
+        .subDrafts(convertSubDraftToSubDraftDto(subDraftList))
         .build();
   }
 
+  private List<SubDraftDto> convertSubDraftToSubDraftDto(
+      List<PhysicalInventorySubDraft> physicalInventorySubDraftList) {
+    // todo：fill saver name from saver id
+    List<SubDraftDto> subDraftDtoList = new LinkedList<>();
+    Map<Integer, List<PhysicalInventorySubDraft>> groupSubDraftDtoMap = physicalInventorySubDraftList.stream()
+        .collect(Collectors.groupingBy(PhysicalInventorySubDraft::getNum));
+    groupSubDraftDtoMap.forEach((groupNum, subDraftList) -> {
+      subDraftDtoList.add(
+          SubDraftDto
+              .builder()
+              .groupNum(groupNum)
+              .status(subDraftList.get(0).getStatus())
+              .subDraftId(subDraftList.stream().map(BaseEntity::getId).collect(Collectors.toList()))
+              .build());
+    });
+    return subDraftDtoList;
+  }
 
-  public DraftListDto getSubDraftListInOneProgram(UUID program, UUID facility,
-      Boolean isDraft) {
-    List<PhysicalInventoryDto> physicalInventoryDtos = getPhysicalInventoryDtos(program, facility, isDraft);
-    if (CollectionUtils.isNotEmpty(physicalInventoryDtos)) {
-      UUID physicalInventoryId = physicalInventoryDtos.get(0).getId();
-      List<PhysicalInventorySubDraft> physicalInventorySubDrafts = physicalInventorySubDraftRepository
-          .findByPhysicalInventoryId(
-              physicalInventoryId);
-      // todo：通过saverid找savername 填充
-      List<SubDraftDto> subDraftDtos = new LinkedList<>();
-      physicalInventorySubDrafts.forEach(subDraft -> {
-        subDraftDtos.add(
-            SubDraftDto.builder().groupNum(subDraft.getNum()).status(subDraft.getStatus())
-                .subDraftId(Collections.singletonList(subDraft.getId()))
-                .build());
-      });
+  public DraftListDto getSubDraftListForOneProgram(UUID program, UUID facility, Boolean isDraft) {
+    List<PhysicalInventoryDto> physicalInventoryDtoList = getPhysicalInventoryDtos(program, facility, isDraft);
+    if (CollectionUtils.isNotEmpty(physicalInventoryDtoList)) {
+      UUID physicalInventoryId = physicalInventoryDtoList.get(0).getId();
+      List<PhysicalInventorySubDraft> physicalInventorySubDraftList = physicalInventorySubDraftRepository
+          .findByPhysicalInventoryId(physicalInventoryId);
+      if (CollectionUtils.isEmpty(physicalInventorySubDraftList)) {
+        throw new IllegalArgumentException(
+            "there is no matching subDraft for the physicalInventoryId : " + physicalInventoryId);
+      }
       return DraftListDto
           .builder()
-          .subDrafts(subDraftDtos)
-          .physicalInventoryId(physicalInventoryDtos.get(0).getId())
+          .subDrafts(convertSubDraftToSubDraftDto(physicalInventorySubDraftList))
+          .physicalInventoryId(physicalInventoryId)
           .build();
     }
     return DraftListDto.builder().build();
@@ -361,10 +373,12 @@ public class SiglusPhysicalInventoryService {
     List<PhysicalInventoryLineItemDto> physicalInventoryLineItems = convertSummaryV2DtosToLineItems(
         summaryV2Dtos, physicalInventoryDto.getProgramId());
 
-    PhysicalInventoryDto toBeSavedPhysicalInventoryDto = PhysicalInventoryDto.builder()
+    PhysicalInventoryDto toBeSavedPhysicalInventoryDto = PhysicalInventoryDto
+        .builder()
         .programId(physicalInventoryDto.getProgramId())
         .facilityId(physicalInventoryDto.getFacilityId()).lineItems(physicalInventoryLineItems)
-        .id(physicalInventoryDto.getId()).build();
+        .id(physicalInventoryDto.getId())
+        .build();
 
     if (CollectionUtils.isNotEmpty(physicalInventoryLineItems)) {
       return saveDraftForProductsForOneProgram(toBeSavedPhysicalInventoryDto);
@@ -380,7 +394,7 @@ public class SiglusPhysicalInventoryService {
   public PhysicalInventoryDto createAndSpiltNewDraftForOneProgram(PhysicalInventoryDto physicalInventoryDto,
       Integer splitNum) {
     PhysicalInventoryDto physicalInventory = createNewDraft(physicalInventoryDto);
-    saveLineItemFromStockCardSummariesData(physicalInventory);
+    physicalInventory = saveLineItemFromStockCardSummariesData(physicalInventory);
     splitPhysicalInventory(physicalInventory, splitNum);
     return physicalInventory;
   }
@@ -389,7 +403,7 @@ public class SiglusPhysicalInventoryService {
     return inventoryController.createEmptyPhysicalInventory(dto);
   }
 
-  private void saveLineItemFromStockCardSummariesDataForAllProduct(
+  private PhysicalInventoryDto saveLineItemFromStockCardSummariesDataForAllProduct(
       PhysicalInventoryDto allProductPhysicalInventoryDto) {
     Set<UUID> supportedPrograms = supportedProgramsHelper
         .findHomeFacilitySupportedProgramIds();
@@ -407,11 +421,13 @@ public class SiglusPhysicalInventoryService {
       }
     }
     allProductPhysicalInventoryDto.setLineItems(allProductLineItemDtoList);
+    return allProductPhysicalInventoryDto;
   }
 
   public PhysicalInventoryDto createAndSplitNewDraftForAllProduct(PhysicalInventoryDto dto, Integer splitNum) {
     PhysicalInventoryDto allProductPhysicalInventoryDto = createNewDraftForAllProducts(dto);
-    saveLineItemFromStockCardSummariesDataForAllProduct(allProductPhysicalInventoryDto);
+    allProductPhysicalInventoryDto = saveLineItemFromStockCardSummariesDataForAllProduct(
+        allProductPhysicalInventoryDto);
     splitPhysicalInventory(allProductPhysicalInventoryDto, splitNum);
     return allProductPhysicalInventoryDto;
   }

@@ -91,7 +91,7 @@ public class SiglusPhysicalInventoryController {
     if (ALL_PRODUCTS_UUID.equals(program)) {
       return siglusPhysicalInventoryService.getSubDraftListForAllProduct();
     }
-    return siglusPhysicalInventoryService.getSubDraftListInOneProgram(program, facility, isDraft);
+    return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
   }
 
   @GetMapping("/subDraft")

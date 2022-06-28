@@ -190,14 +190,14 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldCallGetSubDraftListInOneProgramWhenSearchOneProgramSubDraftList() {
     siglusPhysicalInventoryController.searchSubDraftList(programId, facilityId, isDraft);
 
-    verify(siglusPhysicalInventoryService).getSubDraftListInOneProgram(programId, facilityId, isDraft);
+    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
   }
 
   @Test
   public void shouldCallGetSubPhysicalInventoryDtoBysubDraftIdWhenSearchSubDraftDetail() {
     siglusPhysicalInventoryController.searchSubDraftList(programId, facilityId, isDraft);
 
-    verify(siglusPhysicalInventoryService).getSubDraftListInOneProgram(programId, facilityId, isDraft);
+    verify(siglusPhysicalInventoryService).getSubDraftListForOneProgram(programId, facilityId, isDraft);
   }
 
 

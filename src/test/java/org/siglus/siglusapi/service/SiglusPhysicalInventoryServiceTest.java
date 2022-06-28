@@ -613,7 +613,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .findByPhysicalInventoryId(
             id)).thenReturn(Collections.singletonList(physicalInventorySubDraft));
     // when
-    DraftListDto subDraftListInOneProgram = siglusPhysicalInventoryService.getSubDraftListInOneProgram(programId,
+    DraftListDto subDraftListInOneProgram = siglusPhysicalInventoryService.getSubDraftListForOneProgram(programId,
         facilityId, true);
     // then
     assertEquals(expectedDraftList, subDraftListInOneProgram);
