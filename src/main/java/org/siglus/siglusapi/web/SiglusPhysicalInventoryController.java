@@ -100,6 +100,12 @@ public class SiglusPhysicalInventoryController {
     siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
   }
 
+  @PostMapping("/subDraft/submit")
+  @ResponseStatus(NO_CONTENT)
+  public void submitSubDrafts(@RequestParam List<UUID> subDraftIds) {
+    siglusPhysicalInventorySubDraftService.submitSubDrafts(subDraftIds);
+  }
+
   @PutMapping("/subDraft")
   public void updateSubDrafts(@RequestParam List<UUID> subDraftIds, @RequestBody PhysicalInventoryDto dto) {
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, dto);

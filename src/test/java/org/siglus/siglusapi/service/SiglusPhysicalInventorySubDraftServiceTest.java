@@ -312,6 +312,23 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
   }
 
   @Test
+  public void shouldCallSubmitSubDraftsWhenSubmitSubDrafts() {
+    List<UUID> subDraftIds = Lists.newArrayList(subDraftId);
+    List<PhysicalInventorySubDraft> subDrafts = Lists.newArrayList(PhysicalInventorySubDraft.builder()
+        .physicalInventoryId(physicalInventoryId).num(1)
+        .build(), PhysicalInventorySubDraft.builder()
+        .physicalInventoryId(physicalInventoryId).num(2)
+        .build());
+    when(physicalInventorySubDraftRepository.findAll(subDraftIds)).thenReturn(subDrafts);
+
+    // when
+    siglusPhysicalInventorySubDraftService.submitSubDrafts(subDraftIds);
+    // then
+    verify(physicalInventorySubDraftRepository).save(any(List.class));
+
+  }
+
+  @Test
   public void shouldCallDeleteSubDraftsWhenDeleteSubDraftsFindAllEmpty() {
     // given
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())

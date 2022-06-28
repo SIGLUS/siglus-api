@@ -76,10 +76,21 @@ public class SiglusPhysicalInventorySubDraftService {
     }
 
     subDrafts.forEach(item -> item.setStatus(PhysicalInventorySubDraftEnum.NOT_YET_STARTED));
-    // TODO: check right
+
     physicalInventorySubDraftRepository.save(subDrafts);
 
     doDelete(subDrafts, subDraftIds);
+  }
+
+  public void submitSubDrafts(List<UUID> subDraftIds) {
+    List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(subDraftIds);
+    if (CollectionUtils.isEmpty(subDrafts)) {
+      return;
+    }
+
+    subDrafts.forEach(item -> item.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED));
+
+    physicalInventorySubDraftRepository.save(subDrafts);
   }
 
   private void doDelete(List<PhysicalInventorySubDraft> subDrafts, List<UUID> subDraftIds) {
