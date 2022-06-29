@@ -18,12 +18,18 @@ package org.siglus.siglusapi.errorhandling;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.errorhandling.GlobalErrorHandlingMvcTest.ERROR_MESSAGE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB_DRAFT;
 
+import com.google.common.collect.Lists;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import javax.validation.ConstraintViolation;
 import javax.validation.Path;
 import org.hibernate.exception.ConstraintViolationException;
+import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.ProductSubDraftConflictDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,6 +77,24 @@ class GlobalErrorHandlingTestController {
     when(mockedPath.toString()).thenReturn(propertyPathText);
     when(violation.getPropertyPath()).thenReturn(mockedPath);
     throw new javax.validation.ConstraintViolationException(violations);
+  }
+
+  @GetMapping("/business-error")
+  public void businessError() {
+    throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_SUB_DRAFT),
+        Lists.newArrayList(ProductSubDraftConflictDto.builder()
+            .conflictWith("Draft 1")
+            .conflictWithSubDraftId(UUID.randomUUID())
+            .orderableId(UUID.randomUUID())
+            .productCode("code")
+            .productName("name")
+            .build(), ProductSubDraftConflictDto.builder()
+            .conflictWith("Draft 2")
+            .conflictWithSubDraftId(UUID.randomUUID())
+            .orderableId(UUID.randomUUID())
+            .productCode("code2")
+            .productName("name2")
+            .build()));
   }
 
 }

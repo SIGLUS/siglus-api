@@ -163,4 +163,17 @@ public class GlobalErrorHandlingMvcTest {
         .andExpect(jsonPath("fields[0].messageInPortuguese").value("text"));
   }
 
+  @Test
+  public void shouldReturnBadRequestWhenHandleBusinessErrorGivenBusinessDataException() throws Exception {
+    // given
+    RequestBuilder request = get("/test/business-error").contentType(MediaType.APPLICATION_JSON);
+
+    // then
+    ResultActions response = mockMvc.perform(request).andDo(print());
+
+    // when
+    response.andExpect(status().isBadRequest())
+        .andExpect(jsonPath("isBusinessError").value(true))
+        .andExpect(jsonPath("businessErrorExtraData").exists());
+  }
 }

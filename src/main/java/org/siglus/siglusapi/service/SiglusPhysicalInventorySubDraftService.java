@@ -41,7 +41,7 @@ import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProductSubDraftConflictDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
-import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
@@ -233,7 +233,7 @@ public class SiglusPhysicalInventorySubDraftService {
         item.setConflictWith(DRAFT + num);
       }
     }
-    throw new ValidationMessageException(new Message(ERROR_INVENTORY_CONFLICT_SUB_DRAFT, JSON.toJSONString(result)));
+    throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_SUB_DRAFT), result);
   }
 
   private String getUniqueKey(PhysicalInventoryLineItemDto item) {

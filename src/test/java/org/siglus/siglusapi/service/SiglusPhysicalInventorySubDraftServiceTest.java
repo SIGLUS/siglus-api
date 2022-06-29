@@ -52,7 +52,7 @@ import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
-import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
@@ -205,7 +205,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
   @Test
   public void shouldThrowConflictWhenUpdateSubDraftsWithConflict() {
-    exception.expect(ValidationMessageException.class);
+    exception.expect(BusinessDataException.class);
     exception.expectMessage(containsString(ERROR_INVENTORY_CONFLICT_SUB_DRAFT));
     // given
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())

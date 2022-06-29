@@ -39,6 +39,7 @@ import org.siglus.common.constant.DateFormatConstants;
 import org.siglus.siglusapi.constant.PodConstants;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.BaseMessageException;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.OrderNotFoundException;
 import org.siglus.siglusapi.exception.UnsupportedProductsException;
 import org.siglus.siglusapi.i18n.ExposedMessageSource;
@@ -69,6 +70,7 @@ import org.zalando.problem.spring.web.advice.validation.Violation;
 @Slf4j
 @RequiredArgsConstructor
 @Order
+@SuppressWarnings("PMD.TooManyMethods")
 public class GlobalErrorHandling implements ProblemHandling {
 
   private static final URI CONSTRAINT_VIOLATION_TYPE = URI.create("/errors/constraint-violation");
@@ -82,6 +84,8 @@ public class GlobalErrorHandling implements ProblemHandling {
       "{org.siglus.siglusapi.dto.android.constraint.RequisitionValidStartDate.message}";
   private static final String REQUEST_REQUISITIONCREATEREQUEST_PROGRAMCODE =
       "{org.siglus.siglusapi.dto.android.request.RequisitionCreateRequest.programCode}";
+  public static final String IS_BUSINESS_ERROR = "isBusinessError";
+  public static final String BUSINESS_ERROR_EXTRA_DATA = "businessErrorExtraData";
 
   static {
     CONSTRAINT_MAP.put("unq_programid_additionalorderableid", MessageKeys.ERROR_ADDITIONAL_ORDERABLE_DUPLICATED);
@@ -127,6 +131,16 @@ public class GlobalErrorHandling implements ProblemHandling {
   public ResponseEntity<Problem> handleValidationException(ValidationException exception, NativeWebRequest request) {
     String detail = String.format("%s Caused by %s", exception.getMessage(), exception.getCause());
     ThrowableProblem problem = prepare(exception, BAD_REQUEST, DEFAULT_TYPE).withDetail(detail).build();
+    return create(exception, problem, request);
+  }
+
+  @ExceptionHandler
+  public ResponseEntity<Problem> handleBusinessDataException(BusinessDataException exception,
+      NativeWebRequest request) {
+    ThrowableProblem problem = prepare(exception)
+        .with(IS_BUSINESS_ERROR, exception.isBusinessError())
+        .with(BUSINESS_ERROR_EXTRA_DATA, exception.getBusinessErrorExtraData())
+        .build();
     return create(exception, problem, request);
   }
 
