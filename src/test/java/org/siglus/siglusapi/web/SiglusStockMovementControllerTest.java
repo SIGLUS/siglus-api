@@ -49,13 +49,10 @@ public class SiglusStockMovementControllerTest {
   private SiglusStockMovementController controller;
   private UUID facilityId;
 
-  private UUID orderableId;
-
   @Before
   public void prepare() {
     MockitoAnnotations.initMocks(this);
     facilityId = UUID.randomUUID();
-    orderableId = UUID.randomUUID();
   }
 
   @Test
@@ -64,15 +61,6 @@ public class SiglusStockMovementControllerTest {
         .thenReturn(new LinkedList());
     ResponseEntity<List<StockMovementResDto>> responseEntity =
         controller.getStockMovement(facilityId, null, null, null);
-    assertEquals(OK, responseEntity.getStatusCode());
-  }
-
-  @Test
-  public void shouleGetStcokMovementByOrderableId() {
-    when(service.getProductMovements(null, orderableId, null, null))
-        .thenReturn(new LinkedList());
-    ResponseEntity<List<StockMovementResDto>> responseEntity =
-        controller.getStockMovement(null, orderableId, null, null);
     assertEquals(OK, responseEntity.getStatusCode());
   }
 

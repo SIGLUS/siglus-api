@@ -42,7 +42,7 @@ public class SiglusStockMovementController {
 
   @GetMapping("/getMovement")
   public ResponseEntity<List<StockMovementResDto>> getStockMovement(
-      @RequestParam(required = false) UUID facilityId,
+      @RequestParam UUID facilityId,
       @RequestParam(required = false) UUID orderableId,
       @RequestParam(value = "startTime", required = false)
       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)

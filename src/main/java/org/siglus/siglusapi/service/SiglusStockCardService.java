@@ -242,9 +242,8 @@ public class SiglusStockCardService {
 
   public List<StockMovementResDto> getProductMovements(UUID facilityId, UUID orderableId,
       LocalDate startTime, LocalDate endTime) {
-    HashSet<UUID> orderableIdsSet = null;
+    HashSet<UUID> orderableIdsSet = new HashSet<>();
     if (orderableId != null) {
-      orderableIdsSet = new HashSet<>();
       orderableIdsSet.add(orderableId);
     }
     List<StockMovementResDto> productMovements =

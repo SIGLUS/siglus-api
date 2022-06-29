@@ -279,7 +279,7 @@ public class SiglusStockCardServiceTest {
     StockMovementResDto stockMovementResDto1 = new StockMovementResDto();
     StockMovementResDto stockMovementResDto2 = new StockMovementResDto();
     StockMovementResDto stockMovementResDto3 = new StockMovementResDto();
-    when(stockMovementService.getProductMovements(null, facilityId, null, null))
+    when(stockMovementService.getProductMovements(new HashSet<UUID>(), facilityId, null, null))
         .thenReturn(Arrays.asList(stockMovementResDto1, stockMovementResDto2, stockMovementResDto3));
     List<StockMovementResDto> productMovements = siglusStockCardService.getProductMovements(facilityId, null, null,
         null);
@@ -287,22 +287,8 @@ public class SiglusStockCardServiceTest {
   }
 
   @Test
-  public void shouldReturnStockMovementWhenFindByOrderableId() {
-    StockMovementResDto stockMovementResDto1 = new StockMovementResDto();
-    StockMovementResDto stockMovementResDto2 = new StockMovementResDto();
-    StockMovementResDto stockMovementResDto3 = new StockMovementResDto();
-    HashSet<UUID> orderableIds = new HashSet<>();
-    orderableIds.add(orderableId);
-    when(stockMovementService.getProductMovements(orderableIds, null, null, null))
-        .thenReturn(Arrays.asList(stockMovementResDto1, stockMovementResDto2, stockMovementResDto3));
-    List<StockMovementResDto> productMovements = siglusStockCardService.getProductMovements(null, orderableId, null,
-        null);
-    assertEquals(3, productMovements.size());
-  }
-
-  @Test
   public void shouldReturnNUllIfMovementNotExistWhenFindStockMovementbyfacilityId() {
-    when(stockMovementService.getProductMovements(null, facilityId, null, null))
+    when(stockMovementService.getProductMovements(new HashSet<UUID>(), facilityId, null, null))
         .thenReturn(null);
     List<StockMovementResDto> productMovements = siglusStockCardService.getProductMovements(facilityId, null, null,
         null);
