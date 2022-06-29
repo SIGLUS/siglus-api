@@ -129,9 +129,9 @@ public class SiglusPhysicalInventorySubDraftService {
         }
       }
 
-      // TODO: check physicalInventoryDto's programId exists ( 6/28/22 by kourengang)
-      PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getPhysicalInventory(
+      PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
           physicalInventoryId);
+
       if (physicalInventoryDto == null) {
         throw new IllegalArgumentException("physical inventory not exists. id = " + physicalInventoryId);
       }
@@ -172,8 +172,9 @@ public class SiglusPhysicalInventorySubDraftService {
         .collect(Collectors.groupingBy(PhysicalInventoryLineItemDto::getProgramId));
 
     for (UUID physicalInventoryId : physicalInventoryIds) {
-      PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getPhysicalInventory(
+      PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
           physicalInventoryId);
+
       UUID programId = physicalInventoryDto.getProgramId();
 
       List<PhysicalInventoryLineItemDto> curLineItems = programLineItemMap.get(programId);
@@ -184,8 +185,6 @@ public class SiglusPhysicalInventorySubDraftService {
       List<PhysicalInventoryLineItemDto> notChangedLineItems = oldLineItems.stream()
           .filter(item -> !uniqueKeyList.contains(getUniqueKey(item))).collect(
               Collectors.toList());
-
-      // TODO:  line item reason and program is empty add implement ( 6/29/22 by kourengang)
 
       List<PhysicalInventoryLineItemDto> newLineItems = Lists.newArrayList(notChangedLineItems);
       newLineItems.addAll(curLineItems);

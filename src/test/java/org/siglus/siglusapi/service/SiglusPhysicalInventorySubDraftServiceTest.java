@@ -48,8 +48,6 @@ import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.siglus.common.domain.referencedata.Code;
-import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
@@ -61,8 +59,6 @@ import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementServi
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
@@ -192,7 +188,8 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .lineItems(Lists.newArrayList(lineItemDtoOne))
         .build();
 
-    when(siglusPhysicalInventoryService.getPhysicalInventory(physicalInventoryId)).thenReturn(oldPhysicalInventoryDto);
+    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(physicalInventoryId)).thenReturn(
+        oldPhysicalInventoryDto);
 
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .id(id)
@@ -203,7 +200,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     // when
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto);
     // then
-    verify(siglusPhysicalInventoryService, times(1)).getPhysicalInventory(physicalInventoryId);
+    verify(siglusPhysicalInventoryService, times(1)).getFullPhysicalInventoryDto(physicalInventoryId);
   }
 
 
@@ -253,7 +250,8 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .lineItems(Lists.newArrayList(lineItemDtoOne))
         .build();
 
-    when(siglusPhysicalInventoryService.getPhysicalInventory(physicalInventoryId)).thenReturn(oldPhysicalInventoryDto);
+    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(physicalInventoryId)).thenReturn(
+        oldPhysicalInventoryDto);
 
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .id(id)
@@ -261,11 +259,10 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .lineItems(Lists.newArrayList(lineItemDtoOne))
         .build();
 
-
     // when
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto);
     // then
-    verify(siglusPhysicalInventoryService, times(2)).getPhysicalInventory(physicalInventoryId);
+    verify(siglusPhysicalInventoryService, times(2)).getFullPhysicalInventoryDto(physicalInventoryId);
 
 
   }
@@ -296,7 +293,8 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .lineItems(Lists.newArrayList(lineItemDtoOne))
         .build();
 
-    when(siglusPhysicalInventoryService.getPhysicalInventory(physicalInventoryId)).thenReturn(oldPhysicalInventoryDto);
+    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(physicalInventoryId)).thenReturn(
+        oldPhysicalInventoryDto);
     List<PhysicalInventoryLineItemsExtension> physicalInventories = Lists.newArrayList(
         PhysicalInventoryLineItemsExtension.builder()
             .physicalInventoryId(physicalInventoryId)

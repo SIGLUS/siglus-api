@@ -25,6 +25,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -490,6 +491,14 @@ public class SiglusPhysicalInventoryService {
 
   public PhysicalInventoryDto getPhysicalInventory(UUID id) {
     return physicalInventoryStockManagementService.getPhysicalInventory(id);
+  }
+
+  public PhysicalInventoryDto getFullPhysicalInventoryDto(UUID physicalInventoryId) {
+    PhysicalInventoryDto physicalInventoryDto = getPhysicalInventory(
+        physicalInventoryId);
+    List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
+        .findByPhysicalInventoryIdIn(Lists.newArrayList(physicalInventoryId));
+    return getResultInventory(Lists.newArrayList(physicalInventoryDto), extensions);
   }
 
   public PhysicalInventoryDto getPhysicalInventoryForAllProducts(UUID facilityId) {
