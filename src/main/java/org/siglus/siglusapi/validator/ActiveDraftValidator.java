@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.validator;
 
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_DESTINATION_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EVENT_FACILITY_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IS_DRAFT_MISSING;
@@ -85,4 +86,9 @@ public class ActiveDraftValidator {
     }
   }
 
+  public void validateDestinationId(UUID destinationId) {
+    if (destinationId == null) {
+      throw new ValidationMessageException(ERROR_DRAFT_DESTINATION_ID);
+    }
+  }
 }

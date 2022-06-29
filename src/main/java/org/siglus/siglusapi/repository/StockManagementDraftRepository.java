@@ -29,5 +29,11 @@ public interface StockManagementDraftRepository
       boolean isDraft,
       String draftType);
 
+  List<StockManagementDraft> findByProgramIdAndFacilityIdAndDestinationIdAndDraftType(
+      UUID programId,
+      UUID facilityId,
+      UUID destination,
+      String draftType);
+
   List<StockManagementDraft> findByFacilityId(UUID facilityId);
 }

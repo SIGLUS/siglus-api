@@ -48,6 +48,17 @@ public class SiglusStockManagementDraftControllerTest {
   }
 
   @Test
+  public void shouldCallServiceWhenSearchDraftsMulti() {
+    UUID programId = UUID.randomUUID();
+    UUID userId = UUID.randomUUID();
+    UUID destinationId = UUID.randomUUID();
+    String draftType = "draft_type";
+    controller.searchDrafts(programId, userId, draftType, destinationId);
+
+    verify(service).findStockManagementDrafts(programId, draftType, destinationId);
+  }
+
+  @Test
   public void shouldCallServiceWhenCreateEmptyStockManagementDraft() {
     StockManagementDraftDto dto = new StockManagementDraftDto();
     controller.createEmptyStockManagementDraft(dto);

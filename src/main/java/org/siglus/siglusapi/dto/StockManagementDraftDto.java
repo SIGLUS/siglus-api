@@ -53,6 +53,12 @@ public class StockManagementDraftDto {
 
   private String draftType;
 
+  private UUID destinationId;
+
+  private String status;
+
+  private String documentationNumber;
+
   private List<StockManagementDraftLineItemDto> lineItems;
 
   public static List<StockManagementDraftDto> from(Collection<StockManagementDraft> drafts) {

@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 
 import java.util.List;
@@ -68,7 +69,9 @@ public class SiglusStockManagementDraftService {
   public StockManagementDraftDto createNewDraft(StockManagementDraftDto dto) {
     log.info("create physical inventory draft");
     stockManagementDraftValidator.validateEmptyDraft(dto);
-    checkIfDraftExists(dto);
+      checkIfSameDraftMoreThanTen(dto);
+      //mult-user do not need to limit
+//    checkIfDraftExists(dto);
 
     draftValidator.validateProgramId(dto.getProgramId());
     draftValidator.validateFacilityId(dto.getFacilityId());
@@ -98,6 +101,17 @@ public class SiglusStockManagementDraftService {
     draftValidator.validateIsDraft(isDraft);
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId, facilityId, isDraft, type);
+    return StockManagementDraftDto.from(drafts);
+  }
+
+  public List<StockManagementDraftDto> findStockManagementDrafts(UUID programId, String type, UUID destinationId) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    draftValidator.validateProgramId(programId);
+    draftValidator.validateFacilityId(facilityId);
+    draftValidator.validateDraftType(type);
+    draftValidator.validateDestinationId(destinationId);
+    List<StockManagementDraft> drafts = stockManagementDraftRepository
+        .findByProgramIdAndFacilityIdAndDestinationIdAndDraftType(programId, facilityId, destinationId, type);
     return StockManagementDraftDto.from(drafts);
   }
 
@@ -136,6 +150,7 @@ public class SiglusStockManagementDraftService {
     supportedPrograms.forEach(i -> permissionService.canAdjustStock(i, facility));
   }
 
+  //Maybe never use in future
   private void checkIfDraftExists(StockManagementDraftDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(), true,
@@ -145,4 +160,22 @@ public class SiglusStockManagementDraftService {
           new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(), dto.getFacilityId()));
     }
   }
+
+    //Same draft means: same facilityid, programid, destinationid and drafttype
+    private void checkIfSameDraftMoreThanTen(StockManagementDraftDto dto) {
+        List<StockManagementDraft> sameDrafts = stockManagementDraftRepository
+            .findByProgramIdAndFacilityIdAndDestinationIdAndDraftType(dto.getProgramId(),
+                dto.getFacilityId(),
+                dto.getDestinationId(),
+                dto.getDraftType());
+        if (sameDrafts.size() > 9) {
+            throw new ValidationMessageException(
+                new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN,
+                    dto.getProgramId(),
+                    dto.getFacilityId(),
+                    dto.getDestinationId()
+                )
+            );
+        }
+    }
 }
