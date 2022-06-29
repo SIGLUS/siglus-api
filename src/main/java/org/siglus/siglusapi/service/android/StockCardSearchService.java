@@ -16,17 +16,13 @@
 package org.siglus.siglusapi.service.android;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import javax.annotation.ParametersAreNullableByDefault;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.response.FacilityProductMovementsResponse;
-import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
-import org.siglus.siglusapi.dto.android.response.SiglusStockMovementItemResponse;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.android.mapper.ProductMovementMapper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -43,10 +39,6 @@ public class StockCardSearchService {
   private final StockManagementRepository stockManagementRepository;
 
   private final ProductMovementMapper mapper;
-
-  private static final String UNPACK_KIT_TYPE = "UNPACK_KIT";
-
-  private static final String ISSUE_TYPE = "ISSUE";
 
   @ParametersAreNullableByDefault
   public FacilityProductMovementsResponse getProductMovementsByTime(LocalDate since, LocalDate tillExclusive) {
@@ -66,36 +58,5 @@ public class StockCardSearchService {
     UUID facilityId = authHelper.getCurrentUser().getHomeFacilityId();
     PeriodOfProductMovements period = stockManagementRepository.getAllProductMovements(facilityId, orderableIds);
     return mapper.toAndroidResponse(period);
-  }
-
-  public List<ProductMovementResponse> getProductMovementsByOrderablesAndFacility(
-      Set<UUID> orderableIds, UUID facilityId, LocalDate since, LocalDate till) {
-    PeriodOfProductMovements productMovements =
-        stockManagementRepository.getAllProductMovements(facilityId, orderableIds, since, till);
-    List<ProductMovementResponse> productMovementResponses = mapper.toResponses(productMovements);
-    if (productMovementResponses.isEmpty()) {
-      return null;
-    }
-    return simplifyStockMovementResponse(productMovementResponses);
-  }
-
-  private List<ProductMovementResponse> simplifyStockMovementResponse(
-      List<ProductMovementResponse> productMovementResponses) {
-    List<ProductMovementResponse> responses = productMovementResponses.stream()
-        .map(productMovementResponse -> {
-          List<SiglusStockMovementItemResponse> stockMovementItems =
-              productMovementResponse.getStockMovementItems();
-          productMovementResponse.setStockMovementItems(stockMovementItems.stream().map(items -> {
-            items.setLotMovementItems(null);
-            if (items.getType().equals(UNPACK_KIT_TYPE)) {
-              items.setType(ISSUE_TYPE);
-              items.setReason(UNPACK_KIT_TYPE);
-            }
-            return items;
-          }).collect(Collectors.toList()));
-          productMovementResponse.setLotsOnHand(null);
-          return productMovementResponse;
-        }).collect(Collectors.toList());
-    return responses;
   }
 }

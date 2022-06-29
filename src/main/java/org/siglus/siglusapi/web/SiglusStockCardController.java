@@ -19,17 +19,12 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_ORDERABL
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
-import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.util.UuidUtil;
-import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.service.SiglusStockCardService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,25 +67,6 @@ public class SiglusStockCardController {
       return new ResponseEntity<>(NOT_FOUND);
     } else {
       return new ResponseEntity<>(stockCardDto, OK);
-    }
-  }
-
-  @GetMapping("/movements")
-  public ResponseEntity<List<ProductMovementResponse>> getStockMovementByFacilityIdAndOrderableId(
-      @RequestParam String facilityId,
-      @RequestParam String orderableId,
-      @RequestParam(value = "startTime", required = false)
-      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-      @Nullable LocalDate since,
-      @RequestParam(value = "endTime", required = false)
-      @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-      @Nullable LocalDate tillExclusive) {
-    List<ProductMovementResponse> productMovements =
-        siglusStockCardService.getProductMovements(facilityId, orderableId, since, tillExclusive);
-    if (productMovements == null) {
-      return new ResponseEntity<>(NOT_FOUND);
-    } else {
-      return new ResponseEntity<>(productMovements, OK);
     }
   }
 }

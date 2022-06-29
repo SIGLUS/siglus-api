@@ -22,8 +22,6 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_ORDERABL
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.OK;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Rule;
@@ -36,7 +34,6 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.exception.ValidationMessageException;
 import org.openlmis.stockmanagement.dto.StockCardDto;
-import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
 import org.siglus.siglusapi.service.SiglusStockCardService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
@@ -60,10 +57,6 @@ public class SiglusStockCardControllerTest {
 
   private UUID stockCardId;
 
-  private String facilityId;
-
-  private String orderableId;
-
   private MultiValueMap<String, String> parameters;
 
 
@@ -72,8 +65,6 @@ public class SiglusStockCardControllerTest {
     MockitoAnnotations.initMocks(this);
     productId = UUID.randomUUID();
     stockCardId = UUID.randomUUID();
-    facilityId = UUID.randomUUID().toString();
-    orderableId = UUID.randomUUID().toString();
     parameters = new LinkedMultiValueMap<>();
     parameters.add(PRODUCT_ID, productId.toString());
   }
@@ -118,15 +109,6 @@ public class SiglusStockCardControllerTest {
   public void shouldGetReponseOkById() {
     when(service.findStockCardById(stockCardId)).thenReturn(new StockCardDto());
     ResponseEntity<StockCardDto> responseEntity = controller.searchStockCardById(stockCardId);
-    assertEquals(OK, responseEntity.getStatusCode());
-  }
-
-  @Test
-  public void shouldGetStockMovementByFacilityIdAndOrderableId() {
-    when(service.getProductMovements(facilityId, orderableId, null, null))
-            .thenReturn(new LinkedList<ProductMovementResponse>());
-    ResponseEntity<List<ProductMovementResponse>> responseEntity =
-            controller.getStockMovementByFacilityIdAndOrderableId(facilityId, orderableId, null, null);
     assertEquals(OK, responseEntity.getStatusCode());
   }
 }

@@ -285,6 +285,31 @@ traits:
                 application/json:
                   schema: localizedErrorResponse
 
+    /stockMovement:
+      /getMovement:
+        displayName: Get stock movement
+        get:
+          is: [ secured, paginated ]
+          description: >
+            Get stock movement by facility id and orderable id.
+          queryParameters:
+            facilityId:
+              displayName: facility Id
+              type: string
+              required: false
+              repeat: true
+            orderableId:
+              displayName: orderable Id
+              type: string
+              required: false
+              repeat: true
+          responses:
+            "200":
+              body:
+                application/json:
+                  schema: stockmovementList
+
+
     /orderables:
       displayName: Orderable Product
       get:

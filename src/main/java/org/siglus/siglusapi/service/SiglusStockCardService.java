@@ -44,10 +44,9 @@ import org.openlmis.stockmanagement.dto.referencedata.OrderableDto;
 import org.openlmis.stockmanagement.repository.CalculatedStockOnHandRepository;
 import org.openlmis.stockmanagement.util.AuthenticationHelper;
 import org.siglus.siglusapi.domain.StockCardExtension;
-import org.siglus.siglusapi.dto.android.response.ProductMovementResponse;
+import org.siglus.siglusapi.dto.StockMovementResDto;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.StockCardExtensionRepository;
-import org.siglus.siglusapi.service.android.StockCardSearchService;
 import org.siglus.siglusapi.service.client.SiglusStockManagementService;
 import org.siglus.siglusapi.util.AndroidHelper;
 import org.siglus.siglusapi.util.SiglusDateHelper;
@@ -85,7 +84,7 @@ public class SiglusStockCardService {
   private SiglusDateHelper dateHelper;
 
   @Autowired
-  private StockCardSearchService stockCardSearchService;
+  private StockMovementService stockMovementService;
 
   public StockCardDto findStockCardByOrderable(UUID orderableId) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -241,13 +240,15 @@ public class SiglusStockCardService {
         .build();
   }
 
-  public List<ProductMovementResponse> getProductMovements(String facilityId, String orderableId,
+  public List<StockMovementResDto> getProductMovements(UUID facilityId, UUID orderableId,
       LocalDate startTime, LocalDate endTime) {
-    HashSet<UUID> orderableIdsSet = new HashSet<>();
-    orderableIdsSet.add(UUID.fromString(orderableId));
-    List<ProductMovementResponse> productMovements =
-        stockCardSearchService.getProductMovementsByOrderablesAndFacility(
-        orderableIdsSet, UUID.fromString(facilityId), startTime, endTime);
+    HashSet<UUID> orderableIdsSet = null;
+    if (orderableId != null) {
+      orderableIdsSet = new HashSet<>();
+      orderableIdsSet.add(orderableId);
+    }
+    List<StockMovementResDto> productMovements =
+        stockMovementService.getProductMovements(orderableIdsSet, facilityId, startTime, endTime);
     return productMovements;
   }
 }
