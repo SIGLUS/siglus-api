@@ -107,8 +107,7 @@ public class StockManagementRepository extends BaseNativeRepository {
   public PeriodOfProductMovements getAllProductMovementsForSync(@Nonnull UUID facilityId, @Nonnull LocalDate since) {
     requireNonNull(facilityId);
     ZoneId zoneId = ZoneId.systemDefault();
-    return getAllProductMovements(facilityId, null, null, emptySet(),
-        since.atStartOfDay(zoneId).toInstant(),
+    return getAllProductMovements(facilityId, null, null, emptySet(), since.atStartOfDay(zoneId).toInstant(),
         LocalDate.now().atStartOfDay(zoneId).toInstant());
   }
 
@@ -170,7 +169,7 @@ public class StockManagementRepository extends BaseNativeRepository {
 
   public void batchCreateLots(List<ProductLot> lots) {
     String sql = "INSERT INTO referencedata.lots(id, lotcode, expirationdate, manufacturedate, tradeitemid, active) "
-            + "VALUES (:id, :lotCode, :expirationDate, :expirationDate, :tradeItemId, true)";
+        + "VALUES (:id, :lotCode, :expirationDate, :expirationDate, :tradeItemId, true)";
     namedJdbc.batchUpdate(sql, toParams(lots));
   }
 
@@ -459,8 +458,7 @@ public class StockManagementRepository extends BaseNativeRepository {
 
   @SuppressWarnings("PMD.ConsecutiveLiteralAppends")
   private static String generateWhere(@Nonnull UUID facilityId, @Nonnull MapSqlParameterSource parameters,
-      @Nullable LocalDate since, @Nullable LocalDate at, @Nonnull Set<UUID> orderableIds,
-      Instant syncSince,
+      @Nullable LocalDate since, @Nullable LocalDate at, @Nonnull Set<UUID> orderableIds, Instant syncSince,
       Instant syncTill) {
     StringBuilder where = new StringBuilder(300);
     parameters.addValue("facilityId", facilityId);
@@ -545,8 +543,7 @@ public class StockManagementRepository extends BaseNativeRepository {
   }
 
   private ProductMovement toProductMovement(ProductMovementKey key, List<ProductLotMovement> productLotMovements,
-      Map<String, Integer> productInventoryMap, Map<ProductLotCode, Integer> lotInventories,
-      UUID facilityId) {
+      Map<String, Integer> productInventoryMap, Map<ProductLotCode, Integer> lotInventories, UUID facilityId) {
     ProductMovementBuilder movementBuilder = ProductMovement.builder()
         .productCode(key.getProductCode())
         .eventTime(key.getEventTime());
