@@ -53,6 +53,7 @@ public abstract class MessageKeys {
   public static final String ERROR_IS_DRAFT_MISSING = ERROR_PREFIX + ".is.draft.missing";
   public static final String ERROR_DRAFT_TYPE_MISSING = ERROR_PREFIX + ".draft.type.missing";
   public static final String ERROR_DRAFT_DESTINATION_ID = ERROR_PREFIX + ".draft.destination.id.missing";
+  public static final String ERROR_DRAFT_DOCUMENT_NUMBER = ERROR_PREFIX + ".draft.document.number.missing";
   public static final String ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR = ERROR_PREFIX + ".not.expected.draft.type.error";
   public static final String ERROR_NOT_EXPECTED_USER_DRAFT = ERROR_PREFIX + ".not.expected.user.draft";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".id.notFound";

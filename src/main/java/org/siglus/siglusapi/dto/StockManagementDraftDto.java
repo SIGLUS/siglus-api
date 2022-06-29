@@ -55,6 +55,8 @@ public class StockManagementDraftDto {
 
   private UUID destinationId;
 
+  private String destinationName;
+
   private String status;
 
   private String documentationNumber;

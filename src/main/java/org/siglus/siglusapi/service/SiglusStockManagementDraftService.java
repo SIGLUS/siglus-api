@@ -33,6 +33,7 @@ import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -65,18 +66,21 @@ public class SiglusStockManagementDraftService {
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
 
+  private static final Integer DRAFTS_LIMITATION = 9;
+
   @Transactional
   public StockManagementDraftDto createNewDraft(StockManagementDraftDto dto) {
     log.info("create physical inventory draft");
     stockManagementDraftValidator.validateEmptyDraft(dto);
-      checkIfSameDraftMoreThanTen(dto);
-      //mult-user do not need to limit
+      checkIfSameDraftsOversize(dto);
+      //multi-user do not need to limit
 //    checkIfDraftExists(dto);
 
     draftValidator.validateProgramId(dto.getProgramId());
     draftValidator.validateFacilityId(dto.getFacilityId());
     draftValidator.validateUserId(dto.getUserId());
     draftValidator.validateDraftType(dto.getDraftType());
+    draftValidator.validateDocumentNumber(dto.getDocumentationNumber());
 
     StockManagementDraft draft = StockManagementDraft.createEmptyDraft(dto);
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
@@ -162,20 +166,16 @@ public class SiglusStockManagementDraftService {
   }
 
     //Same draft means: same facilityid, programid, destinationid and drafttype
-    private void checkIfSameDraftMoreThanTen(StockManagementDraftDto dto) {
+    private void checkIfSameDraftsOversize(StockManagementDraftDto dto) {
         List<StockManagementDraft> sameDrafts = stockManagementDraftRepository
             .findByProgramIdAndFacilityIdAndDestinationIdAndDraftType(dto.getProgramId(),
                 dto.getFacilityId(),
                 dto.getDestinationId(),
                 dto.getDraftType());
-        if (sameDrafts.size() > 9) {
-            throw new ValidationMessageException(
-                new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN,
-                    dto.getProgramId(),
-                    dto.getFacilityId(),
-                    dto.getDestinationId()
-                )
-            );
+        if (sameDrafts.size() > DRAFTS_LIMITATION) {
+          throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN, dto.getProgramId(),
+                   dto.getFacilityId(),
+                    dto.getDestinationId()), "same drafts more than limitation");
         }
     }
 }
