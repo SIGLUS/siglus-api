@@ -263,7 +263,7 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // when
     PhysicalInventoryDto dto = siglusPhysicalInventoryService
-        .saveDraftForProductsInOneProgram(physicalInventoryDto);
+        .saveDraftForProductsForOneProgram(physicalInventoryDto);
 
     // then
     assertNull(dto.getLineItems().get(0).getReasonFreeText());

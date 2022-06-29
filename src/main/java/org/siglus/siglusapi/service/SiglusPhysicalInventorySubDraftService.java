@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB_DRAFT;
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,18 +34,16 @@ import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
-import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.ProductSubDraftConflictDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
-import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,7 +56,7 @@ public class SiglusPhysicalInventorySubDraftService {
   @Autowired
   private SiglusStockCardSummariesService siglusStockCardSummariesService;
   @Autowired
-  private OrderableRepository orderableRepository;
+  private SiglusOrderableService siglusOrderableService;
 
   @Autowired
   private PhysicalInventorySubDraftRepository physicalInventorySubDraftRepository;
@@ -120,41 +117,44 @@ public class SiglusPhysicalInventorySubDraftService {
       List<PhysicalInventoryLineItemsExtension> oldLineItemsExtension
           = lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryId);
 
-      List<UUID> needReplaceOrderableIds = new ArrayList<>();
+      List<UUID> needResetOrderableIds = new ArrayList<>();
       List<UUID> needDeleteOrderableIds = new ArrayList<>();
       for (PhysicalInventoryLineItemsExtension item : oldLineItemsExtension) {
         if (subDraftIds.contains(item.getSubDraftId())) {
-          if (item.getIsInitial() != 0) {
-            needReplaceOrderableIds.add(item.getOrderableId());
+          if (Boolean.TRUE.equals(item.getIsInitial())) {
+            needResetOrderableIds.add(item.getOrderableId());
           } else {
             needDeleteOrderableIds.add(item.getOrderableId());
           }
         }
       }
 
-      // TODO: check physicalInventory's programId exists ( 6/28/22 by kourengang)
-      PhysicalInventoryDto physicalInventory = siglusPhysicalInventoryService.getPhysicalInventory(physicalInventoryId);
+      // TODO: check physicalInventoryDto's programId exists ( 6/28/22 by kourengang)
+      PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getPhysicalInventory(
+          physicalInventoryId);
+      if (physicalInventoryDto == null) {
+        throw new IllegalArgumentException("physical inventory not exists. id = " + physicalInventoryId);
+      }
 
-      Iterator<PhysicalInventoryLineItemDto> iterator = physicalInventory.getLineItems().iterator();
+      Iterator<PhysicalInventoryLineItemDto> iterator = physicalInventoryDto.getLineItems().iterator();
       while (iterator.hasNext()) {
         PhysicalInventoryLineItemDto physicalInventoryLineItemDto = iterator.next();
-        if (needReplaceOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {
+        if (needResetOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {
           CanFulfillForMeEntryDto canFulfillForMeEntryDto = canFulfillForMeEntryDtoMap.get(
               getUniqueKey(physicalInventoryLineItemDto));
           if (canFulfillForMeEntryDto != null) {
             physicalInventoryLineItemDto.setQuantity(canFulfillForMeEntryDto.getStockOnHand());
-            // todo 这里设置为空 可以这样吗
             physicalInventoryLineItemDto.setReasonFreeText(null);
           }
         } else if (needDeleteOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {
           iterator.remove();
         }
       }
-      siglusPhysicalInventoryService.saveDraftForProductsInOneProgram(physicalInventory);
+      siglusPhysicalInventoryService.saveDraftForProductsForOneProgram(physicalInventoryDto);
     }
   }
 
-  public void updateSubDrafts(List<UUID> subDraftIds, PhysicalInventoryDto dto) {
+  public void updateSubDrafts(List<UUID> subDraftIds, PhysicalInventoryDto physicalInventoryDto) {
     updateSubDraftsStatus(subDraftIds, PhysicalInventorySubDraftEnum.DRAFT);
 
     List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(subDraftIds);
@@ -162,83 +162,98 @@ public class SiglusPhysicalInventorySubDraftService {
     List<UUID> physicalInventoryIds = subDrafts.stream().map(PhysicalInventorySubDraft::getPhysicalInventoryId)
         .distinct().collect(Collectors.toList());
 
-    checkConflictSubDraft(physicalInventoryIds, dto, subDraftIds);
+    checkConflictSubDraft(physicalInventoryIds, physicalInventoryDto, subDraftIds);
 
+    saveSubDraftsLineItems(physicalInventoryDto, physicalInventoryIds);
+  }
+
+  private void saveSubDraftsLineItems(PhysicalInventoryDto dto, List<UUID> physicalInventoryIds) {
     Map<UUID, List<PhysicalInventoryLineItemDto>> programLineItemMap = dto.getLineItems().stream()
         .collect(Collectors.groupingBy(PhysicalInventoryLineItemDto::getProgramId));
 
     for (UUID physicalInventoryId : physicalInventoryIds) {
-      PhysicalInventoryDto physicalInventory = siglusPhysicalInventoryService.getPhysicalInventory(physicalInventoryId);
-      UUID programId = physicalInventory.getProgramId();
+      PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getPhysicalInventory(
+          physicalInventoryId);
+      UUID programId = physicalInventoryDto.getProgramId();
 
       List<PhysicalInventoryLineItemDto> curLineItems = programLineItemMap.get(programId);
 
       List<String> uniqueKeyList = curLineItems.stream().map(this::getUniqueKey).collect(Collectors.toList());
-      List<PhysicalInventoryLineItemDto> oldLineItems = physicalInventory.getLineItems();
+      List<PhysicalInventoryLineItemDto> oldLineItems = physicalInventoryDto.getLineItems();
 
       List<PhysicalInventoryLineItemDto> notChangedLineItems = oldLineItems.stream()
           .filter(item -> !uniqueKeyList.contains(getUniqueKey(item))).collect(
               Collectors.toList());
 
+      // TODO:  line item reason and program is empty add implement ( 6/29/22 by kourengang)
+
       List<PhysicalInventoryLineItemDto> newLineItems = Lists.newArrayList(notChangedLineItems);
       newLineItems.addAll(curLineItems);
 
-      physicalInventory.setLineItems(newLineItems);
+      physicalInventoryDto.setLineItems(newLineItems);
 
-      siglusPhysicalInventoryService.saveDraftForProductsInOneProgram(physicalInventory);
+      siglusPhysicalInventoryService.saveDraftForProductsForOneProgram(physicalInventoryDto);
     }
   }
 
-  private void checkConflictSubDraft(List<UUID> physicalInventoryIds, PhysicalInventoryDto dto,
+  private void checkConflictSubDraft(List<UUID> physicalInventoryIds, PhysicalInventoryDto physicalInventoryDto,
       List<UUID> subDraftIds) {
-    List<PhysicalInventoryLineItemsExtension> physicalInventories
+    List<PhysicalInventoryLineItemsExtension> physicalInventoryLineItemsExtensions
         = lineItemsExtensionRepository.findByPhysicalInventoryIdIn(physicalInventoryIds);
-    List<ProductSubDraftConflictDto> result = new ArrayList<>();
-    for (PhysicalInventoryLineItemDto lineItem : dto.getLineItems()) {
+
+    List<ProductSubDraftConflictDto> conflictDtoList = new ArrayList<>();
+    Set<UUID> conflictOrderableIds = new HashSet<>();
+    for (PhysicalInventoryLineItemDto lineItem : physicalInventoryDto.getLineItems()) {
+      if (conflictOrderableIds.contains(lineItem.getOrderableId())) {
+        continue;
+      }
       String orderableUniqueKey = lineItem.getOrderableId().toString();
-      Optional<PhysicalInventoryLineItemsExtension> oldLineItem = physicalInventories.stream()
+      Optional<PhysicalInventoryLineItemsExtension> oldLineItem = physicalInventoryLineItemsExtensions.stream()
           .filter(item -> item.getOrderableId().toString().equals(orderableUniqueKey)).findFirst();
       // exist old line item and not current operating drafts
       if (oldLineItem.isPresent() && !subDraftIds.contains(oldLineItem.get().getSubDraftId())) {
-
         ProductSubDraftConflictDto build = ProductSubDraftConflictDto.builder()
             .conflictWithSubDraftId(oldLineItem.get().getSubDraftId())
             .orderableId(lineItem.getOrderableId())
             .build();
-        result.add(build);
+        conflictDtoList.add(build);
+        conflictOrderableIds.add(lineItem.getOrderableId());
       }
     }
-    if (CollectionUtils.isEmpty(result)) {
+    if (CollectionUtils.isEmpty(conflictDtoList)) {
       return;
     }
 
-    List<UUID> conflictOrderableIds = result.stream().map(ProductSubDraftConflictDto::getOrderableId)
-        .collect(Collectors.toList());
-    Page<Orderable> orderables = orderableRepository.findAllLatestByIds(conflictOrderableIds, null);
-    Map<UUID, Orderable> orderableMap = orderables.getContent().stream()
-        .collect(Collectors.toMap(Orderable::getId, Function.identity()));
+    fillConflictDtoList(conflictDtoList, conflictOrderableIds);
 
-    List<UUID> existSubDraftIds = result.stream().map(ProductSubDraftConflictDto::getConflictWithSubDraftId)
+    throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_SUB_DRAFT), conflictDtoList);
+  }
+
+  private void fillConflictDtoList(List<ProductSubDraftConflictDto> conflictDtoList, Set<UUID> conflictOrderableIds) {
+    List<OrderableDto> orderables = siglusOrderableService.getAllProducts();
+    Map<UUID, OrderableDto> orderableMap = orderables.stream()
+        .filter(item -> conflictOrderableIds.contains(item.getId()))
+        .collect(Collectors.toMap(OrderableDto::getId, Function.identity()));
+
+    List<UUID> existSubDraftIds = conflictDtoList.stream().map(ProductSubDraftConflictDto::getConflictWithSubDraftId)
         .collect(Collectors.toList());
     List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(existSubDraftIds);
     Map<UUID, Integer> subDraftsMap = subDrafts.stream()
         .collect(Collectors.toMap(PhysicalInventorySubDraft::getId, PhysicalInventorySubDraft::getNum));
 
-    for (ProductSubDraftConflictDto item : result) {
-      Orderable orderable = orderableMap.get(item.getOrderableId());
-      Integer num = subDraftsMap.get(item.getConflictWithSubDraftId());
+    for (ProductSubDraftConflictDto draftConflictDto : conflictDtoList) {
+      OrderableDto orderable = orderableMap.get(draftConflictDto.getOrderableId());
+      Integer num = subDraftsMap.get(draftConflictDto.getConflictWithSubDraftId());
       if (orderable != null && num != null) {
-        item.setProductCode(orderable.getProductCode().toString());
-        item.setProductName(orderable.getFullProductName());
-        item.setConflictWith(DRAFT + num);
+        draftConflictDto.setProductCode(orderable.getProductCode());
+        draftConflictDto.setProductName(orderable.getFullProductName());
+        draftConflictDto.setConflictWith(DRAFT + num);
       }
     }
-    throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_SUB_DRAFT), result);
   }
 
   private String getUniqueKey(PhysicalInventoryLineItemDto item) {
     if (item.getLotId() == null) {
-      log.info("PhysicalInventoryLineItemDto=" + JSON.toJSONString(item));
       return item.getOrderableId().toString();
     }
     return item.getOrderableId().toString() + "&" + item.getLotId().toString();
@@ -246,7 +261,6 @@ public class SiglusPhysicalInventorySubDraftService {
 
   private String getUniqueKey(CanFulfillForMeEntryDto item) {
     if (item.getLot() == null || item.getLot().getId() == null) {
-      log.info("CanFulfillForMeEntryDto=" + JSON.toJSONString(item));
       return item.getOrderable().getId().toString();
     }
     return item.getOrderable().getId().toString() + "&" + item.getLot().getId().toString();

@@ -50,6 +50,7 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntr
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.referencedata.Code;
 import org.siglus.common.domain.referencedata.Orderable;
+import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -101,6 +102,9 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
   @Mock
   private OrderableRepository orderableRepository;
+  @Mock
+  private SiglusOrderableService siglusOrderableService;
+
 
   @Mock
   private PhysicalInventoryController inventoryController;
@@ -232,11 +236,12 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
     when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(Lists.newArrayList(physicalInventoryId))).thenReturn(
         physicalInventories);
-    Orderable orderable1 = new Orderable(new Code("orderable1 name"), null, 1, 1, true, orderableId, 1L);
-    orderable1.setFullProductName("orderable1 name");
+    OrderableDto dto = new OrderableDto();
+    dto.setId(orderableId);
+    dto.setFullProductName("orderable1 name");
 
-    Page<Orderable> orderables = new PageImpl<>(Lists.newArrayList(), null, 2);
-    when(orderableRepository.findAllLatestByIds(Lists.newArrayList(orderableId), null)).thenReturn(orderables);
+    List<OrderableDto> orderables = Lists.newArrayList(dto);
+    when(siglusOrderableService.getAllProducts()).thenReturn(orderables);
     PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
         .programId(programId)
         .orderableId(orderableId)
@@ -255,6 +260,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .programId(programId)
         .lineItems(Lists.newArrayList(lineItemDtoOne))
         .build();
+
 
     // when
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto);
@@ -297,14 +303,14 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
             .orderableId(orderableId)
             .lotId(lotId)
             .subDraftId(subDraftId)
-            .isInitial(1)
+            .isInitial(true)
             .build(),
         PhysicalInventoryLineItemsExtension.builder()
             .physicalInventoryId(physicalInventoryId)
             .orderableId(orderableId2)
             .lotId(lotId2)
             .subDraftId(subDraftId)
-            .isInitial(1)
+            .isInitial(true)
             .build()
     );
     when(lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryId)).thenReturn(physicalInventories);

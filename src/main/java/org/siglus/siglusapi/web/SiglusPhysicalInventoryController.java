@@ -143,7 +143,7 @@ public class SiglusPhysicalInventoryController {
       siglusPhysicalInventoryService.checkDraftIsExist(dto.getFacilityId());
       return siglusPhysicalInventoryService.saveDraftForAllProducts(dto);
     }
-    return siglusPhysicalInventoryService.saveDraftForProductsInOneProgram(dto);
+    return siglusPhysicalInventoryService.saveDraftForProductsForOneProgram(dto);
   }
 
   @DeleteMapping("/{id}")

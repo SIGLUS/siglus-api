@@ -306,7 +306,7 @@ public class SiglusPhysicalInventoryService {
                         physicalInventory.getFacilityId(), true)))
                 .build();
           }
-          extension.setIsInitial(0);
+          extension.setIsInitial(true);
           PhysicalInventoryLineItemsExtension finalExtension = extension;
           extension.setSubDraftId(
               finalSubDraftList.stream().filter(subDraft -> subDraft.getNum() == groupNum.get()
@@ -357,7 +357,7 @@ public class SiglusPhysicalInventoryService {
         .facilityId(physicalInventoryDto.getFacilityId()).lineItems(physicalInventoryLineItems)
         .id(physicalInventoryDto.getId()).build();
     if (CollectionUtils.isNotEmpty(physicalInventoryLineItems)) {
-      return saveDraftForProductsInOneProgram(toBeSavedPhysicalInventoryDto);
+      return saveDraftForProductsForOneProgram(toBeSavedPhysicalInventoryDto);
     }
     return toBeSavedPhysicalInventoryDto;
 
@@ -422,7 +422,7 @@ public class SiglusPhysicalInventoryService {
     return dto;
   }
 
-  public PhysicalInventoryDto saveDraftForProductsInOneProgram(PhysicalInventoryDto dto) {
+  public PhysicalInventoryDto saveDraftForProductsForOneProgram(PhysicalInventoryDto dto) {
     saveDraft(dto, dto.getId());
     List<PhysicalInventoryDto> physicalInventoryDtos = Collections.singletonList(dto);
     if (CollectionUtils.isNotEmpty(physicalInventoryDtos)) {

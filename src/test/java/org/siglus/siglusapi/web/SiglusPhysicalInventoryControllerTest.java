@@ -142,7 +142,7 @@ public class SiglusPhysicalInventoryControllerTest {
 
     siglusPhysicalInventoryController.updatePhysicalInventory(id, physicalInventoryDto);
 
-    verify(siglusPhysicalInventoryService).saveDraftForProductsInOneProgram(physicalInventoryDto);
+    verify(siglusPhysicalInventoryService).saveDraftForProductsForOneProgram(physicalInventoryDto);
   }
 
   @Test
