@@ -29,6 +29,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.springframework.beans.BeanUtils;
 
 @Data
@@ -57,7 +58,7 @@ public class StockManagementDraftDto {
 
   private String destinationName;
 
-  private String status;
+  private PhysicalInventorySubDraftEnum status;
 
   private String documentationNumber;
 
