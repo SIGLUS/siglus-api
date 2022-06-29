@@ -33,6 +33,7 @@ public class StockMovementService {
 
   private static final String UNPACK_KIT_TYPE = "UNPACK_KIT";
 
+  private static final String UNPACK_KIT_REASON = "Unpack Kit";
   private static final String ISSUE_TYPE = "ISSUE";
 
   @Autowired
@@ -57,7 +58,7 @@ public class StockMovementService {
           .dateOfMovement(productMovement.getEventTime().getOccurredDate())
           .type(UNPACK_KIT_TYPE.equals(productMovement.getMovementDetail().getType().toString()) ? ISSUE_TYPE
               : productMovement.getMovementDetail().getType().toString())
-          .reason(UNPACK_KIT_TYPE.equals(productMovement.getMovementDetail().getType().toString()) ? ISSUE_TYPE
+          .reason(UNPACK_KIT_TYPE.equals(productMovement.getMovementDetail().getType().toString()) ? UNPACK_KIT_REASON
               : productMovement.getMovementDetail().getReason())
           .movementQuantity(productMovement.getMovementDetail().getAdjustment())
           .productSoh(productMovement.getStockQuantity()).requested(productMovement.getRequestedQuantity())
