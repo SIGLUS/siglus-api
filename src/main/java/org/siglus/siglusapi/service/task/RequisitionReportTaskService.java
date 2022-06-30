@@ -20,10 +20,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.FacilityDto;
-import org.openlmis.requisition.dto.ProcessingPeriodDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
-import org.openlmis.requisition.service.referencedata.PeriodReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
@@ -36,7 +34,6 @@ public class RequisitionReportTaskService {
 
   private final ProgramReferenceDataService programDataService;
   private final FacilityReferenceDataService facilityReferenceDataService;
-  private final PeriodReferenceDataService periodReferenceDataService;
   private final RequisitionMonthReportRepository requisitionMonthReportRepository;
 
   public void refresh() {
@@ -44,14 +41,10 @@ public class RequisitionReportTaskService {
     log.info("allProgramDto.size = " + allProgramDto.size());
     List<FacilityDto> allFacilityDto = facilityReferenceDataService.findAll();
     log.info("allFacilityDto.size = " + allFacilityDto.size());
-    List<ProcessingPeriodDto> allProcessingPeriodDto = periodReferenceDataService.findAll();
-    log.info("allProcessingPeriodDto.size = " + allProcessingPeriodDto.size());
 
     UUID uuid = UUID.fromString("2ee6bbf4-cfcf-11e9-9535-0242ac130005");
     List<RequisitionMonthlyReport> facilities = requisitionMonthReportRepository.findByFacilityId(uuid);
     log.info("facilities.size = " + facilities.size());
-
-
 
 
   }
