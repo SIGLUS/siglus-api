@@ -43,6 +43,7 @@ import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,6 +68,9 @@ public class SiglusPhysicalInventorySubDraftService {
   @Autowired
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
 
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+
   @Transactional
   public void deleteSubDrafts(List<UUID> subDraftIds) {
     log.info("deleteSubDrafts, subDraftIds=" + subDraftIds);
@@ -88,12 +92,15 @@ public class SiglusPhysicalInventorySubDraftService {
   private List<PhysicalInventorySubDraft> updateSubDraftsStatus(List<UUID> subDraftIds,
       PhysicalInventorySubDraftEnum subDraftStatus) {
     log.info("updateSubDraftsStatus, subDraftIds=" + subDraftIds);
+    UUID currentUserId = authenticationHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
     List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(subDraftIds);
     if (CollectionUtils.isEmpty(subDrafts)) {
       return new ArrayList<>();
     }
-
-    subDrafts.forEach(item -> item.setStatus(subDraftStatus));
+    subDrafts.forEach(item -> {
+      item.setStatus(subDraftStatus);
+      item.setOperatorId(currentUserId);
+    });
 
     physicalInventorySubDraftRepository.save(subDrafts);
 
@@ -121,7 +128,7 @@ public class SiglusPhysicalInventorySubDraftService {
       List<UUID> needDeleteOrderableIds = new ArrayList<>();
       for (PhysicalInventoryLineItemsExtension item : oldLineItemsExtension) {
         if (subDraftIds.contains(item.getSubDraftId())) {
-          if (Boolean.TRUE.equals(item.getIsInitial())) {
+          if (Boolean.TRUE.equals(item.getInitial())) {
             needResetOrderableIds.add(item.getOrderableId());
           } else {
             needDeleteOrderableIds.add(item.getOrderableId());
@@ -154,8 +161,8 @@ public class SiglusPhysicalInventorySubDraftService {
     }
   }
 
+  @Transactional
   public void updateSubDrafts(List<UUID> subDraftIds, PhysicalInventoryDto physicalInventoryDto) {
-    updateSubDraftsStatus(subDraftIds, PhysicalInventorySubDraftEnum.DRAFT);
 
     List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(subDraftIds);
 
@@ -163,6 +170,8 @@ public class SiglusPhysicalInventorySubDraftService {
         .distinct().collect(Collectors.toList());
 
     checkConflictSubDraft(physicalInventoryIds, physicalInventoryDto, subDraftIds);
+
+    updateSubDraftsStatus(subDraftIds, PhysicalInventorySubDraftEnum.DRAFT);
 
     saveSubDraftsLineItems(physicalInventoryDto, physicalInventoryIds);
   }

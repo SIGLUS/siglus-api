@@ -21,7 +21,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
 
-import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -30,7 +30,8 @@ import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
-import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.dto.ProductSubDraftConflictDto;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -116,15 +117,20 @@ public class SiglusPhysicalInventoryController {
 
   @GetMapping("/test")
   public void testCode() {
-    throw new ValidationMessageException(new Message(ERROR_INVENTORY_CONFLICT_SUB_DRAFT, JSON.toJSONString("[\n"
-        + "  {\n"
-        + "    \"conflictWith\": \"Draft 1\",\n"
-        + "    \"conflictWithSubDraftId\": \"e91eb33f-d470-4438-948b-44cfec5e2ab5\",\n"
-        + "    \"orderableId\": \"af085fe6-ab2a-442c-ac9d-8b850c8f5d66\",\n"
-        + "    \"productCode\": \"08D01i\",\n"
-        + "    \"productName\": \"Amikacina sulfato; (500mg/2ml); Inj - each\"\n"
-        + "  }\n"
-        + "]")));
+    throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_SUB_DRAFT),
+        Lists.newArrayList(ProductSubDraftConflictDto.builder()
+            .conflictWith("Draft 1")
+            .conflictWithSubDraftId(UUID.randomUUID())
+            .orderableId(UUID.randomUUID())
+            .productCode("code")
+            .productName("name")
+            .build(), ProductSubDraftConflictDto.builder()
+            .conflictWith("Draft 2")
+            .conflictWithSubDraftId(UUID.randomUUID())
+            .orderableId(UUID.randomUUID())
+            .productCode("code2")
+            .productName("name2")
+            .build()));
   }
 
   @PostMapping

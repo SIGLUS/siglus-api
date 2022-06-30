@@ -307,7 +307,7 @@ public class SiglusPhysicalInventoryService {
                         physicalInventory.getFacilityId(), true)))
                 .build();
           }
-          extension.setIsInitial(true);
+          extension.setInitial(true);
           PhysicalInventoryLineItemsExtension finalExtension = extension;
           extension.setSubDraftId(
               finalSubDraftList.stream().filter(subDraft -> subDraft.getNum() == groupNum.get()

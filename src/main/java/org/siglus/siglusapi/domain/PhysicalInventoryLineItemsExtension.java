@@ -42,7 +42,7 @@ public class PhysicalInventoryLineItemsExtension extends BaseEntity {
 
   private String reasonFreeText;
 
-  private Boolean isInitial;
+  private Boolean initial;
 
   private UUID subDraftId;
 }

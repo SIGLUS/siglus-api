@@ -26,9 +26,11 @@ import com.google.common.collect.Sets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.assertj.core.util.Lists;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -58,12 +60,15 @@ import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
 public class SiglusPhysicalInventorySubDraftServiceTest {
 
+  @Mock
+  private SiglusAuthenticationHelper authenticationHelper;
   @Captor
   private ArgumentCaptor<PhysicalInventoryDto> physicalInventoryDtoArgumentCaptor;
 
@@ -146,6 +151,11 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
   private final String startDate = "startDate";
 
   private final String endDate = "endDate";
+
+  @Before
+  public void setup() {
+    when(authenticationHelper.getCurrentUserId()).thenReturn(Optional.of(UUID.randomUUID()));
+  }
 
   @Test
   public void shouldCallUpdateSubDraftsWithEmptyLineItemWhenUpdateSubDrafts() {
@@ -301,14 +311,14 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
             .orderableId(orderableId)
             .lotId(lotId)
             .subDraftId(subDraftId)
-            .isInitial(true)
+            .initial(true)
             .build(),
         PhysicalInventoryLineItemsExtension.builder()
             .physicalInventoryId(physicalInventoryId)
             .orderableId(orderableId2)
             .lotId(lotId2)
             .subDraftId(subDraftId)
-            .isInitial(true)
+            .initial(true)
             .build()
     );
     when(lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryId)).thenReturn(physicalInventories);
