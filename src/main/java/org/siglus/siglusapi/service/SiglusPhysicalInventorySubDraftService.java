@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB_DRAFT;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -195,6 +196,8 @@ public class SiglusPhysicalInventorySubDraftService {
       newLineItems.addAll(curLineItems);
 
       physicalInventoryDto.setLineItems(newLineItems);
+
+      log.info("saveDraft=" + JSON.toJSONString(physicalInventoryDto));
 
       siglusPhysicalInventoryService.saveDraftForProductsForOneProgram(physicalInventoryDto);
     }
