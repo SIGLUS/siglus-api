@@ -172,7 +172,7 @@ public class SiglusStockCardSummariesService {
     List<UUID> subDraftUuids = physicalInventoryList.stream().map(PhysicalInventorySubDraft::getId)
         .collect(Collectors.toList());
     List<PhysicalInventoryLineItemsExtension> physicalInventoryLineItemsExtensions =
-        lineItemsExtensionRepository.findByPhysicalInventoryIdIn(subDraftUuids);
+        lineItemsExtensionRepository.findBySubDraftIdIn(subDraftUuids);
     return physicalInventoryLineItemsExtensions.stream()
         // exclude current searching subDraftId
         .filter(item -> !item.getSubDraftId().equals(subDraftId))

@@ -37,4 +37,5 @@ public interface PhysicalInventoryLineItemsExtensionRepository extends
   @Transactional
   void deleteByPhysicalInventoryIdIn(Collection<UUID> ids);
 
+  List<PhysicalInventoryLineItemsExtension> findBySubDraftIdIn(List<UUID> subDraftUuids);
 }
