@@ -42,6 +42,7 @@ public class SiglusStockManagementDraftController {
   @Autowired
   SiglusStockManagementDraftService stockManagementDraftService;
 
+  //Delete after finish multi-user stock issue feature
   @GetMapping
   public List<StockManagementDraftDto> searchDrafts(@RequestParam UUID program,
       @RequestParam UUID userId, @RequestParam String draftType,

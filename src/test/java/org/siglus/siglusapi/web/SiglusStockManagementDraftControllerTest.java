@@ -52,7 +52,6 @@ public class SiglusStockManagementDraftControllerTest {
     UUID programId = UUID.randomUUID();
     UUID userId = UUID.randomUUID();
     UUID destinationId = UUID.randomUUID();
-    String documentNumber = "document_number1";
     String draftType = "draft_type";
     controller.searchDrafts(programId, userId, draftType, destinationId);
 

@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -96,6 +97,12 @@ public class SiglusStockManagementDraftServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
   }
 
+  /**
+   *    in order to support multi-user,
+   *    the original logic has changed, this test is not applicable.
+   *    should delete when everything ok
+   */
+  @Ignore
   @Test
   public void shouldThrowExceptionWhenCreateNewDraftIfDraftExists() {
     exception.expect(ValidationMessageException.class);
