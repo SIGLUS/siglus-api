@@ -256,6 +256,16 @@ traits:
         responses:
           201:
             description: submit success
+    /task/requisition:
+      displayName: run requisition monthly report task
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
     /programs:
       displayName: Program
       get:
