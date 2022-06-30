@@ -28,10 +28,12 @@ import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
@@ -60,6 +62,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @Service
+@Slf4j
 @SuppressWarnings({"PMD"})
 public class SiglusStockCardSummariesService {
 
@@ -97,6 +100,7 @@ public class SiglusStockCardSummariesService {
 
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
       MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable) {
+    log.info("findSiglusStockCard subDraftIds=" + Optional.ofNullable(subDraftIds));
     UUID userId = authenticationHelper.getCurrentUser().getId();
     Set<String> archivedProducts = null;
     if (Boolean.parseBoolean(parameters.getFirst(EXCLUDE_ARCHIVED)) || Boolean
@@ -143,6 +147,8 @@ public class SiglusStockCardSummariesService {
 
     Set<UUID> orderableIds = orderables.stream().map(PhysicalInventoryLineItemsExtension::getOrderableId)
         .collect(Collectors.toSet());
+
+    log.info("filterBySubDraftIds orderableIds=" + orderableIds);
 
     return summaryV2Dtos.stream().filter(item -> !orderableIds.contains(item.getOrderable().getId()))
         .collect(Collectors.toList());
