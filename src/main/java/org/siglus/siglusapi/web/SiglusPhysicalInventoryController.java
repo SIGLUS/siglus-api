@@ -31,6 +31,7 @@ import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.ProductSubDraftConflictDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
@@ -106,13 +107,16 @@ public class SiglusPhysicalInventoryController {
 
   @PostMapping("/subDraftSubmit")
   @ResponseStatus(NO_CONTENT)
-  public void submitSubDrafts(@RequestBody List<UUID> subDraftIds) {
-    siglusPhysicalInventorySubDraftService.submitSubDrafts(subDraftIds);
+  public void submitSubDrafts(@RequestBody PhysicalInventorySubDraftDto dto) {
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto,
+        PhysicalInventorySubDraftEnum.SUBMITTED);
+
   }
 
   @PutMapping("/subDraft")
   public void updateSubDrafts(@RequestBody PhysicalInventorySubDraftDto dto) {
-    siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto);
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(dto.getSubDraftIds(), dto,
+        PhysicalInventorySubDraftEnum.DRAFT);
   }
 
   @GetMapping("/test")

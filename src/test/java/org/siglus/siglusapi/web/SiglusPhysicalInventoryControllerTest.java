@@ -30,6 +30,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -211,16 +212,20 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldCallUpdateSubDraftsBySubDraftIdsWhenUpdateSubDrafts() {
     PhysicalInventorySubDraftDto physicalInventoryDto = new PhysicalInventorySubDraftDto();
 
-    siglusPhysicalInventoryController.updateSubDrafts(physicalInventoryDto);
+    siglusPhysicalInventoryController.submitSubDrafts(physicalInventoryDto);
 
-    verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(null, physicalInventoryDto);
+    verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(null, physicalInventoryDto,
+        PhysicalInventorySubDraftEnum.SUBMITTED);
   }
 
   @Test
   public void shouldCallSubmitSubDraftsBySubDraftIdsWhenSubmitSubDrafts() {
-    siglusPhysicalInventoryController.submitSubDrafts(Lists.newArrayList(subDraftId));
+    PhysicalInventorySubDraftDto physicalInventoryDto = new PhysicalInventorySubDraftDto();
 
-    verify(siglusPhysicalInventorySubDraftService).submitSubDrafts(Lists.newArrayList(subDraftId));
+    siglusPhysicalInventoryController.updateSubDrafts(physicalInventoryDto);
+
+    verify(siglusPhysicalInventorySubDraftService).updateSubDrafts(null, physicalInventoryDto,
+        PhysicalInventorySubDraftEnum.DRAFT);
   }
 
 

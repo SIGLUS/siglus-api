@@ -85,10 +85,6 @@ public class SiglusPhysicalInventorySubDraftService {
     }
   }
 
-  public void submitSubDrafts(List<UUID> subDraftIds) {
-    updateSubDraftsStatus(subDraftIds, PhysicalInventorySubDraftEnum.SUBMITTED);
-  }
-
   private List<PhysicalInventorySubDraft> updateSubDraftsStatus(List<UUID> subDraftIds,
       PhysicalInventorySubDraftEnum subDraftStatus) {
     log.info("updateSubDraftsStatus, subDraftIds=" + subDraftIds);
@@ -162,8 +158,8 @@ public class SiglusPhysicalInventorySubDraftService {
   }
 
   @Transactional
-  public void updateSubDrafts(List<UUID> subDraftIds, PhysicalInventoryDto physicalInventoryDto) {
-
+  public void updateSubDrafts(List<UUID> subDraftIds, PhysicalInventoryDto physicalInventoryDto,
+      PhysicalInventorySubDraftEnum status) {
     List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(subDraftIds);
 
     List<UUID> physicalInventoryIds = subDrafts.stream().map(PhysicalInventorySubDraft::getPhysicalInventoryId)
@@ -171,7 +167,7 @@ public class SiglusPhysicalInventorySubDraftService {
 
     checkConflictSubDraft(physicalInventoryIds, physicalInventoryDto, subDraftIds);
 
-    updateSubDraftsStatus(subDraftIds, PhysicalInventorySubDraftEnum.DRAFT);
+    updateSubDraftsStatus(subDraftIds, status);
 
     saveSubDraftsLineItems(physicalInventoryDto, physicalInventoryIds);
   }

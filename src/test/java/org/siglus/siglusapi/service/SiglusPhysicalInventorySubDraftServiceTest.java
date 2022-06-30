@@ -53,6 +53,7 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2D
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
@@ -170,7 +171,8 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .build();
 
     // when
-    siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto);
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
+        PhysicalInventorySubDraftEnum.DRAFT);
     verify(physicalInventorySubDraftRepository, times(2)).findAll(any(List.class));
   }
 
@@ -208,7 +210,8 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .build();
 
     // when
-    siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto);
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
+        PhysicalInventorySubDraftEnum.DRAFT);
     // then
     verify(siglusPhysicalInventoryService, times(1)).getFullPhysicalInventoryDto(physicalInventoryId);
   }
@@ -270,7 +273,8 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .build();
 
     // when
-    siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto);
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
+        PhysicalInventorySubDraftEnum.DRAFT);
     // then
     verify(siglusPhysicalInventoryService, times(2)).getFullPhysicalInventoryDto(physicalInventoryId);
 
@@ -339,23 +343,6 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
     // when
     siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
-    // then
-    verify(physicalInventorySubDraftRepository).save(any(List.class));
-
-  }
-
-  @Test
-  public void shouldCallSubmitSubDraftsWhenSubmitSubDrafts() {
-    List<UUID> subDraftIds = Lists.newArrayList(subDraftId);
-    List<PhysicalInventorySubDraft> subDrafts = Lists.newArrayList(PhysicalInventorySubDraft.builder()
-        .physicalInventoryId(physicalInventoryId).num(1)
-        .build(), PhysicalInventorySubDraft.builder()
-        .physicalInventoryId(physicalInventoryId).num(2)
-        .build());
-    when(physicalInventorySubDraftRepository.findAll(subDraftIds)).thenReturn(subDrafts);
-
-    // when
-    siglusPhysicalInventorySubDraftService.submitSubDrafts(subDraftIds);
     // then
     verify(physicalInventorySubDraftRepository).save(any(List.class));
 
