@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.domain;
+package org.siglus.siglusapi.domain.report;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -32,8 +32,7 @@ import org.siglus.common.domain.BaseEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "vw_requisition_monthly_report", schema = "dashboard")
-public class RequisitionMonthlyReport extends BaseEntity {
-
+public class NotSubmitRequisitionMonthlyReport  extends BaseEntity {
   @Column(name = "id")
   private UUID id;
   @Column(name = "inventorydate")
@@ -58,3 +57,4 @@ public class RequisitionMonthlyReport extends BaseEntity {
   private UUID processingPeriodId;
 
 }
+

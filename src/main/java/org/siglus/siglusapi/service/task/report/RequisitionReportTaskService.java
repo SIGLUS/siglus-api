@@ -13,18 +13,15 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.task;
+package org.siglus.siglusapi.service.task.report;
 
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.openlmis.requisition.dto.FacilityDto;
-import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
+import org.siglus.siglusapi.repository.SiglusStockEventRepository;
+import org.siglus.siglusapi.service.client.SiglusProcessingPeriodReferenceDataService;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -34,18 +31,12 @@ public class RequisitionReportTaskService {
 
   private final ProgramReferenceDataService programDataService;
   private final FacilityReferenceDataService facilityReferenceDataService;
+  private final SiglusProcessingPeriodReferenceDataService periodReferenceDataService;
   private final RequisitionMonthReportRepository requisitionMonthReportRepository;
+  private final SiglusStockEventRepository siglusStockEventRepository;
 
   public void refresh() {
-    List<ProgramDto> allProgramDto = programDataService.findAll();
-    log.info("allProgramDto.size = " + allProgramDto.size());
-    List<FacilityDto> allFacilityDto = facilityReferenceDataService.findAll();
-    log.info("allFacilityDto.size = " + allFacilityDto.size());
-
-    UUID uuid = UUID.fromString("2ee6bbf4-cfcf-11e9-9535-0242ac130005");
-    List<RequisitionMonthlyReport> facilities = requisitionMonthReportRepository.findByFacilityId(uuid);
-    log.info("facilities.size = " + facilities.size());
-
+    // TODO:  add implement ( 7/1/22 by kourengang)
 
   }
 

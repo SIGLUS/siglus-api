@@ -13,27 +13,19 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.task;
+package org.siglus.siglusapi.repository;
 
-import lombok.RequiredArgsConstructor;
-import org.siglus.siglusapi.service.task.RequisitionReportTaskService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+import java.util.UUID;
+import org.openlmis.stockmanagement.domain.event.StockEvent;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
-@RequiredArgsConstructor
-@RestController
-@RequestMapping("/api/siglusapi/task/requisition")
-public class RequisitionReportTaskController {
-  private final RequisitionReportTaskService requisitionReportTaskService;
+@SuppressWarnings("PMD.AvoidDuplicateLiterals")
+public interface SiglusStockEventRepository extends JpaRepository<StockEvent, UUID> {
 
-  @GetMapping
-  public ResponseEntity<String> refresh() {
-    requisitionReportTaskService.refresh();
-    return ResponseEntity.ok("ok");
-
-
-  }
-
+  @Query(value =
+      "SELECT DISTINCT MIN(sc.processeddate) OVER (PARTITION BY sc.facilityid) AS processeddate, sc.facilityid "
+          + "FROM stockmanagement.stock_events sc", nativeQuery = true)
+  List<StockEvent> findFirstStockCardGroupByFacility();
 }
