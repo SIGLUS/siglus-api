@@ -59,6 +59,9 @@ public class StockManagementDraft extends BaseEntity {
   private UUID userId;
   private String draftType;
   private UUID destinationId;
+  private UUID sourceId;
+  private UUID initialDraftId;
+  private String creator;
   private PhysicalInventorySubDraftEnum status;
   private String documentationNumber;
 

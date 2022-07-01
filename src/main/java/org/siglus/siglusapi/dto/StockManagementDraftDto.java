@@ -57,7 +57,13 @@ public class StockManagementDraftDto {
 
   private UUID destinationId;
 
+  private UUID sourceId;
+
+  private UUID initialDraftId;
+
   private String destinationName;
+
+  private String creator;
 
   private PhysicalInventorySubDraftEnum status;
 

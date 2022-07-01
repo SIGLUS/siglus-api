@@ -27,7 +27,6 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.requisition.dto.RoleAssignmentDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
@@ -36,7 +35,6 @@ import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
-import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
@@ -133,7 +131,6 @@ public class SiglusStockManagementDraftService {
       String destinationName = findDestinationName(draftDtos.get(0));
       draftDtos.forEach(draft -> draft.setDestinationName(destinationName));
     }
-    getUserRole();
     return draftDtos;
   }
 
@@ -214,12 +211,5 @@ public class SiglusStockManagementDraftService {
         )).findFirst()
         .orElseThrow(() -> new NotFoundException("No such destination with id: " + destinationId))
         .getName();
-  }
-
-  private String getUserRole() {
-    Set<RoleAssignmentDto> roleAssignments = authenticationHelper.getCurrentUser()
-        .getRoleAssignments();
-    UUID id = authenticationHelper.getCurrentUser().getId();
-    return id.toString();
   }
 }
