@@ -45,7 +45,7 @@ public class ProductInfoDto extends ResponseBaseDto {
 
   private boolean isKit;
 
-  private boolean isSentinel;
+  private Boolean isSentinel = false;
 
   private List<ProductKitDto> productsKits;
 

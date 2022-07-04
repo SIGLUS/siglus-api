@@ -222,9 +222,7 @@ public class FcProductService implements ProcessDataService {
     if (basicProductCodes.contains(newOrderable.getProductCode())) {
       extraData.put(IS_BASIC, true);
     }
-    if (product.isSentinel()) {
-      extraData.put(IS_TRACER, true);
-    }
+    extraData.put(IS_TRACER, product.getIsSentinel());
     newOrderable.setExtraData(extraData);
     newOrderable.setTradeItemIdentifier(createTradeItem());
     if (FcUtil.isActive(product.getStatus())) {
@@ -248,7 +246,7 @@ public class FcProductService implements ProcessDataService {
     } else {
       extraData.put(ACTIVE, false);
     }
-    extraData.put(IS_TRACER, current.isSentinel());
+    extraData.put(IS_TRACER, current.getIsSentinel());
     existed.setExtraData(extraData);
     if (FcUtil.isActive(current.getStatus())) {
       existed.setPrograms(buildProgramOrderableDtos(current));
@@ -322,7 +320,7 @@ public class FcProductService implements ProcessDataService {
     }
     if (isDifferentProductTracer(existed, current)) {
       log.info("[FC product] isTracer different, existed: {}, current: {}", existed.getExtraData().get(IS_TRACER),
-          current.isSentinel());
+          current.getIsSentinel());
       return true;
     }
     if (FcUtil.isActive(current.getStatus()) && isDifferentProgramOrderable(existed, current)) {
@@ -345,7 +343,7 @@ public class FcProductService implements ProcessDataService {
   private boolean isDifferentProductTracer(OrderableDto existed, ProductInfoDto current) {
     Map<String, Object> existedExtraData = existed.getExtraData();
     Object tracerData = existedExtraData.get(IS_TRACER);
-    return tracerData == null || (boolean) tracerData != current.isSentinel();
+    return tracerData == null || (boolean) tracerData != current.getIsSentinel();
   }
 
   private boolean isDifferentProgramOrderable(OrderableDto existed, ProductInfoDto current) {
