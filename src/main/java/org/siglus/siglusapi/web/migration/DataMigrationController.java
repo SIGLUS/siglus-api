@@ -20,6 +20,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 import java.util.List;
 import javax.validation.Valid;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
 import org.siglus.siglusapi.service.migration.DataMigrationService;
@@ -35,17 +36,26 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/siglusapi/data-migration")
 @Validated
 public class DataMigrationController {
+
   private final DataMigrationService dataMigrationService;
 
   public DataMigrationController(DataMigrationService service) {
     this.dataMigrationService = service;
   }
 
-  @PostMapping("/stock-cards/{facilityId}")
+  @PostMapping("/{facilityId}/stock-cards")
   @ResponseStatus(CREATED)
   public CreateStockCardResponse createStockCards(
       @PathVariable String facilityId,
       @RequestBody @Valid @NotEmpty List<StockCardCreateRequest> requests) {
     return dataMigrationService.createStockCards(facilityId, requests);
+  }
+
+  @PostMapping("/{facilityId}/cmms")
+  @ResponseStatus(CREATED)
+  public void createOrUpdateCmms(
+      @PathVariable String facilityId,
+      @RequestBody @Valid List<HfCmmDto> hfCmmDtos) {
+    dataMigrationService.createOrUpdateCmms(facilityId, hfCmmDtos);
   }
 }

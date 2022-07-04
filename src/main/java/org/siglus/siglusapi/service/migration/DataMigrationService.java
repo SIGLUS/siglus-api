@@ -20,6 +20,7 @@ import static java.lang.String.format;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
 import org.siglus.siglusapi.exception.NotFoundException;
@@ -60,5 +61,10 @@ public class DataMigrationService {
     return userReferenceDataService.getUserInfo(UUID.fromString(facilityId)).getContent().stream()
         .findFirst()
         .orElseThrow(() -> new NotFoundException(format(NO_USER_FOUND_IN_FACILITY, facilityId)));
+  }
+
+  public void createOrUpdateCmms(String facilityId, List<HfCmmDto> hfCmmDtos) {
+    assumeOneUserInFacility(facilityId);
+    meService.processHfCmms(hfCmmDtos);
   }
 }

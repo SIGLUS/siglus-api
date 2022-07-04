@@ -25,13 +25,17 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.service.migration.DataMigrationService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DataMigrationControllerTest {
-  @Mock private DataMigrationService dataMigrationService;
-  @InjectMocks private DataMigrationController dataMigrationController;
+
+  @Mock
+  private DataMigrationService dataMigrationService;
+  @InjectMocks
+  private DataMigrationController dataMigrationController;
 
   @Test
   public void shouldCallMigrationServiceWhenCreateStockCards() {
@@ -41,5 +45,15 @@ public class DataMigrationControllerTest {
     // then
     verify(dataMigrationService)
         .createStockCards(anyString(), anyListOf(StockCardCreateRequest.class));
+  }
+
+  @Test
+  public void shouldCallMigrationServiceWhenCreateCmms() {
+    // when
+    dataMigrationController.createOrUpdateCmms("facility-id", emptyList());
+
+    // then
+    verify(dataMigrationService)
+        .createOrUpdateCmms(anyString(), anyListOf(HfCmmDto.class));
   }
 }

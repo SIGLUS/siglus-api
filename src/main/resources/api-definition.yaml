@@ -246,16 +246,29 @@ traits:
 /api:
 
   /siglusapi:
-    /data-migration/stock-cards/{facilityId}:
-      displayName: Submit stock cards for a specific facility
-      post:
-        is: [ secured ]
-        body:
-          application/json:
-            schema: arrayOfStrings
-        responses:
-          201:
-            description: submit success
+    /data-migration/{facilityId}:
+      /stock-cards:
+        displayName: Submit stock cards for a specific facility
+        post:
+          is: [ secured ]
+          body:
+            application/json:
+              schema: arrayOfStrings
+          responses:
+            201:
+              description: submit success
+      /cmms:
+        displayName: submit cmms for a specific facility
+        post:
+          is: [ secured ]
+          body:
+            application/json:
+              schema: arrayOfStrings
+          responses:
+            201:
+              description: submit success
+    /task/requisition:
+      displayName: run requisition monthly report task
     /task/requisition/refresh:
       displayName: refresh requisition monthly report task
       post:
