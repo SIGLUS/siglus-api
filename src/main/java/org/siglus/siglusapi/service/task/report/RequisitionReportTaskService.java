@@ -16,8 +16,10 @@
 package org.siglus.siglusapi.service.task.report;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +35,6 @@ import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
@@ -47,6 +48,7 @@ import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -93,15 +95,15 @@ public class RequisitionReportTaskService {
         .collect(Collectors.toMap(this::getUniqueKey, Function.identity(), (e1, e2) -> e1));
     log.info("requisitionMonthlyReports.size = " + requisitionMonthlyReports.size());
 
-    List<StockCard> firstStockCardGroupByFacility = siglusStockCardRepository
-        .findFirstStockCardGroupByFacility();
-    Map<String, StockCard> facilityStockInventoryDateMap = firstStockCardGroupByFacility.stream()
+    List<FacillityStockCardDateDto> firstStockCardGroupByFacility
+        = facilityNativeRepository.findFirstStockCardGroupByFacility();
+    Map<String, FacillityStockCardDateDto> facilityStockInventoryDateMap = firstStockCardGroupByFacility.stream()
         .collect(Collectors.toMap(
             facillityStockCardDateDto -> getFirstStockCardUniqueKey(facillityStockCardDateDto.getFacilityId(),
                 facillityStockCardDateDto.getProgramId()), Function.identity()));
 
     Set<UUID> existedPhysicalInventoryFacilityIds = firstStockCardGroupByFacility.stream()
-        .map(StockCard::getFacilityId).collect(
+        .map(FacillityStockCardDateDto::getFacilityId).collect(
             Collectors.toSet());
 
     allFacilityDto = allFacilityDto.stream().filter(item -> existedPhysicalInventoryFacilityIds.contains(item.getId()))
@@ -132,7 +134,7 @@ public class RequisitionReportTaskService {
           log.info(String.format("cannot InitRequisition, programIds=%s, facilityId=%s", programId, facilityId));
           continue;
         }
-        StockCard facillityStockCardDateDto = facilityStockInventoryDateMap.get(
+        FacillityStockCardDateDto facillityStockCardDateDto = facilityStockInventoryDateMap.get(
             getFirstStockCardUniqueKey(facilityId, programId));
         int startPeriodIndexOfFacility = getStartPeriodIndexOfFacility(allProcessingPeriodExtensionDto, facilityId,
             programId, facillityStockCardDateDto);
@@ -169,7 +171,7 @@ public class RequisitionReportTaskService {
   }
 
   private int getStartPeriodIndexOfFacility(List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto,
-      UUID facilityId, UUID programId, StockCard facillityStockCardDateDto) {
+      UUID facilityId, UUID programId, FacillityStockCardDateDto facillityStockCardDateDto) {
     int startPeriodIndexOfFacility;
 
     if (facillityStockCardDateDto == null) {
@@ -177,9 +179,9 @@ public class RequisitionReportTaskService {
           + ", programId=%s,facilityId=%s", programId, facilityId));
       startPeriodIndexOfFacility = 0;
     } else {
-      LocalDate firstOccurredDate = facillityStockCardDateDto.getOccurredDate();
+      Date firstOccurredDate = facillityStockCardDateDto.getOccurredDate();
       startPeriodIndexOfFacility = findStartPeriodIndexOfFacility(allProcessingPeriodExtensionDto,
-          firstOccurredDate);
+          firstOccurredDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
     }
     return startPeriodIndexOfFacility;
   }

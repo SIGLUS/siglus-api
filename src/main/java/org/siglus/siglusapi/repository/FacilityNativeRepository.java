@@ -22,6 +22,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.android.db.Facility;
+import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -110,8 +111,7 @@ public class FacilityNativeRepository extends BaseNativeRepository {
         + "         LEFT JOIN referencedata.facility_types ft ON f.typeid = ft.id "
         + "         LEFT JOIN siglusintegration.facility_type_mapping ftm "
         + "ON ftm.facilitytypecode = ft.code";
-    MapSqlParameterSource params = new MapSqlParameterSource();
-    return namedJdbc.query(query, params, requisitionMonthlyReportFacilityExtractor());
+    return namedJdbc.query(query, requisitionMonthlyReportFacilityExtractor());
   }
 
   private RowMapper<RequisitionMonthlyReportFacility> requisitionMonthlyReportFacilityExtractor() {
@@ -125,6 +125,24 @@ public class FacilityNativeRepository extends BaseNativeRepository {
             readAsString(rs, "facilitymergetype"),
             readAsString(rs, "districtfacilitycode"),
             readAsString(rs, "provincefacilitycode"));
+  }
+
+  public List<FacillityStockCardDateDto> findFirstStockCardGroupByFacility() {
+    String query = "SELECT DISTINCT ON (sc.facilityid, sc.programid) "
+        + "            MIN(scli.occurreddate) OVER (PARTITION BY sc.facilityid, sc.programid) AS occurreddate, "
+        + "            sc.facilityid, "
+        + "            sc.programid "
+        + "FROM stockmanagement.stock_card_line_items scli "
+        + "         LEFT JOIN stockmanagement.stock_cards sc ON scli.stockcardid = sc.id";
+    return namedJdbc.query(query, facillityStockCardDateDtoExtractor());
+
+  }
+
+  private RowMapper<FacillityStockCardDateDto> facillityStockCardDateDtoExtractor() {
+    return (rs, i) ->
+        new FacillityStockCardDateDto(readAsDate(rs, "occurreddate"),
+            readUuid(rs, "facilityid"),
+            readUuid(rs, "programid"));
   }
 
 }

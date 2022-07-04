@@ -21,7 +21,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
@@ -36,7 +38,6 @@ import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
-import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
@@ -48,7 +49,7 @@ import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
-import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RequisitionReportTaskServiceTest {
@@ -63,9 +64,6 @@ public class RequisitionReportTaskServiceTest {
   private RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
   @Mock
   private FacilityNativeRepository facilityNativeRepository;
-
-  @Mock
-  private SiglusStockCardRepository siglusStockCardRepository;
   @Mock
   private ProgramRequisitionNameMappingRepository programRequisitionNameMappingRepository;
   @Mock
@@ -138,15 +136,8 @@ public class RequisitionReportTaskServiceTest {
     allProcessingPeriodDto.add(item2);
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
-    StockCard item3 = new StockCard();
-    item3.setFacilityId(facilityId);
-    item3.setProgramId(programId);
-    item3.setOccurredDate(LocalDate.of(2022, 1, 10));
-    List<StockCard> firstStockCardGroupByFacility = new ArrayList<>();
-    firstStockCardGroupByFacility.add(item3);
-
-    when(siglusStockCardRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        firstStockCardGroupByFacility);
+    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
+        getFacillityStockCardDateDto(2022, 1, 10));
 
     when(requisitionMonthReportRepository.findAll()).thenReturn(new ArrayList<>());
 
@@ -178,15 +169,8 @@ public class RequisitionReportTaskServiceTest {
     allProcessingPeriodDto.add(item2);
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
-    StockCard item3 = new StockCard();
-    item3.setFacilityId(facilityId);
-    item3.setProgramId(programId);
-    item3.setOccurredDate(LocalDate.of(2022, 1, 10));
-    List<StockCard> firstStockCardGroupByFacility = new ArrayList<>();
-    firstStockCardGroupByFacility.add(item3);
-
-    when(siglusStockCardRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        firstStockCardGroupByFacility);
+    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
+        getFacillityStockCardDateDto(2022, 1, 10));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -239,15 +223,8 @@ public class RequisitionReportTaskServiceTest {
 
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
-    StockCard item3 = new StockCard();
-    item3.setFacilityId(facilityId);
-    item3.setProgramId(programId);
-    item3.setOccurredDate(LocalDate.of(2022, 10, 10));
-    List<StockCard> firstStockCardGroupByFacility = new ArrayList<>();
-    firstStockCardGroupByFacility.add(item3);
-
-    when(siglusStockCardRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        firstStockCardGroupByFacility);
+    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
+        getFacillityStockCardDateDto(2022, 10, 10));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -300,15 +277,8 @@ public class RequisitionReportTaskServiceTest {
 
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
-    StockCard item3 = new StockCard();
-    item3.setFacilityId(facilityId);
-    item3.setProgramId(programId);
-    item3.setOccurredDate(LocalDate.of(2019, 10, 10));
-    List<StockCard> firstStockCardGroupByFacility = new ArrayList<>();
-    firstStockCardGroupByFacility.add(item3);
-
-    when(siglusStockCardRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        firstStockCardGroupByFacility);
+    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
+        getFacillityStockCardDateDto(2019, 10, 10));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -361,15 +331,8 @@ public class RequisitionReportTaskServiceTest {
 
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
-    StockCard item3 = new StockCard();
-    item3.setFacilityId(facilityId);
-    item3.setProgramId(programId);
-    item3.setOccurredDate(LocalDate.of(2022, 1, 19));
-    List<StockCard> firstStockCardGroupByFacility = new ArrayList<>();
-    firstStockCardGroupByFacility.add(item3);
-
-    when(siglusStockCardRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        firstStockCardGroupByFacility);
+    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
+        getFacillityStockCardDateDto(2022, 1, 19));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -422,15 +385,8 @@ public class RequisitionReportTaskServiceTest {
 
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
-    StockCard item3 = new StockCard();
-    item3.setFacilityId(facilityId);
-    item3.setProgramId(programId);
-    item3.setOccurredDate(LocalDate.of(2022, 1, 21));
-    List<StockCard> firstStockCardGroupByFacility = new ArrayList<>();
-    firstStockCardGroupByFacility.add(item3);
-
-    when(siglusStockCardRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        firstStockCardGroupByFacility);
+    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
+        getFacillityStockCardDateDto(2022, 1, 21));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -483,15 +439,8 @@ public class RequisitionReportTaskServiceTest {
 
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
-    StockCard item3 = new StockCard();
-    item3.setFacilityId(facilityId);
-    item3.setProgramId(programId);
-    item3.setOccurredDate(LocalDate.of(2022, 1, 25));
-    List<StockCard> firstStockCardGroupByFacility = new ArrayList<>();
-    firstStockCardGroupByFacility.add(item3);
-
-    when(siglusStockCardRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        firstStockCardGroupByFacility);
+    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
+        getFacillityStockCardDateDto(2022, 1, 25));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -541,15 +490,8 @@ public class RequisitionReportTaskServiceTest {
     when(processingPeriodExtensionRepository.findAll()).thenReturn(allProcessingPeriodExtensionDto);
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
-    StockCard item3 = new StockCard();
-    item3.setFacilityId(facilityId);
-    item3.setProgramId(programId);
-    item3.setOccurredDate(LocalDate.of(2021, 4, 21));
-    List<StockCard> firstStockCardGroupByFacility = new ArrayList<>();
-    firstStockCardGroupByFacility.add(item3);
-
-    when(siglusStockCardRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        firstStockCardGroupByFacility);
+    when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
+        getFacillityStockCardDateDto(2021, 4, 21));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -566,5 +508,19 @@ public class RequisitionReportTaskServiceTest {
     // then
     verify(requisitionMonthlyNotSubmitReportRepository, times(1)).save(any(List.class));
 
+  }
+
+  private List<FacillityStockCardDateDto> getFacillityStockCardDateDto(int year, int month, int dayOfMonth) {
+    FacillityStockCardDateDto item3 = new FacillityStockCardDateDto();
+    item3.setFacilityId(facilityId);
+    item3.setProgramId(programId);
+
+    item3.setOccurredDate(Date.from(LocalDate.of(year, month, dayOfMonth).atStartOfDay()
+        .atZone(ZoneId.systemDefault())
+        .toInstant()));
+
+    List<FacillityStockCardDateDto> firstStockCardGroupByFacility = new ArrayList<>();
+    firstStockCardGroupByFacility.add(item3);
+    return firstStockCardGroupByFacility;
   }
 }

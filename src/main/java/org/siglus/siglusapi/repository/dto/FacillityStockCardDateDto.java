@@ -15,20 +15,21 @@
 
 package org.siglus.siglusapi.repository.dto;
 
-import java.time.LocalDate;
+import java.util.Date;
 import java.util.UUID;
-import javax.persistence.Column;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class FacillityStockCardDateDto {
 
-  @Column(name = "occurreddate")
-  private LocalDate occurredDate;
+  private Date occurredDate;
 
-  @Column(name = "facilityid")
   private UUID facilityId;
 
-  @Column(name = "programid")
   private UUID programId;
+
+  public FacillityStockCardDateDto() {
+  }
 }
