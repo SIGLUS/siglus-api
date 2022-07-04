@@ -249,6 +249,7 @@ public class SiglusPhysicalInventoryService {
               .groupNum(groupNum)
               .status(subDraftList.get(0).getStatus())
               .subDraftId(subDraftList.stream().map(BaseEntity::getId).collect(Collectors.toList()))
+              .saver(authenticationHelper.getUserNameByUserId(subDraftList.get(0).getOperatorId()))
               .build());
     });
     return subDraftDtoList;

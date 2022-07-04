@@ -90,6 +90,16 @@ public class SiglusAuthenticationHelper {
     });
   }
 
+  public String getUserNameByUserId(UUID userId) {
+    if (userId == null) {
+      return "";
+    }
+    return userService.getUserDetailDto(userId).stream()
+        .findFirst()
+        .orElseThrow(IllegalArgumentException::new)
+        .getUsername();
+  }
+
   public boolean isTheCurrentUserAdmin() {
     Set<UUID> roleAssignmentIds = getCurrentUser().getRoleAssignments().stream()
         .map(RoleAssignmentDto::getRoleId).collect(Collectors.toSet());

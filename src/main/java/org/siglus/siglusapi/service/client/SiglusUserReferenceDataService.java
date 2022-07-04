@@ -69,6 +69,10 @@ public class SiglusUserReferenceDataService extends BaseReferenceDataService<Use
     return findAll(userId + "/roleAssignments", DetailedRoleAssignmentDto[].class);
   }
 
+  public Collection<org.openlmis.requisition.dto.UserDto> getUserDetailDto(UUID userId) {
+    return findAll(userId.toString(), org.openlmis.requisition.dto.UserDto[].class);
+  }
+
   public Page<UserDto> getUserInfo(UUID homeFacilityId) {
     Pageable noPagination = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
         PaginationConstants.NO_PAGINATION);
