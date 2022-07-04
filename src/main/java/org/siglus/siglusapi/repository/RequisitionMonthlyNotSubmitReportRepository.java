@@ -18,9 +18,11 @@ package org.siglus.siglusapi.repository;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyNotSubmitReport;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface RequisitionMonthlyNotSubmitReportRepository extends
     JpaRepository<RequisitionMonthlyNotSubmitReport, UUID> {
 
+  @Transactional
   void deleteByFacilityId(UUID facilityId);
 }
