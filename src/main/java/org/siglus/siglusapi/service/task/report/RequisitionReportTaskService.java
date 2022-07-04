@@ -67,18 +67,33 @@ public class RequisitionReportTaskService {
   private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
 
-  public void refresh() {
-    log.info("start refresh. start = " + System.currentTimeMillis());
+  public void refresh(boolean needCheckPermission) {
+    log.info("refresh. start = " + System.currentTimeMillis());
     try {
-      doRefresh();
+      doRefresh(needCheckPermission);
     } catch (Exception e) {
       log.error("refresh with exception. msg = " + e.getMessage(), e);
       throw e;
     }
-    log.info("start refresh. end = " + System.currentTimeMillis());
+    log.info("refresh. end = " + System.currentTimeMillis());
   }
 
-  public void doRefresh() {
+  public void update(boolean needCheckPermission) {
+    log.info("refresh. start = " + System.currentTimeMillis());
+    try {
+      doUpdate(needCheckPermission);
+    } catch (Exception e) {
+      log.error("refresh with exception. msg = " + e.getMessage(), e);
+      throw e;
+    }
+    log.info("refresh. end = " + System.currentTimeMillis());
+  }
+
+  private void doUpdate(boolean needCheckPermission) {
+    // TODO:  add implement ( 7/4/22 by kourengang)
+  }
+
+  public void doRefresh(boolean needCheckPermission) {
     List<FacilityDto> allFacilityDto = facilityReferenceDataService.findAll();
     log.info("allFacilityDto.size = " + allFacilityDto.size());
     List<ProgramDto> allProgramDto = programDataService.findAll();
@@ -127,7 +142,7 @@ public class RequisitionReportTaskService {
       for (ProgramDto programDto : allProgramDto) {
         UUID programId = programDto.getId();
         ValidationResult validationResult = permissionService.canInitRequisition(programId, facilityId);
-        if (!validationResult.isSuccess()) {
+        if (needCheckPermission && !validationResult.isSuccess()) {
           log.info(String.format("cannot InitRequisition, programIds=%s, facilityId=%s", programId, facilityId));
           continue;
         }
@@ -161,6 +176,7 @@ public class RequisitionReportTaskService {
         }
         if (CollectionUtils.isNotEmpty(notSubmitList)) {
           log.info("save notSubmitList size = " + notSubmitList.size());
+          requisitionMonthlyNotSubmitReportRepository.deleteByFacilityId(facilityId);
           requisitionMonthlyNotSubmitReportRepository.save(notSubmitList);
         }
       }

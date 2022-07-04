@@ -22,6 +22,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RequisitionMonthlyNotSubmitReportRepository extends
     JpaRepository<RequisitionMonthlyNotSubmitReport, UUID> {
 
-
-
+  void deleteByFacilityId(UUID facilityId);
 }

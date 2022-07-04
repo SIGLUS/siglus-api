@@ -140,7 +140,7 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(new ArrayList<>());
 
     // when
-    requisitionReportTaskService.refresh();
+    requisitionReportTaskService.refresh(true);
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository).save(any(List.class));
@@ -180,7 +180,7 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
 
     // when
-    requisitionReportTaskService.refresh();
+    requisitionReportTaskService.refresh(true);
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository, times(0)).save(any(List.class));
@@ -234,7 +234,7 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
 
     // when
-    requisitionReportTaskService.refresh();
+    requisitionReportTaskService.refresh(true);
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository, times(0)).save(any(List.class));
@@ -288,7 +288,7 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
 
     // when
-    requisitionReportTaskService.refresh();
+    requisitionReportTaskService.refresh(true);
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository, times(1)).save(any(List.class));
@@ -342,7 +342,7 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
 
     // when
-    requisitionReportTaskService.refresh();
+    requisitionReportTaskService.refresh(true);
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository, times(1)).save(any(List.class));
@@ -396,7 +396,7 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
 
     // when
-    requisitionReportTaskService.refresh();
+    requisitionReportTaskService.refresh(true);
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository, times(1)).save(any(List.class));
@@ -456,7 +456,7 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
 
     // when
-    requisitionReportTaskService.refresh();
+    requisitionReportTaskService.refresh(true);
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository, times(0)).save(any(List.class));
@@ -501,7 +501,7 @@ public class RequisitionReportTaskServiceTest {
     when(requisitionMonthReportRepository.findAll()).thenReturn(requisitionMonthlyReports);
 
     // when
-    requisitionReportTaskService.refresh();
+    requisitionReportTaskService.refresh(true);
 
     // then
     verify(requisitionMonthlyNotSubmitReportRepository, times(1)).save(any(List.class));

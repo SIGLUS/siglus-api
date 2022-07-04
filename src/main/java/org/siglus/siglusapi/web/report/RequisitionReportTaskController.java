@@ -20,20 +20,26 @@ import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/siglusapi/task/requisition")
 public class RequisitionReportTaskController {
+
   private final RequisitionReportTaskService requisitionReportTaskService;
 
-  @PostMapping
-  public ResponseEntity<String> refresh() {
-    requisitionReportTaskService.refresh();
+  @PostMapping("/refresh")
+  public ResponseEntity<String> refresh(@RequestParam boolean needCheckPermission) {
+    requisitionReportTaskService.refresh(needCheckPermission);
     return ResponseEntity.ok("ok");
+  }
 
-
+  @PostMapping("/update")
+  public ResponseEntity<String> update(@RequestParam boolean needCheckPermission) {
+    requisitionReportTaskService.update(needCheckPermission);
+    return ResponseEntity.ok("ok");
   }
 
 }
