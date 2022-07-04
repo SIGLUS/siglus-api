@@ -27,6 +27,8 @@ public class UserDto {
 
   private UUID id;
 
+  private String username;
+
   private UUID homeFacilityId;
 
   private Set<RoleAssignmentDto> roleAssignments;

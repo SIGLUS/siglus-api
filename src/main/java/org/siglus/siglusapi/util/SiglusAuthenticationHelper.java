@@ -94,10 +94,7 @@ public class SiglusAuthenticationHelper {
     if (userId == null) {
       return "";
     }
-    return userService.getUserDetailDto(userId).stream()
-        .findFirst()
-        .orElseThrow(IllegalArgumentException::new)
-        .getUsername();
+    return userService.getUserDetailDto(userId).getUsername();
   }
 
   public boolean isTheCurrentUserAdmin() {

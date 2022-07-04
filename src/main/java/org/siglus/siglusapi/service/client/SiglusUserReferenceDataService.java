@@ -69,8 +69,14 @@ public class SiglusUserReferenceDataService extends BaseReferenceDataService<Use
     return findAll(userId + "/roleAssignments", DetailedRoleAssignmentDto[].class);
   }
 
-  public Collection<org.openlmis.requisition.dto.UserDto> getUserDetailDto(UUID userId) {
-    return findAll(userId.toString(), org.openlmis.requisition.dto.UserDto[].class);
+  /**
+   * Get user's dto
+   *
+   * @param userId id of user
+   * @return a dto of user
+   */
+  public UserDto getUserDetailDto(UUID userId) {
+    return findOne(userId);
   }
 
   public Page<UserDto> getUserInfo(UUID homeFacilityId) {
