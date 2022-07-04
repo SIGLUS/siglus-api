@@ -18,7 +18,7 @@ package org.siglus.siglusapi.web.report;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RequisitionReportTaskController {
   private final RequisitionReportTaskService requisitionReportTaskService;
 
-  @GetMapping
+  @PostMapping
   public ResponseEntity<String> refresh() {
     requisitionReportTaskService.refresh();
     return ResponseEntity.ok("ok");

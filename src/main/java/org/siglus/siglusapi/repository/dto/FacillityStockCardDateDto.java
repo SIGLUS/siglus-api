@@ -15,7 +15,7 @@
 
 package org.siglus.siglusapi.repository.dto;
 
-import java.util.Date;
+import java.sql.Date;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;

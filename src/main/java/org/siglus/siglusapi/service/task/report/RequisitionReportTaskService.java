@@ -15,11 +15,10 @@
 
 package org.siglus.siglusapi.service.task.report;
 
+import java.sql.Date;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +55,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class RequisitionReportTaskService {
 
+  public static final int NO_NEED_TO_HANDLE = -1;
   private final ProgramReferenceDataService programDataService;
   private final FacilityReferenceDataService facilityReferenceDataService;
   private final RequisitionMonthReportRepository requisitionMonthReportRepository;
@@ -90,6 +90,7 @@ public class RequisitionReportTaskService {
 
     allProcessingPeriodExtensionDto.sort(Comparator.comparing(ProcessingPeriodExtension::getSubmitStartDate));
 
+    // TODO: data is big ( 7/4/22 by kourengang)
     List<RequisitionMonthlyReport> requisitionMonthlyReports = requisitionMonthReportRepository.findAll();
     Map<String, RequisitionMonthlyReport> requisitionMonthlyReportMap = requisitionMonthlyReports.stream()
         .collect(Collectors.toMap(this::getUniqueKey, Function.identity(), (e1, e2) -> e1));
@@ -121,12 +122,8 @@ public class RequisitionReportTaskService {
         .collect(Collectors.toMap(ProgramRequisitionNameMapping::getProgramId, Function.identity()));
     for (FacilityDto facilityDto : allFacilityDto) {
       UUID facilityId = facilityDto.getId();
-      RequisitionMonthlyReportFacility requisitionMonthlyReportFacility = monthlyReportFacilityMap.get(facilityId);
+      RequisitionMonthlyReportFacility facilityInfo = monthlyReportFacilityMap.get(facilityId);
       // multi program
-      if (!existedPhysicalInventoryFacilityIds.contains(facilityId)) {
-        log.info("only show those who have init PhysicalInventory, now facilityId = " + facilityId);
-        continue;
-      }
       for (ProgramDto programDto : allProgramDto) {
         UUID programId = programDto.getId();
         ValidationResult validationResult = permissionService.canInitRequisition(programId, facilityId);
@@ -138,10 +135,10 @@ public class RequisitionReportTaskService {
             getFirstStockCardUniqueKey(facilityId, programId));
         int startPeriodIndexOfFacility = getStartPeriodIndexOfFacility(allProcessingPeriodExtensionDto, facilityId,
             programId, facillityStockCardDateDto);
-        if (startPeriodIndexOfFacility == -1) {
+        if (startPeriodIndexOfFacility == NO_NEED_TO_HANDLE) {
           continue;
         }
-        List<RequisitionMonthlyNotSubmitReport> list = new ArrayList<>();
+        List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
         for (int i = startPeriodIndexOfFacility; i < allProcessingPeriodExtensionDto.size(); i++) {
           ProcessingPeriodExtension processingPeriodExtension = allProcessingPeriodExtensionDto.get(i);
           if (LocalDate.now().isBefore(processingPeriodExtension.getSubmitStartDate())) {
@@ -158,13 +155,13 @@ public class RequisitionReportTaskService {
             continue;
           }
           RequisitionMonthlyNotSubmitReport notSubmit = getRequisitionMonthlyNotSubmitReport(
-              processingPeriodMap, requisitionNameMappingMap, facilityId, requisitionMonthlyReportFacility, programId,
+              processingPeriodMap, requisitionNameMappingMap, facilityId, facilityInfo, programId,
               processingPeriodExtension);
-          list.add(notSubmit);
+          notSubmitList.add(notSubmit);
         }
-        if (CollectionUtils.isNotEmpty(list)) {
-          log.info("save notSubmit list size = " + list.size());
-          requisitionMonthlyNotSubmitReportRepository.save(list);
+        if (CollectionUtils.isNotEmpty(notSubmitList)) {
+          log.info("save notSubmitList size = " + notSubmitList.size());
+          requisitionMonthlyNotSubmitReportRepository.save(notSubmitList);
         }
       }
     }
@@ -181,7 +178,7 @@ public class RequisitionReportTaskService {
     } else {
       Date firstOccurredDate = facillityStockCardDateDto.getOccurredDate();
       startPeriodIndexOfFacility = findStartPeriodIndexOfFacility(allProcessingPeriodExtensionDto,
-          firstOccurredDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+          firstOccurredDate.toLocalDate());
     }
     return startPeriodIndexOfFacility;
   }
@@ -267,8 +264,7 @@ public class RequisitionReportTaskService {
 
   private int findStartPeriodIndexOfFacility(List<ProcessingPeriodExtension> allProcessingPeriodDto,
       LocalDate firstOccurredDate) {
-    int i = 0;
-    for (; i + 1 < allProcessingPeriodDto.size(); i++) {
+    for (int i = 0; i + 1 < allProcessingPeriodDto.size(); i++) {
       if (!firstOccurredDate.isBefore(allProcessingPeriodDto.get(i).getSubmitStartDate())
           && firstOccurredDate.isBefore(allProcessingPeriodDto.get(i + 1).getSubmitStartDate())) {
         return i + 1;
@@ -278,8 +274,8 @@ public class RequisitionReportTaskService {
     if (firstOccurredDate.isBefore(allProcessingPeriodDto.get(0).getSubmitStartDate())) {
       return 0;
     } else {
-      // not need to handle
-      return -1;
+      // in this case firstOccurredDate is in the future, so no need to handle
+      return NO_NEED_TO_HANDLE;
     }
   }
 

@@ -21,9 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import org.junit.Before;
@@ -514,10 +512,7 @@ public class RequisitionReportTaskServiceTest {
     FacillityStockCardDateDto item3 = new FacillityStockCardDateDto();
     item3.setFacilityId(facilityId);
     item3.setProgramId(programId);
-
-    item3.setOccurredDate(Date.from(LocalDate.of(year, month, dayOfMonth).atStartOfDay()
-        .atZone(ZoneId.systemDefault())
-        .toInstant()));
+    item3.setOccurredDate(java.sql.Date.valueOf(LocalDate.of(year, month, dayOfMonth)));
 
     List<FacillityStockCardDateDto> firstStockCardGroupByFacility = new ArrayList<>();
     firstStockCardGroupByFacility.add(item3);
