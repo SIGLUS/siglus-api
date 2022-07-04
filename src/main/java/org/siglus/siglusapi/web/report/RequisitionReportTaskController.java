@@ -45,8 +45,7 @@ public class RequisitionReportTaskController {
   }
 
   @GetMapping("/testPermission")
-  public ResponseEntity<Boolean> testPermission(@RequestParam UUID programId
-      , @RequestParam UUID facilityId) {
+  public ResponseEntity<Boolean> testPermission(@RequestParam UUID programId, @RequestParam UUID facilityId) {
     return ResponseEntity.ok(requisitionReportTaskService.testPermission(programId, facilityId));
   }
 
