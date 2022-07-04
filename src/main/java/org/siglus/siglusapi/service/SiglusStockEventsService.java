@@ -95,11 +95,15 @@ public class SiglusStockEventsService {
   @Transactional
   public UUID createStockEvent(StockEventDto eventDto) {
     UUID userId = getUserId(eventDto);
-    Map<UUID, UUID> programIdToEventId = createStockEventForPrograms(eventDto, userId);
-    if (!programIdToEventId.isEmpty()) {
-      return programIdToEventId.values().stream().findFirst().orElse(null);
+    if (ALL_PRODUCTS_PROGRAM_ID.equals(eventDto.getProgramId())) {
+      Map<UUID, UUID> programIdToEventId = createStockEventForPrograms(eventDto, userId);
+      if (!programIdToEventId.isEmpty()) {
+        return programIdToEventId.values().stream().findFirst().orElse(null);
+      }
+      return null;
     }
-    return null;
+    return createStockEventForOneProgram(eventDto, userId);
+
   }
 
   @Transactional

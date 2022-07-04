@@ -23,6 +23,7 @@ import static org.siglus.siglusapi.constant.FacilityTypeConstants.CENTRAL;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_DRAFT;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 
@@ -63,6 +64,7 @@ import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.SubDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
+import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
@@ -208,16 +210,29 @@ public class SiglusPhysicalInventoryService {
     }
   }
 
-  public DraftListDto getSubDraftListForAllProduct() {
-    List<PhysicalInventorySubDraft> subDraftList = physicalInventorySubDraftRepository.findAll();
-    if (CollectionUtils.isEmpty(subDraftList)) {
+  public DraftListDto getSubDraftListForAllProduct(UUID facility, Boolean isDraft) {
+    Set<UUID> supportedPrograms = supportedProgramsHelper
+        .findHomeFacilitySupportedProgramIds();
+    List<PhysicalInventorySubDraft> allProductSubDraftList = new LinkedList<>();
+    supportedPrograms.forEach(programId -> {
+      List<PhysicalInventoryDto> physicalInventoryDtoList = getPhysicalInventoryDtos(programId, facility, isDraft);
+      List<UUID> physicalInventoryIds = physicalInventoryDtoList
+          .stream()
+          .map(PhysicalInventoryDto::getId)
+          .collect(Collectors.toList());
+      List<PhysicalInventorySubDraft> subDraftList = physicalInventorySubDraftRepository
+          .findByPhysicalInventoryIdIn(physicalInventoryIds);
+      allProductSubDraftList.addAll(subDraftList);
+    });
+    if (CollectionUtils.isEmpty(allProductSubDraftList)) {
       throw new IllegalArgumentException("there is no subDraft for any record");
     }
     return DraftListDto
         .builder()
         .physicalInventoryId(ALL_PRODUCTS_UUID)
-        .subDrafts(convertSubDraftToSubDraftDto(subDraftList))
-        .mergePermission(authenticationHelper.isTheCurrentUserRole2OrRole3())
+        .subDrafts(convertSubDraftToSubDraftDto(allProductSubDraftList))
+        .canMergeOrDeleteDrafts(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts())
+        .canSubmitDrafts(isTheAllSubDraftIsSubmitted(allProductSubDraftList))
         .build();
   }
 
@@ -239,6 +254,10 @@ public class SiglusPhysicalInventoryService {
     return subDraftDtoList;
   }
 
+  private boolean isTheAllSubDraftIsSubmitted(List<PhysicalInventorySubDraft> subDraftList) {
+    return subDraftList.stream().allMatch(e -> e.getStatus() == PhysicalInventorySubDraftEnum.SUBMITTED);
+  }
+
   public DraftListDto getSubDraftListForOneProgram(UUID program, UUID facility, Boolean isDraft) {
     List<PhysicalInventoryDto> physicalInventoryDtoList = getPhysicalInventoryDtos(program, facility, isDraft);
     if (CollectionUtils.isNotEmpty(physicalInventoryDtoList)) {
@@ -253,7 +272,8 @@ public class SiglusPhysicalInventoryService {
           .builder()
           .subDrafts(convertSubDraftToSubDraftDto(physicalInventorySubDraftList))
           .physicalInventoryId(physicalInventoryId)
-          .mergePermission(authenticationHelper.isTheCurrentUserRole2OrRole3())
+          .canMergeOrDeleteDrafts(authenticationHelper.isTheCurrentUserCanMergeOrDeleteSubDrafts())
+          .canSubmitDrafts(isTheAllSubDraftIsSubmitted(physicalInventorySubDraftList))
           .build();
     }
     return DraftListDto.builder().build();
@@ -393,6 +413,15 @@ public class SiglusPhysicalInventoryService {
   }
 
   private PhysicalInventoryDto createNewDraft(PhysicalInventoryDto physicalInventoryDto) {
+    List<PhysicalInventory> physicalInventory = physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(
+        physicalInventoryDto.getProgramId(),
+        authenticationHelper.getCurrentUser().getHomeFacilityId(),
+        true
+    );
+    if (CollectionUtils.isNotEmpty(physicalInventory)) {
+      throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_DRAFT), physicalInventory);
+    }
+
     return physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto);
   }
 

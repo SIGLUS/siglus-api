@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
@@ -25,6 +26,8 @@ public interface PhysicalInventorySubDraftRepository extends
     JpaRepository<PhysicalInventorySubDraft, UUID> {
 
   List<PhysicalInventorySubDraft> findByPhysicalInventoryId(UUID physicalInventoryId);
+
+  List<PhysicalInventorySubDraft> findByPhysicalInventoryIdIn(Collection<UUID> ids);
 
   PhysicalInventorySubDraft findFirstById(UUID subDraftId);
 

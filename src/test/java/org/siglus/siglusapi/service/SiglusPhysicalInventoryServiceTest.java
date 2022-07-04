@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -35,6 +36,7 @@ import com.google.common.collect.Sets;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,6 +68,7 @@ import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
+import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
@@ -166,9 +169,14 @@ public class SiglusPhysicalInventoryServiceTest {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
         .programId(ALL_PRODUCTS_PROGRAM_ID).build();
     when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
-        .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
+        .thenReturn(Sets.newHashSet(programIdOne, programIdTwo));
     when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto))
         .thenReturn(physicalInventoryDto);
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(any(), eq(facilityId), eq(true)))
+        .thenReturn(Collections.emptyList());
 
     // when
     siglusPhysicalInventoryService.createNewDraftForAllProducts(physicalInventoryDto);
@@ -522,6 +530,11 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(Collections.singletonList(approvedProductDto));
     when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(any()))
         .thenReturn(PhysicalInventoryDto.builder().build());
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(any(), eq(facilityId), eq(true)))
+        .thenReturn(Collections.emptyList());
 
     // when
     siglusPhysicalInventoryService.getPhysicalInventoryDtosForAllProducts(facilityId, true, true);
@@ -616,7 +629,7 @@ public class SiglusPhysicalInventoryServiceTest {
         .findByPhysicalInventoryId(
             id)).thenReturn(Collections.singletonList(physicalInventorySubDraft));
     when(authenticationHelper
-        .isTheCurrentUserRole2OrRole3()).thenReturn(false);
+        .isTheCurrentUserCanMergeOrDeleteSubDrafts()).thenReturn(false);
     // when
     DraftListDto subDraftListInOneProgram = siglusPhysicalInventoryService.getSubDraftListForOneProgram(programId,
         facilityId, true);
@@ -645,6 +658,11 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(new PageImpl<>(summaryV2Dtos, new PageRequest(0, Integer.MAX_VALUE), 0));
     when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryId))
         .thenReturn(Collections.singletonList(PhysicalInventorySubDraft.builder().build()));
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(any(), eq(facilityId), eq(true)))
+        .thenReturn(Collections.emptyList());
 
     // when
     siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 3);
@@ -666,9 +684,51 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoryStockManagementService
         .searchPhysicalInventory(ALL_PRODUCTS_PROGRAM_ID, facilityId, true))
         .thenReturn(Collections.emptyList());
+    UserDto userDto = new UserDto();
+    userDto.setHomeFacilityId(facilityId);
+    when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
+    when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(any(), eq(facilityId), eq(true)))
+        .thenReturn(Collections.emptyList());
 
     // when
     siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(physicalInventoryDto, 3);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenSubDraftIdsIsEmpty() {
+    // then
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage(containsString("empty subDraftIds"));
+
+    //given
+    List<UUID> subDraftIds = Collections.emptyList();
+
+    // when
+    siglusPhysicalInventoryService.getSubPhysicalInventoryDtoBySubDraftId(subDraftIds);
+  }
+
+
+  @Test
+  public void shouldThrowExceptionWhenThereIsNoSubDraftListForAnyProgram() {
+    // then
+    exception.expect(IllegalArgumentException.class);
+    exception.expectMessage(containsString("there is no subDraft for any record"));
+
+    // given
+    Set<UUID> supportedPrograms = new HashSet<>();
+    supportedPrograms.add(programIdOne);
+    supportedPrograms.add(programIdTwo);
+    when(supportedProgramsHelper
+        .findHomeFacilitySupportedProgramIds()).thenReturn(supportedPrograms);
+    doNothing().when(physicalInventoryService).checkPermission(programIdOne, facilityId);
+    doNothing().when(physicalInventoryService).checkPermission(programIdTwo, facilityId);
+    when(physicalInventoryStockManagementService
+        .searchPhysicalInventory(programIdOne, facilityId, true)).thenReturn(Collections.emptyList());
+    when(physicalInventoryStockManagementService
+        .searchPhysicalInventory(programIdTwo, facilityId, true)).thenReturn(Collections.emptyList());
+
+    // when
+    siglusPhysicalInventoryService.getSubDraftListForAllProduct(facilityId, true);
   }
 
 }

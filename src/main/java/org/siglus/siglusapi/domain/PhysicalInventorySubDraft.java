@@ -34,7 +34,7 @@ import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 @Table(name = "physical_inventory_sub_draft", schema = "siglusintegration")
 public class PhysicalInventorySubDraft extends BaseEntity {
 
-  @Column(name = "num")
+  @Column(name = "number")
   private Integer num;
   @Column(name = "status")
   private PhysicalInventorySubDraftEnum status;

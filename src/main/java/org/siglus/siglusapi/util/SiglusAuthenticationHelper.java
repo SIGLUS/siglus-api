@@ -78,7 +78,7 @@ public class SiglusAuthenticationHelper {
     return userService.getUserRightsAndRoles(getCurrentUserId().orElseThrow(() -> authenticateFail(null)));
   }
 
-  public boolean isTheCurrentUserRole2OrRole3() {
+  public boolean isTheCurrentUserCanMergeOrDeleteSubDrafts() {
     Collection<DetailedRoleAssignmentDto> userRightsAndRoles = getUserRightsAndRoles();
     return userRightsAndRoles.stream().anyMatch(e -> {
       String roleId = e.getRole().getId().toString();

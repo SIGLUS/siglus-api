@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -27,9 +26,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DraftListDto implements Serializable {
-
+public class DraftListDto {
   private UUID physicalInventoryId;
   private List<SubDraftDto> subDrafts;
-  private boolean mergePermission;
+  private boolean canMergeOrDeleteDrafts;
+  private boolean canSubmitDrafts;
+
 }

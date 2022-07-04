@@ -183,7 +183,7 @@ public class SiglusPhysicalInventoryControllerTest {
   public void shouldCallGetSubDraftListForAllProductWhenSearchAllProductSubDraftList() {
     siglusPhysicalInventoryController.searchSubDraftList(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
 
-    verify(siglusPhysicalInventoryService).getSubDraftListForAllProduct();
+    verify(siglusPhysicalInventoryService).getSubDraftListForAllProduct(facilityId, isDraft);
   }
 
   @Test

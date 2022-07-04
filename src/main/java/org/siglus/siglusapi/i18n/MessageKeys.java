@@ -68,6 +68,7 @@ public abstract class MessageKeys {
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_SHOULD_NULL =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.id.should.null";
   public static final String ERROR_INVENTORY_CONFLICT_SUB_DRAFT = ERROR_PREFIX + ".inventory.conflict.subDraft";
+  public static final String ERROR_INVENTORY_CONFLICT_DRAFT = ERROR_PREFIX + ".inventory.conflict.Draft";
 
   public static final String ERROR_SUBMIT_START_DATE_BEFORE_START_DATE = ERROR_PREFIX
       + ".submitStartDate.before.startDate";

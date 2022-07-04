@@ -89,7 +89,7 @@ public class SiglusPhysicalInventoryController {
       @RequestParam UUID facility,
       @RequestParam(required = false) Boolean isDraft) {
     if (ALL_PRODUCTS_UUID.equals(program)) {
-      return siglusPhysicalInventoryService.getSubDraftListForAllProduct();
+      return siglusPhysicalInventoryService.getSubDraftListForAllProduct(facility, isDraft);
     }
     return siglusPhysicalInventoryService.getSubDraftListForOneProgram(program, facility, isDraft);
   }
