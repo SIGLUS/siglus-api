@@ -257,7 +257,7 @@ traits:
           201:
             description: submit success
     /task/requisition/refresh:
-      displayName: run requisition monthly report task
+      displayName: refresh requisition monthly report task
       post:
         is: [ secured ]
         body:
@@ -267,12 +267,19 @@ traits:
           201:
             description: submit success
     /task/requisition/update:
-      displayName: run requisition monthly report task
+      displayName: update requisition monthly report task
       post:
         is: [ secured ]
         body:
           application/json:
             schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
+    /task/requisition/testPermission:
+      displayName: test permission
+      get:
+        is: [ secured ]
         responses:
           201:
             description: submit success
