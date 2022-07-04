@@ -104,6 +104,7 @@ public class RequisitionReportTaskService {
 
     allFacilityDto = allFacilityDto.stream().filter(item -> existedPhysicalInventoryFacilityIds.contains(item.getId()))
         .collect(Collectors.toList());
+    log.info("filtered allFacilityDto.size = " + allFacilityDto.size());
 
     List<RequisitionMonthlyReportFacility> requisitionMonthlyReportFacilities
         = requisitionMonthlyNotSubmitReportRepository.queryAllFacilityInfo();
