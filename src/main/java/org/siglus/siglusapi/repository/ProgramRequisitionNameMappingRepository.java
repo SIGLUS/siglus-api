@@ -15,17 +15,11 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.util.List;
 import java.util.UUID;
-import org.openlmis.stockmanagement.domain.event.StockEvent;
+import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 
-@SuppressWarnings("PMD.AvoidDuplicateLiterals")
-public interface SiglusStockEventRepository extends JpaRepository<StockEvent, UUID> {
+public interface ProgramRequisitionNameMappingRepository extends
+    JpaRepository<ProgramRequisitionNameMapping, UUID> {
 
-  @Query(value =
-      "SELECT DISTINCT MIN(sc.processeddate) OVER (PARTITION BY sc.facilityid) AS processeddate, sc.facilityid "
-          + "FROM stockmanagement.stock_events sc", nativeQuery = true)
-  List<StockEvent> findFirstStockCardGroupByFacility();
 }
