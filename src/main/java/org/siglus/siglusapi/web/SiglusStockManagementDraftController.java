@@ -22,6 +22,7 @@ import static org.springframework.http.HttpStatus.OK;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
+import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.service.SiglusStockManagementDraftService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -61,7 +62,8 @@ public class SiglusStockManagementDraftController {
 
   @PostMapping
   @ResponseStatus(CREATED)
-  public StockManagementDraftDto createEmptyStockManagementDraft(@RequestBody StockManagementDraftDto dto) {
+  public StockManagementDraftDto createEmptyStockManagementDraft(
+      @RequestBody StockManagementDraftDto dto) {
     return stockManagementDraftService.createNewDraft(dto);
   }
 
@@ -76,6 +78,22 @@ public class SiglusStockManagementDraftController {
   public StockManagementDraftDto updateDraft(@PathVariable UUID id,
       @RequestBody StockManagementDraftDto dto) {
     return stockManagementDraftService.saveDraft(dto, id);
+  }
+
+  @PostMapping("/initial")
+  @ResponseStatus(CREATED)
+  public StockManagementInitialDraftDto initialDraft(
+      @RequestBody StockManagementInitialDraftDto dto) {
+    return stockManagementDraftService.createInitialDraft(dto);
+  }
+
+  @GetMapping("/initial")
+  public StockManagementInitialDraftDto searchInitialDrafts(
+      @RequestParam UUID programId,
+      @RequestParam String draftType
+  ) {
+    return stockManagementDraftService
+        .findStockManagementInitialDrafts(programId, draftType);
   }
 
 }

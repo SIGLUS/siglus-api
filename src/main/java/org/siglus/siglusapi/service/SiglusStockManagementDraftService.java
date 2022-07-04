@@ -20,6 +20,7 @@ import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRA
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,12 +34,15 @@ import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
+import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
@@ -58,6 +62,9 @@ public class SiglusStockManagementDraftService {
   private StockManagementDraftRepository stockManagementDraftRepository;
 
   @Autowired
+  private StockManagementInitialDraftsRepository stockManagementInitialDraftsRepository;
+
+  @Autowired
   StockManagementDraftValidator stockManagementDraftValidator;
 
   @Autowired
@@ -72,7 +79,7 @@ public class SiglusStockManagementDraftService {
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
 
-  private static final Integer DRAFTS_LIMITATION = 9;
+  private static final Integer DRAFTS_LIMITATION = 10;
 
   @Transactional
   public StockManagementDraftDto createNewDraft(StockManagementDraftDto dto) {
@@ -80,13 +87,13 @@ public class SiglusStockManagementDraftService {
     stockManagementDraftValidator.validateEmptyDraft(dto);
     checkIfSameDraftsOversize(dto);
     //multi-user do not need to limit
-    //checkIfDraftExists(dto);
+//    checkIfDraftExists(dto);
 
     draftValidator.validateProgramId(dto.getProgramId());
     draftValidator.validateFacilityId(dto.getFacilityId());
     draftValidator.validateUserId(dto.getUserId());
     draftValidator.validateDraftType(dto.getDraftType());
-    draftValidator.validateDocumentNumber(dto.getDocumentationNumber());
+//    draftValidator.validateDocumentNumber(dto.getDocumentationNumber());
 
     StockManagementDraft draft = StockManagementDraft.createEmptyDraft(dto);
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
@@ -128,7 +135,8 @@ public class SiglusStockManagementDraftService {
             destinationId, type);
     List<StockManagementDraftDto> draftDtos = StockManagementDraftDto.from(drafts);
     if (!drafts.isEmpty()) {
-      String destinationName = findDestinationName(draftDtos.get(0));
+      String destinationName = findDestinationName(draftDtos.get(0).getDestinationId(),
+          draftDtos.get(0).getFacilityId());
       draftDtos.forEach(draft -> draft.setDestinationName(destinationName));
     }
     return draftDtos;
@@ -200,10 +208,9 @@ public class SiglusStockManagementDraftService {
     }
   }
 
-  private String findDestinationName(StockManagementDraftDto draftDto) {
-    UUID destinationId = draftDto.getDestinationId();
+  private String findDestinationName(UUID destinationId, UUID facilityId) {
     Collection<ValidSourceDestinationDto> destinationsForAllProducts = validSourceDestinationService
-        .findDestinationsForAllProducts(draftDto.getFacilityId());
+        .findDestinationsForAllProducts(facilityId);
 
     return destinationsForAllProducts
         .stream().filter(destination -> (
@@ -211,5 +218,63 @@ public class SiglusStockManagementDraftService {
         )).findFirst()
         .orElseThrow(() -> new NotFoundException("No such destination with id: " + destinationId))
         .getName();
+  }
+
+  public StockManagementInitialDraftDto createInitialDraft(
+      StockManagementInitialDraftDto initialDraftDto) {
+    log.info("create stock management initial draft");
+    stockManagementDraftValidator.validateInitialDraft(initialDraftDto);
+
+    checkIfInitialDraftExists(
+        initialDraftDto.getProgramId(),
+        initialDraftDto.getFacilityId(),
+        initialDraftDto.getDraftType());
+
+    StockManagementInitialDraft initialDraft = StockManagementInitialDraft
+        .createInitialDraft(initialDraftDto);
+
+    StockManagementInitialDraft savedInitialDraft = stockManagementInitialDraftsRepository
+        .save(initialDraft);
+
+    return StockManagementInitialDraftDto.from(savedInitialDraft);
+  }
+
+  public StockManagementInitialDraftDto findStockManagementInitialDrafts(
+      UUID programId, String draftType) {
+    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    draftValidator.validateProgramId(programId);
+    draftValidator.validateFacilityId(facilityId);
+    draftValidator.validateDraftType(draftType);
+
+    if (draftType.equals("issue")) {
+      List<StockManagementInitialDraft> initialDrafts = stockManagementInitialDraftsRepository
+          .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, draftType);
+      StockManagementInitialDraft initialDraft = initialDrafts.stream().findFirst().orElse(null);
+      if (initialDraft != null) {
+        StockManagementInitialDraftDto stockManagementInitialDraftDto = StockManagementInitialDraftDto
+            .from(initialDraft);
+        String destinationName = findDestinationName(initialDraft.getDestinationId(), facilityId);
+        stockManagementInitialDraftDto.setDestinationName(destinationName);
+        return stockManagementInitialDraftDto;
+      }
+      return new StockManagementInitialDraftDto();
+    } else if (draftType.equals("receive")) {
+      List<StockManagementInitialDraft> initialDrafts = stockManagementInitialDraftsRepository
+          .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, draftType);
+      //change logic when do receive
+      return initialDrafts.isEmpty() ? null
+          : StockManagementInitialDraftDto.from(initialDrafts.get(0));
+    }
+    return new StockManagementInitialDraftDto();
+  }
+
+  private void checkIfInitialDraftExists(UUID programId, UUID facilityId, String draftType) {
+    List<StockManagementInitialDraft> initialDrafts = stockManagementInitialDraftsRepository
+        .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, draftType);
+    if (!initialDrafts.isEmpty()) {
+      throw new BusinessDataException(
+          new Message(ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS, programId, facilityId,
+              draftType), "same initial draft exists");
+    }
   }
 }

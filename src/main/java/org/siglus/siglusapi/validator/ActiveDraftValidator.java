@@ -15,8 +15,9 @@
 
 package org.siglus.siglusapi.validator;
 
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_DESTINATION_ID;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_DOCUMENT_NUMBER;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_DESTINATION_ID_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_DOCUMENT_NUMBER_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_SOURCE_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EVENT_FACILITY_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IS_DRAFT_MISSING;
@@ -89,13 +90,28 @@ public class ActiveDraftValidator {
 
   public void validateDestinationId(UUID destinationId) {
     if (destinationId == null) {
-      throw new ValidationMessageException(ERROR_DRAFT_DESTINATION_ID);
+      throw new ValidationMessageException(ERROR_DRAFT_DESTINATION_ID_MISSING);
     }
   }
 
   public void validateDocumentNumber(String documentNumber) {
     if (documentNumber == null) {
-      throw new ValidationMessageException(ERROR_DRAFT_DOCUMENT_NUMBER);
+      throw new ValidationMessageException(ERROR_DRAFT_DOCUMENT_NUMBER_MISSING);
+    }
+  }
+
+  public void validateSourceId(UUID sourceId) {
+    if (sourceId == null) {
+      throw new ValidationMessageException(ERROR_DRAFT_SOURCE_ID_MISSING);
+    }
+  }
+
+  public void validateIsConflictByDraftType(String draftType, UUID destinationId, UUID sourceId) {
+    if (draftType.equals("issue")) {
+      validateDestinationId(destinationId);
+    }
+    if (draftType.equals("receive")){
+      validateSourceId(sourceId);
     }
   }
 }

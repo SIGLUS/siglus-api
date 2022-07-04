@@ -67,8 +67,6 @@ public class StockManagementDraftDto {
 
   private PhysicalInventorySubDraftEnum status;
 
-  private String documentationNumber;
-
   private List<StockManagementDraftLineItemDto> lineItems;
 
   public static List<StockManagementDraftDto> from(Collection<StockManagementDraft> drafts) {

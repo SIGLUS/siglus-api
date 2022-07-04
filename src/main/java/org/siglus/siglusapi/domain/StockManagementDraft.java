@@ -35,6 +35,7 @@ import org.hibernate.annotations.LazyCollection;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
+import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.springframework.beans.BeanUtils;
 
@@ -63,7 +64,6 @@ public class StockManagementDraft extends BaseEntity {
   private UUID initialDraftId;
   private String creator;
   private PhysicalInventorySubDraftEnum status;
-  private String documentationNumber;
 
   @LazyCollection(FALSE)
   @OneToMany(cascade = ALL, mappedBy = "stockManagementDraft", orphanRemoval = true)
