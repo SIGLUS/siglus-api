@@ -50,6 +50,7 @@ import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportReposito
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -183,11 +184,16 @@ public class RequisitionReportTaskService {
         }
         if (CollectionUtils.isNotEmpty(notSubmitList)) {
           log.info("save notSubmitList size = " + notSubmitList.size());
-          requisitionMonthlyNotSubmitReportRepository.deleteByFacilityId(facilityId);
-          requisitionMonthlyNotSubmitReportRepository.save(notSubmitList);
+          saveBatchByFacilityId(facilityId, notSubmitList);
         }
       }
     }
+  }
+
+  @Transactional
+  public void saveBatchByFacilityId(UUID facilityId, List<RequisitionMonthlyNotSubmitReport> notSubmitList) {
+    requisitionMonthlyNotSubmitReportRepository.deleteByFacilityId(facilityId);
+    requisitionMonthlyNotSubmitReportRepository.save(notSubmitList);
   }
 
   private int getStartPeriodIndexOfFacility(List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto,
