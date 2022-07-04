@@ -46,7 +46,9 @@ public abstract class MessageKeys {
   public static final String ERROR_TRADE_ITEM_IS_EMPTY = ERROR_PREFIX + ".tradeItem.is.empty";
   public static final String ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY = ERROR_PREFIX + ".lotinfo.should.empty";
   public static final String ERROR_EVENT_FACILITY_INVALID = EVENT_ERROR_PREFIX + ".facilityId.invalid";
+  public static final String ERROR_EVENT_INITIAL_DRAFT_ID_INVALID = EVENT_ERROR_PREFIX + ".initial.draft.id.invalid";
   public static final String ERROR_FACILITY_ID_MISSING = ERROR_PREFIX + ".facility.id.missing";
+  public static final String ERROR_INITIAL_DRAFT_ID_MISSING = ERROR_PREFIX + ".initial.draft.id.missing";
   public static final String ERROR_PROGRAM_MISSING = ERROR_PREFIX + ".program.missing";
   public static final String ERROR_PROGRAM_ID_MISSING = ERROR_PREFIX + ".program.id.missing";
   public static final String ERROR_USER_ID_MISSING = ERROR_PREFIX + ".user.id.missing";

@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service;
 
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
@@ -40,7 +39,6 @@ import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
-import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -85,15 +83,12 @@ public class SiglusStockManagementDraftService {
   public StockManagementDraftDto createNewDraft(StockManagementDraftDto dto) {
     log.info("create physical inventory draft");
     stockManagementDraftValidator.validateEmptyDraft(dto);
+    draftValidator.validateInitialDraftId(dto.getInitialDraftId());
+    draftValidator.validateInitialDraftId(dto.getInitialDraftId());
+    draftValidator.validateDraftType(dto.getDraftType());
     checkIfSameDraftsOversize(dto);
     //multi-user do not need to limit
 //    checkIfDraftExists(dto);
-
-    draftValidator.validateProgramId(dto.getProgramId());
-    draftValidator.validateFacilityId(dto.getFacilityId());
-    draftValidator.validateUserId(dto.getUserId());
-    draftValidator.validateDraftType(dto.getDraftType());
-//    draftValidator.validateDocumentNumber(dto.getDocumentationNumber());
 
     StockManagementDraft draft = StockManagementDraft.createEmptyDraft(dto);
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
@@ -123,23 +118,11 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(drafts);
   }
 
-  public List<StockManagementDraftDto> findStockManagementDrafts(UUID programId, String type,
-      UUID destinationId) {
-    UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-    draftValidator.validateProgramId(programId);
-    draftValidator.validateFacilityId(facilityId);
-    draftValidator.validateDraftType(type);
-    draftValidator.validateDestinationId(destinationId);
+  public List<StockManagementDraftDto> findStockManagementDrafts(UUID initialDraftId) {
+    draftValidator.validateInitialDraftId(initialDraftId);
     List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndDestinationIdAndDraftType(programId, facilityId,
-            destinationId, type);
-    List<StockManagementDraftDto> draftDtos = StockManagementDraftDto.from(drafts);
-    if (!drafts.isEmpty()) {
-      String destinationName = findDestinationName(draftDtos.get(0).getDestinationId(),
-          draftDtos.get(0).getFacilityId());
-      draftDtos.forEach(draft -> draft.setDestinationName(destinationName));
-    }
-    return draftDtos;
+        .findByInitialDraftId(initialDraftId);
+    return StockManagementDraftDto.from(drafts);
   }
 
   @Transactional
@@ -181,30 +164,26 @@ public class SiglusStockManagementDraftService {
   }
 
   //Delete after finish multi-user stock issue feature
-  private void checkIfDraftExists(StockManagementDraftDto dto) {
-    List<StockManagementDraft> drafts = stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
-            true,
-            dto.getDraftType());
-    if (!drafts.isEmpty()) {
-      throw new ValidationMessageException(
-          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(),
-              dto.getFacilityId()));
-    }
-  }
+//  private void checkIfDraftExists(StockManagementDraftDto dto) {
+//    List<StockManagementDraft> drafts = stockManagementDraftRepository
+//        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
+//            true,
+//            dto.getDraftType());
+//    if (!drafts.isEmpty()) {
+//      throw new ValidationMessageException(
+//          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(),
+//              dto.getFacilityId()));
+//    }
+//  }
 
   //Same draft means: same facilityid, programid, destinationid and drafttype
   private void checkIfSameDraftsOversize(StockManagementDraftDto dto) {
     List<StockManagementDraft> sameDrafts = stockManagementDraftRepository
-        .findByProgramIdAndFacilityIdAndDestinationIdAndDraftType(dto.getProgramId(),
-            dto.getFacilityId(),
-            dto.getDestinationId(),
-            dto.getDraftType());
-    if (sameDrafts.size() > DRAFTS_LIMITATION) {
+        .findByInitialDraftId(dto.getInitialDraftId());
+    if (sameDrafts.size() > DRAFTS_LIMITATION - 1) {
       throw new BusinessDataException(
           new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN, dto.getProgramId(),
-              dto.getFacilityId(),
-              dto.getDestinationId()), "same drafts more than limitation");
+              dto.getFacilityId()), "same drafts more than limitation");
     }
   }
 

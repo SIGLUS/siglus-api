@@ -20,7 +20,6 @@ import static java.util.stream.Collectors.toList;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,6 +37,7 @@ import org.springframework.beans.BeanUtils;
 @NoArgsConstructor
 @Builder
 public class StockManagementDraftDto {
+
   private UUID id;
 
   private UUID facilityId;
@@ -55,15 +55,9 @@ public class StockManagementDraftDto {
 
   private String draftType;
 
-  private UUID destinationId;
-
-  private UUID sourceId;
-
   private UUID initialDraftId;
 
-  private String destinationName;
-
-  private String creator;
+  private String operator;
 
   private PhysicalInventorySubDraftEnum status;
 

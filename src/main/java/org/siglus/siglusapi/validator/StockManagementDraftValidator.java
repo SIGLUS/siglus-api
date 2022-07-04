@@ -19,6 +19,7 @@ import static org.aspectj.util.LangUtil.isEmpty;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_DOCUMENT_NUMBER_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_ID_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INITIAL_DRAFT_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PROGRAM_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
@@ -58,6 +59,7 @@ public class StockManagementDraftValidator {
     validateNotNull(inventory.getProgramId(), ERROR_PROGRAM_ID_MISSING);
     validateNotNull(inventory.getUserId(), ERROR_USER_ID_MISSING);
     validateNotNull(inventory.getFacilityId(), ERROR_FACILITY_ID_MISSING);
+    validateNotNull(inventory.getInitialDraftId(), ERROR_INITIAL_DRAFT_ID_MISSING);
   }
 
   public void validateInitialDraft(StockManagementInitialDraftDto stockManagementInitialDraftDto) {

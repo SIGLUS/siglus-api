@@ -52,12 +52,10 @@ public class SiglusStockManagementDraftController {
   }
 
   @GetMapping("/multi")
-  public List<StockManagementDraftDto> searchDrafts(@RequestParam UUID program,
-      @RequestParam UUID userId,
-      @RequestParam String draftType,
-      @RequestParam UUID destinationId
+  public List<StockManagementDraftDto> searchMultiUserDrafts(
+      @RequestParam UUID initialDraftId
   ) {
-    return stockManagementDraftService.findStockManagementDrafts(program, draftType, destinationId);
+    return stockManagementDraftService.findStockManagementDrafts(initialDraftId);
   }
 
   @PostMapping
