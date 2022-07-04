@@ -95,9 +95,9 @@ public class FacilityNativeRepository extends BaseNativeRepository {
 
 
   public List<RequisitionMonthlyReportFacility> queryAllFacilityInfo() {
-    String query = "SELECT f.id  AS ficilityid, "
-        + "       f.name AS ficilityname, "
-        + "       f.code      AS ficilitycode, "
+    String query = "SELECT f.id  AS facilityid, "
+        + "       f.name AS facilityname, "
+        + "       f.code      AS facilitycode, "
         + "       ft.code      AS facilitytype, "
         + "       ftm.category AS facilitymergetype, "
         + "       z1.name district, "
@@ -119,7 +119,7 @@ public class FacilityNativeRepository extends BaseNativeRepository {
         new RequisitionMonthlyReportFacility(readAsString(rs, "district"),
             readAsString(rs, "province"),
             readAsString(rs, "facilityname"),
-            readAsString(rs, "ficilitycode"),
+            readAsString(rs, "facilitycode"),
             readUuid(rs, "facilityid"),
             readAsString(rs, "facilitytype"),
             readAsString(rs, "facilitymergetype"),
