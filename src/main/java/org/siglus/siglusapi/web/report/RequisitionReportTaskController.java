@@ -15,9 +15,11 @@
 
 package org.siglus.siglusapi.web.report;
 
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,6 +42,12 @@ public class RequisitionReportTaskController {
   public ResponseEntity<String> update(@RequestParam boolean needCheckPermission) {
     requisitionReportTaskService.update(needCheckPermission);
     return ResponseEntity.ok("ok");
+  }
+
+  @GetMapping("/testPermission")
+  public ResponseEntity<Boolean> testPermission(@RequestParam UUID programId
+      , @RequestParam UUID facilityId) {
+    return ResponseEntity.ok(requisitionReportTaskService.testPermission(programId, facilityId));
   }
 
 }

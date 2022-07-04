@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service.task.report;
 
+import com.alibaba.fastjson.JSON;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -91,6 +92,12 @@ public class RequisitionReportTaskService {
 
   private void doUpdate(boolean needCheckPermission) {
     // TODO:  add implement ( 7/4/22 by kourengang)
+  }
+
+  public boolean testPermission(UUID programId, UUID facilityId) {
+    ValidationResult validationResult = permissionService.canInitRequisition(programId, facilityId);
+    log.info("testPermision validationResult=" + JSON.toJSONString(validationResult));
+    return validationResult.isSuccess();
   }
 
   public void doRefresh(boolean needCheckPermission) {
