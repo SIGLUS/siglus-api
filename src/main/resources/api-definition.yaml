@@ -141,7 +141,7 @@ schemas:
   - androidPodConfirmRequest: !include schemas/androidPodConfirmRequest.json
   - androidPodConfirmResponse: !include schemas/androidPodConfirmResponse.json
   - metabaseDashboardUrlResponse: !include schemas/metabaseUrlDto.json
-
+  - draftListResponse: !include schemas/draftListResponse.json
 resourceTypes:
   - collection:
       get:
@@ -563,10 +563,16 @@ traits:
                 schema: localizedMessage
       post:
         is: [ secured ]
-        description: Create empty draft physical inventory. Only one draft is allowed at the same time for one facility&program.
+        description: Create empty draft physical inventory and assign multiple drafts for multiuser. Only one draft is allowed at the same time for one facility&program.
         body:
           application/json:
             schema: physicalInventory
+        queryParameters:
+          splitNum:
+            required: true
+            description: splitNum entered by the user
+            repeat: false
+            type: integer
         responses:
           201:
             description: Draft saved.
@@ -810,6 +816,48 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /draftList:
+      get:
+        is: [ secured ]
+        description: Get subDrafts belongs to the program and facility.
+        queryParameters:
+          program:
+            required: true
+            description: program id
+            repeat: false
+            type: string
+          facility:
+            required: true
+            description: facility id
+            repeat: false
+            type: string
+          isDraft:
+            required: false
+            description: is draft
+            repeat: false
+            type: boolean
+        responses:
+          200:
+            body:
+              application/json:
+                schema: draftListResponse
+
+    /subDraft:
+      get:
+        is: [ secured ]
+        description: Get subDraft detail.
+        queryParameters:
+          subDraftIds:
+            required: true
+            description: subDraftId List
+            repeat: false
+            type: string
+        responses:
+          200:
+            body:
+              application/json:
+                schema: physicalInventory
+
     /stockCards/{id}:
       get:
         is: [ secured ]
@@ -898,7 +946,7 @@ traits:
     /dashboard:
       get:
         is: [ secured ]
-        description: Get Metabase Dashboard Url according user power
+        description: Get Metabase Dashboard Url according user rights
         queryParameters:
           dashboardName:
             required: true
