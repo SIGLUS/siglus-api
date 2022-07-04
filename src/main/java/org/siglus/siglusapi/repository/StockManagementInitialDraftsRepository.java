@@ -23,18 +23,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface StockManagementInitialDraftsRepository extends
     JpaRepository<StockManagementInitialDraft, UUID> {
 
-  List<StockManagementInitialDraft> findByProgramIdAndFacilityIdAndDestinationIdAndDraftType(
-      UUID programId,
-      UUID facilityId,
-      UUID destination,
-      String draftType);
-
-  List<StockManagementInitialDraft> findByProgramIdAndFacilityIdAndSourceIdAndDraftType(
-      UUID programId,
-      UUID facilityId,
-      UUID sourceId,
-      String draftType);
-
   List<StockManagementInitialDraft> findByProgramIdAndFacilityIdAndDraftType(
       UUID programId,
       UUID facilityId,

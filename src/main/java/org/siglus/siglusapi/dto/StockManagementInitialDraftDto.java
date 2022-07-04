@@ -31,6 +31,8 @@ public class StockManagementInitialDraftDto {
 
   private String destinationName;
 
+  private String sourceName;
+
   private String locationFreeText;
 
   private String draftType;

@@ -246,26 +246,28 @@ public class SiglusStockManagementDraftService {
     draftValidator.validateFacilityId(facilityId);
     draftValidator.validateDraftType(draftType);
 
-    if (draftType.equals("issue")) {
-      List<StockManagementInitialDraft> initialDrafts = stockManagementInitialDraftsRepository
-          .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, draftType);
-      StockManagementInitialDraft initialDraft = initialDrafts.stream().findFirst().orElse(null);
-      if (initialDraft != null) {
-        StockManagementInitialDraftDto stockManagementInitialDraftDto = StockManagementInitialDraftDto
-            .from(initialDraft);
+    List<StockManagementInitialDraft> initialDrafts = stockManagementInitialDraftsRepository
+        .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, draftType);
+    StockManagementInitialDraft initialDraft = initialDrafts.stream().findFirst().orElse(null);
+    if (initialDraft != null) {
+      StockManagementInitialDraftDto stockManagementInitialDraftDto = StockManagementInitialDraftDto
+          .from(initialDraft);
+      if (draftType.equals("issue")) {
         String destinationName = findDestinationName(initialDraft.getDestinationId(), facilityId);
         stockManagementInitialDraftDto.setDestinationName(destinationName);
         return stockManagementInitialDraftDto;
+      } else if (draftType.equals("receive")) {
+        String sourceName = findSourceName(initialDraft.getSourceId());
+        stockManagementInitialDraftDto.setSourceName(sourceName);
+        return stockManagementInitialDraftDto;
       }
-      return new StockManagementInitialDraftDto();
-    } else if (draftType.equals("receive")) {
-      List<StockManagementInitialDraft> initialDrafts = stockManagementInitialDraftsRepository
-          .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, draftType);
-      //change logic when do receive
-      return initialDrafts.isEmpty() ? null
-          : StockManagementInitialDraftDto.from(initialDrafts.get(0));
     }
     return new StockManagementInitialDraftDto();
+  }
+
+  private String findSourceName(UUID sourceId) {
+    //TODO: when do multi-user receive, get source name by id
+    return null;
   }
 
   private void checkIfInitialDraftExists(UUID programId, UUID facilityId, String draftType) {
