@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static java.util.stream.Collectors.toList;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
@@ -33,10 +34,13 @@ import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
+import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
@@ -45,6 +49,7 @@ import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -98,11 +103,27 @@ public class SiglusStockManagementDraftService {
 
   @Transactional
   public StockManagementDraftDto saveDraft(StockManagementDraftDto dto, UUID id) {
-    log.info("save physical inventory draft");
+    log.info("update issue draft");
     stockManagementDraftValidator.validateDraft(dto, id);
-    StockManagementDraft draft = StockManagementDraft.createStockManagementDraft(dto, true);
-    StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
+    StockManagementDraft newDraft = setNewAttributesInOriginalDraft(dto, id);
+    StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
     return StockManagementDraftDto.from(savedDraft);
+  }
+
+  private StockManagementDraft setNewAttributesInOriginalDraft(StockManagementDraftDto dto,
+      UUID id) {
+    StockManagementDraft originalDraft = stockManagementDraftRepository.findOne(id);
+    StockManagementDraft newDraft = new StockManagementDraft();
+    BeanUtils.copyProperties(originalDraft, newDraft);
+    newDraft.setSignature(dto.getSignature());
+    newDraft.setStatus(PhysicalInventorySubDraftEnum.DRAFT);
+    List<StockManagementDraftLineItemDto> lineItemDtos = dto.getLineItems();
+    if (lineItemDtos != null) {
+      newDraft.setLineItems(lineItemDtos.stream()
+          .map(lineItemDto -> StockManagementDraftLineItem.from(lineItemDto, newDraft))
+          .collect(toList()));
+    }
+    return newDraft;
   }
 
   //Delete after finish multi-user stock issue feature
