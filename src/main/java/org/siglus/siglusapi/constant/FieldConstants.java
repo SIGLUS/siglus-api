@@ -60,6 +60,8 @@ public class FieldConstants {
 
   public static final String IS_BASIC = "isBasic";
 
+  public static final String IS_TRACER = "isTracer";
+
   public static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
   public static final String CONSUMED = "consumed";

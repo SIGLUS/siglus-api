@@ -24,6 +24,7 @@ import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_ORDERABLES;
 import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
+import static org.siglus.siglusapi.constant.FieldConstants.IS_TRACER;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import java.time.ZonedDateTime;
@@ -55,6 +56,7 @@ import org.siglus.siglusapi.dto.ApprovedProductDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.siglus.siglusapi.dto.TradeItemDto;
+import org.siglus.siglusapi.dto.fc.AreaDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
@@ -118,14 +120,12 @@ public class FcProductService implements ProcessDataService {
         ProductInfoDto product = (ProductInfoDto) item;
         trimProductCode(product);
         boolean isAreaEmpty = product.getAreas() == null || product.getAreas().isEmpty();
-        if (FcUtil.isActive(product.getStatus()) && isAreaEmpty) {
-          log.warn("[FC product] areas is empty: {}", product);
+        if ((FcUtil.isActive(product.getStatus()) && isAreaEmpty)
+            || (!isAreaEmpty && !verifyExistRealProgram(product.getAreas()))) {
+          log.warn("[FC product] areas is empty or real program is null: {}", product);
           return;
         }
-        ProductInfoDto productInMap = productCodeToProduct.get(product.getFnm());
-        if (null == productInMap || FcUtil.isActive(product.getStatus())) {
-          productCodeToProduct.put(product.getFnm(), product);
-        }
+        addProductCodeToProduct(productCodeToProduct, product);
       });
       productCodeToProduct.values().forEach(current -> {
         OrderableDto existed = orderableService.getOrderableByCode(current.getFnm());
@@ -153,6 +153,13 @@ public class FcProductService implements ProcessDataService {
         createCounter.get(), updateCounter.get(), sameCounter.get());
     return buildResult(PRODUCT_API, products, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
         updateCounter.get());
+  }
+
+  private void addProductCodeToProduct(Map<String, ProductInfoDto> productCodeToProduct, ProductInfoDto product) {
+    ProductInfoDto productInMap = productCodeToProduct.get(product.getFnm());
+    if (null == productInMap || FcUtil.isActive(product.getStatus())) {
+      productCodeToProduct.put(product.getFnm(), product);
+    }
   }
 
   private void trimProductCode(ProductInfoDto product) {
@@ -215,6 +222,9 @@ public class FcProductService implements ProcessDataService {
     if (basicProductCodes.contains(newOrderable.getProductCode())) {
       extraData.put(IS_BASIC, true);
     }
+    if (product.isSentinel()) {
+      extraData.put(IS_TRACER, true);
+    }
     newOrderable.setExtraData(extraData);
     newOrderable.setTradeItemIdentifier(createTradeItem());
     if (FcUtil.isActive(product.getStatus())) {
@@ -238,6 +248,7 @@ public class FcProductService implements ProcessDataService {
     } else {
       extraData.put(ACTIVE, false);
     }
+    extraData.put(IS_TRACER, current.isSentinel());
     existed.setExtraData(extraData);
     if (FcUtil.isActive(current.getStatus())) {
       existed.setPrograms(buildProgramOrderableDtos(current));
@@ -309,6 +320,11 @@ public class FcProductService implements ProcessDataService {
           current.getStatus());
       return true;
     }
+    if (isDifferentProductTracer(existed, current)) {
+      log.info("[FC product] isTracer different, existed: {}, current: {}", existed.getExtraData().get(IS_TRACER),
+          current.isSentinel());
+      return true;
+    }
     if (FcUtil.isActive(current.getStatus()) && isDifferentProgramOrderable(existed, current)) {
       log.info("[FC product] program different, existed: {}, current: {}", existed.getPrograms(), current.getAreas());
       return true;
@@ -326,6 +342,12 @@ public class FcProductService implements ProcessDataService {
     return null != existingOrderableStatus && (boolean) existingOrderableStatus != productActiveStatus;
   }
 
+  private boolean isDifferentProductTracer(OrderableDto existed, ProductInfoDto current) {
+    Map<String, Object> existedExtraData = existed.getExtraData();
+    Object tracerData = existedExtraData.get(IS_TRACER);
+    return tracerData == null || (boolean) tracerData != current.isSentinel();
+  }
+
   private boolean isDifferentProgramOrderable(OrderableDto existed, ProductInfoDto current) {
     Set<ProgramOrderableDto> productPrograms = buildProgramOrderableDtos(current);
     Set<ProgramOrderableDto> existingOrderablePrograms = existed.getPrograms();
@@ -340,6 +362,15 @@ public class FcProductService implements ProcessDataService {
       return true;
     }
     return !productProgramIds.containsAll(existingOrderableProgramIds);
+  }
+
+  private boolean verifyExistRealProgram(List<AreaDto> areas) {
+    for (AreaDto areaDto : areas) {
+      if (realProgramCodeToEntityMap.get(areaDto.getAreaCode()) == null) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private UUID createTradeItem() {

@@ -31,6 +31,7 @@ import static org.siglus.siglusapi.constant.CacheConstants.SIGLUS_ORDERABLES;
 import static org.siglus.siglusapi.constant.FcConstants.STATUS_ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
+import static org.siglus.siglusapi.constant.FieldConstants.IS_TRACER;
 import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
 import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
@@ -136,6 +137,8 @@ public class FcProductServiceTest {
 
   private final String fnm = "fnm";
 
+  private final boolean isTracer = true;
+
   private final String description = "description";
 
   private final String fullDescription = "fullDescription";
@@ -229,6 +232,7 @@ public class FcProductServiceTest {
         .status(STATUS_ACTIVE)
         .areas(newArrayList(area))
         .categoryCode(categoryCode)
+        .isSentinel(isTracer)
         .build();
 
     // when
@@ -246,6 +250,7 @@ public class FcProductServiceTest {
     assertEquals("each", orderableToCreate.getDispensable().getDispensingUnit());
     Map<String, Object> extraData = newHashMap();
     extraData.put(IS_BASIC, true);
+    extraData.put(IS_TRACER, isTracer);
     assertEquals(extraData, orderableToCreate.getExtraData());
     assertEquals(tradeItemId.toString(), orderableToCreate.getTradeItemIdentifier());
     assertEquals(1, orderableToCreate.getPrograms().size());
@@ -280,7 +285,9 @@ public class FcProductServiceTest {
     // given
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
-    orderableDto.setExtraData(newHashMap());
+    Map<String, Object> orderableExtraData = newHashMap();
+    orderableExtraData.put(IS_TRACER, false);
+    orderableDto.setExtraData(orderableExtraData);
     when(orderableService.getOrderableByCode(fnm)).thenReturn(orderableDto);
     when(orderableReferenceDataService.update(any())).thenReturn(orderableDto);
 
@@ -295,6 +302,7 @@ public class FcProductServiceTest {
         .fullDescription(fullDescription)
         .status(STATUS_ACTIVE)
         .areas(newArrayList(area))
+        .isSentinel(isTracer)
         .categoryCode(categoryCode)
         .build();
 
@@ -306,7 +314,10 @@ public class FcProductServiceTest {
     OrderableDto orderableToUpdate = orderableCaptor.getValue();
     assertEquals(description, orderableToUpdate.getDescription());
     assertEquals(fullDescription, orderableToUpdate.getFullProductName());
-    assertNull(orderableToUpdate.getExtraData().get(ACTIVE));
+    Map<String, Object> extraData = newHashMap();
+    extraData.put(IS_TRACER, isTracer);
+    assertNull(extraData.get(ACTIVE));
+    assertEquals(extraData, orderableToUpdate.getExtraData());
     assertEquals(1, orderableToUpdate.getPrograms().size());
     orderableToUpdate.getPrograms().forEach(programOrderableDto -> {
       assertEquals(programId, programOrderableDto.getProgramId());
