@@ -33,6 +33,7 @@ import org.openlmis.requisition.errorhandling.ValidationResult;
 import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
@@ -40,12 +41,12 @@ import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyNotSubmitReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
+import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
-import org.siglus.siglusapi.repository.SiglusStockCardLineItemRepository;
-import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
+import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -57,7 +58,8 @@ public class RequisitionReportTaskService {
   private final FacilityReferenceDataService facilityReferenceDataService;
   private final RequisitionMonthReportRepository requisitionMonthReportRepository;
   private final RequisitionMonthlyNotSubmitReportRepository requisitionMonthlyNotSubmitReportRepository;
-  private final SiglusStockCardLineItemRepository siglusStockCardLineItemRepository;
+  private final FacilityNativeRepository facilityNativeRepository;
+  private final SiglusStockCardRepository siglusStockCardRepository;
   private final ProgramRequisitionNameMappingRepository programRequisitionNameMappingRepository;
   private final PermissionService permissionService;
   private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
@@ -91,15 +93,15 @@ public class RequisitionReportTaskService {
         .collect(Collectors.toMap(this::getUniqueKey, Function.identity(), (e1, e2) -> e1));
     log.info("requisitionMonthlyReports.size = " + requisitionMonthlyReports.size());
 
-    List<FacillityStockCardDateDto> firstStockCardGroupByFacility = siglusStockCardLineItemRepository
+    List<StockCard> firstStockCardGroupByFacility = siglusStockCardRepository
         .findFirstStockCardGroupByFacility();
-    Map<String, FacillityStockCardDateDto> facilityStockInventoryDateMap = firstStockCardGroupByFacility.stream()
+    Map<String, StockCard> facilityStockInventoryDateMap = firstStockCardGroupByFacility.stream()
         .collect(Collectors.toMap(
             facillityStockCardDateDto -> getFirstStockCardUniqueKey(facillityStockCardDateDto.getFacilityId(),
                 facillityStockCardDateDto.getProgramId()), Function.identity()));
 
     Set<UUID> existedPhysicalInventoryFacilityIds = firstStockCardGroupByFacility.stream()
-        .map(FacillityStockCardDateDto::getFacilityId).collect(
+        .map(StockCard::getFacilityId).collect(
             Collectors.toSet());
 
     allFacilityDto = allFacilityDto.stream().filter(item -> existedPhysicalInventoryFacilityIds.contains(item.getId()))
@@ -107,7 +109,7 @@ public class RequisitionReportTaskService {
     log.info("filtered allFacilityDto.size = " + allFacilityDto.size());
 
     List<RequisitionMonthlyReportFacility> requisitionMonthlyReportFacilities
-        = requisitionMonthlyNotSubmitReportRepository.queryAllFacilityInfo();
+        = facilityNativeRepository.queryAllFacilityInfo();
 
     Map<UUID, RequisitionMonthlyReportFacility> monthlyReportFacilityMap = requisitionMonthlyReportFacilities.stream()
         .collect(Collectors.toMap(RequisitionMonthlyReportFacility::getFacilityId, Function.identity()));
@@ -130,7 +132,7 @@ public class RequisitionReportTaskService {
           log.info(String.format("cannot InitRequisition, programIds=%s, facilityId=%s", programId, facilityId));
           continue;
         }
-        FacillityStockCardDateDto facillityStockCardDateDto = facilityStockInventoryDateMap.get(
+        StockCard facillityStockCardDateDto = facilityStockInventoryDateMap.get(
             getFirstStockCardUniqueKey(facilityId, programId));
         int startPeriodIndexOfFacility = getStartPeriodIndexOfFacility(allProcessingPeriodExtensionDto, facilityId,
             programId, facillityStockCardDateDto);
@@ -167,7 +169,7 @@ public class RequisitionReportTaskService {
   }
 
   private int getStartPeriodIndexOfFacility(List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto,
-      UUID facilityId, UUID programId, FacillityStockCardDateDto facillityStockCardDateDto) {
+      UUID facilityId, UUID programId, StockCard facillityStockCardDateDto) {
     int startPeriodIndexOfFacility;
 
     if (facillityStockCardDateDto == null) {

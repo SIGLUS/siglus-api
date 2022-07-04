@@ -16,7 +16,6 @@
 package org.siglus.siglusapi.domain.report;
 
 import java.util.UUID;
-import javax.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,25 +27,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class RequisitionMonthlyReportFacility {
 
-  @Column(name = "district")
   private String district;
-  @Column(name = "province")
   private String province;
-  @Column(name = "facilityname")
   private String facilityName;
-  @Column(name = "ficilitycode")
   private String ficilityCode;
 
-  @Column(name = "facilityid")
   private UUID facilityId;
 
-  @Column(name = "facilitytype")
   private String facilityType;
-  @Column(name = "facilitymergetype")
   private String facilityMergeType;
-  @Column(name = "districtfacilitycode")
   private String districtFacilityCode;
-  @Column(name = "provincefacilitycode")
   private String provinceFacilityCode;
 }
 

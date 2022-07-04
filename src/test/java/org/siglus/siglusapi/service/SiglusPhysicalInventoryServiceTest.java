@@ -34,6 +34,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORT
 
 import com.google.common.collect.Sets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -67,6 +68,8 @@ import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
+import org.siglus.siglusapi.dto.PhysicalInventoryLineItemExtensionDto;
+import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
@@ -78,6 +81,7 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -86,9 +90,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
+@SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField", "PMD.AvoidDuplicateLiterals"})
 public class SiglusPhysicalInventoryServiceTest {
 
+  public static final String FREE_TEXT = "freeText";
   @Captor
   private ArgumentCaptor<PhysicalInventoryDto> physicalInventoryDtoArgumentCaptor;
 
@@ -279,7 +284,59 @@ public class SiglusPhysicalInventoryServiceTest {
 
     // then
     assertNull(dto.getLineItems().get(0).getReasonFreeText());
-    assertEquals("freeText", dto.getLineItems().get(1).getReasonFreeText());
+    assertEquals(FREE_TEXT, dto.getLineItems().get(1).getReasonFreeText());
+  }
+
+
+  @Test
+  public void shouldSplicingDataWithExtensionWhenSaveDraftForProductsInOneProgram() {
+    PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
+        .orderableId(orderableId)
+        .programId(programIdOne)
+        .build();
+    UUID orderableIdTwo = UUID.randomUUID();
+    PhysicalInventoryLineItemDto lineItemDtoTwo = PhysicalInventoryLineItemDto.builder()
+        .orderableId(orderableIdTwo)
+        .programId(programIdOne)
+        .reasonFreeText("freeText")
+        .build();
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .programId(programIdOne)
+        .facilityId(facilityId)
+        .lineItems(newArrayList(lineItemDtoOne, lineItemDtoTwo))
+        .build();
+    when(physicalInventoryStockManagementService.searchPhysicalInventory(programIdOne, facilityId,
+        true))
+        .thenReturn(newArrayList(PhysicalInventoryDto.builder()
+            .programId(programIdOne)
+            .facilityId(facilityId)
+            .build()
+        ));
+    PhysicalInventoryLineItemsExtension extensionOne = PhysicalInventoryLineItemsExtension.builder()
+        .orderableId(orderableId)
+        .build();
+    PhysicalInventoryLineItemsExtension extensionTwo = PhysicalInventoryLineItemsExtension.builder()
+        .orderableId(orderableIdTwo)
+        .reasonFreeText("freeText")
+        .build();
+    when(lineItemsExtensionRepository.save(Arrays.asList(extensionOne, extensionTwo)))
+        .thenReturn(Arrays.asList(extensionOne, extensionTwo));
+
+    PhysicalInventoryLineItemExtensionDto physicalInventoryExtendDto = new PhysicalInventoryLineItemExtensionDto();
+    BeanUtils.copyProperties(physicalInventoryDto, physicalInventoryExtendDto);
+    List<PhysicalInventorySubDraftLineItemsExtensionDto> draftLineItemsExtensionDtos = new ArrayList<>();
+    draftLineItemsExtensionDtos.add(PhysicalInventorySubDraftLineItemsExtensionDto.builder()
+        .orderableId(orderableId).subDraftId(UUID.randomUUID()).build());
+    draftLineItemsExtensionDtos.add(PhysicalInventorySubDraftLineItemsExtensionDto.builder()
+        .orderableId(orderableIdTwo).subDraftId(UUID.randomUUID()).build());
+    physicalInventoryExtendDto.setLineItemsExtensions(draftLineItemsExtensionDtos);
+
+    // when
+    PhysicalInventoryDto dto = siglusPhysicalInventoryService
+        .saveDraftForProductsForOneProgramWithExtension(physicalInventoryExtendDto);
+
+    // then
+    assertNull(dto.getLineItems().get(0).getReasonFreeText());
   }
 
   @Test

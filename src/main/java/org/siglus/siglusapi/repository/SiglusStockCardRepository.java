@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.openlmis.stockmanagement.domain.card.StockCard;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 @SuppressWarnings("PMD.AvoidDuplicateLiterals")
@@ -31,4 +32,12 @@ public interface SiglusStockCardRepository extends JpaRepository<StockCard, UUID
 
   void deleteStockCardsByFacilityIdAndOrderableIdIn(@Param("facilityId") UUID facilityId,
       @Param("orderableId") Set<UUID> orderableIds);
+
+  @Query(value = "SELECT DISTINCT ON (sc.facilityid, sc.programid) "
+      + "            MIN(scli.occurreddate) OVER (PARTITION BY sc.facilityid, sc.programid) AS occurreddate, "
+      + "            sc.facilityid, "
+      + "            sc.programid "
+      + "FROM stockmanagement.stock_card_line_items scli "
+      + "         LEFT JOIN stockmanagement.stock_cards sc ON scli.stockcardid = sc.id", nativeQuery = true)
+  List<StockCard> findFirstStockCardGroupByFacility();
 }

@@ -13,15 +13,21 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
 import java.util.UUID;
-import org.siglus.siglusapi.domain.report.RequisitionMonthlyNotSubmitReport;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.Builder;
+import lombok.Data;
 
-public interface RequisitionMonthlyNotSubmitReportRepository extends
-    JpaRepository<RequisitionMonthlyNotSubmitReport, UUID> {
+@Builder
+@Data
+public class PhysicalInventorySubDraftLineItemsExtensionDto {
 
+  private UUID orderableId;
 
+  private UUID lotId;
 
+  private UUID physicalInventoryId;
+
+  private UUID subDraftId;
 }

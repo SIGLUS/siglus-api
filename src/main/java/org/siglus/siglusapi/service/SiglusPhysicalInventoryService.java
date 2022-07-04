@@ -62,6 +62,8 @@ import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
 import org.siglus.siglusapi.dto.Message;
+import org.siglus.siglusapi.dto.PhysicalInventoryLineItemExtensionDto;
+import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -489,6 +491,16 @@ public class SiglusPhysicalInventoryService {
     return null;
   }
 
+  public PhysicalInventoryDto saveDraftForProductsForOneProgramWithExtension(
+      PhysicalInventoryLineItemExtensionDto dto) {
+    saveDraft(dto, dto.getId());
+    List<PhysicalInventoryDto> physicalInventoryDtos = Collections.singletonList(dto);
+    if (CollectionUtils.isNotEmpty(physicalInventoryDtos)) {
+      return getResultInventory(physicalInventoryDtos, updateExtensionWithSubDraft(dto, physicalInventoryDtos));
+    }
+    return null;
+  }
+
   public PhysicalInventoryDto saveDraftForAllProducts(PhysicalInventoryDto dto) {
     deletePhysicalInventoryForAllProducts(dto.getFacilityId());
     createNewDraftForAllProducts(dto);
@@ -712,6 +724,53 @@ public class SiglusPhysicalInventoryService {
 
     log.info("save physical inventory extension, size: {}", updateExtensions.size());
     return lineItemsExtensionRepository.save(updateExtensions);
+  }
+
+  private List<PhysicalInventoryLineItemsExtension> updateExtensionWithSubDraft(
+      PhysicalInventoryLineItemExtensionDto inventoryDto,
+      List<PhysicalInventoryDto> updatedDto) {
+    List<PhysicalInventorySubDraftLineItemsExtensionDto> lineItemsExtensions = inventoryDto.getLineItemsExtensions();
+    Map<String, UUID> lineItemsExtensionMap = lineItemsExtensions.stream()
+        .collect(Collectors.toMap(item -> getUniqueKey(item.getOrderableId(), item.getLotId()),
+            PhysicalInventorySubDraftLineItemsExtensionDto::getSubDraftId));
+
+    List<UUID> updatePhysicalInventoryIds =
+        updatedDto.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
+    log.info("find physical inventory extension: {}", updatePhysicalInventoryIds);
+    List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
+        .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
+    List<PhysicalInventoryLineItemsExtension> updateExtensions = new ArrayList<>();
+
+    updatedDto.forEach(dto -> {
+      if (dto.getLineItems() == null || dto.getLineItems().isEmpty()) {
+        return;
+      }
+      dto.getLineItems().forEach(lineItem -> {
+        PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
+        if (extension == null) {
+          UUID subDraftId = lineItemsExtensionMap.get(getUniqueKey(lineItem.getOrderableId(), lineItem.getLotId()));
+          extension = PhysicalInventoryLineItemsExtension.builder()
+              .orderableId(lineItem.getOrderableId())
+              .lotId(lineItem.getLotId())
+              .physicalInventoryId(dto.getId())
+              .initial(false)
+              .subDraftId(subDraftId)
+              .build();
+        }
+        extension.setReasonFreeText(getFreeTextByInput(inventoryDto, lineItem));
+        updateExtensions.add(extension);
+      });
+    });
+
+    log.info("save physical inventory extension, size: {}", updateExtensions.size());
+    return lineItemsExtensionRepository.save(updateExtensions);
+  }
+
+  private String getUniqueKey(UUID orderableId, UUID lotId) {
+    if (lotId == null) {
+      return orderableId.toString();
+    }
+    return orderableId.toString() + "&" + lotId.toString();
   }
 
   private PhysicalInventoryLineItemsExtension getExtension(

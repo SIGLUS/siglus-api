@@ -143,7 +143,8 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
   private final UUID id = UUID.randomUUID();
 
-  private final UUID physicalInventoryId = UUID.randomUUID();
+  private final UUID physicalInventoryId1 = UUID.randomUUID();
+  private final UUID physicalInventoryId2 = UUID.randomUUID();
 
   private final UUID subDraftIdOne = UUID.randomUUID();
 
@@ -188,10 +189,13 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .build();
     List<UUID> subDraftIds = Lists.newArrayList(subDraftId);
     List<PhysicalInventorySubDraft> subDrafts = Lists.newArrayList(PhysicalInventorySubDraft.builder()
-        .physicalInventoryId(physicalInventoryId).num(1)
+        .physicalInventoryId(physicalInventoryId1).num(1)
         .build(), PhysicalInventorySubDraft.builder()
-        .physicalInventoryId(physicalInventoryId).num(2)
+        .physicalInventoryId(physicalInventoryId2).num(2)
         .build());
+    for (PhysicalInventorySubDraft subDraft : subDrafts) {
+      subDraft.setId(UUID.randomUUID());
+    }
     when(physicalInventorySubDraftRepository.findAll(subDraftIds)).thenReturn(subDrafts);
 
     PhysicalInventoryDto oldPhysicalInventoryDto = PhysicalInventoryDto.builder()
@@ -200,7 +204,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .lineItems(Lists.newArrayList(lineItemDtoOne))
         .build();
 
-    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(physicalInventoryId)).thenReturn(
+    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(any())).thenReturn(
         oldPhysicalInventoryDto);
 
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
@@ -213,7 +217,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
         PhysicalInventorySubDraftEnum.DRAFT);
     // then
-    verify(siglusPhysicalInventoryService, times(1)).getFullPhysicalInventoryDto(physicalInventoryId);
+    verify(siglusPhysicalInventoryService, times(2)).getFullPhysicalInventoryDto(any());
   }
 
 
@@ -227,24 +231,28 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
 
     List<UUID> subDraftIds = Lists.newArrayList(subDraftId);
     List<PhysicalInventorySubDraft> subDrafts = Lists.newArrayList(PhysicalInventorySubDraft.builder()
-        .physicalInventoryId(physicalInventoryId).num(1)
+        .physicalInventoryId(physicalInventoryId1).num(1)
         .build(), PhysicalInventorySubDraft.builder()
-        .physicalInventoryId(physicalInventoryId).num(2)
+        .physicalInventoryId(physicalInventoryId2).num(2)
         .build());
+    for (PhysicalInventorySubDraft subDraft : subDrafts) {
+      subDraft.setId(UUID.randomUUID());
+    }
     when(physicalInventorySubDraftRepository.findAll(subDraftIds)).thenReturn(subDrafts);
     List<PhysicalInventoryLineItemsExtension> physicalInventories = Lists.newArrayList(
         PhysicalInventoryLineItemsExtension.builder()
-            .physicalInventoryId(physicalInventoryId)
+            .physicalInventoryId(physicalInventoryId1)
             .orderableId(orderableId)
             .lotId(lotId)
             .build(), PhysicalInventoryLineItemsExtension.builder()
-            .physicalInventoryId(physicalInventoryId)
+            .physicalInventoryId(physicalInventoryId2)
             .orderableId(UUID.randomUUID())
             .lotId(UUID.randomUUID())
             .build()
     );
 
-    when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(Lists.newArrayList(physicalInventoryId))).thenReturn(
+    when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(
+        Lists.newArrayList(physicalInventoryId1, physicalInventoryId2))).thenReturn(
         physicalInventories);
     OrderableDto dto = new OrderableDto();
     dto.setId(orderableId);
@@ -263,7 +271,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .lineItems(Lists.newArrayList(lineItemDtoOne))
         .build();
 
-    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(physicalInventoryId)).thenReturn(
+    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(any())).thenReturn(
         oldPhysicalInventoryDto);
 
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
@@ -276,7 +284,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
         PhysicalInventorySubDraftEnum.DRAFT);
     // then
-    verify(siglusPhysicalInventoryService, times(2)).getFullPhysicalInventoryDto(physicalInventoryId);
+    verify(siglusPhysicalInventoryService, times(2)).getFullPhysicalInventoryDto(any());
 
 
   }
@@ -295,10 +303,13 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .build();
     List<UUID> subDraftIds = Lists.newArrayList(subDraftId);
     List<PhysicalInventorySubDraft> subDrafts = Lists.newArrayList(PhysicalInventorySubDraft.builder()
-        .physicalInventoryId(physicalInventoryId).num(1)
+        .physicalInventoryId(physicalInventoryId1).num(1)
         .build(), PhysicalInventorySubDraft.builder()
-        .physicalInventoryId(physicalInventoryId).num(2)
+        .physicalInventoryId(physicalInventoryId2).num(2)
         .build());
+    for (PhysicalInventorySubDraft subDraft : subDrafts) {
+      subDraft.setId(UUID.randomUUID());
+    }
     when(physicalInventorySubDraftRepository.findAll(subDraftIds)).thenReturn(subDrafts);
 
     PhysicalInventoryDto oldPhysicalInventoryDto = PhysicalInventoryDto.builder()
@@ -307,25 +318,25 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
         .lineItems(Lists.newArrayList(lineItemDtoOne))
         .build();
 
-    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(physicalInventoryId)).thenReturn(
+    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(any())).thenReturn(
         oldPhysicalInventoryDto);
     List<PhysicalInventoryLineItemsExtension> physicalInventories = Lists.newArrayList(
         PhysicalInventoryLineItemsExtension.builder()
-            .physicalInventoryId(physicalInventoryId)
+            .physicalInventoryId(physicalInventoryId1)
             .orderableId(orderableId)
             .lotId(lotId)
             .subDraftId(subDraftId)
             .initial(true)
             .build(),
         PhysicalInventoryLineItemsExtension.builder()
-            .physicalInventoryId(physicalInventoryId)
+            .physicalInventoryId(physicalInventoryId2)
             .orderableId(orderableId2)
             .lotId(lotId2)
             .subDraftId(subDraftId)
             .initial(true)
             .build()
     );
-    when(lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryId)).thenReturn(physicalInventories);
+    when(lineItemsExtensionRepository.findByPhysicalInventoryId(any())).thenReturn(physicalInventories);
     StockCardSummaryV2Dto stockCardSummaryV2Dto = new StockCardSummaryV2Dto();
     ObjectReferenceDto objectReferenceDto = new ObjectReferenceDto("urlxx", "resxx", orderableId);
     ObjectReferenceDto lot = new ObjectReferenceDto("urlxx", "resxx", lotId);

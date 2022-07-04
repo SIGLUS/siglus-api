@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.android.db.Facility;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -89,6 +90,41 @@ public class FacilityNativeRepository extends BaseNativeRepository {
     return (rs, i) ->
         new Facility(readId(rs), readAsString(rs, "code"), readAsString(rs, "name"),
             readAsString(rs, "description"), readAsBoolean(rs, "active"));
+  }
+
+
+  public List<RequisitionMonthlyReportFacility> queryAllFacilityInfo() {
+    String query = "SELECT f.id  AS ficilityid, "
+        + "       f.name AS ficilityname, "
+        + "       f.code      AS ficilitycode, "
+        + "       ft.code      AS facilitytype, "
+        + "       ftm.category AS facilitymergetype, "
+        + "       z1.name district, "
+        + "       z2.name province, "
+        + "       vfs.districtfacilitycode, "
+        + "       vfs.provincefacilitycode "
+        + "FROM referencedata.facilities f "
+        + "         LEFT JOIN referencedata.geographic_zones z1 ON f.geographiczoneid = z1.id "
+        + "         LEFT JOIN referencedata.geographic_zones z2 ON z1.parentid = z2.id "
+        + "         LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = f.code "
+        + "         LEFT JOIN referencedata.facility_types ft ON f.typeid = ft.id "
+        + "         LEFT JOIN siglusintegration.facility_type_mapping ftm "
+        + "ON ftm.facilitytypecode = ft.code";
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    return namedJdbc.query(query, params, requisitionMonthlyReportFacilityExtractor());
+  }
+
+  private RowMapper<RequisitionMonthlyReportFacility> requisitionMonthlyReportFacilityExtractor() {
+    return (rs, i) ->
+        new RequisitionMonthlyReportFacility(readAsString(rs, "district"),
+            readAsString(rs, "province"),
+            readAsString(rs, "facilityname"),
+            readAsString(rs, "ficilitycode"),
+            readUuid(rs, "facilityid"),
+            readAsString(rs, "facilitytype"),
+            readAsString(rs, "facilitymergetype"),
+            readAsString(rs, "districtfacilitycode"),
+            readAsString(rs, "provincefacilitycode"));
   }
 
 }
