@@ -65,6 +65,16 @@ public class RequisitionReportTaskService {
 
   public void refresh() {
     log.info("start refresh. start = " + System.currentTimeMillis());
+    try {
+      doRefresh();
+    } catch (Exception e) {
+      log.error("refresh with exception. msg = " + e.getMessage(), e);
+      throw e;
+    }
+    log.info("start refresh. end = " + System.currentTimeMillis());
+  }
+
+  public void doRefresh() {
     List<FacilityDto> allFacilityDto = facilityReferenceDataService.findAll();
     log.info("allFacilityDto.size = " + allFacilityDto.size());
     List<ProgramDto> allProgramDto = programDataService.findAll();
@@ -153,7 +163,6 @@ public class RequisitionReportTaskService {
         }
       }
     }
-    log.info("start refresh. end = " + System.currentTimeMillis());
   }
 
   private int getStartPeriodIndexOfFacility(List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto,

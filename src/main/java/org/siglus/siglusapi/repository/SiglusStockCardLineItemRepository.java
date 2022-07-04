@@ -58,7 +58,7 @@ public interface SiglusStockCardLineItemRepository extends JpaRepository<StockCa
   List<StockCardLineItem> findByFacilityIdAndLotIdIn(@Param("facilityId") UUID facilityId,
       @Param("originOrderCode") String originOrderCode);
 
-  @Query(value = "SELECT DISTINCT ON ( sc.facilityid, sc.programid) "
+  @Query(value = "SELECT DISTINCT ON (sc.facilityid, sc.programid) "
       + "            MIN(scli.occurreddate) OVER (PARTITION BY sc.facilityid, sc.programid) AS occurreddate, "
       + "            sc.facilityid, "
       + "            sc.programid "
