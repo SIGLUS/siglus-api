@@ -20,11 +20,9 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SU
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.AC;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.CENTRAL;
-import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_DRAFT;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_ACCEPTABLE;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 
 import com.google.common.collect.Lists;
@@ -45,7 +43,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
@@ -72,7 +69,6 @@ import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
 import org.siglus.siglusapi.service.client.PhysicalInventoryStockManagementService;
-import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.CustomListSortHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -97,9 +93,6 @@ public class SiglusPhysicalInventoryService {
 
   @Autowired
   private StockCardRepository stockCardRepository;
-
-  @Autowired
-  private SiglusApprovedProductReferenceDataService approvedProductReferenceDataService;
 
   @Autowired
   private PhysicalInventoryService physicalInventoryService;
@@ -572,7 +565,7 @@ public class SiglusPhysicalInventoryService {
 
   public PhysicalInventoryDto getPhysicalInventoryForAllProducts(UUID facilityId) {
     List<PhysicalInventoryDto> inventories = getPhysicalInventoryDtosForAllProducts(facilityId,
-        Boolean.TRUE, Boolean.FALSE);
+        Boolean.TRUE);
     if (CollectionUtils.isNotEmpty(inventories)) {
       return inventories.get(0);
     }
@@ -615,8 +608,7 @@ public class SiglusPhysicalInventoryService {
 
   public List<PhysicalInventoryDto> getPhysicalInventoryDtosForAllProducts(
       UUID facilityId,
-      Boolean isDraft,
-      boolean canInitialInventory) {
+      Boolean isDraft) {
     try {
       Set<UUID> supportedPrograms = supportedProgramsHelper
           .findHomeFacilitySupportedProgramIds();
@@ -637,11 +629,6 @@ public class SiglusPhysicalInventoryService {
             .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
         PhysicalInventoryDto resultInventory = getResultInventoryForAllProducts(inventories, extensions);
         return Collections.singletonList(resultInventory);
-      }
-      PhysicalInventoryDto dto = createInitialInventoryDraftForAllProducts(supportedPrograms,
-          facilityId, canInitialInventory);
-      if (dto != null) {
-        inventories.add(dto);
       }
       return inventories;
     } catch (PermissionMessageException e) {
@@ -803,48 +790,6 @@ public class SiglusPhysicalInventoryService {
     }
     PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
     return extension == null ? null : extension.getReasonFreeText();
-  }
-
-
-  private PhysicalInventoryDto createInitialInventoryDraftForAllProducts(
-      Set<UUID> supportedPrograms, UUID facilityId, boolean canInitialInventory) {
-    if (canInitialInventory(facilityId).isCanInitialInventory()) {
-      List<PhysicalInventoryLineItemDto> physicalInventoryLineItemDtos =
-          buildInitialInventoryLineItemDtos(supportedPrograms, facilityId);
-      PhysicalInventoryDto dto = PhysicalInventoryDto.builder()
-          .facilityId(facilityId)
-          .programId(ALL_PRODUCTS_PROGRAM_ID)
-          .lineItems(physicalInventoryLineItemDtos)
-          .build();
-      return saveDraftForAllProducts(dto);
-    }
-    if (canInitialInventory) {
-      throw new ValidationMessageException(new Message(ERROR_NOT_ACCEPTABLE));
-    }
-    return null;
-  }
-
-  private List<PhysicalInventoryLineItemDto> buildInitialInventoryLineItemDtos(
-      Set<UUID> supportedVirtualProgramIds, UUID facilityId) {
-    return supportedVirtualProgramIds.stream()
-        .map(programId ->
-            approvedProductReferenceDataService
-                .getApprovedProducts(facilityId, programId, emptyList()).stream()
-                .map(ApprovedProductDto::getOrderable)
-                .filter(o -> o.getExtraData().containsKey(IS_BASIC))
-                .filter(o -> Boolean.parseBoolean(o.getExtraData().get(IS_BASIC)))
-                .map(o -> newLineItem(o.getId(), programId))
-                .collect(Collectors.toList())
-        )
-        .flatMap(Collection::stream)
-        .collect(Collectors.toList());
-  }
-
-  private PhysicalInventoryLineItemDto newLineItem(UUID orderableId, UUID programId) {
-    return PhysicalInventoryLineItemDto.builder()
-        .orderableId(orderableId)
-        .programId(programId)
-        .build();
   }
 
   private PhysicalInventoryDto getResultInventory(List<PhysicalInventoryDto> inventories,
