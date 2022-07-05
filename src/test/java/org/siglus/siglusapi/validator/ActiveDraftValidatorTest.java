@@ -15,9 +15,7 @@
 
 package org.siglus.siglusapi.validator;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.when;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EVENT_INITIAL_DRAFT_ID_INVALID;
 
 import java.util.UUID;
 import org.junit.Test;

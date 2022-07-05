@@ -67,7 +67,8 @@ import org.siglus.siglusapi.validator.ActiveDraftValidator;
 import org.siglus.siglusapi.validator.StockManagementDraftValidator;
 
 @RunWith(MockitoJUnitRunner.class)
-@SuppressWarnings("unused")
+
+@SuppressWarnings({"unused", "PMD.TooManyMethods"})
 public class SiglusStockManagementDraftServiceTest {
 
   @Rule
