@@ -409,13 +409,10 @@ public class SiglusPhysicalInventoryService {
   }
 
   private PhysicalInventoryDto createNewDraft(PhysicalInventoryDto physicalInventoryDto) {
-    List<PhysicalInventory> physicalInventory = physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(
-        physicalInventoryDto.getProgramId(),
-        authenticationHelper.getCurrentUser().getHomeFacilityId(),
-        true
-    );
+    List<PhysicalInventoryDto> physicalInventory = getPhysicalInventoryDtosForProductsInOneProgram(
+        physicalInventoryDto.getProgramId(), authenticationHelper.getCurrentUser().getHomeFacilityId(), true);
     if (CollectionUtils.isNotEmpty(physicalInventory)) {
-      throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_DRAFT), physicalInventory);
+      throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_DRAFT), null);
     }
     return physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto);
   }
