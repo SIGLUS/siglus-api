@@ -89,7 +89,6 @@ public class SiglusStockManagementDraftService {
     log.info("create physical inventory draft");
     stockManagementDraftValidator.validateEmptyDraft(dto);
     draftValidator.validateInitialDraftId(dto.getInitialDraftId());
-    draftValidator.validateInitialDraftId(dto.getInitialDraftId());
     draftValidator.validateDraftType(dto.getDraftType());
     checkIfSameDraftsOversize(dto);
     //multi-user do not need to limit
@@ -102,7 +101,7 @@ public class SiglusStockManagementDraftService {
   }
 
   @Transactional
-  public StockManagementDraftDto saveDraft(StockManagementDraftDto dto, UUID id) {
+  public StockManagementDraftDto updateDraft(StockManagementDraftDto dto, UUID id) {
     log.info("update issue draft");
     stockManagementDraftValidator.validateDraft(dto, id);
     StockManagementDraft newDraft = setNewAttributesInOriginalDraft(dto, id);
@@ -110,7 +109,7 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(savedDraft);
   }
 
-  private StockManagementDraft setNewAttributesInOriginalDraft(StockManagementDraftDto dto,
+  public StockManagementDraft setNewAttributesInOriginalDraft(StockManagementDraftDto dto,
       UUID id) {
     StockManagementDraft originalDraft = stockManagementDraftRepository.findOne(id);
     StockManagementDraft newDraft = new StockManagementDraft();
@@ -239,7 +238,7 @@ public class SiglusStockManagementDraftService {
     return StockManagementInitialDraftDto.from(savedInitialDraft);
   }
 
-  public StockManagementInitialDraftDto findStockManagementInitialDrafts(
+  public StockManagementInitialDraftDto findStockManagementInitialDraft(
       UUID programId, String draftType) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
     draftValidator.validateProgramId(programId);

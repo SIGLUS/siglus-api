@@ -34,6 +34,7 @@ import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
+import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
@@ -97,6 +98,7 @@ public class StockManagementDraftValidatorTest {
         .programId(UUID.randomUUID())
         .userId(UUID.randomUUID())
         .facilityId(UUID.randomUUID())
+        .initialDraftId(UUID.randomUUID())
         .build();
 
     draftValidator.validateEmptyDraft(draftDto);

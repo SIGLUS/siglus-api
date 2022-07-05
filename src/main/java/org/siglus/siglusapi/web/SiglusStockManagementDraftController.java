@@ -52,9 +52,7 @@ public class SiglusStockManagementDraftController {
   }
 
   @GetMapping("/multi")
-  public List<StockManagementDraftDto> searchMultiUserDrafts(
-      @RequestParam UUID initialDraftId
-  ) {
+  public List<StockManagementDraftDto> searchMultiUserDrafts(@RequestParam UUID initialDraftId) {
     return stockManagementDraftService.findStockManagementDrafts(initialDraftId);
   }
 
@@ -75,7 +73,7 @@ public class SiglusStockManagementDraftController {
   @ResponseStatus(OK)
   public StockManagementDraftDto updateDraft(@PathVariable UUID id,
       @RequestBody StockManagementDraftDto dto) {
-    return stockManagementDraftService.saveDraft(dto, id);
+    return stockManagementDraftService.updateDraft(dto, id);
   }
 
   @PostMapping("/initial")
@@ -91,7 +89,7 @@ public class SiglusStockManagementDraftController {
       @RequestParam String draftType
   ) {
     return stockManagementDraftService
-        .findStockManagementInitialDrafts(programId, draftType);
+        .findStockManagementInitialDraft(programId, draftType);
   }
 
 }
