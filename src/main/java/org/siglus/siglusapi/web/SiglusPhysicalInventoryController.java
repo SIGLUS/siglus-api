@@ -61,11 +61,10 @@ public class SiglusPhysicalInventoryController {
   public List<PhysicalInventoryDto> searchPhysicalInventories(
       @RequestParam UUID program,
       @RequestParam UUID facility,
-      @RequestParam(required = false) Boolean isDraft,
-      @RequestParam(required = false) boolean canInitialInventory) {
+      @RequestParam(required = false) Boolean isDraft) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(program)) {
       return siglusPhysicalInventoryService
-          .getPhysicalInventoryDtosForAllProducts(facility, isDraft, canInitialInventory);
+          .getPhysicalInventoryDtosForAllProducts(facility, isDraft);
     }
     return siglusPhysicalInventoryService.getPhysicalInventoryDtosForProductsInOneProgram(program, facility, isDraft);
   }

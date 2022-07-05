@@ -32,8 +32,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.openlmis.requisition.errorhandling.ValidationResult;
-import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
@@ -48,6 +46,7 @@ import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RequisitionReportTaskServiceTest {
@@ -65,7 +64,7 @@ public class RequisitionReportTaskServiceTest {
   @Mock
   private ProgramRequisitionNameMappingRepository programRequisitionNameMappingRepository;
   @Mock
-  private PermissionService permissionService;
+  private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
   @Mock
   private ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
   @Mock
@@ -111,7 +110,8 @@ public class RequisitionReportTaskServiceTest {
     requisitionNameMapping.add(item5);
     when(programRequisitionNameMappingRepository.findAll()).thenReturn(requisitionNameMapping);
 
-    when(permissionService.canInitRequisition(programId, facilityId)).thenReturn(ValidationResult.success());
+    org.siglus.siglusapi.dto.FacilityDto facilityDto2 = new org.siglus.siglusapi.dto.FacilityDto();
+    when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto2);
   }
 
   @Test

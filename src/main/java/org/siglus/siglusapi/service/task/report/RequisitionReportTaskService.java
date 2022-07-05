@@ -15,11 +15,11 @@
 
 package org.siglus.siglusapi.service.task.report;
 
-import com.alibaba.fastjson.JSON;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,8 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.openlmis.requisition.dto.FacilityDto;
 import org.openlmis.requisition.dto.ProgramDto;
-import org.openlmis.requisition.errorhandling.ValidationResult;
-import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.FacilityReferenceDataService;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
@@ -42,6 +40,7 @@ import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyNotSubmitReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
@@ -66,7 +65,6 @@ public class RequisitionReportTaskService {
   private final FacilityNativeRepository facilityNativeRepository;
   private final SiglusStockCardRepository siglusStockCardRepository;
   private final ProgramRequisitionNameMappingRepository programRequisitionNameMappingRepository;
-  private final PermissionService permissionService;
   private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
   private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
@@ -97,16 +95,11 @@ public class RequisitionReportTaskService {
     // TODO:  add implement ( 7/4/22 by kourengang)
   }
 
-  public boolean testPermission(UUID programId, UUID facilityId) {
-    ValidationResult validationResult = permissionService.canInitRequisition(programId, facilityId);
-    log.info("testPermision validationResult=" + JSON.toJSONString(validationResult));
-    return validationResult.isSuccess();
-  }
-
   public org.siglus.siglusapi.dto.FacilityDto findFacility(UUID facilityId) {
     return siglusFacilityReferenceDataService.findOne(facilityId);
   }
 
+  @SuppressWarnings("PMD.CyclomaticComplexity")
   public void doRefresh(boolean needCheckPermission) {
     List<FacilityDto> allFacilityDto = facilityReferenceDataService.findAll();
     log.info("allFacilityDto.size = " + allFacilityDto.size());
@@ -152,13 +145,14 @@ public class RequisitionReportTaskService {
     for (FacilityDto facilityDto : allFacilityDto) {
       UUID facilityId = facilityDto.getId();
       RequisitionMonthlyReportFacility facilityInfo = monthlyReportFacilityMap.get(facilityId);
+      Set<UUID> facilityCanViewRequisitionPrograms = findFacilityCanViewRequisitionProgramIdList(facilityId);
       for (ProgramDto programDto : allProgramDto) {
         UUID programId = programDto.getId();
         if (!facilityStockInventoryDateMap.keySet().contains(getFirstStockCardUniqueKey(facilityId, programId))) {
           log.info(String.format("has no Stock in this program , programIds=%s, facilityId=%s", programId, facilityId));
           continue;
         }
-        if (needCheckPermission) {
+        if (needCheckPermission && facilityCanViewRequisitionPrograms.contains(programId)) {
           log.info(String.format("cannot InitRequisition, programIds=%s, facilityId=%s", programId, facilityId));
           continue;
         }
@@ -196,6 +190,19 @@ public class RequisitionReportTaskService {
         }
       }
     }
+  }
+
+  private Set<UUID> findFacilityCanViewRequisitionProgramIdList(UUID facilityId) {
+    org.siglus.siglusapi.dto.FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
+    if (facilityDto == null || Boolean.FALSE.equals(facilityDto.getActive()) || CollectionUtils.isEmpty(
+        facilityDto.getSupportedPrograms())) {
+      return new HashSet<>();
+    }
+    List<SupportedProgramDto> supportedPrograms = facilityDto.getSupportedPrograms();
+
+    return supportedPrograms.stream()
+        .filter(item -> item.isSupportActive() && item.isProgramActive()).map(SupportedProgramDto::getId)
+        .collect(Collectors.toSet());
   }
 
   @Transactional

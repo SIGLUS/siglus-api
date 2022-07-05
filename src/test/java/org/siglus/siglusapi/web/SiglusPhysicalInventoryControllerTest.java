@@ -61,8 +61,6 @@ public class SiglusPhysicalInventoryControllerTest {
 
   private final Boolean isDraft = true;
 
-  private final Boolean canInitialInventory = true;
-
   private final String startDate = "startDate";
 
   private final String endDate = "endDate";
@@ -70,16 +68,15 @@ public class SiglusPhysicalInventoryControllerTest {
   @Test
   public void shouldCallGetForAllProductsWhenSearchIfProgramIsAllProducts() {
     siglusPhysicalInventoryController.searchPhysicalInventories(ALL_PRODUCTS_PROGRAM_ID, facilityId,
-        isDraft, canInitialInventory);
+        isDraft);
 
     verify(siglusPhysicalInventoryService).getPhysicalInventoryDtosForAllProducts(facilityId,
-        isDraft, canInitialInventory);
+        isDraft);
   }
 
   @Test
   public void shouldCallGetPhysicalInventoryDtosWhenSearchIfProgramIsNotAllProducts() {
-    siglusPhysicalInventoryController.searchPhysicalInventories(programId, facilityId, isDraft,
-        canInitialInventory);
+    siglusPhysicalInventoryController.searchPhysicalInventories(programId, facilityId, isDraft);
 
     verify(siglusPhysicalInventoryService)
         .getPhysicalInventoryDtosForProductsInOneProgram(programId, facilityId, isDraft);
