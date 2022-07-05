@@ -27,6 +27,7 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SU
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,6 +50,7 @@ import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
@@ -110,10 +112,19 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final Boolean isDraft = nextBoolean();
 
-  private final String draftType = "draftType";
+  private final String issueDraft = FieldConstants.ISSUE;
+
+  private final String receiveDraft = FieldConstants.RECEIVE;
 
   private final StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
-      .programId(programId).facilityId(facilityId).draftType(draftType).build();
+      .programId(programId).facilityId(facilityId).draftType(issueDraft).build();
+
+  private final StockManagementInitialDraftDto initialDraftDto = StockManagementInitialDraftDto
+      .builder()
+      .facilityId(facilityId)
+      .programId(programId)
+      .draftType(issueDraft)
+      .documentNumber("document-number").build();
 
   @Before
   public void setup() {
@@ -135,7 +146,7 @@ public class SiglusStockManagementDraftServiceTest {
     StockManagementDraft draft = StockManagementDraft.builder().build();
     when(
         stockManagementDraftRepository.findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId,
-            facilityId, true, draftType)).thenReturn(newArrayList(draft));
+            facilityId, true, issueDraft)).thenReturn(newArrayList(draft));
 
     siglusStockManagementDraftService.createNewDraft(draftDto);
   }
@@ -175,12 +186,12 @@ public class SiglusStockManagementDraftServiceTest {
 
   @Test
   public void shouldCallRepositoryWhenFindStockManagementDraft() {
-    siglusStockManagementDraftService.findStockManagementDraft(programId, draftType, isDraft);
+    siglusStockManagementDraftService.findStockManagementDraft(programId, issueDraft, isDraft);
 
     verify(draftValidator).validateIsDraft(isDraft);
     verify(stockManagementDraftRepository)
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId,
-            facilityId, isDraft, draftType);
+            facilityId, isDraft, issueDraft);
   }
 
   @Test
@@ -229,10 +240,10 @@ public class SiglusStockManagementDraftServiceTest {
     final ArrayList<StockManagementDraft> drafts = newArrayList(draft);
     when(
         stockManagementDraftRepository.findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId,
-            facilityId, true, draftType)).thenReturn(drafts);
+            facilityId, true, issueDraft)).thenReturn(drafts);
     StockEventDto stockEventDto = StockEventDto.builder().programId(programId)
         .facilityId(facilityId)
-        .type(draftType).build();
+        .type(issueDraft).build();
 
     siglusStockManagementDraftService.deleteStockManagementDraft(stockEventDto);
 
@@ -283,7 +294,7 @@ public class SiglusStockManagementDraftServiceTest {
     validSourceDestinationDtos.add(validSourceDestinationDto);
 
     StockManagementInitialDraft foundInitialDraft = StockManagementInitialDraft.builder()
-        .draftType("issue")
+        .draftType(issueDraft)
         .destinationId(destinationId)
         .build();
     ArrayList<StockManagementInitialDraft> stockManagementInitialDrafts = newArrayList(
@@ -291,17 +302,17 @@ public class SiglusStockManagementDraftServiceTest {
 
     doNothing().when(draftValidator).validateProgramId(programId);
     doNothing().when(draftValidator).validateFacilityId(facilityId);
-    doNothing().when(draftValidator).validateDraftType(draftType);
+    doNothing().when(draftValidator).validateDraftType(issueDraft);
 
     when(stockManagementInitialDraftsRepository
-        .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, "issue"))
+        .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, issueDraft))
         .thenReturn(stockManagementInitialDrafts);
 
     when(siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId))
         .thenReturn(validSourceDestinationDtos);
 
     StockManagementInitialDraftDto stockManagementInitialDraft = siglusStockManagementDraftService
-        .findStockManagementInitialDraft(programId, "issue");
+        .findStockManagementInitialDraft(programId, issueDraft);
 
     assertThat(stockManagementInitialDraft.getDestinationName()).isEqualTo("issue-location");
   }
@@ -311,19 +322,53 @@ public class SiglusStockManagementDraftServiceTest {
 
     doNothing().when(draftValidator).validateProgramId(programId);
     doNothing().when(draftValidator).validateFacilityId(facilityId);
-    doNothing().when(draftValidator).validateDraftType(draftType);
+    doNothing().when(draftValidator).validateDraftType(issueDraft);
 
     when(stockManagementInitialDraftsRepository
         .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, "issue"))
         .thenReturn(Collections.emptyList());
 
     StockManagementInitialDraftDto initialDraft = siglusStockManagementDraftService
-        .findStockManagementInitialDraft(programId, "issue");
+        .findStockManagementInitialDraft(programId, issueDraft);
 
     assertThat(initialDraft.getDestinationName()).isNull();
     assertThat(initialDraft.getFacilityId()).isNull();
     assertThat(initialDraft.getDraftType()).isNull();
     assertThat(initialDraft.getProgramId()).isNull();
+  }
 
+  @Test
+  public void shouldCreateInitialDraft() {
+    when(stockManagementInitialDraftsRepository
+        .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, issueDraft))
+        .thenReturn(Collections.emptyList());
+
+    StockManagementInitialDraft initialDraft = StockManagementInitialDraft
+        .createInitialDraft(initialDraftDto);
+
+    when(stockManagementInitialDraftsRepository.save(initialDraft)).thenReturn(initialDraft);
+
+    StockManagementInitialDraftDto initialReturnedDraftDto = siglusStockManagementDraftService
+        .createInitialDraft(initialDraftDto);
+
+    assertThat(initialReturnedDraftDto.getProgramId()).isEqualTo(programId);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenCreateInitialDraftExists() {
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS));
+
+    StockManagementInitialDraft initialDraft = StockManagementInitialDraft.builder()
+        .facilityId(facilityId)
+        .programId(programId)
+        .draftType(issueDraft)
+        .documentNumber("document-number").build();
+
+    when(stockManagementInitialDraftsRepository
+        .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, issueDraft))
+        .thenReturn(newArrayList(initialDraft));
+
+    siglusStockManagementDraftService.createInitialDraft(initialDraftDto);
   }
 }

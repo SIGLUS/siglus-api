@@ -33,6 +33,7 @@ import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
@@ -251,11 +252,11 @@ public class SiglusStockManagementDraftService {
     if (initialDraft != null) {
       StockManagementInitialDraftDto stockManagementInitialDraftDto = StockManagementInitialDraftDto
           .from(initialDraft);
-      if (draftType.equals("issue")) {
+      if (draftType.equals(FieldConstants.ISSUE)) {
         String destinationName = findDestinationName(initialDraft.getDestinationId(), facilityId);
         stockManagementInitialDraftDto.setDestinationName(destinationName);
         return stockManagementInitialDraftDto;
-      } else if (draftType.equals("receive")) {
+      } else if (draftType.equals(FieldConstants.RECEIVE)) {
         String sourceName = findSourceName(initialDraft.getSourceId());
         stockManagementInitialDraftDto.setSourceName(sourceName);
         return stockManagementInitialDraftDto;
