@@ -22,7 +22,6 @@ import static org.siglus.siglusapi.constant.FacilityTypeConstants.AC;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.CENTRAL;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_UUID;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_DRAFT;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 
 import com.google.common.collect.Lists;
@@ -58,12 +57,10 @@ import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
-import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.PhysicalInventoryLineItemExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
-import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.OrderableRepository;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
@@ -409,15 +406,6 @@ public class SiglusPhysicalInventoryService {
   }
 
   private PhysicalInventoryDto createNewDraft(PhysicalInventoryDto physicalInventoryDto) {
-    List<PhysicalInventory> physicalInventory = physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(
-        physicalInventoryDto.getProgramId(),
-        authenticationHelper.getCurrentUser().getHomeFacilityId(),
-        true
-    );
-    if (CollectionUtils.isNotEmpty(physicalInventory)) {
-      throw new BusinessDataException(new Message(ERROR_INVENTORY_CONFLICT_DRAFT), physicalInventory);
-    }
-
     return physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto);
   }
 
