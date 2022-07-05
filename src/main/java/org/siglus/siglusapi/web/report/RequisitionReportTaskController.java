@@ -45,8 +45,8 @@ public class RequisitionReportTaskController {
   }
 
   @GetMapping("/testPermission")
-  public ResponseEntity<Boolean> testPermission(@RequestParam UUID programId, @RequestParam UUID facilityId) {
-    return ResponseEntity.ok(requisitionReportTaskService.testPermission(programId, facilityId));
+  public ResponseEntity<org.siglus.siglusapi.dto.FacilityDto> testPermission(@RequestParam UUID facilityId) {
+    return ResponseEntity.ok(requisitionReportTaskService.findFacility(facilityId));
   }
 
 }

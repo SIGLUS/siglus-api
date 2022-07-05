@@ -43,6 +43,8 @@ public class RequisitionMonthlyNotSubmitReport extends BaseEntity {
   private String district;
   @Column(name = "province")
   private String province;
+  @Column(name = "requisitionperiod")
+  private LocalDate requisitionPeriod;
   @Column(name = "ficilityname")
   private String facilityName;
   @Column(name = "ficilitycode")

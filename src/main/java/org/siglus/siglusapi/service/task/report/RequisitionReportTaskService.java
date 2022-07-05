@@ -49,6 +49,7 @@ import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,6 +69,7 @@ public class RequisitionReportTaskService {
   private final PermissionService permissionService;
   private final ProcessingPeriodExtensionRepository processingPeriodExtensionRepository;
   private final ProcessingPeriodRepository processingPeriodRepository;
+  private final SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
 
   public void refresh(boolean needCheckPermission) {
     log.info("refresh. start = " + System.currentTimeMillis());
@@ -99,6 +101,10 @@ public class RequisitionReportTaskService {
     ValidationResult validationResult = permissionService.canInitRequisition(programId, facilityId);
     log.info("testPermision validationResult=" + JSON.toJSONString(validationResult));
     return validationResult.isSuccess();
+  }
+
+  public org.siglus.siglusapi.dto.FacilityDto findFacility(UUID facilityId) {
+    return siglusFacilityReferenceDataService.findOne(facilityId);
   }
 
   public void doRefresh(boolean needCheckPermission) {
@@ -146,11 +152,13 @@ public class RequisitionReportTaskService {
     for (FacilityDto facilityDto : allFacilityDto) {
       UUID facilityId = facilityDto.getId();
       RequisitionMonthlyReportFacility facilityInfo = monthlyReportFacilityMap.get(facilityId);
-      // multi program
       for (ProgramDto programDto : allProgramDto) {
         UUID programId = programDto.getId();
-        ValidationResult validationResult = permissionService.canInitRequisition(programId, facilityId);
-        if (needCheckPermission && !validationResult.isSuccess()) {
+        if (!facilityStockInventoryDateMap.keySet().contains(getFirstStockCardUniqueKey(facilityId, programId))) {
+          log.info(String.format("has no Stock in this program , programIds=%s, facilityId=%s", programId, facilityId));
+          continue;
+        }
+        if (needCheckPermission) {
           log.info(String.format("cannot InitRequisition, programIds=%s, facilityId=%s", programId, facilityId));
           continue;
         }
@@ -236,6 +244,7 @@ public class RequisitionReportTaskService {
         .inventorydDate(null)
         .statusDetail(null)
         .submittedStatus("Not submitted")
+        .requisitionPeriod(processingPeriodMap.get(processingPeriodExtension.getProcessingPeriodId()).getEndDate())
         .reportType(null)
         .submittedTime(null)
         .syncTime(null)
