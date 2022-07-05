@@ -112,6 +112,9 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final String draftType = "draftType";
 
+  private final StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
+      .programId(programId).facilityId(facilityId).draftType(draftType).build();
+
   @Before
   public void setup() {
     UserDto userDto = new UserDto();
@@ -133,31 +136,22 @@ public class SiglusStockManagementDraftServiceTest {
     when(
         stockManagementDraftRepository.findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId,
             facilityId, true, draftType)).thenReturn(newArrayList(draft));
-    StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
-        .programId(programId).facilityId(facilityId).draftType(draftType).build();
 
     siglusStockManagementDraftService.createNewDraft(draftDto);
   }
 
   @Test
   public void shouldIsDraftBeTrueWhenCreateNewDraft() {
-    StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
-        .programId(programId).facilityId(facilityId).draftType(draftType).build();
     StockManagementDraft draft = StockManagementDraft.createEmptyDraft(draftDto);
     when(stockManagementDraftRepository.save(draft)).thenReturn(draft);
 
-    draftDto = siglusStockManagementDraftService.createNewDraft(draftDto);
+    StockManagementDraftDto newDraft = siglusStockManagementDraftService.createNewDraft(draftDto);
 
-    assertTrue(draftDto.getIsDraft());
+    assertTrue(newDraft.getIsDraft());
   }
 
   @Test
   public void shouldUpdateDraftStatusWhenSaveDraft() {
-    StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
-        .programId(programId)
-        .facilityId(facilityId)
-        .draftType(draftType)
-        .build();
     StockManagementDraft foundDraft = StockManagementDraft.builder()
         .initialDraftId(initialDraftId)
         .operator("operator-1")
@@ -250,9 +244,7 @@ public class SiglusStockManagementDraftServiceTest {
     exception.expect(BusinessDataException.class);
     exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN));
 
-    StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
-        .programId(programId).facilityId(facilityId).draftType(draftType)
-        .initialDraftId(initialDraftId).build();
+    draftDto.setInitialDraftId(initialDraftId);
     StockManagementDraft draft = StockManagementDraft.builder().build();
     ArrayList<StockManagementDraft> stockManagementDrafts = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
