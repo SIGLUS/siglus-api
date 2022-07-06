@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service.task.report;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +25,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -36,10 +36,12 @@ import org.openlmis.requisition.service.referencedata.ProgramReferenceDataServic
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyNotSubmitReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
+import org.siglus.siglusapi.dto.ProcessingPeriodExtensionDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
@@ -47,8 +49,10 @@ import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.repository.SiglusStockCardRepository;
+import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,12 +109,7 @@ public class RequisitionReportTaskService {
     log.info("allFacilityDto.size = " + allFacilityDto.size());
     List<ProgramDto> allProgramDto = programDataService.findAll();
     log.info("allProgramDto.size = " + allProgramDto.size());
-    List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto = processingPeriodExtensionRepository.findAll();
-    List<ProcessingPeriod> allProcessingPeriodDto = processingPeriodRepository.findAll();
-    Map<UUID, ProcessingPeriod> processingPeriodMap = allProcessingPeriodDto.stream()
-        .collect(Collectors.toMap(ProcessingPeriod::getId, Function.identity()));
-
-    allProcessingPeriodExtensionDto.sort(Comparator.comparing(ProcessingPeriodExtension::getSubmitStartDate));
+    List<ProcessingPeriodExtensionDto> processingPeriodExtensionDtos = getProcessingPeriodExtensionDto();
 
     // TODO: data is big ( 7/4/22 by kourengang)
     List<RequisitionMonthlyReport> requisitionMonthlyReports = requisitionMonthReportRepository.findAll();
@@ -122,9 +121,16 @@ public class RequisitionReportTaskService {
         = facilityNativeRepository.findFirstStockCardGroupByFacility();
     Map<String, FacillityStockCardDateDto> facilityStockInventoryDateMap = firstStockCardGroupByFacility.stream()
         .collect(Collectors.toMap(
-            facillityStockCardDateDto -> getFirstStockCardUniqueKey(facillityStockCardDateDto.getFacilityId(),
+            facillityStockCardDateDto -> getUniqueKey(facillityStockCardDateDto.getFacilityId(),
                 facillityStockCardDateDto.getProgramId()), Function.identity()));
 
+    List<FacilityProgramPeriodScheduleDto> facilityProgramPeriodSchedule
+        = facilityNativeRepository.findFacilityProgramPeriodSchedule();
+
+    Map<String, FacilityProgramPeriodScheduleDto> facilityProgramPeriodScheduleDtoMap
+        = facilityProgramPeriodSchedule.stream().collect(Collectors.toMap(
+            facilityProgramPeriodScheduleDto -> getUniqueKey(facilityProgramPeriodScheduleDto.getFacilityId(),
+            facilityProgramPeriodScheduleDto.getProgramId()), Function.identity()));
     Set<UUID> existedPhysicalInventoryFacilityIds = firstStockCardGroupByFacility.stream()
         .map(FacillityStockCardDateDto::getFacilityId).collect(
             Collectors.toSet());
@@ -148,7 +154,7 @@ public class RequisitionReportTaskService {
       Set<UUID> facilityCanViewRequisitionPrograms = findFacilityCanViewRequisitionProgramIdList(facilityId);
       for (ProgramDto programDto : allProgramDto) {
         UUID programId = programDto.getId();
-        if (!facilityStockInventoryDateMap.keySet().contains(getFirstStockCardUniqueKey(facilityId, programId))) {
+        if (!facilityStockInventoryDateMap.keySet().contains(getUniqueKey(facilityId, programId))) {
           log.info(String.format("has no Stock in this program , programIds=%s, facilityId=%s", programId, facilityId));
           continue;
         }
@@ -157,15 +163,30 @@ public class RequisitionReportTaskService {
           continue;
         }
         FacillityStockCardDateDto facillityStockCardDateDto = facilityStockInventoryDateMap.get(
-            getFirstStockCardUniqueKey(facilityId, programId));
-        int startPeriodIndexOfFacility = getStartPeriodIndexOfFacility(allProcessingPeriodExtensionDto, facilityId,
+            getUniqueKey(facilityId, programId));
+
+        FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto =
+            facilityProgramPeriodScheduleDtoMap.get(getUniqueKey(facilityId, programId));
+
+        List<ProcessingPeriodExtensionDto> facilityProgramSupportedPeriods = processingPeriodExtensionDtos.stream()
+            .filter(item -> {
+              if (Boolean.TRUE.equals(facillityStockCardDateDto.getIsAndroid())) {
+                return item.getProcessingSchedule().getCode().equals(AndroidConstants.SCHEDULE_CODE);
+              } else {
+                return facilityProgramPeriodScheduleDto.getProcessingScheduleId()
+                    .equals(item.getProcessingSchedule().getId());
+              }
+            })
+            .collect(Collectors.toList());
+        log.info("facilityProgramSupportedPeriods size = " + facilityProgramSupportedPeriods.size());
+        int startPeriodIndexOfFacility = getStartPeriodIndexOfFacility(facilityProgramSupportedPeriods, facilityId,
             programId, facillityStockCardDateDto);
         if (startPeriodIndexOfFacility == NO_NEED_TO_HANDLE) {
           continue;
         }
         List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
-        for (int i = startPeriodIndexOfFacility; i < allProcessingPeriodExtensionDto.size(); i++) {
-          ProcessingPeriodExtension processingPeriodExtension = allProcessingPeriodExtensionDto.get(i);
+        for (int i = startPeriodIndexOfFacility; i < facilityProgramSupportedPeriods.size(); i++) {
+          ProcessingPeriodExtensionDto processingPeriodExtension = facilityProgramSupportedPeriods.get(i);
           if (LocalDate.now().isBefore(processingPeriodExtension.getSubmitStartDate())) {
             // future period not take into account
             log.info(String.format("future period not take into account, programId=%s,facilityId=%s, date=%s",
@@ -180,7 +201,7 @@ public class RequisitionReportTaskService {
             continue;
           }
           RequisitionMonthlyNotSubmitReport notSubmit = getRequisitionMonthlyNotSubmitReport(
-              processingPeriodMap, requisitionNameMappingMap, facilityId, facilityInfo, programId,
+               requisitionNameMappingMap, facilityId, facilityInfo, programId,
               processingPeriodExtension);
           notSubmitList.add(notSubmit);
         }
@@ -190,6 +211,28 @@ public class RequisitionReportTaskService {
         }
       }
     }
+  }
+
+  private List<ProcessingPeriodExtensionDto> getProcessingPeriodExtensionDto() {
+    List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto = processingPeriodExtensionRepository.findAll();
+    List<ProcessingPeriod> allProcessingPeriodDto = processingPeriodRepository.findAll();
+
+    Map<UUID, ProcessingPeriod> processingPeriodMap = allProcessingPeriodDto.stream()
+        .collect(Collectors.toMap(ProcessingPeriod::getId, Function.identity()));
+    List<ProcessingPeriodExtensionDto> result = new ArrayList<>();
+    for (ProcessingPeriodExtension item : allProcessingPeriodExtensionDto) {
+      ProcessingPeriodExtensionDto dto = new ProcessingPeriodExtensionDto();
+      BeanUtils.copyProperties(item, dto);
+
+      ProcessingPeriod processingPeriod = processingPeriodMap.get(item.getProcessingPeriodId());
+
+      dto.setStartDate(processingPeriod.getStartDate());
+      dto.setEndDate(processingPeriod.getEndDate());
+      dto.setProcessingSchedule(processingPeriod.getProcessingSchedule());
+
+      result.add(dto);
+    }
+    return result;
   }
 
   private Set<UUID> findFacilityCanViewRequisitionProgramIdList(UUID facilityId) {
@@ -211,7 +254,7 @@ public class RequisitionReportTaskService {
     requisitionMonthlyNotSubmitReportRepository.save(notSubmitList);
   }
 
-  private int getStartPeriodIndexOfFacility(List<ProcessingPeriodExtension> allProcessingPeriodExtensionDto,
+  private int getStartPeriodIndexOfFacility(List<ProcessingPeriodExtensionDto> allProcessingPeriodExtensionDto,
       UUID facilityId, UUID programId, FacillityStockCardDateDto facillityStockCardDateDto) {
     int startPeriodIndexOfFacility;
 
@@ -228,10 +271,9 @@ public class RequisitionReportTaskService {
   }
 
   private RequisitionMonthlyNotSubmitReport getRequisitionMonthlyNotSubmitReport(
-      Map<UUID, ProcessingPeriod> processingPeriodMap,
       Map<UUID, ProgramRequisitionNameMapping> requisitionNameMappingMap, UUID facilityId,
       RequisitionMonthlyReportFacility requisitionMonthlyReportFacility, UUID programId,
-      ProcessingPeriodExtension processingPeriodExtension) {
+      ProcessingPeriodExtensionDto processingPeriodExtension) {
     return RequisitionMonthlyNotSubmitReport.builder()
         .programId(programId)
         .processingPeriodId(processingPeriodExtension.getProcessingPeriodId())
@@ -245,13 +287,12 @@ public class RequisitionReportTaskService {
         .districtFacilityCode(requisitionMonthlyReportFacility.getDistrictFacilityCode())
         .provinceFacilityCode(requisitionMonthlyReportFacility.getProvinceFacilityCode())
 
-        .originalPeriod(
-            formatDate(processingPeriodMap.get(processingPeriodExtension.getProcessingPeriodId())))
+        .originalPeriod(formatDate(processingPeriodExtension))
         .reportName(requisitionNameMappingMap.get(programId).getRequisitionName())
         .inventorydDate(null)
         .statusDetail(null)
         .submittedStatus("Not submitted")
-        .requisitionPeriod(processingPeriodMap.get(processingPeriodExtension.getProcessingPeriodId()).getEndDate())
+        .requisitionPeriod(processingPeriodExtension.getEndDate())
         .reportType(null)
         .submittedTime(null)
         .syncTime(null)
@@ -265,7 +306,7 @@ public class RequisitionReportTaskService {
         .build();
   }
 
-  private String formatDate(ProcessingPeriod processingPeriod) {
+  private String formatDate(ProcessingPeriodExtensionDto processingPeriod) {
     return
         processingPeriod.getStartDate().getDayOfMonth() + " " + getMonth(
             processingPeriod.getStartDate().getMonth().getValue()) + " " + processingPeriod.getStartDate().getYear()
@@ -307,7 +348,7 @@ public class RequisitionReportTaskService {
 
   }
 
-  private int findStartPeriodIndexOfFacility(List<ProcessingPeriodExtension> allProcessingPeriodDto,
+  private int findStartPeriodIndexOfFacility(List<ProcessingPeriodExtensionDto> allProcessingPeriodDto,
       LocalDate firstOccurredDate) {
     for (int i = 0; i + 1 < allProcessingPeriodDto.size(); i++) {
       if (!firstOccurredDate.isBefore(allProcessingPeriodDto.get(i).getSubmitStartDate())
@@ -333,7 +374,7 @@ public class RequisitionReportTaskService {
     return facilityId + "&" + processingPeriodId + "&" + programId;
   }
 
-  private String getFirstStockCardUniqueKey(UUID facilityId, UUID programId) {
+  private String getUniqueKey(UUID facilityId, UUID programId) {
     return facilityId + "&" + programId;
   }
 

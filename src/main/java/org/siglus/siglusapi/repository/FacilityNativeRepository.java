@@ -22,6 +22,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.android.db.Facility;
+import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -131,16 +132,34 @@ public class FacilityNativeRepository extends BaseNativeRepository {
     String query = "SELECT DISTINCT ON (sc.facilityid, sc.programid) "
         + "            MIN(scli.occurreddate) OVER (PARTITION BY sc.facilityid, sc.programid) AS occurreddate, "
         + "            sc.facilityid, "
-        + "            sc.programid "
+        + "            sc.programid, "
+        + "            sf.isandroid "
         + "FROM stockmanagement.stock_card_line_items scli "
-        + "         LEFT JOIN stockmanagement.stock_cards sc ON scli.stockcardid = sc.id";
-    return namedJdbc.query(query, facillityStockCardDateDtoExtractor());
+        + "         LEFT JOIN stockmanagement.stock_cards sc ON scli.stockcardid = sc.id "
+        + "         LEFT JOIN siglusintegration.facility_extension sf ON sc.facilityid = sf.facilityid ";
+    return namedJdbc.query(query, facilityStockCardDateDtoExtractor());
 
   }
 
-  private RowMapper<FacillityStockCardDateDto> facillityStockCardDateDtoExtractor() {
+  private RowMapper<FacillityStockCardDateDto> facilityStockCardDateDtoExtractor() {
     return (rs, i) ->
         new FacillityStockCardDateDto(readAsDate(rs, "occurreddate"),
+            readUuid(rs, "facilityid"),
+            readUuid(rs, "programid"),
+            readAsBoolean(rs, "isandroid"));
+  }
+
+  public List<FacilityProgramPeriodScheduleDto> findFacilityProgramPeriodSchedule() {
+    String query = "select  gps.processingscheduleid, gm.facilityid, gps.programid "
+        + "from referencedata.requisition_group_members gm "
+        + "left join referencedata.requisition_group_program_schedules gps "
+        + "on gm.requisitiongroupid = gps.requisitiongroupid";
+    return namedJdbc.query(query, facilityProgramPeriodScheduleDtoExtractor());
+  }
+
+  private RowMapper<FacilityProgramPeriodScheduleDto> facilityProgramPeriodScheduleDtoExtractor() {
+    return (rs, i) ->
+        new FacilityProgramPeriodScheduleDto(readUuid(rs, "processingscheduleid"),
             readUuid(rs, "facilityid"),
             readUuid(rs, "programid"));
   }

@@ -13,25 +13,27 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository.dto;
+package org.siglus.siglusapi.dto;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
+
 import lombok.Data;
+import org.siglus.common.domain.referencedata.ProcessingSchedule;
 
+
+/**
+ * @author kourengang
+ * @date 2022/7/6
+ */
 @Data
-@AllArgsConstructor
-public class FacillityStockCardDateDto {
+public class ProcessingPeriodExtensionDto {
+  private UUID id;
+  private UUID processingPeriodId;
+  private LocalDate submitStartDate;
+  private LocalDate submitEndDate;
 
-  private Date occurredDate;
-
-  private UUID facilityId;
-
-  private UUID programId;
-
-  private Boolean isAndroid;
-
-  public FacillityStockCardDateDto() {
-  }
+  private ProcessingSchedule processingSchedule;
+  private LocalDate startDate;
+  private LocalDate endDate;
 }
