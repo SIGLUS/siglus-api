@@ -149,7 +149,7 @@ public class SiglusPhysicalInventorySubDraftService {
           CanFulfillForMeEntryDto canFulfillForMeEntryDto = canFulfillForMeEntryDtoMap.get(
               getUniqueKey(physicalInventoryLineItemDto));
           if (canFulfillForMeEntryDto != null) {
-            physicalInventoryLineItemDto.setQuantity(canFulfillForMeEntryDto.getStockOnHand());
+            physicalInventoryLineItemDto.setQuantity(null);
             physicalInventoryLineItemDto.setReasonFreeText(null);
           }
         } else if (needDeleteOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {
