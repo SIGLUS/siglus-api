@@ -237,7 +237,15 @@ public class SiglusStockManagementDraftService {
     StockManagementInitialDraft savedInitialDraft = stockManagementInitialDraftsRepository
         .save(initialDraft);
 
-    return StockManagementInitialDraftDto.from(savedInitialDraft);
+    String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),
+        savedInitialDraft.getFacilityId());
+
+    StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto
+        .from(savedInitialDraft);
+
+    initialDraftDtoResponse.setDestinationName(destinationName);
+
+    return initialDraftDtoResponse;
   }
 
   public StockManagementInitialDraftDto findStockManagementInitialDraft(

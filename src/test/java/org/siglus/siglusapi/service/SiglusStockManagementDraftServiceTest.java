@@ -125,6 +125,7 @@ public class SiglusStockManagementDraftServiceTest {
       .facilityId(facilityId)
       .programId(programId)
       .draftType(issueDraft)
+      .destinationId(destinationId)
       .documentNumber("document-number").build();
 
   @Before
@@ -319,7 +320,7 @@ public class SiglusStockManagementDraftServiceTest {
   }
 
   @Test
-  public void shouldReturnEmptyInitialDraftWhenNotfindInitialDraft() {
+  public void shouldReturnEmptyInitialDraftWhenNotFoundInitialDraft() {
 
     doNothing().when(draftValidator).validateProgramId(programId);
     doNothing().when(draftValidator).validateFacilityId(facilityId);
@@ -340,17 +341,28 @@ public class SiglusStockManagementDraftServiceTest {
 
   @Test
   public void shouldCreateInitialDraft() {
-    when(stockManagementInitialDraftsRepository
-        .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, issueDraft))
-        .thenReturn(Collections.emptyList());
+    ValidSourceDestinationDto validSourceDestinationDto = new ValidSourceDestinationDto();
+    validSourceDestinationDto.setId(destinationId);
+    validSourceDestinationDto.setName("issue-location");
+
+    Collection<ValidSourceDestinationDto> validSourceDestinationDtos = new ArrayList<>(
+        Collections.emptyList());
+    validSourceDestinationDtos.add(validSourceDestinationDto);
 
     StockManagementInitialDraft initialDraft = StockManagementInitialDraft
         .createInitialDraft(initialDraftDto);
+
+    when(siglusValidSourceDestinationService.findDestinationsForAllProducts(facilityId))
+        .thenReturn(validSourceDestinationDtos);
 
     when(stockManagementInitialDraftsRepository.save(initialDraft)).thenReturn(initialDraft);
 
     StockManagementInitialDraftDto initialReturnedDraftDto = siglusStockManagementDraftService
         .createInitialDraft(initialDraftDto);
+
+    when(stockManagementInitialDraftsRepository
+        .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, issueDraft))
+        .thenReturn(Collections.emptyList());
 
     assertThat(initialReturnedDraftDto.getProgramId()).isEqualTo(programId);
   }
