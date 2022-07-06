@@ -167,6 +167,9 @@ public class RequisitionReportTaskService {
 
         FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto =
             facilityProgramPeriodScheduleDtoMap.get(getUniqueKey(facilityId, programId));
+        if (facilityProgramPeriodScheduleDto == null) {
+          continue;
+        }
 
         List<ProcessingPeriodExtensionDto> facilityProgramSupportedPeriods = processingPeriodExtensionDtos.stream()
             .filter(item -> {
