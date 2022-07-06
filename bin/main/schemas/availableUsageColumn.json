@@ -1,0 +1,59 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "AvailableRequisitionColumn",
+  "description": "A single availableRequisitionColumn",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "name": {
+      "type": "string",
+      "title": "name"
+    },
+    "sources": {
+      "type": "array",
+      "title": "sources",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "label": {
+      "type": "string",
+      "title": "label"
+    },
+    "indicator": {
+      "type": "string",
+      "title": "indicator"
+    },
+    "mandatory": {
+      "type": "boolean",
+      "title": "mandatory"
+    },
+    "isDisplayRequired": {
+      "type": "boolean",
+      "title": "isDisplayRequired"
+    },
+    "canChangeOrder": {
+      "type": "boolean",
+      "title": "canChangeOrder"
+    },
+    "canBeChangedByUser": {
+      "type": "boolean",
+      "title": "canBeChangedByUser"
+    },
+    "definition": {
+      "type": "string",
+      "title": "definition"
+    },
+    "columnType": {
+      "type": "string",
+      "title": "columnType"
+    }
+  },
+  "required": [
+    "id"
+  ]
+}

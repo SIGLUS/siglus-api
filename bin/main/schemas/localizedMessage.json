@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "LocalizedMessage",
+  "description": "Localized message",
+  "properties": {
+    "message": {
+      "type": "string",
+      "title": "message"
+    },
+    "messageKey": {
+      "type": "string",
+      "title": "messageKey"
+    }
+  },
+  "required": [
+    "message",
+    "messageKey"
+  ]
+}

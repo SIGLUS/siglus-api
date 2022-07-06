@@ -1,0 +1,1 @@
+alter table siglusintegration.requisition_line_items_extension alter authorizedQuantity drop not null;

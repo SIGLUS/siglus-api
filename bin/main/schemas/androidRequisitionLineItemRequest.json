@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "requisition line item request",
+  "title": "androidRequisitionLineItemRequest",
+  "properties": {
+    "productCode": {
+      "type": "string",
+      "title": "productCode"
+    },
+    "beginningBalance": {
+      "type": "integer",
+      "title": "beginningBalance"
+    },
+    "totalReceivedQuantity": {
+      "type": "integer",
+      "title": "totalReceivedQuantity"
+    },
+    "totalConsumedQuantity": {
+      "type": "integer",
+      "title": "totalConsumedQuantity"
+    },
+    "stockOnHand": {
+      "type": "integer",
+      "title": "stockOnHand"
+    },
+    "requestedQuantity": {
+      "type": "integer",
+      "title": "requestedQuantity"
+    },
+    "authorizedQuantity": {
+      "type": "integer",
+      "title": "authorizedQuantity"
+    }
+  }
+}

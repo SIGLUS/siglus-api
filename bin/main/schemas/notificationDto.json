@@ -1,0 +1,66 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "NotificationDto",
+  "description": "Notification",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "emergency": {
+      "type": "boolean",
+      "title": "emergency"
+    },
+    "refId": {
+      "type": "string",
+      "title": "refId"
+    },
+    "status": {
+      "enum": [
+        "REJECTED",
+        "SUBMITTED",
+        "AUTHORIZED",
+        "IN_APPROVAL",
+        "APPROVED",
+        "ORDERED",
+        "SHIPPED"
+      ],
+      "title": "status"
+    },
+    "type": {
+      "enum": [
+        "TODO",
+        "STATUS_UPDATE"
+      ],
+      "title": "type"
+    },
+    "facility": {
+      "type": "object",
+      "$ref": "facility.json",
+      "title": "facility"
+    },
+    "program": {
+      "type": "object",
+      "$ref": "program.json",
+      "title": "program"
+    },
+    "processingPeriod": {
+      "type": "object",
+      "$ref": "processingPeriod.json",
+      "title": "processingPeriod"
+    },
+    "author": {
+      "type": "string",
+      "title": "author"
+    },
+    "requisitionSubmittedDate": {
+      "type": "string",
+      "title": "requisitionSubmittedDate"
+    },
+    "createdDate": {
+      "type": "string",
+      "title": "createdDate"
+    }
+  }
+}

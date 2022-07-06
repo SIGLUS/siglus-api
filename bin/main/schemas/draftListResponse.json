@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "physical inventory draftList Response",
+  "properties": {
+    "physicalInventoryId": {
+      "type": "string",
+      "description": "physical inventory id"
+    },
+    "canMergeOrDeleteDrafts": {
+      "type": "boolean",
+      "description": "user has has the right to delete or merge all subDrafts"
+    },
+    "canSubmitDrafts": {
+      "type": "boolean",
+      "description": "user has has the right to submit Drafts"
+    },
+    "subDrafts": {
+      "type": "object",
+      "items": {
+        "type": "object",
+        "$ref": "physicalInventorySubDraftsDto.json"
+      }
+    }
+  }
+}

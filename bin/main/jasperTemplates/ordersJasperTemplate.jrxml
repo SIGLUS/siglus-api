@@ -1,0 +1,577 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.5.1.final using JasperReports Library version 6.5.1  -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="order" pageWidth="595" pageHeight="842" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" whenResourceMissingType="Error" uuid="6e843fe2-ce72-4257-a4c3-1df03728dc95">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<property name="reportType" value="Timeliness Report"/>
+	<import value="org.openlmis.fulfillment.web.util.*"/>
+	<import value="java.text.DecimalFormat"/>
+	<import value="java.time.ZonedDateTime"/>
+	<import value="java.time.format.DateTimeFormatter"/>
+	<style name="Row" mode="Transparent">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></conditionExpression>
+			<style backcolor="#F3F3F3"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="order" class="org.openlmis.fulfillment.web.util.OrderReportDto" isForPrompting="false">
+		<property name="displayName" value="Order"/>
+	</parameter>
+	<parameter name="loggedInUser" class="java.lang.String">
+		<property name="displayName" value="LoggedInUser"/>
+	</parameter>
+	<parameter name="decimalFormat" class="java.text.DecimalFormat" isForPrompting="false">
+		<property name="displayName" value="DecimalFormat"/>
+	</parameter>
+	<parameter name="dateTimeFormat" class="java.lang.String" isForPrompting="false">
+		<property name="displayName" value="DateTimeFormat"/>
+	</parameter>
+	<queryString>
+		<![CDATA[]]>
+	</queryString>
+	<field name="orderedQuantity" class="java.lang.Long">
+		<fieldDescription><![CDATA[orderedQuantity]]></fieldDescription>
+	</field>
+	<field name="totalDispensingUnits" class="java.lang.Long">
+		<fieldDescription><![CDATA[totalDispensingUnits]]></fieldDescription>
+	</field>
+	<field name="orderable" class="org.openlmis.fulfillment.service.referencedata.OrderableDto">
+		<fieldDescription><![CDATA[orderable]]></fieldDescription>
+	</field>
+	<field name="id" class="java.util.UUID">
+		<fieldDescription><![CDATA[id]]></fieldDescription>
+	</field>
+	<field name="class" class="java.lang.Class">
+		<fieldDescription><![CDATA[class]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="110" splitType="Stretch">
+			<staticText>
+				<reportElement x="30" y="0" width="500" height="79" forecolor="#3D9297" uuid="9425a6c9-4546-4c90-9119-7a7f300b6fb5"/>
+				<textElement textAlignment="Center">
+					<font size="16" isBold="false"/>
+					<paragraph lineSpacing="Double" lineSpacingSize="2.0"/>
+				</textElement>
+				<!--	siglus change start	-->
+        <!--<text><![CDATA[Ministry of Health and Social Welfare-->
+				<!--Issue Voucher for Medical Supplies (PH81-N/E)]]></text>-->
+				<text><![CDATA[Ministério da Saúde e Bem-Estar Social
+Emitir voucher para suprimentos médicos (PH81-N/E)]]></text>
+				<!--	siglus change start	-->
+			</staticText>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="170">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement x="0" y="10" width="250" height="60" uuid="69507ad9-863a-4e09-a591-90e161383f9e"/>
+				<textElement>
+					<font size="10"/>
+					<paragraph lineSpacing="Fixed" lineSpacingSize="12.0"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[To The Managing Director-->
+				<!--Medical Stores Ltd.-->
+				<!--Lusaka-->
+				<!--Fax numbers: 01-241193,01-246288]]></text>-->
+				<text><![CDATA[Para o Diretor Administrativo
+Medical Stores Ltd.
+Lusaka
+Números de fax: 01-241193,01-246288]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="321" y="40" width="80" height="15" uuid="2ebe95a1-27cc-45b6-86c0-4fe603b2a68c"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Facility: ]]></text>-->
+				<text><![CDATA[Unidade Sanitária: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="321" y="145" width="80" height="15" uuid="e6b5e990-9d52-4bc4-addd-e0d12a9e0545"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Fax:]]></text>-->
+				<text><![CDATA[Fax:]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="321" y="100" width="80" height="15" uuid="e50f5e30-bc3e-48c6-a0cd-5fc2c4549f7a"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[District: ]]></text>-->
+				<text><![CDATA[Distrito: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="321" y="115" width="80" height="15" uuid="41672a04-8b3f-4edb-9755-9ab38e5f5084"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Region:]]></text>-->
+				<text><![CDATA[Região:]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="321" y="130" width="80" height="15" uuid="5d8a3b43-4b11-4b19-bf7d-9c6491fb978f"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Phone:]]></text>-->
+				<text><![CDATA[Telefone:]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="321" y="25" width="80" height="15" uuid="102b0dd5-e20b-461b-9540-0eb0a71f38ce"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Consign to: ]]></text>-->
+				<text><![CDATA[Consignar para: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="321" y="55" width="80" height="15" uuid="62ee4443-5adc-4e23-964a-4059a379e61f"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Facility Code: ]]></text>-->
+				<text><![CDATA[Código da Unidade Sanitária: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="321" y="85" width="80" height="15" uuid="4f9ec696-9521-48b0-86da-e67131811da6"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Address: ]]></text>-->
+				<text><![CDATA[Endereço: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="320" y="0" width="80" height="15" uuid="b0ded7f9-4d1f-4f78-90bb-bf32b906dc78"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Order No.: ]]></text>-->
+				<text><![CDATA[Nº da ordem.: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="411" y="25" width="145" height="15" uuid="e1f25574-b3f7-4455-bbe7-0a57f9ee9da4"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$P{order}.getFacility().getName()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="" x="410" y="0" width="145" height="15" isPrintWhenDetailOverflows="true" uuid="c3a4d043-8e85-48dc-8b3e-265cbd8df92a"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{order}.getOrderCode()]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="411" y="40" width="145" height="15" uuid="59b73e19-33f5-4605-8854-d58e0adc7283"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$P{order}.getFacility().getName()]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="411" y="55" width="145" height="15" uuid="eabc21b2-8e7f-4fef-be54-a403f55b14b9">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$P{order}.getFacility().getCode()]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="411" y="100" width="145" height="15" uuid="6969131b-b903-4273-801e-b69945c2615b"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$P{order}.getThirdLevelFacility().getName()]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="411" y="85" width="145" height="15" uuid="af46019f-41a6-46a6-af27-8e5f64882e46"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="411" y="130" width="145" height="15" uuid="a42100af-d8f4-4a4c-b005-394ea577797f"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="411" y="115" width="145" height="15" uuid="82a6e7bb-330c-4e2d-992e-3ed08974dfe2"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$P{order}.getSecondLevelFacility().getName()]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="411" y="145" width="145" height="15" uuid="abe3fdb1-aa3b-4233-ba3d-1353fa702441"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle"/>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="30">
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="50" height="30" backcolor="#3D9297" uuid="7972837a-4e14-4bc0-94ef-c9f465914ad5"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="11"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Line #]]></text>-->
+				<text><![CDATA[Linha #]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="50" y="0" width="90" height="30" backcolor="#3D9297" uuid="f1296dcd-3a59-4110-99af-f111c9e49196"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="11"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Product Code]]></text>-->
+				<text><![CDATA[Código do Produtos]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="140" y="0" width="260" height="30" backcolor="#3D9297" uuid="fcca10b0-2b26-46d1-b532-5386fbf3bbc4"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="11"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Description]]></text>-->
+				<text><![CDATA[Descrição]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="400" y="0" width="75" height="30" backcolor="#3D9297" uuid="8e7db4f0-de17-4a0a-b56c-452be828d4db"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Ordered Quantity]]></text>-->
+				<text><![CDATA[Quantidade pedida]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="475" y="0" width="80" height="30" backcolor="#3D9297" uuid="646a24fe-b770-4291-8a0d-13db58237726"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Dispensing Units]]></text>-->
+				<text><![CDATA[Unidades Distribuidoras]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="25" splitType="Immediate">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Row" stretchType="RelativeToTallestObject" mode="Opaque" x="140" y="0" width="260" height="25" uuid="31100a38-97d8-400d-bf98-3b9039cd4d01">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="3">
+					<pen lineColor="#3D9297"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{orderable}.getFullProductName()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Row" stretchType="RelativeToTallestObject" mode="Opaque" x="475" y="0" width="80" height="25" uuid="5e3e13b2-3de1-4613-927b-3d352faaed85">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box padding="3">
+					<pen lineColor="#3D9297"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{decimalFormat}.format($F{totalDispensingUnits}).toString()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Row" stretchType="RelativeToTallestObject" mode="Opaque" x="0" y="0" width="50" height="25" uuid="28c1bf9c-6c13-4551-abf3-82481d555ab9"/>
+				<box padding="3">
+					<pen lineColor="#3D9297"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{REPORT_COUNT}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Row" stretchType="RelativeToTallestObject" mode="Opaque" x="50" y="0" width="90" height="25" uuid="5c934beb-6a56-414f-b44b-039716390a2f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="3">
+					<pen lineColor="#3D9297"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{orderable}.getProductCode()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement style="Row" stretchType="RelativeToTallestObject" mode="Opaque" x="400" y="0" width="75" height="25" uuid="325890b1-a7bb-4c2b-b9aa-0149b25d9968">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<box padding="3">
+					<pen lineColor="#3D9297"/>
+					<topPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#3D9297"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{decimalFormat}.format($F{orderedQuantity}).toString()]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="200">
+			<staticText>
+				<reportElement x="0" y="80" width="100" height="20" uuid="03a21e09-32d8-4534-b3cc-76cc27c65e39"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Authorized by: ]]></text>-->
+				<text><![CDATA[Autorizado por: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="110" y="80" width="100" height="20" uuid="8886edad-567d-4be0-9789-84f4588bbe33"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{order}.getAuthorizedStatusChange().getAuthor().printName()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="100" width="100" height="20" uuid="c290ee34-95a5-48fb-b256-237ac3fb15d1"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Approved By (Dist): ]]></text>-->
+				<text><![CDATA[Aprovado por (Dist): ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="110" y="100" width="100" height="20" uuid="23ede21b-50f3-420e-acf5-57e1e890b731"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{order}.getApprovedStatusChange().getAuthor().printName()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="120" width="100" height="20" uuid="9fa486a9-4156-4ddf-bb90-01fcfc403ad4"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Reviewed By (LMU): ]]></text>-->
+				<text><![CDATA[Revisado por (LMU): ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="110" y="120" width="100" height="20" uuid="8547d29e-6e35-453e-8a2a-375ea27f57c7"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{order}.getReleasedStatusChange().getAuthor().printName()]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="0" y="140" width="100" height="20" uuid="67c89e91-ab18-4969-8717-5787b78b787c"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<text><![CDATA[Impresso por: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="110" y="140" width="100" height="20" uuid="965ee62a-0b9d-41d8-917c-7b59abfa8324"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{loggedInUser}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="290" y="140" width="80" height="20" uuid="1bf18c7f-35a2-4b7c-b8a5-5b9bacf1183d"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+			</textField>
+			<staticText>
+				<reportElement x="220" y="140" width="60" height="20" uuid="753ab777-4b4c-48e9-9ea8-7a06a4ea55df"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Signature: ]]></text>-->
+				<text><![CDATA[Assinatura: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="380" y="80" width="40" height="20" uuid="7e7f0007-4f65-4e1b-8cda-7e6bf961e029"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Date: ]]></text>-->
+				<text><![CDATA[Data: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="430" y="80" width="122" height="20" uuid="f76d2dd7-8927-41db-a38d-6a8b43807d84">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[DateTimeFormatter.ofPattern($P{dateTimeFormat}).format($P{order}.getAuthorizedStatusChange().getCreatedDate())]]>
+				</textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="380" y="100" width="40" height="20" uuid="c8adb3e0-3283-482a-96a4-9898a6beb3a9"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Date: ]]></text>-->
+				<text><![CDATA[Data: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="430" y="100" width="122" height="20" uuid="c959fb03-6225-4035-acb1-e2731b6f59cc"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[DateTimeFormatter.ofPattern($P{dateTimeFormat}).format($P{order}.getApprovedStatusChange().getCreatedDate())]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="380" y="120" width="40" height="20" uuid="992fcd9b-f17f-4ee8-8aee-cf95482ae224"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Date: ]]></text>-->
+				<text><![CDATA[Data: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement key="" x="430" y="120" width="122" height="20" uuid="e8582379-9cd9-4274-ae51-f8b1fcdf323f"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<textFieldExpression><![CDATA[DateTimeFormatter.ofPattern($P{dateTimeFormat}).format($P{order}.getReleasedStatusChange().getCreatedDate())]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement key="" x="430" y="140" width="122" height="20" uuid="2308393b-b536-4676-a4f7-8bd83528b662"/>
+				<box>
+					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+					<bottomPen lineWidth="1.0" lineStyle="Solid" lineColor="#000000"/>
+					<rightPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+			</textField>
+			<staticText>
+				<reportElement x="380" y="140" width="40" height="20" uuid="a64dde3f-b081-496c-a33d-521309f2407e"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="10"/>
+				</textElement>
+				<!--	siglus change start	-->
+				<!--				<text><![CDATA[Date: ]]></text>-->
+				<text><![CDATA[Data: ]]></text>
+				<!--	siglus change end	-->
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="5" width="280" height="20" uuid="88faf2a1-accc-4685-908c-3a65a2ed8fe6">
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<text><![CDATA[Explique quaisquer discrepâncias ou danos]]></text>
+			</staticText>
+		</band>
+	</summary>
+</jasperReport>
