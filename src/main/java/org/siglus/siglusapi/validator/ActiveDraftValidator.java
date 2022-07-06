@@ -17,6 +17,7 @@ package org.siglus.siglusapi.validator;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EVENT_FACILITY_INVALID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_EVENT_INITIAL_DRAFT_ID_INVALID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IS_DRAFT_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_USER_DRAFT;
@@ -27,8 +28,10 @@ import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,6 +43,9 @@ public class ActiveDraftValidator {
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Autowired
+  private StockManagementInitialDraftsRepository stockManagementInitialDraftsRepository;
 
   public void validateFacilityId(UUID facilityId) {
     if (facilityId == null || new UUID(0L, 0L).equals(facilityId)) {
@@ -85,4 +91,11 @@ public class ActiveDraftValidator {
     }
   }
 
+  public void validateInitialDraftId(UUID initialDraftId) {
+    StockManagementInitialDraft initialDraft = stockManagementInitialDraftsRepository
+        .findOne(initialDraftId);
+    if (initialDraft == null) {
+      throw new ValidationMessageException(ERROR_EVENT_INITIAL_DRAFT_ID_INVALID);
+    }
+  }
 }

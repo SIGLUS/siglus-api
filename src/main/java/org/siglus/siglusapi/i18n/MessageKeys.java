@@ -46,17 +46,26 @@ public abstract class MessageKeys {
   public static final String ERROR_TRADE_ITEM_IS_EMPTY = ERROR_PREFIX + ".tradeItem.is.empty";
   public static final String ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY = ERROR_PREFIX + ".lotinfo.should.empty";
   public static final String ERROR_EVENT_FACILITY_INVALID = EVENT_ERROR_PREFIX + ".facilityId.invalid";
+  public static final String ERROR_EVENT_INITIAL_DRAFT_ID_INVALID = EVENT_ERROR_PREFIX + ".initial.draft.id.invalid";
   public static final String ERROR_FACILITY_ID_MISSING = ERROR_PREFIX + ".facility.id.missing";
+  public static final String ERROR_INITIAL_DRAFT_ID_MISSING = ERROR_PREFIX + ".initial.draft.id.missing";
   public static final String ERROR_PROGRAM_MISSING = ERROR_PREFIX + ".program.missing";
   public static final String ERROR_PROGRAM_ID_MISSING = ERROR_PREFIX + ".program.id.missing";
   public static final String ERROR_USER_ID_MISSING = ERROR_PREFIX + ".user.id.missing";
   public static final String ERROR_IS_DRAFT_MISSING = ERROR_PREFIX + ".is.draft.missing";
   public static final String ERROR_DRAFT_TYPE_MISSING = ERROR_PREFIX + ".draft.type.missing";
+  public static final String ERROR_DRAFT_DESTINATION_ID_MISSING = ERROR_PREFIX + ".draft.destination.id.missing";
+  public static final String ERROR_DRAFT_SOURCE_ID_MISSING = ERROR_PREFIX + ".draft.source.id.missing";
+  public static final String ERROR_DRAFT_DOCUMENT_NUMBER_MISSING = ERROR_PREFIX + ".draft.document.number.missing";
   public static final String ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR = ERROR_PREFIX + ".not.expected.draft.type.error";
   public static final String ERROR_NOT_EXPECTED_USER_DRAFT = ERROR_PREFIX + ".not.expected.user.draft";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".id.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.exists";
+  public static final String ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".initial.draft.exists";
+  public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".drafts.more.than.ten";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH = STOCK_MANAGEMENT_ERROR_PREFIX + ".id.mismatch";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED = STOCK_MANAGEMENT_ERROR_PREFIX + ".isSubmitted";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_DISABLED_VVM =

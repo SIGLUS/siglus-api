@@ -45,6 +45,7 @@ import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -70,12 +71,15 @@ public class SiglusPhysicalInventorySubDraftService {
   @Autowired
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
 
+  @Autowired
+  private SiglusAuthenticationHelper authenticationHelper;
+
   @Transactional
   public void deleteSubDrafts(List<UUID> subDraftIds) {
     log.info("deleteSubDrafts, subDraftIds=" + subDraftIds);
     try {
       List<PhysicalInventorySubDraft> physicalInventorySubDrafts = updateSubDraftsStatus(subDraftIds,
-          PhysicalInventorySubDraftEnum.NOT_YET_STARTED);
+          PhysicalInventorySubDraftEnum.NOT_YET_STARTED, true);
 
       doDelete(physicalInventorySubDrafts, subDraftIds);
     } catch (Exception e) {
@@ -85,7 +89,8 @@ public class SiglusPhysicalInventorySubDraftService {
   }
 
   private List<PhysicalInventorySubDraft> updateSubDraftsStatus(List<UUID> subDraftIds,
-      PhysicalInventorySubDraftEnum subDraftStatus) {
+      PhysicalInventorySubDraftEnum subDraftStatus, boolean isDelete) {
+    UUID currentUserId = authenticationHelper.getCurrentUserId().orElseThrow(IllegalStateException::new);
     log.info("updateSubDraftsStatus, subDraftIds=" + subDraftIds);
     List<PhysicalInventorySubDraft> subDrafts = physicalInventorySubDraftRepository.findAll(subDraftIds);
     if (CollectionUtils.isEmpty(subDrafts)) {
@@ -93,7 +98,7 @@ public class SiglusPhysicalInventorySubDraftService {
     }
     subDrafts.forEach(item -> {
       item.setStatus(subDraftStatus);
-      item.setOperatorId(null);
+      item.setOperatorId(isDelete ? null : currentUserId);
     });
 
     physicalInventorySubDraftRepository.save(subDrafts);
@@ -165,7 +170,7 @@ public class SiglusPhysicalInventorySubDraftService {
 
     checkConflictSubDraft(physicalInventoryIds, physicalInventoryDto, subDraftIds);
 
-    updateSubDraftsStatus(subDraftIds, status);
+    updateSubDraftsStatus(subDraftIds, status, false);
 
     saveSubDraftsLineItems(physicalInventoryDto, physicalInventoryIds, subDrafts);
   }

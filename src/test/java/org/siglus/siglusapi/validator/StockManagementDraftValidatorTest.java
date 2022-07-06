@@ -97,6 +97,7 @@ public class StockManagementDraftValidatorTest {
         .programId(UUID.randomUUID())
         .userId(UUID.randomUUID())
         .facilityId(UUID.randomUUID())
+        .initialDraftId(UUID.randomUUID())
         .build();
 
     draftValidator.validateEmptyDraft(draftDto);

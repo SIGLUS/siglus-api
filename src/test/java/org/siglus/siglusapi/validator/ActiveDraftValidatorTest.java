@@ -26,6 +26,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
+import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -37,6 +38,11 @@ public class ActiveDraftValidatorTest {
 
   @Mock
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Mock
+  private StockManagementInitialDraftsRepository stockManagementInitialDraftsRepository;
+
+  private final UUID initialDraftId = UUID.randomUUID();
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowValidationMessageExceptionWhenFacilityIdIsNull() {
@@ -147,5 +153,14 @@ public class ActiveDraftValidatorTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(user);
 
     activeDraftValidator.validateUserId(uuid);
+  }
+
+  @Test(expected = ValidationMessageException.class)
+  public void shouldThrowExceptionWhenNoStockManagementDraftFound() {
+
+    when(stockManagementInitialDraftsRepository.findOne(initialDraftId))
+        .thenReturn(null);
+
+    activeDraftValidator.validateInitialDraftId(initialDraftId);
   }
 }

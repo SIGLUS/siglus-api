@@ -16,7 +16,10 @@
 package org.siglus.siglusapi.validator;
 
 import static org.aspectj.util.LangUtil.isEmpty;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_DOCUMENT_NUMBER_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_DRAFT_TYPE_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_FACILITY_ID_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INITIAL_DRAFT_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PROGRAM_ID_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
@@ -34,6 +37,7 @@ import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
+import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +59,18 @@ public class StockManagementDraftValidator {
     validateNotNull(inventory.getProgramId(), ERROR_PROGRAM_ID_MISSING);
     validateNotNull(inventory.getUserId(), ERROR_USER_ID_MISSING);
     validateNotNull(inventory.getFacilityId(), ERROR_FACILITY_ID_MISSING);
+    validateNotNull(inventory.getInitialDraftId(), ERROR_INITIAL_DRAFT_ID_MISSING);
+  }
+
+  public void validateInitialDraft(StockManagementInitialDraftDto stockManagementInitialDraftDto) {
+    if (stockManagementInitialDraftDto.getId() != null) {
+      throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_ID_SHOULD_NULL);
+    }
+    validateNotNull(stockManagementInitialDraftDto.getProgramId(), ERROR_PROGRAM_ID_MISSING);
+    validateNotNull(stockManagementInitialDraftDto.getFacilityId(), ERROR_FACILITY_ID_MISSING);
+    validateNotNull(stockManagementInitialDraftDto.getDraftType(), ERROR_DRAFT_TYPE_MISSING);
+    validateNotNull(stockManagementInitialDraftDto.getDocumentNumber(),
+        ERROR_DRAFT_DOCUMENT_NUMBER_MISSING);
   }
 
   private void validateNotNull(Object field, String errorMessage) {
@@ -69,7 +85,8 @@ public class StockManagementDraftValidator {
     }
     StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(id);
     if (foundDraft == null) {
-      throw new ValidationMessageException(new Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND) + id.toString());
+      throw new ValidationMessageException(
+          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND) + id.toString());
     } else if (Boolean.TRUE.equals(!foundDraft.getIsDraft())) {
       throw new ValidationMessageException(ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED);
     }

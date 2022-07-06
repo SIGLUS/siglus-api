@@ -17,19 +17,14 @@ package org.siglus.siglusapi.repository;
 
 import java.util.List;
 import java.util.UUID;
-import org.siglus.siglusapi.domain.StockManagementDraft;
-import org.springframework.data.repository.PagingAndSortingRepository;
+import org.siglus.siglusapi.domain.StockManagementInitialDraft;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface StockManagementDraftRepository
-    extends PagingAndSortingRepository<StockManagementDraft, UUID> {
+public interface StockManagementInitialDraftsRepository extends
+    JpaRepository<StockManagementInitialDraft, UUID> {
 
-  List<StockManagementDraft> findByProgramIdAndFacilityIdAndIsDraftAndDraftType(
+  List<StockManagementInitialDraft> findByProgramIdAndFacilityIdAndDraftType(
       UUID programId,
       UUID facilityId,
-      boolean isDraft,
       String draftType);
-
-  List<StockManagementDraft> findByInitialDraftId(UUID initialDraftId);
-
-  List<StockManagementDraft> findByFacilityId(UUID facilityId);
 }

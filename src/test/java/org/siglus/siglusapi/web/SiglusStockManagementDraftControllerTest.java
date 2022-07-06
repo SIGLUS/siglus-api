@@ -25,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
+import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.service.SiglusStockManagementDraftService;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -45,6 +46,14 @@ public class SiglusStockManagementDraftControllerTest {
     controller.searchDrafts(programId, userId, draftType, isDraft);
 
     verify(service).findStockManagementDraft(programId, draftType, isDraft);
+  }
+
+  @Test
+  public void shouldCallServiceWhenSearchDraftsMulti() {
+    UUID initialDraftId = UUID.randomUUID();
+    controller.searchMultiUserDrafts(initialDraftId);
+
+    verify(service).findStockManagementDrafts(initialDraftId);
   }
 
   @Test
@@ -69,7 +78,23 @@ public class SiglusStockManagementDraftControllerTest {
     StockManagementDraftDto dto = new StockManagementDraftDto();
     controller.updateDraft(id, dto);
 
-    verify(service).saveDraft(dto, id);
+    verify(service).updateDraft(dto, id);
   }
 
+  @Test
+  public void shouldCallServiceWhenInitialDraft() {
+    StockManagementInitialDraftDto initialDraftDto = new StockManagementInitialDraftDto();
+    controller.initialDraft(initialDraftDto);
+
+    verify(service).createInitialDraft(initialDraftDto);
+  }
+
+  @Test
+  public void shouldCallServiceWhenSearchInitialDrafts() {
+    UUID programId = UUID.randomUUID();
+    String draftType = "draft-type";
+    controller.searchInitialDrafts(programId, draftType);
+
+    verify(service).findStockManagementInitialDraft(programId, draftType);
+  }
 }

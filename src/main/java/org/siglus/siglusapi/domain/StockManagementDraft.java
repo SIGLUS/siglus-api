@@ -35,6 +35,7 @@ import org.hibernate.annotations.LazyCollection;
 import org.siglus.common.domain.BaseEntity;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
+import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.springframework.beans.BeanUtils;
 
 @Data
@@ -57,6 +58,9 @@ public class StockManagementDraft extends BaseEntity {
   private String signature;
   private UUID userId;
   private String draftType;
+  private UUID initialDraftId;
+  private String operator;
+  private PhysicalInventorySubDraftEnum status;
 
   @LazyCollection(FALSE)
   @OneToMany(cascade = ALL, mappedBy = "stockManagementDraft", orphanRemoval = true)
@@ -67,9 +71,11 @@ public class StockManagementDraft extends BaseEntity {
     StockManagementDraft draft = new StockManagementDraft();
     BeanUtils.copyProperties(draftDto, draft);
     draft.setIsDraft(true);
+    draft.setStatus(PhysicalInventorySubDraftEnum.NOT_YET_STARTED);
     return draft;
   }
 
+  //delete when multi-user feature is finish
   public static StockManagementDraft createStockManagementDraft(StockManagementDraftDto draftDto, boolean isDraft) {
     StockManagementDraft draft = new StockManagementDraft();
     BeanUtils.copyProperties(draftDto, draft);
