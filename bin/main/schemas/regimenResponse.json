@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "Regimen",
+  "description": "A regimen",
+  "properties": {
+    "code": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "programCode": {
+      "type": "string"
+    },
+    "programName": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "displayOrder": {
+      "type": "number"
+    },
+    "isCustom": {
+      "type": "boolean"
+    },
+    "category": {
+      "type": "object",
+      "$ref": "regimenCategoryResponse.json"
+    }
+  }
+}

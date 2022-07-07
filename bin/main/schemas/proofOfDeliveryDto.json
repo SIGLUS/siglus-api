@@ -1,0 +1,77 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "title": "ProofOfDeliveryDto",
+  "description": "A single proofOfDelivery of ordered products",
+  "properties": {
+    "id": {
+      "type": "string",
+      "title": "id"
+    },
+    "status": {
+      "type": "string",
+      "title": "status"
+    },
+    "lineItems": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "title": "lineItems",
+      "items": {
+        "type": "object",
+        "$ref": "proofOfDeliveryLineItemDto.json"
+      },
+      "uniqueItems": false
+    },
+    "deliveredBy": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "title": "deliveredBy"
+    },
+    "receivedBy": {
+      "type": "string",
+      "title": "receivedBy"
+    },
+    "receivedDate": {
+      "type": [
+        "array",
+        "string",
+        "null"
+      ],
+      "title": "receivedDate",
+      "items": {
+        "type": "number"
+      },
+      "uniqueItems": false
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "shipment": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "title": "shipment"
+        }
+      }
+    },
+    {
+      "properties": {
+        "shipment": {
+          "type": "object",
+          "$ref": "referenceObjectDto.json",
+          "title": "shipment"
+        }
+      }
+    }
+  ],
+  "required": [
+    "id",
+    "shipment"
+  ]
+}

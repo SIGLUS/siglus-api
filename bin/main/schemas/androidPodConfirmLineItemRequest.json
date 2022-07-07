@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "pod line item request",
+  "title": "androidPodLineItemRequest",
+  "properties": {
+    "code": {
+      "type": "string",
+      "title": "code"
+    },
+    "orderedQuantity": {
+      "type": "integer",
+      "title": "orderedQuantity"
+    },
+    "partialFulfilledQuantity": {
+      "type": "integer",
+      "title": "partialFulfilledQuantity"
+    },
+    "lots": {
+      "type": "array",
+      "title": "lots",
+      "items": {
+        "type": "object",
+        "title": "lots",
+        "$ref": "androidPodConfirmLots.json"
+      }
+    }
+  }
+}

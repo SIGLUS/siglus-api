@@ -1,0 +1,28 @@
+[
+  {
+    "productCode": "08O05Y",
+    "quantity": 0,
+    "stockOnHand": 210,
+    "type": "PHYSICAL_INVENTORY",
+    "signature": "Mh",
+    "occurredDate": "2021-08-05",
+    "processedDate": "2021-08-05T08:49:13.784Z",
+    "documentationNo": null,
+    "reason": null,
+    "requested": null,
+    "lotEventList": []
+  },
+  {
+    "productCode": "08O05Y",
+    "quantity": 0,
+    "stockOnHand": 210,
+    "type": "PHYSICAL_INVENTORY",
+    "signature": "Mh",
+    "occurredDate": "2021-08-07",
+    "processedDate": "2021-08-07T08:49:13.784Z",
+    "documentationNo": null,
+    "reason": null,
+    "requested": null,
+    "lotEventList": []
+  }
+]

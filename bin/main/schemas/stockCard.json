@@ -1,0 +1,47 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "Stock card dto.",
+  "properties": {
+    "lineItems": {
+      "type": "array",
+      "title": "LineItems",
+      "items": {
+        "type": "object",
+        "title": "LineItem",
+        "$ref": "lineItem.json"
+      }
+    },
+    "orderable": {
+      "type": "object",
+      "title": "Orderable",
+      "$ref": "orderable.json"
+    },
+    "lot": {
+      "type": "object",
+      "title": "Lot",
+      "$ref": "lot.json"
+    },
+    "extraData": {
+      "type": "object",
+      "title": "extraData"
+    },
+    "stockOnHand": {
+      "type": "integer"
+    },
+    "lastUpdate": {
+      "type": "string",
+      "format": "date"
+    },
+    "program": {
+      "type": "object",
+      "title": "Program",
+      "$ref": "program.json"
+    },
+    "facility": {
+      "type": "object",
+      "title": "Facility",
+      "$ref": "facility.json"
+    }
+  }
+}

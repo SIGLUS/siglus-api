@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <conversionRule conversionWord="crlf" converterClass="org.owasp.security.logging.mask.CRLFConverter" />
+
+  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <Pattern>
+        %d{yyy-MM-dd HH:mm:ss} %highlight(%-5level) --- %magenta([%thread]) %logger{36}.%M:%L - %crlf(%0msg) %n
+      </Pattern>
+    </layout>
+  </appender>
+
+  <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <maxDepthPerThrowable>60</maxDepthPerThrowable>
+        <maxLength>4096</maxLength>
+        <shortenedClassNameLength>20</shortenedClassNameLength>
+        <exclude>sun\.reflect\..*\.invoke.*</exclude>
+        <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+        <rootCauseFirst>true</rootCauseFirst>
+        <inlineHash>true</inlineHash>
+      </throwableConverter>
+    </encoder>
+  </appender>
+
+  <logger name="org.siglus.siglusapi" level="INFO" additivity="false">
+    <appender-ref ref="CONSOLE"/>
+  </logger>
+
+  <!-- Define the root logger log level -->
+  <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
+  </root>
+</configuration>

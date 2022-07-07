@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "Valid reason assignment.",
+  "properties": {
+    "programId": {
+      "type": "object",
+      "title": "Program",
+      "$ref": "referenceObjectDto.json"
+    },
+    "facilityTypeId": {
+      "type": "object",
+      "title": "FacilityType",
+      "$ref": "referenceObjectDto.json"
+    },
+    "reason": {
+      "type": "object",
+      "title": "Reason",
+      "$ref": "reason.json"
+    },
+    "hidden": {
+      "type": "boolean"
+    }
+  }
+}

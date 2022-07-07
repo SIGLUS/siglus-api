@@ -1,0 +1,9 @@
+{
+  "createOrder": true,
+  "requisitionsToRelease": [
+    {
+      "requisitionId": "fc5fed66-3b45-499e-b828-89d102ced92f",
+      "supplyingDepotId": "004f1352-cfb8-11e9-9398-0242ac130008"
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "content": [
+    {
+      "productMovements": [
+        {
+          "productCode": "test",
+          "stockOnHand": 27,
+          "stockMovementItems": [
+            {
+              "movementQuantity": 10,
+              "type": "ISSUE",
+              "stockOnHand": 10,
+              "signature": null,
+              "processedDate": "2021-09-15T01:23:45Z",
+              "serverProcessedDate": "2021-11-01T01:23:45Z",
+              "occurredDate": "2021-10-01",
+              "documentNumber": null,
+              "reason": "MATERNITY",
+              "requested": null,
+              "lotMovementItems": [
+                {
+                  "reason": "MATERNITY",
+                  "lotCode": "lot1",
+                  "expirationDate": "2023-12-31",
+                  "quantity": 10,
+                  "stockOnHand": 10
+                }
+              ]
+            },
+            {
+              "movementQuantity": 10,
+              "type": "RECEIVE",
+              "stockOnHand": 10,
+              "signature": null,
+              "processedDate": "2021-10-01T01:23:45Z",
+              "serverProcessedDate": "2021-11-01T01:23:45Z",
+              "occurredDate": "2021-10-01",
+              "documentNumber": null,
+              "reason": "DISTRICT_DDM",
+              "requested": null,
+              "lotMovementItems": [
+                {
+                  "reason": "DISTRICT_DDM",
+                  "lotCode": "lot1",
+                  "expirationDate": "2023-12-31",
+                  "quantity": 10,
+                  "stockOnHand": 10
+                }
+              ]
+            }
+          ],
+          "lotsOnHand": [
+            {
+              "quantityOnHand": 10,
+              "effectiveDate": "2021-10-01",
+              "lot": {
+                "code": "lot1",
+                "expirationDate": "2023-12-31"
+              }
+            },
+            {
+              "quantityOnHand": 9,
+              "effectiveDate": "2021-09-15",
+              "lot": {
+                "code": "lot2",
+                "expirationDate": "2023-12-31"
+              }
+            },
+            {
+              "quantityOnHand": 8,
+              "effectiveDate": "2021-08-31",
+              "lot": {
+                "code": "lot3",
+                "expirationDate": "2023-12-31"
+              }
+            }
+          ]
+        },
+        {
+          "productCode": "26A01",
+          "stockOnHand": 10,
+          "stockMovementItems": [
+            {
+              "movementQuantity": 10,
+              "type": "RECEIVE",
+              "stockOnHand": 10,
+              "signature": null,
+              "processedDate": "2021-11-01T01:23:45Z",
+              "serverProcessedDate": "2021-11-01T01:23:45Z",
+              "occurredDate": "2021-10-31",
+              "documentNumber": null,
+              "reason": "DISTRICT_DDM",
+              "requested": null,
+              "lotMovementItems": []
+            }
+          ],
+          "lotsOnHand": []
+        }
+      ],
+      "facilityCode": "F1",
+      "facilityName": "Facility 1"
+    },
+    {
+      "productMovements": [],
+      "facilityCode": "F2",
+      "facilityName": "Facility 2"
+    }
+  ],
+  "totalElements": 2,
+  "totalPages": 1,
+  "last": true,
+  "numberOfElements": 2,
+  "first": true,
+  "size": 0,
+  "number": 0,
+  "sort": null
+}

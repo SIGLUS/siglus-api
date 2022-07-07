@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "pod confirm response",
+  "title": "androidPodConfirmResponse",
+  "properties": {
+    "shippedDate": {
+      "type": "string",
+      "title": "shippedDate"
+    },
+    "receivedDate": {
+      "type": "string",
+      "title": "receivedDate"
+    },
+    "deliveredBy": {
+      "type": "string",
+      "title": "deliveredBy"
+    },
+    "receivedBy": {
+      "type": "string",
+      "title": "receivedBy"
+    },
+    "order": {
+      "type": "object",
+      "title": "order",
+      "$ref": "androidPodConfirmOrder.json"
+    },
+    "products": {
+      "type": "array",
+      "title": "products",
+      "items": {
+        "type": "object",
+        "title": "androidPodConfirmLineItemRequest",
+        "$ref": "androidPodConfirmLineItemRequest.json"
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "description": "Movements of The product",
+  "title": "productMovementResponse",
+  "properties": {
+    "productCode": {
+      "type": "string",
+      "title": "productCode"
+    },
+    "stockOnHand": {
+      "type": "number",
+      "title": "stockOnHand"
+    },
+    "stockMovementItems": {
+      "type": "array",
+      "title": "stockMovementItems",
+      "items": {
+        "type": "object",
+        "title": "siglusStockMovementItemResponse",
+        "$ref": "siglusStockMovementItemResponse.json"
+      }
+    },
+    "lotsOnHand": {
+      "type": "array",
+      "title": "lotsOnHand",
+      "items": {
+        "type": "object",
+        "title": "lotsOnhandResponse",
+        "$ref": "lotsOnhandResponse.json"
+      }
+    }
+  }
+}
