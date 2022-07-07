@@ -92,5 +92,11 @@ public class SiglusStockManagementDraftController {
         .findStockManagementInitialDraft(programId, draftType);
   }
 
+  @PutMapping("/update")
+  @ResponseStatus(OK)
+  public StockManagementDraftDto updateOperatorAndStatus(
+      @RequestBody StockManagementDraftDto dto) {
+    return stockManagementDraftService.updateOperatorAndStatus(dto);
+  }
 }
 
