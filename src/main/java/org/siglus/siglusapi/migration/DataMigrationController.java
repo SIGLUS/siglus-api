@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.migration;
+package org.siglus.siglusapi.migration;
 
 import static org.springframework.http.HttpStatus.CREATED;
 
@@ -23,7 +23,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
-import org.siglus.siglusapi.service.migration.DataMigrationService;
+import org.siglus.siglusapi.migration.DataMigrationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
