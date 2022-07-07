@@ -20,6 +20,7 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SU
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 
 import java.util.Collection;
@@ -287,5 +288,17 @@ public class SiglusStockManagementDraftService {
           new Message(ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS, programId, facilityId,
               draftType), "same initial draft exists");
     }
+  }
+
+  public StockManagementDraftDto updateOperatorAndStatus(StockManagementDraftDto draftDto) {
+    StockManagementDraft draft = stockManagementDraftRepository.findOne(draftDto.getId());
+
+    if (draft != null) {
+      draft.setStatus(PhysicalInventorySubDraftEnum.DRAFT);
+      draft.setOperator(draftDto.getOperator());
+      StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
+      return StockManagementDraftDto.from(savedDraft);
+    }
+    throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
   }
 }

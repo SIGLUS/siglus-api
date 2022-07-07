@@ -27,6 +27,7 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SU
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
@@ -383,5 +385,34 @@ public class SiglusStockManagementDraftServiceTest {
         .thenReturn(newArrayList(initialDraft));
 
     siglusStockManagementDraftService.createInitialDraft(initialDraftDto);
+  }
+
+  @Test
+  public void shouldUpdateDraftStatusAndOperator() {
+    draftDto.setId(id);
+    draftDto.setOperator("Jack");
+    StockManagementDraft draft = new StockManagementDraft();
+    when(stockManagementDraftRepository.findOne(id))
+        .thenReturn(draft);
+    draft.setStatus(PhysicalInventorySubDraftEnum.DRAFT);
+    draft.setOperator("Jack");
+    when(stockManagementDraftRepository.save(draft)).thenReturn(draft);
+
+    StockManagementDraftDto stockManagementDraftDto = siglusStockManagementDraftService
+        .updateOperatorAndStatus(draftDto);
+
+    assertThat(stockManagementDraftDto.getOperator()).isEqualTo("Jack");
+    assertThat(stockManagementDraftDto.getStatus()).isEqualTo(PhysicalInventorySubDraftEnum.DRAFT);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenUpdateDraftStatusAndOperatorCannotFindDraft() {
+    exception.expect(NotFoundException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND));
+
+    when(stockManagementDraftRepository.findOne(id))
+        .thenReturn(null);
+
+    siglusStockManagementDraftService.updateOperatorAndStatus(draftDto);
   }
 }
