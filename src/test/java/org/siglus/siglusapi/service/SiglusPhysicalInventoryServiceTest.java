@@ -66,7 +66,6 @@ import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.referencedata.Orderable;
-import org.siglus.siglusapi.constant.FacilityTypeConstants;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
 import org.siglus.siglusapi.dto.DraftListDto;
@@ -781,14 +780,6 @@ public class SiglusPhysicalInventoryServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(any(), eq(facilityId), eq(true)))
         .thenReturn(Collections.emptyList());
-    FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
-    facilityTypeDto.setCode(FacilityTypeConstants.CS);
-    when(facilityReferenceDataService.findOne(facilityId))
-        .thenReturn(
-            FacilityDto
-                .builder()
-                .type(facilityTypeDto)
-                .build());
 
     // when
     siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 3);
@@ -815,16 +806,6 @@ public class SiglusPhysicalInventoryServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(any(), eq(facilityId), eq(true)))
         .thenReturn(Collections.emptyList());
-    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(FacilityDto.builder().code(
-        FacilityTypeConstants.PS).build());
-    FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
-    facilityTypeDto.setCode(FacilityTypeConstants.CS);
-    when(facilityReferenceDataService.findOne(facilityId))
-        .thenReturn(
-            FacilityDto
-                .builder()
-                .type(facilityTypeDto)
-                .build());
 
     // when
     siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(physicalInventoryDto, 3);
