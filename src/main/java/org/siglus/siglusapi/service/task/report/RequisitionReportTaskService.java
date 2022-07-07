@@ -121,8 +121,8 @@ public class RequisitionReportTaskService {
         = facilityNativeRepository.findFirstStockCardGroupByFacility();
     Map<String, FacillityStockCardDateDto> facilityStockInventoryDateMap = firstStockCardGroupByFacility.stream()
         .collect(Collectors.toMap(
-            facillityStockCardDateDto -> getUniqueKey(facillityStockCardDateDto.getFacilityId(),
-                facillityStockCardDateDto.getProgramId()), Function.identity()));
+            item -> getUniqueKey(item.getFacilityId(),
+                item.getProgramId()), Function.identity()));
 
     List<FacilityProgramPeriodScheduleDto> facilityProgramPeriodSchedule
         = facilityNativeRepository.findFacilityProgramPeriodSchedule();
@@ -168,6 +168,8 @@ public class RequisitionReportTaskService {
         FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto =
             facilityProgramPeriodScheduleDtoMap.get(getUniqueKey(facilityId, programId));
         if (facilityProgramPeriodScheduleDto == null) {
+          log.info(String.format("not facilityProgramPeriodScheduleDto, programIds=%s, facilityId=%s",
+              programId, facilityId));
           continue;
         }
 
@@ -181,12 +183,16 @@ public class RequisitionReportTaskService {
               }
             })
             .collect(Collectors.toList());
-        log.info("facilityProgramSupportedPeriods size = " + facilityProgramSupportedPeriods.size());
+        log.info(String.format("facilityProgramSupportedPeriods size = %s,programIds=%s, facilityId=%s",
+            facilityProgramSupportedPeriods.size(), programId, facilityId));
         int startPeriodIndexOfFacility = getStartPeriodIndexOfFacility(facilityProgramSupportedPeriods, facilityId,
             programId, facillityStockCardDateDto);
         if (startPeriodIndexOfFacility == NO_NEED_TO_HANDLE) {
+          log.info(String.format("NO_NEED_TO_HANDLE, programIds=%s, facilityId=%s", programId, facilityId));
           continue;
         }
+        log.info(String.format("startPeriodIndexOfFacility=%s, programIds=%s, facilityId=%s",
+            startPeriodIndexOfFacility, programId, facilityId));
         List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
         for (int i = startPeriodIndexOfFacility; i < facilityProgramSupportedPeriods.size(); i++) {
           ProcessingPeriodExtensionDto processingPeriodExtension = facilityProgramSupportedPeriods.get(i);
