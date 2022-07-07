@@ -36,6 +36,7 @@ import org.openlmis.requisition.service.referencedata.FacilityReferenceDataServi
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
+import org.siglus.common.domain.referencedata.ProcessingSchedule;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
@@ -45,6 +46,7 @@ import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
+import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
 import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 
@@ -79,6 +81,9 @@ public class RequisitionReportTaskServiceTest {
   private final UUID periodExtensionId = UUID.randomUUID();
   private final UUID periodId = UUID.randomUUID();
 
+  private final UUID periodScheduleId = UUID.randomUUID();
+  private final ProcessingSchedule processingSchedule = new ProcessingSchedule();
+
   @Before
   public void setup() {
     FacilityDto facilityDto = new FacilityDto();
@@ -112,6 +117,17 @@ public class RequisitionReportTaskServiceTest {
 
     org.siglus.siglusapi.dto.FacilityDto facilityDto2 = new org.siglus.siglusapi.dto.FacilityDto();
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto2);
+
+    final FacilityProgramPeriodScheduleDto item111 = new FacilityProgramPeriodScheduleDto();
+    item111.setProcessingScheduleId(periodScheduleId);
+    item111.setFacilityId(facilityId);
+    item111.setProgramId(programId);
+    List<FacilityProgramPeriodScheduleDto> all = new ArrayList<>();
+    all.add(item111);
+
+    when(facilityNativeRepository.findFacilityProgramPeriodSchedule()).thenReturn(all);
+
+    processingSchedule.setId(periodScheduleId);
   }
 
   @Test
@@ -130,9 +146,11 @@ public class RequisitionReportTaskServiceTest {
     item2.setId(periodId);
     item2.setStartDate(LocalDate.of(2022, 1, 1));
     item2.setEndDate(LocalDate.of(2022, 1, 30));
+    item2.setProcessingSchedule(processingSchedule);
     List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
     allProcessingPeriodDto.add(item2);
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
+
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
         getFacillityStockCardDateDto(2022, 1, 10));
@@ -163,6 +181,7 @@ public class RequisitionReportTaskServiceTest {
     item2.setId(periodId);
     item2.setStartDate(LocalDate.of(2022, 1, 1));
     item2.setEndDate(LocalDate.of(2022, 1, 30));
+    item2.setProcessingSchedule(processingSchedule);
     List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
     allProcessingPeriodDto.add(item2);
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
@@ -211,12 +230,14 @@ public class RequisitionReportTaskServiceTest {
     item2.setId(periodId);
     item2.setStartDate(LocalDate.of(2022, 1, 1));
     item2.setEndDate(LocalDate.of(2022, 1, 30));
+    item2.setProcessingSchedule(processingSchedule);
     List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
     allProcessingPeriodDto.add(item2);
     ProcessingPeriod item22 = new ProcessingPeriod();
     item22.setId(periodId2);
     item22.setStartDate(LocalDate.of(2022, 10, 1));
     item22.setEndDate(LocalDate.of(2022, 10, 30));
+    item22.setProcessingSchedule(processingSchedule);
     allProcessingPeriodDto.add(item22);
 
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
@@ -265,11 +286,13 @@ public class RequisitionReportTaskServiceTest {
     item2.setId(periodId);
     item2.setStartDate(LocalDate.of(2022, 1, 1));
     item2.setEndDate(LocalDate.of(2022, 1, 30));
+    item2.setProcessingSchedule(processingSchedule);
     List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
     allProcessingPeriodDto.add(item2);
     ProcessingPeriod item22 = new ProcessingPeriod();
     item22.setId(periodId2);
     item22.setStartDate(LocalDate.of(2022, 10, 1));
+    item22.setProcessingSchedule(processingSchedule);
     item22.setEndDate(LocalDate.of(2022, 10, 30));
     allProcessingPeriodDto.add(item22);
 
@@ -318,11 +341,13 @@ public class RequisitionReportTaskServiceTest {
     ProcessingPeriod item2 = new ProcessingPeriod();
     item2.setId(periodId);
     item2.setStartDate(LocalDate.of(2022, 1, 1));
+    item2.setProcessingSchedule(processingSchedule);
     item2.setEndDate(LocalDate.of(2022, 1, 28));
     List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
     allProcessingPeriodDto.add(item2);
     ProcessingPeriod item22 = new ProcessingPeriod();
     item22.setId(periodId2);
+    item22.setProcessingSchedule(processingSchedule);
     item22.setStartDate(LocalDate.of(2022, 2, 1));
     item22.setEndDate(LocalDate.of(2022, 2, 28));
     allProcessingPeriodDto.add(item22);
@@ -372,11 +397,13 @@ public class RequisitionReportTaskServiceTest {
     ProcessingPeriod item2 = new ProcessingPeriod();
     item2.setId(periodId);
     item2.setStartDate(LocalDate.of(2022, 1, 1));
+    item2.setProcessingSchedule(processingSchedule);
     item2.setEndDate(LocalDate.of(2022, 1, 28));
     List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
     allProcessingPeriodDto.add(item2);
     ProcessingPeriod item22 = new ProcessingPeriod();
     item22.setId(periodId2);
+    item22.setProcessingSchedule(processingSchedule);
     item22.setStartDate(LocalDate.of(2022, 2, 1));
     item22.setEndDate(LocalDate.of(2022, 2, 28));
     allProcessingPeriodDto.add(item22);
@@ -426,10 +453,12 @@ public class RequisitionReportTaskServiceTest {
     ProcessingPeriod item2 = new ProcessingPeriod();
     item2.setId(periodId);
     item2.setStartDate(LocalDate.of(2022, 1, 1));
+    item2.setProcessingSchedule(processingSchedule);
     item2.setEndDate(LocalDate.of(2022, 1, 28));
     List<ProcessingPeriod> allProcessingPeriodDto = new ArrayList<>();
     allProcessingPeriodDto.add(item2);
     ProcessingPeriod item22 = new ProcessingPeriod();
+    item22.setProcessingSchedule(processingSchedule);
     item22.setId(periodId2);
     item22.setStartDate(LocalDate.of(2022, 2, 1));
     item22.setEndDate(LocalDate.of(2022, 2, 28));
@@ -481,6 +510,7 @@ public class RequisitionReportTaskServiceTest {
 
       ProcessingPeriod item22 = new ProcessingPeriod();
       item22.setId(periodIdUuid);
+      item22.setProcessingSchedule(processingSchedule);
       item22.setStartDate(LocalDate.of(2021, i, 1));
       item22.setEndDate(LocalDate.of(2021, i, 28));
       allProcessingPeriodDto.add(item22);

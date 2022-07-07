@@ -15,23 +15,22 @@
 
 package org.siglus.siglusapi.repository.dto;
 
-import java.sql.Date;
 import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+
 @Data
 @AllArgsConstructor
-public class FacillityStockCardDateDto {
+public class FacilityProgramPeriodScheduleDto {
 
-  private Date occurredDate;
+  private UUID processingScheduleId;
 
   private UUID facilityId;
 
   private UUID programId;
 
-  private Boolean isAndroid;
-
-  public FacillityStockCardDateDto() {
+  public FacilityProgramPeriodScheduleDto() {
   }
 }
