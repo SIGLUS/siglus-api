@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service.task.report;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -182,7 +183,7 @@ public class RequisitionReportTaskService {
                 return facilityProgramPeriodScheduleDto.getProcessingScheduleId()
                     .equals(item.getProcessingSchedule().getId());
               }
-            })
+            }).sorted(Comparator.comparing(ProcessingPeriodExtensionDto::getStartDate))
             .collect(Collectors.toList());
         log.info(String.format("facilityProgramSupportedPeriods size = %s,programIds=%s, facilityId=%s",
             facilityProgramSupportedPeriods.size(), programId, facilityId));
