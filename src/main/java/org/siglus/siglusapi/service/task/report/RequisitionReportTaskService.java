@@ -54,7 +54,6 @@ import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -152,9 +151,11 @@ public class RequisitionReportTaskService {
       UUID facilityId = facilityDto.getId();
       RequisitionMonthlyReportFacility facilityInfo = monthlyReportFacilityMap.get(facilityId);
       Set<UUID> facilityCanViewRequisitionPrograms = findFacilityCanViewRequisitionProgramIdList(facilityId);
+      // todo delete and save @Transactional
+      requisitionMonthlyNotSubmitReportRepository.deleteByFacilityId(facilityId);
       for (ProgramDto programDto : allProgramDto) {
         UUID programId = programDto.getId();
-        if (!facilityStockInventoryDateMap.keySet().contains(getUniqueKey(facilityId, programId))) {
+        if (!facilityStockInventoryDateMap.containsKey(getUniqueKey(facilityId, programId))) {
           log.info(String.format("has no Stock in this program , programIds=%s, facilityId=%s", programId, facilityId));
           continue;
         }
@@ -215,8 +216,9 @@ public class RequisitionReportTaskService {
           notSubmitList.add(notSubmit);
         }
         if (CollectionUtils.isNotEmpty(notSubmitList)) {
-          log.info("save notSubmitList size = " + notSubmitList.size());
-          saveBatchByFacilityId(facilityId, notSubmitList);
+          log.info(String.format("save notSubmitList size =%s, programIds=%s, facilityId=%s", notSubmitList.size(),
+              programId, facilityId));
+          requisitionMonthlyNotSubmitReportRepository.save(notSubmitList);
         }
       }
     }
@@ -255,12 +257,6 @@ public class RequisitionReportTaskService {
     return supportedPrograms.stream()
         .filter(item -> item.isSupportActive() && item.isProgramActive()).map(SupportedProgramDto::getId)
         .collect(Collectors.toSet());
-  }
-
-  @Transactional
-  public void saveBatchByFacilityId(UUID facilityId, List<RequisitionMonthlyNotSubmitReport> notSubmitList) {
-    requisitionMonthlyNotSubmitReportRepository.deleteByFacilityId(facilityId);
-    requisitionMonthlyNotSubmitReportRepository.save(notSubmitList);
   }
 
   private int getStartPeriodIndexOfFacility(List<ProcessingPeriodExtensionDto> allProcessingPeriodExtensionDto,
