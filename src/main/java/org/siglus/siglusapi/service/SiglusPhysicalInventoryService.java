@@ -491,9 +491,6 @@ public class SiglusPhysicalInventoryService {
       }
     }
     allProductPhysicalInventoryDto.setLineItems(allProductLineItemDtoList);
-    if (initialPhysicalInventory) {
-      saveDraftForAllProducts(allProductPhysicalInventoryDto);
-    }
     return allProductPhysicalInventoryDto;
   }
 
