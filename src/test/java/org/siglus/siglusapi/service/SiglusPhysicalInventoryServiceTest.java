@@ -808,7 +808,8 @@ public class SiglusPhysicalInventoryServiceTest {
         .thenReturn(Collections.emptyList());
 
     // when
-    siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(physicalInventoryDto, 3);
+    siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(
+        physicalInventoryDto, 3, false);
   }
 
   @Test
