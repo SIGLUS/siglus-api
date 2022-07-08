@@ -56,5 +56,7 @@ public class RequisitionMonthlyReport extends BaseEntity {
   private UUID programId;
   @Column(name = "processingperiodid")
   private UUID processingPeriodId;
+  @Column(name = "requisitioncreateddate")
+  private LocalDateTime requisitionCreatedDate;
 
 }

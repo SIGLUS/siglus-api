@@ -15,7 +15,6 @@
 
 package org.siglus.siglusapi.service.task.report;
 
-import java.sql.Date;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -55,6 +54,7 @@ import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -113,6 +113,8 @@ public class RequisitionReportTaskService {
 
     // TODO: data is big ( 7/4/22 by kourengang)
     List<RequisitionMonthlyReport> requisitionMonthlyReports = requisitionMonthReportRepository.findAll();
+    requisitionMonthlyReports = requisitionMonthlyReports.stream()
+        .filter(item -> item.getRequisitionCreatedDate() != null).collect(Collectors.toList());
     Map<String, RequisitionMonthlyReport> requisitionMonthlyReportMap = requisitionMonthlyReports.stream()
         .collect(Collectors.toMap(this::getUniqueKey, Function.identity(), (e1, e2) -> e1));
     log.info("requisitionMonthlyReports.size = " + requisitionMonthlyReports.size());
@@ -153,11 +155,14 @@ public class RequisitionReportTaskService {
       RequisitionMonthlyReportFacility facilityInfo = monthlyReportFacilityMap.get(facilityId);
       Set<UUID> facilityCanViewRequisitionPrograms = findFacilityCanViewRequisitionProgramIdList(facilityId);
       // todo delete and save @Transactional
-      requisitionMonthlyNotSubmitReportRepository.deleteByFacilityId(facilityId);
+      List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
+
       for (ProgramDto programDto : allProgramDto) {
         UUID programId = programDto.getId();
-        String programCode = programDto.getCode();
-        if (!facilityStockInventoryDateMap.containsKey(getUniqueKey(facilityId, programId))) {
+        String programCode = requisitionNameMappingMap.get(programId).getRequisitionName();
+        FacillityStockCardDateDto facillityStockCardDateDto = facilityStockInventoryDateMap.get(
+            getUniqueKey(facilityId, programId));
+        if (facillityStockCardDateDto == null) {
           log.info(String.format("has no Stock in this program , programCode=%s, facilityId=%s", programCode,
               facilityId));
           continue;
@@ -166,8 +171,6 @@ public class RequisitionReportTaskService {
           log.info(String.format("cannot InitRequisition, programCode=%s, facilityId=%s", programCode, facilityId));
           continue;
         }
-        FacillityStockCardDateDto facillityStockCardDateDto = facilityStockInventoryDateMap.get(
-            getUniqueKey(facilityId, programId));
 
         FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto =
             facilityProgramPeriodScheduleDtoMap.get(getUniqueKey(facilityId, programId));
@@ -189,15 +192,15 @@ public class RequisitionReportTaskService {
             .collect(Collectors.toList());
         log.info(String.format("facilityProgramSupportedPeriods size = %s,programCode=%s, facilityId=%s",
             facilityProgramSupportedPeriods.size(), programCode, facilityId));
-        int startPeriodIndexOfFacility = getStartPeriodIndexOfFacility(facilityProgramSupportedPeriods, facilityId,
-            programCode, facillityStockCardDateDto);
+
+        int startPeriodIndexOfFacility = findStartPeriodIndexOfFacility(facilityProgramSupportedPeriods,
+            facillityStockCardDateDto.getOccurredDate().toLocalDate());
         if (startPeriodIndexOfFacility == NO_NEED_TO_HANDLE) {
           log.info(String.format("NO_NEED_TO_HANDLE, programCode=%s, facilityId=%s", programCode, facilityId));
           continue;
         }
         log.info(String.format("startPeriodIndexOfFacility=%s, programCode=%s, facilityId=%s",
             startPeriodIndexOfFacility, programCode, facilityId));
-        List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
         for (int i = startPeriodIndexOfFacility; i < facilityProgramSupportedPeriods.size(); i++) {
           ProcessingPeriodExtensionDto processingPeriodExtension = facilityProgramSupportedPeriods.get(i);
           if (LocalDate.now().isBefore(processingPeriodExtension.getSubmitStartDate())) {
@@ -218,15 +221,19 @@ public class RequisitionReportTaskService {
               processingPeriodExtension);
           notSubmitList.add(notSubmit);
         }
-        if (CollectionUtils.isNotEmpty(notSubmitList)) {
-          log.info(String.format("save notSubmitList size =%s, programCode=%s, facilityId=%s", notSubmitList.size(),
-              programCode, facilityId));
-          requisitionMonthlyNotSubmitReportRepository.save(notSubmitList);
-        } else {
-          log.info(String.format("all rr is submited or in the future, programCode=%s, facilityId=%s",
-              programCode, facilityId));
-        }
       }
+      updateBatch(facilityId, notSubmitList);
+    }
+  }
+
+  @Transactional
+  public void updateBatch(UUID facilityId, List<RequisitionMonthlyNotSubmitReport> notSubmitList) {
+    requisitionMonthlyNotSubmitReportRepository.deleteByFacilityId(facilityId);
+    if (CollectionUtils.isNotEmpty(notSubmitList)) {
+      log.info(String.format("[save] notSubmitList size =%s, facilityId=%s", notSubmitList.size(), facilityId));
+      requisitionMonthlyNotSubmitReportRepository.save(notSubmitList);
+    } else {
+      log.info(String.format("[all rr is submitted or in the future], facilityId=%s", facilityId));
     }
   }
 
@@ -263,22 +270,6 @@ public class RequisitionReportTaskService {
     return supportedPrograms.stream()
         .filter(item -> item.isSupportActive() && item.isProgramActive()).map(SupportedProgramDto::getId)
         .collect(Collectors.toSet());
-  }
-
-  private int getStartPeriodIndexOfFacility(List<ProcessingPeriodExtensionDto> allProcessingPeriodExtensionDto,
-      UUID facilityId, String programCode, FacillityStockCardDateDto facillityStockCardDateDto) {
-    int startPeriodIndexOfFacility;
-
-    if (facillityStockCardDateDto == null) {
-      log.info(String.format("facility has no stock card in this program(but other program exists stock card)"
-          + ", programCode=%s,facilityId=%s", programCode, facilityId));
-      startPeriodIndexOfFacility = 0;
-    } else {
-      Date firstOccurredDate = facillityStockCardDateDto.getOccurredDate();
-      startPeriodIndexOfFacility = findStartPeriodIndexOfFacility(allProcessingPeriodExtensionDto,
-          firstOccurredDate.toLocalDate());
-    }
-    return startPeriodIndexOfFacility;
   }
 
   private RequisitionMonthlyNotSubmitReport getRequisitionMonthlyNotSubmitReport(
