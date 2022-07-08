@@ -116,9 +116,12 @@ public class SiglusPhysicalInventoryController {
   @PostMapping
   @ResponseStatus(CREATED)
   public PhysicalInventoryDto createEmptyPhysicalInventory(
-      @RequestBody PhysicalInventoryDto dto, @RequestParam Integer splitNum) {
+      @RequestBody PhysicalInventoryDto dto,
+      @RequestParam Integer splitNum,
+      @RequestParam(required = false) boolean initialPhysicalInventory) {
     if (ALL_PRODUCTS_PROGRAM_ID.equals(dto.getProgramId())) {
-      return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum);
+      return siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(dto, splitNum,
+          initialPhysicalInventory);
     }
     return siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(dto, splitNum);
   }
