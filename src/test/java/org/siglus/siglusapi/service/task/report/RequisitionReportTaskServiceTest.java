@@ -202,7 +202,7 @@ public class RequisitionReportTaskServiceTest {
     requisitionReportTaskService.refresh(false);
 
     // then
-    verify(requisitionMonthlyNotSubmitReportRepository, times(0)).save(any(List.class));
+    verify(requisitionMonthlyNotSubmitReportRepository).save(any(List.class));
 
   }
 
@@ -488,7 +488,7 @@ public class RequisitionReportTaskServiceTest {
     requisitionReportTaskService.refresh(false);
 
     // then
-    verify(requisitionMonthlyNotSubmitReportRepository, times(0)).save(any(List.class));
+    verify(requisitionMonthlyNotSubmitReportRepository).save(any(List.class));
 
   }
 

@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.service.migration;
+package org.siglus.siglusapi.migration;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -35,6 +35,7 @@ import org.mockito.stubbing.Answer;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
+import org.siglus.siglusapi.migration.DataMigrationService;
 import org.siglus.siglusapi.service.android.MeService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;

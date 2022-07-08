@@ -13,7 +13,7 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.migration;
+package org.siglus.siglusapi.migration;
 
 import static java.util.Collections.emptyList;
 import static org.mockito.Matchers.anyListOf;
@@ -27,7 +27,8 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
-import org.siglus.siglusapi.service.migration.DataMigrationService;
+import org.siglus.siglusapi.migration.DataMigrationController;
+import org.siglus.siglusapi.migration.DataMigrationService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DataMigrationControllerTest {
