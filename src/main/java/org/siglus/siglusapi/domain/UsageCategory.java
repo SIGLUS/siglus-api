@@ -26,7 +26,9 @@ public enum UsageCategory {
   REGIMEN("regimen"),
   CONSULTATIONNUMBER("consultationNumber"),
   RAPIDTESTCONSUMPTION("rapidTestConsumption"),
-  USAGEINFORMATION("usageInformation");
+  USAGEINFORMATION("usageInformation"),
+
+  AGEGROUP("ageGroup");
 
   @Getter
   private final String name;

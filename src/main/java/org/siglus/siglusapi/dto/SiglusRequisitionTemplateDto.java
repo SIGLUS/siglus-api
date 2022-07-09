@@ -44,6 +44,8 @@ public class SiglusRequisitionTemplateDto extends RequisitionTemplateDto {
 
   private transient List<UsageTemplateSectionDto> usageInformation;
 
+  private transient List<UsageTemplateSectionDto> ageGroup;
+
   public static SiglusRequisitionTemplateDto from(RequisitionTemplateDto requisitionTemplateDto) {
     SiglusRequisitionTemplateDto dto = new SiglusRequisitionTemplateDto();
     BeanUtils.copyProperties(requisitionTemplateDto, dto);
