@@ -13,32 +13,23 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.web.report;
+package org.siglus.siglusapi.task;
 
 import lombok.RequiredArgsConstructor;
+import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
-@RestController
-@RequestMapping("/api/siglusapi/task/requisition")
-public class RequisitionReportTaskController {
-
+@Service
+public class RequisitionReportTask {
   private final RequisitionReportTaskService requisitionReportTaskService;
 
-  @PostMapping("/refresh")
-  public ResponseEntity<String> refresh(@RequestParam boolean needCheckPermission) {
-    requisitionReportTaskService.refresh(needCheckPermission);
-    return ResponseEntity.ok("ok");
+  @Scheduled(cron = "${report.requisition.monthly.cron}", zone = "${time.zoneId}")
+  @SchedulerLock(name = "requisition_not_submit_monthly_report")
+  public void refresh() {
+    requisitionReportTaskService.refresh(false);
   }
 
-  @PostMapping("/update")
-  public ResponseEntity<String> update(@RequestParam boolean needCheckPermission) {
-    requisitionReportTaskService.update(needCheckPermission);
-    return ResponseEntity.ok("ok");
-  }
 }

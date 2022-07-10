@@ -82,12 +82,16 @@ public class RequisitionReportTaskService {
   public void refresh(boolean needCheckPermission) {
     log.info("refresh. start = " + System.currentTimeMillis());
     try {
-      doRefresh(needCheckPermission);
+      doRefresh(needCheckPermission, getDataWrapper());
     } catch (Exception e) {
       log.error("refresh with exception. msg = " + e.getMessage(), e);
       throw e;
     }
     log.info("refresh. end = " + System.currentTimeMillis());
+  }
+
+  private DataWrapper getDataWrapper() {
+    return new DataWrapper();
   }
 
   public void update(boolean needCheckPermission) {
@@ -109,95 +113,71 @@ public class RequisitionReportTaskService {
     return siglusFacilityReferenceDataService.findOne(facilityId);
   }
 
-  @SuppressWarnings("PMD.CyclomaticComplexity")
-  public void doRefresh(boolean needCheckPermission) {
-    List<FacilityDto> allFacilityDto = facilityReferenceDataService.findAll();
-    log.info("allFacilityDto.size = " + allFacilityDto.size());
-    List<ProgramDto> allProgramDto = programDataService.findAll();
-    log.info("allProgramDto.size = " + allProgramDto.size());
-    List<ProcessingPeriodExtensionDto> processingPeriodExtensionDtos = getProcessingPeriodExtensionDto();
-
-    // TODO: data is big ( 7/4/22 by kourengang)
-    List<RequisitionMonthlyReport> requisitionMonthlyReports = requisitionMonthReportRepository.findAll();
-    requisitionMonthlyReports = requisitionMonthlyReports.stream()
-        .filter(item -> item.getRequisitionCreatedDate() != null).collect(Collectors.toList());
-    Map<String, RequisitionMonthlyReport> requisitionMonthlyReportMap = requisitionMonthlyReports.stream()
-        .collect(Collectors.toMap(this::getUniqueKey, Function.identity(), (e1, e2) -> e1));
-    log.info("requisitionMonthlyReports.size = " + requisitionMonthlyReports.size());
-
-    List<FacillityStockCardDateDto> firstStockCardGroupByFacility = getAllFacilityStockCardDateDtos(allProgramDto);
-    Map<String, FacillityStockCardDateDto> facilityStockInventoryDateMap = firstStockCardGroupByFacility.stream()
-        .collect(Collectors.toMap(
-            item -> getUniqueKey(item.getFacilityId(),
-                item.getProgramId()), Function.identity()));
-
-    List<FacilityProgramPeriodScheduleDto> facilityProgramPeriodSchedule
-        = facilityNativeRepository.findFacilityProgramPeriodSchedule();
-
-    Map<String, FacilityProgramPeriodScheduleDto> facilityProgramPeriodScheduleDtoMap
-        = facilityProgramPeriodSchedule.stream().collect(Collectors.toMap(
-            facilityProgramPeriodScheduleDto -> getUniqueKey(facilityProgramPeriodScheduleDto.getFacilityId(),
-            facilityProgramPeriodScheduleDto.getProgramId()), Function.identity()));
-    Set<UUID> existedPhysicalInventoryFacilityIds = firstStockCardGroupByFacility.stream()
-        .map(FacillityStockCardDateDto::getFacilityId).collect(
-            Collectors.toSet());
-
-    allFacilityDto = allFacilityDto.stream().filter(item -> existedPhysicalInventoryFacilityIds.contains(item.getId()))
-        .collect(Collectors.toList());
-    log.info("filtered allFacilityDto.size = " + allFacilityDto.size());
-
-    List<RequisitionMonthlyReportFacility> requisitionMonthlyReportFacilities
-        = facilityNativeRepository.queryAllFacilityInfo();
-
-    Map<UUID, RequisitionMonthlyReportFacility> monthlyReportFacilityMap = requisitionMonthlyReportFacilities.stream()
-        .collect(Collectors.toMap(RequisitionMonthlyReportFacility::getFacilityId, Function.identity()));
-
-    List<ProgramRequisitionNameMapping> requisitionNameMapping = programRequisitionNameMappingRepository.findAll();
-    Map<UUID, ProgramRequisitionNameMapping> requisitionNameMappingMap = requisitionNameMapping.stream()
-        .collect(Collectors.toMap(ProgramRequisitionNameMapping::getProgramId, Function.identity()));
-
-    for (FacilityDto facilityDto : allFacilityDto) {
-      UUID facilityId = facilityDto.getId();
-      RequisitionMonthlyReportFacility facilityInfo = monthlyReportFacilityMap.get(facilityId);
-      findFacilityCanViewRequisitionProgramIdList(facilityId);
+  public void doRefresh(boolean needCheckPermission, DataWrapper dataWrapper) {
+    for (FacilityDto facilityDto : dataWrapper.allFacilityDto) {
+      RequisitionMonthlyReportFacility facilityInfo = dataWrapper.monthlyReportFacilityMap.get(facilityDto.getId());
+      findFacilityCanViewRequisitionProgramIdList(facilityDto.getId());
       org.siglus.siglusapi.dto.FacilityDto facilityWithSupportedPrograms =
-          siglusFacilityReferenceDataService.findOne(facilityId);
+          siglusFacilityReferenceDataService.findOne(facilityDto.getId());
       if (Boolean.FALSE.equals(facilityWithSupportedPrograms.getActive()) || CollectionUtils.isEmpty(
           facilityWithSupportedPrograms.getSupportedPrograms())) {
         continue;
       }
       List<SupportedProgramDto> supportedPrograms = facilityWithSupportedPrograms.getSupportedPrograms();
 
-      List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
+      List<RequisitionMonthlyNotSubmitReport> notSubmitList =
+          getFacilityNotSubmitRequisitions(needCheckPermission, facilityInfo, supportedPrograms, dataWrapper);
 
-      for (ProgramDto programDto : allProgramDto) {
-        UUID programId = programDto.getId();
-        String programCode = requisitionNameMappingMap.get(programId).getRequisitionName();
-        FacillityStockCardDateDto facillityStockCardDateDto = facilityStockInventoryDateMap.get(
-            getUniqueKey(facilityId, programId));
-        if (facillityStockCardDateDto == null) {
-          log.info(String.format("has no Stock in this program , programCode=%s, facilityId=%s", programCode,
-              facilityId));
-          continue;
-        }
+      updateBatch(facilityInfo.getFacilityId(), notSubmitList);
+    }
+  }
 
-        Optional<SupportedProgramDto> supportedProgramDto =
-            supportedPrograms.stream().filter(item -> programId.equals(item.getId())).findFirst();
+  private List<RequisitionMonthlyNotSubmitReport> getFacilityNotSubmitRequisitions(boolean needCheckPermission,
+      RequisitionMonthlyReportFacility facilityInfo,
+      List<SupportedProgramDto> supportedPrograms, DataWrapper dataWrapper) {
+    List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
+    for (ProgramDto programDto : dataWrapper.allProgramDto) {
+      UUID programId = programDto.getId();
+      String programCode = dataWrapper.requisitionNameMappingMap.get(programId).getRequisitionName();
+      FacillityStockCardDateDto facillityStockCardDateDto = dataWrapper.facilityStockInventoryDateMap.get(
+          dataWrapper.getUniqueKey(facilityInfo.getFacilityId(), programId));
+      if (facillityStockCardDateDto == null) {
+        log.info(String.format("has no Stock in this program , programCode=%s, facilityId=%s", programCode,
+            facilityInfo.getFacilityId()));
+        continue;
+      }
+      Optional<SupportedProgramDto> supportedProgramDto =
+          supportedPrograms.stream().filter(item -> programId.equals(item.getId())).findFirst();
+      if (needCheckPermission || !supportedProgramDto.isPresent()) {
+        log.info(String.format("cannot InitRequisition, programCode=%s, facilityId=%s", programCode,
+            facilityInfo.getFacilityId()));
+        continue;
+      }
+      FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto =
+          dataWrapper.facilityProgramPeriodScheduleDtoMap.get(dataWrapper.getUniqueKey(facilityInfo.getFacilityId(),
+              programId));
+      if (facilityProgramPeriodScheduleDto == null) {
+        log.info(String.format("not facilityProgramPeriodScheduleDto, programCode=%s, facilityId=%s",
+            programCode, facilityInfo.getFacilityId()));
+        continue;
+      }
 
-        if (needCheckPermission || !supportedProgramDto.isPresent()) {
-          log.info(String.format("cannot InitRequisition, programCode=%s, facilityId=%s", programCode, facilityId));
-          continue;
-        }
+      List<RequisitionMonthlyNotSubmitReport> programNotSubmitRequisitions =
+          getProgramNotSubmitRequisitions(facilityInfo, dataWrapper, programDto, programCode, facillityStockCardDateDto,
+              supportedProgramDto, facilityProgramPeriodScheduleDto);
+      notSubmitList.addAll(programNotSubmitRequisitions);
 
-        FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto =
-            facilityProgramPeriodScheduleDtoMap.get(getUniqueKey(facilityId, programId));
-        if (facilityProgramPeriodScheduleDto == null) {
-          log.info(String.format("not facilityProgramPeriodScheduleDto, programCode=%s, facilityId=%s",
-              programCode, facilityId));
-          continue;
-        }
+    }
+    return notSubmitList;
+  }
 
-        List<ProcessingPeriodExtensionDto> facilityProgramSupportedPeriods = processingPeriodExtensionDtos.stream()
+  private List<RequisitionMonthlyNotSubmitReport> getProgramNotSubmitRequisitions(
+      RequisitionMonthlyReportFacility facilityInfo, DataWrapper dataWrapper,
+      ProgramDto programDto, String programCode,
+      FacillityStockCardDateDto facillityStockCardDateDto, Optional<SupportedProgramDto> supportedProgramDto,
+      FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto) {
+    List<ProcessingPeriodExtensionDto> facilityProgramSupportedPeriods =
+        dataWrapper.processingPeriodExtensionDtos.stream()
             .filter(item -> {
               if (Boolean.TRUE.equals(facillityStockCardDateDto.getIsAndroid())) {
                 return AndroidConstants.SCHEDULE_CODE.equals(item.getProcessingSchedule().getCode());
@@ -207,42 +187,46 @@ public class RequisitionReportTaskService {
               }
             }).sorted(Comparator.comparing(ProcessingPeriodExtensionDto::getStartDate))
             .collect(Collectors.toList());
-        log.info(String.format("facilityProgramSupportedPeriods size = %s,programCode=%s, facilityId=%s",
-            facilityProgramSupportedPeriods.size(), programCode, facilityId));
+    log.info(String.format("facilityProgramSupportedPeriods size = %s,programCode=%s, facilityId=%s",
+        facilityProgramSupportedPeriods.size(), programCode, facilityInfo.getFacilityId()));
 
-        int startPeriodIndexOfFacility = findStartPeriodIndexOfFacility(facilityProgramSupportedPeriods,
-            supportedProgramDto.get().getSupportStartDate(), facillityStockCardDateDto.getOccurredDate().toLocalDate(),
-            Boolean.TRUE.equals(facillityStockCardDateDto.getIsAndroid()),
-            ProgramConstants.RAPIDTEST_PROGRAM_CODE.equals(programDto.getCode()));
-        if (startPeriodIndexOfFacility == NO_NEED_TO_HANDLE) {
-          log.info(String.format("NO_NEED_TO_HANDLE, programCode=%s, facilityId=%s", programCode, facilityId));
-          continue;
-        }
-        log.info(String.format("startPeriodIndexOfFacility=%s, programCode=%s, facilityId=%s",
-            startPeriodIndexOfFacility, programCode, facilityId));
-        for (int i = startPeriodIndexOfFacility; i < facilityProgramSupportedPeriods.size(); i++) {
-          ProcessingPeriodExtensionDto processingPeriodExtension = facilityProgramSupportedPeriods.get(i);
-          if (LocalDate.now().isBefore(processingPeriodExtension.getSubmitStartDate())) {
-            // future period not take into account
-            log.info(String.format("future period not take into account, programCode=%s,facilityId=%s, date=%s",
-                programCode, facilityId, processingPeriodExtension.getSubmitStartDate()));
-            break;
-          }
+    int startPeriodIndexOfFacility = findStartPeriodIndexOfFacility(facilityProgramSupportedPeriods,
+        supportedProgramDto.get().getSupportStartDate(), facillityStockCardDateDto.getOccurredDate().toLocalDate(),
+        Boolean.TRUE.equals(facillityStockCardDateDto.getIsAndroid()),
+        ProgramConstants.RAPIDTEST_PROGRAM_CODE.equals(programDto.getCode()));
 
-          RequisitionMonthlyReport requisitionMonthlyReport = requisitionMonthlyReportMap.get(
-              getUniqueKey(facilityId, processingPeriodExtension.getProcessingPeriodId(), programDto.getId()));
-          if (requisitionMonthlyReport != null) {
-            // already exists rr
-            continue;
-          }
-          RequisitionMonthlyNotSubmitReport notSubmit = getRequisitionMonthlyNotSubmitReport(
-              requisitionNameMappingMap, facilityId, facilityInfo, programId,
-              processingPeriodExtension);
-          notSubmitList.add(notSubmit);
-        }
+    return getPeriodNotSubmitRequisitions(
+        facilityInfo, programDto, programCode,
+        facilityProgramSupportedPeriods, startPeriodIndexOfFacility, dataWrapper);
+  }
+
+  private List<RequisitionMonthlyNotSubmitReport> getPeriodNotSubmitRequisitions(
+      RequisitionMonthlyReportFacility facilityInfo, ProgramDto programDto,
+      String programCode, List<ProcessingPeriodExtensionDto> facilityProgramSupportedPeriods,
+      int startPeriodIndexOfFacility, DataWrapper dataWrapper) {
+    List<RequisitionMonthlyNotSubmitReport> notSubmitPeriodList = new ArrayList<>();
+    for (int i = startPeriodIndexOfFacility; i < facilityProgramSupportedPeriods.size(); i++) {
+      ProcessingPeriodExtensionDto processingPeriodExtension = facilityProgramSupportedPeriods.get(i);
+      if (LocalDate.now().isBefore(processingPeriodExtension.getSubmitStartDate())) {
+        // future period not take into account
+        log.info(String.format("future period not take into account, programCode=%s,facilityId=%s, date=%s",
+            programCode, facilityInfo.getFacilityId(), processingPeriodExtension.getSubmitStartDate()));
+        break;
       }
-      updateBatch(facilityId, notSubmitList);
+
+      RequisitionMonthlyReport requisitionMonthlyReport = dataWrapper.requisitionMonthlyReportMap.get(
+          dataWrapper.getUniqueKey(facilityInfo.getFacilityId(), processingPeriodExtension.getProcessingPeriodId(),
+              programDto.getId()));
+      if (requisitionMonthlyReport != null) {
+        // already exists rr
+        continue;
+      }
+      RequisitionMonthlyNotSubmitReport notSubmit = getRequisitionMonthlyNotSubmitReport(
+          dataWrapper.requisitionNameMappingMap, facilityInfo.getFacilityId(), facilityInfo, programDto.getId(),
+          processingPeriodExtension);
+      notSubmitPeriodList.add(notSubmit);
     }
+    return notSubmitPeriodList;
   }
 
   private List<FacillityStockCardDateDto> getAllFacilityStockCardDateDtos(List<ProgramDto> allProgramDto) {
@@ -400,21 +384,11 @@ public class RequisitionReportTaskService {
   public int findStartPeriodIndexOfFacility(List<ProcessingPeriodExtensionDto> allProcessingPeriodDto,
       LocalDate reportStartDate, LocalDate firstStockOccurDate, boolean isAndroid, boolean isRapidTest) {
     LocalDate startDate = reportStartDate.isBefore(firstStockOccurDate) ? firstStockOccurDate : reportStartDate;
-
+    // todo web differ from android, temp logic
     if (reportStartDate.isBefore(firstStockOccurDate) && !isRapidTest) {
-      if (isAndroid) {
-        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 17);
-      } else {
-        // todo to be confirm from BA
-        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 17);
-      }
+      return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 17);
     } else {
-      if (isAndroid) {
-        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 20);
-      } else {
-        // todo to be confirm from BA
-        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 20);
-      }
+      return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 20);
     }
   }
 
@@ -434,22 +408,81 @@ public class RequisitionReportTaskService {
         return i;
       }
     }
-    // in this case firstOccurredDate is in the future, so no need to handle
-    return NO_NEED_TO_HANDLE;
+    log.info("first occurred date is in the future, so no need to handle, startDate = " + startDate);
+    return Integer.MAX_VALUE;
   }
 
+  public class DataWrapper {
+    protected List<FacilityDto> allFacilityDto;
+    protected Map<UUID, RequisitionMonthlyReportFacility> monthlyReportFacilityMap;
+    protected List<ProgramDto> allProgramDto;
+    protected Map<UUID, ProgramRequisitionNameMapping> requisitionNameMappingMap;
+    protected Map<String, FacillityStockCardDateDto> facilityStockInventoryDateMap;
+    protected Map<String, FacilityProgramPeriodScheduleDto> facilityProgramPeriodScheduleDtoMap;
+    protected List<ProcessingPeriodExtensionDto> processingPeriodExtensionDtos;
+    protected Map<String, RequisitionMonthlyReport> requisitionMonthlyReportMap;
 
-  private String getUniqueKey(RequisitionMonthlyReport item) {
-    return getUniqueKey(item.getFacilityId(), item.getProcessingPeriodId(), item.getProgramId());
+    public DataWrapper() {
+      allFacilityDto = facilityReferenceDataService.findAll();
+      log.info("allFacilityDto.size = " + allFacilityDto.size());
+
+      List<RequisitionMonthlyReportFacility> requisitionMonthlyReportFacilities
+          = facilityNativeRepository.queryAllFacilityInfo();
+
+      monthlyReportFacilityMap = requisitionMonthlyReportFacilities.stream()
+          .collect(Collectors.toMap(RequisitionMonthlyReportFacility::getFacilityId, Function.identity()));
+
+      allProgramDto = programDataService.findAll();
+      log.info("allProgramDto.size = " + allProgramDto.size());
+
+      List<ProgramRequisitionNameMapping> requisitionNameMapping = programRequisitionNameMappingRepository.findAll();
+      requisitionNameMappingMap = requisitionNameMapping.stream()
+          .collect(Collectors.toMap(ProgramRequisitionNameMapping::getProgramId, Function.identity()));
+
+
+      List<FacillityStockCardDateDto> firstStockCardGroupByFacility =
+          getAllFacilityStockCardDateDtos(allProgramDto);
+      facilityStockInventoryDateMap = firstStockCardGroupByFacility.stream()
+          .collect(Collectors.toMap(
+              item -> getUniqueKey(item.getFacilityId(),
+                  item.getProgramId()), Function.identity()));
+
+      List<FacilityProgramPeriodScheduleDto> facilityProgramPeriodSchedule
+          = facilityNativeRepository.findFacilityProgramPeriodSchedule();
+
+      facilityProgramPeriodScheduleDtoMap = facilityProgramPeriodSchedule.stream().collect(Collectors.toMap(
+          facilityProgramPeriodScheduleDto -> getUniqueKey(facilityProgramPeriodScheduleDto.getFacilityId(),
+              facilityProgramPeriodScheduleDto.getProgramId()), Function.identity()));
+      processingPeriodExtensionDtos = getProcessingPeriodExtensionDto();
+
+      // TODO: data is big ( 7/4/22 by kourengang)
+      List<RequisitionMonthlyReport> requisitionMonthlyReports = requisitionMonthReportRepository.findAll();
+      requisitionMonthlyReports = requisitionMonthlyReports.stream()
+          .filter(item -> item.getRequisitionCreatedDate() != null).collect(Collectors.toList());
+      requisitionMonthlyReportMap = requisitionMonthlyReports.stream()
+          .collect(Collectors.toMap(this::getUniqueKey, Function.identity(), (e1, e2) -> e1));
+      log.info("requisitionMonthlyReports.size = " + requisitionMonthlyReports.size());
+
+      Set<UUID> existedPhysicalInventoryFacilityIds = firstStockCardGroupByFacility.stream()
+          .map(FacillityStockCardDateDto::getFacilityId).collect(
+              Collectors.toSet());
+
+      allFacilityDto =
+          allFacilityDto.stream().filter(item -> existedPhysicalInventoryFacilityIds.contains(item.getId()))
+              .collect(Collectors.toList());
+      log.info("filtered allFacilityDto.size = " + allFacilityDto.size());
+    }
+
+    private String getUniqueKey(RequisitionMonthlyReport item) {
+      return getUniqueKey(item.getFacilityId(), item.getProcessingPeriodId(), item.getProgramId());
+    }
+
+    private String getUniqueKey(UUID facilityId, UUID processingPeriodId, UUID programId) {
+      return facilityId + "&" + processingPeriodId + "&" + programId;
+    }
+
+    private String getUniqueKey(UUID facilityId, UUID programId) {
+      return facilityId + "&" + programId;
+    }
   }
-
-  private String getUniqueKey(UUID facilityId, UUID processingPeriodId, UUID programId) {
-    return facilityId + "&" + processingPeriodId + "&" + programId;
-  }
-
-  private String getUniqueKey(UUID facilityId, UUID programId) {
-    return facilityId + "&" + programId;
-  }
-
-
 }
