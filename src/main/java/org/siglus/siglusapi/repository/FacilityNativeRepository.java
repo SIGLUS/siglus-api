@@ -16,10 +16,14 @@
 package org.siglus.siglusapi.repository;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.android.db.Facility;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
@@ -34,6 +38,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
+@SuppressWarnings("PMD.TooManyMethods")
 public class FacilityNativeRepository extends BaseNativeRepository {
 
   private final NamedParameterJdbcTemplate namedJdbc;
@@ -129,7 +135,12 @@ public class FacilityNativeRepository extends BaseNativeRepository {
   }
 
   public List<FacillityStockCardDateDto> findFirstStockCardGroupByFacility() {
-    String query = "SELECT DISTINCT ON (sc.facilityid, sc.programid) "
+    String query = getQuery();
+    return namedJdbc.query(query, facilityStockCardDateDtoExtractor());
+  }
+
+  private String getQuery() {
+    return "SELECT DISTINCT ON (sc.facilityid, sc.programid) "
         + "            MIN(scli.occurreddate) OVER (PARTITION BY sc.facilityid, sc.programid) AS occurreddate, "
         + "            sc.facilityid, "
         + "            sc.programid, "
@@ -137,8 +148,20 @@ public class FacilityNativeRepository extends BaseNativeRepository {
         + "FROM stockmanagement.stock_card_line_items scli "
         + "         LEFT JOIN stockmanagement.stock_cards sc ON scli.stockcardid = sc.id "
         + "         LEFT JOIN siglusintegration.facility_extension sf ON sc.facilityid = sf.facilityid ";
-    return namedJdbc.query(query, facilityStockCardDateDtoExtractor());
+  }
 
+  public List<FacillityStockCardDateDto> findMalariaFirstStockCardGroupByFacility(
+      Set<UUID> malariaAdditionalOrderableIds, UUID viaProgramId) {
+    if (CollectionUtils.isEmpty(malariaAdditionalOrderableIds)) {
+      return new ArrayList<>();
+    }
+    String query = getQuery() + " WHERE sc.programid = :programId "
+        + " AND sc.orderableid in (:orderableIds)";
+    log.info(query);
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    params.addValue("programId", viaProgramId);
+    params.addValue("orderableIds", malariaAdditionalOrderableIds);
+    return namedJdbc.query(query, params, facilityStockCardDateDtoExtractor());
   }
 
   private RowMapper<FacillityStockCardDateDto> facilityStockCardDateDtoExtractor() {

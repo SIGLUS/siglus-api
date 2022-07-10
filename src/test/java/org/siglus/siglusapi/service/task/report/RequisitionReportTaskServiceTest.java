@@ -41,6 +41,7 @@ import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
@@ -116,6 +117,13 @@ public class RequisitionReportTaskServiceTest {
     when(programRequisitionNameMappingRepository.findAll()).thenReturn(requisitionNameMapping);
 
     org.siglus.siglusapi.dto.FacilityDto facilityDto2 = new org.siglus.siglusapi.dto.FacilityDto();
+    facilityDto2.setActive(true);
+    SupportedProgramDto supportedProgramDto = new SupportedProgramDto();
+    supportedProgramDto.setSupportStartDate(LocalDate.MIN);
+    supportedProgramDto.setId(programId);
+    List<SupportedProgramDto> supportedProgramDtos = new ArrayList<>();
+    supportedProgramDtos.add(supportedProgramDto);
+    facilityDto2.setSupportedPrograms(supportedProgramDtos);
     when(siglusFacilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto2);
 
     final FacilityProgramPeriodScheduleDto item111 = new FacilityProgramPeriodScheduleDto();
@@ -187,7 +195,7 @@ public class RequisitionReportTaskServiceTest {
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2022, 1, 10));
+        getFacillityStockCardDateDto(2021, 1, 10));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -355,7 +363,7 @@ public class RequisitionReportTaskServiceTest {
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2022, 1, 19));
+        getFacillityStockCardDateDto(2021, 1, 19));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -411,7 +419,7 @@ public class RequisitionReportTaskServiceTest {
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2022, 1, 21));
+        getFacillityStockCardDateDto(2021, 1, 21));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -467,7 +475,7 @@ public class RequisitionReportTaskServiceTest {
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2022, 1, 25));
+        getFacillityStockCardDateDto(2021, 1, 25));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
@@ -519,7 +527,7 @@ public class RequisitionReportTaskServiceTest {
     when(processingPeriodRepository.findAll()).thenReturn(allProcessingPeriodDto);
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2021, 4, 21));
+        getFacillityStockCardDateDto(2021, 3, 21));
 
     RequisitionMonthlyReport report = new RequisitionMonthlyReport();
     report.setFacilityId(facilityId);
