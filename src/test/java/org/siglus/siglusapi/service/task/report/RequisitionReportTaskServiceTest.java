@@ -38,13 +38,16 @@ import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.domain.referencedata.ProcessingSchedule;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
+import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
+import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
+import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
@@ -74,6 +77,9 @@ public class RequisitionReportTaskServiceTest {
   private ProcessingPeriodRepository processingPeriodRepository;
   @InjectMocks
   private RequisitionReportTaskService requisitionReportTaskService;
+  @Mock
+  private ReportTypeRepository reportTypeRepository;
+
 
   private final UUID facilityId = UUID.randomUUID();
 
@@ -83,6 +89,8 @@ public class RequisitionReportTaskServiceTest {
   private final UUID periodId = UUID.randomUUID();
 
   private final UUID periodScheduleId = UUID.randomUUID();
+  private final String programCode = "T";
+
   private final ProcessingSchedule processingSchedule = new ProcessingSchedule();
 
   @Before
@@ -92,10 +100,11 @@ public class RequisitionReportTaskServiceTest {
     List<FacilityDto> allFacilityDto = new ArrayList<>();
     allFacilityDto.add(facilityDto);
     when(facilityReferenceDataService.findAll()).thenReturn(allFacilityDto);
-    List<ProgramDto> allProgramDto = new ArrayList<>();
     ProgramDto programDto = new ProgramDto();
     programDto.setId(programId);
     programDto.setName("test 1");
+    programDto.setCode(programCode);
+    List<ProgramDto> allProgramDto = new ArrayList<>();
     allProgramDto.add(programDto);
     when(programDataService.findAll()).thenReturn(allProgramDto);
     RequisitionMonthlyReportFacility item4 = new RequisitionMonthlyReportFacility();
@@ -136,6 +145,15 @@ public class RequisitionReportTaskServiceTest {
     when(facilityNativeRepository.findFacilityProgramPeriodSchedule()).thenReturn(all);
 
     processingSchedule.setId(periodScheduleId);
+    processingSchedule.setCode(AndroidConstants.MONTH_SCHEDULE_CODE);
+
+    ReportType reportType = new ReportType();
+    reportType.setFacilityId(facilityId);
+    reportType.setProgramCode(programCode);
+    reportType.setStartDate(LocalDate.MIN);
+    List<ReportType> facilityReportTypeList = new ArrayList<>();
+    facilityReportTypeList.add(reportType);
+    when(reportTypeRepository.findByFacilityId(facilityId)).thenReturn(facilityReportTypeList);
   }
 
   @Test

@@ -107,13 +107,13 @@ public class FacilityNativeRepository extends BaseNativeRepository {
         + "       f.code      AS facilitycode, "
         + "       ft.code      AS facilitytype, "
         + "       ftm.category AS facilitymergetype, "
-        + "       z1.name district, "
-        + "       z2.name province, "
+        + "       gz1.name district, "
+        + "       gz2.name province, "
         + "       vfs.districtfacilitycode, "
         + "       vfs.provincefacilitycode "
         + "FROM referencedata.facilities f "
-        + "         LEFT JOIN referencedata.geographic_zones z1 ON f.geographiczoneid = z1.id "
-        + "         LEFT JOIN referencedata.geographic_zones z2 ON z1.parentid = z2.id "
+        + "         LEFT JOIN referencedata.geographic_zones gz1 ON f.geographiczoneid = gz1.id "
+        + "         LEFT JOIN referencedata.geographic_zones gz2 ON gz1.parentid = gz2.id "
         + "         LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = f.code "
         + "         LEFT JOIN referencedata.facility_types ft ON f.typeid = ft.id "
         + "         LEFT JOIN siglusintegration.facility_type_mapping ftm "
@@ -144,10 +144,10 @@ public class FacilityNativeRepository extends BaseNativeRepository {
         + "            MIN(scli.occurreddate) OVER (PARTITION BY sc.facilityid, sc.programid) AS occurreddate, "
         + "            sc.facilityid, "
         + "            sc.programid, "
-        + "            sf.isandroid "
+        + "            fe.isandroid "
         + "FROM stockmanagement.stock_card_line_items scli "
         + "         LEFT JOIN stockmanagement.stock_cards sc ON scli.stockcardid = sc.id "
-        + "         LEFT JOIN siglusintegration.facility_extension sf ON sc.facilityid = sf.facilityid ";
+        + "         LEFT JOIN siglusintegration.facility_extension fe ON sc.facilityid = fe.facilityid ";
   }
 
   public List<FacillityStockCardDateDto> findMalariaFirstStockCardGroupByFacility(
@@ -173,10 +173,10 @@ public class FacilityNativeRepository extends BaseNativeRepository {
   }
 
   public List<FacilityProgramPeriodScheduleDto> findFacilityProgramPeriodSchedule() {
-    String query = "select  gps.processingscheduleid, gm.facilityid, gps.programid "
-        + "from referencedata.requisition_group_members gm "
-        + "left join referencedata.requisition_group_program_schedules gps "
-        + "on gm.requisitiongroupid = gps.requisitiongroupid";
+    String query = "select rgps.processingscheduleid, rgm.facilityid, rgps.programid "
+        + "from referencedata.requisition_group_members rgm "
+        + "left join referencedata.requisition_group_program_schedules rgps "
+        + "on rgm.requisitiongroupid = rgps.requisitiongroupid";
     return namedJdbc.query(query, facilityProgramPeriodScheduleDtoExtractor());
   }
 

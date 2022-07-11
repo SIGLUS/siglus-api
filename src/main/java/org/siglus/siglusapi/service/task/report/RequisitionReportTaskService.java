@@ -18,7 +18,6 @@ package org.siglus.siglusapi.service.task.report;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,19 +35,21 @@ import org.openlmis.requisition.service.referencedata.FacilityReferenceDataServi
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
+import org.siglus.common.domain.referencedata.ProcessingSchedule;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.AndroidConstants;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
+import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyNotSubmitReport;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.ProcessingPeriodExtensionDto;
-import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.repository.FacilityNativeRepository;
 import org.siglus.siglusapi.repository.ProcessingPeriodRepository;
 import org.siglus.siglusapi.repository.ProgramRequisitionNameMappingRepository;
+import org.siglus.siglusapi.repository.ReportTypeRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthReportRepository;
 import org.siglus.siglusapi.repository.RequisitionMonthlyNotSubmitReportRepository;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
@@ -64,8 +65,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @SuppressWarnings("PMD.TooManyMethods")
 public class RequisitionReportTaskService {
-
-  public static final int NO_NEED_TO_HANDLE = -1;
   private final ProgramReferenceDataService programDataService;
   private final FacilityReferenceDataService facilityReferenceDataService;
   private final RequisitionMonthReportRepository requisitionMonthReportRepository;
@@ -78,6 +77,7 @@ public class RequisitionReportTaskService {
 
   private final SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
+  private final ReportTypeRepository reportTypeRepository;
 
   public void refresh(boolean needCheckPermission) {
     log.info("refresh. start = " + System.currentTimeMillis());
@@ -109,24 +109,19 @@ public class RequisitionReportTaskService {
     // TODO:  add implement ( 7/4/22 by kourengang)
   }
 
-  public org.siglus.siglusapi.dto.FacilityDto findFacility(UUID facilityId) {
-    return siglusFacilityReferenceDataService.findOne(facilityId);
-  }
-
   public void doRefresh(boolean needCheckPermission, DataWrapper dataWrapper) {
     for (FacilityDto facilityDto : dataWrapper.allFacilityDto) {
       RequisitionMonthlyReportFacility facilityInfo = dataWrapper.monthlyReportFacilityMap.get(facilityDto.getId());
-      findFacilityCanViewRequisitionProgramIdList(facilityDto.getId());
+      List<ReportType> facilityReportTypeList = reportTypeRepository.findByFacilityId(facilityDto.getId());
+
       org.siglus.siglusapi.dto.FacilityDto facilityWithSupportedPrograms =
           siglusFacilityReferenceDataService.findOne(facilityDto.getId());
       if (Boolean.FALSE.equals(facilityWithSupportedPrograms.getActive()) || CollectionUtils.isEmpty(
-          facilityWithSupportedPrograms.getSupportedPrograms())) {
+          facilityReportTypeList)) {
         continue;
       }
-      List<SupportedProgramDto> supportedPrograms = facilityWithSupportedPrograms.getSupportedPrograms();
-
       List<RequisitionMonthlyNotSubmitReport> notSubmitList =
-          getFacilityNotSubmitRequisitions(needCheckPermission, facilityInfo, supportedPrograms, dataWrapper);
+          getFacilityNotSubmitRequisitions(needCheckPermission, facilityInfo, facilityReportTypeList, dataWrapper);
 
       updateBatch(facilityInfo.getFacilityId(), notSubmitList);
     }
@@ -134,7 +129,7 @@ public class RequisitionReportTaskService {
 
   private List<RequisitionMonthlyNotSubmitReport> getFacilityNotSubmitRequisitions(boolean needCheckPermission,
       RequisitionMonthlyReportFacility facilityInfo,
-      List<SupportedProgramDto> supportedPrograms, DataWrapper dataWrapper) {
+      List<ReportType> reportTypes, DataWrapper dataWrapper) {
     List<RequisitionMonthlyNotSubmitReport> notSubmitList = new ArrayList<>();
     for (ProgramDto programDto : dataWrapper.allProgramDto) {
       UUID programId = programDto.getId();
@@ -146,10 +141,10 @@ public class RequisitionReportTaskService {
             facilityInfo.getFacilityId()));
         continue;
       }
-      Optional<SupportedProgramDto> supportedProgramDto =
-          supportedPrograms.stream().filter(item -> programId.equals(item.getId())).findFirst();
-      if (needCheckPermission || !supportedProgramDto.isPresent()) {
-        log.info(String.format("cannot InitRequisition, programCode=%s, facilityId=%s", programCode,
+      Optional<ReportType> reportType =
+          reportTypes.stream().filter(item -> programDto.getCode().equals(item.getProgramCode())).findFirst();
+      if (needCheckPermission || !reportType.isPresent()) {
+        log.info(String.format("cannot init requisition, programCode=%s, facilityId=%s", programCode,
             facilityInfo.getFacilityId()));
         continue;
       }
@@ -164,7 +159,7 @@ public class RequisitionReportTaskService {
 
       List<RequisitionMonthlyNotSubmitReport> programNotSubmitRequisitions =
           getProgramNotSubmitRequisitions(facilityInfo, dataWrapper, programDto, programCode, facillityStockCardDateDto,
-              supportedProgramDto, facilityProgramPeriodScheduleDto);
+              reportType.get(), facilityProgramPeriodScheduleDto);
       notSubmitList.addAll(programNotSubmitRequisitions);
 
     }
@@ -174,30 +169,37 @@ public class RequisitionReportTaskService {
   private List<RequisitionMonthlyNotSubmitReport> getProgramNotSubmitRequisitions(
       RequisitionMonthlyReportFacility facilityInfo, DataWrapper dataWrapper,
       ProgramDto programDto, String programCode,
-      FacillityStockCardDateDto facillityStockCardDateDto, Optional<SupportedProgramDto> supportedProgramDto,
+      FacillityStockCardDateDto facillityStockCardDateDto, ReportType reportType,
       FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto) {
     List<ProcessingPeriodExtensionDto> facilityProgramSupportedPeriods =
         dataWrapper.processingPeriodExtensionDtos.stream()
-            .filter(item -> {
-              if (Boolean.TRUE.equals(facillityStockCardDateDto.getIsAndroid())) {
-                return AndroidConstants.SCHEDULE_CODE.equals(item.getProcessingSchedule().getCode());
-              } else {
-                return facilityProgramPeriodScheduleDto.getProcessingScheduleId()
-                    .equals(item.getProcessingSchedule().getId());
-              }
-            }).sorted(Comparator.comparing(ProcessingPeriodExtensionDto::getStartDate))
+            .filter(item -> filterPeriodBySchedule(facillityStockCardDateDto.getIsAndroid(),
+                facilityProgramPeriodScheduleDto.getProcessingScheduleId(), item.getProcessingSchedule()))
+            .sorted(Comparator.comparing(ProcessingPeriodExtensionDto::getStartDate))
             .collect(Collectors.toList());
-    log.info(String.format("facilityProgramSupportedPeriods size = %s,programCode=%s, facilityId=%s",
-        facilityProgramSupportedPeriods.size(), programCode, facilityInfo.getFacilityId()));
-
+    if (CollectionUtils.isEmpty(facilityProgramSupportedPeriods)) {
+      return new ArrayList<>();
+    }
     int startPeriodIndexOfFacility = findStartPeriodIndexOfFacility(facilityProgramSupportedPeriods,
-        supportedProgramDto.get().getSupportStartDate(), facillityStockCardDateDto.getOccurredDate().toLocalDate(),
+        reportType.getStartDate(), facillityStockCardDateDto.getOccurredDate().toLocalDate(),
         Boolean.TRUE.equals(facillityStockCardDateDto.getIsAndroid()),
         ProgramConstants.RAPIDTEST_PROGRAM_CODE.equals(programDto.getCode()));
 
     return getPeriodNotSubmitRequisitions(
         facilityInfo, programDto, programCode,
         facilityProgramSupportedPeriods, startPeriodIndexOfFacility, dataWrapper);
+  }
+
+  private boolean filterPeriodBySchedule(Boolean isAndroid, UUID facilityProcessingScheduleId,
+                                         ProcessingSchedule processingSchedule) {
+    if (Boolean.TRUE.equals(isAndroid)) {
+      return AndroidConstants.SCHEDULE_CODE.equals(processingSchedule.getCode());
+    } else {
+      // only show monthly periods
+      return facilityProcessingScheduleId.equals(processingSchedule.getId())
+          && (AndroidConstants.MONTH_SCHEDULE_CODE.equals(processingSchedule.getCode())
+          || AndroidConstants.REPORT_MONTH_SCHEDULE_CODE.equals(processingSchedule.getCode()));
+    }
   }
 
   private List<RequisitionMonthlyNotSubmitReport> getPeriodNotSubmitRequisitions(
@@ -288,19 +290,6 @@ public class RequisitionReportTaskService {
       result.add(dto);
     }
     return result;
-  }
-
-  private Set<UUID> findFacilityCanViewRequisitionProgramIdList(UUID facilityId) {
-    org.siglus.siglusapi.dto.FacilityDto facilityDto = siglusFacilityReferenceDataService.findOne(facilityId);
-    if (facilityDto == null || Boolean.FALSE.equals(facilityDto.getActive()) || CollectionUtils.isEmpty(
-        facilityDto.getSupportedPrograms())) {
-      return new HashSet<>();
-    }
-    List<SupportedProgramDto> supportedPrograms = facilityDto.getSupportedPrograms();
-
-    return supportedPrograms.stream()
-        .filter(item -> item.isSupportActive() && item.isProgramActive()).map(SupportedProgramDto::getId)
-        .collect(Collectors.toSet());
   }
 
   private RequisitionMonthlyNotSubmitReport getRequisitionMonthlyNotSubmitReport(

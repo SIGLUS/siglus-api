@@ -41,6 +41,10 @@ public class AndroidConstants {
 
   public static final Code SCHEDULE_CODE = code("Android-M1");
 
+  public static final Code MONTH_SCHEDULE_CODE = code("M1");
+
+  public static final Code REPORT_MONTH_SCHEDULE_CODE = code("M2");
+
   public static AndroidHeader getAndroidHeader(HttpServletRequest request) {
     return AndroidHeader.builder()
         .username(request.getHeader(USER_NAME))
