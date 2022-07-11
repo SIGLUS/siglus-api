@@ -17,6 +17,7 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -25,16 +26,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
@@ -57,6 +62,9 @@ public class SiglusOrderableServiceTest {
 
   @InjectMocks
   private SiglusOrderableService siglusOrderableService;
+
+  @Rule
+  public ExpectedException exception = ExpectedException.none();
 
   @Mock
   private SiglusOrderableReferenceDataService orderableReferenceDataService;
@@ -82,6 +90,8 @@ public class SiglusOrderableServiceTest {
 
   private final UUID programId = UUID.randomUUID();
 
+  private final UUID draftId = UUID.randomUUID();
+
   private final UUID inputProgramId = UUID.randomUUID();
 
   private final UUID orderableId = UUID.randomUUID();
@@ -90,7 +100,7 @@ public class SiglusOrderableServiceTest {
 
   private final UUID targetOrderableId = UUID.randomUUID();
 
-  private StockManagementDraft draft = StockManagementDraft.builder().build();
+  private final StockManagementDraft draft = StockManagementDraft.builder().build();
 
   @Before
   public void prepare() {
@@ -249,6 +259,7 @@ public class SiglusOrderableServiceTest {
     orderableDto.setPrograms(newHashSet(programOrderableDto));
     orderableDto.setFullProductName("ProductNameLast");
 
+    when(stockManagementDraftRepository.findOne(draftId)).thenReturn(draft);
     when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
         .thenReturn(newArrayList(draft));
     when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
@@ -258,8 +269,17 @@ public class SiglusOrderableServiceTest {
         Pagination.getPage(newArrayList(orderableDto), pageable, 1));
 
     Page<OrderableDto> orderableDtos = siglusOrderableService
-        .searchDeduplicatedOrderables(initialDraftId, searchParams, pageable, facilityId);
+        .searchDeduplicatedOrderables(draftId, searchParams, pageable, facilityId);
 
     assertEquals(1, orderableDtos.getContent().size());
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenDraftNotExists() {
+    exception.expect(ResourceNotFoundException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND));
+
+    siglusOrderableService
+        .searchDeduplicatedOrderables(draftId, searchParams, pageable, facilityId);
   }
 }

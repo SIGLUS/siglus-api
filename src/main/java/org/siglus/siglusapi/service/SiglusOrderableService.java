@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.constant.FieldConstants.CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 
 import java.util.Comparator;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
+import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
@@ -64,11 +66,21 @@ public class SiglusOrderableService {
     return orderableDtoPage;
   }
 
-  public Page<OrderableDto> searchDeduplicatedOrderables(UUID initialDraftId,
+  public Page<OrderableDto> searchDeduplicatedOrderables(UUID draftId,
       QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
+    StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(draftId);
+    if (foundDraft == null) {
+      throw new ResourceNotFoundException(
+          new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
+              draftId));
+    }
+    UUID initialDraftId = foundDraft.getInitialDraftId();
+
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByInitialDraftId(initialDraftId);
+
+    drafts.remove(foundDraft);
 
     Set<String> existOrderableIds = drafts.stream().flatMap(
         draft -> draft.getLineItems().stream()
