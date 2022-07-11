@@ -113,6 +113,8 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final UUID destinationId = UUID.randomUUID();
 
+  private final UUID draftId = UUID.randomUUID();
+
   private final Boolean isDraft = nextBoolean();
 
   private final String issueDraft = FieldConstants.ISSUE;
@@ -414,5 +416,25 @@ public class SiglusStockManagementDraftServiceTest {
         .thenReturn(null);
 
     siglusStockManagementDraftService.updateOperatorAndStatus(draftDto);
+  }
+
+  @Test
+  public void shouldSearchDraftById() {
+    StockManagementDraft draft = StockManagementDraft.builder().build();
+    draft.setId(draftId);
+    when(stockManagementDraftRepository.findOne(draftId)).thenReturn(draft);
+
+    StockManagementDraftDto draftDto = siglusStockManagementDraftService
+        .searchDraft(draftId);
+
+    assertThat(draftDto.getId()).isEqualTo(draftId);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenDraftNotExists() {
+    exception.expect(ResourceNotFoundException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND));
+
+    siglusStockManagementDraftService.searchDraft(id);
   }
 }

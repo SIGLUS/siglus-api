@@ -301,4 +301,14 @@ public class SiglusStockManagementDraftService {
     }
     throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
   }
+
+  public StockManagementDraftDto searchDraft(UUID id) {
+    StockManagementDraft draft = stockManagementDraftRepository.findOne(id);
+    if (draft != null) {
+      return StockManagementDraftDto.from(draft);
+    }
+    throw new ResourceNotFoundException(
+        new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
+            id));
+  }
 }

@@ -37,6 +37,8 @@ public class SiglusStockManagementDraftControllerTest {
   @Mock
   private SiglusStockManagementDraftService service;
 
+  private final UUID draftId = UUID.randomUUID();
+
   @Test
   public void shouldCallServiceWhenSearchDrafts() {
     UUID programId = UUID.randomUUID();
@@ -96,5 +98,11 @@ public class SiglusStockManagementDraftControllerTest {
     controller.searchInitialDrafts(programId, draftType);
 
     verify(service).findStockManagementInitialDraft(programId, draftType);
+  }
+
+  @Test
+  public void shouldCallSearchDraft() {
+    controller.searchDraft(draftId);
+    verify(service).searchDraft(draftId);
   }
 }
