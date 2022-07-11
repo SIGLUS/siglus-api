@@ -58,6 +58,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings({"unused", "PMD.TooManyMethods"})
 public class SiglusOrderableServiceTest {
 
   @InjectMocks
