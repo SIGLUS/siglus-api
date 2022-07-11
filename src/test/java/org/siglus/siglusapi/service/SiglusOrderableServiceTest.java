@@ -90,6 +90,8 @@ public class SiglusOrderableServiceTest {
 
   private final UUID targetOrderableId = UUID.randomUUID();
 
+  private StockManagementDraft draft = StockManagementDraft.builder().build();
+
   @Before
   public void prepare() {
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
@@ -237,8 +239,8 @@ public class SiglusOrderableServiceTest {
   public void shouldSearchDeduplicatedOrderables() {
     StockManagementDraftLineItem lineItem = StockManagementDraftLineItem.builder()
         .orderableId(orderableId).build();
-    StockManagementDraft draft = StockManagementDraft.builder()
-        .initialDraftId(initialDraftId).lineItems(newArrayList(lineItem)).build();
+    draft.setInitialDraftId(initialDraftId);
+    draft.setLineItems(newArrayList(lineItem));
     searchParams.setIds(newHashSet(orderableId.toString(), targetOrderableId.toString()));
 
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
