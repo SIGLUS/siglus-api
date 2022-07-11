@@ -32,9 +32,11 @@ import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
+import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
+import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -51,11 +53,40 @@ public class SiglusOrderableService {
   private final SiglusOrderableRepository siglusOrderableRepository;
   private final ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
   private final ArchivedProductRepository archivedProductRepository;
+  private final StockManagementDraftRepository stockManagementDraftRepository;
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
     Page<OrderableDto> orderableDtoPage = orderableReferenceDataService.searchOrderables(searchParams, pageable);
     Set<String> archivedProducts = archivedProductRepository.findArchivedProductsByFacilityId(facilityId);
+    orderableDtoPage.getContent().forEach(orderableDto -> orderableDto
+        .setArchived(archivedProducts.contains(orderableDto.getId().toString())));
+    return orderableDtoPage;
+  }
+
+  public Page<OrderableDto> searchDeduplicatedOrderables(UUID initialDraftId,
+      QueryOrderableSearchParams searchParams,
+      Pageable pageable, UUID facilityId) {
+    List<StockManagementDraft> drafts = stockManagementDraftRepository
+        .findByInitialDraftId(initialDraftId);
+
+    Set<String> existOrderableIds = drafts.stream().flatMap(
+        draft -> draft.getLineItems().stream()
+            .map(lineItem -> lineItem.getOrderableId().toString()))
+        .collect(Collectors.toSet());
+
+    Set<String> orderableIds = searchParams.getIds().stream().map(UUID::toString)
+        .collect(Collectors.toSet());
+
+    orderableIds.removeAll(existOrderableIds);
+
+    searchParams.clearIds();
+    searchParams.setIds(orderableIds);
+
+    Page<OrderableDto> orderableDtoPage = orderableReferenceDataService
+        .searchOrderables(searchParams, pageable);
+    Set<String> archivedProducts = archivedProductRepository
+        .findArchivedProductsByFacilityId(facilityId);
     orderableDtoPage.getContent().forEach(orderableDto -> orderableDto
         .setArchived(archivedProducts.contains(orderableDto.getId().toString())));
     return orderableDtoPage;

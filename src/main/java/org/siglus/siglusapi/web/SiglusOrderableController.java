@@ -41,9 +41,14 @@ public class SiglusOrderableController {
 
   @GetMapping
   public Page<OrderableDto> searchOrderables(
-      @RequestParam MultiValueMap<String, Object> queryParams, Pageable pageable) {
+      @RequestParam MultiValueMap<String, Object> queryParams, Pageable pageable,
+      @RequestParam(required = false) UUID initialDraftId) {
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+    if (initialDraftId != null) {
+      return orderableService
+          .searchDeduplicatedOrderables(initialDraftId, searchParams, pageable, facilityId);
+    }
     return orderableService.searchOrderables(searchParams, pageable, facilityId);
   }
 

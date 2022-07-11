@@ -41,8 +41,11 @@ import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
+import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
+import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -68,6 +71,9 @@ public class SiglusOrderableServiceTest {
   private ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
 
   @Mock
+  private StockManagementDraftRepository stockManagementDraftRepository;
+
+  @Mock
   private QueryOrderableSearchParams searchParams;
 
   private Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
@@ -79,6 +85,10 @@ public class SiglusOrderableServiceTest {
   private final UUID inputProgramId = UUID.randomUUID();
 
   private final UUID orderableId = UUID.randomUUID();
+
+  private final UUID initialDraftId = UUID.randomUUID();
+
+  private final UUID targetOrderableId = UUID.randomUUID();
 
   @Before
   public void prepare() {
@@ -221,5 +231,33 @@ public class SiglusOrderableServiceTest {
 
     // then
     assertEquals("0CODE", orderableDto.getProductCode());
+  }
+
+  @Test
+  public void shouldSearchDeduplicatedOrderables() {
+    StockManagementDraftLineItem lineItem = StockManagementDraftLineItem.builder()
+        .orderableId(orderableId).build();
+    StockManagementDraft draft = StockManagementDraft.builder()
+        .initialDraftId(initialDraftId).lineItems(newArrayList(lineItem)).build();
+    searchParams.setIds(newHashSet(orderableId.toString(), targetOrderableId.toString()));
+
+    ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(targetOrderableId);
+    orderableDto.setPrograms(newHashSet(programOrderableDto));
+    orderableDto.setFullProductName("ProductNameLast");
+
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(newArrayList(draft));
+    when(archivedProductRepository.findArchivedProductsByFacilityId(facilityId))
+        .thenReturn(newHashSet());
+
+    when(orderableReferenceDataService.searchOrderables(searchParams, pageable)).thenReturn(
+        Pagination.getPage(newArrayList(orderableDto), pageable, 1));
+
+    Page<OrderableDto> orderableDtos = siglusOrderableService
+        .searchDeduplicatedOrderables(initialDraftId, searchParams, pageable, facilityId);
+
+    assertEquals(1, orderableDtos.getContent().size());
   }
 }

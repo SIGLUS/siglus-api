@@ -98,4 +98,14 @@ public class QueryOrderableSearchParams implements Serializable {
     }
     return queryParams.getUuids(ID);
   }
+
+  public void setIds(Set<String> ids) {
+    if (ids != null) {
+      queryParams.setUuids(ids);
+    }
+  }
+
+  public void clearIds() {
+    queryParams.clear();
+  }
 }
