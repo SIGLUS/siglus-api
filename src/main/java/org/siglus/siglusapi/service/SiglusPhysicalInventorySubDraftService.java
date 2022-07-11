@@ -192,6 +192,9 @@ public class SiglusPhysicalInventorySubDraftService {
       UUID programId = physicalInventoryDto.getProgramId();
 
       List<PhysicalInventoryLineItemDto> curLineItems = programLineItemMap.get(programId);
+      if (CollectionUtils.isEmpty(curLineItems)) {
+        continue;
+      }
 
       List<String> uniqueKeyList = curLineItems.stream().map(this::getUniqueKey).collect(Collectors.toList());
       List<PhysicalInventoryLineItemDto> oldLineItems = physicalInventoryDto.getLineItems();
