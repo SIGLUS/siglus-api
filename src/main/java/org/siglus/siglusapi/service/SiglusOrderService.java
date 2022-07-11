@@ -495,7 +495,7 @@ public class SiglusOrderService {
     multiValueMap.set(RIGHT_NAME, STOCK_CARDS_VIEW);
     multiValueMap.set(NON_EMPTY_ONLY, Boolean.TRUE.toString());
     Page<StockCardSummaryV2Dto> stockCardSummary = siglusStockCardSummariesService
-        .searchStockCardSummaryV2Dtos(multiValueMap, null, new PageRequest(0, Integer.MAX_VALUE));
+        .searchStockCardSummaryV2Dtos(multiValueMap, null, null, new PageRequest(0, Integer.MAX_VALUE));
 
     // to map stockCardSummaryV2Dto.getStockOnHand() return null cause NPE
     return stockCardSummary.getContent().stream().collect(Collectors.toMap(

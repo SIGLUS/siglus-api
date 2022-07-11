@@ -40,10 +40,11 @@ public class SiglusStockCardSummariesController {
   public Page<StockCardSummaryV2Dto> searchStockCardSummaries(
       @RequestParam MultiValueMap<String, String> parameters,
       @RequestParam(required = false) List<UUID> subDraftIds,
+      @RequestParam(required = false) UUID draftId,
       @PageableDefault(size = Integer.MAX_VALUE) Pageable pageable) {
 
     return stockCardSummariesSiglusService
-        .searchStockCardSummaryV2Dtos(parameters, subDraftIds, pageable);
+        .searchStockCardSummaryV2Dtos(parameters, subDraftIds, draftId, pageable);
   }
 
 }
