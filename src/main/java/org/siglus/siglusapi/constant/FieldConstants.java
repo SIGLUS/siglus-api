@@ -62,6 +62,10 @@ public class FieldConstants {
 
   public static final String IS_TRACER = "isTracer";
 
+  public static final String VM_STATUS = "vmStatus";
+
+  public static final String STOCK_CARD_ID = "stockCardId";
+
   public static final String NON_EMPTY_ONLY = "nonEmptyOnly";
 
   public static final String CONSUMED = "consumed";

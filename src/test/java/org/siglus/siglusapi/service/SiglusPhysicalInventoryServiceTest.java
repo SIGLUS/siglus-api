@@ -28,7 +28,13 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
+import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
+import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
+import static org.siglus.siglusapi.constant.FieldConstants.STOCK_CARD_ID;
+import static org.siglus.siglusapi.constant.FieldConstants.VM_STATUS;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 
@@ -56,6 +62,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ApprovedProductDto;
 import org.openlmis.requisition.dto.OrderableDto;
 import org.openlmis.stockmanagement.domain.physicalinventory.PhysicalInventory;
+import org.openlmis.stockmanagement.dto.ObjectReferenceDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryLineItemDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
@@ -64,6 +71,7 @@ import org.openlmis.stockmanagement.repository.StockCardRepository;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.openlmis.stockmanagement.service.PhysicalInventoryService;
 import org.openlmis.stockmanagement.web.PhysicalInventoryController;
+import org.openlmis.stockmanagement.web.stockcardsummariesv2.CanFulfillForMeEntryDto;
 import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2Dto;
 import org.siglus.common.domain.referencedata.Orderable;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
@@ -88,6 +96,7 @@ import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
@@ -172,6 +181,8 @@ public class SiglusPhysicalInventoryServiceTest {
   private final UUID subDraftIdTwo = UUID.randomUUID();
 
   private final UUID operatorId = UUID.randomUUID();
+
+  private final UUID stockCardId = UUID.randomUUID();
 
   private final String startDate = "startDate";
 
@@ -758,7 +769,7 @@ public class SiglusPhysicalInventoryServiceTest {
   public void shouldThrowExceptionWhenThereIsSubDraftExistAlready() {
     // then
     exception.expect(IllegalArgumentException.class);
-    exception.expectMessage(containsString("Has already begun the physical inventory program"));
+    exception.expectMessage(containsString("Has already begun the physical inventory : "));
 
     // given
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryId)
@@ -780,6 +791,12 @@ public class SiglusPhysicalInventoryServiceTest {
     when(authenticationHelper.getCurrentUser()).thenReturn(userDto);
     when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(any(), eq(facilityId), eq(true)))
         .thenReturn(Collections.emptyList());
+    FacilityDto facilityDto = new FacilityDto();
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setCode("DDM");
+    facilityDto.setType(typeDto);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
 
     // when
     siglusPhysicalInventoryService.createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 3);
@@ -807,10 +824,122 @@ public class SiglusPhysicalInventoryServiceTest {
     when(physicalInventoriesRepository.findByProgramIdAndFacilityIdAndIsDraft(any(), eq(facilityId), eq(true)))
         .thenReturn(Collections.emptyList());
 
+    FacilityDto facilityDto = new FacilityDto();
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setCode("DDM");
+    facilityDto.setType(typeDto);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
+    when(facilityReferenceDataService.findOne(facilityId)).thenReturn(facilityDto);
+
     // when
     siglusPhysicalInventoryService.createAndSplitNewDraftForAllProduct(
         physicalInventoryDto, 3, false);
   }
+
+  @Test
+  public void shouldReturnPhysicalInventoryDtoWhenCreateAndSpiltNewDraftForOneProgram() {
+
+    // given
+    Map<String, String> extraData = newHashMap();
+    extraData.put(IS_BASIC, "true");
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setId(orderableId);
+    orderableDto.setExtraData(extraData);
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
+    approvedProductDto.setOrderable(orderableDto);
+    FacilityDto facilityDto = new FacilityDto();
+    FacilityTypeDto typeDto = new FacilityTypeDto();
+    typeDto.setCode("DDM");
+    facilityDto.setType(typeDto);
+    when(stockCardRepository.countByFacilityId(facilityId)).thenReturn(1);
+    when(facilityReferenceDataService.findOne(facilityId))
+        .thenReturn(facilityDto);
+    when(approvedProductReferenceDataService
+        .getApprovedProducts(facilityId, programIdOne, emptyList()))
+        .thenReturn(Collections.singletonList(approvedProductDto));
+
+    doNothing().when(physicalInventoryService).checkPermission(programId, facilityId);
+    when(physicalInventoryStockManagementService
+        .searchPhysicalInventory(programId, facilityId, true)).thenReturn(Collections.emptyList());
+
+    ObjectReferenceDto orderableReferenceDto = new ObjectReferenceDto();
+    orderableReferenceDto.setId(orderableId);
+    ObjectReferenceDto stockCradReferenceDto = new ObjectReferenceDto();
+    stockCradReferenceDto.setId(stockCardId);
+    ObjectReferenceDto lotReferenceDto = new ObjectReferenceDto();
+    lotReferenceDto.setId(lotId);
+    CanFulfillForMeEntryDto canFulfillForMeEntryDtos = new CanFulfillForMeEntryDto();
+    canFulfillForMeEntryDtos.setOrderable(orderableReferenceDto);
+    canFulfillForMeEntryDtos.setStockCard(stockCradReferenceDto);
+    canFulfillForMeEntryDtos.setLot(lotReferenceDto);
+    StockCardSummaryV2Dto stockCardSummaryV2Dto = new StockCardSummaryV2Dto();
+    stockCardSummaryV2Dto.setCanFulfillForMe(Collections.singleton(canFulfillForMeEntryDtos));
+    MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().facilityId(facilityId)
+        .programId(programId).build();
+    parameters.set(FACILITY_ID, String.valueOf(physicalInventoryDto.getFacilityId()));
+    parameters.set(PROGRAM_ID, String.valueOf(physicalInventoryDto.getProgramId()));
+    parameters.set(RIGHT_NAME, STOCK_INVENTORIES_EDIT);
+    Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
+    when(siglusStockCardSummariesService.findSiglusStockCard(
+        parameters, Collections.emptyList(), pageable)).thenReturn(
+        (new PageImpl<>(Collections.singletonList(stockCardSummaryV2Dto), new PageRequest(0, Integer.MAX_VALUE), 0)));
+    doNothing().when(physicalInventoryStockManagementService).savePhysicalInventory(any(), any());
+
+    PhysicalInventoryDto createdPhysicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryId)
+        .facilityId(facilityId).programId(programId).build();
+    when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto))
+        .thenReturn(createdPhysicalInventoryDto);
+    when(physicalInventorySubDraftRepository.findByPhysicalInventoryId(physicalInventoryId)).thenReturn(
+        Collections.emptyList());
+
+    PhysicalInventorySubDraft physicalInventorySubDraft = PhysicalInventorySubDraft
+        .builder().physicalInventoryId(physicalInventoryId).build();
+    physicalInventorySubDraft.setId(subDraftIdOne);
+    physicalInventorySubDraft.setNum(1);
+    when(physicalInventorySubDraftRepository
+        .findByPhysicalInventoryIdIn(Collections.singletonList(physicalInventoryId))).thenReturn(
+        Collections.singletonList(physicalInventorySubDraft));
+
+    Orderable orderable = new Orderable();
+    orderable.setFullProductName("fakeProductName");
+    when(orderableRepository.findLatestById(orderableId)).thenReturn(Optional.of(orderable));
+
+    when(lineItemsExtensionRepository
+        .findByPhysicalInventoryIdIn(Collections.singletonList(physicalInventoryId))).thenReturn(
+        Collections.singletonList(
+            PhysicalInventoryLineItemsExtension.builder().physicalInventoryId(physicalInventoryId).lotId(lotId)
+                .orderableId(orderableId).build()));
+    when(physicalInventoriesRepository.findIdByProgramIdAndFacilityIdAndIsDraft(programId,
+        facilityId, true)).thenReturn(String.valueOf(physicalInventoryId));
+
+    Map<String, String> expectedExtraData = newHashMap();
+    expectedExtraData.put(VM_STATUS, null);
+    expectedExtraData.put(STOCK_CARD_ID, String.valueOf(stockCardId));
+    PhysicalInventoryLineItemDto expectedPhysicalInventoryLineItem = PhysicalInventoryLineItemDto
+        .builder()
+        .programId(programId)
+        .orderableId(orderableId)
+        .lotId(lotId)
+        .extraData(expectedExtraData)
+        .stockAdjustments(Collections.emptyList())
+        .build();
+    PhysicalInventoryDto expectedPhysicalInventoryDto = PhysicalInventoryDto.builder()
+        .programId(programId)
+        .id(physicalInventoryId)
+        .facilityId(facilityId)
+        .lineItems(Collections.singletonList(expectedPhysicalInventoryLineItem))
+        .build();
+
+    // when
+    PhysicalInventoryDto returnedPhysicalInventoryDto = siglusPhysicalInventoryService
+        .createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 1);
+
+    // then
+    assertEquals(expectedPhysicalInventoryDto, returnedPhysicalInventoryDto);
+
+  }
+
 
   @Test
   public void shouldThrowExceptionWhenSubDraftIdsIsEmpty() {
