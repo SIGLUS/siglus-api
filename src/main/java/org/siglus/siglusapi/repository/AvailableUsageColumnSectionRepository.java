@@ -15,11 +15,16 @@
 
 package org.siglus.siglusapi.repository;
 
+import java.util.List;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.AvailableUsageColumnSection;
+import org.siglus.siglusapi.domain.UsageCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
 
 public interface AvailableUsageColumnSectionRepository
     extends JpaRepository<AvailableUsageColumnSection, UUID> {
+
+  List<AvailableUsageColumnSection> findByCategory(@Param("category") UsageCategory category);
 
 }

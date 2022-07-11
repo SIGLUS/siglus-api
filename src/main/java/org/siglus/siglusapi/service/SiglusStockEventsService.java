@@ -110,9 +110,43 @@ public class SiglusStockEventsService {
   public UUID createStockEventForOneProgram(StockEventDto eventDto, UUID userId) {
     eventDto.setUserId(userId);
     createAndFillLotId(eventDto);
-    UUID stockEventId = stockEventsStockManagementService.createStockEvent(eventDto);
-    enhanceStockCard(eventDto, stockEventId);
-    return stockEventId;
+    if (eventDto.isPhysicalInventory()) {
+      UUID programId = eventDto.getProgramId();
+      List<StockEventDto> stockEventDtos;
+      List<PhysicalInventoryDto> physicalInventoryDtoList = siglusPhysicalInventoryService
+          .getPhysicalInventoryDtosDirectly(programId, eventDto.getFacilityId(), Boolean.TRUE);
+
+      if (CollectionUtils.isEmpty(physicalInventoryDtoList)) {
+        throw new ValidationMessageException("stockmanagement.error.physicalInventory.isSubmitted");
+      }
+      stockEventDtos = physicalInventoryDtoList.stream()
+          .map(StockEventDto::fromPhysicalInventoryDto)
+          .collect(Collectors.toList());
+
+      Map<UUID, UUID> programIdToEventId = new HashMap<>();
+      stockEventDtos.forEach(stockEventDto -> {
+        stockEventDto.setFacilityId(eventDto.getFacilityId());
+        stockEventDto.setSignature(eventDto.getSignature());
+        stockEventDto.setDocumentNumber(eventDto.getDocumentNumber());
+        stockEventDto.setUserId(eventDto.getUserId());
+        stockEventDto.setType(eventDto.getType());
+        stockEventDto.setLineItems(eventDto.getLineItems().stream()
+            .filter(lineItem -> lineItem.getProgramId() != null)
+            .filter(lineItem -> lineItem.getProgramId().equals(stockEventDto.getProgramId()))
+            .collect(Collectors.toList()));
+        programIdToEventId.put(stockEventDto.getProgramId(), siglusCreateStockEvent(stockEventDto));
+      });
+
+      if (!programIdToEventId.isEmpty() && eventDto.isPhysicalInventory()) {
+        siglusPhysicalInventoryService
+            .deletePhysicalInventoryForProductInOneProgramDirectly(eventDto.getFacilityId(), programId);
+      }
+      return programIdToEventId.get(programId);
+    } else {
+      UUID stockEventId = stockEventsStockManagementService.createStockEvent(eventDto);
+      enhanceStockCard(eventDto, stockEventId);
+      return stockEventId;
+    }
   }
 
   private Map<UUID, UUID> createStockEventForPrograms(StockEventDto eventDto, UUID userId) {

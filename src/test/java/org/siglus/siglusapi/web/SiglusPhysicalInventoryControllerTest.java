@@ -111,12 +111,12 @@ public class SiglusPhysicalInventoryControllerTest {
   }
 
   @Test
-  public void shouldCallCreateNewDraftWhenCreateIfProgramIsNotAllProducts() throws InterruptedException {
+  public void shouldCallCreateNewDraftWhenCreateIfProgramIsNotAllProducts() {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().programId(programId)
         .build();
 
     siglusPhysicalInventoryController.createEmptyPhysicalInventory(
-        physicalInventoryDto, 2, true);
+        physicalInventoryDto, 2, false);
 
     verify(siglusPhysicalInventoryService).createAndSpiltNewDraftForOneProgram(physicalInventoryDto, 2);
   }

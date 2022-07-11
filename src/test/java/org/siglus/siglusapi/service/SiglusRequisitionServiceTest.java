@@ -1826,6 +1826,7 @@ public class SiglusRequisitionServiceTest {
     extension.setEnableRegimen(true);
     extension.setEnableUsageInformation(true);
     extension.setEnableQuicklyFill(true);
+    extension.setEnableAgeGroup(true);
     return extension;
   }
 

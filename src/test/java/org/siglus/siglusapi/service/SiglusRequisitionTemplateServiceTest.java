@@ -368,6 +368,7 @@ public class SiglusRequisitionTemplateServiceTest {
             .enableRegimen(false)
             .enableUsageInformation(false)
             .enableQuicklyFill(false)
+            .enableAgeGroup(false)
             .build();
     requisitionTemplateExtension.setId(tempalteExtensionId);
     return requisitionTemplateExtension;
@@ -384,6 +385,7 @@ public class SiglusRequisitionTemplateServiceTest {
             .enableRapidTestConsumption(false)
             .enableRegimen(false)
             .enableUsageInformation(false)
+            .enableAgeGroup(false)
             .build();
     requisitionTemplateExtensionDto.setId(tempalteExtensionId);
     return requisitionTemplateExtensionDto;

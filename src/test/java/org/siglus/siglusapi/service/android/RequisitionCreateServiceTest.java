@@ -653,6 +653,7 @@ public class RequisitionCreateServiceTest extends FileBasedTest {
     templateExtension.setEnableRegimen(false);
     templateExtension.setEnableUsageInformation(false);
     templateExtension.setEnableQuicklyFill(false);
+    templateExtension.setEnableAgeGroup(false);
     return templateExtension;
   }
 
