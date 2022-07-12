@@ -33,6 +33,7 @@ import org.springframework.beans.BeanUtils;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AgeGroupLineDto extends BaseDto {
+  private UUID id;
 
   private UUID requisitionId;
 
