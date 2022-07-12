@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toList;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
@@ -46,6 +47,7 @@ import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
 import org.siglus.siglusapi.exception.NotFoundException;
+import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -87,18 +89,40 @@ public class SiglusStockManagementDraftService {
   private SiglusAuthenticationHelper authenticationHelper;
 
   private static final Integer DRAFTS_LIMITATION = 10;
+  private static final Integer DRAFTS_INCREMENT = 1;
 
   @Transactional
   public StockManagementDraftDto createNewDraft(StockManagementDraftDto dto) {
     log.info("create physical inventory draft");
     stockManagementDraftValidator.validateEmptyDraft(dto);
-    draftValidator.validateInitialDraftId(dto.getInitialDraftId());
+
+    checkIfDraftExists(dto);
+
+    draftValidator.validateProgramId(dto.getProgramId());
+    draftValidator.validateFacilityId(dto.getFacilityId());
+    draftValidator.validateUserId(dto.getUserId());
     draftValidator.validateDraftType(dto.getDraftType());
-    checkIfSameDraftsOversize(dto);
-    //multi-user do not need to limit
-    //checkIfDraftExists(dto);
 
     StockManagementDraft draft = StockManagementDraft.createEmptyDraft(dto);
+    StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
+
+    return StockManagementDraftDto.from(savedDraft);
+  }
+
+  @Transactional
+  public StockManagementDraftDto createNewIssueDraft(StockManagementDraftDto dto) {
+    log.info("create physical inventory draft");
+    stockManagementDraftValidator.validateEmptyDraft(dto);
+    draftValidator.validateInitialDraftId(dto.getInitialDraftId());
+    draftValidator.validateDraftType(dto.getDraftType());
+
+    checkIfSameDraftsOversize(dto);
+
+    StockManagementDraft draft = StockManagementDraft.createEmptyIssueDraft(dto);
+    UUID initialDraftId = draft.getInitialDraftId();
+    List<StockManagementDraft> subDrafts = stockManagementDraftRepository
+        .findByInitialDraftId(initialDraftId);
+    draft.setDraftNumber(subDrafts.size() + DRAFTS_INCREMENT);
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(draft);
 
     return StockManagementDraftDto.from(savedDraft);
@@ -188,17 +212,17 @@ public class SiglusStockManagementDraftService {
   }
 
   //Delete after finish multi-user stock issue feature
-  //private void checkIfDraftExists(StockManagementDraftDto dto) {
-  //  List<StockManagementDraft> drafts = stockManagementDraftRepository
-  //      .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
-  //          true,
-  //          dto.getDraftType());
-  //  if (!drafts.isEmpty()) {
-  //    throw new ValidationMessageException(
-  //        new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(),
-  //            dto.getFacilityId()));
-  //  }
-  //}
+  private void checkIfDraftExists(StockManagementDraftDto dto) {
+    List<StockManagementDraft> drafts = stockManagementDraftRepository
+        .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
+            true,
+            dto.getDraftType());
+    if (!drafts.isEmpty()) {
+      throw new ValidationMessageException(
+          new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(),
+              dto.getFacilityId()));
+    }
+  }
 
   //Same draft means: same facilityid, programid, destinationid and drafttype
   private void checkIfSameDraftsOversize(StockManagementDraftDto dto) {

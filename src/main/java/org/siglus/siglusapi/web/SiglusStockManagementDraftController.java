@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/siglusapi/drafts")
+@SuppressWarnings("PMD.TooManyMethods")
 public class SiglusStockManagementDraftController {
 
   @Autowired
@@ -61,11 +62,18 @@ public class SiglusStockManagementDraftController {
     return stockManagementDraftService.findStockManagementDrafts(initialDraftId);
   }
 
-  @PostMapping
+  @PostMapping()
   @ResponseStatus(CREATED)
   public StockManagementDraftDto createEmptyStockManagementDraft(
       @RequestBody StockManagementDraftDto dto) {
     return stockManagementDraftService.createNewDraft(dto);
+  }
+
+  @PostMapping("/multi")
+  @ResponseStatus(CREATED)
+  public StockManagementDraftDto createEmptyStockManagementDraftForIssue(
+      @RequestBody StockManagementDraftDto dto) {
+    return stockManagementDraftService.createNewIssueDraft(dto);
   }
 
   @DeleteMapping("/{id}")

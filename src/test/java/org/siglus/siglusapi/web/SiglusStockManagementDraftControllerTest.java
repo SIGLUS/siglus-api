@@ -62,9 +62,9 @@ public class SiglusStockManagementDraftControllerTest {
 
   @Test
   public void shouldCallServiceWhenCreateEmptyStockManagementDraft() {
-    controller.createEmptyStockManagementDraft(dto);
+    controller.createEmptyStockManagementDraftForIssue(dto);
 
-    verify(service).createNewDraft(dto);
+    verify(service).createNewIssueDraft(dto);
   }
 
   @Test
@@ -110,5 +110,11 @@ public class SiglusStockManagementDraftControllerTest {
   public void shouldCallupdatePartOfInfoWithDraft() {
     controller.updatePartOfInfoWithDraft(dto);
     verify(service).updatePartOfInfoWithDraft(dto);
+  }
+
+  @Test
+  public void shouldCallCreateEmptyStockManagementDraftForIssue() {
+    controller.createEmptyStockManagementDraftForIssue(dto);
+    verify(service).createNewIssueDraft(dto);
   }
 }

@@ -61,6 +61,7 @@ public class StockManagementDraft extends BaseEntity {
   private UUID initialDraftId;
   private String operator;
   private PhysicalInventorySubDraftEnum status;
+  private Integer draftNumber;
 
   @LazyCollection(FALSE)
   @OneToMany(cascade = ALL, mappedBy = "stockManagementDraft", orphanRemoval = true)
@@ -71,12 +72,20 @@ public class StockManagementDraft extends BaseEntity {
     StockManagementDraft draft = new StockManagementDraft();
     BeanUtils.copyProperties(draftDto, draft);
     draft.setIsDraft(true);
+    return draft;
+  }
+
+  public static StockManagementDraft createEmptyIssueDraft(StockManagementDraftDto draftDto) {
+    StockManagementDraft draft = new StockManagementDraft();
+    BeanUtils.copyProperties(draftDto, draft);
+    draft.setIsDraft(true);
     draft.setStatus(PhysicalInventorySubDraftEnum.NOT_YET_STARTED);
     return draft;
   }
 
   //delete when multi-user feature is finish
-  public static StockManagementDraft createStockManagementDraft(StockManagementDraftDto draftDto, boolean isDraft) {
+  public static StockManagementDraft createStockManagementDraft(StockManagementDraftDto draftDto,
+      boolean isDraft) {
     StockManagementDraft draft = new StockManagementDraft();
     BeanUtils.copyProperties(draftDto, draft);
     draft.setIsDraft(isDraft);
