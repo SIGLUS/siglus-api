@@ -141,8 +141,11 @@ public class SiglusPhysicalInventorySubDraftService {
       if (physicalInventoryDto == null) {
         throw new IllegalArgumentException("physical inventory not exists. id = " + physicalInventoryId);
       }
-
-      Iterator<PhysicalInventoryLineItemDto> iterator = physicalInventoryDto.getLineItems().iterator();
+      List<PhysicalInventoryLineItemDto> lineItems = physicalInventoryDto.getLineItems();
+      if (CollectionUtils.isEmpty(lineItems)) {
+        return;
+      }
+      Iterator<PhysicalInventoryLineItemDto> iterator = lineItems.iterator();
       while (iterator.hasNext()) {
         PhysicalInventoryLineItemDto physicalInventoryLineItemDto = iterator.next();
         if (needResetOrderableIds.contains(physicalInventoryLineItemDto.getOrderableId())) {

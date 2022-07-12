@@ -23,6 +23,7 @@ import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.RIGHT_NAME;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.PermissionMessageKeys.ERROR_NO_FOLLOWING_PERMISSION;
 
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ import org.openlmis.requisition.service.PermissionService;
 import org.openlmis.requisition.service.referencedata.PermissionStringDto;
 import org.openlmis.requisition.utils.Pagination;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
+import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.StockCardSummaries;
 import org.openlmis.stockmanagement.service.StockCardSummariesService;
 import org.openlmis.stockmanagement.service.StockCardSummariesV2SearchParams;
@@ -48,8 +50,11 @@ import org.openlmis.stockmanagement.web.stockcardsummariesv2.StockCardSummaryV2D
 import org.siglus.common.repository.ProgramOrderableRepository;
 import org.siglus.siglusapi.domain.PhysicalInventoryLineItemsExtension;
 import org.siglus.siglusapi.domain.PhysicalInventorySubDraft;
+import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.repository.PhysicalInventoryLineItemsExtensionRepository;
 import org.siglus.siglusapi.repository.PhysicalInventorySubDraftRepository;
+import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusStockCardStockManagementService;
 import org.siglus.siglusapi.util.FormatHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -98,6 +103,9 @@ public class SiglusStockCardSummariesService {
   @Autowired
   private PhysicalInventoryLineItemsExtensionRepository lineItemsExtensionRepository;
 
+  @Autowired
+  private StockManagementDraftRepository stockManagementDraftRepository;
+
   public Page<StockCardSummaryV2Dto> findSiglusStockCard(
       MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable) {
     log.info("findSiglusStockCard subDraftIds=" + Optional.ofNullable(subDraftIds));
@@ -143,18 +151,22 @@ public class SiglusStockCardSummariesService {
 
   private List<StockCardSummaryV2Dto> filterBySubDraftIds(List<StockCardSummaryV2Dto> summaryV2Dtos,
       List<UUID> subDraftIds) {
-    List<PhysicalInventoryLineItemsExtension> orderables = filterLineItemsExtensionBySubDraftIds(subDraftIds);
+    List<PhysicalInventoryLineItemsExtension> orderables = filterLineItemsExtensionBySubDraftIds(
+        subDraftIds);
 
-    Set<UUID> orderableIds = orderables.stream().map(PhysicalInventoryLineItemsExtension::getOrderableId)
+    Set<UUID> orderableIds = orderables.stream()
+        .map(PhysicalInventoryLineItemsExtension::getOrderableId)
         .collect(Collectors.toSet());
 
     log.info("filterBySubDraftIds orderableIds=" + orderableIds);
 
-    return summaryV2Dtos.stream().filter(item -> !orderableIds.contains(item.getOrderable().getId()))
+    return summaryV2Dtos.stream()
+        .filter(item -> !orderableIds.contains(item.getOrderable().getId()))
         .collect(Collectors.toList());
   }
 
-  public List<PhysicalInventoryLineItemsExtension> filterLineItemsExtensionBySubDraftIds(List<UUID> subDraftIds) {
+  public List<PhysicalInventoryLineItemsExtension> filterLineItemsExtensionBySubDraftIds(
+      List<UUID> subDraftIds) {
     List<PhysicalInventoryLineItemsExtension> lineItemsExtensions = new ArrayList<>();
     for (UUID subDraftId : subDraftIds) {
       lineItemsExtensions.addAll(filterExistLineItemsExtensionBySubDraftId(subDraftId));
@@ -162,13 +174,15 @@ public class SiglusStockCardSummariesService {
     return lineItemsExtensions;
   }
 
-  public List<PhysicalInventoryLineItemsExtension> filterExistLineItemsExtensionBySubDraftId(UUID subDraftId) {
+  public List<PhysicalInventoryLineItemsExtension> filterExistLineItemsExtensionBySubDraftId(
+      UUID subDraftId) {
     if (subDraftId == null) {
       return Collections.emptyList();
     }
     PhysicalInventorySubDraft subDraft = physicalInventorySubDraftRepository.findOne(subDraftId);
     List<PhysicalInventorySubDraft> physicalInventoryList =
-        physicalInventorySubDraftRepository.findByPhysicalInventoryId(subDraft.getPhysicalInventoryId());
+        physicalInventorySubDraftRepository
+            .findByPhysicalInventoryId(subDraft.getPhysicalInventoryId());
     List<UUID> subDraftUuids = physicalInventoryList.stream().map(PhysicalInventorySubDraft::getId)
         .collect(Collectors.toList());
     List<PhysicalInventoryLineItemsExtension> physicalInventoryLineItemsExtensions =
@@ -269,13 +283,38 @@ public class SiglusStockCardSummariesService {
       return summaries;
     }
     return summaries.stream().filter(summaryV2Dto ->
-            orderableIds.contains(summaryV2Dto.getOrderable().getId()))
+        orderableIds.contains(summaryV2Dto.getOrderable().getId()))
         .collect(Collectors.toList());
   }
 
   public Page<StockCardSummaryV2Dto> searchStockCardSummaryV2Dtos(
-      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, Pageable pageable) {
+      MultiValueMap<String, String> parameters, List<UUID> subDraftIds, UUID draftId,
+      Pageable pageable) {
     try {
+      if (draftId != null) {
+        Page<StockCardSummaryV2Dto> stockCards = findSiglusStockCard(parameters, subDraftIds,
+            pageable);
+        StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(draftId);
+        if (foundDraft == null) {
+          throw new ResourceNotFoundException(
+              new org.openlmis.stockmanagement.util.Message(
+                  ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
+                  draftId));
+        }
+        List<StockManagementDraft> drafts = stockManagementDraftRepository
+            .findByInitialDraftId(foundDraft.getInitialDraftId());
+
+        drafts.remove(foundDraft);
+
+        Set<UUID> existOrderableIds = drafts.stream().flatMap(
+            draft -> draft.getLineItems().stream()
+                .map(StockManagementDraftLineItem::getOrderableId))
+            .collect(Collectors.toSet());
+
+        return Pagination.getPage(stockCards.getContent().stream()
+            .filter(stockCard -> !existOrderableIds.contains(stockCard.getOrderable().getId()))
+            .collect(Collectors.toList()), pageable);
+      }
       // reason: support all program && archive
       return findSiglusStockCard(parameters, subDraftIds, pageable);
 

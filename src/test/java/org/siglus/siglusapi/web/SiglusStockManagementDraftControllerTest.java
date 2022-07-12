@@ -39,6 +39,8 @@ public class SiglusStockManagementDraftControllerTest {
 
   private final UUID draftId = UUID.randomUUID();
 
+  private final StockManagementDraftDto dto = new StockManagementDraftDto();
+
   @Test
   public void shouldCallServiceWhenSearchDrafts() {
     UUID programId = UUID.randomUUID();
@@ -60,7 +62,6 @@ public class SiglusStockManagementDraftControllerTest {
 
   @Test
   public void shouldCallServiceWhenCreateEmptyStockManagementDraft() {
-    StockManagementDraftDto dto = new StockManagementDraftDto();
     controller.createEmptyStockManagementDraft(dto);
 
     verify(service).createNewDraft(dto);
@@ -77,7 +78,6 @@ public class SiglusStockManagementDraftControllerTest {
   @Test
   public void shouldCallServiceWhenUpdateDraft() {
     UUID id = UUID.randomUUID();
-    StockManagementDraftDto dto = new StockManagementDraftDto();
     controller.updateDraft(id, dto);
 
     verify(service).updateDraft(dto, id);
@@ -104,5 +104,11 @@ public class SiglusStockManagementDraftControllerTest {
   public void shouldCallSearchDraft() {
     controller.searchDraft(draftId);
     verify(service).searchDraft(draftId);
+  }
+
+  @Test
+  public void shouldCallupdatePartOfInfoWithDraft() {
+    controller.updatePartOfInfoWithDraft(dto);
+    verify(service).updatePartOfInfoWithDraft(dto);
   }
 }

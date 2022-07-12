@@ -116,8 +116,7 @@ public class RequisitionReportTaskService {
 
       org.siglus.siglusapi.dto.FacilityDto facilityWithSupportedPrograms =
           siglusFacilityReferenceDataService.findOne(facilityDto.getId());
-      if (Boolean.FALSE.equals(facilityWithSupportedPrograms.getActive()) || CollectionUtils.isEmpty(
-          facilityReportTypeList)) {
+      if (Boolean.FALSE.equals(facilityWithSupportedPrograms.getActive())) {
         continue;
       }
       List<RequisitionMonthlyNotSubmitReport> notSubmitList =
@@ -143,7 +142,8 @@ public class RequisitionReportTaskService {
       }
       Optional<ReportType> reportType =
           reportTypes.stream().filter(item -> programDto.getCode().equals(item.getProgramCode())).findFirst();
-      if (needCheckPermission || !reportType.isPresent()) {
+      if (needCheckPermission || (Boolean.TRUE
+              .equals(facillityStockCardDateDto.getIsAndroid()) && !reportType.isPresent())) {
         log.info(String.format("cannot init requisition, programCode=%s, facilityId=%s", programCode,
             facilityInfo.getFacilityId()));
         continue;
@@ -159,7 +159,7 @@ public class RequisitionReportTaskService {
 
       List<RequisitionMonthlyNotSubmitReport> programNotSubmitRequisitions =
           getProgramNotSubmitRequisitions(facilityInfo, dataWrapper, programDto, programCode, facillityStockCardDateDto,
-              reportType.get(), facilityProgramPeriodScheduleDto);
+              reportType, facilityProgramPeriodScheduleDto);
       notSubmitList.addAll(programNotSubmitRequisitions);
 
     }
@@ -169,7 +169,7 @@ public class RequisitionReportTaskService {
   private List<RequisitionMonthlyNotSubmitReport> getProgramNotSubmitRequisitions(
       RequisitionMonthlyReportFacility facilityInfo, DataWrapper dataWrapper,
       ProgramDto programDto, String programCode,
-      FacillityStockCardDateDto facillityStockCardDateDto, ReportType reportType,
+      FacillityStockCardDateDto facillityStockCardDateDto, Optional<ReportType> reportType,
       FacilityProgramPeriodScheduleDto facilityProgramPeriodScheduleDto) {
     List<ProcessingPeriodExtensionDto> facilityProgramSupportedPeriods =
         dataWrapper.processingPeriodExtensionDtos.stream()
@@ -181,7 +181,7 @@ public class RequisitionReportTaskService {
       return new ArrayList<>();
     }
     int startPeriodIndexOfFacility = findStartPeriodIndexOfFacility(facilityProgramSupportedPeriods,
-        reportType.getStartDate(), facillityStockCardDateDto.getOccurredDate().toLocalDate(),
+        reportType, facillityStockCardDateDto.getOccurredDate().toLocalDate(),
         Boolean.TRUE.equals(facillityStockCardDateDto.getIsAndroid()),
         ProgramConstants.RAPIDTEST_PROGRAM_CODE.equals(programDto.getCode()));
 
@@ -371,18 +371,28 @@ public class RequisitionReportTaskService {
   }
 
   public int findStartPeriodIndexOfFacility(List<ProcessingPeriodExtensionDto> allProcessingPeriodDto,
-      LocalDate reportStartDate, LocalDate firstStockOccurDate, boolean isAndroid, boolean isRapidTest) {
-    LocalDate startDate = reportStartDate.isBefore(firstStockOccurDate) ? firstStockOccurDate : reportStartDate;
-    // todo web differ from android, temp logic
-    if (reportStartDate.isBefore(firstStockOccurDate) && !isRapidTest) {
-      return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 17);
+                                            Optional<ReportType> reportType, LocalDate firstStockOccurDate,
+                                            boolean isAndroid, boolean isRapidTest) {
+    if (isAndroid) {
+      LocalDate startDate = reportType.get().getStartDate().isBefore(firstStockOccurDate)
+          ? firstStockOccurDate : reportType.get().getStartDate();
+      if (reportType.get().getStartDate().isBefore(firstStockOccurDate) && !isRapidTest) {
+        // TODO: 数字可配置 add implement ( 2022/7/11 by kourengang)
+        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 17);
+      } else {
+        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 20);
+      }
     } else {
-      return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 20);
+      if (!isRapidTest) {
+        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, firstStockOccurDate, 17);
+      } else {
+        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, firstStockOccurDate, 20);
+      }
     }
   }
 
   private int findStartPeriodIndexByStartDate(List<ProcessingPeriodExtensionDto> allProcessingPeriodDto,
-      LocalDate startDate, int dayOfMonthThreshold) {
+                                              LocalDate startDate, int dayOfMonthThreshold) {
     if (startDate.getDayOfMonth() > dayOfMonthThreshold) {
       startDate = startDate.plusMonths(1);
     }
