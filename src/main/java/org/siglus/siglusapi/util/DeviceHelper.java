@@ -17,11 +17,11 @@ package org.siglus.siglusapi.util;
 
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.siglus.common.domain.referencedata.Facility;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.repository.AppInfoRepository;
-import org.siglus.siglusapi.repository.SiglusFacilityRepository;
+import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -34,7 +34,7 @@ public class DeviceHelper {
 
   private final SiglusAuthenticationHelper authHelper;
   private final AppInfoRepository appInfoRepository;
-  private final SiglusFacilityRepository siglusFacilityRepository;
+  private final SiglusFacilityReferenceDataService facilityReferenceDataService;
 
   public boolean isSameDevice() {
     RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
@@ -45,7 +45,7 @@ public class DeviceHelper {
     if (currentUser == null || uniqueId == null) {
       return false;
     }
-    Facility facility = siglusFacilityRepository.getOne(currentUser.getHomeFacilityId());
+    FacilityDto facility = facilityReferenceDataService.findOne(currentUser.getHomeFacilityId());
     AppInfo appInfo = appInfoRepository.findByFacilityCode(facility.getCode());
     return appInfo == null || uniqueId.equals(appInfo.getUniqueId());
   }
