@@ -173,21 +173,6 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(drafts);
   }
 
-  @Transactional
-  public void deleteStockManagementDraft(UUID id) {
-    StockManagementDraft draft = stockManagementDraftRepository.findOne(id);
-    if (draft != null) {
-      UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
-      checkPermission(facilityId);
-      log.info("delete stockmanagement draft: {}", id);
-      stockManagementDraftRepository.delete(draft);
-    } else {
-      throw new ResourceNotFoundException(
-          new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
-              id));
-    }
-  }
-
   public void deleteStockManagementDraft(StockEventDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
@@ -197,6 +182,35 @@ public class SiglusStockManagementDraftService {
       log.info("delete stockmanagement draft, programId: {}, facilityId: {}", dto.getProgramId(),
           dto.getFacilityId());
       stockManagementDraftRepository.delete(drafts);
+    }
+  }
+
+  @Transactional
+  public void deleteStockManagementDraft(UUID id) {
+    StockManagementDraft draft = stockManagementDraftRepository.findOne(id);
+    if (draft != null) {
+      UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
+      checkPermission(facilityId);
+      log.info("delete stockmanagement draft: {}", id);
+      stockManagementDraftRepository.delete(draft);
+      resetDraftNumber(draft);
+    } else {
+      throw new ResourceNotFoundException(
+          new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
+              id));
+    }
+  }
+
+  public void resetDraftNumber(StockManagementDraft draft) {
+    List<StockManagementDraft> subDrafts = stockManagementDraftRepository
+        .findByInitialDraftId(draft.getInitialDraftId());
+    List<StockManagementDraft> filterSubDrafts = subDrafts.stream()
+        .filter(subDraft -> subDraft.getDraftNumber() > draft.getDraftNumber())
+        .collect(toList());
+    if (!filterSubDrafts.isEmpty()) {
+      filterSubDrafts.forEach(
+          subDraft -> subDraft.setDraftNumber(subDraft.getDraftNumber() - DRAFTS_INCREMENT));
+      stockManagementDraftRepository.save(filterSubDrafts);
     }
   }
 

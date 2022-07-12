@@ -110,6 +110,8 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final UUID facilityId = UUID.randomUUID();
 
+  private final UUID userId = UUID.randomUUID();
+
   private final UUID initialDraftId = UUID.randomUUID();
 
   private final UUID destinationId = UUID.randomUUID();
@@ -127,6 +129,9 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final StockManagementDraft draft = StockManagementDraft.builder()
       .status(PhysicalInventorySubDraftEnum.DRAFT).build();
+
+  private final StockManagementDraft draft1 = StockManagementDraft.builder().draftNumber(5).build();
+
 
   private final StockManagementInitialDraftDto initialDraftDto = StockManagementInitialDraftDto
       .builder()
@@ -162,7 +167,7 @@ public class SiglusStockManagementDraftServiceTest {
   }
 
   @Test
-  public void shouldIsDraftBeTrueWhenCreateNewDraft() {
+  public void shouldIsDraftBeTrueWhenCreateIssueDraft() {
     StockManagementDraft draft = StockManagementDraft.createEmptyIssueDraft(draftDto);
     when(stockManagementDraftRepository.save(any(StockManagementDraft.class))).thenReturn(draft);
     when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
@@ -245,6 +250,30 @@ public class SiglusStockManagementDraftServiceTest {
 
     //then
     verify(stockManagementDraftRepository).delete(draft);
+  }
+
+  @Test
+  public void shouldResetDraftNumberWhenDeleteDraftById() {
+    StockManagementDraft draft = StockManagementDraft.builder()
+        .initialDraftId(initialDraftId)
+        .draftNumber(3).build();
+    when(stockManagementDraftRepository.findOne(id)).thenReturn(draft);
+    Set<UUID> supportedPrograms = new HashSet<>();
+    supportedPrograms.add(UUID.randomUUID());
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
+        .thenReturn(supportedPrograms);
+
+    doNothing().when(stockManagementDraftRepository).delete(id);
+
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(newArrayList(draft1));
+
+    when(stockManagementDraftRepository.save(newArrayList(draft1)))
+        .thenReturn(newArrayList(draft1));
+
+    siglusStockManagementDraftService.deleteStockManagementDraft(id);
+
+    assertThat(draft1.getDraftNumber()).isEqualTo(4);
   }
 
   @Test
@@ -472,5 +501,17 @@ public class SiglusStockManagementDraftServiceTest {
     exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND));
 
     siglusStockManagementDraftService.updatePartOfInfoWithDraft(draftDto);
+  }
+
+  @Test
+  public void shouldIsDraftBeTrueWhenCreateNewDraft() {
+    StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
+        .programId(programId).userId(userId).draftType(issueDraft).build();
+    StockManagementDraft draft = StockManagementDraft.createEmptyDraft(draftDto);
+    when(stockManagementDraftRepository.save(draft)).thenReturn(draft);
+
+    draftDto = siglusStockManagementDraftService.createNewDraft(draftDto);
+
+    assertTrue(draftDto.getIsDraft());
   }
 }
