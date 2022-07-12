@@ -59,8 +59,8 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
     });
     rows.forEach(usageTemplateRow -> {
       columns.forEach(usageTemplateColumn -> {
-        AgeGroupLineItem ageGroupLineItem = AgeGroupLineItem.builder().groupName(usageTemplateRow.getLabel())
-            .columnName(usageTemplateColumn.getLabel()).requisitionId(siglusRequisitionDto.getId()).build();
+        AgeGroupLineItem ageGroupLineItem = AgeGroupLineItem.builder().groupName(usageTemplateRow.getName())
+            .columnName(usageTemplateColumn.getName()).requisitionId(siglusRequisitionDto.getId()).build();
         ageGroupLineItemList.add(ageGroupLineItem);
       });
     });
@@ -80,8 +80,8 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
   @Override
   public void update(SiglusRequisitionDto siglusRequisitionDto, SiglusRequisitionDto siglusRequisitionUpdatedDto) {
     List<AgeGroupLineDto> ageGroupLineDtoList = siglusRequisitionDto.getAgeGroupLineItems();
-    ageGroupLineItemRepository.save(AgeGroupLineItem.from(ageGroupLineDtoList));
-
+    List<AgeGroupLineItem> save = ageGroupLineItemRepository.save(AgeGroupLineItem.from(ageGroupLineDtoList));
+    siglusRequisitionUpdatedDto.setAgeGroupLineItems(AgeGroupLineDto.from(save));
   }
 
   @Override
@@ -91,6 +91,6 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
 
   @Override
   public boolean isDisabled(SiglusRequisitionDto siglusRequisitionDto) {
-    return false;
+    return !siglusRequisitionDto.getTemplate().getExtension().isEnableAgeGroup();
   }
 }

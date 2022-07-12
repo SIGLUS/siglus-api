@@ -27,8 +27,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SchedulerConfiguration {
 
+  public static final String SHEDLOCK_TABLE_NAME = "siglusintegration.shedlock";
+
   @Bean
   public LockProvider lockProvider(DataSource dataSource) {
-    return new JdbcTemplateLockProvider(dataSource);
+    return new JdbcTemplateLockProvider(dataSource, SHEDLOCK_TABLE_NAME);
   }
 }
