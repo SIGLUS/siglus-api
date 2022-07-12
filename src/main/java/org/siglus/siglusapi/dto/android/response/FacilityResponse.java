@@ -31,5 +31,7 @@ public class FacilityResponse {
 
   private Boolean isAndroid;
 
+  private Boolean isSameDevice;
+
   private List<ReportTypeResponse> supportedReportTypes;
 }

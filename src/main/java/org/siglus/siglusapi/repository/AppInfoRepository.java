@@ -22,4 +22,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AppInfoRepository extends JpaRepository<AppInfo, UUID> {
 
   AppInfo findByFacilityCodeAndUniqueId(String facilityCode, String uniqueId);
+
+  AppInfo findByFacilityCode(String facilityCode);
 }
