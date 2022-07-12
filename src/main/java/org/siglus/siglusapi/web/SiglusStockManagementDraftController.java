@@ -103,5 +103,12 @@ public class SiglusStockManagementDraftController {
       @RequestBody StockManagementDraftDto dto) {
     return stockManagementDraftService.updateOperatorAndStatus(dto);
   }
+
+  @PutMapping("/info")
+  @ResponseStatus(OK)
+  public StockManagementDraftDto updatePartOfInfoWithDraft(
+      @RequestBody StockManagementDraftDto dto) {
+    return stockManagementDraftService.updatePartOfInfoWithDraft(dto);
+  }
 }
 

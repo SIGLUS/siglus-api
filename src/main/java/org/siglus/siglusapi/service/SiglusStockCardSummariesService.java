@@ -291,7 +291,7 @@ public class SiglusStockCardSummariesService {
       MultiValueMap<String, String> parameters, List<UUID> subDraftIds, UUID draftId,
       Pageable pageable) {
     try {
-      if ((draftId != null)) {
+      if (draftId != null) {
         Page<StockCardSummaryV2Dto> stockCards = findSiglusStockCard(parameters, subDraftIds,
             pageable);
         StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(draftId);
