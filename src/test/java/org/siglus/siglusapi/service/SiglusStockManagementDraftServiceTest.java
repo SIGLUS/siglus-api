@@ -158,15 +158,18 @@ public class SiglusStockManagementDraftServiceTest {
         stockManagementDraftRepository.findByProgramIdAndFacilityIdAndIsDraftAndDraftType(programId,
             facilityId, true, issueDraft)).thenReturn(newArrayList(draft));
 
-    siglusStockManagementDraftService.createNewDraft(draftDto);
+    siglusStockManagementDraftService.createNewIssueDraft(draftDto);
   }
 
   @Test
   public void shouldIsDraftBeTrueWhenCreateNewDraft() {
-    StockManagementDraft draft = StockManagementDraft.createEmptyDraft(draftDto);
-    when(stockManagementDraftRepository.save(draft)).thenReturn(draft);
+    StockManagementDraft draft = StockManagementDraft.createEmptyIssueDraft(draftDto);
+    when(stockManagementDraftRepository.save(any(StockManagementDraft.class))).thenReturn(draft);
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(newArrayList(draft));
 
-    StockManagementDraftDto newDraft = siglusStockManagementDraftService.createNewDraft(draftDto);
+    StockManagementDraftDto newDraft = siglusStockManagementDraftService
+        .createNewIssueDraft(draftDto);
 
     assertTrue(newDraft.getIsDraft());
   }
@@ -276,7 +279,7 @@ public class SiglusStockManagementDraftServiceTest {
     when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
         .thenReturn(stockManagementDrafts);
 
-    siglusStockManagementDraftService.createNewDraft(draftDto);
+    siglusStockManagementDraftService.createNewIssueDraft(draftDto);
   }
 
   @Test
