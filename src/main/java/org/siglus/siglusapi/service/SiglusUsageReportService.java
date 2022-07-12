@@ -192,6 +192,7 @@ public class SiglusUsageReportService {
     templateDto.setRapidTestConsumption(templateService.getCategoryDto(categoryListMap,
         UsageCategory.RAPIDTESTCONSUMPTION));
     templateDto.setUsageInformation(templateService.getCategoryDto(categoryListMap, UsageCategory.USAGEINFORMATION));
+    templateDto.setAgeGroup(templateService.getCategoryDto(categoryListMap, UsageCategory.AGEGROUP));
     requisitionDto.setUsageTemplate(templateDto);
   }
 

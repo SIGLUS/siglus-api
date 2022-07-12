@@ -24,6 +24,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -300,5 +301,31 @@ public class SiglusStockManagementDraftService {
       return StockManagementDraftDto.from(savedDraft);
     }
     throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
+  }
+
+  public StockManagementDraftDto searchDraft(UUID id) {
+    StockManagementDraft draft = stockManagementDraftRepository.findOne(id);
+    if (draft != null) {
+      return StockManagementDraftDto.from(draft);
+    }
+    throw new ResourceNotFoundException(
+        new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
+            id));
+  }
+
+  public StockManagementDraftDto updatePartOfInfoWithDraft(StockManagementDraftDto dto) {
+    StockManagementDraft targetDraft = stockManagementDraftRepository.findOne(dto.getId());
+    if (targetDraft != null) {
+      StockManagementDraft currentDraft = new StockManagementDraft();
+      BeanUtils.copyProperties(targetDraft, currentDraft);
+      currentDraft.setStatus(PhysicalInventorySubDraftEnum.NOT_YET_STARTED);
+      currentDraft.setOperator(null);
+      currentDraft.setLineItems(Collections.emptyList());
+      StockManagementDraft savedDraft = stockManagementDraftRepository.save(currentDraft);
+      return StockManagementDraftDto.from(savedDraft);
+    }
+    throw new ResourceNotFoundException(
+        new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
+            dto.getId()));
   }
 }

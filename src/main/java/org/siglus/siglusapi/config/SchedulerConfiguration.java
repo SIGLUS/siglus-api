@@ -13,25 +13,22 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.config;
 
-import java.util.List;
-import lombok.Data;
+import javax.sql.DataSource;
 
-@Data
-public class SiglusUsageTemplateDto {
-  private List<UsageTemplateSectionDto> kitUsage;
+import net.javacrumbs.shedlock.core.LockProvider;
+import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 
-  private List<UsageTemplateSectionDto> patient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-  private List<UsageTemplateSectionDto> regimen;
 
-  private List<UsageTemplateSectionDto> consultationNumber;
+@Configuration
+public class SchedulerConfiguration {
 
-  private List<UsageTemplateSectionDto> rapidTestConsumption;
-
-  private List<UsageTemplateSectionDto> usageInformation;
-
-  private List<UsageTemplateSectionDto> ageGroup;
-
+  @Bean
+  public LockProvider lockProvider(DataSource dataSource) {
+    return new JdbcTemplateLockProvider(dataSource);
+  }
 }

@@ -49,6 +49,7 @@ public class SiglusRequisitionDto extends RequisitionV2Dto {
   private transient List<RegimenLineDto> regimenLineItems = newArrayList();
   private transient List<RegimenSummaryLineDto> regimenSummaryLineItems = newArrayList();
   private transient List<RegimenDto> customRegimens = newArrayList();
+  private transient List<AgeGroupLineDto> ageGroupLineItems = newArrayList();
   private transient SiglusUsageTemplateDto usageTemplate;
   private String requisitionNumber;
 

@@ -24,6 +24,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.validation.Validator;
 import javax.validation.executable.ExecutableValidator;
+
+import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.impl.DefaultCamelContext;
@@ -82,6 +84,7 @@ import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 @EnableScheduling
 @EnableRetry
 @SuppressWarnings({"PMD.TooManyMethods"})
+@EnableSchedulerLock(defaultLockAtMostFor = "PT30M")
 public class Application {
 
   private static final String[] MESSAGE_SOURCE_BASE_NAME = new String[]{

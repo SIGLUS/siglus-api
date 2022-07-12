@@ -13,25 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto;
+package org.siglus.siglusapi.repository;
 
 import java.util.List;
-import lombok.Data;
+import java.util.UUID;
+import org.siglus.siglusapi.domain.AgeGroupLineItem;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Data
-public class SiglusUsageTemplateDto {
-  private List<UsageTemplateSectionDto> kitUsage;
+public interface AgeGroupLineItemRepository extends JpaRepository<AgeGroupLineItem, UUID> {
 
-  private List<UsageTemplateSectionDto> patient;
+  List<AgeGroupLineItem> findByRequisitionId(UUID requisitionId);
 
-  private List<UsageTemplateSectionDto> regimen;
-
-  private List<UsageTemplateSectionDto> consultationNumber;
-
-  private List<UsageTemplateSectionDto> rapidTestConsumption;
-
-  private List<UsageTemplateSectionDto> usageInformation;
-
-  private List<UsageTemplateSectionDto> ageGroup;
-
+  void deleteByRequisitionId(UUID requisitionId);
 }

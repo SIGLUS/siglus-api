@@ -18,6 +18,7 @@ package org.siglus.siglusapi.service;
 import static org.siglus.siglusapi.constant.FieldConstants.CODE;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 
 import java.util.Comparator;
 import java.util.List;
@@ -26,15 +27,18 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
+import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.repository.ArchivedProductRepository;
 import org.siglus.common.repository.ProgramAdditionalOrderableRepository;
 import org.siglus.siglusapi.constant.PaginationConstants;
+import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.OrderableExpirationDateDto;
 import org.siglus.siglusapi.dto.QueryOrderableSearchParams;
 import org.siglus.siglusapi.repository.SiglusOrderableRepository;
+import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -51,11 +55,50 @@ public class SiglusOrderableService {
   private final SiglusOrderableRepository siglusOrderableRepository;
   private final ProgramAdditionalOrderableRepository programAdditionalOrderableRepository;
   private final ArchivedProductRepository archivedProductRepository;
+  private final StockManagementDraftRepository stockManagementDraftRepository;
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
     Page<OrderableDto> orderableDtoPage = orderableReferenceDataService.searchOrderables(searchParams, pageable);
     Set<String> archivedProducts = archivedProductRepository.findArchivedProductsByFacilityId(facilityId);
+    orderableDtoPage.getContent().forEach(orderableDto -> orderableDto
+        .setArchived(archivedProducts.contains(orderableDto.getId().toString())));
+    return orderableDtoPage;
+  }
+
+  public Page<OrderableDto> searchDeduplicatedOrderables(UUID draftId,
+      QueryOrderableSearchParams searchParams,
+      Pageable pageable, UUID facilityId) {
+    StockManagementDraft foundDraft = stockManagementDraftRepository.findOne(draftId);
+    if (foundDraft == null) {
+      throw new ResourceNotFoundException(
+          new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
+              draftId));
+    }
+    UUID initialDraftId = foundDraft.getInitialDraftId();
+
+    List<StockManagementDraft> drafts = stockManagementDraftRepository
+        .findByInitialDraftId(initialDraftId);
+
+    drafts.remove(foundDraft);
+
+    Set<String> existOrderableIds = drafts.stream().flatMap(
+        draft -> draft.getLineItems().stream()
+            .map(lineItem -> lineItem.getOrderableId().toString()))
+        .collect(Collectors.toSet());
+
+    Set<String> orderableIds = searchParams.getIds().stream().map(UUID::toString)
+        .collect(Collectors.toSet());
+
+    orderableIds.removeAll(existOrderableIds);
+
+    searchParams.clearIds();
+    searchParams.setIds(orderableIds);
+
+    Page<OrderableDto> orderableDtoPage = orderableReferenceDataService
+        .searchOrderables(searchParams, pageable);
+    Set<String> archivedProducts = archivedProductRepository
+        .findArchivedProductsByFacilityId(facilityId);
     orderableDtoPage.getContent().forEach(orderableDto -> orderableDto
         .setArchived(archivedProducts.contains(orderableDto.getId().toString())));
     return orderableDtoPage;

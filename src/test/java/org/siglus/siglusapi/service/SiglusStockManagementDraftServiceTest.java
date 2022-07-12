@@ -20,6 +20,7 @@ import static org.apache.commons.lang3.RandomUtils.nextBoolean;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -113,6 +114,8 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final UUID destinationId = UUID.randomUUID();
 
+  private final UUID draftId = UUID.randomUUID();
+
   private final Boolean isDraft = nextBoolean();
 
   private final String issueDraft = FieldConstants.ISSUE;
@@ -121,6 +124,9 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
       .programId(programId).facilityId(facilityId).draftType(issueDraft).build();
+
+  private final StockManagementDraft draft = StockManagementDraft.builder()
+      .status(PhysicalInventorySubDraftEnum.DRAFT).build();
 
   private final StockManagementInitialDraftDto initialDraftDto = StockManagementInitialDraftDto
       .builder()
@@ -391,7 +397,6 @@ public class SiglusStockManagementDraftServiceTest {
   public void shouldUpdateDraftStatusAndOperator() {
     draftDto.setId(id);
     draftDto.setOperator("Jack");
-    StockManagementDraft draft = new StockManagementDraft();
     when(stockManagementDraftRepository.findOne(id))
         .thenReturn(draft);
     draft.setStatus(PhysicalInventorySubDraftEnum.DRAFT);
@@ -414,5 +419,55 @@ public class SiglusStockManagementDraftServiceTest {
         .thenReturn(null);
 
     siglusStockManagementDraftService.updateOperatorAndStatus(draftDto);
+  }
+
+  @Test
+  public void shouldSearchDraftById() {
+    StockManagementDraft draft = StockManagementDraft.builder().build();
+    draft.setId(draftId);
+    when(stockManagementDraftRepository.findOne(draftId)).thenReturn(draft);
+
+    StockManagementDraftDto draftDto = siglusStockManagementDraftService
+        .searchDraft(draftId);
+
+    assertThat(draftDto.getId()).isEqualTo(draftId);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenDraftNotExists() {
+    exception.expect(ResourceNotFoundException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND));
+
+    siglusStockManagementDraftService.searchDraft(id);
+  }
+
+  @Test
+  public void shouldUpdatePartOfInfoWithDraft() {
+    draftDto.setId(id);
+    draftDto.setStatus(PhysicalInventorySubDraftEnum.DRAFT);
+    draftDto.setOperator("Tom");
+
+    when(stockManagementDraftRepository.findOne(id))
+        .thenReturn(draft);
+
+    draft.setId(id);
+    draft.setStatus(PhysicalInventorySubDraftEnum.NOT_YET_STARTED);
+    draft.setOperator(null);
+    when(stockManagementDraftRepository.save(any(StockManagementDraft.class))).thenReturn(draft);
+
+    StockManagementDraftDto stockManagementDraftDto = siglusStockManagementDraftService
+        .updatePartOfInfoWithDraft(draftDto);
+
+    assertThat(stockManagementDraftDto.getOperator()).isNull();
+    assertThat(stockManagementDraftDto.getStatus())
+        .isEqualTo(PhysicalInventorySubDraftEnum.NOT_YET_STARTED);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenDraftNotFound() {
+    exception.expect(ResourceNotFoundException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND));
+
+    siglusStockManagementDraftService.updatePartOfInfoWithDraft(draftDto);
   }
 }

@@ -16,10 +16,14 @@
 package org.siglus.siglusapi.repository;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.siglus.siglusapi.domain.report.RequisitionMonthlyReportFacility;
 import org.siglus.siglusapi.dto.android.db.Facility;
 import org.siglus.siglusapi.repository.dto.FacilityProgramPeriodScheduleDto;
@@ -34,6 +38,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
+@SuppressWarnings("PMD.TooManyMethods")
 public class FacilityNativeRepository extends BaseNativeRepository {
 
   private final NamedParameterJdbcTemplate namedJdbc;
@@ -101,13 +107,13 @@ public class FacilityNativeRepository extends BaseNativeRepository {
         + "       f.code      AS facilitycode, "
         + "       ft.code      AS facilitytype, "
         + "       ftm.category AS facilitymergetype, "
-        + "       z1.name district, "
-        + "       z2.name province, "
+        + "       gz1.name district, "
+        + "       gz2.name province, "
         + "       vfs.districtfacilitycode, "
         + "       vfs.provincefacilitycode "
         + "FROM referencedata.facilities f "
-        + "         LEFT JOIN referencedata.geographic_zones z1 ON f.geographiczoneid = z1.id "
-        + "         LEFT JOIN referencedata.geographic_zones z2 ON z1.parentid = z2.id "
+        + "         LEFT JOIN referencedata.geographic_zones gz1 ON f.geographiczoneid = gz1.id "
+        + "         LEFT JOIN referencedata.geographic_zones gz2 ON gz1.parentid = gz2.id "
         + "         LEFT JOIN dashboard.vw_facility_supplier vfs ON vfs.facilitycode = f.code "
         + "         LEFT JOIN referencedata.facility_types ft ON f.typeid = ft.id "
         + "         LEFT JOIN siglusintegration.facility_type_mapping ftm "
@@ -129,16 +135,33 @@ public class FacilityNativeRepository extends BaseNativeRepository {
   }
 
   public List<FacillityStockCardDateDto> findFirstStockCardGroupByFacility() {
-    String query = "SELECT DISTINCT ON (sc.facilityid, sc.programid) "
+    String query = getQuery();
+    return namedJdbc.query(query, facilityStockCardDateDtoExtractor());
+  }
+
+  private String getQuery() {
+    return "SELECT DISTINCT ON (sc.facilityid, sc.programid) "
         + "            MIN(scli.occurreddate) OVER (PARTITION BY sc.facilityid, sc.programid) AS occurreddate, "
         + "            sc.facilityid, "
         + "            sc.programid, "
-        + "            sf.isandroid "
+        + "            fe.isandroid "
         + "FROM stockmanagement.stock_card_line_items scli "
         + "         LEFT JOIN stockmanagement.stock_cards sc ON scli.stockcardid = sc.id "
-        + "         LEFT JOIN siglusintegration.facility_extension sf ON sc.facilityid = sf.facilityid ";
-    return namedJdbc.query(query, facilityStockCardDateDtoExtractor());
+        + "         LEFT JOIN siglusintegration.facility_extension fe ON sc.facilityid = fe.facilityid ";
+  }
 
+  public List<FacillityStockCardDateDto> findMalariaFirstStockCardGroupByFacility(
+      Set<UUID> malariaAdditionalOrderableIds, UUID viaProgramId) {
+    if (CollectionUtils.isEmpty(malariaAdditionalOrderableIds)) {
+      return new ArrayList<>();
+    }
+    String query = getQuery() + " WHERE sc.programid = :programId "
+        + " AND sc.orderableid in (:orderableIds)";
+    log.info(query);
+    MapSqlParameterSource params = new MapSqlParameterSource();
+    params.addValue("programId", viaProgramId);
+    params.addValue("orderableIds", malariaAdditionalOrderableIds);
+    return namedJdbc.query(query, params, facilityStockCardDateDtoExtractor());
   }
 
   private RowMapper<FacillityStockCardDateDto> facilityStockCardDateDtoExtractor() {
@@ -150,10 +173,10 @@ public class FacilityNativeRepository extends BaseNativeRepository {
   }
 
   public List<FacilityProgramPeriodScheduleDto> findFacilityProgramPeriodSchedule() {
-    String query = "select  gps.processingscheduleid, gm.facilityid, gps.programid "
-        + "from referencedata.requisition_group_members gm "
-        + "left join referencedata.requisition_group_program_schedules gps "
-        + "on gm.requisitiongroupid = gps.requisitiongroupid";
+    String query = "select rgps.processingscheduleid, rgm.facilityid, rgps.programid "
+        + "from referencedata.requisition_group_members rgm "
+        + "left join referencedata.requisition_group_program_schedules rgps "
+        + "on rgm.requisitiongroupid = rgps.requisitiongroupid";
     return namedJdbc.query(query, facilityProgramPeriodScheduleDtoExtractor());
   }
 

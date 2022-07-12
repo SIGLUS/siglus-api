@@ -86,4 +86,8 @@ public class FieldConstants {
 
   public static final String PHYSICAL_INVENTORY = "PHYSICAL_INVENTORY";
 
+  public static final String AGE_GROUP_LABEL = "Patients Age Group";
+
+  public static final String SECTION_SERVICE_LABEL = "Services";
+
 }
