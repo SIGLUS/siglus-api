@@ -15,17 +15,16 @@
 
 package org.siglus.siglusapi.service;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
-import org.siglus.siglusapi.dto.AgeGroupLineDto;
+import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,52 +35,41 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class AgeGroupDataProcessor implements UsageReportDataProcessor {
 
+  private static final String SERVICE = "service";
+  private static final String GROUP = "group";
+
   @Autowired
   private AgeGroupLineItemRepository ageGroupLineItemRepository;
+
+  @Autowired
+  private SiglusUsageReportService siglusUsageReportService;
 
   @Override
   public void doInitiate(SiglusRequisitionDto siglusRequisitionDto,
       List<UsageTemplateColumnSection> templateColumnSections) {
-    List<UsageTemplateColumn> rows = new LinkedList<>();
-    List<UsageTemplateColumn> columns = new LinkedList<>();
-    List<AgeGroupLineDto> ageGroupLineDtoList;
-    List<AgeGroupLineItem> ageGroupLineItemList = new LinkedList<>();
-    templateColumnSections.forEach(usageTemplateColumnSection -> {
-      if (!usageTemplateColumnSection.getCategory().equals(UsageCategory.AGEGROUP)) {
-        return;
-      }
-      if (FieldConstants.AGE_GROUP_LABEL.equals(usageTemplateColumnSection.getLabel())) {
-        columns.addAll(usageTemplateColumnSection.getColumns());
-      }
-      if (FieldConstants.SECTION_SERVICE_LABEL.equals(usageTemplateColumnSection.getLabel())) {
-        rows.addAll(usageTemplateColumnSection.getColumns());
-      }
-    });
-    rows.forEach(usageTemplateRow -> {
-      columns.forEach(usageTemplateColumn -> {
-        AgeGroupLineItem ageGroupLineItem = AgeGroupLineItem.builder().groupName(usageTemplateRow.getName())
-            .columnName(usageTemplateColumn.getName()).requisitionId(siglusRequisitionDto.getId()).build();
-        ageGroupLineItemList.add(ageGroupLineItem);
-      });
-    });
-    List<AgeGroupLineItem> ageGroupLineItems = ageGroupLineItemRepository.save(ageGroupLineItemList);
-    ageGroupLineDtoList = AgeGroupLineDto.from(ageGroupLineItems);
-    siglusRequisitionDto.setAgeGroupLineItems(ageGroupLineDtoList);
+    List<AgeGroupLineItem> ageGroupLineItems =
+            createAgeGroupLineItems(siglusRequisitionDto, templateColumnSections);
 
+    List<AgeGroupLineItem> saved =
+            ageGroupLineItemRepository.save(ageGroupLineItems);
+
+    List<AgeGroupServiceDto> serviceDtos = AgeGroupServiceDto.from(saved);
+    siglusRequisitionDto.setAgeGroupLineItems(serviceDtos);
   }
 
   @Override
   public void get(SiglusRequisitionDto siglusRequisitionDto) {
     List<AgeGroupLineItem> ageGroupLineItems = ageGroupLineItemRepository.findByRequisitionId(
         siglusRequisitionDto.getId());
-    siglusRequisitionDto.setAgeGroupLineItems(AgeGroupLineDto.from(ageGroupLineItems));
+    siglusRequisitionDto.setAgeGroupLineItems(AgeGroupServiceDto.from(ageGroupLineItems));
   }
 
   @Override
   public void update(SiglusRequisitionDto siglusRequisitionDto, SiglusRequisitionDto siglusRequisitionUpdatedDto) {
-    List<AgeGroupLineDto> ageGroupLineDtoList = siglusRequisitionDto.getAgeGroupLineItems();
-    List<AgeGroupLineItem> save = ageGroupLineItemRepository.save(AgeGroupLineItem.from(ageGroupLineDtoList));
-    siglusRequisitionUpdatedDto.setAgeGroupLineItems(AgeGroupLineDto.from(save));
+    List<AgeGroupServiceDto> ageGroupLineDtoList = siglusRequisitionDto.getAgeGroupLineItems();
+    List<AgeGroupLineItem> save = ageGroupLineItemRepository.save(AgeGroupLineItem.from(ageGroupLineDtoList,
+            siglusRequisitionDto.getId()));
+    siglusRequisitionUpdatedDto.setAgeGroupLineItems(AgeGroupServiceDto.from(save));
   }
 
   @Override
@@ -92,5 +80,34 @@ public class AgeGroupDataProcessor implements UsageReportDataProcessor {
   @Override
   public boolean isDisabled(SiglusRequisitionDto siglusRequisitionDto) {
     return !siglusRequisitionDto.getTemplate().getExtension().isEnableAgeGroup();
+  }
+
+  private List<AgeGroupLineItem> createAgeGroupLineItems(
+          SiglusRequisitionDto siglusRequisitionDto,
+          List<UsageTemplateColumnSection> templateColumnSections) {
+    UsageTemplateColumnSection service = siglusUsageReportService
+            .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, SERVICE);
+    UsageTemplateColumnSection group = siglusUsageReportService
+            .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, GROUP);
+
+    List<AgeGroupLineItem> ageGroupLineItems = new ArrayList<>();
+
+    for (UsageTemplateColumn templateServiceColumn : service.getColumns()) {
+      if (!Boolean.TRUE.equals(templateServiceColumn.getIsDisplayed())) {
+        continue;
+      }
+
+      for (UsageTemplateColumn templateGroupColumn : group.getColumns()) {
+        if (!Boolean.TRUE.equals(templateGroupColumn.getIsDisplayed())) {
+          continue;
+        }
+        ageGroupLineItems.add(AgeGroupLineItem.builder()
+                .requisitionId(siglusRequisitionDto.getId())
+                .group(templateGroupColumn.getName())
+                .service(templateServiceColumn.getName())
+                .build());
+      }
+    }
+    return ageGroupLineItems;
   }
 }
