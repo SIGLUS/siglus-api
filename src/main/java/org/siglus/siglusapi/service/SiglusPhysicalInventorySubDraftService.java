@@ -143,7 +143,7 @@ public class SiglusPhysicalInventorySubDraftService {
       }
       List<PhysicalInventoryLineItemDto> lineItems = physicalInventoryDto.getLineItems();
       if (CollectionUtils.isEmpty(lineItems)) {
-        return;
+        continue;
       }
       Iterator<PhysicalInventoryLineItemDto> iterator = lineItems.iterator();
       while (iterator.hasNext()) {
