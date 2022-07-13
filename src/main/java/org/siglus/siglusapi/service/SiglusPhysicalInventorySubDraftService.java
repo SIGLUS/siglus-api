@@ -191,27 +191,29 @@ public class SiglusPhysicalInventorySubDraftService {
     for (UUID physicalInventoryId : physicalInventoryIds) {
       PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
           physicalInventoryId);
+      UUID subDraftId = physicalInventorySubDraftMap.get(physicalInventoryId);
+
+      List<PhysicalInventoryLineItemsExtension> subDraftLineItemsExtensions
+          = lineItemsExtensionRepository.findBySubDraftIdIn(Lists.newArrayList(subDraftId));
+
+      List<String> oldUniqueKeyList = subDraftLineItemsExtensions
+          .stream().map(this::getUniqueKey).collect(Collectors.toList());
 
       UUID programId = physicalInventoryDto.getProgramId();
 
-      List<PhysicalInventoryLineItemDto> curLineItems = programLineItemMap.get(programId);
-      if (CollectionUtils.isEmpty(curLineItems)) {
-        continue;
-      }
+      List<PhysicalInventoryLineItemDto> curLineItems = programLineItemMap.getOrDefault(programId, new ArrayList<>());
 
-      List<String> uniqueKeyList = curLineItems.stream().map(this::getUniqueKey).collect(Collectors.toList());
       List<PhysicalInventoryLineItemDto> oldLineItems = physicalInventoryDto.getLineItems();
 
       List<PhysicalInventoryLineItemDto> notChangedLineItems = oldLineItems.stream()
-          .filter(item -> !uniqueKeyList.contains(getUniqueKey(item))).collect(
-              Collectors.toList());
+          .filter(item -> !oldUniqueKeyList.contains(getUniqueKey(item)))
+          .collect(Collectors.toList());
 
       List<PhysicalInventoryLineItemDto> newLineItems = Lists.newArrayList(notChangedLineItems);
       newLineItems.addAll(curLineItems);
 
       physicalInventoryDto.setLineItems(newLineItems);
 
-      UUID subDraftId = physicalInventorySubDraftMap.get(physicalInventoryId);
       List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension
           = convertToLineItemsExtension(physicalInventoryDto.getLineItems(), subDraftId, physicalInventoryId);
 
