@@ -151,7 +151,7 @@ public class SiglusPhysicalInventoryService {
       List<PhysicalInventoryLineItemDto> subPhysicalInventoryLineItemDtoLists = physicalInventoryDto.getLineItems()
           .stream().filter(lineItem -> {
             PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
-            return extension.getSubDraftId().equals(subDraftId);
+            return subDraftId.equals(extension.getSubDraftId());
           }).collect(Collectors.toList());
       allSubPhysicalInventoryLineItemDtoList.addAll(subPhysicalInventoryLineItemDtoLists);
     });
