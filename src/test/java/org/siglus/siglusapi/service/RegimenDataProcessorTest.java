@@ -158,9 +158,9 @@ public class RegimenDataProcessorTest {
         .thenReturn(mockUsageTemplateColumnSection());
     when(regimenRepository.findAll())
         .thenReturn(newArrayList(mockCustomRegimen(), mockNoCustomRegimen()));
-    when(regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsFalse(any()))
+    when(regimenRepository.findAllByProgramIdAndIsAndroidTrueAndIsCustomFalse(any()))
         .thenReturn(newArrayList(mockNoCustomRegimen()));
-    when(regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsTrue(any()))
+    when(regimenRepository.findAllByProgramIdAndIsAndroidTrueAndIsCustomTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen()));
     when(regimenRepository.findAllByProgramIdAndActiveTrue(any()))
         .thenReturn(newArrayList(mockCustomRegimen(), mockNoCustomRegimen()));

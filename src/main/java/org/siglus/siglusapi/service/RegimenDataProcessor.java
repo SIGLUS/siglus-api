@@ -70,7 +70,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
       List<UsageTemplateColumnSection> templateColumnSections) {
 
     List<RegimenDto> defaultRegimenDtos =
-        regimenRepository.findAllByProgramIdAndActiveTrueAndIsCustomIsFalse(
+        regimenRepository.findAllByProgramIdAndIsAndroidTrueAndIsCustomFalse(
             siglusRequisitionDto.getProgramId())
             .stream()
             .map(RegimenDto::from)
@@ -171,7 +171,7 @@ public class RegimenDataProcessor implements UsageReportDataProcessor {
 
   public void setCustomRegimen(SiglusRequisitionDto siglusRequisitionDto) {
     List<RegimenDto> customRegimenDtos = regimenRepository
-        .findAllByProgramIdAndActiveTrueAndIsCustomIsTrue(
+        .findAllByProgramIdAndIsAndroidTrueAndIsCustomTrue(
             siglusRequisitionDto.getProgramId())
         .stream()
         .map(RegimenDto::from)
