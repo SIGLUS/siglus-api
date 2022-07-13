@@ -212,6 +212,10 @@ public class SiglusPhysicalInventorySubDraftService {
       List<PhysicalInventoryLineItemDto> newLineItems = Lists.newArrayList(notChangedLineItems);
       newLineItems.addAll(curLineItems);
 
+      if (CollectionUtils.isEmpty(newLineItems)) {
+        continue;
+      }
+
       physicalInventoryDto.setLineItems(newLineItems);
 
       List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension
