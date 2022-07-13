@@ -18,6 +18,7 @@ package org.siglus.siglusapi.domain;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -26,8 +27,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.siglus.common.domain.BaseEntity;
-import org.siglus.siglusapi.dto.AgeGroupLineDto;
-import org.springframework.beans.BeanUtils;
+import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 
 @Entity
 @Data
@@ -42,18 +42,29 @@ public class AgeGroupLineItem extends BaseEntity {
 
   private UUID requisitionId;
 
-  private String groupName;
+  @Column(name = "groupname")
+  private String service;
 
-  private String columnName;
+  @Column(name = "columnname")
+  private String group;
 
   private Integer value;
 
-  public static List<AgeGroupLineItem> from(List<AgeGroupLineDto> ageGroupLineDtoList) {
+  public static List<AgeGroupLineItem> from(List<AgeGroupServiceDto> ageGroupServiceDtos,
+                                            UUID requisitionId) {
     LinkedList<AgeGroupLineItem> ageGroupLineItems = new LinkedList<>();
-    ageGroupLineDtoList.forEach(ageGroupLineDto -> {
-      AgeGroupLineItem ageGroupLineItem = new AgeGroupLineItem();
-      BeanUtils.copyProperties(ageGroupLineDto, ageGroupLineItem);
-      ageGroupLineItems.add(ageGroupLineItem);
+    ageGroupServiceDtos.forEach(serviceDto -> {
+      String service = serviceDto.getService();
+      serviceDto.getColumns().forEach((groupKey, lineItemDto) -> {
+        AgeGroupLineItem lineItem = AgeGroupLineItem.builder()
+                .id(lineItemDto.getId())
+                .requisitionId(requisitionId)
+                .service(service)
+                .group(groupKey)
+                .value(lineItemDto.getValue())
+                .build();
+        ageGroupLineItems.add(lineItem);
+      });
     });
     return ageGroupLineItems;
   }

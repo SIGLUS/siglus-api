@@ -179,7 +179,7 @@ public class RequisitionReportTaskServiceTest {
 
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2022, 1, 10));
+        getFacillityStockCardDateDto(2021, 12, 10));
 
     when(requisitionMonthReportRepository.findAll()).thenReturn(new ArrayList<>());
 

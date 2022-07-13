@@ -398,12 +398,12 @@ public class RequisitionReportTaskService {
     }
     int month = startDate.getMonthValue();
     int year = startDate.getYear();
-    if (startDate.isBefore(allProcessingPeriodDto.get(0).getSubmitStartDate())) {
+    if (startDate.isBefore(allProcessingPeriodDto.get(0).getStartDate())) {
       return 0;
     }
     for (int i = 0; i + 1 < allProcessingPeriodDto.size(); i++) {
-      if (year == allProcessingPeriodDto.get(i).getSubmitStartDate().getYear()
-          && month == allProcessingPeriodDto.get(i).getSubmitStartDate().getMonthValue()) {
+      if (year == allProcessingPeriodDto.get(i).getStartDate().getYear()
+          && month == allProcessingPeriodDto.get(i).getStartDate().getMonthValue()) {
         return i;
       }
     }

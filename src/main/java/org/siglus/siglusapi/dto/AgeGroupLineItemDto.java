@@ -15,42 +15,18 @@
 
 package org.siglus.siglusapi.dto;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.openlmis.requisition.dto.BaseDto;
-import org.siglus.siglusapi.domain.AgeGroupLineItem;
-import org.springframework.beans.BeanUtils;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class AgeGroupLineDto extends BaseDto {
+@NoArgsConstructor
+@Builder
+public class AgeGroupLineItemDto {
   private UUID id;
 
-  private UUID requisitionId;
-
-  private String groupName;
-
-  private String columnName;
-
   private Integer value;
-
-  public static List<AgeGroupLineDto> from(List<AgeGroupLineItem> ageGroupLineItemList) {
-    LinkedList<AgeGroupLineDto> ageGroupLineDtos = new LinkedList<>();
-    ageGroupLineItemList.forEach(ageGroupLineItem -> {
-      AgeGroupLineDto ageGroupLineDto = new AgeGroupLineDto();
-      BeanUtils.copyProperties(ageGroupLineItem, ageGroupLineDto);
-      ageGroupLineDtos.add(ageGroupLineDto);
-    });
-    return ageGroupLineDtos;
-  }
-
 }

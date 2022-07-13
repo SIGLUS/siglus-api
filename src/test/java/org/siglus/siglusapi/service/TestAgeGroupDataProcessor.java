@@ -16,27 +16,35 @@
 package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Maps.newHashMap;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyList;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import org.junit.Before;
+
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.BasicRequisitionTemplateDto;
 import org.siglus.common.dto.RequisitionTemplateExtensionDto;
-import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.AgeGroupLineItem;
 import org.siglus.siglusapi.domain.UsageCategory;
 import org.siglus.siglusapi.domain.UsageTemplateColumn;
 import org.siglus.siglusapi.domain.UsageTemplateColumnSection;
+import org.siglus.siglusapi.dto.AgeGroupLineItemDto;
+import org.siglus.siglusapi.dto.AgeGroupServiceDto;
 import org.siglus.siglusapi.dto.SiglusRequisitionDto;
 import org.siglus.siglusapi.repository.AgeGroupLineItemRepository;
 
@@ -47,96 +55,161 @@ public class TestAgeGroupDataProcessor {
   private AgeGroupDataProcessor ageGroupDataProcessor;
 
   @Mock
+  private SiglusUsageReportService siglusUsageReportService;
+  @Mock
   private AgeGroupLineItemRepository ageGroupLineItemRepository;
+  @Captor
+  private ArgumentCaptor<List<AgeGroupLineItem>> lineItemsArgumentCaptor;
   private final UUID requisitionId = UUID.randomUUID();
 
-  private static List<UsageTemplateColumnSection> templateColumnSections;
+  private static final String SERVICE = "service";
+  private static final String GROUP = "group";
+  private final Integer value = RandomUtils.nextInt();
+  private final UUID id = UUID.randomUUID();
 
-  private static SiglusRequisitionDto siglusRequisitionDto;
-
-  @Before
-  public void setup() {
+  @Test
+  public void shouldNotCreateLineItemsWhenInitiateIfDisableAgeGroup() {
+    // given
     RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
-        .enableAgeGroup(false).build();
+            .enableAgeGroup(false).build();
     BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
     template.setExtension(extension);
-    siglusRequisitionDto = new SiglusRequisitionDto();
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
     siglusRequisitionDto.setId(requisitionId);
     siglusRequisitionDto.setTemplate(template);
-    templateColumnSections = newArrayList();
-    UsageTemplateColumn serviceColumn = UsageTemplateColumn.builder()
-        .isDisplayed(true)
-        .label(FieldConstants.SECTION_SERVICE_LABEL)
-        .build();
-    UsageTemplateColumnSection serviceSection = UsageTemplateColumnSection.builder()
-        .category(UsageCategory.AGEGROUP)
-        .label(FieldConstants.SECTION_SERVICE_LABEL)
-        .columns(newArrayList(serviceColumn))
-        .build();
-    UsageTemplateColumn ageGroupColumn = UsageTemplateColumn.builder()
-        .isDisplayed(true)
-        .label(FieldConstants.AGE_GROUP_LABEL)
-        .build();
-    UsageTemplateColumnSection ageGroupSection = UsageTemplateColumnSection.builder()
-        .category(UsageCategory.AGEGROUP)
-        .label(FieldConstants.AGE_GROUP_LABEL)
-        .columns(newArrayList(ageGroupColumn))
-        .build();
-    UsageTemplateColumn otherColumn = UsageTemplateColumn.builder()
-        .isDisplayed(true)
-        .label(FieldConstants.AGE_GROUP_LABEL)
-        .build();
-    UsageTemplateColumnSection otherSection = UsageTemplateColumnSection.builder()
-        .label(FieldConstants.AGE_GROUP_LABEL)
-        .category(UsageCategory.KITUSAGE)
-        .columns(newArrayList(otherColumn))
-        .build();
-    templateColumnSections.add(serviceSection);
-    templateColumnSections.add(ageGroupSection);
-    templateColumnSections.add(otherSection);
-    when(ageGroupLineItemRepository.save(anyList())).thenReturn(newArrayList(new AgeGroupLineItem()));
-    when(ageGroupLineItemRepository.findByRequisitionId(any())).thenReturn(newArrayList(new AgeGroupLineItem()));
-    when(ageGroupLineItemRepository.save(anyList())).thenReturn(newArrayList(new AgeGroupLineItem()));
+    List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
+
+    // when
+    ageGroupDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);
+
+    // then
+    verify(ageGroupLineItemRepository, times(0)).save(lineItemsArgumentCaptor.capture());
   }
 
   @Test
-  public void shouldCreateLineItemsWhenInitiate() {
-    ageGroupDataProcessor.doInitiate(siglusRequisitionDto, templateColumnSections);
-    assertEquals(siglusRequisitionDto.getAgeGroupLineItems().size(), 1);
-  }
-
-  @Test
-  public void shouldGetAgeGroupByRequisitionId() {
-    ageGroupDataProcessor.get(siglusRequisitionDto);
-    assertEquals(siglusRequisitionDto.getAgeGroupLineItems().size(), 1);
-  }
-
-  @Test
-  public void shouldReturnAgeGroupIsDisable() {
-    boolean disabled = ageGroupDataProcessor.isDisabled(siglusRequisitionDto);
-    assertEquals(disabled, true);
-  }
-
-  @Test
-  public void shouldReturnAgeGroupEnsable() {
+  public void shouldCreateLineItemsWhenInitiateIfEnableAgeGroup() {
+    // given
     RequisitionTemplateExtensionDto extension = RequisitionTemplateExtensionDto.builder()
-        .enableAgeGroup(true).build();
+            .enableAgeGroup(true).build();
     BasicRequisitionTemplateDto template = new BasicRequisitionTemplateDto();
     template.setExtension(extension);
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+    siglusRequisitionDto.setId(requisitionId);
     siglusRequisitionDto.setTemplate(template);
-    boolean disabled = ageGroupDataProcessor.isDisabled(siglusRequisitionDto);
-    assertEquals(disabled, false);
+
+    UsageTemplateColumn serviceColumn = UsageTemplateColumn.builder()
+            .isDisplayed(true)
+            .name(SERVICE)
+            .build();
+    UsageTemplateColumnSection serviceSection = UsageTemplateColumnSection.builder()
+            .category(UsageCategory.AGEGROUP)
+            .name(SERVICE)
+            .columns(newArrayList(serviceColumn))
+            .build();
+    UsageTemplateColumn groupColumn = UsageTemplateColumn.builder()
+            .isDisplayed(true)
+            .name(GROUP)
+            .build();
+    UsageTemplateColumnSection groupSection = UsageTemplateColumnSection.builder()
+            .category(UsageCategory.AGEGROUP)
+            .name(GROUP)
+            .columns(newArrayList(groupColumn))
+            .build();
+
+    List<UsageTemplateColumnSection> templateColumnSections = newArrayList();
+    when(siglusUsageReportService
+            .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, SERVICE))
+            .thenReturn(serviceSection);
+    when(siglusUsageReportService
+            .getColumnSection(templateColumnSections, UsageCategory.AGEGROUP, GROUP))
+            .thenReturn(groupSection);
+
+    // when
+    ageGroupDataProcessor.initiate(siglusRequisitionDto, templateColumnSections);
+
+    // then
+    verify(ageGroupLineItemRepository).save(lineItemsArgumentCaptor.capture());
+    List<AgeGroupLineItem> lineItems = lineItemsArgumentCaptor.getValue();
+    assertEquals(1, lineItems.size());
+    assertEquals(requisitionId, lineItems.get(0).getRequisitionId());
+    assertEquals(SERVICE, lineItems.get(0).getService());
+    assertEquals(GROUP, lineItems.get(0).getGroup());
+    assertNull(lineItems.get(0).getValue());
   }
 
   @Test
-  public void shouldDeteleAgeGroupByRequisitionId() {
+  public void shouldGetAgeGroup() {
+    // given
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+    siglusRequisitionDto.setId(requisitionId);
+    AgeGroupLineItem lineItem = AgeGroupLineItem.builder()
+            .requisitionId(requisitionId)
+            .service(SERVICE)
+            .group(GROUP)
+            .value(value)
+            .build();
+    lineItem.setId(id);
+    List<AgeGroupLineItem> lineItems = newArrayList(lineItem);
+    when(ageGroupLineItemRepository.findByRequisitionId(requisitionId))
+            .thenReturn(lineItems);
+
+    // when
+    ageGroupDataProcessor.get(siglusRequisitionDto);
+
+    // then
+    List<AgeGroupServiceDto> serviceDtos = siglusRequisitionDto
+            .getAgeGroupLineItems();
+    assertEquals(1, serviceDtos.size());
+    AgeGroupLineItemDto ageGroupLineItemDto =
+            serviceDtos.get(0).getColumns().get(GROUP);
+    assertEquals(id, ageGroupLineItemDto.getId());
+    assertEquals(value, ageGroupLineItemDto.getValue());
+  }
+
+  @Test
+  public void shouldSaveLineItemsWhenUpdate() {
+    // given
+    AgeGroupLineItemDto lineItemDto = AgeGroupLineItemDto
+            .builder()
+            .id(id)
+            .value(value)
+            .build();
+    Map<String, AgeGroupLineItemDto> groupMap = newHashMap();
+    groupMap.put(GROUP, lineItemDto);
+    AgeGroupServiceDto serviceDto = new AgeGroupServiceDto();
+    serviceDto.setService(SERVICE);
+    serviceDto.setColumns(groupMap);
+
+    List<AgeGroupServiceDto> serviceDtos = newArrayList(serviceDto);
+    SiglusRequisitionDto siglusRequisitionDto = new SiglusRequisitionDto();
+    siglusRequisitionDto.setId(requisitionId);
+    siglusRequisitionDto.setAgeGroupLineItems(serviceDtos);
+    SiglusRequisitionDto siglusRequisitionUpdatedDto = new SiglusRequisitionDto();
+
+    when(ageGroupLineItemRepository.save((Iterable<AgeGroupLineItem>) any()))
+            .thenAnswer(i -> i.getArguments()[0]);
+
+    // when
+    ageGroupDataProcessor.update(siglusRequisitionDto, siglusRequisitionUpdatedDto);
+
+    // then
+    assertEquals(serviceDtos, siglusRequisitionUpdatedDto.getAgeGroupLineItems());
+    verify(ageGroupLineItemRepository).save(lineItemsArgumentCaptor.capture());
+    List<AgeGroupLineItem> lineItems = lineItemsArgumentCaptor.getValue();
+    assertEquals(1, lineItems.size());
+    assertEquals(id, lineItems.get(0).getId());
+    assertEquals(requisitionId, lineItems.get(0).getRequisitionId());
+    assertEquals(SERVICE, lineItems.get(0).getService());
+    assertEquals(GROUP, lineItems.get(0).getGroup());
+    assertEquals(value, lineItems.get(0).getValue());
+  }
+
+  @Test
+  public void shouldCallFindAndDeleteWhenDeleteByRequisitionId() {
+    // when
     ageGroupDataProcessor.delete(requisitionId);
-    verify(ageGroupLineItemRepository).deleteByRequisitionId(requisitionId);
-  }
 
-  @Test
-  public void shouldUpdateAgeGroupLineItem() {
-    ageGroupDataProcessor.update(new SiglusRequisitionDto(), siglusRequisitionDto);
-    assertEquals(siglusRequisitionDto.getAgeGroupLineItems().size(), 1);
+    // then
+    verify(ageGroupLineItemRepository).deleteByRequisitionId(requisitionId);
   }
 }
