@@ -19,6 +19,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB
 
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -106,6 +107,15 @@ public class SiglusPhysicalInventorySubDraftService {
     return subDrafts;
   }
 
+  private void addDeletedInitialLineItems(List<PhysicalInventoryLineItemDto> current,
+                                          List<PhysicalInventoryLineItemDto> original) {
+    Set<PhysicalInventoryLineItemDto> currentLineItemSet = current.stream().collect(Collectors.toSet());
+    List<PhysicalInventoryLineItemDto> deleted = original.stream()
+            .filter(lineItem -> !currentLineItemSet.contains(lineItem)).collect(Collectors.toList());
+
+    current.addAll(deleted);
+  }
+
   private void doDelete(List<PhysicalInventorySubDraft> subDrafts, List<UUID> subDraftIds) {
     List<UUID> physicalInventoryIds = subDrafts.stream().map(PhysicalInventorySubDraft::getPhysicalInventoryId)
         .collect(Collectors.toList());
@@ -138,10 +148,15 @@ public class SiglusPhysicalInventorySubDraftService {
       PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
           physicalInventoryId);
 
+      List<PhysicalInventoryLineItemDto> originalInitialInventoryLineItems = siglusPhysicalInventoryService
+              .buildInitialInventoryLineItemDtos(Collections.singleton(physicalInventoryDto.getProgramId()),
+                      physicalInventoryDto.getFacilityId());
+
       if (physicalInventoryDto == null) {
         throw new IllegalArgumentException("physical inventory not exists. id = " + physicalInventoryId);
       }
       List<PhysicalInventoryLineItemDto> lineItems = physicalInventoryDto.getLineItems();
+      addDeletedInitialLineItems(lineItems, originalInitialInventoryLineItems);
       if (CollectionUtils.isEmpty(lineItems)) {
         continue;
       }

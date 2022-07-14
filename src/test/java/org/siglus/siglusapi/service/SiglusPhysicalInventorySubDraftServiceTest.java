@@ -23,12 +23,14 @@ import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB_DRAFT;
 
 import com.google.common.collect.Sets;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+
 import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Rule;
@@ -63,6 +65,7 @@ import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataSer
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
+import org.springframework.beans.BeanUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings({"PMD.TooManyMethods", "PMD.UnusedPrivateField"})
@@ -373,6 +376,59 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
     verify(physicalInventorySubDraftRepository).findAll(any(List.class));
 
+  }
+
+  @Test
+  public void shouldRemoveProductWithDeleteProductWhenUpdateSubDrafts() {
+    // given
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
+        .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
+
+    PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
+        .programId(programId)
+        .orderableId(orderableId)
+        .lotId(lotId)
+        .build();
+    List<PhysicalInventoryLineItemsExtension> subDraftLineItemsExtensions = new ArrayList<>();
+    PhysicalInventoryLineItemsExtension extension1 = new PhysicalInventoryLineItemsExtension();
+    PhysicalInventoryLineItemsExtension extension2 = PhysicalInventoryLineItemsExtension.builder()
+        .orderableId(UUID.randomUUID())
+        .lotId(UUID.randomUUID())
+        .subDraftId(subDraftId)
+        .build();
+    BeanUtils.copyProperties(lineItemDtoOne, extension1);
+    subDraftLineItemsExtensions.add(extension1);
+    subDraftLineItemsExtensions.add(extension2);
+    when(lineItemsExtensionRepository.findBySubDraftIdIn(com.google.common.collect.Lists.newArrayList(subDraftId)))
+        .thenReturn(subDraftLineItemsExtensions);
+    List<PhysicalInventorySubDraft> subDrafts = new ArrayList<>();
+    PhysicalInventorySubDraft subDraft = PhysicalInventorySubDraft.builder()
+        .physicalInventoryId(id)
+        .build();
+    subDraft.setId(subDraftId);
+
+    subDrafts.add(subDraft);
+    when(physicalInventorySubDraftRepository.findAll()).thenReturn(subDrafts);
+    when(physicalInventorySubDraftRepository.findAll(Lists.newArrayList(subDraftId))).thenReturn(subDrafts);
+
+    PhysicalInventoryDto oldPhysicalInventoryDto = PhysicalInventoryDto.builder()
+        .id(id)
+        .programId(programId)
+        .lineItems(Lists.newArrayList(lineItemDtoOne))
+        .build();
+
+    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(any())).thenReturn(
+        oldPhysicalInventoryDto);
+    List<UUID> subDraftIds = Lists.newArrayList(subDraftId);
+
+    PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder()
+        .id(id)
+        .lineItems(Lists.newArrayList(lineItemDtoOne))
+        .build();
+    // when
+    siglusPhysicalInventorySubDraftService.updateSubDrafts(subDraftIds, physicalInventoryDto,
+        PhysicalInventorySubDraftEnum.DRAFT);
+    verify(physicalInventorySubDraftRepository, times(2)).findAll(any(List.class));
   }
 
 }

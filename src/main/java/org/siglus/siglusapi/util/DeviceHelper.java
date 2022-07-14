@@ -15,6 +15,8 @@
 
 package org.siglus.siglusapi.util;
 
+import static org.siglus.siglusapi.constant.AndroidConstants.UNIQUE_ID;
+
 import javax.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.domain.AppInfo;
@@ -36,11 +38,11 @@ public class DeviceHelper {
   private final AppInfoRepository appInfoRepository;
   private final SiglusFacilityReferenceDataService facilityReferenceDataService;
 
-  public boolean isSameDevice() {
+  public boolean isRegisteredDevice() {
     RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
     ServletRequestAttributes sra = (ServletRequestAttributes) requestAttributes;
     HttpServletRequest request = sra.getRequest();
-    String uniqueId = request.getHeader("UniqueId");
+    String uniqueId = request.getHeader(UNIQUE_ID);
     UserDto currentUser = authHelper.getCurrentUser();
     if (currentUser == null || uniqueId == null) {
       return false;
