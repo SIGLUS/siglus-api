@@ -42,6 +42,5 @@ public class FacilityDto implements Serializable {
   private List<SupportedProgramDto> supportedPrograms;
   private GeographicZoneDto geographicZone;
   private FacilityTypeDto type;
-  private Boolean isAndroid;
 
 }
