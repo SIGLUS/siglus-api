@@ -16,17 +16,14 @@
 package org.siglus.siglusapi.service;
 
 import static java.util.stream.Collectors.toList;
-import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_EVENT_ORDERABLE_INVALID;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_ISSUE_CONFLICT_SUB_DRAFT;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,13 +37,11 @@ import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
 import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
-import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.Message;
-import org.siglus.siglusapi.dto.ProductSubDraftConflictDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
@@ -56,7 +51,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
-import org.siglus.siglusapi.service.client.SiglusOrderableReferenceDataService;
+import org.siglus.siglusapi.util.ConflictOrderableInSubDraftHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
@@ -90,13 +85,13 @@ public class SiglusStockManagementDraftService {
   private SiglusValidSourceDestinationService validSourceDestinationService;
 
   @Autowired
-  private SiglusOrderableReferenceDataService siglusOrderableReferenceDataService;
-
-  @Autowired
   private SupportedProgramsHelper supportedProgramsHelper;
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Autowired
+  private ConflictOrderableInSubDraftHelper conflictOrderableInSubDraftHelper;
 
   private static final Integer DRAFTS_LIMITATION = 10;
   private static final Integer DRAFTS_INCREMENT = 1;
@@ -142,60 +137,10 @@ public class SiglusStockManagementDraftService {
   public StockManagementDraftDto updateDraft(StockManagementDraftDto dto, UUID id) {
     log.info("update issue draft");
     stockManagementDraftValidator.validateDraft(dto, id);
-    checkConflictSubDraft(dto);
+    conflictOrderableInSubDraftHelper.checkConflictSubDraft(dto);
     StockManagementDraft newDraft = setNewAttributesInOriginalDraft(dto, id);
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
     return StockManagementDraftDto.from(savedDraft);
-  }
-
-  private void checkConflictSubDraft(StockManagementDraftDto dto) {
-    StockManagementDraft currentSubDraft = stockManagementDraftRepository.findOne(dto.getId());
-    List<StockManagementDraft> subDrafts = stockManagementDraftRepository
-        .findByInitialDraftId(currentSubDraft.getInitialDraftId());
-
-    List<UUID> preSavedDraftOrderableIds = dto.getLineItems().stream()
-        .map(StockManagementDraftLineItemDto::getOrderableId)
-        .collect(toList());
-
-    subDrafts.remove(currentSubDraft);
-
-    List<ProductSubDraftConflictDto> subDraftConflictDtos = new ArrayList<>();
-    subDrafts.forEach(subDraft -> {
-      List<UUID> conflictOrderableIds = subDraft.getLineItems().stream()
-          .map(StockManagementDraftLineItem::getOrderableId)
-          .filter(preSavedDraftOrderableIds::contains).collect(toList());
-      if (!conflictOrderableIds.isEmpty()) {
-        conflictOrderableIds.forEach(id -> {
-          ProductSubDraftConflictDto subDraftConflictDto = ProductSubDraftConflictDto.builder()
-              .conflictWithSubDraftId(subDraft.getId())
-              .orderableId(id)
-              .conflictWith(subDraft.getDraftNumber().toString())
-              .build();
-          subDraftConflictDtos.add(subDraftConflictDto);
-        });
-      }
-    });
-
-    fillConflictDtos(subDraftConflictDtos);
-
-    if (!subDraftConflictDtos.isEmpty()) {
-      throw new BusinessDataException(new Message(ERROR_ISSUE_CONFLICT_SUB_DRAFT),
-          subDraftConflictDtos);
-    }
-  }
-
-  private void fillConflictDtos(List<ProductSubDraftConflictDto> subDraftConflictDtos) {
-    List<OrderableDto> orderableDtos = siglusOrderableReferenceDataService.findByIds(
-        subDraftConflictDtos.stream().map(ProductSubDraftConflictDto::getOrderableId)
-            .collect(toList()));
-    subDraftConflictDtos.forEach(subDraftConflictDto -> {
-      OrderableDto targetOrderableDto = orderableDtos.stream()
-          .filter(orderableDto -> orderableDto.getId().equals(subDraftConflictDto.getOrderableId()))
-          .findFirst()
-          .orElseThrow(() -> new ResourceNotFoundException(ERROR_EVENT_ORDERABLE_INVALID));
-      subDraftConflictDto.setProductCode(targetOrderableDto.getProductCode());
-      subDraftConflictDto.setProductName(targetOrderableDto.getFullProductName());
-    });
   }
 
   public StockManagementDraft setNewAttributesInOriginalDraft(StockManagementDraftDto dto,

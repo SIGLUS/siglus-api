@@ -64,6 +64,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
+import org.siglus.siglusapi.util.ConflictOrderableInSubDraftHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
@@ -100,6 +101,9 @@ public class SiglusStockManagementDraftServiceTest {
 
   @Mock
   private SupportedProgramsHelper supportedProgramsHelper;
+
+  @Mock
+  private ConflictOrderableInSubDraftHelper conflictOrderableInSubDraftHelper;
 
   @Mock
   private PermissionService permissionService;
@@ -193,6 +197,7 @@ public class SiglusStockManagementDraftServiceTest {
         .setNewAttributesInOriginalDraft(draftDto, id);
     when(stockManagementDraftRepository.save(stockManagementDraft))
         .thenReturn(stockManagementDraft);
+    doNothing().when(conflictOrderableInSubDraftHelper).checkConflictSubDraft(draftDto);
 
     StockManagementDraftDto updatedDraftDto = siglusStockManagementDraftService
         .updateDraft(draftDto, id);
