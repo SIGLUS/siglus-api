@@ -124,18 +124,16 @@ public class SiglusPhysicalInventorySubDraftService {
     return list.stream().anyMatch(lineItem -> isSameLineItem(lineItem, item));
   }
 
-  private void addDeletedInitialLineItems(List<PhysicalInventoryLineItemDto> current,
-                                          List<PhysicalInventoryLineItemDto> original) {
-    // TODO PhysicalInventoryLineItemDto not working
-    List<PhysicalInventoryLineItemDto> deleted = original.stream()
+  private List<PhysicalInventoryLineItemDto> getDeletedInitialLineItems(List<PhysicalInventoryLineItemDto> current,
+                                                                        List<PhysicalInventoryLineItemDto> original) {
+    // TODO PhysicalInventoryLineItemDto equals not working
+    return original.stream()
             .filter(lineItem -> !contains(current, lineItem)).collect(Collectors.toList());
-
-    current.addAll(deleted);
   }
 
   private void doDelete(List<PhysicalInventorySubDraft> subDrafts, List<UUID> subDraftIds) {
-    List<UUID> physicalInventoryIds = subDrafts.stream().map(PhysicalInventorySubDraft::getPhysicalInventoryId)
-        .collect(Collectors.toList());
+    Map<UUID, UUID> physicalInventoryIdToSubDraftIdMap = subDrafts.stream()
+        .collect(Collectors.toMap(PhysicalInventorySubDraft::getPhysicalInventoryId, PhysicalInventorySubDraft::getId));
     List<StockCardSummaryV2Dto> stockSummaries = siglusStockCardSummariesService.findAllProgramStockSummaries();
     Set<CanFulfillForMeEntryDto> canFulfillForMeEntryDtos = new HashSet<>();
     for (StockCardSummaryV2Dto stockCardSummaryV2Dto : stockSummaries) {
@@ -146,7 +144,7 @@ public class SiglusPhysicalInventorySubDraftService {
     Map<String, CanFulfillForMeEntryDto> canFulfillForMeEntryDtoMap = canFulfillForMeEntryDtos.stream()
         .collect(Collectors.toMap(this::getUniqueKey, Function.identity()));
 
-    for (UUID physicalInventoryId : physicalInventoryIds) {
+    for (UUID physicalInventoryId : physicalInventoryIdToSubDraftIdMap.keySet()) {
       List<PhysicalInventoryLineItemsExtension> oldLineItemsExtension
           = lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryId);
 
@@ -173,7 +171,23 @@ public class SiglusPhysicalInventorySubDraftService {
         throw new IllegalArgumentException("physical inventory not exists. id = " + physicalInventoryId);
       }
       List<PhysicalInventoryLineItemDto> lineItems = physicalInventoryDto.getLineItems();
-      addDeletedInitialLineItems(lineItems, originalInitialInventoryLineItems);
+      List<PhysicalInventoryLineItemDto> deleted = getDeletedInitialLineItems(lineItems,
+              originalInitialInventoryLineItems);
+      if (CollectionUtils.isNotEmpty(deleted)) {
+        lineItems.addAll(deleted);
+
+        List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension = convertToLineItemsExtension(
+                deleted,
+                physicalInventoryIdToSubDraftIdMap.get(physicalInventoryId),
+                physicalInventoryId);
+
+        PhysicalInventoryLineItemExtensionDto physicalInventoryExtendDto = new PhysicalInventoryLineItemExtensionDto();
+        BeanUtils.copyProperties(physicalInventoryDto, physicalInventoryExtendDto);
+        physicalInventoryExtendDto.setLineItemsExtensions(newLineItemsExtension);
+
+        siglusPhysicalInventoryService.saveDraftForProductsForOneProgramWithExtension(physicalInventoryExtendDto);
+      }
+
       if (CollectionUtils.isEmpty(lineItems)) {
         continue;
       }
