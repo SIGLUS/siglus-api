@@ -56,6 +56,7 @@ import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
+import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
@@ -144,6 +145,13 @@ public class SiglusStockManagementDraftServiceTest {
       .draftType(issueDraft)
       .destinationId(destinationId)
       .documentNumber("document-number").build();
+
+  private final StockManagementDraftLineItemDto stockManagementDraftLineItemDto = StockManagementDraftLineItemDto
+      .builder()
+      .lotCode("code-1")
+      .lotId(UUID.randomUUID())
+      .build();
+
 
   @Before
   public void setup() {
@@ -532,6 +540,7 @@ public class SiglusStockManagementDraftServiceTest {
   public void shouldUpdateSubDraftStatusWhenSubmit() {
     draftDto.setId(id);
     draftDto.setSignature("Jim-sign");
+    draftDto.setLineItems(newArrayList(stockManagementDraftLineItemDto));
     draft.setId(id);
     draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
 

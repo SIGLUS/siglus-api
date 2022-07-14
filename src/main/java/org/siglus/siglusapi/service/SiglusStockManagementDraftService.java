@@ -210,6 +210,7 @@ public class SiglusStockManagementDraftService {
     }
   }
 
+  @Transactional
   public void resetDraftNumber(StockManagementDraft draft) {
     List<StockManagementDraft> subDrafts = stockManagementDraftRepository
         .findByInitialDraftId(draft.getInitialDraftId());
@@ -270,6 +271,7 @@ public class SiglusStockManagementDraftService {
         .getName();
   }
 
+  @Transactional
   public StockManagementInitialDraftDto createInitialDraft(
       StockManagementInitialDraftDto initialDraftDto) {
     log.info("create stock management initial draft");
@@ -338,6 +340,7 @@ public class SiglusStockManagementDraftService {
     }
   }
 
+  @Transactional
   public StockManagementDraftDto updateOperatorAndStatus(StockManagementDraftDto draftDto) {
     StockManagementDraft draft = stockManagementDraftRepository.findOne(draftDto.getId());
 
@@ -360,6 +363,7 @@ public class SiglusStockManagementDraftService {
             id));
   }
 
+  @Transactional
   public StockManagementDraftDto updatePartOfInfoWithDraft(StockManagementDraftDto dto) {
     StockManagementDraft targetDraft = stockManagementDraftRepository.findOne(dto.getId());
     if (targetDraft != null) {
@@ -374,13 +378,22 @@ public class SiglusStockManagementDraftService {
     throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
   }
 
+  @Transactional
   public StockManagementDraftDto updateStatusAfterSubmit(StockManagementDraftDto draftDto) {
     StockManagementDraft draft = stockManagementDraftRepository.findOne(draftDto.getId());
     if (draft != null) {
       conflictOrderableInSubDraftHelper.checkConflictSubDraft(draftDto);
       draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
       draft.setSignature(draftDto.getSignature());
-      StockManagementDraft updatedDraft = stockManagementDraftRepository.save(draft);
+      List<StockManagementDraftLineItemDto> lineItems = draftDto.getLineItems();
+      List<StockManagementDraftLineItem> draftLineItems = lineItems.stream()
+          .map(lineItemDto -> StockManagementDraftLineItem.from(lineItemDto, draft))
+          .collect(toList());
+      StockManagementDraft submitDraft = new StockManagementDraft();
+      BeanUtils.copyProperties(draft, submitDraft);
+      submitDraft.setLineItems(draftLineItems);
+
+      StockManagementDraft updatedDraft = stockManagementDraftRepository.save(submitDraft);
       return StockManagementDraftDto.from(updatedDraft);
     }
     throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
