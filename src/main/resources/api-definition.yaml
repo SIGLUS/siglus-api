@@ -246,6 +246,29 @@ traits:
 /api:
 
   /siglusapi:
+    /administration:
+      /facilities:
+        get:
+          is: [ secured ]
+          description: Search for facilities information
+          responses:
+            200:
+              description: Information display
+      /{facilityId}/android:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        delete:
+          is: [ secured ]
+          description: Remove android info by facilityId
+          responses:
+            204:
+              description: Android device successfully removed
+
+
     /data-migration/{facilityId}:
       /stock-cards:
         displayName: Submit stock cards for a specific facility
