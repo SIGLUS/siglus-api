@@ -117,4 +117,10 @@ public class SiglusStockManagementDraftControllerTest {
     controller.createEmptyStockManagementDraftForIssue(dto);
     verify(service).createNewIssueDraft(dto);
   }
+
+  @Test
+  public void shouldCallUpdateStatusAfterSubmit() {
+    controller.updateStatusAfterSubmit(dto);
+    verify(service).updateStatusAfterSubmit(dto);
+  }
 }

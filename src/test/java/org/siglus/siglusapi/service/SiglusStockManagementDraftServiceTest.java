@@ -519,4 +519,31 @@ public class SiglusStockManagementDraftServiceTest {
 
     assertTrue(draftDto.getIsDraft());
   }
+
+  @Test
+  public void shouldThrowExceptionCallUpdateStatusAfterSubmitWhenDraftNotFound() {
+    exception.expect(ResourceNotFoundException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND));
+
+    siglusStockManagementDraftService.updateStatusAfterSubmit(draftDto);
+  }
+
+  @Test
+  public void shouldUpdateSubDraftStatusWhenSubmit() {
+    draftDto.setId(id);
+    draft.setId(id);
+    draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+
+    when(stockManagementDraftRepository.findOne(id))
+        .thenReturn(draft);
+    doNothing().when(conflictOrderableInSubDraftHelper).checkConflictSubDraft(draftDto);
+    when(stockManagementDraftRepository.save(any(StockManagementDraft.class))).thenReturn(draft);
+
+    StockManagementDraftDto stockManagementDraftDto = siglusStockManagementDraftService
+        .updateStatusAfterSubmit(draftDto);
+
+    assertThat(stockManagementDraftDto.getStatus())
+        .isEqualTo(PhysicalInventorySubDraftEnum.SUBMITTED);
+
+  }
 }

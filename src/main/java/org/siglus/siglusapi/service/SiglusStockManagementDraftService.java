@@ -159,7 +159,7 @@ public class SiglusStockManagementDraftService {
     return newDraft;
   }
 
-  //Delete after finish multi-user stock issue feature
+  //TODO: Delete after finish multi-user stock issue feature
   public List<StockManagementDraftDto> findStockManagementDraft(UUID programId, String type,
       Boolean isDraft) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -234,7 +234,7 @@ public class SiglusStockManagementDraftService {
     supportedPrograms.forEach(i -> permissionService.canAdjustStock(i, facility));
   }
 
-  //Delete after finish multi-user stock issue feature
+  //TODO: Delete after finish multi-user stock issue feature
   private void checkIfDraftExists(StockManagementDraftDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
@@ -371,8 +371,17 @@ public class SiglusStockManagementDraftService {
       StockManagementDraft savedDraft = stockManagementDraftRepository.save(currentDraft);
       return StockManagementDraftDto.from(savedDraft);
     }
-    throw new ResourceNotFoundException(
-        new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
-            dto.getId()));
+    throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
+  }
+
+  public StockManagementDraftDto updateStatusAfterSubmit(StockManagementDraftDto draftDto) {
+    StockManagementDraft draft = stockManagementDraftRepository.findOne(draftDto.getId());
+    if (draft != null) {
+      conflictOrderableInSubDraftHelper.checkConflictSubDraft(draftDto);
+      draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+      StockManagementDraft updatedDraft = stockManagementDraftRepository.save(draft);
+      return StockManagementDraftDto.from(updatedDraft);
+    }
+    throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
   }
 }
