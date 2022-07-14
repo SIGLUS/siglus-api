@@ -45,8 +45,8 @@ public class SiglusAdministrationsService {
     Page<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.searchAllFacilities(page, size, sort);
     // justify isAndroid by facilityId
     facilityDtos.getContent().forEach(m -> {
-        FacilityExtension byFacilityId = facilityExtensionRepository.findByFacilityId(m.getId());
-        m.setIsAndroid(null != byFacilityId && BooleanUtils.isTrue(byFacilityId.getIsAndroid()));
+      FacilityExtension byFacilityId = facilityExtensionRepository.findByFacilityId(m.getId());
+      m.setIsAndroid(null != byFacilityId && BooleanUtils.isTrue(byFacilityId.getIsAndroid()));
     });
     return facilityDtos;
   }
