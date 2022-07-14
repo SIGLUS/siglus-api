@@ -406,7 +406,7 @@ public class SiglusPhysicalInventoryService {
     return physicalInventoryLineItems;
   }
 
-  private List<PhysicalInventoryLineItemDto> buildInitialInventoryLineItemDtos(
+  public List<PhysicalInventoryLineItemDto> buildInitialInventoryLineItemDtos(
       Set<UUID> supportedVirtualProgramIds, UUID facilityId) {
     return supportedVirtualProgramIds.stream()
         .map(programId ->
