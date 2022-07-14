@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -791,11 +792,13 @@ public class SiglusPhysicalInventoryService {
         .findByPhysicalInventoryIdIn(updatePhysicalInventoryIds);
     List<PhysicalInventoryLineItemsExtension> updateExtensions = new ArrayList<>();
 
+    Set<String> uniqueKeys = new HashSet<>();
     updatedDto.forEach(dto -> {
       if (dto.getLineItems() == null || dto.getLineItems().isEmpty()) {
         return;
       }
       dto.getLineItems().forEach(lineItem -> {
+        uniqueKeys.add(getUniqueKey(lineItem.getOrderableId(), lineItem.getLotId()));
         PhysicalInventoryLineItemsExtension extension = getExtension(extensions, lineItem);
         if (extension == null) {
           UUID subDraftId = lineItemsExtensionMap.get(getUniqueKey(lineItem.getOrderableId(), lineItem.getLotId()));
@@ -811,6 +814,12 @@ public class SiglusPhysicalInventoryService {
         updateExtensions.add(extension);
       });
     });
+    List<PhysicalInventoryLineItemsExtension> needDeleteLineItemsExtensions = extensions.stream()
+        .filter(item -> !uniqueKeys.contains(getUniqueKey(item.getOrderableId(), item.getLotId())))
+        .collect(Collectors.toList());
+    if (CollectionUtils.isNotEmpty(needDeleteLineItemsExtensions)) {
+      lineItemsExtensionRepository.deleteInBatch(needDeleteLineItemsExtensions);
+    }
 
     log.info("save physical inventory extension, size: {}", updateExtensions.size());
     return lineItemsExtensionRepository.save(updateExtensions);
