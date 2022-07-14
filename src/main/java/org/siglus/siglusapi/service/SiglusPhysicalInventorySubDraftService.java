@@ -107,11 +107,25 @@ public class SiglusPhysicalInventorySubDraftService {
     return subDrafts;
   }
 
+  private boolean isSameUUID(UUID id1, UUID id2) {
+    if (id1 == null) {
+      return id2 == null;
+    }
+    return id1.equals(id2);
+  }
+  private boolean isSameLineItem(PhysicalInventoryLineItemDto item1,
+                                  PhysicalInventoryLineItemDto item2) {
+    return isSameUUID(item1.getOrderableId(), item2.getOrderableId()) &&
+            isSameUUID(item1.getLotId(), item2.getLotId());
+  }
+  private boolean contains(List<PhysicalInventoryLineItemDto> list, PhysicalInventoryLineItemDto item) {
+    return list.stream().anyMatch(lineItem -> isSameLineItem(lineItem, item));
+  }
   private void addDeletedInitialLineItems(List<PhysicalInventoryLineItemDto> current,
                                           List<PhysicalInventoryLineItemDto> original) {
-    Set<PhysicalInventoryLineItemDto> currentLineItemSet = current.stream().collect(Collectors.toSet());
+    // TODO PhysicalInventoryLineItemDto not working
     List<PhysicalInventoryLineItemDto> deleted = original.stream()
-            .filter(lineItem -> !currentLineItemSet.contains(lineItem)).collect(Collectors.toList());
+            .filter(lineItem -> !contains(current, lineItem)).collect(Collectors.toList());
 
     current.addAll(deleted);
   }
