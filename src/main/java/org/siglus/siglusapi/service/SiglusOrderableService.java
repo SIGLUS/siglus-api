@@ -59,8 +59,10 @@ public class SiglusOrderableService {
 
   public Page<OrderableDto> searchOrderables(QueryOrderableSearchParams searchParams,
       Pageable pageable, UUID facilityId) {
-    Page<OrderableDto> orderableDtoPage = orderableReferenceDataService.searchOrderables(searchParams, pageable);
-    Set<String> archivedProducts = archivedProductRepository.findArchivedProductsByFacilityId(facilityId);
+    Page<OrderableDto> orderableDtoPage = orderableReferenceDataService
+        .searchOrderables(searchParams, pageable);
+    Set<String> archivedProducts = archivedProductRepository
+        .findArchivedProductsByFacilityId(facilityId);
     orderableDtoPage.getContent().forEach(orderableDto -> orderableDto
         .setArchived(archivedProducts.contains(orderableDto.getId().toString())));
     return orderableDtoPage;
@@ -113,7 +115,8 @@ public class SiglusOrderableService {
       Pageable pageable) {
     Pageable noPagination = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
         PaginationConstants.NO_PAGINATION, pageable.getSort());
-    List<OrderableDto> orderableDtos = orderableReferenceDataService.searchOrderables(searchParams, noPagination)
+    List<OrderableDto> orderableDtos = orderableReferenceDataService
+        .searchOrderables(searchParams, noPagination)
         .getContent();
     Set<UUID> additionalOrderableIds = programAdditionalOrderableRepository
         .findAllByProgramId(programId)
@@ -147,11 +150,13 @@ public class SiglusOrderableService {
   }
 
   public OrderableDto getOrderableByCode(String productCode) {
-    Pageable noPagination = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, PaginationConstants.NO_PAGINATION);
+    Pageable noPagination = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
+        PaginationConstants.NO_PAGINATION);
     MultiValueMap<String, Object> queryParams = new LinkedMultiValueMap<>();
     queryParams.set(CODE, productCode);
     QueryOrderableSearchParams searchParams = new QueryOrderableSearchParams(queryParams);
-    return orderableReferenceDataService.searchOrderables(searchParams, noPagination).getContent().stream()
+    return orderableReferenceDataService.searchOrderables(searchParams, noPagination).getContent()
+        .stream()
         .filter(orderableDto -> productCode.equals(orderableDto.getProductCode()))
         .findFirst()
         .orElse(null);
@@ -159,7 +164,8 @@ public class SiglusOrderableService {
 
   public List<OrderableDto> getAllProducts() {
     QueryOrderableSearchParams params = new QueryOrderableSearchParams(new LinkedMultiValueMap<>());
-    Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER, PaginationConstants.NO_PAGINATION);
+    Pageable pageable = new PageRequest(PaginationConstants.DEFAULT_PAGE_NUMBER,
+        PaginationConstants.NO_PAGINATION);
     return orderableReferenceDataService.searchOrderables(params, pageable).getContent();
   }
 

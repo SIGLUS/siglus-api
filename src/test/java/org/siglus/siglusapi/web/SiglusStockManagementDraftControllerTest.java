@@ -28,6 +28,7 @@ import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.service.SiglusStockManagementDraftService;
 
+@SuppressWarnings("PMD.TooManyMethods")
 @RunWith(MockitoJUnitRunner.class)
 public class SiglusStockManagementDraftControllerTest {
 
@@ -116,5 +117,11 @@ public class SiglusStockManagementDraftControllerTest {
   public void shouldCallCreateEmptyStockManagementDraftForIssue() {
     controller.createEmptyStockManagementDraftForIssue(dto);
     verify(service).createNewIssueDraft(dto);
+  }
+
+  @Test
+  public void shouldCallUpdateStatusAfterSubmit() {
+    controller.updateStatusAfterSubmit(dto);
+    verify(service).updateStatusAfterSubmit(dto);
   }
 }

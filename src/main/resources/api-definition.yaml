@@ -246,6 +246,29 @@ traits:
 /api:
 
   /siglusapi:
+    /administration:
+      /facilities:
+        get:
+          is: [ secured ]
+          description: Search for facilities information
+          responses:
+            200:
+              description: Information display
+      /{facilityId}/android:
+        uriParameters:
+          facilityId:
+            displayName: facilityId
+            type: string
+            required: true
+            repeat: false
+        delete:
+          is: [ secured ]
+          description: Remove android info by facilityId
+          responses:
+            204:
+              description: Android device successfully removed
+
+
     /data-migration/{facilityId}:
       /stock-cards:
         displayName: Submit stock cards for a specific facility
@@ -785,6 +808,32 @@ traits:
 
           403:
             description: User does not have permission to save draft stock management.
+            body:
+              application/json:
+                schema: localizedMessage
+
+    /drafts/{initialDraftId}/subDraft/{subDraftId}/submit:
+      put:
+        is: [ secured ]
+        description: Update a stock management sub-draft. Only one sub-draft is allowed at the same time for one specific initial draft.
+        body:
+          application/json:
+            schema: stockManagementDraft
+
+        responses:
+          200:
+            description: Draft updated.
+            body:
+              application/json:
+                schema: stockManagementDraft
+          400:
+            body:
+              application/json:
+                schema: localizedMessage
+            description: An error occured during request processing.
+
+          403:
+            description: User does not have permission to update stock management sub-draft.
             body:
               application/json:
                 schema: localizedMessage

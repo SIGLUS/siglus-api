@@ -38,7 +38,7 @@ import org.siglus.common.domain.ProcessingPeriodExtension;
 import org.siglus.common.domain.referencedata.ProcessingPeriod;
 import org.siglus.common.domain.referencedata.ProcessingSchedule;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
-import org.siglus.siglusapi.constant.AndroidConstants;
+import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
 import org.siglus.siglusapi.domain.ReportType;
 import org.siglus.siglusapi.domain.RequisitionMonthlyReport;
@@ -145,7 +145,7 @@ public class RequisitionReportTaskServiceTest {
     when(facilityNativeRepository.findFacilityProgramPeriodSchedule()).thenReturn(all);
 
     processingSchedule.setId(periodScheduleId);
-    processingSchedule.setCode(AndroidConstants.MONTH_SCHEDULE_CODE);
+    processingSchedule.setCode(PeriodConstants.MONTH_SCHEDULE_CODE);
 
     ReportType reportType = new ReportType();
     reportType.setFacilityId(facilityId);
@@ -179,7 +179,7 @@ public class RequisitionReportTaskServiceTest {
 
 
     when(facilityNativeRepository.findFirstStockCardGroupByFacility()).thenReturn(
-        getFacillityStockCardDateDto(2021, 12, 10));
+        getFacillityStockCardDateDto(2021, 1, 10));
 
     when(requisitionMonthReportRepository.findAll()).thenReturn(new ArrayList<>());
 

@@ -44,7 +44,7 @@ public class SiglusStockManagementDraftController {
   @Autowired
   SiglusStockManagementDraftService stockManagementDraftService;
 
-  //Delete after finish multi-user stock issue feature
+  //TODO: Delete after finish multi-user stock issue feature
   @GetMapping
   public List<StockManagementDraftDto> searchDrafts(@RequestParam UUID program,
       @RequestParam UUID userId, @RequestParam String draftType,
@@ -62,7 +62,7 @@ public class SiglusStockManagementDraftController {
     return stockManagementDraftService.findStockManagementDrafts(initialDraftId);
   }
 
-  @PostMapping()
+  @PostMapping
   @ResponseStatus(CREATED)
   public StockManagementDraftDto createEmptyStockManagementDraft(
       @RequestBody StockManagementDraftDto dto) {
@@ -117,6 +117,13 @@ public class SiglusStockManagementDraftController {
   public StockManagementDraftDto updatePartOfInfoWithDraft(
       @RequestBody StockManagementDraftDto dto) {
     return stockManagementDraftService.updatePartOfInfoWithDraft(dto);
+  }
+
+  @PutMapping("/{initialDraftId}/subDraft/{subDraftId}/submit")
+  @ResponseStatus(OK)
+  public StockManagementDraftDto updateStatusAfterSubmit(
+      @RequestBody StockManagementDraftDto draftDto) {
+    return stockManagementDraftService.updateStatusAfterSubmit(draftDto);
   }
 }
 

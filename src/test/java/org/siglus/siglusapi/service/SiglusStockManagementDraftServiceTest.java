@@ -64,6 +64,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
+import org.siglus.siglusapi.util.ConflictOrderableInSubDraftHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
@@ -100,6 +101,9 @@ public class SiglusStockManagementDraftServiceTest {
 
   @Mock
   private SupportedProgramsHelper supportedProgramsHelper;
+
+  @Mock
+  private ConflictOrderableInSubDraftHelper conflictOrderableInSubDraftHelper;
 
   @Mock
   private PermissionService permissionService;
@@ -193,6 +197,7 @@ public class SiglusStockManagementDraftServiceTest {
         .setNewAttributesInOriginalDraft(draftDto, id);
     when(stockManagementDraftRepository.save(stockManagementDraft))
         .thenReturn(stockManagementDraft);
+    doNothing().when(conflictOrderableInSubDraftHelper).checkConflictSubDraft(draftDto);
 
     StockManagementDraftDto updatedDraftDto = siglusStockManagementDraftService
         .updateDraft(draftDto, id);
@@ -497,8 +502,8 @@ public class SiglusStockManagementDraftServiceTest {
 
   @Test
   public void shouldThrowExceptionWhenDraftNotFound() {
-    exception.expect(ResourceNotFoundException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND));
+    exception.expect(NotFoundException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND));
 
     siglusStockManagementDraftService.updatePartOfInfoWithDraft(draftDto);
   }
@@ -513,5 +518,33 @@ public class SiglusStockManagementDraftServiceTest {
     draftDto = siglusStockManagementDraftService.createNewDraft(draftDto);
 
     assertTrue(draftDto.getIsDraft());
+  }
+
+  @Test
+  public void shouldThrowExceptionCallUpdateStatusAfterSubmitWhenDraftNotFound() {
+    exception.expect(NotFoundException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND));
+
+    siglusStockManagementDraftService.updateStatusAfterSubmit(draftDto);
+  }
+
+  @Test
+  public void shouldUpdateSubDraftStatusWhenSubmit() {
+    draftDto.setId(id);
+    draftDto.setSignature("Jim-sign");
+    draft.setId(id);
+    draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+
+    when(stockManagementDraftRepository.findOne(id))
+        .thenReturn(draft);
+    doNothing().when(conflictOrderableInSubDraftHelper).checkConflictSubDraft(draftDto);
+    when(stockManagementDraftRepository.save(any(StockManagementDraft.class))).thenReturn(draft);
+
+    StockManagementDraftDto stockManagementDraftDto = siglusStockManagementDraftService
+        .updateStatusAfterSubmit(draftDto);
+
+    assertThat(stockManagementDraftDto.getStatus())
+        .isEqualTo(PhysicalInventorySubDraftEnum.SUBMITTED);
+
   }
 }

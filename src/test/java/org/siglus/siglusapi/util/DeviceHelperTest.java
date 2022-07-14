@@ -78,7 +78,7 @@ public class DeviceHelperTest {
     when(appInfoRepository.findByFacilityCode(anyString())).thenReturn(appInfo);
 
     //when
-    boolean isSameDevice = deviceHelper.isSameDevice();
+    boolean isSameDevice = deviceHelper.isRegisteredDevice();
 
     //then
     assertFalse(isSameDevice);
@@ -92,7 +92,7 @@ public class DeviceHelperTest {
     when(appInfoRepository.findByFacilityCode(anyString())).thenReturn(appInfo);
 
     //when
-    boolean isSameDevice = deviceHelper.isSameDevice();
+    boolean isSameDevice = deviceHelper.isRegisteredDevice();
 
     //then
     assertTrue(isSameDevice);
@@ -104,7 +104,7 @@ public class DeviceHelperTest {
     when(appInfoRepository.findByFacilityCode(anyString())).thenReturn(null);
 
     //when
-    boolean isSameDevice = deviceHelper.isSameDevice();
+    boolean isSameDevice = deviceHelper.isRegisteredDevice();
 
     //then
     assertTrue(isSameDevice);

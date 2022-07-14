@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 public class SiglusFacilityReferenceDataService extends BaseReferenceDataService<FacilityDto> {
 
   public static final String FACILITY_CODE = "code";
+  public static final String SORT = "sort";
 
   @Override
   protected String getUrl() {
@@ -78,6 +79,14 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
   @Cacheable(value = SIGLUS_FACILITY, keyGenerator = CACHE_KEY_GENERATOR)
   public FacilityDto findOne(UUID facilityId) {
     return super.findOne(facilityId);
+  }
+
+  public Page<FacilityDto> searchAllFacilities(Integer page, Integer size, String sort) {
+    Pageable pageInfos = new PageRequest(page, size);
+    Map<String, String> requestBody = new HashMap<>();
+    requestBody.put(SORT, sort);
+    return getPage("search", RequestParameters.init().setPage(pageInfos),
+            requestBody, HttpMethod.POST, getResultClass(), false);
   }
 
 }

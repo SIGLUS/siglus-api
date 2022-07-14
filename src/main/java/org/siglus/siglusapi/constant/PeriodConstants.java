@@ -13,26 +13,16 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.task;
+package org.siglus.siglusapi.constant;
 
-import javax.transaction.Transactional;
+import static org.siglus.common.domain.referencedata.Code.code;
 
-import lombok.RequiredArgsConstructor;
-import net.javacrumbs.shedlock.core.SchedulerLock;
-import org.siglus.siglusapi.service.task.report.RequisitionReportTaskService;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.siglus.common.domain.referencedata.Code;
 
-@RequiredArgsConstructor
-@Service
-public class RequisitionReportTask {
-  private final RequisitionReportTaskService requisitionReportTaskService;
 
-  @Scheduled(cron = "${report.requisition.monthly.cron}", zone = "${time.zoneId}")
-  @SchedulerLock(name = "requisition_not_submit_monthly_report")
-  @Transactional
-  public void refresh() {
-    requisitionReportTaskService.refresh(false);
-  }
+public class PeriodConstants {
 
+  public static final Code MONTH_SCHEDULE_CODE = code("M1");
+
+  public static final Code REPORT_MONTH_SCHEDULE_CODE = code("M2");
 }

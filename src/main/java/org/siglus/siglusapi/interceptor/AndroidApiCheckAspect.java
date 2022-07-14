@@ -44,8 +44,8 @@ public class AndroidApiCheckAspect {
   public void before() {
     if (!androidHelper.isAndroid()) {
       throw new PermissionMessageException(new Message("siglusapi.error.notAndroidUser"));
-    } else if (!deviceHelper.isSameDevice()) {
-      throw new PermissionMessageException(new Message("siglusapi.error.notSameDevice"));
+    } else if (!deviceHelper.isRegisteredDevice()) {
+      throw new PermissionMessageException(new Message("siglusapi.error.notRegisteredDevice"));
     }
   }
 

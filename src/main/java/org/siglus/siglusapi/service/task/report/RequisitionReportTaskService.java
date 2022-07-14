@@ -39,6 +39,7 @@ import org.siglus.common.domain.referencedata.ProcessingSchedule;
 import org.siglus.common.dto.ProgramAdditionalOrderableDto;
 import org.siglus.common.repository.ProcessingPeriodExtensionRepository;
 import org.siglus.siglusapi.constant.AndroidConstants;
+import org.siglus.siglusapi.constant.PeriodConstants;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.ProgramRequisitionNameMapping;
 import org.siglus.siglusapi.domain.ReportType;
@@ -57,8 +58,8 @@ import org.siglus.siglusapi.repository.dto.FacillityStockCardDateDto;
 import org.siglus.siglusapi.service.SiglusProgramAdditionalOrderableService;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -78,6 +79,12 @@ public class RequisitionReportTaskService {
   private final SiglusProgramAdditionalOrderableService siglusProgramAdditionalOrderableService;
 
   private final ReportTypeRepository reportTypeRepository;
+
+  @Value("${dayOfMonthThreshold.nonRapidTest}")
+  private int nonRapidTestDayOfMonthThreshold;
+
+  @Value("${dayOfMonthThreshold.rapidTest}")
+  private int rapidTestDayOfMonthThreshold;
 
   public void refresh(boolean needCheckPermission) {
     log.info("refresh. start = " + System.currentTimeMillis());
@@ -197,8 +204,8 @@ public class RequisitionReportTaskService {
     } else {
       // only show monthly periods
       return facilityProcessingScheduleId.equals(processingSchedule.getId())
-          && (AndroidConstants.MONTH_SCHEDULE_CODE.equals(processingSchedule.getCode())
-          || AndroidConstants.REPORT_MONTH_SCHEDULE_CODE.equals(processingSchedule.getCode()));
+          && (PeriodConstants.MONTH_SCHEDULE_CODE.equals(processingSchedule.getCode())
+          || PeriodConstants.REPORT_MONTH_SCHEDULE_CODE.equals(processingSchedule.getCode()));
     }
   }
 
@@ -259,7 +266,6 @@ public class RequisitionReportTaskService {
     return result;
   }
 
-  @Transactional
   public void updateBatch(UUID facilityId, List<RequisitionMonthlyNotSubmitReport> notSubmitList) {
     requisitionMonthlyNotSubmitReportRepository.deleteByFacilityId(facilityId);
     if (CollectionUtils.isNotEmpty(notSubmitList)) {
@@ -374,19 +380,23 @@ public class RequisitionReportTaskService {
                                             Optional<ReportType> reportType, LocalDate firstStockOccurDate,
                                             boolean isAndroid, boolean isRapidTest) {
     if (isAndroid) {
+      if (!reportType.isPresent()) {
+        throw new IllegalStateException();
+      }
       LocalDate startDate = reportType.get().getStartDate().isBefore(firstStockOccurDate)
           ? firstStockOccurDate : reportType.get().getStartDate();
       if (reportType.get().getStartDate().isBefore(firstStockOccurDate) && !isRapidTest) {
-        // TODO: 数字可配置 add implement ( 2022/7/11 by kourengang)
-        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 17);
+        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, nonRapidTestDayOfMonthThreshold);
       } else {
-        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, 20);
+        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, startDate, rapidTestDayOfMonthThreshold);
       }
     } else {
       if (!isRapidTest) {
-        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, firstStockOccurDate, 17);
+        return findStartPeriodIndexByStartDate(allProcessingPeriodDto,
+            firstStockOccurDate, nonRapidTestDayOfMonthThreshold);
       } else {
-        return findStartPeriodIndexByStartDate(allProcessingPeriodDto, firstStockOccurDate, 20);
+        return findStartPeriodIndexByStartDate(allProcessingPeriodDto,
+            firstStockOccurDate, rapidTestDayOfMonthThreshold);
       }
     }
   }

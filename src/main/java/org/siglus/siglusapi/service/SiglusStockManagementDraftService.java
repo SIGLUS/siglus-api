@@ -26,6 +26,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITI
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -50,6 +51,7 @@ import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
+import org.siglus.siglusapi.util.ConflictOrderableInSubDraftHelper;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.siglus.siglusapi.validator.ActiveDraftValidator;
@@ -87,6 +89,9 @@ public class SiglusStockManagementDraftService {
 
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
+
+  @Autowired
+  private ConflictOrderableInSubDraftHelper conflictOrderableInSubDraftHelper;
 
   private static final Integer DRAFTS_LIMITATION = 10;
   private static final Integer DRAFTS_INCREMENT = 1;
@@ -132,6 +137,7 @@ public class SiglusStockManagementDraftService {
   public StockManagementDraftDto updateDraft(StockManagementDraftDto dto, UUID id) {
     log.info("update issue draft");
     stockManagementDraftValidator.validateDraft(dto, id);
+    conflictOrderableInSubDraftHelper.checkConflictSubDraft(dto);
     StockManagementDraft newDraft = setNewAttributesInOriginalDraft(dto, id);
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
     return StockManagementDraftDto.from(savedDraft);
@@ -153,7 +159,7 @@ public class SiglusStockManagementDraftService {
     return newDraft;
   }
 
-  //Delete after finish multi-user stock issue feature
+  //TODO: Delete after finish multi-user stock issue feature
   public List<StockManagementDraftDto> findStockManagementDraft(UUID programId, String type,
       Boolean isDraft) {
     UUID facilityId = authenticationHelper.getCurrentUser().getHomeFacilityId();
@@ -170,7 +176,10 @@ public class SiglusStockManagementDraftService {
     draftValidator.validateInitialDraftId(initialDraftId);
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByInitialDraftId(initialDraftId);
-    return StockManagementDraftDto.from(drafts);
+    List<StockManagementDraft> sortedDrafts = drafts.stream()
+        .sorted(Comparator.comparingInt(StockManagementDraft::getDraftNumber))
+        .collect(toList());
+    return StockManagementDraftDto.from(sortedDrafts);
   }
 
   public void deleteStockManagementDraft(StockEventDto dto) {
@@ -225,7 +234,7 @@ public class SiglusStockManagementDraftService {
     supportedPrograms.forEach(i -> permissionService.canAdjustStock(i, facility));
   }
 
-  //Delete after finish multi-user stock issue feature
+  //TODO: Delete after finish multi-user stock issue feature
   private void checkIfDraftExists(StockManagementDraftDto dto) {
     List<StockManagementDraft> drafts = stockManagementDraftRepository
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
@@ -362,8 +371,18 @@ public class SiglusStockManagementDraftService {
       StockManagementDraft savedDraft = stockManagementDraftRepository.save(currentDraft);
       return StockManagementDraftDto.from(savedDraft);
     }
-    throw new ResourceNotFoundException(
-        new org.openlmis.stockmanagement.util.Message(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND,
-            dto.getId()));
+    throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
+  }
+
+  public StockManagementDraftDto updateStatusAfterSubmit(StockManagementDraftDto draftDto) {
+    StockManagementDraft draft = stockManagementDraftRepository.findOne(draftDto.getId());
+    if (draft != null) {
+      conflictOrderableInSubDraftHelper.checkConflictSubDraft(draftDto);
+      draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+      draft.setSignature(draftDto.getSignature());
+      StockManagementDraft updatedDraft = stockManagementDraftRepository.save(draft);
+      return StockManagementDraftDto.from(updatedDraft);
+    }
+    throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
   }
 }
