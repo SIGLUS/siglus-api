@@ -379,6 +379,7 @@ public class SiglusStockManagementDraftService {
     if (draft != null) {
       conflictOrderableInSubDraftHelper.checkConflictSubDraft(draftDto);
       draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+      draft.setSignature(draftDto.getSignature());
       StockManagementDraft updatedDraft = stockManagementDraftRepository.save(draft);
       return StockManagementDraftDto.from(updatedDraft);
     }
