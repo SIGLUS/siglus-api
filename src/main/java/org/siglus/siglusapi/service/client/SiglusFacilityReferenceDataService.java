@@ -81,12 +81,12 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
     return super.findOne(facilityId);
   }
 
-  public Page<FacilityDto> searchAllFacilities(Integer page, Integer size, String sort){
+  public Page<FacilityDto> searchAllFacilities(Integer page, Integer size, String sort) {
     Pageable pageInfos = new PageRequest(page, size);
     Map<String, String> requestBody = new HashMap<>();
     requestBody.put(SORT, sort);
-    return getPage("search", RequestParameters.init().setPage(pageInfos)
-            , requestBody, HttpMethod.POST, getResultClass(), false);
+    return getPage("search", RequestParameters.init().setPage(pageInfos),
+            requestBody, HttpMethod.POST, getResultClass(), false);
   }
 
 }
