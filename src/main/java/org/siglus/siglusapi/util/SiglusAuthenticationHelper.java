@@ -31,6 +31,7 @@ import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
@@ -38,6 +39,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SiglusAuthenticationHelper {
 
+  public static final String MIGRATE_DATA = "MIGRATE_DATA";
+  private final SiglusUserReferenceDataService userService;
   @Value("${role.admin.id}")
   private String roleAdminId;
   @Value("${role.role2.warehouse.manager}")
@@ -50,8 +53,6 @@ public class SiglusAuthenticationHelper {
   private String role3Director;
   @Value("${role.role3.director.sn}")
   private String role3DirectorSn;
-
-  private final SiglusUserReferenceDataService userService;
 
   public Optional<UUID> getCurrentUserId() {
     Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -115,4 +116,8 @@ public class SiglusAuthenticationHelper {
     return new AuthenticationException(new Message(ERROR_USER_NOT_FOUND, currentUserId));
   }
 
+  public boolean isTheDataMigrationUser() {
+    return SecurityContextHolder.getContext().getAuthentication().getAuthorities().contains(new SimpleGrantedAuthority(
+        MIGRATE_DATA));
+  }
 }
