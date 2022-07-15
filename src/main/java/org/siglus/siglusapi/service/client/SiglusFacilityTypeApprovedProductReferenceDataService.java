@@ -16,6 +16,7 @@
 package org.siglus.siglusapi.service.client;
 
 import java.util.UUID;
+import org.openlmis.stockmanagement.util.RequestParameters;
 import org.siglus.siglusapi.dto.ApprovedProductDto;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,7 @@ public class SiglusFacilityTypeApprovedProductReferenceDataService extends
     return postResult("", approvedProductDto, getResultClass());
   }
 
-  public void delete(UUID approvedProductId) {
-    delete(approvedProductId.toString(), true);
+  public void delete(UUID approvedProductId, RequestParameters parameters) {
+    delete(approvedProductId.toString(), parameters, true);
   }
 }

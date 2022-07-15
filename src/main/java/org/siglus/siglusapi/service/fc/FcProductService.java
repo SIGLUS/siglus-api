@@ -298,6 +298,7 @@ public class FcProductService implements ProcessDataService {
       return Collections.emptySet();
     }
     Set<String> programCodes = product.getAreas().stream()
+        .filter(areaDto -> FcUtil.isActive(areaDto.getStatus()))
         .filter(areaDto -> realProgramCodeToEntityMap.get(areaDto.getAreaCode()) != null)
         .map(areaDto -> realProgramCodeToEntityMap.get(areaDto.getAreaCode()).getProgramCode())
         .collect(Collectors.toSet());
@@ -314,14 +315,9 @@ public class FcProductService implements ProcessDataService {
     } else {
       programCode = ProgramConstants.VIA_PROGRAM_CODE;
     }
-    boolean isActive = product.getAreas().stream()
-        .filter(area -> programCode.equals(realProgramCodeToEntityMap.get(area.getAreaCode()).getProgramCode()))
-        .findFirst()
-        .map(area -> FcUtil.isActive(area.getStatus()))
-        .orElse(false);
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
     programOrderableDto.setProgramId(programCodeToIdMap.get(programCode));
-    programOrderableDto.setActive(isActive);
+    programOrderableDto.setActive(true);
     programOrderableDto.setFullSupply(true);
     OrderableDisplayCategoryDto categoryDto = categoryCodeToEntityMap.get(product.getCategoryCode());
     if (null == categoryDto) {
@@ -400,26 +396,20 @@ public class FcProductService implements ProcessDataService {
   private boolean isDifferentProgramOrderable(OrderableDto existed, ProductInfoDto current) {
     Set<ProgramOrderableDto> productPrograms = buildProgramOrderableDtos(current);
     Set<ProgramOrderableDto> existingOrderablePrograms = existed.getPrograms();
-    if (existingOrderablePrograms == null) {
+    if (existingOrderablePrograms == null || existingOrderablePrograms.isEmpty()) {
       return !productPrograms.isEmpty();
     }
     if (productPrograms.size() != existingOrderablePrograms.size()) {
       return true;
     }
-    Map<UUID, ProgramOrderableDto> programIdToCurrentDto = productPrograms.stream()
-        .collect(Collectors.toMap(ProgramOrderableDto::getProgramId, currentDto -> currentDto));
-    Map<UUID, ProgramOrderableDto> programIdToExistDto = existingOrderablePrograms.stream()
-        .collect(Collectors.toMap(ProgramOrderableDto::getProgramId, existDto -> existDto));
-    if (programIdToCurrentDto.keySet().size() != programIdToExistDto.keySet().size()) {
+    Set<UUID> productProgramIds = productPrograms.stream().map(ProgramOrderableDto::getProgramId).collect(toSet());
+    Set<UUID> existingOrderableProgramIds = existingOrderablePrograms.stream()
+        .map(ProgramOrderableDto::getProgramId)
+        .collect(toSet());
+    if (productProgramIds.size() != existingOrderableProgramIds.size()) {
       return true;
     }
-    for (Map.Entry<UUID, ProgramOrderableDto> entry : programIdToCurrentDto.entrySet()) {
-      ProgramOrderableDto existDto = programIdToExistDto.get(entry.getKey());
-      if (existDto == null || existDto.isActive() != entry.getValue().isActive()) {
-        return true;
-      }
-    }
-    return false;
+    return !productProgramIds.containsAll(existingOrderableProgramIds);
   }
 
   private UUID createTradeItem() {
@@ -449,7 +439,12 @@ public class FcProductService implements ProcessDataService {
   private void updateFtap(OrderableDto orderableDto) {
     RequestParameters parameters = RequestParameters.init().set(ORDERABLE_ID, orderableDto.getId());
     List<ApprovedProductDto> approvedProductDtos = ftapReferenceDataService.getPage(parameters).getContent();
-    approvedProductDtos.forEach(approvedProductDto -> ftapReferenceDataService.delete(approvedProductDto.getId()));
+    approvedProductDtos
+        .forEach(approvedProductDto -> {
+          RequestParameters parametersDelete = RequestParameters.init()
+              .set("versionNumber", approvedProductDto.getMeta().getVersionNumber());
+          ftapReferenceDataService.delete(approvedProductDto.getId(), parametersDelete);
+        });
     createFtap(orderableDto);
   }
 
