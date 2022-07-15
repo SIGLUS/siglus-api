@@ -133,6 +133,22 @@ public class SiglusPhysicalInventoryService {
   @Autowired
   private SiglusAuthenticationHelper authenticationHelper;
 
+  public List<PhysicalInventoryLineItemDto> buildInitialInventoryLineItemDtos(
+          Set<UUID> supportedVirtualProgramIds, UUID facilityId) {
+    return supportedVirtualProgramIds.stream()
+            .map(programId ->
+                    approvedProductReferenceDataService
+                            .getApprovedProducts(facilityId, programId, emptyList()).stream()
+                            .map(ApprovedProductDto::getOrderable)
+                            .filter(o -> o.getExtraData().containsKey(IS_BASIC))
+                            .filter(o -> Boolean.parseBoolean(o.getExtraData().get(IS_BASIC)))
+                            .map(o -> newLineItem(o.getId(), programId))
+                            .collect(Collectors.toList())
+            )
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
+  }
+
   private PhysicalInventoryDto getPhysicalInventoryBySubDraftId(UUID subDraftId) {
     PhysicalInventorySubDraft subDraft = physicalInventorySubDraftRepository.findFirstById(subDraftId);
     PhysicalInventoryDto physicalInventory = getPhysicalInventory(subDraft.getPhysicalInventoryId());
@@ -404,22 +420,6 @@ public class SiglusPhysicalInventoryService {
       });
     }
     return physicalInventoryLineItems;
-  }
-
-  public List<PhysicalInventoryLineItemDto> buildInitialInventoryLineItemDtos(
-      Set<UUID> supportedVirtualProgramIds, UUID facilityId) {
-    return supportedVirtualProgramIds.stream()
-        .map(programId ->
-            approvedProductReferenceDataService
-                .getApprovedProducts(facilityId, programId, emptyList()).stream()
-                .map(ApprovedProductDto::getOrderable)
-                .filter(o -> o.getExtraData().containsKey(IS_BASIC))
-                .filter(o -> Boolean.parseBoolean(o.getExtraData().get(IS_BASIC)))
-                .map(o -> newLineItem(o.getId(), programId))
-                .collect(Collectors.toList())
-        )
-        .flatMap(Collection::stream)
-        .collect(Collectors.toList());
   }
 
   private PhysicalInventoryLineItemDto newLineItem(UUID orderableId, UUID programId) {

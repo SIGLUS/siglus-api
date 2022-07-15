@@ -126,7 +126,6 @@ public class SiglusPhysicalInventorySubDraftService {
 
   private List<PhysicalInventoryLineItemDto> getDeletedInitialLineItems(List<PhysicalInventoryLineItemDto> current,
                                                                         List<PhysicalInventoryLineItemDto> original) {
-    // TODO PhysicalInventoryLineItemDto equals not working
     return original.stream()
             .filter(lineItem -> !contains(current, lineItem)).collect(Collectors.toList());
   }
@@ -171,13 +170,13 @@ public class SiglusPhysicalInventorySubDraftService {
         throw new IllegalArgumentException("physical inventory not exists. id = " + physicalInventoryId);
       }
       List<PhysicalInventoryLineItemDto> lineItems = physicalInventoryDto.getLineItems();
-      List<PhysicalInventoryLineItemDto> deleted = getDeletedInitialLineItems(lineItems,
+      List<PhysicalInventoryLineItemDto> deletedInitialLineItems = getDeletedInitialLineItems(lineItems,
               originalInitialInventoryLineItems);
-      if (CollectionUtils.isNotEmpty(deleted)) {
-        lineItems.addAll(deleted);
+      if (CollectionUtils.isNotEmpty(deletedInitialLineItems)) {
+        lineItems.addAll(deletedInitialLineItems);
 
         List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension = convertToLineItemsExtension(
-                deleted,
+                deletedInitialLineItems,
                 physicalInventoryIdToSubDraftIdMap.get(physicalInventoryId),
                 physicalInventoryId);
 
