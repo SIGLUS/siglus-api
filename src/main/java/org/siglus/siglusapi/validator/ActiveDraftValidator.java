@@ -22,6 +22,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_IS_DRAFT_MISSING;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_NOT_EXPECTED_USER_DRAFT;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PROGRAM_MISSING;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_ID_MISSING;
 
 import com.google.common.collect.Lists;
@@ -30,6 +31,7 @@ import java.util.UUID;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -38,6 +40,7 @@ import org.springframework.stereotype.Component;
 
 @Component("ActiveDraftValidator")
 public class ActiveDraftValidator {
+
   private static final List<String> draftTypes =
       Lists.newArrayList("adjustment", "issue", "receive");
 
@@ -96,6 +99,12 @@ public class ActiveDraftValidator {
         .findOne(initialDraftId);
     if (initialDraft == null) {
       throw new ValidationMessageException(ERROR_EVENT_INITIAL_DRAFT_ID_INVALID);
+    }
+  }
+
+  public void validateSubDraft(StockManagementDraft subDraft) {
+    if (subDraft == null) {
+      throw new NotFoundException(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND);
     }
   }
 }

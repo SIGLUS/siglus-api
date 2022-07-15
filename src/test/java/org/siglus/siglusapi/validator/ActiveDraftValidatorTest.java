@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.dto.UserDto;
+import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
 import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
@@ -162,5 +163,10 @@ public class ActiveDraftValidatorTest {
         .thenReturn(null);
 
     activeDraftValidator.validateInitialDraftId(initialDraftId);
+  }
+
+  @Test(expected = NotFoundException.class)
+  public void shouldThrowExceptionWhenSubDraftIsNull() {
+    activeDraftValidator.validateSubDraft(null);
   }
 }

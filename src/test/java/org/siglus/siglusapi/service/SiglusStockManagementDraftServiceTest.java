@@ -27,8 +27,6 @@ import static org.mockito.Mockito.when;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
 
 import java.util.ArrayList;
@@ -50,7 +48,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
-import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
@@ -61,7 +58,6 @@ import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
-import org.siglus.siglusapi.exception.NotFoundException;
 import org.siglus.siglusapi.exception.ValidationMessageException;
 import org.siglus.siglusapi.repository.StockManagementDraftRepository;
 import org.siglus.siglusapi.repository.StockManagementInitialDraftsRepository;
@@ -226,14 +222,6 @@ public class SiglusStockManagementDraftServiceTest {
   }
 
   @Test
-  public void shouldThrowExceptionWhenDeleteNotExistsDraft() {
-    exception.expect(ResourceNotFoundException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND));
-
-    siglusStockManagementDraftService.deleteStockManagementDraft(id);
-  }
-
-  @Test
   public void shouldThrowProgramExceptionWhenDeleteNotPermission() {
     // then
     exception.expect(PermissionMessageException.class);
@@ -311,15 +299,10 @@ public class SiglusStockManagementDraftServiceTest {
     exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN));
 
     draftDto.setInitialDraftId(initialDraftId);
-    StockManagementDraft draft = StockManagementDraft.builder().build();
-    ArrayList<StockManagementDraft> stockManagementDrafts = new ArrayList<>();
-    for (int i = 0; i < 10; i++) {
-      stockManagementDrafts.add(draft);
-    }
     when(stockManagementInitialDraftsRepository.findOne(initialDraftId))
         .thenReturn(new StockManagementInitialDraft());
-    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
-        .thenReturn(stockManagementDrafts);
+    when(stockManagementDraftRepository.countByInitialDraftId(initialDraftId))
+        .thenReturn(10);
 
     siglusStockManagementDraftService.createNewIssueDraft(draftDto);
   }
@@ -456,17 +439,6 @@ public class SiglusStockManagementDraftServiceTest {
   }
 
   @Test
-  public void shouldThrowExceptionWhenUpdateDraftStatusAndOperatorCannotFindDraft() {
-    exception.expect(NotFoundException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND));
-
-    when(stockManagementDraftRepository.findOne(id))
-        .thenReturn(null);
-
-    siglusStockManagementDraftService.updateOperatorAndStatus(draftDto);
-  }
-
-  @Test
   public void shouldSearchDraftById() {
     StockManagementDraft draft = StockManagementDraft.builder().build();
     draft.setId(draftId);
@@ -476,14 +448,6 @@ public class SiglusStockManagementDraftServiceTest {
         .searchDraft(draftId);
 
     assertThat(draftDto.getId()).isEqualTo(draftId);
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenDraftNotExists() {
-    exception.expect(ResourceNotFoundException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND));
-
-    siglusStockManagementDraftService.searchDraft(id);
   }
 
   @Test
@@ -509,14 +473,6 @@ public class SiglusStockManagementDraftServiceTest {
   }
 
   @Test
-  public void shouldThrowExceptionWhenDraftNotFound() {
-    exception.expect(NotFoundException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND));
-
-    siglusStockManagementDraftService.updatePartOfInfoWithDraft(draftDto);
-  }
-
-  @Test
   public void shouldIsDraftBeTrueWhenCreateNewDraft() {
     StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
         .programId(programId).userId(userId).draftType(issueDraft).build();
@@ -526,14 +482,6 @@ public class SiglusStockManagementDraftServiceTest {
     draftDto = siglusStockManagementDraftService.createNewDraft(draftDto);
 
     assertTrue(draftDto.getIsDraft());
-  }
-
-  @Test
-  public void shouldThrowExceptionCallUpdateStatusAfterSubmitWhenDraftNotFound() {
-    exception.expect(NotFoundException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND));
-
-    siglusStockManagementDraftService.updateStatusAfterSubmit(draftDto);
   }
 
   @Test

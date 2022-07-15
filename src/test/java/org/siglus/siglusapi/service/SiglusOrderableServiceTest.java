@@ -17,7 +17,6 @@ package org.siglus.siglusapi.service;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -26,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FieldConstants.FULL_PRODUCT_NAME;
 import static org.siglus.siglusapi.constant.FieldConstants.PRODUCT_CODE;
-import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +37,6 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.common.domain.ProgramAdditionalOrderable;
 import org.siglus.common.dto.referencedata.OrderableDto;
@@ -273,14 +270,5 @@ public class SiglusOrderableServiceTest {
         .searchDeduplicatedOrderables(draftId, searchParams, pageable, facilityId);
 
     assertEquals(1, orderableDtos.getContent().size());
-  }
-
-  @Test
-  public void shouldThrowExceptionWhenDraftNotExists() {
-    exception.expect(ResourceNotFoundException.class);
-    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND));
-
-    siglusOrderableService
-        .searchDeduplicatedOrderables(draftId, searchParams, pageable, facilityId);
   }
 }
