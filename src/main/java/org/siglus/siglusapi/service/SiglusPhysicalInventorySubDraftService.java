@@ -115,16 +115,18 @@ public class SiglusPhysicalInventorySubDraftService {
     List<PhysicalInventoryLineItemDto> originalInitialInventoryLineItems = siglusPhysicalInventoryService
             .buildInitialInventoryLineItemDtos(Collections.singleton(physicalInventoryDto.getProgramId()),
                     physicalInventoryDto.getFacilityId());
-    physicalInventoryDto.setLineItems(originalInitialInventoryLineItems);
-    List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension = convertToLineItemsExtension(
-            originalInitialInventoryLineItems,
-            subDraftId,
-            physicalInventoryDto.getId());
-    PhysicalInventoryLineItemExtensionDto physicalInventoryExtendDto = new PhysicalInventoryLineItemExtensionDto();
-    BeanUtils.copyProperties(physicalInventoryDto, physicalInventoryExtendDto);
-    physicalInventoryExtendDto.setLineItemsExtensions(newLineItemsExtension);
-    siglusPhysicalInventoryService.saveDraftForProductsForOneProgramWithExtension(physicalInventoryExtendDto);
-    siglusPhysicalInventoryService.saveDraftForProductsForOneProgram(physicalInventoryDto);
+    if (CollectionUtils.isNotEmpty(originalInitialInventoryLineItems)) {
+      physicalInventoryDto.setLineItems(originalInitialInventoryLineItems);
+      List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension = convertToLineItemsExtension(
+              originalInitialInventoryLineItems,
+              subDraftId,
+              physicalInventoryDto.getId());
+      PhysicalInventoryLineItemExtensionDto physicalInventoryExtendDto = new PhysicalInventoryLineItemExtensionDto();
+      BeanUtils.copyProperties(physicalInventoryDto, physicalInventoryExtendDto);
+      physicalInventoryExtendDto.setLineItemsExtensions(newLineItemsExtension);
+      siglusPhysicalInventoryService.saveDraftForProductsForOneProgramWithExtension(physicalInventoryExtendDto);
+      siglusPhysicalInventoryService.saveDraftForProductsForOneProgram(physicalInventoryDto);
+    }
   }
 
   private void doDelete(List<PhysicalInventorySubDraft> subDrafts,
