@@ -201,9 +201,9 @@ public class SiglusPhysicalInventoryControllerTest {
 
   @Test
   public void shouldCallDeleteSubDraftsBySubDraftIdsWhenDeleteSubDrafts() {
-    siglusPhysicalInventoryController.deleteSubDrafts(Lists.newArrayList(subDraftId));
+    siglusPhysicalInventoryController.deleteSubDrafts(Boolean.FALSE, Lists.newArrayList(subDraftId));
 
-    verify(siglusPhysicalInventorySubDraftService).deleteSubDrafts(Lists.newArrayList(subDraftId));
+    verify(siglusPhysicalInventorySubDraftService).deleteSubDrafts(Lists.newArrayList(subDraftId), Boolean.FALSE);
   }
 
   @Test

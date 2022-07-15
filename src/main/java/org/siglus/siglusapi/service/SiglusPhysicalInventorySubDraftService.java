@@ -76,13 +76,13 @@ public class SiglusPhysicalInventorySubDraftService {
   private SiglusAuthenticationHelper authenticationHelper;
 
   @Transactional
-  public void deleteSubDrafts(List<UUID> subDraftIds) {
+  public void deleteSubDrafts(List<UUID> subDraftIds, boolean initialPhysicalInventory) {
     log.info("deleteSubDrafts, subDraftIds=" + subDraftIds);
     try {
       List<PhysicalInventorySubDraft> physicalInventorySubDrafts = updateSubDraftsStatus(subDraftIds,
           PhysicalInventorySubDraftEnum.NOT_YET_STARTED, true);
 
-      doDelete(physicalInventorySubDrafts, subDraftIds);
+      doDelete(physicalInventorySubDrafts, subDraftIds, initialPhysicalInventory);
     } catch (Exception e) {
       log.error(e.getMessage(), e);
       throw e;
@@ -107,30 +107,29 @@ public class SiglusPhysicalInventorySubDraftService {
     return subDrafts;
   }
 
-  private boolean isSameUuid(UUID id1, UUID id2) {
-    if (id1 == null) {
-      return id2 == null;
-    }
-    return id1.equals(id2);
+
+  private void resetInitialLineItems(UUID physicalInventoryId, UUID subDraftId) {
+    lineItemsExtensionRepository.deleteByPhysicalInventoryIdIn(Collections.singleton(physicalInventoryId));
+    PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
+            physicalInventoryId);
+    List<PhysicalInventoryLineItemDto> originalInitialInventoryLineItems = siglusPhysicalInventoryService
+            .buildInitialInventoryLineItemDtos(Collections.singleton(physicalInventoryDto.getProgramId()),
+                    physicalInventoryDto.getFacilityId());
+    physicalInventoryDto.setLineItems(originalInitialInventoryLineItems);
+    List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension = convertToLineItemsExtension(
+            originalInitialInventoryLineItems,
+            subDraftId,
+            physicalInventoryDto.getId());
+    PhysicalInventoryLineItemExtensionDto physicalInventoryExtendDto = new PhysicalInventoryLineItemExtensionDto();
+    BeanUtils.copyProperties(physicalInventoryDto, physicalInventoryExtendDto);
+    physicalInventoryExtendDto.setLineItemsExtensions(newLineItemsExtension);
+    siglusPhysicalInventoryService.saveDraftForProductsForOneProgramWithExtension(physicalInventoryExtendDto);
+    siglusPhysicalInventoryService.saveDraftForProductsForOneProgram(physicalInventoryDto);
   }
 
-  private boolean isSameLineItem(PhysicalInventoryLineItemDto item1,
-                                  PhysicalInventoryLineItemDto item2) {
-    return isSameUuid(item1.getOrderableId(), item2.getOrderableId())
-            && isSameUuid(item1.getLotId(), item2.getLotId());
-  }
-
-  private boolean contains(List<PhysicalInventoryLineItemDto> list, PhysicalInventoryLineItemDto item) {
-    return list.stream().anyMatch(lineItem -> isSameLineItem(lineItem, item));
-  }
-
-  private List<PhysicalInventoryLineItemDto> getDeletedInitialLineItems(List<PhysicalInventoryLineItemDto> current,
-                                                                        List<PhysicalInventoryLineItemDto> original) {
-    return original.stream()
-            .filter(lineItem -> !contains(current, lineItem)).collect(Collectors.toList());
-  }
-
-  private void doDelete(List<PhysicalInventorySubDraft> subDrafts, List<UUID> subDraftIds) {
+  private void doDelete(List<PhysicalInventorySubDraft> subDrafts,
+                        List<UUID> subDraftIds,
+                        boolean initialPhysicalInventory) {
     Map<UUID, UUID> physicalInventoryIdToSubDraftIdMap = subDrafts.stream()
         .collect(Collectors.toMap(PhysicalInventorySubDraft::getPhysicalInventoryId, PhysicalInventorySubDraft::getId));
     List<StockCardSummaryV2Dto> stockSummaries = siglusStockCardSummariesService.findAllProgramStockSummaries();
@@ -144,6 +143,11 @@ public class SiglusPhysicalInventorySubDraftService {
         .collect(Collectors.toMap(this::getUniqueKey, Function.identity()));
 
     for (UUID physicalInventoryId : physicalInventoryIdToSubDraftIdMap.keySet()) {
+      if (initialPhysicalInventory) {
+        resetInitialLineItems(physicalInventoryId,
+                physicalInventoryIdToSubDraftIdMap.get(physicalInventoryId));
+        continue;
+      }
       List<PhysicalInventoryLineItemsExtension> oldLineItemsExtension
           = lineItemsExtensionRepository.findByPhysicalInventoryId(physicalInventoryId);
 
@@ -162,31 +166,10 @@ public class SiglusPhysicalInventorySubDraftService {
       PhysicalInventoryDto physicalInventoryDto = siglusPhysicalInventoryService.getFullPhysicalInventoryDto(
           physicalInventoryId);
 
-      List<PhysicalInventoryLineItemDto> originalInitialInventoryLineItems = siglusPhysicalInventoryService
-              .buildInitialInventoryLineItemDtos(Collections.singleton(physicalInventoryDto.getProgramId()),
-                      physicalInventoryDto.getFacilityId());
-
       if (physicalInventoryDto == null) {
         throw new IllegalArgumentException("physical inventory not exists. id = " + physicalInventoryId);
       }
       List<PhysicalInventoryLineItemDto> lineItems = physicalInventoryDto.getLineItems();
-      List<PhysicalInventoryLineItemDto> deletedInitialLineItems = getDeletedInitialLineItems(lineItems,
-              originalInitialInventoryLineItems);
-      if (CollectionUtils.isNotEmpty(deletedInitialLineItems)) {
-        lineItems.addAll(deletedInitialLineItems);
-
-        List<PhysicalInventorySubDraftLineItemsExtensionDto> newLineItemsExtension = convertToLineItemsExtension(
-                deletedInitialLineItems,
-                physicalInventoryIdToSubDraftIdMap.get(physicalInventoryId),
-                physicalInventoryId);
-
-        PhysicalInventoryLineItemExtensionDto physicalInventoryExtendDto = new PhysicalInventoryLineItemExtensionDto();
-        BeanUtils.copyProperties(physicalInventoryDto, physicalInventoryExtendDto);
-        physicalInventoryExtendDto.setLineItemsExtensions(newLineItemsExtension);
-
-        siglusPhysicalInventoryService.saveDraftForProductsForOneProgramWithExtension(physicalInventoryExtendDto);
-      }
-
       if (CollectionUtils.isEmpty(lineItems)) {
         continue;
       }
