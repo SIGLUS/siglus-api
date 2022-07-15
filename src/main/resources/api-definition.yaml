@@ -312,6 +312,28 @@ traits:
         responses:
           201:
             description: submit success
+    /task/tracerDrug:
+      displayName: run tracer drug persistent data task
+    /task/tracerDrug/refresh:
+      displayName: refresh tracer drug persistent data task
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
+    /task/tracerDrug/initialize:
+      displayName: initialize tracer drug persistent data task
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
     /programs:
       displayName: Program
       get:
