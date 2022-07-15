@@ -13,37 +13,12 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.fc;
+package org.siglus.siglusapi.repository;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.UUID;
 import org.siglus.siglusapi.domain.FcIntegrationChanges;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class FcIntegrationResultBuildDto {
+public interface FcIntegrationChangesRepository extends JpaRepository<FcIntegrationChanges, UUID> {
 
-  private String api;
-
-  private List<? extends ResponseBaseDto> result;
-
-  private String startDate;
-
-  private ZonedDateTime previousLastUpdatedAt;
-
-  private boolean finalSuccess;
-
-  private int createCounter;
-
-  private int updateCounter;
-
-  private String errorMessage;
-
-  private List<FcIntegrationChanges> fcIntegrationChanges;
 }

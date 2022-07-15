@@ -25,9 +25,11 @@ import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
 import static org.siglus.siglusapi.constant.FieldConstants.ACTIVE;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_TRACER;
+import static org.siglus.siglusapi.constant.FieldConstants.ORDERABLE_ID;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openlmis.requisition.dto.BaseDto;
 import org.openlmis.requisition.dto.BasicProgramDto;
@@ -50,13 +53,14 @@ import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.siglusapi.constant.ProgramConstants;
 import org.siglus.siglusapi.domain.BasicProductCode;
+import org.siglus.siglusapi.domain.FcIntegrationChanges;
 import org.siglus.siglusapi.domain.ProgramOrderablesExtension;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.ApprovedProductDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.siglus.siglusapi.dto.TradeItemDto;
-import org.siglus.siglusapi.dto.fc.AreaDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
@@ -113,49 +117,61 @@ public class FcProductService implements ProcessDataService {
     AtomicInteger createCounter = new AtomicInteger();
     AtomicInteger updateCounter = new AtomicInteger();
     AtomicInteger sameCounter = new AtomicInteger();
+    AtomicInteger errorCounter = new AtomicInteger();
+    List<FcIntegrationChanges> fcIntegrationChangesList = new ArrayList<>();
     try {
       fetchAndCacheMasterData();
       Map<String, ProductInfoDto> productCodeToProduct = newHashMap();
+      List<String> errorCodes = new ArrayList<>();
       products.forEach(item -> {
         ProductInfoDto product = (ProductInfoDto) item;
         trimProductCode(product);
-        boolean isAreaEmpty = product.getAreas() == null || product.getAreas().isEmpty();
-        if ((FcUtil.isActive(product.getStatus()) && isAreaEmpty)
-            || (!isAreaEmpty && !verifyExistRealProgram(product.getAreas()))) {
-          log.warn("[FC product] areas is empty or real program is null: {}", product);
-          return;
-        }
-        addProductCodeToProduct(productCodeToProduct, product);
+        addProductCodeToProductMap(productCodeToProduct, product);
       });
       productCodeToProduct.values().forEach(current -> {
         OrderableDto existed = orderableService.getOrderableByCode(current.getFnm());
-        if (existed == null) {
+        if (existed != null) {
+          FcIntegrationChanges updateChanges = getUpdatedOrderable(existed, current);
+          if (updateChanges != null) {
+            log.info("[FC product] update, existed: {}, current: {}", existed, current);
+            OrderableDto orderableDto = updateOrderable(existed, current);
+            if (updateChanges.isUpdateProgram()) {
+              updateFtap(orderableDto);
+            }
+            createProgramOrderablesExtension(current, orderableDto.getId());
+            updateCounter.getAndIncrement();
+            fcIntegrationChangesList.add(updateChanges);
+          } else {
+            sameCounter.getAndIncrement();
+          }
+        } else if (FcUtil.isNotMatchedCode(current.getFnm())) {
+          errorCodes.add(current.getFnm());
+          errorCounter.getAndIncrement();
+        } else {
           log.info("[FC product] create: {}", current);
           OrderableDto orderableDto = createOrderable(current);
           createFtap(orderableDto);
           createProgramOrderablesExtension(current, orderableDto.getId());
           createCounter.getAndIncrement();
-        } else if (isDifferent(existed, current)) {
-          log.info("[FC product] update, existed: {}, current: {}", existed, current);
-          OrderableDto orderableDto = updateOrderable(existed, current);
-          createProgramOrderablesExtension(current, orderableDto.getId());
-          updateCounter.getAndIncrement();
-        } else {
-          sameCounter.getAndIncrement();
+          FcIntegrationChanges createChanges = FcUtil
+              .buildCreateFcIntegrationChanges(PRODUCT_API, orderableDto.getProductCode(), orderableDto.toString());
+          fcIntegrationChangesList.add(createChanges);
         }
       });
+      log.info("[FC product] process data error code: {}", errorCodes);
     } catch (Exception e) {
       log.error("[FC product] process data error", e);
       finalSuccess = false;
     }
     clearProductCaches();
-    log.info("[FC product] process data create: {}, update: {}, same: {}",
-        createCounter.get(), updateCounter.get(), sameCounter.get());
-    return buildResult(PRODUCT_API, products, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
-        updateCounter.get());
+    log.info("[FC product] process data create: {}, update: {}, error: {}, same: {}",
+        createCounter.get(), updateCounter.get(), errorCounter.get(), sameCounter.get());
+    return buildResult(
+        new FcIntegrationResultBuildDto(PRODUCT_API, products, startDate, previousLastUpdatedAt, finalSuccess,
+            createCounter.get(), updateCounter.get(), null, fcIntegrationChangesList));
   }
 
-  private void addProductCodeToProduct(Map<String, ProductInfoDto> productCodeToProduct, ProductInfoDto product) {
+  private void addProductCodeToProductMap(Map<String, ProductInfoDto> productCodeToProduct, ProductInfoDto product) {
     ProductInfoDto productInMap = productCodeToProduct.get(product.getFnm());
     if (null == productInMap || FcUtil.isActive(product.getStatus())) {
       productCodeToProduct.put(product.getFnm(), product);
@@ -183,6 +199,9 @@ public class FcProductService implements ProcessDataService {
     Set<ProgramOrderablesExtension> extensions = newHashSet();
     product.getAreas().forEach(areaDto -> {
       ProgramRealProgram programRealProgram = realProgramCodeToEntityMap.get(areaDto.getAreaCode());
+      if (programRealProgram == null) {
+        return;
+      }
       ProgramOrderablesExtension extension = ProgramOrderablesExtension.builder()
           .orderableId(orderableId)
           .realProgramCode(areaDto.getAreaCode())
@@ -275,22 +294,34 @@ public class FcProductService implements ProcessDataService {
   }
 
   private Set<ProgramOrderableDto> buildProgramOrderableDtos(ProductInfoDto product) {
-    Set<String> programCodes = product.getAreas()
-        .stream()
-        .filter(areaDto -> FcUtil.isActive(areaDto.getStatus()))
+    if (product.getAreas() == null) {
+      return Collections.emptySet();
+    }
+    Set<String> programCodes = product.getAreas().stream()
+        .filter(areaDto -> realProgramCodeToEntityMap.get(areaDto.getAreaCode()) != null)
         .map(areaDto -> realProgramCodeToEntityMap.get(areaDto.getAreaCode()).getProgramCode())
         .collect(Collectors.toSet());
+    if (CollectionUtils.isEmpty(programCodes)) {
+      return Collections.emptySet();
+    }
     String programCode;
     if (programCodes.contains(ProgramConstants.RAPIDTEST_PROGRAM_CODE)) {
       programCode = ProgramConstants.RAPIDTEST_PROGRAM_CODE;
     } else if (programCodes.contains(ProgramConstants.TARV_PROGRAM_CODE)) {
       programCode = ProgramConstants.TARV_PROGRAM_CODE;
+    } else if (programCodes.contains(ProgramConstants.MTB_PROGRAM_CODE)) {
+      programCode = ProgramConstants.MTB_PROGRAM_CODE;
     } else {
       programCode = ProgramConstants.VIA_PROGRAM_CODE;
     }
+    boolean isActive = product.getAreas().stream()
+        .filter(area -> programCode.equals(realProgramCodeToEntityMap.get(area.getAreaCode()).getProgramCode()))
+        .findFirst()
+        .map(area -> FcUtil.isActive(area.getStatus()))
+        .orElse(false);
     ProgramOrderableDto programOrderableDto = new ProgramOrderableDto();
     programOrderableDto.setProgramId(programCodeToIdMap.get(programCode));
-    programOrderableDto.setActive(true);
+    programOrderableDto.setActive(isActive);
     programOrderableDto.setFullSupply(true);
     OrderableDisplayCategoryDto categoryDto = categoryCodeToEntityMap.get(product.getCategoryCode());
     if (null == categoryDto) {
@@ -302,32 +333,52 @@ public class FcProductService implements ProcessDataService {
     return Collections.singleton(programOrderableDto);
   }
 
-  private boolean isDifferent(OrderableDto existed, ProductInfoDto current) {
+  private FcIntegrationChanges getUpdatedOrderable(OrderableDto existed, ProductInfoDto current) {
+    boolean isDifferent = false;
+    StringBuilder updateContent = new StringBuilder();
+    StringBuilder originContent = new StringBuilder();
     if (!StringUtils.equals(existed.getDescription(), current.getDescription())) {
       log.info("[FC product] description different, existed: {}, current: {}", existed.getDescription(),
           current.getDescription());
-      return true;
+      updateContent.append("description=").append(current.getDescription()).append("; ");
+      originContent.append("description=").append(existed.getDescription()).append("; ");
+      isDifferent = true;
     }
     if (!StringUtils.equals(existed.getFullProductName(), current.getFullDescription())) {
       log.info("[FC product] name different, existed: {}, current: {}", existed.getFullProductName(),
           current.getFullDescription());
-      return true;
+      updateContent.append("productName=").append(current.getFullDescription()).append("; ");
+      originContent.append("productName=").append(existed.getFullProductName()).append("; ");
+      isDifferent = true;
     }
     if (isDifferentProductStatus(existed, current)) {
       log.info("[FC product] status different, existed: {}, current: {}", existed.getExtraData().get(ACTIVE),
           current.getStatus());
-      return true;
+      updateContent.append("status=").append(current.getStatus()).append("; ");
+      originContent.append("status=").append(existed.getExtraData().get(ACTIVE)).append("; ");
+      isDifferent = true;
     }
     if (isDifferentProductTracer(existed, current)) {
       log.info("[FC product] isTracer different, existed: {}, current: {}", existed.getExtraData().get(IS_TRACER),
           current.getIsSentinel());
-      return true;
+      updateContent.append("isTracer=").append(current.getIsSentinel()).append("; ");
+      originContent.append("isTracer=").append(existed.getExtraData().get(IS_TRACER)).append("; ");
+      isDifferent = true;
     }
-    if (FcUtil.isActive(current.getStatus()) && isDifferentProgramOrderable(existed, current)) {
+    boolean isUpdateProgram = false;
+    if (isDifferentProgramOrderable(existed, current)) {
       log.info("[FC product] program different, existed: {}, current: {}", existed.getPrograms(), current.getAreas());
-      return true;
+      updateContent.append("program=").append(current.getAreas()).append("; ");
+      originContent.append("program=").append(existed.getPrograms()).append("; ");
+      isDifferent = true;
+      isUpdateProgram = true;
     }
-    return false;
+    if (isDifferent) {
+      return FcUtil.buildUpdateFcIntegrationChanges(PRODUCT_API, existed.getProductCode(), updateContent.toString(),
+          originContent.toString(), isUpdateProgram);
+    } else {
+      return null;
+    }
   }
 
   private boolean isDifferentProductStatus(OrderableDto existed, ProductInfoDto current) {
@@ -349,26 +400,26 @@ public class FcProductService implements ProcessDataService {
   private boolean isDifferentProgramOrderable(OrderableDto existed, ProductInfoDto current) {
     Set<ProgramOrderableDto> productPrograms = buildProgramOrderableDtos(current);
     Set<ProgramOrderableDto> existingOrderablePrograms = existed.getPrograms();
+    if (existingOrderablePrograms == null) {
+      return !productPrograms.isEmpty();
+    }
     if (productPrograms.size() != existingOrderablePrograms.size()) {
       return true;
     }
-    Set<UUID> productProgramIds = productPrograms.stream().map(ProgramOrderableDto::getProgramId).collect(toSet());
-    Set<UUID> existingOrderableProgramIds = existingOrderablePrograms.stream()
-        .map(ProgramOrderableDto::getProgramId)
-        .collect(toSet());
-    if (productProgramIds.size() != existingOrderableProgramIds.size()) {
+    Map<UUID, ProgramOrderableDto> programIdToCurrentDto = productPrograms.stream()
+        .collect(Collectors.toMap(ProgramOrderableDto::getProgramId, currentDto -> currentDto));
+    Map<UUID, ProgramOrderableDto> programIdToExistDto = existingOrderablePrograms.stream()
+        .collect(Collectors.toMap(ProgramOrderableDto::getProgramId, existDto -> existDto));
+    if (programIdToCurrentDto.keySet().size() != programIdToExistDto.keySet().size()) {
       return true;
     }
-    return !productProgramIds.containsAll(existingOrderableProgramIds);
-  }
-
-  private boolean verifyExistRealProgram(List<AreaDto> areas) {
-    for (AreaDto areaDto : areas) {
-      if (realProgramCodeToEntityMap.get(areaDto.getAreaCode()) == null) {
-        return false;
+    for (Map.Entry<UUID, ProgramOrderableDto> entry : programIdToCurrentDto.entrySet()) {
+      ProgramOrderableDto existDto = programIdToExistDto.get(entry.getKey());
+      if (existDto == null || existDto.isActive() != entry.getValue().isActive()) {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   private UUID createTradeItem() {
@@ -393,6 +444,13 @@ public class FcProductService implements ProcessDataService {
         ftapReferenceDataService.create(approvedProductDto);
       });
     });
+  }
+
+  private void updateFtap(OrderableDto orderableDto) {
+    RequestParameters parameters = RequestParameters.init().set(ORDERABLE_ID, orderableDto.getId());
+    List<ApprovedProductDto> approvedProductDtos = ftapReferenceDataService.getPage(parameters).getContent();
+    approvedProductDtos.forEach(approvedProductDto -> ftapReferenceDataService.delete(approvedProductDto.getId()));
+    createFtap(orderableDto);
   }
 
 }

@@ -13,37 +13,48 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.dto.fc;
+package org.siglus.siglusapi.domain;
 
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.siglus.siglusapi.domain.FcIntegrationChanges;
+import org.siglus.common.domain.BaseEntity;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+@EqualsAndHashCode(callSuper = true)
+@Entity
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class FcIntegrationResultBuildDto {
+@EntityListeners(AuditingEntityListener.class)
+@Table(name = "fc_integration_changes", schema = "siglusintegration")
+public class FcIntegrationChanges extends BaseEntity {
 
-  private String api;
+  private UUID resultId;
 
-  private List<? extends ResponseBaseDto> result;
+  private String type;
 
-  private String startDate;
+  private String category;
 
-  private ZonedDateTime previousLastUpdatedAt;
+  private String code;
 
-  private boolean finalSuccess;
+  private String originContent;
 
-  private int createCounter;
+  private String fcContent;
 
-  private int updateCounter;
+  @LastModifiedDate
+  private ZonedDateTime updateTime;
 
-  private String errorMessage;
-
-  private List<FcIntegrationChanges> fcIntegrationChanges;
+  @Transient
+  private boolean updateProgram;
 }

@@ -38,10 +38,14 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.siglus.siglusapi.domain.FcIntegrationChanges;
+import org.siglus.siglusapi.domain.FcIntegrationResult;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.PageInfoDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
+import org.siglus.siglusapi.repository.FcIntegrationChangesRepository;
 import org.siglus.siglusapi.service.client.SiglusIssueVoucherService;
 import org.siglus.siglusapi.service.client.SiglusReceiptPlanService;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,6 +86,7 @@ public class FcScheduleService {
   private final FcGeographicZoneService fcGeographicZoneService;
   private final FcFacilityService fcFacilityService;
   private final StringRedisTemplate redisTemplate;
+  private final FcIntegrationChangesRepository fcIntegrationChangesRepository;
 
 
   @Scheduled(cron = "${fc.cmm.cron}", zone = TIME_ZONE_ID)
@@ -118,7 +123,7 @@ public class FcScheduleService {
       issueVoucherService.updateIssueVoucher(lastUpdatedAt.format(getFormatter(ISSUE_VOUCHER_API)));
     });
   }
-  
+
   @Transactional
   public void syncCmms(String date) {
     log.info("[FC cmm] start sync");
@@ -253,7 +258,8 @@ public class FcScheduleService {
       return;
     }
     FcIntegrationResultDto resultDto = processDataService.processData(result, date, lastUpdatedAt);
-    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+    FcIntegrationResult fcIntegrationResult = fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+    recordFcIntegrationChanges(fcIntegrationResult, resultDto.getFcIntegrationChanges());
   }
 
   public void fetchData(String api, String date) {
@@ -267,6 +273,17 @@ public class FcScheduleService {
       log.error("[FC] fetch api {} failed", api);
       throw e;
     }
+  }
+
+  private void recordFcIntegrationChanges(FcIntegrationResult fcIntegrationResult,
+      List<FcIntegrationChanges> fcIntegrationChanges) {
+    if (fcIntegrationResult == null || CollectionUtils.isEmpty(fcIntegrationChanges)) {
+      return;
+    }
+    fcIntegrationChanges.forEach(content -> {
+      content.setResultId(fcIntegrationResult.getId());
+      fcIntegrationChangesRepository.save(content);
+    });
   }
 
   private String getUrl(String path, int page, String date) {

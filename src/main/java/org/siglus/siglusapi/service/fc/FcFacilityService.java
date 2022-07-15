@@ -37,12 +37,14 @@ import org.openlmis.requisition.dto.BasicProgramDto;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.siglus.siglusapi.constant.ProgramConstants;
+import org.siglus.siglusapi.domain.FcIntegrationChanges;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
 import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
@@ -74,6 +76,8 @@ public class FcFacilityService implements ProcessDataService {
     boolean finalSuccess = true;
     int createCounter = 0;
     int updateCounter = 0;
+    int errorCounter = 0;
+    List<FcIntegrationChanges> fcIntegrationChangesList = new ArrayList<>();
     try {
       Map<String, ProgramDto> codeToProgramMap = getCodeToProgramMap();
       Map<String, ProgramRealProgram> codeToRealProgramMap = getCodeToRealProgramMap();
@@ -82,6 +86,7 @@ public class FcFacilityService implements ProcessDataService {
       Map<String, FacilityTypeDto> codeToFacilityType = getCodeToFacilityTypeDtoMap();
       List<FcFacilityDto> createFacilities = new ArrayList<>();
       List<FcFacilityDto> updateFacilities = new ArrayList<>();
+      List<String> errorCodes = new ArrayList<>();
       facilities.forEach(item -> {
         FcFacilityDto facility = (FcFacilityDto) item;
         Set<String> codes = getFacilitySupportedProgramCode(facility, codeToRealProgramMap);
@@ -90,11 +95,18 @@ public class FcFacilityService implements ProcessDataService {
         }
         if (codeToFacilityMap.containsKey(facility.getCode())) {
           FacilityDto originDto = codeToFacilityMap.get(facility.getCode());
-          if (isDifferentFacilityDto(facility, codes, originDto)) {
+          FcIntegrationChanges updateChanges = getUpdatedFacilityDto(facility, codes, originDto);
+          if (updateChanges != null) {
             updateFacilities.add(facility);
+            fcIntegrationChangesList.add(updateChanges);
           }
+        } else if (FcUtil.isNotMatchedCode(facility.getCode())) {
+          errorCodes.add(facility.getCode());
         } else {
           createFacilities.add(facility);
+          FcIntegrationChanges createChanges = FcUtil
+              .buildCreateFcIntegrationChanges(FACILITY_API, facility.getCode(), facility.toString());
+          fcIntegrationChangesList.add(createChanges);
         }
       });
       createFacilities(createFacilities, codeToFacilityType, codeToProgramMap, codeToRealProgramMap,
@@ -103,14 +115,17 @@ public class FcFacilityService implements ProcessDataService {
           codeToGeographicZoneDtoMap);
       createCounter = createFacilities.size();
       updateCounter = updateFacilities.size();
+      errorCounter = errorCodes.size();
+      log.info("[FC facility] process data error code: {}", errorCodes);
     } catch (Exception e) {
       log.error("[FC facility] process data error", e);
       finalSuccess = false;
     }
-    log.info("[FC facility] process data create: {}, update: {}, same: {}",
-        createCounter, updateCounter, facilities.size() - createCounter - updateCounter);
-    return buildResult(FACILITY_API, facilities, startDate, previousLastUpdatedAt, finalSuccess, createCounter,
-        updateCounter);
+    log.info("[FC facility] process data create: {}, update: {}, error: {}, same: {}",
+        createCounter, updateCounter, errorCounter, facilities.size() - createCounter - updateCounter - errorCounter);
+    return buildResult(
+        new FcIntegrationResultBuildDto(FACILITY_API, facilities, startDate, previousLastUpdatedAt, finalSuccess,
+            createCounter, updateCounter, null, fcIntegrationChangesList));
   }
 
   private Map<String, FacilityDto> getCodeToFacilityDtoMap() {
@@ -192,19 +207,58 @@ public class FcFacilityService implements ProcessDataService {
     return programDto;
   }
 
-  private boolean isDifferentFacilityDto(FcFacilityDto fcFacilityDto, Set<String> codes, FacilityDto originDto) {
+  private FcIntegrationChanges getUpdatedFacilityDto(FcFacilityDto fcFacilityDto, Set<String> codes,
+      FacilityDto originDto) {
     FacilityDto origin = facilityService.findOne(originDto.getId());
     originDto.setSupportedPrograms(origin.getSupportedPrograms());
     originDto.setDescription(origin.getDescription());
+    boolean isDifferent = false;
+    StringBuilder updateContent = new StringBuilder();
+    StringBuilder originContent = new StringBuilder();
+    if (!fcFacilityDto.getName().equals(originDto.getName())) {
+      updateContent.append("name=").append(fcFacilityDto.getName()).append("; ");
+      originContent.append("name=").append(originDto.getName()).append("; ");
+      isDifferent = true;
+    }
+
+    if (!fcFacilityDto.getDescription().equals(originDto.getDescription())) {
+      updateContent.append("description=").append(fcFacilityDto.getDescription()).append("; ");
+      originContent.append("description=").append(originDto.getDescription()).append("; ");
+      isDifferent = true;
+    }
+
+    if (!fcFacilityDto.getDistrictCode().equals(originDto.getGeographicZone().getCode())) {
+      updateContent.append("districtCode=").append(fcFacilityDto.getDistrictCode()).append("; ");
+      originContent.append("districtCode=").append(originDto.getGeographicZone().getCode()).append("; ");
+      isDifferent = true;
+    }
+
+    if (!fcFacilityDto.getClientTypeCode().equals(originDto.getType().getCode())) {
+      updateContent.append("clientTypeCode=").append(fcFacilityDto.getClientTypeCode()).append("; ");
+      originContent.append("clientTypeCode=").append(originDto.getType().getCode()).append("; ");
+      isDifferent = true;
+    }
+
+    if (FcUtil.isActive(fcFacilityDto.getStatus()) != originDto.getActive()) {
+      updateContent.append("status=").append(fcFacilityDto.getStatus()).append("; ");
+      originContent.append("status=").append(originDto.getActive()).append("; ");
+      isDifferent = true;
+    }
+
     Set<String> originCodes = originDto.getSupportedPrograms().stream()
         .map(SupportedProgramDto::getCode)
         .collect(Collectors.toSet());
-    return !(fcFacilityDto.getName().equals(originDto.getName())
-        && fcFacilityDto.getDescription().equals(originDto.getDescription())
-        && fcFacilityDto.getDistrictCode().equals(originDto.getGeographicZone().getCode())
-        && fcFacilityDto.getClientTypeCode().equals(originDto.getType().getCode())
-        && FcUtil.isActive(fcFacilityDto.getStatus()) == originDto.getActive()
-        && Sets.difference(codes, originCodes).isEmpty());
+    if (!Sets.difference(codes, originCodes).isEmpty()) {
+      updateContent.append("programCodes=").append(codes).append("; ");
+      originContent.append("programCodes=").append(originCodes).append("; ");
+      isDifferent = true;
+    }
+    if (isDifferent) {
+      return FcUtil.buildUpdateFcIntegrationChanges(FACILITY_API, originDto.getCode(), updateContent.toString(),
+          originContent.toString());
+    } else {
+      return null;
+    }
   }
 
   private void createFacilities(List<FcFacilityDto> needCreateFacilities,

@@ -37,4 +37,6 @@ public class ProgramConstants {
   public static final String MALARIA_PROGRAM_CODE = "ML";
 
   public static final String RAPIDTEST_PROGRAM_CODE = "TR";
+
+  public static final String MTB_PROGRAM_CODE = "TB";
 }

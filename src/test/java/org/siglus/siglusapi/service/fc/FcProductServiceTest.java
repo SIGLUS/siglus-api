@@ -50,6 +50,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
 import org.openlmis.stockmanagement.web.Pagination;
+import org.siglus.common.dto.referencedata.OrderableChildDto;
 import org.siglus.common.dto.referencedata.OrderableDto;
 import org.siglus.common.dto.referencedata.ProgramOrderableDto;
 import org.siglus.siglusapi.domain.BasicProductCode;
@@ -61,6 +62,7 @@ import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.siglus.siglusapi.dto.TradeItemDto;
 import org.siglus.siglusapi.dto.fc.AreaDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
+import org.siglus.siglusapi.dto.fc.ProductKitDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
@@ -127,6 +129,8 @@ public class FcProductServiceTest {
 
   private final UUID orderableId = UUID.randomUUID();
 
+  private final UUID childrenOrderableId = UUID.randomUUID();
+
   private final UUID programId = UUID.randomUUID();
 
   private final UUID categoryId = UUID.randomUUID();
@@ -136,6 +140,8 @@ public class FcProductServiceTest {
   private final UUID facilityTypeId = UUID.randomUUID();
 
   private final String fnm = "fnm";
+
+  private final String kitFnm = "kitFnm";
 
   private final boolean isTracer = true;
 
@@ -156,6 +162,8 @@ public class FcProductServiceTest {
   private final String displayName = "Other";
 
   private final int displayOrder = 1;
+
+  private final long kitQuantity = 1000L;
 
   @Mock
   private final ConcurrentMapCache cache1 = new ConcurrentMapCache("cache1");
@@ -193,6 +201,11 @@ public class FcProductServiceTest {
     basicProductCode.setProductCode(fnm);
     when(basicProductCodeRepository.findAll()).thenReturn(newArrayList(basicProductCode));
 
+    FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
+    facilityTypeDto.setId(facilityTypeId);
+    when(facilityTypeReferenceDataService.getPage(any())).thenReturn(
+        Pagination.getPage(newArrayList(facilityTypeDto), pageable, 1));
+
     when(cacheManager.getCacheNames())
         .thenReturn(Arrays.asList("token", SIGLUS_ORDERABLES, SIGLUS_APPROVED_PRODUCTS));
     when(cacheManager.getCache("token")).thenReturn(cache1);
@@ -208,10 +221,7 @@ public class FcProductServiceTest {
     tradeItemDto.setId(tradeItemId);
     when(tradeItemReferenceDataService.create(any())).thenReturn(tradeItemDto);
 
-    FacilityTypeDto facilityTypeDto = new FacilityTypeDto();
-    facilityTypeDto.setId(facilityTypeId);
-    when(facilityTypeReferenceDataService.getPage(any())).thenReturn(
-        Pagination.getPage(newArrayList(facilityTypeDto), pageable, 1));
+    givenChildrenOrderableDto();
 
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setId(orderableId);
@@ -220,20 +230,8 @@ public class FcProductServiceTest {
     orderableDto.setPrograms(newHashSet(programOrderable));
     when(orderableReferenceDataService.create(any())).thenReturn(orderableDto);
 
-    AreaDto area = AreaDto.builder()
-        .areaCode(realProgramCode)
-        .areaDescription(realProgramName)
-        .status(STATUS_ACTIVE)
-        .build();
-    ProductInfoDto product = ProductInfoDto.builder()
-        .fnm(fnm)
-        .description(description)
-        .fullDescription(fullDescription)
-        .status(STATUS_ACTIVE)
-        .areas(newArrayList(area))
-        .categoryCode(categoryCode)
-        .isSentinel(isTracer)
-        .build();
+    ProductInfoDto product = buildProductInfoDto();
+    product.setFnm(" fnm");
 
     // when
     fcProductService.processData(newArrayList(product), START_DATE, LAST_UPDATED_AT);
@@ -244,6 +242,8 @@ public class FcProductServiceTest {
     assertEquals(fnm, orderableToCreate.getProductCode());
     assertEquals(description, orderableToCreate.getDescription());
     assertEquals(fullDescription, orderableToCreate.getFullProductName());
+    OrderableChildDto orderableChildDto = orderableToCreate.getChildren().stream().findFirst().orElse(null);
+    assertEquals(kitQuantity, orderableChildDto == null ? 0L : orderableChildDto.getQuantity());
     assertEquals(1L, orderableToCreate.getPackRoundingThreshold().longValue());
     assertEquals(1L, orderableToCreate.getNetContent().longValue());
     assertFalse(orderableToCreate.getRoundToZero());
@@ -287,25 +287,21 @@ public class FcProductServiceTest {
     orderableDto.setId(orderableId);
     Map<String, Object> orderableExtraData = newHashMap();
     orderableExtraData.put(IS_TRACER, false);
+    orderableExtraData.put(ACTIVE, false);
     orderableDto.setExtraData(orderableExtraData);
+    ProgramOrderableDto programDto = new ProgramOrderableDto();
+    programDto.setProgramId(UUID.randomUUID());
+    Set<ProgramOrderableDto> programs = newHashSet(programDto);
+    orderableDto.setPrograms(programs);
     when(orderableService.getOrderableByCode(fnm)).thenReturn(orderableDto);
     when(orderableReferenceDataService.update(any())).thenReturn(orderableDto);
-
-    AreaDto area = AreaDto.builder()
-        .areaCode(realProgramCode)
-        .areaDescription(realProgramName)
-        .status(STATUS_ACTIVE)
-        .build();
-    ProductInfoDto product = ProductInfoDto.builder()
-        .fnm(fnm)
-        .description(description)
-        .fullDescription(fullDescription)
-        .status(STATUS_ACTIVE)
-        .areas(newArrayList(area))
-        .isSentinel(isTracer)
-        .categoryCode(categoryCode)
-        .build();
-
+    ApprovedProductDto approvedProductDto = new ApprovedProductDto();
+    approvedProductDto.setId(UUID.randomUUID());
+    approvedProductDto.setOrderable(orderableDto);
+    when(ftapReferenceDataService.getPage(any()))
+        .thenReturn(Pagination.getPage(newArrayList(approvedProductDto), pageable, 1));
+    givenChildrenOrderableDto();
+    ProductInfoDto product = buildProductInfoDto();
     // when
     fcProductService.processData(newArrayList(product), START_DATE, LAST_UPDATED_AT);
 
@@ -367,5 +363,35 @@ public class FcProductServiceTest {
     verify(cache1, times(0)).clear();
     verify(cache2).clear();
     verify(cache3).clear();
+  }
+
+  private void givenChildrenOrderableDto() {
+    OrderableDto childrenOrderableDto = new OrderableDto();
+    childrenOrderableDto.setId(childrenOrderableId);
+    when(orderableService.getOrderableByCode(kitFnm)).thenReturn(childrenOrderableDto);
+  }
+
+  private ProductInfoDto buildProductInfoDto() {
+    AreaDto area = AreaDto.builder()
+        .areaCode(realProgramCode)
+        .areaDescription(realProgramName)
+        .status(STATUS_ACTIVE)
+        .build();
+
+    ProductKitDto productKitDto = ProductKitDto.builder()
+        .fnm(kitFnm)
+        .quantity(kitQuantity)
+        .build();
+    return ProductInfoDto.builder()
+        .fnm(fnm)
+        .description(description)
+        .fullDescription(fullDescription)
+        .status(STATUS_ACTIVE)
+        .areas(newArrayList(area))
+        .categoryCode(categoryCode)
+        .isSentinel(isTracer)
+        .isKit(true)
+        .productsKits(newArrayList(productKitDto))
+        .build();
   }
 }
