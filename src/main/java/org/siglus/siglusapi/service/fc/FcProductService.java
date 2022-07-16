@@ -244,11 +244,7 @@ public class FcProductService implements ProcessDataService {
     extraData.put(IS_TRACER, product.getIsSentinel());
     newOrderable.setExtraData(extraData);
     newOrderable.setTradeItemIdentifier(createTradeItem());
-    if (FcUtil.isActive(product.getStatus())) {
-      newOrderable.setPrograms(buildProgramOrderableDtos(product));
-    } else {
-      newOrderable.setPrograms(newHashSet());
-    }
+    newOrderable.setPrograms(buildProgramOrderableDtos(product));
     if (product.isKit()) {
       Set<OrderableChildDto> children = buildOrderableChildDtos(product);
       newOrderable.setChildren(children);
@@ -267,11 +263,7 @@ public class FcProductService implements ProcessDataService {
     }
     extraData.put(IS_TRACER, current.getIsSentinel());
     existed.setExtraData(extraData);
-    if (FcUtil.isActive(current.getStatus())) {
-      existed.setPrograms(buildProgramOrderableDtos(current));
-    } else {
-      existed.setPrograms(newHashSet());
-    }
+    existed.setPrograms(buildProgramOrderableDtos(current));
     if (current.isKit()) {
       Set<OrderableChildDto> children = buildOrderableChildDtos(current);
       existed.setChildren(children);
@@ -363,9 +355,10 @@ public class FcProductService implements ProcessDataService {
     }
     boolean isUpdateProgram = false;
     if (isDifferentProgramOrderable(existed, current)) {
-      log.info("[FC product] program different, existed: {}, current: {}", existed.getPrograms(), current.getAreas());
+      log.info("[FC product] program different, existed: {}, current: {}",
+          programsToString(existed.getPrograms()), current.getAreas());
       updateContent.append("program=").append(current.getAreas()).append("; ");
-      originContent.append("program=").append(existed.getPrograms()).append("; ");
+      originContent.append("program=").append(programsToString(existed.getPrograms())).append("; ");
       isDifferent = true;
       isUpdateProgram = true;
     }
@@ -395,8 +388,9 @@ public class FcProductService implements ProcessDataService {
 
   private boolean isDifferentProgramOrderable(OrderableDto existed, ProductInfoDto current) {
     Set<ProgramOrderableDto> productPrograms = buildProgramOrderableDtos(current);
-    Set<ProgramOrderableDto> existingOrderablePrograms = existed.getPrograms();
-    if (existingOrderablePrograms == null || existingOrderablePrograms.isEmpty()) {
+    Set<ProgramOrderableDto> existingOrderablePrograms =
+        existed.getPrograms() == null ? Collections.emptySet() : existed.getPrograms();
+    if (existingOrderablePrograms.isEmpty()) {
       return !productPrograms.isEmpty();
     }
     if (productPrograms.size() != existingOrderablePrograms.size()) {
@@ -446,6 +440,17 @@ public class FcProductService implements ProcessDataService {
           ftapReferenceDataService.delete(approvedProductDto.getId(), parametersDelete);
         });
     createFtap(orderableDto);
+  }
+
+
+  private String programsToString(Set<ProgramOrderableDto> programs) {
+    StringBuilder originPrograms = new StringBuilder("[");
+    programs.forEach(program ->
+        originPrograms.append("ProgramOrderableDto(")
+            .append("programId:").append(program.getProgramId())
+            .append(",programName:").append(program.getOrderableCategoryDisplayName())
+            .append(",status:").append(program.isActive()).append(")"));
+    return originPrograms.append("]").toString();
   }
 
 }
