@@ -239,7 +239,7 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'BRANCH'
                 value = 'COVEREDRATIO'
-                minimum = 0.63
+                minimum = 0.665
             }
         }
     }

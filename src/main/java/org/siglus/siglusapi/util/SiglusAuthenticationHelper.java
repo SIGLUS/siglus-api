@@ -17,6 +17,7 @@ package org.siglus.siglusapi.util;
 
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_USER_NOT_FOUND;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -81,14 +82,18 @@ public class SiglusAuthenticationHelper {
 
   public boolean isTheCurrentUserCanMergeOrDeleteSubDrafts() {
     Collection<DetailedRoleAssignmentDto> userRightsAndRoles = getUserRightsAndRoles();
-    return userRightsAndRoles.stream().anyMatch(e -> {
-      String roleId = e.getRole().getId().toString();
-      return roleId.equals(role2WareHouseManager)
-          || roleId.equals(role2WareHouseManagerDdmDpmOnly)
-          || roleId.equals(role2WareHouseManagerDdmDpmOnlySn)
-          || roleId.equals(role3Director)
-          || roleId.equals(role3DirectorSn);
-    });
+    return userRightsAndRoles.stream()
+        .anyMatch(
+            e -> {
+              String roleId = e.getRole().getId().toString();
+              return Arrays.asList(
+                      role2WareHouseManager,
+                      role2WareHouseManagerDdmDpmOnly,
+                      role2WareHouseManagerDdmDpmOnlySn,
+                      role3Director,
+                      role3DirectorSn)
+                  .contains(roleId);
+            });
   }
 
   public String getUserNameByUserId(UUID userId) {

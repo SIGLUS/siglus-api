@@ -18,11 +18,16 @@ package org.siglus.siglusapi.service.fc;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,6 +41,9 @@ import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
 import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -61,8 +69,10 @@ import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.OrderableDisplayCategoryDto;
 import org.siglus.siglusapi.dto.TradeItemDto;
 import org.siglus.siglusapi.dto.fc.AreaDto;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.ProductInfoDto;
 import org.siglus.siglusapi.dto.fc.ProductKitDto;
+import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.BasicProductCodeRepository;
 import org.siglus.siglusapi.repository.ProgramOrderablesExtensionRepository;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
@@ -78,6 +88,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 @RunWith(MockitoJUnitRunner.class)
+@SuppressWarnings("PMD.TooManyMethods")
 public class FcProductServiceTest {
 
   @Captor
@@ -363,6 +374,91 @@ public class FcProductServiceTest {
     verify(cache1, times(0)).clear();
     verify(cache2).clear();
     verify(cache3).clear();
+  }
+
+  @Test
+  public void shouldReturnNullWhenProcessDataGivenEmptyProducts() {
+    // given
+    List<ResponseBaseDto> products = emptyList();
+    // when
+    FcIntegrationResultDto fcIntegrationResultDto =
+        fcProductService.processData(products, START_DATE, LAST_UPDATED_AT);
+
+    // then
+    assertThat(fcIntegrationResultDto).isNull();
+  }
+
+  @Test
+  public void shouldIgnoreWhenGetProgramOrderablesExtensionGivenRealProgramNotFound() {
+    AreaDto areaWithUnknownCode = AreaDto.builder().areaCode("unknown-code").build();
+    ProductInfoDto productInfo =
+        ProductInfoDto.builder().areas(singletonList(areaWithUnknownCode)).build();
+
+    Set<ProgramOrderablesExtension> extensions =
+        fcProductService.getProgramOrderablesExtensionsForOneProduct(
+            productInfo, UUID.randomUUID(), new HashMap<>());
+
+    assertThat(extensions).isEmpty();
+  }
+
+  @Test
+  public void shouldSetActiveAsFalseWhenCreateExtraDataGivenProductIsNotActive() {
+    ProductInfoDto productInfo = ProductInfoDto.builder().status("Inactivo").build();
+    Map<String, Object> extraData =
+        fcProductService.createOrderableExtraData(productInfo, "product-inactive", emptySet());
+    assertThat(extraData.get(ACTIVE)).isEqualTo(false);
+  }
+
+  @Test
+  public void shouldNotSetActiveFlagWhenCreateExtraDataGivenProductIsActive() {
+    ProductInfoDto productInfo = ProductInfoDto.builder().status(STATUS_ACTIVE).build();
+    Map<String, Object> extraData =
+        fcProductService.createOrderableExtraData(productInfo, "product-active", emptySet());
+    assertThat(extraData.get(ACTIVE)).isNull();
+  }
+
+  @Test
+  public void shouldNotBasicFlagWhenCreateExtraDataGivenProductIsNotBasic() {
+    ProductInfoDto productInfo = ProductInfoDto.builder().status(STATUS_ACTIVE).build();
+    Map<String, Object> extraData =
+        fcProductService.createOrderableExtraData(productInfo, "product-not-basic", emptySet());
+    assertThat(extraData.get(IS_BASIC)).isNull();
+  }
+
+  @Test
+  public void shouldRemoveActiveFlagWhenUpdateExtraDataGivenProductIsActiveNow() {
+    // given
+    Map<String, Object> extraData = new HashMap<>();
+    extraData.put(ACTIVE, false);
+    ProductInfoDto current = ProductInfoDto.builder().status(STATUS_ACTIVE).build();
+    // when
+    Map<String, Object> updatedExtraData = fcProductService.updateExtraData(extraData, current);
+    // then
+    assertThat(updatedExtraData.get(ACTIVE)).isNull();
+  }
+
+  @Test
+  public void shouldSetActiveAsFalseWhenUpdateExtraDataGivenProductIsInactiveNow() {
+    // given
+    Map<String, Object> extraData = new HashMap<>();
+    ProductInfoDto current = ProductInfoDto.builder().status("inactivo").build();
+    // when
+    Map<String, Object> updatedExtraData = fcProductService.updateExtraData(extraData, current);
+    // then
+    assertThat(updatedExtraData.get(ACTIVE)).isEqualTo(false);
+  }
+
+  @Test
+  public void shouldSetChildrenEmptyWhenUpdateOrderableGivenProductIsNotKit() {
+    OrderableDto orderableDto = new OrderableDto();
+    orderableDto.setExtraData(new HashMap<>());
+    orderableDto.setChildren(Collections.singleton(mock(OrderableChildDto.class)));
+    ProductInfoDto current = ProductInfoDto.builder().status("status").isKit(false).build();
+
+    fcProductService.updateOrderable(orderableDto, current);
+
+    assertThat(orderableDto.getChildren()).isNotNull();
+    assertThat(orderableDto.getChildren()).isEmpty();
   }
 
   private void givenChildrenOrderableDto() {
