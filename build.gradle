@@ -184,6 +184,12 @@ configure(checkApiIsRaml) {
     description = 'Verify that the api-specification is valid RAML'
 }
 
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}
+
 jacoco {
     toolVersion = "0.8.6"
 }

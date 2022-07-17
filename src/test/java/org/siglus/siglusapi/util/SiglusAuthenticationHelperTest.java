@@ -37,13 +37,14 @@ import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 @SuppressWarnings("PMD.TooManyMethods")
 public class SiglusAuthenticationHelperTest {
   private final SecurityContext securityContext = mock(SecurityContext.class);
-  private final Authentication authentication = mock(Authentication.class);
+  private final Authentication authentication = mock(OAuth2Authentication.class);
   @Mock private SiglusUserReferenceDataService referenceDataService;
   private SiglusAuthenticationHelper authenticationHelper;
 
