@@ -429,7 +429,7 @@ public class SiglusNotificationService {
     };
   }
 
-  private static UUID findSupervisoryNodeIdForInternalApprove(UUID currentUserFacilityId,
+  UUID findSupervisoryNodeIdForInternalApprove(UUID currentUserFacilityId,
       List<RequisitionGroupDto> requisitionGroups,
       Set<UUID> currentUserSupervisoryNodeIds, UUID programId) {
     RequisitionGroupDto requisitionGroupDto = requisitionGroups.stream()
@@ -444,7 +444,7 @@ public class SiglusNotificationService {
     return requisitionGroupDto == null ? null : requisitionGroupDto.getSupervisoryNode().getId();
   }
 
-  private static boolean isInMemberFacilities(Set<FacilityDto> memberFacilities, UUID userFacilityId) {
+  private boolean isInMemberFacilities(Set<FacilityDto> memberFacilities, UUID userFacilityId) {
     return memberFacilities.stream().map(FacilityDto::getId).anyMatch(userFacilityId::equals);
   }
 
@@ -470,7 +470,7 @@ public class SiglusNotificationService {
         .orElse(null);
   }
 
-  private static final Map<String, PredicateEvaluator> permissionToPredicateEvaluator = ImmutableMap
+  private final Map<String, PredicateEvaluator> permissionToPredicateEvaluator = ImmutableMap
       .<String, PredicateEvaluator>builder()
       .put(PermissionService.REQUISITION_VIEW, getPredicateEvaluatorForRequisitionView())
       .put(PermissionService.REQUISITION_CREATE, getPredicateEvaluatorForRequisitionCreate())
@@ -484,7 +484,7 @@ public class SiglusNotificationService {
       .put(org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT, getPredicateEvaluatorForShipmentsEdit())
       .build();
 
-  private static PredicateEvaluator getPredicateEvaluatorForShipmentsEdit() {
+  PredicateEvaluator getPredicateEvaluatorForShipmentsEdit() {
     return (permissionString, root, cb, currentUserFacilityId,
         currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
         cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
@@ -493,7 +493,7 @@ public class SiglusNotificationService {
     );
   }
 
-  private static PredicateEvaluator getPredicateEvaluatorForPodView() {
+  PredicateEvaluator getPredicateEvaluatorForPodView() {
     return (permissionString, root, cb, currentUserFacilityId,
         currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
         cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
@@ -504,7 +504,7 @@ public class SiglusNotificationService {
     );
   }
 
-  private static PredicateEvaluator getPredicateEvaluatorForPodManage() {
+  PredicateEvaluator getPredicateEvaluatorForPodManage() {
     return (permissionString, root, cb, currentUserFacilityId,
         currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
         cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
@@ -515,7 +515,7 @@ public class SiglusNotificationService {
     );
   }
 
-  private static PredicateEvaluator getPredicateEvaluatorForStockCardsView() {
+  PredicateEvaluator getPredicateEvaluatorForStockCardsView() {
     return (permissionString, root, cb, currentUserFacilityId,
         currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> {
       if (!canEditShipments) {
@@ -530,7 +530,7 @@ public class SiglusNotificationService {
     };
   }
 
-  private static PredicateEvaluator getPredicateEvaluatorForOrdersEdit() {
+  PredicateEvaluator getPredicateEvaluatorForOrdersEdit() {
     return (permissionString, root, cb, currentUserFacilityId,
         currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
         cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
@@ -539,7 +539,7 @@ public class SiglusNotificationService {
     );
   }
 
-  private static PredicateEvaluator getPredicateEvaluatorForRequisitionApprove() {
+  PredicateEvaluator getPredicateEvaluatorForRequisitionApprove() {
     return (permissionString, root, cb, currentUserFacilityId,
         currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> {
       if (currentUserSupervisoryNodeIds.isEmpty()) {
@@ -587,7 +587,7 @@ public class SiglusNotificationService {
     };
   }
 
-  private static PredicateEvaluator getPredicateEvaluatorForRequisitionAuthorize() {
+  PredicateEvaluator getPredicateEvaluatorForRequisitionAuthorize() {
     return (permissionString, root, cb, currentUserFacilityId,
         currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
         cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
@@ -597,7 +597,7 @@ public class SiglusNotificationService {
     );
   }
 
-  private static PredicateEvaluator getPredicateEvaluatorForRequisitionCreate() {
+  PredicateEvaluator getPredicateEvaluatorForRequisitionCreate() {
     return (permissionString, root, cb, currentUserFacilityId,
         currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
         cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
@@ -607,7 +607,7 @@ public class SiglusNotificationService {
     );
   }
 
-  private static PredicateEvaluator getPredicateEvaluatorForRequisitionView() {
+  PredicateEvaluator getPredicateEvaluatorForRequisitionView() {
     return (permissionString, root, cb, currentUserFacilityId,
         currentUserSupervisoryNodeIds, canEditShipments, requisitionGroups) -> cb.and(
         cb.equal(root.get(FACILITY_ID), permissionString.getFacilityId()),
