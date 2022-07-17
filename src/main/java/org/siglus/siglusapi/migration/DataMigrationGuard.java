@@ -18,7 +18,6 @@ package org.siglus.siglusapi.migration;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_PERMISSION_NOT_SUPPORTED;
 
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.exception.AuthenticationException;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,9 +25,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class DataMigrationGuard {
-  private final BCryptPasswordEncoder encoder;
+  private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
   @Value("datamigration.secret")
   private String encodedSecret;

@@ -26,14 +26,13 @@ public class DataMigrationGuardTest {
 
   @Test(expected = AuthenticationException.class)
   public void shouldThrowWhenAssertAuthorizedGivenSecretNotMatch() {
-    BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-    new DataMigrationGuard(encoder).assertAuthorized(SECRET);
+    new DataMigrationGuard().assertAuthorized(SECRET);
   }
 
   @Test
   public void shouldNotThrowWhenAssertAuthorizedGivenSecretDoesMatch() {
     BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-    DataMigrationGuard dataMigrationGuard = new DataMigrationGuard(encoder);
+    DataMigrationGuard dataMigrationGuard = new DataMigrationGuard();
     ReflectionTestUtils.setField(dataMigrationGuard, "encodedSecret", encoder.encode(SECRET));
 
     dataMigrationGuard.assertAuthorized(SECRET);
