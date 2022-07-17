@@ -35,13 +35,16 @@ public class DataMigrationControllerTest {
 
   @Mock
   private DataMigrationService dataMigrationService;
+  @Mock
+  @SuppressWarnings("unused")
+  private DataMigrationGuard guard;
   @InjectMocks
   private DataMigrationController dataMigrationController;
 
   @Test
   public void shouldCallMigrationServiceWhenCreateStockCards() {
     // when
-    dataMigrationController.createStockCards("facility-id", emptyList());
+    dataMigrationController.createStockCards("secret", "facility-id", emptyList());
 
     // then
     verify(dataMigrationService)
@@ -51,7 +54,7 @@ public class DataMigrationControllerTest {
   @Test
   public void shouldCallMigrationServiceWhenCreateCmms() {
     // when
-    dataMigrationController.createOrUpdateCmms("facility-id", emptyList());
+    dataMigrationController.createOrUpdateCmms("secret", "facility-id", emptyList());
 
     // then
     verify(dataMigrationService)

@@ -19,15 +19,16 @@ import static org.springframework.http.HttpStatus.CREATED;
 
 import java.util.List;
 import javax.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.siglus.siglusapi.dto.android.request.HfCmmDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
-import org.siglus.siglusapi.migration.DataMigrationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,27 +36,29 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/siglusapi/data-migration")
 @Validated
+@RequiredArgsConstructor
 public class DataMigrationController {
 
   private final DataMigrationService dataMigrationService;
-
-  public DataMigrationController(DataMigrationService service) {
-    this.dataMigrationService = service;
-  }
+  private final DataMigrationGuard guard;
 
   @PostMapping("/{facilityId}/stock-cards")
   @ResponseStatus(CREATED)
   public CreateStockCardResponse createStockCards(
+      @RequestHeader("x-dm-secret") String secret,
       @PathVariable String facilityId,
       @RequestBody @Valid @NotEmpty List<StockCardCreateRequest> requests) {
+    guard.assertAuthorized(secret);
     return dataMigrationService.createStockCards(facilityId, requests);
   }
 
   @PostMapping("/{facilityId}/cmms")
   @ResponseStatus(CREATED)
   public void createOrUpdateCmms(
+      @RequestHeader("x-dm-secret") String secret,
       @PathVariable String facilityId,
       @RequestBody @Valid List<HfCmmDto> hfCmmDtos) {
+    guard.assertAuthorized(secret);
     dataMigrationService.createOrUpdateCmms(facilityId, hfCmmDtos);
   }
 }
