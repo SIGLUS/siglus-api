@@ -3,7 +3,7 @@
 -- Migrations should NOT BE EDITED. Add a new migration to apply changes.
 
 -- auto-generated definition
-create table tracer_drug_persistent_data
+create table dashboard.tracer_drug_persistent_data
 (
     id              serial
         constraint tracer_drug_persistent_data_pk
@@ -15,11 +15,11 @@ create table tracer_drug_persistent_data
     stockonhand     integer
 );
 
-alter table tracer_drug_persistent_data
+alter table dashboard.tracer_drug_persistent_data
     owner to postgres;
 
 create unique index tracer_drug_persistent_data_id_uindex
-    on tracer_drug_persistent_data (id);
+    on dashboard.tracer_drug_persistent_data (id);
 
 create unique index tracer_drug_persistent_data_productcode_facilitycode_computatio
-    on tracer_drug_persistent_data (productcode, facilitycode, computationtime);
+    on dashboard.tracer_drug_persistent_data (productcode, facilitycode, computationtime);
