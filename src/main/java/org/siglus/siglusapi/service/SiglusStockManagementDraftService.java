@@ -278,13 +278,18 @@ public class SiglusStockManagementDraftService {
 
     StockManagementInitialDraft savedInitialDraft = stockManagementInitialDraftsRepository
         .save(initialDraft);
+    StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto
+        .from(savedInitialDraft);
 
     if (initialDraftDto.getDraftType().equals("issue")) {
       String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),
           savedInitialDraft.getFacilityId());
-      StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto
-          .from(savedInitialDraft);
       initialDraftDtoResponse.setDestinationName(destinationName);
+      return initialDraftDtoResponse;
+    } else if (initialDraftDto.getDraftType().equals("receive")) {
+      String sourceName = findSourceName(savedInitialDraft.getSourceId(),
+          savedInitialDraft.getFacilityId());
+      initialDraftDtoResponse.setSourceName(sourceName);
       return initialDraftDtoResponse;
     }
     return new StockManagementInitialDraftDto();
@@ -310,7 +315,8 @@ public class SiglusStockManagementDraftService {
         stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
         return stockManagementInitialDraftDto;
       } else if (draftType.equals(FieldConstants.RECEIVE)) {
-        String sourceName = findSourceName(initialDraft.getSourceId());
+        String sourceName = findSourceName(initialDraft.getSourceId(),
+            initialDraft.getFacilityId());
         stockManagementInitialDraftDto.setSourceName(sourceName);
         stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
         return stockManagementInitialDraftDto;
@@ -319,9 +325,17 @@ public class SiglusStockManagementDraftService {
     return new StockManagementInitialDraftDto();
   }
 
-  private String findSourceName(UUID sourceId) {
+  private String findSourceName(UUID sourceId, UUID facilityId) {
     //TODO: when do multi-user receive, get source name by id
-    return null;
+    Collection<ValidSourceDestinationDto> sourcesForAllProducts = validSourceDestinationService
+        .findSourcesForAllProducts(facilityId);
+
+    return sourcesForAllProducts
+        .stream().filter(source -> (
+            source.getId().equals(sourceId)
+        )).findFirst()
+        .orElseThrow(() -> new NotFoundException("No such source with id: " + sourceId))
+        .getName();
   }
 
   private void checkIfInitialDraftExists(UUID programId, UUID facilityId, String draftType) {
