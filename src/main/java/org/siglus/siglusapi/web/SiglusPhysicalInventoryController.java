@@ -27,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openlmis.stockmanagement.dto.PhysicalInventoryDto;
 import org.siglus.siglusapi.dto.DraftListDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftDto;
+import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.service.SiglusPhysicalInventoryService;
 import org.siglus.siglusapi.service.SiglusPhysicalInventorySubDraftService;
@@ -163,5 +164,15 @@ public class SiglusPhysicalInventoryController {
   public PhysicalInventoryDto searchLatestPhysicalInventoryOccurDate(
       @RequestParam UUID facilityId, @RequestParam UUID programId) {
     return siglusPhysicalInventoryService.findLatestPhysicalInventory(facilityId, programId);
+  }
+
+  @GetMapping("/conflict")
+  public PhysicalInventoryValidationDto checkPhysicalInventoryConflict(@RequestParam UUID program,
+      @RequestParam UUID facility,
+      @RequestParam(required = false) Boolean isDraft) {
+    if (ALL_PRODUCTS_UUID.equals(program)) {
+      return siglusPhysicalInventoryService.checkConflictForAllProduct(facility, isDraft);
+    }
+    return siglusPhysicalInventoryService.checkConflictForOneProgram(facility, isDraft);
   }
 }

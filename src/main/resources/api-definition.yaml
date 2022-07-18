@@ -1140,6 +1140,31 @@ traits:
               application/json:
                 schema: physicalInventory
 
+    /physicalInventories/conflict:
+      get:
+        is: [ secured ]
+        description: check physical inventory program conflict
+        queryParameters:
+          program:
+            required: true
+            description: program id
+            repeat: false
+            type: string
+          facility:
+            required: true
+            description: facility id
+            repeat: false
+            type: string
+          isDraft:
+            required: false
+            description: is draft
+            repeat: false
+            type: boolean
+        responses:
+          200:
+            body:
+              application/pdf:
+
     /physicalInventories/dates:
       get:
         is: [ secured ]
