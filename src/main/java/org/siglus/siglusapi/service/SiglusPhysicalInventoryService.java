@@ -404,13 +404,13 @@ public class SiglusPhysicalInventoryService {
         if (CollectionUtils.isNotEmpty(orderableDto.getCanFulfillForMe())) {
           orderableDto.getCanFulfillForMe().forEach(dto -> {
             Map<String, String> extraData = new HashMap<>();
-            if (dto.getLot() != null && dto.getStockCard() != null && dto.getOrderable() != null) {
+            if (dto.getStockCard() != null && dto.getOrderable() != null) {
               extraData.put(VM_STATUS, null);
               extraData.put(STOCK_CARD_ID, String.valueOf(dto.getStockCard().getId()));
               physicalInventoryLineItems.add(
                   PhysicalInventoryLineItemDto.builder()
                       .orderableId(dto.getOrderable().getId())
-                      .lotId(dto.getLot().getId())
+                      .lotId(dto.getLot() != null ? dto.getLot().getId() : null)
                       .extraData(extraData)
                       .stockAdjustments(Collections.emptyList())
                       .programId(programId).build());
