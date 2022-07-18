@@ -16,6 +16,8 @@
 package org.siglus.siglusapi.migration;
 
 import static java.lang.String.format;
+import static java.util.Collections.singleton;
+import static org.siglus.siglusapi.util.SiglusAuthenticationHelper.MIGRATE_DATA;
 
 import java.util.List;
 import java.util.UUID;
@@ -54,7 +56,7 @@ public class DataMigrationService {
 
   private void assumeOneUserInFacility(String facilityId) {
     UserDto assumedUser = findOneUserInFacility(facilityId);
-    simulateUserAuthHelper.simulateUserAuth(assumedUser.getId());
+    simulateUserAuthHelper.simulateUserAuth(assumedUser.getId(), singleton(MIGRATE_DATA));
   }
 
   private UserDto findOneUserInFacility(String facilityId) {

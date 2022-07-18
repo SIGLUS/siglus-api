@@ -32,4 +32,6 @@ public interface StockManagementDraftRepository
   List<StockManagementDraft> findByInitialDraftId(UUID initialDraftId);
 
   List<StockManagementDraft> findByFacilityId(UUID facilityId);
+
+  Integer countByInitialDraftId(UUID initialDraftId);
 }

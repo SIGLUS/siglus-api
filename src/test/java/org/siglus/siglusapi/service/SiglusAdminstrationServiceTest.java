@@ -15,6 +15,7 @@
 
 package org.siglus.siglusapi.service;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang.BooleanUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -33,6 +35,8 @@ import org.openlmis.requisition.utils.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
 import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.FacilitySearchParamDto;
+import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.repository.AppInfoRepository;
 import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
@@ -56,12 +60,6 @@ public class SiglusAdminstrationServiceTest {
   @Rule
   public ExpectedException exception = ExpectedException.none();
 
-  private static final Integer page = 0;
-
-  private static final Integer size = 3;
-
-  private static final String sort = "name,asc";
-
   private static final UUID facilityId = UUID.randomUUID();
 
   private static final UUID device1 = UUID.randomUUID();
@@ -70,50 +68,70 @@ public class SiglusAdminstrationServiceTest {
 
   private static final UUID device3 = UUID.randomUUID();
 
-  private List<FacilityDto> content = new ArrayList<>();
+  private static final String facilityCode = "01100122";
 
-  private Pageable pageable = new PageRequest(0, 3);
+  private static final String Name = "A. Alimenticios";
+
+  private static List<FacilityDto> content = new ArrayList<>();
+
+  private static Pageable pageable = new PageRequest(0, 3);
+
+  private static int isAndroid = 0;
 
   @Test
   public void searchForFacilitiesWithIsAndroid() {
     // given
-    when(siglusFacilityReferenceDataService.searchAllFacilities(page, size, sort))
+    FacilitySearchParamDto facilitySearchParamDto = mockFacilitySearchParamDto();
+    when(siglusFacilityReferenceDataService.searchAllFacilities(facilitySearchParamDto, pageable))
               .thenReturn(mockFacilityDto());
     when(facilityExtensionRepository.findByFacilityId(device1)).thenReturn(mockFacilityExtension(device1, true));
     when(facilityExtensionRepository.findByFacilityId(device2)).thenReturn(mockFacilityExtension(device2, false));
     when(facilityExtensionRepository.findByFacilityId(device3)).thenReturn(null);
 
     // when
-    // Page<FacilityDto> facilityDtos = siglusAdministrationsService.searchForFacilities(page, size, sort);
+    Page<FacilitySearchResultDto> facilitySearchDtoPage = siglusAdministrationsService
+        .searchForFacilities(facilitySearchParamDto, pageable);
+    facilitySearchDtoPage.getContent().forEach(eachFacilityDto -> {
+      if (BooleanUtils.isTrue(eachFacilityDto.getIsAndroidDevice())) {
+        isAndroid++;
+      }
+    });
 
     //then
-    //assertEquals(1, isAndroid);
+    assertEquals(1, isAndroid);
   }
 
   @Test
   public void deleteAndroidInfoByFacilityId() {
     // given
     AppInfo appInfo = mockAppInfo();
-    when(appInfoRepository.findOne(facilityId)).thenReturn(appInfo);
+    when(appInfoRepository.findByFacilityCode(facilityCode)).thenReturn(appInfo);
 
     // when
-    siglusAdministrationsService.eraseAndroidByFacilityId(appInfo.getId());
+    siglusAdministrationsService.eraseDeviceInfoByFacilityId(appInfo.getFacilityCode());
 
     //then
-    verify(appInfoRepository, times(1)).delete(appInfo.getId());
+    verify(appInfoRepository, times(1)).deleteByFacilityCode(appInfo.getFacilityCode());
   }
 
   @Test
   public void deleteAndroidInfoWithWrongFacilityId() {
     exception.expect(IllegalArgumentException.class);
-    exception.expectMessage("The facilityId is not acceptable");
+    exception.expectMessage("The facilityCode is not acceptable");
 
-    siglusAdministrationsService.eraseAndroidByFacilityId(facilityId);
+    siglusAdministrationsService.eraseDeviceInfoByFacilityId(facilityCode);
+  }
+
+  private FacilitySearchParamDto mockFacilitySearchParamDto() {
+    FacilitySearchParamDto facilitySearchParamDto = new FacilitySearchParamDto();
+    facilitySearchParamDto.setName(Name);
+    return facilitySearchParamDto;
   }
 
   private AppInfo mockAppInfo() {
     AppInfo appInfo = new AppInfo();
     appInfo.setId(facilityId);
+    appInfo.setFacilityCode(facilityCode);
     return appInfo;
   }
 

@@ -236,7 +236,7 @@ public abstract class BaseCommunicationService<T> {
   /**
    * Return all reference data T objects for Page that need to be retrieved with GET request.
    *
-   * @param parameters  Map of query parameters.
+   * @param parameters Map of query parameters.
    * @return Page of reference data T objects.
    */
   public Page<T> getPage(RequestParameters parameters) {
@@ -300,9 +300,9 @@ public abstract class BaseCommunicationService<T> {
     R response;
     try {
       response = restTemplate.postForObject(
-              RequestHelper.createUri(url),
-              RequestHelper.createEntity(payload, authService.obtainAccessToken(obtainUserToken)),
-              type);
+          RequestHelper.createUri(url),
+          RequestHelper.createEntity(payload, authService.obtainAccessToken(obtainUserToken)),
+          type);
     } catch (HttpStatusCodeException ex) {
       final Message errorMessage = Message.createFromMessageKeyStr(ex.getResponseBodyAsString());
       throw new ValidationMessageException(ex, errorMessage);
@@ -336,9 +336,24 @@ public abstract class BaseCommunicationService<T> {
     }
   }
 
+  protected void delete(String resourceUrl, RequestParameters parameter, boolean obtainUserToken) {
+    String url = getServiceUrl() + getUrl() + resourceUrl;
+    RequestParameters params = RequestParameters
+        .init()
+        .setAll(parameter);
+    try {
+      restTemplate
+          .exchange(RequestHelper.createUri(url, params), HttpMethod.DELETE,
+              createEntity(null, obtainUserToken), Void.class);
+    } catch (HttpStatusCodeException ex) {
+      final Message errorMessage = Message.createFromMessageKeyStr(ex.getResponseBodyAsString());
+      throw new ValidationMessageException(ex, errorMessage);
+    }
+  }
+
   @SuppressWarnings("java:S3740")
   protected <K, V> Map<K, V> getMap(String resourceUrl, RequestParameters parameters,
-                                    Class<K> keyType, Class<V> valueType) {
+      Class<K> keyType, Class<V> valueType) {
     String url = getServiceUrl() + getUrl() + StringUtils.defaultIfBlank(resourceUrl, "");
     TypeFactory factory = objectMapper.getTypeFactory();
     MapType mapType = factory.constructMapType(HashMap.class, keyType, valueType);
@@ -359,8 +374,8 @@ public abstract class BaseCommunicationService<T> {
   }
 
   private <E> ResponseEntity<E[]> doListRequest(String url, RequestParameters parameters,
-                                                HttpMethod method, Class<E[]> type,
-                                                boolean obtainUserToken) {
+      HttpMethod method, Class<E[]> type,
+      boolean obtainUserToken) {
     HttpEntity<Object> entity = createEntity(null, obtainUserToken);
     List<E[]> arrays = new ArrayList<>();
 
@@ -377,11 +392,11 @@ public abstract class BaseCommunicationService<T> {
   }
 
   private <E> ResponseEntity<PageImplRepresentation<E>> doPageRequest(String url,
-                                                                      RequestParameters parameters,
-                                                                      Object payload,
-                                                                      HttpMethod method,
-                                                                      Class<E> type,
-                                                                      boolean obtainUserToken) {
+      RequestParameters parameters,
+      Object payload,
+      HttpMethod method,
+      Class<E> type,
+      boolean obtainUserToken) {
     HttpEntity<Object> entity = createEntity(payload, obtainUserToken);
     ParameterizedTypeReference<PageImplRepresentation<E>> parameterizedType =
         new DynamicPageTypeReference<>(type);

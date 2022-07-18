@@ -24,4 +24,6 @@ public interface AppInfoRepository extends JpaRepository<AppInfo, UUID> {
   AppInfo findByFacilityCodeAndUniqueId(String facilityCode, String uniqueId);
 
   AppInfo findByFacilityCode(String facilityCode);
+
+  void deleteByFacilityCode(String facilityCode);
 }

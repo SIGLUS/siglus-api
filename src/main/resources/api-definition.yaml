@@ -248,22 +248,22 @@ traits:
   /siglusapi:
     /administration:
       /facilities:
-        get:
+        post:
           is: [ secured ]
           description: Search for facilities information
           responses:
             200:
               description: Information display
-      /{facilityId}/android:
+      /{facilityCode}/android:
         uriParameters:
-          facilityId:
-            displayName: facilityId
+          facilityCode:
+            displayName: facilityCode
             type: string
             required: true
             repeat: false
         delete:
           is: [ secured ]
-          description: Remove android info by facilityId
+          description: Remove android info by facilityCode
           responses:
             204:
               description: Android device successfully removed
@@ -304,6 +304,28 @@ traits:
             description: submit success
     /task/requisition/update:
       displayName: update requisition monthly report task
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
+    /task/tracerDrug:
+      displayName: run tracer drug persistent data task
+    /task/tracerDrug/refresh:
+      displayName: refresh tracer drug persistent data task
+      post:
+        is: [ secured ]
+        body:
+          application/json:
+            schema: arrayOfStrings
+        responses:
+          201:
+            description: submit success
+    /task/tracerDrug/initialize:
+      displayName: initialize tracer drug persistent data task
       post:
         is: [ secured ]
         body:

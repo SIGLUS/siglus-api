@@ -83,7 +83,7 @@ public class StockManagementDraft extends BaseEntity {
     return draft;
   }
 
-  //delete when multi-user feature is finish
+  //TODO: delete when multi-user feature is finish
   public static StockManagementDraft createStockManagementDraft(StockManagementDraftDto draftDto,
       boolean isDraft) {
     StockManagementDraft draft = new StockManagementDraft();

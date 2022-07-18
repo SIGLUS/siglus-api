@@ -148,7 +148,7 @@ public class FcGeographicZoneServiceTest {
         .build();
     GeographicZoneDto province22 = GeographicZoneDto.builder()
         .code("22")
-        .name("description 22")
+        .name("orginal description 22")
         .level(level2)
         .parent(national1)
         .build();

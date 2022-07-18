@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.domain.FcIntegrationChanges;
 
 @Data
 @AllArgsConstructor
@@ -43,4 +44,6 @@ public class FcIntegrationResultBuildDto {
   private int updateCounter;
 
   private String errorMessage;
+
+  private List<FcIntegrationChanges> fcIntegrationChanges;
 }

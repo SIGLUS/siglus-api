@@ -24,6 +24,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.siglus.siglusapi.domain.FcIntegrationChanges;
 
 @Data
 @AllArgsConstructor
@@ -47,15 +48,7 @@ public class FcIntegrationResultDto {
 
   private String errorMessage;
 
-  public static FcIntegrationResultDto buildResult(String api,
-      List<? extends ResponseBaseDto> result, String startDate,
-      ZonedDateTime previousLastUpdatedAt, boolean finalSuccess, int createCounter,
-      int updateCounter) {
-
-    return FcIntegrationResultDto
-        .buildResult(new FcIntegrationResultBuildDto(api, result, startDate, previousLastUpdatedAt,
-            finalSuccess, createCounter, updateCounter, null));
-  }
+  private List<FcIntegrationChanges> fcIntegrationChanges;
 
   public static FcIntegrationResultDto buildResult(
       FcIntegrationResultBuildDto fcIntegrationBuildWrapper) {
@@ -77,6 +70,7 @@ public class FcIntegrationResultDto {
         .createdObjects(fcIntegrationBuildWrapper.getCreateCounter())
         .updatedObjects(fcIntegrationBuildWrapper.getUpdateCounter())
         .finalSuccess(fcIntegrationBuildWrapper.isFinalSuccess())
+        .fcIntegrationChanges(fcIntegrationBuildWrapper.getFcIntegrationChanges())
         .build();
     if (fcIntegrationBuildWrapper.getErrorMessage() != null) {
       resultDto.setErrorMessage(fcIntegrationBuildWrapper.getErrorMessage());

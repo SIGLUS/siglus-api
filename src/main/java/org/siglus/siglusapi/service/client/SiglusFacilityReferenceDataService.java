@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.openlmis.stockmanagement.util.RequestParameters;
+import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.constant.PaginationConstants;
 import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +39,8 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
 
   public static final String FACILITY_CODE = "code";
   public static final String SORT = "sort";
+  public static final String NAME = "name";
+  public static final String ZONEID = "zoneId";
 
   @Override
   protected String getUrl() {
@@ -81,12 +85,10 @@ public class SiglusFacilityReferenceDataService extends BaseReferenceDataService
     return super.findOne(facilityId);
   }
 
-  public Page<FacilityDto> searchAllFacilities(Integer page, Integer size, String sort) {
-    Pageable pageInfos = new PageRequest(page, size);
-    Map<String, String> requestBody = new HashMap<>();
-    requestBody.put(SORT, sort);
-    return getPage("search", RequestParameters.init().setPage(pageInfos),
-            requestBody, HttpMethod.POST, getResultClass(), false);
+  public Page<FacilityDto> searchAllFacilities(FacilitySearchParamDto facilitySearchParamDto, Pageable pageable) {
+    RequestParameters parameters = RequestParameters.init().set(FieldConstants.NAME, facilitySearchParamDto.getName())
+        .set(FieldConstants.ZONEID, facilitySearchParamDto.getZoneId()).setPage(pageable);
+    return getPage(parameters);
   }
 
 }

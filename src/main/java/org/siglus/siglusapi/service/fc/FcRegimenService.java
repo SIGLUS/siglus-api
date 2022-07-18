@@ -20,6 +20,7 @@ import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 import static org.siglus.siglusapi.dto.fc.FcIntegrationResultDto.buildResult;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,15 +33,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openlmis.requisition.dto.ProgramDto;
 import org.openlmis.requisition.service.referencedata.ProgramReferenceDataService;
+import org.siglus.siglusapi.domain.FcIntegrationChanges;
 import org.siglus.siglusapi.domain.ProgramRealProgram;
 import org.siglus.siglusapi.domain.Regimen;
 import org.siglus.siglusapi.domain.RegimenCategory;
+import org.siglus.siglusapi.dto.fc.FcIntegrationResultBuildDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
 import org.siglus.siglusapi.dto.fc.RegimenDto;
 import org.siglus.siglusapi.dto.fc.ResponseBaseDto;
 import org.siglus.siglusapi.repository.ProgramRealProgramRepository;
 import org.siglus.siglusapi.repository.RegimenCategoryRepository;
 import org.siglus.siglusapi.repository.RegimenRepository;
+import org.siglus.siglusapi.util.FcUtil;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -54,7 +58,6 @@ public class FcRegimenService implements ProcessDataService {
   private final ProgramRealProgramRepository programRealProgramRepository;
   private final ProgramReferenceDataService programRefDataService;
   private final RegimenCategoryRepository regimenCategoryRepository;
-  private final FcIntegrationResultService fcIntegrationResultService;
 
   @Override
   public FcIntegrationResultDto processData(List<? extends ResponseBaseDto> regimens, String startDate,
@@ -67,6 +70,7 @@ public class FcRegimenService implements ProcessDataService {
     AtomicInteger createCounter = new AtomicInteger();
     AtomicInteger updateCounter = new AtomicInteger();
     AtomicInteger sameCounter = new AtomicInteger();
+    List<FcIntegrationChanges> fcIntegrationChangesList = new ArrayList<>();
     try {
       Map<String, ProgramRealProgram> realProgramCodeToProgram = programRealProgramRepository.findAll()
           .stream().collect(Collectors.toMap(ProgramRealProgram::getRealProgramCode, Function.identity()));
@@ -102,12 +106,20 @@ public class FcRegimenService implements ProcessDataService {
           regimensToUpdate.add(Regimen.from(current, realProgramId, programId,
               getRegimenCategory(current, regimenCategoryCodeToCategory), maxRegimenDisplayOrder.incrementAndGet()));
           createCounter.getAndIncrement();
-        } else if (isDifferent(existed, current, realProgram.getId())) {
-          log.info("[FC regimen] update regimen, existed: {}, current: {}", existed, current);
-          regimensToUpdate.add(merge(existed, current, realProgramId, programId, regimenCategoryCodeToCategory));
-          updateCounter.getAndIncrement();
+          FcIntegrationChanges createChanges = FcUtil
+              .buildCreateFcIntegrationChanges(REGIMEN_API, current.getCode(), current.toString());
+          fcIntegrationChangesList.add(createChanges);
         } else {
-          sameCounter.getAndIncrement();
+          FcIntegrationChanges updateChanges = getUpdatedRegimen(existed, current, realProgram.getId());
+          if (updateChanges != null) {
+            log.info("[FC regimen] update regimen, existed: {}, current: {}", existed, current);
+            regimensToUpdate.add(merge(existed, current, realProgramId, programId, regimenCategoryCodeToCategory));
+            updateCounter.getAndIncrement();
+            fcIntegrationChangesList.add(updateChanges);
+          } else {
+            sameCounter.getAndIncrement();
+          }
+
         }
       });
       regimenRepository.save(regimensToUpdate);
@@ -117,14 +129,37 @@ public class FcRegimenService implements ProcessDataService {
     }
     log.info("[FC regimen] process data create: {}, update: {}, same: {}",
         createCounter.get(), updateCounter.get(), sameCounter.get());
-    return buildResult(REGIMEN_API, regimens, startDate, previousLastUpdatedAt, finalSuccess, createCounter.get(),
-        updateCounter.get());
+    return buildResult(
+        new FcIntegrationResultBuildDto(REGIMEN_API, regimens, startDate, previousLastUpdatedAt, finalSuccess,
+            createCounter.get(), updateCounter.get(), null, fcIntegrationChangesList));
   }
 
-  private boolean isDifferent(Regimen existed, RegimenDto current, UUID realProgramId) {
-    return !existed.getName().equals(current.getDescription())
-        || !existed.getRealProgramId().equals(realProgramId)
-        || !isCategoryEquivalent(existed, current);
+  private FcIntegrationChanges getUpdatedRegimen(Regimen existed, RegimenDto current, UUID realProgramId) {
+    boolean isDifferent = false;
+    StringBuilder updateContent = new StringBuilder();
+    StringBuilder originContent = new StringBuilder();
+    if (!existed.getName().equals(current.getDescription())) {
+      updateContent.append("name=").append(current.getDescription()).append("; ");
+      originContent.append("name=").append(existed.getName()).append("; ");
+      isDifferent = true;
+    }
+    if (!existed.getRealProgramId().equals(realProgramId)) {
+      updateContent.append("realProgramId=").append(realProgramId).append("; ");
+      originContent.append("realProgramId=").append(existed.getRealProgramId()).append("; ");
+      isDifferent = true;
+    }
+    if (!isCategoryEquivalent(existed, current)) {
+      updateContent.append("category=").append(current.getCategoryCode()).append("; ");
+      originContent.append("category=")
+          .append(existed.getRegimenCategory() == null ? null : existed.getRegimenCategory().getCode()).append("; ");
+      isDifferent = true;
+    }
+    if (isDifferent) {
+      return FcUtil.buildUpdateFcIntegrationChanges(REGIMEN_API, current.getCode(), updateContent.toString(),
+          originContent.toString());
+    } else {
+      return null;
+    }
   }
 
   @SuppressWarnings("java:S125")

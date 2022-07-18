@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class AgeGroupLineItemDto {
-  private UUID id;
+  private UUID ageGroupLineItemId;
 
   private Integer value;
 }

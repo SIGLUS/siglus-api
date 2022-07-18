@@ -17,13 +17,17 @@ package org.siglus.siglusapi.web;
 
 import static org.mockito.Mockito.verify;
 
-import java.util.UUID;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.siglus.siglusapi.dto.FacilitySearchParamDto;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 
 
 @RunWith(MockitoJUnitRunner.class)
@@ -35,24 +39,38 @@ public class SiglusAdministrationControllerTest {
   @Mock
   private SiglusAdministrationsService siglusAdministrationsService;
 
+  private static final Direction direction = Direction.ASC;
+
+  private static final Sort sort = new Sort(direction, "name");
+
+  private static final Pageable pageable = new PageRequest(0, 10, sort);
+
+  private static final String facilityCode = "000000";
+
+  private static final String Name = "A. Alimenticios";
+
   @Test
   public void shouldDisplayFacilitiesWithIsAndroid() {
     //when
-    siglusAdministrationsController.showFacilitiesInfos(null, null, null);
+    FacilitySearchParamDto facilitySearchParamDto = mockFacilitySearchParamDto();
+    siglusAdministrationsController.showFacilitiesInfos(facilitySearchParamDto, pageable);
 
     //then
-    verify(siglusAdministrationsService).searchForFacilities(null, null, null);
+    verify(siglusAdministrationsService).searchForFacilities(facilitySearchParamDto, pageable);
   }
 
   @Test
   public void eraseAndroidByFacilityId() {
-    //given
-    UUID uuid = UUID.randomUUID();
-
     //when
-    siglusAdministrationsController.eraseAndroidDevice(uuid);
+    siglusAdministrationsController.eraseAndroidDeviceInfo(facilityCode);
 
     //then
-    verify(siglusAdministrationsService).eraseAndroidByFacilityId(uuid);
+    verify(siglusAdministrationsService).eraseDeviceInfoByFacilityId(facilityCode);
+  }
+
+  private FacilitySearchParamDto mockFacilitySearchParamDto() {
+    FacilitySearchParamDto facilitySearchParamDto = new FacilitySearchParamDto();
+    facilitySearchParamDto.setName(Name);
+    return facilitySearchParamDto;
   }
 }

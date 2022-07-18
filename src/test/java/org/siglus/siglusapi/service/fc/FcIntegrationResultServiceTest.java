@@ -22,7 +22,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.siglus.siglusapi.constant.FcConstants.CMM_API;
 import static org.siglus.siglusapi.constant.FcConstants.CP_API;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_API;
+import static org.siglus.siglusapi.constant.FcConstants.FACILITY_TYPE_API;
+import static org.siglus.siglusapi.constant.FcConstants.GEOGRAPHIC_ZONE_API;
 import static org.siglus.siglusapi.constant.FcConstants.ISSUE_VOUCHER_API;
+import static org.siglus.siglusapi.constant.FcConstants.PRODUCT_API;
+import static org.siglus.siglusapi.constant.FcConstants.PROGRAM_API;
+import static org.siglus.siglusapi.constant.FcConstants.RECEIPT_PLAN_API;
+import static org.siglus.siglusapi.constant.FcConstants.REGIMEN_API;
 import static org.siglus.siglusapi.service.fc.FcVariables.LAST_UPDATED_AT;
 import static org.siglus.siglusapi.service.fc.FcVariables.START_DATE;
 
@@ -154,4 +161,141 @@ public class FcIntegrationResultServiceTest {
     verify(fcIntegrationResultRepository).save(resultCaptor.capture());
     assertEquals(LAST_UPDATED_AT, resultCaptor.getValue().getLastUpdatedAt());
   }
+
+  @Test
+  public void shouldGetEndDateWhenRecordFcIntegrationResultWhenCallCpApi() {
+    // given
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(CP_API)
+        .lastUpdatedAt(LAST_UPDATED_AT)
+        .build();
+    when(callFcService.getCps()).thenReturn(new ArrayList<>());
+
+    // when
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+
+    // then
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(LAST_UPDATED_AT, resultCaptor.getValue().getLastUpdatedAt());
+  }
+
+  @Test
+  public void shouldGetEndDateWhenRecordFcIntegrationResultWhenCallProgramApi() {
+    // given
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(PROGRAM_API)
+        .lastUpdatedAt(LAST_UPDATED_AT)
+        .build();
+    when(callFcService.getPrograms()).thenReturn(new ArrayList<>());
+
+    // when
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+
+    // then
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(LAST_UPDATED_AT, resultCaptor.getValue().getLastUpdatedAt());
+  }
+
+  @Test
+  public void shouldGetEndDateWhenRecordFcIntegrationResultWhenCallProductApi() {
+    // given
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(PRODUCT_API)
+        .lastUpdatedAt(LAST_UPDATED_AT)
+        .build();
+    when(callFcService.getProducts()).thenReturn(new ArrayList<>());
+
+    // when
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+
+    // then
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(LAST_UPDATED_AT, resultCaptor.getValue().getLastUpdatedAt());
+  }
+
+  @Test
+  public void shouldGetEndDateWhenRecordFcIntegrationResultWhenCallFacilityTypeApi() {
+    // given
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(FACILITY_TYPE_API)
+        .lastUpdatedAt(LAST_UPDATED_AT)
+        .build();
+    when(callFcService.getFacilityTypes()).thenReturn(new ArrayList<>());
+
+    // when
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+
+    // then
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(LAST_UPDATED_AT, resultCaptor.getValue().getLastUpdatedAt());
+  }
+
+  @Test
+  public void shouldGetEndDateWhenRecordFcIntegrationResultWhenCallFacilityApi() {
+    // given
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(FACILITY_API)
+        .lastUpdatedAt(LAST_UPDATED_AT)
+        .build();
+    when(callFcService.getFacilities()).thenReturn(new ArrayList<>());
+
+    // when
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+
+    // then
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(LAST_UPDATED_AT, resultCaptor.getValue().getLastUpdatedAt());
+  }
+
+  @Test
+  public void shouldGetEndDateWhenRecordFcIntegrationResultWhenCallRegimenApi() {
+    // given
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(REGIMEN_API)
+        .lastUpdatedAt(LAST_UPDATED_AT)
+        .build();
+    when(callFcService.getRegimens()).thenReturn(new ArrayList<>());
+
+    // when
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+
+    // then
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(LAST_UPDATED_AT, resultCaptor.getValue().getLastUpdatedAt());
+  }
+
+  @Test
+  public void shouldGetEndDateWhenRecordFcIntegrationResultWhenCallGzApi() {
+    // given
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(GEOGRAPHIC_ZONE_API)
+        .lastUpdatedAt(LAST_UPDATED_AT)
+        .build();
+    when(callFcService.getGeographicZones()).thenReturn(new ArrayList<>());
+
+    // when
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+
+    // then
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(LAST_UPDATED_AT, resultCaptor.getValue().getLastUpdatedAt());
+  }
+
+  @Test
+  public void shouldGetEndDateWhenRecordFcIntegrationResultWhenCallReceiptPlanApi() {
+    // given
+    FcIntegrationResultDto resultDto = FcIntegrationResultDto.builder()
+        .api(RECEIPT_PLAN_API)
+        .lastUpdatedAt(LAST_UPDATED_AT)
+        .build();
+    when(callFcService.getReceiptPlans()).thenReturn(new ArrayList<>());
+
+    // when
+    fcIntegrationResultService.recordFcIntegrationResult(resultDto);
+
+    // then
+    verify(fcIntegrationResultRepository).save(resultCaptor.capture());
+    assertEquals(LAST_UPDATED_AT, resultCaptor.getValue().getLastUpdatedAt());
+  }
+
 }

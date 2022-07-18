@@ -35,7 +35,6 @@ import org.mockito.stubbing.Answer;
 import org.siglus.siglusapi.dto.UserDto;
 import org.siglus.siglusapi.dto.android.request.StockCardCreateRequest;
 import org.siglus.siglusapi.dto.android.response.CreateStockCardResponse;
-import org.siglus.siglusapi.migration.DataMigrationService;
 import org.siglus.siglusapi.service.android.MeService;
 import org.siglus.siglusapi.service.client.SiglusUserReferenceDataService;
 import org.siglus.siglusapi.util.SiglusSimulateUserAuthHelper;
@@ -101,6 +100,7 @@ public class DataMigrationServiceTest {
 
   private void ensureCurrentAuthenticationExists() {
     OAuth2Authentication authentication = mock(OAuth2Authentication.class);
+    SecurityContextHolder.clearContext();
     SecurityContextHolder.getContext().setAuthentication(authentication);
     when(authentication.getOAuth2Request()).thenReturn(mock(OAuth2Request.class));
   }

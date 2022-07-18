@@ -48,6 +48,7 @@ import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.FacilityTypeDto;
 import org.siglus.siglusapi.dto.GeographicLevelDto;
 import org.siglus.siglusapi.dto.GeographicZoneDto;
+import org.siglus.siglusapi.dto.SupportedProgramDto;
 import org.siglus.siglusapi.dto.fc.FcAreaDto;
 import org.siglus.siglusapi.dto.fc.FcFacilityDto;
 import org.siglus.siglusapi.dto.fc.FcIntegrationResultDto;
@@ -60,7 +61,12 @@ import org.siglus.siglusapi.service.client.SiglusGeographicZoneReferenceDataServ
 public class FcFacilityServiceTest {
 
   public static final String FACILITY = "facility";
+  public static final UUID FACILITY_ID = UUID.randomUUID();
   public static final String TYPE_1 = "type1";
+  public static final String TYPE_2 = "type2";
+  public static final String PTV = "PTV";
+  public static final String TYPE_NAME = "typeName";
+  public static final String DESCRIPTION = "description 1";
   @Mock
   private SiglusFacilityReferenceDataService facilityService;
 
@@ -123,10 +129,10 @@ public class FcFacilityServiceTest {
     ProgramDto programDto = getProgramDto();
     when(programReferenceDataService.findAll()).thenReturn(Collections.singletonList(programDto));
     when(programRealProgramRepository.findAll()).thenReturn(
-        Collections.singletonList(mockRealProgram(UUID.randomUUID(), "PT", programDto.getCode(), "PTV", true)));
+        Collections.singletonList(mockRealProgram(UUID.randomUUID(), "PT", programDto.getCode(), PTV, true)));
     when(facilityService.findAll()).thenReturn(emptyList());
     when(geographicZoneService.searchAllGeographicZones()).thenReturn(getGeographicZones());
-    FacilityTypeDto typeDto1 = mockFacilityTypeDto(TYPE_1, "typeName", true);
+    FacilityTypeDto typeDto1 = mockFacilityTypeDto(TYPE_1, TYPE_NAME, true);
     when(facilityTypeService.searchAllFacilityTypes()).thenReturn(Collections.singletonList(typeDto1));
     FcFacilityDto facilityDto = getFcFacilityDto(FACILITY, TYPE_1);
     when(facilityService.createFacility(any(FacilityDto.class))).thenThrow(new RuntimeException());
@@ -148,10 +154,10 @@ public class FcFacilityServiceTest {
     when(programRealProgramRepository.findAll()).thenReturn(
         Collections.singletonList(
             mockRealProgram(UUID.randomUUID(), "PT", programDto.getCode(),
-                "PTV", true)));
+                PTV, true)));
     when(facilityService.findAll()).thenReturn(emptyList());
     when(geographicZoneService.searchAllGeographicZones()).thenReturn(getGeographicZones());
-    FacilityTypeDto typeDto1 = mockFacilityTypeDto(TYPE_1, "typeName", true);
+    FacilityTypeDto typeDto1 = mockFacilityTypeDto(TYPE_1, TYPE_NAME, true);
     when(facilityTypeService.searchAllFacilityTypes())
         .thenReturn(Collections.singletonList(typeDto1));
     FcFacilityDto facilityDto = getFcFacilityDto(FACILITY, TYPE_1);
@@ -164,10 +170,43 @@ public class FcFacilityServiceTest {
     assertNotNull(result);
     verify(facilityService).createFacility(facilityCaptor.capture());
     verify(fcSourceDestinationService).createSourceAndDestination(any());
-    assertEquals("description 1", facilityCaptor.getValue().getGeographicZone().getName());
+    assertEquals(DESCRIPTION, facilityCaptor.getValue().getGeographicZone().getName());
     assertEquals(FACILITY, facilityCaptor.getValue().getCode());
     assertEquals(TYPE_1, facilityCaptor.getValue().getType().getCode());
     assertEquals("TARV", facilityCaptor.getValue().getSupportedPrograms().get(0).getName());
+  }
+
+  @Test
+  public void shouldUpdateFacilityWhenHaveChanges() {
+    // given
+    ProgramDto programDto = getProgramDto();
+    when(programReferenceDataService.findAll()).thenReturn(Collections.singletonList(programDto));
+    when(programRealProgramRepository.findAll()).thenReturn(
+        Collections.singletonList(
+            mockRealProgram(UUID.randomUUID(), "PT", programDto.getCode(),
+                PTV, true)));
+    when(facilityService.findAll()).thenReturn(singletonList(getFacilityDto()));
+    when(facilityService.findOne(FACILITY_ID)).thenReturn(getFacilityDto());
+    when(geographicZoneService.searchAllGeographicZones()).thenReturn(getGeographicZones());
+    FacilityTypeDto typeDto1 = mockFacilityTypeDto(TYPE_1, TYPE_NAME, true);
+    when(facilityTypeService.searchAllFacilityTypes())
+        .thenReturn(Collections.singletonList(typeDto1));
+    FcFacilityDto facilityDto = getFcFacilityDto(FACILITY, TYPE_1);
+
+    // when
+    FcIntegrationResultDto result = fcFacilityService.processData(Collections.singletonList(facilityDto), START_DATE,
+        LAST_UPDATED_AT);
+
+    // then
+    assertNotNull(result);
+    verify(facilityService).saveFacility(facilityCaptor.capture());
+    assertEquals(DESCRIPTION, facilityCaptor.getValue().getGeographicZone().getName());
+    assertEquals("facilityName", facilityCaptor.getValue().getName());
+    assertEquals("description", facilityCaptor.getValue().getDescription());
+    assertEquals(FACILITY, facilityCaptor.getValue().getCode());
+    assertEquals(TYPE_1, facilityCaptor.getValue().getType().getCode());
+    assertTrue(facilityCaptor.getValue().getActive());
+    assertEquals("T", facilityCaptor.getValue().getSupportedPrograms().get(0).getCode());
   }
 
   @Test
@@ -178,7 +217,7 @@ public class FcFacilityServiceTest {
     when(programRealProgramRepository.findAll()).thenReturn(
         Collections.singletonList(
             mockRealProgram(UUID.randomUUID(), "PT", programDto.getCode(),
-                "PTV", true)));
+                PTV, true)));
     FacilityDto originFacility = new FacilityDto();
     originFacility.setId(UUID.randomUUID());
     originFacility.setName(FACILITY);
@@ -187,7 +226,7 @@ public class FcFacilityServiceTest {
     originFacility.setDescription("description");
     originFacility.setSupportedPrograms(emptyList());
     FacilityTypeDto typeDto = new FacilityTypeDto();
-    typeDto.setCode("type2");
+    typeDto.setCode(TYPE_2);
     originFacility.setType(typeDto);
     GeographicZoneDto zoneDto = new GeographicZoneDto();
     zoneDto.setCode("nationalGeographicZone");
@@ -195,20 +234,20 @@ public class FcFacilityServiceTest {
     when(facilityService.findOne(originFacility.getId())).thenReturn(originFacility);
     when(facilityService.findAll()).thenReturn(Collections.singletonList(originFacility));
     when(geographicZoneService.searchAllGeographicZones()).thenReturn(getGeographicZones());
-    FacilityTypeDto typeDto1 = mockFacilityTypeDto(typeDto.getCode(), "typeName", true);
+    FacilityTypeDto typeDto1 = mockFacilityTypeDto(typeDto.getCode(), TYPE_NAME, true);
     when(facilityTypeService.searchAllFacilityTypes())
         .thenReturn(Collections.singletonList(typeDto1));
-    FcFacilityDto facilityDto = getFcFacilityDto("facility2", "type2");
+    FcFacilityDto facilityDto = getFcFacilityDto("facility2", TYPE_2);
 
     // when
     fcFacilityService.processData(Collections.singletonList(facilityDto), START_DATE, LAST_UPDATED_AT);
 
     // then
     verify(facilityService).saveFacility(facilityCaptor.capture());
-    assertEquals("description 1",
+    assertEquals(DESCRIPTION,
         facilityCaptor.getValue().getGeographicZone().getName());
     assertEquals("facility2", facilityCaptor.getValue().getCode());
-    assertEquals("type2", facilityCaptor.getValue().getType().getCode());
+    assertEquals(TYPE_2, facilityCaptor.getValue().getType().getCode());
     assertEquals("TARV", facilityCaptor.getValue()
         .getSupportedPrograms().get(0).getName());
   }
@@ -225,6 +264,24 @@ public class FcFacilityServiceTest {
     areaDto.setAreaCode("PT");
     facilityDto.setAreas(Collections.singletonList(areaDto));
     return facilityDto;
+  }
+
+  public FacilityDto getFacilityDto() {
+    SupportedProgramDto supportedProgramDto = SupportedProgramDto.builder().code("VC").build();
+    GeographicZoneDto geographicZoneDto = GeographicZoneDto.builder()
+        .code("province")
+        .name("originalGeographicZone")
+        .build();
+    return FacilityDto.builder()
+        .id(FACILITY_ID)
+        .code(FACILITY)
+        .name("originalName")
+        .description("originalDescription")
+        .active(false)
+        .supportedPrograms(singletonList(supportedProgramDto))
+        .geographicZone(geographicZoneDto)
+        .type(mockFacilityTypeDto(TYPE_2, TYPE_2, false))
+        .build();
   }
 
   private ProgramDto getProgramDto() {
@@ -259,7 +316,7 @@ public class FcFacilityServiceTest {
         .build();
     GeographicZoneDto national1 = GeographicZoneDto.builder()
         .code("nationalGeographicZone")
-        .name("description 1")
+        .name(DESCRIPTION)
         .level(level1)
         .parent(null)
         .build();

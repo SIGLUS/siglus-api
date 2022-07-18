@@ -356,7 +356,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     when(siglusStockCardSummariesService.findAllProgramStockSummaries()).thenReturn(stockSummaries);
 
     // when
-    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.FALSE);
     // then
     verify(physicalInventorySubDraftRepository).save(any(List.class));
 
@@ -373,7 +373,7 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     when(physicalInventorySubDraftRepository.findAll(subDraftIds)).thenReturn(new ArrayList<>());
 
     // when
-    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds);
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.FALSE);
     verify(physicalInventorySubDraftRepository).findAll(any(List.class));
 
   }

@@ -56,9 +56,9 @@ public class FcIntegrationResultService {
     return result.getLastUpdatedAt();
   }
 
-  public void recordFcIntegrationResult(FcIntegrationResultDto resultDto) {
+  public FcIntegrationResult recordFcIntegrationResult(FcIntegrationResultDto resultDto) {
     if (resultDto == null) {
-      return;
+      return null;
     }
     String api = resultDto.getApi();
     String endDate = getCmmAndCpApis().contains(api) ? dateHelper.getCurrentMonthStr() : dateHelper.getTodayDateStr();
@@ -76,6 +76,7 @@ public class FcIntegrationResultService {
     log.info("save fc_integration_results: {}", result);
     fcIntegrationResultRepository.save(result);
     clearFcData(api);
+    return result;
   }
 
   private void clearFcData(String api) {

@@ -32,10 +32,13 @@ import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.siglus.siglusapi.dto.FacilityDto;
 import org.siglus.siglusapi.dto.android.PeriodOfProductMovements;
 import org.siglus.siglusapi.dto.android.StocksOnHand;
+import org.siglus.siglusapi.migration.AdditionalOrderable;
+import org.siglus.siglusapi.migration.MasterDataRepository;
 import org.siglus.siglusapi.repository.StockManagementRepository;
 import org.siglus.siglusapi.service.SiglusValidReasonAssignmentService;
 import org.siglus.siglusapi.service.SiglusValidSourceDestinationService;
 import org.siglus.siglusapi.service.client.SiglusApprovedProductReferenceDataService;
+import org.siglus.siglusapi.util.SiglusAuthenticationHelper;
 import org.siglus.siglusapi.util.SupportedProgramsHelper;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +54,8 @@ public class StockCardCreateContextHolder {
   private final ProgramReferenceDataService programDataService;
   private final SiglusApprovedProductReferenceDataService approvedProductDataService;
   private final StockManagementRepository stockManagementRepository;
+  private final MasterDataRepository masterDataRepository;
+  private final SiglusAuthenticationHelper authenticationHelper;
 
   public static StockCardCreateContext getContext() {
     StockCardCreateContext context = HOLDER.get();
@@ -84,8 +89,30 @@ public class StockCardCreateContextHolder {
     HOLDER.set(context);
   }
 
-  private List<OrderableDto> getProgramProducts(UUID homeFacilityId, ProgramDto program) {
-    return approvedProductDataService.getApprovedProducts(homeFacilityId, program.getId(), emptyList()).stream()
+  List<OrderableDto> getProgramProducts(UUID homeFacilityId, ProgramDto program) {
+    List<OrderableDto> orderableDtos = getActualApprovedOrderableDtos(homeFacilityId, program);
+    if (authenticationHelper.isTheDataMigrationUser()) {
+      addAdditionalOrderablesForMigration(program, orderableDtos);
+    }
+    return orderableDtos;
+  }
+
+  private void addAdditionalOrderablesForMigration(ProgramDto program, List<OrderableDto> orderableDtos) {
+    List<OrderableDto> additionalOrderableDtos = getAdditionalOrderableDtos(program);
+    orderableDtos.addAll(additionalOrderableDtos);
+  }
+
+  private List<OrderableDto> getAdditionalOrderableDtos(ProgramDto program) {
+    List<AdditionalOrderable> additionalOrderables = masterDataRepository.findAdditionalOrderableByProgram(
+        program.getId());
+    return additionalOrderables.stream()
+        .map(AdditionalOrderable::toPartialOrderableDto)
+        .collect(toList());
+  }
+
+  private List<OrderableDto> getActualApprovedOrderableDtos(UUID homeFacilityId, ProgramDto program) {
+    return approvedProductDataService.getApprovedProducts(homeFacilityId,
+            program.getId(), emptyList()).stream()
         .map(ApprovedProductDto::getOrderable)
         .collect(toList());
   }

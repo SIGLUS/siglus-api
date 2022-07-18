@@ -184,6 +184,12 @@ configure(checkApiIsRaml) {
     description = 'Verify that the api-specification is valid RAML'
 }
 
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}
+
 jacoco {
     toolVersion = "0.8.6"
 }
@@ -232,7 +238,14 @@ jacocoTestCoverageVerification {
             limit {
                 counter = 'LINE'
                 value = 'COVEREDRATIO'
-                minimum = 0.84
+                minimum = 0.85
+            }
+        }
+        rule {
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.665
             }
         }
     }

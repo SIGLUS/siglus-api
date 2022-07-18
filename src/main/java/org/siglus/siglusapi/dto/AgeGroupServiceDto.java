@@ -45,7 +45,7 @@ public class AgeGroupServiceDto {
           AgeGroupLineItem::getGroup,
           lineItem -> AgeGroupLineItemDto
                   .builder()
-                  .id(lineItem.getId())
+                  .ageGroupLineItemId(lineItem.getId())
                   .value(lineItem.getValue())
                   .build())
       );
