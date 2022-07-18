@@ -13,17 +13,25 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
-import java.util.UUID;
-import org.siglus.siglusapi.domain.AppInfo;
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.Data;
+import org.springframework.beans.BeanUtils;
 
-public interface AppInfoRepository extends JpaRepository<AppInfo, UUID> {
+@Data
+public class FacilitySearchResultDto extends FacilityDto {
 
-  AppInfo findByFacilityCodeAndUniqueId(String facilityCode, String uniqueId);
+  private Boolean isAndroidDevice;
 
-  AppInfo findByFacilityCode(String facilityCode);
-
-  void deleteByFacilityCode(String facilityCode);
+  public static List<FacilitySearchResultDto> from(List<FacilityDto> facilityDto) {
+    List<FacilitySearchResultDto> facilitySearchResultDtoList = new ArrayList<>();
+    facilityDto.forEach(eachFacilityDto -> {
+      FacilitySearchResultDto facilitySearchResultDto = new FacilitySearchResultDto();
+      BeanUtils.copyProperties(eachFacilityDto, facilitySearchResultDto);
+      facilitySearchResultDtoList.add(facilitySearchResultDto);
+    });
+    return facilitySearchResultDtoList;
+  }
 }

@@ -90,4 +90,6 @@ public class FieldConstants {
 
   public static final String SECTION_SERVICE_LABEL = "Services";
 
+  public static final String ZONEID = "zoneId";
+
 }

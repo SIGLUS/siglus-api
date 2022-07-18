@@ -15,14 +15,21 @@
 
 package org.siglus.siglusapi.service;
 
-import java.util.UUID;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.BooleanUtils;
+import org.openlmis.stockmanagement.web.Pagination;
 import org.siglus.siglusapi.domain.AppInfo;
+import org.siglus.siglusapi.domain.FacilityExtension;
 import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.FacilitySearchParamDto;
+import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.repository.AppInfoRepository;
+import org.siglus.siglusapi.repository.FacilityExtensionRepository;
 import org.siglus.siglusapi.service.client.SiglusFacilityReferenceDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -35,23 +42,32 @@ public class SiglusAdministrationsService {
   @Autowired
   private SiglusFacilityReferenceDataService siglusFacilityReferenceDataService;
 
-  public Page<FacilityDto> searchForFacilities(Integer page, Integer size, String sort) {
-    // get results from OpenLMIS interface
-    Page<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.searchAllFacilities(page, size, sort);
-    // justify isAndroid by facilityId
-    facilityDtos.getContent().forEach(m -> {
-      // FacilityExtension byFacilityId = facilityExtensionRepository.findByFacilityId(m.getId());
-      // m.setIsAndroid(null != byFacilityId && BooleanUtils.isTrue(byFacilityId.getIsAndroid()));
+  @Autowired
+  private FacilityExtensionRepository facilityExtensionRepository;
+
+  public Page<FacilitySearchResultDto> searchForFacilities(FacilitySearchParamDto facilitySearchParamDto,
+      Pageable pageable) {
+    Page<FacilityDto> facilityDtos = siglusFacilityReferenceDataService.searchAllFacilities(facilitySearchParamDto,
+        pageable);
+
+    List<FacilityDto> facilityDtoList = facilityDtos.getContent();
+    List<FacilitySearchResultDto> facilitySearchResultDtoList = FacilitySearchResultDto.from(facilityDtoList);
+
+    facilitySearchResultDtoList.forEach(eachFacility -> {
+      FacilityExtension byFacilityId = facilityExtensionRepository.findByFacilityId(eachFacility.getId());
+      eachFacility.setIsAndroidDevice(null != byFacilityId && BooleanUtils.isTrue(byFacilityId.getIsAndroid()));
     });
-    return facilityDtos;
+
+    return Pagination.getPage(facilitySearchResultDtoList, pageable, facilityDtos.getTotalElements());
   }
 
-  public void eraseAndroidByFacilityId(UUID facilityId) {
-    AppInfo one = appInfoRepository.findOne(facilityId);
-    if (null == one) {
-      log.info("The facilityId: {} is not exist", facilityId);
-      throw new IllegalArgumentException("The facilityId is not acceptable");
+  public void eraseDeviceInfoByFacilityId(String facilityCode) {
+    AppInfo androidInfoByFacilityId = appInfoRepository.findByFacilityCode(facilityCode);
+    if (null == androidInfoByFacilityId) {
+      log.info("The facilityCode: {} is not exist", facilityCode);
+      throw new IllegalArgumentException("The facilityCode is not acceptable");
     }
-    appInfoRepository.delete(facilityId);
+    log.info("The Android device info has been removed with facilityCode: {}", facilityCode);
+    appInfoRepository.deleteByFacilityCode(facilityCode);
   }
 }

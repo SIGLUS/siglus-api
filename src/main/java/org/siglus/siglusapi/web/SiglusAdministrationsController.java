@@ -15,16 +15,17 @@
 
 package org.siglus.siglusapi.web;
 
-import java.util.UUID;
-import org.siglus.siglusapi.dto.FacilityDto;
+import org.siglus.siglusapi.dto.FacilitySearchParamDto;
+import org.siglus.siglusapi.dto.FacilitySearchResultDto;
 import org.siglus.siglusapi.service.SiglusAdministrationsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -34,15 +35,14 @@ public class SiglusAdministrationsController {
   @Autowired
   private SiglusAdministrationsService administrationsService;
 
-  @GetMapping("/facilities")
-  public Page<FacilityDto> showFacilitiesInfos(@RequestParam(value = "page", defaultValue = "0")Integer page,
-                                                 @RequestParam(value = "size", defaultValue = "10")Integer size,
-                                                 @RequestParam(value = "sort", defaultValue = "name,asc")String sort) {
-    return administrationsService.searchForFacilities(page, size, sort);
+  @PostMapping("/facilities")
+  public Page<FacilitySearchResultDto> showFacilitiesInfos(@RequestBody FacilitySearchParamDto facilitySearchParamDto,
+      Pageable pageable) {
+    return administrationsService.searchForFacilities(facilitySearchParamDto, pageable);
   }
 
-  @DeleteMapping("/{facilityId}/android")
-  public void eraseAndroidDevice(@PathVariable UUID facilityId) {
-    administrationsService.eraseAndroidByFacilityId(facilityId);
+  @DeleteMapping("/{facilityCode}/android")
+  public void eraseAndroidDeviceInfo(@PathVariable String facilityCode) {
+    administrationsService.eraseDeviceInfoByFacilityId(facilityCode);
   }
 }

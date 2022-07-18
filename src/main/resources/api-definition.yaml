@@ -248,22 +248,22 @@ traits:
   /siglusapi:
     /administration:
       /facilities:
-        get:
+        post:
           is: [ secured ]
           description: Search for facilities information
           responses:
             200:
               description: Information display
-      /{facilityId}/android:
+      /{facilityCode}/android:
         uriParameters:
-          facilityId:
-            displayName: facilityId
+          facilityCode:
+            displayName: facilityCode
             type: string
             required: true
             repeat: false
         delete:
           is: [ secured ]
-          description: Remove android info by facilityId
+          description: Remove android info by facilityCode
           responses:
             204:
               description: Android device successfully removed

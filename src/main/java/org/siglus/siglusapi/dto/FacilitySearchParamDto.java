@@ -13,17 +13,13 @@
  * http://www.gnu.org/licenses.  For additional information contact info@OpenLMIS.org.
  */
 
-package org.siglus.siglusapi.repository;
+package org.siglus.siglusapi.dto;
 
-import java.util.UUID;
-import org.siglus.siglusapi.domain.AppInfo;
-import org.springframework.data.jpa.repository.JpaRepository;
+import lombok.Data;
 
-public interface AppInfoRepository extends JpaRepository<AppInfo, UUID> {
+@Data
+public class FacilitySearchParamDto {
+  private String name;
 
-  AppInfo findByFacilityCodeAndUniqueId(String facilityCode, String uniqueId);
-
-  AppInfo findByFacilityCode(String facilityCode);
-
-  void deleteByFacilityCode(String facilityCode);
+  private String zoneId;
 }
