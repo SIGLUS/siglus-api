@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 public class DataMigrationGuard {
   private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-  @Value("datamigration.secret")
+  @Value("${datamigration.secret}")
   private String encodedSecret;
 
   public void assertAuthorized(String secret) {
