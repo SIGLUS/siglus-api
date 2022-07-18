@@ -20,6 +20,7 @@ import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SU
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.AC;
 import static org.siglus.siglusapi.constant.FacilityTypeConstants.CENTRAL;
+import static org.siglus.siglusapi.constant.FieldConstants.EXCLUDE_ARCHIVED;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
@@ -435,6 +436,7 @@ public class SiglusPhysicalInventoryService {
     parameters.set(FACILITY_ID, String.valueOf(physicalInventoryDto.getFacilityId()));
     parameters.set(PROGRAM_ID, String.valueOf(physicalInventoryDto.getProgramId()));
     parameters.set(RIGHT_NAME, STOCK_INVENTORIES_EDIT);
+    parameters.set(EXCLUDE_ARCHIVED, Boolean.TRUE.toString());
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
 
     List<StockCardSummaryV2Dto> summaryV2Dtos = siglusStockCardSummariesService.findSiglusStockCard(

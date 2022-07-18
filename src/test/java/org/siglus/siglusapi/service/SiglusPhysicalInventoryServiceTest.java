@@ -29,6 +29,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.stockmanagement.service.PermissionService.STOCK_INVENTORIES_EDIT;
+import static org.siglus.siglusapi.constant.FieldConstants.EXCLUDE_ARCHIVED;
 import static org.siglus.siglusapi.constant.FieldConstants.FACILITY_ID;
 import static org.siglus.siglusapi.constant.FieldConstants.IS_BASIC;
 import static org.siglus.siglusapi.constant.FieldConstants.PROGRAM_ID;
@@ -775,9 +776,10 @@ public class SiglusPhysicalInventoryServiceTest {
     PhysicalInventoryDto physicalInventoryDto = PhysicalInventoryDto.builder().id(physicalInventoryId)
         .programId(programId).facilityId(facilityId).lineItems(Collections.emptyList()).build();
     MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-    parameters.set("facilityId", String.valueOf(physicalInventoryDto.getFacilityId()));
-    parameters.set("programId", String.valueOf(physicalInventoryDto.getProgramId()));
-    parameters.set("rightName", "STOCK_INVENTORIES_EDIT");
+    parameters.set(FACILITY_ID, String.valueOf(physicalInventoryDto.getFacilityId()));
+    parameters.set(PROGRAM_ID, String.valueOf(physicalInventoryDto.getProgramId()));
+    parameters.set(RIGHT_NAME, STOCK_INVENTORIES_EDIT);
+    parameters.set(EXCLUDE_ARCHIVED, Boolean.TRUE.toString());
     List<StockCardSummaryV2Dto> summaryV2Dtos = Collections.emptyList();
     when(physicalInventoryStockManagementService.createEmptyPhysicalInventory(physicalInventoryDto))
         .thenReturn(physicalInventoryDto);
@@ -880,6 +882,7 @@ public class SiglusPhysicalInventoryServiceTest {
     parameters.set(FACILITY_ID, String.valueOf(physicalInventoryDto.getFacilityId()));
     parameters.set(PROGRAM_ID, String.valueOf(physicalInventoryDto.getProgramId()));
     parameters.set(RIGHT_NAME, STOCK_INVENTORIES_EDIT);
+    parameters.set(EXCLUDE_ARCHIVED, Boolean.TRUE.toString());
     Pageable pageable = new PageRequest(0, Integer.MAX_VALUE);
     when(siglusStockCardSummariesService.findSiglusStockCard(
         parameters, Collections.emptyList(), pageable)).thenReturn(
