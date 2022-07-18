@@ -21,6 +21,7 @@ import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 import java.util.UUID;
+import org.siglus.siglusapi.dto.MergedLineItemDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
 import org.siglus.siglusapi.service.SiglusStockManagementDraftService;
@@ -127,7 +128,7 @@ public class SiglusStockManagementDraftController {
   }
 
   @GetMapping("/{initialDraftId}/merge")
-  public StockManagementDraftDto mergeSubDrafts(@PathVariable UUID initialDraftId) {
+  public List<MergedLineItemDto> mergeSubDrafts(@PathVariable UUID initialDraftId) {
     return stockManagementDraftService.mergeSubDrafts(initialDraftId);
   }
 }
