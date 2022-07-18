@@ -279,15 +279,15 @@ public class SiglusStockManagementDraftService {
     StockManagementInitialDraft savedInitialDraft = stockManagementInitialDraftsRepository
         .save(initialDraft);
 
-    String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),
-        savedInitialDraft.getFacilityId());
-
-    StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto
-        .from(savedInitialDraft);
-
-    initialDraftDtoResponse.setDestinationName(destinationName);
-
-    return initialDraftDtoResponse;
+    if (initialDraftDto.getDraftType().equals("issue")) {
+      String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),
+          savedInitialDraft.getFacilityId());
+      StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto
+          .from(savedInitialDraft);
+      initialDraftDtoResponse.setDestinationName(destinationName);
+      return initialDraftDtoResponse;
+    }
+    return new StockManagementInitialDraftDto();
   }
 
   public StockManagementInitialDraftDto findStockManagementInitialDraft(
@@ -296,7 +296,8 @@ public class SiglusStockManagementDraftService {
     draftValidator.validateProgramId(programId);
     draftValidator.validateFacilityId(facilityId);
     draftValidator.validateDraftType(draftType);
-
+    boolean canMergeOrDeleteSubDrafts = authenticationHelper
+        .isTheCurrentUserCanMergeOrDeleteSubDrafts();
     List<StockManagementInitialDraft> initialDrafts = stockManagementInitialDraftsRepository
         .findByProgramIdAndFacilityIdAndDraftType(programId, facilityId, draftType);
     StockManagementInitialDraft initialDraft = initialDrafts.stream().findFirst().orElse(null);
@@ -306,10 +307,12 @@ public class SiglusStockManagementDraftService {
       if (draftType.equals(FieldConstants.ISSUE)) {
         String destinationName = findDestinationName(initialDraft.getDestinationId(), facilityId);
         stockManagementInitialDraftDto.setDestinationName(destinationName);
+        stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
         return stockManagementInitialDraftDto;
       } else if (draftType.equals(FieldConstants.RECEIVE)) {
         String sourceName = findSourceName(initialDraft.getSourceId());
         stockManagementInitialDraftDto.setSourceName(sourceName);
+        stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
         return stockManagementInitialDraftDto;
       }
     }
@@ -377,5 +380,9 @@ public class SiglusStockManagementDraftService {
 
     StockManagementDraft updatedDraft = stockManagementDraftRepository.save(submitDraft);
     return StockManagementDraftDto.from(updatedDraft);
+  }
+
+  public StockManagementDraftDto mergeSubDrafts(UUID initialDraftId) {
+    return null;
   }
 }

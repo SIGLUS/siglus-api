@@ -52,6 +52,8 @@ public class StockManagementInitialDraftDto {
 
   private String draftType;
 
+  private boolean canMergeOrDeleteSubDrafts;
+
   public static StockManagementInitialDraftDto from(StockManagementInitialDraft initialDraft) {
     StockManagementInitialDraftDto initialDraftDto = new StockManagementInitialDraftDto();
     BeanUtils.copyProperties(initialDraft, initialDraftDto);

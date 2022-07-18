@@ -165,7 +165,8 @@ public class SiglusNotificationService {
           String author = userReferenceDataService.findOne(notification.getOperatorId())
               .getUsername();
           if (notification.getStatus().isRequisitionPeriod()) {
-            RequisitionV2Dto requisition = requisitionService.searchRequisition(notification.getRefId());
+            RequisitionV2Dto requisition = requisitionService
+                .searchRequisition(notification.getRefId());
             Map<String, StatusLogEntry> statusChanges = requisition.getStatusChanges();
             submitDate = statusChanges.get(RequisitionStatus.SUBMITTED.name()).getChangeDate();
           }
@@ -403,7 +404,8 @@ public class SiglusNotificationService {
     List<RequisitionGroupDto> requisitionGroups = requisitionGroupService.findAll();
     boolean canEditShipments = permissionStrings.stream().anyMatch(
         rightAssignment ->
-            org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT.equals(rightAssignment.getRightName()));
+            org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT
+                .equals(rightAssignment.getRightName()));
     return (root, query, cb) -> {
       List<Predicate> predicates = permissionStrings.stream()
           .map(right -> mapRightToPredicate(right, root, cb, currentUserFacilityId,
@@ -479,9 +481,12 @@ public class SiglusNotificationService {
       .put(PermissionService.ORDERS_EDIT, getPredicateEvaluatorForOrdersEdit())
       .put(org.openlmis.stockmanagement.service.PermissionService.STOCK_CARDS_VIEW,
           getPredicateEvaluatorForStockCardsView())
-      .put(org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE, getPredicateEvaluatorForPodManage())
-      .put(org.openlmis.fulfillment.service.PermissionService.PODS_VIEW, getPredicateEvaluatorForPodView())
-      .put(org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT, getPredicateEvaluatorForShipmentsEdit())
+      .put(org.openlmis.fulfillment.service.PermissionService.PODS_MANAGE,
+          getPredicateEvaluatorForPodManage())
+      .put(org.openlmis.fulfillment.service.PermissionService.PODS_VIEW,
+          getPredicateEvaluatorForPodView())
+      .put(org.openlmis.fulfillment.service.PermissionService.SHIPMENTS_EDIT,
+          getPredicateEvaluatorForShipmentsEdit())
       .build();
 
   PredicateEvaluator getPredicateEvaluatorForShipmentsEdit() {
