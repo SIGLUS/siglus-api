@@ -33,6 +33,6 @@ public class TracerDrugPersistentDataTask {
   @SchedulerLock(name = "tarcer_drug_report")
   @Transactional
   public void refreshForTracerDrugReport() {
-    tracerDrugTaskService.refreshTracerDrugPersistentData(LocalDate.now(), LocalDate.now());
+    tracerDrugTaskService.refreshTracerDrugPersistentData(LocalDate.now().toString(), LocalDate.now().toString());
   }
 }

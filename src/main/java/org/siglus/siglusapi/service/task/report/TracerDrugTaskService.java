@@ -16,9 +16,11 @@
 package org.siglus.siglusapi.service.task.report;
 
 import java.time.LocalDate;
+import javax.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.repository.TracerDrugRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -28,7 +30,28 @@ public class TracerDrugTaskService {
 
   private final TracerDrugRepository tracerDrugRepository;
 
-  public void refreshTracerDrugPersistentData(LocalDate startDate, LocalDate endDate) {
-    tracerDrugRepository.insertDataWithinSpecifiedTime(startDate, endDate);
+  @Value("${tracer.drug.initialize.date}")
+  private String tracerDrugInitializeDate;
+
+  @Transactional
+  public void refreshTracerDrugPersistentData(String startDate, String endDate) {
+    log.info("tracer drug persistentData refresh. start = " + System.currentTimeMillis());
+    try {
+      tracerDrugRepository.insertDataWithinSpecifiedTime(startDate, endDate);
+    } catch (Exception e) {
+      log.error("tracer drug persistentData  refresh with exception. msg = " + e.getMessage(), e);
+      throw e;
+    }
+    log.info("tracer drug persistentData  refresh. end = " + System.currentTimeMillis());
   }
+
+
+  @Transactional
+  public void initializeTracerDrugPersistentData() {
+    log.info("tracer drug persistentData initialize. start = " + System.currentTimeMillis());
+    refreshTracerDrugPersistentData(tracerDrugInitializeDate, LocalDate.now().toString());
+    log.info("tracer drug persistentData initialize. end = " + System.currentTimeMillis());
+  }
+
+
 }

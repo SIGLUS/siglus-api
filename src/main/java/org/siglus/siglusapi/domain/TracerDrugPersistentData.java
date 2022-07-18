@@ -15,9 +15,17 @@
 
 package org.siglus.siglusapi.domain;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Table;
 
+@SuppressWarnings("unused")
+@Entity
 @Table(name = "tracer_drug_persistent_data", schema = "dashboard")
 public class TracerDrugPersistentData {
 
+  @Id
+  @Column(name = "id", nullable = false)
+  private Long id;
 }

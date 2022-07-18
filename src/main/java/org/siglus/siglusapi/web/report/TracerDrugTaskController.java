@@ -15,11 +15,8 @@
 
 package org.siglus.siglusapi.web.report;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.siglus.siglusapi.service.task.report.TracerDrugTaskService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,22 +29,15 @@ public class TracerDrugTaskController {
 
   private final TracerDrugTaskService tracerDrugTaskService;
 
-  @Value("${tracer.drug.initialize.date}")
-  private final String tracerDrugInitializeDate;
-
-  private final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-
   @PostMapping("/refresh")
-  public ResponseEntity<String> refresh(LocalDate startDate, LocalDate endDate) {
+  public ResponseEntity<String> refresh(String startDate, String endDate) {
     tracerDrugTaskService.refreshTracerDrugPersistentData(startDate, endDate);
     return ResponseEntity.ok("ok");
   }
 
   @PostMapping("/initialize")
   public ResponseEntity<String> initialize() {
-    tracerDrugTaskService.refreshTracerDrugPersistentData(LocalDate.parse(tracerDrugInitializeDate, dateTimeFormatter),
-        LocalDate.now());
+    tracerDrugTaskService.initializeTracerDrugPersistentData();
     return ResponseEntity.ok("ok");
   }
 

@@ -15,15 +15,18 @@
 
 package org.siglus.siglusapi.repository;
 
-import java.time.LocalDate;
 import java.util.UUID;
 import org.siglus.siglusapi.domain.TracerDrugPersistentData;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+
 
 public interface TracerDrugRepository extends
     JpaRepository<TracerDrugPersistentData, UUID> {
 
+
+  @Modifying
   @Query(value =
       "insert into dashboard.tracer_drug_persistent_data(productcode, facilitycode, stockonhand, computationtime, cmm)"
           + "\n"
@@ -70,22 +73,23 @@ public interface TracerDrugRepository extends
           + "                      (id) *,\n"
           + "                           max(versionnumber) over (partition by id)\n"
           + "                        from referencedata.orderables\n"
-          + "                        where orderables.extradata::jsonb @> '{\n"
+          + "                        where cast(orderables.extradata as jsonb) @> cast('{\n"
           + "                          \"isTracer\": true\n"
-          + "                        }'::jsonb) o\n"
+          + "                        }' as jsonb)) o\n"
           + "                           cross join (select distinct on\n"
           + "                      (facilityid) facilityid\n"
           + "                                       from stockmanagement.stock_cards) scf\n"
           + "                           left join referencedata.facilities f on scf.facilityid = f.id) as main\n"
           + "                     cross join\n"
           + "                 (select date(t) as day\n"
-          + "                  from generate_series(?1::date, ?2::date, '1 days') as t\n"
+          + "                  from generate_series(cast(?1  AS date) , cast(?2  AS date) , '1 days') as t\n"
           + "                  where to_char(t, 'DAY') = to_char(date '1970-01-05', 'DAY')) as mondaydate) as bigunion)"
           + " as bigbigunion\n"
           + "where bigbigunion.totalsohatthattime is not null\n"
           + "on conflict (productcode,facilitycode,computationtime) do update set "
           + "                                                        stockonhand = excluded.stockonhand,\n"
           + "                                                        cmm         = excluded.cmm;\n", nativeQuery = true)
-  void insertDataWithinSpecifiedTime(LocalDate startDate, LocalDate endDate);
+  int insertDataWithinSpecifiedTime(String startDate, String endDate);
+
 
 }
