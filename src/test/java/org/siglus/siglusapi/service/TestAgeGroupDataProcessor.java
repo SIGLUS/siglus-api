@@ -162,7 +162,7 @@ public class TestAgeGroupDataProcessor {
     assertEquals(1, serviceDtos.size());
     AgeGroupLineItemDto ageGroupLineItemDto =
             serviceDtos.get(0).getColumns().get(GROUP);
-    assertEquals(id, ageGroupLineItemDto.getId());
+    assertEquals(id, ageGroupLineItemDto.getAgeGroupLineItemId());
     assertEquals(value, ageGroupLineItemDto.getValue());
   }
 
@@ -171,7 +171,7 @@ public class TestAgeGroupDataProcessor {
     // given
     AgeGroupLineItemDto lineItemDto = AgeGroupLineItemDto
             .builder()
-            .id(id)
+            .ageGroupLineItemId(id)
             .value(value)
             .build();
     Map<String, AgeGroupLineItemDto> groupMap = newHashMap();

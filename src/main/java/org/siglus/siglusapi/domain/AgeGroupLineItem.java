@@ -57,7 +57,7 @@ public class AgeGroupLineItem extends BaseEntity {
       String service = serviceDto.getService();
       serviceDto.getColumns().forEach((groupKey, lineItemDto) -> {
         AgeGroupLineItem lineItem = AgeGroupLineItem.builder()
-                .id(lineItemDto.getId())
+                .id(lineItemDto.getAgeGroupLineItemId())
                 .requisitionId(requisitionId)
                 .service(service)
                 .group(groupKey)
