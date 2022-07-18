@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.siglus.siglusapi.repository.TracerDrugRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -33,6 +34,7 @@ public class TracerDrugTaskService {
   @Value("${tracer.drug.initialize.date}")
   private String tracerDrugInitializeDate;
 
+  @Async
   @Transactional
   public void refreshTracerDrugPersistentData(String startDate, String endDate) {
     log.info("tracer drug persistentData refresh. start = " + System.currentTimeMillis());
@@ -46,6 +48,7 @@ public class TracerDrugTaskService {
   }
 
 
+  @Async
   @Transactional
   public void initializeTracerDrugPersistentData() {
     log.info("tracer drug persistentData initialize. start = " + System.currentTimeMillis());

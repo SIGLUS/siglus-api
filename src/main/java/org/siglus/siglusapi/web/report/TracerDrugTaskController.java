@@ -32,13 +32,13 @@ public class TracerDrugTaskController {
   @PostMapping("/refresh")
   public ResponseEntity<String> refresh(String startDate, String endDate) {
     tracerDrugTaskService.refreshTracerDrugPersistentData(startDate, endDate);
-    return ResponseEntity.ok("ok");
+    return ResponseEntity.ok("refresh begin");
   }
 
   @PostMapping("/initialize")
   public ResponseEntity<String> initialize() {
     tracerDrugTaskService.initializeTracerDrugPersistentData();
-    return ResponseEntity.ok("ok");
+    return ResponseEntity.ok("initialize begin");
   }
 
 }
