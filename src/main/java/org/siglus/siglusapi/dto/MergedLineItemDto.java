@@ -45,7 +45,7 @@ public class MergedLineItemDto {
 
   @JsonFormat(shape = STRING)
 
-  private LocalDate expiryDate;
+  private LocalDate expirationDate;
 
   private Integer stockOnHand;
 

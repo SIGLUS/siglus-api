@@ -456,7 +456,7 @@ public class SiglusStockManagementDraftService {
             return MergedLineItemDto.builder().subDraftId(subDraft.getId())
                 .productName(lineItem.getProductName())
                 .productCode(lineItem.getProductCode())
-                .expiryDate(lineItem.getExpirationDate())
+                .expirationDate(lineItem.getExpirationDate())
                 .lotId(lineItem.getLotId())
                 .orderableId(lineItem.getOrderableId())
                 .occurredDate(lineItem.getOccurredDate())
@@ -472,5 +472,6 @@ public class SiglusStockManagementDraftService {
   public void deleteInitialDraft(UUID initialDraftId) {
     draftValidator.validateInitialDraftId(initialDraftId);
     stockManagementDraftRepository.deleteAllByInitialDraftId(initialDraftId);
+    stockManagementInitialDraftsRepository.delete(initialDraftId);
   }
 }
