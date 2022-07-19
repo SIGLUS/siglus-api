@@ -271,8 +271,6 @@ public class SiglusPhysicalInventoryService {
       }
     });
 
-    allPhysicalInventoryDto.removeIf(physicalInventoryProgram ->
-        ALL_PRODUCTS_UUID.equals(physicalInventoryProgram.getProgramId()));
     if (CollectionUtils.isNotEmpty(allPhysicalInventoryDto)) {
       List<UUID> otherProgramId = new ArrayList<>();
       allPhysicalInventoryDto.forEach(otherProgramInventory -> {
@@ -337,9 +335,19 @@ public class SiglusPhysicalInventoryService {
   }
 
   public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, Boolean isDraft) {
-    List<PhysicalInventoryDto> allProductsPhysicalInventory = getPhysicalInventoryDtos(ALL_PRODUCTS_UUID,
-        facility, isDraft);
-    if (CollectionUtils.isNotEmpty(allProductsPhysicalInventory)) {
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    if (CollectionUtils.isEmpty(supportedPrograms)) {
+      throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
+    }
+    List<PhysicalInventoryDto> inventories = supportedPrograms.stream().map(
+        supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facility,
+            isDraft)).flatMap(Collection::stream).collect(Collectors.toList());
+    List<UUID> physicalInventoryIds = inventories.stream().map(PhysicalInventoryDto::getId)
+            .collect(Collectors.toList());
+    List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
+        .findByPhysicalInventoryIdIn(physicalInventoryIds);
+
+    if (CollectionUtils.isNotEmpty(extensions)) {
       return PhysicalInventoryValidationDto
           .builder()
           .canStartInventory(false)
