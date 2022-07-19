@@ -127,7 +127,7 @@ public class SiglusStockManagementDraftController {
     return stockManagementDraftService.updateStatusAfterSubmit(draftDto);
   }
 
-  @GetMapping("/{initialDraftId}/merge")
+  @GetMapping("/{initialDraftId}/subDraft/merge")
   public List<MergedLineItemDto> mergeSubDrafts(@PathVariable UUID initialDraftId) {
     return stockManagementDraftService.mergeSubDrafts(initialDraftId);
   }

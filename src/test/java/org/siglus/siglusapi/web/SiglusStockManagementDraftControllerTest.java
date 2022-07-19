@@ -40,6 +40,8 @@ public class SiglusStockManagementDraftControllerTest {
 
   private final UUID draftId = UUID.randomUUID();
 
+  private final UUID initialDraftId = UUID.randomUUID();
+
   private final StockManagementDraftDto dto = new StockManagementDraftDto();
 
   @Test
@@ -123,5 +125,11 @@ public class SiglusStockManagementDraftControllerTest {
   public void shouldCallUpdateStatusAfterSubmit() {
     controller.updateStatusAfterSubmit(dto);
     verify(service).updateStatusAfterSubmit(dto);
+  }
+
+  @Test
+  public void shouldMergeSubDrafts() {
+    controller.mergeSubDrafts(initialDraftId);
+    verify(service).mergeSubDrafts(initialDraftId);
   }
 }
