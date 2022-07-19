@@ -251,7 +251,7 @@ public class SiglusStockManagementDraftService {
         .findByProgramIdAndFacilityIdAndIsDraftAndDraftType(dto.getProgramId(), dto.getFacilityId(),
             true,
             dto.getDraftType());
-    if (!drafts.isEmpty()) {
+    if (CollectionUtils.isNotEmpty(drafts)) {
       throw new ValidationMessageException(
           new Message(ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS, dto.getProgramId(),
               dto.getFacilityId()));
