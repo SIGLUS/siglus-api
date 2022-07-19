@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.javers.common.collections.Lists;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -192,6 +193,10 @@ public class SiglusPhysicalInventoryServiceTest {
   private final String endDate = "endDate";
 
   private final UUID lotId = UUID.randomUUID();
+
+  private final List<UUID> physicalInventoryIds = new ArrayList<>();
+
+  private final HashSet<UUID> supportedPrograms = new HashSet<>();
 
   @Test
   public void shouldCallV3MultipleTimesWhenCreateNewDraftForAllProducts() {
@@ -1079,25 +1084,41 @@ public class SiglusPhysicalInventoryServiceTest {
   @Test
   public void shouldGetConflictWhenAllProductHaveDraft() {
     // given
+    supportedPrograms.add(programIdOne);
+    physicalInventoryIds.add(programIdOne);
+    PhysicalInventoryLineItemsExtension physicalInventoryLineItemsExtension = new PhysicalInventoryLineItemsExtension();
+    physicalInventoryLineItemsExtension.setId(programIdOne);
+    List<PhysicalInventoryLineItemsExtension> physicalInventoryLineItemsExtensions = Lists
+        .asList(physicalInventoryLineItemsExtension);
     List<PhysicalInventoryLineItemDto> physicalInventoryLineItemDtos = Collections.singletonList(
         PhysicalInventoryLineItemDto.builder().build());
     List<PhysicalInventoryDto> inventories = Collections.singletonList(
         PhysicalInventoryDto.builder().id(id).lineItems(physicalInventoryLineItemDtos).build());
     when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(ALL_PRODUCTS_PROGRAM_ID, facilityId, true))
         .thenReturn(inventories);
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(
+        supportedPrograms);
+    when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(physicalInventoryIds))
+        .thenReturn(physicalInventoryLineItemsExtensions);
 
     // when
     PhysicalInventoryValidationDto physicalInventoryValidationDto = siglusPhysicalInventoryService
         .checkConflictForOneProgram(facilityId, true);
 
     // then
-    assertFalse(physicalInventoryValidationDto.isCanStartInventory());
+    assertTrue(physicalInventoryValidationDto.isCanStartInventory());
   }
 
   @Test
   public void shouldNotGetConflictWhenStartOneProgramInventory() {
     // given
+    HashSet<UUID> supportedPrograms = Sets.newHashSet(programIdOne);
+    List<UUID> physicalInventoryIds = Lists.asList(programIdOne);
     when(siglusPhysicalInventoryService.getPhysicalInventoryDtos(ALL_PRODUCTS_PROGRAM_ID, facilityId, true))
+        .thenReturn(null);
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds()).thenReturn(
+        supportedPrograms);
+    when(lineItemsExtensionRepository.findByPhysicalInventoryIdIn(physicalInventoryIds))
         .thenReturn(null);
 
     // when

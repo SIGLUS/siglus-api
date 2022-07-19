@@ -107,33 +107,31 @@ public class FcGeographicZoneService implements ProcessDataService {
   }
 
   private FcIntegrationChanges getUpdatedGeographicZone(GeographicZoneDto originZone, GeographicZoneDto currentZone) {
-    boolean isDifferent = false;
+    boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!currentZone.getName().equals(originZone.getName())) {
       updateContent.append("name=").append(currentZone.getName()).append("; ");
       originContent.append("name=").append(originZone.getName()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
     if (!currentZone.getLevel().equals(originZone.getLevel())) {
       updateContent.append("level=").append(currentZone.getLevel()).append("; ");
       originContent.append("level=").append(originZone.getLevel()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
     if (isDifferentParentZone(currentZone, originZone)) {
       updateContent.append("parentZone=")
           .append(currentZone.getParent() == null ? "" : currentZone.getParent().getCode()).append("; ");
       originContent.append("parentZone=")
           .append(originZone.getParent() == null ? "" : originZone.getParent().getCode()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
-    if (isDifferent) {
-      return FcUtil.buildUpdateFcIntegrationChanges(GEOGRAPHIC_ZONE_API, originZone.getCode(), updateContent.toString(),
-          originContent.toString());
-    } else {
+    if (isSame) {
       return null;
     }
-
+    return FcUtil.buildUpdateFcIntegrationChanges(GEOGRAPHIC_ZONE_API, originZone.getCode(), updateContent.toString(),
+        originContent.toString());
   }
 
   private List<? extends ResponseBaseDto> filterInactiveZones(List<? extends ResponseBaseDto> zones) {

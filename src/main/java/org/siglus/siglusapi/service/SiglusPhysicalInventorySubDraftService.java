@@ -98,6 +98,9 @@ public class SiglusPhysicalInventorySubDraftService {
       return new ArrayList<>();
     }
     subDrafts.forEach(item -> {
+      if (PhysicalInventorySubDraftEnum.SUBMITTED == item.getStatus()) {
+        throw new IllegalStateException("can't operate submitted sub draft. sub draft id = " + item.getId());
+      }
       item.setStatus(subDraftStatus);
       item.setOperatorId(isDelete ? null : currentUserId);
     });

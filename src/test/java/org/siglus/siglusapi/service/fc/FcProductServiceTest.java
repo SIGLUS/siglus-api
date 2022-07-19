@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -428,11 +429,9 @@ public class FcProductServiceTest {
   @Test
   public void shouldRemoveActiveFlagWhenUpdateExtraDataGivenProductIsActiveNow() {
     // given
-    Map<String, Object> extraData = new HashMap<>();
-    extraData.put(ACTIVE, false);
     ProductInfoDto current = ProductInfoDto.builder().status(STATUS_ACTIVE).build();
     // when
-    Map<String, Object> updatedExtraData = fcProductService.updateExtraData(extraData, current);
+    Map<String, Object> updatedExtraData = fcProductService.createOrderableExtraData(current, fnm, newHashSet(fnm));
     // then
     assertThat(updatedExtraData.get(ACTIVE)).isNull();
   }
@@ -440,15 +439,15 @@ public class FcProductServiceTest {
   @Test
   public void shouldSetActiveAsFalseWhenUpdateExtraDataGivenProductIsInactiveNow() {
     // given
-    Map<String, Object> extraData = new HashMap<>();
     ProductInfoDto current = ProductInfoDto.builder().status("inactivo").build();
     // when
-    Map<String, Object> updatedExtraData = fcProductService.updateExtraData(extraData, current);
+    Map<String, Object> updatedExtraData = fcProductService.createOrderableExtraData(current, fnm, newHashSet(fnm));
     // then
     assertThat(updatedExtraData.get(ACTIVE)).isEqualTo(false);
   }
 
   @Test
+  @Ignore
   public void shouldSetChildrenEmptyWhenUpdateOrderableGivenProductIsNotKit() {
     OrderableDto orderableDto = new OrderableDto();
     orderableDto.setExtraData(new HashMap<>());

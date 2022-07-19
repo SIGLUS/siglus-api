@@ -113,25 +113,24 @@ public class FcFacilityTypeService implements ProcessDataService {
   private FcIntegrationChanges getUpdatedFacilityType(Map<String, FacilityTypeDto> codeToFacilityType,
       FcFacilityTypeDto typeDto) {
     FacilityTypeDto facilityTypeDto = codeToFacilityType.get(typeDto.getCode());
-    boolean isDifferent = false;
+    boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!facilityTypeDto.getName().equals(typeDto.getDescription())) {
       updateContent.append("name=").append(typeDto.getDescription()).append("; ");
       originContent.append("name=").append(facilityTypeDto.getName()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
     if (!facilityTypeDto.getActive().equals(FcUtil.isActive(typeDto.getStatus()))) {
       updateContent.append("status=").append(FcUtil.isActive(typeDto.getStatus())).append("; ");
       originContent.append("status=").append(facilityTypeDto.getActive()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
-    if (isDifferent) {
-      return FcUtil.buildUpdateFcIntegrationChanges(FACILITY_TYPE_API, facilityTypeDto.getCode(),
-          updateContent.toString(), originContent.toString());
-    } else {
+    if (isSame) {
       return null;
     }
+    return FcUtil.buildUpdateFcIntegrationChanges(FACILITY_TYPE_API, facilityTypeDto.getCode(),
+        updateContent.toString(), originContent.toString());
   }
 
   private void updateFacilityTypes(Map<String, FacilityTypeDto> codeToFacilityType,

@@ -263,6 +263,9 @@ public class SiglusPhysicalInventoryService {
 
   public PhysicalInventoryValidationDto checkConflictForAllProduct(UUID facility, Boolean isDraft) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    if (CollectionUtils.isEmpty(supportedPrograms)) {
+      throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
+    }
     List<PhysicalInventoryDto> allPhysicalInventoryDto = new LinkedList<>();
     supportedPrograms.forEach(programId -> {
       List<PhysicalInventoryDto> physicalInventoryDtoList = getPhysicalInventoryDtos(programId, facility, isDraft);
@@ -271,8 +274,6 @@ public class SiglusPhysicalInventoryService {
       }
     });
 
-    allPhysicalInventoryDto.removeIf(physicalInventoryProgram ->
-        ALL_PRODUCTS_UUID.equals(physicalInventoryProgram.getProgramId()));
     if (CollectionUtils.isNotEmpty(allPhysicalInventoryDto)) {
       List<UUID> otherProgramId = new ArrayList<>();
       allPhysicalInventoryDto.forEach(otherProgramInventory -> {
@@ -337,9 +338,15 @@ public class SiglusPhysicalInventoryService {
   }
 
   public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, Boolean isDraft) {
-    List<PhysicalInventoryDto> allProductsPhysicalInventory = getPhysicalInventoryDtos(ALL_PRODUCTS_UUID,
-        facility, isDraft);
-    if (CollectionUtils.isNotEmpty(allProductsPhysicalInventory)) {
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    if (CollectionUtils.isEmpty(supportedPrograms)) {
+      throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
+    }
+    List<PhysicalInventoryDto> otherProgramInventories = supportedPrograms.stream().map(
+        supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facility,
+            isDraft)).flatMap(Collection::stream).collect(Collectors.toList());
+
+    if (CollectionUtils.isNotEmpty(otherProgramInventories)) {
       return PhysicalInventoryValidationDto
           .builder()
           .canStartInventory(false)
@@ -836,7 +843,7 @@ public class SiglusPhysicalInventoryService {
     List<PhysicalInventorySubDraftLineItemsExtensionDto> lineItemsExtensions = inventoryDto.getLineItemsExtensions();
     Map<String, UUID> lineItemsExtensionMap = lineItemsExtensions.stream()
         .collect(Collectors.toMap(item -> getUniqueKey(item.getOrderableId(), item.getLotId()),
-            PhysicalInventorySubDraftLineItemsExtensionDto::getSubDraftId));
+            PhysicalInventorySubDraftLineItemsExtensionDto::getSubDraftId, (item1, item2) -> item1));
 
     List<UUID> updatePhysicalInventoryIds =
         updatedDto.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());

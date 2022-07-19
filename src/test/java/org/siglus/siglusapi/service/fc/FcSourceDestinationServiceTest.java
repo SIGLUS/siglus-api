@@ -101,7 +101,7 @@ public class FcSourceDestinationServiceTest {
 
     // then
     verify(nodeRepository).save(any(Node.class));
-    verify(validSourceDestinationStockManagementService, times(6)).assignDestination(any());
+    verify(validSourceDestinationStockManagementService, times(8)).assignDestination(any());
   }
 
   @Test
@@ -114,8 +114,8 @@ public class FcSourceDestinationServiceTest {
 
     // then
     verify(nodeRepository).save(any(Node.class));
-    verify(validSourceDestinationStockManagementService).assignDestination(any());
-    verify(validSourceDestinationStockManagementService, times(2)).assignSource(any());
+    verify(validSourceDestinationStockManagementService, times(2)).assignDestination(any());
+    verify(validSourceDestinationStockManagementService, times(4)).assignSource(any());
   }
 
   @Test
@@ -128,8 +128,8 @@ public class FcSourceDestinationServiceTest {
 
     // then
     verify(nodeRepository).save(any(Node.class));
-    verify(validSourceDestinationStockManagementService, times(3)).assignDestination(any());
-    verify(validSourceDestinationStockManagementService, times(26)).assignSource(any());
+    verify(validSourceDestinationStockManagementService, times(4)).assignDestination(any());
+    verify(validSourceDestinationStockManagementService, times(34)).assignSource(any());
   }
 
   @Test
@@ -142,7 +142,7 @@ public class FcSourceDestinationServiceTest {
 
     // then
     verify(nodeRepository).save(any(Node.class));
-    verify(validSourceDestinationStockManagementService, times(9)).assignSource(any());
+    verify(validSourceDestinationStockManagementService, times(12)).assignSource(any());
   }
 
   private void mockFacilityType() {
