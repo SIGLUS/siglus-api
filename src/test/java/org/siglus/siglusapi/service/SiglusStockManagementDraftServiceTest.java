@@ -140,6 +140,8 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final String receiveDraft = FieldConstants.RECEIVE;
 
+  private final String adjustmentDraft = FieldConstants.ADJUSTMENT;
+
   private final StockManagementDraftDto draftDto = StockManagementDraftDto.builder()
       .programId(programId).facilityId(facilityId).draftType(issueDraft).build();
 
@@ -217,7 +219,7 @@ public class SiglusStockManagementDraftServiceTest {
   }
 
   @Test
-  public void shouldUpdateDraftStatusWhenSaveDraft() {
+  public void shouldUpdateSubDraftStatusWhenSaveDraft() {
     StockManagementDraft foundDraft = StockManagementDraft.builder()
         .initialDraftId(initialDraftId)
         .operator("operator-1")
@@ -238,6 +240,18 @@ public class SiglusStockManagementDraftServiceTest {
     assertThat(updatedDraftDto.getStatus())
         .isEqualTo(PhysicalInventorySubDraftEnum.DRAFT);
     assertThat(updatedDraftDto.getInitialDraftId()).isEqualTo(initialDraftId);
+  }
+
+  @Test
+  public void shouldUpdateAdjustmentDraftWhenSaveDraft() {
+    draftDto.setDraftType(adjustmentDraft);
+    StockManagementDraft draft = StockManagementDraft.createStockManagementDraft(draftDto, true);
+    when(stockManagementDraftRepository.save(draft)).thenReturn(draft);
+
+    StockManagementDraftDto stockManagementDraftDto = siglusStockManagementDraftService
+        .updateDraft(draftDto, id);
+
+    assertTrue(stockManagementDraftDto.getIsDraft());
   }
 
   @Test

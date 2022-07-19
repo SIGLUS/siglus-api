@@ -18,6 +18,7 @@ package org.siglus.siglusapi.i18n;
 import java.util.Arrays;
 
 public abstract class MessageKeys {
+
   private static final String DELIMITER = ".";
   private static final String SERVICE_PREFIX = "siglusapi";
   private static final String ERROR = "error";
@@ -34,31 +35,43 @@ public abstract class MessageKeys {
   protected static final String ERROR_PREFIX = join(SERVICE_PREFIX, ERROR);
   private static final String EVENT_ERROR_PREFIX = ERROR_PREFIX + ".event";
   private static final String STOCK_MANAGEMENT_ERROR_PREFIX = ERROR_PREFIX + ".stockManagement";
-  public static final String ERROR_PERMISSION_NOT_SUPPORTED = ERROR_PREFIX + ".authorization.permission.not.supported";
+  public static final String ERROR_PERMISSION_NOT_SUPPORTED =
+      ERROR_PREFIX + ".authorization.permission.not.supported";
   public static final String ERROR_USER_NOT_FOUND = ERROR_PREFIX + ".authorization.user.notFound";
-  public static final String ERROR_WIDGET_CODE_DUPLICATED = join(ERROR_PREFIX, WIDGET, CODE, DUPLICATED);
+  public static final String ERROR_WIDGET_CODE_DUPLICATED = join(ERROR_PREFIX, WIDGET, CODE,
+      DUPLICATED);
   public static final String ERROR_ADDITIONAL_ORDERABLE_DUPLICATED =
       join(ERROR_PREFIX, ADDITIONAL_ORDERABLE, DUPLICATED);
 
   public static final String ERROR_NOT_ACCEPTABLE = ERROR_PREFIX + ".not.acceptable";
-  public static final String ERROR_SUB_ORDER_LINE_ITEM = ERROR_PREFIX + ".suborder.line.item.not.exist";
+  public static final String ERROR_SUB_ORDER_LINE_ITEM =
+      ERROR_PREFIX + ".suborder.line.item.not.exist";
   public static final String ERROR_LOT_CODE_IS_EMPTY = ERROR_PREFIX + ".lotcode.is.empty";
   public static final String ERROR_TRADE_ITEM_IS_EMPTY = ERROR_PREFIX + ".tradeItem.is.empty";
-  public static final String ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY = ERROR_PREFIX + ".lotinfo.should.empty";
-  public static final String ERROR_EVENT_FACILITY_INVALID = EVENT_ERROR_PREFIX + ".facilityId.invalid";
-  public static final String ERROR_EVENT_INITIAL_DRAFT_ID_INVALID = EVENT_ERROR_PREFIX + ".initial.draft.id.invalid";
+  public static final String ERROR_LOT_ID_AND_CODE_SHOULD_EMPTY =
+      ERROR_PREFIX + ".lotinfo.should.empty";
+  public static final String ERROR_EVENT_FACILITY_INVALID =
+      EVENT_ERROR_PREFIX + ".facilityId.invalid";
+  public static final String ERROR_EVENT_INITIAL_DRAFT_ID_INVALID =
+      EVENT_ERROR_PREFIX + ".initial.draft.id.invalid";
   public static final String ERROR_FACILITY_ID_MISSING = ERROR_PREFIX + ".facility.id.missing";
-  public static final String ERROR_INITIAL_DRAFT_ID_MISSING = ERROR_PREFIX + ".initial.draft.id.missing";
+  public static final String ERROR_INITIAL_DRAFT_ID_MISSING =
+      ERROR_PREFIX + ".initial.draft.id.missing";
   public static final String ERROR_PROGRAM_MISSING = ERROR_PREFIX + ".program.missing";
   public static final String ERROR_PROGRAM_ID_MISSING = ERROR_PREFIX + ".program.id.missing";
   public static final String ERROR_USER_ID_MISSING = ERROR_PREFIX + ".user.id.missing";
   public static final String ERROR_IS_DRAFT_MISSING = ERROR_PREFIX + ".is.draft.missing";
   public static final String ERROR_DRAFT_TYPE_MISSING = ERROR_PREFIX + ".draft.type.missing";
-  public static final String ERROR_DRAFT_DOCUMENT_NUMBER_MISSING = ERROR_PREFIX + ".draft.document.number.missing";
-  public static final String ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR = ERROR_PREFIX + ".not.expected.draft.type.error";
-  public static final String ERROR_NOT_EXPECTED_USER_DRAFT = ERROR_PREFIX + ".not.expected.user.draft";
-  public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".id.notFound";
-  public static final String ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.notFound";
+  public static final String ERROR_DRAFT_DOCUMENT_NUMBER_MISSING =
+      ERROR_PREFIX + ".draft.document.number.missing";
+  public static final String ERROR_NOT_EXPECTED_DRAFT_TYPE_ERROR =
+      ERROR_PREFIX + ".not.expected.draft.type.error";
+  public static final String ERROR_NOT_EXPECTED_USER_DRAFT =
+      ERROR_PREFIX + ".not.expected.user.draft";
+  public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_NOT_FOUND =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".id.notFound";
+  public static final String ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.exists";
   public static final String ERROR_STOCK_CARD_NOT_FOUND =
@@ -73,8 +86,12 @@ public abstract class MessageKeys {
       STOCK_MANAGEMENT_ERROR_PREFIX + ".initial.draft.exists";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".drafts.more.than.ten";
-  public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH = STOCK_MANAGEMENT_ERROR_PREFIX + ".id.mismatch";
-  public static final String ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED = STOCK_MANAGEMENT_ERROR_PREFIX + ".isSubmitted";
+  public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_MISMATCH =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".id.mismatch";
+  public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_TYPE_MISSING =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.type.missing";
+  public static final String ERROR_STOCK_MANAGEMENT_DRAFT_IS_SUBMITTED =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".isSubmitted";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ORDERABLE_DISABLED_VVM =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".orderable.disabled.vvm";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_LINE_ITEMS_MISSING =
@@ -83,9 +100,12 @@ public abstract class MessageKeys {
       STOCK_MANAGEMENT_ERROR_PREFIX + ".orderable.missing";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_ID_SHOULD_NULL =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.id.should.null";
-  public static final String ERROR_INVENTORY_CONFLICT_SUB_DRAFT = ERROR_PREFIX + ".inventory.conflict.subDraft";
-  public static final String ERROR_ISSUE_CONFLICT_SUB_DRAFT = ERROR_PREFIX + ".issue.conflict.subDraft";
-  public static final String ERROR_INVENTORY_CONFLICT_DRAFT = ERROR_PREFIX + ".inventory.conflict.Draft";
+  public static final String ERROR_INVENTORY_CONFLICT_SUB_DRAFT =
+      ERROR_PREFIX + ".inventory.conflict.subDraft";
+  public static final String ERROR_ISSUE_CONFLICT_SUB_DRAFT =
+      ERROR_PREFIX + ".issue.conflict.subDraft";
+  public static final String ERROR_INVENTORY_CONFLICT_DRAFT =
+      ERROR_PREFIX + ".inventory.conflict.Draft";
 
   public static final String ERROR_SUBMIT_START_DATE_BEFORE_START_DATE = ERROR_PREFIX
       + ".submitStartDate.before.startDate";
