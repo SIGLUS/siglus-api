@@ -106,6 +106,12 @@ public class SiglusStockManagementDraftController {
         .findStockManagementInitialDraft(programId, draftType);
   }
 
+  @DeleteMapping("/{initialDraftId}")
+  @ResponseStatus(NO_CONTENT)
+  public void deleteInitialDraft(@PathVariable UUID initialDraftId) {
+    stockManagementDraftService.deleteInitialDraft(initialDraftId);
+  }
+
   @PutMapping("/update")
   @ResponseStatus(OK)
   public StockManagementDraftDto updateOperatorAndStatus(
@@ -115,9 +121,9 @@ public class SiglusStockManagementDraftController {
 
   @PutMapping("/info")
   @ResponseStatus(OK)
-  public StockManagementDraftDto updatePartOfInfoWithDraft(
+  public StockManagementDraftDto restoreSubDraftWhenDoDelete(
       @RequestBody StockManagementDraftDto dto) {
-    return stockManagementDraftService.updatePartOfInfoWithDraft(dto);
+    return stockManagementDraftService.restoreSubDraftWhenDoDelete(dto);
   }
 
   @PutMapping("/{initialDraftId}/subDraft/{subDraftId}/submit")

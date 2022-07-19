@@ -67,6 +67,8 @@ public abstract class MessageKeys {
       STOCK_MANAGEMENT_ERROR_PREFIX + ".subDrafts.empty";
   public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".subDrafts.not.all.submitted";
+  public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_ALREADY_SUBMITTED =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".subDrafts.already.submitted";
   public static final String ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".initial.draft.exists";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN =

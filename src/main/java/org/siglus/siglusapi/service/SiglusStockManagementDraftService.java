@@ -144,6 +144,8 @@ public class SiglusStockManagementDraftService {
   public StockManagementDraftDto updateDraft(StockManagementDraftDto dto, UUID id) {
     log.info("update issue draft");
     stockManagementDraftValidator.validateDraft(dto, id);
+    StockManagementDraft subDraft = stockManagementDraftRepository.findOne(id);
+    draftValidator.validateSubDraftStatus(subDraft);
     conflictOrderableInSubDraftHelper.checkConflictSubDraft(dto);
     StockManagementDraft newDraft = setNewAttributesInOriginalDraft(dto, id);
     StockManagementDraft savedDraft = stockManagementDraftRepository.save(newDraft);
@@ -375,9 +377,10 @@ public class SiglusStockManagementDraftService {
   }
 
   @Transactional
-  public StockManagementDraftDto updatePartOfInfoWithDraft(StockManagementDraftDto dto) {
+  public StockManagementDraftDto restoreSubDraftWhenDoDelete(StockManagementDraftDto dto) {
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(dto.getId());
     draftValidator.validateSubDraft(subDraft);
+    draftValidator.validateSubDraftStatus(subDraft);
     StockManagementDraft currentDraft = new StockManagementDraft();
     BeanUtils.copyProperties(subDraft, currentDraft);
     currentDraft.setStatus(PhysicalInventorySubDraftEnum.NOT_YET_STARTED);
@@ -391,6 +394,7 @@ public class SiglusStockManagementDraftService {
   public StockManagementDraftDto updateStatusAfterSubmit(StockManagementDraftDto draftDto) {
     StockManagementDraft subDraft = stockManagementDraftRepository.findOne(draftDto.getId());
     draftValidator.validateSubDraft(subDraft);
+    draftValidator.validateSubDraftStatus(subDraft);
     conflictOrderableInSubDraftHelper.checkConflictSubDraft(draftDto);
     subDraft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
     subDraft.setSignature(draftDto.getSignature());
@@ -458,4 +462,16 @@ public class SiglusStockManagementDraftService {
     });
     return mergedLineItemDtos;
   }
+
+  public void deleteInitialDraft(UUID initialDraftId) {
+    draftValidator.validateInitialDraftId(initialDraftId);
+    stockManagementDraftRepository.deleteAllByInitialDraftId(initialDraftId);
+  }
+
+//  private void checkIfSubDraftSubmitted(StockManagementDraft subDraft) {
+//    if (subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED)) {
+//      throw new ValidationMessageException(
+//          new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_ALREADY_SUBMITTED));
+//    }
+//  }
 }

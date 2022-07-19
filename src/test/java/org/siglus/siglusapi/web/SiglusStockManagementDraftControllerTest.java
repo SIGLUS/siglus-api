@@ -111,8 +111,8 @@ public class SiglusStockManagementDraftControllerTest {
 
   @Test
   public void shouldCallupdatePartOfInfoWithDraft() {
-    controller.updatePartOfInfoWithDraft(dto);
-    verify(service).updatePartOfInfoWithDraft(dto);
+    controller.restoreSubDraftWhenDoDelete(dto);
+    verify(service).restoreSubDraftWhenDoDelete(dto);
   }
 
   @Test

@@ -494,7 +494,7 @@ public class SiglusStockManagementDraftServiceTest {
     when(stockManagementDraftRepository.save(any(StockManagementDraft.class))).thenReturn(draft);
 
     StockManagementDraftDto stockManagementDraftDto = siglusStockManagementDraftService
-        .updatePartOfInfoWithDraft(draftDto);
+        .restoreSubDraftWhenDoDelete(draftDto);
 
     assertThat(stockManagementDraftDto.getOperator()).isNull();
     assertThat(stockManagementDraftDto.getStatus())
