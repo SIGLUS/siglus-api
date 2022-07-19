@@ -370,8 +370,8 @@ public class FcProductService implements ProcessDataService {
 
   private boolean isDifferentProductTracer(OrderableDto existed, ProductInfoDto current) {
     Map<String, Object> existedExtraData = existed.getExtraData();
-    Object tracerData = existedExtraData.get(IS_TRACER);
-    return tracerData == null || (boolean) tracerData != current.getIsSentinel();
+    boolean tracerData = existedExtraData.get(IS_TRACER) != null && (boolean) existedExtraData.get(IS_TRACER);
+    return tracerData != current.getIsSentinel();
   }
 
   private boolean isDifferentProgramOrderable(OrderableDto existed, ProductInfoDto current) {
