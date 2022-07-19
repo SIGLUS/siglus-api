@@ -61,7 +61,7 @@ public class ConflictOrderableInSubDraftHelper {
     subDrafts.forEach(subDraft -> {
       List<UUID> conflictOrderableIds = subDraft.getLineItems().stream()
           .map(StockManagementDraftLineItem::getOrderableId)
-          .filter(preSavedDraftOrderableIds::contains).collect(toList());
+          .filter(preSavedDraftOrderableIds::contains).distinct().collect(toList());
       if (CollectionUtils.isNotEmpty(conflictOrderableIds)) {
         conflictOrderableIds.forEach(id -> {
           ProductSubDraftConflictDto subDraftConflictDto = ProductSubDraftConflictDto.builder()

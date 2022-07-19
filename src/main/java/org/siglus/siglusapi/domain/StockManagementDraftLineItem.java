@@ -68,6 +68,9 @@ public class StockManagementDraftLineItem extends BaseEntity {
   private String sourceFreeText;
   private UUID reasonId;
   private String reasonFreeText;
+  private String productName;
+  private String productCode;
+  private Integer stockOnHand;
 
   @Column(name = "extradata", columnDefinition = "jsonb")
   @Convert(converter = ExtraDataConverter.class)

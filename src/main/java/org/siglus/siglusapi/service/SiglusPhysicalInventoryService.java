@@ -70,6 +70,7 @@ import org.siglus.siglusapi.dto.InitialInventoryFieldDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.PhysicalInventoryLineItemExtensionDto;
 import org.siglus.siglusapi.dto.PhysicalInventorySubDraftLineItemsExtensionDto;
+import org.siglus.siglusapi.dto.PhysicalInventoryValidationDto;
 import org.siglus.siglusapi.dto.SubDraftDto;
 import org.siglus.siglusapi.dto.enums.PhysicalInventorySubDraftEnum;
 import org.siglus.siglusapi.exception.BusinessDataException;
@@ -260,6 +261,37 @@ public class SiglusPhysicalInventoryService {
         .build();
   }
 
+  public PhysicalInventoryValidationDto checkConflictForAllProduct(UUID facility, Boolean isDraft) {
+    Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    List<PhysicalInventoryDto> allPhysicalInventoryDto = new LinkedList<>();
+    supportedPrograms.forEach(programId -> {
+      List<PhysicalInventoryDto> physicalInventoryDtoList = getPhysicalInventoryDtos(programId, facility, isDraft);
+      if (CollectionUtils.isNotEmpty(physicalInventoryDtoList)) {
+        allPhysicalInventoryDto.addAll(physicalInventoryDtoList);
+      }
+    });
+
+    allPhysicalInventoryDto.removeIf(physicalInventoryProgram ->
+        ALL_PRODUCTS_UUID.equals(physicalInventoryProgram.getProgramId()));
+    if (CollectionUtils.isNotEmpty(allPhysicalInventoryDto)) {
+      List<UUID> otherProgramId = new ArrayList<>();
+      allPhysicalInventoryDto.forEach(otherProgramInventory -> {
+        otherProgramId.add(otherProgramInventory.getProgramId());
+      });
+      return PhysicalInventoryValidationDto
+          .builder()
+          .canStartInventory(false)
+          .containDraftProgramsList(otherProgramId)
+          .build();
+    } else {
+      return PhysicalInventoryValidationDto
+          .builder()
+          .canStartInventory(true)
+          .containDraftProgramsList(Lists.newArrayList())
+          .build();
+    }
+  }
+
   private List<SubDraftDto> convertSubDraftToSubDraftDto(
       List<PhysicalInventorySubDraft> physicalInventorySubDraftList) {
     // todo：fill saver name from saver id
@@ -302,6 +334,25 @@ public class SiglusPhysicalInventoryService {
           .build();
     }
     return DraftListDto.builder().build();
+  }
+
+  public PhysicalInventoryValidationDto checkConflictForOneProgram(UUID facility, Boolean isDraft) {
+    List<PhysicalInventoryDto> allProductsPhysicalInventory = getPhysicalInventoryDtos(ALL_PRODUCTS_UUID,
+        facility, isDraft);
+    if (CollectionUtils.isNotEmpty(allProductsPhysicalInventory)) {
+      return PhysicalInventoryValidationDto
+          .builder()
+          .canStartInventory(false)
+          .containDraftProgramsList(Lists.newArrayList(ALL_PRODUCTS_UUID))
+          .build();
+    } else {
+      return PhysicalInventoryValidationDto
+          .builder()
+          .canStartInventory(true)
+          .containDraftProgramsList(Lists.newArrayList())
+          .build();
+    }
+
   }
 
   private List<List<PhysicalInventoryLineItemDto>> groupByProductCode(List<PhysicalInventoryLineItemDto> lineItemDtos) {

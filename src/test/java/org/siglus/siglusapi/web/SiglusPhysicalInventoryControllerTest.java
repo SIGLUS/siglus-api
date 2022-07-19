@@ -226,5 +226,17 @@ public class SiglusPhysicalInventoryControllerTest {
         PhysicalInventorySubDraftEnum.DRAFT);
   }
 
+  @Test
+  public void shouldConflictIfOtherProgramHaveDraft() {
+    siglusPhysicalInventoryController.checkPhysicalInventoryConflict(ALL_PRODUCTS_PROGRAM_ID, facilityId, isDraft);
 
+    verify(siglusPhysicalInventoryService).checkConflictForAllProduct(facilityId, isDraft);
+  }
+
+  @Test
+  public void shouldConflictWithAllProductsWhenAllProductsHaveDraft() {
+    siglusPhysicalInventoryController.checkPhysicalInventoryConflict(programId, facilityId, isDraft);
+
+    verify(siglusPhysicalInventoryService).checkConflictForOneProgram(facilityId, isDraft);
+  }
 }

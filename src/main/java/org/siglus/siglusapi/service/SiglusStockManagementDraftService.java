@@ -18,10 +18,14 @@ package org.siglus.siglusapi.service;
 import static java.util.stream.Collectors.toList;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
 import static org.siglus.siglusapi.constant.ProgramConstants.ALL_PRODUCTS_PROGRAM_ID;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,14 +34,17 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
+import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
 import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
+import org.siglus.siglusapi.dto.MergedLineItemDto;
 import org.siglus.siglusapi.dto.Message;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
@@ -77,6 +84,9 @@ public class SiglusStockManagementDraftService {
 
   @Autowired
   private PermissionService permissionService;
+
+  @Autowired
+  private SiglusStockCardService stockCardService;
 
   @Autowired
   private SiglusValidSourceDestinationService validSourceDestinationService;
@@ -278,13 +288,18 @@ public class SiglusStockManagementDraftService {
 
     StockManagementInitialDraft savedInitialDraft = stockManagementInitialDraftsRepository
         .save(initialDraft);
+    StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto
+        .from(savedInitialDraft);
 
     if (initialDraftDto.getDraftType().equals("issue")) {
       String destinationName = findDestinationName(savedInitialDraft.getDestinationId(),
           savedInitialDraft.getFacilityId());
-      StockManagementInitialDraftDto initialDraftDtoResponse = StockManagementInitialDraftDto
-          .from(savedInitialDraft);
       initialDraftDtoResponse.setDestinationName(destinationName);
+      return initialDraftDtoResponse;
+    } else if (initialDraftDto.getDraftType().equals("receive")) {
+      String sourceName = findSourceName(savedInitialDraft.getSourceId(),
+          savedInitialDraft.getFacilityId());
+      initialDraftDtoResponse.setSourceName(sourceName);
       return initialDraftDtoResponse;
     }
     return new StockManagementInitialDraftDto();
@@ -310,7 +325,8 @@ public class SiglusStockManagementDraftService {
         stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
         return stockManagementInitialDraftDto;
       } else if (draftType.equals(FieldConstants.RECEIVE)) {
-        String sourceName = findSourceName(initialDraft.getSourceId());
+        String sourceName = findSourceName(initialDraft.getSourceId(),
+            initialDraft.getFacilityId());
         stockManagementInitialDraftDto.setSourceName(sourceName);
         stockManagementInitialDraftDto.setCanMergeOrDeleteSubDrafts(canMergeOrDeleteSubDrafts);
         return stockManagementInitialDraftDto;
@@ -319,9 +335,17 @@ public class SiglusStockManagementDraftService {
     return new StockManagementInitialDraftDto();
   }
 
-  private String findSourceName(UUID sourceId) {
+  private String findSourceName(UUID sourceId, UUID facilityId) {
     //TODO: when do multi-user receive, get source name by id
-    return null;
+    Collection<ValidSourceDestinationDto> sourcesForAllProducts = validSourceDestinationService
+        .findSourcesForAllProducts(facilityId);
+
+    return sourcesForAllProducts
+        .stream().filter(source -> (
+            source.getId().equals(sourceId)
+        )).findFirst()
+        .orElseThrow(() -> new NotFoundException("No such source with id: " + sourceId))
+        .getName();
   }
 
   private void checkIfInitialDraftExists(UUID programId, UUID facilityId, String draftType) {
@@ -382,7 +406,56 @@ public class SiglusStockManagementDraftService {
     return StockManagementDraftDto.from(updatedDraft);
   }
 
-  public StockManagementDraftDto mergeSubDrafts(UUID initialDraftId) {
-    return null;
+  public List<MergedLineItemDto> mergeSubDrafts(UUID initialDraftId) {
+    draftValidator.validateInitialDraftId(initialDraftId);
+    List<StockManagementDraft> subDrafts = stockManagementDraftRepository
+        .findByInitialDraftId(initialDraftId);
+
+    if (subDrafts.isEmpty()) {
+      throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY),
+          "subDrafts empty");
+    }
+    boolean ifAllSubmitted = subDrafts.stream()
+        .allMatch(subDraft -> subDraft.getStatus().equals(PhysicalInventorySubDraftEnum.SUBMITTED));
+    if (ifAllSubmitted) {
+      List<MergedLineItemDto> mergedLineItemDtos = fillingMergedLineItemsFields(subDrafts);
+
+      mergedLineItemDtos.forEach(this::fillingStockOnHandField);
+
+      return mergedLineItemDtos;
+    }
+    throw new BusinessDataException(new Message(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED),
+        "subDrafts not all submitted");
+  }
+
+  private void fillingStockOnHandField(MergedLineItemDto mergedLineItemDto) {
+    StockCardDto stockCardByOrderable = stockCardService
+        .findStockCardByOrderable(mergedLineItemDto.getOrderableId());
+    if (stockCardByOrderable == null) {
+      throw new ResourceNotFoundException(ERROR_STOCK_CARD_NOT_FOUND);
+    }
+    mergedLineItemDto.setStockOnHand(stockCardByOrderable.getStockOnHand());
+  }
+
+  private List<MergedLineItemDto> fillingMergedLineItemsFields(
+      List<StockManagementDraft> subDrafts) {
+    List<MergedLineItemDto> mergedLineItemDtos = new ArrayList<>();
+    subDrafts.forEach(subDraft -> {
+      List<MergedLineItemDto> subDraftLineItemDto = subDraft.getLineItems().stream()
+          .map(lineItem -> {
+            return MergedLineItemDto.builder().subDraftId(subDraft.getId())
+                .productName(lineItem.getProductName())
+                .productCode(lineItem.getProductCode())
+                .expiryDate(lineItem.getExpirationDate())
+                .lotId(lineItem.getLotId())
+                .orderableId(lineItem.getOrderableId())
+                .occurredDate(lineItem.getOccurredDate())
+                .quantity(lineItem.getQuantity())
+                .lotCode(lineItem.getLotCode())
+                .build();
+          }).collect(toList());
+      mergedLineItemDtos.addAll(subDraftLineItemDto);
+    });
+    return mergedLineItemDtos;
   }
 }

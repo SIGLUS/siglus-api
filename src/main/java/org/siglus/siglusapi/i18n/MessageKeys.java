@@ -61,6 +61,12 @@ public abstract class MessageKeys {
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_NOT_FOUND = STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.notFound";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".draft.exists";
+  public static final String ERROR_STOCK_CARD_NOT_FOUND =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".stock.card.not.found";
+  public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".subDrafts.empty";
+  public static final String ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED =
+      STOCK_MANAGEMENT_ERROR_PREFIX + ".subDrafts.not.all.submitted";
   public static final String ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS =
       STOCK_MANAGEMENT_ERROR_PREFIX + ".initial.draft.exists";
   public static final String ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN =

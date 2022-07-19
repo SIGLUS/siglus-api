@@ -25,10 +25,14 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openlmis.stockmanagement.i18n.MessageKeys.ERROR_PROGRAM_NOT_SUPPORTED;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_CARD_NOT_FOUND;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_EXISTS;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_DRAFT_DRAFT_MORE_THAN_TEN;
 import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_INITIAL_DRAFT_EXISTS;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY;
+import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,13 +49,17 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.openlmis.stockmanagement.dto.StockCardDto;
 import org.openlmis.stockmanagement.dto.StockEventDto;
 import org.openlmis.stockmanagement.dto.ValidSourceDestinationDto;
 import org.openlmis.stockmanagement.exception.PermissionMessageException;
+import org.openlmis.stockmanagement.exception.ResourceNotFoundException;
 import org.openlmis.stockmanagement.service.PermissionService;
 import org.siglus.siglusapi.constant.FieldConstants;
 import org.siglus.siglusapi.domain.StockManagementDraft;
+import org.siglus.siglusapi.domain.StockManagementDraftLineItem;
 import org.siglus.siglusapi.domain.StockManagementInitialDraft;
+import org.siglus.siglusapi.dto.MergedLineItemDto;
 import org.siglus.siglusapi.dto.StockManagementDraftDto;
 import org.siglus.siglusapi.dto.StockManagementDraftLineItemDto;
 import org.siglus.siglusapi.dto.StockManagementInitialDraftDto;
@@ -77,6 +85,9 @@ public class SiglusStockManagementDraftServiceTest {
 
   @InjectMocks
   private SiglusStockManagementDraftService siglusStockManagementDraftService;
+
+  @Mock
+  private SiglusStockCardService stockCardService;
 
   @Mock
   private SiglusValidSourceDestinationService siglusValidSourceDestinationService;
@@ -119,6 +130,10 @@ public class SiglusStockManagementDraftServiceTest {
 
   private final UUID draftId = UUID.randomUUID();
 
+  private final UUID orderable1 = UUID.randomUUID();
+
+  private final UUID orderable2 = UUID.randomUUID();
+
   private final Boolean isDraft = nextBoolean();
 
   private final String issueDraft = FieldConstants.ISSUE;
@@ -148,6 +163,20 @@ public class SiglusStockManagementDraftServiceTest {
       .lotId(UUID.randomUUID())
       .build();
 
+  private final StockManagementDraftLineItem draftLineItem1 = StockManagementDraftLineItem
+      .builder().stockManagementDraft(draft)
+      .expirationDate(LocalDate.of(2023, 7, 30))
+      .orderableId(orderable1).lotCode("lot-1").occurredDate(LocalDate.of(2022, 7, 20))
+      .productName("product-1").productCode("code-1").quantity(10).build();
+
+  private final StockManagementDraftLineItem draftLineItem2 = StockManagementDraftLineItem
+      .builder().stockManagementDraft(draft1)
+      .expirationDate(LocalDate.of(2024, 7, 30))
+      .orderableId(orderable2).lotCode("lot-2").occurredDate(LocalDate.of(2022, 7, 20))
+      .productName("product-2").productCode("code-2").quantity(20).build();
+
+  private final StockCardDto stockCardDto1 = StockCardDto.builder().stockOnHand(100).build();
+  private final StockCardDto stockCardDto2 = StockCardDto.builder().stockOnHand(200).build();
 
   @Before
   public void setup() {
@@ -503,5 +532,71 @@ public class SiglusStockManagementDraftServiceTest {
     assertThat(stockManagementDraftDto.getStatus())
         .isEqualTo(PhysicalInventorySubDraftEnum.SUBMITTED);
 
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenSubDraftsAreEmpty() {
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_EMPTY));
+
+    doNothing().when(draftValidator).validateInitialDraftId(initialDraftId);
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(Collections.emptyList());
+
+    siglusStockManagementDraftService.mergeSubDrafts(initialDraftId);
+  }
+
+  @Test
+  public void shouldReturnMergedLineItemDtos() {
+    draft.setInitialDraftId(initialDraftId);
+    draft.setLineItems(newArrayList(draftLineItem1));
+    draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+
+    draft1.setInitialDraftId(initialDraftId);
+    draft1.setLineItems(newArrayList(draftLineItem2));
+    draft1.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+
+    doNothing().when(draftValidator).validateInitialDraftId(initialDraftId);
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(newArrayList(draft, draft1));
+    when(stockCardService.findStockCardByOrderable(orderable1)).thenReturn(stockCardDto1);
+    when(stockCardService.findStockCardByOrderable(orderable2)).thenReturn(stockCardDto2);
+
+    List<MergedLineItemDto> mergedLineItemDtos = siglusStockManagementDraftService
+        .mergeSubDrafts(initialDraftId);
+
+    assertThat(mergedLineItemDtos.size()).isEqualTo(2);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenSubDraftsNotSubmitted() {
+    exception.expect(BusinessDataException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_MANAGEMENT_SUB_DRAFT_NOT_ALL_SUBMITTED));
+
+    draft.setInitialDraftId(initialDraftId);
+    draft.setLineItems(newArrayList(draftLineItem1));
+
+    doNothing().when(draftValidator).validateInitialDraftId(initialDraftId);
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(newArrayList(draft));
+
+    siglusStockManagementDraftService.mergeSubDrafts(initialDraftId);
+  }
+
+  @Test
+  public void shouldThrowExceptionWhenNotFoundStockCard() {
+    exception.expect(ResourceNotFoundException.class);
+    exception.expectMessage(containsString(ERROR_STOCK_CARD_NOT_FOUND));
+
+    draft.setInitialDraftId(initialDraftId);
+    draft.setLineItems(newArrayList(draftLineItem1));
+    draft.setStatus(PhysicalInventorySubDraftEnum.SUBMITTED);
+
+    doNothing().when(draftValidator).validateInitialDraftId(initialDraftId);
+    when(stockManagementDraftRepository.findByInitialDraftId(initialDraftId))
+        .thenReturn(newArrayList(draft));
+    when(stockCardService.findStockCardByOrderable(orderable1)).thenReturn(null);
+
+    siglusStockManagementDraftService.mergeSubDrafts(initialDraftId);
   }
 }
