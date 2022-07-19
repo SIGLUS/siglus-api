@@ -263,6 +263,9 @@ public class SiglusPhysicalInventoryService {
 
   public PhysicalInventoryValidationDto checkConflictForAllProduct(UUID facility, Boolean isDraft) {
     Set<UUID> supportedPrograms = supportedProgramsHelper.findHomeFacilitySupportedProgramIds();
+    if (CollectionUtils.isEmpty(supportedPrograms)) {
+      throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
+    }
     List<PhysicalInventoryDto> allPhysicalInventoryDto = new LinkedList<>();
     supportedPrograms.forEach(programId -> {
       List<PhysicalInventoryDto> physicalInventoryDtoList = getPhysicalInventoryDtos(programId, facility, isDraft);
@@ -339,15 +342,11 @@ public class SiglusPhysicalInventoryService {
     if (CollectionUtils.isEmpty(supportedPrograms)) {
       throw new PermissionMessageException(new org.openlmis.stockmanagement.util.Message(ERROR_PROGRAM_NOT_SUPPORTED));
     }
-    List<PhysicalInventoryDto> inventories = supportedPrograms.stream().map(
+    List<PhysicalInventoryDto> otherProgramInventories = supportedPrograms.stream().map(
         supportedVirtualProgram -> getPhysicalInventoryDtos(supportedVirtualProgram, facility,
             isDraft)).flatMap(Collection::stream).collect(Collectors.toList());
-    List<UUID> physicalInventoryIds = inventories.stream().map(PhysicalInventoryDto::getId)
-            .collect(Collectors.toList());
-    List<PhysicalInventoryLineItemsExtension> extensions = lineItemsExtensionRepository
-        .findByPhysicalInventoryIdIn(physicalInventoryIds);
 
-    if (CollectionUtils.isNotEmpty(extensions)) {
+    if (CollectionUtils.isNotEmpty(otherProgramInventories)) {
       return PhysicalInventoryValidationDto
           .builder()
           .canStartInventory(false)
