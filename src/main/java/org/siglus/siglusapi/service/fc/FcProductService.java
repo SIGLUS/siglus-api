@@ -101,6 +101,8 @@ public class FcProductService implements ProcessDataService {
 
   private Map<String, UUID> programCodeToIdMap;
 
+  private Map<UUID, String> programIdToCodeMap;
+
   private Map<String, OrderableDisplayCategoryDto> categoryCodeToEntityMap;
 
   private Set<String> basicProductCodes;
@@ -232,6 +234,8 @@ public class FcProductService implements ProcessDataService {
         Collectors.toMap(ProgramRealProgram::getRealProgramCode, Function.identity()));
     programCodeToIdMap = programReferenceDataService.findAll().stream()
         .collect(Collectors.toMap(BasicProgramDto::getCode, BaseDto::getId));
+    programIdToCodeMap = programReferenceDataService.findAll().stream()
+        .collect(Collectors.toMap(BaseDto::getId, BasicProgramDto::getCode));
     categoryCodeToEntityMap = categoryRefDataService.findAll().stream()
         .collect(Collectors.toMap(OrderableDisplayCategoryDto::getCode, Function.identity()));
     basicProductCodes = basicProductCodeRepository.findAll().stream()
@@ -267,14 +271,16 @@ public class FcProductService implements ProcessDataService {
     if (basicProductCodes.contains(productCode)) {
       extraData.put(IS_BASIC, true);
     }
-    extraData.put(IS_TRACER, product.getIsSentinel());
+    if (Boolean.TRUE.equals(product.getIsSentinel())) {
+      extraData.put(IS_TRACER, true);
+    }
     return extraData;
   }
 
   OrderableDto updateOrderable(OrderableDto existed, ProductInfoDto current) {
     existed.setDescription(current.getDescription());
     existed.setFullProductName(current.getFullDescription());
-    Map<String, Object> extraData = updateExtraData(existed.getExtraData(), current);
+    Map<String, Object> extraData = createOrderableExtraData(current, existed.getProductCode(), basicProductCodes);
     existed.setExtraData(extraData);
     existed.setPrograms(buildProgramOrderableDtos(current));
     if (current.isKit()) {
@@ -284,16 +290,6 @@ public class FcProductService implements ProcessDataService {
       existed.setChildren(newHashSet());
     }
     return orderableReferenceDataService.update(existed);
-  }
-
-  Map<String, Object> updateExtraData(Map<String, Object> extraData, ProductInfoDto current) {
-    if (FcUtil.isActive(current.getStatus())) {
-      extraData.remove(ACTIVE);
-    } else {
-      extraData.put(ACTIVE, false);
-    }
-    extraData.put(IS_TRACER, current.getIsSentinel());
-    return extraData;
   }
 
   private Set<OrderableChildDto> buildOrderableChildDtos(ProductInfoDto product) {
@@ -310,12 +306,12 @@ public class FcProductService implements ProcessDataService {
 
   private Set<ProgramOrderableDto> buildProgramOrderableDtos(ProductInfoDto product) {
     return new FcProductMapper(
-            realProgramCodeToEntityMap, programCodeToIdMap, categoryCodeToEntityMap)
+        realProgramCodeToEntityMap, programCodeToIdMap, categoryCodeToEntityMap)
         .getProgramOrderablesFrom(product);
   }
 
   private FcIntegrationChanges getUpdatedOrderable(OrderableDto existed, ProductInfoDto current) {
-    boolean isDifferent = false;
+    boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!StringUtils.equals(existed.getDescription(), current.getDescription())) {
@@ -323,28 +319,28 @@ public class FcProductService implements ProcessDataService {
           current.getDescription());
       updateContent.append("description=").append(current.getDescription()).append("; ");
       originContent.append("description=").append(existed.getDescription()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
     if (!StringUtils.equals(existed.getFullProductName(), current.getFullDescription())) {
       log.info("[FC product] name different, existed: {}, current: {}", existed.getFullProductName(),
           current.getFullDescription());
       updateContent.append("productName=").append(current.getFullDescription()).append("; ");
       originContent.append("productName=").append(existed.getFullProductName()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
     if (isDifferentProductStatus(existed, current)) {
       log.info("[FC product] status different, existed: {}, current: {}", existed.getExtraData().get(ACTIVE),
           current.getStatus());
       updateContent.append("status=").append(current.getStatus()).append("; ");
       originContent.append("status=").append(existed.getExtraData().get(ACTIVE)).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
     if (isDifferentProductTracer(existed, current)) {
-      log.info("[FC product] isTracer different, existed: {}, current: {}", existed.getExtraData().get(IS_TRACER),
-          current.getIsSentinel());
+      Object existedIsTracer = existed.getExtraData() == null ? null : existed.getExtraData().get(IS_TRACER);
+      log.info("[FC product] isTracer different, existed: {}, current: {}", existedIsTracer, current.getIsSentinel());
       updateContent.append("isTracer=").append(current.getIsSentinel()).append("; ");
-      originContent.append("isTracer=").append(existed.getExtraData().get(IS_TRACER)).append("; ");
-      isDifferent = true;
+      originContent.append("isTracer=").append(existedIsTracer).append("; ");
+      isSame = false;
     }
     boolean isUpdateProgram = false;
     if (isDifferentProgramOrderable(existed, current)) {
@@ -352,15 +348,14 @@ public class FcProductService implements ProcessDataService {
           programsToString(existed.getPrograms()), current.getAreas());
       updateContent.append("program=").append(current.getAreas()).append("; ");
       originContent.append("program=").append(programsToString(existed.getPrograms())).append("; ");
-      isDifferent = true;
+      isSame = false;
       isUpdateProgram = true;
     }
-    if (isDifferent) {
-      return FcUtil.buildUpdateFcIntegrationChanges(PRODUCT_API, existed.getProductCode(), updateContent.toString(),
-          originContent.toString(), isUpdateProgram);
-    } else {
+    if (isSame) {
       return null;
     }
+    return FcUtil.buildUpdateFcIntegrationChanges(PRODUCT_API, existed.getProductCode(), updateContent.toString(),
+        originContent.toString(), isUpdateProgram);
   }
 
   private boolean isDifferentProductStatus(OrderableDto existed, ProductInfoDto current) {
@@ -441,7 +436,7 @@ public class FcProductService implements ProcessDataService {
     programs.forEach(program ->
         originPrograms.append("ProgramOrderableDto(")
             .append("programId:").append(program.getProgramId())
-            .append(",programName:").append(program.getOrderableCategoryDisplayName())
+            .append(",programCode:").append(programIdToCodeMap.get(program.getProgramId()))
             .append(",status:").append(program.isActive()).append(")"));
     return originPrograms.append("]").toString();
   }

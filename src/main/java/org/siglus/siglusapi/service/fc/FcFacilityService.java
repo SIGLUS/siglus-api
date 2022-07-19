@@ -212,53 +212,51 @@ public class FcFacilityService implements ProcessDataService {
     FacilityDto origin = facilityService.findOne(originDto.getId());
     originDto.setSupportedPrograms(origin.getSupportedPrograms());
     originDto.setDescription(origin.getDescription());
-    boolean isDifferent = false;
+    boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!fcFacilityDto.getName().equals(originDto.getName())) {
       updateContent.append("name=").append(fcFacilityDto.getName()).append("; ");
       originContent.append("name=").append(originDto.getName()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
 
     if (!fcFacilityDto.getDescription().equals(originDto.getDescription())) {
       updateContent.append("description=").append(fcFacilityDto.getDescription()).append("; ");
       originContent.append("description=").append(originDto.getDescription()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
 
     if (!fcFacilityDto.getDistrictCode().equals(originDto.getGeographicZone().getCode())) {
       updateContent.append("districtCode=").append(fcFacilityDto.getDistrictCode()).append("; ");
       originContent.append("districtCode=").append(originDto.getGeographicZone().getCode()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
 
     if (!fcFacilityDto.getClientTypeCode().equals(originDto.getType().getCode())) {
       updateContent.append("clientTypeCode=").append(fcFacilityDto.getClientTypeCode()).append("; ");
       originContent.append("clientTypeCode=").append(originDto.getType().getCode()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
 
-    if (FcUtil.isActive(fcFacilityDto.getStatus()) != originDto.getActive()) {
+    if (!originDto.getActive().equals(FcUtil.isActive(fcFacilityDto.getStatus()))) {
       updateContent.append("status=").append(fcFacilityDto.getStatus()).append("; ");
       originContent.append("status=").append(originDto.getActive()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
-
     Set<String> originCodes = originDto.getSupportedPrograms().stream()
         .map(SupportedProgramDto::getCode)
         .collect(Collectors.toSet());
     if (!Sets.difference(codes, originCodes).isEmpty()) {
       updateContent.append("programCodes=").append(codes).append("; ");
       originContent.append("programCodes=").append(originCodes).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
-    if (isDifferent) {
-      return FcUtil.buildUpdateFcIntegrationChanges(FACILITY_API, originDto.getCode(), updateContent.toString(),
-          originContent.toString());
-    } else {
+    if (isSame) {
       return null;
     }
+    return FcUtil.buildUpdateFcIntegrationChanges(FACILITY_API, originDto.getCode(), updateContent.toString(),
+        originContent.toString());
   }
 
   private void createFacilities(List<FcFacilityDto> needCreateFacilities,

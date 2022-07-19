@@ -342,9 +342,8 @@ public abstract class BaseCommunicationService<T> {
         .init()
         .setAll(parameter);
     try {
-      restTemplate
-          .exchange(RequestHelper.createUri(url, params), HttpMethod.DELETE,
-              createEntity(null, obtainUserToken), Void.class);
+      restTemplate.exchange(RequestHelper.createUri(url, params), HttpMethod.DELETE,
+          createEntity(null, obtainUserToken), Void.class);
     } catch (HttpStatusCodeException ex) {
       final Message errorMessage = Message.createFromMessageKeyStr(ex.getResponseBodyAsString());
       throw new ValidationMessageException(ex, errorMessage);

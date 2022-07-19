@@ -135,31 +135,30 @@ public class FcRegimenService implements ProcessDataService {
   }
 
   private FcIntegrationChanges getUpdatedRegimen(Regimen existed, RegimenDto current, UUID realProgramId) {
-    boolean isDifferent = false;
+    boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!existed.getName().equals(current.getDescription())) {
       updateContent.append("name=").append(current.getDescription()).append("; ");
       originContent.append("name=").append(existed.getName()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
     if (!existed.getRealProgramId().equals(realProgramId)) {
       updateContent.append("realProgramId=").append(realProgramId).append("; ");
       originContent.append("realProgramId=").append(existed.getRealProgramId()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
     if (!isCategoryEquivalent(existed, current)) {
       updateContent.append("category=").append(current.getCategoryCode()).append("; ");
       originContent.append("category=")
           .append(existed.getRegimenCategory() == null ? null : existed.getRegimenCategory().getCode()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
-    if (isDifferent) {
-      return FcUtil.buildUpdateFcIntegrationChanges(REGIMEN_API, current.getCode(), updateContent.toString(),
-          originContent.toString());
-    } else {
+    if (isSame) {
       return null;
     }
+    return FcUtil.buildUpdateFcIntegrationChanges(REGIMEN_API, current.getCode(), updateContent.toString(),
+        originContent.toString());
   }
 
   @SuppressWarnings("java:S125")

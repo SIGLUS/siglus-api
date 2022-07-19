@@ -96,7 +96,7 @@ public class FcProgramService implements ProcessDataService {
   }
 
   private FcIntegrationChanges getUpdatedProgram(ProgramRealProgram existed, ProgramDto current) {
-    boolean isDifferent = false;
+    boolean isSame = true;
     StringBuilder updateContent = new StringBuilder();
     StringBuilder originContent = new StringBuilder();
     if (!existed.getRealProgramName().equals(current.getDescription())) {
@@ -104,21 +104,20 @@ public class FcProgramService implements ProcessDataService {
           current.getDescription());
       updateContent.append("name=").append(current.getDescription()).append("; ");
       originContent.append("name=").append(existed.getRealProgramName()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
     if (!existed.getActive().equals(FcUtil.isActive(current.getStatus()))) {
       existed.setActive(FcUtil.isActive(current.getStatus()));
       log.info("[FC program] status different, existed: {}, current: {}", existed.getActive(), current.getStatus());
       updateContent.append("status=").append(FcUtil.isActive(current.getStatus())).append("; ");
       originContent.append("status=").append(existed.getActive()).append("; ");
-      isDifferent = true;
+      isSame = false;
     }
-    if (isDifferent) {
-      return FcUtil.buildUpdateFcIntegrationChanges(PROGRAM_API, current.getCode(), updateContent.toString(),
-          originContent.toString());
-    } else {
+    if (isSame) {
       return null;
     }
+    return FcUtil.buildUpdateFcIntegrationChanges(PROGRAM_API, current.getCode(), updateContent.toString(),
+        originContent.toString());
   }
 
   private ProgramRealProgram getUpdateProgram(ProgramRealProgram program, ProgramDto dto) {
