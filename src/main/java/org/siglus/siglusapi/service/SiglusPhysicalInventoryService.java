@@ -844,7 +844,7 @@ public class SiglusPhysicalInventoryService {
     List<PhysicalInventorySubDraftLineItemsExtensionDto> lineItemsExtensions = inventoryDto.getLineItemsExtensions();
     Map<String, UUID> lineItemsExtensionMap = lineItemsExtensions.stream()
         .collect(Collectors.toMap(item -> getUniqueKey(item.getOrderableId(), item.getLotId()),
-            PhysicalInventorySubDraftLineItemsExtensionDto::getSubDraftId));
+            PhysicalInventorySubDraftLineItemsExtensionDto::getSubDraftId, (item1, item2) -> item1));
 
     List<UUID> updatePhysicalInventoryIds =
         updatedDto.stream().map(PhysicalInventoryDto::getId).collect(Collectors.toList());
