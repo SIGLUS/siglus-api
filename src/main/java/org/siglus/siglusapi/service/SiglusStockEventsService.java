@@ -195,9 +195,7 @@ public class SiglusStockEventsService {
     });
     if (!programIdToEventId.isEmpty()) {
       if (eventDto.isPhysicalInventory()) {
-        programIds.forEach(id ->
-            siglusPhysicalInventoryService
-                .deletePhysicalInventoryForProductInOneProgramDirectly(eventDto.getFacilityId(), id));
+        siglusPhysicalInventoryService.deletePhysicalInventoryForAllProductsDirectly(eventDto.getFacilityId());
       } else if (isNotUnpack(eventDto)) {
         String type = getDraftType(eventDto);
         eventDto.setType(type);
