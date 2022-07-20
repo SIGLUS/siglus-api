@@ -66,6 +66,6 @@ public class SiglusStockMovementControllerTest {
 
   @Test(expected = ValidationMessageException.class)
   public void shouldThrowExceptionWhenOrderableIdAndFacilityIdAreNull() throws ValidationMessageException {
-    controller.getStockMovement(null, null, null, null);
+    assertEquals(ValidationMessageException.class, controller.getStockMovement(null, null, null, null));
   }
 }

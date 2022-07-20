@@ -279,10 +279,12 @@ public class SiglusStockCardServiceTest {
     StockMovementResDto stockMovementResDto1 = new StockMovementResDto();
     StockMovementResDto stockMovementResDto2 = new StockMovementResDto();
     StockMovementResDto stockMovementResDto3 = new StockMovementResDto();
-    when(stockMovementService.getProductMovements(new HashSet<UUID>(), facilityId, null, null))
+    HashSet<UUID> orderables = new HashSet<>();
+    orderables.add(orderableId);
+    when(stockMovementService.getProductMovements(orderables, facilityId, null, null))
         .thenReturn(Arrays.asList(stockMovementResDto1, stockMovementResDto2, stockMovementResDto3));
-    List<StockMovementResDto> productMovements = siglusStockCardService.getProductMovements(facilityId, null, null,
-        null);
+    List<StockMovementResDto> productMovements =
+        siglusStockCardService.getProductMovements(facilityId, orderableId, null, null);
     assertEquals(3, productMovements.size());
   }
 

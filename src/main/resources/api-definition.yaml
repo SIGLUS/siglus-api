@@ -364,18 +364,19 @@ traits:
                   schema: localizedErrorResponse
 
     /stockMovement:
-      /getMovement:
-        displayName: Get stock movement
+      displayName: StockMovement
+      /{id}:
+        uriParameters:
+          id:
+            displayName: id
+            type: string
+            required: true
+            repeat: true
         get:
           is: [ secured, paginated ]
           description: >
             Get stock movement by facility id and orderable id.
           queryParameters:
-            facilityId:
-              displayName: facility Id
-              type: string
-              required: false
-              repeat: true
             orderableId:
               displayName: orderable Id
               type: string
