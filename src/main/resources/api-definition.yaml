@@ -880,6 +880,19 @@ traits:
               application/json:
                 schema: localizedMessage
 
+    /drafts/initial/{initialDraftId}:
+      delete:
+        is: [ secured ]
+        description: Delete a initial draft and all sub-drafts.
+        responses:
+          204:
+            description: Draft deleted.
+          404:
+            description: stock management Draft not found.
+            body:
+              application/json:
+                schema: localizedMessage
+
     /archivedproducts/{orderableId}/archive:
       post:
         is: [ secured ]

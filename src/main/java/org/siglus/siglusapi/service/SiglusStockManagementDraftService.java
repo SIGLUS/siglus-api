@@ -469,9 +469,12 @@ public class SiglusStockManagementDraftService {
     return mergedLineItemDtos;
   }
 
+  @Transactional
   public void deleteInitialDraft(UUID initialDraftId) {
     draftValidator.validateInitialDraftId(initialDraftId);
+    log.info("delete subDrafts with initial draft with id: {}", initialDraftId);
     stockManagementDraftRepository.deleteAllByInitialDraftId(initialDraftId);
+    log.info("delete initial draft with id: {}", initialDraftId);
     stockManagementInitialDraftsRepository.delete(initialDraftId);
   }
 }

@@ -132,4 +132,10 @@ public class SiglusStockManagementDraftControllerTest {
     controller.mergeSubDrafts(initialDraftId);
     verify(service).mergeSubDrafts(initialDraftId);
   }
+
+  @Test
+  public void shouldCallDeleteInitialDraft() {
+    controller.deleteInitialDraft(initialDraftId);
+    verify(service).deleteInitialDraft(initialDraftId);
+  }
 }
