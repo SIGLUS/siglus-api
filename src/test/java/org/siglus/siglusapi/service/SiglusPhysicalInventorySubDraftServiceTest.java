@@ -25,6 +25,7 @@ import static org.siglus.siglusapi.i18n.MessageKeys.ERROR_INVENTORY_CONFLICT_SUB
 import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -290,6 +291,82 @@ public class SiglusPhysicalInventorySubDraftServiceTest {
     verify(siglusPhysicalInventoryService, times(2)).getFullPhysicalInventoryDto(any());
 
 
+  }
+
+  @Test
+  public void shouldCallResetInitialLineItemsWhenDeleteSubDraftsForInitialInventory() {
+    UUID orderableId2 = UUID.randomUUID();
+    UUID lotId2 = UUID.randomUUID();
+    // given
+    when(supportedProgramsHelper.findHomeFacilitySupportedProgramIds())
+            .thenReturn(Sets.newHashSet(UUID.randomUUID(), UUID.randomUUID()));
+    PhysicalInventoryLineItemDto lineItemDtoOne = PhysicalInventoryLineItemDto.builder()
+            .programId(programId)
+            .orderableId(orderableId2)
+            .lotId(lotId2)
+            .build();
+    List<UUID> subDraftIds = Lists.newArrayList(subDraftId);
+    List<PhysicalInventorySubDraft> subDrafts = Lists.newArrayList(PhysicalInventorySubDraft.builder()
+            .physicalInventoryId(physicalInventoryId1).num(1)
+            .build(), PhysicalInventorySubDraft.builder()
+            .physicalInventoryId(physicalInventoryId2).num(2)
+            .build());
+    for (PhysicalInventorySubDraft subDraft : subDrafts) {
+      subDraft.setId(UUID.randomUUID());
+    }
+    when(physicalInventorySubDraftRepository.findAll(subDraftIds)).thenReturn(subDrafts);
+    UUID facilityId = UUID.randomUUID();
+    PhysicalInventoryDto oldPhysicalInventoryDto = PhysicalInventoryDto.builder()
+            .id(id)
+            .facilityId(facilityId)
+            .programId(programId)
+            .lineItems(Lists.newArrayList(lineItemDtoOne))
+            .build();
+
+    when(siglusPhysicalInventoryService.getFullPhysicalInventoryDto(any())).thenReturn(
+            oldPhysicalInventoryDto);
+    List<PhysicalInventoryLineItemsExtension> physicalInventories = Lists.newArrayList(
+            PhysicalInventoryLineItemsExtension.builder()
+                    .physicalInventoryId(physicalInventoryId1)
+                    .orderableId(orderableId)
+                    .lotId(lotId)
+                    .subDraftId(subDraftId)
+                    .initial(true)
+                    .build(),
+            PhysicalInventoryLineItemsExtension.builder()
+                    .physicalInventoryId(physicalInventoryId2)
+                    .orderableId(orderableId2)
+                    .lotId(lotId2)
+                    .subDraftId(subDraftId)
+                    .initial(true)
+                    .build()
+    );
+    when(lineItemsExtensionRepository.findByPhysicalInventoryId(any())).thenReturn(physicalInventories);
+    StockCardSummaryV2Dto stockCardSummaryV2Dto = new StockCardSummaryV2Dto();
+    String url = "urlxx";
+    String path = "resxx";
+    ObjectReferenceDto objectReferenceDto = new ObjectReferenceDto(url, path, orderableId);
+    ObjectReferenceDto lot = new ObjectReferenceDto(url, path, lotId);
+    stockCardSummaryV2Dto.setOrderable(objectReferenceDto);
+    Set<CanFulfillForMeEntryDto> canFulfillForMe = new HashSet<>();
+    CanFulfillForMeEntryDto canFulfillForMeEntryDto = new CanFulfillForMeEntryDto();
+    canFulfillForMeEntryDto.setOrderable(objectReferenceDto);
+    canFulfillForMeEntryDto.setLot(lot);
+    canFulfillForMe.add(canFulfillForMeEntryDto);
+    stockCardSummaryV2Dto.setCanFulfillForMe(canFulfillForMe);
+    List<StockCardSummaryV2Dto> stockSummaries = new ArrayList<>();
+    stockSummaries.add(stockCardSummaryV2Dto);
+
+    when(siglusStockCardSummariesService.findAllProgramStockSummaries()).thenReturn(stockSummaries);
+
+    // when
+    siglusPhysicalInventorySubDraftService.deleteSubDrafts(subDraftIds, Boolean.TRUE);
+    // then
+    verify(lineItemsExtensionRepository).deleteByPhysicalInventoryIdIn(Collections.singleton(physicalInventoryId1));
+    verify(lineItemsExtensionRepository).deleteByPhysicalInventoryIdIn(Collections.singleton(physicalInventoryId2));
+    verify(physicalInventorySubDraftRepository).save(any(List.class));
+    verify(siglusPhysicalInventoryService, times(2))
+            .buildInitialInventoryLineItemDtos(Collections.singleton(programId), facilityId);
   }
 
   @Test
