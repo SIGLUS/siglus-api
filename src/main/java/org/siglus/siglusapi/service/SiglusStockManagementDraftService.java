@@ -203,9 +203,13 @@ public class SiglusStockManagementDraftService {
             true,
             dto.getType());
     if (!drafts.isEmpty()) {
-      log.info("delete stockmanagement draft, programId: {}, facilityId: {}", dto.getProgramId(),
+      UUID initialDraftId = drafts.get(0).getInitialDraftId();
+      log.info("delete stock management subDrafts, programId: {}, facilityId: {}",
+          dto.getProgramId(),
           dto.getFacilityId());
       stockManagementDraftRepository.delete(drafts);
+      log.info("delete stock management initial draft with id: {}", initialDraftId);
+      stockManagementInitialDraftsRepository.delete(initialDraftId);
     }
   }
 
